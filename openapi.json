@@ -1,0 +1,3824 @@
+{
+  "@context": [
+    {
+      "@context": {
+        "hydra": "http://www.w3.org/ns/hydra/core#",
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "vs": "http://www.w3.org/2003/06/sw-vocab-status/ns#",
+        "dc": "http://purl.org/dc/terms/",
+        "cc": "http://creativecommons.org/ns#",
+        "schema": "http://schema.org/",
+        "apiDocumentation": "hydra:apiDocumentation",
+        "ApiDocumentation": "hydra:ApiDocumentation",
+        "title": "hydra:title",
+        "description": "hydra:description",
+        "entrypoint": {
+          "@id": "hydra:entrypoint",
+          "@type": "@id"
+        },
+        "supportedClass": {
+          "@id": "hydra:supportedClass",
+          "@type": "@vocab"
+        },
+        "Class": "hydra:Class",
+        "supportedProperty": {
+          "@id": "hydra:supportedProperty",
+          "@type": "@id"
+        },
+        "SupportedProperty": "hydra:SupportedProperty",
+        "property": {
+          "@id": "hydra:property",
+          "@type": "@vocab"
+        },
+        "required": "hydra:required",
+        "readable": "hydra:readable",
+        "writable": "hydra:writable",
+        "writeable": "hydra:writeable",
+        "supportedOperation": {
+          "@id": "hydra:supportedOperation",
+          "@type": "@id"
+        },
+        "Operation": "hydra:Operation",
+        "method": "hydra:method",
+        "expects": {
+          "@id": "hydra:expects",
+          "@type": "@vocab"
+        },
+        "returns": {
+          "@id": "hydra:returns",
+          "@type": "@vocab"
+        },
+        "possibleStatus": {
+          "@id": "hydra:possibleStatus",
+          "@type": "@id"
+        },
+        "Status": "hydra:Status",
+        "statusCode": "hydra:statusCode",
+        "Error": "hydra:Error",
+        "Resource": "hydra:Resource",
+        "operation": "hydra:operation",
+        "Collection": "hydra:Collection",
+        "collection": "hydra:collection",
+        "member": {
+          "@id": "hydra:member",
+          "@type": "@id"
+        },
+        "memberAssertion": "hydra:memberAssertion",
+        "manages": "hydra:manages",
+        "subject": {
+          "@id": "hydra:subject",
+          "@type": "@vocab"
+        },
+        "object": {
+          "@id": "hydra:object",
+          "@type": "@vocab"
+        },
+        "search": "hydra:search",
+        "freetextQuery": "hydra:freetextQuery",
+        "view": {
+          "@id": "hydra:view",
+          "@type": "@id"
+        },
+        "PartialCollectionView": "hydra:PartialCollectionView",
+        "totalItems": "hydra:totalItems",
+        "first": {
+          "@id": "hydra:first",
+          "@type": "@id"
+        },
+        "last": {
+          "@id": "hydra:last",
+          "@type": "@id"
+        },
+        "next": {
+          "@id": "hydra:next",
+          "@type": "@id"
+        },
+        "previous": {
+          "@id": "hydra:previous",
+          "@type": "@id"
+        },
+        "Link": "hydra:Link",
+        "TemplatedLink": "hydra:TemplatedLink",
+        "IriTemplate": "hydra:IriTemplate",
+        "template": "hydra:template",
+        "Rfc6570Template": "hydra:Rfc6570Template",
+        "variableRepresentation": {
+          "@id": "hydra:variableRepresentation",
+          "@type": "@vocab"
+        },
+        "VariableRepresentation": "hydra:VariableRepresentation",
+        "BasicRepresentation": "hydra:BasicRepresentation",
+        "ExplicitRepresentation": "hydra:ExplicitRepresentation",
+        "mapping": "hydra:mapping",
+        "IriTemplateMapping": "hydra:IriTemplateMapping",
+        "variable": "hydra:variable",
+        "offset": {
+          "@id": "hydra:offset",
+          "@type": "xsd:nonNegativeInteger"
+        },
+        "limit": {
+          "@id": "hydra:limit",
+          "@type": "xsd:nonNegativeInteger"
+        },
+        "pageIndex": {
+          "@id": "hydra:pageIndex",
+          "@type": "xsd:nonNegativeInteger"
+        },
+        "pageReference": {
+          "@id": "hydra:pageReference"
+        },
+        "returnsHeader": {
+          "@id": "hydra:returnsHeader",
+          "@type": "xsd:string"
+        },
+        "expectsHeader": {
+          "@id": "hydra:expectsHeader",
+          "@type": "xsd:string"
+        },
+        "HeaderSpecification": "hydra:HeaderSpecification",
+        "headerName": "hydra:headerName",
+        "possibleValue": "hydra:possibleValue",
+        "closedSet": {
+          "@id": "hydra:possibleValue",
+          "@type": "xsd:boolean"
+        },
+        "name": {
+          "@id": "hydra:name",
+          "@type": "xsd:string"
+        },
+        "extension": {
+          "@id": "hydra:extension",
+          "@type": "@id"
+        },
+        "isDefinedBy": {
+          "@id": "rdfs:isDefinedBy",
+          "@type": "@id"
+        },
+        "defines": {
+          "@reverse": "rdfs:isDefinedBy"
+        },
+        "comment": "rdfs:comment",
+        "label": "rdfs:label",
+        "preferredPrefix": "http://purl.org/vocab/vann/preferredNamespacePrefix",
+        "cc:license": {
+          "@type": "@id"
+        },
+        "cc:attributionURL": {
+          "@type": "@id"
+        },
+        "domain": {
+          "@id": "rdfs:domain",
+          "@type": "@vocab"
+        },
+        "range": {
+          "@id": "rdfs:range",
+          "@type": "@vocab"
+        },
+        "subClassOf": {
+          "@id": "rdfs:subClassOf",
+          "@type": "@vocab"
+        },
+        "subPropertyOf": {
+          "@id": "rdfs:subPropertyOf",
+          "@type": "@vocab"
+        },
+        "seeAlso": {
+          "@id": "rdfs:seeAlso",
+          "@type": "@id"
+        },
+        "domainIncludes": {
+          "@id": "schema:domainIncludes",
+          "@type": "@id"
+        },
+        "rangeIncludes": {
+          "@id": "schema:rangeIncludes",
+          "@type": "@id"
+        }
+      },
+      "@id": "http://www.w3.org/ns/hydra/core",
+      "@type": "owl:Ontology",
+      "label": "The Hydra Core Vocabulary",
+      "comment": "A lightweight vocabulary for hypermedia-driven Web APIs",
+      "seeAlso": "https://www.hydra-cg.com/spec/latest/core/",
+      "preferredPrefix": "hydra",
+      "dc:description": "The Hydra Core Vocabulary is a lightweight vocabulary to create hypermedia-driven Web APIs. By specifying a number of concepts commonly used in Web APIs it enables the creation of generic API clients.",
+      "dc:rights": "Copyright © 2012-2014 the Contributors to the Hydra Core Vocabulary Specification",
+      "dc:publisher": "Hydra W3C Community Group",
+      "cc:license": "http://creativecommons.org/licenses/by/4.0/",
+      "cc:attributionName": "Hydra W3C Community Group",
+      "cc:attributionURL": "http://www.hydra-cg.com/",
+      "defines": [
+        {
+          "@id": "hydra:Resource",
+          "@type": "hydra:Class",
+          "label": "Hydra Resource",
+          "comment": "The class of dereferenceable resources by means a client can attempt to dereference; however, the received responses should still be verified.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:Class",
+          "@type": [
+            "hydra:Resource",
+            "rdfs:Class"
+          ],
+          "subClassOf": [
+            "rdfs:Class"
+          ],
+          "label": "Hydra Class",
+          "comment": "The class of Hydra classes.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:Link",
+          "@type": "hydra:Class",
+          "subClassOf": [
+            "hydra:Resource",
+            "rdf:Property"
+          ],
+          "label": "Link",
+          "comment": "The class of properties representing links.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:apiDocumentation",
+          "@type": "hydra:Link",
+          "label": "apiDocumentation",
+          "comment": "A link to the API documentation",
+          "range": "hydra:ApiDocumentation",
+          "domain": "hydra:Resource",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:ApiDocumentation",
+          "@type": "hydra:Class",
+          "subClassOf": "hydra:Resource",
+          "label": "ApiDocumentation",
+          "comment": "The Hydra API documentation class",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:entrypoint",
+          "@type": "hydra:Link",
+          "label": "entrypoint",
+          "comment": "A link to main entry point of the Web API",
+          "domain": "hydra:ApiDocumentation",
+          "range": "hydra:Resource",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:supportedClass",
+          "@type": "hydra:Link",
+          "label": "supported classes",
+          "comment": "A class known to be supported by the Web API",
+          "domain": "hydra:ApiDocumentation",
+          "range": "rdfs:Class",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:possibleStatus",
+          "@type": "hydra:Link",
+          "label": "possible status",
+          "comment": "A status that might be returned by the Web API (other statuses should be expected and properly handled as well)",
+          "range": "hydra:Status",
+          "domainIncludes": [
+            "hydra:ApiDocumentation",
+            "hydra:Operation"
+          ],
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:supportedProperty",
+          "@type": "hydra:Link",
+          "label": "supported properties",
+          "comment": "The properties known to be supported by a Hydra class",
+          "domain": "rdfs:Class",
+          "range": "hydra:SupportedProperty",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:SupportedProperty",
+          "@type": "hydra:Class",
+          "label": "Supported Property",
+          "comment": "A property known to be supported by a Hydra class.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:property",
+          "@type": "rdf:Property",
+          "label": "property",
+          "comment": "A property",
+          "range": "rdf:Property",
+          "domainIncludes": [
+            "hydra:SupportedProperty",
+            "hydra:IriTemplateMapping"
+          ],
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:required",
+          "@type": "rdf:Property",
+          "label": "required",
+          "comment": "True if the property is required, false otherwise.",
+          "range": "xsd:boolean",
+          "domainIncludes": [
+            "hydra:SupportedProperty",
+            "hydra:IriTemplateMapping"
+          ],
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:readable",
+          "@type": "rdf:Property",
+          "label": "readable",
+          "comment": "True if the client can retrieve the property's value, false otherwise.",
+          "domain": "hydra:SupportedProperty",
+          "range": "xsd:boolean",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:writable",
+          "@type": "rdf:Property",
+          "label": "writable",
+          "comment": "True if the client can change the property's value, false otherwise.",
+          "domain": "hydra:SupportedProperty",
+          "range": "xsd:boolean",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:writeable",
+          "subPropertyOf": "hydra:writable",
+          "label": "writable",
+          "comment": "This property is left for compatibility purposes and hydra:writable should be used instead.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "archaic"
+        },
+        {
+          "@id": "hydra:supportedOperation",
+          "@type": "hydra:Link",
+          "label": "supported operation",
+          "comment": "An operation supported by instances of the specific Hydra class, or the target of the Hydra link, or IRI template.",
+          "range": "hydra:Operation",
+          "domainIncludes": [
+            "rdfs:Class",
+            "hydra:Class",
+            "hydra:Link",
+            "hydra:TemplatedLink",
+            "hydra:SupportedProperty"
+          ],
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:operation",
+          "@type": "hydra:Link",
+          "label": "operation",
+          "comment": "An operation supported by the Hydra resource",
+          "domain": "hydra:Resource",
+          "range": "hydra:Operation",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:Operation",
+          "@type": "hydra:Class",
+          "label": "Operation",
+          "comment": "An operation.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:method",
+          "@type": "rdf:Property",
+          "label": "method",
+          "comment": "The HTTP method.",
+          "domain": "hydra:Operation",
+          "range": "xsd:string",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:expects",
+          "@type": "hydra:Link",
+          "label": "expects",
+          "comment": "The information expected by the Web API.",
+          "domain": "hydra:Operation",
+          "rangeIncludes": [
+            "rdfs:Resource",
+            "hydra:Resource",
+            "rdfs:Class",
+            "hydra:Class"
+          ],
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:returns",
+          "@type": "hydra:Link",
+          "label": "returns",
+          "comment": "The information returned by the Web API on success",
+          "domain": "hydra:Operation",
+          "rangeIncludes": [
+            "rdfs:Resource",
+            "hydra:Resource",
+            "rdfs:Class",
+            "hydra:Class"
+          ],
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:Status",
+          "@type": "hydra:Class",
+          "label": "Status code description",
+          "comment": "Additional information about a status code that might be returned.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:statusCode",
+          "@type": "rdf:Property",
+          "label": "status code",
+          "comment": "The HTTP status code. Please note it may happen this value will be different to actual status code received.",
+          "domain": "hydra:Status",
+          "range": "xsd:integer",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:title",
+          "@type": "rdf:Property",
+          "subPropertyOf": "rdfs:label",
+          "label": "title",
+          "comment": "A title, often used along with a description.",
+          "range": "xsd:string",
+          "domainIncludes": [
+            "hydra:ApiDocumentation",
+            "hydra:Status",
+            "hydra:Class",
+            "hydra:SupportedProperty",
+            "hydra:Operation",
+            "hydra:Link",
+            "hydra:TemplatedLink"
+          ],
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:description",
+          "@type": "rdf:Property",
+          "subPropertyOf": "rdfs:comment",
+          "label": "description",
+          "comment": "A description.",
+          "range": "xsd:string",
+          "domainIncludes": [
+            "hydra:ApiDocumentation",
+            "hydra:Status",
+            "hydra:Class",
+            "hydra:SupportedProperty",
+            "hydra:Operation",
+            "hydra:Link",
+            "hydra:TemplatedLink"
+          ],
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:Error",
+          "@type": "hydra:Class",
+          "subClassOf": "hydra:Status",
+          "label": "Error",
+          "comment": "A runtime error, used to report information beyond the returned status code.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:Collection",
+          "@type": "hydra:Class",
+          "subClassOf": "hydra:Resource",
+          "label": "Collection",
+          "comment": "A collection holding references to a number of related resources.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:collection",
+          "@type": "hydra:Link",
+          "label": "collection",
+          "comment": "Collections somehow related to this resource.",
+          "range": "hydra:Collection",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:memberAssertion",
+          "label": "member assertion",
+          "comment": "Semantics of each member provided by the collection.",
+          "domainIncludes": [
+            "hydra:Collection",
+            "hydra:Class"
+          ],
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:manages",
+          "subPropertyOf": "hydra:memberAssertion",
+          "label": "manages",
+          "comment": "This predicate is left for compatibility purposes and hydra:memberAssertion should be used instead.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "archaic"
+        },
+        {
+          "@id": "hydra:subject",
+          "label": "subject",
+          "comment": "The subject.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:object",
+          "label": "object",
+          "comment": "The object.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:member",
+          "@type": "hydra:Link",
+          "label": "member",
+          "comment": "A member of the collection",
+          "domain": "hydra:Collection",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:view",
+          "@type": "hydra:Link",
+          "label": "view",
+          "comment": "A specific view of a resource.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:PartialCollectionView",
+          "@type": "hydra:Class",
+          "subClassOf": "hydra:Resource",
+          "label": "PartialCollectionView",
+          "comment": "A PartialCollectionView describes a partial view of a Collection. Multiple PartialCollectionViews can be connected with the the next/previous properties to allow a client to retrieve all members of the collection.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:totalItems",
+          "@type": "rdf:Property",
+          "label": "total items",
+          "comment": "The total number of items referenced by a collection.",
+          "domain": "hydra:Collection",
+          "range": "xsd:integer",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:first",
+          "@type": "hydra:Link",
+          "label": "first",
+          "comment": "The first resource of an interlinked set of resources.",
+          "domain": "hydra:Resource",
+          "range": "hydra:Resource",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:last",
+          "@type": "hydra:Link",
+          "label": "last",
+          "comment": "The last resource of an interlinked set of resources.",
+          "domain": "hydra:Resource",
+          "range": "hydra:Resource",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:next",
+          "@type": "hydra:Link",
+          "label": "next",
+          "comment": "The resource following the current instance in an interlinked set of resources.",
+          "domain": "hydra:Resource",
+          "range": "hydra:Resource",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:previous",
+          "@type": "hydra:Link",
+          "label": "previous",
+          "comment": "The resource preceding the current instance in an interlinked set of resources.",
+          "domain": "hydra:Resource",
+          "range": "hydra:Resource",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:search",
+          "@type": "hydra:TemplatedLink",
+          "label": "search",
+          "comment": "A IRI template that can be used to query a collection.",
+          "range": "hydra:IriTemplate",
+          "domain": "hydra:Resource",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:freetextQuery",
+          "@type": "rdf:Property",
+          "label": "freetext query",
+          "comment": "A property representing a freetext query.",
+          "range": "xsd:string",
+          "domain": "hydra:Resource",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:TemplatedLink",
+          "@type": "hydra:Class",
+          "subClassOf": [
+            "hydra:Resource",
+            "rdf:Property"
+          ],
+          "label": "Templated Link",
+          "comment": "A templated link.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:IriTemplate",
+          "@type": "hydra:Class",
+          "label": "IRI Template",
+          "comment": "The class of IRI templates.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:template",
+          "@type": "rdf:Property",
+          "label": "template",
+          "comment": "A templated string with placeholders. The literal's datatype indicates the template syntax; if not specified, hydra:Rfc6570Template is assumed.",
+          "seeAlso": "hydra:Rfc6570Template",
+          "domain": "hydra:IriTemplate",
+          "range": "hydra:Rfc6570Template",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:Rfc6570Template",
+          "@type": "rdfs:Datatype",
+          "label": "RFC6570 IRI template",
+          "comment": "An IRI template as defined by RFC6570.",
+          "seeAlso": "http://tools.ietf.org/html/rfc6570",
+          "range": "xsd:string",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:variableRepresentation",
+          "@type": "rdf:Property",
+          "label": "variable representation",
+          "comment": "The representation format to use when expanding the IRI template.",
+          "range": "hydra:VariableRepresentation",
+          "domainIncludes": [
+            "hydra:IriTemplateMapping",
+            "hydra:IriTemplate"
+          ],
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:VariableRepresentation",
+          "@type": "hydra:Class",
+          "label": "VariableRepresentation",
+          "comment": "A representation specifies how to serialize variable values into strings.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:BasicRepresentation",
+          "@type": "hydra:VariableRepresentation",
+          "label": "BasicRepresentation",
+          "comment": "A representation that serializes just the lexical form of a variable value, but omits language and type information.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:ExplicitRepresentation",
+          "@type": "hydra:VariableRepresentation",
+          "label": "ExplicitRepresentation",
+          "comment": "A representation that serializes a variable value including its language and type information and thus differentiating between IRIs and literals.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:mapping",
+          "@type": "rdf:Property",
+          "label": "mapping",
+          "comment": "A variable-to-property mapping of the IRI template.",
+          "domain": "hydra:IriTemplate",
+          "range": "hydra:IriTemplateMapping",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:IriTemplateMapping",
+          "@type": "hydra:Class",
+          "label": "IriTemplateMapping",
+          "comment": "A mapping from an IRI template variable to a property.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:variable",
+          "@type": "rdf:Property",
+          "label": "variable",
+          "comment": "An IRI template variable",
+          "domain": "hydra:IriTemplateMapping",
+          "range": "xsd:string",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:resolveRelativeUsing",
+          "@type": "rdf:Property",
+          "label": "relative Uri resolution",
+          "domain": "hydra:IriTemplate",
+          "range": "hydra:BaseUriSource",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:BaseUriSource",
+          "@type": "hydra:Class",
+          "subClassOf": "hydra:Resource",
+          "label": "Base Uri source",
+          "comment": "Provides a base abstract for base Uri source for Iri template resolution.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:Rfc3986",
+          "@type": "hydra:BaseUriSource",
+          "label": "RFC 3986 based",
+          "comment": "States that the base Uri should be established using RFC 3986 reference resolution algorithm specified in section 5.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:LinkContext",
+          "@type": "hydra:BaseUriSource",
+          "label": "Link context",
+          "comment": "States that the link's context IRI, as defined in RFC 5988, should be used as the base Uri",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:offset",
+          "@type": "rdf:Property",
+          "label": "skip",
+          "comment": "Instructs to skip N elements of the set.",
+          "range": "xsd:nonNegativeInteger",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:limit",
+          "@type": "rdf:Property",
+          "label": "take",
+          "comment": "Instructs to limit set only to N elements.",
+          "range": "xsd:nonNegativeInteger",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:pageIndex",
+          "@type": "rdf:Property",
+          "subPropertyOf": "hydra:pageReference",
+          "label": "page index",
+          "comment": "Instructs to provide a specific page of the collection at a given index.",
+          "range": "xsd:nonNegativeInteger",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:pageReference",
+          "@type": "rdf:Property",
+          "label": "page reference",
+          "comment": "Instructs to provide a specific page reference of the collection.",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:returnsHeader",
+          "@type": "rdf:Property",
+          "label": "returns header",
+          "comment": "Name of the header returned by the operation.",
+          "domain": "hydra:Operation",
+          "rangeIncludes": [
+            "xsd:string",
+            "hydra:HeaderSpecification"
+          ],
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:expectsHeader",
+          "@type": "rdf:Property",
+          "label": "expects header",
+          "comment": "Specification of the header expected by the operation.",
+          "domain": "hydra:Operation",
+          "rangeIncludes": [
+            "xsd:string",
+            "hydra:HeaderSpecification"
+          ],
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:HeaderSpecification",
+          "@type": "rdfs:Class",
+          "subClassOf": "hydra:Resource",
+          "label": "Header specification",
+          "comment": "Specifies a possible either expected or returned header values",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:headerName",
+          "@type": "rdf:Property",
+          "label": "header name",
+          "comment": "Name of the header.",
+          "domain": "hydra:HeaderSpecification",
+          "range": "xsd:string",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:possibleValue",
+          "@type": "rdf:Property",
+          "label": "possible header value",
+          "comment": "Possible value of the header.",
+          "domain": "hydra:HeaderSpecification",
+          "range": "xsd:string",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:closedSet",
+          "@type": "rdf:Property",
+          "label": "closed set",
+          "comment": "Determines whether the provided set of header values is closed or not.",
+          "domain": "hydra:HeaderSpecification",
+          "range": "xsd:boolean",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        },
+        {
+          "@id": "hydra:extension",
+          "@type": "rdf:Property",
+          "label": "extension",
+          "comment": "Hint on what kind of extensions are in use.",
+          "domain": "hydra:ApiDocumentation",
+          "isDefinedBy": "http://www.w3.org/ns/hydra/core",
+          "vs:term_status": "testing"
+        }
+      ]
+    },
+    {
+      "@vocab": "http://localhost:8000/api/docs.jsonld#",
+      "hydra": "http://www.w3.org/ns/hydra/core#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "xmls": "http://www.w3.org/2001/XMLSchema#",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "schema": "https://schema.org/",
+      "domain": {
+        "@id": "rdfs:domain",
+        "@type": "@id"
+      },
+      "range": {
+        "@id": "rdfs:range",
+        "@type": "@id"
+      },
+      "subClassOf": {
+        "@id": "rdfs:subClassOf",
+        "@type": "@id"
+      }
+    }
+  ],
+  "@id": "/api/docs.jsonld",
+  "@type": "ApiDocumentation",
+  "title": "Fireguard Auth API",
+  "description": "OAuth2 and OpenID Connect Authorization Server",
+  "entrypoint": "/api",
+  "supportedClass": [
+    {
+      "@id": "#Error",
+      "@type": "Class",
+      "title": "Error",
+      "supportedProperty": [
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/id",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "id",
+            "range": "xmls:string"
+          },
+          "title": "id",
+          "required": false,
+          "readable": true,
+          "writeable": true
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/title",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "title",
+            "range": "xmls:string"
+          },
+          "title": "title",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "A short, human-readable summary of the problem."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/detail",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "detail",
+            "range": "xmls:string"
+          },
+          "title": "detail",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "A human-readable explanation specific to this occurrence of the problem."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/instance",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "instance",
+            "range": "xmls:string"
+          },
+          "title": "instance",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "A URI reference that identifies the specific occurrence of the problem. It may or may not yield further information if dereferenced."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/type",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "type",
+            "range": "xmls:string"
+          },
+          "title": "type",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "A URI reference that identifies the problem type"
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/meta",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "meta"
+          },
+          "title": "meta",
+          "required": false,
+          "readable": true,
+          "writeable": true
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/source",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "source"
+          },
+          "title": "source",
+          "required": false,
+          "readable": true,
+          "writeable": true
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/description",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "description",
+            "range": "xmls:string"
+          },
+          "title": "description",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/trace",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "trace"
+          },
+          "title": "trace",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/message",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "message",
+            "range": "xmls:string"
+          },
+          "title": "message",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/code",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "code",
+            "range": "xmls:integer"
+          },
+          "title": "code",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/file",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "file",
+            "range": "xmls:string"
+          },
+          "title": "file",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/line",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "line",
+            "range": "xmls:integer"
+          },
+          "title": "line",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Error/trace",
+            "@type": "rdf:Property",
+            "domain": "#Error",
+            "label": "trace"
+          },
+          "title": "trace",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        }
+      ],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a Error resource.",
+          "method": "GET",
+          "returns": "Error",
+          "title": "getError"
+        }
+      ],
+      "description": "A representation of common errors.",
+      "subClassOf": "Error"
+    },
+    {
+      "@id": "#ConstraintViolation",
+      "@type": "Class",
+      "title": "ConstraintViolation",
+      "supportedProperty": [
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/status",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "status",
+            "range": "xmls:integer"
+          },
+          "title": "status",
+          "required": false,
+          "readable": true,
+          "writeable": true
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/errorTitle",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "errorTitle",
+            "range": "xmls:string"
+          },
+          "title": "errorTitle",
+          "required": false,
+          "readable": false,
+          "writeable": true
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/violations",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "violations",
+            "range": "ConstraintViolationList"
+          },
+          "title": "violations",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/detail",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "detail",
+            "range": "xmls:string"
+          },
+          "title": "detail",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/message",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "message",
+            "range": "xmls:string"
+          },
+          "title": "message",
+          "required": false,
+          "readable": true,
+          "writeable": true
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/code",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "code",
+            "range": [
+              "xmls:string",
+              "xmls:integer"
+            ]
+          },
+          "title": "code",
+          "required": false,
+          "readable": true,
+          "writeable": true
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/file",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "file",
+            "range": "xmls:string"
+          },
+          "title": "file",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/line",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "line",
+            "range": "xmls:integer"
+          },
+          "title": "line",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/description",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "description",
+            "range": "xmls:string"
+          },
+          "title": "description",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/type",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "type",
+            "range": "xmls:string"
+          },
+          "title": "type",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/title",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "title",
+            "range": "xmls:string"
+          },
+          "title": "title",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/instance",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "instance",
+            "range": "xmls:string"
+          },
+          "title": "instance",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/statusCode",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "statusCode",
+            "range": "xmls:integer"
+          },
+          "title": "statusCode",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/headers",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "headers"
+          },
+          "title": "headers",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/trace",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "trace"
+          },
+          "title": "trace",
+          "required": false,
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolation/previous",
+            "@type": "rdf:Property",
+            "domain": "#ConstraintViolation",
+            "label": "previous",
+            "range": "xmls:integer"
+          },
+          "title": "previous",
+          "required": false,
+          "readable": true,
+          "writeable": true
+        }
+      ],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a ConstraintViolation resource.",
+          "method": "GET",
+          "returns": "ConstraintViolation",
+          "title": "getConstraintViolation"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a ConstraintViolation resource.",
+          "method": "GET",
+          "returns": "ConstraintViolation",
+          "title": "getConstraintViolation"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a ConstraintViolation resource.",
+          "method": "GET",
+          "returns": "ConstraintViolation",
+          "title": "getConstraintViolation"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a ConstraintViolation resource.",
+          "method": "GET",
+          "returns": "ConstraintViolation",
+          "title": "getConstraintViolation"
+        }
+      ],
+      "description": "Unprocessable entity",
+      "subClassOf": "Error"
+    },
+    {
+      "@id": "#Health",
+      "@type": "Class",
+      "title": "Health",
+      "supportedProperty": [],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a Health resource.",
+          "method": "GET",
+          "returns": "Health",
+          "title": "getHealth"
+        }
+      ],
+      "description": "Application health check"
+    },
+    {
+      "@id": "#Permission",
+      "@type": "Class",
+      "title": "Permission",
+      "supportedProperty": [
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Permission/name",
+            "@type": "rdf:Property",
+            "domain": "#Permission",
+            "label": "name",
+            "range": "xmls:string"
+          },
+          "title": "name",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Permission name in format \"resource.action\" (e.g., users.create)"
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Permission/description",
+            "@type": "rdf:Property",
+            "domain": "#Permission",
+            "label": "description",
+            "range": "xmls:string"
+          },
+          "title": "description",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Human-readable description of the permission"
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Permission/created_at",
+            "@type": "rdf:Property",
+            "domain": "#Permission",
+            "label": "created_at",
+            "range": "xmls:string"
+          },
+          "title": "created_at",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "ISO 8601 datetime when the permission was created"
+        }
+      ],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a Permission resource.",
+          "method": "GET",
+          "returns": "Permission",
+          "title": "getPermission"
+        },
+        {
+          "@type": "Operation",
+          "description": "Updates the Permission resource.",
+          "expects": "Permission",
+          "expectsHeader": [
+            {
+              "headerName": "Content-Type",
+              "possibleValue": [
+                "application/merge-patch+json"
+              ]
+            }
+          ],
+          "method": "PATCH",
+          "returns": "Permission",
+          "title": "patchPermission"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:DeleteAction"
+          ],
+          "description": "Deletes the Permission resource.",
+          "method": "DELETE",
+          "returns": "owl:Nothing",
+          "title": "deletePermission"
+        }
+      ],
+      "description": "Permission management. Permissions define specific access rights."
+    },
+    {
+      "@id": "#Role",
+      "@type": "Class",
+      "title": "Role",
+      "supportedProperty": [
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Role/name",
+            "@type": "rdf:Property",
+            "domain": "#Role",
+            "label": "name",
+            "range": "xmls:string"
+          },
+          "title": "name",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Role name (lowercase letters, numbers, and underscores)"
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Role/description",
+            "@type": "rdf:Property",
+            "domain": "#Role",
+            "label": "description",
+            "range": "xmls:string"
+          },
+          "title": "description",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Human-readable description of the role"
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Role/is_system",
+            "@type": "rdf:Property",
+            "domain": "#Role",
+            "label": "is_system",
+            "range": "xmls:boolean"
+          },
+          "title": "is_system",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Indicates if this is a system role (protected from deletion)"
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Role/permissions",
+            "@type": "rdf:Property",
+            "domain": "#Role",
+            "label": "permissions"
+          },
+          "title": "permissions",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "List of permissions assigned to this role"
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Role/created_at",
+            "@type": "rdf:Property",
+            "domain": "#Role",
+            "label": "created_at",
+            "range": "xmls:string"
+          },
+          "title": "created_at",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "ISO 8601 datetime when the role was created"
+        }
+      ],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a Role resource.",
+          "method": "GET",
+          "returns": "Role",
+          "title": "getRole"
+        },
+        {
+          "@type": "Operation",
+          "description": "Updates the Role resource.",
+          "expects": "Role",
+          "expectsHeader": [
+            {
+              "headerName": "Content-Type",
+              "possibleValue": [
+                "application/merge-patch+json"
+              ]
+            }
+          ],
+          "method": "PATCH",
+          "returns": "Role",
+          "title": "patchRole"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:DeleteAction"
+          ],
+          "description": "Deletes the Role resource.",
+          "method": "DELETE",
+          "returns": "owl:Nothing",
+          "title": "deleteRole"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:DeleteAction"
+          ],
+          "description": "Deletes the Role resource.",
+          "method": "DELETE",
+          "returns": "owl:Nothing",
+          "title": "deleteRole"
+        }
+      ],
+      "description": "Role-Based Access Control (RBAC) role management. Roles group permissions together."
+    },
+    {
+      "@id": "#AuditEvent",
+      "@type": "Class",
+      "title": "AuditEvent",
+      "supportedProperty": [
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/action",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "action",
+            "range": "xmls:string"
+          },
+          "title": "action",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Audit action key."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/actorType",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "actorType",
+            "range": "xmls:string"
+          },
+          "title": "actorType",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Actor type (user, client, system, anonymous)."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/actorId",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "actorId",
+            "range": "xmls:string"
+          },
+          "title": "actorId",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Actor identifier (UUID or external ID)."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/actorEmail",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "actorEmail",
+            "range": "xmls:string"
+          },
+          "title": "actorEmail",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Actor email (optional, depending on PII settings)."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/actorEmailHash",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "actorEmailHash",
+            "range": "xmls:string"
+          },
+          "title": "actorEmailHash",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Actor email hash (SHA-256)."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/subjectType",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "subjectType",
+            "range": "xmls:string"
+          },
+          "title": "subjectType",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Subject type (token, user, client, etc.)."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/subjectId",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "subjectId",
+            "range": "xmls:string"
+          },
+          "title": "subjectId",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Subject identifier (UUID or token ID)."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/clientId",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "clientId",
+            "range": "xmls:string"
+          },
+          "title": "clientId",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Client identifier (UUID)."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/tenantId",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "tenantId",
+            "range": "xmls:string"
+          },
+          "title": "tenantId",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Tenant identifier (UUID)."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/ipAddress",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "ipAddress",
+            "range": "xmls:string"
+          },
+          "title": "ipAddress",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Client IP address (optional, depending on PII settings)."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/ipHash",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "ipHash",
+            "range": "xmls:string"
+          },
+          "title": "ipHash",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "IP hash (SHA-256)."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/userAgent",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "userAgent",
+            "range": "xmls:string"
+          },
+          "title": "userAgent",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "User agent string (if available)."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/metadata",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "metadata"
+          },
+          "title": "metadata",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Event metadata payload (JSON)."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/occurredAt",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "occurredAt",
+            "range": "xmls:string"
+          },
+          "title": "occurredAt",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "ISO 8601 datetime when the event occurred."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/recordedAt",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "recordedAt",
+            "range": "xmls:string"
+          },
+          "title": "recordedAt",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "ISO 8601 datetime when the event was recorded."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/chainId",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "chainId",
+            "range": "xmls:string"
+          },
+          "title": "chainId",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Audit chain identifier."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/sequence",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "sequence",
+            "range": "xmls:integer"
+          },
+          "title": "sequence",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Monotonic sequence number within the chain."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/prevHash",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "prevHash",
+            "range": "xmls:string"
+          },
+          "title": "prevHash",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Previous event hash in the chain."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#AuditEvent/eventHash",
+            "@type": "rdf:Property",
+            "domain": "#AuditEvent",
+            "label": "eventHash",
+            "range": "xmls:string"
+          },
+          "title": "eventHash",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Hash of the event payload (SHA-256)."
+        }
+      ],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a AuditEvent resource.",
+          "method": "GET",
+          "returns": "AuditEvent",
+          "title": "getAuditEvent"
+        }
+      ],
+      "description": "Audit ledger events for security and compliance."
+    },
+    {
+      "@id": "#Auth",
+      "@type": "Class",
+      "title": "Auth",
+      "supportedProperty": [],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a Auth resource.",
+          "method": "GET",
+          "returns": "owl:Nothing",
+          "title": "getAuth"
+        }
+      ],
+      "description": "User authentication operations"
+    },
+    {
+      "@id": "#PasswordReset",
+      "@type": "Class",
+      "title": "PasswordReset",
+      "supportedProperty": [],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a PasswordReset resource.",
+          "method": "GET",
+          "returns": "owl:Nothing",
+          "title": "getPasswordReset"
+        }
+      ],
+      "description": "Password reset operations"
+    },
+    {
+      "@id": "#Client",
+      "@type": "Class",
+      "title": "Client",
+      "supportedProperty": [
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Client/client_name",
+            "@type": "rdf:Property",
+            "domain": "#Client",
+            "label": "client_name",
+            "range": "xmls:string"
+          },
+          "title": "client_name",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Human-readable name of the client"
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Client/client_secret",
+            "@type": "rdf:Property",
+            "domain": "#Client",
+            "label": "client_secret",
+            "range": "xmls:string"
+          },
+          "title": "client_secret",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Client secret (only shown once)"
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Client/redirect_uris",
+            "@type": "rdf:Property",
+            "domain": "#Client",
+            "label": "redirect_uris",
+            "range": "xmls:string"
+          },
+          "title": "redirect_uris",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "List of registered redirect URIs"
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Client/grant_types",
+            "@type": "rdf:Property",
+            "domain": "#Client",
+            "label": "grant_types",
+            "range": "xmls:string"
+          },
+          "title": "grant_types",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "List of allowed grant types"
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Client/scopes",
+            "@type": "rdf:Property",
+            "domain": "#Client",
+            "label": "scopes",
+            "range": "xmls:string"
+          },
+          "title": "scopes",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "List of allowed scopes"
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Client/is_active",
+            "@type": "rdf:Property",
+            "domain": "#Client",
+            "label": "is_active",
+            "range": "xmls:boolean"
+          },
+          "title": "is_active",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Whether the client is currently active"
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Client/created_at",
+            "@type": "rdf:Property",
+            "domain": "#Client",
+            "label": "created_at",
+            "range": "xmls:string"
+          },
+          "title": "created_at",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Creation timestamp (ISO 8601)"
+        }
+      ],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a Client resource.",
+          "method": "GET",
+          "returns": "Client",
+          "title": "getClient"
+        },
+        {
+          "@type": "Operation",
+          "description": "Updates the Client resource.",
+          "expects": "Client",
+          "expectsHeader": [
+            {
+              "headerName": "Content-Type",
+              "possibleValue": [
+                "application/merge-patch+json"
+              ]
+            }
+          ],
+          "method": "PATCH",
+          "returns": "Client",
+          "title": "patchClient"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:DeleteAction"
+          ],
+          "description": "Deletes the Client resource.",
+          "method": "DELETE",
+          "returns": "owl:Nothing",
+          "title": "deleteClient"
+        }
+      ],
+      "description": "OAuth2 client application management. Clients are applications that can request access tokens."
+    },
+    {
+      "@id": "#Discovery",
+      "@type": "Class",
+      "title": "Discovery",
+      "supportedProperty": [],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a Discovery resource.",
+          "method": "GET",
+          "returns": "Discovery",
+          "title": "getDiscovery"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a Discovery resource.",
+          "method": "GET",
+          "returns": "Discovery",
+          "title": "getDiscovery"
+        }
+      ],
+      "description": "OAuth2/OIDC discovery endpoints"
+    },
+    {
+      "@id": "#OAuth2",
+      "@type": "Class",
+      "title": "OAuth2",
+      "supportedProperty": [],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a OAuth2 resource.",
+          "method": "GET",
+          "returns": "owl:Nothing",
+          "title": "getOAuth2"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a OAuth2 resource.",
+          "method": "GET",
+          "returns": "OAuth2",
+          "title": "getOAuth2"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a OAuth2 resource.",
+          "method": "GET",
+          "returns": "OAuth2",
+          "title": "getOAuth2"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a OAuth2 resource.",
+          "method": "GET",
+          "returns": "owl:Nothing",
+          "title": "getOAuth2"
+        }
+      ],
+      "description": "OAuth2 and OpenID Connect operations"
+    },
+    {
+      "@id": "#Challenge",
+      "@type": "Class",
+      "title": "Challenge",
+      "supportedProperty": [],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a Challenge resource.",
+          "method": "GET",
+          "returns": "Challenge",
+          "title": "getChallenge"
+        }
+      ],
+      "description": "OTP challenge management for verification and 2FA."
+    },
+    {
+      "@id": "#OtpConfig",
+      "@type": "Class",
+      "title": "OtpConfig",
+      "supportedProperty": [],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a OtpConfig resource.",
+          "method": "GET",
+          "returns": "OtpConfig",
+          "title": "getOtpConfig"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a OtpConfig resource.",
+          "method": "GET",
+          "returns": "OtpConfig",
+          "title": "getOtpConfig"
+        }
+      ],
+      "description": "OTP configuration discovery endpoints."
+    },
+    {
+      "@id": "#Totp",
+      "@type": "Class",
+      "title": "Totp",
+      "supportedProperty": [],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a Totp resource.",
+          "method": "GET",
+          "returns": "owl:Nothing",
+          "title": "getTotp"
+        }
+      ],
+      "description": "TOTP (Authenticator App) management."
+    },
+    {
+      "@id": "#Session",
+      "@type": "Class",
+      "title": "Session",
+      "supportedProperty": [
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Session/userId",
+            "@type": "rdf:Property",
+            "domain": "#Session",
+            "label": "userId",
+            "range": "xmls:string"
+          },
+          "title": "userId",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "User identifier (UUID) owning the session."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Session/ipAddress",
+            "@type": "rdf:Property",
+            "domain": "#Session",
+            "label": "ipAddress",
+            "range": "xmls:string"
+          },
+          "title": "ipAddress",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Client IP address for the session."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Session/userAgent",
+            "@type": "rdf:Property",
+            "domain": "#Session",
+            "label": "userAgent",
+            "range": "xmls:string"
+          },
+          "title": "userAgent",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Client user agent string."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Session/deviceType",
+            "@type": "rdf:Property",
+            "domain": "#Session",
+            "label": "deviceType",
+            "range": "xmls:string"
+          },
+          "title": "deviceType",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Detected device type."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Session/browser",
+            "@type": "rdf:Property",
+            "domain": "#Session",
+            "label": "browser",
+            "range": "xmls:string"
+          },
+          "title": "browser",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Detected browser name."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Session/createdAt",
+            "@type": "rdf:Property",
+            "domain": "#Session",
+            "label": "createdAt",
+            "range": "xmls:string"
+          },
+          "title": "createdAt",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "ISO 8601 datetime when the session was created."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Session/lastActivityAt",
+            "@type": "rdf:Property",
+            "domain": "#Session",
+            "label": "lastActivityAt",
+            "range": "xmls:string"
+          },
+          "title": "lastActivityAt",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "ISO 8601 datetime of the last activity."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Session/isActive",
+            "@type": "rdf:Property",
+            "domain": "#Session",
+            "label": "isActive",
+            "range": "xmls:boolean"
+          },
+          "title": "isActive",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Whether the session is active."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Session/isCurrent",
+            "@type": "rdf:Property",
+            "domain": "#Session",
+            "label": "isCurrent",
+            "range": "xmls:boolean"
+          },
+          "title": "isCurrent",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Whether this session is the current one."
+        }
+      ],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a Session resource.",
+          "method": "GET",
+          "returns": "Session",
+          "title": "getSession"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:DeleteAction"
+          ],
+          "description": "Deletes the Session resource.",
+          "method": "DELETE",
+          "returns": "owl:Nothing",
+          "title": "deleteSession"
+        }
+      ],
+      "description": "User session management. Sessions track user authentication state across devices."
+    },
+    {
+      "@id": "#Tenant",
+      "@type": "Class",
+      "title": "Tenant",
+      "supportedProperty": [
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Tenant/name",
+            "@type": "rdf:Property",
+            "domain": "#Tenant",
+            "label": "name",
+            "range": "xmls:string"
+          },
+          "title": "name",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Tenant name."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Tenant/isActive",
+            "@type": "rdf:Property",
+            "domain": "#Tenant",
+            "label": "isActive",
+            "range": "xmls:boolean"
+          },
+          "title": "isActive",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Whether the tenant is active."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Tenant/accessTokenTtl",
+            "@type": "rdf:Property",
+            "domain": "#Tenant",
+            "label": "accessTokenTtl",
+            "range": "xmls:integer"
+          },
+          "title": "accessTokenTtl",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Access token TTL in seconds."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Tenant/refreshTokenTtl",
+            "@type": "rdf:Property",
+            "domain": "#Tenant",
+            "label": "refreshTokenTtl",
+            "range": "xmls:integer"
+          },
+          "title": "refreshTokenTtl",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Refresh token TTL in seconds."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Tenant/requirePkce",
+            "@type": "rdf:Property",
+            "domain": "#Tenant",
+            "label": "requirePkce",
+            "range": "xmls:boolean"
+          },
+          "title": "requirePkce",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Whether PKCE is required for OAuth2 flows."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Tenant/allowPublicClients",
+            "@type": "rdf:Property",
+            "domain": "#Tenant",
+            "label": "allowPublicClients",
+            "range": "xmls:boolean"
+          },
+          "title": "allowPublicClients",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Whether public clients are allowed."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Tenant/allowedScopes",
+            "@type": "rdf:Property",
+            "domain": "#Tenant",
+            "label": "allowedScopes",
+            "range": "xmls:string"
+          },
+          "title": "allowedScopes",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Allowed OAuth2 scopes for this tenant."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Tenant/customIssuer",
+            "@type": "rdf:Property",
+            "domain": "#Tenant",
+            "label": "customIssuer",
+            "range": "xmls:string"
+          },
+          "title": "customIssuer",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Custom issuer URL for this tenant."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Tenant/createdAt",
+            "@type": "rdf:Property",
+            "domain": "#Tenant",
+            "label": "createdAt",
+            "range": "xmls:string"
+          },
+          "title": "createdAt",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "ISO 8601 datetime when the tenant was created."
+        }
+      ],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a Tenant resource.",
+          "method": "GET",
+          "returns": "Tenant",
+          "title": "getTenant"
+        },
+        {
+          "@type": "Operation",
+          "description": "Updates the Tenant resource.",
+          "expects": "Tenant",
+          "expectsHeader": [
+            {
+              "headerName": "Content-Type",
+              "possibleValue": [
+                "application/merge-patch+json"
+              ]
+            }
+          ],
+          "method": "PATCH",
+          "returns": "Tenant",
+          "title": "patchTenant"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:ReplaceAction"
+          ],
+          "description": "Replaces the Tenant resource.",
+          "expects": "Tenant",
+          "method": "PUT",
+          "returns": "Tenant",
+          "title": "putTenant"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:DeleteAction"
+          ],
+          "description": "Deletes the Tenant resource.",
+          "method": "DELETE",
+          "returns": "owl:Nothing",
+          "title": "deleteTenant"
+        }
+      ],
+      "description": "Multi-tenant configuration management. Tenants define OAuth2 settings for different organizations."
+    },
+    {
+      "@id": "#TrustedDevice",
+      "@type": "Class",
+      "title": "TrustedDevice",
+      "supportedProperty": [
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#TrustedDevice/name",
+            "@type": "rdf:Property",
+            "domain": "#TrustedDevice",
+            "label": "name",
+            "range": "xmls:string"
+          },
+          "title": "name",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Friendly name for the device."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#TrustedDevice/lastUsedAt",
+            "@type": "rdf:Property",
+            "domain": "#TrustedDevice",
+            "label": "lastUsedAt",
+            "range": "xmls:dateTime"
+          },
+          "title": "lastUsedAt",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Last time the device was used."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#TrustedDevice/expiresAt",
+            "@type": "rdf:Property",
+            "domain": "#TrustedDevice",
+            "label": "expiresAt",
+            "range": "xmls:dateTime"
+          },
+          "title": "expiresAt",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "When the trust expires."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#TrustedDevice/createdAt",
+            "@type": "rdf:Property",
+            "domain": "#TrustedDevice",
+            "label": "createdAt",
+            "range": "xmls:dateTime"
+          },
+          "title": "createdAt",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "When the device was added."
+        }
+      ],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a TrustedDevice resource.",
+          "method": "GET",
+          "returns": "owl:Nothing",
+          "title": "getTrustedDevice"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:DeleteAction"
+          ],
+          "description": "Deletes the TrustedDevice resource.",
+          "method": "DELETE",
+          "returns": "owl:Nothing",
+          "title": "deleteTrustedDevice"
+        }
+      ],
+      "description": "Manage trusted devices for 2FA bypass."
+    },
+    {
+      "@id": "#User",
+      "@type": "Class",
+      "title": "User",
+      "supportedProperty": [
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#User/username",
+            "@type": "rdf:Property",
+            "domain": "#User",
+            "label": "username",
+            "range": "xmls:string"
+          },
+          "title": "username",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Username of the user."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#User/email",
+            "@type": "rdf:Property",
+            "domain": "#User",
+            "label": "email",
+            "range": "xmls:string"
+          },
+          "title": "email",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "User email address."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#User/firstName",
+            "@type": "rdf:Property",
+            "domain": "#User",
+            "label": "firstName",
+            "range": "xmls:string"
+          },
+          "title": "firstName",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "User first name."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#User/lastName",
+            "@type": "rdf:Property",
+            "domain": "#User",
+            "label": "lastName",
+            "range": "xmls:string"
+          },
+          "title": "lastName",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "User last name."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#User/avatarUrl",
+            "@type": "rdf:Property",
+            "domain": "#User",
+            "label": "avatarUrl",
+            "range": "xmls:string"
+          },
+          "title": "avatarUrl",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Avatar URL."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#User/status",
+            "@type": "rdf:Property",
+            "domain": "#User",
+            "label": "status",
+            "range": "xmls:string"
+          },
+          "title": "status",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Current user status."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#User/emailVerified",
+            "@type": "rdf:Property",
+            "domain": "#User",
+            "label": "emailVerified",
+            "range": "xmls:boolean"
+          },
+          "title": "emailVerified",
+          "required": true,
+          "readable": true,
+          "writeable": false,
+          "description": "Whether the email is verified."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#User/tenantId",
+            "@type": "rdf:Property",
+            "domain": "#User",
+            "label": "tenantId",
+            "range": "xmls:string"
+          },
+          "title": "tenantId",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "Tenant identifier (UUID)."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#User/createdAt",
+            "@type": "rdf:Property",
+            "domain": "#User",
+            "label": "createdAt",
+            "range": "xmls:string"
+          },
+          "title": "createdAt",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "ISO 8601 datetime when the user was created."
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#User/lastLoginAt",
+            "@type": "rdf:Property",
+            "domain": "#User",
+            "label": "lastLoginAt",
+            "range": "xmls:string"
+          },
+          "title": "lastLoginAt",
+          "required": false,
+          "readable": true,
+          "writeable": false,
+          "description": "ISO 8601 datetime of the last login."
+        }
+      ],
+      "supportedOperation": [
+        {
+          "@type": [
+            "Operation",
+            "schema:FindAction"
+          ],
+          "description": "Retrieves a User resource.",
+          "method": "GET",
+          "returns": "User",
+          "title": "getUser"
+        },
+        {
+          "@type": "Operation",
+          "description": "Updates the User resource.",
+          "expects": "User",
+          "expectsHeader": [
+            {
+              "headerName": "Content-Type",
+              "possibleValue": [
+                "application/merge-patch+json"
+              ]
+            }
+          ],
+          "method": "PATCH",
+          "returns": "User",
+          "title": "patchUser"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:ReplaceAction"
+          ],
+          "description": "Replaces the User resource.",
+          "expects": "User",
+          "method": "PUT",
+          "returns": "User",
+          "title": "putUser"
+        },
+        {
+          "@type": [
+            "Operation",
+            "schema:DeleteAction"
+          ],
+          "description": "Deletes the User resource.",
+          "method": "DELETE",
+          "returns": "owl:Nothing",
+          "title": "deleteUser"
+        }
+      ],
+      "description": "Resource UserResource."
+    },
+    {
+      "@id": "#Entrypoint",
+      "@type": "Class",
+      "title": "Entrypoint",
+      "supportedProperty": [
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Entrypoint/permission",
+            "@type": "Link",
+            "domain": "#Entrypoint",
+            "owl:maxCardinality": 1,
+            "range": [
+              {
+                "@id": "Collection"
+              },
+              {
+                "owl:equivalentClass": {
+                  "owl:onProperty": {
+                    "@id": "member"
+                  },
+                  "owl:allValuesFrom": {
+                    "@id": "#Permission"
+                  }
+                }
+              }
+            ],
+            "supportedOperation": [
+              {
+                "@type": [
+                  "Operation",
+                  "schema:FindAction"
+                ],
+                "description": "Retrieves the collection of Permission resources.",
+                "method": "GET",
+                "returns": "Collection",
+                "title": "getPermissionCollection"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Permission resource.",
+                "expects": "Permission",
+                "method": "POST",
+                "returns": "Permission",
+                "title": "postPermission"
+              }
+            ]
+          },
+          "title": "getPermissionCollection",
+          "description": "The collection of Permission resources",
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Entrypoint/role",
+            "@type": "Link",
+            "domain": "#Entrypoint",
+            "owl:maxCardinality": 1,
+            "range": [
+              {
+                "@id": "Collection"
+              },
+              {
+                "owl:equivalentClass": {
+                  "owl:onProperty": {
+                    "@id": "member"
+                  },
+                  "owl:allValuesFrom": {
+                    "@id": "#Role"
+                  }
+                }
+              }
+            ],
+            "supportedOperation": [
+              {
+                "@type": [
+                  "Operation",
+                  "schema:FindAction"
+                ],
+                "description": "Retrieves the collection of Role resources.",
+                "method": "GET",
+                "returns": "Collection",
+                "title": "getRoleCollection"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Role resource.",
+                "expects": "Role",
+                "method": "POST",
+                "returns": "Role",
+                "title": "postRole"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Role resource.",
+                "expects": "Role",
+                "method": "POST",
+                "returns": "Role",
+                "title": "postRole"
+              }
+            ]
+          },
+          "title": "getRoleCollection",
+          "description": "The collection of Role resources",
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Entrypoint/auditEvent",
+            "@type": "Link",
+            "domain": "#Entrypoint",
+            "owl:maxCardinality": 1,
+            "range": [
+              {
+                "@id": "Collection"
+              },
+              {
+                "owl:equivalentClass": {
+                  "owl:onProperty": {
+                    "@id": "member"
+                  },
+                  "owl:allValuesFrom": {
+                    "@id": "#AuditEvent"
+                  }
+                }
+              }
+            ],
+            "supportedOperation": [
+              {
+                "@type": [
+                  "Operation",
+                  "schema:FindAction"
+                ],
+                "description": "Retrieves the collection of AuditEvent resources.",
+                "method": "GET",
+                "returns": "Collection",
+                "title": "getAuditEventCollection"
+              }
+            ]
+          },
+          "title": "getAuditEventCollection",
+          "description": "The collection of AuditEvent resources",
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Entrypoint/auth",
+            "@type": "Link",
+            "domain": "#Entrypoint",
+            "owl:maxCardinality": 1,
+            "range": [
+              {
+                "@id": "Collection"
+              },
+              {
+                "owl:equivalentClass": {
+                  "owl:onProperty": {
+                    "@id": "member"
+                  },
+                  "owl:allValuesFrom": {
+                    "@id": "#Auth"
+                  }
+                }
+              }
+            ],
+            "supportedOperation": [
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Auth resource.",
+                "expects": "Auth",
+                "method": "POST",
+                "returns": "Auth",
+                "title": "postAuth"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Auth resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "Auth",
+                "title": "postAuth"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Auth resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "Auth",
+                "title": "postAuth"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Auth resource.",
+                "expects": "Auth",
+                "method": "POST",
+                "returns": "Auth",
+                "title": "postAuth"
+              }
+            ]
+          },
+          "title": "getAuthCollection",
+          "description": "The collection of Auth resources",
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Entrypoint/passwordReset",
+            "@type": "Link",
+            "domain": "#Entrypoint",
+            "owl:maxCardinality": 1,
+            "range": [
+              {
+                "@id": "Collection"
+              },
+              {
+                "owl:equivalentClass": {
+                  "owl:onProperty": {
+                    "@id": "member"
+                  },
+                  "owl:allValuesFrom": {
+                    "@id": "#PasswordReset"
+                  }
+                }
+              }
+            ],
+            "supportedOperation": [
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a PasswordReset resource.",
+                "expects": "PasswordReset",
+                "method": "POST",
+                "returns": "PasswordReset",
+                "title": "postPasswordReset"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a PasswordReset resource.",
+                "expects": "PasswordReset",
+                "method": "POST",
+                "returns": "PasswordReset",
+                "title": "postPasswordReset"
+              }
+            ]
+          },
+          "title": "getPasswordResetCollection",
+          "description": "The collection of PasswordReset resources",
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Entrypoint/client",
+            "@type": "Link",
+            "domain": "#Entrypoint",
+            "owl:maxCardinality": 1,
+            "range": [
+              {
+                "@id": "Collection"
+              },
+              {
+                "owl:equivalentClass": {
+                  "owl:onProperty": {
+                    "@id": "member"
+                  },
+                  "owl:allValuesFrom": {
+                    "@id": "#Client"
+                  }
+                }
+              }
+            ],
+            "supportedOperation": [
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Client resource.",
+                "expects": "Client",
+                "method": "POST",
+                "returns": "Client",
+                "title": "postClient"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:FindAction"
+                ],
+                "description": "Retrieves the collection of Client resources.",
+                "method": "GET",
+                "returns": "Collection",
+                "title": "getClientCollection"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Client resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "Client",
+                "title": "postClient"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Client resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "Client",
+                "title": "postClient"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Client resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "Client",
+                "title": "postClient"
+              }
+            ]
+          },
+          "title": "getClientCollection",
+          "description": "The collection of Client resources",
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Entrypoint/oAuth2",
+            "@type": "Link",
+            "domain": "#Entrypoint",
+            "owl:maxCardinality": 1,
+            "range": [
+              {
+                "@id": "Collection"
+              },
+              {
+                "owl:equivalentClass": {
+                  "owl:onProperty": {
+                    "@id": "member"
+                  },
+                  "owl:allValuesFrom": {
+                    "@id": "#OAuth2"
+                  }
+                }
+              }
+            ],
+            "supportedOperation": [
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a OAuth2 resource.",
+                "expects": "OAuth2",
+                "method": "POST",
+                "returns": "OAuth2",
+                "title": "postOAuth2"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a OAuth2 resource.",
+                "expects": "OAuth2",
+                "method": "POST",
+                "returns": "owl:Nothing",
+                "title": "postOAuth2"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a OAuth2 resource.",
+                "expects": "OAuth2",
+                "method": "POST",
+                "returns": "OAuth2",
+                "title": "postOAuth2"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a OAuth2 resource.",
+                "expects": "OAuth2",
+                "method": "POST",
+                "returns": "owl:Nothing",
+                "title": "postOAuth2"
+              }
+            ]
+          },
+          "title": "getOAuth2Collection",
+          "description": "The collection of OAuth2 resources",
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Entrypoint/challenge",
+            "@type": "Link",
+            "domain": "#Entrypoint",
+            "owl:maxCardinality": 1,
+            "range": [
+              {
+                "@id": "Collection"
+              },
+              {
+                "owl:equivalentClass": {
+                  "owl:onProperty": {
+                    "@id": "member"
+                  },
+                  "owl:allValuesFrom": {
+                    "@id": "#Challenge"
+                  }
+                }
+              }
+            ],
+            "supportedOperation": [
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Challenge resource.",
+                "expects": "Challenge",
+                "method": "POST",
+                "returns": "Challenge",
+                "title": "postChallenge"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Challenge resource.",
+                "expects": "Challenge",
+                "method": "POST",
+                "returns": "Challenge",
+                "title": "postChallenge"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Challenge resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "Challenge",
+                "title": "postChallenge"
+              }
+            ]
+          },
+          "title": "getChallengeCollection",
+          "description": "The collection of Challenge resources",
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Entrypoint/totp",
+            "@type": "Link",
+            "domain": "#Entrypoint",
+            "owl:maxCardinality": 1,
+            "range": [
+              {
+                "@id": "Collection"
+              },
+              {
+                "owl:equivalentClass": {
+                  "owl:onProperty": {
+                    "@id": "member"
+                  },
+                  "owl:allValuesFrom": {
+                    "@id": "#Totp"
+                  }
+                }
+              }
+            ],
+            "supportedOperation": [
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Totp resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "Totp",
+                "title": "postTotp"
+              }
+            ]
+          },
+          "title": "getTotpCollection",
+          "description": "The collection of Totp resources",
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Entrypoint/session",
+            "@type": "Link",
+            "domain": "#Entrypoint",
+            "owl:maxCardinality": 1,
+            "range": [
+              {
+                "@id": "Collection"
+              },
+              {
+                "owl:equivalentClass": {
+                  "owl:onProperty": {
+                    "@id": "member"
+                  },
+                  "owl:allValuesFrom": {
+                    "@id": "#Session"
+                  }
+                }
+              }
+            ],
+            "supportedOperation": [
+              {
+                "@type": [
+                  "Operation",
+                  "schema:FindAction"
+                ],
+                "description": "Retrieves the collection of Session resources.",
+                "method": "GET",
+                "returns": "Collection",
+                "title": "getSessionCollection"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Session resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "owl:Nothing",
+                "title": "postSession"
+              }
+            ]
+          },
+          "title": "getSessionCollection",
+          "description": "The collection of Session resources",
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Entrypoint/tenant",
+            "@type": "Link",
+            "domain": "#Entrypoint",
+            "owl:maxCardinality": 1,
+            "range": [
+              {
+                "@id": "Collection"
+              },
+              {
+                "owl:equivalentClass": {
+                  "owl:onProperty": {
+                    "@id": "member"
+                  },
+                  "owl:allValuesFrom": {
+                    "@id": "#Tenant"
+                  }
+                }
+              }
+            ],
+            "supportedOperation": [
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Tenant resource.",
+                "expects": "Tenant",
+                "method": "POST",
+                "returns": "Tenant",
+                "title": "postTenant"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:FindAction"
+                ],
+                "description": "Retrieves the collection of Tenant resources.",
+                "method": "GET",
+                "returns": "Collection",
+                "title": "getTenantCollection"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Tenant resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "Tenant",
+                "title": "postTenant"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a Tenant resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "Tenant",
+                "title": "postTenant"
+              }
+            ]
+          },
+          "title": "getTenantCollection",
+          "description": "The collection of Tenant resources",
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Entrypoint/trustedDevice",
+            "@type": "Link",
+            "domain": "#Entrypoint",
+            "owl:maxCardinality": 1,
+            "range": [
+              {
+                "@id": "Collection"
+              },
+              {
+                "owl:equivalentClass": {
+                  "owl:onProperty": {
+                    "@id": "member"
+                  },
+                  "owl:allValuesFrom": {
+                    "@id": "#TrustedDevice"
+                  }
+                }
+              }
+            ],
+            "supportedOperation": [
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a TrustedDevice resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "TrustedDevice",
+                "title": "postTrustedDevice"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:FindAction"
+                ],
+                "description": "Retrieves the collection of TrustedDevice resources.",
+                "method": "GET",
+                "returns": "Collection",
+                "title": "getTrustedDeviceCollection"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a TrustedDevice resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "owl:Nothing",
+                "title": "postTrustedDevice"
+              }
+            ]
+          },
+          "title": "getTrustedDeviceCollection",
+          "description": "The collection of TrustedDevice resources",
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#Entrypoint/user",
+            "@type": "Link",
+            "domain": "#Entrypoint",
+            "owl:maxCardinality": 1,
+            "range": [
+              {
+                "@id": "Collection"
+              },
+              {
+                "owl:equivalentClass": {
+                  "owl:onProperty": {
+                    "@id": "member"
+                  },
+                  "owl:allValuesFrom": {
+                    "@id": "#User"
+                  }
+                }
+              }
+            ],
+            "supportedOperation": [
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a User resource.",
+                "expects": "User",
+                "method": "POST",
+                "returns": "User",
+                "title": "postUser"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:FindAction"
+                ],
+                "description": "Retrieves the collection of User resources.",
+                "method": "GET",
+                "returns": "Collection",
+                "title": "getUserCollection"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a User resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "User",
+                "title": "postUser"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a User resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "User",
+                "title": "postUser"
+              },
+              {
+                "@type": [
+                  "Operation",
+                  "schema:CreateAction"
+                ],
+                "description": "Creates a User resource.",
+                "expects": "owl:Nothing",
+                "method": "POST",
+                "returns": "User",
+                "title": "postUser"
+              }
+            ]
+          },
+          "title": "getUserCollection",
+          "description": "The collection of User resources",
+          "readable": true,
+          "writeable": false
+        }
+      ],
+      "supportedOperation": {
+        "@type": "Operation",
+        "method": "GET",
+        "title": "index",
+        "description": "The API Entrypoint.",
+        "returns": "Entrypoint"
+      }
+    },
+    {
+      "@id": "#ConstraintViolationList",
+      "@type": "Class",
+      "title": "ConstraintViolationList",
+      "description": "A constraint violation List.",
+      "supportedProperty": [
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolationList/propertyPath",
+            "@type": "rdf:Property",
+            "rdfs:label": "propertyPath",
+            "domain": "#ConstraintViolationList",
+            "range": "xmls:string"
+          },
+          "title": "propertyPath",
+          "description": "The property path of the violation",
+          "readable": true,
+          "writeable": false
+        },
+        {
+          "@type": "SupportedProperty",
+          "property": {
+            "@id": "#ConstraintViolationList/message",
+            "@type": "rdf:Property",
+            "rdfs:label": "message",
+            "domain": "#ConstraintViolationList",
+            "range": "xmls:string"
+          },
+          "title": "message",
+          "description": "The message associated with the violation",
+          "readable": true,
+          "writeable": false
+        }
+      ]
+    }
+  ]
+}

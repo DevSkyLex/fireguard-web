@@ -1,0 +1,24 @@
+<div id="mfa-verification-page" class="flex flex-col gap-7 w-full">
+  <!-- MFA Verification Form -->
+  <section class="flex flex-col">
+    <h2 class="text-2xl font-semibold text-surface-900 mb-2">
+      Multi-Factor Authentication
+    </h2>
+    <p class="text-sm text-surface-600">
+      Please enter the verification code from
+      your authenticator app or email.
+    </p>
+  </section>
+
+  <!-- OTP Verification Form -->
+  <section class="flex flex-col">
+    <app-otp-verification-form
+      [showTrustDevice]="showTrustDevice()"
+      [loading]="loading()"
+      [resendIn]="resendIn()"
+      (submitted)="handleOtpSubmit($event)"
+      (cancelled)="handleOtpCancel()"
+      (resend)="handleOtpResend()"
+    />
+  </section>
+</div>

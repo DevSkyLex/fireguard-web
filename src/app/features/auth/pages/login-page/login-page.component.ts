@@ -1,0 +1,201 @@
+import { Component, ChangeDetectionStrategy, inject, effect, computed, type Signal } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
+import { LoginForm, type LoginFormValues } from '@features/auth/forms/login-form';
+import { AuthStore } from '@core/stores/auth';
+import { UserStore } from '@core/stores/user';
+import { ToastService } from '@core/services/toast';
+import type { OperationError } from '@core/stores/operations';
+
+/**
+ * Component LoginPage
+ * @class LoginPage
+ *
+ * @description
+ * Login page component.
+ * Uses LoginForm and handles navigation after login.
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
+@Component({
+  selector: 'app-login-page',
+  imports: [LoginForm, RouterModule],
+  templateUrl: './login-page.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class LoginPage {
+  //#region Properties
+  /**
+   * Property authStore
+   * @readonly
+   *
+   * @description
+   * Authentication store for accessing auth state.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {AuthStore}
+   */
+  protected readonly authStore: AuthStore = 
+  inject<AuthStore>(AuthStore);
+
+  /**
+   * Property userStore
+   * @readonly
+   *
+   * @description
+   * User store for loading user profile.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {UserStore}
+   */
+  private readonly userStore: UserStore = 
+  inject<UserStore>(UserStore);
+
+  /**
+   * Property toastService
+   * @readonly
+   *
+   * @description
+   * Toast service for displaying API errors.
+   *
+   * @access private
+   * @since 3.0.0
+   *
+   * @type {ToastService}
+   */
+  private readonly toastService: ToastService =
+    inject<ToastService>(ToastService);
+
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Angular router for navigation.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Router}
+   */
+  private readonly router: Router = 
+    inject<Router>(Router);
+
+  /**
+   * Property loginErrorEffectInitialized
+   *
+   * @description
+   * Prevents showing stale error toast on first effect run.
+   *
+   * @access private
+   * @since 3.0.0
+   *
+   * @type {boolean}
+   */
+  private loginErrorEffectInitialized: boolean = false;
+
+  /**
+   * Computed loading
+   * @readonly
+   *
+   * @description
+   * Login loading state.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly loading: Signal<boolean> = computed(() => 
+    this.authStore.isLoggingIn()
+  );
+
+  /**
+   * Computed error
+   * @readonly
+   *
+   * @description
+   * Login error state.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<OperationError<unknown> | null>}
+   */
+  protected readonly error: Signal<OperationError<unknown> | null> = computed(() => 
+    this.authStore.loginError()
+  );
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Sets up effects for navigation after 
+   * authentication state changes.
+   * 
+   * @access public
+   * @since 1.0.0
+   */
+  public constructor() {
+    // Navigate to MFA page when MFA is required
+    effect(() => {
+      if (this.authStore.mfaRequired()) {
+        void this.router.navigate(['/auth/mfa-verify']);
+      }
+    });
+
+    // Navigate to home when authenticated and load user profile
+    effect(() => {
+      if (this.authStore.isAuthenticated()) {
+        this.userStore.load();
+        void this.router.navigate(['/home']);
+      }
+    });
+
+    // Show API login errors as toast notifications
+    effect(() => {
+      const error = this.error();
+
+      if (!this.loginErrorEffectInitialized) {
+        this.loginErrorEffectInitialized = true;
+        return;
+      }
+
+      if (error) {
+        this.toastService.error(error.message ?? 'Failed to sign in');
+      }
+    });
+  }
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method handleLogin
+   *
+   * @description
+   * Handles login form submission.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {LoginFormValues} values - Form values.
+   *
+   * @returns {void}
+   */
+  protected handleLogin(values: LoginFormValues): void {
+    this.authStore.login({
+      email: values.email,
+      password: values.password,
+      remember_me: values.remember_me,
+    });
+  }
+  //#endregion
+}

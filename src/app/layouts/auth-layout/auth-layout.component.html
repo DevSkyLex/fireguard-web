@@ -1,0 +1,20 @@
+<div id="auth-layout" class="flex flex-row min-h-dvh bg-surface-0">
+  <section class="hidden xl:grid place-content-stretch flex-3">
+    <!-- Layout Showcase -->
+    <app-auth-layout-showcase />
+  </section>
+
+  <section
+    class="gap-10 grid [grid-template-areas:'header'_'content'_'footer'] grid-cols-[1fr] grid-rows-[auto_1fr_auto] flex-2 min-h-dvh mx-auto">
+    <!-- Layout Header -->
+    <app-auth-layout-header class="[grid-area:header]" />
+
+    <!-- Layout Content -->
+    <app-auth-layout-content class="[grid-area:content]">
+      <router-outlet />
+    </app-auth-layout-content>
+
+    <!-- Layout Footer -->
+    <app-auth-layout-footer class="[grid-area:footer]" />
+  </section>
+</div>

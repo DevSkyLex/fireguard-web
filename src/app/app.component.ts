@@ -1,12 +1,30 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ToastModule } from 'primeng/toast';
 
+/**
+ * Component App
+ * @class App
+ *
+ * @description
+ * Root application component for the FireGuard 
+ * SSO web application.
+ * 
+ * @version 1.0.0
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ * 
+ * @example
+ * ```html
+ * <!-- Used in main.ts as the bootstrap component -->
+ * <app-root></app-root>
+ * ```
+ */
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  imports: [RouterOutlet, ToastModule],
+  template: `
+    <p-toast position="top-right" />
+    <router-outlet />
+  `,
 })
-export class App {
-  protected readonly title = signal('fireguard-sso-web');
-}
+export class App {}

@@ -1,0 +1,63 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-8 w-full">
+
+  <!-- Email Field -->
+  <div class="flex flex-col gap-2">
+    <label for="email" class="text-sm font-medium text-surface-700">Email Address</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-user" />
+      <input pInputText id="email" formControlName="email" class="w-full" placeholder="example@email.com" />
+    </p-iconfield>
+
+    @if (form.controls.email.invalid && form.controls.email.touched) {
+      <p-message severity="error" variant="simple" size="small">
+        @if (form.controls.email.hasError('required')) {
+          <span>Email is required.</span>
+        }
+        @if (form.controls.email.hasError('email')) {
+          <span>Please enter a valid email address.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <!-- Password Field -->
+  <div class="flex flex-col gap-2">
+    <label for="password" class="text-sm font-medium text-surface-700">Password</label>
+
+    <p-iconfield>
+      <p-inputicon class="pi pi-lock" />
+      <p-password id="password" formControlName="password" [feedback]="false" [toggleMask]="true" class="w-full"
+        inputStyleClass="w-full" placeholder="••••••••" />
+    </p-iconfield>
+
+    @if (form.controls.password.invalid && form.controls.password.touched) {
+      <p-message severity="error" variant="simple" size="small">
+        <span>Password is required.</span>
+      </p-message>
+    }
+  </div>
+
+  <!-- Options Row -->
+  <div class="flex items-center justify-between mt-2">
+    <div class="flex items-center gap-2">
+      <p-checkbox inputId="remember_me" formControlName="remember_me" [binary]="true" />
+      <label for="remember_me" class="cursor-pointer text-sm text-surface-700">
+        Remember me
+      </label>
+    </div>
+
+    <a routerLink="/auth/password-reset/forgot" class="text-sm text-primary hover:underline font-medium">
+      Forgot password?
+    </a>
+  </div>
+
+  <!-- Submit Button -->
+  <p-button
+    label="Sign in"
+    type="submit"
+    [loading]="loading()"
+    [disabled]="form.invalid || loading()"
+    styleClass="w-full"
+  />
+
+</form>

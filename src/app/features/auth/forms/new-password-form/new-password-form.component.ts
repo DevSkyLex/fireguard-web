@@ -12,8 +12,6 @@ import {
   ReactiveFormsModule,
   type FormGroup,
   Validators,
-  AbstractControl,
-  ValidationErrors,
 } from '@angular/forms';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
@@ -22,6 +20,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import type { NewPasswordFormData } from './new-password-form-data.type';
 import type { NewPasswordFormValues } from './new-password-form-values.type';
+import { matchFieldsValidator } from '@shared/validators/match-fields.validator';
 
 /**
  * Component NewPasswordForm
@@ -90,21 +89,17 @@ export class NewPasswordForm {
    *
    * @type {FormGroup<NewPasswordFormData>}
    */
-  protected readonly form: FormGroup<NewPasswordFormData> =
-    this.formBuilder.group<NewPasswordFormData>(
-      {
-        newPassword: this.formBuilder.control<string>('', [
-          Validators.required,
-          Validators.minLength(8),
-        ]),
-        confirmPassword: this.formBuilder.control<string>('', [
-          Validators.required,
-        ]),
-      },
-      {
-        validators: this.passwordMatchValidator,
-      }
-    );
+  protected readonly form: FormGroup<NewPasswordFormData> = this.formBuilder.group<NewPasswordFormData>({
+    newPassword: this.formBuilder.control<string>('', [
+      Validators.required,
+      Validators.minLength(8),
+    ]),
+    confirmPassword: this.formBuilder.control<string>('', [
+      Validators.required,
+    ]),
+  }, {
+    validators: matchFieldsValidator('newPassword', 'confirmPassword'),
+  });
 
   /**
    * Property submitted
@@ -139,30 +134,6 @@ export class NewPasswordForm {
   //#endregion
 
   //#region Methods
-  /**
-   * Method passwordMatchValidator
-   *
-   * @description
-   * Validates that password and confirmPassword match.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @param {AbstractControl} control - Form group control.
-   *
-   * @returns {ValidationErrors | null}
-   */
-  private passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-    const password = control.get('newPassword')?.value;
-    const confirmPassword = control.get('confirmPassword')?.value;
-
-    if (password && confirmPassword && password !== confirmPassword) {
-      return { passwordMismatch: true };
-    }
-
-    return null;
-  }
-
   /**
    * Method onSubmit
    *

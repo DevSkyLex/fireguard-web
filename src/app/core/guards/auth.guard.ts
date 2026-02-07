@@ -14,27 +14,20 @@ import { AuthStore } from '@core/stores/auth';
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
- * @example
- * ```typescript
- * // In routes
- * {
- *   path: 'dashboard',
- *   component: DashboardComponent,
- *   canActivate: [authGuard]
- * }
- * ```
+ * @returns {GuardResult} True if user can access protected route, otherwise
+ * a UrlTree redirecting to the login page.
  */
 export const authGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
   /**
    * Constant platformId
    * @const platformId
-   * 
+   *
    * @description
    * Angular platform ID for checking if running in browser
-   * 
-   * Used to allow access during prerendering to enable 
+   *
+   * Used to allow access during prerendering to enable
    * static generation of protected pages.
-   * 
+   *
    * @var {object}
    */
   const platformId: object = inject<object>(PLATFORM_ID);
@@ -42,10 +35,10 @@ export const authGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
   /**
    * Constant authStore
    * @const authStore
-   * 
+   *
    * @description
    * Authentication store for checking auth state.
-   * 
+   *
    * @var {AuthStore}
    */
   const authStore: AuthStore = inject<AuthStore>(AuthStore);
@@ -53,11 +46,11 @@ export const authGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
   /**
    * Constant router
    * @const router
-   * 
+   *
    * @description
    * Angular router for navigation.
    * Used to redirect unauthenticated users to login page.
-   * 
+   *
    * @var {Router}
    */
   const router: Router = inject<Router>(Router);
@@ -67,7 +60,7 @@ export const authGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
 
   // If already authenticated, allow access
   if (authStore.isAuthenticated()) return true;
-  
+
   // Redirect to login
   return router.createUrlTree(['/auth/login']);
 };

@@ -2,8 +2,8 @@ import { Component, ChangeDetectionStrategy, inject, computed, effect, type Sign
 import { Router } from '@angular/router';
 import { NewPasswordForm, type NewPasswordFormValues } from '@features/auth/forms/new-password-form';
 import { PasswordResetStore } from '@core/stores/password-reset';
-import { ToastService } from '@core/services/toast';
-import type { OperationError } from '@core/stores/operations';
+import { MessageService } from 'primeng/api';
+import type { OperationStatus } from '@core/stores/operations';
 
 /**
  * Component NewPasswordPage
@@ -36,23 +36,23 @@ export class NewPasswordPage {
    *
    * @type {PasswordResetStore}
    */
-  private readonly passwordResetStore: PasswordResetStore = 
+  private readonly passwordResetStore: PasswordResetStore =
     inject<PasswordResetStore>(PasswordResetStore);
 
   /**
-   * Property toastService
+   * Property messageService
    * @readonly
    *
    * @description
-   * Toast service for displaying API errors.
+   * PrimeNG message service for displaying API errors.
    *
    * @access private
    * @since 3.0.0
    *
-   * @type {ToastService}
+   * @type {MessageService}
    */
-  private readonly toastService: ToastService =
-    inject<ToastService>(ToastService);
+  private readonly messageService: MessageService =
+    inject<MessageService>(MessageService);
 
   /**
    * Property router
@@ -62,25 +62,25 @@ export class NewPasswordPage {
    * Angular router for navigation.
    *
    * @access private
-   * @since 1.0.0
+   * @since 3.0.0
    *
    * @type {Router}
    */
-  private readonly router: Router = 
+  private readonly router: Router =
     inject<Router>(Router);
 
   /**
-   * Property resetErrorEffectInitialized
+   * Property previousConfirmStatus
    *
    * @description
-   * Prevents showing stale error toast on first effect run.
+   * Previous password reset confirm status used to detect transitions.
    *
    * @access private
    * @since 3.0.0
    *
-   * @type {boolean}
+   * @type {OperationStatus}
    */
-  private resetErrorEffectInitialized: boolean = false;
+  private previousConfirmStatus: OperationStatus = 'idle';
 
   /**
    * Computed isResetting
@@ -90,7 +90,7 @@ export class NewPasswordPage {
    * Whether password reset confirmation is in progress.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 3.0.0
    *
    * @type {Signal<boolean>}
    */
@@ -98,45 +98,20 @@ export class NewPasswordPage {
     this.passwordResetStore.isConfirming()
   );
 
-  /**
-   * Computed resetError
-   * @readonly
-   *
-   * @description
-   * Password reset confirmation error if any.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<OperationError<unknown> | null>}
-   */
-  protected readonly resetError: Signal<OperationError<unknown> | null> = computed(() =>
-    this.passwordResetStore.confirmError()
-  );
   //#endregion
 
   //#region Constructor
   /**
    * Constructor
+   * @constructor
    *
    * @description
-   * Validates that reset token is available.
+   * Sets up navigation after successful password reset confirmation.
+   *
+   * @access public
+   * @since 3.0.0
    */
   public constructor() {
-    // Redirect if required state is missing
-    const token = this.passwordResetStore.challengeToken();
-    const code = this.passwordResetStore.verificationCode();
-
-    if (!token) {
-      void this.router.navigate(['/auth/password-reset/forgot']);
-      return;
-    }
-
-    if (!code) {
-      void this.router.navigate(['/auth/password-reset/verify']);
-      return;
-    }
-
     // Navigate to login after successful confirmation
     effect(() => {
       const operation = this.passwordResetStore.confirmOperation();
@@ -150,16 +125,19 @@ export class NewPasswordPage {
 
     // Show password reset confirmation API errors as toast notifications
     effect(() => {
-      const error = this.resetError();
+      const operation = this.passwordResetStore.confirmOperation();
+      const currentStatus = operation.status;
 
-      if (!this.resetErrorEffectInitialized) {
-        this.resetErrorEffectInitialized = true;
-        return;
+      if (currentStatus === 'error' && this.previousConfirmStatus === 'loading') {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: operation.error?.message ?? 'Failed to reset password',
+          life: 5000,
+        });
       }
 
-      if (error) {
-        this.toastService.error(error.message ?? 'Failed to reset password');
-      }
+      this.previousConfirmStatus = currentStatus;
     });
   }
   //#endregion

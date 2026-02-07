@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, effect } from '@angular/core';
+import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { AvatarModule } from 'primeng/avatar';
@@ -53,6 +54,37 @@ export class HomePage {
    * @type {UserStore}
    */
   protected readonly userStore: UserStore = inject(UserStore);
+
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Angular router for navigation.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Router}
+   */
+  private readonly router: Router = inject(Router);
+
+  /**
+   * Property logoutNavigationEffect
+   * @readonly
+   *
+   * @description
+   * Navigates to login once logout request completes (success or error).
+   *
+   * @access private
+   * @since 1.0.0
+   */
+  private readonly logoutNavigationEffect = effect(() => {
+    const status = this.authStore.logoutOperation().status;
+    if (status === 'success' || status === 'error') {
+      void this.router.navigate(['/auth/login']);
+    }
+  });
   //#endregion
 
   //#region Methods

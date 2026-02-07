@@ -1,5 +1,4 @@
 import { computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -302,7 +301,6 @@ export const AuthStore = signalStore(
   withMethods((
     store,
     authService = inject<AuthService>(AuthService),
-    router = inject<Router>(Router),
     userStore = inject<UserStore>(UserStore),
     trustedDeviceStore = inject<TrustedDeviceStore>(TrustedDeviceStore),
   ) => ({
@@ -388,9 +386,6 @@ export const AuthStore = signalStore(
                 });
                 // Clear user profile on logout
                 userStore.clear();
-                router.navigate(['/auth/login']).catch((navError: unknown) => {
-                  console.error('Navigation to login failed after logout:', navError);
-                });
               },
               error: (error: unknown) => {
                 patchState(store, {
@@ -403,9 +398,6 @@ export const AuthStore = signalStore(
                 });
                 // Clear user profile even on logout error
                 userStore.clear();
-                router.navigate(['/auth/login']).catch((navError: unknown) => {
-                  console.error('Navigation to login failed after logout error:', navError);
-                });
               },
             }),
           ),

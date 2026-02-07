@@ -2,8 +2,8 @@ import { Component, ChangeDetectionStrategy, inject, effect, computed, type Sign
 import { Router } from '@angular/router';
 import { ForgotPasswordForm, type ForgotPasswordFormValues } from '@features/auth/forms/forgot-password-form';
 import { PasswordResetStore } from '@core/stores/password-reset';
-import { ToastService } from '@core/services/toast';
-import type { OperationError } from '@core/stores/operations';
+import { MessageService } from 'primeng/api';
+import type { OperationStatus } from '@core/stores/operations';
 
 /**
  * Component ForgotPasswordPage
@@ -39,19 +39,19 @@ export class ForgotPasswordPage {
   protected readonly passwordResetStore: PasswordResetStore = inject(PasswordResetStore);
 
   /**
-   * Property toastService
+   * Property messageService
    * @readonly
    *
    * @description
-   * Toast service for displaying API errors.
+   * PrimeNG message service for displaying API errors.
    *
    * @access private
    * @since 3.0.0
    *
-   * @type {ToastService}
+   * @type {MessageService}
    */
-  private readonly toastService: ToastService =
-    inject<ToastService>(ToastService);
+  private readonly messageService: MessageService =
+    inject<MessageService>(MessageService);
 
   /**
    * Property router
@@ -69,33 +69,17 @@ export class ForgotPasswordPage {
     inject<Router>(Router);
 
   /**
-   * Computed requestError
-   * @readonly
+   * Property previousRequestStatus
    *
    * @description
-   * Password reset request error if any.
-   *
-   * @access protected
-   * @since 3.0.0
-   *
-   * @type {Signal<OperationError<unknown> | null>}
-   */
-  protected readonly requestError: Signal<OperationError<unknown> | null> = computed(() =>
-    this.passwordResetStore.requestError()
-  );
-
-  /**
-   * Property requestErrorEffectInitialized
-   *
-   * @description
-   * Prevents showing stale error toast on first effect run.
+   * Previous password reset request status used to detect transitions.
    *
    * @access private
    * @since 3.0.0
    *
-   * @type {boolean}
+   * @type {OperationStatus}
    */
-  private requestErrorEffectInitialized: boolean = false;
+  private previousRequestStatus: OperationStatus = 'idle';
   //#endregion
 
   //#region Constructor
@@ -121,16 +105,19 @@ export class ForgotPasswordPage {
 
     // Show password reset request API errors as toast notifications
     effect(() => {
-      const error = this.requestError();
+      const operation = this.passwordResetStore.requestOperation();
+      const currentStatus = operation.status;
 
-      if (!this.requestErrorEffectInitialized) {
-        this.requestErrorEffectInitialized = true;
-        return;
+      if (currentStatus === 'error' && this.previousRequestStatus === 'loading') {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: operation.error?.message ?? 'Failed to send verification code',
+          life: 5000,
+        });
       }
 
-      if (error) {
-        this.toastService.error(error.message ?? 'Failed to send verification code');
-      }
+      this.previousRequestStatus = currentStatus;
     });
   }
   //#endregion

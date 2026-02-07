@@ -4,8 +4,8 @@ import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/a
 import { AuthStore } from '@core/stores/auth';
 import { UserStore } from '@core/stores/user';
 import { TrustedDeviceStore } from '@core/stores/trusted-device';
-import { ToastService } from '@core/services/toast';
-import type { OperationError } from '@core/stores/operations';
+import { MessageService } from 'primeng/api';
+import type { OperationStatus } from '@core/stores/operations';
 
 /**
  * Component MfaVerificationPage
@@ -44,9 +44,9 @@ export class MfaVerificationPage {
   private readonly trustedDeviceStore: TrustedDeviceStore = inject(TrustedDeviceStore);
   private readonly userStore: UserStore = inject(UserStore);
   private readonly router: Router = inject(Router);
-  private readonly toastService: ToastService = inject(ToastService);
-  private verifyErrorEffectInitialized: boolean = false;
-  private resendErrorEffectInitialized: boolean = false;
+  private readonly messageService: MessageService = inject(MessageService);
+  private previousMfaVerifyStatus: OperationStatus = 'idle';
+  private previousMfaResendStatus: OperationStatus = 'idle';
 
   /**
    * Computed showTrustDevice
@@ -79,38 +79,6 @@ export class MfaVerificationPage {
   );
 
   /**
-   * Computed error
-   * @readonly
-   *
-   * @description
-   * MFA verification error state.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<OperationError<unknown> | null>}
-   */
-  protected readonly error: Signal<OperationError<unknown> | null> = computed(() =>
-    this.authStore.mfaVerifyError()
-  );
-
-  /**
-   * Computed resendError
-   * @readonly
-   *
-   * @description
-   * MFA resend error state.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<OperationError<unknown> | null>}
-   */
-  protected readonly resendError: Signal<OperationError<unknown> | null> = computed(() =>
-    this.authStore.mfaResendError()
-  );
-
-  /**
    * Computed resendIn
    * @readonly
    *
@@ -130,13 +98,6 @@ export class MfaVerificationPage {
 
   //#region Constructor
   public constructor() {
-    // Redirect if MFA not required
-    effect(() => {
-      if (!this.authStore.mfaRequired()) {
-        void this.router.navigate(['/auth/login']);
-      }
-    });
-
     // Navigate to home when authenticated
     effect(() => {
       if (this.authStore.isAuthenticated()) {
@@ -147,30 +108,36 @@ export class MfaVerificationPage {
 
     // Show MFA verification API errors as toast notifications
     effect(() => {
-      const error = this.error();
+      const operation = this.authStore.mfaVerifyOperation();
+      const currentStatus = operation.status;
 
-      if (!this.verifyErrorEffectInitialized) {
-        this.verifyErrorEffectInitialized = true;
-        return;
+      if (currentStatus === 'error' && this.previousMfaVerifyStatus === 'loading') {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: operation.error?.message ?? 'Failed to verify code',
+          life: 5000,
+        });
       }
 
-      if (error) {
-        this.toastService.error(error.message ?? 'Failed to verify code');
-      }
+      this.previousMfaVerifyStatus = currentStatus;
     });
 
     // Show MFA resend API errors as toast notifications
     effect(() => {
-      const error = this.resendError();
+      const operation = this.authStore.mfaResendOperation();
+      const currentStatus = operation.status;
 
-      if (!this.resendErrorEffectInitialized) {
-        this.resendErrorEffectInitialized = true;
-        return;
+      if (currentStatus === 'error' && this.previousMfaResendStatus === 'loading') {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: operation.error?.message ?? 'Failed to resend code',
+          life: 5000,
+        });
       }
 
-      if (error) {
-        this.toastService.error(error.message ?? 'Failed to resend code');
-      }
+      this.previousMfaResendStatus = currentStatus;
     });
   }
   //#endregion

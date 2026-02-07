@@ -4,15 +4,13 @@ import {
   inject,
   effect,
   computed,
-  input,
-  type InputSignal,
   type Signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/auth/forms/otp-verification-form';
 import { PasswordResetStore } from '@core/stores/password-reset';
-import { ToastService } from '@core/services/toast';
-import type { OperationError } from '@core/stores/operations';
+import { MessageService } from 'primeng/api';
+import type { OperationStatus } from '@core/stores/operations';
 import { PasswordResetRequestOutput, PasswordResetResendOutput } from '@app/core/models';
 
 /**
@@ -65,49 +63,32 @@ export class PasswordResetVerifyPage {
     inject<Router>(Router);
 
   /**
-   * Input token
-   * @input
+   * Property messageService
    * @readonly
    *
    * @description
-   * Challenge token from URL query param `token`.
-   * Bound automatically by router via withComponentInputBinding().
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<string | undefined>}
-   */
-  public readonly token: InputSignal<string | undefined> =
-    input<string | undefined>(undefined);
-
-  /**
-   * Property toastService
-   * @readonly
-   *
-   * @description
-   * Toast service for displaying API errors.
+   * PrimeNG message service for displaying API errors.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {ToastService}
+   * @type {MessageService}
    */
-  private readonly toastService: ToastService =
-    inject<ToastService>(ToastService);
+  private readonly messageService: MessageService =
+    inject<MessageService>(MessageService);
 
   /**
-   * Property resendErrorEffectInitialized
+   * Property previousResendStatus
    *
    * @description
-   * Prevents showing stale error toast on first effect run.
+   * Previous resend status used to detect transitions.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {boolean}
+   * @type {OperationStatus}
    */
-  private resendErrorEffectInitialized: boolean = false;
+  private previousResendStatus: OperationStatus = 'idle';
 
   /**
    * Computed loading
@@ -123,22 +104,6 @@ export class PasswordResetVerifyPage {
    */
   protected readonly loading: Signal<boolean> = computed(() =>
     this.passwordResetStore.isResending()
-  );
-
-  /**
-   * Computed error
-   * @readonly
-   *
-   * @description
-   * Verification error if any.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<OperationError<unknown> | null>}
-   */
-  protected readonly error: Signal<OperationError<unknown> | null> = computed(() =>
-    this.passwordResetStore.resendError()
   );
 
   /**
@@ -164,35 +129,24 @@ export class PasswordResetVerifyPage {
    * Constructor
    *
    * @description
-   * Sets up navigation after successful verification.
+   * Sets up toast notifications for resend errors.
    */
   public constructor() {
-    // Load token from URL if not already loaded
-    effect(() => {
-      const token = this.token() ?? null;
-      const currentToken = this.passwordResetStore.challengeToken();
-
-      if (token && token !== currentToken) {
-        this.passwordResetStore.setChallengeToken(token);
-      }
-
-      if (!token && !currentToken) {
-        void this.router.navigate(['/auth/password-reset/forgot']);
-      }
-    });
-
     // Show password reset resend API errors as toast notifications
     effect(() => {
-      const error = this.error();
+      const operation = this.passwordResetStore.resendOperation();
+      const currentStatus = operation.status;
 
-      if (!this.resendErrorEffectInitialized) {
-        this.resendErrorEffectInitialized = true;
-        return;
+      if (currentStatus === 'error' && this.previousResendStatus === 'loading') {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: operation.error?.message ?? 'Failed to resend code',
+          life: 5000,
+        });
       }
 
-      if (error) {
-        this.toastService.error(error.message ?? 'Failed to resend code');
-      }
+      this.previousResendStatus = currentStatus;
     });
   }
   //#endregion

@@ -3,8 +3,8 @@ import { Router, RouterModule } from '@angular/router';
 import { LoginForm, type LoginFormValues } from '@features/auth/forms/login-form';
 import { AuthStore } from '@core/stores/auth';
 import { UserStore } from '@core/stores/user';
-import { ToastService } from '@core/services/toast';
-import type { OperationError } from '@core/stores/operations';
+import { MessageService } from 'primeng/api';
+import type { OperationStatus } from '@core/stores/operations';
 
 /**
  * Component LoginPage
@@ -57,19 +57,19 @@ export class LoginPage {
   inject<UserStore>(UserStore);
 
   /**
-   * Property toastService
+   * Property messageService
    * @readonly
    *
    * @description
-   * Toast service for displaying API errors.
+   * PrimeNG message service for displaying API errors.
    *
    * @access private
    * @since 3.0.0
    *
-   * @type {ToastService}
+   * @type {MessageService}
    */
-  private readonly toastService: ToastService =
-    inject<ToastService>(ToastService);
+  private readonly messageService: MessageService =
+    inject<MessageService>(MessageService);
 
   /**
    * Property router
@@ -87,17 +87,17 @@ export class LoginPage {
     inject<Router>(Router);
 
   /**
-   * Property loginErrorEffectInitialized
+   * Property previousLoginStatus
    *
    * @description
-   * Prevents showing stale error toast on first effect run.
+   * Previous login operation status used to detect transitions.
    *
    * @access private
    * @since 3.0.0
    *
-   * @type {boolean}
+   * @type {OperationStatus}
    */
-  private loginErrorEffectInitialized: boolean = false;
+  private previousLoginStatus: OperationStatus = 'idle';
 
   /**
    * Computed loading
@@ -115,21 +115,6 @@ export class LoginPage {
     this.authStore.isLoggingIn()
   );
 
-  /**
-   * Computed error
-   * @readonly
-   *
-   * @description
-   * Login error state.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<OperationError<unknown> | null>}
-   */
-  protected readonly error: Signal<OperationError<unknown> | null> = computed(() => 
-    this.authStore.loginError()
-  );
   //#endregion
 
   //#region Constructor
@@ -162,16 +147,19 @@ export class LoginPage {
 
     // Show API login errors as toast notifications
     effect(() => {
-      const error = this.error();
+      const operation = this.authStore.loginOperation();
+      const currentStatus = operation.status;
 
-      if (!this.loginErrorEffectInitialized) {
-        this.loginErrorEffectInitialized = true;
-        return;
+      if (currentStatus === 'error' && this.previousLoginStatus === 'loading') {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: operation.error?.message ?? 'Failed to sign in',
+          life: 5000,
+        });
       }
 
-      if (error) {
-        this.toastService.error(error.message ?? 'Failed to sign in');
-      }
+      this.previousLoginStatus = currentStatus;
     });
   }
   //#endregion

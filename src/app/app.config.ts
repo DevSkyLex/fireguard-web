@@ -3,7 +3,6 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from '@app/app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideEnv } from '@core/config/environment/env.provider';
 import { environment } from '@env/environment';
 import { providePrimeNG } from 'primeng/config';
@@ -17,19 +16,19 @@ import { provideAuth } from '@app/core/providers/auth';
 /**
  * Configuration appConfig
  * @type {ApplicationConfig}
- * 
+ *
  * @description
- * This configuration is used to provide the 
+ * This configuration is used to provide the
  * application with the necessary providers.
- * 
+ *
  * @version 1.0.0
- * 
+ *
  * @example
  * ```typescript
  * export const appConfig: ApplicationConfig = {
  *   providers: [
  *     provideBrowserGlobalErrorListeners(),
- *     provideRouter(routes), 
+ *     provideRouter(routes),
  *     provideClientHydration(withEventReplay())
  *   ]
  * };
@@ -40,7 +39,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
     provideClientHydration(withEventReplay()),
-    provideAnimationsAsync(),
     provideHttpClient(
       withFetch(),
       withInterceptors([authInterceptor])

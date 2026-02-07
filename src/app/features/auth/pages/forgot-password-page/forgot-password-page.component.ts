@@ -1,9 +1,10 @@
-import { Component, ChangeDetectionStrategy, inject, effect, computed, type Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, effect } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { ForgotPasswordForm, type ForgotPasswordFormValues } from '@features/auth/forms/forgot-password-form';
-import { PasswordResetStore } from '@core/stores/password-reset';
+import { PasswordResetStore, passwordResetStoreEvents } from '@core/stores/password-reset';
 import { MessageService } from 'primeng/api';
-import type { OperationStatus } from '@core/stores/operations';
+import { Events } from '@ngrx/signals/events';
 
 /**
  * Component ForgotPasswordPage
@@ -54,6 +55,20 @@ export class ForgotPasswordPage {
     inject<MessageService>(MessageService);
 
   /**
+   * Property events
+   * @readonly
+   *
+   * @description
+   * NgRx events stream.
+   *
+   * @access private
+   * @since 3.0.0
+   *
+   * @type {Events}
+   */
+  private readonly events: Events = inject<Events>(Events);
+
+  /**
    * Property router
    * @readonly
    *
@@ -68,18 +83,6 @@ export class ForgotPasswordPage {
   private readonly router: Router = 
     inject<Router>(Router);
 
-  /**
-   * Property previousRequestStatus
-   *
-   * @description
-   * Previous password reset request status used to detect transitions.
-   *
-   * @access private
-   * @since 3.0.0
-   *
-   * @type {OperationStatus}
-   */
-  private previousRequestStatus: OperationStatus = 'idle';
   //#endregion
 
   //#region Constructor
@@ -103,22 +106,17 @@ export class ForgotPasswordPage {
       }
     });
 
-    // Show password reset request API errors as toast notifications
-    effect(() => {
-      const operation = this.passwordResetStore.requestOperation();
-      const currentStatus = operation.status;
-
-      if (currentStatus === 'error' && this.previousRequestStatus === 'loading') {
+    this.events
+      .on(passwordResetStoreEvents.requestFailed)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }) => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: operation.error?.message ?? 'Failed to send verification code',
+          detail: payload.message,
           life: 5000,
         });
-      }
-
-      this.previousRequestStatus = currentStatus;
-    });
+      });
   }
   //#endregion
 

@@ -1,11 +1,12 @@
 import { Component, ChangeDetectionStrategy, inject, effect, computed, type Signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/auth/forms/otp-verification-form';
-import { AuthStore } from '@core/stores/auth';
+import { AuthStore, authStoreEvents } from '@core/stores/auth';
 import { UserStore } from '@core/stores/user';
 import { TrustedDeviceStore } from '@core/stores/trusted-device';
 import { MessageService } from 'primeng/api';
-import type { OperationStatus } from '@core/stores/operations';
+import { Events } from '@ngrx/signals/events';
 
 /**
  * Component MfaVerificationPage
@@ -45,8 +46,7 @@ export class MfaVerificationPage {
   private readonly userStore: UserStore = inject(UserStore);
   private readonly router: Router = inject(Router);
   private readonly messageService: MessageService = inject(MessageService);
-  private previousMfaVerifyStatus: OperationStatus = 'idle';
-  private previousMfaResendStatus: OperationStatus = 'idle';
+  private readonly events: Events = inject(Events);
 
   /**
    * Computed showTrustDevice
@@ -106,39 +106,29 @@ export class MfaVerificationPage {
       }
     });
 
-    // Show MFA verification API errors as toast notifications
-    effect(() => {
-      const operation = this.authStore.mfaVerifyOperation();
-      const currentStatus = operation.status;
-
-      if (currentStatus === 'error' && this.previousMfaVerifyStatus === 'loading') {
+    this.events
+      .on(authStoreEvents.mfaVerifyFailed)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }) => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: operation.error?.message ?? 'Failed to verify code',
+          detail: payload.message,
           life: 5000,
         });
-      }
+      });
 
-      this.previousMfaVerifyStatus = currentStatus;
-    });
-
-    // Show MFA resend API errors as toast notifications
-    effect(() => {
-      const operation = this.authStore.mfaResendOperation();
-      const currentStatus = operation.status;
-
-      if (currentStatus === 'error' && this.previousMfaResendStatus === 'loading') {
+    this.events
+      .on(authStoreEvents.mfaResendFailed)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }) => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: operation.error?.message ?? 'Failed to resend code',
+          detail: payload.message,
           life: 5000,
         });
-      }
-
-      this.previousMfaResendStatus = currentStatus;
-    });
+      });
   }
   //#endregion
 
@@ -157,7 +147,7 @@ export class MfaVerificationPage {
    * @returns {void}
    */
   protected handleOtpSubmit(values: OtpVerificationFormValues): void {
-    const mfaToken = this.authStore.mfaToken();
+    const mfaToken: string | null = this.authStore.mfaToken();
     if (!mfaToken) return;
 
     // Set pending trust device if user checked the option

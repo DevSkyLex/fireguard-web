@@ -2,16 +2,16 @@ import {
   Component,
   ChangeDetectionStrategy,
   inject,
-  effect,
   computed,
   type Signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/auth/forms/otp-verification-form';
-import { PasswordResetStore } from '@core/stores/password-reset';
+import { PasswordResetStore, passwordResetStoreEvents } from '@core/stores/password-reset';
 import { MessageService } from 'primeng/api';
-import type { OperationStatus } from '@core/stores/operations';
 import { PasswordResetRequestOutput, PasswordResetResendOutput } from '@app/core/models';
+import { Events } from '@ngrx/signals/events';
 
 /**
  * Component PasswordResetVerifyPage
@@ -78,17 +78,19 @@ export class PasswordResetVerifyPage {
     inject<MessageService>(MessageService);
 
   /**
-   * Property previousResendStatus
+   * Property events
+   * @readonly
    *
    * @description
-   * Previous resend status used to detect transitions.
+   * NgRx events stream.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {OperationStatus}
+   * @type {Events}
    */
-  private previousResendStatus: OperationStatus = 'idle';
+  private readonly events: Events =
+    inject<Events>(Events);
 
   /**
    * Computed loading
@@ -127,27 +129,26 @@ export class PasswordResetVerifyPage {
   //#region Constructor
   /**
    * Constructor
+   * @constructor
    *
    * @description
    * Sets up toast notifications for resend errors.
+   *
+   * @access public
+   * @since 1.0.0
    */
   public constructor() {
-    // Show password reset resend API errors as toast notifications
-    effect(() => {
-      const operation = this.passwordResetStore.resendOperation();
-      const currentStatus = operation.status;
-
-      if (currentStatus === 'error' && this.previousResendStatus === 'loading') {
+    this.events
+      .on(passwordResetStoreEvents.resendFailed)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }) => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: operation.error?.message ?? 'Failed to resend code',
+          detail: payload.message,
           life: 5000,
         });
-      }
-
-      this.previousResendStatus = currentStatus;
-    });
+      });
   }
   //#endregion
 

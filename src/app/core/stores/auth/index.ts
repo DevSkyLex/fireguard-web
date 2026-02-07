@@ -10,3 +10,4 @@
 
 export type { AuthState } from './auth-state.interface';
 export { AuthStore } from './auth.store';
+export { authStoreEvents } from './auth.events';

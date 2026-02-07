@@ -1,10 +1,11 @@
 import { Component, ChangeDetectionStrategy, inject, effect, computed, type Signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterModule } from '@angular/router';
 import { LoginForm, type LoginFormValues } from '@features/auth/forms/login-form';
-import { AuthStore } from '@core/stores/auth';
+import { AuthStore, authStoreEvents } from '@core/stores/auth';
 import { UserStore } from '@core/stores/user';
 import { MessageService } from 'primeng/api';
-import type { OperationStatus } from '@core/stores/operations';
+import { Events } from '@ngrx/signals/events';
 
 /**
  * Component LoginPage
@@ -72,6 +73,20 @@ export class LoginPage {
     inject<MessageService>(MessageService);
 
   /**
+   * Property events
+   * @readonly
+   *
+   * @description
+   * NgRx events stream.
+   *
+   * @access private
+   * @since 3.0.0
+   *
+   * @type {Events}
+   */
+  private readonly events: Events = inject<Events>(Events);
+
+  /**
    * Property router
    * @readonly
    *
@@ -85,19 +100,6 @@ export class LoginPage {
    */
   private readonly router: Router = 
     inject<Router>(Router);
-
-  /**
-   * Property previousLoginStatus
-   *
-   * @description
-   * Previous login operation status used to detect transitions.
-   *
-   * @access private
-   * @since 3.0.0
-   *
-   * @type {OperationStatus}
-   */
-  private previousLoginStatus: OperationStatus = 'idle';
 
   /**
    * Computed loading
@@ -145,22 +147,17 @@ export class LoginPage {
       }
     });
 
-    // Show API login errors as toast notifications
-    effect(() => {
-      const operation = this.authStore.loginOperation();
-      const currentStatus = operation.status;
-
-      if (currentStatus === 'error' && this.previousLoginStatus === 'loading') {
+    this.events
+      .on(authStoreEvents.loginFailed)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }) => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: operation.error?.message ?? 'Failed to sign in',
+          detail: payload.message,
           life: 5000,
         });
-      }
-
-      this.previousLoginStatus = currentStatus;
-    });
+      });
   }
   //#endregion
 

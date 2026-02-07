@@ -1,9 +1,10 @@
 import { Component, ChangeDetectionStrategy, inject, computed, effect, type Signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { NewPasswordForm, type NewPasswordFormValues } from '@features/auth/forms/new-password-form';
-import { PasswordResetStore } from '@core/stores/password-reset';
+import { PasswordResetStore, passwordResetStoreEvents } from '@core/stores/password-reset';
 import { MessageService } from 'primeng/api';
-import type { OperationStatus } from '@core/stores/operations';
+import { Events } from '@ngrx/signals/events';
 
 /**
  * Component NewPasswordPage
@@ -55,6 +56,20 @@ export class NewPasswordPage {
     inject<MessageService>(MessageService);
 
   /**
+   * Property events
+   * @readonly
+   *
+   * @description
+   * NgRx events stream.
+   *
+   * @access private
+   * @since 3.0.0
+   *
+   * @type {Events}
+   */
+  private readonly events: Events = inject<Events>(Events);
+
+  /**
    * Property router
    * @readonly
    *
@@ -68,19 +83,6 @@ export class NewPasswordPage {
    */
   private readonly router: Router =
     inject<Router>(Router);
-
-  /**
-   * Property previousConfirmStatus
-   *
-   * @description
-   * Previous password reset confirm status used to detect transitions.
-   *
-   * @access private
-   * @since 3.0.0
-   *
-   * @type {OperationStatus}
-   */
-  private previousConfirmStatus: OperationStatus = 'idle';
 
   /**
    * Computed isResetting
@@ -123,22 +125,17 @@ export class NewPasswordPage {
       }
     });
 
-    // Show password reset confirmation API errors as toast notifications
-    effect(() => {
-      const operation = this.passwordResetStore.confirmOperation();
-      const currentStatus = operation.status;
-
-      if (currentStatus === 'error' && this.previousConfirmStatus === 'loading') {
+    this.events
+      .on(passwordResetStoreEvents.confirmFailed)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }) => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: operation.error?.message ?? 'Failed to reset password',
+          detail: payload.message,
           life: 5000,
         });
-      }
-
-      this.previousConfirmStatus = currentStatus;
-    });
+      });
   }
   //#endregion
 

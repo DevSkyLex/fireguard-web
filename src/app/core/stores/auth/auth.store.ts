@@ -7,6 +7,7 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, exhaustMap, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
 import { AuthService } from '@core/services/api/auth';
@@ -23,6 +24,7 @@ import {
   type Operation,
   type OperationError,
 } from '../operations';
+import { authStoreEvents } from './auth.events';
 
 /**
  * Constant TOKEN_EXPIRY_WARNING_MS
@@ -123,7 +125,8 @@ export const AuthStore = signalStore(
      * Computed isAuthenticated
      *
      * @description
-     * Returns true if the user has a valid, non-expired access token.
+     * Returns true if the user has a valid,
+     * non-expired access token.
      *
      * @since 1.0.0
      *
@@ -136,10 +139,8 @@ export const AuthStore = signalStore(
 
       if (!token || mfaRequired) return false;
 
-      if (expiresAt && Date.now() >= expiresAt) {
-        return false;
-      }
-
+      if (expiresAt && Date.now() >= expiresAt) return false;
+      
       return true;
     }),
 
@@ -300,6 +301,7 @@ export const AuthStore = signalStore(
   //#region Methods
   withMethods((
     store,
+    dispatcher = inject<Dispatcher>(Dispatcher),
     authService = inject<AuthService>(AuthService),
     userStore = inject<UserStore>(UserStore),
     trustedDeviceStore = inject<TrustedDeviceStore>(TrustedDeviceStore),
@@ -347,12 +349,18 @@ export const AuthStore = signalStore(
                 }
               },
               error: (error: unknown) => {
+                const operationError = createOperationErrorFromUnknown(error);
                 patchState(store, {
                   loginOperation: createErrorOperation(
-                    createOperationErrorFromUnknown(error),
+                    operationError,
                     store.loginOperation().data,
                   ),
                 });
+                dispatcher.dispatch(
+                  authStoreEvents.loginFailed({
+                    message: operationError.message ?? 'Failed to sign in',
+                  }),
+                );
               },
             }),
           ),
@@ -483,12 +491,18 @@ export const AuthStore = signalStore(
                 }
               },
               error: (error: unknown) => {
+                const operationError = createOperationErrorFromUnknown(error);
                 patchState(store, {
                   mfaVerifyOperation: createErrorOperation(
-                    createOperationErrorFromUnknown(error),
+                    operationError,
                     store.mfaVerifyOperation().data,
                   ),
                 });
+                dispatcher.dispatch(
+                  authStoreEvents.mfaVerifyFailed({
+                    message: operationError.message ?? 'Failed to verify code',
+                  }),
+                );
               },
             }),
           ),
@@ -515,12 +529,18 @@ export const AuthStore = signalStore(
         switchMap(() => {
           const preAuthToken = store.mfaToken();
           if (!preAuthToken) {
+            const operationError = createOperationErrorFromUnknown('No MFA token found');
             patchState(store, {
               mfaResendOperation: createErrorOperation(
-                createOperationErrorFromUnknown('No MFA token found'),
+                operationError,
                 store.mfaResendOperation().data,
               ),
             });
+            dispatcher.dispatch(
+              authStoreEvents.mfaResendFailed({
+                message: operationError.message ?? 'Failed to resend code',
+              }),
+            );
             return EMPTY;
           }
 
@@ -535,12 +555,18 @@ export const AuthStore = signalStore(
                 });
               },
               error: (error: unknown) => {
+                const operationError = createOperationErrorFromUnknown(error);
                 patchState(store, {
                   mfaResendOperation: createErrorOperation(
-                    createOperationErrorFromUnknown(error),
+                    operationError,
                     store.mfaResendOperation().data,
                   ),
                 });
+                dispatcher.dispatch(
+                  authStoreEvents.mfaResendFailed({
+                    message: operationError.message ?? 'Failed to resend code',
+                  }),
+                );
               },
             }),
           );

@@ -7,6 +7,7 @@ import {
   withState,
   type SignalStoreFeature,
 } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, pipe, switchMap, tap } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
@@ -24,6 +25,7 @@ import type {
   PasswordResetVerifyOutput,
 } from '@core/models/password-reset';
 import type { PasswordResetState } from './password-reset-state.interface';
+import { passwordResetStoreEvents } from './password-reset.events';
 
 type PasswordResetConfirmPayload = Omit<PasswordResetVerifyInput, 'token'>;
 
@@ -145,7 +147,11 @@ export const PasswordResetStore = signalStore(
      */
     resendError: computed(() => store.resendOperation().error),
   })),
-  withMethods((store, passwordResetService = inject(PasswordResetService)) => ({
+  withMethods((
+    store,
+    dispatcher = inject<Dispatcher>(Dispatcher),
+    passwordResetService = inject(PasswordResetService),
+  ) => ({
     /**
      * Method request
      *
@@ -186,13 +192,19 @@ export const PasswordResetStore = signalStore(
                 });
               },
               error: (error: unknown) => {
+                const operationError = createOperationErrorFromUnknown(error);
                 patchState(store, {
                   requestOperation: {
                     status: 'error',
                     data: null,
-                    error: createOperationErrorFromUnknown(error),
+                    error: operationError,
                   },
                 });
+                dispatcher.dispatch(
+                  passwordResetStoreEvents.requestFailed({
+                    message: operationError.message ?? 'Failed to send verification code',
+                  }),
+                );
               },
             })
           )
@@ -265,13 +277,19 @@ export const PasswordResetStore = signalStore(
         switchMap((input: PasswordResetConfirmPayload) => {
           const token = store.challengeToken();
           if (!token) {
+            const operationError = createOperationErrorFromUnknown('No password reset request found');
             patchState(store, {
               confirmOperation: {
                 status: 'error',
                 data: null,
-                error: createOperationErrorFromUnknown('No password reset request found'),
+                error: operationError,
               },
             });
+            dispatcher.dispatch(
+              passwordResetStoreEvents.confirmFailed({
+                message: operationError.message ?? 'Failed to reset password',
+              }),
+            );
             return EMPTY;
           }
 
@@ -290,13 +308,19 @@ export const PasswordResetStore = signalStore(
                 });
               },
               error: (error: unknown) => {
+                const operationError = createOperationErrorFromUnknown(error);
                 patchState(store, {
                   confirmOperation: {
                     status: 'error',
                     data: null,
-                    error: createOperationErrorFromUnknown(error),
+                    error: operationError,
                   },
                 });
+                dispatcher.dispatch(
+                  passwordResetStoreEvents.confirmFailed({
+                    message: operationError.message ?? 'Failed to reset password',
+                  }),
+                );
               },
             })
           );
@@ -352,13 +376,19 @@ export const PasswordResetStore = signalStore(
         switchMap(() => {
           const token = store.challengeToken();
           if (!token) {
+            const operationError = createOperationErrorFromUnknown('No challenge token found');
             patchState(store, {
               resendOperation: {
                 status: 'error',
                 data: null,
-                error: createOperationErrorFromUnknown('No challenge token found'),
+                error: operationError,
               },
             });
+            dispatcher.dispatch(
+              passwordResetStoreEvents.resendFailed({
+                message: operationError.message ?? 'Failed to resend code',
+              }),
+            );
             return EMPTY;
           }
 
@@ -376,13 +406,19 @@ export const PasswordResetStore = signalStore(
                 });
               },
               error: (error: unknown) => {
+                const operationError = createOperationErrorFromUnknown(error);
                 patchState(store, {
                   resendOperation: {
                     status: 'error',
                     data: null,
-                    error: createOperationErrorFromUnknown(error),
+                    error: operationError,
                   },
                 });
+                dispatcher.dispatch(
+                  passwordResetStoreEvents.resendFailed({
+                    message: operationError.message ?? 'Failed to resend code',
+                  }),
+                );
               },
             })
           );

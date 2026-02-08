@@ -41,12 +41,99 @@ import { Events } from '@ngrx/signals/events';
 })
 export class MfaVerificationPage {
   //#region Properties
-  private readonly authStore: AuthStore = inject(AuthStore);
-  private readonly trustedDeviceStore: TrustedDeviceStore = inject(TrustedDeviceStore);
-  private readonly userStore: UserStore = inject(UserStore);
-  private readonly router: Router = inject(Router);
-  private readonly messageService: MessageService = inject(MessageService);
-  private readonly events: Events = inject(Events);
+  /**
+   * Property authStore
+   * @readonly
+   *
+   * @description
+   * Authentication store for accessing MFA state
+   * and performing verification.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {AuthStore}
+   */
+  private readonly authStore: AuthStore =
+  inject<AuthStore>(AuthStore);
+
+  /**
+   * Property trustedDeviceStore
+   * @readonly
+   *
+   * @description
+   * Trusted device store for handling "trust this device"
+   * option during MFA.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {TrustedDeviceStore}
+   */
+  private readonly trustedDeviceStore: TrustedDeviceStore =
+    inject<TrustedDeviceStore>(TrustedDeviceStore);
+
+  /**
+   * Property userStore
+   * @readonly
+   *
+   * @description
+   * User store for loading user profile after successful MFA.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {UserStore}
+   */
+  private readonly userStore: UserStore =
+    inject<UserStore>(UserStore);
+
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Angular router for navigation after successful
+   * MFA or cancellation.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Router}
+   */
+  private readonly router: Router =
+    inject<Router>(Router);
+
+  /**
+   * Property messageService
+   * @readonly
+   *
+   * @description
+   * PrimeNG message service for displaying API errors
+   * during MFA verification.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {MessageService}
+   */
+  private readonly messageService: MessageService =
+    inject<MessageService>(MessageService);
+
+  /**
+   * Property events
+   * @readonly
+   *
+   * @description
+   * NgRx events stream for subscribing to AuthStore events
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Events}
+   */
+  private readonly events: Events =
+    inject<Events>(Events);
 
   /**
    * Computed showTrustDevice
@@ -97,15 +184,29 @@ export class MfaVerificationPage {
   //#endregion
 
   //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Sets up navigation after successful MFA verification
+   * and error handling for MFA failures.
+   *
+   * @access public
+   * @since 1.0.0
+   */
   public constructor() {
     // Navigate to home when authenticated
     effect(() => {
       if (this.authStore.isAuthenticated()) {
         this.userStore.load();
-        void this.router.navigate(['/home']);
+        this.router.navigate(['/home']).catch((error: unknown) => {
+          console.error('Navigation failed', error);
+        });
       }
     });
 
+    // Show error messages for MFA verification failures
     this.events
       .on(authStoreEvents.mfaVerifyFailed)
       .pipe(takeUntilDestroyed())
@@ -118,6 +219,7 @@ export class MfaVerificationPage {
         });
       });
 
+    // Show error messages for MFA resend failures
     this.events
       .on(authStoreEvents.mfaResendFailed)
       .pipe(takeUntilDestroyed())
@@ -171,11 +273,15 @@ export class MfaVerificationPage {
    * @access protected
    * @since 1.0.0
    *
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  protected handleOtpCancel(): void {
+  protected async handleOtpCancel(): Promise<void> {
     this.authStore.clearMfaState();
-    void this.router.navigate(['/auth/login']);
+    try {
+      await this.router.navigate(['/auth/login']);
+    } catch (error: unknown) {
+      console.error('Navigation failed', error);
+    }
   }
 
   /**
@@ -193,5 +299,6 @@ export class MfaVerificationPage {
   protected handleOtpResend(): void {
     this.authStore.mfaResend();
   }
+
   //#endregion
 }

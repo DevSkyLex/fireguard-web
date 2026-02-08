@@ -1,24 +1,15 @@
-/**
- * Operation Types
- *
- * @description
- * Generic operation state helpers for SignalStore and services.
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
- */
-
 export { OPERATION_STATUSES } from './operation-status.type';
 export type { OperationStatus } from './operation-status.type';
-export type { OperationError } from './operation-error.type';
-export type { OperationMeta } from './operation-meta.type';
+export type { OperationError } from './operation-error.interface';
+export type { OperationFailureEventPayload } from './operation-failure-event-payload.interface';
+export type { OperationMeta } from './operation-meta.interface';
 export type {
   Operation,
   OperationIdle,
   OperationLoading,
   OperationSuccess,
   OperationFailed,
-} from './operation.type';
+} from './operation.interface';
 export type { CollectionOperation } from './collection-operation.type';
 export {
   createIdleOperation,
@@ -28,4 +19,5 @@ export {
   isOperationSuccess,
   isOperationError,
   createOperationErrorFromUnknown,
+  toOperationFailureEventPayload,
 } from './operation.helpers';

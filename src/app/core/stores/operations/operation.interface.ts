@@ -1,6 +1,6 @@
 import type { ApiError } from '@core/models/api';
-import type { OperationError } from './operation-error.type';
-import type { OperationMeta } from './operation-meta.type';
+import type { OperationError } from './operation-error.interface';
+import type { OperationMeta } from './operation-meta.interface';
 
 /**
  * Interface OperationIdle

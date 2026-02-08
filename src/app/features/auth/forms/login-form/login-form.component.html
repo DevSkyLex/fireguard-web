@@ -5,7 +5,13 @@
     <label for="email" class="text-sm font-medium text-surface-700">Email Address</label>
     <p-iconfield>
       <p-inputicon class="pi pi-user" />
-      <input pInputText id="email" formControlName="email" class="w-full" placeholder="example@email.com" />
+      <input
+        pInputText
+        id="email"
+        formControlName="email"
+        class="w-full"
+        placeholder="example@email.com"
+      />
     </p-iconfield>
 
     @if (form.controls.email.invalid && form.controls.email.touched) {
@@ -59,5 +65,4 @@
     [disabled]="form.invalid || loading()"
     styleClass="w-full"
   />
-
 </form>

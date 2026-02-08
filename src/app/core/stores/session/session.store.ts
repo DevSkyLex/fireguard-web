@@ -7,6 +7,7 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
 import { SessionService } from '@core/services/api/session';
@@ -20,10 +21,12 @@ import {
   createLoadingOperation,
   createSuccessOperation,
   createOperationErrorFromUnknown,
+  toOperationFailureEventPayload,
   type CollectionOperation,
   type Operation,
   type OperationError,
 } from '../operations';
+import { sessionStoreEvents } from './session.events';
 
 /**
  * Constant INITIAL_SESSION_STATE
@@ -188,7 +191,11 @@ export const SessionStore = signalStore(
   //#endregion
 
   //#region Methods
-  withMethods((store, sessionService = inject<SessionService>(SessionService)) => ({
+  withMethods((
+    store,
+    dispatcher = inject<Dispatcher>(Dispatcher),
+    sessionService = inject<SessionService>(SessionService),
+  ) => ({
     //#region Reactive Methods
     /**
      * Method loadSessions
@@ -222,12 +229,19 @@ export const SessionStore = signalStore(
                 });
               },
               error: (error: unknown) => {
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
                 patchState(store, {
                   listOperation: createErrorOperation(
-                    createOperationErrorFromUnknown(error),
+                    operationError,
                     store.listOperation().data,
                   ),
                 });
+                dispatcher.dispatch(
+                  sessionStoreEvents.loadFailed(
+                    toOperationFailureEventPayload(operationError, 'Failed to load sessions'),
+                  ),
+                );
               },
             }),
           ),
@@ -265,12 +279,19 @@ export const SessionStore = signalStore(
                 });
               },
               error: (error: unknown) => {
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
                 patchState(store, {
                   revokeOperation: createErrorOperation(
-                    createOperationErrorFromUnknown(error),
+                    operationError,
                     store.revokeOperation().data,
                   ),
                 });
+                dispatcher.dispatch(
+                  sessionStoreEvents.revokeFailed(
+                    toOperationFailureEventPayload(operationError, 'Failed to revoke session'),
+                  ),
+                );
               },
             }),
           ),
@@ -309,12 +330,19 @@ export const SessionStore = signalStore(
                 });
               },
               error: (error: unknown) => {
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
                 patchState(store, {
                   revokeAllOperation: createErrorOperation(
-                    createOperationErrorFromUnknown(error),
+                    operationError,
                     store.revokeAllOperation().data,
                   ),
                 });
+                dispatcher.dispatch(
+                  sessionStoreEvents.revokeAllFailed(
+                    toOperationFailureEventPayload(operationError, 'Failed to revoke all sessions'),
+                  ),
+                );
               },
             }),
           ),

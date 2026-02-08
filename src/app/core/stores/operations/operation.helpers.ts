@@ -1,13 +1,14 @@
 import { isApiError, type ApiError } from '@core/models/api';
-import type { OperationError } from './operation-error.type';
-import type { OperationMeta } from './operation-meta.type';
+import type { OperationError } from './operation-error.interface';
+import type { OperationFailureEventPayload } from './operation-failure-event-payload.interface';
+import type { OperationMeta } from './operation-meta.interface';
 import type {
   Operation,
   OperationFailed,
   OperationIdle,
   OperationLoading,
   OperationSuccess,
-} from './operation.type';
+} from './operation.interface';
 
 /**
  * Function createIdleOperation
@@ -173,5 +174,31 @@ export function createOperationErrorFromUnknown(error: unknown): OperationError<
     code: null,
     retryable: false,
     timestamp: Date.now(),
+  };
+}
+
+/**
+ * Function toOperationFailureEventPayload
+ *
+ * @description
+ * Maps an operation error to a strongly-typed
+ * store event payload.
+ *
+ * @since 1.0.0
+ *
+ * @param {OperationError<unknown>} error - Normalized operation error.
+ * @param {string} fallbackMessage - Fallback user-facing message.
+ *
+ * @returns {OperationFailureEventPayload}
+ */
+export function toOperationFailureEventPayload(
+  error: OperationError<unknown>,
+  fallbackMessage: string,
+): OperationFailureEventPayload {
+  return {
+    message: error.message ?? fallbackMessage,
+    code: error.code ?? null,
+    retryable: error.retryable ?? false,
+    timestamp: error.timestamp ?? Date.now(),
   };
 }

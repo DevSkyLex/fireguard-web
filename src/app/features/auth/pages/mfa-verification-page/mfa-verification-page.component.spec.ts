@@ -1,0 +1,91 @@
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { EMPTY } from 'rxjs';
+import { Router } from '@angular/router';
+import { Events } from '@ngrx/signals/events';
+import { MessageService } from 'primeng/api';
+import { MfaVerificationPage } from './mfa-verification-page.component';
+import { AuthStore } from '@core/stores/auth';
+import { UserStore } from '@core/stores/user';
+import { TrustedDeviceStore } from '@core/stores/trusted-device';
+
+describe('MfaVerificationPage', () => {
+  const setup = (options?: { authenticated?: boolean; mfaToken?: string | null }) => {
+    const mockAuthStore = {
+      isAuthenticated: signal(options?.authenticated ?? false),
+      isVerifyingMfa: signal(false),
+      mfaToken: signal(options?.mfaToken ?? null),
+      loginOperation: signal({ status: 'idle', data: null }),
+      mfaVerify: vi.fn(),
+      clearMfaState: vi.fn(),
+      mfaResend: vi.fn(),
+    };
+    const mockTrustedDeviceStore = {
+      setPendingTrustDevice: vi.fn(),
+    };
+    const mockUserStore = { load: vi.fn() };
+    const mockRouter = { navigate: vi.fn().mockResolvedValue(true) };
+    const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
+    const mockMessageService = { add: vi.fn() };
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AuthStore, useValue: mockAuthStore },
+        { provide: TrustedDeviceStore, useValue: mockTrustedDeviceStore },
+        { provide: UserStore, useValue: mockUserStore },
+        { provide: Router, useValue: mockRouter },
+        { provide: Events, useValue: mockEvents },
+        { provide: MessageService, useValue: mockMessageService },
+      ],
+    });
+
+    const component = TestBed.runInInjectionContext(() => new MfaVerificationPage());
+    TestBed.tick();
+    return { component, mockAuthStore, mockTrustedDeviceStore, mockUserStore, mockRouter };
+  };
+
+  it('should load user and navigate home when authenticated', () => {
+    const { mockUserStore, mockRouter } = setup({ authenticated: true });
+
+    expect(mockUserStore.load).toHaveBeenCalledTimes(1);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/home']);
+  });
+
+  it('should not verify OTP when MFA token is missing', () => {
+    const { component, mockAuthStore, mockTrustedDeviceStore } = setup({ mfaToken: null });
+
+    (component as any).handleOtpSubmit({ code: '123456', trustDevice: true });
+
+    expect(mockTrustedDeviceStore.setPendingTrustDevice).not.toHaveBeenCalled();
+    expect(mockAuthStore.mfaVerify).not.toHaveBeenCalled();
+  });
+
+  it('should set pending trust and verify OTP when token exists', () => {
+    const { component, mockAuthStore, mockTrustedDeviceStore } = setup({ mfaToken: 'mfa-token' });
+
+    (component as any).handleOtpSubmit({ code: '123456', trustDevice: true });
+
+    expect(mockTrustedDeviceStore.setPendingTrustDevice).toHaveBeenCalledWith(true);
+    expect(mockAuthStore.mfaVerify).toHaveBeenCalledWith({
+      preAuthToken: 'mfa-token',
+      code: '123456',
+    });
+  });
+
+  it('should clear MFA state and navigate to login on cancel', async () => {
+    const { component, mockAuthStore, mockRouter } = setup();
+
+    await (component as any).handleOtpCancel();
+
+    expect(mockAuthStore.clearMfaState).toHaveBeenCalledTimes(1);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
+  });
+
+  it('should resend MFA code', () => {
+    const { component, mockAuthStore } = setup();
+
+    (component as any).handleOtpResend();
+
+    expect(mockAuthStore.mfaResend).toHaveBeenCalledTimes(1);
+  });
+});

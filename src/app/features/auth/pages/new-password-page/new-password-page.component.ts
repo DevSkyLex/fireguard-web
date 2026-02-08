@@ -108,7 +108,8 @@ export class NewPasswordPage {
    * @constructor
    *
    * @description
-   * Sets up navigation after successful password reset confirmation.
+   * Sets up navigation after successful
+   * password reset confirmation.
    *
    * @access public
    * @since 3.0.0
@@ -119,8 +120,11 @@ export class NewPasswordPage {
       const operation = this.passwordResetStore.confirmOperation();
       if (operation.status === 'success') {
         this.passwordResetStore.clear();
-        void this.router.navigate(['/auth/login'], {
+
+        this.router.navigate(['/auth/login'], {
           queryParams: { passwordReset: 'success' },
+        }).catch((error: unknown) => {
+          console.error('Navigation failed', error);
         });
       }
     });
@@ -154,15 +158,11 @@ export class NewPasswordPage {
    * @returns {void}
    */
   protected handlePasswordSubmit(values: NewPasswordFormValues): void {
-    const code = this.passwordResetStore.verificationCode();
-
-    if (!code) {
-      void this.router.navigate(['/auth/password-reset/verify']);
-      return;
-    }
+    const code: string | null = this.passwordResetStore.verificationCode();
+    if (!code) return;
 
     this.passwordResetStore.confirm({
-      code,
+      code: code,
       newPassword: values.newPassword,
     });
   }
@@ -176,11 +176,18 @@ export class NewPasswordPage {
    * @access protected
    * @since 1.0.0
    *
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  protected handlePasswordCancel(): void {
+  protected async handlePasswordCancel(): Promise<void> {
     this.passwordResetStore.clear();
-    void this.router.navigate(['/auth/login']);
+
+    try {
+      await this.router.navigate(['/auth/login']);
+    }
+    catch (error: unknown) {
+      console.error('Navigation failed', error);
+    }
   }
+
   //#endregion
 }

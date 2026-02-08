@@ -7,6 +7,7 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
 import { TrustedDeviceService } from '@core/services/api/trusted-device';
@@ -19,10 +20,12 @@ import {
   createLoadingOperation,
   createSuccessOperation,
   createOperationErrorFromUnknown,
+  toOperationFailureEventPayload,
   type CollectionOperation,
   type Operation,
   type OperationError,
 } from '../operations';
+import { trustedDeviceStoreEvents } from './trusted-device.events';
 
 /**
  * Constant INITIAL_TRUSTED_DEVICE_STATE
@@ -206,7 +209,11 @@ export const TrustedDeviceStore = signalStore(
   //#endregion
 
   //#region Methods
-  withMethods((store, trustedDeviceService = inject(TrustedDeviceService)) => ({
+  withMethods((
+    store,
+    dispatcher = inject<Dispatcher>(Dispatcher),
+    trustedDeviceService = inject(TrustedDeviceService),
+  ) => ({
     //#region Reactive Methods
     /**
      * Method loadDevices
@@ -237,12 +244,19 @@ export const TrustedDeviceStore = signalStore(
                 });
               },
               error: (error: unknown) => {
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
                 patchState(store, {
                   listOperation: createErrorOperation(
-                    createOperationErrorFromUnknown(error),
+                    operationError,
                     store.listOperation().data,
                   ),
                 });
+                dispatcher.dispatch(
+                  trustedDeviceStoreEvents.loadFailed(
+                    toOperationFailureEventPayload(operationError, 'Failed to load trusted devices'),
+                  ),
+                );
               },
             }),
           ),
@@ -277,12 +291,19 @@ export const TrustedDeviceStore = signalStore(
                 });
               },
               error: (error: unknown) => {
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
                 patchState(store, {
                   trustOperation: createErrorOperation(
-                    createOperationErrorFromUnknown(error),
+                    operationError,
                     store.trustOperation().data,
                   ),
                 });
+                dispatcher.dispatch(
+                  trustedDeviceStoreEvents.trustFailed(
+                    toOperationFailureEventPayload(operationError, 'Failed to trust device'),
+                  ),
+                );
               },
             }),
           ),
@@ -320,12 +341,19 @@ export const TrustedDeviceStore = signalStore(
                 });
               },
               error: (error: unknown) => {
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
                 patchState(store, {
                   revokeOperation: createErrorOperation(
-                    createOperationErrorFromUnknown(error),
+                    operationError,
                     store.revokeOperation().data,
                   ),
                 });
+                dispatcher.dispatch(
+                  trustedDeviceStoreEvents.revokeFailed(
+                    toOperationFailureEventPayload(operationError, 'Failed to revoke device'),
+                  ),
+                );
               },
             }),
           ),
@@ -358,12 +386,19 @@ export const TrustedDeviceStore = signalStore(
                 });
               },
               error: (error: unknown) => {
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
                 patchState(store, {
                   revokeAllOperation: createErrorOperation(
-                    createOperationErrorFromUnknown(error),
+                    operationError,
                     store.revokeAllOperation().data,
                   ),
                 });
+                dispatcher.dispatch(
+                  trustedDeviceStoreEvents.revokeAllFailed(
+                    toOperationFailureEventPayload(operationError, 'Failed to revoke all devices'),
+                  ),
+                );
               },
             }),
           ),

@@ -1,5 +1,4 @@
-export { guestGuard } from './guest.guard';
-export { mfaGuard } from './mfa.guard';
-export { passwordResetVerifyGuard } from './password-reset-verify.guard';
-export { passwordResetNewGuard } from './password-reset-new.guard';
-
+export * from './guest';
+export * from './mfa';
+export * from './password-reset-verify';
+export * from './password-reset-new';

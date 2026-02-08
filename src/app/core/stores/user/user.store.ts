@@ -7,6 +7,7 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { filter, pipe, switchMap, tap } from 'rxjs';
 import { OAuth2Service } from '@core/services/api/oauth2';
@@ -18,9 +19,11 @@ import {
   createLoadingOperation,
   createSuccessOperation,
   createOperationErrorFromUnknown,
+  toOperationFailureEventPayload,
   type Operation,
   type OperationError,
 } from '../operations';
+import { userStoreEvents } from './user.events';
 
 /**
  * Constant INITIAL_USER_STATE
@@ -167,7 +170,11 @@ export const UserStore = signalStore(
   //#endregion
 
   //#region Methods
-  withMethods((store, oauth2Service = inject<OAuth2Service>(OAuth2Service)) => ({
+  withMethods((
+    store,
+    dispatcher = inject<Dispatcher>(Dispatcher),
+    oauth2Service = inject<OAuth2Service>(OAuth2Service),
+  ) => ({
     //#region Reactive Methods
     /**
      * Method load
@@ -201,12 +208,19 @@ export const UserStore = signalStore(
                 });
               },
               error: (error: unknown) => {
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
                 patchState(store, {
                   loadOperation: createErrorOperation(
-                    createOperationErrorFromUnknown(error),
+                    operationError,
                     store.loadOperation().data,
                   ),
                 });
+                dispatcher.dispatch(
+                  userStoreEvents.loadFailed(
+                    toOperationFailureEventPayload(operationError, 'Failed to load user profile'),
+                  ),
+                );
               },
             }),
           ),

@@ -34,17 +34,17 @@ const PUBLIC_ENDPOINTS: RegExp[] = [
  * ```
  */
 export const authInterceptor: HttpInterceptorFn = (
-  req: HttpRequest<unknown>, 
+  req: HttpRequest<unknown>,
   next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> => {
   /**
    * Constant authStore
    * @const authStore
-   * 
+   *
    * @description
-   * Authentication store for accessing 
+   * Authentication store for accessing
    * auth state and token.
-   * 
+   *
    * @var {AuthStore}
    */
   const authStore: AuthStore = inject<AuthStore>(AuthStore);
@@ -52,11 +52,11 @@ export const authInterceptor: HttpInterceptorFn = (
   /**
    * Constant token
    * @const token
-   * 
+   *
    * @description
-   * Access token from auth store. Used for 
+   * Access token from auth store. Used for
    * adding Authorization header.
-   * 
+   *
    * @var {string | null}
    */
   const token: string | null = authStore.accessToken();
@@ -66,7 +66,7 @@ export const authInterceptor: HttpInterceptorFn = (
 
   // Skip if request is not to our API
   if (!req.url.includes('/api/')) return next(req);
-  
+
   // Skip if request already has Authorization header
   if (req.headers.has('Authorization')) return next(req);
 

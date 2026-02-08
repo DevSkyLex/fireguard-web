@@ -1,1 +1,2 @@
-export { authInterceptor } from './auth.interceptor';
+export { authInterceptor } from './auth';
+export { unauthorizedInterceptor } from './unauthorized';

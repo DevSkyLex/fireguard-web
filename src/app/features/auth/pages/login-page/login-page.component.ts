@@ -135,7 +135,9 @@ export class LoginPage {
     // Navigate to MFA page when MFA is required
     effect(() => {
       if (this.authStore.mfaRequired()) {
-        void this.router.navigate(['/auth/mfa-verify']);
+        this.router.navigate(['/auth/mfa-verify']).catch((error: unknown) => {
+          console.error('Navigation failed', error);
+        });
       }
     });
 
@@ -143,7 +145,9 @@ export class LoginPage {
     effect(() => {
       if (this.authStore.isAuthenticated()) {
         this.userStore.load();
-        void this.router.navigate(['/home']);
+        this.router.navigate(['/home']).catch((error: unknown) => {
+          console.error('Navigation failed', error);
+        });
       }
     });
 
@@ -182,5 +186,6 @@ export class LoginPage {
       remember_me: values.remember_me,
     });
   }
+
   //#endregion
 }

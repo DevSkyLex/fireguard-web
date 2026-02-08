@@ -21,6 +21,7 @@ import {
   createLoadingOperation,
   createSuccessOperation,
   createOperationErrorFromUnknown,
+  toOperationFailureEventPayload,
   type Operation,
   type OperationError,
 } from '../operations';
@@ -349,7 +350,8 @@ export const AuthStore = signalStore(
                 }
               },
               error: (error: unknown) => {
-                const operationError = createOperationErrorFromUnknown(error);
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
                 patchState(store, {
                   loginOperation: createErrorOperation(
                     operationError,
@@ -357,9 +359,9 @@ export const AuthStore = signalStore(
                   ),
                 });
                 dispatcher.dispatch(
-                  authStoreEvents.loginFailed({
-                    message: operationError.message ?? 'Failed to sign in',
-                  }),
+                  authStoreEvents.loginFailed(
+                    toOperationFailureEventPayload(operationError, 'Failed to sign in'),
+                  ),
                 );
               },
             }),
@@ -491,7 +493,8 @@ export const AuthStore = signalStore(
                 }
               },
               error: (error: unknown) => {
-                const operationError = createOperationErrorFromUnknown(error);
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
                 patchState(store, {
                   mfaVerifyOperation: createErrorOperation(
                     operationError,
@@ -499,9 +502,9 @@ export const AuthStore = signalStore(
                   ),
                 });
                 dispatcher.dispatch(
-                  authStoreEvents.mfaVerifyFailed({
-                    message: operationError.message ?? 'Failed to verify code',
-                  }),
+                  authStoreEvents.mfaVerifyFailed(
+                    toOperationFailureEventPayload(operationError, 'Failed to verify code'),
+                  ),
                 );
               },
             }),
@@ -529,7 +532,8 @@ export const AuthStore = signalStore(
         switchMap(() => {
           const preAuthToken = store.mfaToken();
           if (!preAuthToken) {
-            const operationError = createOperationErrorFromUnknown('No MFA token found');
+            const operationError: OperationError<unknown> =
+              createOperationErrorFromUnknown('No MFA token found');
             patchState(store, {
               mfaResendOperation: createErrorOperation(
                 operationError,
@@ -537,9 +541,9 @@ export const AuthStore = signalStore(
               ),
             });
             dispatcher.dispatch(
-              authStoreEvents.mfaResendFailed({
-                message: operationError.message ?? 'Failed to resend code',
-              }),
+              authStoreEvents.mfaResendFailed(
+                toOperationFailureEventPayload(operationError, 'Failed to resend code'),
+              ),
             );
             return EMPTY;
           }
@@ -555,7 +559,8 @@ export const AuthStore = signalStore(
                 });
               },
               error: (error: unknown) => {
-                const operationError = createOperationErrorFromUnknown(error);
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
                 patchState(store, {
                   mfaResendOperation: createErrorOperation(
                     operationError,
@@ -563,9 +568,9 @@ export const AuthStore = signalStore(
                   ),
                 });
                 dispatcher.dispatch(
-                  authStoreEvents.mfaResendFailed({
-                    message: operationError.message ?? 'Failed to resend code',
-                  }),
+                  authStoreEvents.mfaResendFailed(
+                    toOperationFailureEventPayload(operationError, 'Failed to resend code'),
+                  ),
                 );
               },
             }),

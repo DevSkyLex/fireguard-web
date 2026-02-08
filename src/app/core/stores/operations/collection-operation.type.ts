@@ -1,5 +1,5 @@
 import type { ApiError } from '@core/models/api';
-import type { Operation } from './operation.type';
+import type { Operation } from './operation.interface';
 
 /**
  * Type CollectionOperation

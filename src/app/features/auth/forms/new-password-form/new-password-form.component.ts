@@ -20,7 +20,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import type { NewPasswordFormData } from './new-password-form-data.type';
 import type { NewPasswordFormValues } from './new-password-form-values.type';
-import { matchFieldsValidator } from '@shared/validators/match-fields.validator';
+import { matchFieldsValidator } from '@shared/validators/match-fields';
 
 /**
  * Component NewPasswordForm

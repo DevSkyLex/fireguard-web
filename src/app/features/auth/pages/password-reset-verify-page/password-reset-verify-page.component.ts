@@ -164,11 +164,15 @@ export class PasswordResetVerifyPage {
    *
    * @param {OtpVerificationFormValues} values - Form values.
    *
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  protected handleVerify(values: OtpVerificationFormValues): void {
+  protected async handleVerify(values: OtpVerificationFormValues): Promise<void> {
     this.passwordResetStore.setVerificationCode(values.code);
-    void this.router.navigate(['/auth/password-reset/new']);
+    try {
+      await this.router.navigate(['/auth/password-reset/new']);
+    } catch (error: unknown) {
+      console.error('Navigation failed', error);
+    }
   }
 
   /**
@@ -181,11 +185,15 @@ export class PasswordResetVerifyPage {
    * @access protected
    * @since 1.0.0
    *
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  protected handleCancel(): void {
+  protected async handleCancel(): Promise<void> {
     this.passwordResetStore.clear();
-    void this.router.navigate(['/auth/password-reset/forgot']);
+    try {
+      await this.router.navigate(['/auth/password-reset/forgot']);
+    } catch (error: unknown) {
+      console.error('Navigation failed', error);
+    }
   }
 
   /**

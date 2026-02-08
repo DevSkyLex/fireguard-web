@@ -100,8 +100,10 @@ export class ForgotPasswordPage {
     effect(() => {
       const request = this.passwordResetStore.currentRequest();
       if (request?.challengeToken) {
-        void this.router.navigate(['/auth/password-reset/verify'], {
+        this.router.navigate(['/auth/password-reset/verify'], {
           queryParams: { token: request.challengeToken }
+        }).catch((error: unknown) => {
+          console.error('Navigation failed', error);
         });
       }
     });
@@ -137,5 +139,6 @@ export class ForgotPasswordPage {
   protected handleSubmit(values: ForgotPasswordFormValues): void {
     this.passwordResetStore.request({ email: values.email });
   }
+
   //#endregion
 }

@@ -1,5 +1,6 @@
 import { type } from '@ngrx/signals';
 import { eventGroup } from '@ngrx/signals/events';
+import type { OperationFailureEventPayload } from '../operations';
 
 /**
  * Constant passwordResetStoreEvents
@@ -10,8 +11,8 @@ import { eventGroup } from '@ngrx/signals/events';
 export const passwordResetStoreEvents = eventGroup({
   source: 'Password Reset Store',
   events: {
-    requestFailed: type<{ message: string }>(),
-    confirmFailed: type<{ message: string }>(),
-    resendFailed: type<{ message: string }>(),
+    requestFailed: type<OperationFailureEventPayload>(),
+    confirmFailed: type<OperationFailureEventPayload>(),
+    resendFailed: type<OperationFailureEventPayload>(),
   },
 });

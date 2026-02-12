@@ -1,0 +1,14 @@
+<div id="dashboard-layout" class="flex flex-row min-h-dvh bg-surface-0">
+  <section class="grid [grid-template-areas:'sidebar_header'_'sidebar_content'] grid-cols-[auto_1fr] grid-rows-[auto_1fr] w-full">
+    <!-- Layout Sidebar -->
+    <app-dashboard-layout-sidebar class="[grid-area:sidebar]" />
+
+    <!-- Layout Header -->
+    <app-dashboard-layout-header class="[grid-area:header]" />
+
+    <!-- Layout Content -->
+    <app-dashboard-layout-content class="[grid-area:content]">
+      <router-outlet />
+    </app-dashboard-layout-content>
+  </section>
+</div>

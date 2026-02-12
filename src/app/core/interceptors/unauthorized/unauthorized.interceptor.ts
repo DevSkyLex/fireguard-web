@@ -35,28 +35,52 @@ const EXCLUDED_ENDPOINTS: RegExp[] = [
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
- * @example
- * ```typescript
- * // In app.config.ts
- * provideHttpClient(
- *   withInterceptors([authInterceptor, unauthorizedInterceptor])
- * )
- * ```
+ * @return {Observable<HttpEvent<unknown>>} An observable of the HTTP event stream.
  */
 export const unauthorizedInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> => {
+  /**
+   * Constant authStore
+   * @const authStore
+   *
+   * @description
+   * AuthStore instance for managing authentication
+   * state. Used to clear the auth token on 401.
+   *
+   * @var {AuthStore}
+   */
   const authStore: AuthStore = inject<AuthStore>(AuthStore);
+
+  /**
+   * Constant userStore
+   * @const userStore
+   *
+   * @description
+   * UserStore instance for managing user state. Used to clear
+   * user information on 401.
+   *
+   * @var {UserStore}
+   */
   const userStore: UserStore = inject<UserStore>(UserStore);
+
+  /**
+   * Constant router
+   * @const router
+   *
+   * @description
+   * Angular Router instance for navigating to the login page
+   * after clearing auth state on 401.
+   *
+   * @var {Router}
+   */
   const router: Router = inject<Router>(Router);
 
+  // Proceed with the request and handle potential 401 errors.
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (
-        error.status === 401 &&
-        !EXCLUDED_ENDPOINTS.some((pattern: RegExp) => pattern.test(req.url))
-      ) {
+      if (error.status === 401 && !EXCLUDED_ENDPOINTS.some((pattern: RegExp) => pattern.test(req.url))) {
         authStore.clearToken();
         userStore.clear();
         router.navigate(['/auth/login']);

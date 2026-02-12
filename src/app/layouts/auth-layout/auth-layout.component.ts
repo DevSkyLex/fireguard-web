@@ -7,16 +7,16 @@ import { AuthLayoutHeader, AuthLayoutContent, AuthLayoutFooter, AuthLayoutShowca
  * @class AuthLayout
  *
  * @description
- * Layout component for authentication pages 
+ * Layout component for authentication pages
  * like login, register, forgot password, etc.
- * 
+ *
  * @version 1.0.0
- * 
+ *
  * @example
  * ```html
- * <app-auth-layout></app-auth-layout>
+ * <app-auth-layout/>
  * ```
- * 
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({

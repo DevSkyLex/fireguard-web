@@ -43,7 +43,7 @@ describe('authGuard', () => {
     expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login']);
   });
 
-  it('should allow access during SSR (server platform)', () => {
+  it('should redirect to /auth/login during SSR when not authenticated', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
@@ -55,6 +55,7 @@ describe('authGuard', () => {
 
     mockAuthStore.isAuthenticated.mockReturnValue(false);
     const result = runGuard();
-    expect(result).toBe(true);
+    expect(result).toBe(loginUrlTree);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login']);
   });
 });

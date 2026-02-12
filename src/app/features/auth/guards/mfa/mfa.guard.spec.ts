@@ -37,13 +37,14 @@ describe('mfaGuard', () => {
     });
   };
 
-  it('should allow access during SSR', () => {
+  it('should redirect to login during SSR when MFA is not required', () => {
     configure('server');
     mockAuthStore.isAuthenticated.mockReturnValue(false);
     mockAuthStore.mfaRequired.mockReturnValue(false);
 
     const result = runGuard();
-    expect(result).toBe(true);
+    expect(result).toBe(urlTree);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login']);
   });
 
   it('should redirect authenticated users to home in browser', () => {

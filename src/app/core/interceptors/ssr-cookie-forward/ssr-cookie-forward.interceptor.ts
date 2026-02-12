@@ -1,0 +1,68 @@
+import { isPlatformServer } from '@angular/common';
+import { inject, PLATFORM_ID, REQUEST } from '@angular/core';
+import { type HttpEvent, type HttpHandlerFn, type HttpInterceptorFn, type HttpRequest } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+/**
+ * SSR Cookie Forward Interceptor
+ *
+ * @description
+ * Forwards incoming request cookies to server-side API calls during SSR.
+ * This allows session-based endpoints (e.g. refresh) to resolve auth state
+ * while rendering on the server.
+ *
+ * @version 1.0.0
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @returns {Observable<HttpEvent<unknown>>} An observable of the HTTP event stream.
+ */
+export const ssrCookieForwardInterceptor: HttpInterceptorFn = (
+  req: HttpRequest<unknown>,
+  next: HttpHandlerFn,
+): Observable<HttpEvent<unknown>> => {
+  /**
+   * Constant platformId
+   * @const platformId
+   *
+   * @description
+   * Angular platform ID for determining if code
+   * is running on server or browser. Used to conditionally
+   * forward cookies only during SSR.
+   *
+   * @var {object}
+   */
+  const platformId: object =
+    inject<object>(PLATFORM_ID);
+
+  /**
+   * Constant incomingRequest
+   * @const incomingRequest
+   *
+   * @description
+   * The incoming HTTP request during SSR, injected
+   * from the REQUEST token.
+   *
+   * @var {Request | null}
+   */
+  const incomingRequest: Request | null =
+    inject<Request>(REQUEST, { optional: true });
+
+  // Browser runtime or missing SSR request context.
+  if (!isPlatformServer(platformId) || !incomingRequest) {
+    return next(req);
+  }
+
+  // Keep explicit cookie header already set by caller.
+  if (req.headers.has('Cookie')) return next(req);
+
+  const cookieHeader: string | null = incomingRequest.headers.get('cookie');
+  if (!cookieHeader) return next(req);
+
+  const ssrReq: HttpRequest<unknown> = req.clone({
+    setHeaders: {
+      Cookie: cookieHeader,
+    },
+  });
+
+  return next(ssrReq);
+};

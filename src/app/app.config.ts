@@ -10,7 +10,7 @@ import { MessageService } from 'primeng/api';
 import { FireguardTheme } from '@core/themes/fireguard.theme';
 import { provideTheme } from '@core/services/theme';
 import { providePageTitleStrategy } from '@core/strategies/page-title/page-title-strategy.provider';
-import { authInterceptor, unauthorizedInterceptor } from '@core/interceptors';
+import { authInterceptor, ssrCookieForwardInterceptor, unauthorizedInterceptor } from '@core/interceptors';
 import { provideAuth } from '@app/core/providers/auth';
 
 /**
@@ -41,7 +41,11 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay()),
     provideHttpClient(
       withFetch(),
-      withInterceptors([authInterceptor, unauthorizedInterceptor])
+      withInterceptors([
+        ssrCookieForwardInterceptor,
+        authInterceptor,
+        unauthorizedInterceptor
+      ])
     ),
     provideEnv(environment),
     provideAuth(),

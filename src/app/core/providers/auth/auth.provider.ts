@@ -1,5 +1,12 @@
-import { type EnvironmentProviders, makeEnvironmentProviders, provideAppInitializer, inject, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, isPlatformServer } from '@angular/common';
+import {
+  type EnvironmentProviders,
+  inject,
+  makeEnvironmentProviders,
+  PLATFORM_ID,
+  provideAppInitializer,
+  REQUEST,
+} from '@angular/core';
 import { AuthStore } from '@core/stores/auth';
 
 /**
@@ -9,10 +16,10 @@ import { AuthStore } from '@core/stores/auth';
  *
  * @description
  * This provider:
- * - Initializes the AuthStore on app startup (browser only)
+ * - Initializes the AuthStore on app startup (browser + SSR request)
  * - Attempts to restore the user session using the refresh token cookie
  * - Blocks app initialization until auth state is determined
- * - Skips initialization during SSR/SSG to avoid prerendering issues
+ * - Skips initialization only when no browser/runtime request context is available
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -33,21 +40,20 @@ export function provideAuth(): EnvironmentProviders {
       /**
        * Constant platformId
        * @const platformId
-       * 
+       *
        * @description
-       * Angular platform ID for checking if running in browser.
-       * 
-       * Used to skip auth initialization during SSR/SSG prerendering to avoid 
-       * issues with cookies and session restoration.
-       * 
-       * Allows static generation of pages without requiring auth state.
-       * 
+       * Angular platform ID for checking runtime target (browser/server).
+       *
        * @var {object}
        */
       const platformId: object = inject<object>(PLATFORM_ID);
+      const request: Request | null = inject<Request>(REQUEST, { optional: true });
+      const canInitialize: boolean =
+        isPlatformBrowser(platformId) ||
+        (isPlatformServer(platformId) && !!request);
 
-      // Skip during SSR/SSG prerendering
-      if (!isPlatformBrowser(platformId)) return;
+      // Skip static prerender contexts without per-request session.
+      if (!canInitialize) return;
 
       /**
        * Constant authStore

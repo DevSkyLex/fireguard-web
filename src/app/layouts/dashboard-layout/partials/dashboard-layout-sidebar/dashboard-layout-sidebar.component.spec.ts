@@ -20,23 +20,73 @@ describe('DashboardLayoutSidebar', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render configured navigation items', () => {
+  it('should render branding and section labels', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebar);
     fixture.detectChanges();
 
-    const links = fixture.debugElement.queryAll(By.css('a'));
-    expect(links.length).toBe(1);
-    expect(links[0].nativeElement.textContent).toContain('Home');
+    const panelMenus = fixture.debugElement.queryAll(By.css('p-panelmenu'));
+    expect(panelMenus.length).toBe(2);
+
+    const textContent = fixture.nativeElement.textContent;
+    expect(textContent).toContain('Fireguard');
+    expect(textContent).toContain('Home');
+    expect(textContent).toContain('Dashboard');
+    expect(textContent).toContain('Organization');
+    expect(textContent).toContain('Security');
   });
 
-  it('should close sidebar on navigation click', () => {
+  it('should configure notification badges in menu model', () => {
+    const fixture = TestBed.createComponent(DashboardLayoutSidebar);
+    const component = fixture.componentInstance as unknown as {
+      readonly menuGroups: readonly {
+        readonly id: string;
+        readonly items: readonly {
+          readonly items?: readonly {
+            readonly label?: string;
+            readonly badge?: string;
+            readonly items?: readonly {
+              readonly label?: string;
+              readonly badge?: string;
+            }[];
+          }[];
+        }[];
+      }[];
+    };
+
+    const homeGroup = component.menuGroups.find((group) => group.id === 'home');
+    const organizationGroup = component.menuGroups.find((group) => group.id === 'organization');
+    const homeItems = homeGroup?.items[0].items ?? [];
+    const organizationItems = organizationGroup?.items[0].items ?? [];
+    const securityItems = organizationItems.find((item) => item.label === 'Security')?.items ?? [];
+    const bookmarks = homeItems.find((item) => item.label === 'Bookmarks');
+    const messages = homeItems.find((item) => item.label === 'Messages');
+    const reports = securityItems.find((item) => item.label === 'Reports');
+
+    expect(bookmarks?.badge).toBe('3');
+    expect(messages?.badge).toBe('1');
+    expect(reports?.badge).toBe('4');
+  });
+
+  it('should close sidebar when a leaf command is executed', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebar);
     const sidebarService = TestBed.inject(DashboardSidebarService);
     const closeSpy = vi.spyOn(sidebarService, 'close');
+    const component = fixture.componentInstance as unknown as {
+      readonly menuGroups: readonly {
+        readonly id: string;
+        readonly items: readonly {
+          readonly items?: readonly {
+            readonly label?: string;
+            readonly command?: () => void;
+          }[];
+        }[];
+      }[];
+    };
 
-    fixture.detectChanges();
-    const firstLink = fixture.debugElement.query(By.css('a'));
-    firstLink.nativeElement.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const homeGroup = component.menuGroups.find((group) => group.id === 'home');
+    const homeItems = homeGroup?.items[0].items ?? [];
+    const dashboardItem = homeItems.find((item) => item.label === 'Dashboard');
+    dashboardItem?.command?.();
 
     expect(closeSpy).toHaveBeenCalledTimes(1);
   });

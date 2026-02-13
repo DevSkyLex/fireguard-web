@@ -6,7 +6,7 @@ import type { Preset } from '@primeuix/themes/types';
  * Theme FireguardTheme
  * @type {Preset}
  *
- * @description
+ * @descriptionF
  * This is the theme for the application.
  *
  * @version 1.0.0
@@ -25,17 +25,17 @@ import type { Preset } from '@primeuix/themes/types';
 export const FireguardTheme: Preset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '{sky.50}',
-      100: '{sky.100}',
-      200: '{sky.200}',
-      300: '{sky.300}',
-      400: '{sky.400}',
-      500: '{sky.500}',
-      600: '{sky.600}',
-      700: '{sky.700}',
-      800: '{sky.800}',
-      900: '{sky.900}',
-      950: '{sky.950}'
+      50: '{orange.50}',
+      100: '{orange.100}',
+      200: '{orange.200}',
+      300: '{orange.300}',
+      400: '{orange.400}',
+      500: '{orange.500}',
+      600: '{orange.600}',
+      700: '{orange.700}',
+      800: '{orange.800}',
+      900: '{orange.900}',
+      950: '{orange.950}'
     },
   }
 });

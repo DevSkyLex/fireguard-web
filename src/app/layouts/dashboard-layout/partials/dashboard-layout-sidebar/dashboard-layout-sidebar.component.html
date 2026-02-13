@@ -1,3 +1,26 @@
-<aside class="border-r p-10 border-surface-200 h-dvh sticky top-0">
+<aside class="flex flex-col h-dvh w-full bg-surface-0">
+  <!-- Branding -->
+  <div class="flex items-center gap-3 px-6 py-5">
+    <i class="pi pi-shield text-primary text-2xl"></i>
+    <span class="font-bold text-xl text-surface-900">Fireguard</span>
+  </div>
 
+  <!-- Navigation -->
+  <nav class="flex-1 overflow-y-auto px-3">
+    <ul class="list-none m-0 p-0">
+      @for (item of menuItems; track item.route) {
+        <li>
+          <a [routerLink]="item.route"
+             routerLinkActive="bg-primary/10 !text-primary"
+             [routerLinkActiveOptions]="{ exact: item.exact }"
+             (click)="sidebarService.close()"
+             pRipple
+             class="flex items-center gap-3 px-4 py-3 rounded-lg text-surface-600 hover:bg-surface-100 transition-colors cursor-pointer no-underline">
+            <i [class]="item.icon"></i>
+            <span class="font-medium">{{ item.label }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
 </aside>

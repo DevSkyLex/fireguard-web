@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
 import { DashboardLayoutHeader, DashboardLayoutSidebar, DashboardLayoutContent } from "@layouts/dashboard-layout/partials";
+import { SplitterModule } from 'primeng/splitter';
 
 /**
  * Component DashboardLayout
@@ -26,6 +27,7 @@ import { DashboardLayoutHeader, DashboardLayoutSidebar, DashboardLayoutContent }
     DashboardLayoutHeader,
     DashboardLayoutSidebar,
     DashboardLayoutContent,
+    SplitterModule
   ],
   templateUrl: './dashboard-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

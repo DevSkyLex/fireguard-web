@@ -1,14 +1,18 @@
 <div id="dashboard-layout" class="flex flex-row min-h-dvh bg-surface-0">
-  <section class="grid [grid-template-areas:'sidebar_header'_'sidebar_content'] grid-cols-[auto_1fr] grid-rows-[auto_1fr] w-full">
-    <!-- Layout Sidebar -->
-    <app-dashboard-layout-sidebar class="[grid-area:sidebar]" />
+  <section class="flex w-full">
+    <p-splitter [panelSizes]="[20, 80]" [minSizes]="[15, 60]" [gutterSize]="1" class="w-full">
+      <ng-template #panel>
+        <app-dashboard-layout-sidebar/>
+      </ng-template>
 
-    <!-- Layout Header -->
-    <app-dashboard-layout-header class="[grid-area:header]" />
-
-    <!-- Layout Content -->
-    <app-dashboard-layout-content class="[grid-area:content]">
-      <router-outlet />
-    </app-dashboard-layout-content>
+      <ng-template #panel>
+        <div class="flex flex-col">
+          <app-dashboard-layout-header/>
+          <app-dashboard-layout-content>
+            <router-outlet />
+          </app-dashboard-layout-content>
+        </div>
+      </ng-template>
+    </p-splitter>
   </section>
 </div>

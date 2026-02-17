@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, Signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angular/router';
 import type { MotionOptions } from '@primeuix/motion';
 import type { MenuItem } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
@@ -36,6 +36,7 @@ import {
     PanelMenuModule,
     RippleModule,
     RouterLink,
+    RouterLinkActive,
   ],
   templateUrl: './dashboard-layout-sidebar-navigation.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -146,6 +147,44 @@ export class DashboardLayoutSidebarNavigation {
    */
   protected readonly menuItems: Signal<MenuItem[]> =
     this.sidebarNavigationService.menuItems;
+
+  /**
+   * Property exactMatchOptions
+   * @readonly
+   *
+   * @description
+   * Router active options for exact route matching.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {IsActiveMatchOptions}
+   */
+  private readonly exactMatchOptions: IsActiveMatchOptions = {
+    paths: 'exact',
+    queryParams: 'ignored',
+    matrixParams: 'ignored',
+    fragment: 'ignored',
+  };
+
+  /**
+   * Property subsetMatchOptions
+   * @readonly
+   *
+   * @description
+   * Router active options for non-root route matching.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {IsActiveMatchOptions}
+   */
+  private readonly subsetMatchOptions: IsActiveMatchOptions = {
+    paths: 'subset',
+    queryParams: 'ignored',
+    matrixParams: 'ignored',
+    fragment: 'ignored',
+  };
   //#endregion
 
   //#region Methods
@@ -201,6 +240,31 @@ export class DashboardLayoutSidebarNavigation {
     if (item.routerLink && !item.items?.length) {
       this.sidebarService.close();
     }
+  }
+
+  /**
+   * Method getRouterLinkActiveOptions
+   * @method getRouterLinkActiveOptions
+   *
+   * @description
+   * Returns active route matching options based on item route.
+   * Root route uses exact matching to avoid being active on all URLs.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {MenuItem['routerLink']} routerLink - Navigation item route.
+   *
+   * @returns {IsActiveMatchOptions}
+   */
+  protected getRouterLinkActiveOptions(
+    routerLink: MenuItem['routerLink'],
+  ): IsActiveMatchOptions {
+    if (typeof routerLink === 'string' && routerLink === '/') {
+      return this.exactMatchOptions;
+    }
+
+    return this.subsetMatchOptions;
   }
   //#endregion
 }

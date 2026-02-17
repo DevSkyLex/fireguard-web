@@ -14,5 +14,8 @@ export const MAIN_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/home-page/home-page.component').then((m) => m.HomePage),
     title: 'Home',
+    data: {
+      breadcrumb: 'Dashboard',
+    },
   },
 ];

@@ -1,13 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DashboardSidebarService } from '@layouts/dashboard-layout/services';
+import { provideRouter } from '@angular/router';
+import { DashboardBreadcrumbService, DashboardSidebarService } from '@layouts/dashboard-layout/services';
 import { DashboardLayoutHeader } from './dashboard-layout-header.component';
 
 describe('DashboardLayoutHeader', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [DashboardLayoutHeader],
-      providers: [DashboardSidebarService],
+      providers: [
+        DashboardSidebarService,
+        DashboardBreadcrumbService,
+        provideRouter([]),
+      ],
     });
   });
 
@@ -26,5 +31,13 @@ describe('DashboardLayoutHeader', () => {
     menuButton.triggerEventHandler('onClick', new MouseEvent('click'));
 
     expect(openSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render breadcrumb navigation', () => {
+    const fixture = TestBed.createComponent(DashboardLayoutHeader);
+
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('app-dashboard-layout-breadcrumb'))).toBeTruthy();
   });
 });

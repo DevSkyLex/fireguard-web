@@ -1,11 +1,21 @@
-<header class="flex items-center gap-4 px-6 py-3 border-b border-surface-200">
-  <p-button
-    class="lg:hidden"
-    icon="pi pi-bars"
-    severity="secondary"
-    [text]="true"
-    [rounded]="true"
-    ariaLabel="Open navigation menu"
-    (onClick)="sidebarService.open()"
-  />
+<header class="flex items-center gap-4 px-6 py-5 border-b border-surface-200">
+  <section class="lg:hidden">
+    <p-button
+      icon="pi pi-bars"
+      severity="secondary"
+      [text]="true"
+      [rounded]="true"
+      ariaLabel="Open navigation menu"
+      (onClick)="sidebarService.open()"
+    />
+  </section>
+
+  <!-- Header Breadcrumb -->
+  <section class="flex">
+    <app-dashboard-layout-breadcrumb class="flex-1 min-w-0"/>
+  </section>
+
+  <section class="flex ml-auto">
+    test
+  </section>
 </header>

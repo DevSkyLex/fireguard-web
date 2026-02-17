@@ -1,6 +1,6 @@
 <section class="flex flex-col" data-testid="dashboard-user-profile">
   @if (userStore.isLoading()) {
-    <div class="flex items-center gap-3 p-3" data-testid="dashboard-user-profile-skeleton" aria-busy="true">
+    <div class="flex items-center gap-3 p-4" data-testid="dashboard-user-profile-skeleton" aria-busy="true">
       <p-skeleton shape="circle" size="2rem" />
 
       <div class="min-w-0 flex-1 space-y-2">
@@ -20,7 +20,7 @@
       data-testid="dashboard-user-profile-panel"
     >
       <ng-template #header>
-        <div class="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-50 cursor-pointer" data-testid="dashboard-user-profile-trigger">
+        <div class="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-surface-50 cursor-pointer" data-testid="dashboard-user-profile-trigger">
           @if (userStore.avatarUrl(); as avatarUrl) {
             <p-avatar
               [image]="avatarUrl"

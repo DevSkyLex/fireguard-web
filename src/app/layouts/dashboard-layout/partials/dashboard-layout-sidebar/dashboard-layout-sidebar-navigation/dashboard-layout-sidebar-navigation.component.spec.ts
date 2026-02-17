@@ -1,12 +1,18 @@
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
 import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
 } from '@layouts/dashboard-layout/services';
 import { DashboardLayoutSidebarNavigation } from './dashboard-layout-sidebar-navigation.component';
+
+@Component({
+  template: '',
+})
+class DummyPage {}
 
 describe('DashboardLayoutSidebarNavigation', () => {
   beforeEach(() => {
@@ -15,7 +21,12 @@ describe('DashboardLayoutSidebarNavigation', () => {
       providers: [
         DashboardSidebarNavigationService,
         DashboardSidebarService,
-        provideRouter([]),
+        provideRouter([
+          { path: '', component: DummyPage },
+          { path: 'organization/members', component: DummyPage },
+          { path: 'organization/settings', component: DummyPage },
+          { path: 'organization/reports', component: DummyPage },
+        ]),
       ],
     });
   });
@@ -88,5 +99,23 @@ describe('DashboardLayoutSidebarNavigation', () => {
     component.onItemClick({});
 
     expect(closeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should highlight the active route item', async () => {
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/organization/settings');
+
+    const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const activeLinks = fixture.debugElement.queryAll(By.css('a[aria-current="page"]'));
+    const settingsLink = fixture.debugElement.query(By.css('a[data-sidebar-item-id="settings"]'));
+    const dashboardLink = fixture.debugElement.query(By.css('a[data-sidebar-item-id="dashboard"]'));
+
+    expect(activeLinks.length).toBe(1);
+    expect(settingsLink.nativeElement.getAttribute('aria-current')).toBe('page');
+    expect(dashboardLink.nativeElement.getAttribute('aria-current')).toBeNull();
   });
 });

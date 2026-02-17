@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject } from "@angular/core";
 import { ButtonModule } from "primeng/button";
 import { DashboardSidebarService } from "@layouts/dashboard-layout/services";
+import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
 
 /**
  * Component DashboardLayoutHeader
@@ -24,10 +25,26 @@ import { DashboardSidebarService } from "@layouts/dashboard-layout/services";
  */
 @Component({
   selector: 'app-dashboard-layout-header',
-  imports: [ButtonModule],
+  imports: [ButtonModule, DashboardLayoutBreadcrumb],
   templateUrl: './dashboard-layout-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardLayoutHeader {
-  protected readonly sidebarService: DashboardSidebarService = inject(DashboardSidebarService);
+  //#region Properties
+  /**
+   * Property sidebarService
+   * @readonly
+   *
+   * @description
+   * Injected DashboardSidebarService instance for
+   * controlling sidebar visibility.
+   *
+   * @access private
+   * @since 1.3.0
+   *
+   * @type {DashboardSidebarService}
+   */
+  protected readonly sidebarService: DashboardSidebarService =
+    inject<DashboardSidebarService>(DashboardSidebarService);
+  //#endregion
 }

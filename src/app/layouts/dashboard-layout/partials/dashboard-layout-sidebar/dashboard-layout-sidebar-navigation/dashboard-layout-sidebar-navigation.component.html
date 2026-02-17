@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-4 p-3">
   <div class="flex flex-col">
     <label class="sr-only" for="sidebar-search">Search navigation</label>
     <p-iconfield class="w-full">
@@ -53,10 +53,22 @@
           <ng-template #item let-item>
             <a
               pRipple
-              class="flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-surface-800 transition-colors hover:bg-surface-50"
-              [routerLink]="item.routerLink"
+              class="relative flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-surface-800 transition-colors hover:bg-surface-50"
+              [routerLink]="item.routerLink ?? null"
+              routerLinkActive
+              [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.routerLink)"
+              #linkActive="routerLinkActive"
+              [attr.aria-current]="item.routerLink && linkActive.isActive ? 'page' : null"
+              [attr.data-sidebar-item-id]="item.id ?? null"
               (click)="onItemClick(item)"
             >
+              @if (item.routerLink && linkActive.isActive) {
+                <span
+                  class="pointer-events-none absolute top-1/2 -left-3 size-2 -translate-y-1/2 rounded-full bg-primary-500"
+                  aria-hidden="true"
+                ></span>
+              }
+
               @if (item.icon) {
                 <i [class]="item.icon + ' text-base text-surface-500'"></i>
               }

@@ -1,0 +1,11 @@
+<p-breadcrumb
+  [home]="breadcrumbService.home"
+  [model]="breadcrumbService.items()"
+  [pt]="breadcrumbPt"
+  homeAriaLabel="Navigate to dashboard home"
+  class="w-full min-w-0"
+>
+  <ng-template #separator>
+    <i class="pi pi-chevron-right text-xs text-surface-500" aria-hidden="true"></i>
+  </ng-template>
+</p-breadcrumb>

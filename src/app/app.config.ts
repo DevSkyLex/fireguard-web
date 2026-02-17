@@ -1,7 +1,7 @@
 import { type ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import { routes } from '@app/app.routes';
+import { APP_ROUTES } from '@app/app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideEnv } from '@core/config/environment/env.provider';
 import { environment } from '@env/environment';
@@ -37,7 +37,7 @@ import { provideAuth } from '@app/core/providers/auth';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes, withComponentInputBinding()),
+    provideRouter(APP_ROUTES, withComponentInputBinding()),
     provideClientHydration(withEventReplay()),
     provideHttpClient(
       withFetch(),

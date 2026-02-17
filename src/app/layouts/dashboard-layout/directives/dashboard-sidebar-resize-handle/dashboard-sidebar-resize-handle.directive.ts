@@ -273,12 +273,12 @@ export class DashboardSidebarResizeHandleDirective {
     event.preventDefault();
 
     if (event.key === 'Home') {
-      this.sidebarService.setWidth(DashboardSidebarService.MIN_WIDTH);
+      this.sidebarService.setWidth(this.sidebarService.minWidth());
       return;
     }
 
     if (event.key === 'End') {
-      this.sidebarService.setWidth(DashboardSidebarService.MAX_WIDTH);
+      this.sidebarService.setWidth(this.sidebarService.maxWidth());
       return;
     }
 

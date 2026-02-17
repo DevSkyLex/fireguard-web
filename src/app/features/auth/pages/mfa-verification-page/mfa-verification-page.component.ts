@@ -27,7 +27,7 @@ import { Events } from '@ngrx/signals/events';
  * 2. Backend returns 201 with mfaToken (MFA required)
  * 3. Frontend navigates to /auth/mfa-verify
  * 4. User enters OTP code
- * 5. Verification successful → Navigate to /home
+ * 5. Verification successful → Navigate to /
  *
  * @version 1.0.0
  *
@@ -200,7 +200,7 @@ export class MfaVerificationPage {
     effect(() => {
       if (this.authStore.isAuthenticated()) {
         this.userStore.load();
-        this.router.navigate(['/home']).catch((error: unknown) => {
+        this.router.navigate(['/']).catch((error: unknown) => {
           console.error('Navigation failed', error);
         });
       }

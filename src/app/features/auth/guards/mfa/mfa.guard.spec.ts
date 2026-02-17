@@ -47,14 +47,14 @@ describe('mfaGuard', () => {
     expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login']);
   });
 
-  it('should redirect authenticated users to home in browser', () => {
+  it('should redirect authenticated users to root in browser', () => {
     configure('browser');
     mockAuthStore.isAuthenticated.mockReturnValue(true);
 
     const result = runGuard();
 
     expect(result).toBe(urlTree);
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/home']);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/']);
   });
 
   it('should allow access when MFA is required in browser', () => {

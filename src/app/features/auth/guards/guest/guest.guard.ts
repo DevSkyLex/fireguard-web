@@ -8,7 +8,7 @@ import { AuthStore } from '@core/stores/auth';
  * @description
  * Protects routes that should only be accessible
  * to guests (non-authenticated users).
- * Redirects authenticated users to home and users with pending MFA
+ * Redirects authenticated users to root and users with pending MFA
  * to the MFA verification route.
  *
  * @version 1.0.0
@@ -49,7 +49,6 @@ export const guestGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
   // Allow access if user is not authenticated
   if (!authStore.isAuthenticated()) return true;
 
-  // Redirect authenticated users to home
-  return router.createUrlTree(['/home']);
+  // Redirect authenticated users to root
+  return router.createUrlTree(['/']);
 };
-

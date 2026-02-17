@@ -48,7 +48,7 @@ describe('MfaVerificationPage', () => {
     const { mockUserStore, mockRouter } = setup({ authenticated: true });
 
     expect(mockUserStore.load).toHaveBeenCalledTimes(1);
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/home']);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
   });
 
   it('should not verify OTP when MFA token is missing', () => {

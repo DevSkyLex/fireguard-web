@@ -1,0 +1,84 @@
+<div class="flex flex-col gap-4">
+  <div class="flex flex-col">
+    <label class="sr-only" for="sidebar-search">Search navigation</label>
+    <p-iconfield class="w-full">
+      <p-inputicon class="pi pi-search" />
+      <input
+        #searchInput
+        pInputText
+        id="sidebar-search"
+        type="search"
+        class="w-full"
+        pSize="small"
+        placeholder="Search..."
+        data-testid="sidebar-search-input"
+        [value]="searchQuery()"
+        (input)="onSearchInput(searchInput.value)"
+      />
+
+      @if (searchQuery()) {
+        <p-inputicon
+          class="pi pi-times cursor-pointer text-surface-500 text-xs transition-colors hover:text-surface-700"
+          role="button"
+          tabindex="0"
+          aria-label="Clear search"
+          data-testid="sidebar-search-clear"
+          (click)="clearSearch()"
+          (keydown.enter)="clearSearch()"
+          (keydown.space)="$event.preventDefault(); clearSearch()"
+        />
+      }
+    </p-iconfield>
+  </div>
+
+  <nav class="flex-1 overflow-y-auto">
+    @if (menuItems().length === 0) {
+      <div class="flex min-h-28 items-center justify-center rounded-xl border border-dashed border-surface-200 bg-surface-50 px-4 text-center text-sm text-surface-500">
+        No results found.
+      </div>
+    } @else {
+      @for (section of menuItems(); track section.id ?? section.label; let isFirst = $first) {
+        @if (!isFirst) {
+          <p-divider class="!my-4 !border-surface-200" data-testid="sidebar-section-divider" />
+        }
+
+        <p-panelmenu
+          [model]="[section]"
+          [multiple]="true"
+          [motionOptions]="panelMenuMotionOptions"
+          [unstyled]="true"
+          [pt]="panelMenuPt"
+          class="w-full"
+        >
+          <ng-template #item let-item>
+            <a
+              pRipple
+              class="flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-surface-800 transition-colors hover:bg-surface-50"
+              [routerLink]="item.routerLink"
+              (click)="onItemClick(item)"
+            >
+              @if (item.icon) {
+                <i [class]="item.icon + ' text-base text-surface-500'"></i>
+              }
+
+              <span [class]="item.icon ? 'flex-1 text-sm font-medium text-surface-700' : 'flex-1 text-base font-semibold text-surface-900'">
+                {{ item.label }}
+              </span>
+
+              @if (item.badge) {
+                <p-badge [value]="item.badge" severity="contrast" size="small"/>
+              }
+
+              @if (item.items?.length) {
+                <i class="pi text-surface-500 text-xs"
+                  [class.pi-chevron-down]="item.expanded"
+                  [class.pi-chevron-right]="!item.expanded"
+                ></i>
+              }
+            </a>
+          </ng-template>
+        </p-panelmenu>
+      }
+    }
+  </nav>
+</div>

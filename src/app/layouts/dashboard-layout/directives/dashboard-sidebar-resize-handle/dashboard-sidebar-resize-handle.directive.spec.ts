@@ -147,11 +147,11 @@ describe('DashboardSidebarResizeHandleDirective', () => {
 
     const homeHandled = dispatchKeydown(handle, 'Home');
     expect(homeHandled).toBe(false);
-    expect(sidebarService.width()).toBe(DashboardSidebarService.MIN_WIDTH);
+    expect(sidebarService.width()).toBe(sidebarService.minWidth());
 
     const endHandled = dispatchKeydown(handle, 'End');
     expect(endHandled).toBe(false);
-    expect(sidebarService.width()).toBe(DashboardSidebarService.MAX_WIDTH);
+    expect(sidebarService.width()).toBe(sidebarService.maxWidth());
   });
 
   it('should cleanup listeners when destroyed during an active resize', () => {

@@ -49,13 +49,13 @@ describe('guestGuard', () => {
     expect(result).toBe(true);
   });
 
-  it('should redirect authenticated users to home', () => {
+  it('should redirect authenticated users to root', () => {
     mockAuthStore.mfaRequired.mockReturnValue(false);
     mockAuthStore.isAuthenticated.mockReturnValue(true);
 
     const result = runGuard();
 
     expect(result).toBe(urlTree);
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/home']);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/']);
   });
 });

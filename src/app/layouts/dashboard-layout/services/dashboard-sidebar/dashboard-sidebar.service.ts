@@ -1,4 +1,4 @@
-import { Injectable, Signal, signal, WritableSignal } from "@angular/core";
+import { computed, Injectable, Signal, signal, WritableSignal } from "@angular/core";
 
 /**
  * Service DashboardSidebarService
@@ -20,51 +20,50 @@ import { Injectable, Signal, signal, WritableSignal } from "@angular/core";
 export class DashboardSidebarService {
   //#region Properties
   /**
-   * Property DEFAULT_WIDTH
+   * Property INITIAL_DEFAULT_WIDTH
    * @readonly
    * @static
    *
    * @description
-   * Default sidebar width in pixels when the layout is initialized.
-   * Used as the initial value for the width signal and
-   * as a reference for reset operations.
+   * Initial default sidebar width in pixels when the layout
+   * is initialized.
    *
-   * @access public
+   * @access private
    * @since 1.0.0
    *
    * @type {number}
    */
-  public static readonly DEFAULT_WIDTH: number = 288;
+  private static readonly INITIAL_DEFAULT_WIDTH: number = 288;
 
   /**
-   * Property MIN_WIDTH
+   * Property INITIAL_MIN_WIDTH
    * @readonly
    * @static
    *
    * @description
-   * Minimum sidebar width in pixels.
+   * Initial minimum sidebar width in pixels.
    *
-   * @access public
+   * @access private
    * @since 1.0.0
    *
    * @type {number}
    */
-  public static readonly MIN_WIDTH: number = 200;
+  private static readonly INITIAL_MIN_WIDTH: number = 200;
 
   /**
-   * Property MAX_WIDTH
+   * Property INITIAL_MAX_WIDTH
    * @readonly
    * @static
    *
    * @description
-   * Maximum sidebar width in pixels.
+   * Initial maximum sidebar width in pixels.
    *
-   * @access public
+   * @access private
    * @since 1.0.0
    *
    * @type {number}
    */
-  public static readonly MAX_WIDTH: number = 480;
+  private static readonly INITIAL_MAX_WIDTH: number = 480;
 
   /**
    * Property _visible
@@ -83,6 +82,48 @@ export class DashboardSidebarService {
     signal<boolean>(false);
 
   /**
+   * Property defaultWidth
+   *
+   * @description
+   * Configurable default sidebar width in pixels.
+   *
+   * @access public
+   * @since 1.6.0
+   *
+   * @type {WritableSignal<number>}
+   */
+  public readonly defaultWidth: WritableSignal<number> =
+    signal<number>(DashboardSidebarService.INITIAL_DEFAULT_WIDTH);
+
+  /**
+   * Property minWidth
+   *
+   * @description
+   * Configurable minimum sidebar width in pixels.
+   *
+   * @access public
+   * @since 1.6.0
+   *
+   * @type {WritableSignal<number>}
+   */
+  public readonly minWidth: WritableSignal<number> =
+    signal<number>(DashboardSidebarService.INITIAL_MIN_WIDTH);
+
+  /**
+   * Property maxWidth
+   *
+   * @description
+   * Configurable maximum sidebar width in pixels.
+   *
+   * @access public
+   * @since 1.6.0
+   *
+   * @type {WritableSignal<number>}
+   */
+  public readonly maxWidth: WritableSignal<number> =
+    signal<number>(DashboardSidebarService.INITIAL_MAX_WIDTH);
+
+  /**
    * Property _width
    * @readonly
    *
@@ -96,7 +137,7 @@ export class DashboardSidebarService {
    * @type {WritableSignal<number>}
    */
   private readonly _width: WritableSignal<number> =
-    signal<number>(DashboardSidebarService.DEFAULT_WIDTH);
+    signal<number>(this.clampWidth(this.defaultWidth()));
 
   /**
    * Property visible
@@ -125,8 +166,10 @@ export class DashboardSidebarService {
    *
    * @type {Signal<number>}
    */
-  public readonly width: Signal<number> =
-    this._width.asReadonly();
+  public readonly width: Signal<number> = computed<number>(
+    (): number => this.clampWidth(this._width()),
+  );
+
   //#endregion
 
   //#region Methods
@@ -231,9 +274,7 @@ export class DashboardSidebarService {
    * @returns {void} - This method does not return a value.
    */
   public adjustWidth(delta: number): void {
-    this._width.update((currentWidth: number) => this.clampWidth(
-      currentWidth + delta
-    ));
+    this.setWidth(this.width() + delta);
   }
 
   /**
@@ -252,9 +293,12 @@ export class DashboardSidebarService {
    * @returns {number} - Clamped sidebar width.
    */
   private clampWidth(width: number): number {
+    const minWidth: number = Math.min(this.minWidth(), this.maxWidth());
+    const maxWidth: number = Math.max(this.minWidth(), this.maxWidth());
+
     return Math.min(
-      DashboardSidebarService.MAX_WIDTH,
-      Math.max(DashboardSidebarService.MIN_WIDTH, width),
+      maxWidth,
+      Math.max(minWidth, width),
     );
   }
   //#endregion

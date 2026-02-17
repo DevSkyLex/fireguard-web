@@ -1,6 +1,9 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { AuthStore } from '@core/stores/auth';
+import { UserStore } from '@core/stores/user';
 import { DashboardLayout } from './dashboard-layout.component';
 import { DashboardSidebarService } from './services';
 
@@ -71,10 +74,29 @@ const mockPointerCapture = (handle: HTMLButtonElement): ReturnType<typeof vi.fn>
 const createDomRect = (left: number): DOMRect => new DOMRect(left, 0, 0, 0);
 
 describe('DashboardLayout', () => {
+  const mockUserStore = {
+    isLoading: signal(false),
+    avatarUrl: signal<string | null>(null),
+    initials: signal<string | null>('FG'),
+    displayName: signal<string | null>('Fireguard User'),
+    profile: signal<{ email?: string } | null>({ email: 'user@fireguard.local' }),
+  };
+  const mockAuthStore = {
+    isLoggingOut: signal(false),
+    logout: vi.fn(),
+  };
+
   beforeEach(() => {
+    mockAuthStore.isLoggingOut.set(false);
+    mockAuthStore.logout.mockReset();
+
     TestBed.configureTestingModule({
       imports: [DashboardLayout],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: UserStore, useValue: mockUserStore },
+        { provide: AuthStore, useValue: mockAuthStore },
+      ],
     });
   });
 
@@ -155,11 +177,11 @@ describe('DashboardLayout', () => {
 
     const homeHandled = dispatchKeydown(handle, 'Home');
     expect(homeHandled).toBe(false);
-    expect(sidebarService.width()).toBe(DashboardSidebarService.MIN_WIDTH);
+    expect(sidebarService.width()).toBe(sidebarService.minWidth());
 
     const endHandled = dispatchKeydown(handle, 'End');
     expect(endHandled).toBe(false);
-    expect(sidebarService.width()).toBe(DashboardSidebarService.MAX_WIDTH);
+    expect(sidebarService.width()).toBe(sidebarService.maxWidth());
   });
 
   it('should cleanup on pointercancel', () => {

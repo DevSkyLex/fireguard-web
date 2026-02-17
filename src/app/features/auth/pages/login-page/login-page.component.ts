@@ -145,7 +145,7 @@ export class LoginPage {
     effect(() => {
       if (this.authStore.isAuthenticated()) {
         this.userStore.load();
-        this.router.navigate(['/home']).catch((error: unknown) => {
+        this.router.navigate(['/']).catch((error: unknown) => {
           console.error('Navigation failed', error);
         });
       }

@@ -8,7 +8,7 @@ import { AuthStore } from '@core/stores/auth';
  * @description
  * Protects the MFA verification route.
  * Only allows access when MFA verification is pending.
- * Redirects to login if no MFA is required, or to home if already authenticated.
+ * Redirects to login if no MFA is required, or to root if already authenticated.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -41,9 +41,9 @@ export const mfaGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
    */
   const router: Router = inject<Router>(Router);
 
-  // If already authenticated, redirect to home
+  // If already authenticated, redirect to root
   if (authStore.isAuthenticated()) {
-    return router.createUrlTree(['/home']);
+    return router.createUrlTree(['/']);
   }
 
   // If MFA is required, allow access

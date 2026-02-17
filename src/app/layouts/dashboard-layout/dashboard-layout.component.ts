@@ -4,7 +4,7 @@ import { DashboardLayoutHeader, DashboardLayoutSidebar, DashboardLayoutContent }
 import { DrawerModule } from 'primeng/drawer';
 import { Ripple } from "primeng/ripple";
 import { DashboardSidebarResizeHandleDirective } from './directives';
-import { DashboardSidebarService } from './services';
+import { DashboardSidebarNavigationService, DashboardSidebarService } from './services';
 
 /**
  * Component DashboardLayout
@@ -14,8 +14,9 @@ import { DashboardSidebarService } from './services';
  * Layout component for dashboard pages like
  * home, profile, settings, etc.
  *
- * Provides {@link DashboardSidebarService} at the component level
- * so child components can inject it directly.
+ * Provides {@link DashboardSidebarService} and
+ * {@link DashboardSidebarNavigationService} at the component level
+ * so child components can inject them directly.
  *
  * Responsive behavior:
  * - Desktop (lg+): resizable sidebar panel on the left (drag handle)
@@ -41,7 +42,7 @@ import { DashboardSidebarService } from './services';
     Ripple,
     DashboardSidebarResizeHandleDirective,
   ],
-  providers: [DashboardSidebarService],
+  providers: [DashboardSidebarService, DashboardSidebarNavigationService],
   templateUrl: './dashboard-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -61,36 +62,6 @@ export class DashboardLayout {
    * @type {DashboardSidebarService}
    */
   protected readonly sidebarService: DashboardSidebarService =
-    inject(DashboardSidebarService);
-
-  /**
-   * Property minSidebarWidth
-   * @readonly
-   *
-   * @description
-   * Minimum sidebar width in pixels, used to enforce
-   * constraints during resizing.
-   *
-   * @access protected
-   * @since 1.5.0
-   *
-   * @type {number}
-   */
-  protected readonly minSidebarWidth: number = DashboardSidebarService.MIN_WIDTH;
-
-  /**
-   * Property maxSidebarWidth
-   * @readonly
-   *
-   * @description
-   * Maximum sidebar width in pixels, used to enforce
-   * constraints during resizing.
-   *
-   * @access protected
-   * @since 1.5.0
-   *
-   * @type {number}
-   */
-  protected readonly maxSidebarWidth: number = DashboardSidebarService.MAX_WIDTH;
+    inject<DashboardSidebarService>(DashboardSidebarService);
   //#endregion
 }

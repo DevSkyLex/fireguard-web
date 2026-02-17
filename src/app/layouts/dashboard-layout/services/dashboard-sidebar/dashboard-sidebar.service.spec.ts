@@ -17,21 +17,46 @@ describe('DashboardSidebarService', () => {
   });
 
   it('should clamp width when setting it directly', () => {
-    service.setWidth(DashboardSidebarService.MIN_WIDTH - 50);
-    expect(service.width()).toBe(DashboardSidebarService.MIN_WIDTH);
+    service.setWidth(service.minWidth() - 50);
+    expect(service.width()).toBe(service.minWidth());
 
-    service.setWidth(DashboardSidebarService.MAX_WIDTH + 50);
-    expect(service.width()).toBe(DashboardSidebarService.MAX_WIDTH);
+    service.setWidth(service.maxWidth() + 50);
+    expect(service.width()).toBe(service.maxWidth());
   });
 
   it('should clamp width when adjusting it', () => {
-    service.setWidth(DashboardSidebarService.DEFAULT_WIDTH);
+    service.setWidth(service.defaultWidth());
 
     service.adjustWidth(500);
-    expect(service.width()).toBe(DashboardSidebarService.MAX_WIDTH);
+    expect(service.width()).toBe(service.maxWidth());
 
     service.adjustWidth(-500);
-    expect(service.width()).toBe(DashboardSidebarService.MIN_WIDTH);
+    expect(service.width()).toBe(service.minWidth());
+  });
+
+  it('should allow updating default, min and max width signals', () => {
+    service.minWidth.set(240);
+    service.maxWidth.set(420);
+    service.defaultWidth.set(360);
+
+    expect(service.minWidth()).toBe(240);
+    expect(service.maxWidth()).toBe(420);
+    expect(service.defaultWidth()).toBe(360);
+
+    service.setWidth(200);
+    expect(service.width()).toBe(240);
+
+    service.setWidth(500);
+    expect(service.width()).toBe(420);
+  });
+
+  it('should keep width bounded when constraints are updated', () => {
+    service.setWidth(400);
+    service.maxWidth.set(320);
+    expect(service.width()).toBe(320);
+
+    service.minWidth.set(340);
+    expect(service.width()).toBe(340);
   });
 
   it('should open, close and toggle drawer visibility', () => {

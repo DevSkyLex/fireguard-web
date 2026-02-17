@@ -11,11 +11,6 @@ import type { Routes } from '@angular/router';
 export const MAIN_ROUTES: Routes = [
   {
     path: '',
-    redirectTo: 'home',
-    pathMatch: 'full',
-  },
-  {
-    path: 'home',
     loadComponent: () =>
       import('./pages/home-page/home-page.component').then((m) => m.HomePage),
     title: 'Home',

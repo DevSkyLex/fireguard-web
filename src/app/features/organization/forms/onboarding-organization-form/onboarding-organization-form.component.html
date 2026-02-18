@@ -1,0 +1,71 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-6 w-full">
+  <div class="flex flex-col gap-2">
+    <label for="organization-name" class="text-sm font-medium text-surface-700">Organization name</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-building" />
+      <input
+        pInputText
+        id="organization-name"
+        formControlName="name"
+        class="w-full"
+        placeholder="Fireguard Paris"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+
+    @if (form.controls.name.invalid && form.controls.name.touched) {
+      <p-message severity="error" variant="simple" size="small">
+        @if (form.controls.name.hasError('required')) {
+          <span>Organization name is required.</span>
+        }
+        @if (form.controls.name.hasError('minlength')) {
+          <span>Organization name must contain at least 2 characters.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="organization-slug" class="text-sm font-medium text-surface-700">
+      Slug (optional)
+    </label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-link" />
+      <input
+        pInputText
+        id="organization-slug"
+        formControlName="slug"
+        class="w-full"
+        placeholder="fireguard-paris"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+    <p class="text-xs text-surface-500">
+      Use lowercase letters, numbers and dashes only.
+    </p>
+
+    @if (form.controls.slug.invalid && form.controls.slug.touched) {
+      <p-message severity="error" variant="simple" size="small">
+        @if (form.controls.slug.hasError('minlength')) {
+          <span>Slug must contain at least 3 characters.</span>
+        }
+        @if (form.controls.slug.hasError('maxlength')) {
+          <span>Slug is too long.</span>
+        }
+        @if (form.controls.slug.hasError('pattern')) {
+          <span>Slug format is invalid.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <p-button
+    type="submit"
+    label="Create organization"
+    icon="pi pi-arrow-right"
+    iconPos="right"
+    [loading]="loading()"
+    [disabled]="form.invalid || loading()"
+    styleClass="w-full"
+  />
+</form>

@@ -1,6 +1,8 @@
 import type { Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth';
-import { AuthLayout } from './layouts/auth-layout';
+import { onboardingCompletedGuard } from '@features/organization/guards';
+import { SplitLayout } from './layouts/split-layout';
+import { FocusedLayout } from './layouts/focused-layout';
 import { DashboardLayout } from './layouts/dashboard-layout';
 
 /**
@@ -12,7 +14,7 @@ import { DashboardLayout } from './layouts/dashboard-layout';
 export const APP_ROUTES: Routes = [
   {
     path: 'auth',
-    component: AuthLayout,
+    component: SplitLayout,
     children: [
       {
         path: '',
@@ -21,9 +23,23 @@ export const APP_ROUTES: Routes = [
     ],
   },
   {
+    path: 'onboarding',
+    component: SplitLayout,
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadChildren: () =>
+          import('@features/organization/organization.routes').then(
+            (m) => m.ORGANIZATION_ROUTES,
+          ),
+      },
+    ],
+  },
+  {
     path: '',
     component: DashboardLayout,
-    canActivate: [authGuard],
+    canActivate: [authGuard, onboardingCompletedGuard],
     children: [
       {
         path: '',
@@ -32,3 +48,5 @@ export const APP_ROUTES: Routes = [
     ],
   },
 ];
+
+

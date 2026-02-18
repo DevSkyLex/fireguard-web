@@ -55,9 +55,11 @@ export const ssrCookieForwardInterceptor: HttpInterceptorFn = (
   // Keep explicit cookie header already set by caller.
   if (req.headers.has('Cookie')) return next(req);
 
+  // Forward cookies from incoming SSR request to outgoing API call.
   const cookieHeader: string | null = incomingRequest.headers.get('cookie');
   if (!cookieHeader) return next(req);
 
+  // Clone the request and set the Cookie header for SSR.
   const ssrReq: HttpRequest<unknown> = req.clone({
     setHeaders: {
       Cookie: cookieHeader,

@@ -12,6 +12,7 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, exhaustMap, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
 import { AuthService } from '@core/services/api/auth';
 import { UserStore } from '@core/stores/user';
+import { OrganizationStore } from '@core/stores/organization';
 import { TrustedDeviceStore } from '@core/stores/trusted-device';
 import type { LoginInput, LoginOutput, LogoutOutput, MfaResendInput, MfaVerifyInput } from '@core/models/auth';
 import type { AuthState } from './auth-state.interface';
@@ -305,6 +306,7 @@ export const AuthStore = signalStore(
     dispatcher = inject<Dispatcher>(Dispatcher),
     authService = inject<AuthService>(AuthService),
     userStore = inject<UserStore>(UserStore),
+    organizationStore = inject<OrganizationStore>(OrganizationStore),
     trustedDeviceStore = inject<TrustedDeviceStore>(TrustedDeviceStore),
   ) => ({
     //#region Reactive Methods
@@ -396,6 +398,7 @@ export const AuthStore = signalStore(
                 });
                 // Clear user profile on logout
                 userStore.clear();
+                organizationStore.resetStore();
               },
               error: (error: unknown) => {
                 patchState(store, {
@@ -408,6 +411,7 @@ export const AuthStore = signalStore(
                 });
                 // Clear user profile even on logout error
                 userStore.clear();
+                organizationStore.resetStore();
               },
             }),
           ),
@@ -614,6 +618,7 @@ export const AuthStore = signalStore(
                 accessToken: null,
                 expiresAt: null,
               });
+              organizationStore.resetStore();
             },
           }),
         ),

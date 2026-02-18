@@ -11,6 +11,7 @@ import {
 import { Router } from '@angular/router';
 import { unauthorizedInterceptor } from './unauthorized.interceptor';
 import { AuthStore } from '@core/stores/auth';
+import { OrganizationStore } from '@core/stores/organization';
 import { UserStore } from '@core/stores/user';
 
 describe('unauthorizedInterceptor', () => {
@@ -18,11 +19,13 @@ describe('unauthorizedInterceptor', () => {
   let httpMock: HttpTestingController;
   let mockRouter: { navigate: ReturnType<typeof vi.fn> };
   let mockAuthStore: { clearToken: ReturnType<typeof vi.fn> };
+  let mockOrganizationStore: { resetStore: ReturnType<typeof vi.fn> };
   let mockUserStore: { clear: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     mockRouter = { navigate: vi.fn() };
     mockAuthStore = { clearToken: vi.fn() };
+    mockOrganizationStore = { resetStore: vi.fn() };
     mockUserStore = { clear: vi.fn() };
 
     TestBed.configureTestingModule({
@@ -31,6 +34,7 @@ describe('unauthorizedInterceptor', () => {
         provideHttpClientTesting(),
         { provide: Router, useValue: mockRouter },
         { provide: AuthStore, useValue: mockAuthStore },
+        { provide: OrganizationStore, useValue: mockOrganizationStore },
         { provide: UserStore, useValue: mockUserStore },
       ],
     });
@@ -47,6 +51,7 @@ describe('unauthorizedInterceptor', () => {
     httpClient.get('/api/users/me').subscribe({
       error: () => {
         expect(mockAuthStore.clearToken).toHaveBeenCalled();
+        expect(mockOrganizationStore.resetStore).toHaveBeenCalled();
         expect(mockUserStore.clear).toHaveBeenCalled();
         expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
       },

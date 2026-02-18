@@ -1,0 +1,128 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="flex flex-col gap-2">
+    <label for="facility-type" class="text-sm font-medium text-surface-700">Facility type</label>
+    <p-select
+      inputId="facility-type"
+      formControlName="type"
+      [options]="resolvedFacilityTypeOptions()"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Select facility type"
+      [disabled]="loading()"
+      [invalid]="form.controls.type.invalid && form.controls.type.touched"
+      styleClass="w-full"
+    />
+    @if (form.controls.type.invalid && form.controls.type.touched) {
+      <p-message severity="error" variant="simple" size="small">
+        <span>Facility type is required.</span>
+      </p-message>
+    }
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="facility-name" class="text-sm font-medium text-surface-700">Facility name</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-building-columns" />
+      <input
+        pInputText
+        id="facility-name"
+        formControlName="name"
+        class="w-full"
+        placeholder="Headquarters"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+    @if (form.controls.name.invalid && form.controls.name.touched) {
+      <p-message severity="error" variant="simple" size="small">
+        @if (form.controls.name.hasError('required')) {
+          <span>Facility name is required.</span>
+        }
+        @if (form.controls.name.hasError('minlength')) {
+          <span>Facility name must contain at least 2 characters.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="facility-code" class="text-sm font-medium text-surface-700">Code (optional)</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-tag" />
+      <input
+        pInputText
+        id="facility-code"
+        formControlName="code"
+        class="w-full"
+        placeholder="SITE-PAR-001"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+    @if (form.controls.code.invalid && form.controls.code.touched) {
+      <p-message severity="error" variant="simple" size="small">
+        <span>Code is too long.</span>
+      </p-message>
+    }
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="facility-address" class="text-sm font-medium text-surface-700">Address (optional)</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-map-marker" />
+      <input
+        pInputText
+        id="facility-address"
+        formControlName="address"
+        class="w-full"
+        placeholder="10 rue de Rivoli, Paris"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="facility-country" class="text-sm font-medium text-surface-700">Country (optional)</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-flag" />
+      <input
+        pInputText
+        id="facility-country"
+        formControlName="country"
+        class="w-full uppercase"
+        placeholder="FR"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+    @if (form.controls.country.invalid && form.controls.country.touched) {
+      <p-message severity="error" variant="simple" size="small">
+        <span>Country must be a 2-letter ISO code.</span>
+      </p-message>
+    }
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="facility-timezone" class="text-sm font-medium text-surface-700">Timezone (optional)</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-clock" />
+      <input
+        pInputText
+        id="facility-timezone"
+        formControlName="timezone"
+        class="w-full"
+        placeholder="Europe/Paris"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+  </div>
+
+  <div class="md:col-span-2 pt-2">
+    <p-button
+      type="submit"
+      label="Create first facility"
+      icon="pi pi-arrow-right"
+      iconPos="right"
+      [loading]="loading()"
+      [disabled]="form.invalid || loading()"
+      styleClass="w-full"
+    />
+  </div>
+</form>

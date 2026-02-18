@@ -1,0 +1,20 @@
+<div id="split-layout" class="flex flex-row min-h-dvh bg-surface-0">
+  <section class="hidden xl:grid place-content-stretch flex-1">
+    <!-- Layout Showcase -->
+    <app-split-layout-showcase />
+  </section>
+
+  <section class="gap-10 grid [grid-template-areas:'header'_'content'_'footer'] grid-cols-[1fr] grid-rows-[auto_1fr_auto] flex-1 min-h-dvh mx-auto">
+    <!-- Layout Header -->
+    <app-split-layout-header class="[grid-area:header]" />
+
+    <!-- Layout Content -->
+    <app-split-layout-content class="[grid-area:content]">
+      <router-outlet />
+    </app-split-layout-content>
+
+    <!-- Layout Footer -->
+    <app-split-layout-footer class="[grid-area:footer]" />
+  </section>
+</div>
+

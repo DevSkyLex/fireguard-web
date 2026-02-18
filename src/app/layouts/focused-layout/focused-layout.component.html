@@ -1,0 +1,17 @@
+<div id="focused-layout" class="grid grid-rows-[auto_1fr_auto] [grid-template-areas:'header'_'content'_'footer'] grid-cols-1 h-screen">
+  <section class="[grid-area:header]">
+    <app-focused-layout-header />
+  </section>
+
+  <!-- Main content area -->
+  <section class="[grid-area:content] overflow-y-auto">
+    <app-focused-layout-content>
+      <router-outlet />
+    </app-focused-layout-content>
+  </section>
+
+  <section class="[grid-area:footer]">
+    <app-focused-layout-footer />
+  </section>
+</div>
+

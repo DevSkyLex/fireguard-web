@@ -3,6 +3,7 @@ import { of, throwError } from 'rxjs';
 import { Dispatcher } from '@ngrx/signals/events';
 import { AuthStore } from './auth.store';
 import { AuthService } from '@core/services/api/auth';
+import { OrganizationStore } from '@core/stores/organization';
 import { UserStore } from '@core/stores/user';
 import { TrustedDeviceStore } from '@core/stores/trusted-device';
 import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@core/models/auth';
@@ -24,6 +25,9 @@ describe('AuthStore', () => {
   let mockUserStore: {
     clear: ReturnType<typeof vi.fn>;
     load: ReturnType<typeof vi.fn>;
+  };
+  let mockOrganizationStore: {
+    resetStore: ReturnType<typeof vi.fn>;
   };
   let mockTrustedDeviceStore: {
     pendingTrustDevice: ReturnType<typeof vi.fn>;
@@ -56,6 +60,9 @@ describe('AuthStore', () => {
       clear: vi.fn(),
       load: vi.fn(),
     };
+    mockOrganizationStore = {
+      resetStore: vi.fn(),
+    };
     mockTrustedDeviceStore = {
       pendingTrustDevice: vi.fn().mockReturnValue(false),
       trustDevice: vi.fn(),
@@ -66,6 +73,7 @@ describe('AuthStore', () => {
         { provide: Dispatcher, useValue: mockDispatcher },
         { provide: AuthService, useValue: mockAuthService },
         { provide: UserStore, useValue: mockUserStore },
+        { provide: OrganizationStore, useValue: mockOrganizationStore },
         { provide: TrustedDeviceStore, useValue: mockTrustedDeviceStore },
       ],
     });
@@ -203,5 +211,6 @@ describe('AuthStore', () => {
     expect(store.initialized()).toBe(true);
     expect(store.accessToken()).toBeNull();
     expect(mockUserStore.clear).toHaveBeenCalledTimes(1);
+    expect(mockOrganizationStore.resetStore).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,28 +1,30 @@
-import { Component, ChangeDetectionStrategy } from "@angular/core";
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-/**
- * Component SplitLayoutShowcase
- * @class SplitLayoutShowcase
- * 
- * @description
- * This component is used to display the showcase 
- * of the auth layout.
- * 
- * @version 1.0.0
- * 
- * @example 
- * ```html
- * <app-split-layout-showcase/>
- * ```
- * 
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
- */
+type ShowcaseMetric = {
+  readonly label: string;
+  readonly value: string;
+};
+
+const SHOWCASE_METRICS: readonly ShowcaseMetric[] = [
+  { label: 'Live alerts', value: '24/7' },
+  { label: 'Response workflows', value: 'Automated' },
+  { label: 'Compliance tracking', value: 'ISO-ready' },
+];
+
+const SHOWCASE_HIGHLIGHTS: readonly string[] = [
+  'Unified safety command center',
+  'Role-based access and approvals',
+  'Audit-ready incident history',
+];
+
 @Component({
-  selector: "app-split-layout-showcase",
+  selector: 'app-split-layout-showcase',
   imports: [],
-  templateUrl: "./split-layout-showcase.component.html",
+  templateUrl: './split-layout-showcase.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SplitLayoutShowcase {
+  protected readonly metrics: readonly ShowcaseMetric[] = SHOWCASE_METRICS;
 
+  protected readonly highlights: readonly string[] = SHOWCASE_HIGHLIGHTS;
 }

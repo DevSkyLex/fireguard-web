@@ -1,28 +1,43 @@
-<div class="p-3 h-full">
-  <div class="grid h-full bg-surface-950 rounded-lg overflow-hidden">
-    <section class="p-20 flex flex-col justify-between gap-10 max-w-3xl w-full">
-      <section class="flex flex-row">
-        <span class="text-surface-0 font-bold text-3xl">
-          Fireguard
-        </span>
-      </section>
+<div class="h-full relative">
+  <div class="sticky top-0 h-dvh">
+    <div class="relative grid h-full overflow-hidden border border-surface-800/70 bg-linear-to-br from-surface-950 via-surface-900 to-surface-800">
+      <div class="pointer-events-none absolute -right-20 top-8 h-64 w-64 rounded-full bg-primary-500/20 blur-3xl"></div>
+      <div class="pointer-events-none absolute -left-12 bottom-0 h-52 w-52 rounded-full bg-primary-500/15 blur-3xl"></div>
 
-      <section class="flex flex-col gap-5">
-        <h1 class="text-4xl font-bold text-surface-100">
-          The future of fire safety, reimagined.
-        </h1>
+      <section class="relative flex h-full flex-col justify-between gap-10 p-12 2xl:p-16">
+        <header class="flex items-center justify-between gap-4">
+          <span class="text-3xl font-bold tracking-tight text-surface-0">Fireguard</span>
+        </header>
 
-        <p class="text-xl text-surface-400">
-          Monitor, manage, and protect your infrastructures in real-time with
-          our next-generation intelligent platform designed to revolutionize fire safety.
-        </p>
+        <section class="flex max-w-3xl flex-col gap-6">
+          <h1 class="text-4xl font-semibold leading-tight text-surface-0 2xl:text-5xl">
+            The future of fire safety, reimagined.
+          </h1>
 
-        <div class="flex flex-row gap-5">
-          <div class="text-sm">
+          <p class="max-w-2xl text-lg leading-relaxed text-surface-300">
+            Monitor, coordinate and secure every site from one control plane designed for
+            incident readiness and operational clarity.
+          </p>
 
+          <div class="grid gap-3 sm:grid-cols-3">
+            @for (metric of metrics; track metric.label) {
+              <article class="rounded-xl border border-surface-700/30 bg-surface-900/50 px-4 py-3">
+                <p class="text-xs uppercase tracking-wide text-surface-400">{{ metric.label }}</p>
+                <p class="mt-2 text-base font-semibold text-surface-0">{{ metric.value }}</p>
+              </article>
+            }
           </div>
-        </div>
+        </section>
+
+        <footer class="grid gap-3 text-sm text-surface-200">
+          @for (highlight of highlights; track highlight) {
+            <div class="inline-flex items-center gap-2 rounded-lg bg-surface-900/40 px-3 py-2">
+              <i class="pi pi-check text-cyan-300"></i>
+              <span>{{ highlight }}</span>
+            </div>
+          }
+        </footer>
       </section>
-    </section>
+    </div>
   </div>
 </div>

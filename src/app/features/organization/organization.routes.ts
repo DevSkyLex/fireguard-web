@@ -10,14 +10,6 @@ import type { Routes } from '@angular/router';
  */
 export const ORGANIZATION_ROUTES: Routes = [
   {
-    path: '',
-    loadComponent: () =>
-      import('./pages/onboarding-page/onboarding-page.component').then(
-        (m) => m.OnboardingPage,
-      ),
-    title: 'Onboarding',
-  },
-  {
     path: '**',
     redirectTo: '',
   },

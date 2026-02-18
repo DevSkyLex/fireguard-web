@@ -153,7 +153,35 @@ export class OrganizationService extends BaseApiService {
    * Method upsertOrganizationLegalProfile
    *
    * @description
-   * Creates or updates organization legal profile for onboarding step 2.
+   * Retrieves organization legal profile.
+   *
+   * @access public
+   *
+   * @param {string} organizationId - Organization id.
+   *
+   * @returns {Observable<OrganizationLegalProfileOutput>}
+   */
+  public getOrganizationLegalProfile(
+    organizationId: string,
+  ): Observable<OrganizationLegalProfileOutput> {
+    return this.http
+      .get<OrganizationLegalProfileOutput>(
+        this.buildUrl(
+          `${OrganizationService.BASE_PATH}/${organizationId}/legal-profile`,
+        ),
+        {
+          headers: this.buildHeaders(),
+          withCredentials: true,
+        },
+      )
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Method upsertOrganizationLegalProfile
+   *
+   * @description
+   * Creates or updates organization legal profile.
    *
    * @access public
    *

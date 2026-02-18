@@ -172,6 +172,32 @@ describe('OrganizationService', () => {
     req.flush(responsePayload);
   });
 
+  it('should get organization legal profile', () => {
+    const organizationId = 'org-123';
+    const responsePayload: OrganizationLegalProfileOutput = {
+      organizationId,
+      legalType: 'company',
+      legalName: 'Fireguard Paris SAS',
+      registrationNumber: 'RCS-PAR-123456789',
+      vatNumber: 'FR00123456789',
+      requirements: {
+        registrationNumber: { required: true },
+        vatNumber: { required: false },
+      },
+      createdAt: '2026-02-17T13:00:00.000Z',
+      updatedAt: '2026-02-17T13:00:00.000Z',
+    };
+
+    service.getOrganizationLegalProfile(organizationId).subscribe((response) => {
+      expect(response).toEqual(responsePayload);
+    });
+
+    const req = httpMock.expectOne(`${baseUrl}/${organizationId}/legal-profile`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.withCredentials).toBe(true);
+    req.flush(responsePayload);
+  });
+
   it('should create onboarding organization', () => {
     const payload: CreateOnboardingOrganizationInput = {
       name: 'Fireguard Paris',

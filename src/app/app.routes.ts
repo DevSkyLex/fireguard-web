@@ -1,8 +1,6 @@
 import type { Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth';
-import { onboardingCompletedGuard } from '@features/organization/guards';
 import { SplitLayout } from './layouts/split-layout';
-import { FocusedLayout } from './layouts/focused-layout';
 import { DashboardLayout } from './layouts/dashboard-layout';
 
 /**
@@ -39,7 +37,7 @@ export const APP_ROUTES: Routes = [
   {
     path: '',
     component: DashboardLayout,
-    canActivate: [authGuard, onboardingCompletedGuard],
+    canActivate: [authGuard],
     children: [
       {
         path: '',

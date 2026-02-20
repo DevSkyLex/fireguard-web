@@ -9,7 +9,6 @@ import {
 import { Router } from '@angular/router';
 import { Observable, catchError, throwError } from 'rxjs';
 import { AuthStore } from '@core/stores/auth';
-import { OrganizationStore } from '@core/stores/organization';
 import { UserStore } from '@core/stores/user';
 
 /**
@@ -67,19 +66,6 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (
   const userStore: UserStore = inject<UserStore>(UserStore);
 
   /**
-   * Constant organizationStore
-   * @const organizationStore
-   *
-   * @description
-   * OrganizationStore instance for managing organization state. Used to reset
-   * organization information on 401.
-   *
-   * @var {OrganizationStore}
-   */
-  const organizationStore: OrganizationStore =
-    inject<OrganizationStore>(OrganizationStore);
-
-  /**
    * Constant router
    * @const router
    *
@@ -97,7 +83,6 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (
       if (error.status === 401 && !EXCLUDED_ENDPOINTS.some((pattern: RegExp) => pattern.test(req.url))) {
         authStore.clearToken();
         userStore.clear();
-        organizationStore.resetStore();
         router.navigate(['/auth/login']);
       }
 

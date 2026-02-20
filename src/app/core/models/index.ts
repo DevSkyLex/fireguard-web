@@ -1,6 +1,5 @@
 export * from './api';
 export * from './auth';
-export * from './organization';
 export * from './oauth2';
 export * from './password-reset';
 export * from './session';

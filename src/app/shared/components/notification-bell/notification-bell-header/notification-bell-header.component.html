@@ -1,0 +1,12 @@
+<div class="flex items-center justify-between px-4 py-3 border-b border-surface-200">
+  <div class="flex items-center gap-2">
+    <i class="pi pi-bell text-surface-600 text-sm"></i>
+    <span class="font-semibold text-surface-900 text-sm">Notifications</span>
+  </div>
+
+  @if (hasUnread()) {
+    <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-white">
+      {{ unreadCount() }}
+    </span>
+  }
+</div>

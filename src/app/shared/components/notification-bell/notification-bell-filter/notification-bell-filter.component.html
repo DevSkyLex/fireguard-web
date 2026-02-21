@@ -1,0 +1,11 @@
+<div class="flex px-3 py-2 border-b border-surface-100">
+  <p-select-button
+    [options]="options"
+    [ngModel]="selectedValue()"
+    (ngModelChange)="filterChange.emit($event)"
+    optionLabel="label"
+    optionValue="value"
+    size="small"
+    fluid
+  />
+</div>

@@ -37,6 +37,19 @@ const SIDEBAR_MENU_ITEMS: readonly MenuItem[] = [
       },
     ],
   },
+  {
+    id: 'account',
+    label: 'Account',
+    expanded: true,
+    items: [
+      {
+        id: 'notifications',
+        label: 'Notifications',
+        icon: 'pi pi-bell',
+        routerLink: '/account/notifications',
+      },
+    ],
+  },
 ];
 
 /**

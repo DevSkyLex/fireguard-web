@@ -45,6 +45,11 @@ export const APP_ROUTES: Routes = [
         path: '',
         loadChildren: () => import('@features/main/main.routes').then((m) => m.MAIN_ROUTES),
       },
+      {
+        path: 'account',
+        loadChildren: () =>
+          import('@features/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
+      },
     ],
   },
 ];

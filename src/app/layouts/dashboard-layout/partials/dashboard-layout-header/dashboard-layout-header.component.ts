@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, inject } from "@angular/core";
 import { ButtonModule } from "primeng/button";
 import { DashboardSidebarService } from "@layouts/dashboard-layout/services";
 import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
+import { DashboardLayoutNotifications } from '../dashboard-layout-notifications/dashboard-layout-notifications.component';
 
 /**
  * Component DashboardLayoutHeader
@@ -25,7 +26,7 @@ import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashbo
  */
 @Component({
   selector: 'app-dashboard-layout-header',
-  imports: [ButtonModule, DashboardLayoutBreadcrumb],
+  imports: [ButtonModule, DashboardLayoutBreadcrumb, DashboardLayoutNotifications],
   templateUrl: './dashboard-layout-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

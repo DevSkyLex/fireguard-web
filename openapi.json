@@ -3059,102 +3059,6 @@
                 }
             }
         },
-        "/api/organizations/{organizationId}/onboarding/first-facility": {
-            "post": {
-                "operationId": "facility_create_first",
-                "tags": [
-                    "Facility"
-                ],
-                "responses": {
-                    "201": {
-                        "description": "First facility created",
-                        "content": {
-                            "application/ld+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Facility.FacilityOutput.jsonld-facility.read"
-                                }
-                            }
-                        },
-                        "links": {}
-                    },
-                    "400": {
-                        "description": "Invalid input",
-                        "content": {
-                            "application/ld+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error.jsonld"
-                                }
-                            },
-                            "application/problem+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        },
-                        "links": {}
-                    },
-                    "409": {
-                        "description": "A facility already exists in this organization"
-                    },
-                    "403": {
-                        "description": "Insufficient permissions"
-                    },
-                    "422": {
-                        "description": "An error occurred",
-                        "content": {
-                            "application/ld+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ConstraintViolation.jsonld"
-                                }
-                            },
-                            "application/problem+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ConstraintViolation"
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ConstraintViolation"
-                                }
-                            }
-                        },
-                        "links": {}
-                    }
-                },
-                "summary": "Create first facility (onboarding)",
-                "description": "Creates the first facility for an organization during onboarding. Returns 409 if one already exists.",
-                "parameters": [
-                    {
-                        "name": "organizationId",
-                        "in": "path",
-                        "description": "Facility identifier",
-                        "required": true,
-                        "deprecated": false,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "style": "simple",
-                        "explode": false
-                    }
-                ],
-                "requestBody": {
-                    "description": "The new Facility resource",
-                    "content": {
-                        "application/ld+json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/Facility.CreateFacilityInput-facility.write"
-                            }
-                        }
-                    },
-                    "required": true
-                }
-            }
-        },
         "/api/health": {
             "get": {
                 "operationId": "health_check",
@@ -3305,6 +3209,79 @@
                         "explode": false
                     }
                 ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/subscription": {
+            "get": {
+                "operationId": "notification_mercure_subscription",
+                "tags": [
+                    "Notification"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mercure subscription token returned successfully",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Notification.MercureSubscriptionOutput.jsonld-notification.mercure_subscription"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "links": {}
+                    }
+                },
+                "summary": "Get Mercure subscription token",
+                "description": "Returns a Mercure subscriber JWT and the private SSE topic for the authenticated user. The client must pass this token in the Authorization header (Bearer) when opening an EventSource connection to the Mercure hub.",
+                "parameters": [],
                 "security": [
                     {
                         "bearerAuth": []
@@ -5062,6 +5039,491 @@
                 ]
             }
         },
+        "/api/onboarding/organization": {
+            "get": {
+                "operationId": "getOrganizationOnboarding",
+                "tags": [
+                    "Onboarding"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Onboarding flow retrieved",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrganizationOnboarding.OrganizationOnboardingOutput.jsonld-onboarding.read"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "links": {}
+                    }
+                },
+                "summary": "Get organization onboarding flow",
+                "description": "Returns persisted onboarding progression for organization setup and exposes actionable endpoints for each step.",
+                "parameters": []
+            }
+        },
+        "/api/onboarding/organization/rollback": {
+            "post": {
+                "operationId": "rollbackOrganizationOnboarding",
+                "tags": [
+                    "Onboarding"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Onboarding step rolled back",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrganizationOnboarding.OrganizationOnboardingOutput.jsonld-onboarding.read"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "409": {
+                        "description": "No rollback action available"
+                    },
+                    "401": {
+                        "description": "Authentication required"
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "422": {
+                        "description": "An error occurred",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintViolation.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintViolation"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintViolation"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "links": {}
+                    }
+                },
+                "summary": "Rollback last organization onboarding step",
+                "description": "Rolls back the last rollbackable onboarding step for the authenticated user.",
+                "parameters": []
+            }
+        },
+        "/api/onboarding/organization/start": {
+            "post": {
+                "operationId": "startOrganizationOnboarding",
+                "tags": [
+                    "Onboarding"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Onboarding flow started",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrganizationOnboarding.OrganizationOnboardingOutput.jsonld-onboarding.read"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "401": {
+                        "description": "Authentication required"
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "422": {
+                        "description": "An error occurred",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintViolation.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintViolation"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintViolation"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "links": {}
+                    }
+                },
+                "summary": "Start organization onboarding flow",
+                "description": "Starts or resets the persisted organization onboarding session for the authenticated user.",
+                "parameters": [],
+                "requestBody": {
+                    "description": "The new OrganizationOnboarding resource",
+                    "content": {
+                        "application/ld+json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OrganizationOnboarding.StartOrganizationOnboardingInput-onboarding.write"
+                            }
+                        }
+                    },
+                    "required": true
+                }
+            }
+        },
+        "/api/onboarding/organization/steps/{stepKey}/execute": {
+            "post": {
+                "operationId": "executeOrganizationOnboardingStep",
+                "tags": [
+                    "Onboarding"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Onboarding step executed",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrganizationOnboarding.OrganizationOnboardingOutput.jsonld-onboarding.read"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "400": {
+                        "description": "Invalid step payload",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "409": {
+                        "description": "Step not available in current flow state"
+                    },
+                    "401": {
+                        "description": "Authentication required"
+                    },
+                    "422": {
+                        "description": "An error occurred",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintViolation.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintViolation"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintViolation"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "links": {}
+                    }
+                },
+                "summary": "Execute organization onboarding step",
+                "description": "Executes the requested onboarding step and updates persisted flow state.",
+                "parameters": [
+                    {
+                        "name": "stepKey",
+                        "in": "path",
+                        "description": "OrganizationOnboarding identifier",
+                        "required": true,
+                        "deprecated": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "style": "simple",
+                        "explode": false
+                    }
+                ],
+                "requestBody": {
+                    "description": "The new OrganizationOnboarding resource",
+                    "content": {
+                        "application/ld+json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OrganizationOnboarding.ExecuteOrganizationOnboardingStepInput-onboarding.write"
+                            }
+                        }
+                    },
+                    "required": true
+                }
+            }
+        },
+        "/api/onboarding/organization/steps/{stepKey}/skip": {
+            "post": {
+                "operationId": "skipOrganizationOnboardingStep",
+                "tags": [
+                    "Onboarding"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Onboarding step skipped",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrganizationOnboarding.OrganizationOnboardingOutput.jsonld-onboarding.read"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "400": {
+                        "description": "Invalid or required step",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "409": {
+                        "description": "Step not available to skip in current flow state"
+                    },
+                    "401": {
+                        "description": "Authentication required"
+                    },
+                    "422": {
+                        "description": "An error occurred",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintViolation.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintViolation"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintViolation"
+                                }
+                            }
+                        },
+                        "links": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "links": {}
+                    }
+                },
+                "summary": "Skip organization onboarding step",
+                "description": "Voluntarily skips a non-required onboarding step, allowing the flow to advance to completion without executing it.",
+                "parameters": [
+                    {
+                        "name": "stepKey",
+                        "in": "path",
+                        "description": "OrganizationOnboarding identifier",
+                        "required": true,
+                        "deprecated": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "style": "simple",
+                        "explode": false
+                    }
+                ]
+            }
+        },
         "/api/organizations": {
             "get": {
                 "operationId": "listUserOrganizations",
@@ -5239,6 +5701,87 @@
                 }
             }
         },
+        "/api/organizations/countries": {
+            "get": {
+                "operationId": "listOrganizationCountries",
+                "tags": [
+                    "Organization"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Country list retrieved",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "OrganizationCountry.OrganizationCountryOptionOutput.jsonld-Organization.read collection.",
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/HydraCollectionBaseSchema"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "required": [
+                                                "member"
+                                            ],
+                                            "properties": {
+                                                "member": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/OrganizationCountry.OrganizationCountryOptionOutput.jsonld-Organization.read"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/ld+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.jsonld"
+                                }
+                            },
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "links": {}
+                    }
+                },
+                "summary": "List supported countries",
+                "description": "Returns the list of countries supported for organization legal profiles, with ISO code, display name, and flag image URL.",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "The collection page number",
+                        "required": false,
+                        "deprecated": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        },
+                        "style": "form",
+                        "explode": false
+                    }
+                ]
+            }
+        },
         "/api/organizations/legal-types": {
             "get": {
                 "operationId": "listOrganizationLegalTypes",
@@ -5329,178 +5872,6 @@
                         "explode": false
                     }
                 ]
-            }
-        },
-        "/api/organizations/onboarding/organization": {
-            "post": {
-                "operationId": "createOnboardingOrganization",
-                "tags": [
-                    "Organization"
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Organization created",
-                        "content": {
-                            "application/ld+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OrganizationOnboarding.OrganizationOutput.jsonld-Organization.read"
-                                }
-                            }
-                        },
-                        "links": {}
-                    },
-                    "409": {
-                        "description": "Slug already exists"
-                    },
-                    "401": {
-                        "description": "Authentication required"
-                    },
-                    "400": {
-                        "description": "Invalid input",
-                        "content": {
-                            "application/ld+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error.jsonld"
-                                }
-                            },
-                            "application/problem+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        },
-                        "links": {}
-                    },
-                    "422": {
-                        "description": "An error occurred",
-                        "content": {
-                            "application/ld+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ConstraintViolation.jsonld"
-                                }
-                            },
-                            "application/problem+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ConstraintViolation"
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ConstraintViolation"
-                                }
-                            }
-                        },
-                        "links": {}
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "content": {
-                            "application/ld+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error.jsonld"
-                                }
-                            },
-                            "application/problem+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        },
-                        "links": {}
-                    }
-                },
-                "summary": "Create organization (onboarding)",
-                "description": "Creates the organization for onboarding step 1.",
-                "parameters": [],
-                "requestBody": {
-                    "description": "The new OrganizationOnboarding resource",
-                    "content": {
-                        "application/ld+json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/OrganizationOnboarding.CreateOrganizationInput-Organization.write"
-                            }
-                        }
-                    },
-                    "required": true
-                }
-            }
-        },
-        "/api/organizations/onboarding/status": {
-            "get": {
-                "operationId": "getOnboardingStatus",
-                "tags": [
-                    "Organization"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Onboarding status retrieved",
-                        "content": {
-                            "application/ld+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OrganizationOnboarding.OrganizationOnboardingStatusOutput.jsonld-Organization.read"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Authentication required"
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "content": {
-                            "application/ld+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error.jsonld"
-                                }
-                            },
-                            "application/problem+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        },
-                        "links": {}
-                    },
-                    "404": {
-                        "description": "Not found",
-                        "content": {
-                            "application/ld+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error.jsonld"
-                                }
-                            },
-                            "application/problem+json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        },
-                        "links": {}
-                    }
-                },
-                "summary": "Get onboarding status",
-                "description": "Returns onboarding progress for the authenticated user.",
-                "parameters": []
             }
         },
         "/api/organizations/{id}": {
@@ -10343,6 +10714,31 @@
                     "@type"
                 ]
             },
+            "Notification.MercureSubscriptionOutput.jsonld-notification.mercure_subscription": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/HydraItemBaseSchema"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "token": {
+                                "readOnly": true,
+                                "description": "Property token.",
+                                "default": "",
+                                "type": "string"
+                            },
+                            "topic": {
+                                "readOnly": true,
+                                "description": "Property topic.",
+                                "default": "",
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "description": "User notifications delivered by internal modules."
+            },
             "Notification.NotificationOutput.jsonld-notification.read": {
                 "allOf": [
                     {
@@ -10934,6 +11330,29 @@
                 ],
                 "description": "OAuth2 and OpenID Connect operations"
             },
+            "OnboardingStepHistoryEntryOutput.jsonld-onboarding.read": {
+                "type": "object",
+                "properties": {
+                    "stepKey": {
+                        "readOnly": true,
+                        "description": "Property stepKey.",
+                        "default": "",
+                        "type": "string"
+                    },
+                    "occurredAt": {
+                        "readOnly": true,
+                        "description": "Property occurredAt.",
+                        "default": "",
+                        "type": "string"
+                    },
+                    "skipped": {
+                        "readOnly": true,
+                        "description": "Property skipped.",
+                        "default": false,
+                        "type": "boolean"
+                    }
+                }
+            },
             "Organization.CreateOrganizationInput-Organization.write": {
                 "type": "object",
                 "description": "Organization management and membership entry points.",
@@ -11028,6 +11447,37 @@
                     }
                 ],
                 "description": "Organization management and membership entry points."
+            },
+            "OrganizationCountry.OrganizationCountryOptionOutput.jsonld-Organization.read": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/HydraItemBaseSchema"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "code": {
+                                "readOnly": true,
+                                "description": "Property code.",
+                                "default": "",
+                                "type": "string"
+                            },
+                            "name": {
+                                "readOnly": true,
+                                "description": "Property name.",
+                                "default": "",
+                                "type": "string"
+                            },
+                            "flagUrl": {
+                                "readOnly": true,
+                                "description": "Property flagUrl.",
+                                "default": "",
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "description": "Reference data for supported countries in organization legal profiles."
             },
             "OrganizationInvitation.AcceptOrganizationInvitationInput-Organization.write": {
                 "type": "object",
@@ -11517,35 +11967,11 @@
                 ],
                 "description": "Organization member management."
             },
-            "OrganizationOnboarding.CreateOrganizationInput-Organization.write": {
+            "OrganizationOnboarding.ExecuteOrganizationOnboardingStepInput-onboarding.write": {
                 "type": "object",
-                "description": "Onboarding endpoints for organization bootstrap.",
-                "required": [
-                    "name"
-                ],
-                "properties": {
-                    "name": {
-                        "minLength": 2,
-                        "maxLength": 120,
-                        "description": "Organization display name",
-                        "default": "",
-                        "example": "Fireguard Paris",
-                        "type": "string"
-                    },
-                    "slug": {
-                        "minLength": 3,
-                        "maxLength": 120,
-                        "pattern": "^([a-z0-9]+(?:-[a-z0-9]+)*)$",
-                        "description": "Public organization slug",
-                        "example": "fireguard-paris",
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    }
-                }
+                "description": "Organization onboarding orchestration endpoints."
             },
-            "OrganizationOnboarding.OrganizationOnboardingStatusOutput.jsonld-Organization.read": {
+            "OrganizationOnboarding.OrganizationOnboardingOutput.jsonld-onboarding.read": {
                 "allOf": [
                     {
                         "$ref": "#/components/schemas/HydraItemBaseSchema"
@@ -11553,6 +11979,12 @@
                     {
                         "type": "object",
                         "properties": {
+                            "flow": {
+                                "readOnly": true,
+                                "description": "Property flow.",
+                                "default": "organization",
+                                "type": "string"
+                            },
                             "state": {
                                 "readOnly": true,
                                 "description": "Property state.",
@@ -11575,10 +12007,33 @@
                                     "null"
                                 ]
                             },
+                            "completedSteps": {
+                                "readOnly": true,
+                                "description": "Property completedSteps.",
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "skippedSteps": {
+                                "readOnly": true,
+                                "description": "Property skippedSteps.",
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
                             "steps": {
                                 "type": "array",
                                 "items": {
-                                    "$ref": "#/components/schemas/OrganizationOnboardingStepOutput.jsonld-Organization.read"
+                                    "$ref": "#/components/schemas/OrganizationOnboardingStepOutput.jsonld-onboarding.read"
+                                },
+                                "readOnly": true
+                            },
+                            "stepHistory": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/OnboardingStepHistoryEntryOutput.jsonld-onboarding.read"
                                 },
                                 "readOnly": true
                             },
@@ -11597,80 +12052,63 @@
                                     "string",
                                     "null"
                                 ]
-                            }
-                        }
-                    }
-                ],
-                "description": "Onboarding endpoints for organization bootstrap."
-            },
-            "OrganizationOnboarding.OrganizationOutput.jsonld-Organization.read": {
-                "allOf": [
-                    {
-                        "$ref": "#/components/schemas/HydraItemBaseSchema"
-                    },
-                    {
-                        "type": "object",
-                        "properties": {
-                            "id": {
-                                "readOnly": true,
-                                "description": "Property id.",
-                                "default": "",
-                                "type": "string"
                             },
-                            "name": {
+                            "canRollback": {
                                 "readOnly": true,
-                                "description": "Property name.",
-                                "default": "",
-                                "type": "string"
-                            },
-                            "slug": {
-                                "readOnly": true,
-                                "description": "Property slug.",
-                                "default": "",
-                                "type": "string"
-                            },
-                            "ownerUserId": {
-                                "readOnly": true,
-                                "description": "Property ownerUserId.",
-                                "default": "",
-                                "type": "string"
-                            },
-                            "createdByUserId": {
-                                "readOnly": true,
-                                "description": "Property createdByUserId.",
-                                "default": "",
-                                "type": "string"
-                            },
-                            "status": {
-                                "readOnly": true,
-                                "description": "Property status.",
-                                "default": "",
-                                "type": "string"
-                            },
-                            "isActive": {
-                                "readOnly": true,
-                                "description": "Property isActive.",
-                                "default": true,
+                                "description": "Property canRollback.",
+                                "default": false,
                                 "type": "boolean"
                             },
-                            "createdAt": {
+                            "lastRollbackableStep": {
                                 "readOnly": true,
-                                "description": "Property createdAt.",
-                                "default": "",
-                                "type": "string"
+                                "description": "Property lastRollbackableStep.",
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "rollbackMethod": {
+                                "readOnly": true,
+                                "description": "Property rollbackMethod.",
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "rollbackPath": {
+                                "readOnly": true,
+                                "description": "Property rollbackPath.",
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
                             },
                             "updatedAt": {
                                 "readOnly": true,
                                 "description": "Property updatedAt.",
-                                "default": "",
-                                "type": "string"
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
                             }
                         }
                     }
                 ],
-                "description": "Onboarding endpoints for organization bootstrap."
+                "description": "Organization onboarding orchestration endpoints."
             },
-            "OrganizationOnboardingStepOutput.jsonld-Organization.read": {
+            "OrganizationOnboarding.StartOrganizationOnboardingInput-onboarding.write": {
+                "type": "object",
+                "description": "Organization onboarding orchestration endpoints.",
+                "properties": {
+                    "reset": {
+                        "description": "When true, resets the persisted onboarding session for the authenticated user.",
+                        "default": false,
+                        "example": false,
+                        "type": "boolean"
+                    }
+                }
+            },
+            "OrganizationOnboardingStepOutput.jsonld-onboarding.read": {
                 "type": "object",
                 "properties": {
                     "key": {
@@ -11706,6 +12144,80 @@
                     "reason": {
                         "readOnly": true,
                         "description": "Property reason.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "actionMethod": {
+                        "readOnly": true,
+                        "description": "Property actionMethod.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "actionPath": {
+                        "readOnly": true,
+                        "description": "Property actionPath.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "rollbackAvailable": {
+                        "readOnly": true,
+                        "description": "Property rollbackAvailable.",
+                        "default": false,
+                        "type": "boolean"
+                    },
+                    "rollbackMethod": {
+                        "readOnly": true,
+                        "description": "Property rollbackMethod.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "rollbackPath": {
+                        "readOnly": true,
+                        "description": "Property rollbackPath.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "skippable": {
+                        "readOnly": true,
+                        "description": "Property skippable.",
+                        "default": false,
+                        "type": "boolean"
+                    },
+                    "skipAvailable": {
+                        "readOnly": true,
+                        "description": "Property skipAvailable.",
+                        "default": false,
+                        "type": "boolean"
+                    },
+                    "skipMethod": {
+                        "readOnly": true,
+                        "description": "Property skipMethod.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "skipPath": {
+                        "readOnly": true,
+                        "description": "Property skipPath.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "completedAt": {
+                        "readOnly": true,
+                        "description": "Property completedAt.",
                         "type": [
                             "string",
                             "null"
@@ -13141,12 +13653,12 @@
             "description": "Application health check"
         },
         {
-            "name": "Organization Invitations",
-            "description": "Organization invitation management."
-        },
-        {
             "name": "Organization",
             "description": "Organization management and membership entry points."
+        },
+        {
+            "name": "Organization Invitations",
+            "description": "Organization invitation management."
         },
         {
             "name": "Organization Members",
@@ -13155,6 +13667,10 @@
         {
             "name": "Organization Roles",
             "description": "Organization RBAC role management."
+        },
+        {
+            "name": "Onboarding",
+            "description": "Organization onboarding orchestration endpoints."
         },
         {
             "name": "Facility",

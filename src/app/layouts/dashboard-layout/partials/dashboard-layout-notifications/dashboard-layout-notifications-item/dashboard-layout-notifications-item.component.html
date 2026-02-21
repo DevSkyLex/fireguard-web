@@ -1,0 +1,37 @@
+<li
+  class="flex gap-3 px-4 py-3 hover:bg-surface-50 transition-colors"
+  [class.bg-primary-50]="!notification().isRead"
+>
+
+  <!-- Category icon -->
+  <span
+    class="flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm"
+    [class.bg-indigo-100]="notification().category === 'organization'"
+    [class.text-indigo-600]="notification().category === 'organization'"
+    [class.bg-amber-100]="notification().category === 'system'"
+    [class.text-amber-600]="notification().category === 'system'"
+    [class.bg-surface-100]="notification().category !== 'organization' && notification().category !== 'system'"
+    [class.text-surface-500]="notification().category !== 'organization' && notification().category !== 'system'"
+    [title]="notification().type"
+  >
+    <i class="pi text-xs" [class]="icon()"></i>
+  </span>
+
+  <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+    <p class="text-sm font-medium text-surface-900 truncate" [title]="notification().subject">
+      {{ notification().subject }}
+    </p>
+    <p class="text-xs text-surface-600 line-clamp-2">{{ notification().body }}</p>
+    <span class="text-xs text-surface-400">{{ notification().createdAt | date:'short' }}</span>
+  </div>
+
+  @if (!notification().isRead) {
+    <button
+      type="button"
+      class="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5 hover:scale-125 transition-transform cursor-pointer"
+      title="Mark as read"
+      (click)="onMarkAsRead($event)"
+    ></button>
+  }
+
+</li>

@@ -1,13 +1,13 @@
 /**
  * Interface EnvironmentConfig
  * @interface EnvironmentConfig
- * 
+ *
  * @description
- * Interface used to define the environment 
+ * Interface used to define the environment
  * configuration.
- * 
+ *
  * @version 1.0.0
- * 
+ *
  * @example
  * ```typescript
  * export const environment: EnvironmentConfig = {
@@ -22,12 +22,12 @@ export interface EnvironmentConfig {
    * Property production
    * @type {boolean}
    * @readonly
-   * 
+   *
    * @description
    * Whether the application is in production mode.
-   * 
+   *
    * @version 1.0.0
-   * 
+   *
    * @example
    * ```typescript
    * production: true
@@ -39,12 +39,12 @@ export interface EnvironmentConfig {
    * Property apiUrl
    * @type {string}
    * @readonly
-   * 
+   *
    * @description
    * API URL of the application.
-   * 
+   *
    * @version 1.0.0
-   * 
+   *
    * @example
    * ```typescript
    * apiUrl: 'http://api.fireguard.com/api'
@@ -68,5 +68,22 @@ export interface EnvironmentConfig {
    * ```
    */
   readonly appName: string;
+
+  /**
+   * Property mercureHubUrl
+   * @type {string}
+   * @readonly
+   *
+   * @description
+   * URL of the Mercure hub used for server-sent events.
+   *
+   * @version 1.0.0
+   *
+   * @example
+   * ```typescript
+   * mercureHubUrl: 'http://localhost:8000/.well-known/mercure'
+   * ```
+   */
+  readonly mercureHubUrl: string;
   //#endregion
 }

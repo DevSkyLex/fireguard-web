@@ -3,6 +3,9 @@ export type { ApiRequestOptions, PaginationOptions, RequestOptions } from './bas
 
 export * from './auth';
 export * from './oauth2';
+export * from './onboarding';
+export * from './organization';
 export * from './password-reset';
 export * from './session';
 export * from './trusted-device';
+export * from './notification';

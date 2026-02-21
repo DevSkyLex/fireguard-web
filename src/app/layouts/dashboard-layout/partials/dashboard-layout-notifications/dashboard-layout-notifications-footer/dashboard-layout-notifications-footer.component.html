@@ -1,0 +1,19 @@
+<div class="flex items-center justify-between p-2 border-t border-surface-200">
+  @if (hasUnread()) {
+    <p-button
+      label="Mark all as read"
+      [text]="true"
+      size="small"
+      severity="secondary"
+      (onClick)="markAllAsRead.emit()"
+    />
+  }
+
+  <p-button
+    label="Notification center"
+    size="small"
+    severity="secondary"
+    [outlined]="true"
+    iconPos="right"
+  />
+</div>

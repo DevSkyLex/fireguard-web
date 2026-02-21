@@ -1,0 +1,95 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-8 w-full">
+
+  <!-- Email Field -->
+  <div class="flex flex-col gap-2">
+    <label for="email" class="text-sm font-medium text-surface-700">Email Address</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-envelope" />
+      <input
+        pInputText
+        id="email"
+        type="email"
+        formControlName="email"
+        class="w-full"
+        placeholder="member@example.com"
+        [disabled]="inviting()"
+      />
+    </p-iconfield>
+
+    @if (form.controls.email.invalid && form.controls.email.touched) {
+      <p-message severity="error" variant="simple" size="small">
+        @if (form.controls.email.hasError('required')) {
+          <span>Email address is required.</span>
+        }
+        @if (form.controls.email.hasError('email')) {
+          <span>Please enter a valid email address.</span>
+        }
+        @if (form.controls.email.hasError('maxlength')) {
+          <span>Email must be less than 255 characters.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <!-- Role Field -->
+  <div class="flex flex-col gap-2">
+    <label for="roleKey" class="text-sm font-medium text-surface-700">Role</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-id-card" />
+      <input
+        pInputText
+        id="roleKey"
+        formControlName="roleKey"
+        class="w-full"
+        placeholder="member"
+        [disabled]="inviting()"
+      />
+    </p-iconfield>
+
+    @if (form.controls.roleKey.invalid && form.controls.roleKey.touched) {
+      <p-message severity="error" variant="simple" size="small">
+        @if (form.controls.roleKey.hasError('required')) {
+          <span>Role is required.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <!-- Actions -->
+  <div class="flex flex-col gap-3">
+    <p-button
+      label="Invite Member"
+      type="submit"
+      icon="pi pi-user-plus"
+      [loading]="inviting()"
+      [disabled]="form.invalid || busy()"
+      styleClass="w-full"
+    />
+
+    <p-button
+      label="Done — Complete This Step"
+      type="button"
+      icon="pi pi-check"
+      iconPos="right"
+      severity="success"
+      [loading]="executing()"
+      [disabled]="busy()"
+      styleClass="w-full"
+      (onClick)="onComplete()"
+    />
+
+    @if (skippable()) {
+      <p-button
+        label="Skip for now"
+        type="button"
+        icon="pi pi-forward"
+        iconPos="right"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="busy()"
+        styleClass="w-full"
+        (onClick)="onSkip()"
+      />
+    }
+  </div>
+</form>

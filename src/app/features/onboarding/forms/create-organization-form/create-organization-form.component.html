@@ -1,0 +1,45 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-8 w-full">
+
+  <!-- Organization Name Field -->
+  <div class="flex flex-col gap-2">
+    <label for="organizationName" class="text-sm font-medium text-surface-700">Organization Name</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-building" />
+      <input
+        pInputText
+        id="organizationName"
+        formControlName="organizationName"
+        class="w-full"
+        placeholder="Fireguard Paris"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+
+    @if (form.controls.organizationName.invalid && form.controls.organizationName.touched) {
+      <p-message severity="error" variant="simple" size="small">
+        @if (form.controls.organizationName.hasError('required')) {
+          <span>Organization name is required.</span>
+        }
+        @if (form.controls.organizationName.hasError('minlength')) {
+          <span>Name must be at least 2 characters.</span>
+        }
+        @if (form.controls.organizationName.hasError('maxlength')) {
+          <span>Name must be less than 120 characters.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <!-- Submit Button -->
+  <div class="flex flex-col gap-3">
+    <p-button
+      label="Create Organization"
+      type="submit"
+      icon="pi pi-arrow-right"
+      iconPos="right"
+      [loading]="loading()"
+      [disabled]="form.invalid || loading()"
+      styleClass="w-full"
+    />
+  </div>
+</form>

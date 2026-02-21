@@ -1,0 +1,39 @@
+<div class="relative">
+  <p-overlay-badge severity="danger" [badgeDisabled]="!notificationStore.hasUnread()">
+    <p-button
+      icon="pi pi-bell"
+      severity="secondary"
+      [text]="false"
+      [outlined]="true"
+      size="small"
+      ariaLabel="Notifications"
+      (onClick)="toggle($event)"
+    >
+    </p-button>
+  </p-overlay-badge>
+
+  <p-popover #notifPopover styleClass="w-80" [pt]="popoverPt">
+    <div class="flex flex-col gap-2">
+      <app-dashboard-layout-notifications-header
+        [hasUnread]="notificationStore.hasUnread()"
+        [unreadCount]="notificationStore.unreadCount()"
+      />
+
+      <app-dashboard-layout-notifications-filter
+        [selectedValue]="selectedFilterValue()"
+        (filterChange)="applyFilter($event)"
+      />
+
+      <app-dashboard-layout-notifications-list
+        [notifications]="notificationStore.notifications()"
+        [loading]="notificationStore.isLoading()"
+        (markAsRead)="markAsRead($event)"
+      />
+
+      <app-dashboard-layout-notifications-footer
+        [hasUnread]="notificationStore.hasUnread()"
+        (markAllAsRead)="markAllAsRead()"
+      />
+    </div>
+  </p-popover>
+</div>

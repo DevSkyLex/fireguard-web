@@ -57,7 +57,7 @@ export class DashboardLayoutBreadcrumb {
    * @type {object}
    */
   protected readonly breadcrumbPt: BreadcrumbPassThroughOptions = {
-    root: { class: 'text-sm text-surface-500 p-0' },
+    root: { class: 'text-sm text-surface-500 p-0 bg-surface-0 dark:bg-surface-950 transition-colors' },
   };
   //#endregion
 }

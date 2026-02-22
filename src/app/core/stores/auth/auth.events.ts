@@ -17,6 +17,8 @@ export const authStoreEvents = eventGroup({
   source: 'Auth Store',
   events: {
     loginFailed: type<OperationFailureEventPayload>(),
+    logoutSucceeded: type<void>(),
+    logoutFailed: type<OperationFailureEventPayload>(),
     mfaVerifyFailed: type<OperationFailureEventPayload>(),
     mfaResendFailed: type<OperationFailureEventPayload>(),
   },

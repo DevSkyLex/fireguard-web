@@ -1,7 +1,7 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-8 w-full">
   <!-- Email Field -->
   <div class="flex flex-col gap-2">
-    <label for="email" class="text-sm font-medium text-surface-700">Email Address</label>
+    <label for="email" class="text-sm font-medium text-surface-700 dark:text-surface-300">Email Address</label>
     <p-iconfield>
       <p-inputicon class="pi pi-user" />
       <input
@@ -27,7 +27,7 @@
 
   <!-- Password Field -->
   <div class="flex flex-col gap-2">
-    <label for="password" class="text-sm font-medium text-surface-700">Password</label>
+    <label for="password" class="text-sm font-medium text-surface-700 dark:text-surface-300">Password</label>
 
     <p-iconfield>
       <p-inputicon class="pi pi-lock" />
@@ -46,7 +46,7 @@
   <div class="flex items-center justify-between mt-2">
     <div class="flex items-center gap-2">
       <p-checkbox inputId="remember_me" formControlName="remember_me" [binary]="true" />
-      <label for="remember_me" class="cursor-pointer text-sm text-surface-700">
+      <label for="remember_me" class="cursor-pointer text-sm text-surface-700 dark:text-surface-300">
         Remember me
       </label>
     </div>

@@ -1,8 +1,8 @@
 <div class="h-full relative">
   <div class="sticky top-0 h-dvh">
-    <div class="relative grid h-full overflow-hidden border border-surface-800/70 bg-linear-to-br from-surface-950 via-surface-900 to-surface-800">
-      <div class="pointer-events-none absolute -right-20 top-8 h-64 w-64 rounded-full bg-primary-500/20 blur-3xl"></div>
-      <div class="pointer-events-none absolute -left-12 bottom-0 h-52 w-52 rounded-full bg-primary-500/15 blur-3xl"></div>
+    <div class="relative grid h-full overflow-hidden border border-surface-800/70 dark:border-surface-950 bg-linear-to-br from-surface-950 via-surface-900 to-surface-800 dark:from-black dark:via-surface-950 dark:to-surface-950">
+      <div class="pointer-events-none absolute -right-20 top-8 h-64 w-64 rounded-full bg-primary-500/15 blur-3xl"></div>
+      <div class="pointer-events-none absolute -left-12 bottom-0 h-52 w-52 rounded-full bg-primary-500/5 blur-3xl"></div>
 
       <section class="relative flex h-full flex-col justify-between gap-10 p-12 2xl:p-16">
         <header class="flex items-center justify-between gap-4">
@@ -32,7 +32,7 @@
         <footer class="grid gap-3 text-sm text-surface-200">
           @for (highlight of highlights; track highlight) {
             <div class="inline-flex items-center gap-2 rounded-lg bg-surface-900/40 px-3 py-2">
-              <i class="pi pi-check text-cyan-300"></i>
+              <i class="pi pi-check text-primary-400"></i>
               <span>{{ highlight }}</span>
             </div>
           }

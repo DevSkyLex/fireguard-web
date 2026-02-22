@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { AuthStore } from '@core/stores/auth';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router, RouterLink } from '@angular/router';
+import { AuthStore, authStoreEvents } from '@core/stores/auth';
 import { UserStore } from '@core/stores/user';
+import { Events } from '@ngrx/signals/events';
 import type { MotionOptions } from '@primeuix/motion';
 import { AvatarModule } from 'primeng/avatar';
 import { PanelModule, PanelPassThroughOptions } from 'primeng/panel';
@@ -63,6 +65,69 @@ export class DashboardLayoutUserProfile {
     inject<AuthStore>(AuthStore);
 
   /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Angular router for post-logout navigation.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Router}
+   */
+  private readonly router: Router =
+    inject<Router>(Router);
+
+  /**
+   * Property events
+   * @readonly
+   *
+   * @description
+   * NgRx events stream for reacting to auth store events.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Events}
+   */
+  private readonly events: Events =
+    inject<Events>(Events);
+
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Sets up navigation after logout (success or failure).
+   *
+   * @access public
+   * @since 1.0.0
+   */
+  public constructor() {
+    this.events
+      .on(authStoreEvents.logoutSucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        this.router.navigate(['/auth/login']).catch((error: unknown) => {
+          console.error('Navigation after logout failed', error);
+        });
+      });
+
+    this.events
+      .on(authStoreEvents.logoutFailed)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        this.router.navigate(['/auth/login']).catch((error: unknown) => {
+          console.error('Navigation after logout failed', error);
+        });
+      });
+  }
+
+  /**
    * Property panelPt
    * @readonly
    *
@@ -81,7 +146,7 @@ export class DashboardLayoutUserProfile {
     headerActions: { class: 'hidden' },
     pcToggleButton: { root: { class: 'hidden' } },
     contentContainer: {
-      class: 'overflow-hidden rounded-xl bg-surface-0 p-3',
+      class: 'overflow-hidden bg-surface-0 dark:bg-surface-900 p-3',
     },
     contentWrapper: { class: 'p-0' },
     content: { class: 'p-0' },

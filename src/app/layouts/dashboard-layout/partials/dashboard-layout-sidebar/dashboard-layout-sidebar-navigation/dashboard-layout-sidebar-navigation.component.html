@@ -33,7 +33,7 @@
 
   <nav class="flex-1 overflow-y-auto">
     @if (menuItems().length === 0) {
-      <div class="flex min-h-28 items-center justify-center rounded-xl border border-dashed border-surface-200 bg-surface-50 px-4 text-center text-sm text-surface-500">
+      <div class="flex min-h-28 items-center justify-center rounded-xl border border-dashed border-surface-200 dark:border-surface-800 bg-surface-50 dark:bg-surface-900 px-4 text-center text-sm text-surface-500 transition-colors">
         No results found.
       </div>
     } @else {
@@ -53,7 +53,7 @@
           <ng-template #item let-item>
             <a
               pRipple
-              class="relative flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-surface-800 transition-colors hover:bg-surface-50"
+              class="relative flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-surface-800 dark:text-surface-200 transition-colors hover:bg-surface-50 dark:hover:bg-surface-900"
               [routerLink]="item.routerLink ?? null"
               routerLinkActive
               [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.routerLink)"
@@ -70,10 +70,10 @@
               }
 
               @if (item.icon) {
-                <i [class]="item.icon + ' text-base text-surface-500'"></i>
+                <i [class]="item.icon + ' text-base text-surface-500 dark:text-surface-400'"></i>
               }
 
-              <span [class]="item.icon ? 'flex-1 text-sm font-medium text-surface-700' : 'flex-1 text-base font-semibold text-surface-900'">
+              <span [class]="item.icon ? 'flex-1 text-sm font-medium text-surface-700 dark:text-surface-300' : 'flex-1 text-base font-semibold text-surface-900 dark:text-surface-100'">
                 {{ item.label }}
               </span>
 
@@ -82,7 +82,7 @@
               }
 
               @if (item.items?.length) {
-                <i class="pi text-surface-500 text-xs"
+                <i class="pi text-surface-500 dark:text-surface-400 text-xs"
                   [class.pi-chevron-down]="item.expanded"
                   [class.pi-chevron-right]="!item.expanded"
                 ></i>

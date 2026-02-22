@@ -34,10 +34,10 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  organization: { bg: 'bg-indigo-100', text: 'text-indigo-600' },
-  system:       { bg: 'bg-amber-100',  text: 'text-amber-600'  },
-  security:     { bg: 'bg-red-100',    text: 'text-red-600'    },
-  user:         { bg: 'bg-sky-100',    text: 'text-sky-600'    },
+  organization: { bg: 'bg-indigo-100 dark:bg-indigo-950', text: 'text-indigo-600 dark:text-indigo-400' },
+  system:       { bg: 'bg-amber-100 dark:bg-amber-950',   text: 'text-amber-600 dark:text-amber-400'   },
+  security:     { bg: 'bg-red-100 dark:bg-red-950',       text: 'text-red-600 dark:text-red-400'       },
+  user:         { bg: 'bg-sky-100 dark:bg-sky-950',       text: 'text-sky-600 dark:text-sky-400'       },
 };
 
 /**

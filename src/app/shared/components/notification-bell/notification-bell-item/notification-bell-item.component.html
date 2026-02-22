@@ -1,5 +1,5 @@
 <li
-  class="flex gap-3 px-4 py-3 cursor-default transition-colors hover:bg-surface-50"
+  class="flex gap-3 px-4 py-3 cursor-default transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
   [class.bg-primary-50]="!notification().isRead"
 >
 
@@ -14,11 +14,11 @@
 
   <!-- Content -->
   <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-    <p class="text-sm font-medium text-surface-900 truncate" [title]="notification().subject">
+    <p class="text-sm font-medium text-surface-900 dark:text-surface-100 truncate" [title]="notification().subject">
       {{ notification().subject }}
     </p>
-    <p class="text-xs text-surface-500 line-clamp-2">{{ notification().body }}</p>
-    <span class="text-xs text-surface-400 mt-0.5">
+    <p class="text-xs text-surface-500 dark:text-surface-400 line-clamp-2">{{ notification().body }}</p>
+    <span class="text-xs text-surface-400 dark:text-surface-500 mt-0.5">
       {{ notification().createdAt | date: 'short' }}
     </span>
   </div>

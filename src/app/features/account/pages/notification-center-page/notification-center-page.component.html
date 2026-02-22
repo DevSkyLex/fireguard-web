@@ -1,9 +1,9 @@
 <div id="notification-center-page" class="flex flex-col">
   <!-- Page header -->
-  <section class="flex flex-col p-8 bg-surface-50 border-b border-surface-200">
+  <section class="flex flex-col p-8 bg-surface-50 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
     <div class="flex items-center justify-between gap-4">
       <div class="flex flex-col gap-1">
-        <h1 class="text-2xl font-semibold text-surface-900">Notification Center</h1>
+        <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">Notification Center</h1>
         <p class="text-sm text-surface-600">
           @if (notificationStore.isLoading()) {
             Loading notifications…
@@ -22,7 +22,7 @@
   <!-- Notification list -->
   @if (notificationStore.isLoading()) {
     <!-- Skeleton loading -->
-    <ul class="flex flex-col divide-y divide-surface-200 px-6 py-4">
+    <ul class="flex flex-col divide-y divide-surface-200 dark:divide-surface-800 px-6 py-4">
       @for (skeleton of [1, 2, 3, 4, 5]; track skeleton) {
         <li class="flex gap-4 py-4">
           <p-skeleton shape="circle" size="2.25rem" styleClass="shrink-0" />
@@ -36,10 +36,10 @@
     </ul>
   } @else {
     <!-- Notification items -->
-    <ul class="flex flex-col divide-y divide-surface-200">
+    <ul class="flex flex-col divide-y divide-surface-200 dark:divide-surface-800">
       @for (notification of notificationStore.notifications(); track notification.id) {
         <li
-          class="flex gap-4 px-6 py-4 transition-colors hover:bg-surface-50"
+          class="flex gap-4 px-6 py-4 transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
           [class.bg-primary-50]="!notification.isRead"
         >
           <!-- Category icon -->
@@ -53,11 +53,11 @@
 
           <!-- Content -->
           <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-            <p class="text-sm font-semibold text-surface-900 truncate" [title]="notification.subject">
+            <p class="text-sm font-semibold text-surface-900 dark:text-surface-100 truncate" [title]="notification.subject">
               {{ notification.subject }}
             </p>
-            <p class="text-sm text-surface-500 line-clamp-2">{{ notification.body }}</p>
-            <span class="text-xs text-surface-400 mt-1">
+            <p class="text-sm text-surface-500 dark:text-surface-400 line-clamp-2">{{ notification.body }}</p>
+            <span class="text-xs text-surface-400 dark:text-surface-500 mt-1">
               {{ notification.createdAt | date: 'medium' }}
             </span>
           </div>
@@ -74,7 +74,7 @@
         </li>
       } @empty {
         <li class="flex flex-col items-center gap-3 py-16 px-4 text-center">
-          <span class="flex items-center justify-center w-14 h-14 rounded-full bg-surface-100">
+          <span class="flex items-center justify-center w-14 h-14 rounded-full bg-surface-100 dark:bg-surface-800">
             <i class="pi pi-bell text-2xl text-surface-400"></i>
           </span>
           <p class="text-sm text-surface-500">No notifications yet</p>
@@ -85,7 +85,7 @@
 
   <!-- Error state -->
   @if (notificationStore.listError()) {
-    <div class="flex items-center gap-3 mx-6 mb-6 p-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm">
+    <div class="flex items-center gap-3 mx-6 mb-6 p-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-sm">
       <i class="pi pi-exclamation-triangle shrink-0"></i>
       <span>Failed to load notifications. Please try again later.</span>
       <p-button

@@ -10,6 +10,17 @@ import { FormsModule } from '@angular/forms';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import type { NotificationFilter } from '@core/models/notification';
 
+/**
+ * Interface TypeOption
+ * @interface TypeOption
+ *
+ * @description
+ * Defines the shape of filter options used in the notification bell filter select-button.
+ * Each option has a display label and a corresponding filter value.
+ * The "All" option uses a null value to indicate no filtering.
+ *
+ * @version 1.0.0
+ */
 interface TypeOption {
   label: string;
   value: NotificationFilter | null;
@@ -24,7 +35,7 @@ interface TypeOption {
  * the user to narrow notifications by category.
  * Emits the selected filter value whenever the selection changes.
  *
- * @since 1.0.0
+ * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */

@@ -1,4 +1,5 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -9,7 +10,7 @@ import {
 } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { filter, pipe, switchMap, tap } from 'rxjs';
+import { filter, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
 import { OAuth2Service } from '@core/services/api/oauth2';
 import type { UserInfoOutput } from '@core/models/oauth2';
 import type { UserState } from './user-state.interface';
@@ -24,6 +25,17 @@ import {
   type OperationError,
 } from '../operations';
 import { userStoreEvents } from './user.events';
+
+/**
+ * Constant USER_TRANSFER_KEY
+ *
+ * @description
+ * TransferState key used to pass the user profile obtained during SSR
+ * to the browser, avoiding a duplicate userinfo call after hydration.
+ *
+ * @since 1.0.0
+ */
+const USER_TRANSFER_KEY = makeStateKey<UserInfoOutput | null>('user-profile');
 
 /**
  * Constant INITIAL_USER_STATE
@@ -132,7 +144,7 @@ export const UserStore = signalStore(
      * Computed initials
      *
      * @description
-     * Returns the user's initials (first letter of given 
+     * Returns the user's initials (first letter of given
      * name and family name).
      *
      * @since 1.0.0
@@ -174,6 +186,8 @@ export const UserStore = signalStore(
     store,
     dispatcher = inject<Dispatcher>(Dispatcher),
     oauth2Service = inject<OAuth2Service>(OAuth2Service),
+    platformId = inject<object>(PLATFORM_ID),
+    transferState = inject(TransferState),
   ) => ({
     //#region Reactive Methods
     /**
@@ -190,7 +204,7 @@ export const UserStore = signalStore(
       pipe(
         // Skip if already loading or loaded
         filter(() => {
-          const operation = store.loadOperation();
+          const operation: Operation<UserInfoOutput, unknown> = store.loadOperation();
           return operation.status !== 'loading' && operation.status !== 'success';
         }),
         tap(() => {
@@ -271,6 +285,69 @@ export const UserStore = signalStore(
       patchState(store, {
         loadOperation: createIdleOperation(),
       });
+    },
+
+    /**
+     * Method initialize
+     *
+     * @description
+     * Initializes the user profile using TransferState when available (browser
+     * after SSR hydration) to avoid a duplicate userinfo request.
+     * Falls back to a regular load() call if no transferred state is found.
+     *
+     * @since 1.0.0
+     *
+     * @returns {Promise<void>} Resolves when initialization is complete.
+     */
+    async initialize(): Promise<void> {
+      // Browser: consume the profile transferred from SSR to avoid a duplicate request.
+      if (isPlatformBrowser(platformId) && transferState.hasKey(USER_TRANSFER_KEY)) {
+        const transferred: UserInfoOutput | null = transferState.get(USER_TRANSFER_KEY, null);
+        transferState.remove(USER_TRANSFER_KEY);
+
+        if (transferred) {
+          patchState(store, {
+            profile: transferred,
+            loadOperation: createSuccessOperation(transferred),
+          });
+        }
+        // null means SSR userinfo failed — leave state as-is (idle), no retry.
+        return;
+      }
+
+      // SSR or browser without transfer: fetch userinfo and store result for hydration.
+      await firstValueFrom(
+        oauth2Service.userinfo().pipe(
+          tapResponse({
+            next: (response: UserInfoOutput) => {
+              patchState(store, {
+                profile: response,
+                loadOperation: createSuccessOperation(response),
+              });
+              // Store result for browser hydration (SSR only, no-op in browser).
+              transferState.set(USER_TRANSFER_KEY, response);
+            },
+            error: (error: unknown) => {
+              const operationError: OperationError<unknown> =
+                createOperationErrorFromUnknown(error);
+              patchState(store, {
+                loadOperation: createErrorOperation(
+                  operationError,
+                  store.loadOperation().data,
+                ),
+              });
+              // Signal SSR failure to the browser.
+              transferState.set(USER_TRANSFER_KEY, null);
+              dispatcher.dispatch(
+                userStoreEvents.loadFailed(
+                  toOperationFailureEventPayload(operationError, 'Failed to load user profile'),
+                ),
+              );
+            },
+          }),
+        ),
+        { defaultValue: undefined },
+      );
     },
     //#endregion
   })),

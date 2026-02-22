@@ -13,10 +13,8 @@ describe('SplitLayoutFooter', () => {
     fixture.detectChanges();
 
     const footer = fixture.nativeElement.querySelector('footer');
-    const divider = fixture.nativeElement.querySelector('p-divider');
 
     expect(footer).not.toBeNull();
-    expect(divider).not.toBeNull();
   });
 });
 

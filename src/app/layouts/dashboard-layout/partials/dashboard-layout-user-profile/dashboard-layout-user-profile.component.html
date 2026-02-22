@@ -20,7 +20,7 @@
       data-testid="dashboard-user-profile-panel"
     >
       <ng-template #header>
-        <div class="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-surface-50 cursor-pointer" data-testid="dashboard-user-profile-trigger">
+        <div class="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-surface-50 dark:hover:bg-surface-800 cursor-pointer" data-testid="dashboard-user-profile-trigger">
           @if (userStore.avatarUrl(); as avatarUrl) {
             <p-avatar
               [image]="avatarUrl"
@@ -38,16 +38,16 @@
           }
 
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-semibold text-surface-900" data-testid="dashboard-user-profile-name">
+            <p class="truncate text-sm font-semibold text-surface-900 dark:text-surface-100 transition-colors" data-testid="dashboard-user-profile-name">
               {{ userStore.displayName() ?? 'User' }}
             </p>
-            <p class="truncate text-xs text-surface-500" data-testid="dashboard-user-profile-email">
+            <p class="truncate text-xs text-surface-500 dark:text-surface-400 transition-colors" data-testid="dashboard-user-profile-email">
               {{ userStore.profile()?.email ?? 'No email' }}
             </p>
           </div>
 
           <i
-            class="pi text-xs text-surface-500"
+            class="pi text-xs text-surface-500 dark:text-surface-400 transition-colors"
             [class.pi-chevron-up]="!userProfilePanel.collapsed"
             [class.pi-chevron-down]="userProfilePanel.collapsed"
             aria-hidden="true"
@@ -58,22 +58,22 @@
       <div data-testid="dashboard-user-profile-menu">
         <a
           routerLink="/organization/settings"
-          class="flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-surface-800 transition-colors hover:bg-surface-50"
+          class="flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-surface-800 dark:text-surface-200 transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
           data-testid="dashboard-user-profile-settings"
         >
-          <i class="pi pi-cog text-base text-surface-500"></i>
-          <span class="flex-1 text-sm font-medium text-surface-700">Settings</span>
+          <i class="pi pi-cog text-base text-surface-500 dark:text-surface-400"></i>
+          <span class="flex-1 text-sm font-medium text-surface-700 dark:text-surface-300">Settings</span>
         </a>
 
         <button
           type="button"
-          class="flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-surface-800 transition-colors hover:bg-surface-50 disabled:cursor-not-allowed disabled:opacity-60"
+          class="flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-surface-800 dark:text-surface-200 transition-colors hover:bg-surface-50 dark:hover:bg-surface-800 disabled:cursor-not-allowed disabled:opacity-60"
           data-testid="dashboard-user-profile-logout"
           [disabled]="authStore.isLoggingOut()"
           (click)="onLogout()"
         >
-          <i class="pi pi-sign-out text-base text-surface-500"></i>
-          <span class="flex-1 text-left text-sm font-medium text-surface-700">
+          <i class="pi pi-sign-out text-base text-surface-500 dark:text-surface-400"></i>
+          <span class="flex-1 text-left text-sm font-medium text-surface-700 dark:text-surface-300">
             {{ authStore.isLoggingOut() ? 'Logging out...' : 'Logout' }}
           </span>
         </button>

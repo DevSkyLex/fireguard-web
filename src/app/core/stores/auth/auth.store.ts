@@ -1,4 +1,5 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, PLATFORM_ID, makeStateKey, TransferState } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -39,6 +40,17 @@ import { authStoreEvents } from './auth.events';
  * @type {number}
  */
 const TOKEN_EXPIRY_WARNING_MS: number = 5 * 60 * 1000;
+
+/**
+ * Constant AUTH_TRANSFER_KEY
+ *
+ * @description
+ * TransferState key used to pass the auth token obtained during SSR
+ * to the browser, avoiding a duplicate refresh call after hydration.
+ *
+ * @since 1.0.0
+ */
+const AUTH_TRANSFER_KEY = makeStateKey<{ access_token: string; expires_in: number } | null>('auth');
 
 /**
  * Constant INITIAL_AUTH_STATE
@@ -306,6 +318,8 @@ export const AuthStore = signalStore(
     authService = inject<AuthService>(AuthService),
     userStore = inject<UserStore>(UserStore),
     trustedDeviceStore = inject<TrustedDeviceStore>(TrustedDeviceStore),
+    platformId = inject<object>(PLATFORM_ID),
+    transferState = inject(TransferState),
   ) => ({
     //#region Reactive Methods
     /**
@@ -396,6 +410,7 @@ export const AuthStore = signalStore(
                 });
                 // Clear user profile on logout
                 userStore.clear();
+                dispatcher.dispatch(authStoreEvents.logoutSucceeded());
               },
               error: (error: unknown) => {
                 patchState(store, {
@@ -408,6 +423,14 @@ export const AuthStore = signalStore(
                 });
                 // Clear user profile even on logout error
                 userStore.clear();
+                dispatcher.dispatch(
+                  authStoreEvents.logoutFailed(
+                    toOperationFailureEventPayload(
+                      createOperationErrorFromUnknown(error),
+                      'Logout failed',
+                    ),
+                  ),
+                );
               },
             }),
           ),
@@ -598,6 +621,26 @@ export const AuthStore = signalStore(
      * @returns {Promise<void>} Resolves when initialization is complete.
      */
     async initialize(): Promise<void> {
+      // Browser: consume the token transferred from SSR to avoid a duplicate refresh.
+      if (isPlatformBrowser(platformId) && transferState.hasKey(AUTH_TRANSFER_KEY)) {
+        const transferred = transferState.get(AUTH_TRANSFER_KEY, null);
+        transferState.remove(AUTH_TRANSFER_KEY);
+
+        if (transferred) {
+          patchState(store, {
+            initialized: true,
+            accessToken: transferred.access_token,
+            expiresAt: calculateExpiresAt(transferred.expires_in),
+          });
+          userStore.initialize();
+          return;
+        }
+
+        // Transferred null means SSR refresh failed — skip browser refresh too.
+        patchState(store, { initialized: true, accessToken: null, expiresAt: null });
+        return;
+      }
+
       await firstValueFrom(
         authService.refresh().pipe(
           tapResponse({
@@ -608,8 +651,13 @@ export const AuthStore = signalStore(
                 expiresAt: calculateExpiresAt(response.expires_in),
                 refreshOperation: createSuccessOperation(response),
               });
+              // Store result for browser hydration (SSR only, no-op in browser).
+              transferState.set(AUTH_TRANSFER_KEY, {
+                access_token: response.access_token,
+                expires_in: response.expires_in,
+              });
               // Load user profile after successful refresh
-              userStore.load();
+              userStore.initialize();
             },
             error: () => {
               patchState(store, {
@@ -617,6 +665,8 @@ export const AuthStore = signalStore(
                 accessToken: null,
                 expiresAt: null,
               });
+              // Signal SSR failure to the browser.
+              transferState.set(AUTH_TRANSFER_KEY, null);
             },
           }),
         ),

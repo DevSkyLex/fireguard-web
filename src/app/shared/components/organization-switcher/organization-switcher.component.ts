@@ -6,6 +6,7 @@ import type { OrganizationOutput } from '@core/models/organization';
 import { OrganizationSwitcherHeader } from './organization-switcher-header/organization-switcher-header.component';
 import { OrganizationSwitcherTrigger } from './organization-switcher-trigger/organization-switcher-trigger.component';
 import { OrganizationSwitcherList } from './organization-switcher-list/organization-switcher-list.component';
+import { OrganizationSwitcherNav } from './organization-switcher-nav/organization-switcher-nav.component';
 import { OrganizationSwitcherFooter } from './organization-switcher-footer/organization-switcher-footer.component';
 
 /**
@@ -28,6 +29,7 @@ import { OrganizationSwitcherFooter } from './organization-switcher-footer/organ
     OrganizationSwitcherHeader,
     OrganizationSwitcherTrigger,
     OrganizationSwitcherList,
+    OrganizationSwitcherNav,
     OrganizationSwitcherFooter
   ],
   templateUrl: './organization-switcher.component.html',
@@ -167,6 +169,23 @@ export class OrganizationSwitcher implements OnInit {
   protected toggle(event: MouseEvent): void {
     const popover: Popover = this.popover();
     popover.toggle(event);
+  }
+
+  /**
+   * Method closePopover
+   * @method closePopover
+   *
+   * @description
+   * Closes the popover. Called from child components that need
+   * to dismiss the panel (e.g. navigation links).
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @returns {void}
+   */
+  protected closePopover(): void {
+    this.popover().hide();
   }
 
   /**

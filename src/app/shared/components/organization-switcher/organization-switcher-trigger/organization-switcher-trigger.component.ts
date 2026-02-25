@@ -13,7 +13,6 @@ import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import type { OrganizationOutput } from '@core/models/organization';
 
-
 /**
  * Component OrganizationSwitcherTrigger
  * @class OrganizationSwitcherTrigger
@@ -30,18 +29,18 @@ import type { OrganizationOutput } from '@core/models/organization';
  */
 @Component({
   selector: 'app-organization-switcher-trigger',
-  imports: [AvatarModule, ButtonModule, SkeletonModule],
+  imports: [
+    AvatarModule,
+    ButtonModule,
+    SkeletonModule,
+  ],
   templateUrl: './organization-switcher-trigger.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationSwitcherTrigger {
   //#region Properties
-  private readonly elementRef: ElementRef<HTMLElement> = inject(ElementRef);
-  //#endregion
-
-  //#region Inputs
   /**
-   * Input organization
+   * Property organization
    * @readonly
    *
    * @description
@@ -56,7 +55,7 @@ export class OrganizationSwitcherTrigger {
     input<OrganizationOutput | null>(null);
 
   /**
-   * Input isLoading
+   * Property isLoading
    * @readonly
    *
    * @description
@@ -71,7 +70,7 @@ export class OrganizationSwitcherTrigger {
   public readonly isLoading: InputSignal<boolean> = input<boolean>(false);
 
   /**
-   * Input isSwitching
+   * Property isSwitching
    * @readonly
    *
    * @description
@@ -85,11 +84,9 @@ export class OrganizationSwitcherTrigger {
    * @type {InputSignal<boolean>}
    */
   public readonly isSwitching: InputSignal<boolean> = input<boolean>(false);
-  //#endregion
 
-  //#region Outputs
   /**
-   * Output toggleMenu
+   * Property toggleMenu
    * @readonly
    *
    * @description

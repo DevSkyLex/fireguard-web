@@ -14,6 +14,12 @@
       [organizationCount]="[...organizationStore.organizations()].length"
     />
 
+    <!-- Current org nav -->
+    <app-organization-switcher-nav
+      [organization]="organizationStore.selectedOrganization()"
+      (navigate)="closePopover()"
+    />
+
     <!-- Organization list -->
     <app-organization-switcher-list
       [organizations]="[...organizationStore.organizations()]"

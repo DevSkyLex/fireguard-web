@@ -1,5 +1,8 @@
 import { Component, ChangeDetectionStrategy, inject, effect, untracked } from "@angular/core";
-import { RouterOutlet } from "@angular/router";
+import { ActivatedRoute, Data, RouterOutlet } from "@angular/router";
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
+import type { OrganizationOutput } from '@core/models/organization';
 import { DashboardLayoutHeader, DashboardLayoutSidebar, DashboardLayoutContent } from "@layouts/dashboard-layout/partials";
 import { DrawerModule } from 'primeng/drawer';
 import { Ripple } from "primeng/ripple";
@@ -7,6 +10,7 @@ import { DashboardSidebarResizeHandleDirective } from './directives';
 import { DashboardBreadcrumbService, DashboardSidebarNavigationService, DashboardSidebarService } from './services';
 import { UserStore } from '@core/stores/user';
 import { NotificationStore } from '@core/stores/notification';
+import { OrganizationStore } from '@core/stores/organization';
 
 /**
  * Component DashboardLayout
@@ -55,9 +59,19 @@ export class DashboardLayout {
 
   protected readonly userStore: UserStore =
     inject(UserStore);
-    
+
   protected readonly notificationStore: NotificationStore =
     inject(NotificationStore);
+
+  private readonly route: ActivatedRoute =
+    inject(ActivatedRoute);
+
+  private readonly organizationStore: OrganizationStore =
+    inject(OrganizationStore);
+
+  private readonly resolvedOrganization = toSignal<OrganizationOutput | undefined>(
+    this.route.data.pipe(map((data: Data): OrganizationOutput => data['organization'])),
+  );
   //#endregion
 
   constructor() {
@@ -66,6 +80,16 @@ export class DashboardLayout {
         untracked(() => {
           this.notificationStore.load();
           this.notificationStore.connectMercure();
+        });
+      }
+    });
+
+    /** Push the resolved organization into the store so it is available globally. */
+    effect(() => {
+      const organization: OrganizationOutput | undefined = this.resolvedOrganization();
+      if (organization) {
+        untracked(() => {
+          this.organizationStore.setOrganization(organization);
         });
       }
     });

@@ -1,56 +1,6 @@
-import { computed, Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { computed, inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import type { MenuItem } from 'primeng/api';
-
-const SIDEBAR_MENU_ITEMS: readonly MenuItem[] = [
-  {
-    id: 'home',
-    label: 'Home',
-    expanded: true,
-    items: [
-      { id: 'dashboard', label: 'Dashboard', icon: 'pi pi-home', routerLink: '/' },
-      { id: 'bookmarks', label: 'Bookmarks', icon: 'pi pi-bookmark', badge: '3' },
-      { id: 'messages', label: 'Messages', icon: 'pi pi-inbox', badge: '1' },
-    ],
-  },
-  {
-    id: 'organization',
-    label: 'Organization',
-    expanded: true,
-    items: [
-      {
-        id: 'members',
-        label: 'Members',
-        icon: 'pi pi-users',
-        routerLink: '/organization/members',
-      },
-      {
-        id: 'settings',
-        label: 'Settings',
-        icon: 'pi pi-cog',
-        routerLink: '/organization/settings',
-      },
-      {
-        id: 'reports',
-        label: 'Reports',
-        icon: 'pi pi-file',
-        routerLink: '/organization/reports',
-      },
-    ],
-  },
-  {
-    id: 'account',
-    label: 'Account',
-    expanded: true,
-    items: [
-      {
-        id: 'notifications',
-        label: 'Notifications',
-        icon: 'pi pi-bell',
-        routerLink: '/account/notifications',
-      },
-    ],
-  },
-];
+import { OrganizationStore } from '@core/stores/organization';
 
 /**
  * Service DashboardSidebarNavigationService
@@ -60,13 +10,19 @@ const SIDEBAR_MENU_ITEMS: readonly MenuItem[] = [
  * Layout-scoped service managing sidebar navigation items
  * and search filtering logic.
  *
- * @version 1.0.0
+ * Menu items are built dynamically so that every `routerLink`
+ * is prefixed with `/organizations/{currentOrgId}`.
+ *
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable()
 export class DashboardSidebarNavigationService {
   //#region Properties
+  private readonly organizationStore: OrganizationStore =
+    inject(OrganizationStore);
+
   /**
    * Property _searchQuery
    * @readonly
@@ -104,17 +60,47 @@ export class DashboardSidebarNavigationService {
    *
    * @description
    * Sidebar menu items filtered by current search query.
+   * Route links are prefixed with the active organization path.
    *
    * @access public
-   * @since 1.0.0
+   * @since 2.0.0
    *
    * @type {Signal<MenuItem[]>}
    */
   public readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>(
     (): MenuItem[] => {
+      const org = this.organizationStore.selectedOrganization();
+      const prefix: string = org ? `/organizations/${org.id}` : '';
       const query: string = this.searchQuery();
-      if (!query) return [...SIDEBAR_MENU_ITEMS];
-      return this.filterMenuItems(SIDEBAR_MENU_ITEMS, query);
+
+      const items: readonly MenuItem[] = [
+        {
+          id: 'home',
+          label: 'Home',
+          expanded: true,
+          items: [
+            { id: 'dashboard', label: 'Dashboard', icon: 'pi pi-home', routerLink: prefix || '/' },
+            { id: 'bookmarks', label: 'Bookmarks', icon: 'pi pi-bookmark', badge: '3' },
+            { id: 'messages', label: 'Messages', icon: 'pi pi-inbox', badge: '1' },
+          ],
+        },
+        {
+          id: 'account',
+          label: 'Account',
+          expanded: true,
+          items: [
+            {
+              id: 'notifications',
+              label: 'Notifications',
+              icon: 'pi pi-bell',
+              routerLink: `${prefix}/account/notifications`,
+            },
+          ],
+        },
+      ];
+
+      if (!query) return [...items];
+      return this.filterMenuItems(items, query);
     },
   );
   //#endregion

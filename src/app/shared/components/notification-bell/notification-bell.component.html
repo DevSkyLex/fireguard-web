@@ -1,16 +1,10 @@
 <div class="relative">
 
   <!-- Bell trigger button -->
-  <p-overlay-badge severity="danger" [badgeDisabled]="!notificationStore.hasUnread()">
-    <p-button
-      icon="pi pi-bell"
-      severity="secondary"
-      [outlined]="true"
-      size="small"
-      ariaLabel="Notifications"
-      (onClick)="toggle($event)"
-    />
-  </p-overlay-badge>
+  <app-notification-bell-trigger
+    [hasUnread]="notificationStore.hasUnread()"
+    (toggleMenu)="toggle($event)"
+  />
 
   <!-- Notification panel -->
   <p-popover #popover styleClass="w-96" [pt]="popoverPt">

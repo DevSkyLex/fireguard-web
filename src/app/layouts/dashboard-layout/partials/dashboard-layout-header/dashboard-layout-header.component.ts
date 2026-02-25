@@ -3,6 +3,7 @@ import { ButtonModule } from "primeng/button";
 import { DashboardSidebarService } from "@layouts/dashboard-layout/services";
 import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
 import { NotificationBell } from '@shared/components/notification-bell';
+import { OrganizationSwitcher } from '@shared/components/organization-switcher';
 import { ThemeSwitcher } from '@shared/components/theme-switcher';
 
 /**
@@ -30,6 +31,7 @@ import { ThemeSwitcher } from '@shared/components/theme-switcher';
   imports: [
     ButtonModule,
     DashboardLayoutBreadcrumb,
+    OrganizationSwitcher,
     ThemeSwitcher,
     NotificationBell
   ],

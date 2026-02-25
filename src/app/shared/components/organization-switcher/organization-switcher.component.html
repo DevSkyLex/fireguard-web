@@ -1,0 +1,25 @@
+<!-- Trigger button -->
+<app-organization-switcher-trigger
+  [organization]="organizationStore.selectedOrganization()"
+  [isLoading]="organizationStore.isLoadingOrganizations()"
+  (toggleMenu)="toggle($event)"
+/>
+
+<!-- Organization menu -->
+<p-popover #popover [pt]="popoverPt">
+  <div class="flex flex-col w-60">
+    <!-- Header -->
+    <app-organization-switcher-header [organizationCount]="[...organizationStore.organizations()].length" />
+
+    <!-- Organization list -->
+    <app-organization-switcher-list
+      [organizations]="[...organizationStore.organizations()]"
+      [selectedOrganization]="organizationStore.selectedOrganization()"
+      (organizationChange)="onOrganizationChange($event)"
+    />
+
+    <!-- Footer -->
+    <app-organization-switcher-footer (createOrganization)="navigateToNewOrganization()"/>
+
+  </div>
+</p-popover>

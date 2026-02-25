@@ -4,6 +4,7 @@ import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { AuthStore } from '@core/stores/auth';
 import { UserStore } from '@core/stores/user';
+import { OrganizationStore } from '@core/stores/organization';
 import { DashboardLayout } from './dashboard-layout.component';
 import { DashboardSidebarService } from './services';
 
@@ -85,10 +86,19 @@ describe('DashboardLayout', () => {
     isLoggingOut: signal(false),
     logout: vi.fn(),
   };
+  const mockOrganizationStore = {
+    selectedOrganization: signal(null),
+    organizations: signal([]),
+    isLoadingOrganizations: signal(false),
+    setOrganization: vi.fn(),
+    loadOrganizations: vi.fn(),
+  };
 
   beforeEach(() => {
     mockAuthStore.isLoggingOut.set(false);
     mockAuthStore.logout.mockReset();
+    mockOrganizationStore.setOrganization.mockReset();
+    mockOrganizationStore.loadOrganizations.mockReset();
 
     TestBed.configureTestingModule({
       imports: [DashboardLayout],
@@ -96,6 +106,7 @@ describe('DashboardLayout', () => {
         provideRouter([]),
         { provide: UserStore, useValue: mockUserStore },
         { provide: AuthStore, useValue: mockAuthStore },
+        { provide: OrganizationStore, useValue: mockOrganizationStore },
       ],
     });
   });

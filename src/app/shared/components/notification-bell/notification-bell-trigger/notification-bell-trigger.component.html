@@ -1,0 +1,10 @@
+<p-overlay-badge severity="danger" [badgeDisabled]="!hasUnread()">
+  <p-button
+    icon="pi pi-bell"
+    severity="secondary"
+    [outlined]="true"
+    size="small"
+    ariaLabel="Notifications"
+    (onClick)="toggleMenu.emit($event)"
+  />
+</p-overlay-badge>

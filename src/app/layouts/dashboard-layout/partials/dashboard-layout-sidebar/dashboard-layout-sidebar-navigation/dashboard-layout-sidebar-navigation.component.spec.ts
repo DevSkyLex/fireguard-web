@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
@@ -7,6 +7,7 @@ import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
 } from '@layouts/dashboard-layout/services';
+import { OrganizationStore } from '@core/stores/organization';
 import { DashboardLayoutSidebarNavigation } from './dashboard-layout-sidebar-navigation.component';
 
 @Component({
@@ -14,18 +15,35 @@ import { DashboardLayoutSidebarNavigation } from './dashboard-layout-sidebar-nav
 })
 class DummyPage {}
 
+const MOCK_ORG = {
+  id: 'org-1',
+  name: 'Acme Corp',
+  slug: 'acme',
+  isActive: true,
+  status: 'active',
+  ownerUserId: 'u1',
+  createdByUserId: 'u1',
+  createdAt: '2025-01-01',
+  updatedAt: '2025-01-01',
+};
+
 describe('DashboardLayoutSidebarNavigation', () => {
+  const mockOrganizationStore = {
+    selectedOrganization: signal(MOCK_ORG),
+  };
+
   beforeEach(() => {
+    mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
+
     TestBed.configureTestingModule({
       imports: [DashboardLayoutSidebarNavigation],
       providers: [
         DashboardSidebarNavigationService,
         DashboardSidebarService,
+        { provide: OrganizationStore, useValue: mockOrganizationStore },
         provideRouter([
-          { path: '', component: DummyPage },
-          { path: 'organization/members', component: DummyPage },
-          { path: 'organization/settings', component: DummyPage },
-          { path: 'organization/reports', component: DummyPage },
+          { path: 'organizations/:organizationId', component: DummyPage },
+          { path: 'organizations/:organizationId/account/notifications', component: DummyPage },
         ]),
       ],
     });
@@ -52,10 +70,10 @@ describe('DashboardLayoutSidebarNavigation', () => {
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    component.onSearchInput('Reports');
+    component.onSearchInput('Notifications');
     const labels = component.menuItems().map((item) => item.label);
 
-    expect(labels).toEqual(['Organization']);
+    expect(labels).toEqual(['Account']);
   });
 
   it('should clear search query and restore full menu', () => {
@@ -66,11 +84,11 @@ describe('DashboardLayoutSidebarNavigation', () => {
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    component.onSearchInput('Reports');
-    expect(component.menuItems().map((group) => group.label)).toEqual(['Organization']);
+    component.onSearchInput('Notifications');
+    expect(component.menuItems().map((group) => group.label)).toEqual(['Account']);
 
     component.clearSearch();
-    expect(component.menuItems().map((group) => group.label)).toEqual(['Home', 'Organization']);
+    expect(component.menuItems().map((group) => group.label)).toEqual(['Home', 'Account']);
   });
 
   it('should show no results state when search does not match anything', () => {
@@ -94,8 +112,8 @@ describe('DashboardLayoutSidebarNavigation', () => {
       readonly onItemClick: (item: { readonly routerLink?: string; readonly items?: readonly unknown[] }) => void;
     };
 
-    component.onItemClick({ routerLink: '/' });
-    component.onItemClick({ routerLink: '/', items: [{}] });
+    component.onItemClick({ routerLink: '/organizations/org-1' });
+    component.onItemClick({ routerLink: '/organizations/org-1', items: [{}] });
     component.onItemClick({});
 
     expect(closeSpy).toHaveBeenCalledTimes(1);
@@ -103,7 +121,7 @@ describe('DashboardLayoutSidebarNavigation', () => {
 
   it('should highlight the active route item', async () => {
     const router = TestBed.inject(Router);
-    await router.navigateByUrl('/organization/settings');
+    await router.navigateByUrl('/organizations/org-1/account/notifications');
 
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
     fixture.detectChanges();
@@ -111,11 +129,11 @@ describe('DashboardLayoutSidebarNavigation', () => {
     fixture.detectChanges();
 
     const activeLinks = fixture.debugElement.queryAll(By.css('a[aria-current="page"]'));
-    const settingsLink = fixture.debugElement.query(By.css('a[data-sidebar-item-id="settings"]'));
+    const notificationsLink = fixture.debugElement.query(By.css('a[data-sidebar-item-id="notifications"]'));
     const dashboardLink = fixture.debugElement.query(By.css('a[data-sidebar-item-id="dashboard"]'));
 
     expect(activeLinks.length).toBe(1);
-    expect(settingsLink.nativeElement.getAttribute('aria-current')).toBe('page');
+    expect(notificationsLink.nativeElement.getAttribute('aria-current')).toBe('page');
     expect(dashboardLink.nativeElement.getAttribute('aria-current')).toBeNull();
   });
 });

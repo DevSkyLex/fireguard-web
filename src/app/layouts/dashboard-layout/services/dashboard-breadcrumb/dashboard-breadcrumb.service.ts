@@ -1,23 +1,9 @@
-import { inject, Injectable, Signal } from '@angular/core';
+import { computed, inject, Injectable, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
 import { filter, map, startWith } from 'rxjs';
-
-/**
- * Constant DEFAULT_HOME_ITEM
- * @const DEFAULT_HOME_ITEM
- *
- * @description
- * Default home breadcrumb item configuration.
- * Can be overridden by modifying the `home` property of the service.
- *
- * @var {Readonly<MenuItem>}
- */
-const DEFAULT_HOME_ITEM: Readonly<MenuItem> = {
-  icon: 'pi pi-home',
-  routerLink: '/',
-};
+import { OrganizationStore } from '@core/stores/organization';
 
 /**
  * Service DashboardBreadcrumbService
@@ -51,19 +37,41 @@ export class DashboardBreadcrumbService {
     inject<Router>(Router);
 
   /**
+   * Property organizationStore
+   * @readonly
+   *
+   * @description
+   * Organization store for building dynamic home link.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {OrganizationStore}
+   */
+  private readonly organizationStore: OrganizationStore =
+    inject(OrganizationStore);
+
+  /**
    * Property home
    * @readonly
    *
    * @description
    * Home breadcrumb item displayed before the
-   * dynamic route breadcrumbs.
+   * dynamic route breadcrumbs. Links to the current
+   * organization's dashboard.
    *
    * @access public
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @type {MenuItem}
+   * @type {Signal<MenuItem>}
    */
-  public readonly home: MenuItem = { ...DEFAULT_HOME_ITEM };
+  public readonly home: Signal<MenuItem> = computed<MenuItem>(() => {
+    const org = this.organizationStore.selectedOrganization();
+    return {
+      icon: 'pi pi-home',
+      routerLink: org ? `/organizations/${org.id}` : '/',
+    };
+  });
 
   /**
    * Property items

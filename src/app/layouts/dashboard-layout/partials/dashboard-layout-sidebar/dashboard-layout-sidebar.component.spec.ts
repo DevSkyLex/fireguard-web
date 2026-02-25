@@ -5,10 +5,23 @@ import { provideRouter } from '@angular/router';
 import { AuthStore } from '@core/stores/auth';
 import type { UserInfoOutput } from '@core/models/oauth2';
 import { UserStore } from '@core/stores/user';
+import { OrganizationStore } from '@core/stores/organization';
 import type { MenuItem } from 'primeng/api';
 import { DashboardSidebarNavigationService, DashboardSidebarService } from '@layouts/dashboard-layout/services';
 import { DashboardLayoutSidebar } from './dashboard-layout-sidebar.component';
 import { DashboardLayoutSidebarNavigation } from './dashboard-layout-sidebar-navigation/dashboard-layout-sidebar-navigation.component';
+
+const MOCK_ORG = {
+  id: 'org-1',
+  name: 'Acme Corp',
+  slug: 'acme',
+  isActive: true,
+  status: 'active',
+  ownerUserId: 'u1',
+  createdByUserId: 'u1',
+  createdAt: '2025-01-01',
+  updatedAt: '2025-01-01',
+};
 
 describe('DashboardLayoutSidebar', () => {
   const mockUserStore = {
@@ -30,10 +43,18 @@ describe('DashboardLayoutSidebar', () => {
     isLoggingOut: signal(false),
     logout: vi.fn(),
   };
+  const mockOrganizationStore = {
+    selectedOrganization: signal(MOCK_ORG),
+    organizations: signal([MOCK_ORG]),
+    isLoadingOrganizations: signal(false),
+    loadOrganizations: vi.fn(),
+  };
 
   beforeEach(() => {
     mockAuthStore.isLoggingOut.set(false);
     mockAuthStore.logout.mockReset();
+    mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
+    mockOrganizationStore.loadOrganizations.mockReset();
 
     TestBed.configureTestingModule({
       imports: [DashboardLayoutSidebar],
@@ -43,6 +64,7 @@ describe('DashboardLayoutSidebar', () => {
         provideRouter([]),
         { provide: UserStore, useValue: mockUserStore },
         { provide: AuthStore, useValue: mockAuthStore },
+        { provide: OrganizationStore, useValue: mockOrganizationStore },
       ],
     });
   });
@@ -68,8 +90,8 @@ describe('DashboardLayoutSidebar', () => {
     expect(textContent).toContain('Fireguard');
     expect(textContent).toContain('Home');
     expect(textContent).toContain('Dashboard');
-    expect(textContent).toContain('Organization');
-    expect(textContent).toContain('Members');
+    expect(textContent).toContain('Account');
+    expect(textContent).toContain('Notifications');
   });
 
   it('should render a search input in the sidebar', () => {
@@ -103,15 +125,15 @@ describe('DashboardLayoutSidebar', () => {
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    navigation.onSearchInput('Reports');
+    navigation.onSearchInput('Notifications');
 
     const menuItems = navigation.menuItems();
     const rootLabels = menuItems.map((item) => item.label);
-    const organization = menuItems.find((item) => item.label === 'Organization');
-    const reportItem = organization?.items?.find((item) => item.label === 'Reports');
+    const account = menuItems.find((item) => item.label === 'Account');
+    const notifItem = account?.items?.find((item) => item.label === 'Notifications');
 
-    expect(rootLabels).toEqual(['Organization']);
-    expect(reportItem).toBeDefined();
+    expect(rootLabels).toEqual(['Account']);
+    expect(notifItem).toBeDefined();
   });
 
   it('should clear search query and restore full menu', () => {
@@ -125,11 +147,11 @@ describe('DashboardLayoutSidebar', () => {
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    navigation.onSearchInput('Reports');
-    expect(navigation.menuItems().map((group) => group.label)).toEqual(['Organization']);
+    navigation.onSearchInput('Notifications');
+    expect(navigation.menuItems().map((group) => group.label)).toEqual(['Account']);
 
     navigation.clearSearch();
-    expect(navigation.menuItems().map((group) => group.label)).toEqual(['Home', 'Organization']);
+    expect(navigation.menuItems().map((group) => group.label)).toEqual(['Home', 'Account']);
   });
 
   it('should configure notification badges in menu model', () => {
@@ -143,16 +165,12 @@ describe('DashboardLayoutSidebar', () => {
 
     const groups = navigation.menuItems();
     const homeGroup = groups.find((group) => group.label === 'Home');
-    const organizationGroup = groups.find((group) => group.label === 'Organization');
     const homeItems = homeGroup?.items ?? [];
-    const organizationItems = organizationGroup?.items ?? [];
     const bookmarks = homeItems.find((item) => item.label === 'Bookmarks');
     const messages = homeItems.find((item) => item.label === 'Messages');
-    const reports = organizationItems.find((item) => item.label === 'Reports');
 
     expect(bookmarks?.badge).toBe('3');
     expect(messages?.badge).toBe('1');
-    expect(reports?.badge).toBeUndefined();
   });
 
   it('should close sidebar only for routerLink leaf items', () => {
@@ -166,14 +184,14 @@ describe('DashboardLayoutSidebar', () => {
       readonly onItemClick: (item: { readonly routerLink?: string; readonly items?: readonly unknown[] }) => void;
     };
 
-    navigation.onItemClick({ routerLink: '/' });
-    navigation.onItemClick({ routerLink: '/', items: [{}] });
+    navigation.onItemClick({ routerLink: '/organizations/org-1' });
+    navigation.onItemClick({ routerLink: '/organizations/org-1', items: [{}] });
     navigation.onItemClick({});
 
     expect(closeSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should expose route as panelmenu routerLink', () => {
+  it('should expose route as panelmenu routerLink with organization prefix', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebar);
     fixture.detectChanges();
 
@@ -188,7 +206,7 @@ describe('DashboardLayoutSidebar', () => {
     const homePanel = navigation.menuItems().find((group) => group.label === 'Home');
     const dashboard = homePanel?.items?.find((item) => item.label === 'Dashboard');
 
-    expect(dashboard?.routerLink).toBe('/');
+    expect(dashboard?.routerLink).toBe('/organizations/org-1');
   });
 
   it('should keep stable top-level ordering', () => {
@@ -202,7 +220,7 @@ describe('DashboardLayoutSidebar', () => {
 
     const labels = navigation.menuItems().map((group) => group.label);
 
-    expect(labels).toEqual(['Home', 'Organization']);
+    expect(labels).toEqual(['Home', 'Account']);
   });
 
   it('should not render collapsed flyout ui', () => {

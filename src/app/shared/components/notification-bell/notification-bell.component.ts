@@ -7,11 +7,10 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { ButtonModule } from 'primeng/button';
-import { OverlayBadgeModule } from 'primeng/overlaybadge';
 import { Popover, PopoverModule, type PopoverPassThroughOptions } from 'primeng/popover';
 import { NotificationStore } from '@core/stores/notification';
 import type { NotificationFilter } from '@core/models/notification';
+import { NotificationBellTrigger } from './notification-bell-trigger/notification-bell-trigger.component';
 import { NotificationBellHeader } from './notification-bell-header/notification-bell-header.component';
 import { NotificationBellFilter } from './notification-bell-filter/notification-bell-filter.component';
 import { NotificationBellList } from './notification-bell-list/notification-bell-list.component';
@@ -36,9 +35,8 @@ import { NotificationBellFooter } from './notification-bell-footer/notification-
 @Component({
   selector: 'app-notification-bell',
   imports: [
-    ButtonModule,
-    OverlayBadgeModule,
     PopoverModule,
+    NotificationBellTrigger,
     NotificationBellHeader,
     NotificationBellFilter,
     NotificationBellList,

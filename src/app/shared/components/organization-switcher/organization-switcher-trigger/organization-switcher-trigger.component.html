@@ -5,7 +5,7 @@
     severity="secondary"
     [outlined]="true"
     size="small"
-    (onClick)="toggleMenu.emit($event)"
+    (onClick)="onButtonClick($event)"
   >
     @if (organization(); as org) {
       <span class="flex items-center gap-2">

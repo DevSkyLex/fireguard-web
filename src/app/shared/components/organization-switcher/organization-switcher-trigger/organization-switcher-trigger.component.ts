@@ -1,6 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  inject,
   input,
   output,
   type InputSignal,
@@ -10,7 +12,7 @@ import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import type { OrganizationOutput } from '@core/models/organization';
-import { orgColor, orgInitials } from '../organization-switcher.utils';
+
 
 /**
  * Component OrganizationSwitcherTrigger
@@ -33,6 +35,10 @@ import { orgColor, orgInitials } from '../organization-switcher.utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationSwitcherTrigger {
+  //#region Properties
+  private readonly elementRef: ElementRef<HTMLElement> = inject(ElementRef);
+  //#endregion
+
   //#region Inputs
   /**
    * Input organization
@@ -77,15 +83,33 @@ export class OrganizationSwitcherTrigger {
    * @access public
    * @since 2.0.0
    *
-   * @type {OutputEmitterRef<Event>}
+   * @type {OutputEmitterRef<MouseEvent>}
    */
-  public readonly toggleMenu: OutputEmitterRef<Event> = output<Event>();
+  public readonly toggleMenu: OutputEmitterRef<MouseEvent> =
+    output<MouseEvent>();
   //#endregion
 
   //#region Methods
   /**
+   * Method onButtonClick
+   * @method onButtonClick
+   *
+   * @description
+   * Forwards the native click event to the parent so it can
+   * toggle the popover.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {MouseEvent} event - The native click event from `p-button`.
+   * @returns {void}
+   */
+  protected onButtonClick(event: MouseEvent): void {
+    this.toggleMenu.emit(event);
+  }
+
+  /**
    * Method avatarPt
-   * @method avatarPt
    *
    * @description
    * Returns PrimeNG passthrough options for the trigger avatar,
@@ -99,11 +123,64 @@ export class OrganizationSwitcherTrigger {
    */
   protected avatarPt(org: OrganizationOutput): AvatarPassThroughOptions {
     return {
-      root: { class: [orgColor(org.id), 'shrink-0 size-4 rounded text-white'] },
+      root: { class: [this.orgColor(org.id), 'shrink-0 size-4 rounded text-white'] },
       label: { class: 'text-[9px] font-bold leading-none' },
     };
   }
 
-  protected readonly orgInitials = orgInitials;
+  /**
+   * Method orgInitials
+   * @method orgInitials
+   *
+   * @description
+   * Derives a 1-2 letter initials string from the organization name, to be
+   * shown in the avatar when no image is available.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {string} name - The organization name to extract the initials from.
+   *
+   * @return {string} The derived initials, in uppercase.
+   */
+  protected orgInitials(name: string): string {
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0].toUpperCase())
+      .join('');
+  }
+
+  /**
+   * Method orgColor
+   * @method orgColor
+   *
+   * @description
+   * Derives a deterministic Tailwind background-color class from the
+   * organization id so each org has a stable, distinct
+   * color in its avatar.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {string} id - The organization identifier to derive the color from.
+   *
+   * @return {string} A Tailwind bg-* class string.
+   */
+  private orgColor(id: string): string {
+    const palette: string[] = [
+      'bg-violet-500',
+      'bg-blue-500',
+      'bg-cyan-500',
+      'bg-emerald-500',
+      'bg-amber-500',
+      'bg-rose-500',
+      'bg-pink-500',
+      'bg-indigo-500',
+    ];
+    const index: number = [...id].reduce((acc, c) => acc + c.charCodeAt(0), 0) % palette.length;
+    return palette[index];
+  }
   //#endregion
 }

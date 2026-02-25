@@ -9,7 +9,9 @@
 <p-popover #popover [pt]="popoverPt">
   <div class="flex flex-col w-60">
     <!-- Header -->
-    <app-organization-switcher-header [organizationCount]="[...organizationStore.organizations()].length" />
+    <app-organization-switcher-header
+      [organizationCount]="[...organizationStore.organizations()].length"
+    />
 
     <!-- Organization list -->
     <app-organization-switcher-list
@@ -19,7 +21,8 @@
     />
 
     <!-- Footer -->
-    <app-organization-switcher-footer (createOrganization)="navigateToNewOrganization()"/>
-
+    <app-organization-switcher-footer
+      (createOrganization)="navigateToNewOrganization()"
+    />
   </div>
 </p-popover>

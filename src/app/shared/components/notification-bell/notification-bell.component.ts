@@ -76,10 +76,10 @@ export class NotificationBell {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<Popover | undefined>}
+   * @type {Signal<Popover>}
    */
-  protected readonly popover: Signal<Popover | undefined> =
-    viewChild<Popover>('popover');
+  protected readonly popover: Signal<Popover> =
+    viewChild.required<Popover>('popover');
 
   /**
    * Property popoverPt
@@ -95,6 +95,7 @@ export class NotificationBell {
    * @type {PopoverPassThroughOptions}
    */
   protected readonly popoverPt: PopoverPassThroughOptions = {
+    root: { class: 'no-arrow' },
     content: { class: 'p-0 overflow-hidden' },
   };
 
@@ -133,7 +134,7 @@ export class NotificationBell {
    * @return {void} - No return value.
    */
   protected toggle(event: MouseEvent): void {
-    const popover: Popover | undefined = this.popover();
+    const popover: Popover = this.popover();
     const loading: boolean = this.notificationStore.isLoading();
     const empty: boolean = this.notificationStore.notifications().length === 0;
 
@@ -141,7 +142,7 @@ export class NotificationBell {
       this.notificationStore.load({ limit: 20 });
     }
 
-    popover?.toggle(event);
+    popover.toggle(event);
   }
 
   /**

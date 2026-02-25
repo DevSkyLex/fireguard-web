@@ -64,4 +64,24 @@ export class NotificationBellTrigger {
   public readonly toggleMenu: OutputEmitterRef<MouseEvent> =
     output<MouseEvent>();
   //#endregion
+
+  //#region Methods
+  /**
+   * Method onButtonClick
+   * @method onButtonClick
+   *
+   * @description
+   * Forwards the native click event to the parent so it can
+   * toggle the popover.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {MouseEvent} event - The native click event from `p-button`.
+   * @returns {void}
+   */
+  protected onButtonClick(event: MouseEvent): void {
+    this.toggleMenu.emit(event);
+  }
+  //#endregion
 }

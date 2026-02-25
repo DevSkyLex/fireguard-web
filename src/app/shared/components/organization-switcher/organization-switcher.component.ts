@@ -23,7 +23,13 @@ import { OrganizationSwitcherFooter } from './organization-switcher-footer/organ
  */
 @Component({
   selector: 'app-organization-switcher',
-  imports: [PopoverModule, OrganizationSwitcherHeader, OrganizationSwitcherTrigger, OrganizationSwitcherList, OrganizationSwitcherFooter],
+  imports: [
+    PopoverModule,
+    OrganizationSwitcherHeader,
+    OrganizationSwitcherTrigger,
+    OrganizationSwitcherList,
+    OrganizationSwitcherFooter
+  ],
   templateUrl: './organization-switcher.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -90,7 +96,7 @@ export class OrganizationSwitcher implements OnInit {
    */
   protected readonly popoverPt: PopoverPassThroughOptions = {
     content: {
-      class: 'p-0',
+      class: 'p-0 overflow-hidden',
     },
   };
   //#endregion
@@ -132,7 +138,10 @@ export class OrganizationSwitcher implements OnInit {
    */
   protected onOrganizationChange(organization: OrganizationOutput): void {
     if (!organization) return;
-    this.popover().hide();
+
+    const popover: Popover = this.popover();
+    popover.hide();
+
     const currentUrl: string = this.router.url;
     const newUrl: string = currentUrl.replace(
       /\/organizations\/[^/?#]+/,
@@ -155,8 +164,9 @@ export class OrganizationSwitcher implements OnInit {
    * @param {Event} event - The click event from the trigger button.
    * @returns {void}
    */
-  protected toggle(event: Event): void {
-    this.popover().toggle(event);
+  protected toggle(event: MouseEvent): void {
+    const popover: Popover = this.popover();
+    popover.toggle(event);
   }
 
   /**
@@ -172,7 +182,9 @@ export class OrganizationSwitcher implements OnInit {
    * @returns {void}
    */
   protected navigateToNewOrganization(): void {
-    this.popover().hide();
+    const popover: Popover = this.popover();
+    popover.hide();
+
     this.router.navigate(['/onboarding']);
   }
   //#endregion

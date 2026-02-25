@@ -9,7 +9,7 @@ import {
 import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
 import { RippleModule } from 'primeng/ripple';
 import type { OrganizationOutput } from '@core/models/organization';
-import { orgColor, orgInitials } from '../organization-switcher.utils';
+
 
 /**
  * Component OrganizationSwitcherList
@@ -99,11 +99,33 @@ export class OrganizationSwitcherList {
    */
   protected avatarPt(org: OrganizationOutput): AvatarPassThroughOptions {
     return {
-      root: { class: [orgColor(org.id), 'shrink-0 size-6 rounded text-white'] },
+      root: { class: [this.orgColor(org.id), 'shrink-0 size-6 rounded text-white'] },
       label: { class: 'text-[11px] font-bold leading-none' },
     };
   }
 
-  protected readonly orgInitials = orgInitials;
+  protected orgInitials(name: string): string {
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0].toUpperCase())
+      .join('');
+  }
+
+  private orgColor(id: string): string {
+    const palette: string[] = [
+      'bg-violet-500',
+      'bg-blue-500',
+      'bg-cyan-500',
+      'bg-emerald-500',
+      'bg-amber-500',
+      'bg-rose-500',
+      'bg-pink-500',
+      'bg-indigo-500',
+    ];
+    const index: number = [...id].reduce((acc, c) => acc + c.charCodeAt(0), 0) % palette.length;
+    return palette[index];
+  }
   //#endregion
 }

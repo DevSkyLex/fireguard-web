@@ -2,6 +2,7 @@
 <app-organization-switcher-trigger
   [organization]="organizationStore.selectedOrganization()"
   [isLoading]="organizationStore.isLoadingOrganizations()"
+  [isSwitching]="organizationStore.isLoadingOrganization()"
   (toggleMenu)="toggle($event)"
 />
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, Signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, Signal, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Popover, PopoverModule, PopoverPassThroughOptions } from 'primeng/popover';
 import { OrganizationStore } from '@core/stores/organization';

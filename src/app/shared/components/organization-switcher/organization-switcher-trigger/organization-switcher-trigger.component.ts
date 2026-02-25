@@ -69,6 +69,22 @@ export class OrganizationSwitcherTrigger {
    * @type {InputSignal<boolean>}
    */
   public readonly isLoading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input isSwitching
+   * @readonly
+   *
+   * @description
+   * Whether an organization switch is in progress (i.e. the newly selected
+   * organization's data is currently loading). When true, the trigger button
+   * is disabled and shows a spinner in place of the chevron.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly isSwitching: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs

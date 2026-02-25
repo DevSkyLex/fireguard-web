@@ -5,6 +5,7 @@
     severity="secondary"
     [outlined]="true"
     size="small"
+    [disabled]="isSwitching()"
     (onClick)="onButtonClick($event)"
   >
     @if (organization(); as org) {
@@ -14,7 +15,14 @@
           [pt]="avatarPt(org)"
         />
         <span class="text-sm font-medium max-w-32 truncate">{{ org.name }}</span>
-        <i class="pi pi-chevron-down text-[10px] shrink-0"></i>
+
+        <div class="mx-auto">
+          @if (isSwitching()) {
+            <i class="pi pi-spin pi-spinner text-sm shrink-0"></i>
+          } @else {
+            <i class="pi pi-chevron-down text-[10px] shrink-0"></i>
+          }
+        </div>
       </span>
     } @else {
       <span class="flex items-center gap-2">

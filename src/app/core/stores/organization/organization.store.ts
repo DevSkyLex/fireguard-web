@@ -9,7 +9,7 @@ import {
 } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
+import { exhaustMap, Observable, pipe, switchMap, tap } from 'rxjs';
 import {
   OrganizationService,
   OrganizationMemberService,
@@ -366,6 +366,55 @@ export const OrganizationStore = signalStore(
         selectedOrganization: organization,
         getOperation: createSuccessOperation(organization),
       });
+    },
+
+    /**
+     * Method resolveOrganization
+     *
+     * @description
+     * Fetches a single organization by ID, updates the store state
+     * (getOperation + selectedOrganization) and returns the Observable
+     * so callers such as route resolvers can await the result.
+     *
+     * Unlike {@link loadOrganization}, this method returns an Observable
+     * that emits the resolved organization and completes, making it
+     * suitable for use in Angular route resolvers.
+     *
+     * @since 2.0.0
+     *
+     * @param {string} id - Organization identifier.
+     * @returns {Observable<OrganizationOutput>}
+     */
+    resolveOrganization(id: string): Observable<OrganizationOutput> {
+      patchState(store, {
+        getOperation: createLoadingOperation(store.getOperation().data),
+      });
+
+      return organizationService.get(id).pipe(
+        tap({
+          next: (organization: OrganizationOutput) => {
+            patchState(store, {
+              selectedOrganization: organization,
+              getOperation: createSuccessOperation(organization),
+            });
+          },
+          error: (error: unknown) => {
+            const operationError: OperationError<unknown> =
+              createOperationErrorFromUnknown(error);
+            patchState(store, {
+              getOperation: createErrorOperation(
+                operationError,
+                store.getOperation().data,
+              ),
+            });
+            dispatcher.dispatch(
+              organizationStoreEvents.getFailed(
+                toOperationFailureEventPayload(operationError, 'Failed to load organization'),
+              ),
+            );
+          },
+        }),
+      );
     },
 
     /**

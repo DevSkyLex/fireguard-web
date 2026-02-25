@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, MaybeAsync, RedirectCommand, type ResolveFn, Router } from '@angular/router';
 import { catchError, of } from 'rxjs';
-import { OrganizationService } from '@core/services/api/organization';
+import { OrganizationStore } from '@core/stores/organization';
 import type { OrganizationOutput } from '@core/models/organization';
 
 /**
@@ -26,48 +26,40 @@ export const organizationResolver: ResolveFn<OrganizationOutput> = (
   route: ActivatedRouteSnapshot
 ): MaybeAsync<OrganizationOutput | RedirectCommand> => {
   /**
-   * Constant organizationService
-   * @const organizationService
+   * Constant organizationStore
+   * @const organizationStore
    *
    * @description
-   * Service for fetching organization data from the API.
+   * Organization store for fetching the organization
+   * data based on the route parameter.
    *
-   * @var {OrganizationService}
+   * @var {OrganizationStore}
    */
-  const organizationService: OrganizationService =
-    inject<OrganizationService>(OrganizationService);
+  const organizationStore: OrganizationStore =
+    inject<OrganizationStore>(OrganizationStore);
 
   /**
    * Constant router
    * @const router
    *
    * @description
-   * Router for navigating to fallback routes if
-   * the organization fetch fails.
+   * Router for creating a redirection command in case the organization
+   * cannot be resolved, ensuring the user is
+   * redirected to a safe route.
    *
    * @var {Router}
    */
   const router: Router =
     inject<Router>(Router);
 
-  /**
-   * Constant organizationId
-   * @const organizationId
-   *
-   * @description
-   * The `:organizationId` route parameter used to fetch
-   * the organization. If this parameter is missing,
-   * the resolver immediately redirects to `/` and returns null.
-   *
-   * @var {string | null}
-   */
+  // Extract organizationId from route parameters
   const organizationId: string | null = route.paramMap.get('organizationId');
 
-  if (!organizationId) {
-    return new RedirectCommand(router.parseUrl('/'));
-  }
+  // If no organizationId is present, redirect immediately
+  if (!organizationId) return new RedirectCommand(router.parseUrl('/'));
 
-  return organizationService.get(organizationId).pipe(
+  // Attempt to resolve the organization, redirecting on failure
+  return organizationStore.resolveOrganization(organizationId).pipe(
     catchError(() => of(new RedirectCommand(router.parseUrl('/')))),
   );
 };

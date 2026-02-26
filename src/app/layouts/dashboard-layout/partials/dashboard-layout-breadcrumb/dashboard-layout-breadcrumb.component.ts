@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { BreadcrumbModule, BreadcrumbPassThroughOptions } from 'primeng/breadcrumb';
-import { DashboardBreadcrumbService } from '@layouts/dashboard-layout/services';
+import { BreadcrumbService } from '@core/services/breadcrumb';
 
 /**
  * Component DashboardLayoutBreadcrumb
@@ -38,10 +38,10 @@ export class DashboardLayoutBreadcrumb {
    * @access protected
    * @since 1.0.0
    *
-   * @type {DashboardBreadcrumbService}
+   * @type {BreadcrumbService}
    */
-  protected readonly breadcrumbService: DashboardBreadcrumbService =
-    inject<DashboardBreadcrumbService>(DashboardBreadcrumbService);
+  protected readonly breadcrumbService: BreadcrumbService =
+    inject<BreadcrumbService>(BreadcrumbService);
 
   /**
    * Property breadcrumbPt

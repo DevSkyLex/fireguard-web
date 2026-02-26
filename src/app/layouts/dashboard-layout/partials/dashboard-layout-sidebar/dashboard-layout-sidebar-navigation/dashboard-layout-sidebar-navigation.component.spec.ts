@@ -43,7 +43,7 @@ describe('DashboardLayoutSidebarNavigation', () => {
         { provide: OrganizationStore, useValue: mockOrganizationStore },
         provideRouter([
           { path: 'organizations/:organizationId', component: DummyPage },
-          { path: 'organizations/:organizationId/account/notifications', component: DummyPage },
+          { path: 'account/notifications', component: DummyPage },
         ]),
       ],
     });
@@ -121,7 +121,7 @@ describe('DashboardLayoutSidebarNavigation', () => {
 
   it('should highlight the active route item', async () => {
     const router = TestBed.inject(Router);
-    await router.navigateByUrl('/organizations/org-1/account/notifications');
+    await router.navigateByUrl('/account/notifications');
 
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
     fixture.detectChanges();

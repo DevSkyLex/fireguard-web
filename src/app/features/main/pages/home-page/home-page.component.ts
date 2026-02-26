@@ -1,19 +1,12 @@
-import { Component, ChangeDetectionStrategy, inject, effect } from '@angular/core';
-import { Router } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { AvatarModule } from 'primeng/avatar';
-import { SkeletonModule } from 'primeng/skeleton';
-import { AuthStore } from '@core/stores/auth';
-import { UserStore } from '@core/stores/user';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 /**
  * Component HomePage
  * @class HomePage
  *
  * @description
- * Home page component displayed after successful authentication.
- * Displays user profile information.
+ * Application home page displayed after authentication.
+ * Serves as the main landing page / dashboard entry point.
  *
  * @version 1.0.0
  *
@@ -21,7 +14,6 @@ import { UserStore } from '@core/stores/user';
  */
 @Component({
   selector: 'app-home-page',
-  imports: [ButtonModule, CardModule, AvatarModule, SkeletonModule],
   templateUrl: './home-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

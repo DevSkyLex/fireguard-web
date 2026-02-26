@@ -1,59 +1,21 @@
-import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HomePage } from './home-page.component';
-import { AuthStore } from '@core/stores/auth';
-import { UserStore } from '@core/stores/user';
 
 describe('HomePage', () => {
-  const setup = (status: 'idle' | 'loading' | 'success' | 'error' = 'idle') => {
-    const mockAuthStore = {
-      logout: vi.fn(),
-      isLoggingOut: signal(false),
-      logoutOperation: signal({
-        status,
-        data: null,
-        error: null,
-      }),
-    };
-    const mockUserStore = {
-      isLoading: signal(false),
-      avatarUrl: signal<string | null>(null),
-      initials: signal<string | null>('U'),
-      profile: signal<any>(null),
-      displayName: signal<string | null>(null),
-      loadError: signal<any>(null),
-    };
-    const mockRouter = { navigate: vi.fn().mockResolvedValue(true) };
+  let component: HomePage;
+  let fixture: ComponentFixture<HomePage>;
 
-    TestBed.configureTestingModule({
-      providers: [
-        { provide: AuthStore, useValue: mockAuthStore },
-        { provide: UserStore, useValue: mockUserStore },
-        { provide: Router, useValue: mockRouter },
-      ],
-    });
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [HomePage],
+    }).compileComponents();
 
-    const component = TestBed.runInInjectionContext(() => new HomePage());
-    TestBed.tick();
-    return { component, mockAuthStore, mockRouter };
-  };
-
-  it('should call logout when logout action is triggered', () => {
-    const { component, mockAuthStore } = setup();
-
-    (component as any).onLogout();
-
-    expect(mockAuthStore.logout).toHaveBeenCalledTimes(1);
+    fixture = TestBed.createComponent(HomePage);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
   });
 
-  it('should navigate to login when logout operation succeeds', () => {
-    const { mockRouter } = setup('success');
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
-  });
-
-  it('should navigate to login when logout operation fails', () => {
-    const { mockRouter } = setup('error');
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
+  it('should create', () => {
+    expect(component).toBeTruthy();
   });
 });

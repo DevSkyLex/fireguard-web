@@ -1,8 +1,6 @@
 import type { Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth';
 import { noOrganizationGuard } from '@core/guards/no-organization';
-import { organizationGuard } from '@core/guards/organization';
-import { organizationResolver } from '@core/resolvers';
 import { SplitLayout } from './layouts/split-layout';
 import { DashboardLayout } from './layouts/dashboard-layout';
 
@@ -12,12 +10,22 @@ import { DashboardLayout } from './layouts/dashboard-layout';
  * @description
  * Application root routes configuration.
  *
- * The dashboard lives under `organizations/:organizationId` so every
- * child route is automatically scoped to the active organization.
- * The root path (`/`) redirects to the first available organization
- * via {@link organizationGuard}.
+ * The root path (`/`) serves the home page.
+ * Organization-scoped pages live under `/organizations/:organizationId`.
  */
 export const APP_ROUTES: Routes = [
+    {
+    path: '',
+    component: DashboardLayout,
+    canActivate: [authGuard],
+    data: {
+      breadcrumb: false,
+    },
+    loadChildren: () =>
+      import('@features/main/main.routes').then(
+        (m) => m.MAIN_ROUTES,
+      ),
+  },
   {
     path: 'auth',
     component: SplitLayout,
@@ -43,27 +51,28 @@ export const APP_ROUTES: Routes = [
     ],
   },
   {
-    path: 'organizations/:organizationId',
+    path: 'organizations',
     component: DashboardLayout,
     canActivate: [authGuard],
-    resolve: { organization: organizationResolver },
+    data: {
+      breadcrumb: 'Organizations',
+    },
+    loadChildren: () =>
+      import('@features/organization/organization.routes').then(
+        (m) => m.ORGANIZATION_ROUTES,
+      ),
+  },
+  {
+    path: 'account',
+    component: DashboardLayout,
+    canActivate: [authGuard],
     children: [
       {
         path: '',
-        loadChildren: () => import('@features/main/main.routes').then((m) => m.MAIN_ROUTES),
-      },
-      {
-        path: 'account',
         loadChildren: () =>
           import('@features/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
       },
     ],
-  },
-  {
-    path: '',
-    pathMatch: 'full',
-    canActivate: [authGuard, organizationGuard],
-    children: [],
   },
 ];
 

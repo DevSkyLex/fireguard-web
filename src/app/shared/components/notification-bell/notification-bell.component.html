@@ -5,8 +5,8 @@
 />
 
 <!-- Notification panel -->
-<p-popover #popover styleClass="w-96" [pt]="popoverPt">
-  <div class="flex flex-col">
+<p-popover #popover [pt]="popoverPt">
+  <div class="flex flex-col w-96">
 
     <app-notification-bell-header
       [hasUnread]="notificationStore.hasUnread()"

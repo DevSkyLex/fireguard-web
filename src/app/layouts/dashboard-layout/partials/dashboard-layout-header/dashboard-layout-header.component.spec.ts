@@ -1,24 +1,18 @@
-import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { OrganizationStore } from '@core/stores/organization';
-import { DashboardBreadcrumbService, DashboardSidebarService } from '@layouts/dashboard-layout/services';
+import { BreadcrumbService } from '@core/services/breadcrumb';
+import { DashboardSidebarService } from '@layouts/dashboard-layout/services';
 import { DashboardLayoutHeader } from './dashboard-layout-header.component';
 
 describe('DashboardLayoutHeader', () => {
-  const mockOrganizationStore = {
-    selectedOrganization: signal(null),
-  };
-
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [DashboardLayoutHeader],
       providers: [
         DashboardSidebarService,
-        DashboardBreadcrumbService,
+        BreadcrumbService,
         provideRouter([]),
-        { provide: OrganizationStore, useValue: mockOrganizationStore },
       ],
     });
   });

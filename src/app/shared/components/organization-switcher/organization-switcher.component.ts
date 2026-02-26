@@ -145,10 +145,13 @@ export class OrganizationSwitcher implements OnInit {
     popover.hide();
 
     const currentUrl: string = this.router.url;
-    const newUrl: string = currentUrl.replace(
-      /\/organizations\/[^/?#]+/,
-      `/organizations/${organization.id}`,
-    );
+    const orgPattern: RegExp = /\/organizations\/[^/?#]+/;
+
+    // If already on an organization page, swap the org segment and keep the sub-route.
+    // Otherwise, redirect to the selected organization's dashboard.
+    const newUrl: string = orgPattern.test(currentUrl)
+      ? currentUrl.replace(orgPattern, `/organizations/${organization.id}`)
+      : `/organizations/${organization.id}`;
 
     this.router.navigateByUrl(newUrl);
   }

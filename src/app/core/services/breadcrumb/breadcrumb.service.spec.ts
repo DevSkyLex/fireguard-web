@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
   provideRouter,
@@ -7,25 +7,12 @@ import {
   type ActivatedRouteSnapshot,
   type Routes,
 } from '@angular/router';
-import { OrganizationStore } from '@core/stores/organization';
-import { DashboardBreadcrumbService } from './dashboard-breadcrumb.service';
+import { BreadcrumbService } from './breadcrumb.service';
 
 @Component({
   template: '',
 })
 class TestPage {}
-
-const MOCK_ORG = {
-  id: 'org-1',
-  name: 'Acme Corp',
-  slug: 'acme',
-  isActive: true,
-  status: 'active',
-  ownerUserId: 'u1',
-  createdByUserId: 'u1',
-  createdAt: '2025-01-01',
-  updatedAt: '2025-01-01',
-};
 
 const TEST_ROUTES: Routes = [
   {
@@ -63,25 +50,19 @@ const TEST_ROUTES: Routes = [
   },
 ];
 
-describe('DashboardBreadcrumbService', () => {
-  let service: DashboardBreadcrumbService;
+describe('BreadcrumbService', () => {
+  let service: BreadcrumbService;
   let router: Router;
-  const mockOrganizationStore = {
-    selectedOrganization: signal(MOCK_ORG),
-  };
 
   beforeEach(async () => {
-    mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
-
     TestBed.configureTestingModule({
       providers: [
-        DashboardBreadcrumbService,
+        BreadcrumbService,
         provideRouter(TEST_ROUTES),
-        { provide: OrganizationStore, useValue: mockOrganizationStore },
       ],
     });
 
-    service = TestBed.inject(DashboardBreadcrumbService);
+    service = TestBed.inject(BreadcrumbService);
     router = TestBed.inject(Router);
 
     await router.navigateByUrl('/');
@@ -91,10 +72,10 @@ describe('DashboardBreadcrumbService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should expose a home breadcrumb item with organization link', () => {
+  it('should expose a home breadcrumb item linking to root', () => {
     expect(service.home()).toMatchObject({
       icon: 'pi pi-home',
-      routerLink: '/organizations/org-1',
+      routerLink: '/',
     });
   });
 
@@ -102,10 +83,6 @@ describe('DashboardBreadcrumbService', () => {
     await router.navigateByUrl('/account/notifications');
 
     expect(service.items().map((item) => item.label)).toEqual(['Account', 'Notifications']);
-    expect(service.items().map((item) => item.routerLink)).toEqual([
-      '/account',
-      '/account/notifications',
-    ]);
   });
 
   it('should fallback to route title when breadcrumb data is missing', async () => {
@@ -126,7 +103,16 @@ describe('DashboardBreadcrumbService', () => {
     await router.navigateByUrl('/');
 
     expect(service.items().map((item) => item.label)).toEqual(['Dashboard']);
-    expect(service.items()[0]?.routerLink).toBe('/');
+  });
+
+  it('should make last breadcrumb item non-clickable', async () => {
+    await router.navigateByUrl('/account/notifications');
+
+    const items = service.items();
+    const lastItem = items[items.length - 1];
+
+    expect(lastItem.routerLink).toBeUndefined();
+    expect(lastItem.linkClass).toContain('!cursor-default');
   });
 
   it('should safely ignore route nodes without snapshot', () => {

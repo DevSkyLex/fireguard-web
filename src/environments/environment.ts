@@ -13,6 +13,6 @@ import { type EnvironmentConfig } from '@core/config/environment/environment-con
 export const environment: EnvironmentConfig = {
   production: true,
   apiUrl: 'http://localhost:8000',
-  appName: 'Fireguard SSO',
+  appName: 'Fireguard',
   mercureHubUrl: 'http://localhost:3000/.well-known/mercure',
 };

@@ -52,8 +52,10 @@ export const organizationGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
       if (response.totalItems > 0 && response.member.length > 0) {
         return router.createUrlTree(['/organizations', response.member[0].id]);
       }
+
+      // No organizations: redirect to onboarding
       return router.createUrlTree(['/onboarding']);
     }),
-    catchError(() => of(router.createUrlTree(['/onboarding']))),
+    catchError(() => of(router.createUrlTree(['/organizations']))),
   );
 };

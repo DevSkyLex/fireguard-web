@@ -3,22 +3,21 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
 import { filter, map, startWith } from 'rxjs';
-import { OrganizationStore } from '@core/stores/organization';
 
 /**
- * Service DashboardBreadcrumbService
- * @class DashboardBreadcrumbService
+ * Service BreadcrumbService
+ * @class BreadcrumbService
  *
  * @description
  * Builds breadcrumb items from the currently activated route tree.
  * Route labels are resolved from `data.breadcrumb` and fallback to route title.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable()
-export class DashboardBreadcrumbService {
+export class BreadcrumbService {
   //#region Properties
   /**
    * Property router
@@ -37,41 +36,23 @@ export class DashboardBreadcrumbService {
     inject<Router>(Router);
 
   /**
-   * Property organizationStore
-   * @readonly
-   *
-   * @description
-   * Organization store for building dynamic home link.
-   *
-   * @access private
-   * @since 2.0.0
-   *
-   * @type {OrganizationStore}
-   */
-  private readonly organizationStore: OrganizationStore =
-    inject(OrganizationStore);
-
-  /**
    * Property home
    * @readonly
    *
    * @description
    * Home breadcrumb item displayed before the
-   * dynamic route breadcrumbs. Links to the current
-   * organization's dashboard.
+   * dynamic route breadcrumbs. Links to the
+   * application root.
    *
    * @access public
    * @since 2.0.0
    *
    * @type {Signal<MenuItem>}
    */
-  public readonly home: Signal<MenuItem> = computed<MenuItem>(() => {
-    const org = this.organizationStore.selectedOrganization();
-    return {
-      icon: 'pi pi-home',
-      routerLink: org ? `/organizations/${org.id}` : '/',
-    };
-  });
+  public readonly home: Signal<MenuItem> = computed<MenuItem>(() => ({
+    icon: 'pi pi-home',
+    routerLink: '/',
+  }));
 
   /**
    * Property items
@@ -136,6 +117,13 @@ export class DashboardBreadcrumbService {
       currentRoute = currentRoute.firstChild;
     }
 
+    // Last item = current page: non-clickable + darker text
+    if (items.length > 0) {
+      const lastItem: MenuItem = items[items.length - 1];
+      delete lastItem.routerLink;
+      lastItem.linkClass = 'text-surface-900 dark:text-surface-0 font-medium !cursor-default';
+    }
+
     return items;
   }
 
@@ -144,7 +132,12 @@ export class DashboardBreadcrumbService {
    * @method resolveLabel
    *
    * @description
-   * Resolves breadcrumb label from route data (`breadcrumb`) or title.
+   * Resolves breadcrumb label from route configuration.
+   *
+   * Resolution order:
+   * 1. `data.breadcrumb === false` → explicitly suppressed (returns `null`)
+   * 2. `snapshot.data.breadcrumb` → static or resolved breadcrumb label
+   * 3. Route title (string or resolved) → fallback
    *
    * @access private
    * @since 1.0.0
@@ -154,30 +147,21 @@ export class DashboardBreadcrumbService {
    * @returns {string | null} Breadcrumb label when available.
    */
   private resolveLabel(route: ActivatedRoute): string | null {
-    const hasBreadcrumbResolver: boolean = route.routeConfig?.resolve?.['breadcrumb'] !== undefined;
-    if (hasBreadcrumbResolver) {
-      const resolvedBreadcrumbValue: unknown = route.snapshot?.data?.['breadcrumb'];
-      if (typeof resolvedBreadcrumbValue === 'string' && resolvedBreadcrumbValue.trim().length > 0) {
-        return resolvedBreadcrumbValue;
-      }
-    }
+    const config = route.routeConfig;
+    const snapshot = route.snapshot;
 
-    const breadcrumbValue: unknown = route.routeConfig?.data?.['breadcrumb'];
+    // Explicitly suppressed
+    if (config?.data?.['breadcrumb'] === false) return null;
 
-    if (typeof breadcrumbValue === 'string' && breadcrumbValue.trim().length > 0) {
-      return breadcrumbValue;
-    }
+    // Static or resolved breadcrumb label (Angular merges both into snapshot.data)
+    const breadcrumb: unknown = snapshot?.data?.['breadcrumb'];
+    if (typeof breadcrumb === 'string' && breadcrumb.trim()) return breadcrumb;
 
-    const routeTitle: unknown = route.routeConfig?.title;
-    if (typeof routeTitle === 'string' && routeTitle.trim().length > 0) {
-      return routeTitle;
-    }
-
-    if (routeTitle !== undefined) {
-      const resolvedTitle: string | undefined = route.snapshot?.title;
-      if (typeof resolvedTitle === 'string' && resolvedTitle.trim().length > 0) {
-        return resolvedTitle;
-      }
+    // Fallback to route title (static string or resolved)
+    const title: unknown = config?.title;
+    if (typeof title === 'string' && title.trim()) return title;
+    if (title !== undefined && typeof snapshot?.title === 'string' && snapshot.title.trim()) {
+      return snapshot.title;
     }
 
     return null;

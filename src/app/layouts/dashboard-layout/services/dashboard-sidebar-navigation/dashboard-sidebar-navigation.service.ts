@@ -93,7 +93,7 @@ export class DashboardSidebarNavigationService {
               id: 'notifications',
               label: 'Notifications',
               icon: 'pi pi-bell',
-              routerLink: `${prefix}/account/notifications`,
+              routerLink: `/account/notifications`,
             },
           ],
         },

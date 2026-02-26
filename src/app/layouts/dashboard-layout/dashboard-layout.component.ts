@@ -7,7 +7,8 @@ import { DashboardLayoutHeader, DashboardLayoutSidebar, DashboardLayoutContent }
 import { DrawerModule } from 'primeng/drawer';
 import { Ripple } from "primeng/ripple";
 import { DashboardSidebarResizeHandleDirective } from './directives';
-import { DashboardBreadcrumbService, DashboardSidebarNavigationService, DashboardSidebarService } from './services';
+import { DashboardSidebarNavigationService, DashboardSidebarService } from './services';
+import { BreadcrumbService } from '@core/services/breadcrumb';
 import { UserStore } from '@core/stores/user';
 import { NotificationStore } from '@core/stores/notification';
 import { OrganizationStore } from '@core/stores/organization';
@@ -48,7 +49,7 @@ import { OrganizationStore } from '@core/stores/organization';
     Ripple,
     DashboardSidebarResizeHandleDirective,
   ],
-  providers: [DashboardSidebarService, DashboardSidebarNavigationService, DashboardBreadcrumbService],
+  providers: [DashboardSidebarService, DashboardSidebarNavigationService, BreadcrumbService],
   templateUrl: './dashboard-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

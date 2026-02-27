@@ -9,6 +9,8 @@ import {
   type Signal,
 } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { InfiniteScrollDirective } from '@shared/directives';
 import { NotificationBellItem } from '../notification-bell-item/notification-bell-item.component';
 import type { NotificationOutput } from '@core/models/notification';
 
@@ -28,7 +30,7 @@ import type { NotificationOutput } from '@core/models/notification';
  */
 @Component({
   selector: 'app-notification-bell-list',
-  imports: [SkeletonModule, NotificationBellItem],
+  imports: [SkeletonModule, ProgressSpinnerModule, InfiniteScrollDirective, NotificationBellItem],
   templateUrl: './notification-bell-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -64,6 +66,34 @@ export class NotificationBellList {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input loadingMore
+   * @readonly
+   *
+   * @description
+   * Whether additional notifications are currently being fetched.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loadingMore: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input hasMore
+   * @readonly
+   *
+   * @description
+   * Whether more notification pages are available.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly hasMore: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -82,6 +112,20 @@ export class NotificationBellList {
    * @type {OutputEmitterRef<string>}
    */
   public readonly markAsRead: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Output loadMore
+   * @readonly
+   *
+   * @description
+   * Emitted when the user scrolls near the bottom of the list.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly loadMore: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties

@@ -27,7 +27,10 @@
       <app-dashboard-layout-notifications-list
         [notifications]="notificationStore.notifications()"
         [loading]="notificationStore.isLoading()"
+        [loadingMore]="notificationStore.isLoadingMore()"
+        [hasMore]="notificationStore.hasMore()"
         (markAsRead)="markAsRead($event)"
+        (loadMore)="loadMore()"
       />
 
       <app-dashboard-layout-notifications-footer

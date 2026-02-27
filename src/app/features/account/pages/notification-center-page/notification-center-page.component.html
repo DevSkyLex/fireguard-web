@@ -81,6 +81,23 @@
         </li>
       }
     </ul>
+
+    <!-- Loading more indicator -->
+    @if (notificationStore.isLoadingMore()) {
+      <div class="flex justify-center py-4">
+        <p-progressSpinner
+          [style]="{ width: '2rem', height: '2rem' }"
+          strokeWidth="4"
+        />
+      </div>
+    }
+
+    <!-- Infinite scroll sentinel -->
+    <div
+      appInfiniteScroll
+      [disabled]="notificationStore.isLoading() || !notificationStore.hasMore()"
+      (scrolled)="onLoadMore()"
+    ></div>
   }
 
   <!-- Error state -->

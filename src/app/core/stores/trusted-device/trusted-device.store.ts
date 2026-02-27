@@ -3,10 +3,17 @@ import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
   signalStore,
+  type,
   withComputed,
   withMethods,
   withState,
 } from '@ngrx/signals';
+import {
+  removeAllEntities,
+  removeEntity,
+  setAllEntities,
+  withEntities,
+} from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
@@ -38,7 +45,6 @@ import { trustedDeviceStoreEvents } from './trusted-device.events';
  * @type {TrustedDeviceState}
  */
 const INITIAL_TRUSTED_DEVICE_STATE: TrustedDeviceState = {
-  devices: [],
   pendingTrustDevice: false,
   listOperation: createIdleOperation(),
   trustOperation: createIdleOperation(),
@@ -78,8 +84,17 @@ export const TrustedDeviceStore = signalStore(
   withState<TrustedDeviceState>(INITIAL_TRUSTED_DEVICE_STATE),
   //#endregion
 
+  //#region Entities
+  withEntities({ entity: type<TrustedDeviceOutput>(), collection: 'device' }),
+  //#endregion
+
   //#region Computed
   withComputed((store) => ({
+    /** Alias for deviceEntities — backward-compatible accessor. */
+    devices: computed<ReadonlyArray<TrustedDeviceOutput>>(
+      () => store.deviceEntities(),
+    ),
+
     /**
      * Computed isListLoading
      *
@@ -192,7 +207,7 @@ export const TrustedDeviceStore = signalStore(
      *
      * @returns {number}
      */
-    deviceCount: computed<number>(() => store.devices().length),
+    deviceCount: computed<number>(() => store.deviceEntities().length),
 
     /**
      * Computed hasDevices
@@ -204,7 +219,7 @@ export const TrustedDeviceStore = signalStore(
      *
      * @returns {boolean}
      */
-    hasDevices: computed<boolean>(() => store.devices().length > 0),
+    hasDevices: computed<boolean>(() => store.deviceEntities().length > 0),
   })),
   //#endregion
 
@@ -235,13 +250,15 @@ export const TrustedDeviceStore = signalStore(
             tapResponse({
               next: (response: HydraCollection<TrustedDeviceOutput>) => {
                 const devices: readonly TrustedDeviceOutput[] = response.member;
-                patchState(store, {
-                  devices: [...devices],
-                  listOperation: {
-                    ...createSuccessOperation(devices),
-                    total: response.totalItems,
+                patchState(store,
+                  setAllEntities([...devices], { collection: 'device' }),
+                  {
+                    listOperation: {
+                      ...createSuccessOperation(devices),
+                      total: response.totalItems,
+                    },
                   },
-                });
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -333,12 +350,12 @@ export const TrustedDeviceStore = signalStore(
             tapResponse({
               next: () => {
                 // Remove the revoked device from the local list
-                const updatedDevices: TrustedDeviceOutput[] = store.devices()
-                  .filter((device: TrustedDeviceOutput) => device.id !== deviceId);
-                patchState(store, {
-                  devices: updatedDevices,
-                  revokeOperation: createSuccessOperation(undefined as unknown as void),
-                });
+                patchState(store,
+                  removeEntity(deviceId, { collection: 'device' }),
+                  {
+                    revokeOperation: createSuccessOperation(undefined as unknown as void),
+                  },
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -380,10 +397,12 @@ export const TrustedDeviceStore = signalStore(
           trustedDeviceService.revokeAll().pipe(
             tapResponse({
               next: () => {
-                patchState(store, {
-                  devices: [],
-                  revokeAllOperation: createSuccessOperation(undefined as unknown as void),
-                });
+                patchState(store,
+                  removeAllEntities({ collection: 'device' }),
+                  {
+                    revokeAllOperation: createSuccessOperation(undefined as unknown as void),
+                  },
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -418,7 +437,10 @@ export const TrustedDeviceStore = signalStore(
      * @since 1.0.0
      */
     reset(): void {
-      patchState(store, INITIAL_TRUSTED_DEVICE_STATE);
+      patchState(store,
+        removeAllEntities({ collection: 'device' }),
+        INITIAL_TRUSTED_DEVICE_STATE,
+      );
     },
 
     /**

@@ -1,51 +1,20 @@
 <div id="organization-list" class="flex flex-col">
   <section class="flex flex-col gap-2 p-8 bg-surface-50 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
-    <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">Organizations</h1>
-    <p class="text-sm text-surface-700 dark:text-surface-300">Select an organization to manage, or create a new one.</p>
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">Organizations</h1>
+        <p class="text-sm text-surface-700 dark:text-surface-300">Select an organization to manage, or create a new one.</p>
+      </div>
+      <a routerLink="/onboarding">
+        <p-button label="New organization" icon="pi pi-plus" />
+      </a>
+    </div>
   </section>
 
-  <section class="p-8">
-    @if (organizationStore.isLoadingOrganizations()) {
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        @for (_ of [1, 2, 3]; track $index) {
-          <p-card>
-            <div class="flex items-center gap-3">
-              <p-skeleton shape="circle" size="2.5rem" />
-              <p-skeleton width="10rem" height="1.25rem" />
-            </div>
-          </p-card>
-        }
-      </div>
-    } @else {
-      <p-dataview [value]="organizationsList()" layout="grid">
-        <ng-template #grid let-items>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            @for (org of items; track org.id) {
-              <a [routerLink]="['/organizations', org.id]"
-                 class="no-underline">
-                <p-card [pt]="{ body: { class: 'p-4' }, content: { class: 'p-0' } }"
-                        class="h-full hover:border-primary transition-colors cursor-pointer">
-                  <div class="flex items-center gap-3">
-                    <p-avatar [label]="org.name.charAt(0).toUpperCase()"
-                              shape="circle"
-                              [style]="{ 'background-color': 'var(--p-primary-color)', color: 'var(--p-primary-contrast-color)' }" />
-                    <span class="font-medium text-surface-900 dark:text-surface-100">{{ org.name }}</span>
-                  </div>
-                </p-card>
-              </a>
-            }
-          </div>
-        </ng-template>
-
-        <ng-template #empty>
-          <div class="text-center py-12">
-            <p class="text-surface-500 dark:text-surface-400 mb-4">You don't belong to any organization yet.</p>
-            <a routerLink="/onboarding">
-              <p-button label="Create an organization" icon="pi pi-plus" />
-            </a>
-          </div>
-        </ng-template>
-      </p-dataview>
-    }
+  <section>
+    <app-organization-table
+      (view)="onView($event)"
+      (edit)="onEdit($event)"
+      (add)="onAdd()" />
   </section>
 </div>

@@ -21,7 +21,10 @@
     <app-notification-bell-list
       [notifications]="notificationStore.notifications()"
       [loading]="notificationStore.isLoading()"
+      [loadingMore]="notificationStore.isLoadingMore()"
+      [hasMore]="notificationStore.hasMore()"
       (markAsRead)="markAsRead($event)"
+      (loadMore)="loadMore()"
     />
 
     <app-notification-bell-footer

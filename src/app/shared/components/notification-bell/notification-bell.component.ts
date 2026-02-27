@@ -186,6 +186,22 @@ export class NotificationBell {
   }
 
   /**
+   * Method loadMore
+   * @method loadMore
+   *
+   * @description
+   * Loads the next page of notifications (infinite scroll).
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @return {void} - No return value.
+   */
+  protected loadMore(): void {
+    this.notificationStore.loadMore();
+  }
+
+  /**
    * Method markAllAsRead
    * @method markAllAsRead
    *

@@ -3,10 +3,18 @@ import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
   signalStore,
+  type,
   withComputed,
   withMethods,
   withState,
 } from '@ngrx/signals';
+import {
+  addEntity,
+  removeAllEntities,
+  setAllEntities,
+  setEntity,
+  withEntities,
+} from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, Observable, pipe, switchMap, tap } from 'rxjs';
@@ -60,24 +68,20 @@ import { organizationStoreEvents } from './organization.events';
  * @type {OrganizationState}
  */
 const INITIAL_ORGANIZATION_STATE: OrganizationState = {
-  organizations: [],
   totalOrganizations: 0,
   selectedOrganization: null,
   listOperation: createIdleOperation(),
   getOperation: createIdleOperation(),
   createOperation: createIdleOperation(),
 
-  members: [],
   totalMembers: 0,
   membersListOperation: createIdleOperation(),
   addMemberOperation: createIdleOperation(),
 
-  roles: [],
   totalRoles: 0,
   rolesListOperation: createIdleOperation(),
   createRoleOperation: createIdleOperation(),
 
-  invitations: [],
   totalInvitations: 0,
   invitationsListOperation: createIdleOperation(),
   inviteOperation: createIdleOperation(),
@@ -124,8 +128,37 @@ export const OrganizationStore = signalStore(
   withState<OrganizationState>(INITIAL_ORGANIZATION_STATE),
   //#endregion
 
+  //#region Entities
+  withEntities({ entity: type<OrganizationOutput>(), collection: 'organization' }),
+  withEntities({ entity: type<OrganizationMemberOutput>(), collection: 'member' }),
+  withEntities({ entity: type<OrganizationRoleOutput>(), collection: 'role' }),
+  withEntities({ entity: type<OrganizationInvitationOutput>(), collection: 'invitation' }),
+  //#endregion
+
   //#region Computed
   withComputed((store) => ({
+    // ── Entity Aliases ─────────────────────────────────────────────────────────
+
+    /** Alias for organizationEntities — backward-compatible accessor. */
+    organizations: computed<ReadonlyArray<OrganizationOutput>>(
+      () => store.organizationEntities(),
+    ),
+
+    /** Alias for memberEntities — backward-compatible accessor. */
+    members: computed<ReadonlyArray<OrganizationMemberOutput>>(
+      () => store.memberEntities(),
+    ),
+
+    /** Alias for roleEntities — backward-compatible accessor. */
+    roles: computed<ReadonlyArray<OrganizationRoleOutput>>(
+      () => store.roleEntities(),
+    ),
+
+    /** Alias for invitationEntities — backward-compatible accessor. */
+    invitations: computed<ReadonlyArray<OrganizationInvitationOutput>>(
+      () => store.invitationEntities(),
+    ),
+
     // ── Organizations ──────────────────────────────────────────────────────────
 
     /** True while the organization list is loading. */
@@ -223,7 +256,7 @@ export const OrganizationStore = signalStore(
 
     /** Pending invitations only. */
     pendingInvitations: computed<ReadonlyArray<OrganizationInvitationOutput>>(() =>
-      store.invitations().filter((i) => i.status === 'pending'),
+      store.invitationEntities().filter((i) => i.status === 'pending'),
     ),
 
     // ── Legal Profile ──────────────────────────────────────────────────────────
@@ -292,14 +325,16 @@ export const OrganizationStore = signalStore(
           organizationService.list(options ?? undefined).pipe(
             tapResponse({
               next: (response: HydraCollection<OrganizationOutput>) => {
-                patchState(store, {
-                  organizations: response.member,
-                  totalOrganizations: response.totalItems,
-                  listOperation: {
-                    ...createSuccessOperation(response.member),
-                    total: response.totalItems,
+                patchState(store,
+                  setAllEntities([...response.member], { collection: 'organization' }),
+                  {
+                    totalOrganizations: response.totalItems,
+                    listOperation: {
+                      ...createSuccessOperation(response.member),
+                      total: response.totalItems,
+                    },
                   },
-                });
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -456,11 +491,13 @@ export const OrganizationStore = signalStore(
           organizationService.create(input).pipe(
             tapResponse({
               next: (organization: OrganizationOutput) => {
-                patchState(store, {
-                  organizations: [...store.organizations(), organization],
-                  totalOrganizations: store.totalOrganizations() + 1,
-                  createOperation: createSuccessOperation(organization),
-                });
+                patchState(store,
+                  addEntity(organization, { collection: 'organization' }),
+                  {
+                    totalOrganizations: store.totalOrganizations() + 1,
+                    createOperation: createSuccessOperation(organization),
+                  },
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -506,14 +543,16 @@ export const OrganizationStore = signalStore(
           memberService.list(organizationId, options).pipe(
             tapResponse({
               next: (response: HydraCollection<OrganizationMemberOutput>) => {
-                patchState(store, {
-                  members: response.member,
-                  totalMembers: response.totalItems,
-                  membersListOperation: {
-                    ...createSuccessOperation(response.member),
-                    total: response.totalItems,
+                patchState(store,
+                  setAllEntities([...response.member], { collection: 'member' }),
+                  {
+                    totalMembers: response.totalItems,
+                    membersListOperation: {
+                      ...createSuccessOperation(response.member),
+                      total: response.totalItems,
+                    },
                   },
-                });
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -557,11 +596,13 @@ export const OrganizationStore = signalStore(
           memberService.add(organizationId, input).pipe(
             tapResponse({
               next: (member: OrganizationMemberOutput) => {
-                patchState(store, {
-                  members: [...store.members(), member],
-                  totalMembers: store.totalMembers() + 1,
-                  addMemberOperation: createSuccessOperation(member),
-                });
+                patchState(store,
+                  addEntity(member, { collection: 'member' }),
+                  {
+                    totalMembers: store.totalMembers() + 1,
+                    addMemberOperation: createSuccessOperation(member),
+                  },
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -607,14 +648,16 @@ export const OrganizationStore = signalStore(
           roleService.list(organizationId, options).pipe(
             tapResponse({
               next: (response: HydraCollection<OrganizationRoleOutput>) => {
-                patchState(store, {
-                  roles: response.member,
-                  totalRoles: response.totalItems,
-                  rolesListOperation: {
-                    ...createSuccessOperation(response.member),
-                    total: response.totalItems,
+                patchState(store,
+                  setAllEntities([...response.member], { collection: 'role' }),
+                  {
+                    totalRoles: response.totalItems,
+                    rolesListOperation: {
+                      ...createSuccessOperation(response.member),
+                      total: response.totalItems,
+                    },
                   },
-                });
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -658,11 +701,13 @@ export const OrganizationStore = signalStore(
           roleService.create(organizationId, input).pipe(
             tapResponse({
               next: (role: OrganizationRoleOutput) => {
-                patchState(store, {
-                  roles: [...store.roles(), role],
-                  totalRoles: store.totalRoles() + 1,
-                  createRoleOperation: createSuccessOperation(role),
-                });
+                patchState(store,
+                  addEntity(role, { collection: 'role' }),
+                  {
+                    totalRoles: store.totalRoles() + 1,
+                    createRoleOperation: createSuccessOperation(role),
+                  },
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -705,11 +750,9 @@ export const OrganizationStore = signalStore(
           roleService.assignToMember(organizationId, memberId, input).pipe(
             tapResponse({
               next: (updatedMember: OrganizationMemberOutput) => {
-                patchState(store, {
-                  members: store
-                    .members()
-                    .map((m) => (m.id === updatedMember.id ? updatedMember : m)),
-                });
+                patchState(store,
+                  setEntity(updatedMember, { collection: 'member' }),
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -751,14 +794,16 @@ export const OrganizationStore = signalStore(
           organizationService.listInvitations(organizationId, options).pipe(
             tapResponse({
               next: (response: HydraCollection<OrganizationInvitationOutput>) => {
-                patchState(store, {
-                  invitations: response.member,
-                  totalInvitations: response.totalItems,
-                  invitationsListOperation: {
-                    ...createSuccessOperation(response.member),
-                    total: response.totalItems,
+                patchState(store,
+                  setAllEntities([...response.member], { collection: 'invitation' }),
+                  {
+                    totalInvitations: response.totalItems,
+                    invitationsListOperation: {
+                      ...createSuccessOperation(response.member),
+                      total: response.totalItems,
+                    },
                   },
-                });
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -805,11 +850,13 @@ export const OrganizationStore = signalStore(
           invitationService.invite(organizationId, input).pipe(
             tapResponse({
               next: (invitation: OrganizationInvitationOutput) => {
-                patchState(store, {
-                  invitations: [...store.invitations(), invitation],
-                  totalInvitations: store.totalInvitations() + 1,
-                  inviteOperation: createSuccessOperation(invitation),
-                });
+                patchState(store,
+                  addEntity(invitation, { collection: 'invitation' }),
+                  {
+                    totalInvitations: store.totalInvitations() + 1,
+                    inviteOperation: createSuccessOperation(invitation),
+                  },
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -855,12 +902,12 @@ export const OrganizationStore = signalStore(
           organizationService.revokeInvitation(organizationId, invitationId).pipe(
             tapResponse({
               next: (updated: OrganizationInvitationOutput) => {
-                patchState(store, {
-                  invitations: store
-                    .invitations()
-                    .map((inv) => (inv.id === invitationId ? updated : inv)),
-                  revokeInvitationOperation: createSuccessOperation(updated),
-                });
+                patchState(store,
+                  setEntity(updated, { collection: 'invitation' }),
+                  {
+                    revokeInvitationOperation: createSuccessOperation(updated),
+                  },
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -1005,7 +1052,13 @@ export const OrganizationStore = signalStore(
      * @since 1.0.0
      */
     clear(): void {
-      patchState(store, INITIAL_ORGANIZATION_STATE);
+      patchState(store,
+        removeAllEntities({ collection: 'organization' }),
+        removeAllEntities({ collection: 'member' }),
+        removeAllEntities({ collection: 'role' }),
+        removeAllEntities({ collection: 'invitation' }),
+        INITIAL_ORGANIZATION_STATE,
+      );
     },
 
     /**

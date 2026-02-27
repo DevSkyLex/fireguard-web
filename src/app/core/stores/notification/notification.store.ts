@@ -3,10 +3,19 @@ import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
   signalStore,
+  type,
   withComputed,
   withMethods,
   withState,
 } from '@ngrx/signals';
+import {
+  addEntities,
+  prependEntity,
+  removeAllEntities,
+  setAllEntities,
+  setEntity,
+  withEntities,
+} from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, EMPTY, exhaustMap, filter, pipe, switchMap, tap } from 'rxjs';
@@ -29,8 +38,9 @@ import {
 import { notificationStoreEvents } from './notification.events';
 
 const INITIAL_NOTIFICATION_STATE: NotificationStoreState = {
-  notifications: [],
   totalNotifications: 0,
+  currentPage: 1,
+  itemsPerPage: 20,
   listOperation: createIdleOperation(),
   markAsReadOperation: createIdleOperation(),
   mercureConnected: false,
@@ -44,7 +54,13 @@ export const NotificationStore = signalStore(
 
   withState<NotificationStoreState>(INITIAL_NOTIFICATION_STATE),
 
+  withEntities({ entity: type<NotificationOutput>(), collection: 'notification' }),
+
   withComputed((store) => ({
+    /** Alias for notificationEntities — backward-compatible accessor. */
+    notifications: computed<ReadonlyArray<NotificationOutput>>(
+      () => store.notificationEntities(),
+    ),
     isLoading: computed<boolean>(() => store.listOperation().status === 'loading'),
     isMarkingAsRead: computed<boolean>(() => store.markAsReadOperation().status === 'loading'),
     listError: computed<OperationError<unknown> | null>(() => {
@@ -52,10 +68,16 @@ export const NotificationStore = signalStore(
       return op.status === 'error' ? op.error : null;
     }),
     unreadCount: computed<number>(() =>
-      store.notifications().filter((n) => !n.isRead).length,
+      store.notificationEntities().filter((n) => !n.isRead).length,
     ),
     hasUnread: computed<boolean>(() =>
-      store.notifications().some((n) => !n.isRead),
+      store.notificationEntities().some((n) => !n.isRead),
+    ),
+    hasMore: computed<boolean>(() =>
+      store.notificationEntities().length < store.totalNotifications(),
+    ),
+    isLoadingMore: computed<boolean>(() =>
+      store.listOperation().status === 'loading' && store.currentPage() > 1,
     ),
   })),
 
@@ -66,31 +88,75 @@ export const NotificationStore = signalStore(
     mercureService = inject<MercureService>(MercureService),
   ) => ({
     load: rxMethod<NotificationListOptions | void>(pipe(
-      tap(() => patchState(store, { listOperation: createLoadingOperation(store.listOperation().data) })),
+      tap(() => patchState(store, {
+        currentPage: 1,
+        listOperation: createLoadingOperation(store.listOperation().data),
+      })),
       switchMap((options) => {
         // When called with no options, merge the active filter from state
         const activeFilter: NotificationFilter | null = store.activeFilter();
         const mergedOptions: NotificationListOptions = {
-          limit: 20,
+          limit: store.itemsPerPage(),
           ...(options ?? {}),
           ...(activeFilter ?? {}),
+          page: 1,
         };
         return notificationService.list(mergedOptions).pipe(
           tapResponse({
             next: (response: HydraCollection<NotificationOutput>) => {
-              patchState(store, {
-                notifications: response.member,
-                totalNotifications: response.totalItems,
-                listOperation: {
-                  ...createSuccessOperation(response.member),
-                  total: response.totalItems,
+              patchState(store,
+                setAllEntities([...response.member], { collection: 'notification' }),
+                {
+                  totalNotifications: response.totalItems,
+                  currentPage: 1,
+                  listOperation: {
+                    ...createSuccessOperation(response.member),
+                    total: response.totalItems,
+                  },
                 },
-              });
+              );
             },
             error: (error: unknown) => {
               const operationError: OperationError<unknown> = createOperationErrorFromUnknown(error);
               patchState(store, { listOperation: createErrorOperation(operationError, store.listOperation().data) });
               dispatcher.dispatch(notificationStoreEvents.loadFailed(toOperationFailureEventPayload(operationError, 'Failed to load notifications')));
+            },
+          }),
+        );
+      }),
+    )),
+
+    loadMore: rxMethod<void>(pipe(
+      tap(() => patchState(store, {
+        listOperation: createLoadingOperation(store.listOperation().data),
+      })),
+      switchMap(() => {
+        const nextPage: number = store.currentPage() + 1;
+        const activeFilter: NotificationFilter | null = store.activeFilter();
+        const mergedOptions: NotificationListOptions = {
+          limit: store.itemsPerPage(),
+          ...(activeFilter ?? {}),
+          page: nextPage,
+        };
+        return notificationService.list(mergedOptions).pipe(
+          tapResponse({
+            next: (response: HydraCollection<NotificationOutput>) => {
+              patchState(store,
+                addEntities([...response.member], { collection: 'notification' }),
+                {
+                  totalNotifications: response.totalItems,
+                  currentPage: nextPage,
+                  listOperation: {
+                    ...createSuccessOperation(response.member),
+                    total: response.totalItems,
+                  },
+                },
+              );
+            },
+            error: (error: unknown) => {
+              const operationError: OperationError<unknown> = createOperationErrorFromUnknown(error);
+              patchState(store, { listOperation: createErrorOperation(operationError, store.listOperation().data) });
+              dispatcher.dispatch(notificationStoreEvents.loadFailed(toOperationFailureEventPayload(operationError, 'Failed to load more notifications')));
             },
           }),
         );
@@ -104,10 +170,10 @@ export const NotificationStore = signalStore(
             patchState(store, { mercureConnected: true });
             return mercureService.subscribe<NotificationOutput>(subscription.topic, subscription.token).pipe(
               tap((notification: NotificationOutput) => {
-                patchState(store, {
-                  notifications: [notification, ...store.notifications()],
-                  totalNotifications: store.totalNotifications() + 1,
-                });
+                patchState(store,
+                  prependEntity(notification, { collection: 'notification' }),
+                  { totalNotifications: store.totalNotifications() + 1 },
+                );
               }),
               catchError(() => {
                 patchState(store, { mercureConnected: false });
@@ -129,10 +195,10 @@ export const NotificationStore = signalStore(
         notificationService.markAsRead(id).pipe(
           tapResponse({
             next: (updated: NotificationOutput) => {
-              patchState(store, {
-                notifications: store.notifications().map((n) => (n.id === id ? updated : n)),
-                markAsReadOperation: createSuccessOperation(updated),
-              });
+              patchState(store,
+                setEntity(updated, { collection: 'notification' }),
+                { markAsReadOperation: createSuccessOperation(updated) },
+              );
             },
             error: (error: unknown) => {
               const operationError: OperationError<unknown> = createOperationErrorFromUnknown(error);
@@ -145,7 +211,10 @@ export const NotificationStore = signalStore(
     )),
 
     clear(): void {
-      patchState(store, INITIAL_NOTIFICATION_STATE);
+      patchState(store,
+        removeAllEntities({ collection: 'notification' }),
+        INITIAL_NOTIFICATION_STATE,
+      );
     },
 
     loadTypes: rxMethod<void>(pipe(

@@ -3,10 +3,17 @@ import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
   signalStore,
+  type,
   withComputed,
   withMethods,
   withState,
 } from '@ngrx/signals';
+import {
+  removeAllEntities,
+  removeEntity,
+  setAllEntities,
+  withEntities,
+} from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
@@ -39,7 +46,6 @@ import { sessionStoreEvents } from './session.events';
  * @type {SessionState}
  */
 const INITIAL_SESSION_STATE: SessionState = {
-  sessions: [],
   totalSessions: 0,
   listOperation: createIdleOperation(),
   revokeOperation: createIdleOperation(),
@@ -78,8 +84,17 @@ export const SessionStore = signalStore(
   withState<SessionState>(INITIAL_SESSION_STATE),
   //#endregion
 
+  //#region Entities
+  withEntities({ entity: type<SessionOutput>(), collection: 'session' }),
+  //#endregion
+
   //#region Computed
   withComputed((store) => ({
+    /** Alias for sessionEntities — backward-compatible accessor. */
+    sessions: computed<ReadonlyArray<SessionOutput>>(
+      () => store.sessionEntities(),
+    ),
+
     /**
      * Computed isLoadingSessions
      *
@@ -157,7 +172,7 @@ export const SessionStore = signalStore(
      * @returns {SessionOutput | null}
      */
     currentSession: computed<SessionOutput | null>(() => {
-      return store.sessions().find((session) => session.isCurrent) ?? null;
+      return store.sessionEntities().find((session) => session.isCurrent) ?? null;
     }),
 
     /**
@@ -171,7 +186,7 @@ export const SessionStore = signalStore(
      * @returns {ReadonlyArray<SessionOutput>}
      */
     otherSessions: computed<ReadonlyArray<SessionOutput>>(() => {
-      return store.sessions().filter((session) => !session.isCurrent);
+      return store.sessionEntities().filter((session) => !session.isCurrent);
     }),
 
     /**
@@ -185,7 +200,7 @@ export const SessionStore = signalStore(
      * @returns {boolean}
      */
     hasOtherSessions: computed<boolean>(() => {
-      return store.sessions().some((session) => !session.isCurrent);
+      return store.sessionEntities().some((session) => !session.isCurrent);
     }),
   })),
   //#endregion
@@ -219,14 +234,16 @@ export const SessionStore = signalStore(
           sessionService.list(options ?? undefined).pipe(
             tapResponse({
               next: (response: HydraCollection<SessionOutput>) => {
-                patchState(store, {
-                  sessions: response.member,
-                  totalSessions: response.totalItems,
-                  listOperation: {
-                    ...createSuccessOperation(response.member),
-                    total: response.totalItems,
+                patchState(store,
+                  setAllEntities([...response.member], { collection: 'session' }),
+                  {
+                    totalSessions: response.totalItems,
+                    listOperation: {
+                      ...createSuccessOperation(response.member),
+                      total: response.totalItems,
+                    },
                   },
-                });
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -272,11 +289,13 @@ export const SessionStore = signalStore(
             tapResponse({
               next: () => {
                 // Remove the revoked session from the list
-                patchState(store, {
-                  sessions: store.sessions().filter((s) => s.id !== sessionId),
-                  totalSessions: store.totalSessions() - 1,
-                  revokeOperation: createSuccessOperation(undefined),
-                });
+                patchState(store,
+                  removeEntity(sessionId, { collection: 'session' }),
+                  {
+                    totalSessions: store.totalSessions() - 1,
+                    revokeOperation: createSuccessOperation(undefined),
+                  },
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -321,13 +340,18 @@ export const SessionStore = signalStore(
               next: () => {
                 // Keep only the current session
                 const currentSession: SessionOutput | undefined = store
-                  .sessions()
+                  .sessionEntities()
                   .find((s) => s.isCurrent);
-                patchState(store, {
-                  sessions: currentSession ? [currentSession] : [],
-                  totalSessions: currentSession ? 1 : 0,
-                  revokeAllOperation: createSuccessOperation(undefined),
-                });
+                patchState(store,
+                  setAllEntities(
+                    currentSession ? [currentSession] : [],
+                    { collection: 'session' },
+                  ),
+                  {
+                    totalSessions: currentSession ? 1 : 0,
+                    revokeAllOperation: createSuccessOperation(undefined),
+                  },
+                );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
@@ -362,7 +386,10 @@ export const SessionStore = signalStore(
      * @since 1.0.0
      */
     clear(): void {
-      patchState(store, INITIAL_SESSION_STATE);
+      patchState(store,
+        removeAllEntities({ collection: 'session' }),
+        INITIAL_SESSION_STATE,
+      );
     },
 
     /**

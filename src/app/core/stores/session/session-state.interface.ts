@@ -15,19 +15,6 @@ import type { CollectionOperation, Operation } from '@core/stores/operations';
 export interface SessionState {
   //#region Session Data
   /**
-   * Property sessions
-   * @readonly
-   *
-   * @description
-   * List of user sessions.
-   *
-   * @since 1.0.0
-   *
-   * @type {ReadonlyArray<SessionOutput>}
-   */
-  readonly sessions: ReadonlyArray<SessionOutput>;
-
-  /**
    * Property totalSessions
    * @readonly
    *

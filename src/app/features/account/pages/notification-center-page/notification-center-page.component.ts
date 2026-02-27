@@ -2,7 +2,9 @@ import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/cor
 import { DatePipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { NotificationStore } from '@core/stores/notification';
+import { InfiniteScrollDirective } from '@shared/directives';
 import type { NotificationOutput } from '@core/models/notification';
 
 const TYPE_ICONS: Record<string, string> = {
@@ -59,6 +61,8 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
     DatePipe,
     ButtonModule,
     SkeletonModule,
+    ProgressSpinnerModule,
+    InfiniteScrollDirective,
   ],
   templateUrl: './notification-center-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -115,6 +119,21 @@ export class NotificationCenterPage implements OnInit {
    */
   public onMarkAsRead(id: string): void {
     this.notificationStore.markAsRead(id);
+  }
+
+  /**
+   * Method onLoadMore
+   *
+   * @description
+   * Loads the next page of notifications (infinite scroll).
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @returns {void}
+   */
+  public onLoadMore(): void {
+    this.notificationStore.loadMore();
   }
 
   /**

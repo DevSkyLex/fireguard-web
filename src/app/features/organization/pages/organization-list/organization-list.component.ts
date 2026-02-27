@@ -1,12 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, type Signal } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { AvatarModule } from 'primeng/avatar';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { DataViewModule } from 'primeng/dataview';
-import { SkeletonModule } from 'primeng/skeleton';
-import { OrganizationStore } from '@core/stores/organization';
 import type { OrganizationOutput } from '@core/models/organization';
+import { OrganizationTableComponent } from '../../tables/organization-table';
 
 /**
  * Component OrganizationListPage
@@ -22,61 +18,78 @@ import type { OrganizationOutput } from '@core/models/organization';
  */
 @Component({
   selector: 'app-organization-list',
-  imports: [RouterModule, AvatarModule, ButtonModule, CardModule, DataViewModule, SkeletonModule],
+  imports: [RouterModule, ButtonModule, OrganizationTableComponent],
   templateUrl: './organization-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrganizationListPage implements OnInit {
+export class OrganizationListPage {
   //#region Properties
   /**
-   * Property organizationStore
+   * Property router
    * @readonly
    *
    * @description
-   * Organization store providing the list of organizations
-   * and loading state.
+   * Angular Router used to navigate on table actions.
    *
-   * @access protected
-   * @since 1.0.0
+   * @access private
+   * @since 1.2.0
    *
-   * @type {OrganizationStore}
+   * @type {Router}
    */
-  protected readonly organizationStore: OrganizationStore =
-    inject<OrganizationStore>(OrganizationStore);
-
-  /**
-   * Property organizationsList
-   * @readonly
-   *
-   * @description
-   * Mutable copy of organizations for DataView binding.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<OrganizationOutput[]>}
-   */
-  protected readonly organizationsList: Signal<OrganizationOutput[]> =
-    computed<OrganizationOutput[]>(() => this.organizationStore.organizations() as OrganizationOutput[]);
+  private readonly router: Router = inject(Router);
   //#endregion
 
-  //#region Lifecycle
+  //#region Methods
   /**
-   * Method ngOnInit
-   * @method ngOnInit
+   * Method onView
+   * @method onView
    *
    * @description
-   * Loads the organizations list on initialization if not already loaded.
+   * Navigates to the organization overview page.
    *
    * @access public
-   * @since 1.0.0
+   * @since 1.2.0
+   *
+   * @param {OrganizationOutput} organization - The selected organization.
    *
    * @returns {void}
    */
-  public ngOnInit(): void {
-    if (!this.organizationStore.organizations().length) {
-      this.organizationStore.loadOrganizations();
-    }
+  public onView(organization: OrganizationOutput): void {
+    this.router.navigate(['/organizations', organization.id]);
+  }
+
+  /**
+   * Method onEdit
+   * @method onEdit
+   *
+   * @description
+   * Navigates to the organization edit page.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {OrganizationOutput} organization - The selected organization.
+   *
+   * @returns {void}
+   */
+  public onEdit(organization: OrganizationOutput): void {
+    this.router.navigate(['/organizations', organization.id, 'edit']);
+  }
+
+  /**
+   * Method onAdd
+   * @method onAdd
+   *
+   * @description
+   * Navigates to the onboarding page to create a new organization.
+   *
+   * @access public
+   * @since 1.4.0
+   *
+   * @returns {void}
+   */
+  public onAdd(): void {
+    this.router.navigate(['/onboarding']);
   }
   //#endregion
 }

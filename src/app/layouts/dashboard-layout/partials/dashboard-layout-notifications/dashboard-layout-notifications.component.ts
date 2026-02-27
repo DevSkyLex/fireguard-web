@@ -74,6 +74,10 @@ export class DashboardLayoutNotifications {
     this.notificationStore.markAsRead(id);
   }
 
+  protected loadMore(): void {
+    this.notificationStore.loadMore();
+  }
+
   protected markAllAsRead(): void {
     this.notificationStore
       .notifications()

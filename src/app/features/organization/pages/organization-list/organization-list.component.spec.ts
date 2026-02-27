@@ -61,13 +61,13 @@ describe('OrganizationListPage', () => {
     expect(mockOrganizationStore.loadOrganizations).not.toHaveBeenCalled();
   });
 
-  it('should display organization cards when organizations are loaded', () => {
-    mockOrganizationStore.organizations.set([MOCK_ORG, { ...MOCK_ORG, id: 'org-2', name: 'Beta Inc' } as OrganizationOutput]);
+  it('should display organization rows when organizations are loaded', () => {
+    mockOrganizationStore.organizations.set([MOCK_ORG, { ...MOCK_ORG, id: 'org-2', name: 'Beta Inc', slug: 'beta' } as OrganizationOutput]);
     const fixture = TestBed.createComponent(OrganizationListPage);
     fixture.detectChanges();
 
-    const links = fixture.debugElement.queryAll(By.css('a[ng-reflect-router-link]'));
-    expect(links.length).toBe(2);
+    const rows = fixture.debugElement.queryAll(By.css('tbody tr'));
+    expect(rows.length).toBe(2);
     expect(fixture.nativeElement.textContent).toContain('Acme Corp');
     expect(fixture.nativeElement.textContent).toContain('Beta Inc');
   });

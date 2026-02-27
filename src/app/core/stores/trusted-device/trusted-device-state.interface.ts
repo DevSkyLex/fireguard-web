@@ -15,19 +15,6 @@ import type { CollectionOperation, Operation } from '@core/stores/operations';
 export interface TrustedDeviceState {
   //#region Device Data
   /**
-   * Property devices
-   * @readonly
-   *
-   * @description
-   * List of trusted devices for the current user.
-   *
-   * @since 1.0.0
-   *
-   * @type {TrustedDeviceOutput[]}
-   */
-  readonly devices: TrustedDeviceOutput[];
-
-  /**
    * Property pendingTrustDevice
    * @readonly
    *

@@ -22,8 +22,6 @@ import type { CollectionOperation, Operation } from '@core/stores/operations';
  */
 export interface OrganizationState {
   //#region Organizations
-  /** List of organizations the user belongs to. */
-  readonly organizations: ReadonlyArray<OrganizationOutput>;
   /** Total count of organizations (for pagination). */
   readonly totalOrganizations: number;
   /** Currently selected / viewed organization. */
@@ -35,21 +33,18 @@ export interface OrganizationState {
   //#endregion
 
   //#region Members
-  readonly members: ReadonlyArray<OrganizationMemberOutput>;
   readonly totalMembers: number;
   readonly membersListOperation: CollectionOperation<OrganizationMemberOutput, unknown>;
   readonly addMemberOperation: Operation<OrganizationMemberOutput | null, unknown>;
   //#endregion
 
   //#region Roles
-  readonly roles: ReadonlyArray<OrganizationRoleOutput>;
   readonly totalRoles: number;
   readonly rolesListOperation: CollectionOperation<OrganizationRoleOutput, unknown>;
   readonly createRoleOperation: Operation<OrganizationRoleOutput | null, unknown>;
   //#endregion
 
   //#region Invitations
-  readonly invitations: ReadonlyArray<OrganizationInvitationOutput>;
   readonly totalInvitations: number;
   readonly invitationsListOperation: CollectionOperation<OrganizationInvitationOutput, unknown>;
   readonly inviteOperation: Operation<OrganizationInvitationOutput | null, unknown>;

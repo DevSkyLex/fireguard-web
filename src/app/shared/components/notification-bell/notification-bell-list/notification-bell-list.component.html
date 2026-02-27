@@ -36,6 +36,23 @@
         />
       }
     </ul>
+
+    <!-- Loading more indicator -->
+    @if (loadingMore()) {
+      <div class="flex justify-center py-3">
+        <p-progressSpinner
+          [style]="{ width: '1.5rem', height: '1.5rem' }"
+          strokeWidth="4"
+        />
+      </div>
+    }
+
+    <!-- Infinite scroll sentinel -->
+    <div
+      appInfiniteScroll
+      [disabled]="loading() || !hasMore()"
+      (scrolled)="loadMore.emit()"
+    ></div>
   }
 
 </div>

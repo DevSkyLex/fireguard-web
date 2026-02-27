@@ -1,24 +1,26 @@
 import { inject } from '@angular/core';
-import type { ResolveFn } from '@angular/router';
-import { OrganizationOutput } from '@app/core/models';
+import { toObservable } from '@angular/core/rxjs-interop';
+import type { MaybeAsync, ResolveFn } from '@angular/router';
+import type { OrganizationOutput } from '@app/core/models';
 import { OrganizationStore } from '@core/stores/organization';
+import { filter, first, map, type Observable } from 'rxjs';
 
 /**
  * Resolver organizationTitleResolver
  *
  * @description
  * Returns the organization name as the page title or breadcrumb label.
- * Reads the selected organization from {@link OrganizationStore},
+ * Waits for the selected organization to be available in {@link OrganizationStore},
  * which is populated by {@link organizationResolver}.
  *
  * Can be used as both a `title` resolver and a `breadcrumb` resolver.
  *
- * @version 1.1.0
+ * @version 1.2.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
- * @returns {string} The organization name, or 'Overview' as fallback.
+ * @returns {MaybeAsync<string>} The organization name, or 'Overview' as fallback.
  */
-export const organizationTitleResolver: ResolveFn<string> = (): string => {
+export const organizationTitleResolver: ResolveFn<string> = (): MaybeAsync<string> => {
   /**
    * Constant organizationStore
    * @const organizationStore
@@ -37,14 +39,24 @@ export const organizationTitleResolver: ResolveFn<string> = (): string => {
    * @const organization
    *
    * @description
-   * The currently selected organization retrieved from the store. If no organization
-   * is selected, it means the user is on the organizations list page, and we return
-   * a generic title 'Overview'.
+   * The currently selected organization retrieved from the store. If already
+   * available (e.g. when used on a child route after the parent resolver
+   * has completed), the name is returned synchronously. Otherwise, we
+   * wait for the store to be populated by the parallel organizationResolver.
    *
    * @var {OrganizationOutput | null}
    */
   const organization: OrganizationOutput | null = organizationStore.selectedOrganization();
 
-  // Return the organization name as title, or 'Overview' if no organization is selected.
-  return organization ? organization.name : 'Overview';
+  // If the organization is already loaded (child route case), return immediately.
+  if (organization) return organization.name;
+
+  // Otherwise, wait for the organizationResolver to populate the store.
+  const organization$: Observable<string> = toObservable(organizationStore.selectedOrganization).pipe(
+    filter((org: OrganizationOutput | null): org is OrganizationOutput => org !== null),
+    map((org: OrganizationOutput) => org.name),
+    first(),
+  );
+
+  return organization$;
 };

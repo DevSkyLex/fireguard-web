@@ -1,6 +1,73 @@
 <div id="organization-overview" class="flex flex-col">
-  <section class="flex flex-col p-8 bg-surface-50 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
-    <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">Welcome to FireGuard SSO</h1>
-    <p class="mt-2 text-sm text-surface-700 dark:text-surface-300">Manage your organization's single sign-on settings and users.</p>
+  <!-- Header -->
+  <section class="flex flex-col gap-1 px-8 pt-8 pb-6">
+    <div class="flex items-center gap-3">
+      @if (organization(); as org) {
+        <p-avatar
+          [label]="org.name.charAt(0).toUpperCase()"
+          shape="circle"
+          size="large"
+          [style]="{ 'background-color': 'var(--p-primary-color)', color: 'var(--p-primary-contrast-color)', 'font-weight': '600' }"
+        />
+        <div class="flex flex-col">
+          <h1 class="text-2xl font-semibold tracking-tight text-surface-900 dark:text-surface-50">
+            {{ org.name }}
+          </h1>
+          <p class="text-sm text-surface-500 dark:text-surface-400">Organization overview and key metrics</p>
+        </div>
+        <p-tag
+          class="ml-auto"
+          [value]="org.isActive ? 'Active' : 'Inactive'"
+          [severity]="org.isActive ? 'success' : 'danger'"
+        />
+      }
+    </div>
+  </section>
+
+  <!-- Stats Grid -->
+  <section class="px-8 pt-6 pb-2">
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 mb-4">
+      Overview
+    </h2>
+
+    @if (isLoading()) {
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        @for (_ of [1, 2, 3, 4]; track $index) {
+          <div class="flex flex-col gap-3 p-5 rounded-xl border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950">
+            <div class="flex items-center justify-between">
+              <p-skeleton width="5rem" height="0.75rem" />
+              <p-skeleton shape="circle" size="2rem" />
+            </div>
+            <p-skeleton width="3rem" height="2rem" />
+            <p-skeleton width="8rem" height="0.625rem" />
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        @for (card of statCards(); track card.label) {
+          <div
+            class="group flex flex-col gap-3 p-5 rounded-xl border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 hover:border-surface-300 dark:hover:border-surface-700 transition-all duration-200"
+          >
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                {{ card.label }}
+              </span>
+              <div
+                class="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 group-hover:bg-surface-200 dark:group-hover:bg-surface-700 transition-colors"
+              >
+                <i [class]="card.icon + ' text-sm ' + card.color"></i>
+              </div>
+            </div>
+            <span class="text-3xl font-bold tracking-tight text-surface-900 dark:text-surface-50">
+              {{ card.value }}
+            </span>
+            <span class="text-xs text-surface-400 dark:text-surface-500">
+              {{ card.description }}
+            </span>
+          </div>
+        }
+      </div>
+    }
   </section>
 </div>

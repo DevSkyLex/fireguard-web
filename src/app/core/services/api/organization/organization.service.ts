@@ -7,6 +7,7 @@ import type {
   OrganizationOutput,
   CreateOrganizationInput,
   OrganizationInvitationOutput,
+  OrganizationStatisticsOutput,
 } from '@core/models/organization';
 
 @Injectable({
@@ -52,6 +53,12 @@ export class OrganizationService extends BaseApiService {
   ): Observable<OrganizationInvitationOutput> {
     return this.postAction<OrganizationInvitationOutput>(
       `${OrganizationService.BASE_PATH}/${organizationId}/invitations/${invitationId}/revoke`,
+    );
+  }
+
+  public getStatistics(organizationId: string): Observable<OrganizationStatisticsOutput> {
+    return this.getOne<OrganizationStatisticsOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/statistics`,
     );
   }
   //#endregion

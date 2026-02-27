@@ -27,5 +27,6 @@ export const organizationStoreEvents = eventGroup({
     revokeInvitationFailed: type<OperationFailureEventPayload>(),
     legalProfileFailed: type<OperationFailureEventPayload>(),
     upsertLegalProfileFailed: type<OperationFailureEventPayload>(),
+    statisticsFailed: type<OperationFailureEventPayload>(),
   },
 });

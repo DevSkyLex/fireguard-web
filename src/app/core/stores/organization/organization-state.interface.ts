@@ -4,6 +4,7 @@ import type {
   OrganizationRoleOutput,
   OrganizationInvitationOutput,
   OrganizationLegalProfileOutput,
+  OrganizationStatisticsOutput,
 } from '@core/models/organization';
 import type { CollectionOperation, Operation } from '@core/stores/operations';
 
@@ -59,5 +60,10 @@ export interface OrganizationState {
   readonly legalProfile: OrganizationLegalProfileOutput | null;
   readonly legalProfileOperation: Operation<OrganizationLegalProfileOutput | null, unknown>;
   readonly upsertLegalProfileOperation: Operation<OrganizationLegalProfileOutput | null, unknown>;
+  //#endregion
+
+  //#region Statistics
+  readonly statistics: OrganizationStatisticsOutput | null;
+  readonly statisticsOperation: Operation<OrganizationStatisticsOutput | null, unknown>;
   //#endregion
 }

@@ -10,3 +10,4 @@ export type { CreateOrganizationRoleInput } from './create-organization-role-inp
 export type { AssignOrganizationRoleInput } from './assign-organization-role-input.interface';
 export type { AcceptOrganizationInvitationInput } from './accept-organization-invitation-input.interface';
 export type { UpsertOrganizationLegalProfileInput } from './upsert-organization-legal-profile-input.interface';
+export type { OrganizationStatisticsOutput } from './organization-statistics-output.interface';

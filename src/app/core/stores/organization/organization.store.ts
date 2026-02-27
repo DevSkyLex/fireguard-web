@@ -31,6 +31,7 @@ import type {
   InviteOrganizationMemberInput,
   OrganizationLegalProfileOutput,
   UpsertOrganizationLegalProfileInput,
+  OrganizationStatisticsOutput,
 } from '@core/models/organization';
 import type { OrganizationState } from './organization-state.interface';
 import {
@@ -85,6 +86,9 @@ const INITIAL_ORGANIZATION_STATE: OrganizationState = {
   legalProfile: null,
   legalProfileOperation: createIdleOperation(),
   upsertLegalProfileOperation: createIdleOperation(),
+
+  statistics: null,
+  statisticsOperation: createIdleOperation(),
 } as const;
 //#endregion
 
@@ -238,6 +242,20 @@ export const OrganizationStore = signalStore(
     legalProfileError: computed<OperationError<unknown> | null>(() => {
       const op: Operation<OrganizationLegalProfileOutput | null, unknown> =
         store.legalProfileOperation();
+      return op.status === 'error' ? op.error : null;
+    }),
+
+    // ── Statistics ──────────────────────────────────────────────────────────
+
+    /** True while the organization statistics are loading. */
+    isLoadingStatistics: computed<boolean>(
+      () => store.statisticsOperation().status === 'loading',
+    ),
+
+    /** Error from the statistics operation, if any. */
+    statisticsError: computed<OperationError<unknown> | null>(() => {
+      const op: Operation<OrganizationStatisticsOutput | null, unknown> =
+        store.statisticsOperation();
       return op.status === 'error' ? op.error : null;
     }),
   })),
@@ -1029,6 +1047,58 @@ export const OrganizationStore = signalStore(
     resetUpsertLegalProfileOperation(): void {
       patchState(store, { upsertLegalProfileOperation: createIdleOperation() });
     },
+
+    // ── Statistics ──────────────────────────────────────────────────────────
+
+    /**
+     * Method loadStatistics
+     *
+     * @description
+     * Loads the statistics for a given organization.
+     *
+     * @since 1.1.0
+     *
+     * @param {string} organizationId - Organization identifier.
+     */
+    loadStatistics: rxMethod<string>(
+      pipe(
+        tap(() => {
+          patchState(store, {
+            statisticsOperation: createLoadingOperation(store.statisticsOperation().data),
+          });
+        }),
+        switchMap((organizationId) =>
+          organizationService.getStatistics(organizationId).pipe(
+            tapResponse({
+              next: (statistics: OrganizationStatisticsOutput) => {
+                patchState(store, {
+                  statistics,
+                  statisticsOperation: createSuccessOperation(statistics),
+                });
+              },
+              error: (error: unknown) => {
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
+                patchState(store, {
+                  statisticsOperation: createErrorOperation(
+                    operationError,
+                    store.statisticsOperation().data,
+                  ),
+                });
+                dispatcher.dispatch(
+                  organizationStoreEvents.statisticsFailed(
+                    toOperationFailureEventPayload(
+                      operationError,
+                      'Failed to load organization statistics',
+                    ),
+                  ),
+                );
+              },
+            }),
+          ),
+        ),
+      ),
+    ),
   })),
   //#endregion
 );

@@ -1,3 +1,10 @@
+<p-menu
+  #rowMenu
+  [model]="rowMenuItems()"
+  [popup]="true"
+  appendTo="body"
+/>
+
 <p-table
   #organizationTable
   [value]="[...organizationStore.organizations()]"
@@ -13,6 +20,8 @@
   [showCurrentPageReport]="true"
   paginatorStyleClass="justify-end"
   currentPageReportTemplate="Showing {first} to {last} of {totalRecords} organizations"
+  [(selection)]="selection"
+  dataKey="id"
 >
   <ng-template #caption>
     <div class="flex items-center justify-between gap-4">
@@ -22,7 +31,7 @@
           <input
             pInputText
             type="text"
-            pSize="small"
+            p
             placeholder="Search organizations..."
             [formControl]="searchControl"
           />
@@ -34,18 +43,36 @@
           placeholder="All statuses"
           [showClear]="true"
           class="w-40"
-          size="small"
+
         />
       </div>
 
       <div class="flex items-center gap-2">
+        @if (hasSelection()) {
+          <p-button
+            label="Delete ({{ selection().length }})"
+            icon="pi pi-trash"
+            severity="danger"
+            outlined
+            (onClick)="onDeleteSelected()"
+          />
+          <p-button
+            icon="pi pi-times"
+            severity="secondary"
+            [text]="true"
+            pTooltip="Clear selection"
+            tooltipPosition="bottom"
+            (onClick)="clearSelection()"
+          />
+        }
+
         <p-splitbutton
           label="New organization"
           icon="pi pi-plus"
           severity="secondary"
           outlined
           [model]="toolbarActions"
-          size="small"
+
           (onClick)="add.emit()"
         />
       </div>
@@ -54,6 +81,10 @@
 
   <ng-template #header>
     <tr class="text-sm">
+      <th class="w-12">
+        <p-tableHeaderCheckbox />
+      </th>
+
       <th pSortableColumn="name">
         <div class="flex gap-2">
           <span>Name</span>
@@ -81,6 +112,10 @@
 
   <ng-template #body let-organization>
     <tr>
+      <td>
+        <p-tableCheckbox [value]="organization" />
+      </td>
+
       <td>
         <div class="flex items-center gap-3">
           <p-avatar
@@ -112,19 +147,11 @@
       </td>
 
       <td>
-        <p-menu
-          #menu
-          [model]="getMenuItems(organization)"
-          [popup]="true"
-          appendTo="body"
-        />
-
         <p-button
           icon="pi pi-ellipsis-h"
           [outlined]="true"
           severity="secondary"
-          size="small"
-          (onClick)="menu.toggle($event)"
+          (onClick)="onRowMenuToggle($event, organization)"
         />
       </td>
     </tr>
@@ -132,7 +159,7 @@
 
   <ng-template #emptymessage>
     <tr>
-      <td colspan="5">
+      <td colspan="6">
         <div class="text-center py-12">
           <p class="text-surface-500 dark:text-surface-400 mb-4">You don't belong to any organization yet.</p>
           <a routerLink="/onboarding">

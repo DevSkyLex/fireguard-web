@@ -4,9 +4,9 @@
   <p-button
     severity="secondary"
     [outlined]="true"
-    size="small"
     [disabled]="isSwitching()"
     (onClick)="onButtonClick($event)"
+    size="small"
   >
     @if (organization(); as org) {
       <span class="flex items-center gap-2">
@@ -14,7 +14,7 @@
           [label]="orgInitials(org.name)"
           [pt]="avatarPt(org)"
         />
-        <span class="text-sm font-medium max-w-32 truncate">{{ org.name }}</span>
+        <span class="font-medium max-w-32 truncate">{{ org.name }}</span>
 
         <div class="mx-auto">
           @if (isSwitching()) {
@@ -27,7 +27,7 @@
     } @else {
       <span class="flex items-center gap-2">
         <span class="size-4 rounded bg-surface-200 dark:bg-surface-700 shrink-0"></span>
-        <span class="text-sm">Select workspace</span>
+        <span>Select workspace</span>
         <i class="pi pi-chevron-down text-[10px] shrink-0"></i>
       </span>
     }

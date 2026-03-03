@@ -14,7 +14,7 @@
     </p-iconfield>
 
     @if (form.controls.email.invalid && form.controls.email.touched) {
-      <p-message severity="error" variant="simple" size="small">
+      <p-message severity="error" variant="simple" >
         @if (form.controls.email.hasError('required')) {
           <span>Email is required.</span>
         }
@@ -36,7 +36,7 @@
     </p-iconfield>
 
     @if (form.controls.password.invalid && form.controls.password.touched) {
-      <p-message severity="error" variant="simple" size="small">
+      <p-message severity="error" variant="simple" >
         <span>Password is required.</span>
       </p-message>
     }

@@ -16,7 +16,7 @@
     </p-iconfield>
 
     @if (form.controls.organizationName.invalid && form.controls.organizationName.touched) {
-      <p-message severity="error" variant="simple" size="small">
+      <p-message severity="error" variant="simple" >
         @if (form.controls.organizationName.hasError('required')) {
           <span>Organization name is required.</span>
         }

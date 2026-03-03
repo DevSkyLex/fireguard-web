@@ -9,7 +9,7 @@
         id="sidebar-search"
         type="search"
         class="w-full"
-        pSize="small"
+        p
         placeholder="Search..."
         data-testid="sidebar-search-input"
         [value]="searchQuery()"
@@ -78,7 +78,7 @@
               </span>
 
               @if (item.badge) {
-                <p-badge [value]="item.badge" severity="contrast" size="small"/>
+                <p-badge [value]="item.badge" severity="contrast" />
               }
 
               @if (item.items?.length) {

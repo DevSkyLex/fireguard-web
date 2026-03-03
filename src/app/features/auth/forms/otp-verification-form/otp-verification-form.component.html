@@ -16,7 +16,7 @@
     </div>
 
     @if (form.controls.code.invalid && form.controls.code.touched) {
-      <p-message severity="error" variant="simple" size="small">
+      <p-message severity="error" variant="simple" >
         @if (form.controls.code.hasError('required')) {
           <span>Verification code is required.</span>
         }

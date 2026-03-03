@@ -17,7 +17,7 @@
     </p-iconfield>
 
     @if (form.controls.email.invalid && form.controls.email.touched) {
-      <p-message severity="error" variant="simple" size="small">
+      <p-message severity="error" variant="simple" >
         @if (form.controls.email.hasError('required')) {
           <span>Email address is required.</span>
         }
@@ -47,7 +47,7 @@
     </p-iconfield>
 
     @if (form.controls.roleKey.invalid && form.controls.roleKey.touched) {
-      <p-message severity="error" variant="simple" size="small">
+      <p-message severity="error" variant="simple" >
         @if (form.controls.roleKey.hasError('required')) {
           <span>Role is required.</span>
         }

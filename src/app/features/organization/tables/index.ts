@@ -1,1 +1,1 @@
-export { OrganizationTableComponent } from './organization-table';
+export { OrganizationTable } from './organization-table';

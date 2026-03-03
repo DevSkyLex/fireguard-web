@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import type { OrganizationOutput } from '@core/models/organization';
-import { OrganizationTableComponent } from '../../tables/organization-table';
+import { OrganizationTable } from '@features/organization/tables/organization-table';
 
 /**
  * Component OrganizationListPage
@@ -18,7 +18,7 @@ import { OrganizationTableComponent } from '../../tables/organization-table';
  */
 @Component({
   selector: 'app-organization-list',
-  imports: [RouterModule, ButtonModule, OrganizationTableComponent],
+  imports: [RouterModule, ButtonModule, OrganizationTable],
   templateUrl: './organization-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -90,6 +90,25 @@ export class OrganizationListPage {
    */
   public onAdd(): void {
     this.router.navigate(['/onboarding']);
+  }
+
+  /**
+   * Method onDeleteSelected
+   * @method onDeleteSelected
+   *
+   * @description
+   * Handles bulk delete of the selected organizations.
+   *
+   * @access public
+   * @since 1.7.0
+   *
+   * @param {OrganizationOutput[]} organizations - The selected organizations.
+   *
+   * @returns {void}
+   */
+  public onDeleteSelected(organizations: OrganizationOutput[]): void {
+    // TODO: implement bulk delete via store
+    console.warn('Bulk delete requested for', organizations.map((o) => o.id));
   }
   //#endregion
 }

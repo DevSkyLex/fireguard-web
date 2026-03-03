@@ -1,12 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   inject,
+  model,
   output,
   Signal,
   signal,
   viewChild,
+  type ModelSignal,
   type OutputEmitterRef,
   type WritableSignal,
 } from '@angular/core';
@@ -20,7 +23,7 @@ import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
-import { MenuModule } from 'primeng/menu';
+import { Menu, MenuModule } from 'primeng/menu';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -32,8 +35,8 @@ import type { OrganizationOutput } from '@core/models/organization';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 
 /**
- * Component OrganizationTableComponent
- * @class OrganizationTableComponent
+ * Component OrganizationTable
+ * @class OrganizationTable
  *
  * @description
  * Smart table component that displays a paginated list of
@@ -70,7 +73,7 @@ import { MenuItem, PrimeIcons } from 'primeng/api';
   templateUrl: './organization-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrganizationTableComponent {
+export class OrganizationTable {
   //#region Properties
   /**
    * Property organizationStore
@@ -101,7 +104,8 @@ export class OrganizationTableComponent {
    *
    * @type {DestroyRef}
    */
-  private readonly destroyRef: DestroyRef = inject(DestroyRef);
+  private readonly destroyRef: DestroyRef =
+    inject<DestroyRef>(DestroyRef);
 
   /**
    * Property rows
@@ -219,6 +223,103 @@ export class OrganizationTableComponent {
    */
   private readonly lastLazyEvent: WritableSignal<TableLazyLoadEvent | null> =
     signal<TableLazyLoadEvent | null>(null);
+
+  /**
+   * Property rowMenu
+   * @readonly
+   *
+   * @description
+   * Reference to the single shared popup menu used for
+   * row context actions.
+   *
+   * @access private
+   * @since 1.6.0
+   *
+   * @type {Signal<Menu>}
+   */
+  private readonly rowMenu: Signal<Menu> =
+    viewChild.required<Menu>('rowMenu');
+
+  /**
+   * Property selectedOrganization
+   *
+   * @description
+   * Tracks the organization currently targeted by the
+   * row context menu.
+   *
+   * @access private
+   * @since 1.6.0
+   *
+   * @type {WritableSignal<OrganizationOutput | null>}
+   */
+  private readonly selectedOrganization: WritableSignal<OrganizationOutput | null> =
+    signal<OrganizationOutput | null>(null);
+
+  /**
+   * Property rowMenuItems
+   * @readonly
+   *
+   * @description
+   * Computed menu items for the currently selected
+   * organization row.
+   *
+   * @access protected
+   * @since 1.6.0
+   *
+   * @type {Signal<MenuItem[]>}
+   */
+  protected readonly rowMenuItems: Signal<MenuItem[]> = computed(
+    (): MenuItem[] => {
+      const organization: OrganizationOutput | null =
+        this.selectedOrganization();
+
+      if (!organization) return [];
+
+      return [
+        {
+          label: 'View',
+          icon: PrimeIcons.EYE,
+          command: (): void => this.view.emit(organization),
+        },
+        {
+          label: 'Edit',
+          icon: PrimeIcons.PENCIL,
+          command: (): void => this.edit.emit(organization),
+        },
+      ];
+    },
+  );
+
+  /**
+   * Property selection
+   *
+   * @description
+   * Two-way bound selection model for the table's
+   * checkbox selection feature.
+   *
+   * @access protected
+   * @since 1.7.0
+   *
+   * @type {ModelSignal<OrganizationOutput[]>}
+   */
+  protected readonly selection: ModelSignal<OrganizationOutput[]> =
+    model<OrganizationOutput[]>([]);
+
+  /**
+   * Property hasSelection
+   * @readonly
+   *
+   * @description
+   * Whether at least one row is currently selected.
+   *
+   * @access protected
+   * @since 1.7.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasSelection: Signal<boolean> = computed(
+    (): boolean => this.selection().length > 0,
+  );
   //#endregion
   //#region Outputs
   /**
@@ -264,6 +365,22 @@ export class OrganizationTableComponent {
    * @type {OutputEmitterRef<void>}
    */
   public readonly add: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Output deleteSelected
+   * @readonly
+   *
+   * @description
+   * Emitted when the user clicks the "Delete" bulk action
+   * button. Carries the list of currently selected organizations.
+   *
+   * @access public
+   * @since 1.7.0
+   *
+   * @type {OutputEmitterRef<OrganizationOutput[]>}
+   */
+  public readonly deleteSelected: OutputEmitterRef<OrganizationOutput[]> =
+    output<OrganizationOutput[]>();
   //#endregion
 
   //#region Constructor
@@ -368,33 +485,60 @@ export class OrganizationTableComponent {
   }
 
   /**
-   * Method getMenuItems
-   * @method getMenuItems
+   * Method onRowMenuToggle
+   * @method onRowMenuToggle
    *
    * @description
-   * Builds the context menu items for a given
-   * organization row.
+   * Sets the selected organization and toggles the
+   * shared row context menu.
    *
    * @access public
-   * @since 1.2.0
+   * @since 1.6.0
    *
+   * @param {MouseEvent} event - The click event from the row button.
    * @param {OrganizationOutput} organization - The organization for this row.
    *
-   * @returns {MenuItem[]} Menu items array.
+   * @returns {void}
    */
-  public getMenuItems(organization: OrganizationOutput): MenuItem[] {
-    return [
-      {
-        label: 'View',
-        icon: PrimeIcons.EYE,
-        command: (): void => this.view.emit(organization),
-      },
-      {
-        label: 'Edit',
-        icon: PrimeIcons.PENCIL,
-        command: (): void => this.edit.emit(organization),
-      },
-    ];
+  public onRowMenuToggle(
+    event: MouseEvent,
+    organization: OrganizationOutput,
+  ): void {
+    this.selectedOrganization.set(organization);
+    this.rowMenu().toggle(event);
+  }
+
+  /**
+   * Method onDeleteSelected
+   * @method onDeleteSelected
+   *
+   * @description
+   * Emits the currently selected organizations for deletion
+   * and clears the selection.
+   *
+   * @access public
+   * @since 1.7.0
+   *
+   * @returns {void}
+   */
+  public onDeleteSelected(): void {
+    this.deleteSelected.emit(this.selection());
+  }
+
+  /**
+   * Method clearSelection
+   * @method clearSelection
+   *
+   * @description
+   * Clears the current row selection.
+   *
+   * @access public
+   * @since 1.7.0
+   *
+   * @returns {void}
+   */
+  public clearSelection(): void {
+    this.selection.set([]);
   }
 
   /**

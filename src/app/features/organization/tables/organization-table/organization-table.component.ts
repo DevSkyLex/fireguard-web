@@ -174,24 +174,39 @@ export class OrganizationTable {
    *
    * @description
    * Dropdown items for the toolbar split button.
+   * Includes a reactive "Delete selected" entry that reflects
+   * the current selection count and is disabled when empty.
    *
    * @access protected
    * @since 1.5.0
    *
-   * @type {MenuItem[]}
+   * @type {Signal<MenuItem[]>}
    */
-  protected readonly toolbarActions: MenuItem[] = [
-    {
-      label: 'Refresh',
-      icon: PrimeIcons.REFRESH,
-      command: (): void => this.onRefresh(),
+  protected readonly toolbarActions: Signal<MenuItem[]> = computed(
+    (): MenuItem[] => {
+      const count: number = this.selection().length;
+
+      return [
+        {
+          label: 'Refresh',
+          icon: PrimeIcons.REFRESH,
+          command: (): void => this.onRefresh(),
+        },
+        {
+          label: 'Export CSV',
+          icon: PrimeIcons.DOWNLOAD,
+          command: (): void => this.exportCsv(),
+        },
+        { separator: true },
+        {
+          label: count > 0 ? `Delete selected (${count})` : 'Delete selected',
+          icon: PrimeIcons.TRASH,
+          disabled: count === 0,
+          command: (): void => this.onDeleteSelected(),
+        },
+      ];
     },
-    {
-      label: 'Export CSV',
-      icon: PrimeIcons.DOWNLOAD,
-      command: (): void => this.exportCsv(),
-    },
-  ];
+  );
 
   /**
    * Property table
@@ -285,6 +300,13 @@ export class OrganizationTable {
           label: 'Edit',
           icon: PrimeIcons.PENCIL,
           command: (): void => this.edit.emit(organization),
+        },
+        { separator: true },
+        {
+          label: 'Delete',
+          icon: PrimeIcons.TRASH,
+          styleClass: 'text-red-500',
+          command: (): void => this.delete.emit(organization),
         },
       ];
     },
@@ -381,6 +403,22 @@ export class OrganizationTable {
    */
   public readonly deleteSelected: OutputEmitterRef<OrganizationOutput[]> =
     output<OrganizationOutput[]>();
+
+  /**
+   * Output delete
+   * @readonly
+   *
+   * @description
+   * Emitted when the user selects "Delete" from the row context menu.
+   * Carries the targeted organization.
+   *
+   * @access public
+   * @since 1.8.0
+   *
+   * @type {OutputEmitterRef<OrganizationOutput>}
+   */
+  public readonly delete: OutputEmitterRef<OrganizationOutput> =
+    output<OrganizationOutput>();
   //#endregion
 
   //#region Constructor
@@ -523,22 +561,6 @@ export class OrganizationTable {
    */
   public onDeleteSelected(): void {
     this.deleteSelected.emit(this.selection());
-  }
-
-  /**
-   * Method clearSelection
-   * @method clearSelection
-   *
-   * @description
-   * Clears the current row selection.
-   *
-   * @access public
-   * @since 1.7.0
-   *
-   * @returns {void}
-   */
-  public clearSelection(): void {
-    this.selection.set([]);
   }
 
   /**

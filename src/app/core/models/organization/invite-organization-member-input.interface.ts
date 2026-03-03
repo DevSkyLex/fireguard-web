@@ -1,4 +1,4 @@
 export interface InviteOrganizationMemberInput {
   readonly email: string;
-  readonly roleKey: string;
+  readonly roleIds?: ReadonlyArray<string | null>;
 }

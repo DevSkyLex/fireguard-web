@@ -151,7 +151,6 @@ export class OnboardingPage {
 
     this.organizationInvitationService.invite(organizationId, {
       email: values.email,
-      roleKey: values.roleKey,
     }).subscribe({
       next: () => {
         this.isInviting.set(false);

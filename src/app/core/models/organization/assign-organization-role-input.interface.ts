@@ -1,3 +1,3 @@
 export interface AssignOrganizationRoleInput {
-  readonly roleKey: string;
+  readonly roleId: string;
 }

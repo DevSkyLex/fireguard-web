@@ -8,6 +8,7 @@ export interface OrganizationOutput extends HydraItem {
   readonly createdByUserId: string;
   readonly status: string;
   readonly isActive: boolean;
+  readonly memberCount: number;
   readonly createdAt: string;
   readonly updatedAt: string;
 }

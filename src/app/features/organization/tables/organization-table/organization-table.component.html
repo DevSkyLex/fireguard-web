@@ -1,172 +1,158 @@
-<p-menu
-  #rowMenu
-  [model]="rowMenuItems()"
-  [popup]="true"
-  appendTo="body"
-/>
+<div class="block h-full">
+  <p-menu
+    #rowMenu
+    [model]="rowMenuItems()"
+    [popup]="true"
+    appendTo="body"
+  />
 
-<p-table
-  #organizationTable
-  [value]="[...organizationStore.organizations()]"
-  [loading]="organizationStore.isLoadingOrganizations()"
-  [rowHover]="true"
-  [stripedRows]="false"
-  [paginator]="true"
-  [rows]="rows"
-  [totalRecords]="organizationStore.totalOrganizations()"
-  [lazy]="true"
-  (onLazyLoad)="onLazyLoad($event)"
-  [rowsPerPageOptions]="[10, 25, 50]"
-  [showCurrentPageReport]="true"
-  paginatorStyleClass="justify-end"
-  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} organizations"
-  [(selection)]="selection"
-  dataKey="id"
->
-  <ng-template #caption>
-    <div class="flex items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
-        <p-iconfield>
-          <p-inputicon class="pi pi-search" />
-          <input
-            pInputText
-            type="text"
-            p
-            placeholder="Search organizations..."
-            [formControl]="searchControl"
+  <p-table
+    #organizationTable
+    [value]="[...organizationStore.organizations()]"
+    [loading]="organizationStore.isLoadingOrganizations()"
+    [rowHover]="true"
+    [stripedRows]="false"
+    [paginator]="true"
+    [rows]="rows"
+    [totalRecords]="organizationStore.totalOrganizations()"
+    [lazy]="true"
+    (onLazyLoad)="onLazyLoad($event)"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    [showCurrentPageReport]="true"
+    paginatorStyleClass="justify-end"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} organizations"
+    [(selection)]="selection"
+    dataKey="id"
+    class="min-h-0 h-full"
+  >
+    <ng-template #caption>
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <p-iconfield>
+            <p-inputicon class="pi pi-search" />
+            <input
+              pInputText
+              type="text"
+              pSize="small"
+              placeholder="Search organizations..."
+              [formControl]="searchControl"
+            />
+          </p-iconfield>
+
+          <p-select
+            [options]="statusOptions"
+            [formControl]="selectedStatus"
+            placeholder="All statuses"
+            [showClear]="true"
+            class="w-40"
+            size="small"
           />
-        </p-iconfield>
+        </div>
 
-        <p-select
-          [options]="statusOptions"
-          [formControl]="selectedStatus"
-          placeholder="All statuses"
-          [showClear]="true"
-          class="w-40"
-
-        />
-      </div>
-
-      <div class="flex items-center gap-2">
-        @if (hasSelection()) {
-          <p-button
-            label="Delete ({{ selection().length }})"
-            icon="pi pi-trash"
-            severity="danger"
-            outlined
-            (onClick)="onDeleteSelected()"
-          />
-          <p-button
-            icon="pi pi-times"
+        <div class="flex items-center gap-2">
+          <p-splitbutton
+            label="New organization"
+            icon="pi pi-plus"
             severity="secondary"
-            [text]="true"
-            pTooltip="Clear selection"
-            tooltipPosition="bottom"
-            (onClick)="clearSelection()"
+            outlined
+            [model]="toolbarActions()"
+            size="small"
+            (onClick)="add.emit()"
           />
-        }
-
-        <p-splitbutton
-          label="New organization"
-          icon="pi pi-plus"
-          severity="secondary"
-          outlined
-          [model]="toolbarActions"
-
-          (onClick)="add.emit()"
-        />
+        </div>
       </div>
-    </div>
-  </ng-template>
+    </ng-template>
 
-  <ng-template #header>
-    <tr class="text-sm">
-      <th class="w-12">
-        <p-tableHeaderCheckbox />
-      </th>
+    <ng-template #header>
+      <tr class="text-sm">
+        <th class="w-12">
+          <p-tableHeaderCheckbox />
+        </th>
 
-      <th pSortableColumn="name">
-        <div class="flex gap-2">
-          <span>Name</span>
-          <p-sortIcon field="name"/>
-        </div>
-      </th>
+        <th pSortableColumn="name">
+          <div class="flex gap-2">
+            <span>Name</span>
+            <p-sortIcon field="name"/>
+          </div>
+        </th>
 
-      <th pSortableColumn="status">
-        <div class="flex gap-2">
-          <span>Status</span>
-          <p-sortIcon field="status"/>
-        </div>
-      </th>
+        <th pSortableColumn="status">
+          <div class="flex gap-2">
+            <span>Status</span>
+            <p-sortIcon field="status"/>
+          </div>
+        </th>
 
-      <th pSortableColumn="createdAt">
-        <div class="flex gap-2">
-          <span>Created</span>
-          <p-sortIcon field="createdAt"/>
-        </div>
-      </th>
+        <th pSortableColumn="createdAt">
+          <div class="flex gap-2">
+            <span>Created</span>
+            <p-sortIcon field="createdAt"/>
+          </div>
+        </th>
 
-      <th class="w-16"></th>
-    </tr>
-  </ng-template>
+        <th class="w-16"></th>
+      </tr>
+    </ng-template>
 
-  <ng-template #body let-organization>
-    <tr>
-      <td>
-        <p-tableCheckbox [value]="organization" />
-      </td>
+    <ng-template #body let-organization>
+      <tr>
+        <td>
+          <p-tableCheckbox [value]="organization" />
+        </td>
 
-      <td>
-        <div class="flex items-center gap-3">
-          <p-avatar
-            [label]="organization.name.charAt(0).toUpperCase()"
-            shape="square"
-            size="normal"
+        <td>
+          <div class="flex items-center gap-3">
+            <p-avatar
+              [label]="organization.name.charAt(0).toUpperCase()"
+              shape="square"
+              size="normal"
+            />
+            <div class="flex flex-col">
+              <span class="font-medium text-surface-900 dark:text-surface-100">
+                {{ organization.name }}
+              </span>
+
+              <span class="text-xs text-surface-500">/{{ organization.slug }}</span>
+            </div>
+          </div>
+        </td>
+
+        <td>
+          <p-tag class="rounded-md text-sm bg-surface-0 border border-surface-200" severity="secondary">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full" [class.bg-green-500]="organization.status === 'active'" [class.bg-red-500]="organization.status === 'inactive'"></div>
+              <span class="font-semibold">{{ organization.status | titlecase }}</span>
+            </div>
+          </p-tag>
+        </td>
+
+        <td>
+          <span class="text-surface-600 dark:text-surface-400">{{ organization.createdAt | date: 'mediumDate' }}</span>
+        </td>
+
+        <td>
+          <p-button
+            icon="pi pi-ellipsis-v"
+            severity="secondary"
+            size="small"
+            [text]="true"
+            (onClick)="onRowMenuToggle($event, organization)"
           />
-          <div class="flex flex-col">
-            <span class="font-medium text-surface-900 dark:text-surface-100">
-              {{ organization.name }}
-            </span>
+        </td>
+      </tr>
+    </ng-template>
 
-            <span class="text-xs text-surface-500">/{{ organization.slug }}</span>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6">
+          <div class="text-center py-12">
+            <p class="text-surface-500 dark:text-surface-400 mb-4">You don't belong to any organization yet.</p>
+            <a routerLink="/onboarding">
+              <p-button label="Create an organization" icon="pi pi-plus" />
+            </a>
           </div>
-        </div>
-      </td>
-
-      <td>
-        <p-tag class="rounded-md text-sm bg-surface-0 border border-surface-200" severity="secondary">
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 rounded-full" [class.bg-green-500]="organization.status === 'active'" [class.bg-red-500]="organization.status === 'inactive'"></div>
-            <span class="font-semibold">{{ organization.status | titlecase }}</span>
-          </div>
-        </p-tag>
-      </td>
-
-      <td>
-        <span class="text-surface-600 dark:text-surface-400">{{ organization.createdAt | date: 'mediumDate' }}</span>
-      </td>
-
-      <td>
-        <p-button
-          icon="pi pi-ellipsis-h"
-          [outlined]="true"
-          severity="secondary"
-          (onClick)="onRowMenuToggle($event, organization)"
-        />
-      </td>
-    </tr>
-  </ng-template>
-
-  <ng-template #emptymessage>
-    <tr>
-      <td colspan="6">
-        <div class="text-center py-12">
-          <p class="text-surface-500 dark:text-surface-400 mb-4">You don't belong to any organization yet.</p>
-          <a routerLink="/onboarding">
-            <p-button label="Create an organization" icon="pi pi-plus" />
-          </a>
-        </div>
-      </td>
-    </tr>
-  </ng-template>
-</p-table>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

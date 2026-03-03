@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { type Observable } from 'rxjs';
+import { type Observable, catchError } from 'rxjs';
 import { BaseApiService, type PaginationOptions } from '../base-api.service';
 import type { SessionOutput } from '@core/models/session';
 import type { HydraCollection } from '@core/models/api';
@@ -127,7 +127,12 @@ export class SessionService extends BaseApiService {
    * @returns {Observable<void>} Observable completing on success.
    */
   public revokeAll(): Observable<void> {
-    return this.delete(SessionService.BASE_PATH);
+    return this.http
+      .post<void>(this.buildUrl(`${SessionService.BASE_PATH}/revoke-all`), null, {
+        headers: this.buildHeaders(),
+        withCredentials: true,
+      })
+      .pipe(catchError(this.handleError));
   }
   //#endregion
 }

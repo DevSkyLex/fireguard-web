@@ -9,7 +9,7 @@
   <section class="h-full min-h-0 overflow-hidden">
     <app-organization-dataview
       class="h-full flex flex-col"
-      [organizations]="[...store.organizations()]"
+      [organizations]="store.organizations()"
       [total]="store.totalOrganizations()"
       [loading]="store.isLoading()"
       [deleting]="store.isDeleting()"

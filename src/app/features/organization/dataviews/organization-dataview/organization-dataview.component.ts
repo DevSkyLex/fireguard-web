@@ -1,4 +1,5 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -434,6 +435,8 @@ export class OrganizationDataview {
    * @since 1.0.0
    */
   public constructor() {
+    afterNextRender(() => this.onLazyLoad({ first: 0, rows: this.rows, sortField: '', sortOrder: 1 }));
+
     this.searchControl.valueChanges
       .pipe(
         debounceTime(300),

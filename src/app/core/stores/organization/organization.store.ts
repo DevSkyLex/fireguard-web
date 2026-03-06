@@ -3,10 +3,18 @@ import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
   signalStore,
+  type,
   withComputed,
   withMethods,
   withState,
 } from '@ngrx/signals';
+import {
+  addEntity,
+  removeEntities,
+  removeEntity,
+  setAllEntities,
+  withEntities,
+} from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, forkJoin, map, pipe, switchMap, tap } from 'rxjs';
@@ -14,7 +22,6 @@ import { OrganizationService } from '@core/services/api/organization';
 import type { HydraCollection } from '@core/models/api';
 import type { OrganizationOutput, CreateOrganizationInput } from '@core/models/organization';
 import type { RequestOptions } from '@core/services/api';
-import { withPaginatedList } from '@core/stores/features';
 import { ActiveOrganizationStore } from './active-organization.store';
 import type { OrganizationState } from './organization-state.interface';
 import {
@@ -35,8 +42,9 @@ import { organizationStoreEvents } from './organization.events';
  * @const INITIAL_ORGANIZATION_STATE
  *
  * @description
- * Initial state for the OrganizationStore, representing an idle
- * state with no ongoing create operation.
+ * Initial state for the OrganizationStore. Entity state (`organizationEntities`,
+ * `organizationEntityMap`, `organizationIds`) is initialised by `withEntities`.
+ * This constant only seeds the auxiliary state managed in `OrganizationState`.
  *
  * @since 1.0.0
  *
@@ -44,6 +52,9 @@ import { organizationStoreEvents } from './organization.events';
  */
 const INITIAL_ORGANIZATION_STATE: OrganizationState = {
   createOperation: createIdleOperation(),
+  totalOrganizations: 0,
+  isLoading: false,
+  isDeleting: false,
 } as const;
 //#endregion
 
@@ -57,9 +68,11 @@ const INITIAL_ORGANIZATION_STATE: OrganizationState = {
  * each consumer (table, switcher, etc.) gets an independent instance tied to
  * its own lifecycle.
  *
- * Built on {@link withPaginatedList} which provides all pagination state and
- * helpers. This store adds the organization-specific load, create, and delete
- * methods that call the API directly.
+ * Entity state is managed by `withEntities<OrganizationOutput>({ collection:
+ * 'organization' })`, which provides O(1) lookups via `organizationEntityMap`
+ * and keeps insertions/deletions efficient via normalized storage.
+ * Auxiliary state (`isLoading`, `isDeleting`, `totalOrganizations`,
+ * `createOperation`) is held in `withState<OrganizationState>`.
  *
  * For reading the currently active/selected organization use the root-level
  * {@link ActiveOrganizationStore} instead.
@@ -72,36 +85,39 @@ const INITIAL_ORGANIZATION_STATE: OrganizationState = {
  * }
  * ```
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const OrganizationStore = signalStore(
   //#region Features
   /**
-   * Feature withPaginatedList
+   * Feature withEntities
    *
    * @description
-   * Adds paginated list state and helpers to the store for managing a list of
-   * organizations. The generic type parameter is set to `OrganizationOutput` to
-   * type the list items and total count appropriately.
+   * Adds NgRx entity state and entity-adapter updater functions for
+   * `OrganizationOutput` objects keyed by their `id` field. Provides:
+   * - `organizationEntities` — ordered array of all cached entities
+   * - `organizationEntityMap` — `{ [id]: OrganizationOutput }` lookup map
+   * - `organizationIds` — ordered array of entity ids
    *
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @returns {object} The initial state and methods for paginated list
-   * management, typed for organizations.
+   * @returns {object} Entity state slices and updater helpers for organizations.
    */
-  withPaginatedList<OrganizationOutput>(),
+  withEntities({ entity: type<OrganizationOutput>(), collection: 'organization' }),
 
   /**
    * Feature withState
    *
    * @description
-   * Adds the create operation state to the store, initialized with
-   * INITIAL_ORGANIZATION_STATE.
+   * Adds auxiliary state to the store: `createOperation`, `totalOrganizations`,
+   * `isLoading`, and `isDeleting`. Initialized from
+   * `INITIAL_ORGANIZATION_STATE`. Entity state is handled separately by
+   * `withEntities`.
    *
    * @since 1.0.0
    *
-   * @returns {object} The initial state for the organization store.
+   * @returns {object} The initial auxiliary state for the organization store.
    */
   withState<OrganizationState>(INITIAL_ORGANIZATION_STATE),
 
@@ -137,15 +153,31 @@ export const OrganizationStore = signalStore(
        * Property organizations
        *
        * @description
-       * Convenience alias for `items()` — reads naturally in templates
-       * without exposing the generic paginated list naming.
+       * All cached organizations from the entity collection, in insertion order.
+       * Reads from `organizationEntities` provided by `withEntities`.
        *
        * @since 1.0.0
        *
        * @type {ReadonlyArray<OrganizationOutput>} The current page of organizations.
        */
       organizations: computed<ReadonlyArray<OrganizationOutput>>(
-        () => store.items(),
+        () => store.organizationEntities(),
+      ),
+
+      /**
+       * Property isEmpty
+       *
+       * @description
+       * True when the entity collection is empty and no list request is
+       * currently in-flight. Equivalent to `organizations.length === 0 &&
+       * !isLoading`.
+       *
+       * @since 2.0.0
+       *
+       * @type {boolean}
+       */
+      isEmpty: computed<boolean>(
+        () => store.organizationIds().length === 0 && !store.isLoading(),
       ),
 
       /**
@@ -176,6 +208,20 @@ export const OrganizationStore = signalStore(
        */
       isLoadingOrganizations: computed<boolean>(
         () => store.isLoading(),
+      ),
+
+      /**
+       * Property isDeletingOrganizations
+       *
+       * @description
+       * True while a single or bulk delete operation is in-flight.
+       *
+       * @since 2.0.0
+       *
+       * @type {boolean}
+       */
+      isDeletingOrganizations: computed<boolean>(
+        () => store.isDeleting(),
       ),
 
       /**
@@ -276,15 +322,19 @@ export const OrganizationStore = signalStore(
      */
     const loadFn = rxMethod<RequestOptions | void>(
       pipe(
-        tap((): void => { store.setLoading(true); }),
+        tap((): void => { patchState(store, { isLoading: true }); }),
         switchMap((options: RequestOptions | void) =>
           organizationService.list(options ?? undefined).pipe(
             tapResponse({
               next: (response: HydraCollection<OrganizationOutput>): void => {
-                store.setItems([...response.member], response.totalItems);
+                patchState(
+                  store,
+                  setAllEntities([...response.member], { collection: 'organization' }),
+                  { totalOrganizations: response.totalItems, isLoading: false },
+                );
               },
               error: (error: unknown): void => {
-                store.setLoading(false);
+                patchState(store, { isLoading: false });
                 const operationError: OperationError<unknown> =
                   createOperationErrorFromUnknown(error);
                 dispatcher.dispatch(
@@ -352,9 +402,14 @@ export const OrganizationStore = signalStore(
             organizationService.create(input).pipe(
               tapResponse({
                 next: (organization: OrganizationOutput): void => {
-                  patchState(store, {
-                    createOperation: createSuccessOperation(organization),
-                  });
+                  patchState(
+                    store,
+                    addEntity(organization, { collection: 'organization' }),
+                    {
+                      createOperation: createSuccessOperation(organization),
+                      totalOrganizations: store.totalOrganizations() + 1,
+                    },
+                  );
                 },
                 error: (error: unknown): void => {
                   const operationError: OperationError<unknown> =
@@ -393,19 +448,22 @@ export const OrganizationStore = signalStore(
        */
       deleteOne: rxMethod<string>(
         pipe(
-          tap((): void => { store.setDeleting(true); }),
+          tap((): void => { patchState(store, { isDeleting: true }); }),
           exhaustMap((id: string) =>
             organizationService.remove(id).pipe(
               tapResponse({
                 next: (): void => {
-                  store.removeItem(id);
-                  store.setDeleting(false);
+                  patchState(
+                    store,
+                    removeEntity(id, { collection: 'organization' }),
+                    { totalOrganizations: store.totalOrganizations() - 1, isDeleting: false },
+                  );
                   if (activeOrganizationStore.selectedOrganization()?.id === id) {
                     activeOrganizationStore.clearSelectedOrganization();
                   }
                 },
                 error: (error: unknown): void => {
-                  store.setDeleting(false);
+                  patchState(store, { isDeleting: false });
                   const operationError: OperationError<unknown> =
                     createOperationErrorFromUnknown(error);
                   dispatcher.dispatch(
@@ -436,14 +494,17 @@ export const OrganizationStore = signalStore(
        */
       deleteMany: rxMethod<string[]>(
         pipe(
-          tap((): void => { store.setDeleting(true); }),
+          tap((): void => { patchState(store, { isDeleting: true }); }),
           exhaustMap((ids: string[]) =>
             forkJoin(ids.map((id: string) => organizationService.remove(id))).pipe(
               map((): void => void 0),
               tapResponse({
                 next: (): void => {
-                  store.removeItems(ids);
-                  store.setDeleting(false);
+                  patchState(
+                    store,
+                    removeEntities(ids, { collection: 'organization' }),
+                    { totalOrganizations: store.totalOrganizations() - ids.length, isDeleting: false },
+                  );
                   const selectedId: string | undefined =
                     activeOrganizationStore.selectedOrganization()?.id;
                   if (selectedId !== undefined && ids.includes(selectedId)) {
@@ -451,7 +512,7 @@ export const OrganizationStore = signalStore(
                   }
                 },
                 error: (error: unknown): void => {
-                  store.setDeleting(false);
+                  patchState(store, { isDeleting: false });
                   const operationError: OperationError<unknown> =
                     createOperationErrorFromUnknown(error);
                   dispatcher.dispatch(

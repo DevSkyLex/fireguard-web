@@ -1,6 +1,7 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  effect,
   inject,
   input,
   output,
@@ -98,6 +99,10 @@ export class ForgotPasswordForm {
         Validators.email,
       ]),
     });
+
+  private readonly disableFormEffect = effect(() => {
+    this.loading() ? this.form.disable() : this.form.enable();
+  });
 
   /**
    * Property submitted

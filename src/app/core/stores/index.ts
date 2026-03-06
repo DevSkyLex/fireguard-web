@@ -1,5 +1,4 @@
 export * from './operations';
-export * from './features';
 export * from './auth';
 export * from './checklist';
 export * from './equipment';

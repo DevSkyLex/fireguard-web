@@ -21,20 +21,10 @@
           pSize="small"
           placeholder="Search organizations..."
           [formControl]="searchControl"
-          [disabled]="store.isLoading() || store.isDeleting()"
+          [disabled]="loading() || deleting()"
           class="w-full"
         />
       </p-iconfield>
-
-      <p-select
-        [options]="statusOptions"
-        [formControl]="selectedStatus"
-        placeholder="All statuses"
-        [showClear]="true"
-        class="flex-1 sm:flex-none sm:w-40"
-        size="small"
-        [disabled]="store.isLoading() || store.isDeleting()"
-      />
 
       <!-- Layout toggle -->
       <p-selectbutton
@@ -57,7 +47,7 @@
         [model]="toolbarActions()"
         size="small"
         (onClick)="add.emit()"
-        [disabled]="store.isLoading() || store.isDeleting()"
+        [disabled]="loading() || deleting()"
         class="w-full sm:w-auto"
       />
     </div>
@@ -65,11 +55,12 @@
 
   <!-- DataView -->
   <p-dataview
-    [value]="[...store.organizations()]"
+    [value]="[...organizations()]"
     [layout]="layout()"
+    [loading]="loading()"
     [paginator]="true"
     [rows]="rows"
-    [totalRecords]="store.total()"
+    [totalRecords]="total()"
     [lazy]="true"
     (onLazyLoad)="onLazyLoad($event)"
     [rowsPerPageOptions]="[12, 24, 48]"
@@ -82,7 +73,7 @@
     <!-- List layout -->
     <ng-template #list let-items>
       <div class="flex flex-col divide-y divide-surface-200 dark:divide-surface-700">
-        @if (store.isLoading()) {
+        @if (loading(); as loading) {
           @for (_ of skeletonItems; track $index) {
             <div class="flex items-center justify-between px-4 py-3">
               <div class="flex items-center gap-3 min-w-0">
@@ -150,7 +141,7 @@
     <!-- Grid layout -->
     <ng-template #grid let-items>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
-        @if (store.isLoading()) {
+        @if (loading(); as loading) {
           @for (_ of skeletonItems; track $index) {
             <div class="flex flex-col gap-3 p-4 rounded-lg border border-surface-200 dark:border-surface-700">
               <div class="flex items-start justify-between">

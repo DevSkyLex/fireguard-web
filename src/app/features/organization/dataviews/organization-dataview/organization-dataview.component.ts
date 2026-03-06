@@ -2,11 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject,
+  input,
   output,
   Signal,
   signal,
   viewChild,
+  type InputSignal,
   type OutputEmitterRef,
   type WritableSignal,
 } from '@angular/core';
@@ -30,21 +31,21 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import type { OrganizationOutput } from '@core/models/organization';
+import type { RequestOptions } from '@core/services/api';
 import { MenuItem, PrimeIcons } from 'primeng/api';
-import { OrganizationStore } from '@core/stores/organization';
 
 /**
  * Component OrganizationDataview
  * @class OrganizationDataview
  *
  * @description
- * Smart dataview component that displays a paginated list of
+ * Presentational dataview component that displays a paginated list of
  * organizations using PrimeNG's lazy-loaded `p-dataview`.
  * Supports toggling between list and grid layout.
  *
- * Uses a component-scoped `OrganizationStore` (provided via
- * `providers` array) to manage its own local state independently
- * from the global `OrganizationStore` consumed by the switcher.
+ * Receives data via `input()` signals and communicates user actions
+ * upward via `output()` emitters. All store interactions are delegated
+ * to the parent page component.
  *
  * @version 1.0.0
  *
@@ -72,30 +73,73 @@ import { OrganizationStore } from '@core/stores/organization';
     TitleCasePipe,
     TooltipModule,
   ],
-  providers: [OrganizationStore],
   templateUrl: './organization-dataview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDataview {
-  //#region Properties
+  //#region Inputs
   /**
-   * Property store
+   * Input organizations
    * @readonly
    *
    * @description
-   * Component-level NgRx SignalStore scoped to this component's
-   * lifecycle. Manages the dataview's organization list, total count,
-   * and loading state independently from the global OrganizationStore
-   * so that filters never pollute the switcher.
+   * List of organizations to display.
    *
-   * @access protected
+   * @access public
    * @since 1.0.0
    *
-   * @type {OrganizationStore}
+   * @type {InputSignal<OrganizationOutput[]>}
    */
-  protected readonly store: OrganizationStore =
-    inject<OrganizationStore>(OrganizationStore);
+  public readonly organizations: InputSignal<readonly OrganizationOutput[]> =
+    input.required<readonly OrganizationOutput[]>();
 
+  /**
+   * Input total
+   * @readonly
+   *
+   * @description
+   * Total number of organizations (used by paginator).
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly total: InputSignal<number> =
+    input.required<number>();
+
+  /**
+   * Input loading
+   * @readonly
+   *
+   * @description
+   * Whether a list fetch is currently in-flight.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loading: InputSignal<boolean> =
+    input.required<boolean>();
+
+  /**
+   * Input deleting
+   * @readonly
+   *
+   * @description
+   * Whether a delete operation is currently in-flight.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly deleting: InputSignal<boolean> =
+    input.required<boolean>();
+  //#endregion
+
+  //#region Properties
   /**
    * Property rows
    * @readonly
@@ -188,38 +232,6 @@ export class OrganizationDataview {
    */
   protected readonly searchControl: FormControl<string> =
     new FormControl<string>('', { nonNullable: true });
-
-  /**
-   * Property selectedStatus
-   * @readonly
-   *
-   * @description
-   * FormControl for the status dropdown filter.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {FormControl<string | null>}
-   */
-  protected readonly selectedStatus: FormControl<string | null> =
-    new FormControl<string | null>(null);
-
-  /**
-   * Property statusOptions
-   * @readonly
-   *
-   * @description
-   * Options for the status dropdown filter.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {{ label: string; value: string }[]}
-   */
-  protected readonly statusOptions: { label: string; value: string }[] = [
-    { label: 'Active', value: 'active' },
-    { label: 'Inactive', value: 'inactive' },
-  ];
 
   /**
    * Property toolbarActions
@@ -323,10 +335,7 @@ export class OrganizationDataview {
           label: 'Delete',
           icon: PrimeIcons.TRASH,
           styleClass: 'text-red-500',
-          command: (): void => {
-            this.store.deleteOne(organization.id);
-            this.delete.emit(organization);
-          },
+          command: (): void => this.delete.emit(organization),
         },
       ];
     },
@@ -383,9 +392,8 @@ export class OrganizationDataview {
    * @readonly
    *
    * @description
-   * Emitted when the user confirms deletion of a single organization
-   * from the item context menu. The store has already dispatched the
-   * delete request at this point.
+   * Emitted when the user requests deletion of an organization
+   * from the item context menu. The parent page handles the store call.
    *
    * @access public
    * @since 1.0.0
@@ -394,6 +402,23 @@ export class OrganizationDataview {
    */
   public readonly delete: OutputEmitterRef<OrganizationOutput> =
     output<OrganizationOutput>();
+
+  /**
+   * Output load
+   * @readonly
+   *
+   * @description
+   * Emitted whenever the dataview needs to fetch a new page.
+   * Carries the resolved `RequestOptions` (page, itemsPerPage, params).
+   * The parent page is responsible for forwarding this to the store.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<RequestOptions>}
+   */
+  public readonly load: OutputEmitterRef<RequestOptions> =
+    output<RequestOptions>();
   //#endregion
 
   //#region Constructor
@@ -415,10 +440,6 @@ export class OrganizationDataview {
         distinctUntilChanged(),
         takeUntilDestroyed(),
       )
-      .subscribe(() => this.reload());
-
-    this.selectedStatus.valueChanges
-      .pipe(takeUntilDestroyed())
       .subscribe(() => this.reload());
   }
   //#endregion
@@ -451,13 +472,10 @@ export class OrganizationDataview {
     const search: string = this.searchControl.value;
     if (search) params['search'] = search;
 
-    const status: string | null = this.selectedStatus.value;
-    if (status) params['status'] = status;
-
-    this.store.loadOrganizations({
+    this.load.emit({
       page: page,
       itemsPerPage: rowsPerPage,
-      params: params,
+      params: params
     });
   }
 
@@ -497,7 +515,9 @@ export class OrganizationDataview {
     organization: OrganizationOutput,
   ): void {
     this.selectedOrganization.set(organization);
-    this.rowMenu().toggle(event);
+
+    const menu: Menu = this.rowMenu();
+    menu.toggle(event);
   }
 
   /**
@@ -514,8 +534,18 @@ export class OrganizationDataview {
    * @returns {void}
    */
   private reload(): void {
-    const event: DataViewLazyLoadEvent = this.lastLazyEvent() ?? { first: 0, rows: this.rows, sortField: '', sortOrder: 1 };
-    this.onLazyLoad({ ...event, first: 0, rows: event.rows ?? this.rows });
+    const event: DataViewLazyLoadEvent = this.lastLazyEvent() ?? {
+      first: 0,
+      rows: this.rows,
+      sortField: '',
+      sortOrder: 1
+    };
+
+    this.onLazyLoad({
+      ...event,
+      first: 0,
+      rows: event.rows ?? this.rows
+    });
   }
   //#endregion
 }

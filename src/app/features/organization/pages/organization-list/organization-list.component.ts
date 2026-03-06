@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import type { OrganizationOutput } from '@core/models/organization';
+import type { RequestOptions } from '@core/services/api';
+import { OrganizationStore } from '@core/stores/organization';
 import { OrganizationDataview } from '@features/organization/dataviews/organization-dataview';
 
 /**
@@ -19,6 +21,7 @@ import { OrganizationDataview } from '@features/organization/dataviews/organizat
 @Component({
   selector: 'app-organization-list',
   imports: [RouterModule, ButtonModule, OrganizationDataview],
+  providers: [OrganizationStore],
   templateUrl: './organization-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -36,7 +39,23 @@ export class OrganizationListPage {
    *
    * @type {Router}
    */
-  private readonly router: Router = inject(Router);
+  private readonly router: Router =
+    inject<Router>(Router);
+
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * Component-scoped OrganizationStore that manages the organization list.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {OrganizationStore}
+   */
+  protected readonly store: OrganizationStore =
+    inject<OrganizationStore>(OrganizationStore);
   //#endregion
 
   //#region Methods
@@ -108,28 +127,25 @@ export class OrganizationListPage {
    * @returns {void} No return value.
    */
   public onDelete(organization: OrganizationOutput): void {
-    // The table's OrganizationStore handles the HTTP call and list update.
-    // Hook here for post-deletion navigation or notifications if needed.
+    this.store.deleteOne(organization.id);
   }
 
   /**
-   * Method onDeleteMany
-   * @method onDeleteMany
+   * Method onLoad
+   * @method onLoad
    *
    * @description
-   * Called after the table has dispatched a bulk-delete request to its
-   * store. Hook here for post-deletion navigation or notifications.
+   * Forwards the dataview lazy-load params to the store.
    *
    * @access public
-   * @since 1.8.0
+   * @since 2.0.0
    *
-   * @param {OrganizationOutput[]} organizations - The deleted organizations.
+   * @param {RequestOptions} options - Pagination and filter params.
    *
    * @returns {void}
    */
-  public onDeleteMany(organizations: OrganizationOutput[]): void {
-    // The table's OrganizationStore handles the HTTP call and list update.
-    // Hook here for post-deletion navigation or notifications if needed.
+  public onLoad(options: RequestOptions): void {
+    this.store.loadOrganizations(options);
   }
   //#endregion
 }

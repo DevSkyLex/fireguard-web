@@ -19,7 +19,7 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
 import { TrustedDeviceService } from '@core/services/api/trusted-device';
 import type { HydraCollection } from '@core/models/api';
-import type { TrustDeviceOutput, TrustedDeviceOutput } from '@core/models/trusted-device';
+import type { TrustedDeviceOutput } from '@core/models/trusted-device';
 import type { TrustedDeviceState } from './trusted-device-state.interface';
 import {
   createErrorOperation,
@@ -28,63 +28,78 @@ import {
   createSuccessOperation,
   createOperationErrorFromUnknown,
   toOperationFailureEventPayload,
-  type CollectionOperation,
-  type Operation,
   type OperationError,
 } from '../operations';
 import { trustedDeviceStoreEvents } from './trusted-device.events';
 
+//#region Initial State
 /**
  * Constant INITIAL_TRUSTED_DEVICE_STATE
+ * @const INITIAL_TRUSTED_DEVICE_STATE
  *
  * @description
- * Initial state for the trusted device store.
+ * Initial state for the TrustedDeviceStore. Entity state (`deviceEntities`,
+ * `deviceEntityMap`, `deviceIds`) is initialised by `withEntities`.
+ * This constant only seeds the auxiliary state managed in `TrustedDeviceState`.
  *
  * @since 1.0.0
  *
- * @type {TrustedDeviceState}
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 const INITIAL_TRUSTED_DEVICE_STATE: TrustedDeviceState = {
-  pendingTrustDevice: false,
-  listOperation: createIdleOperation(),
-  trustOperation: createIdleOperation(),
+  isLoading: false,
   revokeOperation: createIdleOperation(),
   revokeAllOperation: createIdleOperation(),
 } as const;
+//#endregion
 
 /**
  * Store TrustedDeviceStore
  * @const TrustedDeviceStore
  *
  * @description
- * NGRX SignalStore for trusted device management.
- * Handles trusting devices, listing trusted devices, and revoking trust.
+ * Component-scoped NgRx SignalStore for trusted-device list management.
+ * Handles loading, viewing, and revoking trusted devices. Designed to be
+ * provided at **component level** (no `providedIn: 'root'`), so each
+ * consumer gets an independent instance tied to its own lifecycle.
  *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ * Entity state is managed by `withEntities<TrustedDeviceOutput>({ collection:
+ * 'device' })`, which provides O(1) lookups via `deviceEntityMap` and keeps
+ * insertions/deletions efficient via normalized storage.
+ *
+ * For the `pendingTrustDevice` flag and trust-device API call, use the
+ * root-level {@link ActiveTrustedDeviceStore} instead.
  *
  * @example
  * ```typescript
- * const trustedDeviceStore = inject(TrustedDeviceStore);
- *
- * // Trust current device
- * trustedDeviceStore.trustDevice();
- *
- * // Load all trusted devices
- * trustedDeviceStore.loadDevices();
- *
- * // Revoke a device
- * trustedDeviceStore.revokeDevice('device-uuid');
+ * @Component({ providers: [TrustedDeviceStore] })
+ * export class TrustedDevicePage {
+ *   readonly store = inject(TrustedDeviceStore);
+ * }
  * ```
+ *
+ * @version 2.0.0
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const TrustedDeviceStore = signalStore(
-  { providedIn: 'root' },
 
   //#region State
   withState<TrustedDeviceState>(INITIAL_TRUSTED_DEVICE_STATE),
   //#endregion
 
   //#region Entities
+  /**
+   * Feature withEntities
+   *
+   * @description
+   * Adds NgRx entity state and entity-adapter updater functions for
+   * `TrustedDeviceOutput` objects keyed by their `id` field. Provides:
+   * - `deviceEntities` — ordered array of all cached entities
+   * - `deviceEntityMap` — `{ [id]: TrustedDeviceOutput }` lookup map
+   * - `deviceIds` — ordered array of entity IDs
+   *
+   * @since 1.0.0
+   */
   withEntities({ entity: type<TrustedDeviceOutput>(), collection: 'device' }),
   //#endregion
 
@@ -96,88 +111,10 @@ export const TrustedDeviceStore = signalStore(
     ),
 
     /**
-     * Computed isListLoading
-     *
-     * @description
-     * Returns true if the devices list is being loaded.
-     *
-     * @since 1.0.0
-     *
-     * @returns {boolean}
-     */
-    isListLoading: computed<boolean>(() => store.listOperation().status === 'loading'),
-
-    /**
-     * Computed isListLoaded
-     *
-     * @description
-     * Returns true if the devices list has been successfully loaded.
-     *
-     * @since 1.0.0
-     *
-     * @returns {boolean}
-     */
-    isListLoaded: computed<boolean>(() => store.listOperation().status === 'success'),
-
-    /**
-     * Computed listError
-     *
-     * @description
-     * Returns the list operation error if any.
-     *
-     * @since 1.0.0
-     *
-     * @returns {OperationError<unknown> | null}
-     */
-    listError: computed<OperationError<unknown> | null>(() => {
-      const operation: CollectionOperation<TrustedDeviceOutput, unknown> = store.listOperation();
-      return operation.status === 'error' ? operation.error : null;
-    }),
-
-    /**
-     * Computed isTrusting
-     *
-     * @description
-     * Returns true if a trust operation is in progress.
-     *
-     * @since 1.0.0
-     *
-     * @returns {boolean}
-     */
-    isTrusting: computed<boolean>(() => store.trustOperation().status === 'loading'),
-
-    /**
-     * Computed trustSuccess
-     *
-     * @description
-     * Returns true if the last trust operation was successful.
-     *
-     * @since 1.0.0
-     *
-     * @returns {boolean}
-     */
-    trustSuccess: computed<boolean>(() => store.trustOperation().status === 'success'),
-
-    /**
-     * Computed trustError
-     *
-     * @description
-     * Returns the trust operation error if any.
-     *
-     * @since 1.0.0
-     *
-     * @returns {OperationError<unknown> | null}
-     */
-    trustError: computed<OperationError<unknown> | null>(() => {
-      const operation: Operation<TrustDeviceOutput, unknown> = store.trustOperation();
-      return operation.status === 'error' ? operation.error : null;
-    }),
-
-    /**
      * Computed isRevoking
      *
      * @description
-     * Returns true if a revoke operation is in progress.
+     * Returns true if a single-device revoke operation is in-flight.
      *
      * @since 1.0.0
      *
@@ -189,7 +126,7 @@ export const TrustedDeviceStore = signalStore(
      * Computed isRevokingAll
      *
      * @description
-     * Returns true if a revoke all operation is in progress.
+     * Returns true if the revoke-all operation is in-flight.
      *
      * @since 1.0.0
      *
@@ -201,7 +138,7 @@ export const TrustedDeviceStore = signalStore(
      * Computed deviceCount
      *
      * @description
-     * Returns the number of trusted devices.
+     * Returns the number of trusted devices in the local entity collection.
      *
      * @since 1.0.0
      *
@@ -213,7 +150,8 @@ export const TrustedDeviceStore = signalStore(
      * Computed hasDevices
      *
      * @description
-     * Returns true if there are any trusted devices.
+     * Quick check whether any trusted devices exist. Drives the
+     * visibility of "Revoke all" controls.
      *
      * @since 1.0.0
      *
@@ -228,47 +166,37 @@ export const TrustedDeviceStore = signalStore(
     store,
     dispatcher = inject<Dispatcher>(Dispatcher),
     trustedDeviceService = inject(TrustedDeviceService),
-  ) => ({
-    //#region Reactive Methods
+  ) => {
+    //#region Shared Reactive Pipelines
     /**
-     * Method loadDevices
+     * Reactive pipeline loadFn
      *
      * @description
-     * Loads all trusted devices for the current user.
+     * Shared `rxMethod` pipeline for loading trusted devices. Uses
+     * `switchMap` so that rapid successive calls cancel the previous
+     * in-flight request. Exposed publicly as both `load` (generic) and
+     * `loadDevices` (explicit).
      *
-     * @since 1.0.0
+     * @since 2.0.0
      */
-    loadDevices: rxMethod<void>(
+    const loadFn = rxMethod<void>(
       pipe(
         tap(() => {
-          patchState(store, {
-            listOperation: createLoadingOperation(store.listOperation().data),
-          });
+          patchState(store, { isLoading: true });
         }),
         switchMap(() =>
           trustedDeviceService.list().pipe(
             tapResponse({
               next: (response: HydraCollection<TrustedDeviceOutput>) => {
-                const devices: readonly TrustedDeviceOutput[] = response.member;
                 patchState(store,
-                  setAllEntities([...devices], { collection: 'device' }),
-                  {
-                    listOperation: {
-                      ...createSuccessOperation(devices),
-                      total: response.totalItems,
-                    },
-                  },
+                  setAllEntities([...response.member], { collection: 'device' }),
+                  { isLoading: false },
                 );
               },
               error: (error: unknown) => {
                 const operationError: OperationError<unknown> =
                   createOperationErrorFromUnknown(error);
-                patchState(store, {
-                  listOperation: createErrorOperation(
-                    operationError,
-                    store.listOperation().data,
-                  ),
-                });
+                patchState(store, { isLoading: false });
                 dispatcher.dispatch(
                   trustedDeviceStoreEvents.loadFailed(
                     toOperationFailureEventPayload(operationError, 'Failed to load trusted devices'),
@@ -279,216 +207,150 @@ export const TrustedDeviceStore = signalStore(
           ),
         ),
       ),
-    ),
-
-    /**
-     * Method trustDevice
-     *
-     * @description
-     * Trusts the current device for MFA bypass.
-     * Automatically clears the pending trust device flag.
-     *
-     * @since 1.0.0
-     */
-    trustDevice: rxMethod<void>(
-      pipe(
-        tap(() => {
-          // Clear pending flag immediately when trust starts
-          patchState(store, {
-            pendingTrustDevice: false,
-            trustOperation: createLoadingOperation(store.trustOperation().data),
-          });
-        }),
-        switchMap(() =>
-          trustedDeviceService.trustDevice().pipe(
-            tapResponse({
-              next: (response: TrustDeviceOutput) => {
-                patchState(store, {
-                  trustOperation: createSuccessOperation(response),
-                });
-              },
-              error: (error: unknown) => {
-                const operationError: OperationError<unknown> =
-                  createOperationErrorFromUnknown(error);
-                patchState(store, {
-                  trustOperation: createErrorOperation(
-                    operationError,
-                    store.trustOperation().data,
-                  ),
-                });
-                dispatcher.dispatch(
-                  trustedDeviceStoreEvents.trustFailed(
-                    toOperationFailureEventPayload(operationError, 'Failed to trust device'),
-                  ),
-                );
-              },
-            }),
-          ),
-        ),
-      ),
-    ),
-
-    /**
-     * Method revokeDevice
-     *
-     * @description
-     * Revokes trust for a specific device.
-     *
-     * @since 1.0.0
-     *
-     * @param {string} deviceId - UUID of the device to revoke.
-     */
-    revokeDevice: rxMethod<string>(
-      pipe(
-        tap(() => {
-          patchState(store, {
-            revokeOperation: createLoadingOperation(store.revokeOperation().data),
-          });
-        }),
-        switchMap((deviceId: string) =>
-          trustedDeviceService.revoke(deviceId).pipe(
-            tapResponse({
-              next: () => {
-                // Remove the revoked device from the local list
-                patchState(store,
-                  removeEntity(deviceId, { collection: 'device' }),
-                  {
-                    revokeOperation: createSuccessOperation(undefined as unknown as void),
-                  },
-                );
-              },
-              error: (error: unknown) => {
-                const operationError: OperationError<unknown> =
-                  createOperationErrorFromUnknown(error);
-                patchState(store, {
-                  revokeOperation: createErrorOperation(
-                    operationError,
-                    store.revokeOperation().data,
-                  ),
-                });
-                dispatcher.dispatch(
-                  trustedDeviceStoreEvents.revokeFailed(
-                    toOperationFailureEventPayload(operationError, 'Failed to revoke device'),
-                  ),
-                );
-              },
-            }),
-          ),
-        ),
-      ),
-    ),
-
-    /**
-     * Method revokeAllDevices
-     *
-     * @description
-     * Revokes trust for all devices.
-     *
-     * @since 1.0.0
-     */
-    revokeAllDevices: rxMethod<void>(
-      pipe(
-        tap(() => {
-          patchState(store, {
-            revokeAllOperation: createLoadingOperation(store.revokeAllOperation().data),
-          });
-        }),
-        switchMap(() =>
-          trustedDeviceService.revokeAll().pipe(
-            tapResponse({
-              next: () => {
-                patchState(store,
-                  removeAllEntities({ collection: 'device' }),
-                  {
-                    revokeAllOperation: createSuccessOperation(undefined as unknown as void),
-                  },
-                );
-              },
-              error: (error: unknown) => {
-                const operationError: OperationError<unknown> =
-                  createOperationErrorFromUnknown(error);
-                patchState(store, {
-                  revokeAllOperation: createErrorOperation(
-                    operationError,
-                    store.revokeAllOperation().data,
-                  ),
-                });
-                dispatcher.dispatch(
-                  trustedDeviceStoreEvents.revokeAllFailed(
-                    toOperationFailureEventPayload(operationError, 'Failed to revoke all devices'),
-                  ),
-                );
-              },
-            }),
-          ),
-        ),
-      ),
-    ),
+    );
     //#endregion
 
-    //#region Synchronous Methods
-    /**
-     * Method reset
-     *
-     * @description
-     * Resets the store to initial state.
-     * Should be called on logout.
-     *
-     * @since 1.0.0
-     */
-    reset(): void {
-      patchState(store,
-        removeAllEntities({ collection: 'device' }),
-        INITIAL_TRUSTED_DEVICE_STATE,
-      );
-    },
+    return {
+      //#region Reactive Methods
+      /** @see loadFn — generic alias. */
+      load: loadFn,
+      /** @see loadFn — explicit alias. */
+      loadDevices: loadFn,
 
-    /**
-     * Method resetTrustOperation
-     *
-     * @description
-     * Resets the trust operation state to idle.
-     *
-     * @since 1.0.0
-     */
-    resetTrustOperation(): void {
-      patchState(store, {
-        trustOperation: createIdleOperation(),
-      });
-    },
+      /**
+       * Method revokeDevice
+       *
+       * @description
+       * Revokes trust for a specific device by ID. Uses `switchMap` for
+       * consistency. On success the revoked device is removed from
+       * the local entity collection.
+       *
+       * @since 1.0.0
+       *
+       * @param {string} deviceId - UUID of the device to revoke.
+       */
+      revokeDevice: rxMethod<string>(
+        pipe(
+          tap(() => {
+            patchState(store, {
+              revokeOperation: createLoadingOperation(store.revokeOperation().data),
+            });
+          }),
+          switchMap((deviceId: string) =>
+            trustedDeviceService.revoke(deviceId).pipe(
+              tapResponse({
+                next: () => {
+                  patchState(store,
+                    removeEntity(deviceId, { collection: 'device' }),
+                    {
+                      revokeOperation: createSuccessOperation(undefined as unknown as void),
+                    },
+                  );
+                },
+                error: (error: unknown) => {
+                  const operationError: OperationError<unknown> =
+                    createOperationErrorFromUnknown(error);
+                  patchState(store, {
+                    revokeOperation: createErrorOperation(
+                      operationError,
+                      store.revokeOperation().data,
+                    ),
+                  });
+                  dispatcher.dispatch(
+                    trustedDeviceStoreEvents.revokeFailed(
+                      toOperationFailureEventPayload(operationError, 'Failed to revoke device'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
 
-    /**
-     * Method resetRevokeOperation
-     *
-     * @description
-     * Resets the revoke operation state to idle.
-     *
-     * @since 1.0.0
-     */
-    resetRevokeOperation(): void {
-      patchState(store, {
-        revokeOperation: createIdleOperation(),
-      });
-    },
+      /**
+       * Method revokeAllDevices
+       *
+       * @description
+       * Revokes trust for all devices at once. On success the local entity
+       * collection is cleared completely.
+       *
+       * @since 1.0.0
+       */
+      revokeAllDevices: rxMethod<void>(
+        pipe(
+          tap(() => {
+            patchState(store, {
+              revokeAllOperation: createLoadingOperation(store.revokeAllOperation().data),
+            });
+          }),
+          switchMap(() =>
+            trustedDeviceService.revokeAll().pipe(
+              tapResponse({
+                next: () => {
+                  patchState(store,
+                    removeAllEntities({ collection: 'device' }),
+                    {
+                      revokeAllOperation: createSuccessOperation(undefined as unknown as void),
+                    },
+                  );
+                },
+                error: (error: unknown) => {
+                  const operationError: OperationError<unknown> =
+                    createOperationErrorFromUnknown(error);
+                  patchState(store, {
+                    revokeAllOperation: createErrorOperation(
+                      operationError,
+                      store.revokeAllOperation().data,
+                    ),
+                  });
+                  dispatcher.dispatch(
+                    trustedDeviceStoreEvents.revokeAllFailed(
+                      toOperationFailureEventPayload(operationError, 'Failed to revoke all devices'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+      //#endregion
 
-    /**
-     * Method setPendingTrustDevice
-     *
-     * @description
-     * Sets the pending trust device flag.
-     * Used to defer device trust until after MFA verification completes.
-     *
-     * @since 1.0.0
-     *
-     * @param {boolean} value - Whether to trust the device after MFA.
-     */
-    setPendingTrustDevice(value: boolean): void {
-      patchState(store, {
-        pendingTrustDevice: value,
-      });
-    },
-    //#endregion
-  })),
+      //#region Synchronous Methods
+      /**
+       * Method clear
+       *
+       * @description
+       * Resets the store to its initial state and removes all entities.
+       * Should be called on logout or when the component is destroyed.
+       *
+       * @since 1.0.0
+       */
+      clear(): void {
+        patchState(store,
+          removeAllEntities({ collection: 'device' }),
+          INITIAL_TRUSTED_DEVICE_STATE,
+        );
+      },
+
+      /**
+       * Method resetRevokeOperation
+       *
+       * @description
+       * Resets the revoke operation state to idle. Useful for clearing
+       * feedback messages after the user has acknowledged them.
+       *
+       * @since 1.0.0
+       */
+      resetRevokeOperation(): void {
+        patchState(store, {
+          revokeOperation: createIdleOperation(),
+        });
+      },
+      //#endregion
+    };
+  }),
   //#endregion
 );
 

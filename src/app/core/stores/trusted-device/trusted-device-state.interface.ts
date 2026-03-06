@@ -1,67 +1,46 @@
-import type { TrustDeviceOutput, TrustedDeviceOutput } from '@core/models/trusted-device';
-import type { CollectionOperation, Operation } from '@core/stores/operations';
+import type { Operation } from '@core/stores/operations';
 
 /**
  * Interface TrustedDeviceState
  * @interface TrustedDeviceState
  *
  * @description
- * State interface for the trusted device store.
- * Manages trusted devices list and trust operations.
+ * Component-scoped state for the trusted-device list store. Entities are
+ * managed by the `withEntities` feature (providing `deviceEntities`,
+ * `deviceEntityMap`, `deviceIds`). This interface tracks auxiliary state:
+ * list loading flag and mutation operation tracking.
  *
- * @version 1.0.0
+ * For the `pendingTrustDevice` flag and trust-device API call, see
+ * {@link ActiveTrustedDeviceState}.
+ *
+ * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface TrustedDeviceState {
-  //#region Device Data
+  //#region Properties
   /**
-   * Property pendingTrustDevice
+   * Property isLoading
    * @readonly
    *
    * @description
-   * Flag indicating if device trust should be requested after MFA verification.
-   * Used to defer the trust API call until authentication is complete.
+   * True while a device-list request is in-flight. Set to `true` at the
+   * start of every `load` / `loadDevices` call and back to `false` on
+   * both success and error.
    *
-   * @since 1.0.0
+   * @since 2.0.0
    *
    * @type {boolean}
    */
-  readonly pendingTrustDevice: boolean;
-  //#endregion
-
-  //#region Operations
-  /**
-   * Property listOperation
-   * @readonly
-   *
-   * @description
-   * Async operation state for loading the devices list.
-   *
-   * @since 1.0.0
-   *
-   * @type {CollectionOperation<TrustedDeviceOutput, unknown>}
-   */
-  readonly listOperation: CollectionOperation<TrustedDeviceOutput, unknown>;
-
-  /**
-   * Property trustOperation
-   * @readonly
-   *
-   * @description
-   * Async operation state for trusting the current device.
-   *
-   * @since 1.0.0
-   *
-   * @type {Operation<TrustDeviceOutput, unknown>}
-   */
-  readonly trustOperation: Operation<TrustDeviceOutput, unknown>;
+  readonly isLoading: boolean;
 
   /**
    * Property revokeOperation
    * @readonly
    *
    * @description
-   * Async operation state for revoking a trusted device.
+   * Loading / success / error state for revoking a single trusted device.
+   * Starts idle and transitions through loading → success | error when
+   * {@link TrustedDeviceStore#revokeDevice} is called.
    *
    * @since 1.0.0
    *
@@ -74,7 +53,9 @@ export interface TrustedDeviceState {
    * @readonly
    *
    * @description
-   * Async operation state for revoking all trusted devices.
+   * Loading / success / error state for revoking all trusted devices.
+   * Starts idle and transitions through loading → success | error when
+   * {@link TrustedDeviceStore#revokeAllDevices} is called.
    *
    * @since 1.0.0
    *

@@ -1,53 +1,59 @@
-import type { SessionOutput } from '@core/models/session';
-import type { CollectionOperation, Operation } from '@core/stores/operations';
+import type { Operation } from '@core/stores/operations';
 
 /**
  * Interface SessionState
  * @interface SessionState
  *
  * @description
- * State interface for the session store.
- * Manages user sessions list and session operations.
+ * Component-scoped state for the session list store. Entities are managed
+ * by the `withEntities` feature (providing `sessionEntities`,
+ * `sessionEntityMap`, `sessionIds`). This interface tracks auxiliary state:
+ * list loading flag, total count for pagination, and mutation operation
+ * tracking.
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface SessionState {
-  //#region Session Data
+  //#region Properties
   /**
    * Property totalSessions
    * @readonly
    *
    * @description
-   * Total count of sessions (for pagination).
+   * Server-reported total count of sessions for the current query.
+   * Updated on every successful list response and decremented on
+   * revoke/revokeAll success.
    *
    * @since 1.0.0
    *
    * @type {number}
    */
   readonly totalSessions: number;
-  //#endregion
 
-  //#region Operations
   /**
-   * Property listOperation
+   * Property isLoading
    * @readonly
    *
    * @description
-   * Async operation state for listing sessions.
+   * True while a list request is in-flight. Set to `true` at the start of
+   * every `load` / `loadSessions` call and back to `false` on both
+   * success and error.
    *
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @type {CollectionOperation<SessionOutput, unknown>}
+   * @type {boolean}
    */
-  readonly listOperation: CollectionOperation<SessionOutput, unknown>;
+  readonly isLoading: boolean;
 
   /**
    * Property revokeOperation
    * @readonly
    *
    * @description
-   * Async operation state for revoking a single session.
+   * Loading / success / error state for the revoke single session
+   * operation. Starts idle and transitions through loading → success | error
+   * when {@link SessionStore#revoke} is called.
    *
    * @since 1.0.0
    *
@@ -60,7 +66,9 @@ export interface SessionState {
    * @readonly
    *
    * @description
-   * Async operation state for revoking all sessions.
+   * Loading / success / error state for the revoke all sessions
+   * operation. Starts idle and transitions through loading → success | error
+   * when {@link SessionStore#revokeAll} is called.
    *
    * @since 1.0.0
    *

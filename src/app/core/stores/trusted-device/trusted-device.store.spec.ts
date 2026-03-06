@@ -4,7 +4,7 @@ import { Dispatcher } from '@ngrx/signals/events';
 import { TrustedDeviceStore } from './trusted-device.store';
 import { TrustedDeviceService } from '@core/services/api/trusted-device';
 import type { HydraCollection } from '@core/models/api';
-import type { TrustDeviceOutput, TrustedDeviceOutput } from '@core/models/trusted-device';
+import type { TrustedDeviceOutput } from '@core/models/trusted-device';
 
 const flushEffects = async (): Promise<void> => {
   await Promise.resolve();
@@ -15,7 +15,6 @@ describe('TrustedDeviceStore', () => {
   let mockDispatcher: { dispatch: ReturnType<typeof vi.fn> };
   let mockTrustedDeviceService: {
     list: ReturnType<typeof vi.fn>;
-    trustDevice: ReturnType<typeof vi.fn>;
     revoke: ReturnType<typeof vi.fn>;
     revokeAll: ReturnType<typeof vi.fn>;
   };
@@ -41,26 +40,18 @@ describe('TrustedDeviceStore', () => {
     totalItems: 2,
     member: [device1, device2],
   };
-  const trustResponse: TrustDeviceOutput = {
-    '@id': '/api/trusted-devices',
-    '@type': 'TrustedDevice',
-    deviceId: 'device-3',
-    token: 'trust-token',
-    deviceName: 'Windows PC',
-    expiresAt: '2026-06-01T00:00:00Z',
-  };
 
   beforeEach(() => {
     mockDispatcher = { dispatch: vi.fn() };
     mockTrustedDeviceService = {
       list: vi.fn(),
-      trustDevice: vi.fn(),
       revoke: vi.fn(),
       revokeAll: vi.fn(),
     };
 
     TestBed.configureTestingModule({
       providers: [
+        TrustedDeviceStore,
         { provide: Dispatcher, useValue: mockDispatcher },
         { provide: TrustedDeviceService, useValue: mockTrustedDeviceService },
       ],
@@ -75,30 +66,19 @@ describe('TrustedDeviceStore', () => {
     store.loadDevices();
     await flushEffects();
 
-    expect(store.listOperation().status).toBe('success');
+    expect(store.isLoading()).toBe(false);
     expect(store.devices()).toEqual([device1, device2]);
     expect(store.deviceCount()).toBe(2);
     expect(store.hasDevices()).toBe(true);
   });
 
-  it('should clear pending flag and mark trust operation as success', async () => {
-    mockTrustedDeviceService.trustDevice.mockReturnValue(of(trustResponse));
-    store.setPendingTrustDevice(true);
+  it('should dispatch event when loading devices fails', async () => {
+    mockTrustedDeviceService.list.mockReturnValue(throwError(() => new Error('Failed')));
 
-    store.trustDevice();
+    store.loadDevices();
     await flushEffects();
 
-    expect(store.pendingTrustDevice()).toBe(false);
-    expect(store.trustOperation().status).toBe('success');
-  });
-
-  it('should dispatch event when trust operation fails', async () => {
-    mockTrustedDeviceService.trustDevice.mockReturnValue(throwError(() => new Error('Failed')));
-
-    store.trustDevice();
-    await flushEffects();
-
-    expect(store.trustOperation().status).toBe('error');
+    expect(store.isLoading()).toBe(false);
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 

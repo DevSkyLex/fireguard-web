@@ -7,18 +7,41 @@ import type { OperationFailureEventPayload } from '../operations';
  * @const trustedDeviceStoreEvents
  *
  * @description
- * Trusted device store events for handling device
- * operation failures.
+ * Event group for the component-scoped trusted-device store. Emitted when
+ * list or revoke operations fail so that global side-effects (toasts,
+ * logging, etc.) can react.
  *
- * @version 1.0.0
+ * For the trust-device failure event, see
+ * {@link activeTrustedDeviceStoreEvents}.
+ *
+ * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const trustedDeviceStoreEvents = eventGroup({
   source: 'Trusted Device Store',
   events: {
+    /**
+     * Event loadFailed
+     *
+     * @description
+     * Dispatched when the device-list API call fails.
+     */
     loadFailed: type<OperationFailureEventPayload>(),
-    trustFailed: type<OperationFailureEventPayload>(),
+
+    /**
+     * Event revokeFailed
+     *
+     * @description
+     * Dispatched when a single-device revoke API call fails.
+     */
     revokeFailed: type<OperationFailureEventPayload>(),
+
+    /**
+     * Event revokeAllFailed
+     *
+     * @description
+     * Dispatched when the revoke-all-devices API call fails.
+     */
     revokeAllFailed: type<OperationFailureEventPayload>(),
   },
 });

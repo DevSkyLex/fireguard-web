@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/auth/forms/otp-verification-form';
 import { AuthStore, authStoreEvents } from '@core/stores/auth';
 import { UserStore } from '@core/stores/user';
-import { TrustedDeviceStore } from '@core/stores/trusted-device';
+import { ActiveTrustedDeviceStore } from '@core/stores/trusted-device';
 import { MessageService } from 'primeng/api';
 import { Events } from '@ngrx/signals/events';
 
@@ -58,20 +58,20 @@ export class MfaVerificationPage {
   inject<AuthStore>(AuthStore);
 
   /**
-   * Property trustedDeviceStore
+   * Property activeTrustedDeviceStore
    * @readonly
    *
    * @description
-   * Trusted device store for handling "trust this device"
+   * Root-level trusted-device store for handling "trust this device"
    * option during MFA.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {TrustedDeviceStore}
+   * @type {ActiveTrustedDeviceStore}
    */
-  private readonly trustedDeviceStore: TrustedDeviceStore =
-    inject<TrustedDeviceStore>(TrustedDeviceStore);
+  private readonly activeTrustedDeviceStore: ActiveTrustedDeviceStore =
+    inject<ActiveTrustedDeviceStore>(ActiveTrustedDeviceStore);
 
   /**
    * Property userStore
@@ -254,7 +254,7 @@ export class MfaVerificationPage {
 
     // Set pending trust device if user checked the option
     if (values.trustDevice) {
-      this.trustedDeviceStore.setPendingTrustDevice(true);
+      this.activeTrustedDeviceStore.setPendingTrustDevice(true);
     }
 
     // Verify MFA code (AuthStore will handle trustDevice automatically on success)

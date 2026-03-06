@@ -7,7 +7,7 @@ import { MessageService } from 'primeng/api';
 import { MfaVerificationPage } from './mfa-verification-page.component';
 import { AuthStore } from '@core/stores/auth';
 import { UserStore } from '@core/stores/user';
-import { TrustedDeviceStore } from '@core/stores/trusted-device';
+import { ActiveTrustedDeviceStore } from '@core/stores/trusted-device';
 
 describe('MfaVerificationPage', () => {
   const setup = (options?: { authenticated?: boolean; mfaToken?: string | null }) => {
@@ -20,7 +20,7 @@ describe('MfaVerificationPage', () => {
       clearMfaState: vi.fn(),
       mfaResend: vi.fn(),
     };
-    const mockTrustedDeviceStore = {
+    const mockActiveTrustedDeviceStore = {
       setPendingTrustDevice: vi.fn(),
     };
     const mockUserStore = { load: vi.fn() };
@@ -31,7 +31,7 @@ describe('MfaVerificationPage', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: AuthStore, useValue: mockAuthStore },
-        { provide: TrustedDeviceStore, useValue: mockTrustedDeviceStore },
+        { provide: ActiveTrustedDeviceStore, useValue: mockActiveTrustedDeviceStore },
         { provide: UserStore, useValue: mockUserStore },
         { provide: Router, useValue: mockRouter },
         { provide: Events, useValue: mockEvents },
@@ -41,7 +41,7 @@ describe('MfaVerificationPage', () => {
 
     const component = TestBed.runInInjectionContext(() => new MfaVerificationPage());
     TestBed.tick();
-    return { component, mockAuthStore, mockTrustedDeviceStore, mockUserStore, mockRouter };
+    return { component, mockAuthStore, mockActiveTrustedDeviceStore, mockUserStore, mockRouter };
   };
 
   it('should load user and navigate home when authenticated', () => {
@@ -52,20 +52,20 @@ describe('MfaVerificationPage', () => {
   });
 
   it('should not verify OTP when MFA token is missing', () => {
-    const { component, mockAuthStore, mockTrustedDeviceStore } = setup({ mfaToken: null });
+    const { component, mockAuthStore, mockActiveTrustedDeviceStore } = setup({ mfaToken: null });
 
     (component as any).handleOtpSubmit({ code: '123456', trustDevice: true });
 
-    expect(mockTrustedDeviceStore.setPendingTrustDevice).not.toHaveBeenCalled();
+    expect(mockActiveTrustedDeviceStore.setPendingTrustDevice).not.toHaveBeenCalled();
     expect(mockAuthStore.mfaVerify).not.toHaveBeenCalled();
   });
 
   it('should set pending trust and verify OTP when token exists', () => {
-    const { component, mockAuthStore, mockTrustedDeviceStore } = setup({ mfaToken: 'mfa-token' });
+    const { component, mockAuthStore, mockActiveTrustedDeviceStore } = setup({ mfaToken: 'mfa-token' });
 
     (component as any).handleOtpSubmit({ code: '123456', trustDevice: true });
 
-    expect(mockTrustedDeviceStore.setPendingTrustDevice).toHaveBeenCalledWith(true);
+    expect(mockActiveTrustedDeviceStore.setPendingTrustDevice).toHaveBeenCalledWith(true);
     expect(mockAuthStore.mfaVerify).toHaveBeenCalledWith({
       preAuthToken: 'mfa-token',
       code: '123456',

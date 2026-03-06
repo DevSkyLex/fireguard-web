@@ -54,6 +54,7 @@ describe('SessionStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        SessionStore,
         { provide: Dispatcher, useValue: mockDispatcher },
         { provide: SessionService, useValue: mockSessionService },
       ],
@@ -68,7 +69,7 @@ describe('SessionStore', () => {
     store.loadSessions();
     await flushEffects();
 
-    expect(store.listOperation().status).toBe('success');
+    expect(store.isLoading()).toBe(false);
     expect(store.sessions()).toEqual([currentSession, otherSession]);
     expect(store.totalSessions()).toBe(2);
     expect(store.currentSession()?.id).toBe('current');
@@ -82,8 +83,7 @@ describe('SessionStore', () => {
     store.loadSessions();
     await flushEffects();
 
-    expect(store.listOperation().status).toBe('error');
-    expect(store.listError()).not.toBeNull();
+    expect(store.isLoading()).toBe(false);
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 
@@ -126,7 +126,7 @@ describe('SessionStore', () => {
 
     expect(store.sessions()).toEqual([]);
     expect(store.totalSessions()).toBe(0);
-    expect(store.listOperation().status).toBe('idle');
+    expect(store.isLoading()).toBe(false);
     expect(store.revokeOperation().status).toBe('idle');
     expect(store.revokeAllOperation().status).toBe('idle');
   });

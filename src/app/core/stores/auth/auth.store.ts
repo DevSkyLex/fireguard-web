@@ -13,7 +13,7 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, exhaustMap, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
 import { AuthService } from '@core/services/api/auth';
 import { UserStore } from '@core/stores/user';
-import { TrustedDeviceStore } from '@core/stores/trusted-device';
+import { ActiveTrustedDeviceStore } from '@core/stores/trusted-device';
 import type { LoginInput, LoginOutput, LogoutOutput, MfaResendInput, MfaVerifyInput } from '@core/models/auth';
 import type { AuthState } from './auth-state.interface';
 import {
@@ -317,7 +317,7 @@ export const AuthStore = signalStore(
     dispatcher = inject<Dispatcher>(Dispatcher),
     authService = inject<AuthService>(AuthService),
     userStore = inject<UserStore>(UserStore),
-    trustedDeviceStore = inject<TrustedDeviceStore>(TrustedDeviceStore),
+    activeTrustedDeviceStore = inject<ActiveTrustedDeviceStore>(ActiveTrustedDeviceStore),
     platformId = inject<object>(PLATFORM_ID),
     transferState = inject(TransferState),
   ) => ({
@@ -511,8 +511,8 @@ export const AuthStore = signalStore(
                 });
 
                 // Trust device if pending
-                if (trustedDeviceStore.pendingTrustDevice()) {
-                  trustedDeviceStore.trustDevice();
+                if (activeTrustedDeviceStore.pendingTrustDevice()) {
+                  activeTrustedDeviceStore.trustDevice();
                 }
               },
               error: (error: unknown) => {

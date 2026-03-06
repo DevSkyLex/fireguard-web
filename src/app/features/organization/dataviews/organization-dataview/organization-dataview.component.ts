@@ -4,11 +4,14 @@ import {
   Component,
   computed,
   input,
+  numberAttribute,
+  OnInit,
   output,
   Signal,
   signal,
   viewChild,
   type InputSignal,
+  type InputSignalWithTransform,
   type OutputEmitterRef,
   type WritableSignal,
 } from '@angular/core';
@@ -77,7 +80,7 @@ import { MenuItem, PrimeIcons } from 'primeng/api';
   templateUrl: './organization-dataview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrganizationDataview {
+export class OrganizationDataview implements OnInit {
   //#region Inputs
   /**
    * Input organizations
@@ -138,6 +141,23 @@ export class OrganizationDataview {
    */
   public readonly deleting: InputSignal<boolean> =
     input.required<boolean>();
+
+  /**
+   * Input initialPage
+   * @readonly
+   *
+   * @description
+   * Initial page number to display when the dataview is first rendered.
+   * Typically bound from the `?page=` query param via the parent page.
+   * Defaults to 1.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly initialPage: InputSignalWithTransform<number, unknown> =
+    input<number, unknown>(1, { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) });
   //#endregion
 
   //#region Properties
@@ -154,6 +174,37 @@ export class OrganizationDataview {
    * @type {number}
    */
   protected readonly rows: number = 12;
+
+  /**
+   * Property firstPage
+   *
+   * @description
+   * Zero-based offset passed to `p-dataview [first]` to open on the
+   * correct page. Computed once in `ngOnInit` from `initialPage()` so
+   * that subsequent query-param changes never reactively reset the
+   * paginator position.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {number}
+   */
+  protected firstPage: number = 0;
+
+  /**
+   * Property initialized
+   *
+   * @description
+   * Tracks whether the first `onLazyLoad` event (fired automatically by
+   * PrimeNG on init) has already been processed. `pageChange` is only
+   * emitted for subsequent, user-initiated page navigations.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {boolean}
+   */
+  private initialized: boolean = false;
 
   /**
    * Property skeletonItems
@@ -420,6 +471,43 @@ export class OrganizationDataview {
    */
   public readonly load: OutputEmitterRef<RequestOptions> =
     output<RequestOptions>();
+
+  /**
+   * Output pageChange
+   * @readonly
+   *
+   * @description
+   * Emitted when the user navigates to a different page.
+   * Carries the 1-indexed page number so the parent can sync
+   * the `?page=` query param in the URL.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly pageChange: OutputEmitterRef<number> =
+    output<number>();
+  //#endregion
+
+  //#region Lifecycle
+  /**
+   * Method ngOnInit
+   * @method ngOnInit
+   *
+   * @description
+   * Reads `initialPage()` once after Angular has set all input signals
+   * and stores the result as a plain number. Binding `[first]` to a
+   * plain property (rather than a reactive signal) ensures that later
+   * query-param updates never reactively reset the paginator.
+   *
+   * @since 1.1.0
+   *
+   * @returns {void}
+   */
+  public ngOnInit(): void {
+    this.firstPage = (this.initialPage() - 1) * this.rows;
+  }
   //#endregion
 
   //#region Constructor
@@ -435,8 +523,6 @@ export class OrganizationDataview {
    * @since 1.0.0
    */
   public constructor() {
-    afterNextRender(() => this.onLazyLoad({ first: 0, rows: this.rows, sortField: '', sortOrder: 1 }));
-
     this.searchControl.valueChanges
       .pipe(
         debounceTime(300),
@@ -478,8 +564,15 @@ export class OrganizationDataview {
     this.load.emit({
       page: page,
       itemsPerPage: rowsPerPage,
-      params: params
+      params: params,
     });
+
+    // Skip pageChange on the very first onLazyLoad (PrimeNG init event).
+    // The URL already reflects the correct page on initial render.
+    if (this.initialized) {
+      this.pageChange.emit(page);
+    }
+    this.initialized = true;
   }
 
   /**

@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, input, numberAttribute, type InputSignalWithTransform } from '@angular/core';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import type { OrganizationOutput } from '@core/models/organization';
 import type { RequestOptions } from '@core/services/api';
@@ -26,6 +26,26 @@ import { OrganizationDataview } from '@features/organization/dataviews/organizat
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationListPage {
+  //#region Inputs
+  /**
+   * Input page
+   * @readonly
+   *
+   * @description
+   * Current page number bound from the `?page=` query param via
+   * `withComponentInputBinding`. Passed down to the dataview as
+   * `initialPage` so the paginator opens on the correct page.
+   * Defaults to 1.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly page: InputSignalWithTransform<number, unknown> =
+    input<number, unknown>(1, { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) });
+  //#endregion
+
   //#region Properties
   /**
    * Property router
@@ -41,6 +61,22 @@ export class OrganizationListPage {
    */
   private readonly router: Router =
     inject<Router>(Router);
+
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Current activated route, used to update the `?page=` query
+   * param while preserving other query params.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {ActivatedRoute}
+   */
+  private readonly route: ActivatedRoute =
+    inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property store
@@ -146,6 +182,30 @@ export class OrganizationListPage {
    */
   public onLoad(options: RequestOptions): void {
     this.store.loadOrganizations(options);
+  }
+
+  /**
+   * Method onPageChange
+   * @method onPageChange
+   *
+   * @description
+   * Updates the `?page=` query param in the URL when the user
+   * navigates to a different page in the dataview. Page 1 is
+   * omitted from the URL to keep the default URL clean.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {number} page - The new 1-indexed page number.
+   *
+   * @returns {void}
+   */
+  public onPageChange(page: number): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: page > 1 ? page : null },
+      queryParamsHandling: 'merge',
+    });
   }
   //#endregion
 }

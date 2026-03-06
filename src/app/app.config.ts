@@ -2,7 +2,7 @@ import { type ApplicationConfig, provideBrowserGlobalErrorListeners } from '@ang
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { APP_ROUTES } from '@app/app.routes';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { provideClientHydration, withEventReplay, withHttpTransferCacheOptions } from '@angular/platform-browser';
 import { provideEnv } from '@core/config/environment/env.provider';
 import { environment } from '@env/environment';
 import { providePrimeNG } from 'primeng/config';
@@ -38,7 +38,12 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(APP_ROUTES, withComponentInputBinding()),
-    provideClientHydration(withEventReplay()),
+    provideClientHydration(
+      withEventReplay(),
+      withHttpTransferCacheOptions({
+        includeRequestsWithAuthHeaders: true
+      })
+    ),
     provideHttpClient(
       withFetch(),
       withInterceptors([

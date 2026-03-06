@@ -93,22 +93,43 @@ export class OrganizationListPage {
   }
 
   /**
-   * Method onDeleteSelected
-   * @method onDeleteSelected
+   * Method onDelete
+   * @method onDelete
    *
    * @description
-   * Handles bulk delete of the selected organizations.
+   * No action is needed here since deletion is
+   * handled within the table component.
    *
    * @access public
-   * @since 1.7.0
+   * @since 1.2.0
    *
-   * @param {OrganizationOutput[]} organizations - The selected organizations.
+   * @param {OrganizationOutput} organization - The selected organization.
+   *
+   * @returns {void} No return value.
+   */
+  public onDelete(organization: OrganizationOutput): void {
+    // The table's OrganizationStore handles the HTTP call and list update.
+    // Hook here for post-deletion navigation or notifications if needed.
+  }
+
+  /**
+   * Method onDeleteMany
+   * @method onDeleteMany
+   *
+   * @description
+   * Called after the table has dispatched a bulk-delete request to its
+   * store. Hook here for post-deletion navigation or notifications.
+   *
+   * @access public
+   * @since 1.8.0
+   *
+   * @param {OrganizationOutput[]} organizations - The deleted organizations.
    *
    * @returns {void}
    */
-  public onDeleteSelected(organizations: OrganizationOutput[]): void {
-    // TODO: implement bulk delete via store
-    console.warn('Bulk delete requested for', organizations.map((o) => o.id));
+  public onDeleteMany(organizations: OrganizationOutput[]): void {
+    // The table's OrganizationStore handles the HTTP call and list update.
+    // Hook here for post-deletion navigation or notifications if needed.
   }
   //#endregion
 }

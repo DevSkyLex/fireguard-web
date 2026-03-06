@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, MaybeAsync, RedirectCommand, type ResolveFn, Router } from '@angular/router';
 import { catchError, of } from 'rxjs';
-import { OrganizationStore } from '@core/stores/organization';
+import { ActiveOrganizationStore } from '@core/stores/organization';
 import type { OrganizationOutput } from '@core/models/organization';
 
 /**
@@ -26,17 +26,17 @@ export const organizationResolver: ResolveFn<OrganizationOutput> = (
   route: ActivatedRouteSnapshot
 ): MaybeAsync<OrganizationOutput | RedirectCommand> => {
   /**
-   * Constant organizationStore
-   * @const organizationStore
+   * Constant activeOrganizationStore
+   * @const activeOrganizationStore
    *
    * @description
-   * Organization store for fetching the organization
+   * Active organization store for fetching the organization
    * data based on the route parameter.
    *
-   * @var {OrganizationStore}
+   * @var {ActiveOrganizationStore}
    */
-  const organizationStore: OrganizationStore =
-    inject<OrganizationStore>(OrganizationStore);
+  const activeOrganizationStore: ActiveOrganizationStore =
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Constant router
@@ -59,7 +59,7 @@ export const organizationResolver: ResolveFn<OrganizationOutput> = (
   if (!organizationId) return new RedirectCommand(router.parseUrl('/'));
 
   // Attempt to resolve the organization, redirecting on failure
-  return organizationStore.resolveOrganization(organizationId).pipe(
+  return activeOrganizationStore.resolveOrganization(organizationId).pipe(
     catchError(() => of(new RedirectCommand(router.parseUrl('/')))),
   );
 };

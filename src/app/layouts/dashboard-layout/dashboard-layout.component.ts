@@ -11,7 +11,7 @@ import { DashboardSidebarNavigationService, DashboardSidebarService } from './se
 import { BreadcrumbService } from '@core/services/breadcrumb';
 import { UserStore } from '@core/stores/user';
 import { NotificationStore } from '@core/stores/notification';
-import { OrganizationStore } from '@core/stores/organization';
+import { ActiveOrganizationStore } from '@core/stores/organization';
 
 /**
  * Component DashboardLayout
@@ -67,8 +67,8 @@ export class DashboardLayout {
   private readonly route: ActivatedRoute =
     inject(ActivatedRoute);
 
-  private readonly organizationStore: OrganizationStore =
-    inject(OrganizationStore);
+  private readonly organizationStore: ActiveOrganizationStore =
+    inject(ActiveOrganizationStore);
 
   private readonly resolvedOrganization = toSignal<OrganizationOutput | undefined>(
     this.route.data.pipe(map((data: Data): OrganizationOutput => data['organization'])),

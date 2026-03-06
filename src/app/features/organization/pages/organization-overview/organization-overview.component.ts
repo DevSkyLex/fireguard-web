@@ -6,7 +6,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { DividerModule } from 'primeng/divider';
-import { OrganizationStore } from '@core/stores/organization';
+import { ActiveOrganizationStore } from '@core/stores/organization';
 import type { OrganizationOutput, OrganizationStatisticsOutput } from '@core/models/organization';
 
 interface StatCard {
@@ -37,8 +37,8 @@ interface StatCard {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationOverviewPage implements OnInit {
-  protected readonly organizationStore: OrganizationStore =
-    inject<OrganizationStore>(OrganizationStore);
+  protected readonly organizationStore: ActiveOrganizationStore =
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   protected readonly organization: Signal<OrganizationOutput | null> =
     computed<OrganizationOutput | null>(() => this.organizationStore.selectedOrganization());

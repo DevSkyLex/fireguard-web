@@ -32,6 +32,7 @@ import { OrganizationSwitcherFooter } from './organization-switcher-footer/organ
     OrganizationSwitcherNav,
     OrganizationSwitcherFooter
   ],
+  providers: [OrganizationStore],
   templateUrl: './organization-switcher.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

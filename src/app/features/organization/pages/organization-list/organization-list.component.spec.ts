@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { OrganizationStore } from '@core/stores/organization';
 import type { OrganizationOutput } from '@core/models/organization';
+import { OrganizationTable } from '@features/organization/tables/organization-table';
 import { OrganizationListPage } from './organization-list.component';
 
 const MOCK_ORG: OrganizationOutput = {
@@ -21,21 +22,41 @@ const MOCK_ORG: OrganizationOutput = {
 describe('OrganizationListPage', () => {
   const mockOrganizationStore = {
     organizations: signal<OrganizationOutput[]>([]),
+    selectedOrganization: signal<OrganizationOutput | null>(null),
     isLoadingOrganizations: signal(false),
+    isLoadingOrganization: signal(false),
+    isEmpty: signal(true),
+    isDeleting: signal(false),
+    isCreating: signal(false),
+    total: signal(0),
+    lastLazyEvent: signal(null),
     loadOrganizations: vi.fn(),
+    load: vi.fn(),
+    deleteOne: vi.fn(),
+    deleteMany: vi.fn(),
+    setLastLazyEvent: vi.fn(),
+    resetCreateOperation: vi.fn(),
   };
 
   beforeEach(() => {
     mockOrganizationStore.organizations.set([]);
+    mockOrganizationStore.selectedOrganization.set(null);
     mockOrganizationStore.isLoadingOrganizations.set(false);
+    mockOrganizationStore.isLoadingOrganization.set(false);
+    mockOrganizationStore.isEmpty.set(true);
+    mockOrganizationStore.isDeleting.set(false);
+    mockOrganizationStore.total.set(0);
     mockOrganizationStore.loadOrganizations.mockReset();
+    mockOrganizationStore.load.mockReset();
+    mockOrganizationStore.deleteOne.mockReset();
+    mockOrganizationStore.deleteMany.mockReset();
+    mockOrganizationStore.setLastLazyEvent.mockReset();
 
     TestBed.configureTestingModule({
       imports: [OrganizationListPage],
-      providers: [
-        provideRouter([]),
-        { provide: OrganizationStore, useValue: mockOrganizationStore },
-      ],
+      providers: [provideRouter([])],
+    }).overrideComponent(OrganizationTable, {
+      set: { providers: [{ provide: OrganizationStore, useValue: mockOrganizationStore }] },
     });
   });
 
@@ -46,23 +67,9 @@ describe('OrganizationListPage', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should load organizations on init when list is empty', () => {
-    const fixture = TestBed.createComponent(OrganizationListPage);
-    fixture.detectChanges();
-
-    expect(mockOrganizationStore.loadOrganizations).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not load organizations on init when already loaded', () => {
-    mockOrganizationStore.organizations.set([MOCK_ORG]);
-    const fixture = TestBed.createComponent(OrganizationListPage);
-    fixture.detectChanges();
-
-    expect(mockOrganizationStore.loadOrganizations).not.toHaveBeenCalled();
-  });
-
   it('should display organization rows when organizations are loaded', () => {
     mockOrganizationStore.organizations.set([MOCK_ORG, { ...MOCK_ORG, id: 'org-2', name: 'Beta Inc', slug: 'beta' } as OrganizationOutput]);
+    mockOrganizationStore.isEmpty.set(false);
     const fixture = TestBed.createComponent(OrganizationListPage);
     fixture.detectChanges();
 
@@ -75,6 +82,7 @@ describe('OrganizationListPage', () => {
   it('should show empty state when there are no organizations', () => {
     mockOrganizationStore.organizations.set([]);
     mockOrganizationStore.isLoadingOrganizations.set(false);
+    mockOrganizationStore.isEmpty.set(true);
     const fixture = TestBed.createComponent(OrganizationListPage);
     fixture.detectChanges();
 
@@ -83,6 +91,7 @@ describe('OrganizationListPage', () => {
 
   it('should show skeletons when loading', () => {
     mockOrganizationStore.isLoadingOrganizations.set(true);
+    mockOrganizationStore.isEmpty.set(false);
     const fixture = TestBed.createComponent(OrganizationListPage);
     fixture.detectChanges();
 

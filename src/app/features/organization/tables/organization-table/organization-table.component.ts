@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   inject,
   model,
   output,
@@ -30,9 +29,9 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule, Table, type TableLazyLoadEvent } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { OrganizationStore } from '@core/stores/organization';
 import type { OrganizationOutput } from '@core/models/organization';
 import { MenuItem, PrimeIcons } from 'primeng/api';
+import { OrganizationStore } from '@core/stores/organization';
 
 /**
  * Component OrganizationTable
@@ -42,9 +41,9 @@ import { MenuItem, PrimeIcons } from 'primeng/api';
  * Smart table component that displays a paginated list of
  * organizations using PrimeNG's lazy-loaded `p-table`.
  *
- * Injects the `OrganizationStore` directly to read data
- * and trigger lazy-load requests when the user navigates
- * between pages.
+ * Uses a component-scoped `OrganizationTableStore` (provided via
+ * `providers` array) to manage its own local state independently
+ * from the global `OrganizationStore` consumed by the switcher.
  *
  * @version 1.1.0
  *
@@ -70,42 +69,29 @@ import { MenuItem, PrimeIcons } from 'primeng/api';
     TitleCasePipe,
     TooltipModule,
   ],
+  providers: [OrganizationStore],
   templateUrl: './organization-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationTable {
   //#region Properties
   /**
-   * Property organizationStore
+   * Property store
    * @readonly
    *
    * @description
-   * Organization store providing the list of organizations,
-   * total count, and loading state.
+   * Component-level NgRx SignalStore scoped to this component's
+   * lifecycle. Manages the table's organization list, total count,
+   * and loading state independently from the global OrganizationStore
+   * so that table-specific filters never pollute the switcher.
    *
    * @access protected
-   * @since 1.1.0
+   * @since 2.0.0
    *
    * @type {OrganizationStore}
    */
-  protected readonly organizationStore: OrganizationStore =
+  protected readonly store: OrganizationStore =
     inject<OrganizationStore>(OrganizationStore);
-
-  /**
-   * Property destroyRef
-   * @readonly
-   *
-   * @description
-   * Reference used to automatically unsubscribe
-   * observables when the component is destroyed.
-   *
-   * @access private
-   * @since 1.3.0
-   *
-   * @type {DestroyRef}
-   */
-  private readonly destroyRef: DestroyRef =
-    inject<DestroyRef>(DestroyRef);
 
   /**
    * Property rows
@@ -228,13 +214,15 @@ export class OrganizationTable {
    * Property lastLazyEvent
    *
    * @description
-   * Stores the last lazy-load event so refresh/filter
-   * can replay the current page and sort.
+   * Stores the last PrimeNG lazy-load event emitted by `p-table`.
+   * Kept at component level (not in the store) because it is a
+   * UI-framework concern: the store only knows about generic
+   * pagination parameters, not PrimeNG internals.
+   * Used by {@link reload} to replay the current page after a
+   * search or filter change.
    *
    * @access private
-   * @since 1.3.0
-   *
-   * @type {WritableSignal<TableLazyLoadEvent | null>}
+   * @since 2.0.0
    */
   private readonly lastLazyEvent: WritableSignal<TableLazyLoadEvent | null> =
     signal<TableLazyLoadEvent | null>(null);
@@ -306,7 +294,10 @@ export class OrganizationTable {
           label: 'Delete',
           icon: PrimeIcons.TRASH,
           styleClass: 'text-red-500',
-          command: (): void => this.delete.emit(organization),
+          command: (): void => {
+            this.store.deleteOne(organization.id);
+            this.delete.emit(organization);
+          },
         },
       ];
     },
@@ -343,6 +334,7 @@ export class OrganizationTable {
     (): boolean => this.selection().length > 0,
   );
   //#endregion
+
   //#region Outputs
   /**
    * Output view
@@ -389,28 +381,13 @@ export class OrganizationTable {
   public readonly add: OutputEmitterRef<void> = output<void>();
 
   /**
-   * Output deleteSelected
-   * @readonly
-   *
-   * @description
-   * Emitted when the user clicks the "Delete" bulk action
-   * button. Carries the list of currently selected organizations.
-   *
-   * @access public
-   * @since 1.7.0
-   *
-   * @type {OutputEmitterRef<OrganizationOutput[]>}
-   */
-  public readonly deleteSelected: OutputEmitterRef<OrganizationOutput[]> =
-    output<OrganizationOutput[]>();
-
-  /**
    * Output delete
    * @readonly
    *
    * @description
-   * Emitted when the user selects "Delete" from the row context menu.
-   * Carries the targeted organization.
+   * Emitted when the user confirms deletion of a single organization
+   * from the row context menu. The store has already dispatched the
+   * delete request at this point.
    *
    * @access public
    * @since 1.8.0
@@ -419,6 +396,22 @@ export class OrganizationTable {
    */
   public readonly delete: OutputEmitterRef<OrganizationOutput> =
     output<OrganizationOutput>();
+
+  /**
+   * Output deleteMany
+   * @readonly
+   *
+   * @description
+   * Emitted when the user confirms bulk deletion via the toolbar.
+   * The store has already dispatched the bulk-delete request at this point.
+   *
+   * @access public
+   * @since 1.8.0
+   *
+   * @type {OutputEmitterRef<OrganizationOutput[]>}
+   */
+  public readonly deleteMany: OutputEmitterRef<OrganizationOutput[]> =
+    output<OrganizationOutput[]>();
   //#endregion
 
   //#region Constructor
@@ -438,12 +431,12 @@ export class OrganizationTable {
       .pipe(
         debounceTime(300),
         distinctUntilChanged(),
-        takeUntilDestroyed(this.destroyRef),
+        takeUntilDestroyed(),
       )
       .subscribe(() => this.reload());
 
     this.selectedStatus.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntilDestroyed())
       .subscribe(() => this.reload());
   }
   //#endregion
@@ -482,7 +475,7 @@ export class OrganizationTable {
     const status: string | null = this.selectedStatus.value;
     if (status) params['status'] = status;
 
-    this.organizationStore.loadOrganizations({
+    this.store.loadOrganizations({
       page: page,
       itemsPerPage: rowsPerPage,
       params: params,
@@ -551,8 +544,7 @@ export class OrganizationTable {
    * @method onDeleteSelected
    *
    * @description
-   * Emits the currently selected organizations for deletion
-   * and clears the selection.
+   * Delegates bulk deletion to the store and clears the selection.
    *
    * @access public
    * @since 1.7.0
@@ -560,7 +552,10 @@ export class OrganizationTable {
    * @returns {void}
    */
   public onDeleteSelected(): void {
-    this.deleteSelected.emit(this.selection());
+    const targets: OrganizationOutput[] = this.selection();
+    this.store.deleteMany(targets.map((o) => o.id));
+    this.deleteMany.emit(targets);
+    this.selection.set([]);
   }
 
   /**

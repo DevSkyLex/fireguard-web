@@ -4,7 +4,8 @@ import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { AuthStore } from '@core/stores/auth';
 import { UserStore } from '@core/stores/user';
-import { OrganizationStore } from '@core/stores/organization';
+import { ActiveOrganizationStore, OrganizationStore } from '@core/stores/organization';
+import { OrganizationSwitcher } from '@shared/components/organization-switcher';
 import { DashboardLayout } from './dashboard-layout.component';
 import { DashboardSidebarService } from './services';
 
@@ -90,6 +91,7 @@ describe('DashboardLayout', () => {
     selectedOrganization: signal(null),
     organizations: signal([]),
     isLoadingOrganizations: signal(false),
+    isLoadingOrganization: signal(false),
     setOrganization: vi.fn(),
     loadOrganizations: vi.fn(),
   };
@@ -106,8 +108,10 @@ describe('DashboardLayout', () => {
         provideRouter([]),
         { provide: UserStore, useValue: mockUserStore },
         { provide: AuthStore, useValue: mockAuthStore },
-        { provide: OrganizationStore, useValue: mockOrganizationStore },
+        { provide: ActiveOrganizationStore, useValue: mockOrganizationStore },
       ],
+    }).overrideComponent(OrganizationSwitcher, {
+      set: { providers: [{ provide: OrganizationStore, useValue: mockOrganizationStore }] },
     });
   });
 

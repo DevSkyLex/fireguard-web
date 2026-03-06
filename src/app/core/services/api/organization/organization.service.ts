@@ -89,6 +89,26 @@ export class OrganizationService extends BaseApiService {
   }
 
   /**
+   * Method remove
+   * @method remove
+   *
+   * @description
+   * Permanently deletes the organization identified by `id`.
+   * Named `remove` to avoid shadowing the protected `delete`
+   * method inherited from BaseApiService.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} id - The unique identifier of the organization to delete.
+   *
+   * @return {Observable<void>} Observable completing on success.
+   */
+  public remove(id: string): Observable<void> {
+    return this.delete(`${OrganizationService.BASE_PATH}/${id}`);
+  }
+
+  /**
    * Method create
    * @method create
    *

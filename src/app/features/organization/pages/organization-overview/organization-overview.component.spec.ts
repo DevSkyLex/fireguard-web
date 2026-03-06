@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { OrganizationOverviewPage } from './organization-overview.component';
-import { OrganizationStore } from '@core/stores/organization';
+import { ActiveOrganizationStore } from '@core/stores/organization';
 import type { OrganizationOutput, OrganizationStatisticsOutput } from '@core/models/organization';
 
 const MOCK_ORG: OrganizationOutput = {
@@ -47,7 +47,7 @@ describe('OrganizationOverviewPage', () => {
       imports: [OrganizationOverviewPage],
       providers: [
         provideRouter([]),
-        { provide: OrganizationStore, useValue: mockOrganizationStore },
+        { provide: ActiveOrganizationStore, useValue: mockOrganizationStore },
       ],
     });
   });

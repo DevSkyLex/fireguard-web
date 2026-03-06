@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { OrganizationStore } from '@core/stores/organization';
+import { ActiveOrganizationStore } from '@core/stores/organization';
 import { DashboardSidebarNavigationService } from './dashboard-sidebar-navigation.service';
 
 const MOCK_ORG = {
@@ -27,7 +27,7 @@ describe('DashboardSidebarNavigationService', () => {
     TestBed.configureTestingModule({
       providers: [
         DashboardSidebarNavigationService,
-        { provide: OrganizationStore, useValue: mockOrganizationStore },
+        { provide: ActiveOrganizationStore, useValue: mockOrganizationStore },
       ],
     });
 

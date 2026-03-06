@@ -38,8 +38,9 @@ describe('OrganizationSwitcher', () => {
       imports: [OrganizationSwitcher],
       providers: [
         provideRouter([]),
-        { provide: OrganizationStore, useValue: mockOrganizationStore },
       ],
+    }).overrideComponent(OrganizationSwitcher, {
+      set: { providers: [{ provide: OrganizationStore, useValue: mockOrganizationStore }] },
     });
   });
 

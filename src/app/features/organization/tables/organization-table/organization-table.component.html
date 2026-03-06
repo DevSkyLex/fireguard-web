@@ -8,25 +8,29 @@
 
   <p-table
     #organizationTable
-    [value]="[...organizationStore.organizations()]"
-    [loading]="organizationStore.isLoadingOrganizations()"
+    [value]="[...store.organizations()]"
+    [loading]="store.isLoading()"
     [rowHover]="true"
     [stripedRows]="false"
     [paginator]="true"
     [rows]="rows"
-    [totalRecords]="organizationStore.totalOrganizations()"
+    [totalRecords]="store.total()"
     [lazy]="true"
     (onLazyLoad)="onLazyLoad($event)"
     [rowsPerPageOptions]="[10, 25, 50]"
     [showCurrentPageReport]="true"
-    paginatorStyleClass="justify-end"
+    paginatorStyleClass="border-b border-surface-200 dark:border-surface-700"
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} organizations"
     [(selection)]="selection"
     dataKey="id"
-    class="min-h-0 h-full"
+    class="min-h-0 h-full bg-surface-0 dark:bg-surface-900"
   >
     <ng-template #caption>
       <div class="flex items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <h2 class="font-semibold">Organizations</h2>
+        </div>
+
         <div class="flex items-center gap-2">
           <p-iconfield>
             <p-inputicon class="pi pi-search" />
@@ -36,6 +40,7 @@
               pSize="small"
               placeholder="Search organizations..."
               [formControl]="searchControl"
+              [disabled]="store.isLoading() || store.isDeleting()"
             />
           </p-iconfield>
 
@@ -46,18 +51,17 @@
             [showClear]="true"
             class="w-40"
             size="small"
+            [disabled]="store.isLoading() || store.isDeleting()"
           />
-        </div>
 
-        <div class="flex items-center gap-2">
           <p-splitbutton
             label="New organization"
             icon="pi pi-plus"
-            severity="secondary"
-            outlined
+            severity="primary"
             [model]="toolbarActions()"
             size="small"
             (onClick)="add.emit()"
+            [disabled]="store.isLoading() || store.isDeleting()"
           />
         </div>
       </div>
@@ -145,11 +149,9 @@
     <ng-template #emptymessage>
       <tr>
         <td colspan="6">
-          <div class="text-center py-12">
-            <p class="text-surface-500 dark:text-surface-400 mb-4">You don't belong to any organization yet.</p>
-            <a routerLink="/onboarding">
-              <p-button label="Create an organization" icon="pi pi-plus" />
-            </a>
+          <div class="flex flex-col items-center gap-3 py-8">
+            <i class="pi pi-building-2 text-6xl text-surface-400"></i>
+            <span class="text-sm text-surface-500">No organizations found.</span>
           </div>
         </td>
       </tr>

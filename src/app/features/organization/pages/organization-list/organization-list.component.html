@@ -1,22 +1,19 @@
 <div id="organization-list" class="grid grid-rows-[auto_1fr] h-full">
   <section class="flex flex-col gap-2 p-8 bg-surface-50 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">Organizations</h1>
-        <p class="text-sm text-surface-700 dark:text-surface-300">Select an organization to manage, or create a new one.</p>
-      </div>
-      <a routerLink="/onboarding">
-        <p-button label="New organization" icon="pi pi-plus" />
-      </a>
+    <div class="flex flex-col justify-between">
+      <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">Organizations</h1>
+      <p class="text-sm text-surface-700 dark:text-surface-300">Select an organization to manage, or create a new one.</p>
     </div>
   </section>
 
-  <section class="overflow-auto">
+  <section class="h-full min-h-0 overflow-hidden">
     <app-organization-table
+      class="h-full block"
       (view)="onView($event)"
       (edit)="onEdit($event)"
       (add)="onAdd()"
-      (deleteSelected)="onDeleteSelected($event)"
+      (delete)="onDelete($event)"
+      (deleteMany)="onDeleteMany($event)"
     />
   </section>
 </div>

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import type { OrganizationOutput } from '@core/models/organization';
-import { OrganizationTable } from '@features/organization/tables/organization-table';
+import { OrganizationDataview } from '@features/organization/dataviews/organization-dataview';
 
 /**
  * Component OrganizationListPage
@@ -18,7 +18,7 @@ import { OrganizationTable } from '@features/organization/tables/organization-ta
  */
 @Component({
   selector: 'app-organization-list',
-  imports: [RouterModule, ButtonModule, OrganizationTable],
+  imports: [RouterModule, ButtonModule, OrganizationDataview],
   templateUrl: './organization-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -7,13 +7,12 @@
   </section>
 
   <section class="h-full min-h-0 overflow-hidden">
-    <app-organization-table
-      class="h-full block"
+    <app-organization-dataview
+      class="h-full flex flex-col"
       (view)="onView($event)"
       (edit)="onEdit($event)"
       (add)="onAdd()"
       (delete)="onDelete($event)"
-      (deleteMany)="onDeleteMany($event)"
     />
   </section>
 </div>

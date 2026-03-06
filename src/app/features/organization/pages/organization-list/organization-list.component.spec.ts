@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { OrganizationStore } from '@core/stores/organization';
 import type { OrganizationOutput } from '@core/models/organization';
-import { OrganizationTable } from '@features/organization/tables/organization-table';
+import { OrganizationDataview } from '@features/organization/dataviews/organization-dataview';
 import { OrganizationListPage } from './organization-list.component';
 
 const MOCK_ORG: OrganizationOutput = {
@@ -55,7 +55,7 @@ describe('OrganizationListPage', () => {
     TestBed.configureTestingModule({
       imports: [OrganizationListPage],
       providers: [provideRouter([])],
-    }).overrideComponent(OrganizationTable, {
+    }).overrideComponent(OrganizationDataview, {
       set: { providers: [{ provide: OrganizationStore, useValue: mockOrganizationStore }] },
     });
   });
@@ -67,14 +67,12 @@ describe('OrganizationListPage', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should display organization rows when organizations are loaded', () => {
+  it('should display organization items when organizations are loaded', () => {
     mockOrganizationStore.organizations.set([MOCK_ORG, { ...MOCK_ORG, id: 'org-2', name: 'Beta Inc', slug: 'beta' } as OrganizationOutput]);
     mockOrganizationStore.isEmpty.set(false);
     const fixture = TestBed.createComponent(OrganizationListPage);
     fixture.detectChanges();
 
-    const rows = fixture.debugElement.queryAll(By.css('tbody tr'));
-    expect(rows.length).toBe(2);
     expect(fixture.nativeElement.textContent).toContain('Acme Corp');
     expect(fixture.nativeElement.textContent).toContain('Beta Inc');
   });
@@ -86,7 +84,7 @@ describe('OrganizationListPage', () => {
     const fixture = TestBed.createComponent(OrganizationListPage);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain("You don't belong to any organization yet.");
+    expect(fixture.nativeElement.textContent).toContain('No organizations found.');
   });
 
   it('should show skeletons when loading', () => {

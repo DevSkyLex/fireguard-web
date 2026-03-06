@@ -23,16 +23,16 @@
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} organizations"
     [(selection)]="selection"
     dataKey="id"
-    class="min-h-0 h-full bg-surface-0 dark:bg-surface-900"
+    class="bg-surface-0 dark:bg-surface-900"
   >
     <ng-template #caption>
-      <div class="flex items-center justify-between gap-4">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
           <h2 class="font-semibold">Organizations</h2>
         </div>
 
-        <div class="flex items-center gap-2">
-          <p-iconfield>
+        <div class="flex flex-wrap items-center gap-2">
+          <p-iconfield class="flex-1 sm:flex-none">
             <p-inputicon class="pi pi-search" />
             <input
               pInputText
@@ -41,6 +41,7 @@
               placeholder="Search organizations..."
               [formControl]="searchControl"
               [disabled]="store.isLoading() || store.isDeleting()"
+              class="w-full"
             />
           </p-iconfield>
 
@@ -49,7 +50,7 @@
             [formControl]="selectedStatus"
             placeholder="All statuses"
             [showClear]="true"
-            class="w-40"
+            class="flex-1 sm:flex-none sm:w-40"
             size="small"
             [disabled]="store.isLoading() || store.isDeleting()"
           />
@@ -62,6 +63,7 @@
             size="small"
             (onClick)="add.emit()"
             [disabled]="store.isLoading() || store.isDeleting()"
+            class="w-full sm:w-auto"
           />
         </div>
       </div>

@@ -1,16 +1,19 @@
 import { inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router } from '@angular/router';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
   signalStore,
   withComputed,
+  withHooks,
   withMethods,
   withState,
 } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { computed } from '@angular/core';
-import { Observable, pipe, switchMap, tap } from 'rxjs';
+import { Observable, filter, pipe, switchMap, tap } from 'rxjs';
 import { OrganizationService } from '@core/services/api/organization';
 import type { OrganizationOutput, OrganizationStatisticsOutput } from '@core/models/organization';
 import type { ActiveOrganizationState } from './active-organization-state.interface';
@@ -356,6 +359,40 @@ export const ActiveOrganizationStore = signalStore(
       patchState(store, INITIAL_ACTIVE_ORGANIZATION_STATE);
     },
   })),
+
+  /**
+   * Feature withHooks
+   *
+   * @description
+   * Lifecycle hooks for the ActiveOrganizationStore. On initialization,
+   * subscribes to router NavigationEnd events and clears the selected
+   * organization whenever the active URL no longer contains an
+   * `:organizationId` segment.
+   *
+   * @since 1.0.0
+   *
+   * @param {SignalStore} store - The store instance.
+   */
+  withHooks((store) => {
+    const router: Router = inject<Router>(Router);
+
+    return {
+      onInit(): void {
+        router.events.pipe(
+          filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+          takeUntilDestroyed(),
+        ).subscribe((): void => {
+          const hasOrganizationId: boolean =
+            router.routerState.snapshot.root.firstChild
+              ?.children.some((child) => child.paramMap.has('organizationId')) ?? false;
+
+          if (!hasOrganizationId && store.selectedOrganization() !== null) {
+            store.clearSelectedOrganization();
+          }
+        });
+      },
+    };
+  }),
   //#endregion
 );
 

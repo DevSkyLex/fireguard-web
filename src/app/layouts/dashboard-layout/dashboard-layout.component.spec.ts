@@ -99,8 +99,6 @@ describe('DashboardLayout', () => {
   beforeEach(() => {
     mockAuthStore.isLoggingOut.set(false);
     mockAuthStore.logout.mockReset();
-    mockOrganizationStore.setOrganization.mockReset();
-    mockOrganizationStore.loadOrganizations.mockReset();
 
     TestBed.configureTestingModule({
       imports: [DashboardLayout],

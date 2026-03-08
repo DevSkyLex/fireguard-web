@@ -22,6 +22,13 @@ export const ORGANIZATION_ROUTES: Routes = [
     },
     children: [
       {
+        path: 'facilities',
+        loadChildren: () => import('./facilities/facilities.routes').then((m) => m.FACILITY_ROUTES),
+        data: {
+          breadcrumb: 'Facilities',
+        },
+      },
+      {
         path: '',
         loadComponent: () => import('./pages/organization-overview/organization-overview.component').then((m) => m.OrganizationOverviewPage),
         title: organizationTitleResolver,

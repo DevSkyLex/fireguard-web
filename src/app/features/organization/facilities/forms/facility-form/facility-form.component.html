@@ -1,0 +1,133 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-8 w-full">
+
+  <!-- Facility Type -->
+  <div class="flex flex-col gap-2">
+    <label for="type" class="text-sm font-medium text-surface-700 dark:text-surface-300">Type</label>
+    <p-select
+      id="type"
+      formControlName="type"
+      [options]="typeOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Select a facility type"
+      [disabled]="loading() || isEditMode"
+      class="w-full"
+    />
+
+    @if (form.controls.type.invalid && form.controls.type.touched) {
+      <p-message severity="error" variant="simple">
+        @if (form.controls.type.hasError('required')) {
+          <span>Facility type is required.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <!-- Name -->
+  <div class="flex flex-col gap-2">
+    <label for="name" class="text-sm font-medium text-surface-700 dark:text-surface-300">Name</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-building" />
+      <input
+        pInputText
+        id="name"
+        formControlName="name"
+        class="w-full"
+        placeholder="Main Building"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+
+    @if (form.controls.name.invalid && form.controls.name.touched) {
+      <p-message severity="error" variant="simple">
+        @if (form.controls.name.hasError('required')) {
+          <span>Name is required.</span>
+        }
+        @if (form.controls.name.hasError('minlength')) {
+          <span>Name must be at least 2 characters.</span>
+        }
+        @if (form.controls.name.hasError('maxlength')) {
+          <span>Name must be less than 255 characters.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <!-- Code -->
+  <div class="flex flex-col gap-2">
+    <label for="code" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Code
+      <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-hashtag" />
+      <input
+        pInputText
+        id="code"
+        formControlName="code"
+        class="w-full"
+        placeholder="BLD-001"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+  </div>
+
+  <!-- Address -->
+  <div class="flex flex-col gap-2">
+    <label for="address" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Address
+      <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-map-marker" />
+      <input
+        pInputText
+        id="address"
+        formControlName="address"
+        class="w-full"
+        placeholder="123 Main Street, City"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+  </div>
+
+  <!-- Parent Facility (create mode only) -->
+  @if (!isEditMode) {
+    <div class="flex flex-col gap-2">
+      <label for="parentFacilityId" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+        Parent Facility
+        <span class="text-surface-400 font-normal">(optional)</span>
+      </label>
+      <p-select
+        id="parentFacilityId"
+        formControlName="parentFacilityId"
+        [options]="parentOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select a parent facility"
+        [disabled]="loading()"
+        [filter]="true"
+        filterPlaceholder="Search facilities..."
+        class="w-full"
+      />
+    </div>
+  }
+
+  <!-- Actions -->
+  <div class="flex items-center gap-3 justify-end">
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="loading()"
+      (onClick)="onCancel()"
+    />
+    <p-button
+      [label]="isEditMode ? 'Save Changes' : 'Create Facility'"
+      type="submit"
+      icon="pi pi-check"
+      [loading]="loading()"
+      [disabled]="form.invalid || loading()"
+    />
+  </div>
+</form>

@@ -1,0 +1,26 @@
+<div id="facility-edit" class="grid grid-rows-[auto_1fr] h-full">
+  <section class="flex flex-col gap-2 p-8 bg-surface-50 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
+    <div class="flex flex-col justify-between">
+      <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">Edit Facility</h1>
+      <p class="text-sm text-surface-700 dark:text-surface-300">Update facility information.</p>
+    </div>
+  </section>
+
+  <section class="p-8 max-w-2xl">
+    @if (isLoading()) {
+      <div class="flex flex-col gap-8">
+        <p-skeleton width="100%" height="2.5rem" />
+        <p-skeleton width="100%" height="2.5rem" />
+        <p-skeleton width="100%" height="2.5rem" />
+        <p-skeleton width="100%" height="2.5rem" />
+      </div>
+    } @else if (facility(); as facility) {
+      <app-facility-form
+        [facility]="facility"
+        [loading]="store.isUpdating()"
+        (submitted)="handleSubmit($event)"
+        (cancelled)="handleCancel()"
+      />
+    }
+  </section>
+</div>

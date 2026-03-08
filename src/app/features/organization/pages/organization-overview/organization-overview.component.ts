@@ -65,7 +65,7 @@ export class OrganizationOverviewPage implements OnInit {
         value: stats?.facilityCount ?? 0,
         icon: 'pi pi-building',
         color: 'text-emerald-500',
-        route: null,
+        route: 'facilities',
         description: 'Registered facilities',
       },
     ];

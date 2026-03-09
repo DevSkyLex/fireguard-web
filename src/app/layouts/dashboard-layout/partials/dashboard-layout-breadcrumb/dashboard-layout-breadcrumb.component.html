@@ -1,6 +1,6 @@
 <p-breadcrumb
   [home]="breadcrumbService.home()"
-  [model]="breadcrumbService.items()"
+  [model]="displayItems()"
   [pt]="breadcrumbPt"
   homeAriaLabel="Navigate to dashboard home"
   class="w-full min-w-0"
@@ -8,4 +8,31 @@
   <ng-template #separator>
     <i class="pi pi-chevron-right text-xs text-surface-500" aria-hidden="true"></i>
   </ng-template>
+
+  <ng-template #item let-item>
+    @if (item.id === ELLIPSIS_ID) {
+      <p-button
+        icon="pi pi-ellipsis-h"
+        severity="secondary"
+        [text]="true"
+        size="small"
+        styleClass="!p-1"
+        ariaLabel="Show hidden breadcrumb items"
+        (onClick)="collapsedMenu.toggle($event)"
+      />
+    } @else if (item.routerLink) {
+      <a [routerLink]="item.routerLink" class="p-breadcrumb-item-link">
+        @if (item.icon) {
+          <span [class]="item.icon" aria-hidden="true"></span>
+        }
+        @if (item.label) {
+          <span>{{ item.label }}</span>
+        }
+      </a>
+    } @else {
+      <span class="p-breadcrumb-item-link" [class]="item.linkClass">{{ item.label }}</span>
+    }
+  </ng-template>
 </p-breadcrumb>
+
+<p-menu #collapsedMenu [model]="collapsedItems()" [popup]="true" appendTo="body" />

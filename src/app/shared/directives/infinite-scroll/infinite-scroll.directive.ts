@@ -41,13 +41,11 @@ import { isPlatformBrowser } from '@angular/common';
  * </div>
  * ```
  */
-@Directive({
-  selector: '[appInfiniteScroll]',
-})
+@Directive({ selector: '[appInfiniteScroll]' })
 export class InfiniteScrollDirective implements AfterViewInit, OnDestroy {
-  //#region Inputs
+  //#region Properties
   /**
-   * Input disabled
+   * Property disabled
    * @readonly
    *
    * @description
@@ -63,7 +61,7 @@ export class InfiniteScrollDirective implements AfterViewInit, OnDestroy {
     input<boolean>(false);
 
   /**
-   * Input rootMargin
+   * Property rootMargin
    * @readonly
    *
    * @description
@@ -79,11 +77,9 @@ export class InfiniteScrollDirective implements AfterViewInit, OnDestroy {
    */
   public readonly rootMargin: InputSignal<string> =
     input<string>('200px');
-  //#endregion
 
-  //#region Outputs
   /**
-   * Output scrolled
+   * Property scrolled
    * @readonly
    *
    * @description
@@ -96,19 +92,70 @@ export class InfiniteScrollDirective implements AfterViewInit, OnDestroy {
    * @type {OutputEmitterRef<void>}
    */
   public readonly scrolled: OutputEmitterRef<void> = output<void>();
-  //#endregion
 
-  //#region Properties
-  private readonly el: ElementRef<HTMLElement> = inject(ElementRef);
-  private readonly platformId: object = inject(PLATFORM_ID);
+  /**
+   * Property element
+   * @readonly
+   *
+   * @description
+   * Reference to the host DOM element (the sentinel)
+   * observed by the IntersectionObserver.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {ElementRef<HTMLElement>}
+   */
+  private readonly element: ElementRef<HTMLElement> =
+    inject<ElementRef>(ElementRef);
+
+  /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Angular's platform identifier, used to conditionally disable the
+   * IntersectionObserver on the server where `window` is not available.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {object}
+   */
+  private readonly platformId: object =
+    inject<object>(PLATFORM_ID);
+
+  /**
+   * Property observer
+   * @description
+   *
+   * Instance of the IntersectionObserver
+   * observing the host element.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {IntersectionObserver | null}
+   */
   private observer: IntersectionObserver | null = null;
   //#endregion
 
   //#region Lifecycle
+  /**
+   * Method ngAfterViewInit
+   * @method ngAfterViewInit
+   *
+   * @description
+   * Initializes the IntersectionObserver and starts observing the host element.
+   * Does nothing on the server platform.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @returns {void} No return value.
+   */
   public ngAfterViewInit(): void {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
+    if (!isPlatformBrowser(this.platformId)) return;
 
     this.observer = new IntersectionObserver(
       (entries: IntersectionObserverEntry[]) => {
@@ -119,11 +166,25 @@ export class InfiniteScrollDirective implements AfterViewInit, OnDestroy {
       },
       { rootMargin: `0px 0px ${this.rootMargin()} 0px` },
     );
-    this.observer.observe(this.el.nativeElement);
+    this.observer.observe(this.element.nativeElement);
   }
 
+  /**
+   * Method ngOnDestroy
+   * @method ngOnDestroy
+   *
+   * @description
+   * Disconnects the IntersectionObserver to prevent memory leaks when the
+   * directive is destroyed.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @return {void} No return value.
+   */
   public ngOnDestroy(): void {
-    this.observer?.disconnect();
+    const observer: IntersectionObserver | null = this.observer;
+    if (observer) observer.disconnect();
     this.observer = null;
   }
   //#endregion

@@ -29,6 +29,20 @@ export const ORGANIZATION_ROUTES: Routes = [
         },
       },
       {
+        path: 'equipments',
+        loadChildren: () => import('./features/equipments/equipments.routes').then((m) => m.EQUIPMENT_ROUTES),
+        data: {
+          breadcrumb: 'Equipments',
+        },
+      },
+      {
+        path: 'inspections',
+        loadChildren: () => import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
+        data: {
+          breadcrumb: 'Inspections',
+        },
+      },
+      {
         path: '',
         loadComponent: () => import('./pages/organization-overview/organization-overview.component').then((m) => m.OrganizationOverviewPage),
         title: organizationTitleResolver,

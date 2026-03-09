@@ -1,0 +1,145 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-8 w-full">
+
+  <!-- Equipment Type -->
+  <div class="flex flex-col gap-2">
+    <label for="type" class="text-sm font-medium text-surface-700 dark:text-surface-300">Type</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-box" />
+      <input
+        pInputText
+        id="type"
+        formControlName="type"
+        class="w-full"
+        placeholder="Fire Extinguisher"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+
+    @if (form.controls.type.invalid && form.controls.type.touched) {
+      <p-message severity="error" variant="simple">
+        @if (form.controls.type.hasError('required')) {
+          <span>Equipment type is required.</span>
+        }
+        @if (form.controls.type.hasError('minlength')) {
+          <span>Type must be at least 2 characters.</span>
+        }
+        @if (form.controls.type.hasError('maxlength')) {
+          <span>Type must be less than 255 characters.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <!-- Sub-type -->
+  <div class="flex flex-col gap-2">
+    <label for="subType" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Sub-type
+      <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-tag" />
+      <input
+        pInputText
+        id="subType"
+        formControlName="subType"
+        class="w-full"
+        placeholder="CO2"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+  </div>
+
+  <!-- Brand -->
+  <div class="flex flex-col gap-2">
+    <label for="brand" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Brand
+      <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-briefcase" />
+      <input
+        pInputText
+        id="brand"
+        formControlName="brand"
+        class="w-full"
+        placeholder="Kidde"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+  </div>
+
+  <!-- Model -->
+  <div class="flex flex-col gap-2">
+    <label for="model" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Model
+      <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-wrench" />
+      <input
+        pInputText
+        id="model"
+        formControlName="model"
+        class="w-full"
+        placeholder="Pro 210"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+  </div>
+
+  <!-- Serial Number -->
+  <div class="flex flex-col gap-2">
+    <label for="serialNumber" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Serial Number
+      <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-hashtag" />
+      <input
+        pInputText
+        id="serialNumber"
+        formControlName="serialNumber"
+        class="w-full"
+        placeholder="SN-2024-001"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+  </div>
+
+  <!-- Location Label -->
+  <div class="flex flex-col gap-2">
+    <label for="locationLabel" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Location Label
+      <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-map-marker" />
+      <input
+        pInputText
+        id="locationLabel"
+        formControlName="locationLabel"
+        class="w-full"
+        placeholder="Floor 2 — Near elevator"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+  </div>
+
+  <!-- Actions -->
+  <div class="flex items-center gap-3 justify-end">
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="loading()"
+      (onClick)="onCancel()"
+    />
+    <p-button
+      label="Create Equipment"
+      type="submit"
+      icon="pi pi-check"
+      [loading]="loading()"
+      [disabled]="form.invalid || loading()"
+    />
+  </div>
+</form>

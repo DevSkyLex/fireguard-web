@@ -1,0 +1,212 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-8 w-full">
+
+  <!-- Equipment (required) -->
+  <div class="flex flex-col gap-2">
+    <label for="equipmentId" class="text-sm font-medium text-surface-700 dark:text-surface-300">Equipment</label>
+    <p-select
+      id="equipmentId"
+      formControlName="equipmentId"
+      [options]="equipmentOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Select equipment"
+      [disabled]="loading()"
+      [filter]="true"
+      filterPlaceholder="Search equipment..."
+      class="w-full"
+    />
+
+    @if (form.controls.equipmentId.invalid && form.controls.equipmentId.touched) {
+      <p-message severity="error" variant="simple">
+        <span>Equipment is required.</span>
+      </p-message>
+    }
+  </div>
+
+  <!-- Result (required) -->
+  <div class="flex flex-col gap-2">
+    <label for="result" class="text-sm font-medium text-surface-700 dark:text-surface-300">Result</label>
+    <p-select
+      id="result"
+      formControlName="result"
+      [options]="resultOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Select result"
+      [disabled]="loading()"
+      class="w-full"
+    />
+
+    @if (form.controls.result.invalid && form.controls.result.touched) {
+      <p-message severity="error" variant="simple">
+        <span>Result is required.</span>
+      </p-message>
+    }
+  </div>
+
+  <!-- Performed At (required) -->
+  <div class="flex flex-col gap-2">
+    <label for="performedAt" class="text-sm font-medium text-surface-700 dark:text-surface-300">Performed At</label>
+    <p-datepicker
+      id="performedAt"
+      formControlName="performedAt"
+      [showTime]="true"
+      [showIcon]="true"
+      [disabled]="loading()"
+      dateFormat="yy-mm-dd"
+      placeholder="Select date and time"
+      class="w-full"
+    />
+
+    @if (form.controls.performedAt.invalid && form.controls.performedAt.touched) {
+      <p-message severity="error" variant="simple">
+        <span>Performed date is required.</span>
+      </p-message>
+    }
+  </div>
+
+  <!-- Inspector Type (required) -->
+  <div class="flex flex-col gap-2">
+    <label for="inspectorType" class="text-sm font-medium text-surface-700 dark:text-surface-300">Inspector Type</label>
+    <p-select
+      id="inspectorType"
+      formControlName="inspectorType"
+      [options]="inspectorTypeOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Select inspector type"
+      [disabled]="loading()"
+      class="w-full"
+    />
+
+    @if (form.controls.inspectorType.invalid && form.controls.inspectorType.touched) {
+      <p-message severity="error" variant="simple">
+        <span>Inspector type is required.</span>
+      </p-message>
+    }
+  </div>
+
+  <!-- Inspector Name (required) -->
+  <div class="flex flex-col gap-2">
+    <label for="inspectorName" class="text-sm font-medium text-surface-700 dark:text-surface-300">Inspector Name</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-user" />
+      <input
+        pInputText
+        id="inspectorName"
+        formControlName="inspectorName"
+        class="w-full"
+        placeholder="John Doe"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+
+    @if (form.controls.inspectorName.invalid && form.controls.inspectorName.touched) {
+      <p-message severity="error" variant="simple">
+        @if (form.controls.inspectorName.hasError('required')) {
+          <span>Inspector name is required.</span>
+        }
+        @if (form.controls.inspectorName.hasError('minlength')) {
+          <span>Name must be at least 2 characters.</span>
+        }
+        @if (form.controls.inspectorName.hasError('maxlength')) {
+          <span>Name must be less than 255 characters.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <!-- Facility (optional) -->
+  <div class="flex flex-col gap-2">
+    <label for="facilityId" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Facility
+      <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <p-select
+      id="facilityId"
+      formControlName="facilityId"
+      [options]="facilityOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Select a facility"
+      [disabled]="loading()"
+      [filter]="true"
+      filterPlaceholder="Search facilities..."
+      class="w-full"
+    />
+  </div>
+
+  <!-- Checklist (optional) -->
+  <div class="flex flex-col gap-2">
+    <label for="checklistId" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Checklist
+      <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <p-select
+      id="checklistId"
+      formControlName="checklistId"
+      [options]="checklistOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Select a checklist"
+      [disabled]="loading()"
+      [filter]="true"
+      filterPlaceholder="Search checklists..."
+      class="w-full"
+    />
+  </div>
+
+  <!-- Notes (optional) -->
+  <div class="flex flex-col gap-2">
+    <label for="notes" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Notes
+      <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <textarea
+      pTextarea
+      id="notes"
+      formControlName="notes"
+      class="w-full"
+      placeholder="Additional notes about this inspection..."
+      [disabled]="loading()"
+      rows="4"
+    ></textarea>
+  </div>
+
+  <!-- Signature (optional) -->
+  <div class="flex flex-col gap-2">
+    <label for="signature" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Signature
+      <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-pencil" />
+      <input
+        pInputText
+        id="signature"
+        formControlName="signature"
+        class="w-full"
+        placeholder="Inspector signature"
+        [disabled]="loading()"
+      />
+    </p-iconfield>
+  </div>
+
+  <!-- Actions -->
+  <div class="flex items-center gap-3 justify-end">
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="loading()"
+      (onClick)="onCancel()"
+    />
+    <p-button
+      label="Create Inspection"
+      type="submit"
+      icon="pi pi-check"
+      [loading]="loading()"
+      [disabled]="form.invalid || loading()"
+    />
+  </div>
+</form>

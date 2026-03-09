@@ -1,0 +1,51 @@
+<div class="h-full flex flex-col">
+  @if (loading()) {
+    <div class="flex flex-col gap-4 p-4">
+      @for (_ of skeletonRows; track $index) {
+        <p-skeleton height="3rem" styleClass="w-full" />
+      }
+    </div>
+  } @else if (empty()) {
+    <div class="flex flex-col items-center justify-center gap-4 py-16 text-center">
+      <i class="pi pi-search text-4xl text-surface-400"></i>
+      <p class="text-surface-500 dark:text-surface-400">No inspections found.</p>
+      <p-button label="Add Inspection" icon="pi pi-plus" [outlined]="true" (onClick)="add.emit()" />
+    </div>
+  } @else {
+    <p-table
+      [value]="[...inspections()]"
+      [lazy]="true"
+      [totalRecords]="total()"
+      [rows]="rows"
+      [paginator]="true"
+      [first]="firstPage"
+      (onLazyLoad)="onLazyLoad($event)"
+      styleClass="p-datatable-sm"
+    >
+      <ng-template #header>
+        <tr>
+          <th>Result</th>
+          <th>Status</th>
+          <th>Inspector</th>
+          <th>Inspector Type</th>
+          <th>Performed At</th>
+          <th>Non-conformities</th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-inspection>
+        <tr>
+          <td>
+            <p-tag [value]="inspection.result | titlecase" [severity]="getResultSeverity(inspection.result)" />
+          </td>
+          <td>
+            <p-tag [value]="inspection.status | titlecase" [severity]="getStatusSeverity(inspection.status)" />
+          </td>
+          <td class="font-medium">{{ inspection.inspectorName }}</td>
+          <td>{{ inspection.inspectorType | titlecase }}</td>
+          <td class="text-sm text-surface-500">{{ inspection.performedAt | date:'medium' }}</td>
+          <td class="text-center">{{ inspection.nonConformitiesCount }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+</div>

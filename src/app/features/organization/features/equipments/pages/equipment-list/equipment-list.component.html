@@ -1,0 +1,22 @@
+<div id="equipment-list" class="grid grid-rows-[auto_1fr] h-full">
+  <section class="flex flex-col gap-2 p-8 bg-surface-50 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
+    <div class="flex flex-col justify-between">
+      <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">Equipments</h1>
+      <p class="text-sm text-surface-700 dark:text-surface-300">Manage equipment for this organization.</p>
+    </div>
+  </section>
+
+  <section class="h-full min-h-0 overflow-hidden">
+    <app-equipment-table
+      class="h-full flex flex-col"
+      [equipments]="store.equipmentList()"
+      [total]="store.totalEquipment()"
+      [loading]="store.isLoadingEquipment()"
+      [empty]="store.isEmpty()"
+      [initialPage]="page()"
+      (load)="onLoad($event)"
+      (pageChange)="onPageChange($event)"
+      (add)="onAdd()"
+    />
+  </section>
+</div>

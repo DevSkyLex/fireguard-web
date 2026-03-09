@@ -1,0 +1,66 @@
+<div class="h-full flex flex-col">
+  @if (loading()) {
+    <div class="flex flex-col gap-4 p-4">
+      @for (_ of skeletonRows; track $index) {
+        <p-skeleton height="3rem" styleClass="w-full" />
+      }
+    </div>
+  } @else if (empty()) {
+    <div class="flex flex-col items-center justify-center gap-4 py-16 text-center">
+      <i class="pi pi-box text-4xl text-surface-400"></i>
+      <p class="text-surface-500 dark:text-surface-400">No equipment found.</p>
+      <p-button label="Add Equipment" icon="pi pi-plus" [outlined]="true" (onClick)="add.emit()" />
+    </div>
+  } @else {
+    <p-table
+      [value]="[...equipments()]"
+      [lazy]="true"
+      [totalRecords]="total()"
+      [rows]="rows"
+      [paginator]="true"
+      [first]="firstPage"
+      (onLazyLoad)="onLazyLoad($event)"
+      styleClass="p-datatable-sm"
+    >
+      <ng-template #header>
+        <tr>
+          <th>Type</th>
+          <th>Brand / Model</th>
+          <th>Serial Number</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Created</th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-equipment>
+        <tr>
+          <td class="font-medium">
+            {{ equipment.type }}
+            @if (equipment.subType) {
+              <span class="text-surface-400 text-xs ml-1">/ {{ equipment.subType }}</span>
+            }
+          </td>
+          <td>
+            @if (equipment.brand || equipment.model) {
+              {{ equipment.brand ?? '' }} {{ equipment.model ?? '' }}
+            } @else {
+              <span class="text-surface-400">—</span>
+            }
+          </td>
+          <td>
+            @if (equipment.serialNumber) {
+              <code class="text-xs">{{ equipment.serialNumber }}</code>
+            } @else {
+              <span class="text-surface-400">—</span>
+            }
+          </td>
+          <td>{{ equipment.locationLabel ?? '—' }}</td>
+          <td>
+            <p-tag [value]="equipment.status | titlecase" [severity]="getStatusSeverity(equipment.status)" />
+          </td>
+          <td class="text-sm text-surface-500">{{ equipment.createdAt | date:'mediumDate' }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+</div>

@@ -9,6 +9,7 @@ import { providePrimeNG } from 'primeng/config';
 import { MessageService } from 'primeng/api';
 import { FireguardTheme } from '@core/themes/fireguard.theme';
 import { provideTheme } from '@core/services/theme';
+import { provideSplashScreen } from '@core/services/splash-screen';
 import { providePageTitleStrategy } from '@core/strategies/page-title/page-title-strategy.provider';
 import { authInterceptor, ssrCookieForwardInterceptor, unauthorizedInterceptor } from '@core/interceptors';
 import { provideAuth } from '@app/core/providers/auth';
@@ -55,6 +56,7 @@ export const appConfig: ApplicationConfig = {
     provideEnv(environment),
     provideAuth(),
     provideTheme(),
+    provideSplashScreen(),
     providePrimeNG({
       theme: {
         preset: FireguardTheme,

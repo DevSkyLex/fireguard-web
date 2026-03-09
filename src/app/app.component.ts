@@ -1,18 +1,19 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
+import { SplashScreen } from '@shared/components/splash-screen';
 
 /**
  * Component App
  * @class App
  *
  * @description
- * Root application component for the FireGuard 
+ * Root application component for the FireGuard
  * SSO web application.
- * 
+ *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
- * 
+ *
  * @example
  * ```html
  * <!-- Used in main.ts as the bootstrap component -->
@@ -21,8 +22,9 @@ import { ToastModule } from 'primeng/toast';
  */
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastModule],
+  imports: [RouterOutlet, ToastModule, SplashScreen],
   template: `
+    <app-splash-screen />
     <p-toast position="top-right" />
     <router-outlet />
   `,

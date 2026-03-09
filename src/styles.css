@@ -10,7 +10,9 @@
 
 @custom-variant dark (&:where(html[data-theme="dark"], html[data-theme="dark"] *));
 
-router-outlet { display: none; }
+router-outlet {
+  display: none;
+}
 
 html {
   font-size: 14px;

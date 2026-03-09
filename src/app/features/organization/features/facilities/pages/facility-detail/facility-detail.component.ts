@@ -7,9 +7,7 @@ import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
-import { DividerModule } from 'primeng/divider';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
@@ -17,7 +15,8 @@ import { TabsModule } from 'primeng/tabs';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import { ActiveFacilityStore, FacilityStore, facilityStoreEvents } from '@core/stores/facility';
 import type { FacilityOutput, MoveFacilityInput } from '@core/models/facility';
-import { FacilityEquipmentTab } from '@features/organization/facilities/components/facility-equipment-tab';
+import { FacilityEquipmentTab } from '@features/organization/features/facilities/components/facility-equipment-tab';
+import { FacilityInspectionTab } from '@features/organization/features/facilities/components/facility-inspection-tab';
 
 /**
  * Component FacilityDetailPage
@@ -43,14 +42,13 @@ import { FacilityEquipmentTab } from '@features/organization/facilities/componen
     TitleCasePipe,
     AvatarModule,
     ButtonModule,
-    CardModule,
     DialogModule,
-    DividerModule,
     SelectModule,
     SkeletonModule,
     TagModule,
     TabsModule,
     FacilityEquipmentTab,
+    FacilityInspectionTab,
   ],
   providers: [FacilityStore],
   templateUrl: './facility-detail.component.html',
@@ -58,45 +56,226 @@ import { FacilityEquipmentTab } from '@features/organization/facilities/componen
 })
 export class FacilityDetailPage {
   //#region Properties
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Angular Router used to navigate to the edit page and
+   * after successful operations.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Router}
+   */
   private readonly router: Router =
     inject<Router>(Router);
 
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Current activated route, used as a navigation anchor for
+   * relative routing.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ActivatedRoute}
+   */
   private readonly route: ActivatedRoute =
     inject<ActivatedRoute>(ActivatedRoute);
 
+  /**
+   * Property messageService
+   * @readonly
+   *
+   * @description
+   * PrimeNG toast service used to display success and error
+   * notifications after store operations.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {MessageService}
+   */
   private readonly messageService: MessageService =
     inject<MessageService>(MessageService);
 
+  /**
+   * Property events
+   * @readonly
+   *
+   * @description
+   * NgRx Signals event bus used to subscribe to store-level
+   * failure events (e.g. move failed).
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Events}
+   */
   private readonly events: Events =
     inject<Events>(Events);
 
+  /**
+   * Property activeOrganizationStore
+   * @readonly
+   *
+   * @description
+   * Root-scoped store providing the current organization context.
+   * Used to obtain the `organizationId` required by all API calls.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ActiveOrganizationStore}
+   */
   private readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
+  /**
+   * Property activeFacilityStore
+   * @readonly
+   *
+   * @description
+   * Root-scoped store that holds the currently resolved facility.
+   * Populated by the route resolver before this component renders.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {ActiveFacilityStore}
+   */
   protected readonly activeFacilityStore: ActiveFacilityStore =
     inject<ActiveFacilityStore>(ActiveFacilityStore);
 
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * Component-scoped FacilityStore used for write operations
+   * (move, archive) and loading the parent options for the
+   * move dialog.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FacilityStore}
+   */
   protected readonly store: FacilityStore =
     inject<FacilityStore>(FacilityStore);
 
+  /**
+   * Property facility
+   * @readonly
+   *
+   * @description
+   * The currently resolved facility proxied from
+   * {@link ActiveFacilityStore}.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<FacilityOutput | null>}
+   */
   protected readonly facility: Signal<FacilityOutput | null> =
     computed<FacilityOutput | null>(() => this.activeFacilityStore.selectedFacility());
 
+  /**
+   * Property isLoading
+   * @readonly
+   *
+   * @description
+   * Whether the active facility is currently being resolved.
+   * Used to show skeleton placeholders in the header.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly isLoading: Signal<boolean> =
     computed<boolean>(() => this.activeFacilityStore.isLoadingFacility());
 
+  /**
+   * Property activeTab
+   *
+   * @description
+   * Index of the currently active tab panel (0=Overview,
+   * 1=Equipments, 2=Inspections). Writable so the template can
+   * update it via `(valueChange)`.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly activeTab: WritableSignal<number> =
     signal<number>(0);
 
+  /**
+   * Property showMoveDialog
+   *
+   * @description
+   * Controls the visibility of the Move Facility dialog.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly showMoveDialog: WritableSignal<boolean> =
     signal<boolean>(false);
 
+  /**
+   * Property moveParentId
+   *
+   * @description
+   * The parent facility ID selected in the move dialog. An empty
+   * string represents the root level (no parent).
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly moveParentId: WritableSignal<string> =
     signal<string>('');
 
+  /**
+   * Property isMoving
+   * @readonly
+   *
+   * @description
+   * Whether a move operation is currently in-flight. Used to
+   * disable buttons and show a loading indicator in the dialog.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly isMoving: Signal<boolean> =
     computed<boolean>(() => this.store.moveOperation().status === 'loading');
 
+  /**
+   * Property parentOptions
+   * @readonly
+   *
+   * @description
+   * Computed select options for the move-dialog parent picker.
+   * Includes a "None (root level)" sentinel and all facilities
+   * except the current one to avoid circular parenting.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<{ label: string; value: string }[]>}
+   */
   protected readonly parentOptions: Signal<{ label: string; value: string }[]> =
     computed<{ label: string; value: string }[]>(() => {
       const currentId: string | undefined = this.facility()?.id;
@@ -115,6 +294,19 @@ export class FacilityDetailPage {
       return options;
     });
 
+  /**
+   * Property facilityTypeIcons
+   * @readonly
+   *
+   * @description
+   * Maps facility types to PrimeNG icon classes for use in
+   * avatar icons and tags throughout the template.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Record<string, string>}
+   */
   protected readonly facilityTypeIcons: Record<string, string> = {
     site: 'pi pi-globe',
     building: 'pi pi-building',
@@ -125,6 +317,19 @@ export class FacilityDetailPage {
   //#endregion
 
   //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Pre-loads all organization facilities (for the move-dialog parent
+   * picker), then sets up an effect to close the dialog and toast on
+   * successful move, and subscribes to the move-failed event for the
+   * error toast.
+   *
+   * @access public
+   * @since 1.0.0
+   */
   public constructor() {
     // Load facilities for move dialog parent selection
     const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
@@ -162,16 +367,55 @@ export class FacilityDetailPage {
   //#endregion
 
   //#region Methods
+  /**
+   * Method onEdit
+   * @method onEdit
+   *
+   * @description
+   * Navigates to the facility edit page relative to the current route.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
   protected onEdit(): void {
     this.router.navigate(['edit'], { relativeTo: this.route });
   }
 
+  /**
+   * Method onOpenMoveDialog
+   * @method onOpenMoveDialog
+   *
+   * @description
+   * Pre-selects the current parent facility in the picker, then
+   * opens the Move Facility dialog.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
   protected onOpenMoveDialog(): void {
     const currentParentId: string = this.facility()?.parentFacilityId ?? '';
     this.moveParentId.set(currentParentId);
     this.showMoveDialog.set(true);
   }
 
+  /**
+   * Method onMoveSubmit
+   * @method onMoveSubmit
+   *
+   * @description
+   * Reads the selected parent facility ID from the dialog and
+   * dispatches a move operation to the store. A null value means
+   * the facility is moved to the root level.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
   protected onMoveSubmit(): void {
     const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
     const facilityId: string | undefined = this.facility()?.id;
@@ -184,6 +428,18 @@ export class FacilityDetailPage {
     this.store.move({ organizationId, facilityId, input });
   }
 
+  /**
+   * Method onMoveCancel
+   * @method onMoveCancel
+   *
+   * @description
+   * Closes the Move Facility dialog without performing an action.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
   protected onMoveCancel(): void {
     this.showMoveDialog.set(false);
   }

@@ -9,11 +9,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import { EquipmentStore } from '@core/stores/equipment';
 import type { EquipmentOutput, EquipmentStatus } from '@core/models/equipment';
@@ -35,11 +31,7 @@ import type { EquipmentOutput, EquipmentStatus } from '@core/models/equipment';
   selector: 'app-facility-equipment-tab',
   imports: [
     DatePipe,
-    ButtonModule,
     SkeletonModule,
-    TableModule,
-    TagModule,
-    TooltipModule,
   ],
   providers: [EquipmentStore],
   templateUrl: './facility-equipment-tab.component.html',

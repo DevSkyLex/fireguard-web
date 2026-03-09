@@ -7,7 +7,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import { ActiveFacilityStore, FacilityStore, facilityStoreEvents } from '@core/stores/facility';
 import type { FacilityOutput, UpdateFacilityInput } from '@core/models/facility';
-import { FacilityForm, type FacilityFormValues } from '@features/organization/facilities/forms/facility-form';
+import { FacilityForm, type FacilityFormValues } from '@features/organization/features/facilities/forms/facility-form';
 
 /**
  * Component FacilityEditPage
@@ -36,6 +36,10 @@ export class FacilityEditPage {
    * Property router
    * @readonly
    *
+   * @description
+   * Angular Router used to navigate back to the facility detail
+   * page after a successful update.
+   *
    * @access private
    * @since 1.0.0
    *
@@ -47,6 +51,10 @@ export class FacilityEditPage {
   /**
    * Property route
    * @readonly
+   *
+   * @description
+   * Current activated route, used as an anchor for relative
+   * navigation after the update.
    *
    * @access private
    * @since 1.0.0
@@ -60,6 +68,10 @@ export class FacilityEditPage {
    * Property messageService
    * @readonly
    *
+   * @description
+   * PrimeNG toast service used to display success and error
+   * notifications after the update operation.
+   *
    * @access private
    * @since 1.0.0
    *
@@ -71,6 +83,10 @@ export class FacilityEditPage {
   /**
    * Property events
    * @readonly
+   *
+   * @description
+   * NgRx Signals event bus used to subscribe to
+   * {@link facilityStoreEvents.updateFailed} for error toasts.
    *
    * @access private
    * @since 1.0.0
@@ -84,6 +100,10 @@ export class FacilityEditPage {
    * Property activeOrganizationStore
    * @readonly
    *
+   * @description
+   * Root-scoped store providing the current organization context.
+   * Used to obtain the `organizationId` required by all API calls.
+   *
    * @access private
    * @since 1.0.0
    *
@@ -96,6 +116,10 @@ export class FacilityEditPage {
    * Property activeFacilityStore
    * @readonly
    *
+   * @description
+   * Root-scoped store that holds the currently resolved facility.
+   * Populated by the route resolver before this component renders.
+   *
    * @access private
    * @since 1.0.0
    *
@@ -107,6 +131,10 @@ export class FacilityEditPage {
   /**
    * Property store
    * @readonly
+   *
+   * @description
+   * Component-scoped FacilityStore used to dispatch the update
+   * action and expose the resulting operation state to the template.
    *
    * @access protected
    * @since 1.0.0
@@ -134,6 +162,10 @@ export class FacilityEditPage {
   /**
    * Property isLoading
    * @readonly
+   *
+   * @description
+   * Whether the active facility is currently being resolved.
+   * Used to show a skeleton form while the resolver is in-flight.
    *
    * @access protected
    * @since 1.0.0

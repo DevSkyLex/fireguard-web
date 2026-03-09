@@ -6,7 +6,7 @@ import { MessageService } from 'primeng/api';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import { FacilityStore, facilityStoreEvents } from '@core/stores/facility';
 import type { CreateFacilityInput } from '@core/models/facility';
-import { FacilityForm, type FacilityFormValues } from '@features/organization/facilities/forms/facility-form';
+import { FacilityForm, type FacilityFormValues } from '@features/organization/features/facilities/forms/facility-form';
 
 /**
  * Component FacilityCreatePage
@@ -34,6 +34,10 @@ export class FacilityCreatePage {
    * Property router
    * @readonly
    *
+   * @description
+   * Angular Router used to navigate to the new facility detail
+   * page after successful creation.
+   *
    * @access private
    * @since 1.0.0
    *
@@ -45,6 +49,10 @@ export class FacilityCreatePage {
   /**
    * Property route
    * @readonly
+   *
+   * @description
+   * Current activated route, used as an anchor for relative
+   * navigation after creation.
    *
    * @access private
    * @since 1.0.0
@@ -58,6 +66,10 @@ export class FacilityCreatePage {
    * Property messageService
    * @readonly
    *
+   * @description
+   * PrimeNG toast service used to display success and error
+   * notifications after the create operation.
+   *
    * @access private
    * @since 1.0.0
    *
@@ -69,6 +81,10 @@ export class FacilityCreatePage {
   /**
    * Property events
    * @readonly
+   *
+   * @description
+   * NgRx Signals event bus used to subscribe to
+   * {@link facilityStoreEvents.createFailed} for error toasts.
    *
    * @access private
    * @since 1.0.0
@@ -82,6 +98,10 @@ export class FacilityCreatePage {
    * Property activeOrganizationStore
    * @readonly
    *
+   * @description
+   * Root-scoped store providing the current organization context.
+   * Used to obtain the `organizationId` required by all API calls.
+   *
    * @access private
    * @since 1.0.0
    *
@@ -93,6 +113,10 @@ export class FacilityCreatePage {
   /**
    * Property store
    * @readonly
+   *
+   * @description
+   * Component-scoped FacilityStore used to dispatch the create
+   * action and expose the resulting operation state to the template.
    *
    * @access protected
    * @since 1.0.0

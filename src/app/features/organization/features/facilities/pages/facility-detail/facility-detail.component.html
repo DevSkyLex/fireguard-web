@@ -29,16 +29,14 @@
                 </div>
               </p-tag>
 
-              <p-tag class="rounded-md text-sm bg-surface-0 border border-surface-200" severity="secondary">
-                <div class="flex items-center gap-2">
-                  <div
-                    class="w-2 h-2 rounded-full"
-                    [class.bg-green-500]="facility.status === 'active'"
-                    [class.bg-orange-500]="facility.status === 'archived'"
-                  ></div>
-                  <span class="font-semibold">{{ facility.status | titlecase }}</span>
-                </div>
-              </p-tag>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400">
+                <span
+                  class="w-1.5 h-1.5 rounded-full shrink-0"
+                  [class.bg-green-500]="facility.status === 'active'"
+                  [class.bg-orange-500]="facility.status === 'archived'"
+                ></span>
+                {{ facility.status | titlecase }}
+              </span>
 
               @if (facility.code) {
                 <span class="text-sm text-surface-500">{{ facility.code }}</span>
@@ -92,96 +90,100 @@
           @if (facility(); as facility) {
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
               <!-- General Information -->
-              <p-card>
-                <ng-template #title>
-                  <span class="text-lg font-semibold">General Information</span>
-                </ng-template>
-                <div class="flex flex-col gap-4">
-                  <div class="flex flex-col gap-1">
-                    <span class="text-sm font-medium text-surface-500">Name</span>
-                    <span class="text-surface-900 dark:text-surface-100">{{ facility.name }}</span>
+              <!-- General Information -->
+              <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 overflow-hidden">
+                <div class="px-4 py-3 border-b border-surface-200 dark:border-surface-700">
+                  <h3 class="text-sm font-semibold text-surface-900 dark:text-surface-100">General Information</h3>
+                </div>
+                <dl class="divide-y divide-surface-100 dark:divide-surface-800">
+                  <div class="flex items-baseline gap-6 px-4 py-3">
+                    <dt class="text-sm text-surface-500 w-28 shrink-0">Name</dt>
+                    <dd class="text-sm text-surface-900 dark:text-surface-100 min-w-0">{{ facility.name }}</dd>
                   </div>
 
-                  <div class="flex flex-col gap-1">
-                    <span class="text-sm font-medium text-surface-500">Type</span>
-                    <span class="text-surface-900 dark:text-surface-100">{{ facility.type | titlecase }}</span>
+                  <div class="flex items-center gap-6 px-4 py-3">
+                    <dt class="text-sm text-surface-500 w-28 shrink-0">Type</dt>
+                    <dd>
+                      <p-tag class="rounded-md text-xs" [severity]="facility.type === 'site' ? 'info' : 'secondary'">
+                        <div class="flex items-center gap-1.5">
+                          <i [class]="facilityTypeIcons[facility.type]" class="text-xs"></i>
+                          <span class="font-semibold">{{ facility.type | titlecase }}</span>
+                        </div>
+                      </p-tag>
+                    </dd>
                   </div>
 
                   @if (facility.code) {
-                    <div class="flex flex-col gap-1">
-                      <span class="text-sm font-medium text-surface-500">Code</span>
-                      <span class="text-surface-900 dark:text-surface-100">{{ facility.code }}</span>
+                    <div class="flex items-baseline gap-6 px-4 py-3">
+                      <dt class="text-sm text-surface-500 w-28 shrink-0">Code</dt>
+                      <dd class="text-sm font-mono text-surface-900 dark:text-surface-100">{{ facility.code }}</dd>
                     </div>
                   }
 
                   @if (facility.address) {
-                    <div class="flex flex-col gap-1">
-                      <span class="text-sm font-medium text-surface-500">Address</span>
-                      <span class="text-surface-900 dark:text-surface-100">{{ facility.address }}</span>
+                    <div class="flex items-baseline gap-6 px-4 py-3">
+                      <dt class="text-sm text-surface-500 w-28 shrink-0">Address</dt>
+                      <dd class="text-sm text-surface-900 dark:text-surface-100 min-w-0">{{ facility.address }}</dd>
                     </div>
                   }
 
-                  <div class="flex flex-col gap-1">
-                    <span class="text-sm font-medium text-surface-500">Status</span>
-                    <p-tag class="rounded-md text-sm bg-surface-0 border border-surface-200" severity="secondary">
-                      <div class="flex items-center gap-2">
-                        <div
-                          class="w-2 h-2 rounded-full"
+                  <div class="flex items-center gap-6 px-4 py-3">
+                    <dt class="text-sm text-surface-500 w-28 shrink-0">Status</dt>
+                    <dd>
+                      <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400">
+                        <span
+                          class="w-1.5 h-1.5 rounded-full shrink-0"
                           [class.bg-green-500]="facility.status === 'active'"
                           [class.bg-orange-500]="facility.status === 'archived'"
-                        ></div>
-                        <span class="font-semibold">{{ facility.status | titlecase }}</span>
-                      </div>
-                    </p-tag>
+                        ></span>
+                        {{ facility.status | titlecase }}
+                      </span>
+                    </dd>
                   </div>
-                </div>
-              </p-card>
+                </dl>
+              </div>
 
-              <!-- Metadata & Dates -->
-              <p-card>
-                <ng-template #title>
-                  <span class="text-lg font-semibold">Details</span>
-                </ng-template>
-                <div class="flex flex-col gap-4">
+              <!-- Details -->
+              <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 overflow-hidden">
+                <div class="px-4 py-3 border-b border-surface-200 dark:border-surface-700">
+                  <h3 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Details</h3>
+                </div>
+                <dl class="divide-y divide-surface-100 dark:divide-surface-800">
                   @if (facility.parentFacilityId) {
-                    <div class="flex flex-col gap-1">
-                      <span class="text-sm font-medium text-surface-500">Parent Facility</span>
-                      <a
-                        [routerLink]="['..', '..', facility.parentFacilityId]"
-                        class="text-primary hover:underline flex items-center gap-1.5"
-                      >
-                        <i class="pi pi-link text-xs"></i>
-                        <span>{{ facility.parentFacilityId }}</span>
-                      </a>
+                    <div class="flex items-center gap-6 px-4 py-3">
+                      <dt class="text-sm text-surface-500 w-28 shrink-0">Parent</dt>
+                      <dd>
+                        <a
+                          [routerLink]="['..', '..', facility.parentFacilityId]"
+                          class="text-sm text-primary hover:underline flex items-center gap-1.5"
+                        >
+                          <i class="pi pi-link text-xs"></i>
+                          <span>{{ facility.parentFacilityId }}</span>
+                        </a>
+                      </dd>
                     </div>
                   }
 
-                  <div class="flex flex-col gap-1">
-                    <span class="text-sm font-medium text-surface-500">Created</span>
-                    <span class="text-surface-900 dark:text-surface-100">{{ facility.createdAt | date: 'medium' }}</span>
+                  <div class="flex items-baseline gap-6 px-4 py-3">
+                    <dt class="text-sm text-surface-500 w-28 shrink-0">Created</dt>
+                    <dd class="text-sm text-surface-900 dark:text-surface-100">{{ facility.createdAt | date: 'medium' }}</dd>
                   </div>
 
-                  <div class="flex flex-col gap-1">
-                    <span class="text-sm font-medium text-surface-500">Last Updated</span>
-                    <span class="text-surface-900 dark:text-surface-100">{{ facility.updatedAt | date: 'medium' }}</span>
+                  <div class="flex items-baseline gap-6 px-4 py-3">
+                    <dt class="text-sm text-surface-500 w-28 shrink-0">Last updated</dt>
+                    <dd class="text-sm text-surface-900 dark:text-surface-100">{{ facility.updatedAt | date: 'medium' }}</dd>
                   </div>
 
                   @if (facility.metadata && (facility.metadata | keyvalue).length > 0) {
-                    <p-divider />
-                    <div class="flex flex-col gap-1">
-                      <span class="text-sm font-medium text-surface-500">Metadata</span>
-                      <div class="flex flex-col gap-2 mt-1">
-                        @for (entry of facility.metadata | keyvalue; track entry.key) {
-                          <div class="flex items-center gap-2 text-sm">
-                            <span class="font-medium text-surface-700 dark:text-surface-300">{{ entry.key }}:</span>
-                            <span class="text-surface-900 dark:text-surface-100">{{ entry.value ?? '—' }}</span>
-                          </div>
-                        }
+                    @for (entry of facility.metadata | keyvalue; track entry.key) {
+                      <div class="flex items-baseline gap-6 px-4 py-3">
+                        <dt class="text-sm text-surface-500 w-28 shrink-0 truncate">{{ entry.key }}</dt>
+                        <dd class="text-sm text-surface-900 dark:text-surface-100 min-w-0">{{ entry.value ?? '—' }}</dd>
                       </div>
-                    </div>
+                    }
                   }
-                </div>
-              </p-card>
+                </dl>
+              </div>
             </div>
           }
         </p-tabpanel>
@@ -195,13 +197,9 @@
 
         <!-- Inspections Tab -->
         <p-tabpanel [value]="2">
-          <div class="flex flex-col items-center gap-3 py-16">
-            <i class="pi pi-clipboard text-6xl text-surface-400"></i>
-            <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">Inspections</h3>
-            <span class="text-sm text-surface-500">
-              Inspection management for this facility will be available soon.
-            </span>
-          </div>
+          @if (facility(); as facility) {
+            <app-facility-inspection-tab [facilityId]="facility.id" />
+          }
         </p-tabpanel>
       </p-tabpanels>
     </p-tabs>

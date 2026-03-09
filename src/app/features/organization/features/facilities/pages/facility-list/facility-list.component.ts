@@ -5,7 +5,7 @@ import type { FacilityOutput } from '@core/models/facility';
 import type { RequestOptions } from '@core/services/api';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import { FacilityStore } from '@core/stores/facility';
-import { FacilityDataview } from '@features/organization/facilities/dataviews/facility-dataview';
+import { FacilityDataview } from '@features/organization/features/facilities/dataviews/facility-dataview';
 
 /**
  * Component FacilityListPage

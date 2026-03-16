@@ -10,7 +10,6 @@
       optionLabel="label"
       optionValue="value"
       placeholder="Select equipment"
-      [disabled]="loading()"
       [filter]="true"
       filterPlaceholder="Search equipment..."
       class="w-full"
@@ -33,7 +32,6 @@
       optionLabel="label"
       optionValue="value"
       placeholder="Select result"
-      [disabled]="loading()"
       class="w-full"
     />
 
@@ -52,7 +50,6 @@
       formControlName="performedAt"
       [showTime]="true"
       [showIcon]="true"
-      [disabled]="loading()"
       dateFormat="yy-mm-dd"
       placeholder="Select date and time"
       class="w-full"
@@ -75,7 +72,6 @@
       optionLabel="label"
       optionValue="value"
       placeholder="Select inspector type"
-      [disabled]="loading()"
       class="w-full"
     />
 
@@ -97,7 +93,6 @@
         formControlName="inspectorName"
         class="w-full"
         placeholder="John Doe"
-        [disabled]="loading()"
       />
     </p-iconfield>
 
@@ -129,7 +124,6 @@
       optionLabel="label"
       optionValue="value"
       placeholder="Select a facility"
-      [disabled]="loading()"
       [filter]="true"
       filterPlaceholder="Search facilities..."
       class="w-full"
@@ -149,7 +143,6 @@
       optionLabel="label"
       optionValue="value"
       placeholder="Select a checklist"
-      [disabled]="loading()"
       [filter]="true"
       filterPlaceholder="Search checklists..."
       class="w-full"
@@ -168,7 +161,6 @@
       formControlName="notes"
       class="w-full"
       placeholder="Additional notes about this inspection..."
-      [disabled]="loading()"
       rows="4"
     ></textarea>
   </div>
@@ -187,7 +179,6 @@
         formControlName="signature"
         class="w-full"
         placeholder="Inspector signature"
-        [disabled]="loading()"
       />
     </p-iconfield>
   </div>

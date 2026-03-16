@@ -10,7 +10,6 @@
       optionLabel="label"
       optionValue="value"
       placeholder="Select a facility type"
-      [disabled]="loading() || isEditMode"
       class="w-full"
     />
 
@@ -34,7 +33,6 @@
         formControlName="name"
         class="w-full"
         placeholder="Main Building"
-        [disabled]="loading()"
       />
     </p-iconfield>
 
@@ -67,7 +65,6 @@
         formControlName="code"
         class="w-full"
         placeholder="BLD-001"
-        [disabled]="loading()"
       />
     </p-iconfield>
   </div>
@@ -86,7 +83,6 @@
         formControlName="address"
         class="w-full"
         placeholder="123 Main Street, City"
-        [disabled]="loading()"
       />
     </p-iconfield>
   </div>
@@ -105,7 +101,6 @@
         optionLabel="label"
         optionValue="value"
         placeholder="Select a parent facility"
-        [disabled]="loading()"
         [filter]="true"
         filterPlaceholder="Search facilities..."
         class="w-full"

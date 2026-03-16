@@ -1,6 +1,7 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  effect,
   inject,
   input,
   output,
@@ -227,6 +228,21 @@ export class FacilityForm {
    */
   protected get isEditMode(): boolean {
     return this.facility() !== null;
+  }
+  //#endregion
+
+  //#region Constructor
+  public constructor() {
+    effect(() => {
+      if (this.loading()) {
+        this.form.disable({ emitEvent: false });
+      } else {
+        this.form.enable({ emitEvent: false });
+        if (this.isEditMode) {
+          this.form.controls.type.disable({ emitEvent: false });
+        }
+      }
+    });
   }
   //#endregion
 

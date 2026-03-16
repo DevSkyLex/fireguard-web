@@ -1,6 +1,7 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  effect,
   inject,
   input,
   output,
@@ -62,6 +63,18 @@ export class InviteMembersForm {
       ]),
       roleKey: this.formBuilder.control<string>('member', [Validators.required]),
     });
+  //#endregion
+
+  //#region Constructor
+  public constructor() {
+    effect(() => {
+      if (this.inviting()) {
+        this.form.disable({ emitEvent: false });
+      } else {
+        this.form.enable({ emitEvent: false });
+      }
+    });
+  }
   //#endregion
 
   //#region Methods

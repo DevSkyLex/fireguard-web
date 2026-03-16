@@ -1,6 +1,7 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  effect,
   inject,
   input,
   output,
@@ -131,6 +132,18 @@ export class NewPasswordForm {
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
+  //#endregion
+
+  //#region Constructor
+  public constructor() {
+    effect(() => {
+      if (this.loading()) {
+        this.form.disable({ emitEvent: false });
+      } else {
+        this.form.enable({ emitEvent: false });
+      }
+    });
+  }
   //#endregion
 
   //#region Methods

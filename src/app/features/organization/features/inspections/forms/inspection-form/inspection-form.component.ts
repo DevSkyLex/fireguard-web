@@ -1,6 +1,7 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  effect,
   inject,
   input,
   output,
@@ -211,6 +212,18 @@ export class InspectionForm {
     { label: 'Internal User', value: 'user' },
     { label: 'External Inspector', value: 'external' },
   ];
+  //#endregion
+
+  //#region Constructor
+  public constructor() {
+    effect(() => {
+      if (this.loading()) {
+        this.form.disable({ emitEvent: false });
+      } else {
+        this.form.enable({ emitEvent: false });
+      }
+    });
+  }
   //#endregion
 
   //#region Computed

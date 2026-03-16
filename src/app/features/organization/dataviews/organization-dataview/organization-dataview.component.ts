@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   numberAttribute,
   OnInit,
@@ -530,6 +531,14 @@ export class OrganizationDataview implements OnInit {
         takeUntilDestroyed(),
       )
       .subscribe(() => this.reload());
+
+    effect(() => {
+      if (this.loading() || this.deleting()) {
+        this.searchControl.disable({ emitEvent: false });
+      } else {
+        this.searchControl.enable({ emitEvent: false });
+      }
+    });
   }
   //#endregion
 

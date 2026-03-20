@@ -1,0 +1,66 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-6 w-full">
+
+  <!-- Facility Type -->
+  <div class="flex flex-col gap-2">
+    <label for="facilityType" class="text-sm font-medium text-surface-700 dark:text-surface-300">Facility type</label>
+    <p-select
+      inputId="facilityType"
+      formControlName="type"
+      [options]="facilityTypes"
+      optionLabel="label"
+      optionValue="value"
+      fluid
+      placeholder="Select a type"
+    />
+    @if (form.controls.type.invalid && form.controls.type.touched) {
+      <p-message severity="error" variant="simple"><span>Type is required.</span></p-message>
+    }
+  </div>
+
+  <!-- Name -->
+  <div class="flex flex-col gap-2">
+    <label for="facilityName" class="text-sm font-medium text-surface-700 dark:text-surface-300">Facility name</label>
+    <input
+      pInputText
+      id="facilityName"
+      formControlName="name"
+      fluid
+      placeholder="Paris HQ"
+    />
+    @if (form.controls.name.invalid && form.controls.name.touched) {
+      <p-message severity="error" variant="simple">
+        @if (form.controls.name.hasError('required')) {
+          <span>Name is required.</span>
+        }
+        @if (form.controls.name.hasError('minlength')) {
+          <span>At least 2 characters.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <!-- Address -->
+  <div class="flex flex-col gap-2">
+    <label for="facilityAddress" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Address <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <input
+      pInputText
+      id="facilityAddress"
+      formControlName="address"
+      fluid
+      placeholder="10 Rue de Rivoli, Paris"
+    />
+  </div>
+
+  <!-- Submit -->
+  <p-button
+    label="Create facility"
+    type="submit"
+    icon="pi pi-arrow-right"
+    iconPos="right"
+    [loading]="loading()"
+    [disabled]="form.invalid || loading()"
+    fluid
+  />
+</form>

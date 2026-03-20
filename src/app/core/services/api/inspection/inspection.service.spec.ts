@@ -10,6 +10,8 @@ import type {
   NonConformityOutput,
   AddNonConformityInput,
   UpdateNonConformityStatusInput,
+  InspectionListOptions,
+  NonConformityListOptions,
 } from '@core/models/inspection';
 import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
 
@@ -106,6 +108,28 @@ describe('InspectionService', () => {
 
       const req = httpMock.expectOne((r) => r.url === inspectionsBaseUrl);
       expect(req.request.params.get('page')).toBe('2');
+      req.flush(mockCollection([]));
+    });
+
+    it('should map OpenAPI inspection filters to query params', () => {
+      const options: InspectionListOptions = {
+        equipmentId: 'equipment-uuid-1',
+        facilityId: 'facility-uuid-1',
+        result: 'fail',
+        status: 'submitted',
+        page: 3,
+        itemsPerPage: 10,
+      };
+
+      service.list(orgId, options).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === inspectionsBaseUrl);
+      expect(req.request.params.get('equipmentId')).toBe('equipment-uuid-1');
+      expect(req.request.params.get('facilityId')).toBe('facility-uuid-1');
+      expect(req.request.params.get('result')).toBe('fail');
+      expect(req.request.params.get('status')).toBe('submitted');
+      expect(req.request.params.get('page')).toBe('3');
+      expect(req.request.params.get('itemsPerPage')).toBe('10');
       req.flush(mockCollection([]));
     });
 
@@ -247,6 +271,24 @@ describe('InspectionService', () => {
 
       const req = httpMock.expectOne((r) => r.url === `${inspectionsBaseUrl}/${inspectionId}/non-conformities`);
       expect(req.request.params.get('page')).toBe('2');
+      req.flush(mockCollection([]));
+    });
+
+    it('should map OpenAPI non-conformity filters to query params', () => {
+      const options: NonConformityListOptions = {
+        severity: 'critical',
+        status: 'in_progress',
+        page: 4,
+        itemsPerPage: 15,
+      };
+
+      service.listNonConformities(orgId, inspectionId, options).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === `${inspectionsBaseUrl}/${inspectionId}/non-conformities`);
+      expect(req.request.params.get('severity')).toBe('critical');
+      expect(req.request.params.get('status')).toBe('in_progress');
+      expect(req.request.params.get('page')).toBe('4');
+      expect(req.request.params.get('itemsPerPage')).toBe('15');
       req.flush(mockCollection([]));
     });
   });

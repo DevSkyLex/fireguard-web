@@ -1,7 +1,8 @@
 import type { Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth';
-import { noOrganizationGuard } from '@core/guards/no-organization';
+import { onboardingGuard } from '@core/guards/onboarding';
 import { SplitLayout } from './layouts/split-layout';
+import { FocusedLayout } from './layouts/focused-layout';
 import { DashboardLayout } from './layouts/dashboard-layout';
 
 /**
@@ -17,7 +18,7 @@ export const APP_ROUTES: Routes = [
     {
     path: '',
     component: DashboardLayout,
-    canActivate: [authGuard],
+    canActivate: [authGuard, onboardingGuard],
     data: {
       breadcrumb: false,
     },
@@ -38,8 +39,8 @@ export const APP_ROUTES: Routes = [
   },
   {
     path: 'onboarding',
-    component: SplitLayout,
-    canActivate: [authGuard, noOrganizationGuard],
+    component: FocusedLayout,
+    canActivate: [authGuard],
     children: [
       {
         path: '',
@@ -53,7 +54,7 @@ export const APP_ROUTES: Routes = [
   {
     path: 'organizations',
     component: DashboardLayout,
-    canActivate: [authGuard],
+    canActivate: [authGuard, onboardingGuard],
     data: {
       breadcrumb: 'Organizations',
     },
@@ -65,7 +66,7 @@ export const APP_ROUTES: Routes = [
   {
     path: 'account',
     component: DashboardLayout,
-    canActivate: [authGuard],
+    canActivate: [authGuard, onboardingGuard],
     children: [
       {
         path: '',

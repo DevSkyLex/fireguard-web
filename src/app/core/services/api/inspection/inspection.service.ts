@@ -9,6 +9,8 @@ import type {
   NonConformityOutput,
   AddNonConformityInput,
   UpdateNonConformityStatusInput,
+  InspectionListOptions,
+  NonConformityListOptions,
 } from '@core/models/inspection';
 
 /**
@@ -72,11 +74,22 @@ export class InspectionService extends BaseApiService {
    */
   public list(
     organizationId: string,
-    options?: RequestOptions,
+    options?: InspectionListOptions,
   ): Observable<HydraCollection<InspectionOutput>> {
+    const params: NonNullable<RequestOptions['params']> = {};
+
+    if (options?.equipmentId) params['equipmentId'] = options.equipmentId;
+    if (options?.facilityId) params['facilityId'] = options.facilityId;
+    if (options?.result) params['result'] = options.result;
+    if (options?.status) params['status'] = options.status;
+
     return this.getCollection<InspectionOutput>(
       this.inspectionPath(organizationId),
-      options,
+      {
+        page: options?.page,
+        itemsPerPage: options?.itemsPerPage,
+        params,
+      },
     );
   }
 
@@ -202,11 +215,20 @@ export class InspectionService extends BaseApiService {
   public listNonConformities(
     organizationId: string,
     inspectionId: string,
-    options?: RequestOptions,
+    options?: NonConformityListOptions,
   ): Observable<HydraCollection<NonConformityOutput>> {
+    const params: NonNullable<RequestOptions['params']> = {};
+
+    if (options?.severity) params['severity'] = options.severity;
+    if (options?.status) params['status'] = options.status;
+
     return this.getCollection<NonConformityOutput>(
       `${this.inspectionPath(organizationId, inspectionId)}/non-conformities`,
-      options,
+      {
+        page: options?.page,
+        itemsPerPage: options?.itemsPerPage,
+        params,
+      },
     );
   }
 

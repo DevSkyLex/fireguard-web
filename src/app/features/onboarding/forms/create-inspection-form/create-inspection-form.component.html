@@ -1,0 +1,98 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-6 w-full">
+
+  <!-- Equipment -->
+  <div class="flex flex-col gap-2">
+    <label for="inspEquipment" class="text-sm font-medium text-surface-700 dark:text-surface-300">Equipment</label>
+    <p-select
+      inputId="inspEquipment"
+      formControlName="equipmentId"
+      [options]="equipmentOptions()"
+      optionLabel="label"
+      optionValue="id"
+      fluid
+      placeholder="Select equipment"
+    />
+    @if (form.controls.equipmentId.invalid && form.controls.equipmentId.touched) {
+      <p-message severity="error" variant="simple"><span>Equipment is required.</span></p-message>
+    }
+  </div>
+
+  <!-- Result -->
+  <div class="flex flex-col gap-2">
+    <label for="inspResult" class="text-sm font-medium text-surface-700 dark:text-surface-300">Result</label>
+    <p-select
+      inputId="inspResult"
+      formControlName="result"
+      [options]="resultOptions"
+      optionLabel="label"
+      optionValue="value"
+      fluid
+    />
+    @if (form.controls.result.invalid && form.controls.result.touched) {
+      <p-message severity="error" variant="simple"><span>Result is required.</span></p-message>
+    }
+  </div>
+
+  <!-- Performed At -->
+  <div class="flex flex-col gap-2">
+    <label for="performedAt" class="text-sm font-medium text-surface-700 dark:text-surface-300">Inspection date</label>
+    @defer (on immediate) {
+      <p-datepicker
+        inputId="performedAt"
+        formControlName="performedAt"
+        fluid
+        [showIcon]="true"
+        dateFormat="dd/mm/yy"
+      />
+    }
+    @if (form.controls.performedAt.invalid && form.controls.performedAt.touched) {
+      <p-message severity="error" variant="simple"><span>Date is required.</span></p-message>
+    }
+  </div>
+
+  <!-- Inspector Type -->
+  <div class="flex flex-col gap-2">
+    <label for="inspectorType" class="text-sm font-medium text-surface-700 dark:text-surface-300">Inspector type</label>
+    <p-select
+      inputId="inspectorType"
+      formControlName="inspectorType"
+      [options]="inspectorTypeOptions"
+      optionLabel="label"
+      optionValue="value"
+      fluid
+    />
+  </div>
+
+  <!-- Inspector Name -->
+  <div class="flex flex-col gap-2">
+    <label for="inspectorName" class="text-sm font-medium text-surface-700 dark:text-surface-300">Inspector name</label>
+    <input
+      pInputText
+      id="inspectorName"
+      formControlName="inspectorName"
+      fluid
+      placeholder="John Doe"
+    />
+    @if (form.controls.inspectorName.invalid && form.controls.inspectorName.touched) {
+      <p-message severity="error" variant="simple">
+        @if (form.controls.inspectorName.hasError('required')) {
+          <span>Name is required.</span>
+        }
+        @if (form.controls.inspectorName.hasError('minlength')) {
+          <span>At least 2 characters.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <!-- Submit -->
+  <p-button
+    label="Save inspection"
+    type="submit"
+    icon="pi pi-arrow-right"
+    iconPos="right"
+    [loading]="loading()"
+    [disabled]="form.invalid || loading()"
+    fluid
+  />
+</form>

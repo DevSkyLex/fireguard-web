@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 
 import { ChecklistService } from './checklist.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
-import type { ChecklistOutput, CreateChecklistInput } from '@core/models/checklist';
+import type { ChecklistListOptions, ChecklistOutput, CreateChecklistInput } from '@core/models/checklist';
 import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
 
 describe('ChecklistService', () => {
@@ -85,6 +85,22 @@ describe('ChecklistService', () => {
       const req = httpMock.expectOne((r) => r.url === checklistsUrl);
       expect(req.request.params.get('page')).toBe('1');
       expect(req.request.params.get('itemsPerPage')).toBe('30');
+      req.flush(mockCollection([]));
+    });
+
+    it('should map OpenAPI checklist filters to query params', () => {
+      const options: ChecklistListOptions = {
+        status: 'archived',
+        page: 2,
+        itemsPerPage: 12,
+      };
+
+      service.list(orgId, options).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === checklistsUrl);
+      expect(req.request.params.get('status')).toBe('archived');
+      expect(req.request.params.get('page')).toBe('2');
+      expect(req.request.params.get('itemsPerPage')).toBe('12');
       req.flush(mockCollection([]));
     });
 

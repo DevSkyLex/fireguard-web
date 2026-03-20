@@ -9,7 +9,8 @@ import {
 } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, catchError, exhaustMap, map, of, pipe, switchMap, tap } from 'rxjs';
 import { OnboardingService } from '@core/services/api/onboarding';
 import type {
   OnboardingOutput,
@@ -450,6 +451,53 @@ export const OnboardingStore = signalStore(
      */
     resetExecuteStepOperation(): void {
       patchState(store, { executeStepOperation: createIdleOperation() });
+    },
+
+    /**
+     * Method checkBlocking
+     *
+     * @description
+     * Returns an `Observable<boolean>` that emits `true` when an onboarding
+     * workflow is currently blocking navigation (`in_progress` or `blocked`).
+     *
+     * If the onboarding record is already present in the store the decision is
+     * made synchronously (via `of()`). Otherwise the API is called once and the
+     * response is patched into the store as a side-effect so that the onboarding
+     * page does not need to re-fetch it.
+     *
+     * A network / API error is treated as "not blocking" so that a failing
+     * onboarding endpoint never hard-locks the application.
+     *
+     * @since 1.0.0
+     *
+     * @author Valentin FORTIN <contact@valentin-fortin.pro>
+     */
+    checkBlocking(): Observable<boolean> {
+      const isBlockingState = (state: string): boolean =>
+        state === 'in_progress' || state === 'blocked';
+
+      const current: OnboardingOutput | null = store.onboarding();
+      if (current !== null) {
+        return of(isBlockingState(current.state));
+      }
+
+      return onboardingService.get().pipe(
+        tap((response: OnboardingOutput) =>
+          patchState(store, {
+            onboarding: response,
+            loadOperation: createSuccessOperation(response),
+          }),
+        ),
+        map((response: OnboardingOutput) => isBlockingState(response.state)),
+        catchError((error: unknown): Observable<boolean> => {
+          // 404 → aucun workflow d'onboarding pour cet utilisateur → non bloquant
+          if (error instanceof HttpErrorResponse && error.status === 404) {
+            return of(false);
+          }
+          // Toute autre erreur (réseau, 5xx) → fail-closed → rediriger vers /onboarding
+          return of(true);
+        }),
+      );
     },
   })),
   //#endregion

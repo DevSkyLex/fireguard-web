@@ -1,5 +1,16 @@
 import type { HydraItem } from '@core/models/api';
-import type { OrganizationLegalProfileRequirements } from './organization-legal-profile-output.interface';
+
+export interface OrganizationLegalFieldRequirement {
+  readonly required: boolean;
+  readonly label: string | null;
+  readonly pattern: string | null;
+  readonly example: string | null;
+}
+
+export interface OrganizationLegalProfileRequirements {
+  readonly registrationNumber: OrganizationLegalFieldRequirement;
+  readonly vatNumber: OrganizationLegalFieldRequirement;
+}
 
 export interface OrganizationLegalTypeOutput extends HydraItem {
   readonly countryCode: string;

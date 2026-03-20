@@ -3,89 +3,17 @@ import { inject, Injectable } from '@angular/core';
 import { type Observable, catchError, throwError } from 'rxjs';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type { EnvironmentConfig } from '@core/config/environment/environment-config.interface';
-import { isApiError, type HydraItem, type HydraCollection, type ApiError, type ConstraintViolation } from '@core/models/api';
+import {
+  isApiError,
+  type ApiError,
+  type ApiRequestOptions,
+  type ConstraintViolation,
+  type HydraCollection,
+  type HydraItem,
+  type RequestOptions,
+} from '@core/models/api';
 
-//#region Interfaces
-/**
- * Interface ApiRequestOptions
- * @interface ApiRequestOptions
- *
- * @description
- * Options for API requests including query parameters and headers.
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
- */
-export interface ApiRequestOptions {
-  /**
-   * Property params
-   * @readonly
-   *
-   * @description
-   * Query parameters to include in the request URL.
-   *
-   * @type {Record<string, string | number | boolean> | undefined}
-   */
-  readonly params?: Record<string, string | number | boolean>;
-
-  /**
-   * Property headers
-   * @readonly
-   *
-   * @description
-   * Additional HTTP headers to include in the request.
-   *
-   * @type {Record<string, string> | undefined}
-   */
-  readonly headers?: Record<string, string>;
-}
-
-/**
- * Interface PaginationOptions
- * @interface PaginationOptions
- *
- * @description
- * Pagination options for Hydra collection requests.
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
- */
-export interface PaginationOptions {
-  /**
-   * Property page
-   * @readonly
-   *
-   * @description
-   * Page number (1-indexed) for paginated results.
-   *
-   * @type {number | undefined}
-   */
-  readonly page?: number;
-
-  /**
-   * Property itemsPerPage
-   * @readonly
-   *
-   * @description
-   * Number of items to return per page.
-   *
-   * @type {number | undefined}
-   */
-  readonly itemsPerPage?: number;
-}
-
-/**
- * Type RequestOptions
- * @type RequestOptions
- *
- * @description
- * Combined request options type merging API and pagination options.
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
- */
-export type RequestOptions = ApiRequestOptions & PaginationOptions;
-//#endregion
+export type { ApiRequestOptions, PaginationOptions, RequestOptions } from '@core/models/api';
 
 /**
  * Service BaseApiService

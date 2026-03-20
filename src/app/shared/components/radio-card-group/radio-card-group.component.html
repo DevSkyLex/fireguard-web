@@ -1,0 +1,14 @@
+<div class="grid grid-cols-2 gap-2">
+  @for (option of options(); track option.value; let i = $index) {
+    <app-radio-card
+      [inputId]="uid + '-' + i"
+      [name]="uid"
+      [value]="option.value"
+      [selectedValue]="value()"
+      [label]="option.label"
+      [description]="option.description"
+      [disabled]="isDisabled()"
+      (selected)="select($event)"
+    />
+  }
+</div>

@@ -1,16 +1,8 @@
-/**
- * API Models - Hydra/JSON-LD
- *
- * @description
- * Generic interfaces for Hydra/JSON-LD API responses.
- * These types are used as base for all domain-specific models.
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
- */
-
 // Types
 export type { HydraContext } from './hydra-context.type';
+export type { ApiRequestOptions } from './api-request-options.interface';
+export type { PaginationOptions } from './pagination-options.interface';
+export type { RequestOptions } from './request-options.type';
 
 // Interfaces
 export type { HydraItem } from './hydra-item.interface';

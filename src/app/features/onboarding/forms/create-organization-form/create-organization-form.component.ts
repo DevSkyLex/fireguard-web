@@ -22,6 +22,18 @@ import { InputIconModule } from 'primeng/inputicon';
 import type { CreateOrganizationFormData } from './create-organization-form-data.type';
 import type { CreateOrganizationFormValues } from './create-organization-form-values.type';
 
+/**
+ * Component CreateOrganizationForm
+ * @class CreateOrganizationForm
+ *
+ * @description
+ * Presentational form component for creating an organization during
+ * onboarding. Emits typed form values via `submitted` output.
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
 @Component({
   selector: 'app-create-organization-form',
   imports: [
@@ -37,18 +49,57 @@ import type { CreateOrganizationFormValues } from './create-organization-form-va
 })
 export class CreateOrganizationForm {
   //#region Inputs
+  /**
+   * Input loading
+   * @readonly
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
+  /**
+   * Output submitted
+   * @readonly
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<CreateOrganizationFormValues>}
+   */
   public readonly submitted: OutputEmitterRef<CreateOrganizationFormValues> =
     output<CreateOrganizationFormValues>();
   //#endregion
 
   //#region Properties
+  /**
+   * Property formBuilder
+   * @readonly
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {NonNullableFormBuilder}
+   */
   private readonly formBuilder: NonNullableFormBuilder =
     inject<NonNullableFormBuilder>(NonNullableFormBuilder);
 
+  /**
+   * Property form
+   * @readonly
+   *
+   * @description
+   * Reactive form group for organization creation.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FormGroup<CreateOrganizationFormData>}
+   */
   protected readonly form: FormGroup<CreateOrganizationFormData> =
     this.formBuilder.group<CreateOrganizationFormData>({
       organizationName: this.formBuilder.control<string>('', [
@@ -60,6 +111,12 @@ export class CreateOrganizationForm {
   //#endregion
 
   //#region Constructor
+  /**
+   * @constructor
+   *
+   * @description
+   * Disables/enables the form reactively based on the loading input.
+   */
   public constructor() {
     effect(() => {
       if (this.loading()) {
@@ -72,6 +129,18 @@ export class CreateOrganizationForm {
   //#endregion
 
   //#region Methods
+  /**
+   * Method onSubmit
+   * @method onSubmit
+   *
+   * @description
+   * Validates and emits the form values.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
   protected onSubmit(): void {
     if (this.form.invalid) return;
     const formValues: CreateOrganizationFormValues = this.form.getRawValue();

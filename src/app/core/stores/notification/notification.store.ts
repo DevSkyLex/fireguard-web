@@ -19,10 +19,15 @@ import {
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, EMPTY, exhaustMap, filter, pipe, switchMap, tap } from 'rxjs';
-import { NotificationService, type NotificationListOptions } from '@core/services/api/notification';
+import { NotificationService } from '@core/services/api/notification';
 import { MercureService } from '@core/services/mercure';
 import type { MercureSubscriptionOutput } from '@core/models/mercure';
-import type { NotificationFilter, NotificationOutput, NotificationTypeOutput } from '@core/models/notification';
+import type {
+  NotificationFilter,
+  NotificationListOptions,
+  NotificationOutput,
+  NotificationTypeOutput,
+} from '@core/models/notification';
 import type { HydraCollection } from '@core/models/api';
 import type { NotificationStoreState } from './notification-state.interface';
 import {

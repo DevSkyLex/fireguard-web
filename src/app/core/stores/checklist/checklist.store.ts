@@ -18,10 +18,10 @@ import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
 import { ChecklistService } from '@core/services/api/checklist';
-import type { RequestOptions } from '@core/services/api';
 import type { HydraCollection } from '@core/models/api';
 import type {
   ChecklistOutput,
+  ChecklistListOptions,
   CreateChecklistInput,
 } from '@core/models/checklist';
 import { ActiveChecklistStore } from './active-checklist.store';
@@ -322,7 +322,7 @@ export const ChecklistStore = signalStore(
      *
      * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>}
      */
-    const loadFn = rxMethod<{ organizationId: string; options?: RequestOptions }>(
+    const loadFn = rxMethod<{ organizationId: string; options?: ChecklistListOptions }>(
       pipe(
         tap((): void => { patchState(store, { isLoading: true }); }),
         switchMap(({ organizationId, options }) =>

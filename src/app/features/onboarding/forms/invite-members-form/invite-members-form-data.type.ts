@@ -1,6 +1,27 @@
-import type { FormControl } from '@angular/forms';
-import type { InviteMembersFormValues } from './invite-members-form-values.type';
+import type { FormArray, FormControl, FormGroup } from '@angular/forms';
 
-export type InviteMembersFormData = {
-  [K in keyof InviteMembersFormValues]: FormControl<InviteMembersFormValues[K]>;
-};
+/**
+ * Interface InviteeRowData
+ *
+ * @description
+ * Typed FormGroup shape for a single invitee row.
+ *
+ * @since 1.0.0
+ */
+export interface InviteeRowData {
+  email: FormControl<string>;
+  roleId: FormControl<string | null>;
+}
+
+/**
+ * Interface InviteMembersFormData
+ *
+ * @description
+ * Shape of the invite-members form controls.
+ * Used as the generic parameter of `FormGroup<InviteMembersFormData>`.
+ *
+ * @since 1.0.0
+ */
+export interface InviteMembersFormData {
+  rows: FormArray<FormGroup<InviteeRowData>>;
+}

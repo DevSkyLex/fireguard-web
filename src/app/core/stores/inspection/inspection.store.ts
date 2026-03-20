@@ -18,7 +18,6 @@ import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
 import { InspectionService } from '@core/services/api/inspection';
-import type { RequestOptions } from '@core/services/api';
 import type { HydraCollection } from '@core/models/api';
 import type {
   InspectionOutput,
@@ -26,6 +25,8 @@ import type {
   NonConformityOutput,
   AddNonConformityInput,
   UpdateNonConformityStatusInput,
+  InspectionListOptions,
+  NonConformityListOptions,
 } from '@core/models/inspection';
 import { ActiveInspectionStore } from './active-inspection.store';
 import type { InspectionState } from './inspection-state.interface';
@@ -181,7 +182,7 @@ export const InspectionStore = signalStore(
      *
      * @since 2.0.0
      */
-    const loadFn = rxMethod<{ organizationId: string; options?: RequestOptions }>(
+    const loadFn = rxMethod<{ organizationId: string; options?: InspectionListOptions }>(
       pipe(
         tap((): void => { patchState(store, { isLoading: true }); }),
         switchMap(({ organizationId, options }) =>
@@ -373,7 +374,7 @@ export const InspectionStore = signalStore(
        *
        * @since 1.0.0
        */
-      loadNonConformities: rxMethod<{ organizationId: string; inspectionId: string; options?: RequestOptions }>(
+      loadNonConformities: rxMethod<{ organizationId: string; inspectionId: string; options?: NonConformityListOptions }>(
         pipe(
           tap((): void => {
             patchState(store, {

@@ -1,0 +1,44 @@
+<p-card
+  [pt]="cardPt"
+>
+  <ng-template #header>
+    <div class="flex items-start gap-4 px-6 pt-5 pb-4">
+      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/15">
+        <i class="pi pi-clipboard text-base text-primary"></i>
+      </div>
+      <div class="min-w-0 flex-1">
+        <div class="mb-1 flex flex-wrap items-center gap-2">
+          <span class="text-[10px] font-semibold uppercase tracking-widest text-surface-400 dark:text-surface-500">
+            Inspections
+          </span>
+          @if (!step().required) {
+            <p-tag value="Optional" severity="secondary" [rounded]="true" />
+          }
+        </div>
+        <h2 class="text-xl font-semibold tracking-tight text-surface-900 dark:text-surface-0">
+          First inspection
+        </h2>
+        <p class="mt-0.5 text-sm leading-relaxed text-surface-500 dark:text-surface-400">
+          Record the first fire safety equipment inspection.
+        </p>
+      </div>
+      <span class="shrink-0 rounded-full bg-surface-100 px-2.5 py-0.5 font-mono text-xs font-medium text-surface-500 dark:bg-surface-800 dark:text-surface-400">
+        {{ stepIndex() + 1 }}&thinsp;/&thinsp;{{ totalSteps() }}
+      </span>
+    </div>
+    <div class="h-0.5 w-full bg-surface-100 dark:bg-surface-800">
+      <div
+        class="h-full bg-primary transition-all duration-300"
+        [style.width.%]="((stepIndex() + 1) / totalSteps()) * 100"
+      ></div>
+    </div>
+  </ng-template>
+
+  <div class="px-6 py-6">
+    <app-create-inspection-form
+      [loading]="isCreating() || isExecuting()"
+      [equipmentOptions]="[...equipmentOptions()]"
+      (submitted)="handleSubmit($event)"
+    />
+  </div>
+</p-card>

@@ -231,7 +231,7 @@ export class FacilityInspectionTab {
       if (organizationId && facilityId) {
         this.store.load({
           organizationId,
-          options: { params: { facilityId } },
+          options: { facilityId },
         });
       }
     });

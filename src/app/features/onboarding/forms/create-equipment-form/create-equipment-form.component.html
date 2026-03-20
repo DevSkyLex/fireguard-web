@@ -1,0 +1,72 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-6 w-full">
+
+  <!-- Equipment Type -->
+  <div class="flex flex-col gap-2">
+    <label for="equipmentType" class="text-sm font-medium text-surface-700 dark:text-surface-300">Equipment type</label>
+    <p-select
+      inputId="equipmentType"
+      formControlName="type"
+      [options]="equipmentTypes"
+      optionLabel="label"
+      optionValue="value"
+      fluid
+      placeholder="Select a type"
+    />
+    @if (form.controls.type.invalid && form.controls.type.touched) {
+      <p-message severity="error" variant="simple"><span>Type is required.</span></p-message>
+    }
+  </div>
+
+  <!-- Brand -->
+  <div class="flex flex-col gap-2">
+    <label for="equipmentBrand" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Brand <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <input
+      pInputText
+      id="equipmentBrand"
+      formControlName="brand"
+      fluid
+      placeholder="Amerex, Tyco, Kidde…"
+    />
+  </div>
+
+  <!-- Model -->
+  <div class="flex flex-col gap-2">
+    <label for="equipmentModel" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Model <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <input
+      pInputText
+      id="equipmentModel"
+      formControlName="model"
+      fluid
+      placeholder="ABC-2.5, EX-9000…"
+    />
+  </div>
+
+  <!-- Serial Number -->
+  <div class="flex flex-col gap-2">
+    <label for="serialNumber" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      Serial number <span class="text-surface-400 font-normal">(optional)</span>
+    </label>
+    <input
+      pInputText
+      id="serialNumber"
+      formControlName="serialNumber"
+      fluid
+      placeholder="SN-20241234"
+    />
+  </div>
+
+  <!-- Submit -->
+  <p-button
+    label="Create equipment"
+    type="submit"
+    icon="pi pi-arrow-right"
+    iconPos="right"
+    [loading]="loading()"
+    [disabled]="form.invalid || loading()"
+    fluid
+  />
+</form>

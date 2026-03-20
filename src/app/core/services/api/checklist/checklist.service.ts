@@ -5,6 +5,7 @@ import type { RequestOptions } from '../base-api.service';
 import type { HydraCollection } from '@core/models/api';
 import type {
   ChecklistOutput,
+  ChecklistListOptions,
   CreateChecklistInput,
 } from '@core/models/checklist';
 
@@ -46,11 +47,19 @@ export class ChecklistService extends BaseApiService {
    */
   public list(
     organizationId: string,
-    options?: RequestOptions,
+    options?: ChecklistListOptions,
   ): Observable<HydraCollection<ChecklistOutput>> {
+    const params: NonNullable<RequestOptions['params']> = {};
+
+    if (options?.status) params['status'] = options.status;
+
     return this.getCollection<ChecklistOutput>(
       `${ChecklistService.BASE_PATH}/${organizationId}/checklists`,
-      options,
+      {
+        page: options?.page,
+        itemsPerPage: options?.itemsPerPage,
+        params,
+      },
     );
   }
 

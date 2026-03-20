@@ -1,5 +1,5 @@
 export { BaseApiService } from './base-api.service';
-export type { ApiRequestOptions, PaginationOptions, RequestOptions } from './base-api.service';
+export type { ApiRequestOptions, PaginationOptions, RequestOptions } from '@core/models/api';
 
 export * from './auth';
 export * from './checklist';

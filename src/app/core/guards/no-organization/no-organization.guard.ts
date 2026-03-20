@@ -47,6 +47,7 @@ export const noOrganizationGuard: CanActivateFn = (): MaybeAsync<GuardResult> =>
   const router: Router =
     inject<Router>(Router);
 
+  // Check if the user has any organizations by fetching a single item from the list.
   return organizationService.list({ page: 1, itemsPerPage: 1 }).pipe(
     map((response: HydraCollection<OrganizationOutput>) => {
       if (response.totalItems === 0) return true;

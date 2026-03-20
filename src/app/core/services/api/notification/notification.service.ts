@@ -3,14 +3,12 @@ import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { BaseApiService } from '../base-api.service';
 import type { HydraCollection } from '@core/models/api';
-import type { NotificationFilter, NotificationOutput, NotificationTypeOutput } from '@core/models/notification';
+import type {
+  NotificationListOptions,
+  NotificationOutput,
+  NotificationTypeOutput,
+} from '@core/models/notification';
 import type { MercureSubscriptionOutput } from '@core/models/mercure';
-
-export interface NotificationListOptions extends NotificationFilter {
-  readonly unreadOnly?: boolean;
-  readonly limit?: number;
-  readonly page?: number;
-}
 
 /**
  * Service NotificationService

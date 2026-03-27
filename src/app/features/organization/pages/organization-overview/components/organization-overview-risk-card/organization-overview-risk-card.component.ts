@@ -27,8 +27,8 @@ interface RiskSummaryItem {
  * Presentational risk card showing non-conformity severity via
  * PrimeNG MeterGroup and a compact summary grid.
  *
- * The parent page remains responsible for fetching statistics and
- * preparing the meter values.
+ * The card owns the MeterGroup view model so the parent page only
+ * needs to provide the underlying non-conformity statistics.
  *
  * @version 1.0.0
  *
@@ -65,35 +65,6 @@ export class OrganizationOverviewRiskCardComponent {
   public readonly statistics: InputSignal<OrganizationNonConformityStatisticsOutput | null> =
     input<OrganizationNonConformityStatisticsOutput | null>(null);
 
-  /**
-   * Input meterValues
-   * @readonly
-   *
-   * @description
-   * Severity segments rendered by PrimeNG MeterGroup.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<readonly OverviewMeterValue[]>}
-   */
-  public readonly meterValues: InputSignal<readonly OverviewMeterValue[]> =
-    input.required<readonly OverviewMeterValue[]>();
-
-  /**
-   * Input meterMax
-   * @readonly
-   *
-   * @description
-   * Max value supplied to MeterGroup for relative rendering.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<number>}
-   */
-  public readonly meterMax: InputSignal<number> =
-    input.required<number>();
   //#endregion
 
   //#region Properties
@@ -102,8 +73,8 @@ export class OrganizationOverviewRiskCardComponent {
    * @readonly
    *
    * @description
-   * Mutable clone of meter segments required by PrimeNG's
-   * `p-metergroup` input contract.
+   * Severity segments derived from the statistics and passed to
+   * PrimeNG MeterGroup.
    *
    * @access protected
    * @since 1.0.0
@@ -111,7 +82,48 @@ export class OrganizationOverviewRiskCardComponent {
    * @type {Signal<OverviewMeterValue[]>}
    */
   protected readonly chartMeterValues: Signal<OverviewMeterValue[]> =
-    computed<OverviewMeterValue[]>(() => [...this.meterValues()]);
+    computed<OverviewMeterValue[]>(() => {
+      const stats: OrganizationNonConformityStatisticsOutput | null = this.statistics();
+
+      return [
+        {
+          label: 'Critical',
+          value: stats?.criticalSeverityCount ?? 0,
+          color: '#ef4444',
+        },
+        {
+          label: 'High',
+          value: stats?.highSeverityCount ?? 0,
+          color: '#f97316',
+        },
+        {
+          label: 'Medium',
+          value: stats?.mediumSeverityCount ?? 0,
+          color: '#f59e0b',
+        },
+        {
+          label: 'Low',
+          value: stats?.lowSeverityCount ?? 0,
+          color: '#22c55e',
+        },
+      ];
+    });
+
+  /**
+   * Property meterMax
+   * @readonly
+   *
+   * @description
+   * Max value supplied to MeterGroup for relative rendering.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly meterMax: Signal<number> = computed<number>(() =>
+    Math.max(this.statistics()?.totalCount ?? 0, 1),
+  );
 
   /**
    * Property summaryItems

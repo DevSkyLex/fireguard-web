@@ -9,12 +9,18 @@ import {
   type Signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import type { ChartData, ChartOptions } from 'chart.js';
 import { CardModule } from 'primeng/card';
-import { ChartModule } from 'primeng/chart';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { SkeletonModule } from 'primeng/skeleton';
 import type {
+  OrganizationEquipmentStatisticsOutput,
+  OrganizationInspectionStatisticsOutput,
+  OrganizationMembershipStatisticsOutput,
+  OrganizationNonConformityStatisticsOutput,
+  OrganizationStatisticsOutput,
+} from '@core/models/organization';
+import { OrganizationOverviewOperationsPulseChartComponent } from '../organization-overview-operations-pulse-chart/organization-overview-operations-pulse-chart.component';
+import type {
+  OverviewPulseFilter,
   OverviewPulseReadout,
   OverviewToggleOption,
 } from '../../organization-overview.types';
@@ -27,9 +33,9 @@ import type {
  * Presentational analytics card showing the main operations pulse
  * chart and the supporting readout tiles.
  *
- * All chart datasets and filters are provided by the parent page.
- * This component is responsible only for rendering and emitting
- * the selected filter value upward.
+ * The card owns the chart component and the layout shell while the
+ * parent page provides the underlying business statistics and the
+ * supporting readout values.
  *
  * @version 1.0.0
  *
@@ -43,9 +49,8 @@ import type {
   imports: [
     FormsModule,
     CardModule,
-    ChartModule,
     SelectButtonModule,
-    SkeletonModule,
+    OrganizationOverviewOperationsPulseChartComponent,
   ],
   templateUrl: './organization-overview-operations-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,10 +67,10 @@ export class OrganizationOverviewOperationsCardComponent {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<readonly OverviewToggleOption[]>}
+   * @type {InputSignal<readonly OverviewToggleOption<OverviewPulseFilter>[]>}
    */
-  public readonly filterOptions: InputSignal<readonly OverviewToggleOption[]> =
-    input.required<readonly OverviewToggleOption[]>();
+  public readonly filterOptions: InputSignal<readonly OverviewToggleOption<OverviewPulseFilter>[]> =
+    input.required<readonly OverviewToggleOption<OverviewPulseFilter>[]>();
 
   /**
    * Input activeFilter
@@ -77,40 +82,85 @@ export class OrganizationOverviewOperationsCardComponent {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<string>}
+   * @type {InputSignal<OverviewPulseFilter>}
    */
-  public readonly activeFilter: InputSignal<string> =
-    input.required<string>();
+  public readonly activeFilter: InputSignal<OverviewPulseFilter> =
+    input.required<OverviewPulseFilter>();
 
   /**
-   * Input chartData
+   * Input overviewStatistics
    * @readonly
    *
    * @description
-   * Chart.js line dataset rendered by PrimeNG Chart.
+   * Overview statistics forwarded to the operations chart.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<ChartData<'line', number[], string>>}
+   * @type {InputSignal<OrganizationStatisticsOutput | null>}
    */
-  public readonly chartData: InputSignal<ChartData<'line', number[], string>> =
-    input.required<ChartData<'line', number[], string>>();
+  public readonly overviewStatistics: InputSignal<OrganizationStatisticsOutput | null> =
+    input<OrganizationStatisticsOutput | null>(null);
 
   /**
-   * Input chartOptions
+   * Input equipmentStatistics
    * @readonly
    *
    * @description
-   * Chart.js configuration for the line chart.
+   * Equipment statistics forwarded to the operations chart.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<ChartOptions<'line'>>}
+   * @type {InputSignal<OrganizationEquipmentStatisticsOutput | null>}
    */
-  public readonly chartOptions: InputSignal<ChartOptions<'line'>> =
-    input.required<ChartOptions<'line'>>();
+  public readonly equipmentStatistics: InputSignal<OrganizationEquipmentStatisticsOutput | null> =
+    input<OrganizationEquipmentStatisticsOutput | null>(null);
+
+  /**
+   * Input inspectionStatistics
+   * @readonly
+   *
+   * @description
+   * Inspection statistics forwarded to the operations chart.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<OrganizationInspectionStatisticsOutput | null>}
+   */
+  public readonly inspectionStatistics: InputSignal<OrganizationInspectionStatisticsOutput | null> =
+    input<OrganizationInspectionStatisticsOutput | null>(null);
+
+  /**
+   * Input membershipStatistics
+   * @readonly
+   *
+   * @description
+   * Membership statistics forwarded to the operations chart.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<OrganizationMembershipStatisticsOutput | null>}
+   */
+  public readonly membershipStatistics: InputSignal<OrganizationMembershipStatisticsOutput | null> =
+    input<OrganizationMembershipStatisticsOutput | null>(null);
+
+  /**
+   * Input nonConformityStatistics
+   * @readonly
+   *
+   * @description
+   * Non-conformity statistics forwarded to the operations chart.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<OrganizationNonConformityStatisticsOutput | null>}
+   */
+  public readonly nonConformityStatistics: InputSignal<OrganizationNonConformityStatisticsOutput | null> =
+    input<OrganizationNonConformityStatisticsOutput | null>(null);
 
   /**
    * Input readouts
@@ -155,10 +205,10 @@ export class OrganizationOverviewOperationsCardComponent {
    * @access public
    * @since 1.0.0
    *
-   * @type {OutputEmitterRef<string>}
+   * @type {OutputEmitterRef<OverviewPulseFilter>}
    */
-  public readonly filterChange: OutputEmitterRef<string> =
-    output<string>();
+  public readonly filterChange: OutputEmitterRef<OverviewPulseFilter> =
+    output<OverviewPulseFilter>();
   //#endregion
 
   //#region Properties
@@ -173,9 +223,9 @@ export class OrganizationOverviewOperationsCardComponent {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<OverviewToggleOption[]>}
+   * @type {Signal<OverviewToggleOption<OverviewPulseFilter>[]>}
    */
-  protected readonly selectOptions: Signal<OverviewToggleOption[]> =
-    computed<OverviewToggleOption[]>(() => [...this.filterOptions()]);
+  protected readonly selectOptions: Signal<OverviewToggleOption<OverviewPulseFilter>[]> =
+    computed<OverviewToggleOption<OverviewPulseFilter>[]>(() => [...this.filterOptions()]);
   //#endregion
 }

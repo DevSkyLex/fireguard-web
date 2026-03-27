@@ -1,65 +1,102 @@
-<div
-  id="organization-overview"
-  class="min-h-full bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.08),_transparent_32%),linear-gradient(180deg,_var(--p-surface-50)_0%,_var(--p-surface-100)_100%)] px-6 py-8 md:px-8 dark:bg-[linear-gradient(180deg,_var(--p-surface-950)_0%,_var(--p-surface-900)_100%)]"
->
+<div id="organization-overview" class="grid h-full grid-rows-[auto_1fr] bg-surface-0 dark:bg-surface-950">
   @if (organization(); as org) {
-    <app-organization-overview-header
-      [organization]="org"
-      [modeOptions]="headerModeOptions"
-      [activeMode]="activeHeaderMode()"
-      [snapshotDateLabel]="snapshotDateLabel"
-      (modeChange)="activeHeaderMode.set($event)"
-    />
+    <section class="border-b border-surface-200 bg-surface-50 px-6 py-8 dark:border-surface-800 dark:bg-surface-900 md:px-8">
+      <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+        <div class="flex items-start gap-4">
+          <p-avatar
+            [label]="org.name.charAt(0).toUpperCase()"
+            shape="square"
+            size="xlarge"
+            [style.background-color]="'var(--p-primary-color)'"
+            [style.color]="'var(--p-primary-contrast-color)'"
+            [style.font-weight]="'700'"
+          />
+
+          <div class="min-w-0">
+            <h1 class="text-3xl font-semibold text-surface-900 dark:text-surface-100">
+              {{ org.name }}
+            </h1>
+            <p class="mt-3 max-w-3xl text-sm leading-7 text-surface-700 dark:text-surface-300">
+              Your operational briefing across facilities, assets, inspections, and compliance.
+            </p>
+
+            <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-surface-500 dark:text-surface-400">
+              <span class="flex items-center gap-2">
+                <i class="pi pi-calendar text-xs"></i>
+                Snapshot {{ snapshotDate | date: 'mediumDate' }}
+              </span>
+              <span class="flex items-center gap-2">
+                <i class="pi pi-clock text-xs"></i>
+                Created {{ org.createdAt | date: 'mediumDate' }}
+              </span>
+              <span class="flex items-center gap-2">
+                <i class="pi pi-refresh text-xs"></i>
+                Updated {{ org.updatedAt | date: 'mediumDate' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 xl:max-w-[30rem] xl:justify-end">
+          @for (action of quickActions; track action.label) {
+            <p-button
+              [label]="action.label"
+              [icon]="action.icon"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              (onClick)="navigateTo(action.route)"
+            />
+          }
+        </div>
+      </div>
+    </section>
   }
 
-  @if (errorMessage() && !showSkeleton()) {
-    <div class="mt-6">
-      <p-message severity="error">
-        <span>{{ errorMessage() }}</span>
-      </p-message>
-    </div>
-  }
+  <section class="min-h-0 overflow-auto bg-surface-0 px-6 py-6 dark:bg-surface-950 md:px-8">
+    @if (errorMessage() && !showSkeleton()) {
+      <div class="mb-6">
+        <p-message severity="error">
+          <span>{{ errorMessage() }}</span>
+        </p-message>
+      </div>
+    }
 
-  <section class="mt-6 grid gap-4 xl:grid-cols-3">
-    <app-organization-overview-metrics
-      [metrics]="headlineMetrics()"
-      [showSkeleton]="showSkeleton()"
-    />
-  </section>
-
-  <section class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.95fr)]">
-    <app-organization-overview-operations-card
-      [filterOptions]="pulseFilterOptions"
-      [activeFilter]="activePulseFilter()"
-      [chartData]="operationsPulseChartData()"
-      [chartOptions]="operationsPulseChartOptions"
-      [readouts]="operationsReadouts()"
-      [hasData]="hasDashboardStatistics()"
-      (filterChange)="activePulseFilter.set($event)"
-    />
-
-    <div class="grid gap-6">
-      <app-organization-overview-focus-board [items]="focusBoardItems()" />
-
-      <app-organization-overview-quick-actions
-        [actions]="quickActions"
-        (routeSelected)="navigateTo($event)"
+    <section class="grid items-stretch gap-6 xl:grid-cols-12">
+      <app-organization-overview-metrics
+        [metrics]="headlineMetrics()"
+        [showSkeleton]="showSkeleton()"
       />
-    </div>
-  </section>
 
-  <section class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-    <app-organization-overview-team-card
-      [statistics]="membershipStatistics()"
-      [chartData]="teamOverviewChartData()"
-      [chartOptions]="teamOverviewChartOptions"
-      (viewReport)="navigateTo('inspections')"
-    />
+      <app-organization-overview-operations-card
+        class="h-full xl:col-span-8"
+        [filterOptions]="pulseFilterOptions"
+        [activeFilter]="activePulseFilter()"
+        [overviewStatistics]="statistics()"
+        [equipmentStatistics]="equipmentStatistics()"
+        [inspectionStatistics]="inspectionStatistics()"
+        [membershipStatistics]="membershipStatistics()"
+        [nonConformityStatistics]="nonConformityStatistics()"
+        [readouts]="operationsReadouts()"
+        [hasData]="hasDashboardStatistics()"
+        (filterChange)="activePulseFilter.set($event)"
+      />
 
-    <app-organization-overview-risk-card
-      [statistics]="nonConformityStatistics()"
-      [meterValues]="riskMeterValues()"
-      [meterMax]="riskMeterMax()"
-    />
+      <app-organization-overview-focus-board
+        class="h-full xl:col-span-4"
+        [items]="focusBoardItems()"
+      />
+
+      <app-organization-overview-team-card
+        class="h-full xl:col-span-8"
+        [statistics]="membershipStatistics()"
+        (viewReport)="navigateTo('inspections')"
+      />
+
+      <app-organization-overview-risk-card
+        class="h-full xl:col-span-4"
+        [statistics]="nonConformityStatistics()"
+      />
+    </section>
   </section>
 </div>

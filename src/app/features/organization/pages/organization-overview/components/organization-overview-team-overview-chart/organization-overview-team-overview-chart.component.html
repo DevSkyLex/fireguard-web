@@ -1,0 +1,15 @@
+@if (statistics()) {
+  <div class="h-[20rem] pt-4">
+    <p-chart
+      type="bar"
+      [data]="chartData()"
+      [options]="chartOptions"
+      ariaLabel="Team overview"
+      class="block h-full"
+    />
+  </div>
+} @else {
+  <div class="flex h-[20rem] items-center justify-center pt-4">
+    <p-skeleton width="100%" height="100%" borderRadius="0.875rem" />
+  </div>
+}

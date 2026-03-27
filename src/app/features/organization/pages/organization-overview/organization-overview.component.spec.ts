@@ -192,9 +192,13 @@ describe('OrganizationOverviewPage', () => {
     expect(fixture.nativeElement.textContent).toContain('Track inspections');
   });
 
-  it('should show Active tag when organization is active', () => {
+  it('should display the overview description without legacy header tags', () => {
     const fixture = TestBed.createComponent(OrganizationOverviewPage);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Active');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Your operational briefing across facilities, assets, inspections, and compliance.',
+    );
+    expect(fixture.nativeElement.textContent).not.toContain('/fireguard');
+    expect(fixture.nativeElement.textContent).not.toContain('acme');
   });
 });

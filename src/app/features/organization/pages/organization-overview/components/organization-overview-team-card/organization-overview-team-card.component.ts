@@ -8,12 +8,10 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
-import type { ChartData, ChartOptions } from 'chart.js';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import { ChartModule } from 'primeng/chart';
-import { SkeletonModule } from 'primeng/skeleton';
 import type { OrganizationMembershipStatisticsOutput } from '@core/models/organization';
+import { OrganizationOverviewTeamOverviewChartComponent } from '../organization-overview-team-overview-chart/organization-overview-team-overview-chart.component';
 
 interface TeamSummaryItem {
   readonly label: string;
@@ -26,8 +24,8 @@ interface TeamSummaryItem {
  *
  * @description
  * Presentational membership analytics card for the organization
- * overview page. Renders the team chart and a small summary grid
- * from statistics already prepared by the parent container.
+ * overview page. It owns the chart component and renders a small
+ * summary grid from statistics prepared by the parent container.
  *
  * @version 1.0.0
  *
@@ -41,8 +39,7 @@ interface TeamSummaryItem {
   imports: [
     ButtonModule,
     CardModule,
-    ChartModule,
-    SkeletonModule,
+    OrganizationOverviewTeamOverviewChartComponent,
   ],
   templateUrl: './organization-overview-team-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,35 +62,6 @@ export class OrganizationOverviewTeamCardComponent {
   public readonly statistics: InputSignal<OrganizationMembershipStatisticsOutput | null> =
     input<OrganizationMembershipStatisticsOutput | null>(null);
 
-  /**
-   * Input chartData
-   * @readonly
-   *
-   * @description
-   * Chart.js dataset rendered by PrimeNG's bar chart.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<ChartData<'bar', number[], string>>}
-   */
-  public readonly chartData: InputSignal<ChartData<'bar', number[], string>> =
-    input.required<ChartData<'bar', number[], string>>();
-
-  /**
-   * Input chartOptions
-   * @readonly
-   *
-   * @description
-   * Chart.js configuration for the membership chart.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<ChartOptions<'bar'>>}
-   */
-  public readonly chartOptions: InputSignal<ChartOptions<'bar'>> =
-    input.required<ChartOptions<'bar'>>();
   //#endregion
 
   //#region Outputs

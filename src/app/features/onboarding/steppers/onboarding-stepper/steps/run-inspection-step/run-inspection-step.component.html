@@ -36,7 +36,7 @@
 
   <div class="px-6 py-6">
     <app-create-inspection-form
-      [loading]="isCreating() || isExecuting()"
+      [loading]="isFormBusy()"
       [equipmentOptions]="[...equipmentOptions()]"
       (submitted)="handleSubmit($event)"
     />

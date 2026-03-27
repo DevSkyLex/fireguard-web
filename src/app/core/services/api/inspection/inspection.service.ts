@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { BaseApiService } from '../base-api.service';
 import type { RequestOptions } from '../base-api.service';
-import type { HydraCollection } from '@core/models/api';
+import type { HydraCollection, OptionOutput } from '@core/models/api';
 import type {
   InspectionOutput,
   CreateInspectionInput,
@@ -54,6 +54,18 @@ export class InspectionService extends BaseApiService {
     return inspectionId ? `${base}/${inspectionId}` : base;
   }
   //#endregion
+
+  public listStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
+    return this.getCollection<OptionOutput>('/api/inspections/statuses', options);
+  }
+
+  public listResults(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
+    return this.getCollection<OptionOutput>('/api/inspections/results', options);
+  }
+
+  public listInspectorTypes(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
+    return this.getCollection<OptionOutput>('/api/inspections/inspector-types', options);
+  }
 
   //#region Public Methods — Inspections
   /**

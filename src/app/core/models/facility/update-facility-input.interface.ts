@@ -1,6 +1,3 @@
-export interface UpdateFacilityInput {
-  readonly name?: string;
-  readonly code?: string | null;
-  readonly address?: string | null;
-  readonly metadata?: Readonly<Record<string, string | null>>;
-}
+import type { CreateFacilityInput } from './create-facility-input.interface';
+
+export type UpdateFacilityInput = Partial<Omit<CreateFacilityInput, 'type' | 'parentFacilityId'>>;

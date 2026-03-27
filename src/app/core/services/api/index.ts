@@ -2,6 +2,7 @@ export { BaseApiService } from './base-api.service';
 export type { ApiRequestOptions, PaginationOptions, RequestOptions } from '@core/models/api';
 
 export * from './auth';
+export * from './audit';
 export * from './checklist';
 export * from './equipment';
 export * from './facility';
@@ -13,3 +14,4 @@ export * from './organization';
 export * from './password-reset';
 export * from './session';
 export * from './trusted-device';
+export * from './user';

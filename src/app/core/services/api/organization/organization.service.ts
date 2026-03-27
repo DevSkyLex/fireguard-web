@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { BaseApiService } from '../base-api.service';
 import type { RequestOptions } from '../base-api.service';
-import type { HydraCollection } from '@core/models/api';
+import type { HydraCollection, OptionOutput } from '@core/models/api';
 import type {
   OrganizationOutput,
   CreateOrganizationInput,
@@ -10,7 +10,9 @@ import type {
   OrganizationStatisticsOutput,
   OrganizationCountryOutput,
   OrganizationLegalTypeOutput,
+  OrganizationLegalProfileOutput,
   OrganizationPermissionOutput,
+  UpsertOrganizationLegalProfileInput,
 } from '@core/models/organization';
 
 /**
@@ -200,6 +202,22 @@ export class OrganizationService extends BaseApiService {
     );
   }
 
+  public getLegalProfile(organizationId: string): Observable<OrganizationLegalProfileOutput> {
+    return this.getOne<OrganizationLegalProfileOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/legal-profile`,
+    );
+  }
+
+  public upsertLegalProfile(
+    organizationId: string,
+    input: UpsertOrganizationLegalProfileInput,
+  ): Observable<OrganizationLegalProfileOutput> {
+    return this.put<UpsertOrganizationLegalProfileInput, OrganizationLegalProfileOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/legal-profile`,
+      input,
+    );
+  }
+
   /**
    * Method listCountries
    * @method listCountries
@@ -217,6 +235,20 @@ export class OrganizationService extends BaseApiService {
   public listCountries(options?: RequestOptions): Observable<HydraCollection<OrganizationCountryOutput>> {
     return this.getCollection<OrganizationCountryOutput>(
       `${OrganizationService.BASE_PATH}/countries`,
+      options,
+    );
+  }
+
+  public listStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
+    return this.getCollection<OptionOutput>(
+      `${OrganizationService.BASE_PATH}/statuses`,
+      options,
+    );
+  }
+
+  public listInvitationStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
+    return this.getCollection<OptionOutput>(
+      `${OrganizationService.BASE_PATH}/invitation-statuses`,
       options,
     );
   }

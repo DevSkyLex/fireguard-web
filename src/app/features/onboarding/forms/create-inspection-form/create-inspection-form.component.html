@@ -12,6 +12,11 @@
       fluid
       placeholder="Select equipment"
     />
+    @if (!loading() && equipmentOptions().length === 0) {
+      <p-message severity="warn" variant="simple">
+        <span>Create or refresh an equipment before running the first inspection.</span>
+      </p-message>
+    }
     @if (form.controls.equipmentId.invalid && form.controls.equipmentId.touched) {
       <p-message severity="error" variant="simple"><span>Equipment is required.</span></p-message>
     }

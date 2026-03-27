@@ -13,3 +13,9 @@ export type { OrganizationStatisticsOutput } from './organization-statistics-out
 export type { OrganizationCountryOutput } from './organization-country-output.interface';
 export type { OrganizationLegalTypeOutput, OrganizationLegalFieldRequirement, OrganizationLegalProfileRequirements } from './organization-legal-type-output.interface';
 export type { OrganizationPermissionOutput } from './organization-permission-output.interface';
+export type {
+  OrganizationLegalFieldRequirementOutput,
+  OrganizationLegalProfileRequirementsOutput,
+  OrganizationLegalProfileOutput,
+} from './organization-legal-profile-output.interface';
+export type { UpsertOrganizationLegalProfileInput } from './upsert-organization-legal-profile-input.interface';

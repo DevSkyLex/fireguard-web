@@ -11,6 +11,7 @@ export type { HydraSearch, HydraSearchMapping } from './hydra-search.interface';
 export type { HydraCollection } from './hydra-collection.interface';
 export type { ApiError } from './api-error.interface';
 export type { ConstraintViolation, Violation } from './constraint-violation.interface';
+export type { OptionOutput } from './option-output.interface';
 
 // Type guards
 export { isApiError } from './api-error.interface';

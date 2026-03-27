@@ -194,6 +194,21 @@ export class CreateInspectionForm {
         this.form.enable({ emitEvent: false });
       }
     });
+
+    effect(() => {
+      const options: EquipmentOption[] = this.equipmentOptions();
+      const equipmentControl = this.form.controls.equipmentId;
+      const selectedEquipmentId: string = equipmentControl.getRawValue();
+
+      if (options.length === 0 && selectedEquipmentId) {
+        equipmentControl.setValue('', { emitEvent: false });
+        return;
+      }
+
+      if (options.length === 1 && !selectedEquipmentId) {
+        equipmentControl.setValue(options[0].id, { emitEvent: false });
+      }
+    });
   }
   //#endregion
 

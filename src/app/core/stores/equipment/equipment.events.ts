@@ -28,6 +28,7 @@ export const equipmentStoreEvents = eventGroup({
     attachmentsListFailed: type<OperationFailureEventPayload>(),
     addAttachmentFailed: type<OperationFailureEventPayload>(),
     deleteAttachmentFailed: type<OperationFailureEventPayload>(),
+    tagsListFailed: type<OperationFailureEventPayload>(),
     addTagFailed: type<OperationFailureEventPayload>(),
     removeTagFailed: type<OperationFailureEventPayload>(),
   },

@@ -6,3 +6,4 @@ export type { EquipmentAttachmentOutput } from './equipment-attachment-output.in
 export type { AddAttachmentInput } from './add-attachment-input.interface';
 export type { EquipmentTagOutput } from './equipment-tag-output.interface';
 export type { AddTagInput } from './add-tag-input.interface';
+export type { EquipmentMaintenanceLogOutput } from './equipment-maintenance-log-output.interface';

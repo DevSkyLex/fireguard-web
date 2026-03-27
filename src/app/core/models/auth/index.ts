@@ -14,4 +14,3 @@ export { TOKEN_TYPE } from './login-output.interface';
 export type { LogoutOutput } from './logout-output.interface';
 export type { MfaResendInput } from './mfa-resend-input.interface';
 export type { MfaVerifyInput } from './mfa-verify-input.interface';
-export type { ResetPasswordOutput } from './reset-password-output.interface';

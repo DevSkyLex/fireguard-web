@@ -923,6 +923,59 @@ export const EquipmentStore = signalStore(
       // ── Tags ───────────────────────────────────────────────────────────────
 
       /**
+       * Method loadTags
+       * @method loadTags
+       *
+       * @description
+       * Loads the organization tag catalog used by equipment tag pickers.
+       * Uses `switchMap` to cancel any previous in-flight request.
+       *
+       * @since 1.0.0
+       */
+      loadTags: rxMethod<{ organizationId: string; search?: string; options?: RequestOptions }>(
+        pipe(
+          tap((): void => {
+            patchState(store, {
+              tagsListOperation: createLoadingOperation(store.tagsListOperation().data),
+            });
+          }),
+          switchMap(({ organizationId, search, options }) =>
+            equipmentService.listTagCatalog(organizationId, search, options).pipe(
+              tapResponse({
+                next: (response: HydraCollection<EquipmentTagOutput>): void => {
+                  patchState(store,
+                    setAllEntities([...response.member], { collection: 'tag' }),
+                    {
+                      totalTags: response.totalItems,
+                      tagsListOperation: {
+                        ...createSuccessOperation(response.member),
+                        total: response.totalItems,
+                      },
+                    },
+                  );
+                },
+                error: (error: unknown): void => {
+                  const operationError: OperationError<unknown> =
+                    createOperationErrorFromUnknown(error);
+                  patchState(store, {
+                    tagsListOperation: createErrorOperation(
+                      operationError,
+                      store.tagsListOperation().data,
+                    ),
+                  });
+                  dispatcher.dispatch(
+                    equipmentStoreEvents.tagsListFailed(
+                      toOperationFailureEventPayload(operationError, 'Failed to load tags'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
        * Method addTag
        * @method addTag
        *

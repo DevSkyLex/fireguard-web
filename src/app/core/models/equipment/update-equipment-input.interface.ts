@@ -1,8 +1,3 @@
-export interface UpdateEquipmentInput {
-  readonly type?: string;
-  readonly subType?: string | null;
-  readonly brand?: string | null;
-  readonly model?: string | null;
-  readonly serialNumber?: string | null;
-  readonly locationLabel?: string | null;
-}
+import type { CreateEquipmentInput } from './create-equipment-input.interface';
+
+export type UpdateEquipmentInput = Partial<CreateEquipmentInput>;

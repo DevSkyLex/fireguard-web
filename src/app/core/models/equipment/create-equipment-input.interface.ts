@@ -1,8 +1,9 @@
-export interface CreateEquipmentInput {
-  readonly type: string;
-  readonly subType?: string | null;
-  readonly brand?: string | null;
-  readonly model?: string | null;
-  readonly serialNumber?: string | null;
-  readonly locationLabel?: string | null;
-}
+import type { EquipmentOutput } from './equipment-output.interface';
+
+type EquipmentEditableFields = Pick<
+  EquipmentOutput,
+  'type' | 'subType' | 'brand' | 'model' | 'serialNumber' | 'locationLabel'
+>;
+
+export type CreateEquipmentInput = Pick<EquipmentEditableFields, 'type'> &
+  Partial<Omit<EquipmentEditableFields, 'type'>>;

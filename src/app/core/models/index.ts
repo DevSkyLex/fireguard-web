@@ -1,4 +1,5 @@
 export * from './api';
+export * from './audit';
 export * from './auth';
 export * from './checklist';
 export * from './equipment';
@@ -12,3 +13,4 @@ export * from './organization';
 export * from './password-reset';
 export * from './session';
 export * from './trusted-device';
+export * from './user';

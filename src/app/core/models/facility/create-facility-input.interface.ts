@@ -1,10 +1,9 @@
-import type { FacilityType } from './facility-output.interface';
+import type { FacilityOutput } from './facility-output.interface';
 
-export interface CreateFacilityInput {
-  readonly type: FacilityType;
-  readonly name: string;
-  readonly parentFacilityId?: string | null;
-  readonly code?: string | null;
-  readonly address?: string | null;
-  readonly metadata?: Readonly<Record<string, string | null>>;
-}
+type FacilityWritableFields = Pick<
+  FacilityOutput,
+  'type' | 'name' | 'parentFacilityId' | 'code' | 'address' | 'metadata'
+>;
+
+export type CreateFacilityInput = Pick<FacilityWritableFields, 'type' | 'name'> &
+  Partial<Omit<FacilityWritableFields, 'type' | 'name'>>;

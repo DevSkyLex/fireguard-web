@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { BaseApiService } from '../base-api.service';
 import type { RequestOptions } from '../base-api.service';
-import type { HydraCollection } from '@core/models/api';
+import type { HydraCollection, OptionOutput } from '@core/models/api';
 import type {
   FacilityOutput,
   FacilityTypeOutput,
@@ -51,6 +51,10 @@ export class FacilityService extends BaseApiService {
       '/api/facilities/types',
       options,
     );
+  }
+
+  public listStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
+    return this.getCollection<OptionOutput>('/api/facilities/statuses', options);
   }
 
   /**

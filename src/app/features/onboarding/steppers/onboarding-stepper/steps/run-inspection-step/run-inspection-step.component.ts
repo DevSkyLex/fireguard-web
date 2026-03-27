@@ -99,23 +99,66 @@ export class RunInspectionStep extends OnboardingStepBase {
    * Property isCreating
    * @readonly
    *
+   * @description
+   * True while the inspection creation operation is in progress, used to
+   * disable the form and show a loading state on the submit button.
+   *
    * @access protected
    * @since 1.0.0
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isCreating: Signal<boolean> = this.inspectionStore.isCreating;
+  protected readonly isCreating: Signal<boolean> =
+    this.inspectionStore.isCreating;
+
+  /**
+   * Property isLoadingEquipment
+   * @readonly
+   *
+   * @description
+   * True while the equipment list is loading, used to disable the form and show
+   * a loading state on the equipment selector.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isLoadingEquipment: Signal<boolean> =
+    this.equipmentStore.isLoadingEquipment;
 
   /**
    * Property isExecuting
    * @readonly
    *
+   * @description
+   * True while the onboarding step execution operation is in progress,
+   * used to disable the form and show a loading state on the submit button.
+   *
    * @access protected
    * @since 1.0.0
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isExecuting: Signal<boolean> = this.onboardingStore.isExecutingStep;
+  protected readonly isExecuting: Signal<boolean> =
+    this.onboardingStore.isExecutingStep;
+
+  /**
+   * Property isFormBusy
+   * @readonly
+   *
+   * @description
+   * True while the step is loading equipment, creating the inspection,
+   * or executing the onboarding step transition.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isFormBusy: Signal<boolean> = computed<boolean>(
+    () => this.isLoadingEquipment() || this.isCreating() || this.isExecuting(),
+  );
 
   /**
    * Property equipmentOptions
@@ -172,8 +215,14 @@ export class RunInspectionStep extends OnboardingStepBase {
     super();
     effect(() => {
       const organizationId: string | null = this.onboardingStore.targetOrganizationId();
-      if (organizationId) {
-        this.equipmentStore.loadEquipment({ organizationId });
+      const isActiveStep: boolean =
+        this.onboardingStore.activeStepIndex() === this.stepIndex();
+
+      if (organizationId && isActiveStep) {
+        this.equipmentStore.loadEquipment({
+          organizationId,
+          options: { itemsPerPage: 100 },
+        });
       }
     });
 
@@ -212,7 +261,7 @@ export class RunInspectionStep extends OnboardingStepBase {
    */
   protected handleSubmit(values: CreateInspectionFormValues): void {
     const organizationId: string | null = this.onboardingStore.targetOrganizationId();
-    if (!organizationId || this.onboardingStore.isBusy() || this.inspectionStore.isCreating()) return;
+    if (!organizationId || this.onboardingStore.isBusy() || this.isFormBusy()) return;
 
     this.inspectionStore.create({
       organizationId,

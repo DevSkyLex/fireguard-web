@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { type Observable } from 'rxjs';
 import { BaseApiService } from '../base-api.service';
-import type { LoginInput, LoginOutput, LogoutOutput, MfaResendInput, MfaVerifyInput, ResetPasswordOutput } from '@core/models/auth';
+import type { LoginInput, LoginOutput, LogoutOutput, MfaResendInput, MfaVerifyInput } from '@core/models/auth';
 
 /**
  * Service AuthService
@@ -165,26 +165,5 @@ export class AuthService extends BaseApiService {
     );
   }
 
-  /**
-   * Method resetPassword
-   *
-   * @description
-   * Resets the user's password after successful OTP verification.
-   * Requires a valid verification token from the password reset challenge.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {string} token - Verification token from OTP challenge.
-   * @param {string} newPassword - New password to set.
-   *
-   * @returns {Observable<ResetPasswordOutput>} Observable emitting the reset result.
-   */
-  public resetPassword(token: string, newPassword: string): Observable<ResetPasswordOutput> {
-    return this.post<{ token: string; password: string }, ResetPasswordOutput>(
-      `${AuthService.BASE_PATH}/password/reset`,
-      { token, password: newPassword },
-    );
-  }
   //#endregion
 }

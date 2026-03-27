@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { BaseApiService } from '../base-api.service';
 import type { RequestOptions } from '../base-api.service';
-import type { HydraCollection } from '@core/models/api';
+import type { HydraCollection, OptionOutput } from '@core/models/api';
 import type {
   ChecklistOutput,
   ChecklistListOptions,
@@ -112,6 +112,10 @@ export class ChecklistService extends BaseApiService {
       `${ChecklistService.BASE_PATH}/${organizationId}/checklists`,
       input,
     );
+  }
+
+  public listStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
+    return this.getCollection<OptionOutput>('/api/checklists/statuses', options);
   }
 
   /**

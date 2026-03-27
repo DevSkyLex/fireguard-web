@@ -2,13 +2,14 @@ import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { BaseApiService } from '../base-api.service';
 import type { RequestOptions } from '../base-api.service';
-import type { HydraCollection } from '@core/models/api';
+import type { HydraCollection, OptionOutput } from '@core/models/api';
 import type {
   EquipmentOutput,
   CreateEquipmentInput,
   UpdateEquipmentInput,
   AssignToFacilityInput,
   EquipmentAttachmentOutput,
+  EquipmentMaintenanceLogOutput,
   AddAttachmentInput,
   EquipmentTagOutput,
   AddTagInput,
@@ -91,6 +92,26 @@ export class EquipmentService extends BaseApiService {
   ): Observable<HydraCollection<EquipmentOutput>> {
     return this.getCollection<EquipmentOutput>(
       this.equipmentPath(organizationId),
+      options,
+    );
+  }
+
+  public listStatuses(
+    organizationId: string,
+    options?: RequestOptions,
+  ): Observable<HydraCollection<OptionOutput>> {
+    return this.getCollection<OptionOutput>(
+      `${EquipmentService.BASE_PATH}/${organizationId}/equipment-statuses`,
+      options,
+    );
+  }
+
+  public listTypes(
+    organizationId: string,
+    options?: RequestOptions,
+  ): Observable<HydraCollection<OptionOutput>> {
+    return this.getCollection<OptionOutput>(
+      `${EquipmentService.BASE_PATH}/${organizationId}/equipment-types`,
       options,
     );
   }
@@ -339,6 +360,34 @@ export class EquipmentService extends BaseApiService {
     return this.getCollection<EquipmentAttachmentOutput>(
       `${this.equipmentPath(organizationId, equipmentId)}/attachments`,
       options,
+    );
+  }
+
+  public listMaintenanceLogs(
+    organizationId: string,
+    equipmentId: string,
+    options?: RequestOptions,
+  ): Observable<HydraCollection<EquipmentMaintenanceLogOutput>> {
+    return this.getCollection<EquipmentMaintenanceLogOutput>(
+      `${this.equipmentPath(organizationId, equipmentId)}/maintenance-logs`,
+      options,
+    );
+  }
+
+  public listTagCatalog(
+    organizationId: string,
+    search?: string,
+    options?: RequestOptions,
+  ): Observable<HydraCollection<EquipmentTagOutput>> {
+    return this.getCollection<EquipmentTagOutput>(
+      `${EquipmentService.BASE_PATH}/${organizationId}/equipment/tags`,
+      {
+        ...options,
+        params: {
+          ...options?.params,
+          ...(search ? { search } : {}),
+        },
+      },
     );
   }
 

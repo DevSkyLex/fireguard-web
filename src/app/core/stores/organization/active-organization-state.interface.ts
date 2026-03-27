@@ -1,4 +1,5 @@
 import type {
+  OrganizationDashboardStatistics,
   OrganizationOutput,
   OrganizationStatisticsOutput,
 } from '@core/models/organization';
@@ -66,6 +67,19 @@ export interface ActiveOrganizationState {
    * @type {OrganizationStatisticsOutput | null}
    */
   readonly statistics: OrganizationStatisticsOutput | null;
+
+  /**
+   * Property dashboardStatistics
+   * @readonly
+   *
+   * @description
+   * Detailed statistics payload used by the organization overview dashboard.
+   *
+   * @since 1.1.0
+   *
+   * @type {OrganizationDashboardStatistics | null}
+   */
+  readonly dashboardStatistics: OrganizationDashboardStatistics | null;
 
   /**
    * Property statisticsOperation

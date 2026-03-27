@@ -1,0 +1,55 @@
+<p-card
+  styleClass="rounded-[1rem] border border-surface-200 bg-surface-0 shadow-none dark:border-surface-800 dark:bg-surface-900"
+>
+  <div class="flex flex-wrap items-center justify-between gap-4 border-b border-surface-200 pb-5 dark:border-surface-800">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.24em] text-surface-400 dark:text-surface-500">
+        Team overview
+      </p>
+      <h2 class="mt-1 text-xl font-semibold tracking-tight text-surface-900 dark:text-surface-0">
+        Membership and invitations
+      </h2>
+      <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">
+        Member activity and invitation funnel at a glance.
+      </p>
+    </div>
+
+    <p-button
+      label="View report"
+      icon="pi pi-file"
+      severity="secondary"
+      [outlined]="true"
+      size="small"
+      (onClick)="viewReport.emit()"
+    />
+  </div>
+
+  @if (statistics()) {
+    <div class="h-[20rem] pt-4">
+      <p-chart
+        type="bar"
+        [data]="chartData()"
+        [options]="chartOptions()"
+        ariaLabel="Team overview"
+        class="block h-full"
+      />
+    </div>
+  } @else {
+    <div class="flex h-[20rem] items-center justify-center pt-4">
+      <p-skeleton width="100%" height="100%" borderRadius="0.875rem" />
+    </div>
+  }
+
+  <div class="mt-5 grid gap-3 border-t border-surface-200 pt-5 sm:grid-cols-2 xl:grid-cols-4 dark:border-surface-800">
+    @for (item of summaryItems(); track item.label) {
+      <div class="rounded-lg bg-surface-50 px-4 py-4 dark:bg-surface-800">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-surface-400 dark:text-surface-500">
+          {{ item.label }}
+        </p>
+        <p class="mt-2 text-xl font-semibold text-surface-900 dark:text-surface-0">
+          {{ item.value }}
+        </p>
+      </div>
+    }
+  </div>
+</p-card>

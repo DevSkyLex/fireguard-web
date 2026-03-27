@@ -23,6 +23,7 @@ import type { OnboardingStepOutput } from '@core/models/onboarding';
  */
 @Directive()
 export abstract class OnboardingStepBase {
+  //#region Inputs
   /**
    * Input step
    * @readonly
@@ -70,4 +71,5 @@ export abstract class OnboardingStepBase {
    */
   public readonly totalSteps: InputSignal<number> =
     input.required<number>();
+  //#endregion
 }

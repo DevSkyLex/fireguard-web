@@ -4,6 +4,11 @@ import { BaseApiService } from '../base-api.service';
 import type { RequestOptions } from '../base-api.service';
 import type { HydraCollection, OptionOutput } from '@core/models/api';
 import type {
+  OrganizationEquipmentStatisticsOutput,
+  OrganizationFacilityStatisticsOutput,
+  OrganizationInspectionStatisticsOutput,
+  OrganizationMembershipStatisticsOutput,
+  OrganizationNonConformityStatisticsOutput,
   OrganizationOutput,
   CreateOrganizationInput,
   OrganizationInvitationOutput,
@@ -199,6 +204,46 @@ export class OrganizationService extends BaseApiService {
   public getStatistics(organizationId: string): Observable<OrganizationStatisticsOutput> {
     return this.getOne<OrganizationStatisticsOutput>(
       `${OrganizationService.BASE_PATH}/${organizationId}/statistics`,
+    );
+  }
+
+  public getEquipmentStatistics(
+    organizationId: string,
+  ): Observable<OrganizationEquipmentStatisticsOutput> {
+    return this.getOne<OrganizationEquipmentStatisticsOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/statistics/equipment`,
+    );
+  }
+
+  public getFacilityStatistics(
+    organizationId: string,
+  ): Observable<OrganizationFacilityStatisticsOutput> {
+    return this.getOne<OrganizationFacilityStatisticsOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/statistics/facilities`,
+    );
+  }
+
+  public getInspectionStatistics(
+    organizationId: string,
+  ): Observable<OrganizationInspectionStatisticsOutput> {
+    return this.getOne<OrganizationInspectionStatisticsOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/statistics/inspections`,
+    );
+  }
+
+  public getMembershipStatistics(
+    organizationId: string,
+  ): Observable<OrganizationMembershipStatisticsOutput> {
+    return this.getOne<OrganizationMembershipStatisticsOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/statistics/membership`,
+    );
+  }
+
+  public getNonConformityStatistics(
+    organizationId: string,
+  ): Observable<OrganizationNonConformityStatisticsOutput> {
+    return this.getOne<OrganizationNonConformityStatisticsOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/statistics/non-conformities`,
     );
   }
 

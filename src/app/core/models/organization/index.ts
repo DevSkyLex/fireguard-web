@@ -10,6 +10,12 @@ export type { UpdateOrganizationRoleInput } from './update-organization-role-inp
 export type { AssignOrganizationRoleInput } from './assign-organization-role-input.interface';
 export type { AcceptOrganizationInvitationInput } from './accept-organization-invitation-input.interface';
 export type { OrganizationStatisticsOutput } from './organization-statistics-output.interface';
+export type { OrganizationEquipmentStatisticsOutput } from './organization-equipment-statistics-output.interface';
+export type { OrganizationFacilityStatisticsOutput } from './organization-facility-statistics-output.interface';
+export type { OrganizationInspectionStatisticsOutput } from './organization-inspection-statistics-output.interface';
+export type { OrganizationMembershipStatisticsOutput } from './organization-membership-statistics-output.interface';
+export type { OrganizationNonConformityStatisticsOutput } from './organization-non-conformity-statistics-output.interface';
+export type { OrganizationDashboardStatistics } from './organization-dashboard-statistics.type';
 export type { OrganizationCountryOutput } from './organization-country-output.interface';
 export type { OrganizationLegalTypeOutput, OrganizationLegalFieldRequirement, OrganizationLegalProfileRequirements } from './organization-legal-type-output.interface';
 export type { OrganizationPermissionOutput } from './organization-permission-output.interface';

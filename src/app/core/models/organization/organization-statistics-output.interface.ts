@@ -4,5 +4,6 @@ export interface OrganizationStatisticsOutput extends HydraItem {
   readonly memberCount: number;
   readonly roleCount: number;
   readonly facilityCount: number;
+  readonly activeFacilityCount: number;
   readonly pendingInvitationCount: number;
 }

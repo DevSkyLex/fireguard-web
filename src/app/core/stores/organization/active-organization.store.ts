@@ -13,9 +13,13 @@ import {
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { computed } from '@angular/core';
-import { Observable, filter, pipe, switchMap, tap } from 'rxjs';
+import { Observable, filter, forkJoin, pipe, switchMap, tap } from 'rxjs';
 import { OrganizationService } from '@core/services/api/organization';
-import type { OrganizationOutput, OrganizationStatisticsOutput } from '@core/models/organization';
+import type {
+  OrganizationDashboardStatistics,
+  OrganizationOutput,
+  OrganizationStatisticsOutput,
+} from '@core/models/organization';
 import type { ActiveOrganizationState } from './active-organization-state.interface';
 import {
   createErrorOperation,
@@ -46,6 +50,7 @@ const INITIAL_ACTIVE_ORGANIZATION_STATE: ActiveOrganizationState = {
   selectedOrganization: null,
   getOperation: createIdleOperation(),
   statistics: null,
+  dashboardStatistics: null,
   statisticsOperation: createIdleOperation(),
 } as const;
 //#endregion
@@ -182,6 +187,26 @@ export const ActiveOrganizationStore = signalStore(
       // If the operation is in error, return the error object; otherwise, return null.
       return operation.status === 'error' ? operation.error : null;
     }),
+
+    equipmentStatistics: computed(
+      () => store.dashboardStatistics()?.equipment ?? null,
+    ),
+
+    facilityStatistics: computed(
+      () => store.dashboardStatistics()?.facilities ?? null,
+    ),
+
+    inspectionStatistics: computed(
+      () => store.dashboardStatistics()?.inspections ?? null,
+    ),
+
+    membershipStatistics: computed(
+      () => store.dashboardStatistics()?.membership ?? null,
+    ),
+
+    nonConformityStatistics: computed(
+      () => store.dashboardStatistics()?.nonConformities ?? null,
+    ),
   })),
 
   /**
@@ -220,9 +245,19 @@ export const ActiveOrganizationStore = signalStore(
      * @returns {void} No return value.
      */
     setOrganization(organization: OrganizationOutput): void {
+      const hasChangedOrganization: boolean =
+        store.selectedOrganization()?.id !== organization.id;
+
       patchState(store, {
         selectedOrganization: organization,
         getOperation: createSuccessOperation(organization),
+        ...(hasChangedOrganization
+          ? {
+              statistics: null,
+              dashboardStatistics: null,
+              statisticsOperation: createIdleOperation(),
+            }
+          : {}),
       });
     },
 
@@ -287,7 +322,12 @@ export const ActiveOrganizationStore = signalStore(
      * @return {void} No return value.
      */
     clearSelectedOrganization(): void {
-      patchState(store, { selectedOrganization: null });
+      patchState(store, {
+        selectedOrganization: null,
+        statistics: null,
+        dashboardStatistics: null,
+        statisticsOperation: createIdleOperation(),
+      });
     },
 
     /**
@@ -311,12 +351,20 @@ export const ActiveOrganizationStore = signalStore(
           });
         }),
         switchMap((organizationId: string) =>
-          organizationService.getStatistics(organizationId).pipe(
+          forkJoin({
+            overview: organizationService.getStatistics(organizationId),
+            equipment: organizationService.getEquipmentStatistics(organizationId),
+            facilities: organizationService.getFacilityStatistics(organizationId),
+            inspections: organizationService.getInspectionStatistics(organizationId),
+            membership: organizationService.getMembershipStatistics(organizationId),
+            nonConformities: organizationService.getNonConformityStatistics(organizationId),
+          }).pipe(
             tapResponse({
-              next: (statistics: OrganizationStatisticsOutput): void => {
+              next: (statistics: OrganizationDashboardStatistics): void => {
                 patchState(store, {
-                  statistics,
-                  statisticsOperation: createSuccessOperation(statistics),
+                  statistics: statistics.overview,
+                  dashboardStatistics: statistics,
+                  statisticsOperation: createSuccessOperation(statistics.overview),
                 });
               },
               error: (error: unknown): void => {

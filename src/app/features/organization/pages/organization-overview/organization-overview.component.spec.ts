@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
@@ -111,22 +111,33 @@ const MOCK_DASHBOARD_STATS: OrganizationDashboardStatistics = {
 };
 
 describe('OrganizationOverviewPage', () => {
+  const selectedOrganization = signal<OrganizationOutput | null>(MOCK_ORG);
+  const statistics = signal<OrganizationStatisticsOutput | null>(null);
+  const dashboardStatistics = signal<OrganizationDashboardStatistics | null>(null);
+  const isLoadingStatistics = signal(false);
+  const statisticsError = signal<{ message: string } | null>(null);
+
   const mockOrganizationStore = {
-    selectedOrganization: signal<OrganizationOutput | null>(MOCK_ORG),
-    statistics: signal<OrganizationStatisticsOutput | null>(null),
-    dashboardStatistics: signal<OrganizationDashboardStatistics | null>(null),
-    isLoadingStatistics: signal(false),
-    statisticsError: signal<{ message: string } | null>(null),
-    loadStatistics: vi.fn(),
+    selectedOrganization,
+    statistics,
+    dashboardStatistics,
+    equipmentStatistics: computed(() => dashboardStatistics()?.equipment ?? null),
+    facilityStatistics: computed(() => dashboardStatistics()?.facilities ?? null),
+    inspectionStatistics: computed(() => dashboardStatistics()?.inspections ?? null),
+    membershipStatistics: computed(() => dashboardStatistics()?.membership ?? null),
+    nonConformityStatistics: computed(() => dashboardStatistics()?.nonConformities ?? null),
+    isLoadingStatistics,
+    statisticsError,
+    ensureStatisticsLoaded: vi.fn(),
   };
 
   beforeEach(() => {
-    mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
-    mockOrganizationStore.statistics.set(null);
-    mockOrganizationStore.dashboardStatistics.set(null);
-    mockOrganizationStore.isLoadingStatistics.set(false);
-    mockOrganizationStore.statisticsError.set(null);
-    mockOrganizationStore.loadStatistics.mockReset();
+    selectedOrganization.set(MOCK_ORG);
+    statistics.set(null);
+    dashboardStatistics.set(null);
+    isLoadingStatistics.set(false);
+    statisticsError.set(null);
+    mockOrganizationStore.ensureStatisticsLoaded.mockReset();
 
     TestBed.configureTestingModule({
       imports: [OrganizationOverviewPage],
@@ -143,20 +154,10 @@ describe('OrganizationOverviewPage', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should load statistics when organization is available', () => {
+  it('should request organization statistics when organization is available', () => {
     const fixture = TestBed.createComponent(OrganizationOverviewPage);
     fixture.detectChanges();
-    expect(mockOrganizationStore.loadStatistics).toHaveBeenCalledWith('org-1');
-  });
-
-  it('should not reload statistics when current organization dashboard is already available', () => {
-    mockOrganizationStore.statistics.set(MOCK_STATS);
-    mockOrganizationStore.dashboardStatistics.set(MOCK_DASHBOARD_STATS);
-
-    const fixture = TestBed.createComponent(OrganizationOverviewPage);
-    fixture.detectChanges();
-
-    expect(mockOrganizationStore.loadStatistics).not.toHaveBeenCalled();
+    expect(mockOrganizationStore.ensureStatisticsLoaded).toHaveBeenCalledWith('org-1');
   });
 
   it('should display organization name', () => {
@@ -166,7 +167,7 @@ describe('OrganizationOverviewPage', () => {
   });
 
   it('should show skeleton cards when loading', () => {
-    mockOrganizationStore.isLoadingStatistics.set(true);
+    isLoadingStatistics.set(true);
     const fixture = TestBed.createComponent(OrganizationOverviewPage);
     fixture.detectChanges();
     const skeletons = fixture.debugElement.queryAll(By.css('p-skeleton'));
@@ -174,8 +175,8 @@ describe('OrganizationOverviewPage', () => {
   });
 
   it('should display dashboard stat values when statistics are loaded', () => {
-    mockOrganizationStore.statistics.set(MOCK_STATS);
-    mockOrganizationStore.dashboardStatistics.set(MOCK_DASHBOARD_STATS);
+    statistics.set(MOCK_STATS);
+    dashboardStatistics.set(MOCK_DASHBOARD_STATS);
     const fixture = TestBed.createComponent(OrganizationOverviewPage);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('12');

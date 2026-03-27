@@ -64,27 +64,29 @@
 
     <section class="grid items-stretch gap-6 xl:grid-cols-12">
       <app-organization-overview-metrics
-        [metrics]="headlineMetrics()"
+        [overviewStatistics]="statistics()"
+        [equipmentStatistics]="equipmentStatistics()"
+        [inspectionStatistics]="inspectionStatistics()"
         [showSkeleton]="showSkeleton()"
       />
 
       <app-organization-overview-operations-card
         class="h-full xl:col-span-8"
-        [filterOptions]="pulseFilterOptions"
-        [activeFilter]="activePulseFilter()"
         [overviewStatistics]="statistics()"
         [equipmentStatistics]="equipmentStatistics()"
+        [facilityStatistics]="facilityStatistics()"
         [inspectionStatistics]="inspectionStatistics()"
         [membershipStatistics]="membershipStatistics()"
         [nonConformityStatistics]="nonConformityStatistics()"
-        [readouts]="operationsReadouts()"
-        [hasData]="hasDashboardStatistics()"
-        (filterChange)="activePulseFilter.set($event)"
       />
 
       <app-organization-overview-focus-board
         class="h-full xl:col-span-4"
-        [items]="focusBoardItems()"
+        [equipmentStatistics]="equipmentStatistics()"
+        [facilityStatistics]="facilityStatistics()"
+        [inspectionStatistics]="inspectionStatistics()"
+        [membershipStatistics]="membershipStatistics()"
+        [nonConformityStatistics]="nonConformityStatistics()"
       />
 
       <app-organization-overview-team-card

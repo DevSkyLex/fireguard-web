@@ -5,7 +5,6 @@ import {
   computed,
   effect,
   inject,
-  signal,
   untracked,
   type Signal,
 } from '@angular/core';
@@ -14,7 +13,6 @@ import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import type {
-  OrganizationDashboardStatistics,
   OrganizationEquipmentStatisticsOutput,
   OrganizationFacilityStatisticsOutput,
   OrganizationInspectionStatisticsOutput,
@@ -31,65 +29,24 @@ import {
   OrganizationOverviewRiskCardComponent,
   OrganizationOverviewTeamCardComponent,
 } from './components';
-import type {
-  OverviewBreakdownItem,
-  OverviewFocusBoardItem,
-  OverviewHeadlineMetric,
-  OverviewPulseFilter,
-  OverviewPulseReadout,
-  OverviewQuickAction,
-  OverviewToggleOption,
-} from './organization-overview.types';
+/**
+ * Type OverviewQuickActionRoute
+ *
+ * @description
+ * Child routes exposed by the organization overview shortcuts.
+ */
+type OverviewQuickActionRoute = 'facilities' | 'equipments' | 'inspections';
 
-interface OrganizationOverviewStatisticsSnapshot {
-  readonly overview: OrganizationStatisticsOutput | null;
-  readonly equipment: OrganizationEquipmentStatisticsOutput | null;
-  readonly facilities: OrganizationFacilityStatisticsOutput | null;
-  readonly inspections: OrganizationInspectionStatisticsOutput | null;
-  readonly membership: OrganizationMembershipStatisticsOutput | null;
-  readonly nonConformities: OrganizationNonConformityStatisticsOutput | null;
-}
-
-function toTitleCaseToken(value: string): string {
-  return value
-    .split(/[_\s-]+/)
-    .filter(Boolean)
-    .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-}
-
-function toSortedBreakdown(
-  counts: Readonly<Record<string, number>> | null | undefined,
-): readonly OverviewBreakdownItem[] {
-  return Object.entries(counts ?? {})
-    .map(([label, value]: [string, number]) => ({
-      label: toTitleCaseToken(label),
-      value,
-    }))
-    .sort(
-      (left: OverviewBreakdownItem, right: OverviewBreakdownItem) =>
-        right.value - left.value,
-    );
-}
-
-function toPercent(numerator: number, denominator: number): string {
-  if (denominator <= 0) {
-    return '0%';
-  }
-
-  return `${Math.round((numerator / denominator) * 100)}%`;
-}
-
-function getResolvedFindingsCount(
-  statistics: OrganizationNonConformityStatisticsOutput | null,
-): number {
-  return (statistics?.doneCount ?? 0) + (statistics?.waivedCount ?? 0);
-}
-
-function getOpenFindingsCount(
-  statistics: OrganizationNonConformityStatisticsOutput | null,
-): number {
-  return (statistics?.openCount ?? 0) + (statistics?.inProgressCount ?? 0);
+/**
+ * Interface OverviewQuickAction
+ *
+ * @description
+ * Shortcut action displayed in the overview header.
+ */
+interface OverviewQuickAction {
+  readonly label: string;
+  readonly route: OverviewQuickActionRoute;
+  readonly icon: string;
 }
 
 /**
@@ -98,12 +55,8 @@ function getOpenFindingsCount(
  *
  * @description
  * Smart dashboard container for the organization overview route.
- * It coordinates store access, prepares the page view-model with
- * local computed signals, and delegates rendering to focused
- * presentational components.
- *
- * The transformation logic is intentionally colocated here because
- * it is specific to this page and not reused elsewhere.
+ * It coordinates store access, handles route-level actions, and
+ * delegates dashboard rendering to focused overview components.
  *
  * @version 1.0.0
  *
@@ -129,7 +82,7 @@ function getOpenFindingsCount(
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationOverviewPage {
-  //#region Dependencies
+  //#region Properties
   /**
    * Property organizationStore
    * @readonly
@@ -146,11 +99,39 @@ export class OrganizationOverviewPage {
   protected readonly organizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
-  private readonly router: Router = inject(Router);
-  private readonly route: ActivatedRoute = inject(ActivatedRoute);
-  //#endregion
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Angular Router instance used for programmatic navigation from
+   * quick action buttons.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Router}
+   */
+  private readonly router: Router =
+    inject<Router>(Router);
 
-  //#region State
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Active route reference used as the navigation context for quick
+   * action links, ensuring that navigations are relative to the current
+   * organization overview route.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ActivatedRoute}
+   */
+  private readonly route: ActivatedRoute =
+    inject<ActivatedRoute>(ActivatedRoute);
+
   /**
    * Property organization
    * @readonly
@@ -164,7 +145,7 @@ export class OrganizationOverviewPage {
    * @type {Signal<OrganizationOutput | null>}
    */
   protected readonly organization: Signal<OrganizationOutput | null> =
-    computed<OrganizationOutput | null>(() => this.organizationStore.selectedOrganization());
+    this.organizationStore.selectedOrganization;
 
   /**
    * Property statistics
@@ -179,268 +160,231 @@ export class OrganizationOverviewPage {
    * @type {Signal<OrganizationStatisticsOutput | null>}
    */
   protected readonly statistics: Signal<OrganizationStatisticsOutput | null> =
-    computed<OrganizationStatisticsOutput | null>(() => this.organizationStore.statistics());
+    this.organizationStore.statistics;
 
   /**
-   * Property dashboardStatistics
+   * Property isLoading
    * @readonly
    *
    * @description
-   * Aggregated dashboard statistics payload used by overview cards.
+   * Loading state exposed by the store while statistics requests are
+   * in flight.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<OrganizationDashboardStatistics | null>}
+   * @type {Signal<boolean>}
    */
-  protected readonly dashboardStatistics: Signal<OrganizationDashboardStatistics | null> =
-    computed<OrganizationDashboardStatistics | null>(() => this.organizationStore.dashboardStatistics());
-
-  /**
-   * Property statisticsSnapshot
-   * @readonly
-   *
-   * @description
-   * Normalized snapshot that avoids repeating null-safe traversal
-   * across all dashboard view-model computations.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<OrganizationOverviewStatisticsSnapshot>}
-   */
-  protected readonly statisticsSnapshot: Signal<OrganizationOverviewStatisticsSnapshot> =
-    computed<OrganizationOverviewStatisticsSnapshot>(() => ({
-      overview: this.statistics(),
-      equipment: this.dashboardStatistics()?.equipment ?? null,
-      facilities: this.dashboardStatistics()?.facilities ?? null,
-      inspections: this.dashboardStatistics()?.inspections ?? null,
-      membership: this.dashboardStatistics()?.membership ?? null,
-      nonConformities: this.dashboardStatistics()?.nonConformities ?? null,
-    }));
-
-  protected readonly loadedStatisticsResource: Signal<string | null> = computed<string | null>(
-    () => this.dashboardStatistics()?.overview['@id'] ?? null,
-  );
-
   protected readonly isLoading: Signal<boolean> =
-    computed<boolean>(() => this.organizationStore.isLoadingStatistics());
+    this.organizationStore.isLoadingStatistics;
 
+  /**
+   * Property errorMessage
+   * @readonly
+   *
+   * @description
+   * Optional API error surfaced by the dashboard store.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<string | null>}
+   */
   protected readonly errorMessage: Signal<string | null> = computed<string | null>(() =>
     this.organizationStore.statisticsError()?.message ?? null,
   );
 
-  protected readonly equipmentStatistics = computed(
-    () => this.statisticsSnapshot().equipment,
-  );
-  protected readonly facilityStatistics = computed(
-    () => this.statisticsSnapshot().facilities,
-  );
-  protected readonly inspectionStatistics = computed(
-    () => this.statisticsSnapshot().inspections,
-  );
-  protected readonly membershipStatistics = computed(
-    () => this.statisticsSnapshot().membership,
-  );
-  protected readonly nonConformityStatistics = computed(
-    () => this.statisticsSnapshot().nonConformities,
-  );
+  /**
+   * Property equipmentStatistics
+   * @readonly
+   *
+  * @description
+  * Equipment-specific dashboard statistics forwarded to child
+  * components.
+  *
+  * @access protected
+  * @since 1.0.0
+   *
+   * @type {Signal<OrganizationEquipmentStatisticsOutput | null>}
+   */
+  protected readonly equipmentStatistics: Signal<OrganizationEquipmentStatisticsOutput | null> =
+    this.organizationStore.equipmentStatistics;
 
+  /**
+   * Property facilityStatistics
+   * @readonly
+   *
+   * @description
+   * Facility-specific dashboard statistics forwarded to overview
+   * child components.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<OrganizationFacilityStatisticsOutput | null>}
+   */
+  protected readonly facilityStatistics: Signal<OrganizationFacilityStatisticsOutput | null> =
+    this.organizationStore.facilityStatistics;
+
+  /**
+   * Property inspectionStatistics
+   * @readonly
+   *
+   * @description
+   * Inspection-specific dashboard statistics forwarded to overview
+   * child components.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<OrganizationInspectionStatisticsOutput | null>}
+   */
+  protected readonly inspectionStatistics: Signal<OrganizationInspectionStatisticsOutput | null> =
+    this.organizationStore.inspectionStatistics;
+
+  /**
+   * Property membershipStatistics
+   * @readonly
+   *
+   * @description
+   * Membership-specific dashboard statistics forwarded to the team
+   * overview card.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<OrganizationMembershipStatisticsOutput | null>}
+   */
+  protected readonly membershipStatistics: Signal<OrganizationMembershipStatisticsOutput | null> =
+    this.organizationStore.membershipStatistics;
+
+  /**
+   * Property nonConformityStatistics
+   * @readonly
+   *
+   * @description
+   * Non-conformity statistics consumed by risk-related visual blocks.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<OrganizationNonConformityStatisticsOutput | null>}
+   */
+  protected readonly nonConformityStatistics: Signal<OrganizationNonConformityStatisticsOutput | null> =
+    this.organizationStore.nonConformityStatistics;
+
+  /**
+   * Property showSkeleton
+   * @readonly
+   *
+   * @description
+   * Whether the dashboard should render KPI skeletons while the
+   * initial statistics payload has not been resolved yet.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly showSkeleton: Signal<boolean> = computed<boolean>(
-    () => this.isLoading() && this.dashboardStatistics() === null,
+    () => this.isLoading() && this.statistics() === null,
   );
 
-  protected readonly hasDashboardStatistics: Signal<boolean> = computed<boolean>(
-    () => this.dashboardStatistics() !== null,
-  );
-
-  protected readonly activePulseFilter = signal<OverviewPulseFilter>('all');
   //#endregion
 
   //#region ViewModel
-  protected readonly pulseFilterOptions: readonly OverviewToggleOption<OverviewPulseFilter>[] = [
-    { label: 'Live', value: 'live' },
-    { label: '30 days', value: '30days' },
-    { label: 'Health', value: 'health' },
-    { label: 'Risk', value: 'risk' },
-    { label: 'All', value: 'all' },
-  ];
-
+  /**
+   * Property quickActions
+   * @readonly
+   *
+   * @description
+   * Static quick links displayed in the overview header actions.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {readonly OverviewQuickAction[]}
+   */
   protected readonly quickActions: readonly OverviewQuickAction[] = [
     {
       label: 'Open facilities',
-      description: 'Browse sites, buildings, and monitored areas.',
       route: 'facilities',
       icon: 'pi pi-building',
     },
     {
       label: 'Review equipments',
-      description: 'Inspect operational inventory and maintenance needs.',
       route: 'equipments',
       icon: 'pi pi-box',
     },
     {
       label: 'Track inspections',
-      description: 'Follow recent inspections and open findings.',
       route: 'inspections',
       icon: 'pi pi-clipboard',
     },
   ] as const;
 
+  /**
+   * Property snapshotDate
+   * @readonly
+   *
+   * @description
+   * Local timestamp displayed in the page header as the current
+   * dashboard snapshot reference.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Date}
+   */
   protected readonly snapshotDate: Date = new Date();
-
-  protected readonly equipmentTypeBreakdown: Signal<readonly OverviewBreakdownItem[]> =
-    computed<readonly OverviewBreakdownItem[]>(() =>
-      toSortedBreakdown(this.equipmentStatistics()?.countsByType),
-    );
-
-  protected readonly facilityTypeBreakdown: Signal<readonly OverviewBreakdownItem[]> =
-    computed<readonly OverviewBreakdownItem[]>(() =>
-      toSortedBreakdown(this.facilityStatistics()?.countsByType),
-    );
-
-  protected readonly inspectorTypeBreakdown: Signal<readonly OverviewBreakdownItem[]> =
-    computed<readonly OverviewBreakdownItem[]>(() =>
-      toSortedBreakdown(this.inspectionStatistics()?.countsByInspectorType),
-    );
-
-  protected readonly headlineMetrics: Signal<readonly OverviewHeadlineMetric[]> = computed<
-    readonly OverviewHeadlineMetric[]
-  >(() => {
-    const snapshot = this.statisticsSnapshot();
-
-    return [
-      {
-        label: 'Active footprint',
-        value: `${snapshot.overview?.activeFacilityCount ?? 0}`,
-        helper: `${snapshot.overview?.facilityCount ?? 0} mapped facilities`,
-        badgeLabel: `${toPercent(
-          snapshot.overview?.activeFacilityCount ?? 0,
-          snapshot.overview?.facilityCount ?? 0,
-        )} online`,
-        badgeSeverity: 'success',
-      },
-      {
-        label: 'Operational assets',
-        value: `${snapshot.equipment?.operationalCount ?? 0}`,
-        helper: `${snapshot.equipment?.underMaintenanceCount ?? 0} under maintenance`,
-        badgeLabel: `${toPercent(
-          snapshot.equipment?.operationalCount ?? 0,
-          snapshot.equipment?.totalCount ?? 0,
-        )} ready`,
-        badgeSeverity: 'info',
-      },
-      {
-        label: 'Inspections / 30 days',
-        value: `${snapshot.inspections?.performedLast30DaysCount ?? 0}`,
-        helper: `${snapshot.inspections?.closedCount ?? 0} already closed`,
-        badgeLabel: `${snapshot.inspections?.performedLast7DaysCount ?? 0} this week`,
-        badgeSeverity: 'contrast',
-      },
-    ] as const;
-  });
-
-  protected readonly operationsReadouts: Signal<readonly OverviewPulseReadout[]> = computed<
-    readonly OverviewPulseReadout[]
-  >(() => {
-    const snapshot = this.statisticsSnapshot();
-    const resolvedFindings: number = getResolvedFindingsCount(snapshot.nonConformities);
-    const openFindings: number = getOpenFindingsCount(snapshot.nonConformities);
-
-    return [
-      {
-        label: 'Facilities',
-        value: `${snapshot.overview?.activeFacilityCount ?? 0}/${snapshot.overview?.facilityCount ?? 0}`,
-        helper: `${this.facilityTypeBreakdown().length} tracked types`,
-      },
-      {
-        label: 'Assets',
-        value: `${snapshot.equipment?.operationalCount ?? 0}/${snapshot.equipment?.totalCount ?? 0}`,
-        helper: `${snapshot.equipment?.underMaintenanceCount ?? 0} in maintenance`,
-      },
-      {
-        label: 'Inspections',
-        value: `${snapshot.inspections?.closedCount ?? 0}/${snapshot.inspections?.totalCount ?? 0}`,
-        helper: `${snapshot.inspections?.passCount ?? 0} passed`,
-      },
-      {
-        label: 'Members',
-        value: `${snapshot.membership?.activeMemberCount ?? 0}/${snapshot.membership?.memberCount ?? 0}`,
-        helper: `${snapshot.membership?.roleCount ?? 0} active roles`,
-      },
-      {
-        label: 'Findings',
-        value: `${resolvedFindings}/${snapshot.nonConformities?.totalCount ?? 0}`,
-        helper: `${openFindings} still open`,
-      },
-    ] as const;
-  });
-
-  protected readonly focusBoardItems: Signal<readonly OverviewFocusBoardItem[]> = computed<
-    readonly OverviewFocusBoardItem[]
-  >(() => {
-    const topEquipment = this.equipmentTypeBreakdown()[0];
-    const topFacility = this.facilityTypeBreakdown()[0];
-    const topInspector = this.inspectorTypeBreakdown()[0];
-    const snapshot = this.statisticsSnapshot();
-
-    return [
-      {
-        label: 'Top equipment type',
-        value: `${topEquipment?.value ?? 0}`,
-        helper: topEquipment?.label ?? 'No breakdown available yet',
-        severity: 'info',
-      },
-      {
-        label: 'Primary facility type',
-        value: `${topFacility?.value ?? 0}`,
-        helper: topFacility?.label ?? 'No facility mix available yet',
-        severity: 'success',
-      },
-      {
-        label: 'Inspection pass rate',
-        value: toPercent(snapshot.inspections?.passCount ?? 0, snapshot.inspections?.totalCount ?? 0),
-        helper: topInspector
-          ? `Mostly handled by ${topInspector.label}`
-          : 'No inspector mix available yet',
-        severity: 'contrast',
-      },
-      {
-        label: 'Pending invitations',
-        value: `${snapshot.membership?.pendingInvitationCount ?? 0}`,
-        helper: `${getOpenFindingsCount(snapshot.nonConformities)} findings still need attention`,
-        severity: 'warn',
-      },
-    ] as const;
-  });
-
   //#endregion
 
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Initializes the component and triggers the initial load of the
+   * organization overview statistics through the store.
+   *
+   * The effect will re-run and refresh the statistics whenever the
+   * selected organization changes, ensuring that the dashboard data
+   * is always up to date with the current organizational context.
+   *
+   * @access public
+   * @since 1.0.0
+   */
   public constructor() {
     effect(() => {
       const organizationId: string | undefined = this.organization()?.id;
-      const expectedStatisticsResource: string | null = organizationId
-        ? `/api/organizations/${organizationId}/statistics`
-        : null;
-      const loadedStatisticsResource: string | null = this.loadedStatisticsResource();
 
-      if (organizationId && loadedStatisticsResource !== expectedStatisticsResource) {
+      if (organizationId) {
         untracked(() => {
-          this.organizationStore.loadStatistics(organizationId);
+          this.organizationStore.ensureStatisticsLoaded(organizationId);
         });
       }
     });
   }
+  //#endregion
 
+  //#region Methods
   /**
    * Method navigateTo
    *
    * @description
-   * Navigates to a child route of the current organization context.
+   * Navigates to a child route of the current
+   * organization context.
    *
-   * @param route Child route to open from the overview page.
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {OverviewQuickActionRoute} route - Target child route to navigate to.
+   *
+   * @returns {void} - No return value.
    */
-  protected navigateTo(route: OverviewQuickAction['route']): void {
+  protected navigateTo(route: OverviewQuickActionRoute): void {
     this.router.navigate([route], { relativeTo: this.route });
   }
+  //#endregion
 }

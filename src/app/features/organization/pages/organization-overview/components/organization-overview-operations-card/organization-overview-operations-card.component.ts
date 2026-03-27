@@ -3,39 +3,42 @@ import {
   Component,
   computed,
   input,
-  output,
   type InputSignal,
-  type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
-import { SelectButtonModule } from 'primeng/selectbutton';
 import type {
   OrganizationEquipmentStatisticsOutput,
+  OrganizationFacilityStatisticsOutput,
   OrganizationInspectionStatisticsOutput,
   OrganizationMembershipStatisticsOutput,
   OrganizationNonConformityStatisticsOutput,
   OrganizationStatisticsOutput,
 } from '@core/models/organization';
 import { OrganizationOverviewOperationsPulseChartComponent } from '../organization-overview-operations-pulse-chart/organization-overview-operations-pulse-chart.component';
-import type {
-  OverviewPulseFilter,
-  OverviewPulseReadout,
-  OverviewToggleOption,
-} from '../../organization-overview.types';
+
+/**
+ * Interface OrganizationOverviewOperationsReadout
+ *
+ * @description
+ * Local readout item displayed below the operations pulse chart.
+ */
+interface OrganizationOverviewOperationsReadout {
+  readonly label: string;
+  readonly value: string;
+  readonly helper: string;
+}
 
 /**
  * Component OrganizationOverviewOperationsCardComponent
  * @class OrganizationOverviewOperationsCardComponent
  *
  * @description
- * Presentational analytics card showing the main operations pulse
- * chart and the supporting readout tiles.
+ * Smart analytics card showing the main operations pulse chart
+ * and the supporting readout tiles.
  *
- * The card owns the chart component and the layout shell while the
- * parent page provides the underlying business statistics and the
- * supporting readout values.
+ * The card owns the chart component and the layout shell. The parent
+ * page only provides the underlying business statistics.
  *
  * @version 1.0.0
  *
@@ -47,9 +50,7 @@ import type {
     style: 'display: block',
   },
   imports: [
-    FormsModule,
     CardModule,
-    SelectButtonModule,
     OrganizationOverviewOperationsPulseChartComponent,
   ],
   templateUrl: './organization-overview-operations-card.component.html',
@@ -57,36 +58,6 @@ import type {
 })
 export class OrganizationOverviewOperationsCardComponent {
   //#region Inputs
-  /**
-   * Input filterOptions
-   * @readonly
-   *
-   * @description
-   * Options rendered by the operations filter switcher.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<readonly OverviewToggleOption<OverviewPulseFilter>[]>}
-   */
-  public readonly filterOptions: InputSignal<readonly OverviewToggleOption<OverviewPulseFilter>[]> =
-    input.required<readonly OverviewToggleOption<OverviewPulseFilter>[]>();
-
-  /**
-   * Input activeFilter
-   * @readonly
-   *
-   * @description
-   * Currently selected operations filter value.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<OverviewPulseFilter>}
-   */
-  public readonly activeFilter: InputSignal<OverviewPulseFilter> =
-    input.required<OverviewPulseFilter>();
-
   /**
    * Input overviewStatistics
    * @readonly
@@ -116,6 +87,21 @@ export class OrganizationOverviewOperationsCardComponent {
    */
   public readonly equipmentStatistics: InputSignal<OrganizationEquipmentStatisticsOutput | null> =
     input<OrganizationEquipmentStatisticsOutput | null>(null);
+
+  /**
+   * Input facilityStatistics
+   * @readonly
+   *
+   * @description
+   * Facility statistics used to derive facility readouts.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<OrganizationFacilityStatisticsOutput | null>}
+   */
+  public readonly facilityStatistics: InputSignal<OrganizationFacilityStatisticsOutput | null> =
+    input<OrganizationFacilityStatisticsOutput | null>(null);
 
   /**
    * Input inspectionStatistics
@@ -161,71 +147,68 @@ export class OrganizationOverviewOperationsCardComponent {
    */
   public readonly nonConformityStatistics: InputSignal<OrganizationNonConformityStatisticsOutput | null> =
     input<OrganizationNonConformityStatisticsOutput | null>(null);
-
-  /**
-   * Input readouts
-   * @readonly
-   *
-   * @description
-   * Supporting summary values displayed below the chart.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<readonly OverviewPulseReadout[]>}
-   */
-  public readonly readouts: InputSignal<readonly OverviewPulseReadout[]> =
-    input.required<readonly OverviewPulseReadout[]>();
-
-  /**
-   * Input hasData
-   * @readonly
-   *
-   * @description
-   * Whether the card should render the chart or the loading
-   * skeleton placeholder.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<boolean>}
-   */
-  public readonly hasData: InputSignal<boolean> =
-    input<boolean>(false);
   //#endregion
 
-  //#region Outputs
+  //#region ViewModel
   /**
-   * Output filterChange
+   * Property readouts
    * @readonly
    *
    * @description
-   * Emitted when the user switches the operations filter.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<OverviewPulseFilter>}
-   */
-  public readonly filterChange: OutputEmitterRef<OverviewPulseFilter> =
-    output<OverviewPulseFilter>();
-  //#endregion
-
-  //#region Properties
-  /**
-   * Property selectOptions
-   * @readonly
-   *
-   * @description
-   * Mutable clone of the filter options for PrimeNG's
-   * `p-selectbutton` API.
+   * Summary readouts rendered below the pulse chart.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<OverviewToggleOption<OverviewPulseFilter>[]>}
+   * @type {Signal<readonly OrganizationOverviewOperationsReadout[]>}
    */
-  protected readonly selectOptions: Signal<OverviewToggleOption<OverviewPulseFilter>[]> =
-    computed<OverviewToggleOption<OverviewPulseFilter>[]>(() => [...this.filterOptions()]);
+  protected readonly readouts: Signal<readonly OrganizationOverviewOperationsReadout[]> =
+    computed<readonly OrganizationOverviewOperationsReadout[]>(() => {
+      const overview: OrganizationStatisticsOutput | null = this.overviewStatistics();
+      const equipment: OrganizationEquipmentStatisticsOutput | null =
+        this.equipmentStatistics();
+      const facilities: OrganizationFacilityStatisticsOutput | null =
+        this.facilityStatistics();
+      const inspections: OrganizationInspectionStatisticsOutput | null =
+        this.inspectionStatistics();
+      const membership: OrganizationMembershipStatisticsOutput | null =
+        this.membershipStatistics();
+      const nonConformities: OrganizationNonConformityStatisticsOutput | null =
+        this.nonConformityStatistics();
+
+      const resolvedFindings: number =
+        (nonConformities?.doneCount ?? 0) + (nonConformities?.waivedCount ?? 0);
+      const openFindings: number =
+        (nonConformities?.openCount ?? 0) +
+        (nonConformities?.inProgressCount ?? 0);
+
+      return [
+        {
+          label: 'Facilities',
+          value: `${overview?.activeFacilityCount ?? 0}/${overview?.facilityCount ?? 0}`,
+          helper: `${Object.keys(facilities?.countsByType ?? {}).length} tracked types`,
+        },
+        {
+          label: 'Assets',
+          value: `${equipment?.operationalCount ?? 0}/${equipment?.totalCount ?? 0}`,
+          helper: `${equipment?.underMaintenanceCount ?? 0} in maintenance`,
+        },
+        {
+          label: 'Inspections',
+          value: `${inspections?.closedCount ?? 0}/${inspections?.totalCount ?? 0}`,
+          helper: `${inspections?.passCount ?? 0} passed`,
+        },
+        {
+          label: 'Members',
+          value: `${membership?.activeMemberCount ?? 0}/${membership?.memberCount ?? 0}`,
+          helper: `${membership?.roleCount ?? 0} active roles`,
+        },
+        {
+          label: 'Findings',
+          value: `${resolvedFindings}/${nonConformities?.totalCount ?? 0}`,
+          helper: `${openFindings} still open`,
+        },
+      ] as const;
+    });
   //#endregion
 }

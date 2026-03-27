@@ -12,11 +12,28 @@ import { SkeletonModule } from 'primeng/skeleton';
 import type {
   OrganizationNonConformityStatisticsOutput,
 } from '@core/models/organization';
-import type { OverviewMeterValue } from '../../organization-overview.types';
 
+/**
+ * Interface RiskSummaryItem
+ *
+ * @description
+ * Compact summary tile displayed below the severity meter.
+ */
 interface RiskSummaryItem {
   readonly label: string;
   readonly value: number;
+}
+
+/**
+ * Interface RiskMeterValue
+ *
+ * @description
+ * Severity segment forwarded to PrimeNG MeterGroup.
+ */
+interface RiskMeterValue {
+  readonly label: string;
+  readonly value: number;
+  readonly color: string;
 }
 
 /**
@@ -79,10 +96,10 @@ export class OrganizationOverviewRiskCardComponent {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<OverviewMeterValue[]>}
+   * @type {Signal<RiskMeterValue[]>}
    */
-  protected readonly chartMeterValues: Signal<OverviewMeterValue[]> =
-    computed<OverviewMeterValue[]>(() => {
+  protected readonly chartMeterValues: Signal<RiskMeterValue[]> =
+    computed<RiskMeterValue[]>(() => {
       const stats: OrganizationNonConformityStatisticsOutput | null = this.statistics();
 
       return [

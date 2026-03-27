@@ -239,6 +239,7 @@ describe('OrganizationService', () => {
         memberCount: 5,
         roleCount: 2,
         facilityCount: 3,
+        activeFacilityCount: 2,
         pendingInvitationCount: 1,
       };
 

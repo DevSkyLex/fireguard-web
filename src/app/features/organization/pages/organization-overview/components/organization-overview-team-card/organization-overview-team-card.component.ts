@@ -13,6 +13,12 @@ import { CardModule } from 'primeng/card';
 import type { OrganizationMembershipStatisticsOutput } from '@core/models/organization';
 import { OrganizationOverviewTeamOverviewChartComponent } from '../organization-overview-team-overview-chart/organization-overview-team-overview-chart.component';
 
+/**
+ * Interface TeamSummaryItem
+ *
+ * @description
+ * Compact membership summary tile rendered below the chart.
+ */
 interface TeamSummaryItem {
   readonly label: string;
   readonly value: number;

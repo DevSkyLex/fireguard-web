@@ -15,33 +15,6 @@ import { ChartModule } from 'primeng/chart';
 import { SkeletonModule } from 'primeng/skeleton';
 import type { OrganizationMembershipStatisticsOutput } from '@core/models/organization';
 
-type GradientStop = readonly [offset: number, color: string];
-
-function createVerticalGradient(
-  context: ScriptableContext<'bar'>,
-  stops: readonly GradientStop[],
-  fallback: string,
-): CanvasGradient | string {
-  const chartArea = context.chart.chartArea;
-
-  if (!chartArea) {
-    return fallback;
-  }
-
-  const gradient: CanvasGradient = context.chart.ctx.createLinearGradient(
-    0,
-    chartArea.top,
-    0,
-    chartArea.bottom,
-  );
-
-  for (const [offset, color] of stops) {
-    gradient.addColorStop(offset, color);
-  }
-
-  return gradient;
-}
-
 /**
  * Component OrganizationOverviewTeamOverviewChartComponent
  * @class OrganizationOverviewTeamOverviewChartComponent
@@ -116,26 +89,36 @@ export class OrganizationOverviewTeamOverviewChartComponent {
               statistics?.pendingInvitationCount ?? 0,
               statistics?.expiredInvitationCount ?? 0,
             ],
-            backgroundColor: (context: ScriptableContext<'bar'>) =>
-              createVerticalGradient(
-                context,
-                [
-                  [0, 'rgba(14, 165, 233, 0.95)'],
-                  [0.45, 'rgba(59, 130, 246, 0.78)'],
-                  [1, 'rgba(191, 219, 254, 0.42)'],
-                ],
-                'rgba(59, 130, 246, 0.78)',
-              ),
-            hoverBackgroundColor: (context: ScriptableContext<'bar'>) =>
-              createVerticalGradient(
-                context,
-                [
-                  [0, 'rgba(2, 132, 199, 1)'],
-                  [0.5, 'rgba(37, 99, 235, 0.88)'],
-                  [1, 'rgba(147, 197, 253, 0.5)'],
-                ],
-                'rgba(2, 132, 199, 0.88)',
-              ),
+            backgroundColor: (context: ScriptableContext<'bar'>): CanvasGradient | string => {
+              const chartArea = context.chart.chartArea;
+
+              if (!chartArea) {
+                return 'rgba(59, 130, 246, 0.78)';
+              }
+
+              const gradient = context.chart.ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+
+              gradient.addColorStop(0, 'rgba(14, 165, 233, 0.95)');
+              gradient.addColorStop(0.45, 'rgba(59, 130, 246, 0.78)');
+              gradient.addColorStop(1, 'rgba(191, 219, 254, 0.42)');
+
+              return gradient;
+            },
+            hoverBackgroundColor: (context: ScriptableContext<'bar'>): CanvasGradient | string => {
+              const chartArea = context.chart.chartArea;
+
+              if (!chartArea) {
+                return 'rgba(2, 132, 199, 0.88)';
+              }
+
+              const gradient = context.chart.ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+
+              gradient.addColorStop(0, 'rgba(2, 132, 199, 1)');
+              gradient.addColorStop(0.5, 'rgba(37, 99, 235, 0.88)');
+              gradient.addColorStop(1, 'rgba(147, 197, 253, 0.5)');
+
+              return gradient;
+            },
             borderColor: 'rgba(255, 255, 255, 0.42)',
             borderWidth: 1,
             borderRadius: 8,

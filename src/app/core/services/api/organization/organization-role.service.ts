@@ -24,9 +24,7 @@ import type {
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class OrganizationRoleService extends BaseApiService {
   //#region Public Methods
   /**

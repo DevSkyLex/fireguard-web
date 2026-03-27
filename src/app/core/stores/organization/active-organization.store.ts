@@ -1,4 +1,4 @@
-import { inject } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { tapResponse } from '@ngrx/operators';
@@ -12,7 +12,6 @@ import {
 } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { computed } from '@angular/core';
 import { Observable, filter, forkJoin, pipe, switchMap, tap } from 'rxjs';
 import { OrganizationService } from '@core/services/api/organization';
 import type {
@@ -229,7 +228,56 @@ export const ActiveOrganizationStore = signalStore(
     store,
     dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
     organizationService: OrganizationService = inject<OrganizationService>(OrganizationService),
-  ) => ({
+  ) => {
+    const loadStatistics = rxMethod<string>(
+      pipe(
+        tap((): void => {
+          patchState(store, {
+            statisticsOperation: createLoadingOperation(store.statisticsOperation().data),
+          });
+        }),
+        switchMap((organizationId: string) =>
+          forkJoin({
+            overview: organizationService.getStatistics(organizationId),
+            equipment: organizationService.getEquipmentStatistics(organizationId),
+            facilities: organizationService.getFacilityStatistics(organizationId),
+            inspections: organizationService.getInspectionStatistics(organizationId),
+            membership: organizationService.getMembershipStatistics(organizationId),
+            nonConformities: organizationService.getNonConformityStatistics(organizationId),
+          }).pipe(
+            tapResponse({
+              next: (statistics: OrganizationDashboardStatistics): void => {
+                patchState(store, {
+                  statistics: statistics.overview,
+                  dashboardStatistics: statistics,
+                  statisticsOperation: createSuccessOperation(statistics.overview),
+                });
+              },
+              error: (error: unknown): void => {
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
+                patchState(store, {
+                  statisticsOperation: createErrorOperation(
+                    operationError,
+                    store.statisticsOperation().data,
+                  ),
+                });
+                dispatcher.dispatch(
+                  activeOrganizationStoreEvents.statisticsFailed(
+                    toOperationFailureEventPayload(
+                      operationError,
+                      'Failed to load organization statistics',
+                    ),
+                  ),
+                );
+              },
+            }),
+          ),
+        ),
+      ),
+    );
+
+    return {
     /**
      * Method setOrganization
      * @method setOrganization
@@ -284,9 +332,19 @@ export const ActiveOrganizationStore = signalStore(
       return organizationService.get(id).pipe(
         tap({
           next: (organization: OrganizationOutput): void => {
+            const hasChangedOrganization: boolean =
+              store.selectedOrganization()?.id !== organization.id;
+
             patchState(store, {
               selectedOrganization: organization,
               getOperation: createSuccessOperation(organization),
+              ...(hasChangedOrganization
+                ? {
+                    statistics: null,
+                    dashboardStatistics: null,
+                    statisticsOperation: createIdleOperation(),
+                  }
+                : {}),
             });
           },
           error: (error: unknown): void => {
@@ -343,53 +401,41 @@ export const ActiveOrganizationStore = signalStore(
      * @type {RxMethod<string>} returns an RxJS pipe that takes an
      * organization ID and triggers the
      */
-    loadStatistics: rxMethod<string>(
-      pipe(
-        tap((): void => {
-          patchState(store, {
-            statisticsOperation: createLoadingOperation(store.statisticsOperation().data),
-          });
-        }),
-        switchMap((organizationId: string) =>
-          forkJoin({
-            overview: organizationService.getStatistics(organizationId),
-            equipment: organizationService.getEquipmentStatistics(organizationId),
-            facilities: organizationService.getFacilityStatistics(organizationId),
-            inspections: organizationService.getInspectionStatistics(organizationId),
-            membership: organizationService.getMembershipStatistics(organizationId),
-            nonConformities: organizationService.getNonConformityStatistics(organizationId),
-          }).pipe(
-            tapResponse({
-              next: (statistics: OrganizationDashboardStatistics): void => {
-                patchState(store, {
-                  statistics: statistics.overview,
-                  dashboardStatistics: statistics,
-                  statisticsOperation: createSuccessOperation(statistics.overview),
-                });
-              },
-              error: (error: unknown): void => {
-                const operationError: OperationError<unknown> =
-                  createOperationErrorFromUnknown(error);
-                patchState(store, {
-                  statisticsOperation: createErrorOperation(
-                    operationError,
-                    store.statisticsOperation().data,
-                  ),
-                });
-                dispatcher.dispatch(
-                  activeOrganizationStoreEvents.statisticsFailed(
-                    toOperationFailureEventPayload(
-                      operationError,
-                      'Failed to load organization statistics',
-                    ),
-                  ),
-                );
-              },
-            }),
-          ),
-        ),
-      ),
-    ),
+    loadStatistics,
+
+    /**
+     * Method ensureStatisticsLoaded
+     * @method ensureStatisticsLoaded
+     *
+     * @description
+     * Loads dashboard statistics only when the currently cached payload
+     * does not already match the requested organization.
+     *
+     * This keeps page components free from cache guard details while
+     * still allowing overview pages to opt-in to statistics loading.
+     *
+     * @since 1.1.0
+     *
+     * @param {string} organizationId - Organization identifier.
+     *
+     * @returns {void} No return value.
+     */
+    ensureStatisticsLoaded(organizationId: string): void {
+      if (!organizationId) {
+        return;
+      }
+
+      const isSelectedOrganization: boolean =
+        store.selectedOrganization()?.id === organizationId;
+      const hasLoadedDashboardStatistics: boolean =
+        store.dashboardStatistics() !== null;
+      const isLoadingStatistics: boolean =
+        store.statisticsOperation().status === 'loading';
+
+      if (isSelectedOrganization && !hasLoadedDashboardStatistics && !isLoadingStatistics) {
+        loadStatistics(organizationId);
+      }
+    },
 
     /**
      * Method clear
@@ -406,7 +452,8 @@ export const ActiveOrganizationStore = signalStore(
     clear(): void {
       patchState(store, INITIAL_ACTIVE_ORGANIZATION_STATE);
     },
-  })),
+    };
+  }),
 
   /**
    * Feature withHooks

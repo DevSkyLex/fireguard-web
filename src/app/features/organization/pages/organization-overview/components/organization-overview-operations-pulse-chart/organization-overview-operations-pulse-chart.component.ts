@@ -7,6 +7,7 @@ import {
   type Signal,
 } from '@angular/core';
 import type {
+  Chart,
   ChartData,
   ChartOptions,
   Plugin,
@@ -22,42 +23,16 @@ import type {
   OrganizationStatisticsOutput,
 } from '@core/models/organization';
 
-type GradientStop = readonly [offset: number, color: string];
-
-function getResolvedFindingsCount(
-  statistics: OrganizationNonConformityStatisticsOutput | null,
-): number {
-  return (statistics?.doneCount ?? 0) + (statistics?.waivedCount ?? 0);
-}
-
-function createVerticalGradient<TType extends 'line' | 'bar'>(
-  context: ScriptableContext<TType>,
-  stops: readonly GradientStop[],
-  fallback: string,
-): CanvasGradient | string {
-  const chartArea = context.chart.chartArea;
-
-  if (!chartArea) {
-    return fallback;
-  }
-
-  const gradient: CanvasGradient = context.chart.ctx.createLinearGradient(
-    0,
-    chartArea.top,
-    0,
-    chartArea.bottom,
-  );
-
-  for (const [offset, color] of stops) {
-    gradient.addColorStop(offset, color);
-  }
-
-  return gradient;
-}
-
+/**
+ * Constant operationsHoverLinkPlugin
+ *
+ * @description
+ * Local Chart.js plugin drawing a vertical hover guideline across
+ * the full plot area for the active index.
+ */
 const operationsHoverLinkPlugin: Plugin<'line'> = {
   id: 'operationsHoverLink',
-  afterDatasetsDraw(chart) {
+  afterDatasetsDraw(chart: Chart<'line'>): void {
     const activeElements = chart.tooltip?.getActiveElements() ?? [];
 
     if (activeElements.length === 0) {
@@ -182,23 +157,26 @@ export class OrganizationOverviewOperationsPulseChartComponent {
   public readonly nonConformityStatistics: InputSignal<OrganizationNonConformityStatisticsOutput | null> =
     input<OrganizationNonConformityStatisticsOutput | null>(null);
 
-  /**
-   * Input hasData
-   * @readonly
-   *
-   * @description
-   * Whether the chart should render its data or the loading skeleton.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<boolean>}
-   */
-  public readonly hasData: InputSignal<boolean> =
-    input<boolean>(false);
   //#endregion
 
   //#region Properties
+  /**
+   * Property isReady
+   * @readonly
+   *
+   * @description
+   * Whether enough data is available to render the chart instead of
+   * the loading skeleton.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isReady: Signal<boolean> = computed<boolean>(
+    () => this.overviewStatistics() !== null,
+  );
+
   /**
    * Property chartData
    * @readonly
@@ -232,16 +210,21 @@ export class OrganizationOverviewOperationsPulseChartComponent {
               nonConformities?.totalCount ?? 0,
             ],
             borderColor: '#0ea5e9',
-            backgroundColor: (context: ScriptableContext<'line'>) =>
-              createVerticalGradient(
-                context,
-                [
-                  [0, 'rgba(14, 165, 233, 0.24)'],
-                  [0.55, 'rgba(14, 165, 233, 0.1)'],
-                  [1, 'rgba(14, 165, 233, 0.01)'],
-                ],
-                'rgba(14, 165, 233, 0.14)',
-              ),
+            backgroundColor: (context: ScriptableContext<'line'>): CanvasGradient | string => {
+              const chartArea = context.chart.chartArea;
+
+              if (!chartArea) {
+                return 'rgba(14, 165, 233, 0.14)';
+              }
+
+              const gradient = context.chart.ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+
+              gradient.addColorStop(0, 'rgba(14, 165, 233, 0.24)');
+              gradient.addColorStop(0.55, 'rgba(14, 165, 233, 0.1)');
+              gradient.addColorStop(1, 'rgba(14, 165, 233, 0.01)');
+
+              return gradient;
+            },
             pointBackgroundColor: 'rgba(255, 255, 255, 0.96)',
             pointBorderColor: '#0ea5e9',
             pointBorderWidth: 3,
@@ -261,19 +244,24 @@ export class OrganizationOverviewOperationsPulseChartComponent {
               equipment?.operationalCount ?? 0,
               inspections?.closedCount ?? 0,
               membership?.activeMemberCount ?? 0,
-              getResolvedFindingsCount(nonConformities),
+              (nonConformities?.doneCount ?? 0) + (nonConformities?.waivedCount ?? 0),
             ],
             borderColor: '#1d4ed8',
-            backgroundColor: (context: ScriptableContext<'line'>) =>
-              createVerticalGradient(
-                context,
-                [
-                  [0, 'rgba(29, 78, 216, 0.2)'],
-                  [0.6, 'rgba(59, 130, 246, 0.08)'],
-                  [1, 'rgba(59, 130, 246, 0.01)'],
-                ],
-                'rgba(29, 78, 216, 0.1)',
-              ),
+            backgroundColor: (context: ScriptableContext<'line'>): CanvasGradient | string => {
+              const chartArea = context.chart.chartArea;
+
+              if (!chartArea) {
+                return 'rgba(29, 78, 216, 0.1)';
+              }
+
+              const gradient = context.chart.ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+
+              gradient.addColorStop(0, 'rgba(29, 78, 216, 0.2)');
+              gradient.addColorStop(0.6, 'rgba(59, 130, 246, 0.08)');
+              gradient.addColorStop(1, 'rgba(59, 130, 246, 0.01)');
+
+              return gradient;
+            },
             pointBackgroundColor: 'rgba(255, 255, 255, 0.96)',
             pointBorderColor: '#1d4ed8',
             pointBorderWidth: 3,

@@ -9,7 +9,7 @@ import type { OperationFailureEventPayload } from '../operations';
  * @description
  * Root-level active organization store events for handling operation failures.
  * These events are dispatched by {@link ActiveOrganizationStore} when a
- * get or statistics operation fails.
+ * get or dashboard operation fails.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -18,6 +18,7 @@ export const activeOrganizationStoreEvents = eventGroup({
   source: 'Active Organization Store',
   events: {
     getFailed: type<OperationFailureEventPayload>(),
-    statisticsFailed: type<OperationFailureEventPayload>(),
+    dashboardFailed: type<OperationFailureEventPayload>(),
+    dashboardTrendFailed: type<OperationFailureEventPayload>(),
   },
 });

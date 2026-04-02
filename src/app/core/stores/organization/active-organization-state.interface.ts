@@ -1,7 +1,8 @@
 import type {
-  OrganizationDashboardStatistics,
+  OrganizationDashboardOutput,
+  OrganizationDashboardTrendKey,
+  OrganizationDashboardTrendOutput,
   OrganizationOutput,
-  OrganizationStatisticsOutput,
 } from '@core/models/organization';
 import type { Operation } from '@core/stores/operations';
 
@@ -12,7 +13,7 @@ import type { Operation } from '@core/stores/operations';
  * @description
  * Minimal root-level state for the currently selected / active organization.
  * Only tracks the routing context (which org is being viewed) and its
- * associated statistics. All list management and CRUD operations live in
+ * associated dashboard analytics. All list management and CRUD operations live in
  * the component-scoped {@link OrganizationStore}.
  *
  * @version 1.0.0
@@ -52,46 +53,63 @@ export interface ActiveOrganizationState {
   readonly getOperation: Operation<OrganizationOutput | null, unknown>;
 
   /**
-   * Property statistics
+   * Property dashboard
    * @readonly
    *
    * @description
-   * Statistics for the currently selected organization.
-   *
-   * This is loaded on demand by the OrganizationDetailComponent when the user
-   * navigates to the details page, and is not automatically fetched with the
-   * organization itself.
+   * Dashboard analytics for the currently selected organization.
    *
    * @since 1.0.0
    *
-   * @type {OrganizationStatisticsOutput | null}
+   * @type {OrganizationDashboardOutput | null}
    */
-  readonly statistics: OrganizationStatisticsOutput | null;
+  readonly dashboard: OrganizationDashboardOutput | null;
 
   /**
-   * Property dashboardStatistics
+   * Property dashboardOperation
    * @readonly
    *
    * @description
-   * Detailed statistics payload used by the organization overview dashboard.
+   * Loading / error state for the organization dashboard request.
    *
    * @since 1.1.0
    *
-   * @type {OrganizationDashboardStatistics | null}
+   * @type {Operation<OrganizationDashboardOutput | null, unknown>}
    */
-  readonly dashboardStatistics: OrganizationDashboardStatistics | null;
+  readonly dashboardOperation: Operation<OrganizationDashboardOutput | null, unknown>;
 
   /**
-   * Property statisticsOperation
+   * Property dashboardTrendMap
    * @readonly
    *
    * @description
-   * Loading / error state for statistics.
+   * Chart-level dashboard trend resources fetched from the dedicated
+   * `/dashboard/trends/*` endpoints.
    *
-   * @since 1.0.0
+   * @since 1.1.0
    *
-   * @type {Operation<OrganizationStatisticsOutput | null, unknown>}
+   * @type {Readonly<Record<OrganizationDashboardTrendKey, OrganizationDashboardTrendOutput | null>>}
    */
-  readonly statisticsOperation: Operation<OrganizationStatisticsOutput | null, unknown>;
+  readonly dashboardTrendMap: Readonly<
+    Record<OrganizationDashboardTrendKey, OrganizationDashboardTrendOutput | null>
+  >;
+
+  /**
+   * Property dashboardTrendOperations
+   * @readonly
+   *
+   * @description
+   * Loading and error state for each dedicated dashboard trend endpoint.
+   *
+   * @since 1.1.0
+   *
+   * @type {Readonly<Record<OrganizationDashboardTrendKey, Operation<OrganizationDashboardTrendOutput | null, unknown>>>}
+   */
+  readonly dashboardTrendOperations: Readonly<
+    Record<
+      OrganizationDashboardTrendKey,
+      Operation<OrganizationDashboardTrendOutput | null, unknown>
+    >
+  >;
   //#endregion
 }

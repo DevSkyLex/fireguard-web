@@ -107,6 +107,25 @@ export class OrganizationRoleService extends BaseApiService {
   }
 
   /**
+   * Method remove
+   * @method remove
+   *
+   * @description
+   * Deletes a role defined within the given organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} roleId - The ID of the role to delete.
+   *
+   * @return {Observable<void>} Observable completing on success.
+   */
+  public remove(organizationId: string, roleId: string): Observable<void> {
+    return this.delete(`/api/organizations/${organizationId}/roles/${roleId}`);
+  }
+
+  /**
    * Method assignToMember
    * @method assignToMember
    *
@@ -131,6 +150,32 @@ export class OrganizationRoleService extends BaseApiService {
     return this.post<AssignOrganizationRoleInput, OrganizationMemberOutput>(
       `/api/organizations/${organizationId}/members/${memberId}/roles`,
       input,
+    );
+  }
+
+  /**
+   * Method removeFromMember
+   * @method removeFromMember
+   *
+   * @description
+   * Removes a role assignment from an organization member.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} memberId - The ID of the member whose role should be removed.
+   * @param {string} roleId - The ID of the role assignment to remove.
+   *
+   * @return {Observable<void>} Observable completing on success.
+   */
+  public removeFromMember(
+    organizationId: string,
+    memberId: string,
+    roleId: string,
+  ): Observable<void> {
+    return this.delete(
+      `/api/organizations/${organizationId}/members/${memberId}/roles/${roleId}`,
     );
   }
   //#endregion

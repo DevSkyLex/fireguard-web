@@ -9,13 +9,40 @@ export type { CreateOrganizationRoleInput } from './create-organization-role-inp
 export type { UpdateOrganizationRoleInput } from './update-organization-role-input.interface';
 export type { AssignOrganizationRoleInput } from './assign-organization-role-input.interface';
 export type { AcceptOrganizationInvitationInput } from './accept-organization-invitation-input.interface';
-export type { OrganizationStatisticsOutput } from './organization-statistics-output.interface';
-export type { OrganizationEquipmentStatisticsOutput } from './organization-equipment-statistics-output.interface';
-export type { OrganizationFacilityStatisticsOutput } from './organization-facility-statistics-output.interface';
-export type { OrganizationInspectionStatisticsOutput } from './organization-inspection-statistics-output.interface';
-export type { OrganizationMembershipStatisticsOutput } from './organization-membership-statistics-output.interface';
-export type { OrganizationNonConformityStatisticsOutput } from './organization-non-conformity-statistics-output.interface';
-export type { OrganizationDashboardStatistics } from './organization-dashboard-statistics.type';
+export type {
+  OrganizationDashboardAlert,
+  OrganizationDashboardAlertValue,
+  OrganizationDashboardComparison,
+  OrganizationDashboardComparisonValue,
+  OrganizationDashboardHealth,
+  OrganizationDashboardOutput,
+  OrganizationDashboardOverview,
+  OrganizationDashboardOverviewValue,
+  OrganizationDashboardPeriod,
+  OrganizationDashboardTrendPoint,
+  OrganizationDashboardTrendPointValue,
+  OrganizationDashboardTrends,
+} from './organization-dashboard-output.interface';
+export type {
+  OrganizationDashboardGranularity,
+  OrganizationDashboardCommonQueryOptions,
+  OrganizationDashboardEquipmentStatus,
+  OrganizationDashboardEquipmentType,
+  OrganizationDashboardInspectionTrendQueryOptions,
+  OrganizationDashboardNonConformityTrendQueryOptions,
+  OrganizationDashboardQueryOptions,
+  OrganizationDashboardTrendQueryOptions,
+} from './organization-dashboard-query-options.interface';
+export type {
+  OrganizationDashboardTrendComparison,
+  OrganizationDashboardTrendComparisonValue,
+  OrganizationDashboardTrendKey,
+  OrganizationDashboardTrendOutput,
+  OrganizationDashboardTrendSeriesPoint,
+  OrganizationDashboardTrendSeriesPointValue,
+  OrganizationDashboardTrendSummary,
+  OrganizationDashboardTrendSummaryValue,
+} from './organization-dashboard-trend-output.interface';
 export type { OrganizationCountryOutput } from './organization-country-output.interface';
 export type { OrganizationLegalTypeOutput, OrganizationLegalFieldRequirement, OrganizationLegalProfileRequirements } from './organization-legal-type-output.interface';
 export type { OrganizationPermissionOutput } from './organization-permission-output.interface';

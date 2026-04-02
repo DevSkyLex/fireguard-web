@@ -88,6 +88,43 @@ describe('InspectionService', () => {
     view: { '@id': `${inspectionsBaseUrl}?page=1`, '@type': 'hydra:PartialCollectionView' },
   });
 
+  // ── listNonConformityStatuses ──────────────────────────────────────────────
+
+  describe('listNonConformityStatuses', () => {
+    it('should send GET request and return non-conformity statuses', () => {
+      const statuses: HydraCollection<HydraItem> = {
+        '@context': '/api/contexts/Collection',
+        '@id': '/api/non-conformities/statuses',
+        '@type': 'Collection',
+        member: [
+          {
+            '@id': '/api/non-conformities/statuses/open',
+            '@type': 'Option',
+          },
+          {
+            '@id': '/api/non-conformities/statuses/done',
+            '@type': 'Option',
+          },
+        ],
+        totalItems: 2,
+        view: {
+          '@id': '/api/non-conformities/statuses?page=1',
+          '@type': 'hydra:PartialCollectionView',
+        },
+      };
+
+      service.listNonConformityStatuses({ page: 2 }).subscribe((response) => {
+        expect(response.totalItems).toBe(2);
+      });
+
+      const req = httpMock.expectOne((request) => request.url === `${mockEnv.apiUrl}/api/non-conformities/statuses`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('page')).toBe('2');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(statuses);
+    });
+  });
+
   // ── list ───────────────────────────────────────────────────────────────────
 
   describe('list', () => {

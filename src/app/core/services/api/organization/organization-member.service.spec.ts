@@ -122,4 +122,28 @@ describe('OrganizationMemberService', () => {
       req.flush({ status: 409, title: 'Conflict' }, { status: 409, statusText: 'Conflict' });
     });
   });
+
+  // ── remove ─────────────────────────────────────────────────────────────────
+
+  describe('remove', () => {
+    it('should send DELETE request for the member', () => {
+      service.remove(orgId, 'member-uuid-1').subscribe();
+
+      const req = httpMock.expectOne(`${baseUrl}/member-uuid-1`);
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(null);
+    });
+
+    it('should handle not found errors', () => {
+      service.remove(orgId, 'missing-member').subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(404);
+        },
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/missing-member`);
+      req.flush({ status: 404, title: 'Not Found' }, { status: 404, statusText: 'Not Found' });
+    });
+  });
 });

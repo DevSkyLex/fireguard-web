@@ -1,3 +1,10 @@
+/**
+ * Type OnboardingStepKey
+ *
+ * @description
+ * Supported identifiers for each onboarding step
+ * managed by the backend.
+ */
 export type OnboardingStepKey =
   | 'create_organization'
   | 'invite_members'

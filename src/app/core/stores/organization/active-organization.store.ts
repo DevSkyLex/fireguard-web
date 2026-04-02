@@ -12,12 +12,17 @@ import {
 } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { Observable, filter, forkJoin, pipe, switchMap, tap } from 'rxjs';
+import { Observable, filter, pipe, switchMap, tap } from 'rxjs';
 import { OrganizationService } from '@core/services/api/organization';
 import type {
-  OrganizationDashboardStatistics,
+  OrganizationDashboardOutput,
+  OrganizationDashboardInspectionTrendQueryOptions,
+  OrganizationDashboardNonConformityTrendQueryOptions,
+  OrganizationDashboardQueryOptions,
+  OrganizationDashboardTrendKey,
+  OrganizationDashboardTrendQueryOptions,
+  OrganizationDashboardTrendOutput,
   OrganizationOutput,
-  OrganizationStatisticsOutput,
 } from '@core/models/organization';
 import type { ActiveOrganizationState } from './active-organization-state.interface';
 import {
@@ -34,6 +39,59 @@ import { activeOrganizationStoreEvents } from './active-organization.events';
 
 //#region Initial State
 /**
+ * Interface DashboardRequestPayload
+ * @interface DashboardRequestPayload
+ *
+ * @description
+ * Internal request payload used by dashboard rxMethods so they can
+ * receive both the organization identifier and optional query filters.
+ */
+interface DashboardRequestPayload {
+  readonly organizationId: string;
+  readonly options?: OrganizationDashboardQueryOptions;
+}
+
+/**
+ * Interface DashboardTrendRequestPayload
+ * @interface DashboardTrendRequestPayload
+ *
+ * @description
+ * Internal request payload used by dedicated trend rxMethods.
+ */
+interface DashboardTrendRequestPayload<TOptions extends OrganizationDashboardTrendQueryOptions> {
+  readonly organizationId: string;
+  readonly options?: TOptions;
+}
+
+/**
+ * Function createInitialDashboardTrendMap
+ *
+ * @description
+ * Creates the empty dashboard trend-resource cache for the active organization.
+ *
+ * @returns {ActiveOrganizationState['dashboardTrendMap']} Initial dashboard trend map.
+ */
+const createInitialDashboardTrendMap = (): ActiveOrganizationState['dashboardTrendMap'] => ({
+  inspections: null,
+  nonConformitiesOpened: null,
+  nonConformitiesResolved: null,
+});
+
+/**
+ * Function createInitialDashboardTrendOperations
+ *
+ * @description
+ * Creates the idle operation state for each dedicated dashboard trend endpoint.
+ *
+ * @returns {ActiveOrganizationState['dashboardTrendOperations']} Initial dashboard trend operation map.
+ */
+const createInitialDashboardTrendOperations = (): ActiveOrganizationState['dashboardTrendOperations'] => ({
+  inspections: createIdleOperation(),
+  nonConformitiesOpened: createIdleOperation(),
+  nonConformitiesResolved: createIdleOperation(),
+});
+
+/**
  * Constant INITIAL_ACTIVE_ORGANIZATION_STATE
  * @const INITIAL_ACTIVE_ORGANIZATION_STATE
  *
@@ -48,9 +106,10 @@ import { activeOrganizationStoreEvents } from './active-organization.events';
 const INITIAL_ACTIVE_ORGANIZATION_STATE: ActiveOrganizationState = {
   selectedOrganization: null,
   getOperation: createIdleOperation(),
-  statistics: null,
-  dashboardStatistics: null,
-  statisticsOperation: createIdleOperation(),
+  dashboard: null,
+  dashboardOperation: createIdleOperation(),
+  dashboardTrendMap: createInitialDashboardTrendMap(),
+  dashboardTrendOperations: createInitialDashboardTrendOperations(),
 } as const;
 //#endregion
 
@@ -60,7 +119,7 @@ const INITIAL_ACTIVE_ORGANIZATION_STATE: ActiveOrganizationState = {
  *
  * @description
  * Root-level NgRx SignalStore that tracks only the **currently active /
- * selected organization** and its associated statistics.
+ * selected organization** and its associated dashboard analytics.
  *
  * This store is intentionally minimal — its single responsibility is
  * answering "which organization are we looking at right now?". All list
@@ -76,197 +135,199 @@ export const ActiveOrganizationStore = signalStore(
   { providedIn: 'root' },
 
   //#region Features
-  /**
-   * Feature withState
-   *
-   * @description
-   * Adds the ActiveOrganizationState to the store, initialized with
-   * INITIAL_ACTIVE_ORGANIZATION_STATE.
-   *
-   * @since 1.0.0
-   *
-   * @returns {ActiveOrganizationState} The initial state for the active organization store.
-   */
   withState<ActiveOrganizationState>(INITIAL_ACTIVE_ORGANIZATION_STATE),
 
-  /**
-   * Feature withComputed
-   *
-   * @description
-   * Adds computed properties to the store for common
-   * derived state related to the active organization and its statistics.
-   *
-   * @since 1.0.0
-   *
-   * @param {SignalStore} store - The store instance to which the computed properties will be added.
-   *
-   * @returns {object} An object containing the computed properties to add to the store.
-   */
   withComputed((store) => ({
     /**
      * Property isLoadingOrganization
      *
      * @description
-     * True while the organization is being resolved / fetched.
+     * True while the selected organization resource is loading.
      *
-     * @since 1.0.0
-     *
-     * @type {boolean} True if the get operation is currently loading, false otherwise.
+     * @type {boolean}
      */
     isLoadingOrganization: computed<boolean>(
       () => store.getOperation().status === 'loading',
     ),
 
     /**
-     * Property isLoadingStatistics
+     * Property isLoadingDashboard
      *
      * @description
-     * True while the organization's statistics are being fetched.
+     * True while the aggregate dashboard resource is loading.
      *
-     * @since 1.0.0
-     *
-     * @type {boolean} True if the statistics operation is currently loading, false otherwise.
+     * @type {boolean}
      */
-    isLoadingStatistics: computed<boolean>(
-      () => store.statisticsOperation().status === 'loading',
+    isLoadingDashboard: computed<boolean>(
+      () => store.dashboardOperation().status === 'loading',
+    ),
+
+    /**
+     * Property dashboardInspectionsTrend
+     *
+     * @description
+     * Dedicated inspections trend resource for the active organization.
+     *
+     * @type {OrganizationDashboardTrendOutput | null}
+     */
+    dashboardInspectionsTrend: computed<OrganizationDashboardTrendOutput | null>(
+      () => store.dashboardTrendMap().inspections,
+    ),
+
+    /**
+     * Property dashboardNonConformitiesOpenedTrend
+     *
+     * @description
+     * Dedicated opened non-conformities trend resource for the active organization.
+     *
+     * @type {OrganizationDashboardTrendOutput | null}
+     */
+    dashboardNonConformitiesOpenedTrend: computed<OrganizationDashboardTrendOutput | null>(
+      () => store.dashboardTrendMap().nonConformitiesOpened,
+    ),
+
+    /**
+     * Property dashboardNonConformitiesResolvedTrend
+     *
+     * @description
+     * Dedicated resolved non-conformities trend resource for the active organization.
+     *
+     * @type {OrganizationDashboardTrendOutput | null}
+     */
+    dashboardNonConformitiesResolvedTrend: computed<OrganizationDashboardTrendOutput | null>(
+      () => store.dashboardTrendMap().nonConformitiesResolved,
+    ),
+
+    /**
+     * Property isLoadingDashboardTrends
+     *
+     * @description
+     * True while at least one dedicated dashboard trend endpoint is loading.
+     *
+     * @type {boolean}
+     */
+    isLoadingDashboardTrends: computed<boolean>(() =>
+      Object.values(store.dashboardTrendOperations()).some(
+        (operation) => operation.status === 'loading',
+      ),
     ),
 
     /**
      * Property getError
      *
      * @description
-     * Error from the get operation, if any. Null if the operation is idle
-     * or loading, or if it succeeded.
+     * Error associated with the active-organization fetch operation.
      *
-     * @since 1.0.0
-     *
-     * @type {OperationError<unknown> | null} The error object if the get operation is in error, or null otherwise.
+     * @type {OperationError<unknown> | null}
      */
     getError: computed<OperationError<unknown> | null>(() => {
-      /**
-       * Constant operation
-       * @const operation
-       *
-       * @description
-       * Current get operation for fetching the selected organization, used to
-       * derive the getError computed property.
-       *
-       * @type {Operation<OrganizationOutput | null, unknown>}
-       */
       const operation: Operation<OrganizationOutput | null, unknown> = store.getOperation();
 
-      // If the operation is in error, return the error object; otherwise, return null.
       return operation.status === 'error' ? operation.error : null;
     }),
 
     /**
-     * Property statisticsError
+     * Property dashboardError
      *
      * @description
-     * Error from the statistics operation, if any. Null if the operation is idle
-     * or loading, or if it succeeded.
+     * Error associated with the aggregate dashboard fetch operation.
      *
-     * @since 1.0.0
-     *
-     * @type {OperationError<unknown> | null} The error object if the statistics operation is in error, or null otherwise.
+     * @type {OperationError<unknown> | null}
      */
-    statisticsError: computed<OperationError<unknown> | null>(() => {
-      /**
-       * Constant operation
-       * @const operation
-       *
-       * @description
-       * Current statistics operation for fetching the selected organization's statistics, used to
-       * derive the statisticsError computed property.
-       *
-       * @type {Operation<OrganizationStatisticsOutput | null, unknown>}
-       */
-      const operation: Operation<OrganizationStatisticsOutput | null, unknown> = store.statisticsOperation();
+    dashboardError: computed<OperationError<unknown> | null>(() => {
+      const operation: Operation<OrganizationDashboardOutput | null, unknown> =
+        store.dashboardOperation();
 
-      // If the operation is in error, return the error object; otherwise, return null.
       return operation.status === 'error' ? operation.error : null;
     }),
-
-    equipmentStatistics: computed(
-      () => store.dashboardStatistics()?.equipment ?? null,
-    ),
-
-    facilityStatistics: computed(
-      () => store.dashboardStatistics()?.facilities ?? null,
-    ),
-
-    inspectionStatistics: computed(
-      () => store.dashboardStatistics()?.inspections ?? null,
-    ),
-
-    membershipStatistics: computed(
-      () => store.dashboardStatistics()?.membership ?? null,
-    ),
-
-    nonConformityStatistics: computed(
-      () => store.dashboardStatistics()?.nonConformities ?? null,
-    ),
   })),
-
-  /**
-   * Feature withMethods
-   *
-   * @description
-   * Adds methods to the store for managing the active organization state, including
-   * setting the active organization, resolving it by ID,
-   * clearing the selection, and loading statistics.
-   *
-   * @since 1.0.0
-   *
-   * @param {SignalStore} store - The store instance to which the methods will be added.
-   * @param {Dispatcher} dispatcher - The NgRx Signals event dispatcher, used to dispatch events on errors.
-   * @param {OrganizationService} organizationService - The service used to fetch organization data from the API.
-   *
-   * @returns {object} An object containing the methods to add to the store.
-   */
   withMethods((
     store,
     dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
     organizationService: OrganizationService = inject<OrganizationService>(OrganizationService),
   ) => {
-    const loadStatistics = rxMethod<string>(
+    /**
+     * Function resetDashboardState
+     *
+     * @description
+     * Produces a fresh idle dashboard state used when the selected organization
+     * changes or when the store is cleared.
+     *
+     * @returns {Pick<ActiveOrganizationState, 'dashboard' | 'dashboardOperation' | 'dashboardTrendMap' | 'dashboardTrendOperations'>}
+     * Dashboard-related slices reset to idle.
+     */
+    const resetDashboardState = (): Pick<
+      ActiveOrganizationState,
+      'dashboard' | 'dashboardOperation' | 'dashboardTrendMap' | 'dashboardTrendOperations'
+    > => ({
+      dashboard: null,
+      dashboardOperation: createIdleOperation(),
+      dashboardTrendMap: createInitialDashboardTrendMap(),
+      dashboardTrendOperations: createInitialDashboardTrendOperations(),
+    });
+
+    /**
+     * Function createDashboardTrendLoader
+     *
+     * @description
+     * Creates a reusable rxMethod loader for one dedicated dashboard trend endpoint.
+     *
+     * @param {OrganizationDashboardTrendKey} metric - Logical key of the dashboard trend resource.
+     * @param {(organizationId: string, options?: TOptions) => Observable<OrganizationDashboardTrendOutput>} request
+     * Backend request function for the target trend endpoint.
+     *
+     * @returns {ReturnType<typeof rxMethod<DashboardTrendRequestPayload<TOptions>>>} Configured rxMethod for the target trend endpoint.
+     */
+    const createDashboardTrendLoader = <TOptions extends OrganizationDashboardTrendQueryOptions>(
+      metric: OrganizationDashboardTrendKey,
+      request: (
+        organizationId: string,
+        options?: TOptions,
+      ) => Observable<OrganizationDashboardTrendOutput>,
+    ) => rxMethod<DashboardTrendRequestPayload<TOptions>>(
       pipe(
         tap((): void => {
           patchState(store, {
-            statisticsOperation: createLoadingOperation(store.statisticsOperation().data),
+            dashboardTrendOperations: {
+              ...store.dashboardTrendOperations(),
+              [metric]: createLoadingOperation(
+                store.dashboardTrendOperations()[metric].data,
+              ),
+            },
           });
         }),
-        switchMap((organizationId: string) =>
-          forkJoin({
-            overview: organizationService.getStatistics(organizationId),
-            equipment: organizationService.getEquipmentStatistics(organizationId),
-            facilities: organizationService.getFacilityStatistics(organizationId),
-            inspections: organizationService.getInspectionStatistics(organizationId),
-            membership: organizationService.getMembershipStatistics(organizationId),
-            nonConformities: organizationService.getNonConformityStatistics(organizationId),
-          }).pipe(
+        switchMap(({ organizationId, options }: DashboardTrendRequestPayload<TOptions>) =>
+          request(organizationId, options).pipe(
             tapResponse({
-              next: (statistics: OrganizationDashboardStatistics): void => {
+              next: (trend: OrganizationDashboardTrendOutput): void => {
                 patchState(store, {
-                  statistics: statistics.overview,
-                  dashboardStatistics: statistics,
-                  statisticsOperation: createSuccessOperation(statistics.overview),
+                  dashboardTrendMap: {
+                    ...store.dashboardTrendMap(),
+                    [metric]: trend,
+                  },
+                  dashboardTrendOperations: {
+                    ...store.dashboardTrendOperations(),
+                    [metric]: createSuccessOperation(trend),
+                  },
                 });
               },
               error: (error: unknown): void => {
                 const operationError: OperationError<unknown> =
                   createOperationErrorFromUnknown(error);
                 patchState(store, {
-                  statisticsOperation: createErrorOperation(
-                    operationError,
-                    store.statisticsOperation().data,
-                  ),
+                  dashboardTrendOperations: {
+                    ...store.dashboardTrendOperations(),
+                    [metric]: createErrorOperation(
+                      operationError,
+                      store.dashboardTrendOperations()[metric].data,
+                    ),
+                  },
                 });
                 dispatcher.dispatch(
-                  activeOrganizationStoreEvents.statisticsFailed(
+                  activeOrganizationStoreEvents.dashboardTrendFailed(
                     toOperationFailureEventPayload(
                       operationError,
-                      'Failed to load organization statistics',
+                      `Failed to load ${metric} dashboard trend`,
                     ),
                   ),
                 );
@@ -277,197 +338,256 @@ export const ActiveOrganizationStore = signalStore(
       ),
     );
 
-    return {
-    /**
-     * Method setOrganization
-     * @method setOrganization
-     *
-     * @description
-     * Directly sets the selected organization (e.g., resolved from route data
-     * by DashboardLayout after the resolver runs).
-     *
-     * @since 1.0.0
-     *
-     * @param {OrganizationOutput} organization - Organization to mark as active.
-     *
-     * @returns {void} No return value.
-     */
-    setOrganization(organization: OrganizationOutput): void {
-      const hasChangedOrganization: boolean =
-        store.selectedOrganization()?.id !== organization.id;
-
-      patchState(store, {
-        selectedOrganization: organization,
-        getOperation: createSuccessOperation(organization),
-        ...(hasChangedOrganization
-          ? {
-              statistics: null,
-              dashboardStatistics: null,
-              statisticsOperation: createIdleOperation(),
-            }
-          : {}),
-      });
-    },
-
-    /**
-     * Method resolveOrganization
-     * @method resolveOrganization
-     *
-     * @description
-     * Fetches a single organization by ID and marks it as the active one.
-     * Returns an Observable so Angular route resolvers can await the result.
-     *
-     * @since 1.0.0
-     *
-     * @param {string} id - Organization identifier.
-     *
-     * @returns {Observable<OrganizationOutput>} Observable that emits the resolved
-     * organization or an error if it fails.
-     */
-    resolveOrganization(id: string): Observable<OrganizationOutput> {
-      patchState(store, {
-        getOperation: createLoadingOperation(store.getOperation().data),
-      });
-
-      return organizationService.get(id).pipe(
-        tap({
-          next: (organization: OrganizationOutput): void => {
-            const hasChangedOrganization: boolean =
-              store.selectedOrganization()?.id !== organization.id;
-
-            patchState(store, {
-              selectedOrganization: organization,
-              getOperation: createSuccessOperation(organization),
-              ...(hasChangedOrganization
-                ? {
-                    statistics: null,
-                    dashboardStatistics: null,
-                    statisticsOperation: createIdleOperation(),
-                  }
-                : {}),
-            });
-          },
-          error: (error: unknown): void => {
-            const operationError: OperationError<unknown> =
-              createOperationErrorFromUnknown(error);
-            patchState(store, {
-              getOperation: createErrorOperation(
-                operationError,
-                store.getOperation().data,
-              ),
-            });
-            dispatcher.dispatch(
-              activeOrganizationStoreEvents.getFailed(
-                toOperationFailureEventPayload(operationError, 'Failed to load organization'),
-              ),
-            );
-          },
+    const loadDashboard = rxMethod<DashboardRequestPayload>(
+      pipe(
+        tap((): void => {
+          patchState(store, {
+            dashboardOperation: createLoadingOperation(store.dashboardOperation().data),
+          });
         }),
-      );
-    },
+        switchMap(({ organizationId, options }: DashboardRequestPayload) =>
+          organizationService.getDashboard(organizationId, options).pipe(
+            tapResponse({
+              next: (dashboard: OrganizationDashboardOutput): void => {
+                patchState(store, {
+                  dashboard,
+                  dashboardOperation: createSuccessOperation(dashboard),
+                });
+              },
+              error: (error: unknown): void => {
+                const operationError: OperationError<unknown> =
+                  createOperationErrorFromUnknown(error);
+                patchState(store, {
+                  dashboardOperation: createErrorOperation(
+                    operationError,
+                    store.dashboardOperation().data,
+                  ),
+                });
+                dispatcher.dispatch(
+                  activeOrganizationStoreEvents.dashboardFailed(
+                    toOperationFailureEventPayload(
+                      operationError,
+                      'Failed to load organization dashboard',
+                    ),
+                  ),
+                );
+              },
+            }),
+          ),
+        ),
+      ),
+    );
 
-    /**
-     * Method clearSelectedOrganization
-     * @method clearSelectedOrganization
-     *
-     * @description
-     * Clears the active organization selection. Called by
-     * {@link OrganizationStore} after a successful delete when the
-     * deleted organization was the currently active one.
-     *
-     * @since 1.0.0
-     *
-     * @return {void} No return value.
-     */
-    clearSelectedOrganization(): void {
-      patchState(store, {
-        selectedOrganization: null,
-        statistics: null,
-        dashboardStatistics: null,
-        statisticsOperation: createIdleOperation(),
-      });
-    },
+    const loadDashboardInspectionsTrend = createDashboardTrendLoader(
+      'inspections',
+      organizationService.getDashboardInspectionsTrend.bind(organizationService),
+    );
+    const loadDashboardNonConformitiesOpenedTrend = createDashboardTrendLoader(
+      'nonConformitiesOpened',
+      organizationService.getDashboardNonConformitiesOpenedTrend.bind(organizationService),
+    );
+    const loadDashboardNonConformitiesResolvedTrend = createDashboardTrendLoader(
+      'nonConformitiesResolved',
+      organizationService.getDashboardNonConformitiesResolvedTrend.bind(organizationService),
+    );
 
-    /**
-     * Method loadStatistics
-     * @method loadStatistics
-     *
-     * @description
-     * Loads the statistics for the currently
-     * active organization.
-     *
-     * @since 1.0.0
-     *
-     * @type {RxMethod<string>} returns an RxJS pipe that takes an
-     * organization ID and triggers the
-     */
-    loadStatistics,
+    return {
+      /**
+       * Method setOrganization
+       * @method setOrganization
+       *
+       * @description
+       * Marks the provided organization as active and resets dashboard data
+       * when the selection changes.
+       *
+       * @param {OrganizationOutput} organization - Organization to mark as active.
+       *
+       * @returns {void} No return value.
+       */
+      setOrganization(organization: OrganizationOutput): void {
+        const hasChangedOrganization: boolean =
+          store.selectedOrganization()?.id !== organization.id;
 
-    /**
-     * Method ensureStatisticsLoaded
-     * @method ensureStatisticsLoaded
-     *
-     * @description
-     * Loads dashboard statistics only when the currently cached payload
-     * does not already match the requested organization.
-     *
-     * This keeps page components free from cache guard details while
-     * still allowing overview pages to opt-in to statistics loading.
-     *
-     * @since 1.1.0
-     *
-     * @param {string} organizationId - Organization identifier.
-     *
-     * @returns {void} No return value.
-     */
-    ensureStatisticsLoaded(organizationId: string): void {
-      if (!organizationId) {
-        return;
-      }
+        patchState(store, {
+          selectedOrganization: organization,
+          getOperation: createSuccessOperation(organization),
+          ...(hasChangedOrganization ? resetDashboardState() : {}),
+        });
+      },
 
-      const isSelectedOrganization: boolean =
-        store.selectedOrganization()?.id === organizationId;
-      const hasLoadedDashboardStatistics: boolean =
-        store.dashboardStatistics() !== null;
-      const isLoadingStatistics: boolean =
-        store.statisticsOperation().status === 'loading';
+      /**
+       * Method resolveOrganization
+       * @method resolveOrganization
+       *
+       * @description
+       * Fetches an organization by ID and stores it as the active organization.
+       *
+       * @param {string} id - Organization identifier.
+       *
+       * @returns {Observable<OrganizationOutput>} Observable emitting the resolved organization.
+       */
+      resolveOrganization(id: string): Observable<OrganizationOutput> {
+        patchState(store, {
+          getOperation: createLoadingOperation(store.getOperation().data),
+        });
 
-      if (isSelectedOrganization && !hasLoadedDashboardStatistics && !isLoadingStatistics) {
-        loadStatistics(organizationId);
-      }
-    },
+        return organizationService.get(id).pipe(
+          tap({
+            next: (organization: OrganizationOutput): void => {
+              const hasChangedOrganization: boolean =
+                store.selectedOrganization()?.id !== organization.id;
 
-    /**
-     * Method clear
-     * @method clear
-     *
-     * @description
-     * Resets the entire active-organization state to idle.
-     * Should be called on logout.
-     *
-     * @since 1.0.0
-     *
-     * @returns {void} No return value.
-     */
-    clear(): void {
-      patchState(store, INITIAL_ACTIVE_ORGANIZATION_STATE);
-    },
+              patchState(store, {
+                selectedOrganization: organization,
+                getOperation: createSuccessOperation(organization),
+                ...(hasChangedOrganization ? resetDashboardState() : {}),
+              });
+            },
+            error: (error: unknown): void => {
+              const operationError: OperationError<unknown> =
+                createOperationErrorFromUnknown(error);
+              patchState(store, {
+                getOperation: createErrorOperation(
+                  operationError,
+                  store.getOperation().data,
+                ),
+              });
+              dispatcher.dispatch(
+                activeOrganizationStoreEvents.getFailed(
+                  toOperationFailureEventPayload(operationError, 'Failed to load organization'),
+                ),
+              );
+            },
+          }),
+        );
+      },
+
+      /**
+       * Method clearSelectedOrganization
+       * @method clearSelectedOrganization
+       *
+       * @description
+       * Clears only the active organization selection and all dashboard data.
+       *
+       * @returns {void} No return value.
+       */
+      clearSelectedOrganization(): void {
+        patchState(store, {
+          selectedOrganization: null,
+          ...resetDashboardState(),
+        });
+      },
+
+      /**
+       * Method loadDashboard
+       * @method loadDashboard
+       *
+       * @description
+       * RxMethod that loads the aggregate organization dashboard resource.
+       */
+      loadDashboard,
+
+      /**
+       * Method loadDashboardInspectionsTrend
+       * @method loadDashboardInspectionsTrend
+       *
+       * @description
+       * RxMethod that loads the dedicated inspections trend resource.
+       */
+      loadDashboardInspectionsTrend,
+
+      /**
+       * Method loadDashboardNonConformitiesOpenedTrend
+       * @method loadDashboardNonConformitiesOpenedTrend
+       *
+       * @description
+       * RxMethod that loads the dedicated opened non-conformities trend resource.
+       */
+      loadDashboardNonConformitiesOpenedTrend,
+
+      /**
+       * Method loadDashboardNonConformitiesResolvedTrend
+       * @method loadDashboardNonConformitiesResolvedTrend
+       *
+       * @description
+       * RxMethod that loads the dedicated resolved non-conformities trend resource.
+       */
+      loadDashboardNonConformitiesResolvedTrend,
+
+      /**
+       * Method loadDashboardTrends
+       * @method loadDashboardTrends
+       *
+       * @description
+       * Triggers all dedicated dashboard trend requests for the active organization.
+       *
+       * @param {string} organizationId - Organization identifier.
+      * @param {OrganizationDashboardTrendQueryOptions} [options] - Optional shared trend query filters.
+       *
+       * @returns {void} No return value.
+       */
+      loadDashboardTrends(
+        organizationId: string,
+        options?: OrganizationDashboardTrendQueryOptions,
+      ): void {
+        const payload = { organizationId, options };
+
+        loadDashboardInspectionsTrend(payload);
+        loadDashboardNonConformitiesOpenedTrend(payload);
+        loadDashboardNonConformitiesResolvedTrend(payload);
+      },
+
+      /**
+       * Method ensureDashboardLoaded
+       * @method ensureDashboardLoaded
+       *
+       * @description
+       * Loads the aggregate dashboard resource only when it is missing
+       * for the currently selected organization.
+       *
+       * @param {string} organizationId - Organization identifier.
+       * @param {OrganizationDashboardQueryOptions} [options] - Optional dashboard query filters.
+       *
+       * @returns {void} No return value.
+       */
+      ensureDashboardLoaded(
+        organizationId: string,
+        options?: OrganizationDashboardQueryOptions,
+      ): void {
+        if (!organizationId) {
+          return;
+        }
+
+        const isSelectedOrganization: boolean =
+          store.selectedOrganization()?.id === organizationId;
+        const hasLoadedDashboard: boolean = store.dashboard() !== null;
+        const isLoadingDashboard: boolean =
+          store.dashboardOperation().status === 'loading';
+
+        if (isSelectedOrganization && !hasLoadedDashboard && !isLoadingDashboard) {
+          loadDashboard({ organizationId, options });
+        }
+      },
+
+      /**
+       * Method clear
+       * @method clear
+       *
+       * @description
+       * Resets the entire active-organization store to its idle state.
+       *
+       * @returns {void} No return value.
+       */
+      clear(): void {
+        patchState(store, {
+          selectedOrganization: null,
+          getOperation: createIdleOperation(),
+          ...resetDashboardState(),
+        });
+      },
     };
   }),
 
-  /**
-   * Feature withHooks
-   *
-   * @description
-   * Lifecycle hooks for the ActiveOrganizationStore. On initialization,
-   * subscribes to router NavigationEnd events and clears the selected
-   * organization whenever the active URL no longer contains an
-   * `:organizationId` segment.
-   *
-   * @since 1.0.0
-   *
-   * @param {SignalStore} store - The store instance.
-   */
   withHooks((store) => {
     const router: Router = inject<Router>(Router);
 

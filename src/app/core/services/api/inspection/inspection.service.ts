@@ -67,6 +67,10 @@ export class InspectionService extends BaseApiService {
     return this.getCollection<OptionOutput>('/api/inspections/inspector-types', options);
   }
 
+  public listNonConformityStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
+    return this.getCollection<OptionOutput>('/api/non-conformities/statuses', options);
+  }
+
   //#region Public Methods — Inspections
   /**
    * Method list

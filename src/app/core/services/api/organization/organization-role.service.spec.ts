@@ -133,6 +133,19 @@ describe('OrganizationRoleService', () => {
     });
   });
 
+  // ── remove ─────────────────────────────────────────────────────────────────
+
+  describe('remove', () => {
+    it('should send DELETE request for the role', () => {
+      service.remove(orgId, 'role-uuid-1').subscribe();
+
+      const req = httpMock.expectOne(`${rolesUrl}/role-uuid-1`);
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(null);
+    });
+  });
+
   // ── assignToMember ─────────────────────────────────────────────────────────
 
   describe('assignToMember', () => {
@@ -164,6 +177,23 @@ describe('OrganizationRoleService', () => {
       expect(req.request.body).toEqual(input);
       expect(req.request.withCredentials).toBe(true);
       req.flush(mockMember);
+    });
+  });
+
+  // ── removeFromMember ───────────────────────────────────────────────────────
+
+  describe('removeFromMember', () => {
+    const memberId = 'member-uuid-1';
+
+    it('should send DELETE request for the member role assignment', () => {
+      service.removeFromMember(orgId, memberId, 'role-uuid-1').subscribe();
+
+      const req = httpMock.expectOne(
+        `${mockEnv.apiUrl}/api/organizations/${orgId}/members/${memberId}/roles/role-uuid-1`,
+      );
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(null);
     });
   });
 });

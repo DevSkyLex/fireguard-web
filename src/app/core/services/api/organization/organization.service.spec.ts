@@ -7,8 +7,9 @@ import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type {
   OrganizationOutput,
   CreateOrganizationInput,
+  OrganizationDashboardOutput,
+  OrganizationDashboardTrendOutput,
   OrganizationInvitationOutput,
-  OrganizationStatisticsOutput,
   OrganizationCountryOutput,
   OrganizationLegalTypeOutput,
   OrganizationPermissionOutput,
@@ -229,28 +230,257 @@ describe('OrganizationService', () => {
     });
   });
 
-  // ── getStatistics ──────────────────────────────────────────────────────────
+  // ── getDashboard ───────────────────────────────────────────────────────────
 
-  describe('getStatistics', () => {
-    it('should send GET request and return organization statistics', () => {
-      const mockStats: OrganizationStatisticsOutput = {
-        '@id': '/api/organizations/org-uuid-1/statistics',
-        '@type': 'Statistics',
-        memberCount: 5,
-        roleCount: 2,
-        facilityCount: 3,
-        activeFacilityCount: 2,
-        pendingInvitationCount: 1,
+  describe('getDashboard', () => {
+    it('should send GET request and return organization dashboard', () => {
+      const mockDashboard: OrganizationDashboardOutput = {
+        '@id': '/api/organizations/org-uuid-1/dashboard',
+        '@type': 'OrganizationDashboard',
+        generatedAt: '2026-03-30T08:00:00+00:00',
+        period: {
+          from: '2026-03-01T00:00:00+00:00',
+          to: '2026-03-30T23:59:59+00:00',
+          timezone: 'Europe/Paris',
+        },
+        overview: {
+          members: {
+            summary: [
+              { key: 'memberCount', label: 'Members', value: 5 },
+            ],
+          },
+          facilities: {
+            summary: [
+              { key: 'facilityCount', label: 'Facilities', value: 3 },
+            ],
+          },
+        },
+        health: {
+          metrics: [
+            { key: 'readiness', label: 'Readiness', value: 88 },
+            { key: 'compliance', label: 'Compliance', value: 72 },
+          ],
+        },
+        alerts: [
+          {
+            code: 'non_conformities_open',
+            severity: 'warning',
+            count: 2,
+          },
+        ],
+        comparison: {
+          mode: 'previous_period',
+          from: '2026-02-01T00:00:00+00:00',
+          to: '2026-02-29T23:59:59+00:00',
+          metrics: [
+            { key: 'inspections', label: 'Inspections', value: '+2', direction: 'up' },
+          ],
+          health: {
+            metrics: [
+              { key: 'readiness', label: 'Readiness', value: 4, direction: 'up' },
+            ],
+          },
+        },
       };
 
-      service.getStatistics('org-uuid-1').subscribe((stats) => {
-        expect(stats.memberCount).toBe(5);
+      service.getDashboard('org-uuid-1', {
+        from: '2026-03-01T00:00:00+00:00',
+        to: '2026-03-30T23:59:59+00:00',
+        compare: true,
+        timezone: 'Europe/Paris',
+        facilityType: 'site',
+        equipmentType: 'fire_extinguisher',
+        equipmentStatus: 'operational',
+        inspectionStatus: 'closed',
+        inspectionResult: 'pass',
+        inspectorType: 'user',
+        nonConformityStatus: 'open',
+        nonConformitySeverity: 'critical',
+      }).subscribe((dashboard) => {
+        expect(dashboard.generatedAt).toBe('2026-03-30T08:00:00+00:00');
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/statistics`);
+      const req = httpMock.expectOne(
+        (request) => request.url === `${baseUrl}/org-uuid-1/dashboard`,
+      );
       expect(req.request.method).toBe('GET');
       expect(req.request.withCredentials).toBe(true);
-      req.flush(mockStats);
+      expect(req.request.params.get('from')).toBe('2026-03-01T00:00:00+00:00');
+      expect(req.request.params.get('to')).toBe('2026-03-30T23:59:59+00:00');
+      expect(req.request.params.get('compare')).toBe('true');
+      expect(req.request.params.get('granularity')).toBeNull();
+      expect(req.request.params.get('timezone')).toBe('Europe/Paris');
+      expect(req.request.params.get('facilityType')).toBe('site');
+      expect(req.request.params.get('equipmentType')).toBe('fire_extinguisher');
+      expect(req.request.params.get('equipmentStatus')).toBe('operational');
+      expect(req.request.params.get('inspectionStatus')).toBe('closed');
+      expect(req.request.params.get('inspectionResult')).toBe('pass');
+      expect(req.request.params.get('inspectorType')).toBe('user');
+      expect(req.request.params.get('nonConformityStatus')).toBe('open');
+      expect(req.request.params.get('nonConformitySeverity')).toBe('critical');
+      req.flush(mockDashboard);
+    });
+  });
+
+  // ── getDashboardInspectionsTrend ───────────────────────────────────────────
+
+  describe('getDashboardInspectionsTrend', () => {
+    it('should request the inspections trend endpoint with dashboard query params', () => {
+      const mockTrend: OrganizationDashboardTrendOutput = {
+        '@id': '/api/organizations/org-uuid-1/dashboard/trends/inspections',
+        '@type': 'OrganizationDashboardTrend',
+        generatedAt: '2026-03-30T08:00:00+00:00',
+        metric: 'inspections',
+        period: {
+          from: '2026-03-01T00:00:00+00:00',
+          to: '2026-03-30T23:59:59+00:00',
+          granularity: 'week',
+          timezone: 'UTC',
+        },
+        summary: {
+          total: 12,
+          previousTotal: 10,
+        },
+        series: [
+          { bucket: '2026-W13', value: 2 },
+          { bucket: '2026-W14', value: 4 },
+        ],
+        comparison: {
+          mode: 'previous_period',
+          from: '2026-02-01T00:00:00+00:00',
+          to: '2026-02-29T23:59:59+00:00',
+          summary: [
+            { key: 'delta', label: 'Delta', value: 2 },
+          ],
+          series: [
+            { bucket: '2026-W09', value: 1 },
+          ],
+        },
+      };
+
+      service.getDashboardInspectionsTrend('org-uuid-1', {
+        compare: false,
+        granularity: 'week',
+        timezone: 'UTC',
+        inspectionStatus: 'closed',
+        inspectionResult: 'pass',
+        inspectorType: 'user',
+      }).subscribe((trend) => {
+        expect(trend.metric).toBe('inspections');
+      });
+
+      const req = httpMock.expectOne(
+        (request) => request.url === `${baseUrl}/org-uuid-1/dashboard/trends/inspections`,
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('compare')).toBe('false');
+      expect(req.request.params.get('granularity')).toBe('week');
+      expect(req.request.params.get('timezone')).toBe('UTC');
+      expect(req.request.params.get('inspectionStatus')).toBe('closed');
+      expect(req.request.params.get('inspectionResult')).toBe('pass');
+      expect(req.request.params.get('inspectorType')).toBe('user');
+      req.flush(mockTrend);
+    });
+  });
+
+  // ── getDashboardNonConformitiesOpenedTrend ────────────────────────────────
+
+  describe('getDashboardNonConformitiesOpenedTrend', () => {
+    it('should request the opened non-conformities trend endpoint', () => {
+      const mockTrend: OrganizationDashboardTrendOutput = {
+        '@id': '/api/organizations/org-uuid-1/dashboard/trends/non-conformities-opened',
+        '@type': 'OrganizationDashboardTrend',
+        generatedAt: '2026-03-30T08:00:00+00:00',
+        metric: 'nonConformitiesOpened',
+        period: {
+          from: '2026-03-01T00:00:00+00:00',
+          to: '2026-03-30T23:59:59+00:00',
+          granularity: 'day',
+          timezone: 'UTC',
+        },
+        summary: {
+          total: 5,
+        },
+        series: [
+          { date: '2026-03-29', value: 1 },
+          { date: '2026-03-30', value: 0 },
+        ],
+        comparison: {
+          mode: 'previous_period',
+          from: '2026-02-01T00:00:00+00:00',
+          to: '2026-02-29T23:59:59+00:00',
+          summary: [
+            { key: 'delta', label: 'Delta', value: -1 },
+          ],
+          series: [
+            { date: '2026-02-29', value: 1 },
+          ],
+        },
+      };
+
+      service.getDashboardNonConformitiesOpenedTrend('org-uuid-1', {
+        granularity: 'day',
+        nonConformityStatus: 'open',
+        nonConformitySeverity: 'critical',
+      }).subscribe((trend) => {
+        expect(trend.metric).toBe('nonConformitiesOpened');
+      });
+
+      const req = httpMock.expectOne((request) =>
+        request.url === `${baseUrl}/org-uuid-1/dashboard/trends/non-conformities-opened`,
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('granularity')).toBe('day');
+      expect(req.request.params.get('nonConformityStatus')).toBe('open');
+      expect(req.request.params.get('nonConformitySeverity')).toBe('critical');
+      req.flush(mockTrend);
+    });
+  });
+
+  // ── getDashboardNonConformitiesResolvedTrend ──────────────────────────────
+
+  describe('getDashboardNonConformitiesResolvedTrend', () => {
+    it('should request the resolved non-conformities trend endpoint', () => {
+      const mockTrend: OrganizationDashboardTrendOutput = {
+        '@id': '/api/organizations/org-uuid-1/dashboard/trends/non-conformities-resolved',
+        '@type': 'OrganizationDashboardTrend',
+        generatedAt: '2026-03-30T08:00:00+00:00',
+        metric: 'nonConformitiesResolved',
+        period: {
+          from: '2026-03-01T00:00:00+00:00',
+          to: '2026-03-30T23:59:59+00:00',
+          granularity: 'day',
+          timezone: 'UTC',
+        },
+        summary: {
+          total: 7,
+        },
+        series: [
+          { date: '2026-03-29', value: 2 },
+          { date: '2026-03-30', value: 3 },
+        ],
+        comparison: {
+          mode: 'previous_period',
+          from: '2026-02-01T00:00:00+00:00',
+          to: '2026-02-29T23:59:59+00:00',
+          summary: [
+            { key: 'delta', label: 'Delta', value: 1 },
+          ],
+          series: [
+            { date: '2026-02-29', value: 2 },
+          ],
+        },
+      };
+
+      service.getDashboardNonConformitiesResolvedTrend('org-uuid-1').subscribe((trend) => {
+        expect(trend.metric).toBe('nonConformitiesResolved');
+      });
+
+      const req = httpMock.expectOne(
+        `${baseUrl}/org-uuid-1/dashboard/trends/non-conformities-resolved`,
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush(mockTrend);
     });
   });
 

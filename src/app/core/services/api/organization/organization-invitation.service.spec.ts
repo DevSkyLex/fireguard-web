@@ -4,7 +4,12 @@ import { provideHttpClient } from '@angular/common/http';
 
 import { OrganizationInvitationService } from './organization-invitation.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
-import type { OrganizationInvitationOutput, InviteOrganizationMemberInput } from '@core/models/organization';
+import type {
+  AcceptOrganizationInvitationInput,
+  InviteOrganizationMemberInput,
+  OrganizationInvitationOutput,
+  OrganizationMemberOutput,
+} from '@core/models/organization';
 import type { ApiError } from '@core/models/api';
 
 describe('OrganizationInvitationService', () => {
@@ -14,6 +19,7 @@ describe('OrganizationInvitationService', () => {
   const mockEnv = { apiUrl: 'https://api.test.com' };
   const orgId = 'org-uuid-1';
   const invitationsUrl = `${mockEnv.apiUrl}/api/organizations/${orgId}/invitations`;
+  const acceptInvitationUrl = `${mockEnv.apiUrl}/api/organizations/invitations/accept`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -48,6 +54,53 @@ describe('OrganizationInvitationService', () => {
     updatedAt: '2026-03-01T00:00:00+00:00',
     roleIds: [],
   };
+
+  const mockAcceptedMember: OrganizationMemberOutput = {
+    '@id': `/api/organizations/${orgId}/members/member-uuid-1`,
+    '@type': 'OrganizationMember',
+    id: 'member-uuid-1',
+    organizationId: orgId,
+    userId: 'user-uuid-2',
+    isActive: true,
+    joinedAt: '2026-03-15T00:00:00+00:00',
+    roleIds: ['role-uuid-1'],
+  };
+
+  // ── accept ─────────────────────────────────────────────────────────────────
+
+  describe('accept', () => {
+    const input: AcceptOrganizationInvitationInput = {
+      token: 'a4d8e8f04d3a2a59f5d8f29f6f4f25bc25d5ef8c9fef2a79328fa93ce31d5d88',
+    };
+
+    it('should send POST request and return the accepted member', () => {
+      service.accept(input).subscribe((member) => {
+        expect(member.id).toBe('member-uuid-1');
+        expect(member.organizationId).toBe(orgId);
+      });
+
+      const req = httpMock.expectOne(acceptInvitationUrl);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(input);
+      expect(req.request.withCredentials).toBe(true);
+      expect(req.request.headers.get('Content-Type')).toBe('application/ld+json');
+      req.flush(mockAcceptedMember);
+    });
+
+    it('should handle validation errors for an invalid token', () => {
+      service.accept({ token: 'invalid' }).subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(422);
+        },
+      });
+
+      const req = httpMock.expectOne(acceptInvitationUrl);
+      req.flush(
+        { status: 422, title: 'Unprocessable Entity' },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+    });
+  });
 
   // ── invite ─────────────────────────────────────────────────────────────────
 

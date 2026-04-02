@@ -21,9 +21,7 @@ import type {
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class OrganizationMemberService extends BaseApiService {
   //#region Public Methods
   /**
@@ -45,8 +43,9 @@ export class OrganizationMemberService extends BaseApiService {
     organizationId: string,
     options?: RequestOptions,
   ): Observable<HydraCollection<OrganizationMemberOutput>> {
+    const url: string = `/api/organizations/${organizationId}/members`;
     return this.getCollection<OrganizationMemberOutput>(
-      `/api/organizations/${organizationId}/members`,
+      url,
       options,
     );
   }
@@ -71,10 +70,31 @@ export class OrganizationMemberService extends BaseApiService {
     organizationId: string,
     input: AddOrganizationMemberInput,
   ): Observable<OrganizationMemberOutput> {
+    const url: string = `/api/organizations/${organizationId}/members`;
     return this.post<AddOrganizationMemberInput, OrganizationMemberOutput>(
-      `/api/organizations/${organizationId}/members`,
+      url,
       input,
     );
+  }
+
+  /**
+   * Method remove
+   * @method remove
+   *
+   * @description
+   * Removes a member from the given organization.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} memberId - The ID of the member to remove.
+   *
+   * @return {Observable<void>} Observable completing on success.
+   */
+  public remove(organizationId: string, memberId: string): Observable<void> {
+    const url: string = `/api/organizations/${organizationId}/members/${memberId}`;
+    return this.delete(url);
   }
   //#endregion
 }

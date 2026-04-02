@@ -137,13 +137,13 @@ export class Card {
       class: 'p-0!',
     },
     content: {
-      class: 'p-5',
+      class: 'p-4',
     },
     header: {
-      class: 'p-5',
+      class: 'p-4',
     },
     footer: {
-      class: 'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 p-5',
+      class: 'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 px-4 py-3',
     },
   };
   //#endregion

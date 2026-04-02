@@ -148,7 +148,7 @@ export class OrganizationDashboardOverviewTrend {
           {
             granularity: params.granularity,
             from: params.from,
-            to: params.to, 
+            to: params.to,
             compare: params.compare
           },
         ),
@@ -294,13 +294,17 @@ export class OrganizationDashboardOverviewTrend {
             const { ctx, chartArea } = context.chart;
             if (!chartArea) return 'transparent';
             const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.35)');
             gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
             return gradient;
           },
           tension: 0.4,
-          pointRadius: 3,
-          pointHoverRadius: 6,
+          pointBackgroundColor: '#3b82f6',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointHoverBorderWidth: 2,
         },
         {
           label: 'NC Opened',
@@ -311,13 +315,17 @@ export class OrganizationDashboardOverviewTrend {
             const { ctx, chartArea } = context.chart;
             if (!chartArea) return 'transparent';
             const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, 'rgba(249, 115, 22, 0.4)');
+            gradient.addColorStop(0, 'rgba(249, 115, 22, 0.35)');
             gradient.addColorStop(1, 'rgba(249, 115, 22, 0.0)');
             return gradient;
           },
           tension: 0.4,
-          pointRadius: 3,
-          pointHoverRadius: 6,
+          pointBackgroundColor: '#f97316',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointHoverBorderWidth: 2,
         },
         {
           label: 'NC Resolved',
@@ -328,13 +336,17 @@ export class OrganizationDashboardOverviewTrend {
             const { ctx, chartArea } = context.chart;
             if (!chartArea) return 'transparent';
             const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, 'rgba(34, 197, 94, 0.4)');
+            gradient.addColorStop(0, 'rgba(34, 197, 94, 0.35)');
             gradient.addColorStop(1, 'rgba(34, 197, 94, 0.0)');
             return gradient;
           },
           tension: 0.4,
-          pointRadius: 3,
-          pointHoverRadius: 6,
+          pointBackgroundColor: '#22c55e',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointHoverBorderWidth: 2,
         },
       ],
     };
@@ -356,6 +368,8 @@ export class OrganizationDashboardOverviewTrend {
   protected readonly chartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: { duration: 400 },
+    interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: {
         display: true,
@@ -365,11 +379,24 @@ export class OrganizationDashboardOverviewTrend {
           pointStyle: 'circle',
         },
       },
-      tooltip: { mode: 'index', intersect: false },
+      tooltip: {
+        callbacks: {
+          label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
+        },
+      },
     },
     scales: {
-      x: { grid: { display: false } },
-      y: { beginAtZero: true },
+      x: {
+        border: { display: false },
+        grid: { display: false },
+        ticks: { maxRotation: 0, maxTicksLimit: 6 },
+      },
+      y: {
+        border: { display: false },
+        beginAtZero: true,
+        grid: { color: 'rgba(0, 0, 0, 0.06)' },
+        ticks: { precision: 0, maxTicksLimit: 5 },
+      },
     },
   };
   //#endregion

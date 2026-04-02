@@ -26,6 +26,7 @@ import type {
   OrganizationDashboardGranularity,
   OrganizationDashboardNonConformityTrendResourceParams,
   OrganizationDashboardTrendOutput,
+  OrganizationDashboardTrendSeriesPoint,
   OrganizationOutput,
 } from '@core/models/organization';
 import type {
@@ -266,28 +267,53 @@ export class OrganizationDashboardNonConformitiesResolvedTrend {
     const data: number[] =
       trend?.series.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0)) ?? [];
 
-    return {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Non-Conformities Resolved',
-          data: data,
-          fill: true,
-          borderColor: '#22c55e',
-          backgroundColor: (context: ScriptableContext<'line'>) => {
-            const { ctx, chartArea } = context.chart;
-            if (!chartArea) return 'transparent';
-            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, 'rgba(34, 197, 94, 0.4)');
-            gradient.addColorStop(1, 'rgba(34, 197, 94, 0.0)');
-            return gradient;
-          },
-          tension: 0.4,
-          pointRadius: 3,
-          pointHoverRadius: 6,
+    const comparisonSeries: readonly OrganizationDashboardTrendSeriesPoint[] =
+      trend?.comparison?.series ?? [];
+    const comparisonData: number[] =
+      comparisonSeries.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0));
+
+    const datasets: ChartData<'line'>['datasets'] = [
+      {
+        label: 'Non-Conformities Resolved',
+        data: data,
+        fill: true,
+        borderColor: '#22c55e',
+        backgroundColor: (context: ScriptableContext<'line'>) => {
+          const { ctx, chartArea } = context.chart;
+          if (!chartArea) return 'transparent';
+          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, 'rgba(34, 197, 94, 0.35)');
+          gradient.addColorStop(1, 'rgba(34, 197, 94, 0.0)');
+          return gradient;
         },
-      ],
-    };
+        tension: 0.4,
+        pointBackgroundColor: '#22c55e',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 7,
+        pointHoverBorderWidth: 2,
+      },
+    ];
+
+    if (comparisonData.length > 0) {
+      datasets.push({
+        label: 'Previous Period',
+        data: comparisonData,
+        fill: false,
+        borderColor: 'rgba(34, 197, 94, 0.4)',
+        borderDash: [5, 5],
+        backgroundColor: 'transparent',
+        tension: 0.4,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: 'rgba(34, 197, 94, 0.4)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 1,
+      });
+    }
+
+    return { labels, datasets };
   });
 
   /**
@@ -305,13 +331,28 @@ export class OrganizationDashboardNonConformitiesResolvedTrend {
   protected readonly chartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: { duration: 400 },
+    interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: { display: false },
-      tooltip: { mode: 'index', intersect: false },
+      tooltip: {
+        callbacks: {
+          label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
+        },
+      },
     },
     scales: {
-      x: { grid: { display: false } },
-      y: { beginAtZero: true },
+      x: {
+        border: { display: false },
+        grid: { display: false },
+        ticks: { maxRotation: 0, maxTicksLimit: 6 },
+      },
+      y: {
+        border: { display: false },
+        beginAtZero: true,
+        grid: { color: 'rgba(0, 0, 0, 0.06)' },
+        ticks: { precision: 0, maxTicksLimit: 5 },
+      },
     },
   };
   //#endregion

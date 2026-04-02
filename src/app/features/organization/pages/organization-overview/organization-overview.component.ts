@@ -1,12 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-} from '@angular/core';
-import { AvatarModule } from 'primeng/avatar';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
-import { SkeletonModule } from 'primeng/skeleton';
-import { TagModule } from 'primeng/tag';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 /**
  * Component OrganizationOverviewPage
@@ -23,17 +15,11 @@ import { TagModule } from 'primeng/tag';
  */
 @Component({
   selector: 'app-organization-overview',
-  host: { class: 'block min-h-full' },
-  imports: [
-    AvatarModule,
-    ButtonModule,
-    MessageModule,
-    SkeletonModule,
-    TagModule,
-  ],
+  imports: [],
   templateUrl: './organization-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationOverviewPage {
-
+  //#region Properties
+  //#endregion
 }

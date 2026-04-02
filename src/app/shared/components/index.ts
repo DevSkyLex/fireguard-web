@@ -1,3 +1,4 @@
+export { Card } from './card';
 export { NotificationBell } from './notification-bell';
 export { OrganizationSwitcher } from './organization-switcher';
 export { RadioCardGroup } from './radio-card-group';

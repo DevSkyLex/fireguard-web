@@ -38,4 +38,36 @@
       />
     }
   </ng-template>
+
+  <ng-template #footer>
+    <div class="flex flex-wrap items-center gap-2">
+      <p-select
+        [ngModel]="selectedNonConformityStatus()"
+        (ngModelChange)="selectedNonConformityStatus.set($event)"
+        [options]="nonConformityStatusOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Status"
+        [showClear]="true"
+        size="small"
+      />
+      <p-select
+        [ngModel]="selectedNonConformitySeverity()"
+        (ngModelChange)="selectedNonConformitySeverity.set($event)"
+        [options]="nonConformitySeverityOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Severity"
+        [showClear]="true"
+        size="small"
+      />
+      <p-togglebutton
+        [ngModel]="compareEnabled()"
+        (ngModelChange)="compareEnabled.set($event)"
+        onLabel="Compare ON"
+        offLabel="Compare OFF"
+        size="small"
+      />
+    </div>
+  </ng-template>
 </app-card>

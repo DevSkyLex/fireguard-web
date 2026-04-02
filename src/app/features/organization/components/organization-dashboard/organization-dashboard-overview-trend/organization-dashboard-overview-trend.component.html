@@ -38,4 +38,16 @@
       />
     }
   </ng-template>
+
+  <ng-template #footer>
+    <div class="flex flex-wrap items-center gap-2">
+      <p-togglebutton
+        [ngModel]="compareEnabled()"
+        (ngModelChange)="compareEnabled.set($event)"
+        onLabel="Compare ON"
+        offLabel="Compare OFF"
+        size="small"
+      />
+    </div>
+  </ng-template>
 </app-card>

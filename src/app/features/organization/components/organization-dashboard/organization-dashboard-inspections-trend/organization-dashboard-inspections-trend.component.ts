@@ -16,6 +16,7 @@ import { ChartModule } from 'primeng/chart';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SelectModule } from 'primeng/select';
+import { ToggleButtonModule } from 'primeng/togglebutton';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
 import { Card } from '@shared/components';
@@ -23,10 +24,15 @@ import { OrganizationService } from '@core/services/api/organization';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import type {
   OrganizationDashboardGranularity,
+  OrganizationDashboardInspectionTrendResourceParams,
   OrganizationDashboardTrendOutput,
-  OrganizationDashboardTrendResourceParams,
   OrganizationOutput,
 } from '@core/models/organization';
+import type {
+  InspectionResult,
+  InspectionStatus,
+  InspectorType,
+} from '@core/models/inspection';
 import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
 
 /**
@@ -45,7 +51,7 @@ import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
 @Component({
   selector: 'app-organization-dashboard-inspections-trend',
   templateUrl: './organization-dashboard-inspections-trend.component.html',
-  imports: [Card, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule],
+  imports: [Card, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule, ToggleButtonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboardInspectionsTrend {
@@ -94,7 +100,7 @@ export class OrganizationDashboardInspectionsTrend {
    *
    * @type {ResourceRef<OrganizationDashboardTrendOutput | undefined>}
    */
-  protected readonly trendResource: ResourceRef<OrganizationDashboardTrendOutput | undefined> = rxResource<OrganizationDashboardTrendOutput, OrganizationDashboardTrendResourceParams | undefined>({
+  protected readonly trendResource: ResourceRef<OrganizationDashboardTrendOutput | undefined> = rxResource<OrganizationDashboardTrendOutput, OrganizationDashboardInspectionTrendResourceParams | undefined>({
     params: () => {
       /**
        * Constant organization
@@ -114,13 +120,27 @@ export class OrganizationDashboardInspectionsTrend {
 
       return {
         organizationId: organization.id,
-        granularity: this.selectedGranularity()
+        granularity: this.selectedGranularity(),
+        from: this.selectedFrom() ?? undefined,
+        to: this.selectedTo() ?? undefined,
+        compare: this.compareEnabled() || undefined,
+        inspectionStatus: this.selectedInspectionStatus() ?? undefined,
+        inspectionResult: this.selectedInspectionResult() ?? undefined,
+        inspectorType: this.selectedInspectorType() ?? undefined,
       };
     },
-    stream: ({ params }: { params: OrganizationDashboardTrendResourceParams }) =>
+    stream: ({ params }: { params: OrganizationDashboardInspectionTrendResourceParams }) =>
       this.organizationService.getDashboardInspectionsTrend(
         params.organizationId,
-        { granularity: params.granularity },
+        {
+          granularity: params.granularity,
+          from: params.from,
+          to: params.to,
+          compare: params.compare,
+          inspectionStatus: params.inspectionStatus,
+          inspectionResult: params.inspectionResult,
+          inspectorType: params.inspectorType,
+        },
       ),
   });
 
@@ -197,6 +217,38 @@ export class OrganizationDashboardInspectionsTrend {
    */
   protected readonly selectedGranularity: WritableSignal<OrganizationDashboardGranularity> =
     signal<OrganizationDashboardGranularity>('month');
+
+  protected readonly selectedFrom: WritableSignal<string | null> = signal<string | null>(null);
+
+  protected readonly selectedTo: WritableSignal<string | null> = signal<string | null>(null);
+
+  protected readonly compareEnabled: WritableSignal<boolean> = signal<boolean>(false);
+
+  protected readonly inspectionStatusOptions: { label: string; value: InspectionStatus }[] = [
+    { label: 'Draft', value: 'draft' },
+    { label: 'Submitted', value: 'submitted' },
+    { label: 'Closed', value: 'closed' },
+  ];
+
+  protected readonly selectedInspectionStatus: WritableSignal<InspectionStatus | null> =
+    signal<InspectionStatus | null>(null);
+
+  protected readonly inspectionResultOptions: { label: string; value: InspectionResult }[] = [
+    { label: 'Pass', value: 'pass' },
+    { label: 'Fail', value: 'fail' },
+    { label: 'Partial', value: 'partial' },
+  ];
+
+  protected readonly selectedInspectionResult: WritableSignal<InspectionResult | null> =
+    signal<InspectionResult | null>(null);
+
+  protected readonly inspectorTypeOptions: { label: string; value: InspectorType }[] = [
+    { label: 'User', value: 'user' },
+    { label: 'External', value: 'external' },
+  ];
+
+  protected readonly selectedInspectorType: WritableSignal<InspectorType | null> =
+    signal<InspectorType | null>(null);
 
   /**
    * Property chartData

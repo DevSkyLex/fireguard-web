@@ -16,6 +16,7 @@ import { ChartModule } from 'primeng/chart';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SelectModule } from 'primeng/select';
+import { ToggleButtonModule } from 'primeng/togglebutton';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
 import { Card } from '@shared/components';
@@ -23,10 +24,14 @@ import { OrganizationService } from '@core/services/api/organization';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import type {
   OrganizationDashboardGranularity,
+  OrganizationDashboardNonConformityTrendResourceParams,
   OrganizationDashboardTrendOutput,
-  OrganizationDashboardTrendResourceParams,
   OrganizationOutput,
 } from '@core/models/organization';
+import type {
+  NonConformitySeverity,
+  NonConformityStatus,
+} from '@core/models/inspection';
 import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
 
 /**
@@ -45,7 +50,7 @@ import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
 @Component({
   selector: 'app-organization-dashboard-non-conformities-resolved-trend',
   templateUrl: './organization-dashboard-non-conformities-resolved-trend.component.html',
-  imports: [Card, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule],
+  imports: [Card, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule, ToggleButtonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboardNonConformitiesResolvedTrend {
@@ -94,7 +99,7 @@ export class OrganizationDashboardNonConformitiesResolvedTrend {
    *
    * @type {ResourceRef<OrganizationDashboardTrendOutput | undefined>}
    */
-  protected readonly trendResource: ResourceRef<OrganizationDashboardTrendOutput | undefined> = rxResource<OrganizationDashboardTrendOutput, OrganizationDashboardTrendResourceParams | undefined>({
+  protected readonly trendResource: ResourceRef<OrganizationDashboardTrendOutput | undefined> = rxResource<OrganizationDashboardTrendOutput, OrganizationDashboardNonConformityTrendResourceParams | undefined>({
     params: () => {
       /**
        * Constant organization
@@ -114,13 +119,25 @@ export class OrganizationDashboardNonConformitiesResolvedTrend {
 
       return {
         organizationId: organization.id,
-        granularity: this.selectedGranularity()
+        granularity: this.selectedGranularity(),
+        from: this.selectedFrom() ?? undefined,
+        to: this.selectedTo() ?? undefined,
+        compare: this.compareEnabled() || undefined,
+        nonConformityStatus: this.selectedNonConformityStatus() ?? undefined,
+        nonConformitySeverity: this.selectedNonConformitySeverity() ?? undefined,
       };
     },
-    stream: ({ params }: { params: OrganizationDashboardTrendResourceParams }) =>
+    stream: ({ params }: { params: OrganizationDashboardNonConformityTrendResourceParams }) =>
       this.organizationService.getDashboardNonConformitiesResolvedTrend(
         params.organizationId,
-        { granularity: params.granularity },
+        {
+          granularity: params.granularity,
+          from: params.from,
+          to: params.to,
+          compare: params.compare,
+          nonConformityStatus: params.nonConformityStatus,
+          nonConformitySeverity: params.nonConformitySeverity,
+        },
       ),
   });
 
@@ -200,6 +217,32 @@ export class OrganizationDashboardNonConformitiesResolvedTrend {
    */
   protected readonly selectedGranularity: WritableSignal<OrganizationDashboardGranularity> =
     signal<OrganizationDashboardGranularity>('month');
+
+  protected readonly selectedFrom: WritableSignal<string | null> = signal<string | null>(null);
+
+  protected readonly selectedTo: WritableSignal<string | null> = signal<string | null>(null);
+
+  protected readonly compareEnabled: WritableSignal<boolean> = signal<boolean>(false);
+
+  protected readonly nonConformityStatusOptions: { label: string; value: NonConformityStatus }[] = [
+    { label: 'Open', value: 'open' },
+    { label: 'In Progress', value: 'in_progress' },
+    { label: 'Done', value: 'done' },
+    { label: 'Waived', value: 'waived' },
+  ];
+
+  protected readonly selectedNonConformityStatus: WritableSignal<NonConformityStatus | null> =
+    signal<NonConformityStatus | null>(null);
+
+  protected readonly nonConformitySeverityOptions: { label: string; value: NonConformitySeverity }[] = [
+    { label: 'Low', value: 'low' },
+    { label: 'Medium', value: 'medium' },
+    { label: 'High', value: 'high' },
+    { label: 'Critical', value: 'critical' },
+  ];
+
+  protected readonly selectedNonConformitySeverity: WritableSignal<NonConformitySeverity | null> =
+    signal<NonConformitySeverity | null>(null);
 
   /**
    * Property chartData

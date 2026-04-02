@@ -38,4 +38,46 @@
       />
     }
   </ng-template>
+
+  <ng-template #footer>
+    <div class="flex flex-wrap items-center gap-2">
+      <p-select
+        [ngModel]="selectedInspectionStatus()"
+        (ngModelChange)="selectedInspectionStatus.set($event)"
+        [options]="inspectionStatusOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Status"
+        [showClear]="true"
+        size="small"
+      />
+      <p-select
+        [ngModel]="selectedInspectionResult()"
+        (ngModelChange)="selectedInspectionResult.set($event)"
+        [options]="inspectionResultOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Result"
+        [showClear]="true"
+        size="small"
+      />
+      <p-select
+        [ngModel]="selectedInspectorType()"
+        (ngModelChange)="selectedInspectorType.set($event)"
+        [options]="inspectorTypeOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Inspector"
+        [showClear]="true"
+        size="small"
+      />
+      <p-togglebutton
+        [ngModel]="compareEnabled()"
+        (ngModelChange)="compareEnabled.set($event)"
+        onLabel="Compare ON"
+        offLabel="Compare OFF"
+        size="small"
+      />
+    </div>
+  </ng-template>
 </app-card>

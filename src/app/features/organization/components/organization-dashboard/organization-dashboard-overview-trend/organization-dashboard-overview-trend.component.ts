@@ -16,6 +16,7 @@ import { ChartModule } from 'primeng/chart';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SelectModule } from 'primeng/select';
+import { ToggleButtonModule } from 'primeng/togglebutton';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
 import { forkJoin } from 'rxjs';
@@ -58,7 +59,8 @@ import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
     ChartModule,
     MenuModule,
     SkeletonModule,
-    SelectModule
+    SelectModule,
+    ToggleButtonModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -133,22 +135,40 @@ export class OrganizationDashboardOverviewTrend {
 
       return {
         organizationId: organization.id,
-        granularity: this.selectedGranularity()
+        granularity: this.selectedGranularity(),
+        from: this.selectedFrom() ?? undefined,
+        to: this.selectedTo() ?? undefined,
+        compare: this.compareEnabled() || undefined,
       };
     },
     stream: ({ params }: { params: OrganizationDashboardTrendResourceParams }) =>
       forkJoin({
         inspections: this.organizationService.getDashboardInspectionsTrend(
           params.organizationId,
-          { granularity: params.granularity },
+          {
+            granularity: params.granularity,
+            from: params.from,
+            to: params.to, 
+            compare: params.compare
+          },
         ),
         ncOpened: this.organizationService.getDashboardNonConformitiesOpenedTrend(
           params.organizationId,
-          { granularity: params.granularity },
+          {
+            granularity: params.granularity,
+            from: params.from,
+            to: params.to,
+            compare: params.compare
+          },
         ),
         ncResolved: this.organizationService.getDashboardNonConformitiesResolvedTrend(
           params.organizationId,
-          { granularity: params.granularity },
+          {
+            granularity: params.granularity,
+            from: params.from,
+            to: params.to,
+            compare: params.compare
+          },
         ),
       }),
   });
@@ -226,6 +246,12 @@ export class OrganizationDashboardOverviewTrend {
    */
   protected readonly selectedGranularity: WritableSignal<OrganizationDashboardGranularity> =
     signal<OrganizationDashboardGranularity>('month');
+
+  protected readonly selectedFrom: WritableSignal<string | null> = signal<string | null>(null);
+
+  protected readonly selectedTo: WritableSignal<string | null> = signal<string | null>(null);
+
+  protected readonly compareEnabled: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property chartData

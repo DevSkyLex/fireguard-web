@@ -1,4 +1,5 @@
 import type { HydraItem } from '@core/models/api';
+import type { OrganizationDashboardGranularity } from './organization-dashboard-query-options.interface';
 import type { OrganizationDashboardPeriod } from './organization-dashboard-output.interface';
 
 /**
@@ -180,3 +181,30 @@ export interface OrganizationDashboardTrendOutput extends HydraItem {
   readonly comparison: OrganizationDashboardTrendComparison;
   //#endregion
 }
+
+/**
+ * Type OrganizationDashboardOverviewTrendResource
+ *
+ * @description
+ * Shape of the `rxResource` value for the overview trend card,
+ * which combines all three dashboard trend datasets in a single
+ * parallel load.
+ */
+export type OrganizationDashboardOverviewTrendResource = {
+  readonly inspections: OrganizationDashboardTrendOutput;
+  readonly ncOpened: OrganizationDashboardTrendOutput;
+  readonly ncResolved: OrganizationDashboardTrendOutput;
+};
+
+/**
+ * Type OrganizationDashboardTrendResourceParams
+ *
+ * @description
+ * Reactive params shape shared by all trend `rxResource` instances.
+ * Combines the active organization identifier with the selected
+ * time granularity to drive automatic re-fetching.
+ */
+export type OrganizationDashboardTrendResourceParams = {
+  readonly organizationId: string;
+  readonly granularity: OrganizationDashboardGranularity;
+};

@@ -1,0 +1,41 @@
+<p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
+
+<app-card title="Non-Conformities Resolved" description="Resolved non-conformities over time">
+  <ng-template #action>
+    <div class="flex items-center gap-2">
+      <p-select
+        [ngModel]="selectedGranularity()"
+        (ngModelChange)="onGranularityChange($event)"
+        [options]="granularityOptions"
+        optionLabel="label"
+        optionValue="value"
+        size="small"
+      />
+
+      <p-button
+        icon="pi pi-ellipsis-v"
+        severity="secondary"
+        size="small"
+        outlined
+        (onClick)="onMenuToggle($event)"
+      />
+    </div>
+  </ng-template>
+
+  <ng-template #content>
+    @if (trendResource.isLoading()) {
+      <p-skeleton
+        height="200px"
+        class="w-full"
+      />
+    } @else {
+      <p-chart
+        type="line"
+        [data]="chartData()"
+        [options]="chartOptions"
+        height="200px"
+        fluid
+      />
+    }
+  </ng-template>
+</app-card>

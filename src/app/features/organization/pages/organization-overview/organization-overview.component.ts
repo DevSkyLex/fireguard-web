@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { OrganizationDashboard } from '@features/organization/components';
 
 /**
  * Component OrganizationOverviewPage
@@ -15,7 +16,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
  */
 @Component({
   selector: 'app-organization-overview',
-  imports: [],
+  imports: [OrganizationDashboard],
   templateUrl: './organization-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

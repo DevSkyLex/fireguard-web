@@ -44,6 +44,8 @@ export type {
   OrganizationDashboardTrendSummaryValue,
   OrganizationDashboardOverviewTrendResource,
   OrganizationDashboardTrendResourceParams,
+  OrganizationDashboardInspectionTrendResourceParams,
+  OrganizationDashboardNonConformityTrendResourceParams,
 } from './organization-dashboard-trend-output.interface';
 export type { OrganizationCountryOutput } from './organization-country-output.interface';
 export type { OrganizationLegalTypeOutput, OrganizationLegalFieldRequirement, OrganizationLegalProfileRequirements } from './organization-legal-type-output.interface';

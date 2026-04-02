@@ -1,5 +1,14 @@
 import type { HydraItem } from '@core/models/api';
 import type { OrganizationDashboardGranularity } from './organization-dashboard-query-options.interface';
+import type {
+  InspectionResult,
+  InspectionStatus,
+  InspectorType,
+} from '../inspection/inspection-output.interface';
+import type {
+  NonConformitySeverity,
+  NonConformityStatus,
+} from '../inspection/non-conformity-output.interface';
 import type { OrganizationDashboardPeriod } from './organization-dashboard-output.interface';
 
 /**
@@ -202,9 +211,40 @@ export type OrganizationDashboardOverviewTrendResource = {
  * @description
  * Reactive params shape shared by all trend `rxResource` instances.
  * Combines the active organization identifier with the selected
- * time granularity to drive automatic re-fetching.
+ * time granularity and optional date range / comparison flag
+ * to drive automatic re-fetching.
  */
 export type OrganizationDashboardTrendResourceParams = {
   readonly organizationId: string;
   readonly granularity: OrganizationDashboardGranularity;
+  readonly from?: string;
+  readonly to?: string;
+  readonly compare?: boolean;
 };
+
+/**
+ * Type OrganizationDashboardInspectionTrendResourceParams
+ *
+ * @description
+ * Reactive params shape for the inspections trend `rxResource`.
+ * Extends the base params with inspection-specific filters.
+ */
+export type OrganizationDashboardInspectionTrendResourceParams =
+  OrganizationDashboardTrendResourceParams & {
+    readonly inspectionStatus?: InspectionStatus;
+    readonly inspectionResult?: InspectionResult;
+    readonly inspectorType?: InspectorType;
+  };
+
+/**
+ * Type OrganizationDashboardNonConformityTrendResourceParams
+ *
+ * @description
+ * Reactive params shape for the non-conformity trend `rxResource` instances.
+ * Extends the base params with non-conformity-specific filters.
+ */
+export type OrganizationDashboardNonConformityTrendResourceParams =
+  OrganizationDashboardTrendResourceParams & {
+    readonly nonConformityStatus?: NonConformityStatus;
+    readonly nonConformitySeverity?: NonConformitySeverity;
+  };

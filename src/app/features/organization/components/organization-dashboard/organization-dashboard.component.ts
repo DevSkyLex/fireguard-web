@@ -22,7 +22,7 @@ import { OrganizationDashboardNonConformitiesResolvedTrend } from './organizatio
 import { OrganizationDashboardOverviewTrend } from './organization-dashboard-overview-trend/organization-dashboard-overview-trend.component';
 import { OrganizationDashboardEquipmentCreatedTrend } from './organization-dashboard-equipment-created-trend/organization-dashboard-equipment-created-trend.component';
 import { OrganizationDashboardFacilitiesCreatedTrend } from './organization-dashboard-facilities-created-trend/organization-dashboard-facilities-created-trend.component';
-import { OrganizationDashboardHealthValue } from '@app/core/models/organization/organization-dashboard-output.interface';
+
 
 /**
  * Type OrganizationDashboardKpiValue
@@ -250,53 +250,6 @@ export class OrganizationDashboard {
     });
 
   /**
-   * Property readinessScore
-   * @readonly
-   *
-   * @description
-   * Organization readiness health score, extracted from the
-   * `health.metrics` array by matching the `"readiness"` key.
-   * Returns null while loading or when the metric is not present.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<OrganizationDashboardKpiValue>}
-   */
-  protected readonly readinessScore: Signal<OrganizationDashboardKpiValue> =
-    computed<OrganizationDashboardKpiValue>(() => {
-      /**
-       * Constant dashboard
-       * @const dashboard
-       *
-       * @description
-       * Current value of the `dashboardResource`, typed as a local variable
-       * to avoid repeated optional chaining and improve readability of the
-       * return statement.
-       *
-       * @type {OrganizationDashboardOutput | undefined}
-       */
-      const dashboard: OrganizationDashboardOutput | undefined =
-        this.dashboardResource.value();
-
-      /**
-       * Constant metrics
-       * @const metrics
-       *
-       * @description
-       * Health metrics array extracted from the dashboard payload,
-       * typed as a local variable to improve readability.
-       *
-       * @type {readonly Readonly<Record<string, OrganizationDashboardHealthValue>>[] | undefined}
-       */
-      const metrics: readonly Readonly<Record<string, OrganizationDashboardHealthValue>>[] | undefined =
-        dashboard?.health?.['metrics'];
-
-      // Find the entry with the "readiness" key and return its value, or null if not found
-      return metrics?.find((m) => m['key'] === 'readiness')?.['value'] ?? null;
-    });
-
-  /**
    * Property equipmentCount
    * @readonly
    *
@@ -362,75 +315,6 @@ export class OrganizationDashboard {
 
       // Return the value of the first entry in the inspections overview summary, or null if it's not present
       return dashboard?.overview?.['inspections']?.['summary']?.[0]?.['value'] ?? null;
-    });
-
-  /**
-   * Property readinessComparison
-   * @readonly
-   *
-   * @description
-   * Previous-period comparison delta for the readiness health score.
-   * Pulled from `comparison.health.metrics` by matching the
-   * `"readiness"` key. Returns null when comparison mode is disabled
-   * or when the matching entry is absent.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<OrganizationDashboardComparisonDelta | null>}
-   */
-  protected readonly readinessComparison: Signal<OrganizationDashboardComparisonDelta | null> =
-    computed<OrganizationDashboardComparisonDelta | null>(() => {
-      /**
-       * Constant dashboard
-       * @const dashboard
-       *
-       * @description
-       * Current value of the `dashboardResource`, typed as a local variable
-       * to avoid repeated optional chaining and improve readability of the
-       * return statement.
-       *
-       * @type {OrganizationDashboardOutput | undefined}
-       */
-      const dashboard: OrganizationDashboardOutput | undefined =
-        this.dashboardResource.value();
-
-      /**
-       * Constant metrics
-       * @const metrics
-       *
-       * @description
-       * Health metrics array extracted from the dashboard payload's comparison section,
-       * specifically for the readiness key.
-       *
-       * @type {OrganizationDashboardComparisonMetricGroup | undefined}
-       */
-      const metrics: OrganizationDashboardComparisonMetricGroup | undefined =
-        dashboard?.comparison?.health?.['metrics'];
-
-      /**
-       * Constant entry
-       * @const entry
-       *
-       * @description
-       * Entry in the health metrics comparison array matching the
-       * "readiness" key, which contains the value and direction for
-       * the readiness score comparison delta.
-       * Returns undefined if not found.
-       *
-       * @type {OrganizationDashboardComparisonMetric | undefined}
-       */
-      const entry: OrganizationDashboardComparisonMetric | undefined = metrics?.find(
-        (m: OrganizationDashboardComparisonMetric) => m['key'] === 'readiness',
-      );
-
-      // If the entry is not found, return null to indicate that the comparison delta cannot be computed
-      if (!entry) return null;
-
-      return {
-        value: entry['value'],
-        direction: entry['direction'],
-      };
     });
 
   /**
@@ -501,6 +385,205 @@ export class OrganizationDashboard {
         value: entry['value'],
         direction: entry['direction'],
       };
+    });
+
+  /**
+   * Property facilitiesComparison
+   * @readonly
+   *
+   * @description
+   * Previous-period comparison delta for
+   * the facilities KPI count.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<OrganizationDashboardComparisonDelta | null>}
+   */
+  protected readonly facilitiesComparison: Signal<OrganizationDashboardComparisonDelta | null> =
+    computed<OrganizationDashboardComparisonDelta | null>(() => {
+      /**
+       * Constant dashboard
+       * @const dashboard
+       *
+       * @description
+       * Current value of the `dashboardResource`, typed as a local variable
+       * to avoid repeated optional chaining and improve readability of the
+       * return statement.
+       *
+       * @type {OrganizationDashboardOutput | undefined}
+       */
+      const dashboard: OrganizationDashboardOutput | undefined =
+        this.dashboardResource.value();
+
+      /**
+       * Constant metrics
+       * @const metrics
+       *
+       * @description
+       * Metrics array extracted from the dashboard payload's comparison section,
+       * specifically for the facilities key.
+       *
+       * @type {OrganizationDashboardComparisonMetricGroup | undefined}
+       */
+      const metrics: OrganizationDashboardComparisonMetricGroup | undefined =
+        dashboard?.comparison?.metrics;
+
+      /**
+       * Constant entry
+       * @const entry
+       *
+       * @description
+       * Entry in the metrics comparison array matching the "facilities"
+       * key, which contains the value and direction for the
+       * facilities KPI comparison delta.
+       *
+       * Returns undefined if not found.
+       *
+       * @type {OrganizationDashboardComparisonMetric | undefined}
+       */
+      const entry: OrganizationDashboardComparisonMetric | undefined = metrics?.find(
+        (m: OrganizationDashboardComparisonMetric) => m['key'] === 'facilities',
+      );
+
+      // If the entry is not found, return null to indicate that the comparison delta cannot be computed
+      if (!entry) return null;
+
+      return { value: entry['value'], direction: entry['direction'] };
+    });
+
+  /**
+   * Property membersComparison
+   * @readonly
+   *
+   * @description
+   * Previous-period comparison delta for the members KPI count.
+   * Pulled from `comparison.metrics` by matching the
+   * `"members"` key. Returns null when the comparison mode is
+   * disabled or when the matching entry is absent.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<OrganizationDashboardComparisonDelta | null>}
+   */
+  protected readonly membersComparison: Signal<OrganizationDashboardComparisonDelta | null> =
+    computed<OrganizationDashboardComparisonDelta | null>(() => {
+      /**
+       * Constant dashboard
+       * @const dashboard
+       *
+       * @description
+       * Current value of the `dashboardResource`, typed as a local variable
+       * to avoid repeated optional chaining and improve readability of the
+       * return statement.
+       *
+       * @type {OrganizationDashboardOutput | undefined}
+       */
+      const dashboard: OrganizationDashboardOutput | undefined =
+        this.dashboardResource.value();
+
+      /**
+       * Constant metrics
+       * @const metrics
+       *
+       * @description
+       * Metrics array extracted from the dashboard payload's comparison section,
+       * specifically for the members key.
+       *
+       * @type {OrganizationDashboardComparisonMetricGroup | undefined}
+       */
+      const metrics: OrganizationDashboardComparisonMetricGroup | undefined =
+        dashboard?.comparison?.metrics;
+
+      /**
+       * Constant entry
+       * @const entry
+       *
+       * @description
+       * Entry in the metrics comparison array matching the "members"
+       * key, which contains the value and direction for the
+       * members KPI comparison delta.
+       *
+       * Returns undefined if not found.
+       *
+       * @type {OrganizationDashboardComparisonMetric | undefined}
+       */
+      const entry: OrganizationDashboardComparisonMetric | undefined = metrics?.find(
+        (m: OrganizationDashboardComparisonMetric) => m['key'] === 'members',
+      );
+
+      // If the entry is not found, return null to indicate that the comparison delta cannot be computed
+      if (!entry) return null;
+
+      return { value: entry['value'], direction: entry['direction'] };
+    });
+
+  /**
+   * Property equipmentComparison
+   * @readonly
+   *
+   * @description
+   * Previous-period comparison delta for the equipment KPI count.
+   * Pulled from `comparison.metrics` by matching the
+   * `"equipment"` key. Returns null when the comparison mode is
+   * disabled or when the matching entry is absent.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<OrganizationDashboardComparisonDelta | null>}
+   */
+  protected readonly equipmentComparison: Signal<OrganizationDashboardComparisonDelta | null> =
+    computed<OrganizationDashboardComparisonDelta | null>(() => {
+      /**
+       * Constant dashboard
+       * @const dashboard
+       *
+       * @description
+       * Current value of the `dashboardResource`, typed as a local variable
+       * to avoid repeated optional chaining and improve readability of the
+       * return statement.
+       *
+       * @type {OrganizationDashboardOutput | undefined}
+       */
+      const dashboard: OrganizationDashboardOutput | undefined =
+        this.dashboardResource.value();
+
+      /**
+       * Constant metrics
+       * @const metrics
+       *
+       * @description
+       * Metrics array extracted from the dashboard payload's comparison section,
+       * specifically for the equipment key.
+       *
+       * @type {OrganizationDashboardComparisonMetricGroup | undefined}
+       */
+      const metrics: OrganizationDashboardComparisonMetricGroup | undefined =
+        dashboard?.comparison?.metrics;
+
+      /**
+       * Constant entry
+       * @const entry
+       *
+       * @description
+       * Entry in the metrics comparison array matching the "equipment"
+       * key, which contains the value and direction for the
+       * equipment KPI comparison delta.
+       *
+       * Returns undefined if not found.
+       *
+       * @type {OrganizationDashboardComparisonMetric | undefined}
+       */
+      const entry: OrganizationDashboardComparisonMetric | undefined = metrics?.find(
+        (m: OrganizationDashboardComparisonMetric) => m['key'] === 'equipment',
+      );
+
+      // If the entry is not found, return null to indicate that the comparison delta cannot be computed
+      if (!entry) return null;
+
+      return { value: entry['value'], direction: entry['direction'] };
     });
   //#endregion
 }

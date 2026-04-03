@@ -131,10 +131,10 @@ export class Card {
    */
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
-      class: 'overflow-hidden border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
+      class: 'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
     },
     body: {
-      class: 'p-0!',
+      class: 'p-0! flex flex-col flex-1',
     },
     content: {
       class: 'p-4',
@@ -143,7 +143,7 @@ export class Card {
       class: 'p-4',
     },
     footer: {
-      class: 'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 px-4 py-3',
+      class: 'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 px-4 py-3 rounded-b-md',
     },
   };
   //#endregion

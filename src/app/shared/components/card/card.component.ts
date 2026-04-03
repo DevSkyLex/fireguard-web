@@ -131,7 +131,7 @@ export class Card {
    */
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
-      class: 'overflow-hidden border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none!',
+      class: 'overflow-hidden border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
     },
     body: {
       class: 'p-0!',

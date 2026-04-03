@@ -31,9 +31,10 @@ import type {
   OrganizationDashboardOverviewTrendResource,
   OrganizationDashboardTrendOutput,
   OrganizationDashboardTrendResourceParams,
+  OrganizationDashboardTrendSeriesPoint,
   OrganizationOutput,
 } from '@core/models/organization';
-import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
+import type { ChartData, ChartOptions } from 'chart.js';
 
 /**
  * Component OrganizationDashboardOverviewTrend
@@ -314,9 +315,9 @@ export class OrganizationDashboardOverviewTrend {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<ChartData<'line'>>}
+   * @type {Signal<ChartData<'bar'>>}
    */
-  protected readonly chartData: Signal<ChartData<'line'>> = computed<ChartData<'line'>>(() => {
+  protected readonly chartData: Signal<ChartData<'bar'>> = computed<ChartData<'bar'>>(() => {
     const result = this.overviewResource.value();
     const inspections: OrganizationDashboardTrendOutput | null = result?.inspections ?? null;
     const ncOpened: OrganizationDashboardTrendOutput | null = result?.ncOpened ?? null;
@@ -325,16 +326,43 @@ export class OrganizationDashboardOverviewTrend {
     const sourceTrend: OrganizationDashboardTrendOutput | null = inspections ?? ncOpened ?? ncResolved;
     const granularity = this.selectedGranularity();
 
-    const formatLabel = (raw: string): string => {
+    const formatLabel = (point: OrganizationDashboardTrendSeriesPoint): string => {
+      const raw = String(point['bucket'] ?? point['date'] ?? point['label'] ?? point['from'] ?? '');
       if (!raw) return '';
-      const date = new Date(raw);
+      const weekMatch = raw.match(/^(\d{4})-W(\d{2})$/);
+      if (weekMatch) {
+        const year = parseInt(weekMatch[1], 10);
+        const week = parseInt(weekMatch[2], 10);
+        const jan4 = new Date(year, 0, 4);
+        const dow = (jan4.getDay() + 6) % 7;
+        const weekStart = new Date(year, 0, 4 - dow + (week - 1) * 7);
+        const weekEnd = new Date(year, 0, 4 - dow + (week - 1) * 7 + 6);
+        const fromStr = weekStart.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+        const toStr = weekEnd.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+        return `${fromStr} – ${toStr}`;
+      }
+      const monthMatch = raw.match(/^(\d{4})-(\d{2})$/);
+      const dayMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      let date: Date;
+      if (monthMatch) {
+        date = new Date(parseInt(monthMatch[1], 10), parseInt(monthMatch[2], 10) - 1, 1);
+      } else if (dayMatch) {
+        date = new Date(parseInt(dayMatch[1], 10), parseInt(dayMatch[2], 10) - 1, parseInt(dayMatch[3], 10));
+      } else {
+        date = new Date(raw);
+      }
       if (isNaN(date.getTime())) return raw;
       if (granularity === 'month') return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+      if (granularity === 'week') {
+        const weekEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 6);
+        const fromStr = date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+        const toStr = weekEnd.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+        return `${fromStr} – ${toStr}`;
+      }
+      return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
-    const labels: string[] =
-      sourceTrend?.series.map((point) => formatLabel(String(point['date'] ?? point['label'] ?? point['from'] ?? ''))) ?? [];
+    const labels: string[] = sourceTrend?.series.map(formatLabel) ?? [];
 
     const toData = (trend: OrganizationDashboardTrendOutput | null): number[] =>
       trend?.series.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0)) ?? [];
@@ -345,65 +373,29 @@ export class OrganizationDashboardOverviewTrend {
         {
           label: 'Inspections',
           data: toData(inspections),
-          fill: true,
+          backgroundColor: '#3b82f6',
           borderColor: '#3b82f6',
-          backgroundColor: (context: ScriptableContext<'line'>) => {
-            const { ctx, chartArea } = context.chart;
-            if (!chartArea) return 'transparent';
-            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.35)');
-            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-            return gradient;
-          },
-          tension: 0.4,
-          pointBackgroundColor: '#3b82f6',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointRadius: 4,
-          pointHoverRadius: 7,
-          pointHoverBorderWidth: 2,
+          borderWidth: 0,
+          borderRadius: 0,
+          stack: 'activity',
         },
         {
           label: 'NC Opened',
           data: toData(ncOpened),
-          fill: true,
+          backgroundColor: '#f97316',
           borderColor: '#f97316',
-          backgroundColor: (context: ScriptableContext<'line'>) => {
-            const { ctx, chartArea } = context.chart;
-            if (!chartArea) return 'transparent';
-            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, 'rgba(249, 115, 22, 0.35)');
-            gradient.addColorStop(1, 'rgba(249, 115, 22, 0.0)');
-            return gradient;
-          },
-          tension: 0.4,
-          pointBackgroundColor: '#f97316',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointRadius: 4,
-          pointHoverRadius: 7,
-          pointHoverBorderWidth: 2,
+          borderWidth: 0,
+          borderRadius: 0,
+          stack: 'activity',
         },
         {
           label: 'NC Resolved',
           data: toData(ncResolved),
-          fill: true,
+          backgroundColor: '#22c55e',
           borderColor: '#22c55e',
-          backgroundColor: (context: ScriptableContext<'line'>) => {
-            const { ctx, chartArea } = context.chart;
-            if (!chartArea) return 'transparent';
-            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, 'rgba(34, 197, 94, 0.35)');
-            gradient.addColorStop(1, 'rgba(34, 197, 94, 0.0)');
-            return gradient;
-          },
-          tension: 0.4,
-          pointBackgroundColor: '#22c55e',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointRadius: 4,
-          pointHoverRadius: 7,
-          pointHoverBorderWidth: 2,
+          borderWidth: 0,
+          borderRadius: 4,
+          stack: 'activity',
         },
       ],
     };
@@ -414,15 +406,15 @@ export class OrganizationDashboardOverviewTrend {
    * @readonly
    *
    * @description
-   * Static chart.js options for the overview multi-dataset line chart.
+   * Static chart.js options for the overview multi-dataset bar chart.
    * The legend is displayed to distinguish the three datasets.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {ChartOptions<'line'>}
+   * @type {ChartOptions<'bar'>}
    */
-  protected readonly chartOptions: ChartOptions<'line'> = {
+  protected readonly chartOptions: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 400 },
@@ -441,17 +433,20 @@ export class OrganizationDashboardOverviewTrend {
       },
       tooltip: {
         callbacks: {
+          title: (items) => items[0]?.label ?? '',
           label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
         },
       },
     },
     scales: {
       x: {
+        stacked: true,
         border: { display: false },
         grid: { display: false },
-        ticks: { maxRotation: 45, autoSkip: false },
+        ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: 12 },
       },
       y: {
+        stacked: true,
         border: { display: false },
         beginAtZero: true,
         grid: { color: 'rgba(0, 0, 0, 0.06)' },

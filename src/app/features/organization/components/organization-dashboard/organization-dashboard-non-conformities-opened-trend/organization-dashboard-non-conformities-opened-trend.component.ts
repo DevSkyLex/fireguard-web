@@ -383,16 +383,43 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
     const trend: OrganizationDashboardTrendOutput | null = this.trendResource.value() ?? null;
     const granularity = this.selectedGranularity();
 
-    const formatLabel = (raw: string): string => {
+    const formatLabel = (point: OrganizationDashboardTrendSeriesPoint): string => {
+      const raw = String(point['bucket'] ?? point['date'] ?? point['label'] ?? point['from'] ?? '');
       if (!raw) return '';
-      const date = new Date(raw);
+      const weekMatch = raw.match(/^(\d{4})-W(\d{2})$/);
+      if (weekMatch) {
+        const year = parseInt(weekMatch[1], 10);
+        const week = parseInt(weekMatch[2], 10);
+        const jan4 = new Date(year, 0, 4);
+        const dow = (jan4.getDay() + 6) % 7;
+        const weekStart = new Date(year, 0, 4 - dow + (week - 1) * 7);
+        const weekEnd = new Date(year, 0, 4 - dow + (week - 1) * 7 + 6);
+        const fromStr = weekStart.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+        const toStr = weekEnd.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+        return `${fromStr} – ${toStr}`;
+      }
+      const monthMatch = raw.match(/^(\d{4})-(\d{2})$/);
+      const dayMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      let date: Date;
+      if (monthMatch) {
+        date = new Date(parseInt(monthMatch[1], 10), parseInt(monthMatch[2], 10) - 1, 1);
+      } else if (dayMatch) {
+        date = new Date(parseInt(dayMatch[1], 10), parseInt(dayMatch[2], 10) - 1, parseInt(dayMatch[3], 10));
+      } else {
+        date = new Date(raw);
+      }
       if (isNaN(date.getTime())) return raw;
       if (granularity === 'month') return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+      if (granularity === 'week') {
+        const weekEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 6);
+        const fromStr = date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+        const toStr = weekEnd.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+        return `${fromStr} – ${toStr}`;
+      }
+      return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
-    const labels: string[] =
-      trend?.series.map((point) => formatLabel(String(point['date'] ?? point['label'] ?? point['from'] ?? ''))) ?? [];
+    const labels: string[] = trend?.series.map(formatLabel) ?? [];
 
     const data: number[] =
       trend?.series.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0)) ?? [];
@@ -406,8 +433,8 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
       {
         label: 'Non-Conformities Opened',
         data: data,
-        backgroundColor: 'rgba(249, 115, 22, 0.85)',
-        hoverBackgroundColor: '#f97316',
+        backgroundColor: '#f97316',
+        hoverBackgroundColor: '#ea580c',
       },
     ];
 
@@ -415,8 +442,8 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
       datasets.push({
         label: 'Previous Period',
         data: comparisonData,
-        backgroundColor: 'rgba(249, 115, 22, 0.25)',
-        hoverBackgroundColor: 'rgba(249, 115, 22, 0.45)',
+        backgroundColor: '#fdba74',
+        hoverBackgroundColor: '#fb923c',
       });
     }
 
@@ -466,6 +493,7 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
         padding: 10,
         cornerRadius: 8,
         callbacks: {
+          title: (items) => items[0]?.label ?? '',
           label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
         },
       },
@@ -474,7 +502,7 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
       x: {
         border: { display: false },
         grid: { display: false },
-        ticks: { maxRotation: 45, autoSkip: false },
+        ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: 12 },
       },
       y: {
         border: { display: false },

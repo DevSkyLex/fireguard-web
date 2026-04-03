@@ -1,0 +1,114 @@
+<p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
+
+<app-card title="Equipment Created" description="New equipment registered over time">
+  <ng-template #action>
+    <div class="flex items-center gap-2">
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-calendar"></i>
+        </p-inputgroup-addon>
+        <p-select
+          [ngModel]="selectedGranularity()"
+          (ngModelChange)="onGranularityChange($event)"
+          [options]="granularityOptions"
+          optionLabel="label"
+          optionValue="value"
+          [loading]="trendResource.isLoading()"
+          size="small"
+        />
+      </p-inputgroup>
+
+      <p-button
+        icon="pi pi-ellipsis-v"
+        severity="secondary"
+        size="small"
+        outlined
+        (onClick)="onMenuToggle($event)"
+      />
+    </div>
+  </ng-template>
+
+  <ng-template #content>
+    @if (trendResource.isLoading()) {
+      <p-skeleton
+        height="200px"
+        class="w-full"
+      />
+    } @else {
+      <p-chart
+        type="bar"
+        [data]="chartData()"
+        [options]="chartOptions()"
+        height="200px"
+        fluid
+      />
+    }
+  </ng-template>
+
+  <ng-template #footer>
+    <div class="flex flex-wrap items-center gap-2">
+      <p-select
+        [ngModel]="selectedEquipmentType()"
+        (ngModelChange)="selectedEquipmentType.set($event)"
+        [options]="equipmentTypeOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Type"
+        [showClear]="true"
+        [loading]="trendResource.isLoading()"
+        size="small"
+      />
+      <p-select
+        [ngModel]="selectedEquipmentStatus()"
+        (ngModelChange)="selectedEquipmentStatus.set($event)"
+        [options]="equipmentStatusOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Status"
+        [showClear]="true"
+        [loading]="trendResource.isLoading()"
+        size="small"
+      >
+        <ng-template #item let-option>
+          <span class="flex items-center gap-2">
+            <i [class]="option.icon" [style.color]="option.color"></i>
+            {{ option.label }}
+          </span>
+        </ng-template>
+        <ng-template #selectedItem>
+          @let option = selectedEquipmentStatusOption();
+          @if (option) {
+            <span class="flex items-center gap-2">
+              <i [class]="option.icon" [style.color]="option.color"></i>
+              {{ option.label }}
+            </span>
+          }
+        </ng-template>
+      </p-select>
+      @defer (on idle) {
+        <p-datepicker
+          selectionMode="range"
+          [ngModel]="selectedDateRange()"
+          [ngModelOptions]="{ updateOn: 'blur' }"
+          (ngModelChange)="selectedDateRange.set($event)"
+          placeholder="Select date range"
+          [showClear]="true"
+          [showTime]="true"
+          hourFormat="24"
+          size="small"
+          appendTo="body"
+          dateFormat="dd/mm/yy"
+          [disabled]="trendResource.isLoading()"
+        />
+      }
+      <p-togglebutton
+        [ngModel]="compareEnabled()"
+        (ngModelChange)="compareEnabled.set($event)"
+        onLabel="Compare ON"
+        offLabel="Compare OFF"
+        size="small"
+        [disabled]="trendResource.isLoading()"
+      />
+    </div>
+  </ng-template>
+</app-card>

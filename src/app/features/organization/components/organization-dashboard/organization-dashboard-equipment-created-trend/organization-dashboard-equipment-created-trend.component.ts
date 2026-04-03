@@ -26,38 +26,37 @@ import { Card } from '@shared/components';
 import { OrganizationService } from '@core/services/api/organization';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import type {
+  OrganizationDashboardEquipmentTrendResourceParams,
+  OrganizationDashboardEquipmentType,
+  OrganizationDashboardEquipmentStatus,
   OrganizationDashboardGranularity,
-  OrganizationDashboardNonConformityTrendResourceParams,
   OrganizationDashboardTrendOutput,
   OrganizationDashboardTrendSeriesPoint,
   OrganizationOutput,
 } from '@core/models/organization';
-import type {
-  NonConformitySeverity,
-  NonConformityStatus,
-} from '@core/models/inspection';
 import type { ChartData, ChartOptions } from 'chart.js';
 
 /**
- * Component OrganizationDashboardNonConformitiesOpenedTrend
- * @class OrganizationDashboardNonConformitiesOpenedTrend
+ * Component OrganizationDashboardEquipmentCreatedTrend
+ * @class OrganizationDashboardEquipmentCreatedTrend
  *
  * @description
- * Dumb component that displays a line chart of the opened non-conformities trend.
- * Receives trend data and loading state via signal inputs and emits
- * period change events so the parent can reload the data accordingly.
+ * Smart component that displays a bar chart of equipment created over time.
+ * Fetches the equipment-created trend from the organization dashboard API,
+ * supports granularity selection, date range filtering, status/type filtering,
+ * and optional period comparison.
  *
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-organization-dashboard-non-conformities-opened-trend',
-  templateUrl: './organization-dashboard-non-conformities-opened-trend.component.html',
+  selector: 'app-organization-dashboard-equipment-created-trend',
+  templateUrl: './organization-dashboard-equipment-created-trend.component.html',
   imports: [Card, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule, InputGroupModule, InputGroupAddonModule, ToggleButtonModule, DatePickerModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrganizationDashboardNonConformitiesOpenedTrend {
+export class OrganizationDashboardEquipmentCreatedTrend {
   //#region Properties
   /**
    * Property organizationService
@@ -93,8 +92,8 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
    * @readonly
    *
    * @description
-   * Reactive resource that automatically fetches the opened non-conformities trend
-   * whenever the active organization or selected granularity changes.
+   * Reactive resource that automatically fetches the equipment-created trend
+   * whenever the active organization or selected filters change.
    * Stays idle when no organization is selected.
    * Automatically cancels any in-flight request when inputs change.
    *
@@ -103,26 +102,14 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
    *
    * @type {ResourceRef<OrganizationDashboardTrendOutput | undefined>}
    */
-  protected readonly trendResource: ResourceRef<OrganizationDashboardTrendOutput | undefined> = rxResource<OrganizationDashboardTrendOutput, OrganizationDashboardNonConformityTrendResourceParams | undefined>({
+  protected readonly trendResource: ResourceRef<OrganizationDashboardTrendOutput | undefined> = rxResource<OrganizationDashboardTrendOutput, OrganizationDashboardEquipmentTrendResourceParams | undefined>({
     params: () => {
-      /**
-       * Constant organization
-       * @const organization
-       *
-       * @description
-       * Locally scoped constant to hold the currently
-       * selected organization.
-       *
-       * @type {OrganizationOutput | null}
-       */
       const organization: OrganizationOutput | null =
         this.activeOrganizationStore.selectedOrganization();
 
-      // If no organization is selected, return undefined to keep the resource idle
       if (!organization) return undefined;
 
       const toISO = (d: Date | undefined): string | undefined => d?.toISOString();
-
       const range: Date[] | null = this.selectedDateRange();
 
       return {
@@ -131,20 +118,20 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
         from: toISO(range?.[0]),
         to: toISO(range?.[1]),
         compare: this.compareEnabled() || undefined,
-        nonConformityStatus: this.selectedNonConformityStatus() ?? undefined,
-        nonConformitySeverity: this.selectedNonConformitySeverity() ?? undefined,
+        equipmentType: this.selectedEquipmentType() ?? undefined,
+        equipmentStatus: this.selectedEquipmentStatus() ?? undefined,
       };
     },
-    stream: ({ params }: { params: OrganizationDashboardNonConformityTrendResourceParams }) =>
-      this.organizationService.getDashboardNonConformitiesOpenedTrend(
+    stream: ({ params }: { params: OrganizationDashboardEquipmentTrendResourceParams }) =>
+      this.organizationService.getDashboardEquipmentCreatedTrend(
         params.organizationId,
         {
           granularity: params.granularity,
           from: params.from,
           to: params.to,
           compare: params.compare,
-          nonConformityStatus: params.nonConformityStatus,
-          nonConformitySeverity: params.nonConformitySeverity,
+          equipmentType: params.equipmentType,
+          equipmentStatus: params.equipmentStatus,
         },
       ),
   });
@@ -155,7 +142,6 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
    *
    * @description
    * Navigation menu items displayed in the ellipsis popup menu.
-   * Derived from the active organization identifier.
    *
    * @access protected
    * @since 1.0.0
@@ -168,9 +154,9 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
 
     return [
       {
-        label: 'View all inspections',
+        label: 'View all equipment',
         icon: PrimeIcons.LIST,
-        routerLink: organizationId ? ['/organizations', organizationId, 'inspections'] : null,
+        routerLink: organizationId ? ['/organizations', organizationId, 'equipment'] : null,
       },
     ];
   });
@@ -187,8 +173,7 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
    *
    * @type {Signal<Menu>}
    */
-  private readonly menu: Signal<Menu> =
-    viewChild.required<Menu>('actionMenu');
+  private readonly menu: Signal<Menu> = viewChild.required<Menu>('actionMenu');
 
   /**
    * Property granularityOptions
@@ -200,10 +185,7 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
    * @access protected
    * @since 1.0.0
    *
-   * @type {{
-   *  label: string;
-   *  value: OrganizationDashboardGranularity
-   * }[]}
+   * @type {{ label: string; value: OrganizationDashboardGranularity }[]}
    */
   protected readonly granularityOptions: { label: string; value: OrganizationDashboardGranularity }[] = [
     { label: 'Daily', value: 'day' },
@@ -232,8 +214,6 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
    *
    * @description
    * The currently selected date range for the chart.
-   * When set, both from and to are forwarded to the API as ISO 8601
-   * datetime strings. Null means no date filter is applied.
    *
    * @access protected
    * @since 1.0.0
@@ -250,9 +230,7 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
    * @readonly
    *
    * @description
-   * Whether the comparison mode is active. When true, the API
-   * returns a second series for the previous equivalent period
-   * and the chart renders a second semi-transparent dataset.
+   * Whether the comparison mode is active.
    *
    * @access protected
    * @since 1.0.0
@@ -262,111 +240,98 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
   protected readonly compareEnabled: WritableSignal<boolean> = signal<boolean>(true);
 
   /**
-   * Property nonConformityStatusOptions
+   * Property equipmentTypeOptions
    * @readonly
    *
    * @description
-   * Available filter options for non-conformity status.
-   * Each option carries a label, a typed value, a PrimeIcons icon
-   * class and a hex color used to tint the icon in the select.
+   * Available filter options for equipment type.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {{ label: string; value: NonConformityStatus; icon: string; color: string }[]}
+   * @type {{ label: string; value: OrganizationDashboardEquipmentType }[]}
    */
-  protected readonly nonConformityStatusOptions: { label: string; value: NonConformityStatus; icon: string; color: string }[] = [
-    { label: 'Open', value: 'open', icon: 'pi pi-circle', color: '#ef4444' },
-    { label: 'In Progress', value: 'in_progress', icon: 'pi pi-refresh', color: '#f97316' },
-    { label: 'Done', value: 'done', icon: 'pi pi-check-circle', color: '#22c55e' },
-    { label: 'Waived', value: 'waived', icon: 'pi pi-ban', color: '#94a3b8' },
+  protected readonly equipmentTypeOptions: { label: string; value: OrganizationDashboardEquipmentType }[] = [
+    { label: 'Fire Extinguisher', value: 'fire_extinguisher' },
+    { label: 'Smoke Detector', value: 'smoke_detector' },
+    { label: 'Heat Detector', value: 'heat_detector' },
+    { label: 'Sprinkler', value: 'sprinkler' },
+    { label: 'Fire Alarm Panel', value: 'fire_alarm_panel' },
+    { label: 'Hydrant', value: 'hydrant' },
+    { label: 'Fire Door', value: 'fire_door' },
+    { label: 'Emergency Lighting', value: 'emergency_lighting' },
+    { label: 'Access Control', value: 'access_control' },
+    { label: 'Camera', value: 'camera' },
+    { label: 'Gas Detector', value: 'gas_detector' },
+    { label: 'Other', value: 'other' },
   ];
 
   /**
-   * Property selectedNonConformityStatus
+   * Property selectedEquipmentType
    * @readonly
    *
    * @description
-   * The currently selected non-conformity status filter.
+   * The currently selected equipment type filter.
    * Null means no filter is applied.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<NonConformityStatus | null>}
+   * @type {WritableSignal<OrganizationDashboardEquipmentType | null>}
    */
-  protected readonly selectedNonConformityStatus: WritableSignal<NonConformityStatus | null> =
-    signal<NonConformityStatus | null>(null);
+  protected readonly selectedEquipmentType: WritableSignal<OrganizationDashboardEquipmentType | null> =
+    signal<OrganizationDashboardEquipmentType | null>(null);
 
   /**
-   * Property selectedNonConformityStatusOption
+   * Property equipmentStatusOptions
    * @readonly
    *
    * @description
-   * The full option object matching the currently selected non-conformity
+   * Available filter options for equipment status.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {{ label: string; value: OrganizationDashboardEquipmentStatus; icon: string; color: string }[]}
+   */
+  protected readonly equipmentStatusOptions: { label: string; value: OrganizationDashboardEquipmentStatus; icon: string; color: string }[] = [
+    { label: 'In Stock', value: 'in_stock', icon: 'pi pi-box', color: '#94a3b8' },
+    { label: 'Operational', value: 'operational', icon: 'pi pi-check-circle', color: '#22c55e' },
+    { label: 'Under Maintenance', value: 'under_maintenance', icon: 'pi pi-wrench', color: '#f97316' },
+    { label: 'Decommissioned', value: 'decommissioned', icon: 'pi pi-ban', color: '#ef4444' },
+  ];
+
+  /**
+   * Property selectedEquipmentStatus
+   * @readonly
+   *
+   * @description
+   * The currently selected equipment status filter.
+   * Null means no filter is applied.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<OrganizationDashboardEquipmentStatus | null>}
+   */
+  protected readonly selectedEquipmentStatus: WritableSignal<OrganizationDashboardEquipmentStatus | null> =
+    signal<OrganizationDashboardEquipmentStatus | null>(null);
+
+  /**
+   * Property selectedEquipmentStatusOption
+   * @readonly
+   *
+   * @description
+   * The full option object matching the currently selected equipment
    * status, used to render the icon and color in the selected item template.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<{ label: string; value: NonConformityStatus; icon: string; color: string } | null>}
+   * @type {Signal<{ label: string; value: OrganizationDashboardEquipmentStatus; icon: string; color: string } | null>}
    */
-  protected readonly selectedNonConformityStatusOption = computed(() =>
-    this.nonConformityStatusOptions.find(o => o.value === this.selectedNonConformityStatus()) ?? null
-  );
-
-  /**
-   * Property nonConformitySeverityOptions
-   * @readonly
-   *
-   * @description
-   * Available filter options for non-conformity severity.
-   * Each option carries a label, a typed value and a hex color
-   * used to render the colored dot in the select.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {{ label: string; value: NonConformitySeverity; color: string }[]}
-   */
-  protected readonly nonConformitySeverityOptions: { label: string; value: NonConformitySeverity; color: string }[] = [
-    { label: 'Low', value: 'low', color: '#22c55e' },
-    { label: 'Medium', value: 'medium', color: '#eab308' },
-    { label: 'High', value: 'high', color: '#f97316' },
-    { label: 'Critical', value: 'critical', color: '#ef4444' },
-  ];
-
-  /**
-   * Property selectedNonConformitySeverity
-   * @readonly
-   *
-   * @description
-   * The currently selected non-conformity severity filter.
-   * Null means no filter is applied.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {WritableSignal<NonConformitySeverity | null>}
-   */
-  protected readonly selectedNonConformitySeverity: WritableSignal<NonConformitySeverity | null> =
-    signal<NonConformitySeverity | null>(null);
-
-  /**
-   * Property selectedSeverityOption
-   * @readonly
-   *
-   * @description
-   * The full option object matching the currently selected severity,
-   * used to render the colored dot in the selected item template.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<{ label: string; value: NonConformitySeverity; color: string } | null>}
-   */
-  protected readonly selectedSeverityOption = computed(() =>
-    this.nonConformitySeverityOptions.find(o => o.value === this.selectedNonConformitySeverity()) ?? null
+  protected readonly selectedEquipmentStatusOption = computed(() =>
+    this.equipmentStatusOptions.find(o => o.value === this.selectedEquipmentStatus()) ?? null,
   );
 
   /**
@@ -374,8 +339,7 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
    * @readonly
    *
    * @description
-   * Reactive chart.js data derived from the trend signal.
-   * Automatically recomputes when the trend input changes.
+   * Reactive chart.js data derived from the trend resource.
    *
    * @access protected
    * @since 1.0.0
@@ -423,21 +387,17 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
     };
 
     const labels: string[] = trend?.series.map(formatLabel) ?? [];
+    const data: number[] = trend?.series.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0)) ?? [];
 
-    const data: number[] =
-      trend?.series.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0)) ?? [];
-
-    const comparisonSeries: readonly OrganizationDashboardTrendSeriesPoint[] =
-      trend?.comparison?.series ?? [];
-    const comparisonData: number[] =
-      comparisonSeries.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0));
+    const comparisonSeries: readonly OrganizationDashboardTrendSeriesPoint[] = trend?.comparison?.series ?? [];
+    const comparisonData: number[] = comparisonSeries.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0));
 
     const datasets: ChartData<'bar'>['datasets'] = [
       {
-        label: 'Non-Conformities Opened',
-        data: data,
-        backgroundColor: '#f97316',
-        hoverBackgroundColor: '#ea580c',
+        label: 'Equipment Created',
+        data,
+        backgroundColor: '#8b5cf6',
+        hoverBackgroundColor: '#7c3aed',
       },
     ];
 
@@ -445,8 +405,8 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
       datasets.push({
         label: 'Previous Period',
         data: comparisonData,
-        backgroundColor: '#fdba74',
-        hoverBackgroundColor: '#fb923c',
+        backgroundColor: '#c4b5fd',
+        hoverBackgroundColor: '#a78bfa',
       });
     }
 
@@ -458,8 +418,7 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
    * @readonly
    *
    * @description
-   * Reactive chart.js options for the opened non-conformities bar chart.
-   * The legend is shown only when the comparison mode is active.
+   * Reactive chart.js options for the equipment-created bar chart.
    *
    * @access protected
    * @since 1.0.0
@@ -522,8 +481,7 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
    * Method onGranularityChange
    *
    * @description
-   * Updates the selected granularity and emits a period change event
-   * so the parent can reload the trend with the new options.
+   * Updates the selected granularity signal.
    *
    * @access protected
    * @since 1.0.0

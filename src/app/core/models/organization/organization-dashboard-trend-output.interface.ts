@@ -1,5 +1,9 @@
 import type { HydraItem } from '@core/models/api';
-import type { OrganizationDashboardGranularity } from './organization-dashboard-query-options.interface';
+import type {
+  OrganizationDashboardEquipmentStatus,
+  OrganizationDashboardEquipmentType,
+  OrganizationDashboardGranularity,
+} from './organization-dashboard-query-options.interface';
 import type {
   InspectionResult,
   InspectionStatus,
@@ -9,6 +13,7 @@ import type {
   NonConformitySeverity,
   NonConformityStatus,
 } from '../inspection/non-conformity-output.interface';
+import type { FacilityType } from '../facility/facility-output.interface';
 import type { OrganizationDashboardPeriod } from './organization-dashboard-output.interface';
 
 /**
@@ -21,7 +26,9 @@ import type { OrganizationDashboardPeriod } from './organization-dashboard-outpu
 export type OrganizationDashboardTrendKey =
   | 'inspections'
   | 'nonConformitiesOpened'
-  | 'nonConformitiesResolved';
+  | 'nonConformitiesResolved'
+  | 'equipmentCreated'
+  | 'facilitiesCreated';
 
 /**
  * Type OrganizationDashboardTrendSummaryValue
@@ -247,4 +254,29 @@ export type OrganizationDashboardNonConformityTrendResourceParams =
   OrganizationDashboardTrendResourceParams & {
     readonly nonConformityStatus?: NonConformityStatus;
     readonly nonConformitySeverity?: NonConformitySeverity;
+  };
+
+/**
+ * Type OrganizationDashboardEquipmentTrendResourceParams
+ *
+ * @description
+ * Reactive params shape for the equipment-created trend `rxResource`.
+ * Extends the base params with equipment-specific filters.
+ */
+export type OrganizationDashboardEquipmentTrendResourceParams =
+  OrganizationDashboardTrendResourceParams & {
+    readonly equipmentType?: OrganizationDashboardEquipmentType;
+    readonly equipmentStatus?: OrganizationDashboardEquipmentStatus;
+  };
+
+/**
+ * Type OrganizationDashboardFacilityTrendResourceParams
+ *
+ * @description
+ * Reactive params shape for the facilities-created trend `rxResource`.
+ * Extends the base params with facility-specific filters.
+ */
+export type OrganizationDashboardFacilityTrendResourceParams =
+  OrganizationDashboardTrendResourceParams & {
+    readonly facilityType?: FacilityType;
   };

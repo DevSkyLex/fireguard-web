@@ -240,7 +240,10 @@ export class OrganizationDashboardNonConformitiesResolvedTrend {
    *
    * @type {WritableSignal<Date[] | null>}
    */
-  protected readonly selectedDateRange: WritableSignal<Date[] | null> = signal<Date[] | null>(null);
+  protected readonly selectedDateRange: WritableSignal<Date[] | null> = signal<Date[] | null>([
+    new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
+    new Date(),
+  ]);
 
   /**
    * Property compareEnabled

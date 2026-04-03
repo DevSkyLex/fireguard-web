@@ -422,3 +422,28 @@ export interface OrganizationDashboardNonConformityTrendQueryOptions extends Org
   readonly nonConformitySeverity?: NonConformitySeverity;
   //#endregion
 }
+
+/**
+ * Interface OrganizationDashboardFacilityTrendQueryOptions
+ * @interface OrganizationDashboardFacilityTrendQueryOptions
+ *
+ * @description
+ * Query options for facility-related organization dashboard
+ * trend data requests, extending the common trend query options
+ * with a specific filter for facility type.
+ */
+export interface OrganizationDashboardFacilityTrendQueryOptions extends OrganizationDashboardTrendQueryOptions {
+  //#region Properties
+  /**
+   * Property facilityType
+   * @readonly
+   *
+   * @description
+   * Type of facility for filtering dashboard
+   * trend data.
+   *
+   * @type {FacilityType}
+   */
+  readonly facilityType?: FacilityType;
+  //#endregion
+}

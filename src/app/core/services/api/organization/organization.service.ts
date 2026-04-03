@@ -6,6 +6,8 @@ import type { HydraCollection, OptionOutput } from '@core/models/api';
 import type {
   OrganizationDashboardOutput,
   OrganizationDashboardQueryOptions,
+  OrganizationDashboardEquipmentTrendQueryOptions,
+  OrganizationDashboardFacilityTrendQueryOptions,
   OrganizationDashboardInspectionTrendQueryOptions,
   OrganizationDashboardNonConformityTrendQueryOptions,
   OrganizationDashboardTrendQueryOptions,
@@ -376,6 +378,58 @@ export class OrganizationService extends BaseApiService {
   ): Observable<OrganizationDashboardTrendOutput> {
     return this.getOne<OrganizationDashboardTrendOutput>(
       this.dashboardPath(organizationId, 'trends/non-conformities-resolved'),
+      this.buildDashboardRequestOptions(options, true),
+    );
+  }
+
+  /**
+   * Method getDashboardEquipmentCreatedTrend
+   * @method getDashboardEquipmentCreatedTrend
+   *
+   * @description
+   * Retrieves the dedicated equipment-created chart resource
+   * from the organization dashboard trends API.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {OrganizationDashboardEquipmentTrendQueryOptions} [options] - Optional equipment trend query parameters.
+   *
+   * @return {Observable<OrganizationDashboardTrendOutput>} An observable emitting the equipment-created trend resource.
+   */
+  public getDashboardEquipmentCreatedTrend(
+    organizationId: string,
+    options?: OrganizationDashboardEquipmentTrendQueryOptions,
+  ): Observable<OrganizationDashboardTrendOutput> {
+    return this.getOne<OrganizationDashboardTrendOutput>(
+      this.dashboardPath(organizationId, 'trends/equipment-created'),
+      this.buildDashboardRequestOptions(options, true),
+    );
+  }
+
+  /**
+   * Method getDashboardFacilitiesCreatedTrend
+   * @method getDashboardFacilitiesCreatedTrend
+   *
+   * @description
+   * Retrieves the dedicated facilities-created chart resource
+   * from the organization dashboard trends API.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {OrganizationDashboardFacilityTrendQueryOptions} [options] - Optional facility trend query parameters.
+   *
+   * @return {Observable<OrganizationDashboardTrendOutput>} An observable emitting the facilities-created trend resource.
+   */
+  public getDashboardFacilitiesCreatedTrend(
+    organizationId: string,
+    options?: OrganizationDashboardFacilityTrendQueryOptions,
+  ): Observable<OrganizationDashboardTrendOutput> {
+    return this.getOne<OrganizationDashboardTrendOutput>(
+      this.dashboardPath(organizationId, 'trends/facilities-created'),
       this.buildDashboardRequestOptions(options, true),
     );
   }

@@ -13,64 +13,63 @@
     </section>
 
     <section class="flex flex-col gap-6">
-      <div class="flex flex-row items-center gap-6">
-        <div class="flex flex-1 border border-surface-200 dark:border-surface-700 rounded-lg p-4">
-          <div class="flex flex-col gap-3">
-            <section class="flex flex-row text-sm items-center gap-2 text-surface-500 dark:text-surface-500">
-              <i class="pi pi-check-circle"></i>
-              <span class="font-semibold">Inspections completed</span>
-            </section>
-
-            <section class="flex flex-row items-center gap-4">
-              <h3 class="text-4xl font-semibold">1,245</h3>
-              <p class="flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
-                <i class="text-xs pi pi-arrow-up-right"></i>
-                8.5%
-              </p>
-            </section>
-          </div>
-        </div>
-
-        <div class="flex flex-1 border border-surface-200 dark:border-surface-700 rounded-lg p-4">
-          <div class="flex flex-col gap-3">
-            <section class="flex flex-row text-sm items-center gap-2 text-surface-500 dark:text-surface-500">
-              <i class="pi pi-check-circle"></i>
-              <span class="font-semibold">Inspections completed</span>
-            </section>
-
-            <section class="flex flex-row items-center gap-4">
-              <h3 class="text-4xl font-semibold">1,245</h3>
-              <p class="flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
-                <i class="text-xs pi pi-arrow-up-right"></i>
-                8.5%
-              </p>
-            </section>
-          </div>
-        </div>
-
-        <div class="flex flex-1 border border-surface-200 dark:border-surface-700 rounded-lg p-4">
-          <div class="flex flex-col gap-3 w-full">
-            <section class="flex flex-row text-sm items-center justify-between gap-2 w-full text-surface-500 dark:text-surface-500">
-              <div class="flex flex-row gap-2 items-center">
-                <i class="pi pi-check-circle"></i>
-                <span class="font-semibold">Inspections completed</span>
+      <div class="flex flex-row items-start gap-6">
+        <!-- Facilities -->
+        <app-card class="flex-1" title="Facilities" description="Registered sites">
+          <ng-template #content>
+            @if (dashboardResource.isLoading()) {
+              <p-skeleton height="48px" />
+            } @else {
+              <div class="flex flex-row items-center gap-4">
+                <h3 class="text-4xl font-semibold">{{ facilityCount() ?? '—' }}</h3>
               </div>
+            }
+          </ng-template>
+        </app-card>
 
-              <p class="flex items-center gap-1 text-xs text-surface-500 dark:text-surface-400">
-                <i class="pi pi-info-circle"></i>
-                Compared to last month
-              </p>
-            </section>
+        <!-- Members -->
+        <app-card class="flex-1" title="Members" description="Active members">
+          <ng-template #content>
+            @if (dashboardResource.isLoading()) {
+              <p-skeleton height="48px" />
+            } @else {
+              <div class="flex flex-row items-center gap-4">
+                <h3 class="text-4xl font-semibold">{{ memberCount() ?? '—' }}</h3>
+              </div>
+            }
+          </ng-template>
+        </app-card>
 
-            <section class="flex flex-row items-center gap-4">
-              <h3 class="text-4xl font-semibold">1,245</h3>
-              <p class="flex items-center gap-1 text-sm text-red-600 dark:text-red-400">
-                <i class="text-xs pi pi-arrow-down-right"></i>
-                8.5%
-              </p>
-            </section>
-          </div>
-        </div>
+        <!-- Equipment Readiness -->
+        <app-card class="flex-1" title="Equipment Readiness" description="Operational health score">
+          <ng-template #content>
+            @if (dashboardResource.isLoading()) {
+              <p-skeleton height="48px" />
+            } @else {
+              <div class="flex flex-row items-center gap-4">
+                <h3 class="text-4xl font-semibold">
+                  {{ readinessScore() !== null ? readinessScore() + '%' : '—' }}
+                </h3>
+                @if (inspectionsComparison(); as cmp) {
+                  <p
+                    class="flex items-center gap-1 text-sm"
+                    [class.text-green-600]="cmp.direction === 'up'"
+                    [class.dark:text-green-400]="cmp.direction === 'up'"
+                    [class.text-red-600]="cmp.direction !== 'up'"
+                    [class.dark:text-red-400]="cmp.direction !== 'up'"
+                  >
+                    <i
+                      class="text-xs pi"
+                      [class.pi-arrow-up-right]="cmp.direction === 'up'"
+                      [class.pi-arrow-down-right]="cmp.direction !== 'up'"
+                    ></i>
+                    {{ cmp.value }}
+                  </p>
+                }
+              </div>
+            }
+          </ng-template>
+        </app-card>
       </div>
 
       <app-organization-dashboard-overview-trend />
@@ -79,6 +78,11 @@
         <app-organization-dashboard-inspections-trend />
         <app-organization-dashboard-non-conformities-opened-trend />
         <app-organization-dashboard-non-conformities-resolved-trend />
+      </div>
+
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <app-organization-dashboard-equipment-created-trend />
+        <app-organization-dashboard-facilities-created-trend />
       </div>
     </section>
   </div>

@@ -30,9 +30,9 @@
       />
     } @else {
       <p-chart
-        type="line"
+        type="bar"
         [data]="chartData()"
-        [options]="chartOptions"
+        [options]="chartOptions()"
         height="200px"
         fluid
       />
@@ -50,7 +50,23 @@
         placeholder="Status"
         [showClear]="true"
         size="small"
-      />
+      >
+        <ng-template #item let-option>
+          <span class="flex items-center gap-2">
+            <i [class]="option.icon" [style.color]="option.color"></i>
+            {{ option.label }}
+          </span>
+        </ng-template>
+        <ng-template #selectedItem>
+          @let option = selectedInspectionStatusOption();
+          @if (option) {
+            <span class="flex items-center gap-2">
+              <i [class]="option.icon" [style.color]="option.color"></i>
+              {{ option.label }}
+            </span>
+          }
+        </ng-template>
+      </p-select>
       <p-select
         [ngModel]="selectedInspectionResult()"
         (ngModelChange)="selectedInspectionResult.set($event)"
@@ -60,7 +76,23 @@
         placeholder="Result"
         [showClear]="true"
         size="small"
-      />
+      >
+        <ng-template #item let-option>
+          <span class="flex items-center gap-2">
+            <i [class]="option.icon" [style.color]="option.color"></i>
+            {{ option.label }}
+          </span>
+        </ng-template>
+        <ng-template #selectedItem>
+          @let option = selectedInspectionResultOption();
+          @if (option) {
+            <span class="flex items-center gap-2">
+              <i [class]="option.icon" [style.color]="option.color"></i>
+              {{ option.label }}
+            </span>
+          }
+        </ng-template>
+      </p-select>
       <p-select
         [ngModel]="selectedInspectorType()"
         (ngModelChange)="selectedInspectorType.set($event)"
@@ -71,6 +103,20 @@
         [showClear]="true"
         size="small"
       />
+      @defer (on idle) {
+        <p-datepicker
+          selectionMode="range"
+          [ngModel]="selectedDateRange()"
+          (ngModelChange)="selectedDateRange.set($event)"
+          placeholder="Select date range"
+          [showClear]="true"
+          [showTime]="true"
+          hourFormat="24"
+          size="small"
+          appendTo="body"
+          dateFormat="dd/mm/yy"
+        />
+      }
       <p-togglebutton
         [ngModel]="compareEnabled()"
         (ngModelChange)="compareEnabled.set($event)"

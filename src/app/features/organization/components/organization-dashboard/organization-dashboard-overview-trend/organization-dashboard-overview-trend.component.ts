@@ -16,6 +16,7 @@ import { ChartModule } from 'primeng/chart';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SelectModule } from 'primeng/select';
+import { DatePickerModule } from 'primeng/datepicker';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
@@ -61,6 +62,7 @@ import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
     SkeletonModule,
     SelectModule,
     ToggleButtonModule,
+    DatePickerModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -133,11 +135,25 @@ export class OrganizationDashboardOverviewTrend {
       // If no organization is selected, return undefined to keep the resource idle
       if (!organization) return undefined;
 
+      const toISO = (d: Date | undefined): string | undefined => d?.toISOString();
+
+      /**
+       * Constant range
+       * @const range
+       *
+       * @description
+       * Locally scoped constant to hold the currently selected date range,
+       * extracted from the corresponding signal for convenience.
+       *
+       * @type {Date[] | null}
+       */
+      const range: Date[] | null = this.selectedDateRange();
+
       return {
         organizationId: organization.id,
         granularity: this.selectedGranularity(),
-        from: this.selectedFrom() ?? undefined,
-        to: this.selectedTo() ?? undefined,
+        from: toISO(range?.[0]),
+        to: toISO(range?.[1]),
         compare: this.compareEnabled() || undefined,
       };
     },
@@ -247,11 +263,39 @@ export class OrganizationDashboardOverviewTrend {
   protected readonly selectedGranularity: WritableSignal<OrganizationDashboardGranularity> =
     signal<OrganizationDashboardGranularity>('month');
 
-  protected readonly selectedFrom: WritableSignal<string | null> = signal<string | null>(null);
+  /**
+   * Property selectedDateRange
+   * @readonly
+   *
+   * @description
+   * The currently selected date range for the chart.
+   * When set, both from and to are forwarded to the API as ISO 8601
+   * datetime strings. Null means no date filter is applied.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<Date[] | null>}
+   */
+  protected readonly selectedDateRange: WritableSignal<Date[] | null> =
+    signal<Date[] | null>(null);
 
-  protected readonly selectedTo: WritableSignal<string | null> = signal<string | null>(null);
-
-  protected readonly compareEnabled: WritableSignal<boolean> = signal<boolean>(false);
+  /**
+   * Property compareEnabled
+   * @readonly
+   *
+   * @description
+   * Whether the comparison mode is active. When true, the API
+   * returns a second series for the previous equivalent period
+   * and the chart renders a second semi-transparent dataset.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly compareEnabled: WritableSignal<boolean> =
+    signal<boolean>(false);
 
   /**
    * Property chartData
@@ -275,9 +319,18 @@ export class OrganizationDashboardOverviewTrend {
     const ncResolved: OrganizationDashboardTrendOutput | null = result?.ncResolved ?? null;
 
     const sourceTrend: OrganizationDashboardTrendOutput | null = inspections ?? ncOpened ?? ncResolved;
+    const granularity = this.selectedGranularity();
+
+    const formatLabel = (raw: string): string => {
+      if (!raw) return '';
+      const date = new Date(raw);
+      if (isNaN(date.getTime())) return raw;
+      if (granularity === 'month') return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+    };
 
     const labels: string[] =
-      sourceTrend?.series.map((point) => String(point['date'] ?? point['label'] ?? point['from'] ?? '')) ?? [];
+      sourceTrend?.series.map((point) => formatLabel(String(point['date'] ?? point['label'] ?? point['from'] ?? ''))) ?? [];
 
     const toData = (trend: OrganizationDashboardTrendOutput | null): number[] =>
       trend?.series.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0)) ?? [];
@@ -377,6 +430,9 @@ export class OrganizationDashboardOverviewTrend {
         labels: {
           usePointStyle: true,
           pointStyle: 'circle',
+          boxWidth: 8,
+          boxHeight: 8,
+          padding: 16,
         },
       },
       tooltip: {
@@ -389,7 +445,7 @@ export class OrganizationDashboardOverviewTrend {
       x: {
         border: { display: false },
         grid: { display: false },
-        ticks: { maxRotation: 0, maxTicksLimit: 6 },
+        ticks: { maxRotation: 45, autoSkip: false },
       },
       y: {
         border: { display: false },

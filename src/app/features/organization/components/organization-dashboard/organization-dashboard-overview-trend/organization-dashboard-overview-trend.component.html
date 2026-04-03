@@ -41,6 +41,20 @@
 
   <ng-template #footer>
     <div class="flex flex-wrap items-center gap-2">
+      @defer (on idle) {
+        <p-datepicker
+          selectionMode="range"
+          [ngModel]="selectedDateRange()"
+          (ngModelChange)="selectedDateRange.set($event)"
+          placeholder="Select date range"
+          [showClear]="true"
+          [showTime]="true"
+          hourFormat="24"
+          size="small"
+          appendTo="body"
+          dateFormat="dd/mm/yy"
+        />
+      }
       <p-togglebutton
         [ngModel]="compareEnabled()"
         (ngModelChange)="compareEnabled.set($event)"

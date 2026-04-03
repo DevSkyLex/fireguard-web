@@ -30,9 +30,9 @@
       />
     } @else {
       <p-chart
-        type="line"
+        type="bar"
         [data]="chartData()"
-        [options]="chartOptions"
+        [options]="chartOptions()"
         height="200px"
         fluid
       />
@@ -50,7 +50,23 @@
         placeholder="Status"
         [showClear]="true"
         size="small"
-      />
+      >
+        <ng-template #item let-option>
+          <span class="flex items-center gap-2">
+            <i [class]="option.icon" [style.color]="option.color"></i>
+            {{ option.label }}
+          </span>
+        </ng-template>
+        <ng-template #selectedItem>
+          @let option = selectedNonConformityStatusOption();
+          @if (option) {
+            <span class="flex items-center gap-2">
+              <i [class]="option.icon" [style.color]="option.color"></i>
+              {{ option.label }}
+            </span>
+          }
+        </ng-template>
+      </p-select>
       <p-select
         [ngModel]="selectedNonConformitySeverity()"
         (ngModelChange)="selectedNonConformitySeverity.set($event)"
@@ -60,7 +76,37 @@
         placeholder="Severity"
         [showClear]="true"
         size="small"
-      />
+      >
+        <ng-template #item let-option>
+          <span class="flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full shrink-0" [style.background-color]="option.color"></span>
+            {{ option.label }}
+          </span>
+        </ng-template>
+        <ng-template #selectedItem>
+          @let option = selectedSeverityOption();
+          @if (option) {
+            <span class="flex items-center gap-2">
+              <span class="inline-block w-2 h-2 rounded-full shrink-0" [style.background-color]="option.color"></span>
+              {{ option.label }}
+            </span>
+          }
+        </ng-template>
+      </p-select>
+      @defer (on idle) {
+        <p-datepicker
+          selectionMode="range"
+          [ngModel]="selectedDateRange()"
+          (ngModelChange)="selectedDateRange.set($event)"
+          placeholder="Select date range"
+          [showClear]="true"
+          [showTime]="true"
+          hourFormat="24"
+          size="small"
+          appendTo="body"
+          dateFormat="dd/mm/yy"
+        />
+      }
       <p-togglebutton
         [ngModel]="compareEnabled()"
         (ngModelChange)="compareEnabled.set($event)"

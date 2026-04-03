@@ -16,6 +16,7 @@ import { ChartModule } from 'primeng/chart';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SelectModule } from 'primeng/select';
+import { DatePickerModule } from 'primeng/datepicker';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
@@ -33,7 +34,7 @@ import type {
   NonConformitySeverity,
   NonConformityStatus,
 } from '@core/models/inspection';
-import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
+import type { ChartData, ChartOptions } from 'chart.js';
 
 /**
  * Component OrganizationDashboardNonConformitiesResolvedTrend
@@ -51,7 +52,7 @@ import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
 @Component({
   selector: 'app-organization-dashboard-non-conformities-resolved-trend',
   templateUrl: './organization-dashboard-non-conformities-resolved-trend.component.html',
-  imports: [Card, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule, ToggleButtonModule],
+  imports: [Card, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule, ToggleButtonModule, DatePickerModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboardNonConformitiesResolvedTrend {
@@ -118,11 +119,15 @@ export class OrganizationDashboardNonConformitiesResolvedTrend {
       // If no organization is selected, return undefined to keep the resource idle
       if (!organization) return undefined;
 
+      const toISO = (d: Date | undefined): string | undefined => d?.toISOString();
+
+      const range: Date[] | null = this.selectedDateRange();
+
       return {
         organizationId: organization.id,
         granularity: this.selectedGranularity(),
-        from: this.selectedFrom() ?? undefined,
-        to: this.selectedTo() ?? undefined,
+        from: toISO(range?.[0]),
+        to: toISO(range?.[1]),
         compare: this.compareEnabled() || undefined,
         nonConformityStatus: this.selectedNonConformityStatus() ?? undefined,
         nonConformitySeverity: this.selectedNonConformitySeverity() ?? undefined,
@@ -219,31 +224,145 @@ export class OrganizationDashboardNonConformitiesResolvedTrend {
   protected readonly selectedGranularity: WritableSignal<OrganizationDashboardGranularity> =
     signal<OrganizationDashboardGranularity>('month');
 
-  protected readonly selectedFrom: WritableSignal<string | null> = signal<string | null>(null);
+  /**
+   * Property selectedDateRange
+   * @readonly
+   *
+   * @description
+   * The currently selected date range for the chart.
+   * When set, both from and to are forwarded to the API as ISO 8601
+   * datetime strings. Null means no date filter is applied.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<Date[] | null>}
+   */
+  protected readonly selectedDateRange: WritableSignal<Date[] | null> = signal<Date[] | null>(null);
 
-  protected readonly selectedTo: WritableSignal<string | null> = signal<string | null>(null);
-
+  /**
+   * Property compareEnabled
+   * @readonly
+   *
+   * @description
+   * Whether the comparison mode is active. When true, the API
+   * returns a second series for the previous equivalent period
+   * and the chart renders a second semi-transparent dataset.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly compareEnabled: WritableSignal<boolean> = signal<boolean>(false);
 
-  protected readonly nonConformityStatusOptions: { label: string; value: NonConformityStatus }[] = [
-    { label: 'Open', value: 'open' },
-    { label: 'In Progress', value: 'in_progress' },
-    { label: 'Done', value: 'done' },
-    { label: 'Waived', value: 'waived' },
+  /**
+   * Property nonConformityStatusOptions
+   * @readonly
+   *
+   * @description
+   * Available filter options for non-conformity status.
+   * Each option carries a label, a typed value, a PrimeIcons icon
+   * class and a hex color used to tint the icon in the select.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {{ label: string; value: NonConformityStatus; icon: string; color: string }[]}
+   */
+  protected readonly nonConformityStatusOptions: { label: string; value: NonConformityStatus; icon: string; color: string }[] = [
+    { label: 'Open', value: 'open', icon: 'pi pi-circle', color: '#ef4444' },
+    { label: 'In Progress', value: 'in_progress', icon: 'pi pi-refresh', color: '#f97316' },
+    { label: 'Done', value: 'done', icon: 'pi pi-check-circle', color: '#22c55e' },
+    { label: 'Waived', value: 'waived', icon: 'pi pi-ban', color: '#94a3b8' },
   ];
 
+  /**
+   * Property selectedNonConformityStatus
+   * @readonly
+   *
+   * @description
+   * The currently selected non-conformity status filter.
+   * Null means no filter is applied.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<NonConformityStatus | null>}
+   */
   protected readonly selectedNonConformityStatus: WritableSignal<NonConformityStatus | null> =
     signal<NonConformityStatus | null>(null);
 
-  protected readonly nonConformitySeverityOptions: { label: string; value: NonConformitySeverity }[] = [
-    { label: 'Low', value: 'low' },
-    { label: 'Medium', value: 'medium' },
-    { label: 'High', value: 'high' },
-    { label: 'Critical', value: 'critical' },
+  /**
+   * Property selectedNonConformityStatusOption
+   * @readonly
+   *
+   * @description
+   * The full option object matching the currently selected non-conformity
+   * status, used to render the icon and color in the selected item template.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<{ label: string; value: NonConformityStatus; icon: string; color: string } | null>}
+   */
+  protected readonly selectedNonConformityStatusOption = computed(() =>
+    this.nonConformityStatusOptions.find(o => o.value === this.selectedNonConformityStatus()) ?? null
+  );
+
+  /**
+   * Property nonConformitySeverityOptions
+   * @readonly
+   *
+   * @description
+   * Available filter options for non-conformity severity.
+   * Each option carries a label, a typed value and a hex color
+   * used to render the colored dot in the select.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {{ label: string; value: NonConformitySeverity; color: string }[]}
+   */
+  protected readonly nonConformitySeverityOptions: { label: string; value: NonConformitySeverity; color: string }[] = [
+    { label: 'Low', value: 'low', color: '#22c55e' },
+    { label: 'Medium', value: 'medium', color: '#eab308' },
+    { label: 'High', value: 'high', color: '#f97316' },
+    { label: 'Critical', value: 'critical', color: '#ef4444' },
   ];
 
+  /**
+   * Property selectedNonConformitySeverity
+   * @readonly
+   *
+   * @description
+   * The currently selected non-conformity severity filter.
+   * Null means no filter is applied.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<NonConformitySeverity | null>}
+   */
   protected readonly selectedNonConformitySeverity: WritableSignal<NonConformitySeverity | null> =
     signal<NonConformitySeverity | null>(null);
+
+  /**
+   * Property selectedSeverityOption
+   * @readonly
+   *
+   * @description
+   * The full option object matching the currently selected severity,
+   * used to render the colored dot in the selected item template.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<{ label: string; value: NonConformitySeverity; color: string } | null>}
+   */
+  protected readonly selectedSeverityOption = computed(() =>
+    this.nonConformitySeverityOptions.find(o => o.value === this.selectedNonConformitySeverity()) ?? null
+  );
 
   /**
    * Property chartData
@@ -256,13 +375,22 @@ export class OrganizationDashboardNonConformitiesResolvedTrend {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<ChartData<'line'>>}
+   * @type {Signal<ChartData<'bar'>>}
    */
-  protected readonly chartData: Signal<ChartData<'line'>> = computed<ChartData<'line'>>(() => {
+  protected readonly chartData: Signal<ChartData<'bar'>> = computed<ChartData<'bar'>>(() => {
     const trend: OrganizationDashboardTrendOutput | null = this.trendResource.value() ?? null;
+    const granularity = this.selectedGranularity();
+
+    const formatLabel = (raw: string): string => {
+      if (!raw) return '';
+      const date = new Date(raw);
+      if (isNaN(date.getTime())) return raw;
+      if (granularity === 'month') return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+    };
 
     const labels: string[] =
-      trend?.series.map((point) => String(point['date'] ?? point['label'] ?? point['from'] ?? '')) ?? [];
+      trend?.series.map((point) => formatLabel(String(point['date'] ?? point['label'] ?? point['from'] ?? ''))) ?? [];
 
     const data: number[] =
       trend?.series.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0)) ?? [];
@@ -272,44 +400,21 @@ export class OrganizationDashboardNonConformitiesResolvedTrend {
     const comparisonData: number[] =
       comparisonSeries.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0));
 
-    const datasets: ChartData<'line'>['datasets'] = [
+    const datasets: ChartData<'bar'>['datasets'] = [
       {
         label: 'Non-Conformities Resolved',
         data: data,
-        fill: true,
-        borderColor: '#22c55e',
-        backgroundColor: (context: ScriptableContext<'line'>) => {
-          const { ctx, chartArea } = context.chart;
-          if (!chartArea) return 'transparent';
-          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-          gradient.addColorStop(0, 'rgba(34, 197, 94, 0.35)');
-          gradient.addColorStop(1, 'rgba(34, 197, 94, 0.0)');
-          return gradient;
-        },
-        tension: 0.4,
-        pointBackgroundColor: '#22c55e',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 7,
-        pointHoverBorderWidth: 2,
+        backgroundColor: 'rgba(34, 197, 94, 0.85)',
+        hoverBackgroundColor: '#22c55e',
       },
     ];
 
-    if (comparisonData.length > 0) {
+    if (this.compareEnabled() && comparisonData.length > 0) {
       datasets.push({
         label: 'Previous Period',
         data: comparisonData,
-        fill: false,
-        borderColor: 'rgba(34, 197, 94, 0.4)',
-        borderDash: [5, 5],
-        backgroundColor: 'transparent',
-        tension: 0.4,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-        pointBackgroundColor: 'rgba(34, 197, 94, 0.4)',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 1,
+        backgroundColor: 'rgba(34, 197, 94, 0.25)',
+        hoverBackgroundColor: 'rgba(34, 197, 94, 0.45)',
       });
     }
 
@@ -321,21 +426,43 @@ export class OrganizationDashboardNonConformitiesResolvedTrend {
    * @readonly
    *
    * @description
-   * Static chart.js options for the resolved non-conformities line chart.
+   * Reactive chart.js options for the resolved non-conformities bar chart.
+   * The legend is shown only when the comparison mode is active.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {ChartOptions<'line'>}
+   * @type {Signal<ChartOptions<'bar'>>}
    */
-  protected readonly chartOptions: ChartOptions<'line'> = {
+  protected readonly chartOptions: Signal<ChartOptions<'bar'>> = computed<ChartOptions<'bar'>>(() => ({
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 400 },
+    animation: { duration: 500 },
     interaction: { mode: 'index', intersect: false },
+    datasets: {
+      bar: {
+        barPercentage: 0.65,
+        categoryPercentage: 0.8,
+        borderRadius: 6,
+        borderSkipped: 'start',
+        borderWidth: 0,
+      },
+    },
     plugins: {
-      legend: { display: false },
+      legend: {
+        display: this.compareEnabled(),
+        position: 'bottom',
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 8,
+          boxHeight: 8,
+          padding: 16,
+        },
+      },
       tooltip: {
+        padding: 10,
+        cornerRadius: 8,
         callbacks: {
           label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
         },
@@ -345,7 +472,7 @@ export class OrganizationDashboardNonConformitiesResolvedTrend {
       x: {
         border: { display: false },
         grid: { display: false },
-        ticks: { maxRotation: 0, maxTicksLimit: 6 },
+        ticks: { maxRotation: 45, autoSkip: false },
       },
       y: {
         border: { display: false },
@@ -354,7 +481,7 @@ export class OrganizationDashboardNonConformitiesResolvedTrend {
         ticks: { precision: 0, maxTicksLimit: 5 },
       },
     },
-  };
+  }));
   //#endregion
 
   //#region Methods

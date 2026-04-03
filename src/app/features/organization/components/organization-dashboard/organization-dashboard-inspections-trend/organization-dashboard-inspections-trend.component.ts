@@ -16,6 +16,7 @@ import { ChartModule } from 'primeng/chart';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SelectModule } from 'primeng/select';
+import { DatePickerModule } from 'primeng/datepicker';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
@@ -34,7 +35,7 @@ import type {
   InspectionStatus,
   InspectorType,
 } from '@core/models/inspection';
-import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
+import type { ChartData, ChartOptions } from 'chart.js';
 
 /**
  * Component OrganizationDashboardInspectionsTrend
@@ -52,7 +53,7 @@ import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
 @Component({
   selector: 'app-organization-dashboard-inspections-trend',
   templateUrl: './organization-dashboard-inspections-trend.component.html',
-  imports: [Card, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule, ToggleButtonModule],
+  imports: [Card, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule, ToggleButtonModule, DatePickerModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboardInspectionsTrend {
@@ -119,11 +120,15 @@ export class OrganizationDashboardInspectionsTrend {
       // If no organization is selected, return undefined to keep the resource idle
       if (!organization) return undefined;
 
+      const toISO = (d: Date | undefined): string | undefined => d?.toISOString();
+
+      const range: Date[] | null = this.selectedDateRange();
+
       return {
         organizationId: organization.id,
         granularity: this.selectedGranularity(),
-        from: this.selectedFrom() ?? undefined,
-        to: this.selectedTo() ?? undefined,
+        from: toISO(range?.[0]),
+        to: toISO(range?.[1]),
         compare: this.compareEnabled() || undefined,
         inspectionStatus: this.selectedInspectionStatus() ?? undefined,
         inspectionResult: this.selectedInspectionResult() ?? undefined,
@@ -219,35 +224,174 @@ export class OrganizationDashboardInspectionsTrend {
   protected readonly selectedGranularity: WritableSignal<OrganizationDashboardGranularity> =
     signal<OrganizationDashboardGranularity>('month');
 
-  protected readonly selectedFrom: WritableSignal<string | null> = signal<string | null>(null);
+  /**
+   * Property selectedDateRange
+   * @readonly
+   *
+   * @description
+   * The currently selected date range for the chart.
+   * When set, both from and to are forwarded to the API as ISO 8601
+   * datetime strings. Null means no date filter is applied.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<Date[] | null>}
+   */
+  protected readonly selectedDateRange: WritableSignal<Date[] | null> = signal<Date[] | null>(null);
 
-  protected readonly selectedTo: WritableSignal<string | null> = signal<string | null>(null);
-
+  /**
+   * Property compareEnabled
+   * @readonly
+   *
+   * @description
+   * Whether the comparison mode is active. When true, the API
+   * returns a second series for the previous equivalent period
+   * and the chart renders a second semi-transparent dataset.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly compareEnabled: WritableSignal<boolean> = signal<boolean>(false);
 
-  protected readonly inspectionStatusOptions: { label: string; value: InspectionStatus }[] = [
-    { label: 'Draft', value: 'draft' },
-    { label: 'Submitted', value: 'submitted' },
-    { label: 'Closed', value: 'closed' },
+  /**
+   * Property inspectionStatusOptions
+   * @readonly
+   *
+   * @description
+   * Available filter options for inspection status.
+   * Each option carries a label, a typed value, a PrimeIcons icon
+   * class and a hex color used to tint the icon in the select.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {{ label: string; value: InspectionStatus; icon: string; color: string }[]}
+   */
+  protected readonly inspectionStatusOptions: { label: string; value: InspectionStatus; icon: string; color: string }[] = [
+    { label: 'Draft', value: 'draft', icon: 'pi pi-file-edit', color: '#94a3b8' },
+    { label: 'Submitted', value: 'submitted', icon: 'pi pi-send', color: '#3b82f6' },
+    { label: 'Closed', value: 'closed', icon: 'pi pi-lock', color: '#22c55e' },
   ];
 
+  /**
+   * Property selectedInspectionStatus
+   * @readonly
+   *
+   * @description
+   * The currently selected inspection status filter.
+   * Null means no filter is applied.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<InspectionStatus | null>}
+   */
   protected readonly selectedInspectionStatus: WritableSignal<InspectionStatus | null> =
     signal<InspectionStatus | null>(null);
 
-  protected readonly inspectionResultOptions: { label: string; value: InspectionResult }[] = [
-    { label: 'Pass', value: 'pass' },
-    { label: 'Fail', value: 'fail' },
-    { label: 'Partial', value: 'partial' },
+  /**
+   * Property selectedInspectionStatusOption
+   * @readonly
+   *
+   * @description
+   * The full option object matching the currently selected inspection
+   * status, used to render the icon and color in the selected item template.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<{ label: string; value: InspectionStatus; icon: string; color: string } | null>}
+   */
+  protected readonly selectedInspectionStatusOption = computed(() =>
+    this.inspectionStatusOptions.find(o => o.value === this.selectedInspectionStatus()) ?? null
+  );
+
+  /**
+   * Property inspectionResultOptions
+   * @readonly
+   *
+   * @description
+   * Available filter options for inspection result.
+   * Each option carries a label, a typed value, a PrimeIcons icon
+   * class and a hex color used to tint the icon in the select.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {{ label: string; value: InspectionResult; icon: string; color: string }[]}
+   */
+  protected readonly inspectionResultOptions: { label: string; value: InspectionResult; icon: string; color: string }[] = [
+    { label: 'Pass', value: 'pass', icon: 'pi pi-check-circle', color: '#22c55e' },
+    { label: 'Fail', value: 'fail', icon: 'pi pi-times-circle', color: '#ef4444' },
+    { label: 'Partial', value: 'partial', icon: 'pi pi-exclamation-circle', color: '#f97316' },
   ];
 
+  /**
+   * Property selectedInspectionResult
+   * @readonly
+   *
+   * @description
+   * The currently selected inspection result filter.
+   * Null means no filter is applied.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<InspectionResult | null>}
+   */
   protected readonly selectedInspectionResult: WritableSignal<InspectionResult | null> =
     signal<InspectionResult | null>(null);
 
+  /**
+   * Property selectedInspectionResultOption
+   * @readonly
+   *
+   * @description
+   * The full option object matching the currently selected inspection
+   * result, used to render the icon and color in the selected item template.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<{ label: string; value: InspectionResult; icon: string; color: string } | null>}
+   */
+  protected readonly selectedInspectionResultOption = computed(() =>
+    this.inspectionResultOptions.find(o => o.value === this.selectedInspectionResult()) ?? null
+  );
+
+  /**
+   * Property inspectorTypeOptions
+   * @readonly
+   *
+   * @description
+   * Available filter options for inspector type.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {{ label: string; value: InspectorType }[]}
+   */
   protected readonly inspectorTypeOptions: { label: string; value: InspectorType }[] = [
     { label: 'User', value: 'user' },
     { label: 'External', value: 'external' },
   ];
 
+  /**
+   * Property selectedInspectorType
+   * @readonly
+   *
+   * @description
+   * The currently selected inspector type filter.
+   * Null means no filter is applied.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<InspectorType | null>}
+   */
   protected readonly selectedInspectorType: WritableSignal<InspectorType | null> =
     signal<InspectorType | null>(null);
 
@@ -262,13 +406,22 @@ export class OrganizationDashboardInspectionsTrend {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<ChartData<'line'>>}
+   * @type {Signal<ChartData<'bar'>>}
    */
-  protected readonly chartData: Signal<ChartData<'line'>> = computed<ChartData<'line'>>(() => {
+  protected readonly chartData: Signal<ChartData<'bar'>> = computed<ChartData<'bar'>>(() => {
     const trend: OrganizationDashboardTrendOutput | null = this.trendResource.value() ?? null;
+    const granularity = this.selectedGranularity();
+
+    const formatLabel = (raw: string): string => {
+      if (!raw) return '';
+      const date = new Date(raw);
+      if (isNaN(date.getTime())) return raw;
+      if (granularity === 'month') return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+    };
 
     const labels: string[] =
-      trend?.series.map((point) => String(point['date'] ?? point['label'] ?? point['from'] ?? '')) ?? [];
+      trend?.series.map((point) => formatLabel(String(point['date'] ?? point['label'] ?? point['from'] ?? ''))) ?? [];
 
     const data: number[] =
       trend?.series.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0)) ?? [];
@@ -278,44 +431,21 @@ export class OrganizationDashboardInspectionsTrend {
     const comparisonData: number[] =
       comparisonSeries.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0));
 
-    const datasets: ChartData<'line'>['datasets'] = [
+    const datasets: ChartData<'bar'>['datasets'] = [
       {
         label: 'Inspections',
         data: data,
-        fill: true,
-        borderColor: '#3b82f6',
-        backgroundColor: (context: ScriptableContext<'line'>) => {
-          const { ctx, chartArea } = context.chart;
-          if (!chartArea) return 'transparent';
-          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-          gradient.addColorStop(0, 'rgba(59, 130, 246, 0.35)');
-          gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-          return gradient;
-        },
-        tension: 0.4,
-        pointBackgroundColor: '#3b82f6',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 7,
-        pointHoverBorderWidth: 2,
+        backgroundColor: 'rgba(59, 130, 246, 0.85)',
+        hoverBackgroundColor: '#3b82f6',
       },
     ];
 
-    if (comparisonData.length > 0) {
+    if (this.compareEnabled() && comparisonData.length > 0) {
       datasets.push({
         label: 'Previous Period',
         data: comparisonData,
-        fill: false,
-        borderColor: 'rgba(59, 130, 246, 0.4)',
-        borderDash: [5, 5],
-        backgroundColor: 'transparent',
-        tension: 0.4,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-        pointBackgroundColor: 'rgba(59, 130, 246, 0.4)',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 1,
+        backgroundColor: 'rgba(59, 130, 246, 0.25)',
+        hoverBackgroundColor: 'rgba(59, 130, 246, 0.45)',
       });
     }
 
@@ -327,21 +457,43 @@ export class OrganizationDashboardInspectionsTrend {
    * @readonly
    *
    * @description
-   * Static chart.js options for the inspections line chart.
+   * Reactive chart.js options for the inspections bar chart.
+   * The legend is shown only when the comparison mode is active.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {ChartOptions<'line'>}
+   * @type {Signal<ChartOptions<'bar'>>}
    */
-  protected readonly chartOptions: ChartOptions<'line'> = {
+  protected readonly chartOptions: Signal<ChartOptions<'bar'>> = computed<ChartOptions<'bar'>>(() => ({
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 400 },
+    animation: { duration: 500 },
     interaction: { mode: 'index', intersect: false },
+    datasets: {
+      bar: {
+        barPercentage: 0.65,
+        categoryPercentage: 0.8,
+        borderRadius: 6,
+        borderSkipped: 'start',
+        borderWidth: 0,
+      },
+    },
     plugins: {
-      legend: { display: false },
+      legend: {
+        display: this.compareEnabled(),
+        position: 'bottom',
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 8,
+          boxHeight: 8,
+          padding: 16,
+        },
+      },
       tooltip: {
+        padding: 10,
+        cornerRadius: 8,
         callbacks: {
           label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
         },
@@ -351,7 +503,7 @@ export class OrganizationDashboardInspectionsTrend {
       x: {
         border: { display: false },
         grid: { display: false },
-        ticks: { maxRotation: 0, maxTicksLimit: 6 },
+        ticks: { maxRotation: 45, autoSkip: false },
       },
       y: {
         border: { display: false },
@@ -360,7 +512,7 @@ export class OrganizationDashboardInspectionsTrend {
         ticks: { precision: 0, maxTicksLimit: 5 },
       },
     },
-  };
+  }));
   //#endregion
 
   //#region Methods

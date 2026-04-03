@@ -1,11 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  contentChild,
   input,
+  Signal,
+  TemplateRef,
   type InputSignal,
 } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
-import { Card } from '@shared/components';
+import { CardModule, CardPassThroughOptions } from 'primeng/card';
+import { CommonModule } from '@angular/common';
 
 /**
  * Type OrganizationDashboardMetricCardComparison
@@ -38,7 +42,7 @@ export type OrganizationDashboardMetricCardComparison = {
 @Component({
   selector: 'app-organization-dashboard-metric-card',
   templateUrl: './organization-dashboard-metric-card.component.html',
-  imports: [Card, SkeletonModule],
+  imports: [CardModule, SkeletonModule, CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboardMetricCard {
@@ -47,7 +51,8 @@ export class OrganizationDashboardMetricCard {
    * Input title
    *
    * @description
-   * Card heading displayed in the PrimeNG card header.
+   * Card heading displayed in the
+   * PrimeNG card header.
    *
    * @access public
    * @since 1.0.0
@@ -66,10 +71,10 @@ export class OrganizationDashboardMetricCard {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<string>}
+   * @type {InputSignal<string | undefined>}
    */
-  public readonly description: InputSignal<string> =
-    input.required<string>();
+  public readonly description: InputSignal<string | undefined> =
+    input<string>();
 
   /**
    * Input value
@@ -84,6 +89,21 @@ export class OrganizationDashboardMetricCard {
    */
   public readonly value: InputSignal<string | number | null> =
     input.required<string | number | null>();
+
+  /**
+   * Input icon
+   *
+   * @description
+   * Optional icon to display in the
+   * top-left corner of the card.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly icon: InputSignal<string | null> =
+    input<string | null>(null);
 
   /**
    * Input loading
@@ -114,5 +134,54 @@ export class OrganizationDashboardMetricCard {
    */
   public readonly comparison: InputSignal<OrganizationDashboardMetricCardComparison | null> =
     input<OrganizationDashboardMetricCardComparison | null>(null);
+
+  /**
+   * Property cardPt
+   * @readonly
+   *
+   * @description
+   * Pass-through options for customizing the styling of the PrimeNG Card component.
+   * This allows for consistent styling across all metric cards while still
+   * enabling specific adjustments as needed.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {CardPassThroughOptions}
+   */
+  protected readonly cardPt: CardPassThroughOptions = {
+    root: {
+      class: 'h-full flex flex-col gap-4 border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
+    },
+    body: {
+      class: 'p-0! flex flex-col flex-1',
+    },
+    content: {
+      class: 'px-4 pb-4',
+    },
+    header: {
+      class: 'px-4 pt-4',
+    },
+    footer: {
+      class: 'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 px-4 py-3 rounded-b-md',
+    },
+  };
+
+  /**
+   * Property action
+   * @readonly
+   *
+   * @description
+   * A template reference for the action section
+   * of the card, allowing for  custom content such as buttons or links to be
+   * injected into the card's action area.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  public readonly action: Signal<TemplateRef<unknown> | undefined> =
+    contentChild<TemplateRef<unknown>>('action');
   //#endregion
 }

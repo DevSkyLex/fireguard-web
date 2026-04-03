@@ -1,5 +1,33 @@
-<app-card class="min-w-40 flex-1" [title]="title()" [description]="description()">
-  <ng-template #content>
+<p-card [pt]="cardPt">
+  <ng-template pTemplate="header">
+    <div class="flex flex-row justify-between items-center">
+      <div class="flex flex-row items-center gap-3">
+        @if (icon(); as icon) {
+          <div class="border border-surface-200 dark:border-surface-700 rounded-lg p-2 grid content-center">
+            <i class="{{ icon }} text-lg text-surface-500 dark:text-surface-400"></i>
+          </div>
+        }
+
+        <div class="flex flex-col">
+          <span class="text-sm font-medium">
+            {{ title() }}
+          </span>
+
+          @if (description(); as description) {
+            <span class="text-xs text-surface-500">
+              {{ description }}
+            </span>
+          }
+        </div>
+      </div>
+
+      @if (action(); as action) {
+        <ng-container *ngTemplateOutlet="action"/>
+      }
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="content">
     @if (loading(); as loading) {
       <p-skeleton height="48px" />
     } @else {
@@ -10,14 +38,19 @@
 
         @if (comparison(); as comparison) {
           <div class="flex flex-row items-center gap-2">
-            <i class="pi pi-arrow-down-right text-red-500 text-xs"></i>
+            <i
+              class="text-xs"
+              [class]="comparison.direction === 'up'
+                ? 'pi pi-arrow-up-right text-green-500'
+                : 'pi pi-arrow-down-right text-red-500'"
+            ></i>
             <div class="text-sm flex flex-row gap-1">
-              <span class="font-semibold">{{ comparison.value }}%</span>
-              <span>last period</span>
+              <span class="font-semibold">{{ comparison.value }}</span>
+              <span class="text-surface-500">last period</span>
             </div>
           </div>
         }
       </div>
     }
   </ng-template>
-</app-card>
+</p-card>

@@ -137,7 +137,7 @@ export class Card {
       class: 'p-0! flex flex-col flex-1',
     },
     content: {
-      class: 'px-4 pb-4',
+      class: 'px-4 pb-4 flex-1',
     },
     header: {
       class: 'px-4 pt-4',

@@ -13,6 +13,7 @@
     </section>
 
     <section class="flex flex-col gap-6">
+      <!-- Row 1: overview snapshot counts -->
       <div class="flex flex-row items-start gap-6">
         <!-- Facilities -->
         <app-card class="flex-1" title="Facilities" description="Registered sites">
@@ -40,6 +41,22 @@
           </ng-template>
         </app-card>
 
+        <!-- Equipment -->
+        <app-card class="flex-1" title="Equipment" description="Tracked assets">
+          <ng-template #content>
+            @if (dashboardResource.isLoading()) {
+              <p-skeleton height="48px" />
+            } @else {
+              <div class="flex flex-row items-center gap-4">
+                <h3 class="text-4xl font-semibold">{{ equipmentCount() ?? '—' }}</h3>
+              </div>
+            }
+          </ng-template>
+        </app-card>
+      </div>
+
+      <!-- Row 2: period-based health & comparison KPIs -->
+      <div class="flex flex-row items-start gap-6">
         <!-- Equipment Readiness -->
         <app-card class="flex-1" title="Equipment Readiness" description="Operational health score">
           <ng-template #content>
@@ -50,6 +67,35 @@
                 <h3 class="text-4xl font-semibold">
                   {{ readinessScore() !== null ? readinessScore() + '%' : '—' }}
                 </h3>
+                @if (readinessComparison(); as cmp) {
+                  <p
+                    class="flex items-center gap-1 text-sm"
+                    [class.text-green-600]="cmp.direction === 'up'"
+                    [class.dark:text-green-400]="cmp.direction === 'up'"
+                    [class.text-red-600]="cmp.direction !== 'up'"
+                    [class.dark:text-red-400]="cmp.direction !== 'up'"
+                  >
+                    <i
+                      class="text-xs pi"
+                      [class.pi-arrow-up-right]="cmp.direction === 'up'"
+                      [class.pi-arrow-down-right]="cmp.direction !== 'up'"
+                    ></i>
+                    {{ cmp.value }}
+                  </p>
+                }
+              </div>
+            }
+          </ng-template>
+        </app-card>
+
+        <!-- Inspections -->
+        <app-card class="flex-1" title="Inspections" description="Performed this period">
+          <ng-template #content>
+            @if (dashboardResource.isLoading()) {
+              <p-skeleton height="48px" />
+            } @else {
+              <div class="flex flex-row items-center gap-4">
+                <h3 class="text-4xl font-semibold">{{ inspectionCount() ?? '—' }}</h3>
                 @if (inspectionsComparison(); as cmp) {
                   <p
                     class="flex items-center gap-1 text-sm"

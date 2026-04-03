@@ -3,14 +3,19 @@
 <app-card title="Inspections" description="Total inspections over time">
   <ng-template #action>
     <div class="flex items-center gap-2">
-      <p-select
-        [ngModel]="selectedGranularity()"
-        (ngModelChange)="onGranularityChange($event)"
-        [options]="granularityOptions"
-        optionLabel="label"
-        optionValue="value"
-        size="small"
-      />
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-calendar"></i>
+        </p-inputgroup-addon>
+        <p-select
+          [ngModel]="selectedGranularity()"
+          (ngModelChange)="onGranularityChange($event)"
+          [options]="granularityOptions"
+          optionLabel="label"
+          optionValue="value"
+          size="small"
+        />
+      </p-inputgroup>
 
       <p-button
         icon="pi pi-ellipsis-v"

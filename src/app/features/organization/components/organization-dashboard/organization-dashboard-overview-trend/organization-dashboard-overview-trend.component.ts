@@ -16,6 +16,8 @@ import { ChartModule } from 'primeng/chart';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SelectModule } from 'primeng/select';
+import { InputGroupModule } from 'primeng/inputgroup';
+import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { PrimeIcons } from 'primeng/api';
@@ -61,6 +63,8 @@ import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
     MenuModule,
     SkeletonModule,
     SelectModule,
+    InputGroupModule,
+    InputGroupAddonModule,
     ToggleButtonModule,
     DatePickerModule,
   ],

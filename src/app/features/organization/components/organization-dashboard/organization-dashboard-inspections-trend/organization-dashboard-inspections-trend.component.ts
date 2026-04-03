@@ -16,6 +16,8 @@ import { ChartModule } from 'primeng/chart';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SelectModule } from 'primeng/select';
+import { InputGroupModule } from 'primeng/inputgroup';
+import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { PrimeIcons } from 'primeng/api';
@@ -53,7 +55,7 @@ import type { ChartData, ChartOptions } from 'chart.js';
 @Component({
   selector: 'app-organization-dashboard-inspections-trend',
   templateUrl: './organization-dashboard-inspections-trend.component.html',
-  imports: [Card, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule, ToggleButtonModule, DatePickerModule],
+  imports: [Card, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule, InputGroupModule, InputGroupAddonModule, ToggleButtonModule, DatePickerModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboardInspectionsTrend {

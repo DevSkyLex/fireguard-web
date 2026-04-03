@@ -256,7 +256,7 @@ export class OrganizationDashboardInspectionsTrend {
    *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly compareEnabled: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly compareEnabled: WritableSignal<boolean> = signal<boolean>(true);
 
   /**
    * Property inspectionStatusOptions
@@ -533,7 +533,7 @@ export class OrganizationDashboardInspectionsTrend {
       x: {
         border: { display: false },
         grid: { display: false },
-        ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: 12 },
+        ticks: { display: false },
       },
       y: {
         border: { display: false },

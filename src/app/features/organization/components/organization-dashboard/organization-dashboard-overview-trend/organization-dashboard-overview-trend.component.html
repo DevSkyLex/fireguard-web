@@ -13,6 +13,7 @@
           [options]="granularityOptions"
           optionLabel="label"
           optionValue="value"
+          [loading]="overviewResource.isLoading()"
           size="small"
         />
       </p-inputgroup>
@@ -50,6 +51,7 @@
         <p-datepicker
           selectionMode="range"
           [ngModel]="selectedDateRange()"
+          [ngModelOptions]="{ updateOn: 'blur' }"
           (ngModelChange)="selectedDateRange.set($event)"
           placeholder="Select date range"
           [showClear]="true"
@@ -58,6 +60,7 @@
           size="small"
           appendTo="body"
           dateFormat="dd/mm/yy"
+          [disabled]="overviewResource.isLoading()"
         />
       }
       <p-togglebutton
@@ -66,6 +69,7 @@
         onLabel="Compare ON"
         offLabel="Compare OFF"
         size="small"
+        [disabled]="overviewResource.isLoading()"
       />
     </div>
   </ng-template>

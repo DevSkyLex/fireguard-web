@@ -300,7 +300,7 @@ export class OrganizationDashboardOverviewTrend {
    * @type {WritableSignal<boolean>}
    */
   protected readonly compareEnabled: WritableSignal<boolean> =
-    signal<boolean>(false);
+    signal<boolean>(true);
 
   /**
    * Property chartData
@@ -443,7 +443,7 @@ export class OrganizationDashboardOverviewTrend {
         stacked: true,
         border: { display: false },
         grid: { display: false },
-        ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: 12 },
+        ticks: { display: false },
       },
       y: {
         stacked: true,

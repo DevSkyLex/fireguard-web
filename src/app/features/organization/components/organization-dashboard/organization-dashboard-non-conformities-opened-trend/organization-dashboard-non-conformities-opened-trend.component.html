@@ -13,6 +13,7 @@
           [options]="granularityOptions"
           optionLabel="label"
           optionValue="value"
+          [loading]="trendResource.isLoading()"
           size="small"
         />
       </p-inputgroup>
@@ -54,6 +55,7 @@
         optionValue="value"
         placeholder="Status"
         [showClear]="true"
+        [loading]="trendResource.isLoading()"
         size="small"
       >
         <ng-template #item let-option>
@@ -80,6 +82,7 @@
         optionValue="value"
         placeholder="Severity"
         [showClear]="true"
+        [loading]="trendResource.isLoading()"
         size="small"
       >
         <ng-template #item let-option>
@@ -102,6 +105,7 @@
         <p-datepicker
           selectionMode="range"
           [ngModel]="selectedDateRange()"
+          [ngModelOptions]="{ updateOn: 'blur' }"
           (ngModelChange)="selectedDateRange.set($event)"
           placeholder="Select date range"
           [showClear]="true"
@@ -110,6 +114,7 @@
           size="small"
           appendTo="body"
           dateFormat="dd/mm/yy"
+          [disabled]="trendResource.isLoading()"
         />
       }
       <p-togglebutton
@@ -118,6 +123,7 @@
         onLabel="Compare ON"
         offLabel="Compare OFF"
         size="small"
+        [disabled]="trendResource.isLoading()"
       />
     </div>
   </ng-template>

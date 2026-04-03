@@ -7,8 +7,6 @@ import {
   type Signal,
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { SkeletonModule } from 'primeng/skeleton';
-import { Card } from '@shared/components';
 import { OrganizationService } from '@core/services/api/organization';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import type {
@@ -22,6 +20,7 @@ import { OrganizationDashboardNonConformitiesResolvedTrend } from './organizatio
 import { OrganizationDashboardOverviewTrend } from './organization-dashboard-overview-trend/organization-dashboard-overview-trend.component';
 import { OrganizationDashboardEquipmentCreatedTrend } from './organization-dashboard-equipment-created-trend/organization-dashboard-equipment-created-trend.component';
 import { OrganizationDashboardFacilitiesCreatedTrend } from './organization-dashboard-facilities-created-trend/organization-dashboard-facilities-created-trend.component';
+import { OrganizationDashboardMetricCard } from './organization-dashboard-metric-card';
 
 
 /**
@@ -69,8 +68,7 @@ type OrganizationDashboardComparisonDelta = {
   selector: 'app-organization-dashboard',
   templateUrl: './organization-dashboard.component.html',
   imports: [
-    Card,
-    SkeletonModule,
+    OrganizationDashboardMetricCard,
     OrganizationDashboardOverviewTrend,
     OrganizationDashboardInspectionsTrend,
     OrganizationDashboardNonConformitiesOpenedTrend,

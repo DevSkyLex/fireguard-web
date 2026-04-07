@@ -9,8 +9,18 @@ export type MetricSummary = {
   readonly label: string;
   readonly value: string;
   readonly icon: string | null;
-  readonly comparison?: OrganizationDashboardMetricCardComparison | null;
+  readonly comparison?: MetricComparison | null;
 };
+
+export type MetricComparison = {
+  readonly value: string | number | null;
+  readonly direction: MetricComparisonDirection;
+};
+
+export type MetricComparisonDirection =
+  | 'up'
+  | 'down'
+  | null;
 
 /**
  * Component OrganizationDashboardTrendCard
@@ -41,7 +51,7 @@ export type MetricSummary = {
 @Component({
   selector: 'app-organization-dashboard-trend-card',
   templateUrl: './organization-dashboard-trend-card.component.html',
-  imports: [CardModule, CommonModule, SkeletonModule, OrganizationDashboardMetricCard],
+  imports: [CardModule, CommonModule, SkeletonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboardTrendCard {
@@ -92,7 +102,7 @@ export class OrganizationDashboardTrendCard {
     input<readonly MetricSummary[]>([]);
 
   /**
-   * Property metricsLoading
+   * Property loading
    * @readonly
    *
    * @description
@@ -103,7 +113,7 @@ export class OrganizationDashboardTrendCard {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly metricsLoading: InputSignal<boolean> =
+  public readonly loading: InputSignal<boolean> =
     input<boolean>(false);
 
   /**

@@ -408,8 +408,13 @@ export class OrganizationDashboardFacilitiesCreatedTrend {
         },
       },
       tooltip: {
-        padding: 10,
-        cornerRadius: 8,
+        backgroundColor: 'rgba(15, 23, 42, 0.92)',
+        titleColor: '#f1f5f9',
+        bodyColor: '#94a3b8',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 10,
         callbacks: {
           title: (items) => items[0]?.label ?? '',
           label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
@@ -425,8 +430,8 @@ export class OrganizationDashboardFacilitiesCreatedTrend {
       y: {
         border: { display: false },
         beginAtZero: true,
-        grid: { color: 'rgba(0, 0, 0, 0.06)' },
-        ticks: { precision: 0, maxTicksLimit: 5 },
+        grid: { color: 'rgba(0, 0, 0, 0.04)', drawTicks: false },
+        ticks: { precision: 0, maxTicksLimit: 5, color: '#94a3b8', font: { size: 11 }, padding: 8 },
       },
     },
   }));

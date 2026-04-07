@@ -672,8 +672,11 @@ export class OrganizationDashboardInspectionQualityTrend {
       backgroundColor: 'rgba(168, 85, 247, 0.08)',
       borderWidth: 2,
       tension: 0.4,
-      pointRadius: 3,
+      pointRadius: 0,
       pointHoverRadius: 5,
+      pointHoverBorderWidth: 2,
+      pointHoverBorderColor: '#fff',
+      pointHoverBackgroundColor: '#a855f7',
       fill: false,
       order: 0,
     });
@@ -748,8 +751,13 @@ export class OrganizationDashboardInspectionQualityTrend {
         },
       },
       tooltip: {
-        padding: 10,
-        cornerRadius: 8,
+        backgroundColor: 'rgba(15, 23, 42, 0.92)',
+        titleColor: '#f1f5f9',
+        bodyColor: '#94a3b8',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 10,
         callbacks: {
           title: (items) => items[0]?.label ?? '',
           label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
@@ -765,8 +773,8 @@ export class OrganizationDashboardInspectionQualityTrend {
       y: {
         border: { display: false },
         beginAtZero: true,
-        grid: { color: 'rgba(0, 0, 0, 0.06)' },
-        ticks: { precision: 0, maxTicksLimit: 5 },
+        grid: { color: 'rgba(0, 0, 0, 0.04)', drawTicks: false },
+        ticks: { precision: 0, maxTicksLimit: 5, color: '#94a3b8', font: { size: 11 }, padding: 8 },
       },
       rateAxis: {
         type: 'linear' as const,
@@ -778,6 +786,8 @@ export class OrganizationDashboardInspectionQualityTrend {
         ticks: {
           callback: (value: number | string) => `${value}%`,
           maxTicksLimit: 5,
+          color: '#94a3b8',
+          font: { size: 11 },
         },
       },
     },

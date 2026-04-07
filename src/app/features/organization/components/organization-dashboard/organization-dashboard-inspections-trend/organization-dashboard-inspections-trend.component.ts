@@ -37,7 +37,7 @@ import type {
   InspectionStatus,
   InspectorType,
 } from '@core/models/inspection';
-import type { ChartData, ChartOptions } from 'chart.js';
+import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
 
 /**
  * Component OrganizationDashboardInspectionsTrend
@@ -468,12 +468,22 @@ export class OrganizationDashboardInspectionsTrend {
         label: 'Inspections',
         data: data,
         borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        backgroundColor: (context: ScriptableContext<'line'>): CanvasGradient | string => {
+          const { ctx, chartArea } = context.chart;
+          if (!chartArea) return 'rgba(59, 130, 246, 0)';
+          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, 'rgba(59, 130, 246, 0.25)');
+          gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+          return gradient;
+        },
         borderWidth: 2,
         tension: 0.4,
-        pointRadius: 3,
+        pointRadius: 0,
         pointHoverRadius: 5,
-        fill: false,
+        pointHoverBorderWidth: 2,
+        pointHoverBorderColor: '#fff',
+        pointHoverBackgroundColor: '#3b82f6',
+        fill: 'origin',
       },
     ];
 
@@ -486,8 +496,11 @@ export class OrganizationDashboardInspectionsTrend {
         borderWidth: 1.5,
         borderDash: [4, 4],
         tension: 0.4,
-        pointRadius: 2,
+        pointRadius: 0,
         pointHoverRadius: 4,
+        pointHoverBorderWidth: 2,
+        pointHoverBorderColor: '#fff',
+        pointHoverBackgroundColor: '#93c5fd',
         fill: false,
       });
     }
@@ -526,8 +539,13 @@ export class OrganizationDashboardInspectionsTrend {
         },
       },
       tooltip: {
-        padding: 10,
-        cornerRadius: 8,
+        backgroundColor: 'rgba(15, 23, 42, 0.92)',
+        titleColor: '#f1f5f9',
+        bodyColor: '#94a3b8',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 10,
         callbacks: {
           title: (items) => items[0]?.label ?? '',
           label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
@@ -543,8 +561,8 @@ export class OrganizationDashboardInspectionsTrend {
       y: {
         border: { display: false },
         beginAtZero: true,
-        grid: { color: 'rgba(0, 0, 0, 0.06)' },
-        ticks: { precision: 0, maxTicksLimit: 5 },
+        grid: { color: 'rgba(0, 0, 0, 0.04)', drawTicks: false },
+        ticks: { precision: 0, maxTicksLimit: 5, color: '#94a3b8', font: { size: 11 }, padding: 8 },
       },
     },
   }));

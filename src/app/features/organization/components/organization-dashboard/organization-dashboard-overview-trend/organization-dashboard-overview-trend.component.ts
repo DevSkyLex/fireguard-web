@@ -397,9 +397,9 @@ export class OrganizationDashboardOverviewTrend {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<ChartData<'bar'>>}
+   * @type {Signal<ChartData<'line'>>}
    */
-  protected readonly chartData: Signal<ChartData<'bar'>> = computed<ChartData<'bar'>>(() => {
+  protected readonly chartData: Signal<ChartData<'line'>> = computed<ChartData<'line'>>(() => {
     const result = this.overviewResource.value();
     const inspections: OrganizationDashboardTrendOutput | null = result?.inspections ?? null;
     const ncOpened: OrganizationDashboardTrendOutput | null = result?.ncOpened ?? null;
@@ -417,34 +417,47 @@ export class OrganizationDashboardOverviewTrend {
         {
           label: 'Inspections',
           data: inspectionData,
-          backgroundColor: '#3b82f6',
           borderColor: '#3b82f6',
-          borderWidth: 0,
-          borderRadius: 6,
+          backgroundColor: 'rgba(59, 130, 246, 0.08)',
+          borderWidth: 2,
+          tension: 0.4,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          fill: false,
         },
         {
           label: 'NC Opened',
           data: openedData,
-          backgroundColor: '#f97316',
           borderColor: '#f97316',
-          borderWidth: 0,
-          borderRadius: 6,
+          backgroundColor: 'rgba(249, 115, 22, 0.08)',
+          borderWidth: 2,
+          tension: 0.4,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          fill: false,
         },
         {
           label: 'NC Resolved',
           data: resolvedData,
-          backgroundColor: '#22c55e',
           borderColor: '#22c55e',
-          borderWidth: 0,
-          borderRadius: 6,
+          backgroundColor: 'rgba(34, 197, 94, 0.08)',
+          borderWidth: 2,
+          tension: 0.4,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          fill: false,
         },
         {
           label: 'Net Pressure',
           data: netPressureData,
-          backgroundColor: '#0f172a',
-          borderColor: '#0f172a',
-          borderWidth: 0,
-          borderRadius: 6,
+          borderColor: '#6366f1',
+          backgroundColor: 'rgba(99, 102, 241, 0.08)',
+          borderWidth: 2,
+          borderDash: [5, 4],
+          tension: 0.4,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          fill: false,
         },
       ],
     };
@@ -455,26 +468,20 @@ export class OrganizationDashboardOverviewTrend {
    * @readonly
    *
    * @description
-   * Static chart.js options for the overview multi-dataset bar chart.
-   * The legend is displayed to distinguish the three datasets.
+   * Static chart.js options for the overview multi-dataset line chart.
+   * The legend is displayed to distinguish the four datasets.
+   * Net Pressure (opened − resolved) can be negative; the Y axis does not force zero.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {ChartOptions<'bar'>}
+   * @type {ChartOptions<'line'>}
    */
-  protected readonly chartOptions: ChartOptions<'bar'> = {
+  protected readonly chartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 400 },
     interaction: { mode: 'index', intersect: false },
-    datasets: {
-      bar: {
-        barPercentage: 0.72,
-        categoryPercentage: 0.78,
-        borderWidth: 0,
-      },
-    },
     plugins: {
       legend: {
         display: true,
@@ -502,7 +509,7 @@ export class OrganizationDashboardOverviewTrend {
       },
       y: {
         border: { display: false },
-        beginAtZero: true,
+        beginAtZero: false,
         grid: { color: 'rgba(0, 0, 0, 0.06)' },
         ticks: { precision: 0, maxTicksLimit: 5 },
       },

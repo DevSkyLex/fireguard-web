@@ -34,19 +34,19 @@
   </ng-template>
 
   <ng-template #content>
-    <div class="flex min-h-65 flex-1 flex-col gap-4">
+    <div class="h-72">
       @if (growthResource.isLoading()) {
         <p-skeleton
           height="100%"
-          class="w-full flex-1"
+          class="w-full"
         />
       } @else {
         <p-chart
           type="bar"
           [data]="chartData()"
           [options]="chartOptions()"
-          class="min-h-45 flex-1"
-          height="100%"
+          class="block h-full"
+          [style]="{ height: '100%' }"
           fluid
         />
       }

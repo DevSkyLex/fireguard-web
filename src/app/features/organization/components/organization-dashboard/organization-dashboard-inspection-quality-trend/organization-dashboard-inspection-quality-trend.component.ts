@@ -663,6 +663,21 @@ export class OrganizationDashboardInspectionQualityTrend {
       });
     }
 
+    (datasets as any[]).push({
+      type: 'line' as const,
+      label: 'NC Rate (%)',
+      data: buildPercentageSeries(openedData, inspectionData),
+      yAxisID: 'rateAxis',
+      borderColor: '#a855f7',
+      backgroundColor: 'rgba(168, 85, 247, 0.08)',
+      borderWidth: 2,
+      tension: 0.4,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      fill: false,
+      order: 0,
+    });
+
     return {
       labels: [...aligned.labels],
       datasets,
@@ -698,9 +713,9 @@ export class OrganizationDashboardInspectionQualityTrend {
    * @readonly
    *
    * @description
-   * Reactive Chart.js options for the inspection quality grouped bar chart.
-   * The tooltip title callback injects the per-bucket NC rate alongside
-   * the default bucket label.
+   * Reactive Chart.js options for the inspection quality combo bar/line chart.
+   * Bars show raw inspections and opened NC volumes; a secondary line
+   * overlays the per-bucket NC rate (%) on the right-hand axis.
    *
    * @access protected
    * @since 1.0.0
@@ -736,15 +751,7 @@ export class OrganizationDashboardInspectionQualityTrend {
         padding: 10,
         cornerRadius: 8,
         callbacks: {
-          title: (items) => {
-            const item = items[0];
-
-            if (!item) return '';
-
-            const rate = this.rateSeries()[item.dataIndex] ?? 0;
-
-            return `${item.label} • ${this.percentFormatter.format(rate)}% NC rate`;
-          },
+          title: (items) => items[0]?.label ?? '',
           label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
         },
       },
@@ -760,6 +767,18 @@ export class OrganizationDashboardInspectionQualityTrend {
         beginAtZero: true,
         grid: { color: 'rgba(0, 0, 0, 0.06)' },
         ticks: { precision: 0, maxTicksLimit: 5 },
+      },
+      rateAxis: {
+        type: 'linear' as const,
+        position: 'right' as const,
+        border: { display: false },
+        min: 0,
+        max: 100,
+        grid: { display: false },
+        ticks: {
+          callback: (value: number | string) => `${value}%`,
+          maxTicksLimit: 5,
+        },
       },
     },
   }));

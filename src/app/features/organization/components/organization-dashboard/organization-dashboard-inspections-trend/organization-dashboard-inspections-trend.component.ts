@@ -411,9 +411,9 @@ export class OrganizationDashboardInspectionsTrend {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<ChartData<'bar'>>}
+   * @type {Signal<ChartData<'line'>>}
    */
-  protected readonly chartData: Signal<ChartData<'bar'>> = computed<ChartData<'bar'>>(() => {
+  protected readonly chartData: Signal<ChartData<'line'>> = computed<ChartData<'line'>>(() => {
     const trend: OrganizationDashboardTrendOutput | null = this.trendResource.value() ?? null;
     const granularity = this.selectedGranularity();
 
@@ -463,12 +463,17 @@ export class OrganizationDashboardInspectionsTrend {
     const comparisonData: number[] =
       comparisonSeries.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0));
 
-    const datasets: ChartData<'bar'>['datasets'] = [
+    const datasets: ChartData<'line'>['datasets'] = [
       {
         label: 'Inspections',
         data: data,
-        backgroundColor: '#3b82f6',
-        hoverBackgroundColor: '#2563eb',
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        borderWidth: 2,
+        tension: 0.4,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        fill: false,
       },
     ];
 
@@ -476,8 +481,14 @@ export class OrganizationDashboardInspectionsTrend {
       datasets.push({
         label: 'Previous Period',
         data: comparisonData,
-        backgroundColor: '#93c5fd',
-        hoverBackgroundColor: '#60a5fa',
+        borderColor: '#93c5fd',
+        backgroundColor: 'transparent',
+        borderWidth: 1.5,
+        borderDash: [4, 4],
+        tension: 0.4,
+        pointRadius: 2,
+        pointHoverRadius: 4,
+        fill: false,
       });
     }
 
@@ -489,28 +500,19 @@ export class OrganizationDashboardInspectionsTrend {
    * @readonly
    *
    * @description
-   * Reactive chart.js options for the inspections bar chart.
+   * Reactive chart.js options for the inspections line chart.
    * The legend is shown only when the comparison mode is active.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<ChartOptions<'bar'>>}
+   * @type {Signal<ChartOptions<'line'>>}
    */
-  protected readonly chartOptions: Signal<ChartOptions<'bar'>> = computed<ChartOptions<'bar'>>(() => ({
+  protected readonly chartOptions: Signal<ChartOptions<'line'>> = computed<ChartOptions<'line'>>(() => ({
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 500 },
     interaction: { mode: 'index', intersect: false },
-    datasets: {
-      bar: {
-        barPercentage: 0.65,
-        categoryPercentage: 0.8,
-        borderRadius: 6,
-        borderSkipped: 'start',
-        borderWidth: 0,
-      },
-    },
     plugins: {
       legend: {
         display: this.compareEnabled(),

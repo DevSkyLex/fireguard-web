@@ -170,7 +170,8 @@ export class OrganizationDashboardFacilitiesCreatedTrend {
    *
    * @type {Signal<Menu>}
    */
-  private readonly menu: Signal<Menu> = viewChild.required<Menu>('actionMenu');
+  private readonly menu: Signal<Menu> =
+    viewChild.required<Menu>('actionMenu');
 
   /**
    * Property granularityOptions

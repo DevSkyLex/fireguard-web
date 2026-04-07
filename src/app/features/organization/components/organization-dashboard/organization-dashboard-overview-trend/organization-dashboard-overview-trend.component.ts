@@ -24,6 +24,8 @@ import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
 import { forkJoin } from 'rxjs';
 import { Card } from '@shared/components';
+import { OrganizationDashboardMetricCard } from '../organization-dashboard-metric-card';
+import type { OrganizationDashboardMetricCardComparison } from '../organization-dashboard-metric-card';
 import { OrganizationService } from '@core/services/api/organization';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import type {
@@ -31,10 +33,30 @@ import type {
   OrganizationDashboardOverviewTrendResource,
   OrganizationDashboardTrendOutput,
   OrganizationDashboardTrendResourceParams,
-  OrganizationDashboardTrendSeriesPoint,
   OrganizationOutput,
 } from '@core/models/organization';
 import type { ChartData, ChartOptions } from 'chart.js';
+import {
+  alignDashboardTrendSeries,
+  buildDifferenceSeries,
+  getDashboardTrendPointValue,
+  sumDashboardTrendValues,
+} from '../organization-dashboard-trend.utils';
+
+/**
+ * Type OrganizationDashboardOverviewSummaryMetric
+ *
+ * @description
+ * Shape of a single KPI tile rendered above the operational flow chart.
+ * Maps directly onto the inputs expected by
+ * {@link OrganizationDashboardMetricCard}.
+ */
+type OrganizationDashboardOverviewSummaryMetric = {
+  readonly label: string;
+  readonly value: string;
+  readonly icon: string | null;
+  readonly comparison: OrganizationDashboardMetricCardComparison | null;
+};
 
 /**
  * Component OrganizationDashboardOverviewTrend
@@ -62,6 +84,7 @@ import type { ChartData, ChartOptions } from 'chart.js';
     ButtonModule,
     ChartModule,
     MenuModule,
+    OrganizationDashboardMetricCard,
     SkeletonModule,
     SelectModule,
     InputGroupModule,
@@ -73,6 +96,10 @@ import type { ChartData, ChartOptions } from 'chart.js';
 })
 export class OrganizationDashboardOverviewTrend {
   //#region Properties
+  private readonly wholeNumberFormatter = new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 0,
+  });
+
   /**
    * Property organizationService
    * @readonly
@@ -306,6 +333,75 @@ export class OrganizationDashboardOverviewTrend {
     signal<boolean>(true);
 
   /**
+   * Property summaryMetrics
+   * @readonly
+   *
+   * @description
+   * Four KPI tiles rendered above the chart: Inspections, Opened NC,
+   * Resolved NC, and Net Pressure (opened − resolved).
+   * Automatically recomputes when the resource value changes.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<readonly OrganizationDashboardOverviewSummaryMetric[]>}
+   */
+  protected readonly summaryMetrics: Signal<readonly OrganizationDashboardOverviewSummaryMetric[]> = computed(() => {
+    const result = this.overviewResource.value();
+    const aligned = alignDashboardTrendSeries(
+      [
+        result?.inspections?.series,
+        result?.ncOpened?.series,
+        result?.ncResolved?.series,
+      ],
+      this.selectedGranularity(),
+    );
+    const [inspectionData = [], openedData = [], resolvedData = []] = aligned.datasets;
+    const netPressureData = buildDifferenceSeries(openedData, resolvedData);
+    const inspectionTotal = sumDashboardTrendValues(inspectionData);
+    const openedTotal = sumDashboardTrendValues(openedData);
+    const resolvedTotal = sumDashboardTrendValues(resolvedData);
+    const netPressureTotal = sumDashboardTrendValues(netPressureData);
+    const previousInspectionTotal = sumDashboardTrendValues(
+      (result?.inspections?.comparison?.series ?? []).map((point) => getDashboardTrendPointValue(point)),
+    );
+    const previousOpenedTotal = sumDashboardTrendValues(
+      (result?.ncOpened?.comparison?.series ?? []).map((point) => getDashboardTrendPointValue(point)),
+    );
+    const previousResolvedTotal = sumDashboardTrendValues(
+      (result?.ncResolved?.comparison?.series ?? []).map((point) => getDashboardTrendPointValue(point)),
+    );
+    const previousNetPressure = previousOpenedTotal - previousResolvedTotal;
+
+    return [
+      {
+        label: 'Inspections',
+        value: this.formatWholeNumber(inspectionTotal),
+        icon: 'pi pi-list-check',
+        comparison: this.buildComparison(inspectionTotal, previousInspectionTotal),
+      },
+      {
+        label: 'Opened NC',
+        value: this.formatWholeNumber(openedTotal),
+        icon: 'pi pi-exclamation-triangle',
+        comparison: this.buildComparison(openedTotal, previousOpenedTotal),
+      },
+      {
+        label: 'Resolved NC',
+        value: this.formatWholeNumber(resolvedTotal),
+        icon: 'pi pi-check-circle',
+        comparison: this.buildComparison(resolvedTotal, previousResolvedTotal),
+      },
+      {
+        label: 'Net Pressure',
+        value: this.formatWholeNumber(netPressureTotal),
+        icon: 'pi pi-gauge',
+        comparison: this.buildComparison(netPressureTotal, previousNetPressure),
+      },
+    ];
+  });
+
+  /**
    * Property chartData
    * @readonly
    *
@@ -325,80 +421,47 @@ export class OrganizationDashboardOverviewTrend {
     const inspections: OrganizationDashboardTrendOutput | null = result?.inspections ?? null;
     const ncOpened: OrganizationDashboardTrendOutput | null = result?.ncOpened ?? null;
     const ncResolved: OrganizationDashboardTrendOutput | null = result?.ncResolved ?? null;
-
-    const sourceTrend: OrganizationDashboardTrendOutput | null = inspections ?? ncOpened ?? ncResolved;
-    const granularity = this.selectedGranularity();
-
-    const formatLabel = (point: OrganizationDashboardTrendSeriesPoint): string => {
-      const raw = String(point['bucket'] ?? point['date'] ?? point['label'] ?? point['from'] ?? '');
-      if (!raw) return '';
-      const weekMatch = raw.match(/^(\d{4})-W(\d{2})$/);
-      if (weekMatch) {
-        const year = parseInt(weekMatch[1], 10);
-        const week = parseInt(weekMatch[2], 10);
-        const jan4 = new Date(year, 0, 4);
-        const dow = (jan4.getDay() + 6) % 7;
-        const weekStart = new Date(year, 0, 4 - dow + (week - 1) * 7);
-        const weekEnd = new Date(year, 0, 4 - dow + (week - 1) * 7 + 6);
-        const fromStr = weekStart.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
-        const toStr = weekEnd.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
-        return `${fromStr} – ${toStr}`;
-      }
-      const monthMatch = raw.match(/^(\d{4})-(\d{2})$/);
-      const dayMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-      let date: Date;
-      if (monthMatch) {
-        date = new Date(parseInt(monthMatch[1], 10), parseInt(monthMatch[2], 10) - 1, 1);
-      } else if (dayMatch) {
-        date = new Date(parseInt(dayMatch[1], 10), parseInt(dayMatch[2], 10) - 1, parseInt(dayMatch[3], 10));
-      } else {
-        date = new Date(raw);
-      }
-      if (isNaN(date.getTime())) return raw;
-      if (granularity === 'month') return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      if (granularity === 'week') {
-        const weekEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 6);
-        const fromStr = date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
-        const toStr = weekEnd.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
-        return `${fromStr} – ${toStr}`;
-      }
-      return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
-    };
-
-    const labels: string[] = sourceTrend?.series.map(formatLabel) ?? [];
-
-    const toData = (trend: OrganizationDashboardTrendOutput | null): number[] =>
-      trend?.series.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0)) ?? [];
+    const aligned = alignDashboardTrendSeries(
+      [inspections?.series, ncOpened?.series, ncResolved?.series],
+      this.selectedGranularity(),
+    );
+    const [inspectionData = [], openedData = [], resolvedData = []] = aligned.datasets;
+    const netPressureData = buildDifferenceSeries(openedData, resolvedData);
 
     return {
-      labels,
+      labels: [...aligned.labels],
       datasets: [
         {
           label: 'Inspections',
-          data: toData(inspections),
+          data: inspectionData,
           backgroundColor: '#3b82f6',
           borderColor: '#3b82f6',
           borderWidth: 0,
-          borderRadius: 0,
-          stack: 'activity',
+          borderRadius: 6,
         },
         {
           label: 'NC Opened',
-          data: toData(ncOpened),
+          data: openedData,
           backgroundColor: '#f97316',
           borderColor: '#f97316',
           borderWidth: 0,
-          borderRadius: 0,
-          stack: 'activity',
+          borderRadius: 6,
         },
         {
           label: 'NC Resolved',
-          data: toData(ncResolved),
+          data: resolvedData,
           backgroundColor: '#22c55e',
           borderColor: '#22c55e',
           borderWidth: 0,
-          borderRadius: 4,
-          stack: 'activity',
+          borderRadius: 6,
+        },
+        {
+          label: 'Net Pressure',
+          data: netPressureData,
+          backgroundColor: '#0f172a',
+          borderColor: '#0f172a',
+          borderWidth: 0,
+          borderRadius: 6,
         },
       ],
     };
@@ -422,6 +485,13 @@ export class OrganizationDashboardOverviewTrend {
     maintainAspectRatio: false,
     animation: { duration: 400 },
     interaction: { mode: 'index', intersect: false },
+    datasets: {
+      bar: {
+        barPercentage: 0.72,
+        categoryPercentage: 0.78,
+        borderWidth: 0,
+      },
+    },
     plugins: {
       legend: {
         display: true,
@@ -443,13 +513,11 @@ export class OrganizationDashboardOverviewTrend {
     },
     scales: {
       x: {
-        stacked: true,
         border: { display: false },
         grid: { display: false },
         ticks: { display: false },
       },
       y: {
-        stacked: true,
         border: { display: false },
         beginAtZero: true,
         grid: { color: 'rgba(0, 0, 0, 0.06)' },
@@ -491,6 +559,41 @@ export class OrganizationDashboardOverviewTrend {
    */
   protected onMenuToggle(event: MouseEvent): void {
     this.menu().toggle(event);
+  }
+
+  private formatWholeNumber(value: number): string {
+    return this.wholeNumberFormatter.format(value);
+  }
+
+  /**
+   * Method buildComparison
+   *
+   * @description
+   * Builds an {@link OrganizationDashboardMetricCardComparison} from a
+   * current and previous period total. Returns null when compare mode
+   * is disabled, and uses direction `null` for a flat (zero-delta) result.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {number} current - Current-period total.
+   * @param {number} previous - Previous-period total.
+   * @returns {OrganizationDashboardMetricCardComparison | null}
+   */
+  private buildComparison(
+    current: number,
+    previous: number,
+  ): OrganizationDashboardMetricCardComparison | null {
+    if (!this.compareEnabled()) return null;
+
+    const delta = current - previous;
+
+    if (delta === 0) return { value: 'Flat', direction: null };
+
+    return {
+      value: `${delta > 0 ? '+' : ''}${this.formatWholeNumber(delta)}`,
+      direction: delta > 0 ? 'up' : 'down',
+    };
   }
   //#endregion
 }

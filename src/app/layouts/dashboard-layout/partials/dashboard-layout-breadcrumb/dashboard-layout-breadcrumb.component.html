@@ -21,16 +21,18 @@
         (onClick)="collapsedMenu.toggle($event)"
       />
     } @else if (item.routerLink) {
-      <a [routerLink]="item.routerLink" class="p-breadcrumb-item-link">
+      <a [routerLink]="item.routerLink" class="p-breadcrumb-item-link max-w-[10rem] sm:max-w-[14rem] overflow-hidden">
         @if (item.icon) {
           <span [class]="item.icon" aria-hidden="true"></span>
         }
         @if (item.label) {
-          <span>{{ item.label }}</span>
+          <span class="truncate">{{ item.label }}</span>
         }
       </a>
     } @else {
-      <span class="p-breadcrumb-item-link" [class]="item.linkClass">{{ item.label }}</span>
+      <span class="p-breadcrumb-item-link overflow-hidden" [class]="item.linkClass">
+        <span class="block truncate max-w-[10rem] sm:max-w-[14rem]">{{ item.label }}</span>
+      </span>
     }
   </ng-template>
 </p-breadcrumb>

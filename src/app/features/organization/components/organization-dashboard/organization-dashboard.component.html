@@ -52,11 +52,11 @@
         />
       </div>
 
-      <div class="grid grid-cols-1 gap-6 lg:grid-cols-6 lg:grid-rows-2">
-        <app-organization-dashboard-overview-trend class="lg:col-span-4"/>
-        <app-organization-dashboard-inspections-trend class="lg:col-span-3 lg:col-start-1 lg:row-start-2"/>
-        <app-organization-dashboard-non-conformities-opened-trend class="lg:col-span-3 lg:col-start-4 lg:row-start-2"/>
-        <app-organization-dashboard-non-conformities-resolved-trend class="lg:col-span-2 lg:col-start-5 lg:row-start-1"/>
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <app-organization-dashboard-overview-trend class="lg:col-span-7"/>
+        <app-organization-dashboard-inspection-quality-trend class="lg:col-span-5"/>
+        <app-organization-dashboard-non-conformities-opened-trend class="lg:col-span-6"/>
+        <app-organization-dashboard-non-conformities-resolved-trend class="lg:col-span-6"/>
       </div>
     </section>
   </div>
@@ -74,9 +74,8 @@
     </section>
 
     <section class="flex flex-col gap-6">
-      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <app-organization-dashboard-equipment-created-trend />
-        <app-organization-dashboard-facilities-created-trend />
+      <div class="grid grid-cols-1 gap-6">
+        <app-organization-dashboard-asset-growth-trend />
       </div>
     </section>
   </div>

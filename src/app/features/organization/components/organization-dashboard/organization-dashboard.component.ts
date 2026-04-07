@@ -14,12 +14,11 @@ import type {
   OrganizationDashboardComparisonMetric,
   OrganizationDashboardComparisonMetricGroup,
 } from '@core/models/organization';
-import { OrganizationDashboardInspectionsTrend } from './organization-dashboard-inspections-trend/organization-dashboard-inspections-trend.component';
 import { OrganizationDashboardNonConformitiesOpenedTrend } from './organization-dashboard-non-conformities-opened-trend/organization-dashboard-non-conformities-opened-trend.component';
 import { OrganizationDashboardNonConformitiesResolvedTrend } from './organization-dashboard-non-conformities-resolved-trend/organization-dashboard-non-conformities-resolved-trend.component';
 import { OrganizationDashboardOverviewTrend } from './organization-dashboard-overview-trend/organization-dashboard-overview-trend.component';
-import { OrganizationDashboardEquipmentCreatedTrend } from './organization-dashboard-equipment-created-trend/organization-dashboard-equipment-created-trend.component';
-import { OrganizationDashboardFacilitiesCreatedTrend } from './organization-dashboard-facilities-created-trend/organization-dashboard-facilities-created-trend.component';
+import { OrganizationDashboardAssetGrowthTrend } from './organization-dashboard-asset-growth-trend';
+import { OrganizationDashboardInspectionQualityTrend } from './organization-dashboard-inspection-quality-trend';
 import { OrganizationDashboardMetricCard } from './organization-dashboard-metric-card';
 
 
@@ -70,11 +69,10 @@ type OrganizationDashboardComparisonDelta = {
   imports: [
     OrganizationDashboardMetricCard,
     OrganizationDashboardOverviewTrend,
-    OrganizationDashboardInspectionsTrend,
+    OrganizationDashboardInspectionQualityTrend,
     OrganizationDashboardNonConformitiesOpenedTrend,
     OrganizationDashboardNonConformitiesResolvedTrend,
-    OrganizationDashboardEquipmentCreatedTrend,
-    OrganizationDashboardFacilitiesCreatedTrend,
+    OrganizationDashboardAssetGrowthTrend,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,0 +1,55 @@
+<p-card class="h-full" [pt]="cardPt">
+  <!-- Header -->
+  <ng-template pTemplate="header">
+    <section class="flex justify-between items-center">
+      <section class="flex flex-col">
+        <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-100">{{ title() }}</h2>
+        @if (description(); as description) {
+         <p class="text-sm text-surface-500 dark:text-surface-300">{{ description }}</p>
+        }
+      </section>
+
+      @if (action(); as action) {
+        <ng-container *ngTemplateOutlet="action"/>
+      }
+    </section>
+  </ng-template>
+
+  <ng-template pTemplate="content">
+    <section class="flex flex-col">
+      <!-- Metrics -->
+      @if (metrics(); as metrics) {
+        @if (metrics.length > 0) {
+          <div class="flex flex-row border-y border-surface-200 mb-4">
+            @for (metric of metrics; track $index) {
+              <div class="flex-1 border-r border-surface-200 p-4">
+                test
+              </div>
+            }
+          </div>
+        }
+      }
+
+      <!-- Content -->
+      @if (content(); as content) {
+        <div class="px-4">
+          <ng-container *ngTemplateOutlet="content"/>
+        </div>
+      }
+
+      <!-- Chart -->
+      @if (chart(); as chart) {
+        <div class="px-4">>
+          <ng-container *ngTemplateOutlet="chart"/>
+        </div>
+      }
+    </section>
+  </ng-template>
+
+  <!-- Footer -->
+  @if (footer(); as footer) {
+    <ng-template pTemplate="footer">
+      <ng-container *ngTemplateOutlet="footer"/>
+    </ng-template>
+  }
+</p-card>

@@ -23,9 +23,8 @@ import { ToggleButtonModule } from 'primeng/togglebutton';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
 import { forkJoin } from 'rxjs';
-import { Card } from '@shared/components';
-import { OrganizationDashboardMetricCard } from '../organization-dashboard-metric-card';
-import type { OrganizationDashboardMetricCardComparison } from '../organization-dashboard-metric-card';
+import { TrendCard } from '@shared/components';
+import type { MetricComparison, MetricSummary } from '@shared/components';
 import { OrganizationService } from '@core/services/api/organization';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import type {
@@ -42,21 +41,6 @@ import {
   getDashboardTrendPointValue,
   sumDashboardTrendValues,
 } from '../organization-dashboard-trend.utils';
-
-/**
- * Type OrganizationDashboardOverviewSummaryMetric
- *
- * @description
- * Shape of a single KPI tile rendered above the operational flow chart.
- * Maps directly onto the inputs expected by
- * {@link OrganizationDashboardMetricCard}.
- */
-type OrganizationDashboardOverviewSummaryMetric = {
-  readonly label: string;
-  readonly value: string;
-  readonly icon: string | null;
-  readonly comparison: OrganizationDashboardMetricCardComparison | null;
-};
 
 /**
  * Component OrganizationDashboardOverviewTrend
@@ -79,12 +63,11 @@ type OrganizationDashboardOverviewSummaryMetric = {
   selector: 'app-organization-dashboard-overview-trend',
   templateUrl: './organization-dashboard-overview-trend.component.html',
   imports: [
-    Card,
+    TrendCard,
     FormsModule,
     ButtonModule,
     ChartModule,
     MenuModule,
-    OrganizationDashboardMetricCard,
     SkeletonModule,
     SelectModule,
     InputGroupModule,
@@ -346,7 +329,7 @@ export class OrganizationDashboardOverviewTrend {
    *
    * @type {Signal<readonly OrganizationDashboardOverviewSummaryMetric[]>}
    */
-  protected readonly summaryMetrics: Signal<readonly OrganizationDashboardOverviewSummaryMetric[]> = computed(() => {
+  protected readonly summaryMetrics: Signal<readonly MetricSummary[]> = computed(() => {
     const result = this.overviewResource.value();
     const aligned = alignDashboardTrendSeries(
       [
@@ -569,7 +552,7 @@ export class OrganizationDashboardOverviewTrend {
    * Method buildComparison
    *
    * @description
-   * Builds an {@link OrganizationDashboardMetricCardComparison} from a
+   * Builds a {@link MetricComparison} from a
    * current and previous period total. Returns null when compare mode
    * is disabled, and uses direction `null` for a flat (zero-delta) result.
    *
@@ -578,12 +561,12 @@ export class OrganizationDashboardOverviewTrend {
    *
    * @param {number} current - Current-period total.
    * @param {number} previous - Previous-period total.
-   * @returns {OrganizationDashboardMetricCardComparison | null}
+   * @returns {MetricComparison | null}
    */
   private buildComparison(
     current: number,
     previous: number,
-  ): OrganizationDashboardMetricCardComparison | null {
+  ): MetricComparison | null {
     if (!this.compareEnabled()) return null;
 
     const delta = current - previous;

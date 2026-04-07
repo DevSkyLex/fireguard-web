@@ -24,8 +24,8 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { forkJoin } from 'rxjs';
 import type { ChartData, ChartOptions } from 'chart.js';
-import { OrganizationDashboardTrendCard } from '../organization-dashboard-trend-card/organization-dashboard-trend-card.component';
-import type { OrganizationDashboardMetricCardComparison } from '../organization-dashboard-metric-card';
+import { TrendCard } from '@shared/components';
+import type { MetricComparison } from '@shared/components';
 import { OrganizationService } from '@core/services/api/organization';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import type {
@@ -61,13 +61,13 @@ type OrganizationDashboardAssetGrowthParams =
  * @description
  * Shape of a single KPI tile rendered above the asset growth chart.
  * Maps directly onto the inputs expected by
- * {@link OrganizationDashboardMetricCard}.
+ * KPI tile rendered above the asset growth chart.
  */
 type OrganizationDashboardAssetGrowthSummaryMetric = {
   readonly label: string;
   readonly value: string;
   readonly icon: string | null;
-  readonly comparison: OrganizationDashboardMetricCardComparison | null;
+  readonly comparison: MetricComparison | null;
 };
 
 /**
@@ -96,7 +96,7 @@ type OrganizationDashboardAssetGrowthSummaryMetric = {
   selector: 'app-organization-dashboard-asset-growth-trend',
   templateUrl: './organization-dashboard-asset-growth-trend.component.html',
   imports: [
-    OrganizationDashboardTrendCard,
+    TrendCard,
     FormsModule,
     ButtonModule,
     ChartModule,
@@ -767,7 +767,7 @@ export class OrganizationDashboardAssetGrowthTrend {
    * Method buildComparison
    *
    * @description
-   * Builds an {@link OrganizationDashboardMetricCardComparison} from a
+   * Builds a {@link MetricComparison} from a
    * current and previous period total. Returns null when compare mode
    * is disabled, and uses direction `null` for a flat (zero-delta) result.
    *
@@ -776,12 +776,12 @@ export class OrganizationDashboardAssetGrowthTrend {
    *
    * @param {number} current - Current-period total.
    * @param {number} previous - Previous-period total.
-   * @returns {OrganizationDashboardMetricCardComparison | null}
+   * @returns {MetricComparison | null}
    */
   private buildComparison(
     current: number,
     previous: number,
-  ): OrganizationDashboardMetricCardComparison | null {
+  ): MetricComparison | null {
     if (!this.compareEnabled()) return null;
 
     const delta = current - previous;

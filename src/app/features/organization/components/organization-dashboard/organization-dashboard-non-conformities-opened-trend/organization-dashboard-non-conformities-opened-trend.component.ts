@@ -22,7 +22,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
-import { Card } from '@shared/components';
+import { TrendCard } from '@shared/components';
 import { OrganizationService } from '@core/services/api/organization';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import type {
@@ -54,7 +54,7 @@ import type { ChartData, ChartOptions } from 'chart.js';
 @Component({
   selector: 'app-organization-dashboard-non-conformities-opened-trend',
   templateUrl: './organization-dashboard-non-conformities-opened-trend.component.html',
-  imports: [Card, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule, InputGroupModule, InputGroupAddonModule, ToggleButtonModule, DatePickerModule],
+  imports: [TrendCard, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule, InputGroupModule, InputGroupAddonModule, ToggleButtonModule, DatePickerModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboardNonConformitiesOpenedTrend {

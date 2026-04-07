@@ -12,25 +12,24 @@ import { CardModule, CardPassThroughOptions } from 'primeng/card';
 import { CommonModule } from '@angular/common';
 
 /**
- * Type OrganizationDashboardMetricCardComparison
+ * Type MetricComparison
  *
  * @description
  * Scalar delta shown below the KPI value when a previous-period
  * comparison is available. Combines the human-readable formatted
- * value (e.g. `"+3"`) with the direction indicator returned by
- * the backend (`"up"` | `"down"`).
+ * value (e.g. `"+3"`) with the direction indicator (`"up"` | `"down"`).
  */
-export type OrganizationDashboardMetricCardComparison = {
+export type MetricComparison = {
   readonly value: string | number | null;
-  readonly direction: string | number | null;
+  readonly direction: string | null;
 };
 
 /**
- * Component OrganizationDashboardMetricCard
- * @class OrganizationDashboardMetricCard
+ * Component MetricCard
+ * @class MetricCard
  *
  * @description
- * Reusable KPI metric card for the organization dashboard.
+ * Reusable KPI metric card.
  * Displays a title, description, a KPI value and an optional
  * comparison delta badge (up/down arrow + formatted difference).
  * Shows a skeleton while loading.
@@ -40,19 +39,19 @@ export type OrganizationDashboardMetricCardComparison = {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-organization-dashboard-metric-card',
-  templateUrl: './organization-dashboard-metric-card.component.html',
+  selector: 'app-metric-card',
+  templateUrl: './metric-card.component.html',
   imports: [CardModule, SkeletonModule, CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrganizationDashboardMetricCard {
+export class MetricCard {
   //#region Inputs
   /**
-   * Input title
+   * Property title
+   * @readonly
    *
    * @description
-   * Card heading displayed in the
-   * PrimeNG card header.
+   * Card heading displayed in the PrimeNG card header.
    *
    * @access public
    * @since 1.0.0
@@ -63,7 +62,8 @@ export class OrganizationDashboardMetricCard {
     input.required<string>();
 
   /**
-   * Input description
+   * Property description
+   * @readonly
    *
    * @description
    * Subtitle shown below the card heading.
@@ -77,7 +77,8 @@ export class OrganizationDashboardMetricCard {
     input<string>();
 
   /**
-   * Input value
+   * Property value
+   * @readonly
    *
    * @description
    * KPI value to display. Rendered as `—` when null.
@@ -91,11 +92,11 @@ export class OrganizationDashboardMetricCard {
     input.required<string | number | null>();
 
   /**
-   * Input icon
+   * Property icon
+   * @readonly
    *
    * @description
-   * Optional icon to display in the
-   * top-left corner of the card.
+   * Optional PrimeIcons class displayed in the top-left corner of the card.
    *
    * @access public
    * @since 1.0.0
@@ -106,11 +107,11 @@ export class OrganizationDashboardMetricCard {
     input<string | null>(null);
 
   /**
-   * Input loading
+   * Property loading
+   * @readonly
    *
    * @description
-   * When true, a skeleton placeholder is
-   * shown instead of the value.
+   * When true, a skeleton placeholder is shown instead of the KPI value.
    *
    * @access public
    * @since 1.0.0
@@ -121,7 +122,8 @@ export class OrganizationDashboardMetricCard {
     input<boolean>(false);
 
   /**
-   * Input comparison
+   * Property comparison
+   * @readonly
    *
    * @description
    * Optional previous-period comparison delta. When non-null, an
@@ -130,19 +132,35 @@ export class OrganizationDashboardMetricCard {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<OrganizationDashboardMetricCardComparison | null>}
+   * @type {InputSignal<MetricComparison | null>}
    */
-  public readonly comparison: InputSignal<OrganizationDashboardMetricCardComparison | null> =
-    input<OrganizationDashboardMetricCardComparison | null>(null);
+  public readonly comparison: InputSignal<MetricComparison | null> =
+    input<MetricComparison | null>(null);
 
+  /**
+   * Property action
+   * @readonly
+   *
+   * @description
+   * Optional template reference projected into the card header's action area.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  public readonly action: Signal<TemplateRef<unknown> | undefined> =
+    contentChild<TemplateRef<unknown>>('action');
+  //#endregion
+
+  //#region Properties
   /**
    * Property cardPt
    * @readonly
    *
    * @description
-   * Pass-through options for customizing the styling of the PrimeNG Card component.
-   * This allows for consistent styling across all metric cards while still
-   * enabling specific adjustments as needed.
+   * Pass-through options for the PrimeNG Card component, allowing for
+   * customization of the card's appearance and behavior.
    *
    * @access protected
    * @since 1.0.0
@@ -166,22 +184,5 @@ export class OrganizationDashboardMetricCard {
       class: 'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 px-4 py-3 rounded-b-md',
     },
   };
-
-  /**
-   * Property action
-   * @readonly
-   *
-   * @description
-   * A template reference for the action section
-   * of the card, allowing for  custom content such as buttons or links to be
-   * injected into the card's action area.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {Signal<TemplateRef<unknown> | undefined>}
-   */
-  public readonly action: Signal<TemplateRef<unknown> | undefined> =
-    contentChild<TemplateRef<unknown>>('action');
   //#endregion
 }

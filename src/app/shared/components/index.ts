@@ -1,6 +1,10 @@
 export { Card } from './card';
+export { MetricCard } from './metric-card';
+export type { MetricComparison } from './metric-card';
 export { NotificationBell } from './notification-bell';
 export { OrganizationSwitcher } from './organization-switcher';
 export { RadioCardGroup } from './radio-card-group';
 export type { RadioCardOption } from './radio-card-group';
 export { ThemeSwitcher } from './theme-switcher';
+export { TrendCard } from './trend-card';
+export type { MetricSummary } from './trend-card';

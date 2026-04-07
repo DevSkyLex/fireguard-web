@@ -24,9 +24,8 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { forkJoin } from 'rxjs';
 import type { ChartData, ChartOptions } from 'chart.js';
-import { Card } from '@shared/components';
-import { OrganizationDashboardMetricCard } from '../organization-dashboard-metric-card';
-import type { OrganizationDashboardMetricCardComparison } from '../organization-dashboard-metric-card';
+import { TrendCard } from '@shared/components';
+import type { MetricComparison, MetricSummary } from '@shared/components';
 import { OrganizationService } from '@core/services/api/organization';
 import { ActiveOrganizationStore } from '@core/stores/organization';
 import type {
@@ -62,21 +61,6 @@ type OrganizationDashboardInspectionQualityParams =
   };
 
 /**
- * Type OrganizationDashboardInspectionQualitySummaryMetric
- *
- * @description
- * Shape of a single KPI tile rendered above the inspection quality chart.
- * Maps directly onto the inputs expected by
- * {@link OrganizationDashboardMetricCard}.
- */
-type OrganizationDashboardInspectionQualitySummaryMetric = {
-  readonly label: string;
-  readonly value: string;
-  readonly icon: string | null;
-  readonly comparison: OrganizationDashboardMetricCardComparison | null;
-};
-
-/**
  * Component OrganizationDashboardInspectionQualityTrend
  * @class OrganizationDashboardInspectionQualityTrend
  *
@@ -101,7 +85,7 @@ type OrganizationDashboardInspectionQualitySummaryMetric = {
   selector: 'app-organization-dashboard-inspection-quality-trend',
   templateUrl: './organization-dashboard-inspection-quality-trend.component.html',
   imports: [
-    Card,
+    TrendCard,
     FormsModule,
     ButtonModule,
     ChartModule,
@@ -109,7 +93,6 @@ type OrganizationDashboardInspectionQualitySummaryMetric = {
     InputGroupAddonModule,
     InputGroupModule,
     MenuModule,
-    OrganizationDashboardMetricCard,
     SelectModule,
     SkeletonModule,
     ToggleButtonModule,
@@ -569,7 +552,7 @@ export class OrganizationDashboardInspectionQualityTrend {
    *
    * @type {Signal<readonly OrganizationDashboardInspectionQualitySummaryMetric[]>}
    */
-  protected readonly summaryMetrics: Signal<readonly OrganizationDashboardInspectionQualitySummaryMetric[]> = computed(() => {
+  protected readonly summaryMetrics: Signal<readonly MetricSummary[]> = computed(() => {
     const quality = this.qualityResource.value();
     const inspectionSeries = quality?.inspections?.series ?? [];
     const openedSeries = quality?.ncOpened?.series ?? [];
@@ -833,7 +816,7 @@ export class OrganizationDashboardInspectionQualityTrend {
    * Method buildComparison
    *
    * @description
-   * Builds an {@link OrganizationDashboardMetricCardComparison} from a
+   * Builds a {@link MetricComparison} from a
    * current and previous period total. Returns null when compare mode
    * is disabled, and uses direction `null` for a flat (zero-delta) result.
    *
@@ -842,12 +825,12 @@ export class OrganizationDashboardInspectionQualityTrend {
    *
    * @param {number} current - Current-period total.
    * @param {number} previous - Previous-period total.
-   * @returns {OrganizationDashboardMetricCardComparison | null}
+   * @returns {MetricComparison | null}
    */
   private buildComparison(
     current: number,
     previous: number,
-  ): OrganizationDashboardMetricCardComparison | null {
+  ): MetricComparison | null {
     if (!this.compareEnabled()) return null;
 
     const delta = current - previous;

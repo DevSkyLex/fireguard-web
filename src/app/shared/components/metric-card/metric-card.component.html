@@ -28,7 +28,7 @@
   </ng-template>
 
   <ng-template pTemplate="content">
-    @if (loading(); as loading) {
+    @if (loading()) {
       <p-skeleton height="48px" />
     } @else {
       <div class="flex flex-col justify-center gap-3">

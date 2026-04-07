@@ -1,6 +1,11 @@
 <p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
 
-<app-card title="Operational Flow" description="Inspection throughput and non-conformity pressure over time">
+<app-trend-card
+  title="Operational Flow"
+  description="Inspection throughput and non-conformity pressure over time"
+  [metrics]="summaryMetrics()"
+  [loading]="overviewResource.isLoading()"
+>
   <ng-template #action>
     <div class="flex items-center gap-2">
       <p-inputgroup>
@@ -30,18 +35,6 @@
 
   <ng-template #content>
     <div class="flex flex-col flex-1 min-h-70 gap-4">
-      <div class="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        @for (summary of summaryMetrics(); track summary.label) {
-          <app-organization-dashboard-metric-card
-            [title]="summary.label"
-            [value]="summary.value"
-            [icon]="summary.icon"
-            [loading]="overviewResource.isLoading()"
-            [comparison]="summary.comparison"
-          />
-        }
-      </div>
-
       @if (overviewResource.isLoading()) {
         <p-skeleton
           height="100%"
@@ -88,4 +81,4 @@
       />
     </div>
   </ng-template>
-</app-card>
+</app-trend-card>

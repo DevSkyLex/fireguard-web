@@ -1,6 +1,6 @@
 <p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
 
-<app-card title="Facilities Created" description="New facilities registered over time">
+<app-trend-card title="Facilities Created" description="New facilities registered over time">
   <ng-template #action>
     <div class="flex items-center gap-2">
       <p-inputgroup>
@@ -29,7 +29,7 @@
   </ng-template>
 
   <ng-template #content>
-    <div class="flex flex-col flex-1 min-h-[200px]">
+    <div class="flex flex-col flex-1 min-h-50">
       @if (trendResource.isLoading()) {
         <p-skeleton
           height="100%"
@@ -103,4 +103,4 @@
       />
     </div>
   </ng-template>
-</app-card>
+</app-trend-card>

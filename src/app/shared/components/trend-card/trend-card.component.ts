@@ -1,10 +1,23 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectionStrategy, Component, contentChild, input, InputSignal, Signal, signal, TemplateRef } from "@angular/core";
-import { CardModule, CardPassThroughOptions } from "primeng/card";
-import { SkeletonModule } from "primeng/skeleton";
-import { OrganizationDashboardMetricCard } from '../organization-dashboard-metric-card';
-import type { OrganizationDashboardMetricCardComparison } from '../organization-dashboard-metric-card';
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  contentChild,
+  input,
+  InputSignal,
+  Signal,
+  TemplateRef,
+} from '@angular/core';
+import { CardModule, CardPassThroughOptions } from 'primeng/card';
+import { SkeletonModule } from 'primeng/skeleton';
+import type { MetricComparison } from '@shared/components/metric-card';
 
+/**
+ * Type MetricSummary
+ *
+ * @description
+ * Shape of a single KPI tile rendered inside the trend card's metrics bar.
+ */
 export type MetricSummary = {
   readonly label: string;
   readonly value: string;
@@ -12,36 +25,20 @@ export type MetricSummary = {
   readonly comparison?: MetricComparison | null;
 };
 
-export type MetricComparison = {
-  readonly value: string | number | null;
-  readonly direction: MetricComparisonDirection;
-};
-
-export type MetricComparisonDirection =
-  | 'up'
-  | 'down'
-  | null;
-
 /**
- * Component OrganizationDashboardTrendCard
- * @class OrganizationDashboardTrendCard
+ * Component TrendCard
+ * @class TrendCard
  *
  * @description
  * A reusable card component that provides a flexible and customizable container
- * for displaying content.
+ * for displaying trend content with an optional inline metrics bar.
  *
  * @example ```html
- * <app-organization-dashboard-trend-card [title]="cardTitle" [description]="cardDescription">
- *  <ng-template #content>
- *    <!-- Custom content goes here -->
- *  </ng-template>
- *  <ng-template #action>
- *    <!-- Custom action buttons or links go here -->
- *  </ng-template>
- *  <ng-template #footer>
- *    <!-- Custom footer content goes here -->
- *  </ng-template>
- * </app-organization-dashboard-trend-card>
+ * <app-trend-card [title]="cardTitle" [description]="cardDescription">
+ *  <ng-template #content><!-- Custom content goes here --></ng-template>
+ *  <ng-template #action><!-- Custom action buttons or links go here --></ng-template>
+ *  <ng-template #footer><!-- Custom footer content goes here --></ng-template>
+ * </app-trend-card>
  * ```
  *
  * @version 1.0.0
@@ -49,19 +46,19 @@ export type MetricComparisonDirection =
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-organization-dashboard-trend-card',
-  templateUrl: './organization-dashboard-trend-card.component.html',
+  selector: 'app-trend-card',
+  templateUrl: './trend-card.component.html',
   imports: [CardModule, CommonModule, SkeletonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrganizationDashboardTrendCard {
-  //#region Properties
+export class TrendCard {
+  //#region Inputs
   /**
    * Property title
    * @readonly
    *
    * @description
-   * The title of the card.
+   * The title displayed in the card header.
    *
    * @access public
    * @since 1.0.0
@@ -76,7 +73,7 @@ export class OrganizationDashboardTrendCard {
    * @readonly
    *
    * @description
-   * The description of the card.
+   * Optional subtitle shown below the title.
    *
    * @access public
    * @since 1.0.0
@@ -91,12 +88,13 @@ export class OrganizationDashboardTrendCard {
    * @readonly
    *
    * @description
-   * An optional list of metric summaries to display in the card.
+   * Optional list of KPI summaries rendered as an inline metrics bar
+   * above the card content. Shows skeleton cells while {@link loading} is true.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<MetricSummary[]>}
+   * @type {InputSignal<readonly MetricSummary[]>}
    */
   public readonly metrics: InputSignal<readonly MetricSummary[]> =
     input<readonly MetricSummary[]>([]);
@@ -106,7 +104,8 @@ export class OrganizationDashboardTrendCard {
    * @readonly
    *
    * @description
-   * Whether the metrics are in a loading state.
+   * When true, skeleton placeholders are shown in the metrics bar
+   * instead of real values.
    *
    * @access public
    * @since 1.0.0
@@ -121,9 +120,8 @@ export class OrganizationDashboardTrendCard {
    * @readonly
    *
    * @description
-   * A template reference for the action section
-   * of the card, allowing for  custom content such as buttons or links to be
-   * injected into the card's action area.
+   * Optional template reference projected into the card header's
+   * action area (e.g. buttons, selects).
    *
    * @access public
    * @since 1.0.0
@@ -138,8 +136,7 @@ export class OrganizationDashboardTrendCard {
    * @readonly
    *
    * @description
-   * A template reference for the main content section
-   * of the card, allowing for custom content to be injected into the card's body.
+   * Required template reference projected into the card body.
    *
    * @access public
    * @since 1.0.0
@@ -148,32 +145,13 @@ export class OrganizationDashboardTrendCard {
    */
   public readonly content: Signal<TemplateRef<unknown>> =
     contentChild.required<TemplateRef<unknown>>('content');
-
-  /**
-   * Property chart
-   * @readonly
-   *
-   * @description
-   * A template reference for the chart section of the
-   * card, allowing for a custom chart to be
-   * injected into the card's body.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {Signal<TemplateRef<HTMLCanvasElement>>}
-   */
-  public readonly chart: Signal<TemplateRef<HTMLCanvasElement> | undefined> =
-    contentChild<TemplateRef<HTMLCanvasElement>>('chart');
-
+    
   /**
    * Property footer
    * @readonly
    *
    * @description
-   * A template reference for the footer section of the card,
-   * allowing for custom content to be injected into the card's
-   * footer area, such as additional information or links.
+   * Optional template reference projected into the card footer.
    *
    * @access public
    * @since 1.0.0
@@ -182,7 +160,9 @@ export class OrganizationDashboardTrendCard {
    */
   public readonly footer: Signal<TemplateRef<unknown> | undefined> =
     contentChild<TemplateRef<unknown>>('footer');
+  //#endregion
 
+  //#region Properties
   /**
    * Property cardPt
    * @readonly

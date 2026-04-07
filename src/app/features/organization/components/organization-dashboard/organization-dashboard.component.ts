@@ -19,7 +19,7 @@ import { OrganizationDashboardNonConformitiesResolvedTrend } from './organizatio
 import { OrganizationDashboardOverviewTrend } from './organization-dashboard-overview-trend/organization-dashboard-overview-trend.component';
 import { OrganizationDashboardAssetGrowthTrend } from './organization-dashboard-asset-growth-trend';
 import { OrganizationDashboardInspectionQualityTrend } from './organization-dashboard-inspection-quality-trend';
-import { OrganizationDashboardMetricCard } from './organization-dashboard-metric-card';
+import { MetricCard } from '@shared/components';
 
 
 /**
@@ -43,7 +43,7 @@ type OrganizationDashboardKpiValue = number | string | null;
  */
 type OrganizationDashboardComparisonDelta = {
   readonly value: string | number | null;
-  readonly direction: number | string | null;
+  readonly direction: string | null;
 };
 
 /**
@@ -67,7 +67,7 @@ type OrganizationDashboardComparisonDelta = {
   selector: 'app-organization-dashboard',
   templateUrl: './organization-dashboard.component.html',
   imports: [
-    OrganizationDashboardMetricCard,
+    MetricCard,
     OrganizationDashboardOverviewTrend,
     OrganizationDashboardInspectionQualityTrend,
     OrganizationDashboardNonConformitiesOpenedTrend,
@@ -379,7 +379,7 @@ export class OrganizationDashboard {
 
       return {
         value: entry['value'],
-        direction: entry['direction'],
+        direction: entry['direction'] != null ? String(entry['direction']) : null,
       };
     });
 
@@ -445,7 +445,7 @@ export class OrganizationDashboard {
       // If the entry is not found, return null to indicate that the comparison delta cannot be computed
       if (!entry) return null;
 
-      return { value: entry['value'], direction: entry['direction'] };
+      return { value: entry['value'], direction: entry['direction'] != null ? String(entry['direction']) : null };
     });
 
   /**
@@ -512,7 +512,7 @@ export class OrganizationDashboard {
       // If the entry is not found, return null to indicate that the comparison delta cannot be computed
       if (!entry) return null;
 
-      return { value: entry['value'], direction: entry['direction'] };
+      return { value: entry['value'], direction: entry['direction'] != null ? String(entry['direction']) : null };
     });
 
   /**
@@ -579,7 +579,7 @@ export class OrganizationDashboard {
       // If the entry is not found, return null to indicate that the comparison delta cannot be computed
       if (!entry) return null;
 
-      return { value: entry['value'], direction: entry['direction'] };
+      return { value: entry['value'], direction: entry['direction'] != null ? String(entry['direction']) : null };
     });
   //#endregion
 }

@@ -14,7 +14,7 @@
 
     <section class="flex flex-col gap-6">
       <div class="flex flex-row flex-wrap items-stretch gap-6">
-        <app-organization-dashboard-metric-card
+        <app-metric-card
           title="Facilities"
           description="Registered sites"
           icon="pi pi-building"
@@ -23,7 +23,7 @@
           [comparison]="facilitiesComparison()"
           class="flex-1"
         />
-        <app-organization-dashboard-metric-card
+        <app-metric-card
           title="Members"
           description="Active members"
           icon="pi pi-users"
@@ -32,7 +32,7 @@
           [comparison]="membersComparison()"
           class="flex-1"
         />
-        <app-organization-dashboard-metric-card
+        <app-metric-card
           title="Equipment"
           description="Tracked assets"
           icon="pi pi-shield"
@@ -41,7 +41,7 @@
           [comparison]="equipmentComparison()"
           class="flex-1"
         />
-        <app-organization-dashboard-metric-card
+        <app-metric-card
           title="Inspections"
           description="Performed this period"
           icon="pi pi-check-square"

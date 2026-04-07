@@ -112,7 +112,7 @@ export class OrganizationDashboardInspectionQualityTrend {
    *
    * @type {OrganizationService}
    */
-  private readonly organizationService = inject(OrganizationService);
+  private readonly organizationService: OrganizationService = inject(OrganizationService);
 
   /**
    * Property activeOrganizationStore
@@ -126,7 +126,7 @@ export class OrganizationDashboardInspectionQualityTrend {
    *
    * @type {ActiveOrganizationStore}
    */
-  private readonly activeOrganizationStore = inject(ActiveOrganizationStore);
+  private readonly activeOrganizationStore: InstanceType<typeof ActiveOrganizationStore> = inject(ActiveOrganizationStore);
 
   /**
    * Property wholeNumberFormatter
@@ -140,7 +140,7 @@ export class OrganizationDashboardInspectionQualityTrend {
    *
    * @type {Intl.NumberFormat}
    */
-  private readonly wholeNumberFormatter = new Intl.NumberFormat('en-US', {
+  private readonly wholeNumberFormatter: Intl.NumberFormat = new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 0,
   });
 
@@ -156,7 +156,7 @@ export class OrganizationDashboardInspectionQualityTrend {
    *
    * @type {Intl.NumberFormat}
    */
-  private readonly percentFormatter = new Intl.NumberFormat('en-US', {
+  private readonly percentFormatter: Intl.NumberFormat = new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 1,
   });
 
@@ -297,7 +297,7 @@ export class OrganizationDashboardInspectionQualityTrend {
    * @type {WritableSignal<OrganizationDashboardGranularity>}
    */
   protected readonly selectedGranularity: WritableSignal<OrganizationDashboardGranularity> =
-    signal<OrganizationDashboardGranularity>('month');
+    signal<OrganizationDashboardGranularity>('week');
 
   /**
    * Property selectedDateRange
@@ -316,6 +316,42 @@ export class OrganizationDashboardInspectionQualityTrend {
     new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
     new Date(),
   ]);
+
+  /**
+   * Property today
+   * @readonly
+   *
+   * @description
+   * Upper bound for the date picker. Prevents selecting future dates.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Date}
+   */
+  protected readonly today: Date = new Date();
+
+  /**
+   * Property maxRangeDays
+   * @readonly
+   *
+   * @description
+   * Maximum selectable date range in days based on the current granularity.
+   * Daily: 90 days — Weekly: 365 days — Monthly: 730 days.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly maxRangeDays: Signal<number> = computed<number>(() => {
+    switch (this.selectedGranularity()) {
+      case 'day': return 90;
+      case 'month': return 730;
+      default: return 365;
+    }
+  });
+
   /**
    * Property compareEnabled
    * @readonly
@@ -349,9 +385,9 @@ export class OrganizationDashboardInspectionQualityTrend {
     icon: string;
     color: string;
   }[] = [
-    { label: 'Draft', value: 'draft', icon: 'pi pi-file-edit', color: '#94a3b8' },
-    { label: 'Submitted', value: 'submitted', icon: 'pi pi-send', color: '#3b82f6' },
-    { label: 'Closed', value: 'closed', icon: 'pi pi-lock', color: '#22c55e' },
+    { label: 'Draft', value: 'draft', icon: 'pi pi-file-edit', color: '#3b82f6' },
+    { label: 'Submitted', value: 'submitted', icon: 'pi pi-send', color: '#f59e0b' },
+    { label: 'Closed', value: 'closed', icon: 'pi pi-lock', color: '#64748b' },
   ];
   /**
    * Property selectedInspectionStatus
@@ -382,7 +418,7 @@ export class OrganizationDashboardInspectionQualityTrend {
    *
    * @type {Signal<{ label: string; value: InspectionStatus; icon: string; color: string } | null>}
    */
-  protected readonly selectedInspectionStatusOption = computed(() =>
+  protected readonly selectedInspectionStatusOption: Signal<{ label: string; value: InspectionStatus; icon: string; color: string } | null> = computed(() =>
     this.inspectionStatusOptions.find(
       (option) => option.value === this.selectedInspectionStatus(),
     ) ?? null,
@@ -411,7 +447,7 @@ export class OrganizationDashboardInspectionQualityTrend {
       label: 'Partial',
       value: 'partial',
       icon: 'pi pi-exclamation-circle',
-      color: '#f97316',
+      color: '#f59e0b',
     },
   ];
   /**
@@ -443,7 +479,7 @@ export class OrganizationDashboardInspectionQualityTrend {
    *
    * @type {Signal<{ label: string; value: InspectionResult; icon: string; color: string } | null>}
    */
-  protected readonly selectedInspectionResultOption = computed(() =>
+  protected readonly selectedInspectionResultOption: Signal<{ label: string; value: InspectionResult; icon: string; color: string } | null> = computed(() =>
     this.inspectionResultOptions.find(
       (option) => option.value === this.selectedInspectionResult(),
     ) ?? null,
@@ -532,7 +568,7 @@ export class OrganizationDashboardInspectionQualityTrend {
    *
    * @type {Signal<{ label: string; value: NonConformitySeverity; color: string } | null>}
    */
-  protected readonly selectedSeverityOption = computed(() =>
+  protected readonly selectedSeverityOption: Signal<{ label: string; value: NonConformitySeverity; color: string } | null> = computed(() =>
     this.nonConformitySeverityOptions.find(
       (option) => option.value === this.selectedNonConformitySeverity(),
     ) ?? null,
@@ -623,18 +659,40 @@ export class OrganizationDashboardInspectionQualityTrend {
       this.selectedGranularity(),
     );
     const [inspectionData = [], openedData = []] = aligned.datasets;
+
+    const activeResult = this.selectedInspectionResult();
+    const activeStatus = this.selectedInspectionStatus();
+    const inspectionColor: string = activeResult
+      ? (this.inspectionResultOptions.find(o => o.value === activeResult)?.color ?? '#3b82f6')
+      : activeStatus
+        ? (this.inspectionStatusOptions.find(o => o.value === activeStatus)?.color ?? '#3b82f6')
+        : '#3b82f6';
+
+    const activeNcSeverity = this.selectedNonConformitySeverity();
+    const ncColor: string = activeNcSeverity
+      ? (this.nonConformitySeverityOptions.find(o => o.value === activeNcSeverity)?.color ?? '#ef4444')
+      : '#ef4444';
+
+    const hexToRgb = (hex: string): [number, number, number] => [
+      parseInt(hex.slice(1, 3), 16),
+      parseInt(hex.slice(3, 5), 16),
+      parseInt(hex.slice(5, 7), 16),
+    ];
+    const [ir, ig, ib] = hexToRgb(inspectionColor);
+    const [nr, ng, nb] = hexToRgb(ncColor);
+
     const datasets: ChartData<'bar'>['datasets'] = [
       {
         label: 'Inspections',
         data: inspectionData,
-        backgroundColor: '#3b82f6',
-        hoverBackgroundColor: '#2563eb',
+        backgroundColor: inspectionColor,
+        hoverBackgroundColor: `rgba(${ir}, ${ig}, ${ib}, 0.75)`,
       },
       {
         label: 'Opened NC',
         data: openedData,
-        backgroundColor: '#f97316',
-        hoverBackgroundColor: '#ea580c',
+        backgroundColor: ncColor,
+        hoverBackgroundColor: `rgba(${nr}, ${ng}, ${nb}, 0.75)`,
       },
     ];
 
@@ -649,8 +707,8 @@ export class OrganizationDashboardInspectionQualityTrend {
       datasets.push({
         label: 'Inspections Previous Period',
         data: inspectionComparisonData,
-        backgroundColor: '#93c5fd',
-        hoverBackgroundColor: '#60a5fa',
+        backgroundColor: `rgba(${ir}, ${ig}, ${ib}, 0.35)`,
+        hoverBackgroundColor: `rgba(${ir}, ${ig}, ${ib}, 0.5)`,
       });
     }
 
@@ -658,8 +716,8 @@ export class OrganizationDashboardInspectionQualityTrend {
       datasets.push({
         label: 'Opened NC Previous Period',
         data: openedComparisonData,
-        backgroundColor: '#fdba74',
-        hoverBackgroundColor: '#fb923c',
+        backgroundColor: `rgba(${nr}, ${ng}, ${nb}, 0.35)`,
+        hoverBackgroundColor: `rgba(${nr}, ${ng}, ${nb}, 0.5)`,
       });
     }
 
@@ -671,7 +729,7 @@ export class OrganizationDashboardInspectionQualityTrend {
       borderColor: '#a855f7',
       backgroundColor: 'rgba(168, 85, 247, 0.08)',
       borderWidth: 2,
-      tension: 0.4,
+      tension: 0.3,
       pointRadius: 0,
       pointHoverRadius: 5,
       pointHoverBorderWidth: 2,
@@ -780,8 +838,7 @@ export class OrganizationDashboardInspectionQualityTrend {
         type: 'linear' as const,
         position: 'right' as const,
         border: { display: false },
-        min: 0,
-        max: 100,
+        beginAtZero: true,
         grid: { display: false },
         ticks: {
           callback: (value: number | string) => `${value}%`,
@@ -805,6 +862,20 @@ export class OrganizationDashboardInspectionQualityTrend {
    * @param {OrganizationDashboardGranularity} granularity - The newly selected granularity.
    * @returns {void}
    */
+  protected onDateRangeChange(range: Date[] | null): void {
+    if (!range || range.length < 2 || !range[0] || !range[1]) {
+      this.selectedDateRange.set(range);
+      return;
+    }
+    const [from, to] = range;
+    const maxMs = this.maxRangeDays() * 24 * 60 * 60 * 1000;
+    if (to.getTime() - from.getTime() > maxMs) {
+      this.selectedDateRange.set([from, new Date(from.getTime() + maxMs)]);
+    } else {
+      this.selectedDateRange.set(range);
+    }
+  }
+
   protected onGranularityChange(granularity: OrganizationDashboardGranularity): void {
     this.selectedGranularity.set(granularity);
   }

@@ -206,7 +206,7 @@ export class OrganizationDashboardEquipmentCreatedTrend {
    * @type {WritableSignal<OrganizationDashboardGranularity>}
    */
   protected readonly selectedGranularity: WritableSignal<OrganizationDashboardGranularity> =
-    signal<OrganizationDashboardGranularity>('month');
+    signal<OrganizationDashboardGranularity>('week');
 
   /**
    * Property selectedDateRange
@@ -224,6 +224,41 @@ export class OrganizationDashboardEquipmentCreatedTrend {
     new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
     new Date(),
   ]);
+
+  /**
+   * Property today
+   * @readonly
+   *
+   * @description
+   * Upper bound for the date picker. Prevents selecting future dates.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Date}
+   */
+  protected readonly today: Date = new Date();
+
+  /**
+   * Property maxRangeDays
+   * @readonly
+   *
+   * @description
+   * Maximum selectable date range in days based on the current granularity.
+   * Daily: 90 days — Weekly: 365 days — Monthly: 730 days.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly maxRangeDays: Signal<number> = computed<number>(() => {
+    switch (this.selectedGranularity()) {
+      case 'day': return 90;
+      case 'month': return 730;
+      default: return 365;
+    }
+  });
 
   /**
    * Property compareEnabled
@@ -494,6 +529,20 @@ export class OrganizationDashboardEquipmentCreatedTrend {
    * @param {OrganizationDashboardGranularity} granularity - The newly selected granularity.
    * @returns {void}
    */
+  protected onDateRangeChange(range: Date[] | null): void {
+    if (!range || range.length < 2 || !range[0] || !range[1]) {
+      this.selectedDateRange.set(range);
+      return;
+    }
+    const [from, to] = range;
+    const maxMs = this.maxRangeDays() * 24 * 60 * 60 * 1000;
+    if (to.getTime() - from.getTime() > maxMs) {
+      this.selectedDateRange.set([from, new Date(from.getTime() + maxMs)]);
+    } else {
+      this.selectedDateRange.set(range);
+    }
+  }
+
   protected onGranularityChange(granularity: OrganizationDashboardGranularity): void {
     this.selectedGranularity.set(granularity);
   }

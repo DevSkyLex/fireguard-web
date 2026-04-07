@@ -224,7 +224,7 @@ export class OrganizationDashboardInspectionsTrend {
    * @type {WritableSignal<OrganizationDashboardGranularity>}
    */
   protected readonly selectedGranularity: WritableSignal<OrganizationDashboardGranularity> =
-    signal<OrganizationDashboardGranularity>('month');
+    signal<OrganizationDashboardGranularity>('week');
 
   /**
    * Property selectedDateRange
@@ -244,6 +244,41 @@ export class OrganizationDashboardInspectionsTrend {
     new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
     new Date(),
   ]);
+
+  /**
+   * Property today
+   * @readonly
+   *
+   * @description
+   * Upper bound for the date picker. Prevents selecting future dates.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Date}
+   */
+  protected readonly today: Date = new Date();
+
+  /**
+   * Property maxRangeDays
+   * @readonly
+   *
+   * @description
+   * Maximum selectable date range in days based on the current granularity.
+   * Daily: 90 days — Weekly: 365 days — Monthly: 730 days.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly maxRangeDays: Signal<number> = computed<number>(() => {
+    switch (this.selectedGranularity()) {
+      case 'day': return 90;
+      case 'month': return 730;
+      default: return 365;
+    }
+  });
 
   /**
    * Property compareEnabled
@@ -276,9 +311,9 @@ export class OrganizationDashboardInspectionsTrend {
    * @type {{ label: string; value: InspectionStatus; icon: string; color: string }[]}
    */
   protected readonly inspectionStatusOptions: { label: string; value: InspectionStatus; icon: string; color: string }[] = [
-    { label: 'Draft', value: 'draft', icon: 'pi pi-file-edit', color: '#94a3b8' },
-    { label: 'Submitted', value: 'submitted', icon: 'pi pi-send', color: '#3b82f6' },
-    { label: 'Closed', value: 'closed', icon: 'pi pi-lock', color: '#22c55e' },
+    { label: 'Draft', value: 'draft', icon: 'pi pi-file-edit', color: '#3b82f6' },
+    { label: 'Submitted', value: 'submitted', icon: 'pi pi-send', color: '#f59e0b' },
+    { label: 'Closed', value: 'closed', icon: 'pi pi-lock', color: '#64748b' },
   ];
 
   /**
@@ -331,7 +366,7 @@ export class OrganizationDashboardInspectionsTrend {
   protected readonly inspectionResultOptions: { label: string; value: InspectionResult; icon: string; color: string }[] = [
     { label: 'Pass', value: 'pass', icon: 'pi pi-check-circle', color: '#22c55e' },
     { label: 'Fail', value: 'fail', icon: 'pi pi-times-circle', color: '#ef4444' },
-    { label: 'Partial', value: 'partial', icon: 'pi pi-exclamation-circle', color: '#f97316' },
+    { label: 'Partial', value: 'partial', icon: 'pi pi-exclamation-circle', color: '#f59e0b' },
   ];
 
   /**
@@ -463,26 +498,37 @@ export class OrganizationDashboardInspectionsTrend {
     const comparisonData: number[] =
       comparisonSeries.map((point) => Number(point['count'] ?? point['total'] ?? point['value'] ?? 0));
 
+    const activeResult = this.selectedInspectionResult();
+    const activeStatus = this.selectedInspectionStatus();
+    const color: string = activeResult
+      ? (this.inspectionResultOptions.find(o => o.value === activeResult)?.color ?? '#3b82f6')
+      : activeStatus
+        ? (this.inspectionStatusOptions.find(o => o.value === activeStatus)?.color ?? '#3b82f6')
+        : '#3b82f6';
+    const r = parseInt(color.slice(1, 3), 16);
+    const g = parseInt(color.slice(3, 5), 16);
+    const b = parseInt(color.slice(5, 7), 16);
+
     const datasets: ChartData<'line'>['datasets'] = [
       {
         label: 'Inspections',
         data: data,
-        borderColor: '#3b82f6',
+        borderColor: color,
         backgroundColor: (context: ScriptableContext<'line'>): CanvasGradient | string => {
           const { ctx, chartArea } = context.chart;
-          if (!chartArea) return 'rgba(59, 130, 246, 0)';
+          if (!chartArea) return `rgba(${r}, ${g}, ${b}, 0)`;
           const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-          gradient.addColorStop(0, 'rgba(59, 130, 246, 0.25)');
-          gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+          gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.25)`);
+          gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
           return gradient;
         },
         borderWidth: 2,
-        tension: 0.4,
+        tension: 0.3,
         pointRadius: 0,
         pointHoverRadius: 5,
         pointHoverBorderWidth: 2,
         pointHoverBorderColor: '#fff',
-        pointHoverBackgroundColor: '#3b82f6',
+        pointHoverBackgroundColor: color,
         fill: 'origin',
       },
     ];
@@ -491,16 +537,16 @@ export class OrganizationDashboardInspectionsTrend {
       datasets.push({
         label: 'Previous Period',
         data: comparisonData,
-        borderColor: '#93c5fd',
+        borderColor: `rgba(${r}, ${g}, ${b}, 0.4)`,
         backgroundColor: 'transparent',
         borderWidth: 1.5,
         borderDash: [4, 4],
-        tension: 0.4,
+        tension: 0.3,
         pointRadius: 0,
         pointHoverRadius: 4,
         pointHoverBorderWidth: 2,
         pointHoverBorderColor: '#fff',
-        pointHoverBackgroundColor: '#93c5fd',
+        pointHoverBackgroundColor: `rgba(${r}, ${g}, ${b}, 0.4)`,
         fill: false,
       });
     }
@@ -582,6 +628,20 @@ export class OrganizationDashboardInspectionsTrend {
    * @param {OrganizationDashboardGranularity} granularity - The newly selected granularity.
    * @returns {void}
    */
+  protected onDateRangeChange(range: Date[] | null): void {
+    if (!range || range.length < 2 || !range[0] || !range[1]) {
+      this.selectedDateRange.set(range);
+      return;
+    }
+    const [from, to] = range;
+    const maxMs = this.maxRangeDays() * 24 * 60 * 60 * 1000;
+    if (to.getTime() - from.getTime() > maxMs) {
+      this.selectedDateRange.set([from, new Date(from.getTime() + maxMs)]);
+    } else {
+      this.selectedDateRange.set(range);
+    }
+  }
+
   protected onGranularityChange(granularity: OrganizationDashboardGranularity): void {
     this.selectedGranularity.set(granularity);
   }

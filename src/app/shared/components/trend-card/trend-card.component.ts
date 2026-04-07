@@ -16,7 +16,8 @@ import type { MetricComparison } from '@shared/components/metric-card';
  * Type MetricSummary
  *
  * @description
- * Shape of a single KPI tile rendered inside the trend card's metrics bar.
+ * Shape of a single KPI tile rendered inside
+ * the trend card's metrics bar.
  */
 export type MetricSummary = {
   readonly label: string;
@@ -145,7 +146,7 @@ export class TrendCard {
    */
   public readonly content: Signal<TemplateRef<unknown>> =
     contentChild.required<TemplateRef<unknown>>('content');
-    
+
   /**
    * Property footer
    * @readonly

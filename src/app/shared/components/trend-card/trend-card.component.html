@@ -30,12 +30,12 @@
               }
             } @else {
               @for (metric of metrics(); track metric.label) {
-                <div class="bg-surface-0 dark:bg-surface-950 p-4 flex flex-col gap-2 min-w-0">
+                <div class="bg-surface-0 dark:bg-surface-950 p-4 flex flex-col gap-1 min-w-0">
                   <span class="text-sm font-medium truncate">
                     {{ metric.label }}
                   </span>
 
-                  <span class="text-4xl font-semibold truncate">
+                  <span class="text-3xl font-semibold truncate">
                     {{ metric.value }}
                   </span>
 

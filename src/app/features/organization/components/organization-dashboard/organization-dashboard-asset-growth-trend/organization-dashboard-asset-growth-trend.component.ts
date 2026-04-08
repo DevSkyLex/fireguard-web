@@ -3,12 +3,14 @@ import {
   Component,
   computed,
   inject,
+  PLATFORM_ID,
   ResourceRef,
   signal,
   viewChild,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -125,6 +127,8 @@ export class OrganizationDashboardAssetGrowthTrend {
    */
   private readonly organizationService = inject(OrganizationService);
 
+  private readonly platformId = inject(PLATFORM_ID);
+
   /**
    * Property activeOrganizationStore
    * @readonly
@@ -188,6 +192,8 @@ export class OrganizationDashboardAssetGrowthTrend {
    */
   protected readonly growthResource: ResourceRef<OrganizationDashboardAssetGrowthResource | undefined> = rxResource<OrganizationDashboardAssetGrowthResource, OrganizationDashboardAssetGrowthParams | undefined>({
     params: () => {
+      if (!isPlatformBrowser(this.platformId)) return undefined;
+
       const organization: OrganizationOutput | null =
         this.activeOrganizationStore.selectedOrganization();
 

@@ -3,12 +3,14 @@ import {
   Component,
   computed,
   inject,
+  PLATFORM_ID,
   ResourceRef,
   signal,
   viewChild,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -98,6 +100,8 @@ export class OrganizationDashboardOverviewTrend {
   private readonly organizationService: OrganizationService =
     inject<OrganizationService>(OrganizationService);
 
+  private readonly platformId = inject(PLATFORM_ID);
+
   /**
    * Property activeOrganizationStore
    * @readonly
@@ -134,6 +138,8 @@ export class OrganizationDashboardOverviewTrend {
    */
   protected readonly overviewResource: ResourceRef<OrganizationDashboardOverviewTrendResource | undefined> = rxResource<OrganizationDashboardOverviewTrendResource, OrganizationDashboardTrendResourceParams | undefined>({
     params: () => {
+      if (!isPlatformBrowser(this.platformId)) return undefined;
+
       /**
        * Constant organization
        * @const organization

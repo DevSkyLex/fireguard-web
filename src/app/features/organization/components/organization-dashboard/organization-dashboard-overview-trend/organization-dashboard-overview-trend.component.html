@@ -35,7 +35,7 @@
 
   <ng-template #content>
     <div class="h-72">
-      @if (overviewResource.isLoading()) {
+      @if (overviewResource.isLoading() && !overviewResource.value()) {
         <p-skeleton
           height="100%"
           class="w-full"

@@ -3,9 +3,11 @@ import {
   Component,
   computed,
   inject,
+  PLATFORM_ID,
   type ResourceRef,
   type Signal,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { OrganizationService } from '@core/services/api/organization';
 import { ActiveOrganizationStore } from '@core/stores/organization';
@@ -94,6 +96,8 @@ export class OrganizationDashboard {
   private readonly organizationService: OrganizationService =
     inject<OrganizationService>(OrganizationService);
 
+  private readonly platformId = inject(PLATFORM_ID);
+
   /**
    * Property activeOrganizationStore
    * @readonly
@@ -129,7 +133,10 @@ export class OrganizationDashboard {
    */
   protected readonly dashboardResource: ResourceRef<OrganizationDashboardOutput | undefined> =
     rxResource<OrganizationDashboardOutput, string | undefined>({
-      params: (): string | undefined => this.activeOrganizationStore.selectedOrganization()?.id ?? undefined,
+      params: (): string | undefined => {
+        if (!isPlatformBrowser(this.platformId)) return undefined;
+        return this.activeOrganizationStore.selectedOrganization()?.id ?? undefined;
+      },
       stream: ({ params: organizationId }: { params: string | undefined }) => {
         /**
          * Constant now

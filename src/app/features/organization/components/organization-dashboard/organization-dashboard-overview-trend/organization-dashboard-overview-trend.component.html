@@ -3,8 +3,8 @@
 <app-trend-card
   title="Operational Flow"
   description="Inspection throughput and non-conformity pressure over time"
-  [metrics]="summaryMetrics()"
-  [loading]="overviewResource.isLoading()"
+  [metrics]="dashboardStore.summaryMetrics()"
+  [loading]="dashboardStore.isLoading()"
 >
   <ng-template #action>
     <div class="flex items-center gap-2">
@@ -13,12 +13,12 @@
           <i class="pi pi-calendar"></i>
         </p-inputgroup-addon>
         <p-select
-          [ngModel]="selectedGranularity()"
-          (ngModelChange)="onGranularityChange($event)"
-          [options]="granularityOptions"
+          [ngModel]="dashboardStore.selectedGranularity()"
+          (ngModelChange)="dashboardStore.setGranularity($event)"
+          [options]="dashboardStore.granularityOptions()"
           optionLabel="label"
           optionValue="value"
-          [loading]="overviewResource.isLoading()"
+          [loading]="dashboardStore.isLoading()"
           size="small"
         />
       </p-inputgroup>
@@ -35,7 +35,7 @@
 
   <ng-template #content>
     <div class="h-72">
-      @if (overviewResource.isLoading() && !overviewResource.value()) {
+      @if (dashboardStore.isLoading() && !dashboardStore.data()) {
         <p-skeleton
           height="100%"
           class="w-full"
@@ -43,8 +43,8 @@
       } @else {
         <p-chart
           type="line"
-          [data]="chartData()"
-          [options]="chartOptions"
+          [data]="dashboardStore.chartData()"
+          [options]="dashboardStore.chartOptions()"
           class="block h-full"
           [style]="{ height: '100%' }"
           fluid
@@ -58,9 +58,9 @@
       @defer (on idle) {
         <p-datepicker
           selectionMode="range"
-          [ngModel]="selectedDateRange()"
+          [ngModel]="dashboardStore.selectedDateRange()"
           [ngModelOptions]="{ updateOn: 'blur' }"
-          (ngModelChange)="onDateRangeChange($event)"
+          (ngModelChange)="dashboardStore.setDateRange($event)"
           [maxDate]="today"
           placeholder="Select date range"
           [showClear]="true"
@@ -69,16 +69,16 @@
           size="small"
           appendTo="body"
           dateFormat="dd/mm/yy"
-          [disabled]="overviewResource.isLoading()"
+          [disabled]="dashboardStore.isLoading()"
         />
       }
       <p-togglebutton
-        [ngModel]="compareEnabled()"
-        (ngModelChange)="compareEnabled.set($event)"
+        [ngModel]="dashboardStore.compareEnabled()"
+        (ngModelChange)="dashboardStore.setCompareEnabled($event)"
         onLabel="Compare ON"
         offLabel="Compare OFF"
         size="small"
-        [disabled]="overviewResource.isLoading()"
+        [disabled]="dashboardStore.isLoading()"
       />
     </div>
   </ng-template>

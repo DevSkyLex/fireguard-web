@@ -3,8 +3,8 @@
 <app-trend-card
   title="Asset Growth Momentum"
   description="Equipment and facilities created over time"
-  [metrics]="summaryMetrics()"
-  [loading]="growthResource.isLoading()"
+  [metrics]="dashboardStore.summaryMetrics()"
+  [loading]="dashboardStore.isLoading()"
 >
   <ng-template #action>
     <div class="flex items-center gap-2">
@@ -13,12 +13,12 @@
           <i class="pi pi-calendar"></i>
         </p-inputgroup-addon>
         <p-select
-          [ngModel]="selectedGranularity()"
-          (ngModelChange)="onGranularityChange($event)"
-          [options]="granularityOptions"
+          [ngModel]="dashboardStore.selectedGranularity()"
+          (ngModelChange)="dashboardStore.setGranularity($event)"
+          [options]="dashboardStore.granularityOptions()"
           optionLabel="label"
           optionValue="value"
-          [loading]="growthResource.isLoading()"
+          [loading]="dashboardStore.isLoading()"
           size="small"
         />
       </p-inputgroup>
@@ -35,7 +35,7 @@
 
   <ng-template #content>
     <div class="h-72">
-      @if (growthResource.isLoading() && !growthResource.value()) {
+      @if (dashboardStore.isLoading() && !dashboardStore.data()) {
         <p-skeleton
           height="100%"
           class="w-full"
@@ -43,8 +43,8 @@
       } @else {
         <p-chart
           type="bar"
-          [data]="chartData()"
-          [options]="chartOptions()"
+          [data]="dashboardStore.chartData()"
+          [options]="dashboardStore.chartOptions()"
           class="block h-full"
           [style]="{ height: '100%' }"
           fluid
@@ -56,26 +56,26 @@
   <ng-template #footer>
     <div class="flex flex-wrap items-center gap-2">
       <p-select
-        [ngModel]="selectedEquipmentType()"
-        (ngModelChange)="selectedEquipmentType.set($event)"
-        [options]="equipmentTypeOptions"
+        [ngModel]="dashboardStore.selectedEquipmentType()"
+        (ngModelChange)="dashboardStore.setEquipmentType($event)"
+        [options]="dashboardStore.equipmentTypeOptions()"
         optionLabel="label"
         optionValue="value"
         placeholder="Equipment type"
         [showClear]="true"
-        [loading]="growthResource.isLoading()"
+        [loading]="dashboardStore.isLoading()"
         size="small"
       />
 
       <p-select
-        [ngModel]="selectedEquipmentStatus()"
-        (ngModelChange)="selectedEquipmentStatus.set($event)"
-        [options]="equipmentStatusOptions"
+        [ngModel]="dashboardStore.selectedEquipmentStatus()"
+        (ngModelChange)="dashboardStore.setEquipmentStatus($event)"
+        [options]="dashboardStore.equipmentStatusOptions()"
         optionLabel="label"
         optionValue="value"
         placeholder="Equipment status"
         [showClear]="true"
-        [loading]="growthResource.isLoading()"
+        [loading]="dashboardStore.isLoading()"
         size="small"
       >
         <ng-template #item let-option>
@@ -85,7 +85,7 @@
           </span>
         </ng-template>
         <ng-template #selectedItem>
-          @let option = selectedEquipmentStatusOption();
+          @let option = dashboardStore.selectedEquipmentStatusOption();
           @if (option) {
             <span class="flex items-center gap-2">
               <i [class]="option.icon" [style.color]="option.color"></i>
@@ -96,14 +96,14 @@
       </p-select>
 
       <p-select
-        [ngModel]="selectedFacilityType()"
-        (ngModelChange)="selectedFacilityType.set($event)"
-        [options]="facilityTypeOptions"
+        [ngModel]="dashboardStore.selectedFacilityType()"
+        (ngModelChange)="dashboardStore.setFacilityType($event)"
+        [options]="dashboardStore.facilityTypeOptions()"
         optionLabel="label"
         optionValue="value"
         placeholder="Facility type"
         [showClear]="true"
-        [loading]="growthResource.isLoading()"
+        [loading]="dashboardStore.isLoading()"
         size="small"
       >
         <ng-template #item let-option>
@@ -113,7 +113,7 @@
           </span>
         </ng-template>
         <ng-template #selectedItem>
-          @let option = selectedFacilityTypeOption();
+          @let option = dashboardStore.selectedFacilityTypeOption();
           @if (option) {
             <span class="flex items-center gap-2">
               <i [class]="option.icon"></i>
@@ -126,9 +126,9 @@
       @defer (on idle) {
         <p-datepicker
           selectionMode="range"
-          [ngModel]="selectedDateRange()"
+          [ngModel]="dashboardStore.selectedDateRange()"
           [ngModelOptions]="{ updateOn: 'blur' }"
-          (ngModelChange)="onDateRangeChange($event)"
+          (ngModelChange)="dashboardStore.setDateRange($event)"
           [maxDate]="today"
           placeholder="Select date range"
           [showClear]="true"
@@ -137,17 +137,17 @@
           size="small"
           appendTo="body"
           dateFormat="dd/mm/yy"
-          [disabled]="growthResource.isLoading()"
+          [disabled]="dashboardStore.isLoading()"
         />
       }
 
       <p-togglebutton
-        [ngModel]="compareEnabled()"
-        (ngModelChange)="compareEnabled.set($event)"
+        [ngModel]="dashboardStore.compareEnabled()"
+        (ngModelChange)="dashboardStore.setCompareEnabled($event)"
         [onLabel]="'Compare ON'"
         [offLabel]="'Compare OFF'"
         size="small"
-        [disabled]="growthResource.isLoading()"
+        [disabled]="dashboardStore.isLoading()"
       />
     </div>
   </ng-template>

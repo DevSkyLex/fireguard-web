@@ -1,4 +1,4 @@
-import { type EnvironmentConfig } from '@core/config/environment/environment-config.interface';
+import { type EnvironmentConfig } from '@core/config/environment';
 
 /**
  * Environment production

@@ -7,6 +7,13 @@ import { EMPTY } from 'rxjs';
 import { PasswordResetStore } from '@features/auth/state';
 import { PasswordResetVerifyPage } from './password-reset-verify-page.component';
 
+type PasswordResetVerifyPageTestApi = PasswordResetVerifyPage & {
+  resendIn: () => number | null;
+  handleVerify(values: { code: string; trustDevice: boolean }): Promise<void>;
+  handleCancel(): Promise<void>;
+  handleResend(): void;
+};
+
 describe('PasswordResetVerifyPage', () => {
   const setup = (options?: { canResendIn?: number | null }) => {
     const mockPasswordResetStore = {
@@ -37,13 +44,15 @@ describe('PasswordResetVerifyPage', () => {
 
   it('should expose resendIn value from current request', () => {
     const { component } = setup({ canResendIn: 30 });
-    expect((component as any).resendIn()).toBe(30);
+    const page = component as unknown as PasswordResetVerifyPageTestApi;
+    expect(page.resendIn()).toBe(30);
   });
 
   it('should set verification code and navigate to new password page', async () => {
     const { component, mockPasswordResetStore, mockRouter } = setup();
+    const page = component as unknown as PasswordResetVerifyPageTestApi;
 
-    await (component as any).handleVerify({ code: '123456', trustDevice: false });
+    await page.handleVerify({ code: '123456', trustDevice: false });
 
     expect(mockPasswordResetStore.setVerificationCode).toHaveBeenCalledWith('123456');
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/password-reset/new']);
@@ -51,8 +60,9 @@ describe('PasswordResetVerifyPage', () => {
 
   it('should clear state and navigate to forgot page on cancel', async () => {
     const { component, mockPasswordResetStore, mockRouter } = setup();
+    const page = component as unknown as PasswordResetVerifyPageTestApi;
 
-    await (component as any).handleCancel();
+    await page.handleCancel();
 
     expect(mockPasswordResetStore.clear).toHaveBeenCalledTimes(1);
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/password-reset/forgot']);
@@ -60,8 +70,9 @@ describe('PasswordResetVerifyPage', () => {
 
   it('should request resend', () => {
     const { component, mockPasswordResetStore } = setup();
+    const page = component as unknown as PasswordResetVerifyPageTestApi;
 
-    (component as any).handleResend();
+    page.handleResend();
 
     expect(mockPasswordResetStore.resend).toHaveBeenCalledTimes(1);
   });

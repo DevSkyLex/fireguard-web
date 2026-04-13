@@ -11,9 +11,11 @@ describe('passwordResetNewGuard', () => {
   };
 
   const urlTree = {} as UrlTree;
+  const route = {} as unknown as Parameters<typeof passwordResetNewGuard>[0];
+  const state = {} as unknown as Parameters<typeof passwordResetNewGuard>[1];
 
   const runGuard = (): boolean | UrlTree => {
-    return TestBed.runInInjectionContext(() => passwordResetNewGuard({} as any, {} as any)) as
+    return TestBed.runInInjectionContext(() => passwordResetNewGuard(route, state)) as
       | boolean
       | UrlTree;
   };

@@ -20,7 +20,6 @@ import {
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
-  type CallState,
   type StoreError,
 } from '@core/state/request-state';
 import { OrganizationService } from '@features/organization/data-access';

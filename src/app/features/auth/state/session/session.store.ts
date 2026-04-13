@@ -19,7 +19,6 @@ import {
   errorCallState,
   toStoreError,
   toStoreFailureEventPayload,
-  type CallState,
   type StoreError,
 } from '@core/state/request-state';
 import { SessionService } from '@features/auth/data-access';

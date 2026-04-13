@@ -161,7 +161,7 @@ export class NotificationBell {
   protected applyFilter(value: NotificationFilter | null): void {
     this.selectedFilter.set(value);
     this.notificationStore.setFilter(value);
-    this.notificationStore.load({ limit: 20, ...(value ?? {}) });
+    this.notificationStore.load({ limit: 20, ...value });
   }
 
   /**

@@ -11,11 +11,11 @@ describe('guestGuard', () => {
   };
 
   const urlTree = {} as UrlTree;
+  const route = {} as unknown as Parameters<typeof guestGuard>[0];
+  const state = {} as unknown as Parameters<typeof guestGuard>[1];
 
   const runGuard = (): boolean | UrlTree => {
-    return TestBed.runInInjectionContext(() => guestGuard({} as any, {} as any)) as
-      | boolean
-      | UrlTree;
+    return TestBed.runInInjectionContext(() => guestGuard(route, state)) as boolean | UrlTree;
   };
 
   beforeEach(() => {

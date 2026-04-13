@@ -6,7 +6,6 @@ import {
   input,
   InputSignal,
   Signal,
-  signal,
   TemplateRef,
 } from '@angular/core';
 import { CardModule, CardPassThroughOptions } from 'primeng/card';

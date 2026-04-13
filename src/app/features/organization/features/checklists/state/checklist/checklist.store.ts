@@ -13,7 +13,6 @@ import {
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
-  type CallState,
   type StoreError,
 } from '@core/state/request-state';
 import { ChecklistService } from '@features/organization/features/checklists/data-access';

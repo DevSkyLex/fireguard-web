@@ -1,5 +1,5 @@
 import type { CallState } from '@core/state/request-state';
-import type { AuditEventListOptions, AuditEventOutput } from '@features/organization/models';
+import type { AuditEventListOptions } from '@features/organization/models';
 
 export interface AuditState {
   readonly totalAuditEvents: number;

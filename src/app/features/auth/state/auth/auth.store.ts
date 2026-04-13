@@ -16,13 +16,7 @@ import {
 } from '@core/state/request-state';
 import { UserStore } from '@features/account/state';
 import { AuthService } from '@features/auth/data-access';
-import type {
-  LoginInput,
-  LoginOutput,
-  LogoutOutput,
-  MfaResendInput,
-  MfaVerifyInput,
-} from '@features/auth/models';
+import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@features/auth/models';
 import { ActiveTrustedDeviceStore } from '@features/auth/state';
 import type { AuthState } from './auth-state.interface';
 import { authStoreEvents } from './auth.events';

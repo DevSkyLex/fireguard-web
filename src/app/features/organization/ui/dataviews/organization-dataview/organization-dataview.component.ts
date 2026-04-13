@@ -1,6 +1,5 @@
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import {
-  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,

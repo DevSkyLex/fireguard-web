@@ -136,9 +136,7 @@ export class LoginPage {
     // Navigate to MFA page when MFA is required
     effect(() => {
       if (this.authStore.mfaRequired()) {
-        this.router.navigate(['/auth/mfa-verify']).catch((error: unknown) => {
-          console.error('Navigation failed', error);
-        });
+        this.router.navigate(['/auth/mfa-verify']).catch(() => undefined);
       }
     });
 
@@ -146,9 +144,7 @@ export class LoginPage {
     effect(() => {
       if (this.authStore.isAuthenticated()) {
         this.userStore.load();
-        this.router.navigate(['/']).catch((error: unknown) => {
-          console.error('Navigation failed', error);
-        });
+        this.router.navigate(['/']).catch(() => undefined);
       }
     });
 

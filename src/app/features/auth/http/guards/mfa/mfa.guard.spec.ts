@@ -12,9 +12,11 @@ describe('mfaGuard', () => {
   };
 
   const urlTree = {} as UrlTree;
+  const route = {} as unknown as Parameters<typeof mfaGuard>[0];
+  const state = {} as unknown as Parameters<typeof mfaGuard>[1];
 
   const runGuard = (): boolean | UrlTree => {
-    return TestBed.runInInjectionContext(() => mfaGuard({} as any, {} as any)) as boolean | UrlTree;
+    return TestBed.runInInjectionContext(() => mfaGuard(route, state)) as boolean | UrlTree;
   };
 
   beforeEach(() => {

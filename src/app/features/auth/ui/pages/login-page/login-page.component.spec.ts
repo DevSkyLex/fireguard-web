@@ -8,6 +8,10 @@ import { UserStore } from '@features/account/state';
 import { AuthStore } from '@features/auth/state';
 import { LoginPage } from './login-page.component';
 
+type LoginPageTestApi = LoginPage & {
+  handleLogin(values: { email: string; password: string; remember_me: boolean }): void;
+};
+
 describe('LoginPage', () => {
   const setup = (options?: { mfaRequired?: boolean; authenticated?: boolean }) => {
     const authState = {
@@ -41,8 +45,9 @@ describe('LoginPage', () => {
 
   it('should call authStore.login when form is submitted', () => {
     const { component, mockAuthStore } = setup();
+    const page = component as unknown as LoginPageTestApi;
 
-    (component as any).handleLogin({
+    page.handleLogin({
       email: 'test@example.com',
       password: 'password123',
       remember_me: true,

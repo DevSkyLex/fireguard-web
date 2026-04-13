@@ -130,9 +130,7 @@ export class NewPasswordPage {
           .navigate(['/auth/login'], {
             queryParams: { passwordReset: 'success' },
           })
-          .catch((error: unknown) => {
-            console.error('Navigation failed', error);
-          });
+          .catch(() => undefined);
       }
     });
 
@@ -187,12 +185,7 @@ export class NewPasswordPage {
    */
   protected async handlePasswordCancel(): Promise<void> {
     this.passwordResetStore.clear();
-
-    try {
-      await this.router.navigate(['/auth/login']);
-    } catch (error: unknown) {
-      console.error('Navigation failed', error);
-    }
+    await this.router.navigate(['/auth/login']).catch(() => undefined);
   }
 
   //#endregion

@@ -11,13 +11,14 @@ describe('passwordResetVerifyGuard', () => {
   };
 
   const forgotUrlTree = {} as UrlTree;
+  const state = {} as unknown as Parameters<typeof passwordResetVerifyGuard>[1];
 
   const runGuard = (queryToken: string | null): boolean | UrlTree => {
     const route = {
       queryParamMap: convertToParamMap(queryToken ? { token: queryToken } : {}),
-    } as any;
+    } as unknown as Parameters<typeof passwordResetVerifyGuard>[0];
 
-    return TestBed.runInInjectionContext(() => passwordResetVerifyGuard(route, {} as any)) as
+    return TestBed.runInInjectionContext(() => passwordResetVerifyGuard(route, state)) as
       | boolean
       | UrlTree;
   };

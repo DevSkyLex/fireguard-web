@@ -43,12 +43,19 @@ const MOCK_FACILITY: FacilityOutput = {
 
 describe('FacilityDetailPage', () => {
   beforeAll(() => {
-    if (typeof (window as any).ResizeObserver === 'undefined') {
-      (window as any).ResizeObserver = vi.fn().mockImplementation(function (this: any) {
-        this.observe = vi.fn();
-        this.unobserve = vi.fn();
-        this.disconnect = vi.fn();
-      });
+    const windowWithResizeObserver = window as Window & {
+      ResizeObserver?: typeof ResizeObserver;
+    };
+
+    if (typeof windowWithResizeObserver.ResizeObserver === 'undefined') {
+      class ResizeObserverMock {
+        public readonly observe = vi.fn();
+        public readonly unobserve = vi.fn();
+        public readonly disconnect = vi.fn();
+      }
+
+      windowWithResizeObserver.ResizeObserver =
+        ResizeObserverMock as unknown as typeof ResizeObserver;
     }
     if (typeof window.matchMedia === 'undefined' || typeof window.matchMedia !== 'function') {
       Object.defineProperty(window, 'matchMedia', {

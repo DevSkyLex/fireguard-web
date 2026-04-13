@@ -27,7 +27,7 @@ describe('OrganizationSwitcherHeader', () => {
 
     const badge: HTMLElement | null = fixture.nativeElement.querySelector('span.inline-flex');
     expect(badge).not.toBeNull();
-    expect(badge!.textContent!.trim()).toBe('3');
+    expect(badge?.textContent?.trim()).toBe('3');
   });
 
   it('should not display the count badge when organizationCount is 0', () => {

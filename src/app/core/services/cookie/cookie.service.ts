@@ -40,7 +40,7 @@ export class CookieService {
    *
    * @type {Object}
    */
-  private readonly platformId: Object = inject<Object>(PLATFORM_ID);
+  private readonly platformId: object = inject<object>(PLATFORM_ID);
 
   /**
    * Property request
@@ -96,11 +96,11 @@ export class CookieService {
    * @returns {T | null} - The cookie value or null.
    */
   private getCookieFromDocument<T>(name: string): T | null {
-    const cookie: string | undefined = document.cookie
+    const matchingCookie: string | undefined = document.cookie
       .split(';')
-      .find((cookie: string) => cookie.trim().startsWith(`${name}=`));
+      .find((cookieEntry: string) => cookieEntry.trim().startsWith(`${name}=`));
 
-    return cookie ? (cookie.split('=')[1] as T) : null;
+    return matchingCookie ? (matchingCookie.split('=')[1] as T) : null;
   }
 
   /**

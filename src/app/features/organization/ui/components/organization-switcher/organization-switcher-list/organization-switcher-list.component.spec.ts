@@ -105,6 +105,6 @@ describe('OrganizationSwitcherList', () => {
     ) as NodeListOf<HTMLSpanElement>;
     const boldSpan = Array.from(spans).find((s) => s.classList.contains('font-medium'));
     expect(boldSpan).toBeDefined();
-    expect(boldSpan!.textContent!.trim()).toBe('Beta Inc');
+    expect(boldSpan?.textContent?.trim()).toBe('Beta Inc');
   });
 });

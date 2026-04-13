@@ -1,6 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { NewPasswordForm } from './new-password-form.component';
 
+type NewPasswordFormTestApi = NewPasswordForm & {
+  form: {
+    setValue(value: { newPassword: string; confirmPassword: string }): void;
+    hasError(errorCode: string): boolean;
+  };
+  onSubmit(): void;
+  onCancel(): void;
+};
+
 describe('NewPasswordForm', () => {
   let component: NewPasswordForm;
 
@@ -11,33 +20,36 @@ describe('NewPasswordForm', () => {
 
   it('should not emit when form is invalid (password mismatch)', () => {
     const emitSpy = vi.spyOn(component.submitted, 'emit');
-    (component as any).form.setValue({
+    const formComponent = component as unknown as NewPasswordFormTestApi;
+    formComponent.form.setValue({
       newPassword: 'password123',
       confirmPassword: 'different123',
     });
 
-    (component as any).onSubmit();
+    formComponent.onSubmit();
 
-    expect((component as any).form.hasError('passwordMismatch')).toBe(true);
+    expect(formComponent.form.hasError('passwordMismatch')).toBe(true);
     expect(emitSpy).not.toHaveBeenCalled();
   });
 
   it('should emit newPassword when form is valid', () => {
     const emitSpy = vi.spyOn(component.submitted, 'emit');
-    (component as any).form.setValue({
+    const formComponent = component as unknown as NewPasswordFormTestApi;
+    formComponent.form.setValue({
       newPassword: 'password123',
       confirmPassword: 'password123',
     });
 
-    (component as any).onSubmit();
+    formComponent.onSubmit();
 
     expect(emitSpy).toHaveBeenCalledWith({ newPassword: 'password123' });
   });
 
   it('should emit cancel event on cancel', () => {
     const emitSpy = vi.spyOn(component.cancelled, 'emit');
+    const formComponent = component as unknown as NewPasswordFormTestApi;
 
-    (component as any).onCancel();
+    formComponent.onCancel();
 
     expect(emitSpy).toHaveBeenCalledTimes(1);
   });

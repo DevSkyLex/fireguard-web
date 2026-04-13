@@ -97,7 +97,12 @@ export class ForgotPasswordForm {
     });
 
   private readonly disableFormEffect = effect(() => {
-    this.loading() ? this.form.disable() : this.form.enable();
+    if (this.loading()) {
+      this.form.disable();
+      return;
+    }
+
+    this.form.enable();
   });
 
   /**

@@ -7,6 +7,11 @@ import { EMPTY } from 'rxjs';
 import { PasswordResetStore } from '@features/auth/state';
 import { NewPasswordPage } from './new-password-page.component';
 
+type NewPasswordPageTestApi = NewPasswordPage & {
+  handlePasswordSubmit(values: { newPassword: string }): void;
+  handlePasswordCancel(): Promise<void>;
+};
+
 describe('NewPasswordPage', () => {
   const setup = (options?: {
     status?: 'idle' | 'loading' | 'success' | 'error';
@@ -52,16 +57,18 @@ describe('NewPasswordPage', () => {
 
   it('should not submit when verification code is missing', () => {
     const { component, mockPasswordResetStore } = setup({ code: null });
+    const page = component as unknown as NewPasswordPageTestApi;
 
-    (component as any).handlePasswordSubmit({ newPassword: 'NewPass123!' });
+    page.handlePasswordSubmit({ newPassword: 'NewPass123!' });
 
     expect(mockPasswordResetStore.confirm).not.toHaveBeenCalled();
   });
 
   it('should submit with verification code when available', () => {
     const { component, mockPasswordResetStore } = setup({ code: '123456' });
+    const page = component as unknown as NewPasswordPageTestApi;
 
-    (component as any).handlePasswordSubmit({ newPassword: 'NewPass123!' });
+    page.handlePasswordSubmit({ newPassword: 'NewPass123!' });
 
     expect(mockPasswordResetStore.confirm).toHaveBeenCalledWith({
       code: '123456',
@@ -71,8 +78,9 @@ describe('NewPasswordPage', () => {
 
   it('should clear state and navigate to login on cancel', async () => {
     const { component, mockPasswordResetStore, mockRouter } = setup();
+    const page = component as unknown as NewPasswordPageTestApi;
 
-    await (component as any).handlePasswordCancel();
+    await page.handlePasswordCancel();
 
     expect(mockPasswordResetStore.clear).toHaveBeenCalledTimes(1);
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);

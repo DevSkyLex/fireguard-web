@@ -11,7 +11,6 @@ import {
   errorCallState,
   toStoreError,
   toStoreFailureEventPayload,
-  type CallState,
   type StoreError,
 } from '@core/state/request-state';
 import { TrustedDeviceService } from '@features/auth/data-access';

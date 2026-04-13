@@ -11,7 +11,7 @@ import {
 } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { catchError, EMPTY, exhaustMap, filter, pipe, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, exhaustMap, filter as rxFilter, pipe, switchMap, tap } from 'rxjs';
 import type { HydraCollection } from '@core/models/api';
 import type { MercureSubscriptionOutput } from '@core/models/mercure';
 import { MercureService } from '@core/services/mercure';
@@ -246,8 +246,8 @@ export const NotificationStore = signalStore(
             const activeFilter: NotificationFilter | null = store.activeFilter();
             const mergedOptions: NotificationListOptions = {
               limit: store.itemsPerPage(),
-              ...(options ?? {}),
-              ...(activeFilter ?? {}),
+              ...options,
+              ...activeFilter,
               page: 1,
             };
             return notificationService.list(mergedOptions).pipe(
@@ -301,7 +301,7 @@ export const NotificationStore = signalStore(
             const activeFilter: NotificationFilter | null = store.activeFilter();
             const mergedOptions: NotificationListOptions = {
               limit: store.itemsPerPage(),
-              ...(activeFilter ?? {}),
+              ...activeFilter,
               page: nextPage,
             };
             return notificationService.list(mergedOptions).pipe(
@@ -455,7 +455,7 @@ export const NotificationStore = signalStore(
        */
       loadTypes: rxMethod<void>(
         pipe(
-          filter(() => !store.typesLoaded()),
+          rxFilter(() => !store.typesLoaded()),
           switchMap(() =>
             notificationService.listTypes().pipe(
               tapResponse({
@@ -486,8 +486,8 @@ export const NotificationStore = signalStore(
        *
        * @author Valentin FORTIN <contact@valentin-fortin.pro>
        */
-      setFilter(filter: NotificationFilter | null): void {
-        patchState(store, { activeFilter: filter });
+      setFilter(notificationFilter: NotificationFilter | null): void {
+        patchState(store, { activeFilter: notificationFilter });
       },
     }),
   ),

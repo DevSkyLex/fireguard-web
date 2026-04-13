@@ -1,0 +1,58 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc"],
+  "env": {
+    "builtin": true,
+    "browser": true
+  },
+  "ignorePatterns": ["dist/**", "out-tsc/**", ".angular/**", "coverage/**", "tmp/**"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error",
+    "style": "off",
+    "pedantic": "off"
+  },
+  "options": {
+    "denyWarnings": true,
+    "reportUnusedDisableDirectives": "error"
+  },
+  "rules": {
+    "no-console": "error",
+    "no-debugger": "error",
+    "sort-keys": "off",
+    "no-unused-vars": "error",
+    "typescript/no-extraneous-class": ["error", { "allowWithDecorator": true }],
+    "typescript/no-floating-promises": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/no-this-alias": "error",
+    "typescript/no-wrapper-object-types": "error",
+    "typescript/prefer-as-const": "error",
+    "unicorn/no-null": "off",
+    "unicorn/prefer-module": "off",
+    "unicorn/prefer-top-level-await": "off"
+  },
+  "overrides": [
+    {
+      "files": ["src/**/*.spec.ts", "src/**/*.test.ts"],
+      "plugins": ["typescript", "unicorn", "oxc", "vitest"],
+      "env": {
+        "builtin": true,
+        "browser": true,
+        "vitest": true
+      },
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["src/server.ts", "src/main.server.ts", "src/**/*.server.ts"],
+      "env": {
+        "builtin": true,
+        "browser": false,
+        "node": true
+      }
+    }
+  ]
+}

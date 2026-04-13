@@ -8,11 +8,11 @@ describe('authGuard', () => {
   let mockRouter: { createUrlTree: ReturnType<typeof vi.fn> };
   let mockAuthStore: { isAuthenticated: ReturnType<typeof vi.fn> };
   const loginUrlTree = {} as UrlTree;
+  const route = {} as unknown as Parameters<typeof authGuard>[0];
+  const state = {} as unknown as Parameters<typeof authGuard>[1];
 
   function runGuard(): boolean | UrlTree {
-    return TestBed.runInInjectionContext(() => authGuard({} as any, {} as any)) as
-      | boolean
-      | UrlTree;
+    return TestBed.runInInjectionContext(() => authGuard(route, state)) as boolean | UrlTree;
   }
 
   beforeEach(() => {

@@ -104,7 +104,7 @@ export class InspectionListPage {
    *
    * @since 1.0.0
    */
-  public constructor() {}
+
   //#endregion
 
   //#region Methods

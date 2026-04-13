@@ -29,6 +29,8 @@ interface ExecuteStepPayload {
   readonly stepKey: OnboardingStepKey;
 }
 
+const isBlockingState = (state: string): boolean => state === 'in_progress' || state === 'blocked';
+
 //#region Initial State
 /**
  * Constant INITIAL_ONBOARDING_STATE
@@ -508,9 +510,6 @@ export const OnboardingStore = signalStore(
        * @author Valentin FORTIN <contact@valentin-fortin.pro>
        */
       checkBlocking(): Observable<boolean> {
-        const isBlockingState = (state: string): boolean =>
-          state === 'in_progress' || state === 'blocked';
-
         const current: OnboardingOutput | null = store.onboarding();
         if (current !== null) {
           return of(isBlockingState(current.state));

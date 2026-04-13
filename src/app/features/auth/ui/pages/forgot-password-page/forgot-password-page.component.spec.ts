@@ -7,6 +7,10 @@ import { EMPTY } from 'rxjs';
 import { PasswordResetStore } from '@features/auth/state';
 import { ForgotPasswordPage } from './forgot-password-page.component';
 
+type ForgotPasswordPageTestApi = ForgotPasswordPage & {
+  handleSubmit(values: { email: string }): void;
+};
+
 describe('ForgotPasswordPage', () => {
   const setup = (options?: { challengeToken?: string | null }) => {
     const mockPasswordResetStore = {
@@ -54,8 +58,9 @@ describe('ForgotPasswordPage', () => {
 
   it('should request password reset on submit', () => {
     const { component, mockPasswordResetStore } = setup();
+    const page = component as unknown as ForgotPasswordPageTestApi;
 
-    (component as any).handleSubmit({ email: 'test@example.com' });
+    page.handleSubmit({ email: 'test@example.com' });
 
     expect(mockPasswordResetStore.request).toHaveBeenCalledWith({ email: 'test@example.com' });
   });

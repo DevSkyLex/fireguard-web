@@ -5,7 +5,6 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
 import {
-  CallState,
   errorCallState,
   idleCallState,
   pendingCallState,

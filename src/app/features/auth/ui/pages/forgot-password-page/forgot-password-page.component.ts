@@ -102,9 +102,7 @@ export class ForgotPasswordPage {
           .navigate(['/auth/password-reset/verify'], {
             queryParams: { token: request.challengeToken },
           })
-          .catch((error: unknown) => {
-            console.error('Navigation failed', error);
-          });
+          .catch(() => undefined);
       }
     });
 

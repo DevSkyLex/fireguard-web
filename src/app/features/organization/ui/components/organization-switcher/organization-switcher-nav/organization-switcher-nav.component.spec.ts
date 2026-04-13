@@ -60,7 +60,7 @@ describe('OrganizationSwitcherNav', () => {
     const links = fixture.nativeElement.querySelectorAll('nav a') as NodeListOf<HTMLAnchorElement>;
     expect(links.length).toBe(3);
 
-    const labels = Array.from(links).map((a) => a.textContent!.trim());
+    const labels = Array.from(links).map((a) => a.textContent?.trim() ?? '');
     expect(labels).toContain('Members');
     expect(labels).toContain('Settings');
     expect(labels).toContain('Billing');

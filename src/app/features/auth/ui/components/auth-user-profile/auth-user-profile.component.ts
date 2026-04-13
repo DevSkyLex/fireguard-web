@@ -72,18 +72,14 @@ export class AuthUserProfile {
       .on(authStoreEvents.logoutSucceeded)
       .pipe(takeUntilDestroyed())
       .subscribe(() => {
-        this.router.navigate(['/auth/login']).catch((error: unknown) => {
-          console.error('Navigation after logout failed', error);
-        });
+        this.router.navigate(['/auth/login']).catch(() => undefined);
       });
 
     this.events
       .on(authStoreEvents.logoutFailed)
       .pipe(takeUntilDestroyed())
       .subscribe(() => {
-        this.router.navigate(['/auth/login']).catch((error: unknown) => {
-          console.error('Navigation after logout failed', error);
-        });
+        this.router.navigate(['/auth/login']).catch(() => undefined);
       });
   }
 

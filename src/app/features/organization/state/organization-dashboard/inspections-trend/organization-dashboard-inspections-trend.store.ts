@@ -37,6 +37,8 @@ import {
   sumDashboardTrendValues,
 } from '../../../data-access/adapters/organization-dashboard-trend.adapter';
 
+const toIsoString = (value: Date | undefined): string | undefined => value?.toISOString();
+
 /**
  * Type GranularityOption
  *
@@ -751,13 +753,12 @@ export const OrganizationDashboardInspectionsTrendStore = signalStore(
             if (!organization) return undefined;
 
             const range = store.selectedDateRange();
-            const toISO = (value: Date | undefined): string | undefined => value?.toISOString();
 
             return {
               organizationId: organization.id,
               granularity: store.selectedGranularity(),
-              from: toISO(range?.[0]),
-              to: toISO(range?.[1]),
+              from: toIsoString(range?.[0]),
+              to: toIsoString(range?.[1]),
               compare: store.compareEnabled() || undefined,
               inspectionStatus: store.selectedInspectionStatus() ?? undefined,
               inspectionResult: store.selectedInspectionResult() ?? undefined,

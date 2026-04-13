@@ -13,7 +13,6 @@ import {
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
-  type CallState,
   type StoreError,
 } from '@core/state/request-state';
 import { InspectionService } from '@features/organization/features/inspections/data-access';

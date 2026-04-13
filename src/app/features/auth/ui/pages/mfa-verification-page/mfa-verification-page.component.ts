@@ -200,9 +200,7 @@ export class MfaVerificationPage {
     effect(() => {
       if (this.authStore.isAuthenticated()) {
         this.userStore.load();
-        this.router.navigate(['/']).catch((error: unknown) => {
-          console.error('Navigation failed', error);
-        });
+        this.router.navigate(['/']).catch(() => undefined);
       }
     });
 
@@ -277,11 +275,7 @@ export class MfaVerificationPage {
    */
   protected async handleOtpCancel(): Promise<void> {
     this.authStore.clearMfaState();
-    try {
-      await this.router.navigate(['/auth/login']);
-    } catch (error: unknown) {
-      console.error('Navigation failed', error);
-    }
+    await this.router.navigate(['/auth/login']).catch(() => undefined);
   }
 
   /**

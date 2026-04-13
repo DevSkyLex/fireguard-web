@@ -1,6 +1,5 @@
 import { inject } from '@angular/core';
 import { computed } from '@angular/core';
-import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { Observable, tap } from 'rxjs';
@@ -11,7 +10,6 @@ import {
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
-  type CallState,
   type StoreError,
 } from '@core/state/request-state';
 import { InspectionService } from '@features/organization/features/inspections/data-access';

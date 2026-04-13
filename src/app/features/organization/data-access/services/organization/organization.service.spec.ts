@@ -16,6 +16,15 @@ import type {
 } from '@features/organization/models';
 import { OrganizationService } from './organization.service';
 
+const mockCollection = <T extends HydraItem>(items: T[]): HydraCollection<T> => ({
+  '@context': '/api/contexts/Collection',
+  '@id': '/api/organizations',
+  '@type': 'Collection',
+  member: items,
+  totalItems: items.length,
+  view: { '@id': '/api/organizations?page=1', '@type': 'hydra:PartialCollectionView' },
+});
+
 describe('OrganizationService', () => {
   let service: OrganizationService;
   let httpMock: HttpTestingController;
@@ -55,16 +64,6 @@ describe('OrganizationService', () => {
     createdAt: '2026-01-01T00:00:00+00:00',
     updatedAt: '2026-03-01T00:00:00+00:00',
   };
-
-  const mockCollection = <T extends HydraItem>(items: T[]): HydraCollection<T> => ({
-    '@context': '/api/contexts/Collection',
-    '@id': '/api/organizations',
-    '@type': 'Collection',
-    member: items,
-    totalItems: items.length,
-    view: { '@id': '/api/organizations?page=1', '@type': 'hydra:PartialCollectionView' },
-  });
-
   // ── list ───────────────────────────────────────────────────────────────────
 
   describe('list', () => {

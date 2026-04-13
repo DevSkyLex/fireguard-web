@@ -107,7 +107,7 @@ export class EquipmentListPage {
    *
    * @since 1.0.0
    */
-  public constructor() {}
+
   //#endregion
 
   //#region Methods

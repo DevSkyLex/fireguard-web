@@ -49,9 +49,7 @@ export class OnboardingPage {
 
     effect(() => {
       if (this.onboardingStore.isCompleted()) {
-        this.router.navigate(['/']).catch((error: unknown) => {
-          console.error('Navigation failed', error);
-        });
+        this.router.navigate(['/']).catch(() => undefined);
       }
     });
 

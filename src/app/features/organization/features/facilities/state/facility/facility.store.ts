@@ -14,7 +14,6 @@ import {
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
-  type CallState,
   type StoreError,
 } from '@core/state/request-state';
 import { FacilityService } from '@features/organization/features/facilities/data-access';

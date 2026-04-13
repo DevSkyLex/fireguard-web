@@ -5,18 +5,18 @@ import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from './active-organization.store';
 
-const flushEffects = async (): Promise<void> => {
+const _flushEffects = async (): Promise<void> => {
   await Promise.resolve();
 };
 
 describe('ActiveOrganizationStore', () => {
-  let store: ActiveOrganizationStore;
+  let _store: ActiveOrganizationStore;
   let mockDispatcher: { dispatch: ReturnType<typeof vi.fn> };
   let mockOrganizationService: {
     get: ReturnType<typeof vi.fn>;
   };
 
-  const organization: OrganizationOutput = {
+  const _organization: OrganizationOutput = {
     '@id': '/api/organizations/org-1',
     '@type': 'Organization',
     id: 'org-1',
@@ -45,6 +45,6 @@ describe('ActiveOrganizationStore', () => {
       ],
     });
 
-    store = TestBed.inject(ActiveOrganizationStore);
+    _store = TestBed.inject(ActiveOrganizationStore);
   });
 });

@@ -35,6 +35,27 @@ This document does not govern:
 - Transitional rule: accepted only while migrating legacy areas.
 - Anti-pattern: must not be introduced in new code.
 
+## 2.1 Feature Documentation
+
+Each feature must include a `FEATURE.md` file at its root.
+
+This document is normative for the local feature boundary and must stay short.
+
+A `FEATURE.md` must document:
+
+- the feature purpose and ownership,
+- its route entry points,
+- its main stores and data-access services,
+- any published ports or public APIs,
+- cross-feature dependencies that are intentionally allowed,
+- the local invariants that reviewers must preserve.
+
+A `FEATURE.md` must not become a file catalog or duplicate the implementation line-by-line.
+
+Top-level features under `src/app/features/` require a `FEATURE.md`.
+
+Nested business subfeatures under another feature also require their own `FEATURE.md` when they own routes, state, services, or domain workflow decisions.
+
 ## 3. Core Ideas
 
 ### 3.1 Feature-first business ownership

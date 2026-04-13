@@ -572,7 +572,7 @@ export const AuthStore = signalStore(
             accessToken: transferred.access_token,
             expiresAt: calculateExpiresAt(transferred.expires_in),
           });
-          userStore.initialize();
+          await userStore.initialize();
           return;
         }
 
@@ -581,37 +581,33 @@ export const AuthStore = signalStore(
         return;
       }
 
-      await firstValueFrom(
-        authService.refresh().pipe(
-          tapResponse({
-            next: (response: LoginOutput) => {
-              patchState(store, {
-                initialized: true,
-                accessToken: response.access_token,
-                expiresAt: calculateExpiresAt(response.expires_in),
-                refreshCallState: successCallState(response),
-              });
-              // Store result for browser hydration (SSR only, no-op in browser).
-              transferState.set(AUTH_TRANSFER_KEY, {
-                access_token: response.access_token,
-                expires_in: response.expires_in,
-              });
-              // Load user profile after successful refresh
-              userStore.initialize();
-            },
-            error: () => {
-              patchState(store, {
-                initialized: true,
-                accessToken: null,
-                expiresAt: null,
-              });
-              // Signal SSR failure to the browser.
-              transferState.set(AUTH_TRANSFER_KEY, null);
-            },
-          }),
-        ),
-        { defaultValue: undefined },
-      );
+      try {
+        const response: LoginOutput = await firstValueFrom(authService.refresh());
+
+        patchState(store, {
+          initialized: true,
+          accessToken: response.access_token,
+          expiresAt: calculateExpiresAt(response.expires_in),
+          refreshCallState: successCallState(response),
+        });
+
+        // Store result for browser hydration (SSR only, no-op in browser).
+        transferState.set(AUTH_TRANSFER_KEY, {
+          access_token: response.access_token,
+          expires_in: response.expires_in,
+        });
+
+        // Load user profile after successful refresh and wait for it during bootstrap.
+        await userStore.initialize();
+      } catch {
+        patchState(store, {
+          initialized: true,
+          accessToken: null,
+          expiresAt: null,
+        });
+        // Signal SSR failure to the browser.
+        transferState.set(AUTH_TRANSFER_KEY, null);
+      }
     },
     //#endregion
 

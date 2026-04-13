@@ -1,16 +1,19 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { EMPTY } from 'rxjs';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { FacilityEditPage } from './facility-edit.component';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import { ActiveFacilityStore, FacilityStore } from '@features/organization/features/facilities/state';
+import { EMPTY } from 'rxjs';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
-import type { OrganizationOutput } from '@features/organization/models';
+import {
+  ActiveFacilityStore,
+  FacilityStore,
+} from '@features/organization/features/facilities/state';
 import type { FacilityFormValues } from '@features/organization/features/facilities/ui/forms';
+import type { OrganizationOutput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import { FacilityEditPage } from './facility-edit.component';
 
 const MOCK_ORG: OrganizationOutput = {
   id: 'org-1',
@@ -41,7 +44,10 @@ describe('FacilityEditPage', () => {
 
   const mockFacilityStore = {
     isUpdating: signal<boolean>(false),
-    updateOperation: signal<{ status: string; data: FacilityOutput | null }>({ status: 'idle', data: null }),
+    updateOperation: signal<{ status: string; data: FacilityOutput | null }>({
+      status: 'idle',
+      data: null,
+    }),
     update: vi.fn(),
   };
 
@@ -149,4 +155,3 @@ describe('FacilityEditPage', () => {
     expect(mockFacilityStore.update).not.toHaveBeenCalled();
   });
 });
-

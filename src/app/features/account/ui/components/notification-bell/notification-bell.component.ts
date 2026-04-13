@@ -8,13 +8,13 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { Popover, PopoverModule, type PopoverPassThroughOptions } from 'primeng/popover';
-import { NotificationStore } from '@features/account/state';
 import type { NotificationFilter } from '@features/account/models';
-import { NotificationBellTrigger } from './notification-bell-trigger/notification-bell-trigger.component';
-import { NotificationBellHeader } from './notification-bell-header/notification-bell-header.component';
+import { NotificationStore } from '@features/account/state';
 import { NotificationBellFilter } from './notification-bell-filter/notification-bell-filter.component';
-import { NotificationBellList } from './notification-bell-list/notification-bell-list.component';
 import { NotificationBellFooter } from './notification-bell-footer/notification-bell-footer.component';
+import { NotificationBellHeader } from './notification-bell-header/notification-bell-header.component';
+import { NotificationBellList } from './notification-bell-list/notification-bell-list.component';
+import { NotificationBellTrigger } from './notification-bell-trigger/notification-bell-trigger.component';
 
 /**
  * Component NotificationBell
@@ -78,8 +78,7 @@ export class NotificationBell {
    *
    * @type {Signal<Popover>}
    */
-  protected readonly popover: Signal<Popover> =
-    viewChild.required<Popover>('popover');
+  protected readonly popover: Signal<Popover> = viewChild.required<Popover>('popover');
 
   /**
    * Property popoverPt

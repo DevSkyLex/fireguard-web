@@ -36,7 +36,8 @@ const TEST_ROUTES: Routes = [
             path: 'notifications/:id',
             component: TestPage,
             resolve: {
-              breadcrumb: (route: ActivatedRouteSnapshot) => `Notification ${route.paramMap.get('id')}`,
+              breadcrumb: (route: ActivatedRouteSnapshot) =>
+                `Notification ${route.paramMap.get('id')}`,
             },
           },
           {
@@ -56,10 +57,7 @@ describe('BreadcrumbService', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [
-        BreadcrumbService,
-        provideRouter(TEST_ROUTES),
-      ],
+      providers: [BreadcrumbService, provideRouter(TEST_ROUTES)],
     });
 
     service = TestBed.inject(BreadcrumbService);
@@ -122,8 +120,9 @@ describe('BreadcrumbService', () => {
       firstChild: null,
     } as unknown as ActivatedRoute;
 
-    const items = (service as unknown as { buildBreadcrumbs: (route: ActivatedRoute) => unknown[] })
-      .buildBreadcrumbs(unsafeRoute);
+    const items = (
+      service as unknown as { buildBreadcrumbs: (route: ActivatedRoute) => unknown[] }
+    ).buildBreadcrumbs(unsafeRoute);
 
     expect(items).toEqual([]);
   });

@@ -1,9 +1,9 @@
 import { inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import type { MaybeAsync, ResolveFn } from '@angular/router';
+import { filter, first, map, type Observable } from 'rxjs';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { filter, first, map, type Observable } from 'rxjs';
 
 /**
  * Resolver organizationTitleResolver
@@ -52,7 +52,9 @@ export const organizationTitleResolver: ResolveFn<string> = (): MaybeAsync<strin
   if (organization) return organization.name;
 
   // Otherwise, wait for the organizationResolver to populate the store.
-  const organization$: Observable<string> = toObservable(activeOrganizationStore.selectedOrganization).pipe(
+  const organization$: Observable<string> = toObservable(
+    activeOrganizationStore.selectedOrganization,
+  ).pipe(
     filter((org: OrganizationOutput | null): org is OrganizationOutput => org !== null),
     map((org: OrganizationOutput) => org.name),
     first(),

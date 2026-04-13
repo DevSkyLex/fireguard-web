@@ -1,9 +1,5 @@
 import type { HydraItem } from '@core/models/api';
-import type {
-  OrganizationDashboardEquipmentStatus,
-  OrganizationDashboardEquipmentType,
-  OrganizationDashboardGranularity,
-} from './organization-dashboard-query-options.interface';
+import type { FacilityType } from '@features/organization/features/facilities/models';
 import type {
   InspectionResult,
   InspectionStatus,
@@ -13,8 +9,12 @@ import type {
   NonConformitySeverity,
   NonConformityStatus,
 } from '@features/organization/features/inspections/models';
-import type { FacilityType } from '@features/organization/features/facilities/models';
 import type { OrganizationDashboardPeriod } from './organization-dashboard-output.interface';
+import type {
+  OrganizationDashboardEquipmentStatus,
+  OrganizationDashboardEquipmentType,
+  OrganizationDashboardGranularity,
+} from './organization-dashboard-query-options.interface';
 
 /**
  * Type OrganizationDashboardTrendKey

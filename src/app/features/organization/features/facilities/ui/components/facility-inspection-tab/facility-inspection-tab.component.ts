@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,11 +9,14 @@ import {
   type InputSignal,
   type Signal,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { SkeletonModule } from 'primeng/skeleton';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import type {
+  InspectionOutput,
+  InspectionResult,
+  InspectionStatus,
+} from '@features/organization/features/inspections/models';
 import { InspectionStore } from '@features/organization/features/inspections/state';
-import type { InspectionOutput, InspectionResult, InspectionStatus } from '@features/organization/features/inspections/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
  * Component FacilityInspectionTab
@@ -30,10 +34,7 @@ import type { InspectionOutput, InspectionResult, InspectionStatus } from '@feat
  */
 @Component({
   selector: 'app-facility-inspection-tab',
-  imports: [
-    DatePipe,
-    SkeletonModule,
-  ],
+  imports: [DatePipe, SkeletonModule],
   providers: [InspectionStore],
   templateUrl: './facility-inspection-tab.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,8 +86,7 @@ export class FacilityInspectionTab {
    *
    * @type {InspectionStore}
    */
-  protected readonly store: InspectionStore =
-    inject<InspectionStore>(InspectionStore);
+  protected readonly store: InspectionStore = inject<InspectionStore>(InspectionStore);
 
   /**
    * Property inspections
@@ -100,8 +100,9 @@ export class FacilityInspectionTab {
    *
    * @type {Signal<ReadonlyArray<InspectionOutput>>}
    */
-  protected readonly inspections: Signal<ReadonlyArray<InspectionOutput>> =
-    computed<ReadonlyArray<InspectionOutput>>(() => this.store.inspections());
+  protected readonly inspections: Signal<ReadonlyArray<InspectionOutput>> = computed<
+    ReadonlyArray<InspectionOutput>
+  >(() => this.store.inspections());
 
   /**
    * Property isLoading
@@ -116,8 +117,9 @@ export class FacilityInspectionTab {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isLoading: Signal<boolean> =
-    computed<boolean>(() => this.store.isLoadingInspections());
+  protected readonly isLoading: Signal<boolean> = computed<boolean>(() =>
+    this.store.isLoadingInspections(),
+  );
 
   /**
    * Property isEmpty
@@ -132,8 +134,7 @@ export class FacilityInspectionTab {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isEmpty: Signal<boolean> =
-    computed<boolean>(() => this.store.isEmpty());
+  protected readonly isEmpty: Signal<boolean> = computed<boolean>(() => this.store.isEmpty());
 
   /**
    * Property statusColors
@@ -227,7 +228,8 @@ export class FacilityInspectionTab {
   public constructor() {
     effect(() => {
       const facilityId: string = this.facilityId();
-      const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+      const organizationId: string | undefined =
+        this.activeOrganizationStore.selectedOrganization()?.id;
       if (organizationId && facilityId) {
         this.store.load({
           organizationId,

@@ -1,5 +1,9 @@
-import type { NotificationFilter, NotificationOutput, NotificationTypeOutput } from '@features/account/models';
 import type { CallState } from '@core/state/request-state';
+import type {
+  NotificationFilter,
+  NotificationOutput,
+  NotificationTypeOutput,
+} from '@features/account/models';
 
 /**
  * Interface NotificationStoreState

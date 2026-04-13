@@ -2,14 +2,17 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { USER_IDENTITY_PORT } from '@features/account/ports';
-import type { UserInfoOutput } from '@features/auth/models';
-import { AuthStore } from '@features/auth';
-import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import type { MenuItem } from 'primeng/api';
-import { DashboardSidebarNavigationService, DashboardSidebarService } from '@layouts/dashboard-layout/services';
-import { DashboardLayoutSidebar } from './dashboard-layout-sidebar.component';
+import { USER_IDENTITY_PORT } from '@features/account/ports';
+import { AuthStore } from '@features/auth';
+import type { UserInfoOutput } from '@features/auth/models';
+import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
+import {
+  DashboardSidebarNavigationService,
+  DashboardSidebarService,
+} from '@layouts/dashboard-layout/services';
 import { DashboardLayoutSidebarNavigation } from './dashboard-layout-sidebar-navigation/dashboard-layout-sidebar-navigation.component';
+import { DashboardLayoutSidebar } from './dashboard-layout-sidebar.component';
 
 const MOCK_ORG = {
   id: 'org-1',
@@ -79,12 +82,16 @@ describe('DashboardLayoutSidebar', () => {
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-header'))).toBeTruthy();
-    expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-navigation'))).toBeTruthy();
+    expect(
+      fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-navigation')),
+    ).toBeTruthy();
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-footer'))).toBeTruthy();
 
     const panelMenus = fixture.debugElement.queryAll(By.css('p-panelmenu'));
     expect(panelMenus.length).toBe(2);
-    expect(fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length).toBe(1);
+    expect(
+      fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
+    ).toBe(1);
 
     const textContent = fixture.nativeElement.textContent;
     expect(textContent).toContain('Fireguard');
@@ -181,7 +188,10 @@ describe('DashboardLayoutSidebar', () => {
     const closeSpy = vi.spyOn(sidebarService, 'close');
     const navigation = fixture.debugElement.query(By.directive(DashboardLayoutSidebarNavigation))
       .componentInstance as unknown as {
-      readonly onItemClick: (item: { readonly routerLink?: string; readonly items?: readonly unknown[] }) => void;
+      readonly onItemClick: (item: {
+        readonly routerLink?: string;
+        readonly items?: readonly unknown[];
+      }) => void;
     };
 
     navigation.onItemClick({ routerLink: '/organizations/org-1' });
@@ -228,7 +238,9 @@ describe('DashboardLayoutSidebar', () => {
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('[data-testid="collapsed-flyout"]'))).toBeFalsy();
-    expect(fixture.debugElement.query(By.css('[data-testid="collapsed-flyout-backdrop"]'))).toBeFalsy();
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="collapsed-flyout-backdrop"]')),
+    ).toBeFalsy();
     expect(fixture.debugElement.query(By.css('p-menu'))).toBeFalsy();
   });
 });

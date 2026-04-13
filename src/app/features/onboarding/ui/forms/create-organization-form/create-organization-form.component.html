@@ -1,8 +1,9 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-8 w-full">
-
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
   <!-- Organization Name Field -->
   <div class="flex flex-col gap-2">
-    <label for="organizationName" class="text-sm font-medium text-surface-700 dark:text-surface-300">Organization Name</label>
+    <label for="organizationName" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      >Organization Name</label
+    >
     <p-iconfield>
       <p-inputicon class="pi pi-building" />
       <input
@@ -15,7 +16,7 @@
     </p-iconfield>
 
     @if (form.controls.organizationName.invalid && form.controls.organizationName.touched) {
-      <p-message severity="error" variant="simple" >
+      <p-message severity="error" variant="simple">
         @if (form.controls.organizationName.hasError('required')) {
           <span>Organization name is required.</span>
         }

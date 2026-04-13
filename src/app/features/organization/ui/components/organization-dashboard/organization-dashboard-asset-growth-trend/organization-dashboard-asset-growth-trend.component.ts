@@ -7,21 +7,21 @@ import {
   type Signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { PrimeIcons } from 'primeng/api';
+import type { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ChartModule } from 'primeng/chart';
 import { DatePickerModule } from 'primeng/datepicker';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { InputGroupModule } from 'primeng/inputgroup';
-import { PrimeIcons } from 'primeng/api';
+import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { Menu, MenuModule } from 'primeng/menu';
-import type { MenuItem } from 'primeng/api';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToggleButtonModule } from 'primeng/togglebutton';
-import { TrendCard } from '@shared/components/trend-card';
-import { ActiveOrganizationStore } from '@features/organization/state';
 import type { OrganizationOutput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
 import { OrganizationDashboardAssetGrowthStore } from '@features/organization/state/organization-dashboard';
+import { TrendCard } from '@shared/components/trend-card';
 
 /**
  * Component OrganizationDashboardAssetGrowthTrend
@@ -170,16 +170,12 @@ export class OrganizationDashboardAssetGrowthTrend {
       {
         label: 'View all equipment',
         icon: PrimeIcons.SHIELD,
-        routerLink: organizationId
-          ? ['/organizations', organizationId, 'equipment']
-          : null,
+        routerLink: organizationId ? ['/organizations', organizationId, 'equipment'] : null,
       },
       {
         label: 'View all facilities',
         icon: PrimeIcons.BUILDING,
-        routerLink: organizationId
-          ? ['/organizations', organizationId, 'facilities']
-          : null,
+        routerLink: organizationId ? ['/organizations', organizationId, 'facilities'] : null,
       },
     ];
   });

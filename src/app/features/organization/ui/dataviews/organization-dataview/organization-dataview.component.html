@@ -1,13 +1,10 @@
-<div class="flex flex-col h-full bg-surface-0 dark:bg-surface-900">
-  <p-menu
-    #rowMenu
-    [model]="rowMenuItems()"
-    [popup]="true"
-    appendTo="body"
-  />
+<div class="flex h-full flex-col bg-surface-0 dark:bg-surface-900">
+  <p-menu #rowMenu [model]="rowMenuItems()" [popup]="true" appendTo="body" />
 
   <!-- Caption -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-b border-surface-200 dark:border-surface-700">
+  <div
+    class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-700"
+  >
     <div class="flex items-center gap-2">
       <h2 class="font-semibold">Organizations</h2>
     </div>
@@ -66,8 +63,11 @@
     [showCurrentPageReport]="true"
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} organizations"
     paginatorStyleClass="border-t border-surface-200 dark:border-surface-700 mt-auto rounded-none"
-    [pt]="{ root: { class: 'flex flex-col flex-1 min-h-0' }, pcPaginator: { root: { class: 'rounded-none justify-end' } } }"
-    class="flex-1 min-h-0 flex flex-col"
+    [pt]="{
+      root: { class: 'flex flex-col flex-1 min-h-0' },
+      pcPaginator: { root: { class: 'rounded-none justify-end' } },
+    }"
+    class="flex min-h-0 flex-1 flex-col"
   >
     <!-- List layout -->
     <ng-template #list let-items>
@@ -75,43 +75,52 @@
         @if (loading(); as loading) {
           @for (_ of skeletonItems; track $index) {
             <div class="flex items-center justify-between px-4 py-3">
-              <div class="flex items-center gap-3 min-w-0">
+              <div class="flex min-w-0 items-center gap-3">
                 <p-skeleton shape="square" size="2.5rem" />
                 <div class="flex flex-col gap-1.5">
                   <p-skeleton width="10rem" height="0.875rem" />
                   <p-skeleton width="6rem" height="0.75rem" />
                 </div>
               </div>
-              <div class="flex items-center gap-4 shrink-0 ml-4">
-                <p-skeleton width="5rem" height="1.5rem" borderRadius="0.375rem" styleClass="hidden sm:block" />
+              <div class="ml-4 flex shrink-0 items-center gap-4">
+                <p-skeleton
+                  width="5rem"
+                  height="1.5rem"
+                  borderRadius="0.375rem"
+                  styleClass="hidden sm:block"
+                />
                 <p-skeleton width="4rem" height="0.875rem" styleClass="hidden sm:block" />
                 <p-skeleton shape="circle" size="2rem" />
               </div>
             </div>
           }
-        }
-        @else {
+        } @else {
           @for (organization of items; track organization.id) {
-            <div class="flex items-center justify-between px-4 py-3 hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors">
-              <div class="flex items-center gap-3 min-w-0">
+            <div
+              class="flex items-center justify-between px-4 py-3 transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
+            >
+              <div class="flex min-w-0 items-center gap-3">
                 <p-avatar
                   [label]="organization.name.charAt(0).toUpperCase()"
                   shape="square"
                   size="normal"
                 />
-                <div class="flex flex-col min-w-0">
-                  <span class="font-medium text-surface-900 dark:text-surface-100 truncate">
+                <div class="flex min-w-0 flex-col">
+                  <span class="truncate font-medium text-surface-900 dark:text-surface-100">
                     {{ organization.name }}
                   </span>
-                  <span class="text-xs text-surface-500 truncate">/{{ organization.slug }}</span>
+                  <span class="truncate text-xs text-surface-500">/{{ organization.slug }}</span>
                 </div>
               </div>
 
-              <div class="flex items-center gap-4 shrink-0 ml-4">
-                <p-tag class="rounded-md text-sm bg-surface-0 border border-surface-200" severity="secondary">
+              <div class="ml-4 flex shrink-0 items-center gap-4">
+                <p-tag
+                  class="rounded-md border border-surface-200 bg-surface-0 text-sm"
+                  severity="secondary"
+                >
                   <div class="flex items-center gap-2">
                     <div
-                      class="w-2 h-2 rounded-full"
+                      class="h-2 w-2 rounded-full"
                       [class.bg-green-500]="organization.status === 'active'"
                       [class.bg-red-500]="organization.status === 'inactive'"
                     ></div>
@@ -119,7 +128,7 @@
                   </div>
                 </p-tag>
 
-                <span class="text-sm text-surface-500 dark:text-surface-400 hidden sm:block">
+                <span class="hidden text-sm text-surface-500 sm:block dark:text-surface-400">
                   {{ organization.createdAt | date: 'mediumDate' }}
                 </span>
 
@@ -139,10 +148,12 @@
 
     <!-- Grid layout -->
     <ng-template #grid let-items>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
+      <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         @if (loading(); as loading) {
           @for (_ of skeletonItems; track $index) {
-            <div class="flex flex-col gap-3 p-4 rounded-lg border border-surface-200 dark:border-surface-700">
+            <div
+              class="flex flex-col gap-3 rounded-lg border border-surface-200 p-4 dark:border-surface-700"
+            >
               <div class="flex items-start justify-between">
                 <p-skeleton shape="square" size="3rem" />
                 <p-skeleton shape="circle" size="2rem" />
@@ -151,16 +162,19 @@
                 <p-skeleton width="8rem" height="0.875rem" />
                 <p-skeleton width="5rem" height="0.75rem" />
               </div>
-              <div class="flex items-center justify-between pt-2 border-t border-surface-100 dark:border-surface-800">
+              <div
+                class="flex items-center justify-between border-t border-surface-100 pt-2 dark:border-surface-800"
+              >
                 <p-skeleton width="4.5rem" height="1.25rem" borderRadius="0.375rem" />
                 <p-skeleton width="4rem" height="0.75rem" />
               </div>
             </div>
           }
-        }
-        @else {
+        } @else {
           @for (organization of items; track organization.id) {
-            <div class="flex flex-col gap-3 p-4 rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 hover:shadow-md transition-shadow">
+            <div
+              class="flex flex-col gap-3 rounded-lg border border-surface-200 bg-surface-0 p-4 transition-shadow hover:shadow-md dark:border-surface-700 dark:bg-surface-900"
+            >
               <div class="flex items-start justify-between">
                 <p-avatar
                   [label]="organization.name.charAt(0).toUpperCase()"
@@ -176,25 +190,32 @@
                 />
               </div>
 
-              <div class="flex flex-col gap-1 min-w-0">
-                <span class="font-semibold text-surface-900 dark:text-surface-100 truncate">
+              <div class="flex min-w-0 flex-col gap-1">
+                <span class="truncate font-semibold text-surface-900 dark:text-surface-100">
                   {{ organization.name }}
                 </span>
-                <span class="text-xs text-surface-500 truncate">/{{ organization.slug }}</span>
+                <span class="truncate text-xs text-surface-500">/{{ organization.slug }}</span>
               </div>
 
-              <div class="flex items-center justify-between mt-auto pt-2 border-t border-surface-100 dark:border-surface-800">
-                <p-tag class="rounded-md text-xs bg-surface-0 border border-surface-200" severity="secondary">
+              <div
+                class="mt-auto flex items-center justify-between border-t border-surface-100 pt-2 dark:border-surface-800"
+              >
+                <p-tag
+                  class="rounded-md border border-surface-200 bg-surface-0 text-xs"
+                  severity="secondary"
+                >
                   <div class="flex items-center gap-1.5">
                     <div
-                      class="w-1.5 h-1.5 rounded-full"
+                      class="h-1.5 w-1.5 rounded-full"
                       [class.bg-green-500]="organization.status === 'active'"
                       [class.bg-red-500]="organization.status === 'inactive'"
                     ></div>
                     <span class="font-semibold">{{ organization.status | titlecase }}</span>
                   </div>
                 </p-tag>
-                <span class="text-xs text-surface-400">{{ organization.createdAt | date: 'mediumDate' }}</span>
+                <span class="text-xs text-surface-400">{{
+                  organization.createdAt | date: 'mediumDate'
+                }}</span>
               </div>
             </div>
           }
@@ -206,7 +227,9 @@
     <ng-template #emptymessage>
       <div class="flex flex-col items-center gap-3 py-16">
         <i class="pi pi-building text-6xl text-surface-400"></i>
-        <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">No organizations found</h3>
+        <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
+          No organizations found
+        </h3>
         <span class="text-sm text-surface-500">
           Try adjusting your search or filter to find what you're looking for.
         </span>

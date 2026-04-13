@@ -15,11 +15,11 @@ import {
   Validators,
 } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import type { ForgotPasswordFormData } from './forgot-password-form-data.type';
 import type { ForgotPasswordFormValues } from './forgot-password-form-values.type';
 
@@ -62,8 +62,7 @@ export class ForgotPasswordForm {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly loading: InputSignal<boolean> =
-    input<boolean>(false);
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property formBuilder
@@ -94,10 +93,7 @@ export class ForgotPasswordForm {
    */
   protected readonly form: FormGroup<ForgotPasswordFormData> =
     this.formBuilder.group<ForgotPasswordFormData>({
-      email: this.formBuilder.control<string>('', [
-        Validators.required,
-        Validators.email,
-      ]),
+      email: this.formBuilder.control<string>('', [Validators.required, Validators.email]),
     });
 
   private readonly disableFormEffect = effect(() => {

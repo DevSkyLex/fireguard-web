@@ -21,8 +21,10 @@
  * };
  * ```
  */
-export type HydraContext = string | {
-  readonly '@vocab': string;
-  readonly hydra: 'http://www.w3.org/ns/hydra/core#';
-  readonly [key: string]: unknown;
-};
+export type HydraContext =
+  | string
+  | {
+      readonly '@vocab': string;
+      readonly hydra: 'http://www.w3.org/ns/hydra/core#';
+      readonly [key: string]: unknown;
+    };

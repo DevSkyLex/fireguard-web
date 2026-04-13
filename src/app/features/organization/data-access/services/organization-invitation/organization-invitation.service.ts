@@ -65,7 +65,10 @@ export class OrganizationInvitationService extends HydraApiService {
    *
    * @return {Observable<OrganizationInvitationOutput>} An observable emitting the created invitation details.
    */
-  public invite(organizationId: string, input: InviteOrganizationMemberInput): Observable<OrganizationInvitationOutput> {
+  public invite(
+    organizationId: string,
+    input: InviteOrganizationMemberInput,
+  ): Observable<OrganizationInvitationOutput> {
     return this.post<InviteOrganizationMemberInput, OrganizationInvitationOutput>(
       `/api/organizations/${organizationId}/invitations`,
       input,

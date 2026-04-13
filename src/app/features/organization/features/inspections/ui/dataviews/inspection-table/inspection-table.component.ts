@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,22 +16,21 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { DataViewModule, type DataViewLazyLoadEvent } from 'primeng/dataview';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
-import { MenuItem, PrimeIcons } from 'primeng/api';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TagModule } from 'primeng/tag';
-import type { InspectionOutput } from '@features/organization/features/inspections/models';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/services/hydra-api';
+import type { InspectionOutput } from '@features/organization/features/inspections/models';
 
 function toDisplayLabel(value: string | null | undefined): string {
   if (!value) return '';
@@ -107,8 +107,7 @@ export class InspectionTable implements OnInit {
    *
    * @type {InputSignal<number>}
    */
-  public readonly total: InputSignal<number> =
-    input.required<number>();
+  public readonly total: InputSignal<number> = input.required<number>();
 
   /**
    * Input loading
@@ -122,8 +121,7 @@ export class InspectionTable implements OnInit {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly loading: InputSignal<boolean> =
-    input.required<boolean>();
+  public readonly loading: InputSignal<boolean> = input.required<boolean>();
 
   /**
    * Input empty
@@ -137,8 +135,7 @@ export class InspectionTable implements OnInit {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly empty: InputSignal<boolean> =
-    input.required<boolean>();
+  public readonly empty: InputSignal<boolean> = input.required<boolean>();
 
   /**
    * Input initialPage
@@ -154,8 +151,10 @@ export class InspectionTable implements OnInit {
    *
    * @type {InputSignalWithTransform<number, unknown>}
    */
-  public readonly initialPage: InputSignalWithTransform<number, unknown> =
-    input<number, unknown>(1, { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) });
+  public readonly initialPage: InputSignalWithTransform<number, unknown> = input<number, unknown>(
+    1,
+    { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) },
+  );
   //#endregion
 
   //#region Outputs
@@ -172,8 +171,7 @@ export class InspectionTable implements OnInit {
    *
    * @type {OutputEmitterRef<RequestOptions>}
    */
-  public readonly load: OutputEmitterRef<RequestOptions> =
-    output<RequestOptions>();
+  public readonly load: OutputEmitterRef<RequestOptions> = output<RequestOptions>();
 
   /**
    * Output pageChange
@@ -189,8 +187,7 @@ export class InspectionTable implements OnInit {
    *
    * @type {OutputEmitterRef<number>}
    */
-  public readonly pageChange: OutputEmitterRef<number> =
-    output<number>();
+  public readonly pageChange: OutputEmitterRef<number> = output<number>();
 
   /**
    * Output add
@@ -277,8 +274,10 @@ export class InspectionTable implements OnInit {
    *
    * @type {FormControl<'list' | 'grid'>}
    */
-  protected readonly layoutControl: FormControl<'list' | 'grid'> =
-    new FormControl<'list' | 'grid'>('list', { nonNullable: true });
+  protected readonly layoutControl: FormControl<'list' | 'grid'> = new FormControl<'list' | 'grid'>(
+    'list',
+    { nonNullable: true },
+  );
 
   /**
    * Property layout
@@ -292,10 +291,9 @@ export class InspectionTable implements OnInit {
    *
    * @type {Signal<'list' | 'grid'>}
    */
-  protected readonly layout: Signal<'list' | 'grid'> = toSignal(
-    this.layoutControl.valueChanges,
-    { initialValue: 'list' },
-  );
+  protected readonly layout: Signal<'list' | 'grid'> = toSignal(this.layoutControl.valueChanges, {
+    initialValue: 'list',
+  });
 
   /**
    * Property layoutOptions
@@ -326,8 +324,9 @@ export class InspectionTable implements OnInit {
    *
    * @type {FormControl<string>}
    */
-  protected readonly searchControl: FormControl<string> =
-    new FormControl<string>('', { nonNullable: true });
+  protected readonly searchControl: FormControl<string> = new FormControl<string>('', {
+    nonNullable: true,
+  });
 
   /**
    * Property toolbarActions
@@ -341,15 +340,13 @@ export class InspectionTable implements OnInit {
    *
    * @type {Signal<MenuItem[]>}
    */
-  protected readonly toolbarActions: Signal<MenuItem[]> = computed(
-    (): MenuItem[] => [
-      {
-        label: 'Refresh',
-        icon: PrimeIcons.REFRESH,
-        command: (): void => this.onRefresh(),
-      },
-    ],
-  );
+  protected readonly toolbarActions: Signal<MenuItem[]> = computed((): MenuItem[] => [
+    {
+      label: 'Refresh',
+      icon: PrimeIcons.REFRESH,
+      command: (): void => this.onRefresh(),
+    },
+  ]);
 
   /**
    * Property lastLazyEvent
@@ -398,11 +395,7 @@ export class InspectionTable implements OnInit {
    */
   public constructor() {
     this.searchControl.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntilDestroyed(),
-      )
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(() => this.reload());
 
     effect(() => {
@@ -581,10 +574,14 @@ export class InspectionTable implements OnInit {
    */
   protected getInspectionIcon(result: InspectionOutput['result']): string {
     switch (result) {
-      case 'pass': return PrimeIcons.CHECK_CIRCLE;
-      case 'fail': return PrimeIcons.TIMES_CIRCLE;
-      case 'partial': return PrimeIcons.MINUS_CIRCLE;
-      default: return PrimeIcons.CLIPBOARD;
+      case 'pass':
+        return PrimeIcons.CHECK_CIRCLE;
+      case 'fail':
+        return PrimeIcons.TIMES_CIRCLE;
+      case 'partial':
+        return PrimeIcons.MINUS_CIRCLE;
+      default:
+        return PrimeIcons.CLIPBOARD;
     }
   }
 
@@ -602,12 +599,18 @@ export class InspectionTable implements OnInit {
    *
    * @returns {'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'}
    */
-  protected getResultSeverity(result: InspectionOutput['result']): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+  protected getResultSeverity(
+    result: InspectionOutput['result'],
+  ): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
     switch (result) {
-      case 'pass': return 'success';
-      case 'fail': return 'danger';
-      case 'partial': return 'warn';
-      default: return 'secondary';
+      case 'pass':
+        return 'success';
+      case 'fail':
+        return 'danger';
+      case 'partial':
+        return 'warn';
+      default:
+        return 'secondary';
     }
   }
 
@@ -625,12 +628,18 @@ export class InspectionTable implements OnInit {
    *
    * @returns {'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'}
    */
-  protected getStatusSeverity(status: InspectionOutput['status']): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+  protected getStatusSeverity(
+    status: InspectionOutput['status'],
+  ): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
     switch (status) {
-      case 'draft': return 'info';
-      case 'submitted': return 'warn';
-      case 'closed': return 'secondary';
-      default: return 'secondary';
+      case 'draft':
+        return 'info';
+      case 'submitted':
+        return 'warn';
+      case 'closed':
+        return 'secondary';
+      default:
+        return 'secondary';
     }
   }
 

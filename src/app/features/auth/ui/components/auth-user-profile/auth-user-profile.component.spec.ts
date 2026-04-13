@@ -2,9 +2,9 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { Panel } from 'primeng/panel';
 import { USER_IDENTITY_PORT } from '@features/account/ports';
 import { AuthStore } from '@features/auth';
-import { Panel } from 'primeng/panel';
 import { AuthUserProfile } from './auth-user-profile.component';
 
 describe('AuthUserProfile', () => {
@@ -69,8 +69,12 @@ describe('AuthUserProfile', () => {
     fixture.detectChanges();
 
     expect(panelInstance.collapsed).toBe(false);
-    expect(fixture.debugElement.query(By.css('[data-testid="auth-user-profile-settings"]'))).toBeTruthy();
-    expect(fixture.debugElement.query(By.css('[data-testid="auth-user-profile-logout"]'))).toBeTruthy();
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="auth-user-profile-settings"]')),
+    ).toBeTruthy();
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="auth-user-profile-logout"]')),
+    ).toBeTruthy();
   });
 
   it('should trigger logout from user action menu', () => {
@@ -81,7 +85,9 @@ describe('AuthUserProfile', () => {
     trigger.nativeElement.click();
     fixture.detectChanges();
 
-    const logoutButton = fixture.debugElement.query(By.css('[data-testid="auth-user-profile-logout"]'));
+    const logoutButton = fixture.debugElement.query(
+      By.css('[data-testid="auth-user-profile-logout"]'),
+    );
     logoutButton.nativeElement.click();
 
     expect(mockAuthStore.logout).toHaveBeenCalledTimes(1);
@@ -101,7 +107,9 @@ describe('AuthUserProfile', () => {
     const fixture = TestBed.createComponent(AuthUserProfile);
     fixture.detectChanges();
 
-    const skeletonState = fixture.debugElement.query(By.css('[data-testid="auth-user-profile-skeleton"]'));
+    const skeletonState = fixture.debugElement.query(
+      By.css('[data-testid="auth-user-profile-skeleton"]'),
+    );
     const skeletons = fixture.debugElement.queryAll(By.css('p-skeleton'));
     const avatar = fixture.debugElement.query(By.css('p-avatar'));
 

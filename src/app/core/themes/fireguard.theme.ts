@@ -35,7 +35,7 @@ export const FireguardTheme: Preset = definePreset(Aura, {
       700: '{blue.700}',
       800: '{blue.800}',
       900: '{blue.900}',
-      950: '{blue.950}'
+      950: '{blue.950}',
     },
     colorScheme: {
       dark: {
@@ -45,9 +45,9 @@ export const FireguardTheme: Preset = definePreset(Aura, {
         },
         content: {
           borderColor: '{surface.800}',
-        }
-      }
-    }
+        },
+      },
+    },
   },
   components: {
     datatable: {
@@ -58,9 +58,9 @@ export const FireguardTheme: Preset = definePreset(Aura, {
         dark: {
           row: {
             hoverBackground: '{surface.800}',
-          }
-        }
-      }
-    }
-  }
+          },
+        },
+      },
+    },
+  },
 });

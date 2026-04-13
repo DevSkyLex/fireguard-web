@@ -1,5 +1,5 @@
-import type { LoginOutput, LogoutOutput } from '@features/auth/models';
 import type { CallState } from '@core/state/request-state';
+import type { LoginOutput, LogoutOutput } from '@features/auth/models';
 
 /**
  * Interface AuthState

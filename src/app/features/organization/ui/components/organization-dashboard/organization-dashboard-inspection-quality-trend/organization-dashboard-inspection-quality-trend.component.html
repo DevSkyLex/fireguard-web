@@ -36,10 +36,7 @@
   <ng-template #content>
     <div class="h-72">
       @if (dashboardStore.isQueryLoading() && !dashboardStore.queryData()) {
-        <p-skeleton
-          height="100%"
-          class="w-full"
-        />
+        <p-skeleton height="100%" class="w-full" />
       } @else {
         <p-chart
           type="bar"
@@ -136,7 +133,10 @@
       >
         <ng-template #item let-option>
           <span class="flex items-center gap-2">
-            <span class="inline-block h-2 w-2 shrink-0 rounded-full" [style.background-color]="option.color"></span>
+            <span
+              class="inline-block h-2 w-2 shrink-0 rounded-full"
+              [style.background-color]="option.color"
+            ></span>
             {{ option.label }}
           </span>
         </ng-template>
@@ -144,7 +144,10 @@
           @let option = dashboardStore.selectedSeverityOption();
           @if (option) {
             <span class="flex items-center gap-2">
-              <span class="inline-block h-2 w-2 shrink-0 rounded-full" [style.background-color]="option.color"></span>
+              <span
+                class="inline-block h-2 w-2 shrink-0 rounded-full"
+                [style.background-color]="option.color"
+              ></span>
               {{ option.label }}
             </span>
           }
@@ -180,4 +183,3 @@
     </div>
   </ng-template>
 </app-trend-card>
-

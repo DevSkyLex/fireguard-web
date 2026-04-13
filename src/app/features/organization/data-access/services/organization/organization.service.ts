@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type { HydraCollection, OptionOutput } from '@core/models/api';
+import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
   OrganizationDashboardOutput,
   OrganizationDashboardQueryOptions,
@@ -60,7 +60,7 @@ export class OrganizationService extends HydraApiService {
    *
    * @description
    * Normalizes optional dashboard query parameters into the
-  * shared API request-options shape expected by HydraApiService.
+   * shared API request-options shape expected by HydraApiService.
    *
    * @access private
    * @since 1.1.0
@@ -161,10 +161,7 @@ export class OrganizationService extends HydraApiService {
    * @return {Observable<HydraCollection<OrganizationOutput>>} An observable emitting the organizations collection.
    */
   public list(options?: RequestOptions): Observable<HydraCollection<OrganizationOutput>> {
-    return this.getCollection<OrganizationOutput>(
-      OrganizationService.BASE_PATH,
-      options,
-    );
+    return this.getCollection<OrganizationOutput>(OrganizationService.BASE_PATH, options);
   }
 
   /**
@@ -192,7 +189,7 @@ export class OrganizationService extends HydraApiService {
    * @description
    * Permanently deletes the organization identified by `id`.
    * Named `remove` to avoid shadowing the protected `delete`
-  * method inherited from HydraApiService.
+   * method inherited from HydraApiService.
    *
    * @access public
    * @since 1.1.0
@@ -289,7 +286,7 @@ export class OrganizationService extends HydraApiService {
    * @since 1.1.0
    *
    * @param {string} organizationId - The ID of the organization.
-  * @param {OrganizationDashboardQueryOptions} [options] - Optional aggregate dashboard query parameters.
+   * @param {OrganizationDashboardQueryOptions} [options] - Optional aggregate dashboard query parameters.
    *
    * @return {Observable<OrganizationDashboardOutput>} An observable emitting the dashboard resource.
    */
@@ -315,7 +312,7 @@ export class OrganizationService extends HydraApiService {
    * @since 1.1.0
    *
    * @param {string} organizationId - The ID of the organization.
-  * @param {OrganizationDashboardInspectionTrendQueryOptions} [options] - Optional inspections trend query parameters.
+   * @param {OrganizationDashboardInspectionTrendQueryOptions} [options] - Optional inspections trend query parameters.
    *
    * @return {Observable<OrganizationDashboardTrendOutput>} An observable emitting the inspections trend resource.
    */
@@ -341,7 +338,7 @@ export class OrganizationService extends HydraApiService {
    * @since 1.1.0
    *
    * @param {string} organizationId - The ID of the organization.
-  * @param {OrganizationDashboardNonConformityTrendQueryOptions} [options] - Optional opened non-conformities trend query parameters.
+   * @param {OrganizationDashboardNonConformityTrendQueryOptions} [options] - Optional opened non-conformities trend query parameters.
    *
    * @return {Observable<OrganizationDashboardTrendOutput>} An observable emitting the opened non-conformities trend resource.
    */
@@ -367,7 +364,7 @@ export class OrganizationService extends HydraApiService {
    * @since 1.1.0
    *
    * @param {string} organizationId - The ID of the organization.
-  * @param {OrganizationDashboardNonConformityTrendQueryOptions} [options] - Optional resolved non-conformities trend query parameters.
+   * @param {OrganizationDashboardNonConformityTrendQueryOptions} [options] - Optional resolved non-conformities trend query parameters.
    *
    * @return {Observable<OrganizationDashboardTrendOutput>} An observable emitting the resolved non-conformities trend resource.
    */
@@ -492,7 +489,9 @@ export class OrganizationService extends HydraApiService {
    *
    * @return {Observable<HydraCollection<OrganizationCountryOutput>>} An observable emitting the countries collection.
    */
-  public listCountries(options?: RequestOptions): Observable<HydraCollection<OrganizationCountryOutput>> {
+  public listCountries(
+    options?: RequestOptions,
+  ): Observable<HydraCollection<OrganizationCountryOutput>> {
     return this.getCollection<OrganizationCountryOutput>(
       `${OrganizationService.BASE_PATH}/countries`,
       options,
@@ -514,10 +513,7 @@ export class OrganizationService extends HydraApiService {
    * @return {Observable<HydraCollection<OptionOutput>>} An observable emitting the organization status options.
    */
   public listStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
-    return this.getCollection<OptionOutput>(
-      `${OrganizationService.BASE_PATH}/statuses`,
-      options,
-    );
+    return this.getCollection<OptionOutput>(`${OrganizationService.BASE_PATH}/statuses`, options);
   }
 
   /**
@@ -534,7 +530,9 @@ export class OrganizationService extends HydraApiService {
    *
    * @return {Observable<HydraCollection<OptionOutput>>} An observable emitting the invitation status options.
    */
-  public listInvitationStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
+  public listInvitationStatuses(
+    options?: RequestOptions,
+  ): Observable<HydraCollection<OptionOutput>> {
     return this.getCollection<OptionOutput>(
       `${OrganizationService.BASE_PATH}/invitation-statuses`,
       options,
@@ -557,7 +555,10 @@ export class OrganizationService extends HydraApiService {
    *
    * @return {Observable<HydraCollection<OrganizationLegalTypeOutput>>} An observable emitting the legal types collection.
    */
-  public listLegalTypes(countryCode?: string, options?: RequestOptions): Observable<HydraCollection<OrganizationLegalTypeOutput>> {
+  public listLegalTypes(
+    countryCode?: string,
+    options?: RequestOptions,
+  ): Observable<HydraCollection<OrganizationLegalTypeOutput>> {
     const mergedOptions: RequestOptions = {
       ...options,
       params: {

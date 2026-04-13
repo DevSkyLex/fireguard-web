@@ -1,8 +1,9 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-8 w-full">
-
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
   <!-- Facility Type -->
   <div class="flex flex-col gap-2">
-    <label for="type" class="text-sm font-medium text-surface-700 dark:text-surface-300">Type</label>
+    <label for="type" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      >Type</label
+    >
     <p-select
       id="type"
       formControlName="type"
@@ -24,7 +25,9 @@
 
   <!-- Name -->
   <div class="flex flex-col gap-2">
-    <label for="name" class="text-sm font-medium text-surface-700 dark:text-surface-300">Name</label>
+    <label for="name" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      >Name</label
+    >
     <p-iconfield>
       <p-inputicon class="pi pi-building" />
       <input
@@ -55,17 +58,11 @@
   <div class="flex flex-col gap-2">
     <label for="code" class="text-sm font-medium text-surface-700 dark:text-surface-300">
       Code
-      <span class="text-surface-400 font-normal">(optional)</span>
+      <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <p-iconfield>
       <p-inputicon class="pi pi-hashtag" />
-      <input
-        pInputText
-        id="code"
-        formControlName="code"
-        class="w-full"
-        placeholder="BLD-001"
-      />
+      <input pInputText id="code" formControlName="code" class="w-full" placeholder="BLD-001" />
     </p-iconfield>
   </div>
 
@@ -73,7 +70,7 @@
   <div class="flex flex-col gap-2">
     <label for="address" class="text-sm font-medium text-surface-700 dark:text-surface-300">
       Address
-      <span class="text-surface-400 font-normal">(optional)</span>
+      <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <p-iconfield>
       <p-inputicon class="pi pi-map-marker" />
@@ -90,9 +87,12 @@
   <!-- Parent Facility (create mode only) -->
   @if (!isEditMode) {
     <div class="flex flex-col gap-2">
-      <label for="parentFacilityId" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      <label
+        for="parentFacilityId"
+        class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      >
         Parent Facility
-        <span class="text-surface-400 font-normal">(optional)</span>
+        <span class="font-normal text-surface-400">(optional)</span>
       </label>
       <p-select
         id="parentFacilityId"
@@ -109,7 +109,7 @@
   }
 
   <!-- Actions -->
-  <div class="flex items-center gap-3 justify-end">
+  <div class="flex items-center justify-end gap-3">
     <p-button
       label="Cancel"
       severity="secondary"

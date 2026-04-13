@@ -1,6 +1,11 @@
 import { isPlatformServer } from '@angular/common';
+import {
+  type HttpEvent,
+  type HttpHandlerFn,
+  type HttpInterceptorFn,
+  type HttpRequest,
+} from '@angular/common/http';
 import { inject, PLATFORM_ID, REQUEST } from '@angular/core';
-import { type HttpEvent, type HttpHandlerFn, type HttpInterceptorFn, type HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 /**
@@ -31,8 +36,7 @@ export const ssrCookieForwardInterceptor: HttpInterceptorFn = (
    *
    * @var {object}
    */
-  const platformId: object =
-    inject<object>(PLATFORM_ID);
+  const platformId: object = inject<object>(PLATFORM_ID);
 
   /**
    * Constant incomingRequest
@@ -44,8 +48,7 @@ export const ssrCookieForwardInterceptor: HttpInterceptorFn = (
    *
    * @var {Request | null}
    */
-  const incomingRequest: Request | null =
-    inject<Request>(REQUEST, { optional: true });
+  const incomingRequest: Request | null = inject<Request>(REQUEST, { optional: true });
 
   // Browser runtime or missing SSR request context.
   if (!isPlatformServer(platformId) || !incomingRequest) {

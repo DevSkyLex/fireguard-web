@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type { HydraCollection, OptionOutput } from '@core/models/api';
+import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
   InspectionOutput,
   CreateInspectionInput,
@@ -66,7 +66,9 @@ export class InspectionService extends HydraApiService {
     return this.getCollection<OptionOutput>('/api/inspections/inspector-types', options);
   }
 
-  public listNonConformityStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
+  public listNonConformityStatuses(
+    options?: RequestOptions,
+  ): Observable<HydraCollection<OptionOutput>> {
     return this.getCollection<OptionOutput>('/api/non-conformities/statuses', options);
   }
 
@@ -98,14 +100,11 @@ export class InspectionService extends HydraApiService {
     if (options?.result) params['result'] = options.result;
     if (options?.status) params['status'] = options.status;
 
-    return this.getCollection<InspectionOutput>(
-      this.inspectionPath(organizationId),
-      {
-        page: options?.page,
-        itemsPerPage: options?.itemsPerPage,
-        params,
-      },
-    );
+    return this.getCollection<InspectionOutput>(this.inspectionPath(organizationId), {
+      page: options?.page,
+      itemsPerPage: options?.itemsPerPage,
+      params,
+    });
   }
 
   /**
@@ -123,13 +122,8 @@ export class InspectionService extends HydraApiService {
    *
    * @return {Observable<InspectionOutput>} An observable emitting the inspection details.
    */
-  public get(
-    organizationId: string,
-    inspectionId: string,
-  ): Observable<InspectionOutput> {
-    return this.getOne<InspectionOutput>(
-      this.inspectionPath(organizationId, inspectionId),
-    );
+  public get(organizationId: string, inspectionId: string): Observable<InspectionOutput> {
+    return this.getOne<InspectionOutput>(this.inspectionPath(organizationId, inspectionId));
   }
 
   /**
@@ -174,10 +168,7 @@ export class InspectionService extends HydraApiService {
    *
    * @return {Observable<InspectionOutput>} An observable emitting the submitted inspection details.
    */
-  public submit(
-    organizationId: string,
-    inspectionId: string,
-  ): Observable<InspectionOutput> {
+  public submit(organizationId: string, inspectionId: string): Observable<InspectionOutput> {
     return this.postAction<InspectionOutput>(
       `${this.inspectionPath(organizationId, inspectionId)}/submit`,
     );
@@ -199,10 +190,7 @@ export class InspectionService extends HydraApiService {
    *
    * @return {Observable<InspectionOutput>} An observable emitting the closed inspection details.
    */
-  public close(
-    organizationId: string,
-    inspectionId: string,
-  ): Observable<InspectionOutput> {
+  public close(organizationId: string, inspectionId: string): Observable<InspectionOutput> {
     return this.postAction<InspectionOutput>(
       `${this.inspectionPath(organizationId, inspectionId)}/close`,
     );

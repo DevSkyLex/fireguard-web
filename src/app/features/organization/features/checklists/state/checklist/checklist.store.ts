@@ -1,31 +1,11 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import {
-  patchState,
-  signalStore,
-  type,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
-import {
-  addEntity,
-  setAllEntities,
-  setEntity,
-  withEntities,
-} from '@ngrx/signals/entities';
+import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
+import { addEntity, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
-import { ChecklistService } from '@features/organization/features/checklists/data-access';
 import type { HydraCollection } from '@core/models/api';
-import type {
-  ChecklistOutput,
-  ChecklistListOptions,
-  CreateChecklistInput,
-} from '@features/organization/features/checklists/models';
-import { ActiveChecklistStore } from '../active-checklist/active-checklist.store';
-import type { ChecklistState } from './checklist-state.interface';
 import {
   errorCallState,
   idleCallState,
@@ -36,6 +16,14 @@ import {
   type CallState,
   type StoreError,
 } from '@core/state/request-state';
+import { ChecklistService } from '@features/organization/features/checklists/data-access';
+import type {
+  ChecklistOutput,
+  ChecklistListOptions,
+  CreateChecklistInput,
+} from '@features/organization/features/checklists/models';
+import { ActiveChecklistStore } from '../active-checklist/active-checklist.store';
+import type { ChecklistState } from './checklist-state.interface';
 import { checklistStoreEvents } from './checklist.events';
 
 //#region Initial State
@@ -162,9 +150,7 @@ export const ChecklistStore = signalStore(
        *
        * @type {ReadonlyArray<ChecklistOutput>} The current page of checklists.
        */
-      checklists: computed<ReadonlyArray<ChecklistOutput>>(
-        () => store.checklistEntities(),
-      ),
+      checklists: computed<ReadonlyArray<ChecklistOutput>>(() => store.checklistEntities()),
 
       /**
        * Property isEmpty
@@ -193,8 +179,8 @@ export const ChecklistStore = signalStore(
        *
        * @type {ChecklistOutput | null} The currently selected checklist, or null if none.
        */
-      selectedChecklist: computed<ChecklistOutput | null>(
-        () => activeChecklistStore.selectedChecklist(),
+      selectedChecklist: computed<ChecklistOutput | null>(() =>
+        activeChecklistStore.selectedChecklist(),
       ),
 
       /**
@@ -208,9 +194,7 @@ export const ChecklistStore = signalStore(
        *
        * @type {boolean} True if the checklist list is currently loading, false otherwise.
        */
-      isLoadingChecklists: computed<boolean>(
-        () => store.listCallState().status === 'pending',
-      ),
+      isLoadingChecklists: computed<boolean>(() => store.listCallState().status === 'pending'),
 
       /**
        * Property isLoadingChecklist
@@ -223,9 +207,7 @@ export const ChecklistStore = signalStore(
        *
        * @type {boolean} True if the active checklist is currently loading, false otherwise.
        */
-      isLoadingChecklist: computed<boolean>(
-        () => activeChecklistStore.isLoadingChecklist(),
-      ),
+      isLoadingChecklist: computed<boolean>(() => activeChecklistStore.isLoadingChecklist()),
 
       /**
        * Property isCreating
@@ -238,9 +220,7 @@ export const ChecklistStore = signalStore(
        *
        * @type {boolean} True if the create operation is currently loading, false otherwise.
        */
-      isCreating: computed<boolean>(
-        () => store.createCallState().status === 'pending',
-      ),
+      isCreating: computed<boolean>(() => store.createCallState().status === 'pending'),
 
       /**
        * Property isArchiving
@@ -252,9 +232,7 @@ export const ChecklistStore = signalStore(
        *
        * @type {boolean}
        */
-      isArchiving: computed<boolean>(
-        () => store.archiveCallState().status === 'pending',
-      ),
+      isArchiving: computed<boolean>(() => store.archiveCallState().status === 'pending'),
 
       /**
        * Property createError
@@ -288,205 +266,209 @@ export const ChecklistStore = signalStore(
    *
    * @returns {object} An object containing the methods to add to the store.
    */
-  withMethods((
-    store,
-    checklistService: ChecklistService = inject<ChecklistService>(ChecklistService),
-    activeChecklistStore: ActiveChecklistStore = inject<ActiveChecklistStore>(ActiveChecklistStore),
-    dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
-  ) => {
-    /**
-     * Constant loadFn
-     * @const loadFn
-     *
-     * @description
-     * Shared rxMethod implementation for loading a paginated checklist list.
-     * Uses `switchMap` so that a new request cancels any previous in-flight one.
-     * Exposed under two names: {@link load} (table / generic usage) and
-     * {@link loadChecklists} (page usage).
-     *
-     * @since 1.0.0
-     *
-     * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>}
-     */
-    const loadFn = rxMethod<{ organizationId: string; options?: ChecklistListOptions }>(
-      pipe(
-        tap((): void => { patchState(store, { listCallState: pendingCallState() }); }),
-        switchMap(({ organizationId, options }) =>
-          checklistService.list(organizationId, options).pipe(
-            tapResponse({
-              next: (response: HydraCollection<ChecklistOutput>): void => {
-                patchState(
-                  store,
-                  setAllEntities([...response.member], { collection: 'checklist' }),
-                  { totalChecklists: response.totalItems, listCallState: successCallState(null) },
-                );
-              },
-              error: (error: unknown): void => {
-                const storeError: StoreError = toStoreError(error);
-                patchState(store, { listCallState: errorCallState(storeError) });
-                dispatcher.dispatch(
-                  checklistStoreEvents.listFailed(
-                    toStoreFailureEventPayload(storeError, 'Failed to load checklists'),
-                  ),
-                );
-              },
-            }),
-          ),
-        ),
+  withMethods(
+    (
+      store,
+      checklistService: ChecklistService = inject<ChecklistService>(ChecklistService),
+      activeChecklistStore: ActiveChecklistStore = inject<ActiveChecklistStore>(
+        ActiveChecklistStore,
       ),
-    );
-
-    return {
+      dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
+    ) => {
       /**
-       * Method load
-       * @method load
+       * Constant loadFn
+       * @const loadFn
        *
        * @description
-       * Fetches one page of checklists from the API. Cancels any in-flight
-       * request via `switchMap`. Alias: {@link loadChecklists}.
+       * Shared rxMethod implementation for loading a paginated checklist list.
+       * Uses `switchMap` so that a new request cancels any previous in-flight one.
+       * Exposed under two names: {@link load} (table / generic usage) and
+       * {@link loadChecklists} (page usage).
        *
        * @since 1.0.0
        *
-       * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>} An RxMethod that accepts organization ID and optional request options.
+       * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>}
        */
-      load: loadFn,
-
-      /**
-       * Method loadChecklists
-       * @method loadChecklists
-       *
-       * @description
-       * Alias for {@link load} — preferred name when called without pagination
-       * options (e.g. from the list page).
-       *
-       * @since 1.0.0
-       *
-       * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>} An RxMethod that accepts organization ID and optional request options.
-       */
-      loadChecklists: loadFn,
-
-      /**
-       * Method create
-       * @method create
-       *
-       * @description
-       * Creates a new checklist via the API. Uses `exhaustMap` to prevent
-       * concurrent submissions. On success the `createOperation` transitions
-       * to a success state carrying the newly created entity.
-       *
-       * @since 1.0.0
-       *
-       * @type {RxMethod<{ organizationId: string; input: CreateChecklistInput }>} An RxMethod that accepts the creation input.
-       */
-      create: rxMethod<{ organizationId: string; input: CreateChecklistInput }>(
+      const loadFn = rxMethod<{ organizationId: string; options?: ChecklistListOptions }>(
         pipe(
-          tap((): void => { patchState(store, { createCallState: pendingCallState() }); }),
-          exhaustMap(({ organizationId, input }) =>
-            checklistService.create(organizationId, input).pipe(
+          tap((): void => {
+            patchState(store, { listCallState: pendingCallState() });
+          }),
+          switchMap(({ organizationId, options }) =>
+            checklistService.list(organizationId, options).pipe(
               tapResponse({
-                next: (checklist: ChecklistOutput): void => {
+                next: (response: HydraCollection<ChecklistOutput>): void => {
                   patchState(
                     store,
-                    addEntity(checklist, { collection: 'checklist' }),
-                    {
+                    setAllEntities([...response.member], { collection: 'checklist' }),
+                    { totalChecklists: response.totalItems, listCallState: successCallState(null) },
+                  );
+                },
+                error: (error: unknown): void => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { listCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    checklistStoreEvents.listFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load checklists'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      );
+
+      return {
+        /**
+         * Method load
+         * @method load
+         *
+         * @description
+         * Fetches one page of checklists from the API. Cancels any in-flight
+         * request via `switchMap`. Alias: {@link loadChecklists}.
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>} An RxMethod that accepts organization ID and optional request options.
+         */
+        load: loadFn,
+
+        /**
+         * Method loadChecklists
+         * @method loadChecklists
+         *
+         * @description
+         * Alias for {@link load} — preferred name when called without pagination
+         * options (e.g. from the list page).
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>} An RxMethod that accepts organization ID and optional request options.
+         */
+        loadChecklists: loadFn,
+
+        /**
+         * Method create
+         * @method create
+         *
+         * @description
+         * Creates a new checklist via the API. Uses `exhaustMap` to prevent
+         * concurrent submissions. On success the `createOperation` transitions
+         * to a success state carrying the newly created entity.
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<{ organizationId: string; input: CreateChecklistInput }>} An RxMethod that accepts the creation input.
+         */
+        create: rxMethod<{ organizationId: string; input: CreateChecklistInput }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { createCallState: pendingCallState() });
+            }),
+            exhaustMap(({ organizationId, input }) =>
+              checklistService.create(organizationId, input).pipe(
+                tapResponse({
+                  next: (checklist: ChecklistOutput): void => {
+                    patchState(store, addEntity(checklist, { collection: 'checklist' }), {
                       createCallState: successCallState(checklist),
                       totalChecklists: store.totalChecklists() + 1,
-                    },
-                  );
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { createCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    checklistStoreEvents.createFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to create checklist'),
-                    ),
-                  );
-                },
-              }),
+                    });
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { createCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      checklistStoreEvents.createFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to create checklist'),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method archive
-       * @method archive
-       *
-       * @description
-       * Archives a checklist by organization ID and checklist ID. Uses
-       * `exhaustMap` to prevent concurrent archive operations. On success:
-       * updates the entity in the collection and transitions the
-       * `archiveOperation` to success.
-       *
-       * @since 1.0.0
-       *
-       * @type {RxMethod<{ organizationId: string; checklistId: string }>} An RxMethod that accepts the organization ID and checklist ID to archive.
-       */
-      archive: rxMethod<{ organizationId: string; checklistId: string }>(
-        pipe(
-          tap((): void => { patchState(store, { archiveCallState: pendingCallState() }); }),
-          exhaustMap(({ organizationId, checklistId }) =>
-            checklistService.archive(organizationId, checklistId).pipe(
-              tapResponse({
-                next: (checklist: ChecklistOutput): void => {
-                  patchState(
-                    store,
-                    setEntity(checklist, { collection: 'checklist' }),
-                    { archiveCallState: successCallState(checklist) },
-                  );
-                  // If the archived checklist is the currently active one, update it.
-                  if (activeChecklistStore.selectedChecklist()?.id === checklist.id) {
-                    activeChecklistStore.setChecklist(checklist);
-                  }
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { archiveCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    checklistStoreEvents.archiveFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to archive checklist'),
-                    ),
-                  );
-                },
-              }),
+        /**
+         * Method archive
+         * @method archive
+         *
+         * @description
+         * Archives a checklist by organization ID and checklist ID. Uses
+         * `exhaustMap` to prevent concurrent archive operations. On success:
+         * updates the entity in the collection and transitions the
+         * `archiveOperation` to success.
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<{ organizationId: string; checklistId: string }>} An RxMethod that accepts the organization ID and checklist ID to archive.
+         */
+        archive: rxMethod<{ organizationId: string; checklistId: string }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { archiveCallState: pendingCallState() });
+            }),
+            exhaustMap(({ organizationId, checklistId }) =>
+              checklistService.archive(organizationId, checklistId).pipe(
+                tapResponse({
+                  next: (checklist: ChecklistOutput): void => {
+                    patchState(store, setEntity(checklist, { collection: 'checklist' }), {
+                      archiveCallState: successCallState(checklist),
+                    });
+                    // If the archived checklist is the currently active one, update it.
+                    if (activeChecklistStore.selectedChecklist()?.id === checklist.id) {
+                      activeChecklistStore.setChecklist(checklist);
+                    }
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { archiveCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      checklistStoreEvents.archiveFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to archive checklist'),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method resetCreateOperation
-       * @method resetCreateOperation
-       *
-       * @description
-       * Resets the create operation back to its idle state.
-       * Call this after the create form is dismissed or the dialog is closed.
-       *
-       * @since 1.0.0
-       *
-       * @returns {void} No return value.
-       */
-      resetCreateOperation(): void {
-        patchState(store, { createCallState: idleCallState() });
-      },
+        /**
+         * Method resetCreateOperation
+         * @method resetCreateOperation
+         *
+         * @description
+         * Resets the create operation back to its idle state.
+         * Call this after the create form is dismissed or the dialog is closed.
+         *
+         * @since 1.0.0
+         *
+         * @returns {void} No return value.
+         */
+        resetCreateOperation(): void {
+          patchState(store, { createCallState: idleCallState() });
+        },
 
-      /**
-       * Method resetArchiveOperation
-       * @method resetArchiveOperation
-       *
-       * @description
-       * Resets the archive operation back to its idle state.
-       *
-       * @since 2.0.0
-       *
-       * @returns {void} No return value.
-       */
-      resetArchiveOperation(): void {
-        patchState(store, { archiveCallState: idleCallState() });
-      },
-    };
-  }),
+        /**
+         * Method resetArchiveOperation
+         * @method resetArchiveOperation
+         *
+         * @description
+         * Resets the archive operation back to its idle state.
+         *
+         * @since 2.0.0
+         *
+         * @returns {void} No return value.
+         */
+        resetArchiveOperation(): void {
+          patchState(store, { archiveCallState: idleCallState() });
+        },
+      };
+    },
+  ),
   //#endregion
 );
 

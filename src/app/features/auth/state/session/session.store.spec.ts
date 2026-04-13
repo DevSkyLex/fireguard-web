@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
 import { Dispatcher } from '@ngrx/signals/events';
-import { SessionStore } from './session.store';
-import { SessionService } from '@features/auth/data-access';
+import { of, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/models/api';
+import { SessionService } from '@features/auth/data-access';
 import type { SessionOutput } from '@features/auth/models';
+import { SessionStore } from './session.store';
 
 const flushEffects = async (): Promise<void> => {
   await Promise.resolve();

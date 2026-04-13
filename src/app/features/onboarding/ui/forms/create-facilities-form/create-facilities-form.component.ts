@@ -41,13 +41,7 @@ import type { CreateFacilitiesFormData } from './create-facilities-form-data.typ
  */
 @Component({
   selector: 'app-create-facilities-form',
-  imports: [
-    ReactiveFormsModule,
-    ButtonModule,
-    InputTextModule,
-    MessageModule,
-    SelectModule,
-  ],
+  imports: [ReactiveFormsModule, ButtonModule, InputTextModule, MessageModule, SelectModule],
   templateUrl: './create-facilities-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -153,12 +147,9 @@ export class CreateFacilitiesForm {
    *
    * @type {FormGroup<CreateFacilitiesFormData>}
    */
-  protected readonly form: FormGroup<CreateFacilitiesFormData> =
-    this.formBuilder.group({
-      rows: this.formBuilder.array<FormGroup<CreateFacilityFormData>>([
-        this.buildRow(),
-      ]),
-    });
+  protected readonly form: FormGroup<CreateFacilitiesFormData> = this.formBuilder.group({
+    rows: this.formBuilder.array<FormGroup<CreateFacilityFormData>>([this.buildRow()]),
+  });
 
   /**
    * Getter rows
@@ -210,9 +201,7 @@ export class CreateFacilitiesForm {
    */
   private buildRow(): FormGroup<CreateFacilityFormData> {
     return this.formBuilder.group<CreateFacilityFormData>({
-      type: this.formBuilder.control<FacilityType>('site', [
-        Validators.required,
-      ]),
+      type: this.formBuilder.control<FacilityType>('site', [Validators.required]),
       name: this.formBuilder.control<string>('', [
         Validators.required,
         Validators.minLength(2),
@@ -276,9 +265,7 @@ export class CreateFacilitiesForm {
       this.form.markAllAsTouched();
       return;
     }
-    const values: CreateFacilityFormValues[] = this.rows.controls.map(
-      (row) => row.getRawValue(),
-    );
+    const values: CreateFacilityFormValues[] = this.rows.controls.map((row) => row.getRawValue());
     this.submitted.emit(values);
   }
   //#endregion

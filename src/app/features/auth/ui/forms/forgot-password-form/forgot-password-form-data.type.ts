@@ -11,4 +11,6 @@ import type { ForgotPasswordFormValues } from './forgot-password-form-values.typ
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export type ForgotPasswordFormData = { [K in keyof ForgotPasswordFormValues]: FormControl<ForgotPasswordFormValues[K]>; };
+export type ForgotPasswordFormData = {
+  [K in keyof ForgotPasswordFormValues]: FormControl<ForgotPasswordFormValues[K]>;
+};

@@ -10,12 +10,12 @@ import { MessageService } from 'primeng/api';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { OnboardingStore } from '@features/onboarding/state';
-import { OrganizationService } from '@features/organization/data-access';
-import { OnboardingStepBase } from '../onboarding-step.base';
 import {
   CreateOrganizationForm,
   type CreateOrganizationFormValues,
 } from '@features/onboarding/ui/forms';
+import { OrganizationService } from '@features/organization/data-access';
+import { OnboardingStepBase } from '../onboarding-step.base';
 
 /**
  * Component CreateOrganizationStep
@@ -47,8 +47,7 @@ export class CreateOrganizationStep extends OnboardingStepBase {
    *
    * @type {OnboardingStore}
    */
-  private readonly onboardingStore: OnboardingStore =
-    inject<OnboardingStore>(OnboardingStore);
+  private readonly onboardingStore: OnboardingStore = inject<OnboardingStore>(OnboardingStore);
 
   /**
    * Property organizationService
@@ -71,8 +70,7 @@ export class CreateOrganizationStep extends OnboardingStepBase {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
   //#endregion
 
   //#region State
@@ -114,7 +112,10 @@ export class CreateOrganizationStep extends OnboardingStepBase {
    * @since 1.0.0
    */
   protected readonly cardPt: CardPassThroughOptions = {
-    root: { class: 'overflow-hidden border border-surface-200 bg-surface-0 shadow-none dark:border-surface-800 dark:bg-surface-950' },
+    root: {
+      class:
+        'overflow-hidden border border-surface-200 bg-surface-0 shadow-none dark:border-surface-800 dark:bg-surface-950',
+    },
     header: { class: 'p-0' },
     body: { class: 'p-0' },
     content: { class: 'p-0' },
@@ -151,10 +152,14 @@ export class CreateOrganizationStep extends OnboardingStepBase {
         this.isCreatingOrganization.set(false);
         const message: string =
           error instanceof Error ? error.message : 'Failed to create organization.';
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: message, life: 5000 });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: message,
+          life: 5000,
+        });
       },
     });
   }
   //#endregion
 }
-

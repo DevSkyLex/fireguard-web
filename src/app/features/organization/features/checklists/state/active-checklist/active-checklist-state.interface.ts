@@ -1,5 +1,5 @@
-import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import type { CallState } from '@core/state/request-state';
+import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 
 /**
  * Interface ActiveChecklistState

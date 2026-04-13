@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type { HydraCollection } from '@core/models/api';
+import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
   OrganizationMemberOutput,
   AddOrganizationMemberInput,
@@ -43,10 +43,7 @@ export class OrganizationMemberService extends HydraApiService {
     options?: RequestOptions,
   ): Observable<HydraCollection<OrganizationMemberOutput>> {
     const url: string = `/api/organizations/${organizationId}/members`;
-    return this.getCollection<OrganizationMemberOutput>(
-      url,
-      options,
-    );
+    return this.getCollection<OrganizationMemberOutput>(url, options);
   }
 
   /**
@@ -70,10 +67,7 @@ export class OrganizationMemberService extends HydraApiService {
     input: AddOrganizationMemberInput,
   ): Observable<OrganizationMemberOutput> {
     const url: string = `/api/organizations/${organizationId}/members`;
-    return this.post<AddOrganizationMemberInput, OrganizationMemberOutput>(
-      url,
-      input,
-    );
+    return this.post<AddOrganizationMemberInput, OrganizationMemberOutput>(url, input);
   }
 
   /**

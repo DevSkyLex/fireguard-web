@@ -16,7 +16,7 @@ import { AbstractControl, type ValidationErrors, type ValidatorFn } from '@angul
  * @returns {ValidatorFn} A validator function that checks if
  * the specified controls match.
  */
-export function matchFieldsValidator(first: string, second: string ): ValidatorFn {
+export function matchFieldsValidator(first: string, second: string): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     /**
      * Constant firstControl
@@ -46,8 +46,10 @@ export function matchFieldsValidator(first: string, second: string ): ValidatorF
     if (!firstControl || !secondControl) return null;
 
     // If the values match, return null (no error), otherwise return an error object
-    return firstControl.value === secondControl.value ? null : {
-      passwordMismatch: true
-    };
+    return firstControl.value === secondControl.value
+      ? null
+      : {
+          passwordMismatch: true,
+        };
   };
 }

@@ -8,11 +8,11 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
-import { SkeletonModule } from 'primeng/skeleton';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SkeletonModule } from 'primeng/skeleton';
+import type { NotificationOutput } from '@features/account/models';
 import { InfiniteScrollDirective } from '@shared/directives';
 import { NotificationBellItem } from '../notification-bell-item/notification-bell-item.component';
-import type { NotificationOutput } from '@features/account/models';
 
 /**
  * Component NotificationBellList
@@ -49,8 +49,9 @@ export class NotificationBellList {
    *
    * @type {InputSignal<ReadonlyArray<NotificationOutput>>}
    */
-  public readonly notifications: InputSignal<ReadonlyArray<NotificationOutput>> =
-    input<ReadonlyArray<NotificationOutput>>([]);
+  public readonly notifications: InputSignal<ReadonlyArray<NotificationOutput>> = input<
+    ReadonlyArray<NotificationOutput>
+  >([]);
 
   /**
    * Input loading

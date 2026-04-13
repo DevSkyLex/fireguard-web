@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  type Signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/ports/theme';
@@ -46,8 +40,7 @@ export class ThemeSwitcher {
    *
    * @type {ThemePort}
    */
-  protected readonly themePort: ThemePort =
-    inject<ThemePort>(THEME_PORT);
+  protected readonly themePort: ThemePort = inject<ThemePort>(THEME_PORT);
   //#endregion
 
   //#region Computed

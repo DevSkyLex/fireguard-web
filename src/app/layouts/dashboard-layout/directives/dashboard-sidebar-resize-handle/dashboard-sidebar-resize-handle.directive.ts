@@ -1,6 +1,6 @@
-import { DOCUMENT } from "@angular/common";
-import { Directive, DestroyRef, ElementRef, inject } from "@angular/core";
-import { DashboardSidebarService } from "@layouts/dashboard-layout/services";
+import { DOCUMENT } from '@angular/common';
+import { Directive, DestroyRef, ElementRef, inject } from '@angular/core';
+import { DashboardSidebarService } from '@layouts/dashboard-layout/services';
 
 /**
  * Directive DashboardSidebarResizeHandleDirective
@@ -75,8 +75,7 @@ export class DashboardSidebarResizeHandleDirective {
    *
    * @type {Document}
    */
-  private readonly document: Document =
-    inject<Document>(DOCUMENT);
+  private readonly document: Document = inject<Document>(DOCUMENT);
 
   /**
    * Property destroyRef
@@ -91,8 +90,7 @@ export class DashboardSidebarResizeHandleDirective {
    *
    * @type {DestroyRef}
    */
-  private readonly destroyRef: DestroyRef =
-    inject<DestroyRef>(DestroyRef);
+  private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
 
   /**
    * Property elementRef

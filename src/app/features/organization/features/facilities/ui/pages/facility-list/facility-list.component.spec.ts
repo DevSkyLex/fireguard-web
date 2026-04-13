@@ -1,12 +1,12 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
-import { FacilityListPage } from './facility-list.component';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import { FacilityStore } from '@features/organization/features/facilities/state';
+import { provideRouter } from '@angular/router';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import { FacilityStore } from '@features/organization/features/facilities/state';
 import type { OrganizationOutput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import { FacilityListPage } from './facility-list.component';
 
 const MOCK_ORG: OrganizationOutput = {
   id: 'org-1',

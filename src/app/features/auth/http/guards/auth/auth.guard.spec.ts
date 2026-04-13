@@ -1,8 +1,8 @@
-import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree } from '@angular/router';
-import { authGuard } from './auth.guard';
 import { AuthStore } from '@features/auth/state';
+import { authGuard } from './auth.guard';
 
 describe('authGuard', () => {
   let mockRouter: { createUrlTree: ReturnType<typeof vi.fn> };
@@ -10,7 +10,9 @@ describe('authGuard', () => {
   const loginUrlTree = {} as UrlTree;
 
   function runGuard(): boolean | UrlTree {
-    return TestBed.runInInjectionContext(() => authGuard({} as any, {} as any)) as boolean | UrlTree;
+    return TestBed.runInInjectionContext(() => authGuard({} as any, {} as any)) as
+      | boolean
+      | UrlTree;
   }
 
   beforeEach(() => {

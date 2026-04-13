@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree } from '@angular/router';
-import { passwordResetNewGuard } from './password-reset-new.guard';
 import { PasswordResetStore } from '@features/auth/state';
+import { passwordResetNewGuard } from './password-reset-new.guard';
 
 describe('passwordResetNewGuard', () => {
   let mockRouter: { createUrlTree: ReturnType<typeof vi.fn> };
@@ -13,7 +13,9 @@ describe('passwordResetNewGuard', () => {
   const urlTree = {} as UrlTree;
 
   const runGuard = (): boolean | UrlTree => {
-    return TestBed.runInInjectionContext(() => passwordResetNewGuard({} as any, {} as any)) as boolean | UrlTree;
+    return TestBed.runInInjectionContext(() => passwordResetNewGuard({} as any, {} as any)) as
+      | boolean
+      | UrlTree;
   };
 
   beforeEach(() => {

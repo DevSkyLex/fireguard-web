@@ -1,13 +1,20 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, Signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  Signal,
+  viewChild,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Popover, PopoverModule, PopoverPassThroughOptions } from 'primeng/popover';
-import { OrganizationStore } from '@features/organization/state';
 import type { OrganizationOutput } from '@features/organization/models';
+import { OrganizationStore } from '@features/organization/state';
+import { OrganizationSwitcherFooter } from './organization-switcher-footer/organization-switcher-footer.component';
 import { OrganizationSwitcherHeader } from './organization-switcher-header/organization-switcher-header.component';
-import { OrganizationSwitcherTrigger } from './organization-switcher-trigger/organization-switcher-trigger.component';
 import { OrganizationSwitcherList } from './organization-switcher-list/organization-switcher-list.component';
 import { OrganizationSwitcherNav } from './organization-switcher-nav/organization-switcher-nav.component';
-import { OrganizationSwitcherFooter } from './organization-switcher-footer/organization-switcher-footer.component';
+import { OrganizationSwitcherTrigger } from './organization-switcher-trigger/organization-switcher-trigger.component';
 
 /**
  * Component OrganizationSwitcher
@@ -30,7 +37,7 @@ import { OrganizationSwitcherFooter } from './organization-switcher-footer/organ
     OrganizationSwitcherTrigger,
     OrganizationSwitcherList,
     OrganizationSwitcherNav,
-    OrganizationSwitcherFooter
+    OrganizationSwitcherFooter,
   ],
   providers: [OrganizationStore],
   templateUrl: './organization-switcher.component.html',
@@ -67,8 +74,7 @@ export class OrganizationSwitcher implements OnInit {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property popover
@@ -82,8 +88,7 @@ export class OrganizationSwitcher implements OnInit {
    *
    * @type {Signal<Popover>}
    */
-  private readonly popover: Signal<Popover> =
-    viewChild.required<Popover>('popover');
+  private readonly popover: Signal<Popover> = viewChild.required<Popover>('popover');
 
   /**
    * Property popoverPt
@@ -129,8 +134,7 @@ export class OrganizationSwitcher implements OnInit {
      *
      * @type {readonly OrganizationOutput[]}
      */
-    const organizations: readonly OrganizationOutput[] =
-      this.organizationStore.organizations();
+    const organizations: readonly OrganizationOutput[] = this.organizationStore.organizations();
 
     // If organizations are already loaded, do not trigger another load to avoid unnecessary API calls.
     if (!organizations.length) {

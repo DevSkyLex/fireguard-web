@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  type InputSignal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
 
 /**
  * Component NotificationBellHeader

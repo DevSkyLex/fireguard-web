@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { OrganizationSwitcherList } from './organization-switcher-list.component';
 import type { OrganizationOutput } from '@features/organization/models';
+import { OrganizationSwitcherList } from './organization-switcher-list.component';
 
 const MOCK_ORG_1 = {
   id: 'org-1',
@@ -85,7 +85,9 @@ describe('OrganizationSwitcherList', () => {
     const emitSpy = vi.fn();
     fixture.componentInstance.organizationChange.subscribe(emitSpy);
 
-    const buttons = fixture.nativeElement.querySelectorAll('li button') as NodeListOf<HTMLButtonElement>;
+    const buttons = fixture.nativeElement.querySelectorAll(
+      'li button',
+    ) as NodeListOf<HTMLButtonElement>;
     buttons[1].click();
 
     expect(emitSpy).toHaveBeenCalledTimes(1);
@@ -98,7 +100,9 @@ describe('OrganizationSwitcherList', () => {
     fixture.componentRef.setInput('selectedOrganization', MOCK_ORG_2);
     fixture.detectChanges();
 
-    const spans = fixture.nativeElement.querySelectorAll('li button span.truncate') as NodeListOf<HTMLSpanElement>;
+    const spans = fixture.nativeElement.querySelectorAll(
+      'li button span.truncate',
+    ) as NodeListOf<HTMLSpanElement>;
     const boldSpan = Array.from(spans).find((s) => s.classList.contains('font-medium'));
     expect(boldSpan).toBeDefined();
     expect(boldSpan!.textContent!.trim()).toBe('Beta Inc');

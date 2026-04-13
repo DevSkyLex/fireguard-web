@@ -1,22 +1,17 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
-import { AuthStore, authStoreEvents } from '@features/auth';
 import { Events } from '@ngrx/signals/events';
 import type { MotionOptions } from '@primeuix/motion';
 import { AvatarModule } from 'primeng/avatar';
 import { PanelModule, PanelPassThroughOptions } from 'primeng/panel';
 import { SkeletonModule } from 'primeng/skeleton';
+import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
+import { AuthStore, authStoreEvents } from '@features/auth';
 
 @Component({
   selector: 'app-auth-user-profile',
-  imports: [
-    AvatarModule,
-    SkeletonModule,
-    RouterLink,
-    PanelModule
-  ],
+  imports: [AvatarModule, SkeletonModule, RouterLink, PanelModule],
   templateUrl: './auth-user-profile.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -53,8 +48,7 @@ export class AuthUserProfile {
    *
    * @type {AuthStore}
    */
-  protected readonly authStore: AuthStore =
-    inject<AuthStore>(AuthStore);
+  protected readonly authStore: AuthStore = inject<AuthStore>(AuthStore);
 
   /**
    * Property router
@@ -69,11 +63,9 @@ export class AuthUserProfile {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
-  private readonly events: Events =
-    inject<Events>(Events);
+  private readonly events: Events = inject<Events>(Events);
 
   public constructor() {
     this.events

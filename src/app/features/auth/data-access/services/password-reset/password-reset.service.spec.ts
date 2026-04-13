@@ -1,9 +1,9 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 
-import { PasswordResetService } from './password-reset.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
+import type { ApiError } from '@core/models/api';
 import type {
   PasswordResetRequestInput,
   PasswordResetRequestOutput,
@@ -12,7 +12,7 @@ import type {
   PasswordResetVerifyInput,
   PasswordResetVerifyOutput,
 } from '@features/auth/models';
-import type { ApiError } from '@core/models/api';
+import { PasswordResetService } from './password-reset.service';
 
 describe('PasswordResetService', () => {
   let service: PasswordResetService;

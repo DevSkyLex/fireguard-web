@@ -1,5 +1,5 @@
-import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -10,12 +10,17 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { withQueryState, setPendingQuery, setSuccessQuery, setErrorQuery, toStoreError } from '@core/state/request-state';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { EMPTY, forkJoin, pipe, switchMap } from 'rxjs';
-import type { MetricComparison } from '@shared/components/metric-card';
+import {
+  withQueryState,
+  setPendingQuery,
+  setSuccessQuery,
+  setErrorQuery,
+  toStoreError,
+} from '@core/state/request-state';
 import { OrganizationService } from '@features/organization/data-access';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import type { FacilityType } from '@features/organization/features/facilities/models';
 import type {
   OrganizationDashboardEquipmentStatus,
   OrganizationDashboardEquipmentType,
@@ -23,7 +28,8 @@ import type {
   OrganizationDashboardTrendOutput,
   OrganizationDashboardTrendResourceParams,
 } from '@features/organization/models';
-import type { FacilityType } from '@features/organization/features/facilities/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import type { MetricComparison } from '@shared/components/metric-card';
 import {
   alignDashboardTrendSeries,
   getDashboardTrendPointValue,
@@ -116,12 +122,11 @@ type OrganizationDashboardAssetGrowthData = {
  *
  * @since 1.0.0
  */
-type OrganizationDashboardAssetGrowthParams =
-  OrganizationDashboardTrendResourceParams & {
-    readonly equipmentType?: OrganizationDashboardEquipmentType;
-    readonly equipmentStatus?: OrganizationDashboardEquipmentStatus;
-    readonly facilityType?: FacilityType;
-  };
+type OrganizationDashboardAssetGrowthParams = OrganizationDashboardTrendResourceParams & {
+  readonly equipmentType?: OrganizationDashboardEquipmentType;
+  readonly equipmentStatus?: OrganizationDashboardEquipmentStatus;
+  readonly facilityType?: FacilityType;
+};
 
 /**
  * Type OrganizationDashboardAssetGrowthSummaryMetric
@@ -303,10 +308,7 @@ const DECIMAL_FMT = new Intl.NumberFormat('en-US', {
  */
 const INITIAL_STATE: OrganizationDashboardAssetGrowthState = {
   selectedGranularity: 'week',
-  selectedDateRange: [
-    new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
-    new Date(),
-  ],
+  selectedDateRange: [new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1), new Date()],
   compareEnabled: true,
   selectedEquipmentType: null,
   selectedEquipmentStatus: null,
@@ -346,7 +348,6 @@ const INITIAL_STATE: OrganizationDashboardAssetGrowthState = {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const OrganizationDashboardAssetGrowthStore = signalStore(
-
   //#region State
 
   /**
@@ -471,9 +472,8 @@ export const OrganizationDashboardAssetGrowthStore = signalStore(
      */
     selectedFacilityTypeOption: computed<FacilityTypeOption | null>(
       () =>
-        FACILITY_TYPE_OPTIONS.find(
-          (option) => option.value === store.selectedFacilityType(),
-        ) ?? null,
+        FACILITY_TYPE_OPTIONS.find((option) => option.value === store.selectedFacilityType()) ??
+        null,
     ),
 
     /**
@@ -607,12 +607,12 @@ export const OrganizationDashboardAssetGrowthStore = signalStore(
         },
       ];
 
-      const equipmentComparisonData = (growth?.equipment?.comparison?.series ?? []).map(
-        (point) => getDashboardTrendPointValue(point),
+      const equipmentComparisonData = (growth?.equipment?.comparison?.series ?? []).map((point) =>
+        getDashboardTrendPointValue(point),
       );
-      const facilityComparisonData = (
-        growth?.facilities?.comparison?.series ?? []
-      ).map((point) => getDashboardTrendPointValue(point));
+      const facilityComparisonData = (growth?.facilities?.comparison?.series ?? []).map((point) =>
+        getDashboardTrendPointValue(point),
+      );
 
       if (compareEnabled && equipmentComparisonData.length > 0) {
         datasets.push({
@@ -967,5 +967,3 @@ export const OrganizationDashboardAssetGrowthStore = signalStore(
 export type OrganizationDashboardAssetGrowthStore = InstanceType<
   typeof OrganizationDashboardAssetGrowthStore
 >;
-
-

@@ -1,13 +1,8 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  effect,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, effect } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
 import { Events } from '@ngrx/signals/events';
+import { MessageService } from 'primeng/api';
 import { OnboardingStore, onboardingStoreEvents } from '@features/onboarding/state';
 import { OnboardingStepper } from '@features/onboarding/ui/components';
 
@@ -26,19 +21,15 @@ import { OnboardingStepper } from '@features/onboarding/ui/components';
  */
 @Component({
   selector: 'app-onboarding-page',
-  imports: [
-    OnboardingStepper,
-  ],
+  imports: [OnboardingStepper],
   templateUrl: './onboarding-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingPage {
   //#region Properties
-  private readonly onboardingStore: OnboardingStore =
-    inject<OnboardingStore>(OnboardingStore);
+  private readonly onboardingStore: OnboardingStore = inject<OnboardingStore>(OnboardingStore);
 
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
 
   private readonly events: Events = inject<Events>(Events);
 

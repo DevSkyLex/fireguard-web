@@ -1,11 +1,15 @@
-<div class="flex items-center justify-between px-4 py-3 border-b border-surface-200 dark:border-surface-800">
+<div
+  class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
+>
   <div class="flex items-center gap-2">
-    <i class="pi pi-building text-surface-600 dark:text-surface-400 text-sm"></i>
-    <span class="font-semibold text-surface-900 dark:text-surface-100 text-sm">Organizations</span>
+    <i class="pi pi-building text-sm text-surface-600 dark:text-surface-400"></i>
+    <span class="text-sm font-semibold text-surface-900 dark:text-surface-100">Organizations</span>
   </div>
 
   @if (organizationCount() > 0) {
-    <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400">
+    <span
+      class="inline-flex items-center justify-center rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-400"
+    >
       {{ organizationCount() }}
     </span>
   }

@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,11 +9,13 @@ import {
   type InputSignal,
   type Signal,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { SkeletonModule } from 'primeng/skeleton';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import type {
+  EquipmentOutput,
+  EquipmentStatus,
+} from '@features/organization/features/equipments/models';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
-import type { EquipmentOutput, EquipmentStatus } from '@features/organization/features/equipments/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
  * Component FacilityEquipmentTab
@@ -29,10 +32,7 @@ import type { EquipmentOutput, EquipmentStatus } from '@features/organization/fe
  */
 @Component({
   selector: 'app-facility-equipment-tab',
-  imports: [
-    DatePipe,
-    SkeletonModule,
-  ],
+  imports: [DatePipe, SkeletonModule],
   providers: [EquipmentStore],
   templateUrl: './facility-equipment-tab.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,17 +58,17 @@ export class FacilityEquipmentTab {
   private readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
-  protected readonly store: EquipmentStore =
-    inject<EquipmentStore>(EquipmentStore);
+  protected readonly store: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
 
-  protected readonly equipmentList: Signal<ReadonlyArray<EquipmentOutput>> =
-    computed<ReadonlyArray<EquipmentOutput>>(() => this.store.equipmentList());
+  protected readonly equipmentList: Signal<ReadonlyArray<EquipmentOutput>> = computed<
+    ReadonlyArray<EquipmentOutput>
+  >(() => this.store.equipmentList());
 
-  protected readonly isLoading: Signal<boolean> =
-    computed<boolean>(() => this.store.isLoadingEquipment());
+  protected readonly isLoading: Signal<boolean> = computed<boolean>(() =>
+    this.store.isLoadingEquipment(),
+  );
 
-  protected readonly isEmpty: Signal<boolean> =
-    computed<boolean>(() => this.store.isEmpty());
+  protected readonly isEmpty: Signal<boolean> = computed<boolean>(() => this.store.isEmpty());
 
   private readonly statusColors: Record<EquipmentStatus, string> = {
     in_stock: 'bg-blue-500',
@@ -89,7 +89,8 @@ export class FacilityEquipmentTab {
   public constructor() {
     effect(() => {
       const facilityId: string = this.facilityId();
-      const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+      const organizationId: string | undefined =
+        this.activeOrganizationStore.selectedOrganization()?.id;
       if (organizationId && facilityId) {
         this.store.load({
           organizationId,

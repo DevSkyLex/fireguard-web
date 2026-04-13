@@ -1,7 +1,13 @@
 import { Injectable } from '@angular/core';
 import { type Observable } from 'rxjs';
 import { HydraApiService } from '@core/services/hydra-api';
-import type { LoginInput, LoginOutput, LogoutOutput, MfaResendInput, MfaVerifyInput } from '@features/auth/models';
+import type {
+  LoginInput,
+  LoginOutput,
+  LogoutOutput,
+  MfaResendInput,
+  MfaVerifyInput,
+} from '@features/auth/models';
 
 /**
  * Service AuthService
@@ -77,10 +83,7 @@ export class AuthService extends HydraApiService {
    * - challenge_token: OTP challenge token
    */
   public login(credentials: LoginInput): Observable<LoginOutput> {
-    return this.post<LoginInput, LoginOutput>(
-      `${AuthService.BASE_PATH}/login`,
-      credentials,
-    );
+    return this.post<LoginInput, LoginOutput>(`${AuthService.BASE_PATH}/login`, credentials);
   }
 
   /**
@@ -96,9 +99,7 @@ export class AuthService extends HydraApiService {
    * @returns {Observable<LogoutOutput>} Observable emitting the logout response.
    */
   public logout(): Observable<LogoutOutput> {
-    return this.postAction<LogoutOutput>(
-      `${AuthService.BASE_PATH}/logout`,
-    );
+    return this.postAction<LogoutOutput>(`${AuthService.BASE_PATH}/logout`);
   }
 
   /**
@@ -115,9 +116,7 @@ export class AuthService extends HydraApiService {
    * @returns {Observable<LoginOutput>} Observable emitting a new login response with fresh token.
    */
   public refresh(): Observable<LoginOutput> {
-    return this.postAction<LoginOutput>(
-      `${AuthService.BASE_PATH}/refresh`,
-    );
+    return this.postAction<LoginOutput>(`${AuthService.BASE_PATH}/refresh`);
   }
 
   /**
@@ -135,10 +134,7 @@ export class AuthService extends HydraApiService {
    * @returns {Observable<LoginOutput>} Observable emitting the login response with access token.
    */
   public mfaVerify(input: MfaVerifyInput): Observable<LoginOutput> {
-    return this.post<MfaVerifyInput, LoginOutput>(
-      `${AuthService.BASE_PATH}/mfa/verify`,
-      input,
-    );
+    return this.post<MfaVerifyInput, LoginOutput>(`${AuthService.BASE_PATH}/mfa/verify`, input);
   }
 
   /**
@@ -159,10 +155,7 @@ export class AuthService extends HydraApiService {
    * The response will contain updated mfa_token and challenge_token that should replace the old ones.
    */
   public mfaResend(input: MfaResendInput): Observable<LoginOutput> {
-    return this.post<MfaResendInput, LoginOutput>(
-      `${AuthService.BASE_PATH}/mfa/resend`,
-      input,
-    );
+    return this.post<MfaResendInput, LoginOutput>(`${AuthService.BASE_PATH}/mfa/resend`, input);
   }
 
   //#endregion

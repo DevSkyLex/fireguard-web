@@ -43,8 +43,7 @@ export class RadioCard {
    *
    * @type {InputSignal<string>}
    */
-  public readonly inputId: InputSignal<string> =
-    input.required<string>();
+  public readonly inputId: InputSignal<string> = input.required<string>();
 
   /**
    * Input name
@@ -58,8 +57,7 @@ export class RadioCard {
    *
    * @type {InputSignal<string>}
    */
-  public readonly name: InputSignal<string> =
-    input.required<string>();
+  public readonly name: InputSignal<string> = input.required<string>();
 
   /**
    * Input value
@@ -73,8 +71,7 @@ export class RadioCard {
    *
    * @type {InputSignal<unknown>}
    */
-  public readonly value: InputSignal<unknown> =
-    input.required<unknown>();
+  public readonly value: InputSignal<unknown> = input.required<unknown>();
 
   /**
    * Input selectedValue
@@ -89,8 +86,7 @@ export class RadioCard {
    *
    * @type {InputSignal<unknown>}
    */
-  public readonly selectedValue: InputSignal<unknown> =
-    input<unknown>(null);
+  public readonly selectedValue: InputSignal<unknown> = input<unknown>(null);
 
   /**
    * Input label
@@ -104,8 +100,7 @@ export class RadioCard {
    *
    * @type {InputSignal<string>}
    */
-  public readonly label: InputSignal<string> =
-    input.required<string>();
+  public readonly label: InputSignal<string> = input.required<string>();
 
   /**
    * Input description
@@ -119,8 +114,9 @@ export class RadioCard {
    *
    * @type {InputSignal<string | null | undefined>}
    */
-  public readonly description: InputSignal<string | null | undefined> =
-    input<string | null | undefined>(null);
+  public readonly description: InputSignal<string | null | undefined> = input<
+    string | null | undefined
+  >(null);
 
   /**
    * Input disabled
@@ -134,8 +130,7 @@ export class RadioCard {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly disabled: InputSignal<boolean> =
-    input<boolean>(false);
+  public readonly disabled: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -152,7 +147,6 @@ export class RadioCard {
    *
    * @type {OutputEmitterRef<unknown>}
    */
-  public readonly selected: OutputEmitterRef<unknown> =
-    output<unknown>();
+  public readonly selected: OutputEmitterRef<unknown> = output<unknown>();
   //#endregion
 }

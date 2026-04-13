@@ -1,9 +1,9 @@
+import type { CallState } from '@core/state/request-state';
 import type {
   EquipmentOutput,
   EquipmentAttachmentOutput,
   EquipmentTagOutput,
 } from '@features/organization/features/equipments/models';
-import type { CallState } from '@core/state/request-state';
 
 /**
  * Interface EquipmentState

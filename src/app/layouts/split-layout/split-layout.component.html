@@ -1,10 +1,15 @@
-<div id="split-layout" class="flex flex-row min-h-dvh bg-surface-0 dark:bg-surface-950 transition-colors">
-  <section class="hidden xl:grid place-content-stretch flex-1">
+<div
+  id="split-layout"
+  class="flex min-h-dvh flex-row bg-surface-0 transition-colors dark:bg-surface-950"
+>
+  <section class="hidden flex-1 place-content-stretch xl:grid">
     <!-- Layout Showcase -->
     <app-split-layout-showcase />
   </section>
 
-  <section class="gap-10 grid [grid-template-areas:'header'_'content'_'footer'] grid-cols-[1fr] grid-rows-[auto_1fr_auto] flex-1 min-h-dvh mx-auto">
+  <section
+    class="mx-auto grid min-h-dvh flex-1 grid-cols-[1fr] grid-rows-[auto_1fr_auto] gap-10 [grid-template-areas:'header'_'content'_'footer']"
+  >
     <!-- Layout Header -->
     <app-split-layout-header class="[grid-area:header]" />
 
@@ -17,4 +22,3 @@
     <app-split-layout-footer class="[grid-area:footer]" />
   </section>
 </div>
-

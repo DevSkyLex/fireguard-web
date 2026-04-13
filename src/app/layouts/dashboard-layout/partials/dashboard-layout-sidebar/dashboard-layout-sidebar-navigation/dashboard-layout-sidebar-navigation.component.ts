@@ -130,8 +130,7 @@ export class DashboardLayoutSidebarNavigation {
    *
    * @type {Signal<string>}
    */
-  protected readonly searchQuery: Signal<string> =
-    this.sidebarNavigationService.searchQuery;
+  protected readonly searchQuery: Signal<string> = this.sidebarNavigationService.searchQuery;
 
   /**
    * Property menuItems
@@ -145,8 +144,7 @@ export class DashboardLayoutSidebarNavigation {
    *
    * @type {Signal<MenuItem[]>}
    */
-  protected readonly menuItems: Signal<MenuItem[]> =
-    this.sidebarNavigationService.menuItems;
+  protected readonly menuItems: Signal<MenuItem[]> = this.sidebarNavigationService.menuItems;
 
   /**
    * Property exactMatchOptions
@@ -257,9 +255,7 @@ export class DashboardLayoutSidebarNavigation {
    *
    * @returns {IsActiveMatchOptions}
    */
-  protected getRouterLinkActiveOptions(
-    routerLink: MenuItem['routerLink'],
-  ): IsActiveMatchOptions {
+  protected getRouterLinkActiveOptions(routerLink: MenuItem['routerLink']): IsActiveMatchOptions {
     if (typeof routerLink === 'string' && routerLink === '/') {
       return this.exactMatchOptions;
     }

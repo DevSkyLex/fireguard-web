@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { By } from '@angular/platform-browser';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { DashboardSidebarService } from '../../services';
 import { DashboardSidebarResizeHandleDirective } from './dashboard-sidebar-resize-handle.directive';
 
@@ -45,7 +45,9 @@ const dispatchKeydown = (target: EventTarget, key: string, shiftKey: boolean = f
 };
 
 const getHandle = (fixture: ComponentFixture<TestHostComponent>): HTMLButtonElement => {
-  const debugElement = fixture.debugElement.query(By.css('button[appDashboardSidebarResizeHandle]'));
+  const debugElement = fixture.debugElement.query(
+    By.css('button[appDashboardSidebarResizeHandle]'),
+  );
   return debugElement.nativeElement as HTMLButtonElement;
 };
 

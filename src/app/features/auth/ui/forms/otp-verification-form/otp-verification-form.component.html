@@ -1,4 +1,4 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-8 w-full">
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
   <!-- OTP Code Field -->
   <div class="flex flex-col gap-2">
     <div class="flex flex-col items-center gap-2">
@@ -6,22 +6,20 @@
         Verification Code
       </label>
 
-      <p-inputotp
-        id="code"
-        formControlName="code"
-        size="large"
-        [length]="6"
-        [integerOnly]="true"
-      />
+      <p-inputotp id="code" formControlName="code" size="large" [length]="6" [integerOnly]="true" />
     </div>
 
     @if (form.controls.code.invalid && form.controls.code.touched) {
-      <p-message severity="error" variant="simple" >
+      <p-message severity="error" variant="simple">
         @if (form.controls.code.hasError('required')) {
           <span>Verification code is required.</span>
         }
 
-        @if (form.controls.code.hasError('minlength') || form.controls.code.hasError('maxlength') || form.controls.code.hasError('pattern')) {
+        @if (
+          form.controls.code.hasError('minlength') ||
+          form.controls.code.hasError('maxlength') ||
+          form.controls.code.hasError('pattern')
+        ) {
           <span>Please enter a valid 6-digit code.</span>
         }
       </p-message>
@@ -32,7 +30,7 @@
   <div class="flex flex-col items-center gap-2">
     <button
       type="button"
-      class="text-sm text-primary-600 hover:text-primary-700 underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      class="cursor-pointer text-sm text-primary-600 underline hover:text-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
       [disabled]="loading() || !canResend()"
       (click)="onResend()"
     >
@@ -51,12 +49,11 @@
   <!-- Trust Device Checkbox -->
   @if (showTrustDevice()) {
     <div class="flex items-center gap-2">
-      <p-checkbox
-        inputId="trustDevice"
-        formControlName="trustDevice"
-        [binary]="true"
-      />
-      <label for="trustDevice" class="text-sm text-surface-600 dark:text-surface-400 cursor-pointer">
+      <p-checkbox inputId="trustDevice" formControlName="trustDevice" [binary]="true" />
+      <label
+        for="trustDevice"
+        class="cursor-pointer text-sm text-surface-600 dark:text-surface-400"
+      >
         Trust this device for 30 days
       </label>
     </div>
@@ -82,5 +79,4 @@
       (onClick)="onCancel()"
     />
   </div>
-
 </form>

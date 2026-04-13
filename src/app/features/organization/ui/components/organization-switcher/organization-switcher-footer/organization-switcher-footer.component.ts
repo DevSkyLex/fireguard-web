@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  output,
-  type OutputEmitterRef,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, output, type OutputEmitterRef } from '@angular/core';
 import { RippleModule } from 'primeng/ripple';
 
 /**

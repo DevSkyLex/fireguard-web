@@ -11,15 +11,15 @@ import { MessageService } from 'primeng/api';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { OnboardingStore } from '@features/onboarding/state';
-import { EquipmentStore } from '@features/organization/features/equipments/state';
-import { InspectionStore } from '@features/organization/features/inspections/state';
-import type { EquipmentOutput } from '@features/organization/features/equipments/models';
-import { OnboardingStepBase } from '../onboarding-step.base';
 import {
   CreateInspectionForm,
   type CreateInspectionFormValues,
   type EquipmentOption,
 } from '@features/onboarding/ui/forms';
+import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import { EquipmentStore } from '@features/organization/features/equipments/state';
+import { InspectionStore } from '@features/organization/features/inspections/state';
+import { OnboardingStepBase } from '../onboarding-step.base';
 
 /**
  * Component RunInspectionStep
@@ -52,8 +52,7 @@ export class RunInspectionStep extends OnboardingStepBase {
    *
    * @type {OnboardingStore}
    */
-  private readonly onboardingStore: OnboardingStore =
-    inject<OnboardingStore>(OnboardingStore);
+  private readonly onboardingStore: OnboardingStore = inject<OnboardingStore>(OnboardingStore);
 
   /**
    * Property equipmentStore
@@ -64,8 +63,7 @@ export class RunInspectionStep extends OnboardingStepBase {
    *
    * @type {EquipmentStore}
    */
-  private readonly equipmentStore: EquipmentStore =
-    inject<EquipmentStore>(EquipmentStore);
+  private readonly equipmentStore: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
 
   /**
    * Property inspectionStore
@@ -76,8 +74,7 @@ export class RunInspectionStep extends OnboardingStepBase {
    *
    * @type {InspectionStore}
    */
-  private readonly inspectionStore: InspectionStore =
-    inject<InspectionStore>(InspectionStore);
+  private readonly inspectionStore: InspectionStore = inject<InspectionStore>(InspectionStore);
 
   /**
    * Property messageService
@@ -88,11 +85,8 @@ export class RunInspectionStep extends OnboardingStepBase {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
   //#endregion
-
-
 
   //#region State
   /**
@@ -108,8 +102,7 @@ export class RunInspectionStep extends OnboardingStepBase {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isCreating: Signal<boolean> =
-    this.inspectionStore.isCreating;
+  protected readonly isCreating: Signal<boolean> = this.inspectionStore.isCreating;
 
   /**
    * Property isLoadingEquipment
@@ -124,8 +117,7 @@ export class RunInspectionStep extends OnboardingStepBase {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isLoadingEquipment: Signal<boolean> =
-    this.equipmentStore.isLoadingEquipment;
+  protected readonly isLoadingEquipment: Signal<boolean> = this.equipmentStore.isLoadingEquipment;
 
   /**
    * Property isExecuting
@@ -140,8 +132,7 @@ export class RunInspectionStep extends OnboardingStepBase {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isExecuting: Signal<boolean> =
-    this.onboardingStore.isExecutingStep;
+  protected readonly isExecuting: Signal<boolean> = this.onboardingStore.isExecutingStep;
 
   /**
    * Property isFormBusy
@@ -172,15 +163,16 @@ export class RunInspectionStep extends OnboardingStepBase {
    *
    * @type {Signal<readonly EquipmentOption[]>}
    */
-  protected readonly equipmentOptions: Signal<readonly EquipmentOption[]> =
-    computed<readonly EquipmentOption[]>(() =>
-      this.equipmentStore.equipmentEntities().map((equipment: EquipmentOutput) => ({
-        id: equipment.id,
-        label: equipment.serialNumber
-          ? `${equipment.type} — ${equipment.serialNumber}`
-          : equipment.type,
-      })),
-    );
+  protected readonly equipmentOptions: Signal<readonly EquipmentOption[]> = computed<
+    readonly EquipmentOption[]
+  >(() =>
+    this.equipmentStore.equipmentEntities().map((equipment: EquipmentOutput) => ({
+      id: equipment.id,
+      label: equipment.serialNumber
+        ? `${equipment.type} — ${equipment.serialNumber}`
+        : equipment.type,
+    })),
+  );
   //#endregion
 
   //#region PT
@@ -195,7 +187,10 @@ export class RunInspectionStep extends OnboardingStepBase {
    * @since 1.0.0
    */
   protected readonly cardPt: CardPassThroughOptions = {
-    root: { class: 'overflow-hidden border border-surface-200 bg-surface-0 shadow-none dark:border-surface-800 dark:bg-surface-950' },
+    root: {
+      class:
+        'overflow-hidden border border-surface-200 bg-surface-0 shadow-none dark:border-surface-800 dark:bg-surface-950',
+    },
     header: { class: 'p-0' },
     body: { class: 'p-0' },
     content: { class: 'p-0' },
@@ -215,8 +210,7 @@ export class RunInspectionStep extends OnboardingStepBase {
     super();
     effect(() => {
       const organizationId: string | null = this.onboardingStore.targetOrganizationId();
-      const isActiveStep: boolean =
-        this.onboardingStore.activeStepIndex() === this.stepIndex();
+      const isActiveStep: boolean = this.onboardingStore.activeStepIndex() === this.stepIndex();
 
       if (organizationId && isActiveStep) {
         this.equipmentStore.loadEquipment({
@@ -237,7 +231,12 @@ export class RunInspectionStep extends OnboardingStepBase {
         this.inspectionStore.resetCreateOperation();
         if (untracked(() => this.onboardingStore.activeStepIndex() === this.stepIndex())) {
           const message: string = operation.error?.message ?? 'Failed to save the inspection.';
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: message, life: 5000 });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: message,
+            life: 5000,
+          });
         }
       }
     });
@@ -276,4 +275,3 @@ export class RunInspectionStep extends OnboardingStepBase {
   }
   //#endregion
 }
-

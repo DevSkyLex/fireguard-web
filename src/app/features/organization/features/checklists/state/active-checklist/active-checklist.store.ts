@@ -1,19 +1,10 @@
 import { inject } from '@angular/core';
+import { computed } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import {
-  patchState,
-  signalStore,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { computed } from '@angular/core';
 import { Observable, pipe, switchMap, tap } from 'rxjs';
-import { ChecklistService } from '@features/organization/features/checklists/data-access';
-import type { ChecklistOutput } from '@features/organization/features/checklists/models';
-import type { ActiveChecklistState } from './active-checklist-state.interface';
 import {
   errorCallState,
   idleCallState,
@@ -24,6 +15,9 @@ import {
   type CallState,
   type StoreError,
 } from '@core/state/request-state';
+import { ChecklistService } from '@features/organization/features/checklists/data-access';
+import type { ChecklistOutput } from '@features/organization/features/checklists/models';
+import type { ActiveChecklistState } from './active-checklist-state.interface';
 import { activeChecklistStoreEvents } from './active-checklist.events';
 
 //#region Initial State
@@ -104,9 +98,7 @@ export const ActiveChecklistStore = signalStore(
      *
      * @type {boolean} True if the get operation is currently loading, false otherwise.
      */
-    isLoadingChecklist: computed<boolean>(
-      () => store.getCallState().status === 'pending',
-    ),
+    isLoadingChecklist: computed<boolean>(() => store.getCallState().status === 'pending'),
 
     /**
      * Property getError
@@ -138,106 +130,108 @@ export const ActiveChecklistStore = signalStore(
    *
    * @returns {object} An object containing the methods to add to the store.
    */
-  withMethods((
-    store,
-    dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
-    checklistService: ChecklistService = inject<ChecklistService>(ChecklistService),
-  ) => ({
-    /**
-     * Method setChecklist
-     * @method setChecklist
-     *
-     * @description
-     * Directly sets the selected checklist (e.g., resolved from route data
-     * by DashboardLayout after the resolver runs).
-     *
-     * @since 1.0.0
-     *
-     * @param {ChecklistOutput} checklist - Checklist to mark as active.
-     *
-     * @returns {void} No return value.
-     */
-    setChecklist(checklist: ChecklistOutput): void {
-      patchState(store, {
-        selectedChecklist: checklist,
-        getCallState: successCallState(checklist),
-      });
-    },
+  withMethods(
+    (
+      store,
+      dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
+      checklistService: ChecklistService = inject<ChecklistService>(ChecklistService),
+    ) => ({
+      /**
+       * Method setChecklist
+       * @method setChecklist
+       *
+       * @description
+       * Directly sets the selected checklist (e.g., resolved from route data
+       * by DashboardLayout after the resolver runs).
+       *
+       * @since 1.0.0
+       *
+       * @param {ChecklistOutput} checklist - Checklist to mark as active.
+       *
+       * @returns {void} No return value.
+       */
+      setChecklist(checklist: ChecklistOutput): void {
+        patchState(store, {
+          selectedChecklist: checklist,
+          getCallState: successCallState(checklist),
+        });
+      },
 
-    /**
-     * Method resolveChecklist
-     * @method resolveChecklist
-     *
-     * @description
-     * Fetches a single checklist by organization ID and checklist ID and marks
-     * it as the active one. Returns an Observable so Angular route resolvers
-     * can await the result.
-     *
-     * @since 1.0.0
-     *
-     * @param {string} organizationId - Organization identifier.
-     * @param {string} checklistId - Checklist identifier.
-     *
-     * @returns {Observable<ChecklistOutput>} Observable that emits the resolved
-     * checklist or an error if it fails.
-     */
-    resolveChecklist(organizationId: string, checklistId: string): Observable<ChecklistOutput> {
-      patchState(store, { getCallState: pendingCallState() });
+      /**
+       * Method resolveChecklist
+       * @method resolveChecklist
+       *
+       * @description
+       * Fetches a single checklist by organization ID and checklist ID and marks
+       * it as the active one. Returns an Observable so Angular route resolvers
+       * can await the result.
+       *
+       * @since 1.0.0
+       *
+       * @param {string} organizationId - Organization identifier.
+       * @param {string} checklistId - Checklist identifier.
+       *
+       * @returns {Observable<ChecklistOutput>} Observable that emits the resolved
+       * checklist or an error if it fails.
+       */
+      resolveChecklist(organizationId: string, checklistId: string): Observable<ChecklistOutput> {
+        patchState(store, { getCallState: pendingCallState() });
 
-      return checklistService.get(organizationId, checklistId).pipe(
-        tap({
-          next: (checklist: ChecklistOutput): void => {
-            patchState(store, {
-              selectedChecklist: checklist,
-              getCallState: successCallState(checklist),
-            });
-          },
-          error: (error: unknown): void => {
-            const storeError: StoreError = toStoreError(error);
-            patchState(store, { getCallState: errorCallState(storeError) });
-            dispatcher.dispatch(
-              activeChecklistStoreEvents.getFailed(
-                toStoreFailureEventPayload(storeError, 'Failed to load checklist'),
-              ),
-            );
-          },
-        }),
-      );
-    },
+        return checklistService.get(organizationId, checklistId).pipe(
+          tap({
+            next: (checklist: ChecklistOutput): void => {
+              patchState(store, {
+                selectedChecklist: checklist,
+                getCallState: successCallState(checklist),
+              });
+            },
+            error: (error: unknown): void => {
+              const storeError: StoreError = toStoreError(error);
+              patchState(store, { getCallState: errorCallState(storeError) });
+              dispatcher.dispatch(
+                activeChecklistStoreEvents.getFailed(
+                  toStoreFailureEventPayload(storeError, 'Failed to load checklist'),
+                ),
+              );
+            },
+          }),
+        );
+      },
 
-    /**
-     * Method clearSelectedChecklist
-     * @method clearSelectedChecklist
-     *
-     * @description
-     * Clears the active checklist selection. Called by
-     * {@link ChecklistStore} after a successful archive when the
-     * archived checklist was the currently active one.
-     *
-     * @since 1.0.0
-     *
-     * @return {void} No return value.
-     */
-    clearSelectedChecklist(): void {
-      patchState(store, { selectedChecklist: null });
-    },
+      /**
+       * Method clearSelectedChecklist
+       * @method clearSelectedChecklist
+       *
+       * @description
+       * Clears the active checklist selection. Called by
+       * {@link ChecklistStore} after a successful archive when the
+       * archived checklist was the currently active one.
+       *
+       * @since 1.0.0
+       *
+       * @return {void} No return value.
+       */
+      clearSelectedChecklist(): void {
+        patchState(store, { selectedChecklist: null });
+      },
 
-    /**
-     * Method clear
-     * @method clear
-     *
-     * @description
-     * Resets the entire active-checklist state to idle.
-     * Should be called on logout.
-     *
-     * @since 1.0.0
-     *
-     * @returns {void} No return value.
-     */
-    clear(): void {
-      patchState(store, INITIAL_ACTIVE_CHECKLIST_STATE);
-    },
-  })),
+      /**
+       * Method clear
+       * @method clear
+       *
+       * @description
+       * Resets the entire active-checklist state to idle.
+       * Should be called on logout.
+       *
+       * @since 1.0.0
+       *
+       * @returns {void} No return value.
+       */
+      clear(): void {
+        patchState(store, INITIAL_ACTIVE_CHECKLIST_STATE);
+      },
+    }),
+  ),
   //#endregion
 );
 

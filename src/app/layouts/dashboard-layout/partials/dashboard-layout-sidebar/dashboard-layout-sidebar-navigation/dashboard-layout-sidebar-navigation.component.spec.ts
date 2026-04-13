@@ -3,11 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
+import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
 } from '@layouts/dashboard-layout/services';
-import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { DashboardLayoutSidebarNavigation } from './dashboard-layout-sidebar-navigation.component';
 
 @Component({
@@ -60,7 +60,9 @@ describe('DashboardLayoutSidebarNavigation', () => {
 
     expect(fixture.debugElement.query(By.css('[data-testid="sidebar-search-input"]'))).toBeTruthy();
     expect(fixture.debugElement.queryAll(By.css('p-panelmenu')).length).toBe(2);
-    expect(fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length).toBe(1);
+    expect(
+      fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
+    ).toBe(1);
   });
 
   it('should filter menu items based on search query', () => {
@@ -109,7 +111,10 @@ describe('DashboardLayoutSidebarNavigation', () => {
     const sidebarService = TestBed.inject(DashboardSidebarService);
     const closeSpy = vi.spyOn(sidebarService, 'close');
     const component = fixture.componentInstance as unknown as {
-      readonly onItemClick: (item: { readonly routerLink?: string; readonly items?: readonly unknown[] }) => void;
+      readonly onItemClick: (item: {
+        readonly routerLink?: string;
+        readonly items?: readonly unknown[];
+      }) => void;
     };
 
     component.onItemClick({ routerLink: '/organizations/org-1' });
@@ -129,7 +134,9 @@ describe('DashboardLayoutSidebarNavigation', () => {
     fixture.detectChanges();
 
     const activeLinks = fixture.debugElement.queryAll(By.css('a[aria-current="page"]'));
-    const notificationsLink = fixture.debugElement.query(By.css('a[data-sidebar-item-id="notifications"]'));
+    const notificationsLink = fixture.debugElement.query(
+      By.css('a[data-sidebar-item-id="notifications"]'),
+    );
     const dashboardLink = fixture.debugElement.query(By.css('a[data-sidebar-item-id="dashboard"]'));
 
     expect(activeLinks.length).toBe(1);

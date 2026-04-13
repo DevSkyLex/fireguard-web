@@ -1,13 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import {
-  patchState,
-  signalStore,
-  type,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import {
   removeAllEntities,
   removeEntity,
@@ -17,11 +10,8 @@ import {
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
-import { SessionService } from '@features/auth/data-access';
-import type { PaginationOptions } from '@core/services/hydra-api';
-import type { SessionOutput } from '@features/auth/models';
 import type { HydraCollection } from '@core/models/api';
-import type { SessionState } from './session-state.interface';
+import type { PaginationOptions } from '@core/services/hydra-api';
 import {
   idleCallState,
   pendingCallState,
@@ -32,6 +22,9 @@ import {
   type CallState,
   type StoreError,
 } from '@core/state/request-state';
+import { SessionService } from '@features/auth/data-access';
+import type { SessionOutput } from '@features/auth/models';
+import type { SessionState } from './session-state.interface';
 import { sessionStoreEvents } from './session.events';
 
 //#region Initial State
@@ -105,9 +98,7 @@ export const SessionStore = signalStore(
   //#region Computed
   withComputed((store) => ({
     /** Alias for sessionEntities — backward-compatible accessor. */
-    sessions: computed<ReadonlyArray<SessionOutput>>(
-      () => store.sessionEntities(),
-    ),
+    sessions: computed<ReadonlyArray<SessionOutput>>(() => store.sessionEntities()),
 
     /**
      * Computed isRevoking
@@ -193,201 +184,198 @@ export const SessionStore = signalStore(
   //#endregion
 
   //#region Methods
-  withMethods((
-    store,
-    dispatcher = inject<Dispatcher>(Dispatcher),
-    sessionService = inject<SessionService>(SessionService),
-  ) => {
-    //#region Shared Reactive Pipelines
-    /**
-     * Reactive pipeline loadFn
-     *
-     * @description
-     * Shared `rxMethod` pipeline for list-loading. Uses `switchMap` so that
-     * rapid successive calls (e.g. pagination changes) cancel the previous
-     * in-flight request. Exposed publicly as both `load` (generic) and
-     * `loadSessions` (explicit).
-     *
-     * @since 2.0.0
-     */
-    const loadFn = rxMethod<PaginationOptions | void>(
-      pipe(
-        tap(() => {
-          patchState(store, { listCallState: pendingCallState() });
-        }),
-        switchMap((options) =>
-          sessionService.list(options ?? undefined).pipe(
-            tapResponse({
-              next: (response: HydraCollection<SessionOutput>) => {
-                patchState(store,
-                  setAllEntities([...response.member], { collection: 'session' }),
-                  {
-                    totalSessions: response.totalItems,
-                    listCallState: successCallState(null),
-                  },
-                );
-              },
-              error: (error: unknown) => {
-                const storeError: StoreError = toStoreError(error);
-                patchState(store, { listCallState: errorCallState(storeError) });
-                dispatcher.dispatch(
-                  sessionStoreEvents.loadFailed(
-                    toStoreFailureEventPayload(storeError, 'Failed to load sessions'),
-                  ),
-                );
-              },
-            }),
-          ),
-        ),
-      ),
-    );
-    //#endregion
-
-    return {
-      //#region Reactive Methods
-      /** @see loadFn — generic alias. */
-      load: loadFn,
-      /** @see loadFn — explicit alias. */
-      loadSessions: loadFn,
-
+  withMethods(
+    (
+      store,
+      dispatcher = inject<Dispatcher>(Dispatcher),
+      sessionService = inject<SessionService>(SessionService),
+    ) => {
+      //#region Shared Reactive Pipelines
       /**
-       * Method revoke
+       * Reactive pipeline loadFn
        *
        * @description
-       * Revokes a specific session by ID. Uses `exhaustMap` to prevent
-       * duplicate requests while a revoke is already in-flight.
-       * On success the revoked session is removed from the local entity
-       * collection and `totalSessions` is decremented.
+       * Shared `rxMethod` pipeline for list-loading. Uses `switchMap` so that
+       * rapid successive calls (e.g. pagination changes) cancel the previous
+       * in-flight request. Exposed publicly as both `load` (generic) and
+       * `loadSessions` (explicit).
        *
-       * @since 1.0.0
-       *
-       * @param {string} sessionId - The session ID to revoke.
+       * @since 2.0.0
        */
-      revoke: rxMethod<string>(
+      const loadFn = rxMethod<PaginationOptions | void>(
         pipe(
           tap(() => {
-            patchState(store, { revokeCallState: pendingCallState() });
+            patchState(store, { listCallState: pendingCallState() });
           }),
-          exhaustMap((sessionId) =>
-            sessionService.revoke(sessionId).pipe(
+          switchMap((options) =>
+            sessionService.list(options ?? undefined).pipe(
               tapResponse({
-                next: () => {
-                  patchState(store,
-                    removeEntity(sessionId, { collection: 'session' }),
+                next: (response: HydraCollection<SessionOutput>) => {
+                  patchState(
+                    store,
+                    setAllEntities([...response.member], { collection: 'session' }),
                     {
+                      totalSessions: response.totalItems,
+                      listCallState: successCallState(null),
+                    },
+                  );
+                },
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { listCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    sessionStoreEvents.loadFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load sessions'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      );
+      //#endregion
+
+      return {
+        //#region Reactive Methods
+        /** @see loadFn — generic alias. */
+        load: loadFn,
+        /** @see loadFn — explicit alias. */
+        loadSessions: loadFn,
+
+        /**
+         * Method revoke
+         *
+         * @description
+         * Revokes a specific session by ID. Uses `exhaustMap` to prevent
+         * duplicate requests while a revoke is already in-flight.
+         * On success the revoked session is removed from the local entity
+         * collection and `totalSessions` is decremented.
+         *
+         * @since 1.0.0
+         *
+         * @param {string} sessionId - The session ID to revoke.
+         */
+        revoke: rxMethod<string>(
+          pipe(
+            tap(() => {
+              patchState(store, { revokeCallState: pendingCallState() });
+            }),
+            exhaustMap((sessionId) =>
+              sessionService.revoke(sessionId).pipe(
+                tapResponse({
+                  next: () => {
+                    patchState(store, removeEntity(sessionId, { collection: 'session' }), {
                       totalSessions: store.totalSessions() - 1,
                       revokeCallState: successCallState(null),
-                    },
-                  );
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { revokeCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    sessionStoreEvents.revokeFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to revoke session'),
-                    ),
-                  );
-                },
-              }),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { revokeCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      sessionStoreEvents.revokeFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to revoke session'),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method revokeAll
-       *
-       * @description
-       * Revokes all sessions except the current one. Uses `exhaustMap` to
-       * prevent duplicate requests. On success, only the current session
-       * (identified by `isCurrent`) is kept in the entity collection.
-       *
-       * @since 1.0.0
-       */
-      revokeAll: rxMethod<void>(
-        pipe(
-          tap(() => {
-            patchState(store, { revokeAllCallState: pendingCallState() });
-          }),
-          exhaustMap(() =>
-            sessionService.revokeAll().pipe(
-              tapResponse({
-                next: () => {
-                  const currentSession: SessionOutput | undefined = store
-                    .sessionEntities()
-                    .find((s) => s.isCurrent);
-                  patchState(store,
-                    setAllEntities(
-                      currentSession ? [currentSession] : [],
-                      { collection: 'session' },
-                    ),
-                    {
-                      totalSessions: currentSession ? 1 : 0,
-                      revokeAllCallState: successCallState(null),
-                    },
-                  );
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { revokeAllCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    sessionStoreEvents.revokeAllFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to revoke all sessions'),
-                    ),
-                  );
-                },
-              }),
+        /**
+         * Method revokeAll
+         *
+         * @description
+         * Revokes all sessions except the current one. Uses `exhaustMap` to
+         * prevent duplicate requests. On success, only the current session
+         * (identified by `isCurrent`) is kept in the entity collection.
+         *
+         * @since 1.0.0
+         */
+        revokeAll: rxMethod<void>(
+          pipe(
+            tap(() => {
+              patchState(store, { revokeAllCallState: pendingCallState() });
+            }),
+            exhaustMap(() =>
+              sessionService.revokeAll().pipe(
+                tapResponse({
+                  next: () => {
+                    const currentSession: SessionOutput | undefined = store
+                      .sessionEntities()
+                      .find((s) => s.isCurrent);
+                    patchState(
+                      store,
+                      setAllEntities(currentSession ? [currentSession] : [], {
+                        collection: 'session',
+                      }),
+                      {
+                        totalSessions: currentSession ? 1 : 0,
+                        revokeAllCallState: successCallState(null),
+                      },
+                    );
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { revokeAllCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      sessionStoreEvents.revokeAllFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to revoke all sessions'),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
-      //#endregion
+        //#endregion
 
-      //#region Synchronous Methods
-      /**
-       * Method clear
-       *
-       * @description
-       * Resets the store to its initial state and removes all entities.
-       * Should be called on logout or when the component is destroyed.
-       *
-       * @since 1.0.0
-       */
-      clear(): void {
-        patchState(store,
-          removeAllEntities({ collection: 'session' }),
-          INITIAL_SESSION_STATE,
-        );
-      },
+        //#region Synchronous Methods
+        /**
+         * Method clear
+         *
+         * @description
+         * Resets the store to its initial state and removes all entities.
+         * Should be called on logout or when the component is destroyed.
+         *
+         * @since 1.0.0
+         */
+        clear(): void {
+          patchState(store, removeAllEntities({ collection: 'session' }), INITIAL_SESSION_STATE);
+        },
 
-      /**
-       * Method resetRevokeOperation
-       *
-       * @description
-       * Resets the revoke operation state to idle. Useful for clearing
-       * feedback messages after the user has acknowledged them.
-       *
-       * @since 1.0.0
-       */
-      resetRevokeOperation(): void {
-        patchState(store, { revokeCallState: idleCallState() });
-      },
+        /**
+         * Method resetRevokeOperation
+         *
+         * @description
+         * Resets the revoke operation state to idle. Useful for clearing
+         * feedback messages after the user has acknowledged them.
+         *
+         * @since 1.0.0
+         */
+        resetRevokeOperation(): void {
+          patchState(store, { revokeCallState: idleCallState() });
+        },
 
-      /**
-       * Method resetRevokeAllOperation
-       *
-       * @description
-       * Resets the revoke-all call state to idle.
-       *
-       * @since 1.0.0
-       */
-      resetRevokeAllOperation(): void {
-        patchState(store, { revokeAllCallState: idleCallState() });
-      },
-      //#endregion
-    };
-  }),
+        /**
+         * Method resetRevokeAllOperation
+         *
+         * @description
+         * Resets the revoke-all call state to idle.
+         *
+         * @since 1.0.0
+         */
+        resetRevokeAllOperation(): void {
+          patchState(store, { revokeAllCallState: idleCallState() });
+        },
+        //#endregion
+      };
+    },
+  ),
   //#endregion
 );
 

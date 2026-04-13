@@ -1,13 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import {
-  patchState,
-  signalStore,
-  type,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import {
   removeAllEntities,
   removeEntity,
@@ -17,10 +10,7 @@ import {
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
-import { TrustedDeviceService } from '@features/auth/data-access';
 import type { HydraCollection } from '@core/models/api';
-import type { TrustedDeviceOutput } from '@features/auth/models';
-import type { TrustedDeviceState } from './trusted-device-state.interface';
 import {
   idleCallState,
   pendingCallState,
@@ -31,6 +21,9 @@ import {
   type CallState,
   type StoreError,
 } from '@core/state/request-state';
+import { TrustedDeviceService } from '@features/auth/data-access';
+import type { TrustedDeviceOutput } from '@features/auth/models';
+import type { TrustedDeviceState } from './trusted-device-state.interface';
 import { trustedDeviceStoreEvents } from './trusted-device.events';
 
 //#region Initial State
@@ -83,7 +76,6 @@ const INITIAL_TRUSTED_DEVICE_STATE: TrustedDeviceState = {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const TrustedDeviceStore = signalStore(
-
   //#region State
   withState<TrustedDeviceState>(INITIAL_TRUSTED_DEVICE_STATE),
   //#endregion
@@ -107,9 +99,7 @@ export const TrustedDeviceStore = signalStore(
   //#region Computed
   withComputed((store) => ({
     /** Alias for deviceEntities — backward-compatible accessor. */
-    devices: computed<ReadonlyArray<TrustedDeviceOutput>>(
-      () => store.deviceEntities(),
-    ),
+    devices: computed<ReadonlyArray<TrustedDeviceOutput>>(() => store.deviceEntities()),
 
     /**
      * Computed isRevoking
@@ -163,130 +153,45 @@ export const TrustedDeviceStore = signalStore(
   //#endregion
 
   //#region Methods
-  withMethods((
-    store,
-    dispatcher = inject<Dispatcher>(Dispatcher),
-    trustedDeviceService = inject(TrustedDeviceService),
-  ) => {
-    //#region Shared Reactive Pipelines
-    /**
-     * Reactive pipeline loadFn
-     *
-     * @description
-     * Shared `rxMethod` pipeline for loading trusted devices. Uses
-     * `switchMap` so that rapid successive calls cancel the previous
-     * in-flight request. Exposed publicly as both `load` (generic) and
-     * `loadDevices` (explicit).
-     *
-     * @since 2.0.0
-     */
-    const loadFn = rxMethod<void>(
-      pipe(
-        tap(() => {
-          patchState(store, { listCallState: pendingCallState() });
-        }),
-        switchMap(() =>
-          trustedDeviceService.list().pipe(
-            tapResponse({
-              next: (response: HydraCollection<TrustedDeviceOutput>) => {
-                patchState(store,
-                  setAllEntities([...response.member], { collection: 'device' }),
-                  { listCallState: successCallState(null) },
-                );
-              },
-              error: (error: unknown) => {
-                const storeError: StoreError = toStoreError(error);
-                patchState(store, { listCallState: errorCallState(storeError) });
-                dispatcher.dispatch(
-                  trustedDeviceStoreEvents.loadFailed(
-                    toStoreFailureEventPayload(storeError, 'Failed to load trusted devices'),
-                  ),
-                );
-              },
-            }),
-          ),
-        ),
-      ),
-    );
-    //#endregion
-
-    return {
-      //#region Reactive Methods
-      /** @see loadFn — generic alias. */
-      load: loadFn,
-      /** @see loadFn — explicit alias. */
-      loadDevices: loadFn,
-
+  withMethods(
+    (
+      store,
+      dispatcher = inject<Dispatcher>(Dispatcher),
+      trustedDeviceService = inject(TrustedDeviceService),
+    ) => {
+      //#region Shared Reactive Pipelines
       /**
-       * Method revokeDevice
+       * Reactive pipeline loadFn
        *
        * @description
-       * Revokes trust for a specific device by ID. Uses `switchMap` for
-       * consistency. On success the revoked device is removed from
-       * the local entity collection.
+       * Shared `rxMethod` pipeline for loading trusted devices. Uses
+       * `switchMap` so that rapid successive calls cancel the previous
+       * in-flight request. Exposed publicly as both `load` (generic) and
+       * `loadDevices` (explicit).
        *
-       * @since 1.0.0
-       *
-       * @param {string} deviceId - UUID of the device to revoke.
+       * @since 2.0.0
        */
-      revokeDevice: rxMethod<string>(
+      const loadFn = rxMethod<void>(
         pipe(
           tap(() => {
-            patchState(store, { revokeCallState: pendingCallState() });
-          }),
-          switchMap((deviceId: string) =>
-            trustedDeviceService.revoke(deviceId).pipe(
-              tapResponse({
-                next: () => {
-                  patchState(store,
-                    removeEntity(deviceId, { collection: 'device' }),
-                    { revokeCallState: successCallState(null) },
-                  );
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { revokeCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    trustedDeviceStoreEvents.revokeFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to revoke device'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Method revokeAllDevices
-       *
-       * @description
-       * Revokes trust for all devices at once. On success the local entity
-       * collection is cleared completely.
-       *
-       * @since 1.0.0
-       */
-      revokeAllDevices: rxMethod<void>(
-        pipe(
-          tap(() => {
-            patchState(store, { revokeAllCallState: pendingCallState() });
+            patchState(store, { listCallState: pendingCallState() });
           }),
           switchMap(() =>
-            trustedDeviceService.revokeAll().pipe(
+            trustedDeviceService.list().pipe(
               tapResponse({
-                next: () => {
-                  patchState(store,
-                    removeAllEntities({ collection: 'device' }),
-                    { revokeAllCallState: successCallState(null) },
+                next: (response: HydraCollection<TrustedDeviceOutput>) => {
+                  patchState(
+                    store,
+                    setAllEntities([...response.member], { collection: 'device' }),
+                    { listCallState: successCallState(null) },
                   );
                 },
                 error: (error: unknown) => {
                   const storeError: StoreError = toStoreError(error);
-                  patchState(store, { revokeAllCallState: errorCallState(storeError) });
+                  patchState(store, { listCallState: errorCallState(storeError) });
                   dispatcher.dispatch(
-                    trustedDeviceStoreEvents.revokeAllFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to revoke all devices'),
+                    trustedDeviceStoreEvents.loadFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load trusted devices'),
                     ),
                   );
                 },
@@ -294,41 +199,128 @@ export const TrustedDeviceStore = signalStore(
             ),
           ),
         ),
-      ),
+      );
       //#endregion
 
-      //#region Synchronous Methods
-      /**
-       * Method clear
-       *
-       * @description
-       * Resets the store to its initial state and removes all entities.
-       * Should be called on logout or when the component is destroyed.
-       *
-       * @since 1.0.0
-       */
-      clear(): void {
-        patchState(store,
-          removeAllEntities({ collection: 'device' }),
-          INITIAL_TRUSTED_DEVICE_STATE,
-        );
-      },
+      return {
+        //#region Reactive Methods
+        /** @see loadFn — generic alias. */
+        load: loadFn,
+        /** @see loadFn — explicit alias. */
+        loadDevices: loadFn,
 
-      /**
-       * Method resetRevokeOperation
-       *
-       * @description
-       * Resets the revoke operation state to idle. Useful for clearing
-       * feedback messages after the user has acknowledged them.
-       *
-       * @since 1.0.0
-       */
-      resetRevokeOperation(): void {
-        patchState(store, { revokeCallState: idleCallState() });
-      },
-      //#endregion
-    };
-  }),
+        /**
+         * Method revokeDevice
+         *
+         * @description
+         * Revokes trust for a specific device by ID. Uses `switchMap` for
+         * consistency. On success the revoked device is removed from
+         * the local entity collection.
+         *
+         * @since 1.0.0
+         *
+         * @param {string} deviceId - UUID of the device to revoke.
+         */
+        revokeDevice: rxMethod<string>(
+          pipe(
+            tap(() => {
+              patchState(store, { revokeCallState: pendingCallState() });
+            }),
+            switchMap((deviceId: string) =>
+              trustedDeviceService.revoke(deviceId).pipe(
+                tapResponse({
+                  next: () => {
+                    patchState(store, removeEntity(deviceId, { collection: 'device' }), {
+                      revokeCallState: successCallState(null),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { revokeCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      trustedDeviceStoreEvents.revokeFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to revoke device'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method revokeAllDevices
+         *
+         * @description
+         * Revokes trust for all devices at once. On success the local entity
+         * collection is cleared completely.
+         *
+         * @since 1.0.0
+         */
+        revokeAllDevices: rxMethod<void>(
+          pipe(
+            tap(() => {
+              patchState(store, { revokeAllCallState: pendingCallState() });
+            }),
+            switchMap(() =>
+              trustedDeviceService.revokeAll().pipe(
+                tapResponse({
+                  next: () => {
+                    patchState(store, removeAllEntities({ collection: 'device' }), {
+                      revokeAllCallState: successCallState(null),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { revokeAllCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      trustedDeviceStoreEvents.revokeAllFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to revoke all devices'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+        //#endregion
+
+        //#region Synchronous Methods
+        /**
+         * Method clear
+         *
+         * @description
+         * Resets the store to its initial state and removes all entities.
+         * Should be called on logout or when the component is destroyed.
+         *
+         * @since 1.0.0
+         */
+        clear(): void {
+          patchState(
+            store,
+            removeAllEntities({ collection: 'device' }),
+            INITIAL_TRUSTED_DEVICE_STATE,
+          );
+        },
+
+        /**
+         * Method resetRevokeOperation
+         *
+         * @description
+         * Resets the revoke operation state to idle. Useful for clearing
+         * feedback messages after the user has acknowledged them.
+         *
+         * @since 1.0.0
+         */
+        resetRevokeOperation(): void {
+          patchState(store, { revokeCallState: idleCallState() });
+        },
+        //#endregion
+      };
+    },
+  ),
   //#endregion
 );
 

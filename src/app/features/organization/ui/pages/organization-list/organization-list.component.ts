@@ -1,8 +1,15 @@
-import { ChangeDetectionStrategy, Component, inject, input, numberAttribute, type InputSignalWithTransform } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  numberAttribute,
+  type InputSignalWithTransform,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import type { OrganizationOutput } from '@features/organization/models';
 import type { RequestOptions } from '@core/services/hydra-api';
+import type { OrganizationOutput } from '@features/organization/models';
 import { OrganizationStore } from '@features/organization/state';
 import { OrganizationDataview } from '@features/organization/ui/dataviews';
 
@@ -42,8 +49,9 @@ export class OrganizationListPage {
    *
    * @type {InputSignal<number>}
    */
-  public readonly page: InputSignalWithTransform<number, unknown> =
-    input<number, unknown>(1, { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) });
+  public readonly page: InputSignalWithTransform<number, unknown> = input<number, unknown>(1, {
+    transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)),
+  });
   //#endregion
 
   //#region Properties
@@ -59,8 +67,7 @@ export class OrganizationListPage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property route
@@ -75,8 +82,7 @@ export class OrganizationListPage {
    *
    * @type {ActivatedRoute}
    */
-  private readonly route: ActivatedRoute =
-    inject<ActivatedRoute>(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property store
@@ -90,8 +96,7 @@ export class OrganizationListPage {
    *
    * @type {OrganizationStore}
    */
-  protected readonly store: OrganizationStore =
-    inject<OrganizationStore>(OrganizationStore);
+  protected readonly store: OrganizationStore = inject<OrganizationStore>(OrganizationStore);
   //#endregion
 
   //#region Methods

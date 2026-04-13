@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,46 +9,48 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import type { NotificationOutput } from '@features/account/models';
 
 const TYPE_ICONS: Record<string, string> = {
   // user
-  'user.created':          'pi-user-plus',
-  'user.updated':          'pi-user-edit',
-  'user.deleted':          'pi-user-minus',
-  'user.invited':          'pi-user-plus',
+  'user.created': 'pi-user-plus',
+  'user.updated': 'pi-user-edit',
+  'user.deleted': 'pi-user-minus',
+  'user.invited': 'pi-user-plus',
   // auth / security
-  'login':                 'pi-sign-in',
-  'login.failed':          'pi-lock',
-  'password.reset':        'pi-key',
-  'security':              'pi-shield',
+  login: 'pi-sign-in',
+  'login.failed': 'pi-lock',
+  'password.reset': 'pi-key',
+  security: 'pi-shield',
   // organization
-  'organization.created':  'pi-building',
-  'organization.updated':  'pi-building',
-  'organization.deleted':  'pi-trash',
-  'member.added':          'pi-users',
-  'member.removed':        'pi-users',
+  'organization.created': 'pi-building',
+  'organization.updated': 'pi-building',
+  'organization.deleted': 'pi-trash',
+  'member.added': 'pi-users',
+  'member.removed': 'pi-users',
   // system
-  'maintenance':           'pi-wrench',
-  'update':                'pi-sync',
-  'upgrade':               'pi-arrow-circle-up',
-  'alert':                 'pi-exclamation-triangle',
-  'error':                 'pi-times-circle',
+  maintenance: 'pi-wrench',
+  update: 'pi-sync',
+  upgrade: 'pi-arrow-circle-up',
+  alert: 'pi-exclamation-triangle',
+  error: 'pi-times-circle',
 };
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  organization: { bg: 'bg-indigo-100 dark:bg-indigo-950', text: 'text-indigo-600 dark:text-indigo-400' },
-  system:       { bg: 'bg-amber-100 dark:bg-amber-950',   text: 'text-amber-600 dark:text-amber-400'   },
-  security:     { bg: 'bg-red-100 dark:bg-red-950',       text: 'text-red-600 dark:text-red-400'       },
-  user:         { bg: 'bg-sky-100 dark:bg-sky-950',       text: 'text-sky-600 dark:text-sky-400'       },
+  organization: {
+    bg: 'bg-indigo-100 dark:bg-indigo-950',
+    text: 'text-indigo-600 dark:text-indigo-400',
+  },
+  system: { bg: 'bg-amber-100 dark:bg-amber-950', text: 'text-amber-600 dark:text-amber-400' },
+  security: { bg: 'bg-red-100 dark:bg-red-950', text: 'text-red-600 dark:text-red-400' },
+  user: { bg: 'bg-sky-100 dark:bg-sky-950', text: 'text-sky-600 dark:text-sky-400' },
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
   organization: 'pi-sitemap',
-  system:       'pi-cog',
-  security:     'pi-shield',
-  user:         'pi-user',
+  system: 'pi-cog',
+  security: 'pi-shield',
+  user: 'pi-user',
 };
 
 /**

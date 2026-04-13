@@ -1,11 +1,11 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 
-import { AuthService } from './auth.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
-import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@features/auth/models';
 import type { ApiError } from '@core/models/api';
+import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@features/auth/models';
+import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
   let service: AuthService;

@@ -1,11 +1,11 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 
-import { OAuth2Service } from './oauth2.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
-import type { UserInfoOutput } from '@features/auth/models';
 import type { ApiError } from '@core/models/api';
+import type { UserInfoOutput } from '@features/auth/models';
+import { OAuth2Service } from './oauth2.service';
 
 describe('OAuth2Service', () => {
   let service: OAuth2Service;

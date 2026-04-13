@@ -1,20 +1,18 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { EMPTY } from 'rxjs';
 import { Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { PasswordResetVerifyPage } from './password-reset-verify-page.component';
+import { EMPTY } from 'rxjs';
 import { PasswordResetStore } from '@features/auth/state';
+import { PasswordResetVerifyPage } from './password-reset-verify-page.component';
 
 describe('PasswordResetVerifyPage', () => {
   const setup = (options?: { canResendIn?: number | null }) => {
     const mockPasswordResetStore = {
       isResending: signal(false),
       currentRequest: signal(
-        options?.canResendIn !== undefined
-          ? { canResendIn: options.canResendIn }
-          : null
+        options?.canResendIn !== undefined ? { canResendIn: options.canResendIn } : null,
       ),
       setVerificationCode: vi.fn(),
       clear: vi.fn(),

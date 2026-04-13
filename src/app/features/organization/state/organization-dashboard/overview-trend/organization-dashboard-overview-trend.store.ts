@@ -1,5 +1,5 @@
-import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -10,17 +10,23 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { withQueryState, setPendingQuery, setSuccessQuery, setErrorQuery, toStoreError } from '@core/state/request-state';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { EMPTY, forkJoin, pipe, switchMap } from 'rxjs';
-import type { MetricComparison } from '@shared/components/metric-card';
+import {
+  withQueryState,
+  setPendingQuery,
+  setSuccessQuery,
+  setErrorQuery,
+  toStoreError,
+} from '@core/state/request-state';
 import { OrganizationService } from '@features/organization/data-access';
-import { ActiveOrganizationStore } from '@features/organization/state';
 import type {
   OrganizationDashboardGranularity,
   OrganizationDashboardOverviewTrendResource,
   OrganizationDashboardTrendResourceParams,
 } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import type { MetricComparison } from '@shared/components/metric-card';
 import {
   alignDashboardTrendSeries,
   buildDifferenceSeries,
@@ -117,10 +123,7 @@ const WHOLE_NUMBER_FMT = new Intl.NumberFormat('en-US', { maximumFractionDigits:
  */
 const INITIAL_STATE: OrganizationDashboardOverviewTrendState = {
   selectedGranularity: 'week',
-  selectedDateRange: [
-    new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
-    new Date(),
-  ],
+  selectedDateRange: [new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1), new Date()],
   compareEnabled: true,
 };
 
@@ -146,7 +149,6 @@ const INITIAL_STATE: OrganizationDashboardOverviewTrendState = {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const OrganizationDashboardOverviewTrendStore = signalStore(
-
   //#region State
 
   /**
@@ -216,18 +218,12 @@ export const OrganizationDashboardOverviewTrendStore = signalStore(
      *
      * @since 1.0.0
      */
-    summaryMetrics: computed<
-      readonly OrganizationDashboardOverviewTrendSummaryMetric[]
-    >(() => {
+    summaryMetrics: computed<readonly OrganizationDashboardOverviewTrendSummaryMetric[]>(() => {
       const result = store.queryData();
       const compareEnabled = store.compareEnabled();
 
       const aligned = alignDashboardTrendSeries(
-        [
-          result?.inspections?.series,
-          result?.ncOpened?.series,
-          result?.ncResolved?.series,
-        ],
+        [result?.inspections?.series, result?.ncOpened?.series, result?.ncResolved?.series],
         store.selectedGranularity(),
       );
       const [inspectionData = [], openedData = [], resolvedData = []] = aligned.datasets;
@@ -239,32 +235,28 @@ export const OrganizationDashboardOverviewTrendStore = signalStore(
       const netPressureTotal = sumDashboardTrendValues(netPressureData);
 
       const previousInspectionTotal = sumDashboardTrendValues(
-        (result?.inspections?.comparison?.series ?? []).map((p) =>
-          getDashboardTrendPointValue(p),
-        ),
+        (result?.inspections?.comparison?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
       );
       const previousOpenedTotal = sumDashboardTrendValues(
         (result?.ncOpened?.comparison?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
       );
       const previousResolvedTotal = sumDashboardTrendValues(
-        (result?.ncResolved?.comparison?.series ?? []).map((p) =>
-          getDashboardTrendPointValue(p),
-        ),
+        (result?.ncResolved?.comparison?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
       );
       const previousNetPressure = previousOpenedTotal - previousResolvedTotal;
-        /**
-         * Function buildComparison
-         * @function buildComparison
-         *
-         * @description
-         * Builds a {@link MetricComparison} object from the delta between
-         * the current and previous period values. Returns null when
-         * compare mode is disabled or the delta is exactly zero.
-         *
-         * @param {number} current - Current period total.
-         * @param {number} previous - Previous period total.
-         * @returns {MetricComparison | null} Comparison metadata, or null.
-         */      const buildComparison = (current: number, previous: number): MetricComparison | null => {
+      /**
+       * Function buildComparison
+       * @function buildComparison
+       *
+       * @description
+       * Builds a {@link MetricComparison} object from the delta between
+       * the current and previous period values. Returns null when
+       * compare mode is disabled or the delta is exactly zero.
+       *
+       * @param {number} current - Current period total.
+       * @param {number} previous - Previous period total.
+       * @returns {MetricComparison | null} Comparison metadata, or null.
+       */ const buildComparison = (current: number, previous: number): MetricComparison | null => {
         if (!compareEnabled) return null;
         const delta = current - previous;
         if (delta === 0) return { value: 'Flat', direction: null };
@@ -315,11 +307,7 @@ export const OrganizationDashboardOverviewTrendStore = signalStore(
     chartData: computed<ChartData<'line'>>(() => {
       const result = store.queryData();
       const aligned = alignDashboardTrendSeries(
-        [
-          result?.inspections?.series,
-          result?.ncOpened?.series,
-          result?.ncResolved?.series,
-        ],
+        [result?.inspections?.series, result?.ncOpened?.series, result?.ncResolved?.series],
         store.selectedGranularity(),
       );
       const [inspectionData = [], openedData = [], resolvedData = []] = aligned.datasets;
@@ -483,15 +471,12 @@ export const OrganizationDashboardOverviewTrendStore = signalStore(
           patchState(store, setPendingQuery());
 
           return forkJoin({
-            inspections: organizationService.getDashboardInspectionsTrend(
-              params.organizationId,
-              {
-                granularity: params.granularity,
-                from: params.from,
-                to: params.to,
-                compare: params.compare,
-              },
-            ),
+            inspections: organizationService.getDashboardInspectionsTrend(params.organizationId, {
+              granularity: params.granularity,
+              from: params.from,
+              to: params.to,
+              compare: params.compare,
+            }),
             ncOpened: organizationService.getDashboardNonConformitiesOpenedTrend(
               params.organizationId,
               {
@@ -637,5 +622,3 @@ export const OrganizationDashboardOverviewTrendStore = signalStore(
 export type OrganizationDashboardOverviewTrendStore = InstanceType<
   typeof OrganizationDashboardOverviewTrendStore
 >;
-
-

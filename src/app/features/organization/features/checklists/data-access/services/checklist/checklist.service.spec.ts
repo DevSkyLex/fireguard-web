@@ -1,11 +1,15 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 
-import { ChecklistService } from './checklist.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
-import type { ChecklistListOptions, ChecklistOutput, CreateChecklistInput } from '@features/organization/features/checklists/models';
 import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
+import type {
+  ChecklistListOptions,
+  ChecklistOutput,
+  CreateChecklistInput,
+} from '@features/organization/features/checklists/models';
+import { ChecklistService } from './checklist.service';
 
 describe('ChecklistService', () => {
   let service: ChecklistService;
@@ -145,9 +149,7 @@ describe('ChecklistService', () => {
     const input: CreateChecklistInput = {
       name: 'Fire Safety Inspection Checklist v1',
       version: '1.0',
-      items: [
-        { label: 'Check fire extinguishers', required: true, position: 1 },
-      ],
+      items: [{ label: 'Check fire extinguishers', required: true, position: 1 }],
     };
 
     it('should send POST request and return created checklist', () => {
@@ -170,7 +172,10 @@ describe('ChecklistService', () => {
       });
 
       const req = httpMock.expectOne(checklistsUrl);
-      req.flush({ status: 422, title: 'Unprocessable Entity' }, { status: 422, statusText: 'Unprocessable Entity' });
+      req.flush(
+        { status: 422, title: 'Unprocessable Entity' },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
     });
   });
 

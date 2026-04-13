@@ -2,8 +2,8 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
-import { OrganizationStore } from '@features/organization/state';
 import type { OrganizationOutput } from '@features/organization/models';
+import { OrganizationStore } from '@features/organization/state';
 import { OrganizationSwitcher } from './organization-switcher.component';
 
 const MOCK_ORG = {
@@ -36,9 +36,7 @@ describe('OrganizationSwitcher', () => {
 
     TestBed.configureTestingModule({
       imports: [OrganizationSwitcher],
-      providers: [
-        provideRouter([]),
-      ],
+      providers: [provideRouter([])],
     }).overrideComponent(OrganizationSwitcher, {
       set: { providers: [{ provide: OrganizationStore, useValue: mockOrganizationStore }] },
     });

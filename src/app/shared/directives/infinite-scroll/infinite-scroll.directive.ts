@@ -1,3 +1,4 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
   Directive,
   AfterViewInit,
@@ -10,7 +11,6 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
 
 /**
  * Directive InfiniteScrollDirective
@@ -57,8 +57,7 @@ export class InfiniteScrollDirective implements AfterViewInit, OnDestroy {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly disabled: InputSignal<boolean> =
-    input<boolean>(false);
+  public readonly disabled: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property rootMargin
@@ -75,8 +74,7 @@ export class InfiniteScrollDirective implements AfterViewInit, OnDestroy {
    *
    * @type {InputSignal<string>}
    */
-  public readonly rootMargin: InputSignal<string> =
-    input<string>('200px');
+  public readonly rootMargin: InputSignal<string> = input<string>('200px');
 
   /**
    * Property scrolled
@@ -106,8 +104,7 @@ export class InfiniteScrollDirective implements AfterViewInit, OnDestroy {
    *
    * @type {ElementRef<HTMLElement>}
    */
-  private readonly element: ElementRef<HTMLElement> =
-    inject<ElementRef>(ElementRef);
+  private readonly element: ElementRef<HTMLElement> = inject<ElementRef>(ElementRef);
 
   /**
    * Property platformId
@@ -122,8 +119,7 @@ export class InfiniteScrollDirective implements AfterViewInit, OnDestroy {
    *
    * @type {object}
    */
-  private readonly platformId: object =
-    inject<object>(PLATFORM_ID);
+  private readonly platformId: object = inject<object>(PLATFORM_ID);
 
   /**
    * Property observer

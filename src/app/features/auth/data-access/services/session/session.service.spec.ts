@@ -1,11 +1,11 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 
-import { SessionService } from './session.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
-import type { SessionOutput } from '@features/auth/models';
 import type { HydraCollection, ApiError } from '@core/models/api';
+import type { SessionOutput } from '@features/auth/models';
+import { SessionService } from './session.service';
 
 describe('SessionService', () => {
   let service: SessionService;

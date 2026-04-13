@@ -59,9 +59,7 @@ export class OAuth2Service extends HydraApiService {
    * @returns {Observable<UserInfoOutput>} Observable emitting the user information.
    */
   public userinfo(): Observable<UserInfoOutput> {
-    return this.getOne<UserInfoOutput>(
-      `${OAuth2Service.BASE_PATH}/userinfo`,
-    );
+    return this.getOne<UserInfoOutput>(`${OAuth2Service.BASE_PATH}/userinfo`);
   }
   //#endregion
 }

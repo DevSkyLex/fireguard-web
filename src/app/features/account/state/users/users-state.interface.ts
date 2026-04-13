@@ -1,6 +1,6 @@
 import type { OptionOutput } from '@core/models/api';
-import type { UserOutput } from '@features/account/models';
 import type { CallState } from '@core/state/request-state';
+import type { UserOutput } from '@features/account/models';
 
 export interface UsersState {
   readonly totalUsers: number;

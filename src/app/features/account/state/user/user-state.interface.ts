@@ -1,5 +1,5 @@
-import type { UserInfoOutput } from '@features/auth/models';
 import type { CallState } from '@core/state/request-state';
+import type { UserInfoOutput } from '@features/auth/models';
 
 /**
  * Interface UserState

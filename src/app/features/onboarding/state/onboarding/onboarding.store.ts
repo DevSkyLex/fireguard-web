@@ -1,24 +1,10 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import {
-  patchState,
-  signalStore,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, exhaustMap, map, of, pipe, switchMap, tap } from 'rxjs';
-import { OnboardingService } from '@features/onboarding/data-access';
-import type {
-  OnboardingOutput,
-  OnboardingStepKey,
-  OnboardingStepOutput,
-  StartOnboardingInput,
-} from '@features/onboarding/models';
-import type { OnboardingStoreState } from './onboarding-state.interface';
 import {
   idleCallState,
   pendingCallState,
@@ -29,6 +15,14 @@ import {
   type CallState,
   type StoreError,
 } from '@core/state/request-state';
+import { OnboardingService } from '@features/onboarding/data-access';
+import type {
+  OnboardingOutput,
+  OnboardingStepKey,
+  OnboardingStepOutput,
+  StartOnboardingInput,
+} from '@features/onboarding/models';
+import type { OnboardingStoreState } from './onboarding-state.interface';
 import { onboardingStoreEvents } from './onboarding.events';
 
 interface ExecuteStepPayload {
@@ -206,7 +200,9 @@ export const OnboardingStore = signalStore(
     steps: computed<readonly OnboardingStepOutput[]>(() => store.onboarding()?.steps ?? []),
 
     /** Keys of already-completed steps. */
-    completedSteps: computed<readonly OnboardingStepKey[]>(() => store.onboarding()?.completedSteps ?? []),
+    completedSteps: computed<readonly OnboardingStepKey[]>(
+      () => store.onboarding()?.completedSteps ?? [],
+    ),
 
     /** Whether a rollback action is available. */
     canRollback: computed<boolean>(() => store.onboarding()?.canRollback ?? false),
@@ -215,10 +211,14 @@ export const OnboardingStore = signalStore(
     blockedReason: computed<string | null>(() => store.onboarding()?.blockedReason ?? null),
 
     /** Organization ID associated with the onboarding, or `null`. */
-    targetOrganizationId: computed<string | null>(() => store.onboarding()?.targetOrganizationId ?? null),
+    targetOrganizationId: computed<string | null>(
+      () => store.onboarding()?.targetOrganizationId ?? null,
+    ),
 
     /** Organization name associated with the onboarding, or `null`. */
-    targetOrganizationName: computed<string | null>(() => store.onboarding()?.targetOrganizationName ?? null),
+    targetOrganizationName: computed<string | null>(
+      () => store.onboarding()?.targetOrganizationName ?? null,
+    ),
 
     /**
      * Computed activeStepIndex
@@ -242,258 +242,300 @@ export const OnboardingStore = signalStore(
   //#endregion
 
   //#region Methods
-  withMethods((
-    store,
-    dispatcher = inject<Dispatcher>(Dispatcher),
-    onboardingService = inject<OnboardingService>(OnboardingService),
-  ) => ({
-    /**
-     * Method load
-     *
-     * @description
-     * Fetches the current onboarding record from the API. Uses `switchMap`
-     * so a new call cancels any in-flight request.
-     *
-     * @fires onboardingStoreEvents.loadFailed  On API error.
-     *
-     * @since 1.0.0
-     *
-     * @author Valentin FORTIN <contact@valentin-fortin.pro>
-     */
-    load: rxMethod<void>(pipe(
-      tap(() => patchState(store, { loadCallState: pendingCallState() })),
-      switchMap(() => onboardingService.get().pipe(
-        tapResponse({
-          next: (response: OnboardingOutput) => {
+  withMethods(
+    (
+      store,
+      dispatcher = inject<Dispatcher>(Dispatcher),
+      onboardingService = inject<OnboardingService>(OnboardingService),
+    ) => ({
+      /**
+       * Method load
+       *
+       * @description
+       * Fetches the current onboarding record from the API. Uses `switchMap`
+       * so a new call cancels any in-flight request.
+       *
+       * @fires onboardingStoreEvents.loadFailed  On API error.
+       *
+       * @since 1.0.0
+       *
+       * @author Valentin FORTIN <contact@valentin-fortin.pro>
+       */
+      load: rxMethod<void>(
+        pipe(
+          tap(() => patchState(store, { loadCallState: pendingCallState() })),
+          switchMap(() =>
+            onboardingService.get().pipe(
+              tapResponse({
+                next: (response: OnboardingOutput) => {
+                  patchState(store, {
+                    onboarding: response,
+                    loadCallState: successCallState(response),
+                  });
+                },
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { loadCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    onboardingStoreEvents.loadFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load onboarding'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Method start
+       *
+       * @description
+       * Starts the onboarding workflow by posting the initial input to the
+       * API. Uses `exhaustMap` to prevent duplicate submissions.
+       *
+       * @param {StartOnboardingInput} input  Configuration for the new
+       *   onboarding (e.g. target organization).
+       *
+       * @fires onboardingStoreEvents.startFailed  On API error.
+       *
+       * @since 1.0.0
+       *
+       * @author Valentin FORTIN <contact@valentin-fortin.pro>
+       */
+      start: rxMethod<StartOnboardingInput>(
+        pipe(
+          tap(() => patchState(store, { startCallState: pendingCallState() })),
+          exhaustMap((input: StartOnboardingInput) =>
+            onboardingService.start(input).pipe(
+              tapResponse({
+                next: (response: OnboardingOutput) => {
+                  patchState(store, {
+                    onboarding: response,
+                    startCallState: successCallState(response),
+                  });
+                },
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { startCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    onboardingStoreEvents.startFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to start onboarding'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Method executeStep
+       *
+       * @description
+       * Executes an onboarding step by key. Uses `exhaustMap` to prevent
+       * duplicate submissions. On success the full onboarding record is
+       * refreshed.
+       *
+       * @param {ExecuteStepPayload} payload  Contains the `stepKey` to execute.
+       *
+       * @fires onboardingStoreEvents.executeStepFailed  On API error.
+       *
+       * @since 1.0.0
+       *
+       * @author Valentin FORTIN <contact@valentin-fortin.pro>
+       */
+      executeStep: rxMethod<ExecuteStepPayload>(
+        pipe(
+          tap(() => patchState(store, { executeStepCallState: pendingCallState() })),
+          exhaustMap(({ stepKey }: ExecuteStepPayload) =>
+            onboardingService.executeStep(stepKey).pipe(
+              tapResponse({
+                next: (response: OnboardingOutput) => {
+                  patchState(store, {
+                    onboarding: response,
+                    executeStepCallState: successCallState(response),
+                  });
+                },
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { executeStepCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    onboardingStoreEvents.executeStepFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to execute step'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Method skipStep
+       *
+       * @description
+       * Skips an onboarding step by key. Uses `exhaustMap` to prevent
+       * duplicate submissions.
+       *
+       * @param {OnboardingStepKey} stepKey  The step key to skip.
+       *
+       * @fires onboardingStoreEvents.skipStepFailed  On API error.
+       *
+       * @since 1.0.0
+       *
+       * @author Valentin FORTIN <contact@valentin-fortin.pro>
+       */
+      skipStep: rxMethod<OnboardingStepKey>(
+        pipe(
+          tap(() => patchState(store, { skipStepCallState: pendingCallState() })),
+          exhaustMap((stepKey) =>
+            onboardingService.skipStep(stepKey).pipe(
+              tapResponse({
+                next: (response: OnboardingOutput) => {
+                  patchState(store, {
+                    onboarding: response,
+                    skipStepCallState: successCallState(response),
+                  });
+                },
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { skipStepCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    onboardingStoreEvents.skipStepFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to skip step'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Method rollback
+       *
+       * @description
+       * Rolls back the last completed onboarding step. Uses `exhaustMap`
+       * to prevent duplicate submissions. Check `canRollback()` before
+       * calling to ensure a rollback is available.
+       *
+       * @fires onboardingStoreEvents.rollbackFailed  On API error.
+       *
+       * @since 1.0.0
+       *
+       * @author Valentin FORTIN <contact@valentin-fortin.pro>
+       */
+      rollback: rxMethod<void>(
+        pipe(
+          tap(() => patchState(store, { rollbackCallState: pendingCallState() })),
+          exhaustMap(() =>
+            onboardingService.rollback().pipe(
+              tapResponse({
+                next: (response: OnboardingOutput) => {
+                  patchState(store, {
+                    onboarding: response,
+                    rollbackCallState: successCallState(response),
+                  });
+                },
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { rollbackCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    onboardingStoreEvents.rollbackFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to rollback step'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Method clear
+       *
+       * @description
+       * Resets the store to its initial state: clears the onboarding
+       * record and resets all operations to idle.
+       *
+       * @since 1.0.0
+       *
+       * @author Valentin FORTIN <contact@valentin-fortin.pro>
+       */
+      clear(): void {
+        patchState(store, INITIAL_ONBOARDING_STATE);
+      },
+
+      /**
+       * Method resetExecuteStepOperation
+       *
+       * @description
+       * Resets the execute-step operation to idle. Call this after
+       * displaying an error to the user so the next step attempt
+       * starts fresh.
+       *
+       * @since 1.0.0
+       *
+       * @author Valentin FORTIN <contact@valentin-fortin.pro>
+       */
+      resetExecuteStepOperation(): void {
+        patchState(store, { executeStepCallState: idleCallState() });
+      },
+
+      /**
+       * Method checkBlocking
+       *
+       * @description
+       * Returns an `Observable<boolean>` that emits `true` when an onboarding
+       * workflow is currently blocking navigation (`in_progress` or `blocked`).
+       *
+       * If the onboarding record is already present in the store the decision is
+       * made synchronously (via `of()`). Otherwise the API is called once and the
+       * response is patched into the store as a side-effect so that the onboarding
+       * page does not need to re-fetch it.
+       *
+       * A network / API error is treated as "not blocking" so that a failing
+       * onboarding endpoint never hard-locks the application.
+       *
+       * @since 1.0.0
+       *
+       * @author Valentin FORTIN <contact@valentin-fortin.pro>
+       */
+      checkBlocking(): Observable<boolean> {
+        const isBlockingState = (state: string): boolean =>
+          state === 'in_progress' || state === 'blocked';
+
+        const current: OnboardingOutput | null = store.onboarding();
+        if (current !== null) {
+          return of(isBlockingState(current.state));
+        }
+
+        return onboardingService.get().pipe(
+          tap((response: OnboardingOutput) =>
             patchState(store, {
               onboarding: response,
               loadCallState: successCallState(response),
-            });
-          },
-          error: (error: unknown) => {
-            const storeError: StoreError = toStoreError(error);
-            patchState(store, { loadCallState: errorCallState(storeError) });
-            dispatcher.dispatch(onboardingStoreEvents.loadFailed(toStoreFailureEventPayload(storeError, 'Failed to load onboarding')));
-          },
-        }),
-      )),
-    )),
-
-    /**
-     * Method start
-     *
-     * @description
-     * Starts the onboarding workflow by posting the initial input to the
-     * API. Uses `exhaustMap` to prevent duplicate submissions.
-     *
-     * @param {StartOnboardingInput} input  Configuration for the new
-     *   onboarding (e.g. target organization).
-     *
-     * @fires onboardingStoreEvents.startFailed  On API error.
-     *
-     * @since 1.0.0
-     *
-     * @author Valentin FORTIN <contact@valentin-fortin.pro>
-     */
-    start: rxMethod<StartOnboardingInput>(pipe(
-      tap(() => patchState(store, { startCallState: pendingCallState() })),
-      exhaustMap((input: StartOnboardingInput) => onboardingService.start(input).pipe(
-        tapResponse({
-          next: (response: OnboardingOutput) => {
-            patchState(store, {
-              onboarding: response,
-              startCallState: successCallState(response),
-            });
-          },
-          error: (error: unknown) => {
-            const storeError: StoreError = toStoreError(error);
-            patchState(store, { startCallState: errorCallState(storeError) });
-            dispatcher.dispatch(onboardingStoreEvents.startFailed(toStoreFailureEventPayload(storeError, 'Failed to start onboarding')));
-          },
-        }),
-      )),
-    )),
-
-    /**
-     * Method executeStep
-     *
-     * @description
-     * Executes an onboarding step by key. Uses `exhaustMap` to prevent
-     * duplicate submissions. On success the full onboarding record is
-     * refreshed.
-     *
-     * @param {ExecuteStepPayload} payload  Contains the `stepKey` to execute.
-     *
-     * @fires onboardingStoreEvents.executeStepFailed  On API error.
-     *
-     * @since 1.0.0
-     *
-     * @author Valentin FORTIN <contact@valentin-fortin.pro>
-     */
-    executeStep: rxMethod<ExecuteStepPayload>(pipe(
-      tap(() => patchState(store, { executeStepCallState: pendingCallState() })),
-      exhaustMap(({ stepKey }: ExecuteStepPayload) => onboardingService.executeStep(stepKey).pipe(
-        tapResponse({
-          next: (response: OnboardingOutput) => {
-            patchState(store, {
-              onboarding: response,
-              executeStepCallState: successCallState(response),
-            });
-          },
-          error: (error: unknown) => {
-            const storeError: StoreError = toStoreError(error);
-            patchState(store, { executeStepCallState: errorCallState(storeError) });
-            dispatcher.dispatch(onboardingStoreEvents.executeStepFailed(toStoreFailureEventPayload(storeError, 'Failed to execute step')));
-          },
-        }),
-      )),
-    )),
-
-    /**
-     * Method skipStep
-     *
-     * @description
-     * Skips an onboarding step by key. Uses `exhaustMap` to prevent
-     * duplicate submissions.
-     *
-     * @param {OnboardingStepKey} stepKey  The step key to skip.
-     *
-     * @fires onboardingStoreEvents.skipStepFailed  On API error.
-     *
-     * @since 1.0.0
-     *
-     * @author Valentin FORTIN <contact@valentin-fortin.pro>
-     */
-    skipStep: rxMethod<OnboardingStepKey>(pipe(
-      tap(() => patchState(store, { skipStepCallState: pendingCallState() })),
-      exhaustMap((stepKey) => onboardingService.skipStep(stepKey).pipe(
-        tapResponse({
-          next: (response: OnboardingOutput) => {
-            patchState(store, {
-              onboarding: response,
-              skipStepCallState: successCallState(response),
-            });
-          },
-          error: (error: unknown) => {
-            const storeError: StoreError = toStoreError(error);
-            patchState(store, { skipStepCallState: errorCallState(storeError) });
-            dispatcher.dispatch(onboardingStoreEvents.skipStepFailed(toStoreFailureEventPayload(storeError, 'Failed to skip step')));
-          },
-        }),
-      )),
-    )),
-
-    /**
-     * Method rollback
-     *
-     * @description
-     * Rolls back the last completed onboarding step. Uses `exhaustMap`
-     * to prevent duplicate submissions. Check `canRollback()` before
-     * calling to ensure a rollback is available.
-     *
-     * @fires onboardingStoreEvents.rollbackFailed  On API error.
-     *
-     * @since 1.0.0
-     *
-     * @author Valentin FORTIN <contact@valentin-fortin.pro>
-     */
-    rollback: rxMethod<void>(pipe(
-      tap(() => patchState(store, { rollbackCallState: pendingCallState() })),
-      exhaustMap(() => onboardingService.rollback().pipe(
-        tapResponse({
-          next: (response: OnboardingOutput) => {
-            patchState(store, {
-              onboarding: response,
-              rollbackCallState: successCallState(response),
-            });
-          },
-          error: (error: unknown) => {
-            const storeError: StoreError = toStoreError(error);
-            patchState(store, { rollbackCallState: errorCallState(storeError) });
-            dispatcher.dispatch(onboardingStoreEvents.rollbackFailed(toStoreFailureEventPayload(storeError, 'Failed to rollback step')));
-          },
-        }),
-      )),
-    )),
-
-    /**
-     * Method clear
-     *
-     * @description
-     * Resets the store to its initial state: clears the onboarding
-     * record and resets all operations to idle.
-     *
-     * @since 1.0.0
-     *
-     * @author Valentin FORTIN <contact@valentin-fortin.pro>
-     */
-    clear(): void {
-      patchState(store, INITIAL_ONBOARDING_STATE);
-    },
-
-    /**
-     * Method resetExecuteStepOperation
-     *
-     * @description
-     * Resets the execute-step operation to idle. Call this after
-     * displaying an error to the user so the next step attempt
-     * starts fresh.
-     *
-     * @since 1.0.0
-     *
-     * @author Valentin FORTIN <contact@valentin-fortin.pro>
-     */
-    resetExecuteStepOperation(): void {
-      patchState(store, { executeStepCallState: idleCallState() });
-    },
-
-    /**
-     * Method checkBlocking
-     *
-     * @description
-     * Returns an `Observable<boolean>` that emits `true` when an onboarding
-     * workflow is currently blocking navigation (`in_progress` or `blocked`).
-     *
-     * If the onboarding record is already present in the store the decision is
-     * made synchronously (via `of()`). Otherwise the API is called once and the
-     * response is patched into the store as a side-effect so that the onboarding
-     * page does not need to re-fetch it.
-     *
-     * A network / API error is treated as "not blocking" so that a failing
-     * onboarding endpoint never hard-locks the application.
-     *
-     * @since 1.0.0
-     *
-     * @author Valentin FORTIN <contact@valentin-fortin.pro>
-     */
-    checkBlocking(): Observable<boolean> {
-      const isBlockingState = (state: string): boolean =>
-        state === 'in_progress' || state === 'blocked';
-
-      const current: OnboardingOutput | null = store.onboarding();
-      if (current !== null) {
-        return of(isBlockingState(current.state));
-      }
-
-      return onboardingService.get().pipe(
-        tap((response: OnboardingOutput) =>
-          patchState(store, {
-            onboarding: response,
-            loadCallState: successCallState(response),
+            }),
+          ),
+          map((response: OnboardingOutput) => isBlockingState(response.state)),
+          catchError((error: unknown): Observable<boolean> => {
+            // 404 → aucun workflow d'onboarding pour cet utilisateur → non bloquant
+            if (error instanceof HttpErrorResponse && error.status === 404) {
+              return of(false);
+            }
+            // Toute autre erreur (réseau, 5xx) → fail-closed → rediriger vers /onboarding
+            return of(true);
           }),
-        ),
-        map((response: OnboardingOutput) => isBlockingState(response.state)),
-        catchError((error: unknown): Observable<boolean> => {
-          // 404 → aucun workflow d'onboarding pour cet utilisateur → non bloquant
-          if (error instanceof HttpErrorResponse && error.status === 404) {
-            return of(false);
-          }
-          // Toute autre erreur (réseau, 5xx) → fail-closed → rediriger vers /onboarding
-          return of(true);
-        }),
-      );
-    },
-  })),
+        );
+      },
+    }),
+  ),
   //#endregion
 );
 

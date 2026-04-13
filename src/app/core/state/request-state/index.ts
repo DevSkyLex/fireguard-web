@@ -12,4 +12,10 @@ export {
 export type { StoreError, StoreFailureEventPayload } from './store-error';
 export { toStoreError, toStoreFailureEventPayload } from './store-error';
 
-export { withQueryState, setPendingQuery, setSuccessQuery, setErrorQuery, resetQuery } from './with-query-state.feature';
+export {
+  withQueryState,
+  setPendingQuery,
+  setSuccessQuery,
+  setErrorQuery,
+  resetQuery,
+} from './with-query-state.feature';

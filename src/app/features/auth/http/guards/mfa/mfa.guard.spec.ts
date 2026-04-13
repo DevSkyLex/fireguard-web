@@ -1,8 +1,8 @@
-import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree } from '@angular/router';
-import { mfaGuard } from './mfa.guard';
 import { AuthStore } from '@features/auth/state';
+import { mfaGuard } from './mfa.guard';
 
 describe('mfaGuard', () => {
   let mockRouter: { createUrlTree: ReturnType<typeof vi.fn> };

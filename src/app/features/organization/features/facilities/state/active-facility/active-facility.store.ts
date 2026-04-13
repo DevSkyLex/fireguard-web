@@ -1,19 +1,10 @@
 import { inject } from '@angular/core';
+import { computed } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import {
-  patchState,
-  signalStore,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { computed } from '@angular/core';
 import { Observable, pipe, switchMap, tap } from 'rxjs';
-import { FacilityService } from '@features/organization/features/facilities/data-access';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
-import type { ActiveFacilityState } from './active-facility-state.interface';
 import {
   errorCallState,
   idleCallState,
@@ -24,6 +15,9 @@ import {
   type CallState,
   type StoreError,
 } from '@core/state/request-state';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
+import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import type { ActiveFacilityState } from './active-facility-state.interface';
 import { activeFacilityStoreEvents } from './active-facility.events';
 
 //#region Initial State
@@ -104,9 +98,7 @@ export const ActiveFacilityStore = signalStore(
      *
      * @type {boolean} True if the get operation is currently loading, false otherwise.
      */
-    isLoadingFacility: computed<boolean>(
-      () => store.getCallState().status === 'pending',
-    ),
+    isLoadingFacility: computed<boolean>(() => store.getCallState().status === 'pending'),
 
     /**
      * Property getError
@@ -138,104 +130,106 @@ export const ActiveFacilityStore = signalStore(
    *
    * @returns {object} An object containing the methods to add to the store.
    */
-  withMethods((
-    store,
-    dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
-    facilityService: FacilityService = inject<FacilityService>(FacilityService),
-  ) => ({
-    /**
-     * Method setFacility
-     * @method setFacility
-     *
-     * @description
-     * Directly sets the selected facility (e.g., resolved from route data
-     * by DashboardLayout after the resolver runs).
-     *
-     * @since 1.0.0
-     *
-     * @param {FacilityOutput} facility - Facility to mark as active.
-     *
-     * @returns {void} No return value.
-     */
-    setFacility(facility: FacilityOutput): void {
-      patchState(store, {
-        selectedFacility: facility,
-        getCallState: successCallState(facility),
-      });
-    },
+  withMethods(
+    (
+      store,
+      dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
+      facilityService: FacilityService = inject<FacilityService>(FacilityService),
+    ) => ({
+      /**
+       * Method setFacility
+       * @method setFacility
+       *
+       * @description
+       * Directly sets the selected facility (e.g., resolved from route data
+       * by DashboardLayout after the resolver runs).
+       *
+       * @since 1.0.0
+       *
+       * @param {FacilityOutput} facility - Facility to mark as active.
+       *
+       * @returns {void} No return value.
+       */
+      setFacility(facility: FacilityOutput): void {
+        patchState(store, {
+          selectedFacility: facility,
+          getCallState: successCallState(facility),
+        });
+      },
 
-    /**
-     * Method resolveFacility
-     * @method resolveFacility
-     *
-     * @description
-     * Fetches a single facility by organization ID and facility ID and marks
-     * it as the active one. Returns an Observable so Angular route resolvers
-     * can await the result.
-     *
-     * @since 1.0.0
-     *
-     * @param {string} organizationId - Organization identifier.
-     * @param {string} facilityId - Facility identifier.
-     *
-     * @returns {Observable<FacilityOutput>} Observable that emits the resolved
-     * facility or an error if it fails.
-     */
-    resolveFacility(organizationId: string, facilityId: string): Observable<FacilityOutput> {
-      patchState(store, { getCallState: pendingCallState() });
+      /**
+       * Method resolveFacility
+       * @method resolveFacility
+       *
+       * @description
+       * Fetches a single facility by organization ID and facility ID and marks
+       * it as the active one. Returns an Observable so Angular route resolvers
+       * can await the result.
+       *
+       * @since 1.0.0
+       *
+       * @param {string} organizationId - Organization identifier.
+       * @param {string} facilityId - Facility identifier.
+       *
+       * @returns {Observable<FacilityOutput>} Observable that emits the resolved
+       * facility or an error if it fails.
+       */
+      resolveFacility(organizationId: string, facilityId: string): Observable<FacilityOutput> {
+        patchState(store, { getCallState: pendingCallState() });
 
-      return facilityService.get(organizationId, facilityId).pipe(
-        tap({
-          next: (facility: FacilityOutput): void => {
-            patchState(store, {
-              selectedFacility: facility,
-              getCallState: successCallState(facility),
-            });
-          },
-          error: (error: unknown): void => {
-            const storeError: StoreError = toStoreError(error);
-            patchState(store, { getCallState: errorCallState(storeError) });
-            dispatcher.dispatch(
-              activeFacilityStoreEvents.getFailed(
-                toStoreFailureEventPayload(storeError, 'Failed to load facility'),
-              ),
-            );
-          },
-        }),
-      );
-    },
+        return facilityService.get(organizationId, facilityId).pipe(
+          tap({
+            next: (facility: FacilityOutput): void => {
+              patchState(store, {
+                selectedFacility: facility,
+                getCallState: successCallState(facility),
+              });
+            },
+            error: (error: unknown): void => {
+              const storeError: StoreError = toStoreError(error);
+              patchState(store, { getCallState: errorCallState(storeError) });
+              dispatcher.dispatch(
+                activeFacilityStoreEvents.getFailed(
+                  toStoreFailureEventPayload(storeError, 'Failed to load facility'),
+                ),
+              );
+            },
+          }),
+        );
+      },
 
-    /**
-     * Method clearSelectedFacility
-     * @method clearSelectedFacility
-     *
-     * @description
-     * Clears the active facility selection.
-     *
-     * @since 1.0.0
-     *
-     * @return {void} No return value.
-     */
-    clearSelectedFacility(): void {
-      patchState(store, { selectedFacility: null });
-    },
+      /**
+       * Method clearSelectedFacility
+       * @method clearSelectedFacility
+       *
+       * @description
+       * Clears the active facility selection.
+       *
+       * @since 1.0.0
+       *
+       * @return {void} No return value.
+       */
+      clearSelectedFacility(): void {
+        patchState(store, { selectedFacility: null });
+      },
 
-    /**
-     * Method clear
-     * @method clear
-     *
-     * @description
-     * Resets the entire active-facility state to idle.
-     * Should be called on logout.
-     *
-     * @since 1.0.0
-     *
-     * @returns {void} No return value.
-     */
-    clear(): void {
-      patchState(store, INITIAL_ACTIVE_FACILITY_STATE);
-    },
-  })),
+      /**
+       * Method clear
+       * @method clear
+       *
+       * @description
+       * Resets the entire active-facility state to idle.
+       * Should be called on logout.
+       *
+       * @since 1.0.0
+       *
+       * @returns {void} No return value.
+       */
+      clear(): void {
+        patchState(store, INITIAL_ACTIVE_FACILITY_STATE);
+      },
+    }),
+  ),
   //#endregion
 );
 

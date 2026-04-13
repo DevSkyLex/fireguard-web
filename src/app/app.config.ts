@@ -1,17 +1,21 @@
-import { type ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { type ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import {
+  provideClientHydration,
+  withEventReplay,
+  withHttpTransferCacheOptions,
+} from '@angular/platform-browser';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import { APP_ROUTES } from '@app/app.routes';
-import { provideClientHydration, withEventReplay, withHttpTransferCacheOptions } from '@angular/platform-browser';
-import { provideEnv } from '@core/config/environment/env.provider';
-import { environment } from '@env/environment';
-import { providePrimeNG } from 'primeng/config';
 import { MessageService } from 'primeng/api';
-import { FireguardTheme } from '@core/themes/fireguard.theme';
-import { provideTheme } from '@core/services/theme';
-import { provideSplashScreen } from '@core/services/splash-screen';
+import { providePrimeNG } from 'primeng/config';
+import { APP_ROUTES } from '@app/app.routes';
+import { provideEnv } from '@core/config/environment/env.provider';
 import { ssrCookieForwardInterceptor } from '@core/http/interceptors';
 import { providePageTitleStrategy } from '@core/routing/strategies/page-title';
+import { provideSplashScreen } from '@core/services/splash-screen';
+import { provideTheme } from '@core/services/theme';
+import { FireguardTheme } from '@core/themes/fireguard.theme';
+import { environment } from '@env/environment';
 import { provideAccount } from '@features/account';
 import { authInterceptor, provideAuth, unauthorizedInterceptor } from '@features/auth';
 import { provideOrganization } from '@features/organization';
@@ -44,16 +48,12 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(
       withEventReplay(),
       withHttpTransferCacheOptions({
-        includeRequestsWithAuthHeaders: true
-      })
+        includeRequestsWithAuthHeaders: true,
+      }),
     ),
     provideHttpClient(
       withFetch(),
-      withInterceptors([
-        ssrCookieForwardInterceptor,
-        authInterceptor,
-        unauthorizedInterceptor
-      ])
+      withInterceptors([ssrCookieForwardInterceptor, authInterceptor, unauthorizedInterceptor]),
     ),
     provideEnv(environment),
     provideAuth(),
@@ -69,12 +69,12 @@ export const appConfig: ApplicationConfig = {
           darkModeSelector: '[data-theme="dark"]',
           cssLayer: {
             name: 'primeng',
-            order: 'theme, base, primeng'
-          }
-        }
-      }
+            order: 'theme, base, primeng',
+          },
+        },
+      },
     }),
     MessageService,
     providePageTitleStrategy(),
-  ]
+  ],
 };

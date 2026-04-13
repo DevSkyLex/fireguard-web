@@ -13,4 +13,6 @@ import type { OtpVerificationFormValues } from './otp-verification-form-values.t
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export type OtpVerificationFormData = { [K in keyof OtpVerificationFormValues]: FormControl<OtpVerificationFormValues[K]>; };
+export type OtpVerificationFormData = {
+  [K in keyof OtpVerificationFormValues]: FormControl<OtpVerificationFormValues[K]>;
+};

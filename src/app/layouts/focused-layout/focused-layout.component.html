@@ -1,10 +1,13 @@
-<div id="focused-layout" class="grid grid-rows-[auto_1fr_auto] [grid-template-areas:'header'_'content'_'footer'] grid-cols-1 h-screen">
+<div
+  id="focused-layout"
+  class="grid h-screen grid-cols-1 grid-rows-[auto_1fr_auto] [grid-template-areas:'header'_'content'_'footer']"
+>
   <section class="[grid-area:header]">
     <app-focused-layout-header />
   </section>
 
   <!-- Main content area -->
-  <section class="[grid-area:content] overflow-y-auto">
+  <section class="overflow-y-auto [grid-area:content]">
     <app-focused-layout-content>
       <router-outlet />
     </app-focused-layout-content>
@@ -14,4 +17,3 @@
     <app-focused-layout-footer />
   </section>
 </div>
-

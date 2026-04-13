@@ -1,19 +1,10 @@
-import { computed, inject, makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { computed, inject, makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import {
-  patchState,
-  signalStore,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { filter, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
-import { OAuth2Service } from '@features/auth/data-access';
-import type { UserInfoOutput } from '@features/auth/models';
-import type { UserState } from './user-state.interface';
 import {
   idleCallState,
   pendingCallState,
@@ -24,6 +15,9 @@ import {
   type CallState,
   type StoreError,
 } from '@core/state/request-state';
+import { OAuth2Service } from '@features/auth/data-access';
+import type { UserInfoOutput } from '@features/auth/models';
+import type { UserState } from './user-state.interface';
 import { userStoreEvents } from './user.events';
 
 /**
@@ -179,34 +173,129 @@ export const UserStore = signalStore(
   //#endregion
 
   //#region Methods
-  withMethods((
-    store,
-    dispatcher = inject<Dispatcher>(Dispatcher),
-    oauth2Service = inject<OAuth2Service>(OAuth2Service),
-    platformId = inject<object>(PLATFORM_ID),
-    transferState = inject(TransferState),
-  ) => ({
-    //#region Reactive Methods
-    /**
-     * Method load
-     *
-     * @description
-     * Loads the current user profile from the OIDC userinfo endpoint.
-     * Idempotent: skips loading if already loading or successfully loaded.
-     * Uses switchMap to cancel previous requests if called multiple times.
-     *
-     * @since 1.0.0
-     */
-    load: rxMethod<void>(
-      pipe(
-        filter(() => {
-          const callState: CallState<UserInfoOutput> = store.loadCallState();
-          return callState.status !== 'pending' && callState.status !== 'success';
-        }),
-        tap(() => {
-          patchState(store, { loadCallState: pendingCallState() });
-        }),
-        switchMap(() =>
+  withMethods(
+    (
+      store,
+      dispatcher = inject<Dispatcher>(Dispatcher),
+      oauth2Service = inject<OAuth2Service>(OAuth2Service),
+      platformId = inject<object>(PLATFORM_ID),
+      transferState = inject(TransferState),
+    ) => ({
+      //#region Reactive Methods
+      /**
+       * Method load
+       *
+       * @description
+       * Loads the current user profile from the OIDC userinfo endpoint.
+       * Idempotent: skips loading if already loading or successfully loaded.
+       * Uses switchMap to cancel previous requests if called multiple times.
+       *
+       * @since 1.0.0
+       */
+      load: rxMethod<void>(
+        pipe(
+          filter(() => {
+            const callState: CallState<UserInfoOutput> = store.loadCallState();
+            return callState.status !== 'pending' && callState.status !== 'success';
+          }),
+          tap(() => {
+            patchState(store, { loadCallState: pendingCallState() });
+          }),
+          switchMap(() =>
+            oauth2Service.userinfo().pipe(
+              tapResponse({
+                next: (response: UserInfoOutput) => {
+                  patchState(store, {
+                    profile: response,
+                    loadCallState: successCallState(response),
+                  });
+                },
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { loadCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    userStoreEvents.loadFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load user profile'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+      //#endregion
+
+      //#region Synchronous Methods
+      /**
+       * Method reload
+       *
+       * @description
+       * Forces a reload of the user profile by resetting the operation state
+       * and triggering a new load.
+       *
+       * @since 1.0.0
+       */
+      reload(): void {
+        patchState(store, { loadCallState: idleCallState() });
+        this.load();
+      },
+
+      /**
+       * Method clear
+       *
+       * @description
+       * Clears the user profile.
+       * Should be called on logout.
+       *
+       * @since 1.0.0
+       */
+      clear(): void {
+        patchState(store, INITIAL_USER_STATE);
+      },
+
+      /**
+       * Method resetLoadOperation
+       *
+       * @description
+       * Resets the load operation state to idle.
+       *
+       * @since 1.0.0
+       */
+      resetLoadOperation(): void {
+        patchState(store, { loadCallState: idleCallState() });
+      },
+
+      /**
+       * Method initialize
+       *
+       * @description
+       * Initializes the user profile using TransferState when available (browser
+       * after SSR hydration) to avoid a duplicate userinfo request.
+       * Falls back to a regular load() call if no transferred state is found.
+       *
+       * @since 1.0.0
+       *
+       * @returns {Promise<void>} Resolves when initialization is complete.
+       */
+      async initialize(): Promise<void> {
+        // Browser: consume the profile transferred from SSR to avoid a duplicate request.
+        if (isPlatformBrowser(platformId) && transferState.hasKey(USER_TRANSFER_KEY)) {
+          const transferred: UserInfoOutput | null = transferState.get(USER_TRANSFER_KEY, null);
+          transferState.remove(USER_TRANSFER_KEY);
+
+          if (transferred) {
+            patchState(store, {
+              profile: transferred,
+              loadCallState: successCallState(transferred),
+            });
+          }
+          // null means SSR userinfo failed — leave state as-is (idle), no retry.
+          return;
+        }
+
+        // SSR or browser without transfer: fetch userinfo and store result for hydration.
+        await firstValueFrom(
           oauth2Service.userinfo().pipe(
             tapResponse({
               next: (response: UserInfoOutput) => {
@@ -214,10 +303,14 @@ export const UserStore = signalStore(
                   profile: response,
                   loadCallState: successCallState(response),
                 });
+                // Store result for browser hydration (SSR only, no-op in browser).
+                transferState.set(USER_TRANSFER_KEY, response);
               },
               error: (error: unknown) => {
                 const storeError: StoreError = toStoreError(error);
                 patchState(store, { loadCallState: errorCallState(storeError) });
+                // Signal SSR failure to the browser.
+                transferState.set(USER_TRANSFER_KEY, null);
                 dispatcher.dispatch(
                   userStoreEvents.loadFailed(
                     toStoreFailureEventPayload(storeError, 'Failed to load user profile'),
@@ -226,109 +319,12 @@ export const UserStore = signalStore(
               },
             }),
           ),
-        ),
-      ),
-    ),
-    //#endregion
-
-    //#region Synchronous Methods
-    /**
-     * Method reload
-     *
-     * @description
-     * Forces a reload of the user profile by resetting the operation state
-     * and triggering a new load.
-     *
-     * @since 1.0.0
-     */
-    reload(): void {
-      patchState(store, { loadCallState: idleCallState() });
-      this.load();
-    },
-
-    /**
-     * Method clear
-     *
-     * @description
-     * Clears the user profile.
-     * Should be called on logout.
-     *
-     * @since 1.0.0
-     */
-    clear(): void {
-      patchState(store, INITIAL_USER_STATE);
-    },
-
-    /**
-     * Method resetLoadOperation
-     *
-     * @description
-     * Resets the load operation state to idle.
-     *
-     * @since 1.0.0
-     */
-    resetLoadOperation(): void {
-      patchState(store, { loadCallState: idleCallState() });
-    },
-
-    /**
-     * Method initialize
-     *
-     * @description
-     * Initializes the user profile using TransferState when available (browser
-     * after SSR hydration) to avoid a duplicate userinfo request.
-     * Falls back to a regular load() call if no transferred state is found.
-     *
-     * @since 1.0.0
-     *
-     * @returns {Promise<void>} Resolves when initialization is complete.
-     */
-    async initialize(): Promise<void> {
-      // Browser: consume the profile transferred from SSR to avoid a duplicate request.
-      if (isPlatformBrowser(platformId) && transferState.hasKey(USER_TRANSFER_KEY)) {
-        const transferred: UserInfoOutput | null = transferState.get(USER_TRANSFER_KEY, null);
-        transferState.remove(USER_TRANSFER_KEY);
-
-        if (transferred) {
-          patchState(store, {
-            profile: transferred,
-            loadCallState: successCallState(transferred),
-          });
-        }
-        // null means SSR userinfo failed — leave state as-is (idle), no retry.
-        return;
-      }
-
-      // SSR or browser without transfer: fetch userinfo and store result for hydration.
-      await firstValueFrom(
-        oauth2Service.userinfo().pipe(
-          tapResponse({
-            next: (response: UserInfoOutput) => {
-              patchState(store, {
-                profile: response,
-                loadCallState: successCallState(response),
-              });
-              // Store result for browser hydration (SSR only, no-op in browser).
-              transferState.set(USER_TRANSFER_KEY, response);
-            },
-            error: (error: unknown) => {
-              const storeError: StoreError = toStoreError(error);
-              patchState(store, { loadCallState: errorCallState(storeError) });
-              // Signal SSR failure to the browser.
-              transferState.set(USER_TRANSFER_KEY, null);
-              dispatcher.dispatch(
-                userStoreEvents.loadFailed(
-                  toStoreFailureEventPayload(storeError, 'Failed to load user profile'),
-                ),
-              );
-            },
-          }),
-        ),
-        { defaultValue: undefined },
-      );
-    },
-    //#endregion
-  })),
+          { defaultValue: undefined },
+        );
+      },
+      //#endregion
+    }),
+  ),
   //#endregion
 );
 

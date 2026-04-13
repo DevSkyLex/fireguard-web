@@ -3,10 +3,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import { EquipmentStore, equipmentStoreEvents } from '@features/organization/features/equipments/state';
 import type { CreateEquipmentInput } from '@features/organization/features/equipments/models';
-import { EquipmentForm, type EquipmentFormValues } from '@features/organization/features/equipments/ui/forms';
+import {
+  EquipmentStore,
+  equipmentStoreEvents,
+} from '@features/organization/features/equipments/state';
+import {
+  EquipmentForm,
+  type EquipmentFormValues,
+} from '@features/organization/features/equipments/ui/forms';
+import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
  * Component EquipmentCreatePage
@@ -39,8 +45,7 @@ export class EquipmentCreatePage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property route
@@ -51,8 +56,7 @@ export class EquipmentCreatePage {
    *
    * @type {ActivatedRoute}
    */
-  private readonly route: ActivatedRoute =
-    inject<ActivatedRoute>(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property messageService
@@ -63,8 +67,7 @@ export class EquipmentCreatePage {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
 
   /**
    * Property events
@@ -75,8 +78,7 @@ export class EquipmentCreatePage {
    *
    * @type {Events}
    */
-  private readonly events: Events =
-    inject<Events>(Events);
+  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Property activeOrganizationStore
@@ -99,8 +101,7 @@ export class EquipmentCreatePage {
    *
    * @type {EquipmentStore}
    */
-  protected readonly store: EquipmentStore =
-    inject<EquipmentStore>(EquipmentStore);
+  protected readonly store: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
   //#endregion
 
   //#region Constructor
@@ -161,7 +162,8 @@ export class EquipmentCreatePage {
    * @returns {void}
    */
   protected handleSubmit(values: EquipmentFormValues): void {
-    const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
     if (!organizationId) return;
 
     const input: CreateEquipmentInput = {
@@ -193,4 +195,3 @@ export class EquipmentCreatePage {
   }
   //#endregion
 }
-

@@ -1,13 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import {
-  patchState,
-  signalStore,
-  type,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import {
   addEntity,
   removeEntities,
@@ -18,12 +11,8 @@ import {
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, forkJoin, map, pipe, switchMap, tap } from 'rxjs';
-import { OrganizationService } from '@features/organization/data-access';
 import type { HydraCollection } from '@core/models/api';
-import type { OrganizationOutput, CreateOrganizationInput } from '@features/organization/models';
 import type { RequestOptions } from '@core/services/hydra-api';
-import { ActiveOrganizationStore } from '../active-organization/active-organization.store';
-import type { OrganizationState } from './organization-state.interface';
 import {
   errorCallState,
   idleCallState,
@@ -34,6 +23,10 @@ import {
   type CallState,
   type StoreError,
 } from '@core/state/request-state';
+import { OrganizationService } from '@features/organization/data-access';
+import type { OrganizationOutput, CreateOrganizationInput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '../active-organization/active-organization.store';
+import type { OrganizationState } from './organization-state.interface';
 import { organizationStoreEvents } from './organization.events';
 
 //#region Initial State
@@ -160,8 +153,8 @@ export const OrganizationStore = signalStore(
        *
        * @type {ReadonlyArray<OrganizationOutput>} The current page of organizations.
        */
-      organizations: computed<ReadonlyArray<OrganizationOutput>>(
-        () => store.organizationEntities(),
+      organizations: computed<ReadonlyArray<OrganizationOutput>>(() =>
+        store.organizationEntities(),
       ),
 
       /**
@@ -191,8 +184,8 @@ export const OrganizationStore = signalStore(
        *
        * @type {OrganizationOutput | null} The currently selected organization, or null if none.
        */
-      selectedOrganization: computed<OrganizationOutput | null>(
-        () => activeOrganizationStore.selectedOrganization(),
+      selectedOrganization: computed<OrganizationOutput | null>(() =>
+        activeOrganizationStore.selectedOrganization(),
       ),
 
       /**
@@ -206,9 +199,7 @@ export const OrganizationStore = signalStore(
        *
        * @type {boolean} True if the organization list is currently loading, false otherwise.
        */
-      isLoadingOrganizations: computed<boolean>(
-        () => store.listCallState().status === 'pending',
-      ),
+      isLoadingOrganizations: computed<boolean>(() => store.listCallState().status === 'pending'),
 
       /**
        * Property isDeleting
@@ -220,9 +211,7 @@ export const OrganizationStore = signalStore(
        *
        * @type {boolean}
        */
-      isDeleting: computed<boolean>(
-        () => store.deleteCallState().status === 'pending',
-      ),
+      isDeleting: computed<boolean>(() => store.deleteCallState().status === 'pending'),
 
       /**
        * Property isLoadingOrganization
@@ -235,8 +224,8 @@ export const OrganizationStore = signalStore(
        *
        * @type {boolean} True if the active organization is currently loading, false otherwise.
        */
-      isLoadingOrganization: computed<boolean>(
-        () => activeOrganizationStore.isLoadingOrganization(),
+      isLoadingOrganization: computed<boolean>(() =>
+        activeOrganizationStore.isLoadingOrganization(),
       ),
 
       /**
@@ -250,9 +239,7 @@ export const OrganizationStore = signalStore(
        *
        * @type {boolean} True if the create operation is currently loading, false otherwise.
        */
-      isCreating: computed<boolean>(
-        () => store.createCallState().status === 'pending',
-      ),
+      isCreating: computed<boolean>(() => store.createCallState().status === 'pending'),
 
       /**
        * Property createError
@@ -286,120 +273,53 @@ export const OrganizationStore = signalStore(
    *
    * @returns {object} An object containing the methods to add to the store.
    */
-  withMethods((
-    store,
-    organizationService: OrganizationService = inject<OrganizationService>(OrganizationService),
-    activeOrganizationStore: ActiveOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore),
-    dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
-  ) => {
-    /**
-     * Constant loadFn
-     * @const loadFn
-     *
-     * @description
-     * Shared rxMethod implementation for loading a paginated organization list.
-     * Uses `switchMap` so that a new request cancels any previous in-flight one.
-     * Exposed under two names: {@link load} (table / generic usage) and
-     * {@link loadOrganizations} (switcher / page usage).
-     *
-     * @since 1.0.0
-     *
-     * @type {RxMethod<RequestOptions | void>}
-     */
-    const loadFn = rxMethod<RequestOptions | void>(
-      pipe(
-        tap((): void => { patchState(store, { listCallState: pendingCallState() }); }),
-        switchMap((options: RequestOptions | void) =>
-          organizationService.list(options ?? undefined).pipe(
-            tapResponse({
-              next: (response: HydraCollection<OrganizationOutput>): void => {
-                patchState(
-                  store,
-                  setAllEntities([...response.member], { collection: 'organization' }),
-                  { totalOrganizations: response.totalItems, listCallState: successCallState(null) },
-                );
-              },
-              error: (error: unknown): void => {
-                const storeError: StoreError = toStoreError(error);
-                patchState(store, { listCallState: errorCallState(storeError) });
-                dispatcher.dispatch(
-                  organizationStoreEvents.listFailed(
-                    toStoreFailureEventPayload(storeError, 'Failed to load organizations'),
-                  ),
-                );
-              },
-            }),
-          ),
-        ),
+  withMethods(
+    (
+      store,
+      organizationService: OrganizationService = inject<OrganizationService>(OrganizationService),
+      activeOrganizationStore: ActiveOrganizationStore = inject<ActiveOrganizationStore>(
+        ActiveOrganizationStore,
       ),
-    );
-
-    return {
+      dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
+    ) => {
       /**
-       * Method load
-       * @method load
+       * Constant loadFn
+       * @const loadFn
        *
        * @description
-       * Fetches one page of organizations from the API. Cancels any in-flight
-       * request via `switchMap`. Alias: {@link loadOrganizations}.
+       * Shared rxMethod implementation for loading a paginated organization list.
+       * Uses `switchMap` so that a new request cancels any previous in-flight one.
+       * Exposed under two names: {@link load} (table / generic usage) and
+       * {@link loadOrganizations} (switcher / page usage).
        *
        * @since 1.0.0
        *
-       * @type {RxMethod<RequestOptions | void>} An RxMethod that accepts optional request options.
+       * @type {RxMethod<RequestOptions | void>}
        */
-      load: loadFn,
-
-      /**
-       * Method loadOrganizations
-       * @method loadOrganizations
-       *
-       * @description
-       * Alias for {@link load} — preferred name when called without pagination
-       * options (e.g. from the OrganizationSwitcher or the list page).
-       *
-       * @since 1.0.0
-       *
-       * @type {RxMethod<RequestOptions | void>} An RxMethod that accepts optional request options.
-       */
-      loadOrganizations: loadFn,
-
-      /**
-       * Method create
-       * @method create
-       *
-       * @description
-       * Creates a new organization via the API. Uses `exhaustMap` to prevent
-       * concurrent submissions. On success the `createOperation` transitions
-       * to a success state carrying the newly created entity.
-       *
-       * @since 1.0.0
-       *
-       * @type {RxMethod<CreateOrganizationInput>} An RxMethod that accepts the creation input.
-       */
-      create: rxMethod<CreateOrganizationInput>(
+      const loadFn = rxMethod<RequestOptions | void>(
         pipe(
           tap((): void => {
-            patchState(store, { createCallState: pendingCallState() });
+            patchState(store, { listCallState: pendingCallState() });
           }),
-          exhaustMap((input: CreateOrganizationInput) =>
-            organizationService.create(input).pipe(
+          switchMap((options: RequestOptions | void) =>
+            organizationService.list(options ?? undefined).pipe(
               tapResponse({
-                next: (organization: OrganizationOutput): void => {
+                next: (response: HydraCollection<OrganizationOutput>): void => {
                   patchState(
                     store,
-                    addEntity(organization, { collection: 'organization' }),
+                    setAllEntities([...response.member], { collection: 'organization' }),
                     {
-                      createCallState: successCallState(organization),
-                      totalOrganizations: store.totalOrganizations() + 1,
+                      totalOrganizations: response.totalItems,
+                      listCallState: successCallState(null),
                     },
                   );
                 },
                 error: (error: unknown): void => {
                   const storeError: StoreError = toStoreError(error);
-                  patchState(store, { createCallState: errorCallState(storeError) });
+                  patchState(store, { listCallState: errorCallState(storeError) });
                   dispatcher.dispatch(
-                    organizationStoreEvents.createFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to create organization'),
+                    organizationStoreEvents.listFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load organizations'),
                     ),
                   );
                 },
@@ -407,118 +327,192 @@ export const OrganizationStore = signalStore(
             ),
           ),
         ),
-      ),
+      );
 
-      /**
-       * Method deleteOne
-       * @method deleteOne
-       *
-       * @description
-       * Deletes a single organization by ID. Uses `exhaustMap` to prevent
-       * concurrent deletes. On success: removes the item from the paginated
-       * list and clears the active selection if the deleted organization was
-       * the currently selected one.
-       *
-       * @since 1.0.0
-       *
-       * @type {RxMethod<string>} An RxMethod that accepts the organization ID to delete.
-       */
-      deleteOne: rxMethod<string>(
-        pipe(
-          tap((): void => { patchState(store, { deleteCallState: pendingCallState() }); }),
-          exhaustMap((id: string) =>
-            organizationService.remove(id).pipe(
-              tapResponse({
-                next: (): void => {
-                  patchState(
-                    store,
-                    removeEntity(id, { collection: 'organization' }),
-                    { totalOrganizations: store.totalOrganizations() - 1, deleteCallState: successCallState(null) },
-                  );
-                  if (activeOrganizationStore.selectedOrganization()?.id === id) {
-                    activeOrganizationStore.clearSelectedOrganization();
-                  }
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { deleteCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    organizationStoreEvents.deleteFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to delete organization'),
-                    ),
-                  );
-                },
-              }),
+      return {
+        /**
+         * Method load
+         * @method load
+         *
+         * @description
+         * Fetches one page of organizations from the API. Cancels any in-flight
+         * request via `switchMap`. Alias: {@link loadOrganizations}.
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<RequestOptions | void>} An RxMethod that accepts optional request options.
+         */
+        load: loadFn,
+
+        /**
+         * Method loadOrganizations
+         * @method loadOrganizations
+         *
+         * @description
+         * Alias for {@link load} — preferred name when called without pagination
+         * options (e.g. from the OrganizationSwitcher or the list page).
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<RequestOptions | void>} An RxMethod that accepts optional request options.
+         */
+        loadOrganizations: loadFn,
+
+        /**
+         * Method create
+         * @method create
+         *
+         * @description
+         * Creates a new organization via the API. Uses `exhaustMap` to prevent
+         * concurrent submissions. On success the `createOperation` transitions
+         * to a success state carrying the newly created entity.
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<CreateOrganizationInput>} An RxMethod that accepts the creation input.
+         */
+        create: rxMethod<CreateOrganizationInput>(
+          pipe(
+            tap((): void => {
+              patchState(store, { createCallState: pendingCallState() });
+            }),
+            exhaustMap((input: CreateOrganizationInput) =>
+              organizationService.create(input).pipe(
+                tapResponse({
+                  next: (organization: OrganizationOutput): void => {
+                    patchState(store, addEntity(organization, { collection: 'organization' }), {
+                      createCallState: successCallState(organization),
+                      totalOrganizations: store.totalOrganizations() + 1,
+                    });
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { createCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      organizationStoreEvents.createFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to create organization'),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method deleteMany
-       * @method deleteMany
-       *
-       * @description
-       * Bulk-deletes organizations in parallel using `forkJoin`. Uses `exhaustMap`
-       * to prevent concurrent bulk-delete operations. On success: removes all
-       * matching items from the list and clears the active selection if it was
-       * among the deleted IDs.
-       *
-       * @since 1.0.0
-       *
-       * @type {RxMethod<string[]>} An RxMethod that accepts an array of organization IDs to delete.
-       */
-      deleteMany: rxMethod<string[]>(
-        pipe(
-          tap((): void => { patchState(store, { deleteCallState: pendingCallState() }); }),
-          exhaustMap((ids: string[]) =>
-            forkJoin(ids.map((id: string) => organizationService.remove(id))).pipe(
-              map((): void => void 0),
-              tapResponse({
-                next: (): void => {
-                  patchState(
-                    store,
-                    removeEntities(ids, { collection: 'organization' }),
-                    { totalOrganizations: store.totalOrganizations() - ids.length, deleteCallState: successCallState(null) },
-                  );
-                  const selectedId: string | undefined =
-                    activeOrganizationStore.selectedOrganization()?.id;
-                  if (selectedId !== undefined && ids.includes(selectedId)) {
-                    activeOrganizationStore.clearSelectedOrganization();
-                  }
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { deleteCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    organizationStoreEvents.deleteManyFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to delete organizations'),
-                    ),
-                  );
-                },
-              }),
+        /**
+         * Method deleteOne
+         * @method deleteOne
+         *
+         * @description
+         * Deletes a single organization by ID. Uses `exhaustMap` to prevent
+         * concurrent deletes. On success: removes the item from the paginated
+         * list and clears the active selection if the deleted organization was
+         * the currently selected one.
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<string>} An RxMethod that accepts the organization ID to delete.
+         */
+        deleteOne: rxMethod<string>(
+          pipe(
+            tap((): void => {
+              patchState(store, { deleteCallState: pendingCallState() });
+            }),
+            exhaustMap((id: string) =>
+              organizationService.remove(id).pipe(
+                tapResponse({
+                  next: (): void => {
+                    patchState(store, removeEntity(id, { collection: 'organization' }), {
+                      totalOrganizations: store.totalOrganizations() - 1,
+                      deleteCallState: successCallState(null),
+                    });
+                    if (activeOrganizationStore.selectedOrganization()?.id === id) {
+                      activeOrganizationStore.clearSelectedOrganization();
+                    }
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { deleteCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      organizationStoreEvents.deleteFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to delete organization'),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method resetCreateOperation
-       * @method resetCreateOperation
-       *
-       * @description
-       * Resets the create operation back to its idle state.
-       * Call this after the create form is dismissed or the dialog is closed.
-       *
-       * @since 1.0.0
-       *
-       * @returns {void} No return value.
-       */
-      resetCreateOperation(): void {
-        patchState(store, { createCallState: idleCallState() });
-      },
-    };
-  }),
+        /**
+         * Method deleteMany
+         * @method deleteMany
+         *
+         * @description
+         * Bulk-deletes organizations in parallel using `forkJoin`. Uses `exhaustMap`
+         * to prevent concurrent bulk-delete operations. On success: removes all
+         * matching items from the list and clears the active selection if it was
+         * among the deleted IDs.
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<string[]>} An RxMethod that accepts an array of organization IDs to delete.
+         */
+        deleteMany: rxMethod<string[]>(
+          pipe(
+            tap((): void => {
+              patchState(store, { deleteCallState: pendingCallState() });
+            }),
+            exhaustMap((ids: string[]) =>
+              forkJoin(ids.map((id: string) => organizationService.remove(id))).pipe(
+                map((): void => void 0),
+                tapResponse({
+                  next: (): void => {
+                    patchState(store, removeEntities(ids, { collection: 'organization' }), {
+                      totalOrganizations: store.totalOrganizations() - ids.length,
+                      deleteCallState: successCallState(null),
+                    });
+                    const selectedId: string | undefined =
+                      activeOrganizationStore.selectedOrganization()?.id;
+                    if (selectedId !== undefined && ids.includes(selectedId)) {
+                      activeOrganizationStore.clearSelectedOrganization();
+                    }
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { deleteCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      organizationStoreEvents.deleteManyFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to delete organizations'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method resetCreateOperation
+         * @method resetCreateOperation
+         *
+         * @description
+         * Resets the create operation back to its idle state.
+         * Call this after the create form is dismissed or the dialog is closed.
+         *
+         * @since 1.0.0
+         *
+         * @returns {void} No return value.
+         */
+        resetCreateOperation(): void {
+          patchState(store, { createCallState: idleCallState() });
+        },
+      };
+    },
+  ),
   //#endregion
 );
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { type Observable } from 'rxjs';
-import { HydraApiService } from '@core/services/hydra-api';
 import type { HydraCollection } from '@core/models/api';
+import { HydraApiService } from '@core/services/hydra-api';
 import type { TrustDeviceOutput, TrustedDeviceOutput } from '@features/auth/models';
 
 /**
@@ -120,11 +120,14 @@ export class TrustedDeviceService extends HydraApiService {
    * @returns {Observable<void>} Observable completing on success.
    */
   public revokeAll(): Observable<void> {
-    return this.http
-      .post<void>(this.buildUrl(`${TrustedDeviceService.BASE_PATH}/revoke-all`), null, {
+    return this.http.post<void>(
+      this.buildUrl(`${TrustedDeviceService.BASE_PATH}/revoke-all`),
+      null,
+      {
         headers: this.defaultHeaders,
         withCredentials: true,
-      });
+      },
+    );
   }
   //#endregion
 }

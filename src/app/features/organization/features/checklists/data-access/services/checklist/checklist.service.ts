@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type { HydraCollection, OptionOutput } from '@core/models/api';
+import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
   ChecklistOutput,
   ChecklistListOptions,
@@ -78,10 +78,7 @@ export class ChecklistService extends HydraApiService {
    *
    * @return {Observable<ChecklistOutput>} An observable emitting the checklist details.
    */
-  public get(
-    organizationId: string,
-    checklistId: string,
-  ): Observable<ChecklistOutput> {
+  public get(organizationId: string, checklistId: string): Observable<ChecklistOutput> {
     return this.getOne<ChecklistOutput>(
       `${ChecklistService.BASE_PATH}/${organizationId}/checklists/${checklistId}`,
     );
@@ -103,10 +100,7 @@ export class ChecklistService extends HydraApiService {
    *
    * @return {Observable<ChecklistOutput>} An observable emitting the created checklist details.
    */
-  public create(
-    organizationId: string,
-    input: CreateChecklistInput,
-  ): Observable<ChecklistOutput> {
+  public create(organizationId: string, input: CreateChecklistInput): Observable<ChecklistOutput> {
     return this.post<CreateChecklistInput, ChecklistOutput>(
       `${ChecklistService.BASE_PATH}/${organizationId}/checklists`,
       input,
@@ -133,10 +127,7 @@ export class ChecklistService extends HydraApiService {
    *
    * @return {Observable<ChecklistOutput>} An observable emitting the archived checklist details.
    */
-  public archive(
-    organizationId: string,
-    checklistId: string,
-  ): Observable<ChecklistOutput> {
+  public archive(organizationId: string, checklistId: string): Observable<ChecklistOutput> {
     return this.postAction<ChecklistOutput>(
       `${ChecklistService.BASE_PATH}/${organizationId}/checklists/${checklistId}/archive`,
     );

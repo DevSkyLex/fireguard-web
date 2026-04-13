@@ -10,11 +10,7 @@ import {
   withState,
 } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
-import { Observable, filter, tap } from 'rxjs';import { OrganizationService } from '@features/organization/data-access';
-import type {
-  OrganizationOutput,
-} from '@features/organization/models';
-import type { ActiveOrganizationState } from './active-organization-state.interface';
+import { Observable, filter, tap } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -25,6 +21,9 @@ import {
   toStoreFailureEventPayload,
   type CallState,
 } from '@core/state/request-state';
+import { OrganizationService } from '@features/organization/data-access';
+import type { OrganizationOutput } from '@features/organization/models';
+import type { ActiveOrganizationState } from './active-organization-state.interface';
 import { activeOrganizationStoreEvents } from './active-organization.events';
 
 //#region Initial State
@@ -79,9 +78,7 @@ export const ActiveOrganizationStore = signalStore(
      *
      * @type {boolean}
      */
-    isLoadingOrganization: computed<boolean>(
-      () => store.getCallState().status === 'pending',
-    ),
+    isLoadingOrganization: computed<boolean>(() => store.getCallState().status === 'pending'),
 
     /**
      * Property getError
@@ -93,120 +90,125 @@ export const ActiveOrganizationStore = signalStore(
      */
     getError: computed<StoreError | null>(() => store.getCallState().error),
   })),
-  withMethods((
-    store,
-    dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
-    organizationService: OrganizationService = inject<OrganizationService>(OrganizationService),
-  ) => {
-    return {
-      /**
-       * Method setOrganization
-       * @method setOrganization
-       *
-       * @description
-       * Marks the provided organization as active and resets dashboard data
-       * when the selection changes.
-       *
-       * @param {OrganizationOutput} organization - Organization to mark as active.
-       *
-       * @returns {void} No return value.
-       */
-      setOrganization(organization: OrganizationOutput): void {
-        patchState(store, {
-          selectedOrganization: organization,
-          getCallState: successCallState(organization),
-        });
-      },
+  withMethods(
+    (
+      store,
+      dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
+      organizationService: OrganizationService = inject<OrganizationService>(OrganizationService),
+    ) => {
+      return {
+        /**
+         * Method setOrganization
+         * @method setOrganization
+         *
+         * @description
+         * Marks the provided organization as active and resets dashboard data
+         * when the selection changes.
+         *
+         * @param {OrganizationOutput} organization - Organization to mark as active.
+         *
+         * @returns {void} No return value.
+         */
+        setOrganization(organization: OrganizationOutput): void {
+          patchState(store, {
+            selectedOrganization: organization,
+            getCallState: successCallState(organization),
+          });
+        },
 
-      /**
-       * Method resolveOrganization
-       * @method resolveOrganization
-       *
-       * @description
-       * Fetches an organization by ID and stores it as the active organization.
-       *
-       * @param {string} id - Organization identifier.
-       *
-       * @returns {Observable<OrganizationOutput>} Observable emitting the resolved organization.
-       */
-      resolveOrganization(id: string): Observable<OrganizationOutput> {
-        patchState(store, {
-          getCallState: pendingCallState(),
-        });
+        /**
+         * Method resolveOrganization
+         * @method resolveOrganization
+         *
+         * @description
+         * Fetches an organization by ID and stores it as the active organization.
+         *
+         * @param {string} id - Organization identifier.
+         *
+         * @returns {Observable<OrganizationOutput>} Observable emitting the resolved organization.
+         */
+        resolveOrganization(id: string): Observable<OrganizationOutput> {
+          patchState(store, {
+            getCallState: pendingCallState(),
+          });
 
-        return organizationService.get(id).pipe(
-          tap({
-            next: (organization: OrganizationOutput): void => {
-              patchState(store, {
-                selectedOrganization: organization,
-                getCallState: successCallState(organization),
-              });
-            },
-            error: (error: unknown): void => {
-              const storeError: StoreError = toStoreError(error);
-              patchState(store, {
-                getCallState: errorCallState(storeError),
-              });
-              dispatcher.dispatch(
-                activeOrganizationStoreEvents.getFailed(
-                  toStoreFailureEventPayload(storeError, 'Failed to load organization'),
-                ),
-              );
-            },
-          }),
-        );
-      },
+          return organizationService.get(id).pipe(
+            tap({
+              next: (organization: OrganizationOutput): void => {
+                patchState(store, {
+                  selectedOrganization: organization,
+                  getCallState: successCallState(organization),
+                });
+              },
+              error: (error: unknown): void => {
+                const storeError: StoreError = toStoreError(error);
+                patchState(store, {
+                  getCallState: errorCallState(storeError),
+                });
+                dispatcher.dispatch(
+                  activeOrganizationStoreEvents.getFailed(
+                    toStoreFailureEventPayload(storeError, 'Failed to load organization'),
+                  ),
+                );
+              },
+            }),
+          );
+        },
 
-      /**
-       * Method clearSelectedOrganization
-       * @method clearSelectedOrganization
-       *
-       * @description
-       * Clears only the active organization selection and all dashboard data.
-       *
-       * @returns {void} No return value.
-       */
-      clearSelectedOrganization(): void {
-        patchState(store, {
-          selectedOrganization: null,
-        });
-      },
+        /**
+         * Method clearSelectedOrganization
+         * @method clearSelectedOrganization
+         *
+         * @description
+         * Clears only the active organization selection and all dashboard data.
+         *
+         * @returns {void} No return value.
+         */
+        clearSelectedOrganization(): void {
+          patchState(store, {
+            selectedOrganization: null,
+          });
+        },
 
-      /**
-       * Method clear
-       * @method clear
-       *
-       * @description
-       * Resets the entire active-organization store to its idle state.
-       *
-       * @returns {void} No return value.
-       */
-      clear(): void {
-        patchState(store, {
-          selectedOrganization: null,
-          getCallState: idleCallState(),
-        });
-      },
-    };
-  }),
+        /**
+         * Method clear
+         * @method clear
+         *
+         * @description
+         * Resets the entire active-organization store to its idle state.
+         *
+         * @returns {void} No return value.
+         */
+        clear(): void {
+          patchState(store, {
+            selectedOrganization: null,
+            getCallState: idleCallState(),
+          });
+        },
+      };
+    },
+  ),
 
   withHooks((store) => {
     const router: Router = inject<Router>(Router);
 
     return {
       onInit(): void {
-        router.events.pipe(
-          filter((e): e is NavigationEnd => e instanceof NavigationEnd),
-          takeUntilDestroyed(),
-        ).subscribe((): void => {
-          const hasOrganizationId: boolean =
-            router.routerState.snapshot.root.firstChild
-              ?.children.some((child) => child.paramMap.has('organizationId')) ?? false;
+        router.events
+          .pipe(
+            filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+            takeUntilDestroyed(),
+          )
+          .subscribe((): void => {
+            const hasOrganizationId: boolean =
+              router.routerState.snapshot.root.firstChild?.children.some((child) =>
+                child.paramMap.has('organizationId'),
+              ) ?? false;
 
-          if (!hasOrganizationId && store.selectedOrganization() !== null) {
-            store.clearSelectedOrganization();
-          }
-        });
+            if (!hasOrganizationId && store.selectedOrganization() !== null) {
+              store.clearSelectedOrganization();
+            }
+          });
       },
     };
   }),

@@ -1,5 +1,5 @@
 @if (isLoading()) {
-  <p-skeleton width="9rem" height="2rem" borderRadius="0.375rem"/>
+  <p-skeleton width="9rem" height="2rem" borderRadius="0.375rem" />
 } @else {
   <p-button
     severity="secondary"
@@ -10,25 +10,22 @@
   >
     @if (organization(); as org) {
       <span class="flex items-center gap-2">
-        <p-avatar
-          [label]="orgInitials(org.name)"
-          [pt]="avatarPt(org)"
-        />
-        <span class="font-medium max-w-32 truncate">{{ org.name }}</span>
+        <p-avatar [label]="orgInitials(org.name)" [pt]="avatarPt(org)" />
+        <span class="max-w-32 truncate font-medium">{{ org.name }}</span>
 
         <div class="mx-auto">
           @if (isSwitching()) {
-            <i class="pi pi-spin pi-spinner text-sm shrink-0"></i>
+            <i class="pi pi-spin pi-spinner shrink-0 text-sm"></i>
           } @else {
-            <i class="pi pi-chevron-down text-[10px] shrink-0"></i>
+            <i class="pi pi-chevron-down shrink-0 text-[10px]"></i>
           }
         </div>
       </span>
     } @else {
       <span class="flex items-center gap-2">
-        <span class="size-4 rounded bg-surface-200 dark:bg-surface-700 shrink-0"></span>
+        <span class="size-4 shrink-0 rounded bg-surface-200 dark:bg-surface-700"></span>
         <span>Select workspace</span>
-        <i class="pi pi-chevron-down text-[10px] shrink-0"></i>
+        <i class="pi pi-chevron-down shrink-0 text-[10px]"></i>
       </span>
     }
   </p-button>

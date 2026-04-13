@@ -43,9 +43,7 @@ export const OrganizationRoleListStore = signalStore(
   withMethods((store, roleService = inject(OrganizationRoleService)) => ({
     loadRoles: rxMethod<string>(
       pipe(
-        tap(() =>
-          patchState(store, { rolesCallState: pendingCallState() }),
-        ),
+        tap(() => patchState(store, { rolesCallState: pendingCallState() })),
         switchMap((organizationId) =>
           roleService.list(organizationId).pipe(
             tapResponse({

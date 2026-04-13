@@ -6,14 +6,14 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { forkJoin } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
+import { forkJoin } from 'rxjs';
 import { OnboardingStore } from '@features/onboarding/state';
+import { CreateFacilitiesForm, type CreateFacilityFormValues } from '@features/onboarding/ui/forms';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { OnboardingStepBase } from '../onboarding-step.base';
-import { CreateFacilitiesForm, type CreateFacilityFormValues } from '@features/onboarding/ui/forms';
 
 /**
  * Component CreateFacilityStep
@@ -45,8 +45,7 @@ export class CreateFacilityStep extends OnboardingStepBase {
    *
    * @type {OnboardingStore}
    */
-  private readonly onboardingStore: OnboardingStore =
-    inject<OnboardingStore>(OnboardingStore);
+  private readonly onboardingStore: OnboardingStore = inject<OnboardingStore>(OnboardingStore);
 
   /**
    * Property facilityService
@@ -57,8 +56,7 @@ export class CreateFacilityStep extends OnboardingStepBase {
    *
    * @type {FacilityService}
    */
-  private readonly facilityService: FacilityService =
-    inject<FacilityService>(FacilityService);
+  private readonly facilityService: FacilityService = inject<FacilityService>(FacilityService);
 
   /**
    * Property messageService
@@ -69,8 +67,7 @@ export class CreateFacilityStep extends OnboardingStepBase {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
   //#endregion
 
   //#region State
@@ -111,7 +108,10 @@ export class CreateFacilityStep extends OnboardingStepBase {
    * @since 1.0.0
    */
   protected readonly cardPt: CardPassThroughOptions = {
-    root: { class: 'overflow-hidden border border-surface-200 bg-surface-0 shadow-none dark:border-surface-800 dark:bg-surface-950' },
+    root: {
+      class:
+        'overflow-hidden border border-surface-200 bg-surface-0 shadow-none dark:border-surface-800 dark:bg-surface-950',
+    },
     header: { class: 'p-0' },
     body: { class: 'p-0' },
     content: { class: 'p-0' },
@@ -123,7 +123,9 @@ export class CreateFacilityStep extends OnboardingStepBase {
   /**
    * @constructor
    */
-  public constructor() { super(); }
+  public constructor() {
+    super();
+  }
   //#endregion
 
   //#region Methods
@@ -162,9 +164,10 @@ export class CreateFacilityStep extends OnboardingStepBase {
         this.messageService.add({
           severity: 'success',
           summary: count > 1 ? 'Facilities created' : 'Facility created',
-          detail: count > 1
-            ? `${count} facilities have been created.`
-            : `${created[0].name} has been created.`,
+          detail:
+            count > 1
+              ? `${count} facilities have been created.`
+              : `${created[0].name} has been created.`,
           life: 4000,
         });
         this.onboardingStore.executeStep({ stepKey: 'create_first_facility' });
@@ -173,10 +176,14 @@ export class CreateFacilityStep extends OnboardingStepBase {
         this.isCreating.set(false);
         const message: string =
           error instanceof Error ? error.message : 'Failed to create the facility.';
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: message, life: 5000 });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: message,
+          life: 5000,
+        });
       },
     });
   }
   //#endregion
 }
-

@@ -32,8 +32,7 @@ export class BreadcrumbService {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property home
@@ -101,9 +100,7 @@ export class BreadcrumbService {
     while (currentRoute) {
       const snapshot: ActivatedRouteSnapshot = currentRoute.snapshot;
       const label: string | null = this.resolveLabel(currentRoute);
-      const path: string = (snapshot?.url ?? [])
-        .map((segment): string => segment.path)
-        .join('/');
+      const path: string = (snapshot?.url ?? []).map((segment): string => segment.path).join('/');
 
       if (path) currentUrl = `${currentUrl}/${path}`;
 

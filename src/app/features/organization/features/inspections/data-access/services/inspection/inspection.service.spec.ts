@@ -1,9 +1,9 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 
-import { InspectionService } from './inspection.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
+import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
 import type {
   InspectionOutput,
   CreateInspectionInput,
@@ -13,7 +13,7 @@ import type {
   InspectionListOptions,
   NonConformityListOptions,
 } from '@features/organization/features/inspections/models';
-import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
+import { InspectionService } from './inspection.service';
 
 describe('InspectionService', () => {
   let service: InspectionService;
@@ -117,7 +117,9 @@ describe('InspectionService', () => {
         expect(response.totalItems).toBe(2);
       });
 
-      const req = httpMock.expectOne((request) => request.url === `${mockEnv.apiUrl}/api/non-conformities/statuses`);
+      const req = httpMock.expectOne(
+        (request) => request.url === `${mockEnv.apiUrl}/api/non-conformities/statuses`,
+      );
       expect(req.request.method).toBe('GET');
       expect(req.request.params.get('page')).toBe('2');
       expect(req.request.withCredentials).toBe(true);
@@ -238,7 +240,7 @@ describe('InspectionService', () => {
       const req = httpMock.expectOne(inspectionsBaseUrl);
       req.flush(
         { status: 422, title: 'Unprocessable Entity', violations: [] },
-        { status: 422, statusText: 'Unprocessable Entity' }
+        { status: 422, statusText: 'Unprocessable Entity' },
       );
     });
   });
@@ -306,7 +308,9 @@ describe('InspectionService', () => {
     it('should send GET request with pagination options', () => {
       service.listNonConformities(orgId, inspectionId, { page: 2 }).subscribe();
 
-      const req = httpMock.expectOne((r) => r.url === `${inspectionsBaseUrl}/${inspectionId}/non-conformities`);
+      const req = httpMock.expectOne(
+        (r) => r.url === `${inspectionsBaseUrl}/${inspectionId}/non-conformities`,
+      );
       expect(req.request.params.get('page')).toBe('2');
       req.flush(mockCollection([]));
     });
@@ -321,7 +325,9 @@ describe('InspectionService', () => {
 
       service.listNonConformities(orgId, inspectionId, options).subscribe();
 
-      const req = httpMock.expectOne((r) => r.url === `${inspectionsBaseUrl}/${inspectionId}/non-conformities`);
+      const req = httpMock.expectOne(
+        (r) => r.url === `${inspectionsBaseUrl}/${inspectionId}/non-conformities`,
+      );
       expect(req.request.params.get('severity')).toBe('critical');
       expect(req.request.params.get('status')).toBe('in_progress');
       expect(req.request.params.get('page')).toBe('4');
@@ -368,13 +374,15 @@ describe('InspectionService', () => {
         resolvedAt: '2026-03-15T00:00:00+00:00',
       };
 
-      service.updateNonConformityStatus(orgId, inspectionId, nonConformityId, input).subscribe((nc) => {
-        expect(nc.status).toBe('done');
-        expect(nc.resolvedAt).not.toBeNull();
-      });
+      service
+        .updateNonConformityStatus(orgId, inspectionId, nonConformityId, input)
+        .subscribe((nc) => {
+          expect(nc.status).toBe('done');
+          expect(nc.resolvedAt).not.toBeNull();
+        });
 
       const req = httpMock.expectOne(
-        `${inspectionsBaseUrl}/${inspectionId}/non-conformities/${nonConformityId}/status`
+        `${inspectionsBaseUrl}/${inspectionId}/non-conformities/${nonConformityId}/status`,
       );
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body).toEqual(input);
@@ -389,7 +397,7 @@ describe('InspectionService', () => {
       });
 
       const req = httpMock.expectOne(
-        `${inspectionsBaseUrl}/${inspectionId}/non-conformities/nonexistent/status`
+        `${inspectionsBaseUrl}/${inspectionId}/non-conformities/nonexistent/status`,
       );
       req.flush({ status: 404, title: 'Not Found' }, { status: 404, statusText: 'Not Found' });
     });

@@ -1,5 +1,5 @@
-import type { OnboardingOutput } from '@features/onboarding/models';
 import type { CallState } from '@core/state/request-state';
+import type { OnboardingOutput } from '@features/onboarding/models';
 
 //#region Onboarding Store State
 /**

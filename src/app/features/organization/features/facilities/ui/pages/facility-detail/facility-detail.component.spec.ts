@@ -1,18 +1,24 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { EMPTY } from 'rxjs';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { FacilityDetailPage } from './facility-detail.component';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import { ActiveFacilityStore, FacilityStore } from '@features/organization/features/facilities/state';
+import { EMPTY } from 'rxjs';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
-import { InspectionStore } from '@features/organization/features/inspections/state';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import {
+  ActiveFacilityStore,
+  FacilityStore,
+} from '@features/organization/features/facilities/state';
+import {
+  FacilityEquipmentTab,
+  FacilityInspectionTab,
+} from '@features/organization/features/facilities/ui/components';
+import { InspectionStore } from '@features/organization/features/inspections/state';
 import type { OrganizationOutput } from '@features/organization/models';
-import { FacilityEquipmentTab, FacilityInspectionTab } from '@features/organization/features/facilities/ui/components';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import { FacilityDetailPage } from './facility-detail.component';
 
 const MOCK_ORG: OrganizationOutput = {
   id: 'org-1',
@@ -68,7 +74,10 @@ describe('FacilityDetailPage', () => {
 
   const mockFacilityStore = {
     facilities: signal<readonly FacilityOutput[]>([]),
-    moveOperation: signal<{ status: string; data: FacilityOutput | null }>({ status: 'idle', data: null }),
+    moveOperation: signal<{ status: string; data: FacilityOutput | null }>({
+      status: 'idle',
+      data: null,
+    }),
     loadFacilities: vi.fn(),
     move: vi.fn(),
   };
@@ -214,4 +223,3 @@ describe('FacilityDetailPage', () => {
     });
   });
 });
-

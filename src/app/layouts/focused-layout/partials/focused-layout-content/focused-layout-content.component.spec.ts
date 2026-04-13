@@ -31,4 +31,3 @@ describe('FocusedLayoutContent', () => {
     expect(projected?.textContent).toContain('Projected Content');
   });
 });
-

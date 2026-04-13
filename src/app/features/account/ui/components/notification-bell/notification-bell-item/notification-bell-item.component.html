@@ -1,11 +1,10 @@
 <li
-  class="flex gap-3 px-4 py-3 cursor-default transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
+  class="flex cursor-default gap-3 px-4 py-3 transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
   [class.bg-primary-50]="!notification().isRead"
 >
-
   <!-- Category icon -->
   <span
-    class="flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm mt-0.5"
+    class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm"
     [class]="iconBg() + ' ' + iconText()"
     [title]="notification().type"
   >
@@ -13,12 +12,17 @@
   </span>
 
   <!-- Content -->
-  <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-    <p class="text-sm font-medium text-surface-900 dark:text-surface-100 truncate" [title]="notification().subject">
+  <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+    <p
+      class="truncate text-sm font-medium text-surface-900 dark:text-surface-100"
+      [title]="notification().subject"
+    >
       {{ notification().subject }}
     </p>
-    <p class="text-xs text-surface-500 dark:text-surface-400 line-clamp-2">{{ notification().body }}</p>
-    <span class="text-xs text-surface-400 dark:text-surface-500 mt-0.5">
+    <p class="line-clamp-2 text-xs text-surface-500 dark:text-surface-400">
+      {{ notification().body }}
+    </p>
+    <span class="mt-0.5 text-xs text-surface-400 dark:text-surface-500">
       {{ notification().createdAt | date: 'short' }}
     </span>
   </div>
@@ -27,10 +31,9 @@
   @if (!notification().isRead) {
     <button
       type="button"
-      class="w-2 h-2 rounded-full bg-primary shrink-0 mt-2 hover:scale-125 transition-transform cursor-pointer"
+      class="mt-2 h-2 w-2 shrink-0 cursor-pointer rounded-full bg-primary transition-transform hover:scale-125"
       title="Mark as read"
       (click)="onMarkAsRead($event)"
     ></button>
   }
-
 </li>

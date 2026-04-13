@@ -14,11 +14,11 @@ import {
   Validators,
   type FormGroup,
 } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import type { EquipmentFormData } from './equipment-form-data.type';
 import type { EquipmentFormValues } from './equipment-form-values.type';
 
@@ -78,8 +78,7 @@ export class EquipmentForm {
    *
    * @type {OutputEmitterRef<EquipmentFormValues>}
    */
-  public readonly submitted: OutputEmitterRef<EquipmentFormValues> =
-    output<EquipmentFormValues>();
+  public readonly submitted: OutputEmitterRef<EquipmentFormValues> = output<EquipmentFormValues>();
 
   /**
    * Output cancelled
@@ -121,8 +120,8 @@ export class EquipmentForm {
    *
    * @type {FormGroup<EquipmentFormData>}
    */
-  protected readonly form: FormGroup<EquipmentFormData> =
-    this.formBuilder.group<EquipmentFormData>({
+  protected readonly form: FormGroup<EquipmentFormData> = this.formBuilder.group<EquipmentFormData>(
+    {
       type: this.formBuilder.control<string>('', [
         Validators.required,
         Validators.minLength(2),
@@ -133,7 +132,8 @@ export class EquipmentForm {
       model: this.formBuilder.control<string>(''),
       serialNumber: this.formBuilder.control<string>(''),
       locationLabel: this.formBuilder.control<string>(''),
-    });
+    },
+  );
   //#endregion
 
   //#region Constructor

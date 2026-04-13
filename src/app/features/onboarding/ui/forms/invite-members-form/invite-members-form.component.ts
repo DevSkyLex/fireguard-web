@@ -17,11 +17,11 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import type { OrganizationRoleOutput } from '@features/organization/models';
 import { RadioCardGroup, type RadioCardOption } from '@shared/components';
 import type { InviteMembersFormData, InviteeRowData } from './invite-members-form-data.type';
@@ -67,8 +67,9 @@ export class InviteMembersForm {
    *
    * @type {InputSignal<readonly OrganizationRoleOutput[]>}
    */
-  public readonly roles: InputSignal<readonly OrganizationRoleOutput[]> =
-    input<readonly OrganizationRoleOutput[]>([]);
+  public readonly roles: InputSignal<readonly OrganizationRoleOutput[]> = input<
+    readonly OrganizationRoleOutput[]
+  >([]);
 
   /**
    * Input rolesLoading
@@ -79,8 +80,7 @@ export class InviteMembersForm {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly rolesLoading: InputSignal<boolean> =
-    input<boolean>(false);
+  public readonly rolesLoading: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Input inviting
@@ -91,8 +91,7 @@ export class InviteMembersForm {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly inviting: InputSignal<boolean> =
-    input<boolean>(false);
+  public readonly inviting: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Input executing
@@ -195,7 +194,7 @@ export class InviteMembersForm {
       value: role.id,
       label: role.name.charAt(0).toUpperCase() + role.name.slice(1),
       description: role.description,
-    }))
+    }));
   });
 
   /**
@@ -211,9 +210,10 @@ export class InviteMembersForm {
    *
    * @type {FormGroup<InviteMembersFormData>}
    */
-  protected readonly form: FormGroup<InviteMembersFormData> = this.formBuilder.group<InviteMembersFormData>({
-    rows: this.formBuilder.array<FormGroup<InviteeRowData>>([this.buildRow()]),
-  });
+  protected readonly form: FormGroup<InviteMembersFormData> =
+    this.formBuilder.group<InviteMembersFormData>({
+      rows: this.formBuilder.array<FormGroup<InviteeRowData>>([this.buildRow()]),
+    });
 
   /**
    * Getter rows
@@ -375,4 +375,3 @@ export class InviteMembersForm {
   }
   //#endregion
 }
-

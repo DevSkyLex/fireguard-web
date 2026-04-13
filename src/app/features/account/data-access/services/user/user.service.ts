@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { catchError, type Observable } from 'rxjs';
-import { HydraApiService, type PaginationOptions } from '@core/services/hydra-api';
 import type { HydraCollection, OptionOutput } from '@core/models/api';
+import { HydraApiService, type PaginationOptions } from '@core/services/hydra-api';
 import type { UpdateUserInput, UserInput, UserOutput } from '@features/account/models';
 
 @Injectable({ providedIn: 'root' })

@@ -10,7 +10,7 @@ import { TitleService } from '@core/services/title';
  * and set page titles based on route configuration.
  *
  * @version 1.0.0
- * 
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable()
@@ -19,31 +19,30 @@ export class PageTitleStrategy extends TitleStrategy {
   /**
    * Property titleService
    * @readonly
-   * 
+   *
    * @description
    * Title service of the application.
-   * 
+   *
    * @since 1.0.0
-   * 
+   *
    * @type {TitleService}
    */
-  private readonly titleService: TitleService =
-    inject<TitleService>(TitleService);
+  private readonly titleService: TitleService = inject<TitleService>(TitleService);
   //#endregion
 
   //#region Methods
   /**
    * Method updateTitle
    * @override
-   * 
+   *
    * @description
    * Updates the page title using the TitleService.
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @param {RouterStateSnapshot} routerState - The current router state snapshot
-   * 
+   *
    * @returns {void} - Returns nothing
    */
   public override updateTitle(routerState: RouterStateSnapshot): void {

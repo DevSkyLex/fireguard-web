@@ -31,9 +31,7 @@ export type AlignedDashboardTrendSeries = {
  * @param {OrganizationDashboardTrendSeriesPoint} point - The trend data point to inspect.
  * @returns {string} The bucket key, or an empty string if none found.
  */
-export function getDashboardTrendPointBucket(
-  point: OrganizationDashboardTrendSeriesPoint,
-): string {
+export function getDashboardTrendPointBucket(point: OrganizationDashboardTrendSeriesPoint): string {
   return String(point['bucket'] ?? point['date'] ?? point['label'] ?? point['from'] ?? '');
 }
 
@@ -47,9 +45,7 @@ export function getDashboardTrendPointBucket(
  * @param {OrganizationDashboardTrendSeriesPoint} point - The trend data point to inspect.
  * @returns {number} The numeric value, or 0 if none found.
  */
-export function getDashboardTrendPointValue(
-  point: OrganizationDashboardTrendSeriesPoint,
-): number {
+export function getDashboardTrendPointValue(point: OrganizationDashboardTrendSeriesPoint): number {
   return Number(point['count'] ?? point['total'] ?? point['value'] ?? 0);
 }
 
@@ -102,11 +98,7 @@ export function formatDashboardTrendBucket(
   let date: Date;
 
   if (monthMatch) {
-    date = new Date(
-      parseInt(monthMatch[1], 10),
-      parseInt(monthMatch[2], 10) - 1,
-      1,
-    );
+    date = new Date(parseInt(monthMatch[1], 10), parseInt(monthMatch[2], 10) - 1, 1);
   } else if (dayMatch) {
     date = new Date(
       parseInt(dayMatch[1], 10),
@@ -166,7 +158,11 @@ export function formatDashboardTrendBucket(
  * @returns {AlignedDashboardTrendSeries} The aligned result.
  */
 export function alignDashboardTrendSeries(
-  seriesCollection: readonly (readonly OrganizationDashboardTrendSeriesPoint[] | null | undefined)[],
+  seriesCollection: readonly (
+    | readonly OrganizationDashboardTrendSeriesPoint[]
+    | null
+    | undefined
+  )[],
   granularity: OrganizationDashboardGranularity,
 ): AlignedDashboardTrendSeries {
   const bucketSet = new Set<string>();
@@ -191,7 +187,10 @@ export function alignDashboardTrendSeries(
 
       if (!bucket) continue;
 
-      valueByBucket.set(bucket, (valueByBucket.get(bucket) ?? 0) + getDashboardTrendPointValue(point));
+      valueByBucket.set(
+        bucket,
+        (valueByBucket.get(bucket) ?? 0) + getDashboardTrendPointValue(point),
+      );
     }
 
     return buckets.map((bucket) => valueByBucket.get(bucket) ?? 0);
@@ -218,10 +217,7 @@ export function alignDashboardTrendSeries(
  * @param {readonly number[]} right - The subtrahend series.
  * @returns {number[]} A new array of element-wise differences.
  */
-export function buildDifferenceSeries(
-  left: readonly number[],
-  right: readonly number[],
-): number[] {
+export function buildDifferenceSeries(left: readonly number[], right: readonly number[]): number[] {
   return left.map((value, index) => value - (right[index] ?? 0));
 }
 

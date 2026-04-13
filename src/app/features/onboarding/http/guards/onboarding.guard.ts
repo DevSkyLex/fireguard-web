@@ -33,8 +33,7 @@ export const onboardingGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
    *
    * @var {OnboardingStore}
    */
-  const onboardingStore: OnboardingStore =
-    inject<OnboardingStore>(OnboardingStore);
+  const onboardingStore: OnboardingStore = inject<OnboardingStore>(OnboardingStore);
 
   /**
    * Constant router
@@ -48,13 +47,15 @@ export const onboardingGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
    *
    * @var {Router}
    */
-  const router: Router =
-    inject<Router>(Router);
+  const router: Router = inject<Router>(Router);
 
   // Check if the user is blocked by an active onboarding workflow.
-  return onboardingStore.checkBlocking().pipe(
-    map((blocking: boolean): GuardResult =>
-      blocking ? router.createUrlTree(['/onboarding']) : true,
-    ),
-  );
+  return onboardingStore
+    .checkBlocking()
+    .pipe(
+      map(
+        (blocking: boolean): GuardResult =>
+          blocking ? router.createUrlTree(['/onboarding']) : true,
+      ),
+    );
 };

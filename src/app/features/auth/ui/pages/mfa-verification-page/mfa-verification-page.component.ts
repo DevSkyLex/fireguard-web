@@ -1,12 +1,19 @@
-import { Component, ChangeDetectionStrategy, inject, effect, computed, type Signal } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  effect,
+  computed,
+  type Signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/auth/ui/forms';
-import { AuthStore, authStoreEvents } from '@features/auth/state';
-import { UserStore } from '@features/account/state';
-import { ActiveTrustedDeviceStore } from '@features/auth/state';
-import { MessageService } from 'primeng/api';
 import { Events } from '@ngrx/signals/events';
+import { MessageService } from 'primeng/api';
+import { UserStore } from '@features/account/state';
+import { AuthStore, authStoreEvents } from '@features/auth/state';
+import { ActiveTrustedDeviceStore } from '@features/auth/state';
+import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/auth/ui/forms';
 
 /**
  * Component MfaVerificationPage
@@ -54,8 +61,7 @@ export class MfaVerificationPage {
    *
    * @type {AuthStore}
    */
-  private readonly authStore: AuthStore =
-  inject<AuthStore>(AuthStore);
+  private readonly authStore: AuthStore = inject<AuthStore>(AuthStore);
 
   /**
    * Property activeTrustedDeviceStore
@@ -85,8 +91,7 @@ export class MfaVerificationPage {
    *
    * @type {UserStore}
    */
-  private readonly userStore: UserStore =
-    inject<UserStore>(UserStore);
+  private readonly userStore: UserStore = inject<UserStore>(UserStore);
 
   /**
    * Property router
@@ -101,8 +106,7 @@ export class MfaVerificationPage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property messageService
@@ -117,8 +121,7 @@ export class MfaVerificationPage {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
 
   /**
    * Property events
@@ -132,8 +135,7 @@ export class MfaVerificationPage {
    *
    * @type {Events}
    */
-  private readonly events: Events =
-    inject<Events>(Events);
+  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Computed showTrustDevice
@@ -161,9 +163,7 @@ export class MfaVerificationPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly loading: Signal<boolean> = computed(() =>
-    this.authStore.isVerifyingMfa()
-  );
+  protected readonly loading: Signal<boolean> = computed(() => this.authStore.isVerifyingMfa());
 
   /**
    * Computed resendIn

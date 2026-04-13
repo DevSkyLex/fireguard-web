@@ -1,5 +1,5 @@
-import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { EMPTY, Observable, Subscriber } from 'rxjs';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type { EnvironmentConfig } from '@core/config/environment/environment-config.interface';
@@ -44,8 +44,7 @@ export class MercureService {
    *
    * @type {EnvironmentConfig}
    */
-  private readonly config: EnvironmentConfig =
-    inject<EnvironmentConfig>(ENV_CONFIG);
+  private readonly config: EnvironmentConfig = inject<EnvironmentConfig>(ENV_CONFIG);
 
   /**
    * Property platformId
@@ -63,8 +62,7 @@ export class MercureService {
    *
    * @type {object}
    */
-  private readonly platformId: object =
-    inject<object>(PLATFORM_ID);
+  private readonly platformId: object = inject<object>(PLATFORM_ID);
   //#endregion
 
   //#region Public Methods

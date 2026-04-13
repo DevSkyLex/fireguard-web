@@ -14,14 +14,14 @@ import {
   type FormGroup,
   Validators,
 } from '@angular/forms';
-import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { MessageModule } from 'primeng/message';
+import { PasswordModule } from 'primeng/password';
+import { matchFieldsValidator } from '@shared/validators/match-fields';
 import type { NewPasswordFormData } from './new-password-form-data.type';
 import type { NewPasswordFormValues } from './new-password-form-values.type';
-import { matchFieldsValidator } from '@shared/validators/match-fields';
 
 /**
  * Component NewPasswordForm
@@ -90,17 +90,19 @@ export class NewPasswordForm {
    *
    * @type {FormGroup<NewPasswordFormData>}
    */
-  protected readonly form: FormGroup<NewPasswordFormData> = this.formBuilder.group<NewPasswordFormData>({
-    newPassword: this.formBuilder.control<string>('', [
-      Validators.required,
-      Validators.minLength(8),
-    ]),
-    confirmPassword: this.formBuilder.control<string>('', [
-      Validators.required,
-    ]),
-  }, {
-    validators: matchFieldsValidator('newPassword', 'confirmPassword'),
-  });
+  protected readonly form: FormGroup<NewPasswordFormData> =
+    this.formBuilder.group<NewPasswordFormData>(
+      {
+        newPassword: this.formBuilder.control<string>('', [
+          Validators.required,
+          Validators.minLength(8),
+        ]),
+        confirmPassword: this.formBuilder.control<string>('', [Validators.required]),
+      },
+      {
+        validators: matchFieldsValidator('newPassword', 'confirmPassword'),
+      },
+    );
 
   /**
    * Property submitted

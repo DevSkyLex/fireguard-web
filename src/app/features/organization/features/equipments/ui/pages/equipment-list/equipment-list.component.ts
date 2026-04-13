@@ -1,9 +1,16 @@
-import { ChangeDetectionStrategy, Component, inject, input, numberAttribute, type InputSignalWithTransform } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  numberAttribute,
+  type InputSignalWithTransform,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { RequestOptions } from '@core/services/hydra-api';
-import { ActiveOrganizationStore } from '@features/organization/state';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import { EquipmentTable } from '@features/organization/features/equipments/ui/dataviews';
+import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
  * Component EquipmentListPage
@@ -38,8 +45,9 @@ export class EquipmentListPage {
    *
    * @type {InputSignalWithTransform<number, unknown>}
    */
-  public readonly page: InputSignalWithTransform<number, unknown> =
-    input<number, unknown>(1, { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) });
+  public readonly page: InputSignalWithTransform<number, unknown> = input<number, unknown>(1, {
+    transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)),
+  });
   //#endregion
 
   //#region Properties
@@ -52,8 +60,7 @@ export class EquipmentListPage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property route
@@ -64,8 +71,7 @@ export class EquipmentListPage {
    *
    * @type {ActivatedRoute}
    */
-  private readonly route: ActivatedRoute =
-    inject<ActivatedRoute>(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property activeOrganizationStore
@@ -88,8 +94,7 @@ export class EquipmentListPage {
    *
    * @type {EquipmentStore}
    */
-  protected readonly store: EquipmentStore =
-    inject<EquipmentStore>(EquipmentStore);
+  protected readonly store: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
   //#endregion
 
   //#region Constructor
@@ -131,7 +136,8 @@ export class EquipmentListPage {
    * @returns {void}
    */
   public onLoad(options: RequestOptions): void {
-    const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
     if (organizationId) {
       this.store.load({ organizationId, options });
     }
@@ -157,4 +163,3 @@ export class EquipmentListPage {
   }
   //#endregion
 }
-

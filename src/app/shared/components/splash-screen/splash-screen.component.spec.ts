@@ -15,9 +15,7 @@ describe('SplashScreen', () => {
 
     TestBed.configureTestingModule({
       imports: [SplashScreen],
-      providers: [
-        { provide: SPLASH_SCREEN_PORT, useValue: mockSplashScreenPort },
-      ],
+      providers: [{ provide: SPLASH_SCREEN_PORT, useValue: mockSplashScreenPort }],
     });
   });
 

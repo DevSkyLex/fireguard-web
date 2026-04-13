@@ -1,8 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, type Signal, type WritableSignal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { DatePipe, KeyValuePipe, TitleCasePipe } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  type Signal,
+  type WritableSignal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
@@ -10,12 +19,22 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TagModule } from 'primeng/tag';
 import { TabsModule } from 'primeng/tabs';
+import { TagModule } from 'primeng/tag';
+import type {
+  FacilityOutput,
+  MoveFacilityInput,
+} from '@features/organization/features/facilities/models';
+import {
+  ActiveFacilityStore,
+  FacilityStore,
+  facilityStoreEvents,
+} from '@features/organization/features/facilities/state';
+import {
+  FacilityEquipmentTab,
+  FacilityInspectionTab,
+} from '@features/organization/features/facilities/ui/components';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { ActiveFacilityStore, FacilityStore, facilityStoreEvents } from '@features/organization/features/facilities/state';
-import type { FacilityOutput, MoveFacilityInput } from '@features/organization/features/facilities/models';
-import { FacilityEquipmentTab, FacilityInspectionTab } from '@features/organization/features/facilities/ui/components';
 
 /**
  * Component FacilityDetailPage
@@ -68,8 +87,7 @@ export class FacilityDetailPage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property route
@@ -84,8 +102,7 @@ export class FacilityDetailPage {
    *
    * @type {ActivatedRoute}
    */
-  private readonly route: ActivatedRoute =
-    inject<ActivatedRoute>(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property messageService
@@ -100,8 +117,7 @@ export class FacilityDetailPage {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
 
   /**
    * Property events
@@ -116,8 +132,7 @@ export class FacilityDetailPage {
    *
    * @type {Events}
    */
-  private readonly events: Events =
-    inject<Events>(Events);
+  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Property activeOrganizationStore
@@ -165,8 +180,7 @@ export class FacilityDetailPage {
    *
    * @type {FacilityStore}
    */
-  protected readonly store: FacilityStore =
-    inject<FacilityStore>(FacilityStore);
+  protected readonly store: FacilityStore = inject<FacilityStore>(FacilityStore);
 
   /**
    * Property facility
@@ -181,8 +195,9 @@ export class FacilityDetailPage {
    *
    * @type {Signal<FacilityOutput | null>}
    */
-  protected readonly facility: Signal<FacilityOutput | null> =
-    computed<FacilityOutput | null>(() => this.activeFacilityStore.selectedFacility());
+  protected readonly facility: Signal<FacilityOutput | null> = computed<FacilityOutput | null>(() =>
+    this.activeFacilityStore.selectedFacility(),
+  );
 
   /**
    * Property isLoading
@@ -197,8 +212,9 @@ export class FacilityDetailPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isLoading: Signal<boolean> =
-    computed<boolean>(() => this.activeFacilityStore.isLoadingFacility());
+  protected readonly isLoading: Signal<boolean> = computed<boolean>(() =>
+    this.activeFacilityStore.isLoadingFacility(),
+  );
 
   /**
    * Property activeTab
@@ -213,8 +229,7 @@ export class FacilityDetailPage {
    *
    * @type {WritableSignal<number>}
    */
-  protected readonly activeTab: WritableSignal<number> =
-    signal<number>(0);
+  protected readonly activeTab: WritableSignal<number> = signal<number>(0);
 
   /**
    * Property showMoveDialog
@@ -227,8 +242,7 @@ export class FacilityDetailPage {
    *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly showMoveDialog: WritableSignal<boolean> =
-    signal<boolean>(false);
+  protected readonly showMoveDialog: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property moveParentId
@@ -242,8 +256,7 @@ export class FacilityDetailPage {
    *
    * @type {WritableSignal<string>}
    */
-  protected readonly moveParentId: WritableSignal<string> =
-    signal<string>('');
+  protected readonly moveParentId: WritableSignal<string> = signal<string>('');
 
   /**
    * Property isMoving
@@ -258,8 +271,9 @@ export class FacilityDetailPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isMoving: Signal<boolean> =
-    computed<boolean>(() => this.store.moveCallState().status === 'pending');
+  protected readonly isMoving: Signal<boolean> = computed<boolean>(
+    () => this.store.moveCallState().status === 'pending',
+  );
 
   /**
    * Property parentOptions
@@ -275,23 +289,22 @@ export class FacilityDetailPage {
    *
    * @type {Signal<{ label: string; value: string }[]>}
    */
-  protected readonly parentOptions: Signal<{ label: string; value: string }[]> =
-    computed<{ label: string; value: string }[]>(() => {
-      const currentId: string | undefined = this.facility()?.id;
-      const facilities: readonly FacilityOutput[] = this.store.facilities();
-      const options: { label: string; value: string }[] = [
-        { label: 'None (root level)', value: '' },
-      ];
-      for (const f of facilities) {
-        if (f.id !== currentId) {
-          options.push({
-            label: `${f.name}${f.code ? ' (' + f.code + ')' : ''}`,
-            value: f.id,
-          });
-        }
+  protected readonly parentOptions: Signal<{ label: string; value: string }[]> = computed<
+    { label: string; value: string }[]
+  >(() => {
+    const currentId: string | undefined = this.facility()?.id;
+    const facilities: readonly FacilityOutput[] = this.store.facilities();
+    const options: { label: string; value: string }[] = [{ label: 'None (root level)', value: '' }];
+    for (const f of facilities) {
+      if (f.id !== currentId) {
+        options.push({
+          label: `${f.name}${f.code ? ' (' + f.code + ')' : ''}`,
+          value: f.id,
+        });
       }
-      return options;
-    });
+    }
+    return options;
+  });
 
   /**
    * Property facilityTypeIcons
@@ -331,7 +344,8 @@ export class FacilityDetailPage {
    */
   public constructor() {
     // Load facilities for move dialog parent selection
-    const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
     if (organizationId) {
       this.store.loadFacilities({ organizationId, options: { itemsPerPage: 200 } });
     }
@@ -416,7 +430,8 @@ export class FacilityDetailPage {
    * @returns {void}
    */
   protected onMoveSubmit(): void {
-    const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
     const facilityId: string | undefined = this.facility()?.id;
     if (!organizationId || !facilityId) return;
 
@@ -444,4 +459,3 @@ export class FacilityDetailPage {
   }
   //#endregion
 }
-

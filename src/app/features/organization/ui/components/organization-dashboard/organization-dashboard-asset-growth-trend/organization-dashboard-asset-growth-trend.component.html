@@ -36,10 +36,7 @@
   <ng-template #content>
     <div class="h-72">
       @if (dashboardStore.isQueryLoading() && !dashboardStore.queryData()) {
-        <p-skeleton
-          height="100%"
-          class="w-full"
-        />
+        <p-skeleton height="100%" class="w-full" />
       } @else {
         <p-chart
           type="bar"
@@ -152,4 +149,3 @@
     </div>
   </ng-template>
 </app-trend-card>
-

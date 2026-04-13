@@ -1,16 +1,16 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 
-import { OrganizationInvitationService } from './organization-invitation.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
+import type { ApiError } from '@core/models/api';
 import type {
   AcceptOrganizationInvitationInput,
   InviteOrganizationMemberInput,
   OrganizationInvitationOutput,
   OrganizationMemberOutput,
 } from '@features/organization/models';
-import type { ApiError } from '@core/models/api';
+import { OrganizationInvitationService } from './organization-invitation.service';
 
 describe('OrganizationInvitationService', () => {
   let service: OrganizationInvitationService;
@@ -143,7 +143,10 @@ describe('OrganizationInvitationService', () => {
       });
 
       const req = httpMock.expectOne(invitationsUrl);
-      req.flush({ status: 422, title: 'Unprocessable Entity' }, { status: 422, statusText: 'Unprocessable Entity' });
+      req.flush(
+        { status: 422, title: 'Unprocessable Entity' },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
     });
   });
 });

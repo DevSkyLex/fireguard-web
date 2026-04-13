@@ -77,4 +77,3 @@ export const passwordResetVerifyGuard: CanActivateFn = (route): MaybeAsync<Guard
   // If no token at all, redirect to forgot password page
   return router.createUrlTree(['/auth/password-reset/forgot']);
 };
-

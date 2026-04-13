@@ -1,4 +1,7 @@
-import type { InspectionResult, InspectorType } from '@features/organization/features/inspections/models';
+import type {
+  InspectionResult,
+  InspectorType,
+} from '@features/organization/features/inspections/models';
 
 /**
  * Interface CreateInspectionFormValues

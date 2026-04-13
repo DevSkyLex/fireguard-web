@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree } from '@angular/router';
-import { guestGuard } from './guest.guard';
 import { AuthStore } from '@features/auth/state';
+import { guestGuard } from './guest.guard';
 
 describe('guestGuard', () => {
   let mockRouter: { createUrlTree: ReturnType<typeof vi.fn> };
@@ -13,7 +13,9 @@ describe('guestGuard', () => {
   const urlTree = {} as UrlTree;
 
   const runGuard = (): boolean | UrlTree => {
-    return TestBed.runInInjectionContext(() => guestGuard({} as any, {} as any)) as boolean | UrlTree;
+    return TestBed.runInInjectionContext(() => guestGuard({} as any, {} as any)) as
+      | boolean
+      | UrlTree;
   };
 
   beforeEach(() => {

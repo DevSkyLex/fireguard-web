@@ -14,10 +14,10 @@ import {
   Validators,
   type FormGroup,
 } from '@angular/forms';
-import { SelectModule } from 'primeng/select';
-import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import type { FacilityType } from '@features/organization/features/facilities/models';
 import type { CreateFacilityFormData } from './create-facility-form-data.type';
 import type { CreateFacilityFormValues } from './create-facility-form-values.type';
@@ -36,13 +36,7 @@ import type { CreateFacilityFormValues } from './create-facility-form-values.typ
  */
 @Component({
   selector: 'app-create-facility-form',
-  imports: [
-    ReactiveFormsModule,
-    SelectModule,
-    InputTextModule,
-    ButtonModule,
-    MessageModule,
-  ],
+  imports: [ReactiveFormsModule, SelectModule, InputTextModule, ButtonModule, MessageModule],
   templateUrl: './create-facility-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

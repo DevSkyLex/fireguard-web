@@ -1,18 +1,9 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import {
-  patchState,
-  signalStore,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
-import { TrustedDeviceService } from '@features/auth/data-access';
-import type { TrustDeviceOutput } from '@features/auth/models';
-import type { ActiveTrustedDeviceState } from './active-trusted-device-state.interface';
 import {
   idleCallState,
   pendingCallState,
@@ -23,6 +14,9 @@ import {
   type CallState,
   type StoreError,
 } from '@core/state/request-state';
+import { TrustedDeviceService } from '@features/auth/data-access';
+import type { TrustDeviceOutput } from '@features/auth/models';
+import type { ActiveTrustedDeviceState } from './active-trusted-device-state.interface';
 import { activeTrustedDeviceStoreEvents } from './active-trusted-device.events';
 
 //#region Initial State
@@ -123,94 +117,96 @@ export const ActiveTrustedDeviceStore = signalStore(
   //#endregion
 
   //#region Methods
-  withMethods((
-    store,
-    dispatcher = inject<Dispatcher>(Dispatcher),
-    trustedDeviceService = inject(TrustedDeviceService),
-  ) => ({
-    //#region Reactive Methods
-    /**
-     * Method trustDevice
-     *
-     * @description
-     * Trusts the current device for MFA bypass. Automatically clears the
-     * `pendingTrustDevice` flag when the API call starts, regardless of
-     * outcome, to prevent accidental re-trust on retry.
-     *
-     * @since 1.0.0
-     */
-    trustDevice: rxMethod<void>(
-      pipe(
-        tap(() => {
-          patchState(store, {
-            pendingTrustDevice: false,
-            trustCallState: pendingCallState(),
-          });
-        }),
-        switchMap(() =>
-          trustedDeviceService.trustDevice().pipe(
-            tapResponse({
-              next: (response: TrustDeviceOutput) => {
-                patchState(store, { trustCallState: successCallState(response) });
-              },
-              error: (error: unknown) => {
-                const storeError: StoreError = toStoreError(error);
-                patchState(store, { trustCallState: errorCallState(storeError) });
-                dispatcher.dispatch(
-                  activeTrustedDeviceStoreEvents.trustFailed(
-                    toStoreFailureEventPayload(storeError, 'Failed to trust device'),
-                  ),
-                );
-              },
-            }),
+  withMethods(
+    (
+      store,
+      dispatcher = inject<Dispatcher>(Dispatcher),
+      trustedDeviceService = inject(TrustedDeviceService),
+    ) => ({
+      //#region Reactive Methods
+      /**
+       * Method trustDevice
+       *
+       * @description
+       * Trusts the current device for MFA bypass. Automatically clears the
+       * `pendingTrustDevice` flag when the API call starts, regardless of
+       * outcome, to prevent accidental re-trust on retry.
+       *
+       * @since 1.0.0
+       */
+      trustDevice: rxMethod<void>(
+        pipe(
+          tap(() => {
+            patchState(store, {
+              pendingTrustDevice: false,
+              trustCallState: pendingCallState(),
+            });
+          }),
+          switchMap(() =>
+            trustedDeviceService.trustDevice().pipe(
+              tapResponse({
+                next: (response: TrustDeviceOutput) => {
+                  patchState(store, { trustCallState: successCallState(response) });
+                },
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { trustCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    activeTrustedDeviceStoreEvents.trustFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to trust device'),
+                    ),
+                  );
+                },
+              }),
+            ),
           ),
         ),
       ),
-    ),
-    //#endregion
+      //#endregion
 
-    //#region Synchronous Methods
-    /**
-     * Method setPendingTrustDevice
-     *
-     * @description
-     * Sets the pending trust device flag. Called by the MFA verification
-     * page when the user checks "Trust this device".
-     *
-     * @since 1.0.0
-     *
-     * @param {boolean} value - Whether to trust the device after MFA.
-     */
-    setPendingTrustDevice(value: boolean): void {
-      patchState(store, { pendingTrustDevice: value });
-    },
+      //#region Synchronous Methods
+      /**
+       * Method setPendingTrustDevice
+       *
+       * @description
+       * Sets the pending trust device flag. Called by the MFA verification
+       * page when the user checks "Trust this device".
+       *
+       * @since 1.0.0
+       *
+       * @param {boolean} value - Whether to trust the device after MFA.
+       */
+      setPendingTrustDevice(value: boolean): void {
+        patchState(store, { pendingTrustDevice: value });
+      },
 
-    /**
-     * Method resetTrustOperation
-     *
-     * @description
-     * Resets the trust operation state to idle. Useful for clearing
-     * feedback messages.
-     *
-     * @since 1.0.0
-     */
-    resetTrustOperation(): void {
-      patchState(store, { trustCallState: idleCallState() });
-    },
+      /**
+       * Method resetTrustOperation
+       *
+       * @description
+       * Resets the trust operation state to idle. Useful for clearing
+       * feedback messages.
+       *
+       * @since 1.0.0
+       */
+      resetTrustOperation(): void {
+        patchState(store, { trustCallState: idleCallState() });
+      },
 
-    /**
-     * Method clear
-     *
-     * @description
-     * Resets the store to its initial state. Should be called on logout.
-     *
-     * @since 1.0.0
-     */
-    clear(): void {
-      patchState(store, INITIAL_ACTIVE_TRUSTED_DEVICE_STATE);
-    },
-    //#endregion
-  })),
+      /**
+       * Method clear
+       *
+       * @description
+       * Resets the store to its initial state. Should be called on logout.
+       *
+       * @since 1.0.0
+       */
+      clear(): void {
+        patchState(store, INITIAL_ACTIVE_TRUSTED_DEVICE_STATE);
+      },
+      //#endregion
+    }),
+  ),
   //#endregion
 );
 

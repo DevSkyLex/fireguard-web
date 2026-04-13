@@ -8,10 +8,7 @@ describe('DashboardLayoutBreadcrumb', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [DashboardLayoutBreadcrumb],
-      providers: [
-        BreadcrumbService,
-        provideRouter([]),
-      ],
+      providers: [BreadcrumbService, provideRouter([])],
     });
   });
 

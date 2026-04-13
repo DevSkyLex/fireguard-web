@@ -1,4 +1,4 @@
-import { computed, Injectable, Signal, signal, WritableSignal } from "@angular/core";
+import { computed, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 
 /**
  * Service DashboardSidebarService
@@ -78,8 +78,7 @@ export class DashboardSidebarService {
    *
    * @type {WritableSignal<boolean>}
    */
-  private readonly _visible: WritableSignal<boolean> =
-    signal<boolean>(false);
+  private readonly _visible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property defaultWidth
@@ -92,8 +91,9 @@ export class DashboardSidebarService {
    *
    * @type {WritableSignal<number>}
    */
-  public readonly defaultWidth: WritableSignal<number> =
-    signal<number>(DashboardSidebarService.INITIAL_DEFAULT_WIDTH);
+  public readonly defaultWidth: WritableSignal<number> = signal<number>(
+    DashboardSidebarService.INITIAL_DEFAULT_WIDTH,
+  );
 
   /**
    * Property minWidth
@@ -106,8 +106,9 @@ export class DashboardSidebarService {
    *
    * @type {WritableSignal<number>}
    */
-  public readonly minWidth: WritableSignal<number> =
-    signal<number>(DashboardSidebarService.INITIAL_MIN_WIDTH);
+  public readonly minWidth: WritableSignal<number> = signal<number>(
+    DashboardSidebarService.INITIAL_MIN_WIDTH,
+  );
 
   /**
    * Property maxWidth
@@ -120,8 +121,9 @@ export class DashboardSidebarService {
    *
    * @type {WritableSignal<number>}
    */
-  public readonly maxWidth: WritableSignal<number> =
-    signal<number>(DashboardSidebarService.INITIAL_MAX_WIDTH);
+  public readonly maxWidth: WritableSignal<number> = signal<number>(
+    DashboardSidebarService.INITIAL_MAX_WIDTH,
+  );
 
   /**
    * Property _width
@@ -136,8 +138,9 @@ export class DashboardSidebarService {
    *
    * @type {WritableSignal<number>}
    */
-  private readonly _width: WritableSignal<number> =
-    signal<number>(this.clampWidth(this.defaultWidth()));
+  private readonly _width: WritableSignal<number> = signal<number>(
+    this.clampWidth(this.defaultWidth()),
+  );
 
   /**
    * Property visible
@@ -151,8 +154,7 @@ export class DashboardSidebarService {
    *
    * @type {Signal<boolean>}
    */
-  public readonly visible: Signal<boolean> =
-    this._visible.asReadonly();
+  public readonly visible: Signal<boolean> = this._visible.asReadonly();
 
   /**
    * Property width
@@ -166,8 +168,8 @@ export class DashboardSidebarService {
    *
    * @type {Signal<number>}
    */
-  public readonly width: Signal<number> = computed<number>(
-    (): number => this.clampWidth(this._width()),
+  public readonly width: Signal<number> = computed<number>((): number =>
+    this.clampWidth(this._width()),
   );
 
   //#endregion
@@ -296,10 +298,7 @@ export class DashboardSidebarService {
     const minWidth: number = Math.min(this.minWidth(), this.maxWidth());
     const maxWidth: number = Math.max(this.minWidth(), this.maxWidth());
 
-    return Math.min(
-      maxWidth,
-      Math.max(minWidth, width),
-    );
+    return Math.min(maxWidth, Math.max(minWidth, width));
   }
   //#endregion
 }

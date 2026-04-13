@@ -6,8 +6,7 @@
 
 <!-- Notification panel -->
 <p-popover #popover [pt]="popoverPt">
-  <div class="flex flex-col w-96">
-
+  <div class="flex w-96 flex-col">
     <app-notification-bell-header
       [hasUnread]="notificationStore.hasUnread()"
       [unreadCount]="notificationStore.unreadCount()"
@@ -31,6 +30,5 @@
       [hasUnread]="notificationStore.hasUnread()"
       (markAllAsRead)="markAllAsRead()"
     />
-
   </div>
 </p-popover>

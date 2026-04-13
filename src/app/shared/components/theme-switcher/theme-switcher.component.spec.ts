@@ -19,9 +19,7 @@ describe('ThemeSwitcher', () => {
 
     TestBed.configureTestingModule({
       imports: [ThemeSwitcher],
-      providers: [
-        { provide: THEME_PORT, useValue: mockThemePort },
-      ],
+      providers: [{ provide: THEME_PORT, useValue: mockThemePort }],
     });
   });
 

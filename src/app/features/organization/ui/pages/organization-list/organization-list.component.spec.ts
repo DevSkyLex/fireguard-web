@@ -1,9 +1,9 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
-import { OrganizationStore } from '@features/organization/state';
+import { provideRouter } from '@angular/router';
 import type { OrganizationOutput } from '@features/organization/models';
+import { OrganizationStore } from '@features/organization/state';
 import { OrganizationDataview } from '@features/organization/ui/dataviews';
 import { OrganizationListPage } from './organization-list.component';
 
@@ -68,7 +68,10 @@ describe('OrganizationListPage', () => {
   });
 
   it('should display organization items when organizations are loaded', () => {
-    mockOrganizationStore.organizations.set([MOCK_ORG, { ...MOCK_ORG, id: 'org-2', name: 'Beta Inc', slug: 'beta' } as OrganizationOutput]);
+    mockOrganizationStore.organizations.set([
+      MOCK_ORG,
+      { ...MOCK_ORG, id: 'org-2', name: 'Beta Inc', slug: 'beta' } as OrganizationOutput,
+    ]);
     mockOrganizationStore.isEmpty.set(false);
     const fixture = TestBed.createComponent(OrganizationListPage);
     fixture.detectChanges();

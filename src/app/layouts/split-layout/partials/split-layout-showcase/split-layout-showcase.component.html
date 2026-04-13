@@ -1,8 +1,14 @@
-<div class="h-full relative">
+<div class="relative h-full">
   <div class="sticky top-0 h-dvh">
-    <div class="relative grid h-full overflow-hidden border border-surface-800/70 dark:border-surface-950 bg-linear-to-br from-surface-950 via-surface-900 to-surface-800 dark:from-black dark:via-surface-950 dark:to-surface-950">
-      <div class="pointer-events-none absolute -right-20 top-8 h-64 w-64 rounded-full bg-primary-500/15 blur-3xl"></div>
-      <div class="pointer-events-none absolute -left-12 bottom-0 h-52 w-52 rounded-full bg-primary-500/5 blur-3xl"></div>
+    <div
+      class="relative grid h-full overflow-hidden border border-surface-800/70 bg-linear-to-br from-surface-950 via-surface-900 to-surface-800 dark:border-surface-950 dark:from-black dark:via-surface-950 dark:to-surface-950"
+    >
+      <div
+        class="pointer-events-none absolute top-8 -right-20 h-64 w-64 rounded-full bg-primary-500/15 blur-3xl"
+      ></div>
+      <div
+        class="pointer-events-none absolute bottom-0 -left-12 h-52 w-52 rounded-full bg-primary-500/5 blur-3xl"
+      ></div>
 
       <section class="relative flex h-full flex-col justify-between gap-10 p-12 2xl:p-16">
         <header class="flex items-center justify-between gap-4">
@@ -10,19 +16,19 @@
         </header>
 
         <section class="flex max-w-3xl flex-col gap-6">
-          <h1 class="text-4xl font-semibold leading-tight text-surface-0 2xl:text-5xl">
+          <h1 class="text-4xl leading-tight font-semibold text-surface-0 2xl:text-5xl">
             The future of fire safety, reimagined.
           </h1>
 
           <p class="max-w-2xl text-lg leading-relaxed text-surface-300">
-            Monitor, coordinate and secure every site from one control plane designed for
-            incident readiness and operational clarity.
+            Monitor, coordinate and secure every site from one control plane designed for incident
+            readiness and operational clarity.
           </p>
 
           <div class="grid gap-3 sm:grid-cols-3">
             @for (metric of metrics; track metric.label) {
               <article class="rounded-xl border border-surface-700/30 bg-surface-900/50 px-4 py-3">
-                <p class="text-xs uppercase tracking-wide text-surface-400">{{ metric.label }}</p>
+                <p class="text-xs tracking-wide text-surface-400 uppercase">{{ metric.label }}</p>
                 <p class="mt-2 text-base font-semibold text-surface-0">{{ metric.value }}</p>
               </article>
             }

@@ -1,15 +1,15 @@
 /**
  * Interface CookieOptions
  * @interface CookieOptions
- * 
+ *
  * @description
- * The CookieOptions interface is used to 
+ * The CookieOptions interface is used to
  * define the options for a cookie.
- * 
+ *
  * @version 1.0.0
- * 
+ *
  * @template T - The type of the value of the cookie.
- * 
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface CookieOptions<T = string> {
@@ -17,13 +17,13 @@ export interface CookieOptions<T = string> {
   /**
    * Property name
    * @readonly
-   * 
+   *
    * @description
    * The name of the cookie.
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @type {string}
    */
   readonly name: string;
@@ -31,13 +31,13 @@ export interface CookieOptions<T = string> {
   /**
    * Property value
    * @readonly
-   * 
+   *
    * @description
    * The value of the cookie.
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @type {T}
    */
   readonly value: T;
@@ -45,13 +45,13 @@ export interface CookieOptions<T = string> {
   /**
    * Property maxAge
    * @readonly
-   * 
+   *
    * @description
    * The max age of the cookie.
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @type {number}
    */
   readonly maxAge?: number;
@@ -59,13 +59,13 @@ export interface CookieOptions<T = string> {
   /**
    * Property expires
    * @readonly
-   * 
+   *
    * @description
    * The expires of the cookie.
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @type {Date}
    */
   readonly expires?: Date;
@@ -73,13 +73,13 @@ export interface CookieOptions<T = string> {
   /**
    * Property path
    * @readonly
-   * 
+   *
    * @description
    * The path of the cookie.
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @type {string}
    */
   readonly path?: string;
@@ -87,13 +87,13 @@ export interface CookieOptions<T = string> {
   /**
    * Property domain
    * @readonly
-   * 
+   *
    * @description
    * The domain of the cookie.
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @type {string}
    */
   readonly domain?: string;
@@ -101,13 +101,13 @@ export interface CookieOptions<T = string> {
   /**
    * Property secure
    * @readonly
-   * 
+   *
    * @description
    * The secure of the cookie.
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @type {boolean}
    */
   readonly secure?: boolean;
@@ -115,13 +115,13 @@ export interface CookieOptions<T = string> {
   /**
    * Property httpOnly
    * @readonly
-   * 
+   *
    * @description
    * The httpOnly of the cookie.
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @type {boolean}
    */
   readonly httpOnly?: boolean;
@@ -129,13 +129,13 @@ export interface CookieOptions<T = string> {
   /**
    * Property sameSite
    * @readonly
-   * 
+   *
    * @description
    * The sameSite of the cookie.
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @type {CookieSameSite}
    */
   readonly sameSite?: CookieSameSite;
@@ -145,13 +145,13 @@ export interface CookieOptions<T = string> {
 /**
  * Type CookieSameSite
  * @type {CookieSameSite}
- * 
+ *
  * @description
- * The CookieSameSite type is used to 
+ * The CookieSameSite type is used to
  * define the sameSite of a cookie.
- * 
+ *
  * @version 1.0.0
- * 
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export type CookieSameSite = 'Strict' | 'Lax' | 'None';

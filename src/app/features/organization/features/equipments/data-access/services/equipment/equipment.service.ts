@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type { HydraCollection, OptionOutput } from '@core/models/api';
+import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
   EquipmentOutput,
   CreateEquipmentInput,
@@ -89,10 +89,7 @@ export class EquipmentService extends HydraApiService {
     organizationId: string,
     options?: RequestOptions,
   ): Observable<HydraCollection<EquipmentOutput>> {
-    return this.getCollection<EquipmentOutput>(
-      this.equipmentPath(organizationId),
-      options,
-    );
+    return this.getCollection<EquipmentOutput>(this.equipmentPath(organizationId), options);
   }
 
   public listStatuses(
@@ -131,13 +128,8 @@ export class EquipmentService extends HydraApiService {
    *
    * @return {Observable<EquipmentOutput>} An observable emitting the equipment details.
    */
-  public get(
-    organizationId: string,
-    equipmentId: string,
-  ): Observable<EquipmentOutput> {
-    return this.getOne<EquipmentOutput>(
-      this.equipmentPath(organizationId, equipmentId),
-    );
+  public get(organizationId: string, equipmentId: string): Observable<EquipmentOutput> {
+    return this.getOne<EquipmentOutput>(this.equipmentPath(organizationId, equipmentId));
   }
 
   /**
@@ -156,10 +148,7 @@ export class EquipmentService extends HydraApiService {
    *
    * @return {Observable<EquipmentOutput>} An observable emitting the created equipment details.
    */
-  public create(
-    organizationId: string,
-    input: CreateEquipmentInput,
-  ): Observable<EquipmentOutput> {
+  public create(organizationId: string, input: CreateEquipmentInput): Observable<EquipmentOutput> {
     return this.post<CreateEquipmentInput, EquipmentOutput>(
       this.equipmentPath(organizationId),
       input,
@@ -270,10 +259,7 @@ export class EquipmentService extends HydraApiService {
    *
    * @return {Observable<EquipmentOutput>} An observable emitting the updated equipment details after commissioning.
    */
-  public commission(
-    organizationId: string,
-    equipmentId: string,
-  ): Observable<EquipmentOutput> {
+  public commission(organizationId: string, equipmentId: string): Observable<EquipmentOutput> {
     return this.postAction<EquipmentOutput>(
       `${this.equipmentPath(organizationId, equipmentId)}/commission`,
     );
@@ -296,10 +282,7 @@ export class EquipmentService extends HydraApiService {
    *
    * @return {Observable<EquipmentOutput>} An observable emitting the updated equipment details after decommissioning.
    */
-  public decommission(
-    organizationId: string,
-    equipmentId: string,
-  ): Observable<EquipmentOutput> {
+  public decommission(organizationId: string, equipmentId: string): Observable<EquipmentOutput> {
     return this.postAction<EquipmentOutput>(
       `${this.equipmentPath(organizationId, equipmentId)}/decommission`,
     );
@@ -322,10 +305,7 @@ export class EquipmentService extends HydraApiService {
    *
    * @return {Observable<EquipmentOutput>} An observable emitting the updated equipment details after putting it into maintenance mode.
    */
-  public maintenance(
-    organizationId: string,
-    equipmentId: string,
-  ): Observable<EquipmentOutput> {
+  public maintenance(organizationId: string, equipmentId: string): Observable<EquipmentOutput> {
     return this.postAction<EquipmentOutput>(
       `${this.equipmentPath(organizationId, equipmentId)}/maintenance`,
     );
@@ -496,14 +476,8 @@ export class EquipmentService extends HydraApiService {
    *
    * @return {Observable<void>} An observable that completes when the tag is successfully removed from the equipment.
    */
-  public removeTag(
-    organizationId: string,
-    equipmentId: string,
-    tagId: string,
-  ): Observable<void> {
-    return this.delete(
-      `${this.equipmentPath(organizationId, equipmentId)}/tags/${tagId}`,
-    );
+  public removeTag(organizationId: string, equipmentId: string, tagId: string): Observable<void> {
+    return this.delete(`${this.equipmentPath(organizationId, equipmentId)}/tags/${tagId}`);
   }
   //#endregion
 }

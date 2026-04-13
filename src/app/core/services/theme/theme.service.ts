@@ -1,7 +1,14 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { effect, inject, Injectable, PLATFORM_ID, signal, type WritableSignal } from '@angular/core';
-import { CookieService } from '@core/services/cookie';
+import {
+  effect,
+  inject,
+  Injectable,
+  PLATFORM_ID,
+  signal,
+  type WritableSignal,
+} from '@angular/core';
 import { isThemeMode, type ThemeMode } from '@core/ports/theme';
+import { CookieService } from '@core/services/cookie';
 
 /**
  * Service ThemeService
@@ -30,8 +37,7 @@ export class ThemeService {
    *
    * @type {CookieService}
    */
-  private readonly cookieService: CookieService =
-    inject<CookieService>(CookieService);
+  private readonly cookieService: CookieService = inject<CookieService>(CookieService);
 
   /**
    * Property document
@@ -45,8 +51,7 @@ export class ThemeService {
    *
    * @type {Document}
    */
-  private readonly document: Document =
-    inject<Document>(DOCUMENT);
+  private readonly document: Document = inject<Document>(DOCUMENT);
 
   /**
    * Property platformId
@@ -60,8 +65,7 @@ export class ThemeService {
    *
    * @type {object}
    */
-  private readonly platformId: object =
-    inject<object>(PLATFORM_ID);
+  private readonly platformId: object = inject<object>(PLATFORM_ID);
 
   /**
    * Property THEME_COOKIE_NAME
@@ -89,8 +93,7 @@ export class ThemeService {
    *
    * @type {WritableSignal<ThemeMode>}
    */
-  public readonly theme: WritableSignal<ThemeMode> =
-    signal<ThemeMode>(this.getInitialTheme());
+  public readonly theme: WritableSignal<ThemeMode> = signal<ThemeMode>(this.getInitialTheme());
   //#endregion
 
   //#region Constructor
@@ -130,8 +133,7 @@ export class ThemeService {
    * @returns {void}
    */
   public switchTheme(): void {
-    const newTheme: ThemeMode =
-      this.theme() === 'light' ? 'dark' : 'light';
+    const newTheme: ThemeMode = this.theme() === 'light' ? 'dark' : 'light';
     this.theme.set(newTheme);
   }
 
@@ -180,8 +182,7 @@ export class ThemeService {
    * @returns {ThemeMode} - The initial theme mode.
    */
   private getInitialTheme(): ThemeMode {
-    const cookieValue: string | null =
-      this.cookieService.getCookie(ThemeService.THEME_COOKIE_NAME);
+    const cookieValue: string | null = this.cookieService.getCookie(ThemeService.THEME_COOKIE_NAME);
 
     if (cookieValue && isThemeMode(cookieValue)) {
       return cookieValue;
@@ -253,8 +254,9 @@ export class ThemeService {
         return 'light';
       }
 
-      const mediaQuery: MediaQueryList | undefined =
-        this.document.defaultView?.matchMedia('(prefers-color-scheme: dark)');
+      const mediaQuery: MediaQueryList | undefined = this.document.defaultView?.matchMedia(
+        '(prefers-color-scheme: dark)',
+      );
 
       const prefersDark: boolean = mediaQuery?.matches ?? false;
 

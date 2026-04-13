@@ -16,11 +16,7 @@ import type {
  * Supported granularity values for the organization
  * dashboard trends.
  */
-export type OrganizationDashboardGranularity =
-  | 'day'
-  | 'week'
-  | 'month'
-  | 'auto';
+export type OrganizationDashboardGranularity = 'day' | 'week' | 'month' | 'auto';
 
 /**
  * Type OrganizationDashboardEquipmentType

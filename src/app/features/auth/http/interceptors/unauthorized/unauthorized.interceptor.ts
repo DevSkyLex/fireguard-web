@@ -1,4 +1,3 @@
-import { inject } from '@angular/core';
 import {
   type HttpInterceptorFn,
   type HttpRequest,
@@ -6,6 +5,7 @@ import {
   type HttpEvent,
   HttpErrorResponse,
 } from '@angular/common/http';
+import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, catchError, throwError } from 'rxjs';
 import { AUTH_SESSION, type AuthSessionPort } from '@features/auth/ports';
@@ -40,7 +40,10 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && !EXCLUDED_ENDPOINTS.some((pattern: RegExp) => pattern.test(req.url))) {
+      if (
+        error.status === 401 &&
+        !EXCLUDED_ENDPOINTS.some((pattern: RegExp) => pattern.test(req.url))
+      ) {
         authSession.clearSession();
         router.navigate(['/auth/login']);
       }

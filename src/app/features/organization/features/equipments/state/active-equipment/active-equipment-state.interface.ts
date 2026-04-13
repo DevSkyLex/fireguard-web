@@ -1,5 +1,5 @@
-import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import type { CallState } from '@core/state/request-state';
+import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 
 /**
  * Interface ActiveEquipmentState

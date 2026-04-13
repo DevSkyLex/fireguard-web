@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,9 +8,8 @@ import {
   TemplateRef,
   type InputSignal,
 } from '@angular/core';
-import { SkeletonModule } from 'primeng/skeleton';
 import { CardModule, CardPassThroughOptions } from 'primeng/card';
-import { CommonModule } from '@angular/common';
+import { SkeletonModule } from 'primeng/skeleton';
 
 /**
  * Type MetricComparison
@@ -58,8 +58,7 @@ export class MetricCard {
    *
    * @type {InputSignal<string>}
    */
-  public readonly title: InputSignal<string> =
-    input.required<string>();
+  public readonly title: InputSignal<string> = input.required<string>();
 
   /**
    * Property description
@@ -73,8 +72,7 @@ export class MetricCard {
    *
    * @type {InputSignal<string | undefined>}
    */
-  public readonly description: InputSignal<string | undefined> =
-    input<string>();
+  public readonly description: InputSignal<string | undefined> = input<string>();
 
   /**
    * Property value
@@ -88,8 +86,9 @@ export class MetricCard {
    *
    * @type {InputSignal<string | number | null>}
    */
-  public readonly value: InputSignal<string | number | null> =
-    input.required<string | number | null>();
+  public readonly value: InputSignal<string | number | null> = input.required<
+    string | number | null
+  >();
 
   /**
    * Property icon
@@ -103,8 +102,7 @@ export class MetricCard {
    *
    * @type {InputSignal<string | null>}
    */
-  public readonly icon: InputSignal<string | null> =
-    input<string | null>(null);
+  public readonly icon: InputSignal<string | null> = input<string | null>(null);
 
   /**
    * Property loading
@@ -118,8 +116,7 @@ export class MetricCard {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly loading: InputSignal<boolean> =
-    input<boolean>(false);
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property comparison
@@ -134,8 +131,9 @@ export class MetricCard {
    *
    * @type {InputSignal<MetricComparison | null>}
    */
-  public readonly comparison: InputSignal<MetricComparison | null> =
-    input<MetricComparison | null>(null);
+  public readonly comparison: InputSignal<MetricComparison | null> = input<MetricComparison | null>(
+    null,
+  );
 
   /**
    * Property action
@@ -169,7 +167,8 @@ export class MetricCard {
    */
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
-      class: 'h-full flex flex-col gap-4 border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
+      class:
+        'h-full flex flex-col gap-4 border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
     },
     body: {
       class: 'p-0! flex flex-col flex-1',
@@ -181,7 +180,8 @@ export class MetricCard {
       class: 'px-4 pt-4',
     },
     footer: {
-      class: 'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 px-4 py-3 rounded-b-md',
+      class:
+        'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 px-4 py-3 rounded-b-md',
     },
   };
   //#endregion

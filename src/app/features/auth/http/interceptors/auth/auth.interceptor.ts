@@ -1,7 +1,12 @@
+import {
+  type HttpInterceptorFn,
+  type HttpRequest,
+  type HttpHandlerFn,
+  HttpEvent,
+} from '@angular/common/http';
 import { inject } from '@angular/core';
-import { type HttpInterceptorFn, type HttpRequest, type HttpHandlerFn, HttpEvent } from '@angular/common/http';
-import { AUTH_SESSION, type AuthSessionPort } from '@features/auth/ports';
 import { Observable } from 'rxjs';
+import { AUTH_SESSION, type AuthSessionPort } from '@features/auth/ports';
 
 /**
  * Public endpoints that don't require authentication
@@ -27,7 +32,7 @@ const PUBLIC_ENDPOINTS: RegExp[] = [
  */
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
-  next: HttpHandlerFn
+  next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> => {
   const authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION);
   const token: string | null = authSession.accessToken();

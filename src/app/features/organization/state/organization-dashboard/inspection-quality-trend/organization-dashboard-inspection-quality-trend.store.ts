@@ -1,5 +1,5 @@
-import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -10,23 +10,29 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { withQueryState, setPendingQuery, setSuccessQuery, setErrorQuery, toStoreError } from '@core/state/request-state';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { EMPTY, forkJoin, pipe, switchMap } from 'rxjs';
-import type { MetricComparison } from '@shared/components/metric-card';
+import {
+  withQueryState,
+  setPendingQuery,
+  setSuccessQuery,
+  setErrorQuery,
+  toStoreError,
+} from '@core/state/request-state';
 import { OrganizationService } from '@features/organization/data-access';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import type {
-  OrganizationDashboardGranularity,
-  OrganizationDashboardTrendOutput,
-  OrganizationDashboardTrendResourceParams,
-} from '@features/organization/models';
 import type {
   InspectionResult,
   InspectionStatus,
   InspectorType,
   NonConformitySeverity,
 } from '@features/organization/features/inspections/models';
+import type {
+  OrganizationDashboardGranularity,
+  OrganizationDashboardTrendOutput,
+  OrganizationDashboardTrendResourceParams,
+} from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import type { MetricComparison } from '@shared/components/metric-card';
 import {
   alignDashboardTrendSeries,
   buildPercentageSeries,
@@ -144,13 +150,12 @@ type OrganizationDashboardInspectionQualitySummaryMetric = {
  *
  * @since 1.0.0
  */
-type OrganizationDashboardInspectionQualityParams =
-  OrganizationDashboardTrendResourceParams & {
-    readonly inspectionStatus?: InspectionStatus;
-    readonly inspectionResult?: InspectionResult;
-    readonly inspectorType?: InspectorType;
-    readonly nonConformitySeverity?: NonConformitySeverity;
-  };
+type OrganizationDashboardInspectionQualityParams = OrganizationDashboardTrendResourceParams & {
+  readonly inspectionStatus?: InspectionStatus;
+  readonly inspectionResult?: InspectionResult;
+  readonly inspectorType?: InspectorType;
+  readonly nonConformitySeverity?: NonConformitySeverity;
+};
 
 /**
  * Type OrganizationDashboardInspectionQualityState
@@ -321,10 +326,7 @@ const hexToRgb = (hex: string): [number, number, number] => [
  */
 const INITIAL_STATE: OrganizationDashboardInspectionQualityState = {
   selectedGranularity: 'week',
-  selectedDateRange: [
-    new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
-    new Date(),
-  ],
+  selectedDateRange: [new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1), new Date()],
   compareEnabled: true,
   selectedInspectionStatus: null,
   selectedInspectionResult: null,
@@ -354,7 +356,6 @@ const INITIAL_STATE: OrganizationDashboardInspectionQualityState = {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const OrganizationDashboardInspectionQualityStore = signalStore(
-
   //#region State
 
   /**
@@ -471,8 +472,7 @@ export const OrganizationDashboardInspectionQualityStore = signalStore(
      */
     selectedInspectionStatusOption: computed<InspectionStatusOption | null>(
       () =>
-        INSPECTION_STATUS_OPTIONS.find((o) => o.value === store.selectedInspectionStatus()) ??
-        null,
+        INSPECTION_STATUS_OPTIONS.find((o) => o.value === store.selectedInspectionStatus()) ?? null,
     ),
 
     /**
@@ -486,8 +486,7 @@ export const OrganizationDashboardInspectionQualityStore = signalStore(
      */
     selectedInspectionResultOption: computed<InspectionResultOption | null>(
       () =>
-        INSPECTION_RESULT_OPTIONS.find((o) => o.value === store.selectedInspectionResult()) ??
-        null,
+        INSPECTION_RESULT_OPTIONS.find((o) => o.value === store.selectedInspectionResult()) ?? null,
     ),
 
     /**
@@ -515,86 +514,77 @@ export const OrganizationDashboardInspectionQualityStore = signalStore(
      *
      * @since 1.0.0
      */
-    summaryMetrics: computed<readonly OrganizationDashboardInspectionQualitySummaryMetric[]>(
-      () => {
-        const quality = store.queryData();
-        const compareEnabled = store.compareEnabled();
+    summaryMetrics: computed<readonly OrganizationDashboardInspectionQualitySummaryMetric[]>(() => {
+      const quality = store.queryData();
+      const compareEnabled = store.compareEnabled();
 
-        const inspectionsTotal = sumDashboardTrendValues(
-          (quality?.inspections?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
-        );
-        const openedTotal = sumDashboardTrendValues(
-          (quality?.ncOpened?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
-        );
-        const currentRate =
-          inspectionsTotal > 0 ? (openedTotal / inspectionsTotal) * 100 : 0;
+      const inspectionsTotal = sumDashboardTrendValues(
+        (quality?.inspections?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
+      );
+      const openedTotal = sumDashboardTrendValues(
+        (quality?.ncOpened?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
+      );
+      const currentRate = inspectionsTotal > 0 ? (openedTotal / inspectionsTotal) * 100 : 0;
 
-        const previousInspectionsTotal = sumDashboardTrendValues(
-          (quality?.inspections?.comparison?.series ?? []).map((p) =>
-            getDashboardTrendPointValue(p),
-          ),
-        );
-        const previousOpenedTotal = sumDashboardTrendValues(
-          (quality?.ncOpened?.comparison?.series ?? []).map((p) =>
-            getDashboardTrendPointValue(p),
-          ),
-        );
-        const previousRate =
-          previousInspectionsTotal > 0
-            ? (previousOpenedTotal / previousInspectionsTotal) * 100
-            : 0;
+      const previousInspectionsTotal = sumDashboardTrendValues(
+        (quality?.inspections?.comparison?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
+      );
+      const previousOpenedTotal = sumDashboardTrendValues(
+        (quality?.ncOpened?.comparison?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
+      );
+      const previousRate =
+        previousInspectionsTotal > 0 ? (previousOpenedTotal / previousInspectionsTotal) * 100 : 0;
 
-        /**
-         * Function buildComparison
-         * @function buildComparison
-         *
-         * @description
-         * Builds a {@link MetricComparison} object from the delta between
-         * the current and previous period values. Returns null when
-         * compare mode is disabled or the delta is exactly zero.
-         *
-         * @param {number} current - Current period total.
-         * @param {number} previous - Previous period total.
-         * @returns {MetricComparison | null} Comparison metadata, or null.
-         */
-        const buildComparison = (current: number, previous: number): MetricComparison | null => {
-          if (!compareEnabled) return null;
-          const delta = current - previous;
-          if (delta === 0) return { value: 'Flat', direction: null };
-          return {
-            value: `${delta > 0 ? '+' : ''}${WHOLE_NUMBER_FMT.format(delta)}`,
-            direction: delta > 0 ? 'up' : 'down',
-          };
+      /**
+       * Function buildComparison
+       * @function buildComparison
+       *
+       * @description
+       * Builds a {@link MetricComparison} object from the delta between
+       * the current and previous period values. Returns null when
+       * compare mode is disabled or the delta is exactly zero.
+       *
+       * @param {number} current - Current period total.
+       * @param {number} previous - Previous period total.
+       * @returns {MetricComparison | null} Comparison metadata, or null.
+       */
+      const buildComparison = (current: number, previous: number): MetricComparison | null => {
+        if (!compareEnabled) return null;
+        const delta = current - previous;
+        if (delta === 0) return { value: 'Flat', direction: null };
+        return {
+          value: `${delta > 0 ? '+' : ''}${WHOLE_NUMBER_FMT.format(delta)}`,
+          direction: delta > 0 ? 'up' : 'down',
         };
+      };
 
-        return [
-          {
-            label: 'Inspections',
-            value: WHOLE_NUMBER_FMT.format(inspectionsTotal),
-            icon: 'pi pi-list-check',
-            comparison: buildComparison(inspectionsTotal, previousInspectionsTotal),
-          },
-          {
-            label: 'Opened NC',
-            value: WHOLE_NUMBER_FMT.format(openedTotal),
-            icon: 'pi pi-exclamation-triangle',
-            comparison: buildComparison(openedTotal, previousOpenedTotal),
-          },
-          {
-            label: 'NC Rate',
-            value: `${PERCENT_FMT.format(currentRate)}%`,
-            icon: 'pi pi-percentage',
-            comparison: null,
-          },
-          {
-            label: 'Rate Shift',
-            value: `${PERCENT_FMT.format(currentRate - previousRate)} pts`,
-            icon: 'pi pi-chart-line',
-            comparison: null,
-          },
-        ];
-      },
-    ),
+      return [
+        {
+          label: 'Inspections',
+          value: WHOLE_NUMBER_FMT.format(inspectionsTotal),
+          icon: 'pi pi-list-check',
+          comparison: buildComparison(inspectionsTotal, previousInspectionsTotal),
+        },
+        {
+          label: 'Opened NC',
+          value: WHOLE_NUMBER_FMT.format(openedTotal),
+          icon: 'pi pi-exclamation-triangle',
+          comparison: buildComparison(openedTotal, previousOpenedTotal),
+        },
+        {
+          label: 'NC Rate',
+          value: `${PERCENT_FMT.format(currentRate)}%`,
+          icon: 'pi pi-percentage',
+          comparison: null,
+        },
+        {
+          label: 'Rate Shift',
+          value: `${PERCENT_FMT.format(currentRate - previousRate)} pts`,
+          icon: 'pi pi-chart-line',
+          comparison: null,
+        },
+      ];
+    }),
 
     /**
      * Computed rateSeries
@@ -667,9 +657,9 @@ export const OrganizationDashboardInspectionQualityStore = signalStore(
         },
       ];
 
-      const inspectionComparisonData = (
-        quality?.inspections?.comparison?.series ?? []
-      ).map((p) => getDashboardTrendPointValue(p));
+      const inspectionComparisonData = (quality?.inspections?.comparison?.series ?? []).map((p) =>
+        getDashboardTrendPointValue(p),
+      );
       const openedComparisonData = (quality?.ncOpened?.comparison?.series ?? []).map((p) =>
         getDashboardTrendPointValue(p),
       );
@@ -829,18 +819,15 @@ export const OrganizationDashboardInspectionQualityStore = signalStore(
           patchState(store, setPendingQuery());
 
           return forkJoin({
-            inspections: organizationService.getDashboardInspectionsTrend(
-              params.organizationId,
-              {
-                granularity: params.granularity,
-                from: params.from,
-                to: params.to,
-                compare: params.compare,
-                inspectionStatus: params.inspectionStatus,
-                inspectionResult: params.inspectionResult,
-                inspectorType: params.inspectorType,
-              },
-            ),
+            inspections: organizationService.getDashboardInspectionsTrend(params.organizationId, {
+              granularity: params.granularity,
+              from: params.from,
+              to: params.to,
+              compare: params.compare,
+              inspectionStatus: params.inspectionStatus,
+              inspectionResult: params.inspectionResult,
+              inspectorType: params.inspectorType,
+            }),
             ncOpened: organizationService.getDashboardNonConformitiesOpenedTrend(
               params.organizationId,
               {
@@ -999,29 +986,27 @@ export const OrganizationDashboardInspectionQualityStore = signalStore(
        * @returns {void}
        */
       onInit(): void {
-        const params = computed<OrganizationDashboardInspectionQualityParams | undefined>(
-          () => {
-            if (!isPlatformBrowser(platformId)) return undefined;
+        const params = computed<OrganizationDashboardInspectionQualityParams | undefined>(() => {
+          if (!isPlatformBrowser(platformId)) return undefined;
 
-            const organization = activeOrganizationStore.selectedOrganization();
-            if (!organization) return undefined;
+          const organization = activeOrganizationStore.selectedOrganization();
+          if (!organization) return undefined;
 
-            const range = store.selectedDateRange();
-            const toISO = (value: Date | undefined): string | undefined => value?.toISOString();
+          const range = store.selectedDateRange();
+          const toISO = (value: Date | undefined): string | undefined => value?.toISOString();
 
-            return {
-              organizationId: organization.id,
-              granularity: store.selectedGranularity(),
-              from: toISO(range?.[0]),
-              to: toISO(range?.[1]),
-              compare: store.compareEnabled() || undefined,
-              inspectionStatus: store.selectedInspectionStatus() ?? undefined,
-              inspectionResult: store.selectedInspectionResult() ?? undefined,
-              inspectorType: store.selectedInspectorType() ?? undefined,
-              nonConformitySeverity: store.selectedNonConformitySeverity() ?? undefined,
-            };
-          },
-        );
+          return {
+            organizationId: organization.id,
+            granularity: store.selectedGranularity(),
+            from: toISO(range?.[0]),
+            to: toISO(range?.[1]),
+            compare: store.compareEnabled() || undefined,
+            inspectionStatus: store.selectedInspectionStatus() ?? undefined,
+            inspectionResult: store.selectedInspectionResult() ?? undefined,
+            inspectorType: store.selectedInspectorType() ?? undefined,
+            nonConformitySeverity: store.selectedNonConformitySeverity() ?? undefined,
+          };
+        });
 
         store.load(params);
       },
@@ -1040,5 +1025,3 @@ export const OrganizationDashboardInspectionQualityStore = signalStore(
 export type OrganizationDashboardInspectionQualityStore = InstanceType<
   typeof OrganizationDashboardInspectionQualityStore
 >;
-
-

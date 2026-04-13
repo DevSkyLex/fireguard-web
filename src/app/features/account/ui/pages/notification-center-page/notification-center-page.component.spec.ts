@@ -1,8 +1,8 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import type { NotificationOutput } from '@features/account/models';
 import { NotificationStore } from '@features/account/state';
 import { NotificationCenterPage } from './notification-center-page.component';
-import type { NotificationOutput } from '@features/account/models';
 
 describe('NotificationCenterPage', () => {
   const setup = () => {
@@ -20,9 +20,7 @@ describe('NotificationCenterPage', () => {
     };
 
     TestBed.configureTestingModule({
-      providers: [
-        { provide: NotificationStore, useValue: mockNotificationStore },
-      ],
+      providers: [{ provide: NotificationStore, useValue: mockNotificationStore }],
     });
 
     const component = TestBed.runInInjectionContext(() => new NotificationCenterPage());

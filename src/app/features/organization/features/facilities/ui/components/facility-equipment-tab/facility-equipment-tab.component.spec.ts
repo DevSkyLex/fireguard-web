@@ -1,11 +1,11 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { FacilityEquipmentTab } from './facility-equipment-tab.component';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import { EquipmentStore } from '@features/organization/features/equipments/state';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import { EquipmentStore } from '@features/organization/features/equipments/state';
 import type { OrganizationOutput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import { FacilityEquipmentTab } from './facility-equipment-tab.component';
 
 const MOCK_ORG: OrganizationOutput = {
   id: 'org-1',
@@ -52,9 +52,7 @@ describe('FacilityEquipmentTab', () => {
 
     TestBed.configureTestingModule({
       imports: [FacilityEquipmentTab],
-      providers: [
-        { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
-      ],
+      providers: [{ provide: ActiveOrganizationStore, useValue: mockActiveOrgStore }],
     }).overrideComponent(FacilityEquipmentTab, {
       set: { providers: [{ provide: EquipmentStore, useValue: mockEquipmentStore }] },
     });

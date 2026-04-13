@@ -1,11 +1,14 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 
-import { OrganizationMemberService } from './organization-member.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
-import type { OrganizationMemberOutput, AddOrganizationMemberInput } from '@features/organization/models';
 import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
+import type {
+  OrganizationMemberOutput,
+  AddOrganizationMemberInput,
+} from '@features/organization/models';
+import { OrganizationMemberService } from './organization-member.service';
 
 describe('OrganizationMemberService', () => {
   let service: OrganizationMemberService;

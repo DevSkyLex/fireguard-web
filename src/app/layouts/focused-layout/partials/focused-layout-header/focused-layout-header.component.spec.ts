@@ -15,4 +15,3 @@ describe('FocusedLayoutHeader', () => {
     expect(component).toBeTruthy();
   });
 });
-

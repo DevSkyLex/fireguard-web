@@ -1,4 +1,6 @@
-<header class="flex items-center gap-4 px-6 py-2 border-b border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 transition-colors">
+<header
+  class="flex items-center gap-4 border-b border-surface-200 bg-surface-0 px-6 py-2 transition-colors dark:border-surface-800 dark:bg-surface-950"
+>
   <section class="lg:hidden">
     <p-button
       icon="pi pi-bars"
@@ -11,13 +13,13 @@
   </section>
 
   <!-- Header Breadcrumb -->
-  <section class="flex flex-1 min-w-0 overflow-hidden">
-    <app-dashboard-layout-breadcrumb class="flex-1 min-w-0"/>
+  <section class="flex min-w-0 flex-1 overflow-hidden">
+    <app-dashboard-layout-breadcrumb class="min-w-0 flex-1" />
   </section>
 
-  <section class="flex items-center gap-2 ml-auto">
-    <app-organization-switcher/>
-    <app-theme-switcher/>
-    <app-notification-bell/>
+  <section class="ml-auto flex items-center gap-2">
+    <app-organization-switcher />
+    <app-theme-switcher />
+    <app-notification-bell />
   </section>
 </header>

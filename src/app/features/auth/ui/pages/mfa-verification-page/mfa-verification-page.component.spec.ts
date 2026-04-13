@@ -1,13 +1,13 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { EMPTY } from 'rxjs';
 import { Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { MfaVerificationPage } from './mfa-verification-page.component';
-import { AuthStore } from '@features/auth/state';
+import { EMPTY } from 'rxjs';
 import { UserStore } from '@features/account/state';
+import { AuthStore } from '@features/auth/state';
 import { ActiveTrustedDeviceStore } from '@features/auth/state';
+import { MfaVerificationPage } from './mfa-verification-page.component';
 
 describe('MfaVerificationPage', () => {
   const setup = (options?: { authenticated?: boolean; mfaToken?: string | null }) => {
@@ -61,7 +61,9 @@ describe('MfaVerificationPage', () => {
   });
 
   it('should set pending trust and verify OTP when token exists', () => {
-    const { component, mockAuthStore, mockActiveTrustedDeviceStore } = setup({ mfaToken: 'mfa-token' });
+    const { component, mockAuthStore, mockActiveTrustedDeviceStore } = setup({
+      mfaToken: 'mfa-token',
+    });
 
     (component as any).handleOtpSubmit({ code: '123456', trustDevice: true });
 

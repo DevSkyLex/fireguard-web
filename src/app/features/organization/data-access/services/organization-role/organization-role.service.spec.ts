@@ -1,9 +1,9 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 
-import { OrganizationRoleService } from './organization-role.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
+import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
 import type {
   OrganizationRoleOutput,
   OrganizationMemberOutput,
@@ -11,7 +11,7 @@ import type {
   UpdateOrganizationRoleInput,
   AssignOrganizationRoleInput,
 } from '@features/organization/models';
-import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
+import { OrganizationRoleService } from './organization-role.service';
 
 describe('OrganizationRoleService', () => {
   let service: OrganizationRoleService;
@@ -118,7 +118,10 @@ describe('OrganizationRoleService', () => {
     };
 
     it('should send PATCH request and return updated role', () => {
-      const updatedRole: OrganizationRoleOutput = { ...mockRole, permissions: ['facility:read', 'equipment:read'] };
+      const updatedRole: OrganizationRoleOutput = {
+        ...mockRole,
+        permissions: ['facility:read', 'equipment:read'],
+      };
 
       service.update(orgId, 'role-uuid-1', input).subscribe((role) => {
         expect(role.permissions).toContain('facility:read');

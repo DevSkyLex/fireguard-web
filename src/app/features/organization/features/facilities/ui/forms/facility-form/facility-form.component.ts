@@ -14,13 +14,16 @@ import {
   Validators,
   type FormGroup,
 } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
-import type { FacilityOutput, FacilityType } from '@features/organization/features/facilities/models';
+import type {
+  FacilityOutput,
+  FacilityType,
+} from '@features/organization/features/facilities/models';
 import type { FacilityFormData } from './facility-form-data.type';
 import type { FacilityFormValues } from './facility-form-values.type';
 
@@ -100,7 +103,9 @@ export class FacilityForm {
    *
    * @type {InputSignal<readonly FacilityOutput[]>}
    */
-  public readonly parentFacilities: InputSignal<readonly FacilityOutput[]> = input<readonly FacilityOutput[]>([]);
+  public readonly parentFacilities: InputSignal<readonly FacilityOutput[]> = input<
+    readonly FacilityOutput[]
+  >([]);
   //#endregion
 
   //#region Outputs
@@ -116,8 +121,7 @@ export class FacilityForm {
    *
    * @type {OutputEmitterRef<FacilityFormValues>}
    */
-  public readonly submitted: OutputEmitterRef<FacilityFormValues> =
-    output<FacilityFormValues>();
+  public readonly submitted: OutputEmitterRef<FacilityFormValues> = output<FacilityFormValues>();
 
   /**
    * Output cancelled
@@ -159,18 +163,17 @@ export class FacilityForm {
    *
    * @type {FormGroup<FacilityFormData>}
    */
-  protected readonly form: FormGroup<FacilityFormData> =
-    this.formBuilder.group<FacilityFormData>({
-      type: this.formBuilder.control<FacilityType>('site', [Validators.required]),
-      name: this.formBuilder.control<string>('', [
-        Validators.required,
-        Validators.minLength(2),
-        Validators.maxLength(255),
-      ]),
-      code: this.formBuilder.control<string>(''),
-      address: this.formBuilder.control<string>(''),
-      parentFacilityId: this.formBuilder.control<string>(''),
-    });
+  protected readonly form: FormGroup<FacilityFormData> = this.formBuilder.group<FacilityFormData>({
+    type: this.formBuilder.control<FacilityType>('site', [Validators.required]),
+    name: this.formBuilder.control<string>('', [
+      Validators.required,
+      Validators.minLength(2),
+      Validators.maxLength(255),
+    ]),
+    code: this.formBuilder.control<string>(''),
+    address: this.formBuilder.control<string>(''),
+    parentFacilityId: this.formBuilder.control<string>(''),
+  });
 
   /**
    * Property typeOptions

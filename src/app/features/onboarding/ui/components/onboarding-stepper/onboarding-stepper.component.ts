@@ -1,23 +1,25 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  type Signal,
-  type Type,
-} from '@angular/core';
 import { NgComponentOutlet } from '@angular/common';
-import { MessageModule } from 'primeng/message';
-import type { MessagePassThroughOptions } from 'primeng/types/message';
+import { Component, ChangeDetectionStrategy, inject, type Signal, type Type } from '@angular/core';
 import { ButtonModule, type ButtonPassThroughOptions } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { StepperModule } from 'primeng/stepper';
-import type { StepPanelPassThroughOptions, StepPanelsPassThroughOptions, StepperPassThroughOptions } from 'primeng/types/stepper';
+import type { MessagePassThroughOptions } from 'primeng/types/message';
+import type {
+  StepPanelPassThroughOptions,
+  StepPanelsPassThroughOptions,
+  StepperPassThroughOptions,
+} from 'primeng/types/stepper';
+import type {
+  OnboardingStepKey,
+  OnboardingStepOutput,
+  OnboardingStepStatus,
+} from '@features/onboarding/models';
 import { OnboardingStore } from '@features/onboarding/state';
-import type { OnboardingStepKey, OnboardingStepOutput, OnboardingStepStatus } from '@features/onboarding/models';
-import { OnboardingStepBase } from './steps/onboarding-step.base';
+import { CreateEquipmentStep } from './steps/create-equipment-step';
+import { CreateFacilityStep } from './steps/create-facility-step';
 import { CreateOrganizationStep } from './steps/create-organization-step';
 import { InviteMembersStep } from './steps/invite-members-step';
-import { CreateFacilityStep } from './steps/create-facility-step';
-import { CreateEquipmentStep } from './steps/create-equipment-step';
+import { OnboardingStepBase } from './steps/onboarding-step.base';
 import { RunInspectionStep } from './steps/run-inspection-step';
 
 /**
@@ -48,12 +50,7 @@ interface OnboardingStepMeta {
  */
 @Component({
   selector: 'app-onboarding-stepper',
-  imports: [
-    NgComponentOutlet,
-    MessageModule,
-    ButtonModule,
-    StepperModule,
-  ],
+  imports: [NgComponentOutlet, MessageModule, ButtonModule, StepperModule],
   templateUrl: './onboarding-stepper.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -72,8 +69,7 @@ export class OnboardingStepper {
    *
    * @type {OnboardingStore}
    */
-  protected readonly onboardingStore: OnboardingStore =
-    inject<OnboardingStore>(OnboardingStore);
+  protected readonly onboardingStore: OnboardingStore = inject<OnboardingStore>(OnboardingStore);
 
   /**
    * Property activeStep
@@ -206,23 +202,23 @@ export class OnboardingStepper {
   protected readonly stepMeta: Record<OnboardingStepKey, OnboardingStepMeta> = {
     create_organization: {
       label: 'Create organization',
-      description: 'Legal information and company identity'
+      description: 'Legal information and company identity',
     },
     invite_members: {
       label: 'Team & technicians',
-      description: 'Invitations, access management and collaboration'
+      description: 'Invitations, access management and collaboration',
     },
     create_first_facility: {
       label: 'First facility',
-      description: 'Site, building or area to monitor'
+      description: 'Site, building or area to monitor',
     },
     create_first_equipment: {
       label: 'First equipment',
-      description: 'Extinguisher, detector or other fire safety equipment'
+      description: 'Extinguisher, detector or other fire safety equipment',
     },
     run_first_inspection: {
       label: 'First inspection',
-      description: 'Initial equipment inspection'
+      description: 'Initial equipment inspection',
     },
   };
 
@@ -242,11 +238,11 @@ export class OnboardingStepper {
    * @type {Record<OnboardingStepKey, Type<OnboardingStepBase>>}
    */
   protected readonly stepComponents: Record<OnboardingStepKey, Type<OnboardingStepBase>> = {
-    create_organization:    CreateOrganizationStep,
-    invite_members:         InviteMembersStep,
-    create_first_facility:  CreateFacilityStep,
+    create_organization: CreateOrganizationStep,
+    invite_members: InviteMembersStep,
+    create_first_facility: CreateFacilityStep,
     create_first_equipment: CreateEquipmentStep,
-    run_first_inspection:   RunInspectionStep,
+    run_first_inspection: RunInspectionStep,
   };
 
   /**
@@ -265,10 +261,11 @@ export class OnboardingStepper {
    * @type {Record<OnboardingStepStatus, string>}
    */
   protected readonly statusIndicatorClass: Record<OnboardingStepStatus, string> = {
-    pending:   'ring-1 ring-surface-300 bg-transparent text-surface-400 dark:ring-surface-700 dark:text-surface-500',
+    pending:
+      'ring-1 ring-surface-300 bg-transparent text-surface-400 dark:ring-surface-700 dark:text-surface-500',
     completed: 'bg-green-500 text-white',
-    skipped:   'bg-surface-300 text-surface-700 dark:bg-surface-700 dark:text-surface-300',
-    blocked:   'bg-red-500 text-white',
+    skipped: 'bg-surface-300 text-surface-700 dark:bg-surface-700 dark:text-surface-300',
+    blocked: 'bg-red-500 text-white',
   };
   //#endregion
 
@@ -382,7 +379,7 @@ export class OnboardingStepper {
    */
   protected stepLabelClass(index: number): string {
     if (index === this.activeStep()) return 'text-surface-900 dark:text-surface-0';
-    if (index < this.activeStep())  return 'text-surface-600 dark:text-surface-300';
+    if (index < this.activeStep()) return 'text-surface-600 dark:text-surface-300';
     return 'text-surface-400 dark:text-surface-500';
   }
 

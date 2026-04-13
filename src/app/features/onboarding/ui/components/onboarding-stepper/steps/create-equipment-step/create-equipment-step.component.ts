@@ -10,12 +10,9 @@ import { MessageService } from 'primeng/api';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { OnboardingStore } from '@features/onboarding/state';
+import { CreateEquipmentForm, type CreateEquipmentFormValues } from '@features/onboarding/ui/forms';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import { OnboardingStepBase } from '../onboarding-step.base';
-import {
-  CreateEquipmentForm,
-  type CreateEquipmentFormValues,
-} from '@features/onboarding/ui/forms';
 
 /**
  * Component CreateEquipmentStep
@@ -47,8 +44,7 @@ export class CreateEquipmentStep extends OnboardingStepBase {
    *
    * @type {OnboardingStore}
    */
-  private readonly onboardingStore: OnboardingStore =
-    inject<OnboardingStore>(OnboardingStore);
+  private readonly onboardingStore: OnboardingStore = inject<OnboardingStore>(OnboardingStore);
 
   /**
    * Property equipmentStore
@@ -59,8 +55,7 @@ export class CreateEquipmentStep extends OnboardingStepBase {
    *
    * @type {EquipmentStore}
    */
-  private readonly equipmentStore: EquipmentStore =
-    inject<EquipmentStore>(EquipmentStore);
+  private readonly equipmentStore: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
 
   /**
    * Property messageService
@@ -71,8 +66,7 @@ export class CreateEquipmentStep extends OnboardingStepBase {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
   //#endregion
 
   //#region State
@@ -111,7 +105,10 @@ export class CreateEquipmentStep extends OnboardingStepBase {
    * @since 1.0.0
    */
   protected readonly cardPt: CardPassThroughOptions = {
-    root: { class: 'overflow-hidden border border-surface-200 bg-surface-0 shadow-none dark:border-surface-800 dark:bg-surface-950' },
+    root: {
+      class:
+        'overflow-hidden border border-surface-200 bg-surface-0 shadow-none dark:border-surface-800 dark:bg-surface-950',
+    },
     header: { class: 'p-0' },
     body: { class: 'p-0' },
     content: { class: 'p-0' },
@@ -140,7 +137,12 @@ export class CreateEquipmentStep extends OnboardingStepBase {
         this.equipmentStore.resetCreateOperation();
         if (untracked(() => this.onboardingStore.activeStepIndex() === this.stepIndex())) {
           const message: string = operation.error?.message ?? 'Failed to create the equipment.';
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: message, life: 5000 });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: message,
+            life: 5000,
+          });
         }
       }
     });
@@ -163,7 +165,8 @@ export class CreateEquipmentStep extends OnboardingStepBase {
    */
   protected handleSubmit(values: CreateEquipmentFormValues): void {
     const organizationId: string | null = this.onboardingStore.targetOrganizationId();
-    if (!organizationId || this.onboardingStore.isBusy() || this.equipmentStore.isCreating()) return;
+    if (!organizationId || this.onboardingStore.isBusy() || this.equipmentStore.isCreating())
+      return;
 
     this.equipmentStore.create({
       organizationId,
@@ -177,4 +180,3 @@ export class CreateEquipmentStep extends OnboardingStepBase {
   }
   //#endregion
 }
-

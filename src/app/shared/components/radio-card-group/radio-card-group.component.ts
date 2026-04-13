@@ -7,10 +7,7 @@ import {
   type InputSignal,
   type WritableSignal,
 } from '@angular/core';
-import {
-  ControlValueAccessor,
-  NG_VALUE_ACCESSOR,
-} from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { RadioCard } from './radio-card/radio-card.component';
 
 /**
@@ -74,8 +71,7 @@ export class RadioCardGroup implements ControlValueAccessor {
    *
    * @type {InputSignal<RadioCardOption[]>}
    */
-  public readonly options: InputSignal<RadioCardOption[]> =
-    input<RadioCardOption[]>([]);
+  public readonly options: InputSignal<RadioCardOption[]> = input<RadioCardOption[]>([]);
   //#endregion
 
   //#region Properties
@@ -107,8 +103,7 @@ export class RadioCardGroup implements ControlValueAccessor {
    *
    * @type {WritableSignal<unknown>}
    */
-  protected readonly value: WritableSignal<unknown> =
-    signal<unknown>(null);
+  protected readonly value: WritableSignal<unknown> = signal<unknown>(null);
 
   /**
    * Property isDisabled
@@ -122,8 +117,7 @@ export class RadioCardGroup implements ControlValueAccessor {
    *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly isDisabled: WritableSignal<boolean> =
-    signal<boolean>(false);
+  protected readonly isDisabled: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property onChange

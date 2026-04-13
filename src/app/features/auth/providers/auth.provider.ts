@@ -7,9 +7,9 @@ import {
   provideAppInitializer,
   REQUEST,
 } from '@angular/core';
+import { UserStore } from '@features/account/state';
 import { AUTH_SESSION } from '@features/auth/ports';
 import { AuthStore } from '@features/auth/state';
-import { UserStore } from '@features/account/state';
 
 /**
  * ProvideAuth
@@ -51,8 +51,7 @@ export function provideAuth(): EnvironmentProviders {
       const platformId: object = inject<object>(PLATFORM_ID);
       const request: Request | null = inject<Request>(REQUEST, { optional: true });
       const canInitialize: boolean =
-        isPlatformBrowser(platformId) ||
-        (isPlatformServer(platformId) && !!request);
+        isPlatformBrowser(platformId) || (isPlatformServer(platformId) && !!request);
 
       // Skip static prerender contexts without per-request session.
       if (!canInitialize) return;

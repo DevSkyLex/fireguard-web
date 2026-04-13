@@ -16,7 +16,10 @@ import { facilityResolver, facilityTitleResolver } from './http/resolvers';
 export const FACILITY_ROUTES: Routes = [
   {
     path: 'create',
-    loadComponent: () => import('./ui/pages/facility-create/facility-create.component').then((m) => m.FacilityCreatePage),
+    loadComponent: () =>
+      import('./ui/pages/facility-create/facility-create.component').then(
+        (m) => m.FacilityCreatePage,
+      ),
     title: 'Create Facility',
   },
   {
@@ -28,12 +31,18 @@ export const FACILITY_ROUTES: Routes = [
     children: [
       {
         path: 'edit',
-        loadComponent: () => import('./ui/pages/facility-edit/facility-edit.component').then((m) => m.FacilityEditPage),
+        loadComponent: () =>
+          import('./ui/pages/facility-edit/facility-edit.component').then(
+            (m) => m.FacilityEditPage,
+          ),
         title: 'Edit Facility',
       },
       {
         path: '',
-        loadComponent: () => import('./ui/pages/facility-detail/facility-detail.component').then((m) => m.FacilityDetailPage),
+        loadComponent: () =>
+          import('./ui/pages/facility-detail/facility-detail.component').then(
+            (m) => m.FacilityDetailPage,
+          ),
         title: facilityTitleResolver,
         data: {
           breadcrumb: false,
@@ -44,7 +53,8 @@ export const FACILITY_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    loadComponent: () => import('./ui/pages/facility-list/facility-list.component').then((m) => m.FacilityListPage),
+    loadComponent: () =>
+      import('./ui/pages/facility-list/facility-list.component').then((m) => m.FacilityListPage),
     title: 'Facilities',
     data: {
       breadcrumb: false,

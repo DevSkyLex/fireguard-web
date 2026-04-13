@@ -78,7 +78,7 @@ export class PasswordResetService extends HydraApiService {
    * Method request
    *
    * @description
-  * Requests a password reset by sending a verification code to the user's email.
+   * Requests a password reset by sending a verification code to the user's email.
    *
    * @access public
    * @since 1.0.0

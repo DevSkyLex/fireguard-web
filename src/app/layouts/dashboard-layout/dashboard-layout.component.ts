@@ -1,10 +1,7 @@
-import { Component, ChangeDetectionStrategy, inject, effect, untracked } from "@angular/core";
-import { RouterOutlet } from "@angular/router";
-import { DashboardLayoutHeader, DashboardLayoutSidebar, DashboardLayoutContent } from "@layouts/dashboard-layout/partials";
+import { Component, ChangeDetectionStrategy, inject, effect, untracked } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
-import { Ripple } from "primeng/ripple";
-import { DashboardSidebarResizeHandleDirective } from './directives';
-import { DashboardSidebarNavigationService, DashboardSidebarService } from './services';
+import { Ripple } from 'primeng/ripple';
 import { BreadcrumbService } from '@core/services/breadcrumb';
 import {
   NOTIFICATION_CENTER_PORT,
@@ -12,6 +9,13 @@ import {
   type NotificationCenterPort,
   type UserIdentityPort,
 } from '@features/account/ports';
+import {
+  DashboardLayoutHeader,
+  DashboardLayoutSidebar,
+  DashboardLayoutContent,
+} from '@layouts/dashboard-layout/partials';
+import { DashboardSidebarResizeHandleDirective } from './directives';
+import { DashboardSidebarNavigationService, DashboardSidebarService } from './services';
 
 /**
  * Component DashboardLayout

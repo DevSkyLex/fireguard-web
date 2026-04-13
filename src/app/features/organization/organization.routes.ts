@@ -22,28 +22,34 @@ export const ORGANIZATION_ROUTES: Routes = [
     children: [
       {
         path: 'facilities',
-        loadChildren: () => import('./features/facilities/facilities.routes').then((m) => m.FACILITY_ROUTES),
+        loadChildren: () =>
+          import('./features/facilities/facilities.routes').then((m) => m.FACILITY_ROUTES),
         data: {
           breadcrumb: 'Facilities',
         },
       },
       {
         path: 'equipments',
-        loadChildren: () => import('./features/equipments/equipments.routes').then((m) => m.EQUIPMENT_ROUTES),
+        loadChildren: () =>
+          import('./features/equipments/equipments.routes').then((m) => m.EQUIPMENT_ROUTES),
         data: {
           breadcrumb: 'Equipments',
         },
       },
       {
         path: 'inspections',
-        loadChildren: () => import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
+        loadChildren: () =>
+          import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
         data: {
           breadcrumb: 'Inspections',
         },
       },
       {
         path: '',
-        loadComponent: () => import('./ui/pages/organization-overview/organization-overview.component').then((m) => m.OrganizationOverviewPage),
+        loadComponent: () =>
+          import('./ui/pages/organization-overview/organization-overview.component').then(
+            (m) => m.OrganizationOverviewPage,
+          ),
         title: organizationTitleResolver,
         data: {
           breadcrumb: false,
@@ -54,7 +60,10 @@ export const ORGANIZATION_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    loadComponent: () => import('./ui/pages/organization-list/organization-list.component').then((m) => m.OrganizationListPage),
+    loadComponent: () =>
+      import('./ui/pages/organization-list/organization-list.component').then(
+        (m) => m.OrganizationListPage,
+      ),
     title: 'Organizations',
     data: {
       breadcrumb: false,

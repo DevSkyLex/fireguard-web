@@ -1,24 +1,22 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import {
-  patchState,
-  signalStore,
-  type,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
-import {
-  addEntity,
-  setAllEntities,
-  setEntity,
-  withEntities,
-} from '@ngrx/signals/entities';
+import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
+import { addEntity, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
-import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type { HydraCollection } from '@core/models/api';
+import {
+  errorCallState,
+  idleCallState,
+  pendingCallState,
+  successCallState,
+  toStoreError,
+  toStoreFailureEventPayload,
+  type CallState,
+  type StoreError,
+} from '@core/state/request-state';
+import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type {
   InspectionOutput,
   CreateInspectionInput,
@@ -30,16 +28,6 @@ import type {
 } from '@features/organization/features/inspections/models';
 import { ActiveInspectionStore } from '../active-inspection/active-inspection.store';
 import type { InspectionState } from './inspection-state.interface';
-import {
-  errorCallState,
-  idleCallState,
-  pendingCallState,
-  successCallState,
-  toStoreError,
-  toStoreFailureEventPayload,
-  type CallState,
-  type StoreError,
-} from '@core/state/request-state';
 import { inspectionStoreEvents } from './inspection.events';
 
 //#region Initial State
@@ -93,7 +81,6 @@ const INITIAL_INSPECTION_STATE: InspectionState = {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const InspectionStore = signalStore(
-
   //#region Features
   withEntities({ entity: type<InspectionOutput>(), collection: 'inspection' }),
   withEntities({ entity: type<NonConformityOutput>(), collection: 'nonConformity' }),
@@ -114,13 +101,11 @@ export const InspectionStore = signalStore(
 
     return {
       /** All cached inspections from the entity collection. */
-      inspections: computed<ReadonlyArray<InspectionOutput>>(
-        () => store.inspectionEntities(),
-      ),
+      inspections: computed<ReadonlyArray<InspectionOutput>>(() => store.inspectionEntities()),
 
       /** All cached non-conformities from the entity collection. */
-      nonConformities: computed<ReadonlyArray<NonConformityOutput>>(
-        () => store.nonConformityEntities(),
+      nonConformities: computed<ReadonlyArray<NonConformityOutput>>(() =>
+        store.nonConformityEntities(),
       ),
 
       /** True when the entity collection is empty and no list request is in-flight. */
@@ -129,29 +114,21 @@ export const InspectionStore = signalStore(
       ),
 
       /** Proxied from {@link ActiveInspectionStore}. */
-      selectedInspection: computed<InspectionOutput | null>(
-        () => activeInspectionStore.selectedInspection(),
+      selectedInspection: computed<InspectionOutput | null>(() =>
+        activeInspectionStore.selectedInspection(),
       ),
 
       /** True while the inspection list is loading. */
-      isLoadingInspections: computed<boolean>(
-        () => store.listCallState().status === 'pending',
-      ),
+      isLoadingInspections: computed<boolean>(() => store.listCallState().status === 'pending'),
 
       /** Proxied from {@link ActiveInspectionStore}. */
-      isLoadingInspection: computed<boolean>(
-        () => activeInspectionStore.isLoadingInspection(),
-      ),
+      isLoadingInspection: computed<boolean>(() => activeInspectionStore.isLoadingInspection()),
 
       /** True while a create operation is in-flight. */
-      isCreating: computed<boolean>(
-        () => store.createCallState().status === 'pending',
-      ),
+      isCreating: computed<boolean>(() => store.createCallState().status === 'pending'),
 
       /** Error from the last create operation, if any. */
-      createError: computed<StoreError | null>(
-        () => store.createCallState().error,
-      ),
+      createError: computed<StoreError | null>(() => store.createCallState().error),
     };
   }),
 
@@ -165,307 +142,341 @@ export const InspectionStore = signalStore(
    * @since 1.0.0
    */
   //#region Methods
-  withMethods((
-    store,
-    activeInspectionStore: ActiveInspectionStore = inject<ActiveInspectionStore>(ActiveInspectionStore),
-    dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
-    inspectionService: InspectionService = inject<InspectionService>(InspectionService),
-  ) => {
-    /**
-     * Constant loadFn
-     * @const loadFn
-     *
-     * @description
-     * Shared rxMethod implementation for loading a paginated inspection list.
-     * Uses `switchMap` so that a new request cancels any previous in-flight one.
-     *
-     * @since 2.0.0
-     */
-    const loadFn = rxMethod<{ organizationId: string; options?: InspectionListOptions }>(
-      pipe(
-        tap((): void => { patchState(store, { listCallState: pendingCallState() }); }),
-        switchMap(({ organizationId, options }) =>
-          inspectionService.list(organizationId, options).pipe(
-            tapResponse({
-              next: (response: HydraCollection<InspectionOutput>): void => {
-                patchState(store,
-                  setAllEntities([...response.member], { collection: 'inspection' }),
-                  { totalInspections: response.totalItems, listCallState: successCallState(null) },
-                );
-              },
-              error: (error: unknown): void => {
-                const storeError: StoreError = toStoreError(error);
-                patchState(store, { listCallState: errorCallState(storeError) });
-                dispatcher.dispatch(
-                  inspectionStoreEvents.listFailed(
-                    toStoreFailureEventPayload(storeError, 'Failed to load inspections'),
-                  ),
-                );
-              },
-            }),
-          ),
-        ),
+  withMethods(
+    (
+      store,
+      activeInspectionStore: ActiveInspectionStore = inject<ActiveInspectionStore>(
+        ActiveInspectionStore,
       ),
-    );
-
-    return {
-      // ── Inspection List ────────────────────────────────────────────────────
-
-      /** Fetches one page of inspections. Alias: {@link loadInspections}. */
-      load: loadFn,
-
-      /** Alias for {@link load} — kept for backward-compatibility. */
-      loadInspections: loadFn,
-
-      // ── Inspection CRUD ────────────────────────────────────────────────────
-
+      dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
+      inspectionService: InspectionService = inject<InspectionService>(InspectionService),
+    ) => {
       /**
-       * Method create
-       * @method create
+       * Constant loadFn
+       * @const loadFn
        *
        * @description
-       * Creates a new inspection via the API. Uses `exhaustMap` to prevent
-       * concurrent submissions.
+       * Shared rxMethod implementation for loading a paginated inspection list.
+       * Uses `switchMap` so that a new request cancels any previous in-flight one.
        *
-       * @since 1.0.0
+       * @since 2.0.0
        */
-      create: rxMethod<{ organizationId: string; input: CreateInspectionInput }>(
+      const loadFn = rxMethod<{ organizationId: string; options?: InspectionListOptions }>(
         pipe(
-          tap((): void => { patchState(store, { createCallState: pendingCallState() }); }),
-          exhaustMap(({ organizationId, input }) =>
-            inspectionService.create(organizationId, input).pipe(
+          tap((): void => {
+            patchState(store, { listCallState: pendingCallState() });
+          }),
+          switchMap(({ organizationId, options }) =>
+            inspectionService.list(organizationId, options).pipe(
               tapResponse({
-                next: (inspection: InspectionOutput): void => {
-                  patchState(store,
-                    addEntity(inspection, { collection: 'inspection' }),
+                next: (response: HydraCollection<InspectionOutput>): void => {
+                  patchState(
+                    store,
+                    setAllEntities([...response.member], { collection: 'inspection' }),
                     {
+                      totalInspections: response.totalItems,
+                      listCallState: successCallState(null),
+                    },
+                  );
+                },
+                error: (error: unknown): void => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { listCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    inspectionStoreEvents.listFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load inspections'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      );
+
+      return {
+        // ── Inspection List ────────────────────────────────────────────────────
+
+        /** Fetches one page of inspections. Alias: {@link loadInspections}. */
+        load: loadFn,
+
+        /** Alias for {@link load} — kept for backward-compatibility. */
+        loadInspections: loadFn,
+
+        // ── Inspection CRUD ────────────────────────────────────────────────────
+
+        /**
+         * Method create
+         * @method create
+         *
+         * @description
+         * Creates a new inspection via the API. Uses `exhaustMap` to prevent
+         * concurrent submissions.
+         *
+         * @since 1.0.0
+         */
+        create: rxMethod<{ organizationId: string; input: CreateInspectionInput }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { createCallState: pendingCallState() });
+            }),
+            exhaustMap(({ organizationId, input }) =>
+              inspectionService.create(organizationId, input).pipe(
+                tapResponse({
+                  next: (inspection: InspectionOutput): void => {
+                    patchState(store, addEntity(inspection, { collection: 'inspection' }), {
                       totalInspections: store.totalInspections() + 1,
                       createCallState: successCallState(inspection),
-                    },
-                  );
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { createCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    inspectionStoreEvents.createFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to create inspection'),
-                    ),
-                  );
-                },
-              }),
+                    });
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { createCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      inspectionStoreEvents.createFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to create inspection'),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      // ── Inspection Lifecycle ───────────────────────────────────────────────
+        // ── Inspection Lifecycle ───────────────────────────────────────────────
 
-      /**
-       * Method submit
-       * @method submit
-       *
-       * @description
-       * Submits an inspection. Uses `exhaustMap` to prevent concurrent
-       * submissions. On success, updates the entity in the collection
-       * and synchronises the {@link ActiveInspectionStore}.
-       *
-       * @since 1.0.0
-       */
-      submit: rxMethod<{ organizationId: string; inspectionId: string }>(
-        pipe(
-          tap((): void => { patchState(store, { submitCallState: pendingCallState() }); }),
-          exhaustMap(({ organizationId, inspectionId }) =>
-            inspectionService.submit(organizationId, inspectionId).pipe(
-              tapResponse({
-                next: (inspection: InspectionOutput): void => {
-                  patchState(store,
-                    setEntity(inspection, { collection: 'inspection' }),
-                    { submitCallState: successCallState(inspection) },
-                  );
-                  activeInspectionStore.setInspection(inspection);
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { submitCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    inspectionStoreEvents.submitFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to submit inspection'),
-                    ),
-                  );
-                },
-              }),
+        /**
+         * Method submit
+         * @method submit
+         *
+         * @description
+         * Submits an inspection. Uses `exhaustMap` to prevent concurrent
+         * submissions. On success, updates the entity in the collection
+         * and synchronises the {@link ActiveInspectionStore}.
+         *
+         * @since 1.0.0
+         */
+        submit: rxMethod<{ organizationId: string; inspectionId: string }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { submitCallState: pendingCallState() });
+            }),
+            exhaustMap(({ organizationId, inspectionId }) =>
+              inspectionService.submit(organizationId, inspectionId).pipe(
+                tapResponse({
+                  next: (inspection: InspectionOutput): void => {
+                    patchState(store, setEntity(inspection, { collection: 'inspection' }), {
+                      submitCallState: successCallState(inspection),
+                    });
+                    activeInspectionStore.setInspection(inspection);
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { submitCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      inspectionStoreEvents.submitFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to submit inspection'),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method close
-       * @method close
-       *
-       * @description
-       * Closes an inspection. Uses `exhaustMap` to prevent concurrent
-       * submissions. On success, updates the entity in the collection
-       * and synchronises the {@link ActiveInspectionStore}.
-       *
-       * @since 1.0.0
-       */
-      close: rxMethod<{ organizationId: string; inspectionId: string }>(
-        pipe(
-          tap((): void => { patchState(store, { closeCallState: pendingCallState() }); }),
-          exhaustMap(({ organizationId, inspectionId }) =>
-            inspectionService.close(organizationId, inspectionId).pipe(
-              tapResponse({
-                next: (inspection: InspectionOutput): void => {
-                  patchState(store,
-                    setEntity(inspection, { collection: 'inspection' }),
-                    { closeCallState: successCallState(inspection) },
-                  );
-                  activeInspectionStore.setInspection(inspection);
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { closeCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    inspectionStoreEvents.closeFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to close inspection'),
-                    ),
-                  );
-                },
-              }),
+        /**
+         * Method close
+         * @method close
+         *
+         * @description
+         * Closes an inspection. Uses `exhaustMap` to prevent concurrent
+         * submissions. On success, updates the entity in the collection
+         * and synchronises the {@link ActiveInspectionStore}.
+         *
+         * @since 1.0.0
+         */
+        close: rxMethod<{ organizationId: string; inspectionId: string }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { closeCallState: pendingCallState() });
+            }),
+            exhaustMap(({ organizationId, inspectionId }) =>
+              inspectionService.close(organizationId, inspectionId).pipe(
+                tapResponse({
+                  next: (inspection: InspectionOutput): void => {
+                    patchState(store, setEntity(inspection, { collection: 'inspection' }), {
+                      closeCallState: successCallState(inspection),
+                    });
+                    activeInspectionStore.setInspection(inspection);
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { closeCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      inspectionStoreEvents.closeFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to close inspection'),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      // ── Non-Conformities ─────────────────────────────────────────────────
+        // ── Non-Conformities ─────────────────────────────────────────────────
 
-      /**
-       * Method loadNonConformities
-       * @method loadNonConformities
-       *
-       * @description
-       * Loads paginated non-conformities for a given inspection.
-       * Uses `switchMap` to cancel any previous in-flight request.
-       *
-       * @since 1.0.0
-       */
-      loadNonConformities: rxMethod<{ organizationId: string; inspectionId: string; options?: NonConformityListOptions }>(
-        pipe(
-          tap((): void => { patchState(store, { nonConformitiesListCallState: pendingCallState() }); }),
-          switchMap(({ organizationId, inspectionId, options }) =>
-            inspectionService.listNonConformities(organizationId, inspectionId, options).pipe(
-              tapResponse({
-                next: (response: HydraCollection<NonConformityOutput>): void => {
-                  patchState(store,
-                    setAllEntities([...response.member], { collection: 'nonConformity' }),
-                    {
-                      totalNonConformities: response.totalItems,
-                      nonConformitiesListCallState: successCallState(null),
-                    },
-                  );
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { nonConformitiesListCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    inspectionStoreEvents.nonConformitiesListFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to load non-conformities'),
-                    ),
-                  );
-                },
-              }),
+        /**
+         * Method loadNonConformities
+         * @method loadNonConformities
+         *
+         * @description
+         * Loads paginated non-conformities for a given inspection.
+         * Uses `switchMap` to cancel any previous in-flight request.
+         *
+         * @since 1.0.0
+         */
+        loadNonConformities: rxMethod<{
+          organizationId: string;
+          inspectionId: string;
+          options?: NonConformityListOptions;
+        }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { nonConformitiesListCallState: pendingCallState() });
+            }),
+            switchMap(({ organizationId, inspectionId, options }) =>
+              inspectionService.listNonConformities(organizationId, inspectionId, options).pipe(
+                tapResponse({
+                  next: (response: HydraCollection<NonConformityOutput>): void => {
+                    patchState(
+                      store,
+                      setAllEntities([...response.member], { collection: 'nonConformity' }),
+                      {
+                        totalNonConformities: response.totalItems,
+                        nonConformitiesListCallState: successCallState(null),
+                      },
+                    );
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { nonConformitiesListCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      inspectionStoreEvents.nonConformitiesListFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to load non-conformities'),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method addNonConformity
-       * @method addNonConformity
-       *
-       * @description
-       * Adds a non-conformity to an inspection. Uses `exhaustMap` to
-       * prevent concurrent submissions.
-       *
-       * @since 1.0.0
-       */
-      addNonConformity: rxMethod<{ organizationId: string; inspectionId: string; input: AddNonConformityInput }>(
-        pipe(
-          tap((): void => { patchState(store, { addNonConformityCallState: pendingCallState() }); }),
-          exhaustMap(({ organizationId, inspectionId, input }) =>
-            inspectionService.addNonConformity(organizationId, inspectionId, input).pipe(
-              tapResponse({
-                next: (nonConformity: NonConformityOutput): void => {
-                  patchState(store,
-                    addEntity(nonConformity, { collection: 'nonConformity' }),
-                    {
+        /**
+         * Method addNonConformity
+         * @method addNonConformity
+         *
+         * @description
+         * Adds a non-conformity to an inspection. Uses `exhaustMap` to
+         * prevent concurrent submissions.
+         *
+         * @since 1.0.0
+         */
+        addNonConformity: rxMethod<{
+          organizationId: string;
+          inspectionId: string;
+          input: AddNonConformityInput;
+        }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { addNonConformityCallState: pendingCallState() });
+            }),
+            exhaustMap(({ organizationId, inspectionId, input }) =>
+              inspectionService.addNonConformity(organizationId, inspectionId, input).pipe(
+                tapResponse({
+                  next: (nonConformity: NonConformityOutput): void => {
+                    patchState(store, addEntity(nonConformity, { collection: 'nonConformity' }), {
                       totalNonConformities: store.totalNonConformities() + 1,
                       addNonConformityCallState: successCallState(nonConformity),
+                    });
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { addNonConformityCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      inspectionStoreEvents.addNonConformityFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to add non-conformity'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method updateNonConformityStatus
+         * @method updateNonConformityStatus
+         *
+         * @description
+         * Updates the status of a non-conformity. Uses `exhaustMap` to
+         * prevent concurrent submissions.
+         *
+         * @since 1.0.0
+         */
+        updateNonConformityStatus: rxMethod<{
+          organizationId: string;
+          inspectionId: string;
+          nonConformityId: string;
+          input: UpdateNonConformityStatusInput;
+        }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { updateNonConformityStatusCallState: pendingCallState() });
+            }),
+            exhaustMap(({ organizationId, inspectionId, nonConformityId, input }) =>
+              inspectionService
+                .updateNonConformityStatus(organizationId, inspectionId, nonConformityId, input)
+                .pipe(
+                  tapResponse({
+                    next: (nonConformity: NonConformityOutput): void => {
+                      patchState(store, setEntity(nonConformity, { collection: 'nonConformity' }), {
+                        updateNonConformityStatusCallState: successCallState(nonConformity),
+                      });
                     },
-                  );
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { addNonConformityCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    inspectionStoreEvents.addNonConformityFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to add non-conformity'),
-                    ),
-                  );
-                },
-              }),
+                    error: (error: unknown): void => {
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, {
+                        updateNonConformityStatusCallState: errorCallState(storeError),
+                      });
+                      dispatcher.dispatch(
+                        inspectionStoreEvents.updateNonConformityStatusFailed(
+                          toStoreFailureEventPayload(
+                            storeError,
+                            'Failed to update non-conformity status',
+                          ),
+                        ),
+                      );
+                    },
+                  }),
+                ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method updateNonConformityStatus
-       * @method updateNonConformityStatus
-       *
-       * @description
-       * Updates the status of a non-conformity. Uses `exhaustMap` to
-       * prevent concurrent submissions.
-       *
-       * @since 1.0.0
-       */
-      updateNonConformityStatus: rxMethod<{ organizationId: string; inspectionId: string; nonConformityId: string; input: UpdateNonConformityStatusInput }>(
-        pipe(
-          tap((): void => { patchState(store, { updateNonConformityStatusCallState: pendingCallState() }); }),
-          exhaustMap(({ organizationId, inspectionId, nonConformityId, input }) =>
-            inspectionService.updateNonConformityStatus(organizationId, inspectionId, nonConformityId, input).pipe(
-              tapResponse({
-                next: (nonConformity: NonConformityOutput): void => {
-                  patchState(store,
-                    setEntity(nonConformity, { collection: 'nonConformity' }),
-                    { updateNonConformityStatusCallState: successCallState(nonConformity) },
-                  );
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { updateNonConformityStatusCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    inspectionStoreEvents.updateNonConformityStatusFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to update non-conformity status'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
+        // ── Sync Helpers ───────────────────────────────────────────────────────
 
-      // ── Sync Helpers ───────────────────────────────────────────────────────
-
-      /** Resets the create operation back to its idle state. */
-      resetCreateOperation(): void {
-        patchState(store, { createCallState: idleCallState() });
-      },
-    };
-  }),
+        /** Resets the create operation back to its idle state. */
+        resetCreateOperation(): void {
+          patchState(store, { createCallState: idleCallState() });
+        },
+      };
+    },
+  ),
   //#endregion
 );
 

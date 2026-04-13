@@ -29,11 +29,7 @@ import type { OrganizationOutput } from '@features/organization/models';
  */
 @Component({
   selector: 'app-organization-switcher-trigger',
-  imports: [
-    AvatarModule,
-    ButtonModule,
-    SkeletonModule,
-  ],
+  imports: [AvatarModule, ButtonModule, SkeletonModule],
   templateUrl: './organization-switcher-trigger.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -98,8 +94,7 @@ export class OrganizationSwitcherTrigger {
    *
    * @type {OutputEmitterRef<MouseEvent>}
    */
-  public readonly toggleMenu: OutputEmitterRef<MouseEvent> =
-    output<MouseEvent>();
+  public readonly toggleMenu: OutputEmitterRef<MouseEvent> = output<MouseEvent>();
   //#endregion
 
   //#region Methods

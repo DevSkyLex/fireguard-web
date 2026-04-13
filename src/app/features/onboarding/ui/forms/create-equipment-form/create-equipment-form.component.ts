@@ -14,10 +14,10 @@ import {
   Validators,
   type FormGroup,
 } from '@angular/forms';
-import { SelectModule } from 'primeng/select';
-import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import type { CreateEquipmentFormData } from './create-equipment-form-data.type';
 import type { CreateEquipmentFormValues } from './create-equipment-form-values.type';
 
@@ -35,13 +35,7 @@ import type { CreateEquipmentFormValues } from './create-equipment-form-values.t
  */
 @Component({
   selector: 'app-create-equipment-form',
-  imports: [
-    ReactiveFormsModule,
-    SelectModule,
-    InputTextModule,
-    ButtonModule,
-    MessageModule,
-  ],
+  imports: [ReactiveFormsModule, SelectModule, InputTextModule, ButtonModule, MessageModule],
   templateUrl: './create-equipment-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

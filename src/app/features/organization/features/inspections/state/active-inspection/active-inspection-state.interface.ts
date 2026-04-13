@@ -1,5 +1,5 @@
-import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import type { CallState } from '@core/state/request-state';
+import type { InspectionOutput } from '@features/organization/features/inspections/models';
 
 /**
  * Interface ActiveInspectionState

@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
 import { Dispatcher } from '@ngrx/signals/events';
-import { AuthStore } from './auth.store';
-import { AuthService } from '@features/auth/data-access';
-import { OrganizationStore } from '@features/organization/state';
+import { of, throwError } from 'rxjs';
 import { UserStore } from '@features/account/state';
-import { ActiveTrustedDeviceStore } from '@features/auth/state';
+import { AuthService } from '@features/auth/data-access';
 import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@features/auth/models';
+import { ActiveTrustedDeviceStore } from '@features/auth/state';
+import { OrganizationStore } from '@features/organization/state';
+import { AuthStore } from './auth.store';
 
 const flushEffects = async (): Promise<void> => {
   await Promise.resolve();

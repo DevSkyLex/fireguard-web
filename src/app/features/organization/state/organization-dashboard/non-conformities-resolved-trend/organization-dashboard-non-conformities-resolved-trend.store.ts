@@ -1,5 +1,5 @@
-import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -10,19 +10,31 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { withQueryState, setPendingQuery, setSuccessQuery, setErrorQuery, toStoreError } from '@core/state/request-state';
 import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
 import { EMPTY, pipe, switchMap } from 'rxjs';
-import type { MetricComparison } from '@shared/components/metric-card';
+import {
+  withQueryState,
+  setPendingQuery,
+  setSuccessQuery,
+  setErrorQuery,
+  toStoreError,
+} from '@core/state/request-state';
 import { OrganizationService } from '@features/organization/data-access';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import type {
+  NonConformitySeverity,
+  NonConformityStatus,
+} from '@features/organization/features/inspections/models';
 import type {
   OrganizationDashboardGranularity,
   OrganizationDashboardNonConformityTrendResourceParams,
   OrganizationDashboardTrendOutput,
 } from '@features/organization/models';
-import type { NonConformitySeverity, NonConformityStatus } from '@features/organization/features/inspections/models';
-import { getDashboardTrendPointValue, sumDashboardTrendValues } from '../../../data-access/adapters/organization-dashboard-trend.adapter';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import type { MetricComparison } from '@shared/components/metric-card';
+import {
+  getDashboardTrendPointValue,
+  sumDashboardTrendValues,
+} from '../../../data-access/adapters/organization-dashboard-trend.adapter';
 
 /**
  * Type GranularityOption
@@ -183,10 +195,7 @@ const WHOLE_NUMBER_FMT = new Intl.NumberFormat('en-US', { maximumFractionDigits:
  */
 const INITIAL_STATE: OrganizationDashboardNonConformitiesResolvedState = {
   selectedGranularity: 'week',
-  selectedDateRange: [
-    new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
-    new Date(),
-  ],
+  selectedDateRange: [new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1), new Date()],
   compareEnabled: true,
   selectedNonConformityStatus: null,
   selectedNonConformitySeverity: null,
@@ -213,7 +222,6 @@ const INITIAL_STATE: OrganizationDashboardNonConformitiesResolvedState = {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const OrganizationDashboardNonConformitiesResolvedStore = signalStore(
-
   //#region State
 
   /**
@@ -340,18 +348,17 @@ export const OrganizationDashboardNonConformitiesResolvedStore = signalStore(
      *
      * @since 1.0.0
      */
-    summaryMetrics: computed<
-      readonly OrganizationDashboardNonConformitiesResolvedSummaryMetric[]
-    >(() => {
-      const trend = store.queryData();
-      const compareEnabled = store.compareEnabled();
+    summaryMetrics: computed<readonly OrganizationDashboardNonConformitiesResolvedSummaryMetric[]>(
+      () => {
+        const trend = store.queryData();
+        const compareEnabled = store.compareEnabled();
 
-      const total = sumDashboardTrendValues(
-        (trend?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
-      );
-      const previousTotal = sumDashboardTrendValues(
-        (trend?.comparison?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
-      );
+        const total = sumDashboardTrendValues(
+          (trend?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
+        );
+        const previousTotal = sumDashboardTrendValues(
+          (trend?.comparison?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
+        );
         /**
          * Function buildComparison
          * @function buildComparison
@@ -364,25 +371,29 @@ export const OrganizationDashboardNonConformitiesResolvedStore = signalStore(
          * @param {number} current - Current period total.
          * @param {number} previous - Previous period total.
          * @returns {MetricComparison | null} Comparison metadata, or null.
-         */      const buildComparison = (current: number, previous: number): MetricComparison | null => {
-        if (!compareEnabled) return null;
-        const delta = current - previous;
-        if (delta === 0) return { value: 'Flat', direction: null };
-        return {
-          value: `${delta > 0 ? '+' : ''}${WHOLE_NUMBER_FMT.format(delta)}`,
-          direction: delta > 0 ? 'up' : 'down',
+         */ const buildComparison = (
+          current: number,
+          previous: number,
+        ): MetricComparison | null => {
+          if (!compareEnabled) return null;
+          const delta = current - previous;
+          if (delta === 0) return { value: 'Flat', direction: null };
+          return {
+            value: `${delta > 0 ? '+' : ''}${WHOLE_NUMBER_FMT.format(delta)}`,
+            direction: delta > 0 ? 'up' : 'down',
+          };
         };
-      };
 
-      return [
-        {
-          label: 'Resolved NC',
-          value: WHOLE_NUMBER_FMT.format(total),
-          icon: 'pi pi-check-circle',
-          comparison: buildComparison(total, previousTotal),
-        },
-      ];
-    }),
+        return [
+          {
+            label: 'Resolved NC',
+            value: WHOLE_NUMBER_FMT.format(total),
+            icon: 'pi pi-check-circle',
+            comparison: buildComparison(total, previousTotal),
+          },
+        ];
+      },
+    ),
 
     /**
      * Computed chartData
@@ -671,27 +682,27 @@ export const OrganizationDashboardNonConformitiesResolvedStore = signalStore(
        * @returns {void}
        */
       onInit(): void {
-        const params = computed<
-          OrganizationDashboardNonConformityTrendResourceParams | undefined
-        >(() => {
-          if (!isPlatformBrowser(platformId)) return undefined;
+        const params = computed<OrganizationDashboardNonConformityTrendResourceParams | undefined>(
+          () => {
+            if (!isPlatformBrowser(platformId)) return undefined;
 
-          const organization = activeOrganizationStore.selectedOrganization();
-          if (!organization) return undefined;
+            const organization = activeOrganizationStore.selectedOrganization();
+            if (!organization) return undefined;
 
-          const range = store.selectedDateRange();
-          const toISO = (value: Date | undefined): string | undefined => value?.toISOString();
+            const range = store.selectedDateRange();
+            const toISO = (value: Date | undefined): string | undefined => value?.toISOString();
 
-          return {
-            organizationId: organization.id,
-            granularity: store.selectedGranularity(),
-            from: toISO(range?.[0]),
-            to: toISO(range?.[1]),
-            compare: store.compareEnabled() || undefined,
-            nonConformityStatus: store.selectedNonConformityStatus() ?? undefined,
-            nonConformitySeverity: store.selectedNonConformitySeverity() ?? undefined,
-          };
-        });
+            return {
+              organizationId: organization.id,
+              granularity: store.selectedGranularity(),
+              from: toISO(range?.[0]),
+              to: toISO(range?.[1]),
+              compare: store.compareEnabled() || undefined,
+              nonConformityStatus: store.selectedNonConformityStatus() ?? undefined,
+              nonConformitySeverity: store.selectedNonConformitySeverity() ?? undefined,
+            };
+          },
+        );
 
         store.load(params);
       },
@@ -710,5 +721,3 @@ export const OrganizationDashboardNonConformitiesResolvedStore = signalStore(
 export type OrganizationDashboardNonConformitiesResolvedStore = InstanceType<
   typeof OrganizationDashboardNonConformitiesResolvedStore
 >;
-
-

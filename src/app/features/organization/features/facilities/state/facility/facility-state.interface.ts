@@ -1,8 +1,8 @@
+import type { CallState } from '@core/state/request-state';
 import type {
   FacilityOutput,
   FacilityTypeOutput,
 } from '@features/organization/features/facilities/models';
-import type { CallState } from '@core/state/request-state';
 
 /**
  * Interface FacilityState

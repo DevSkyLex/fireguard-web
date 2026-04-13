@@ -1,6 +1,9 @@
 import { computed, inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import type { MenuItem } from 'primeng/api';
-import { ORGANIZATION_CONTEXT_PORT, type OrganizationContextPort } from '@features/organization/ports';
+import {
+  ORGANIZATION_CONTEXT_PORT,
+  type OrganizationContextPort,
+} from '@features/organization/ports';
 
 /**
  * Service DashboardSidebarNavigationService
@@ -21,11 +24,11 @@ import { ORGANIZATION_CONTEXT_PORT, type OrganizationContextPort } from '@featur
 export class DashboardSidebarNavigationService {
   //#region Properties
   /**
-  * Property organizationContext
+   * Property organizationContext
    * @readonly
    *
    * @description
-  * Organization context port for accessing the
+   * Organization context port for accessing the
    * currently selected organization and prefixing sidebar
    * links with the correct organization path.
    *
@@ -34,8 +37,7 @@ export class DashboardSidebarNavigationService {
    *
    * @type {OrganizationContextPort}
    */
-  private readonly organizationContext: OrganizationContextPort =
-    inject(ORGANIZATION_CONTEXT_PORT);
+  private readonly organizationContext: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
 
   /**
    * Property _searchQuery
@@ -50,8 +52,7 @@ export class DashboardSidebarNavigationService {
    *
    * @type {WritableSignal<string>}
    */
-  private readonly _searchQuery: WritableSignal<string> =
-    signal<string>('');
+  private readonly _searchQuery: WritableSignal<string> = signal<string>('');
 
   /**
    * Property searchQuery
@@ -65,8 +66,7 @@ export class DashboardSidebarNavigationService {
    *
    * @type {Signal<string>}
    */
-  public readonly searchQuery: Signal<string> =
-    this._searchQuery.asReadonly();
+  public readonly searchQuery: Signal<string> = this._searchQuery.asReadonly();
 
   /**
    * Property menuItems
@@ -81,42 +81,40 @@ export class DashboardSidebarNavigationService {
    *
    * @type {Signal<MenuItem[]>}
    */
-  public readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>(
-    (): MenuItem[] => {
-      const organization = this.organizationContext.selectedOrganization();
-      const prefix: string = organization ? `/organizations/${organization.id}` : '';
-      const query: string = this.searchQuery();
+  public readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] => {
+    const organization = this.organizationContext.selectedOrganization();
+    const prefix: string = organization ? `/organizations/${organization.id}` : '';
+    const query: string = this.searchQuery();
 
-      const items: readonly MenuItem[] = [
-        {
-          id: 'home',
-          label: 'Home',
-          expanded: true,
-          items: [
-            { id: 'dashboard', label: 'Dashboard', icon: 'pi pi-home', routerLink: prefix || '/' },
-            { id: 'bookmarks', label: 'Bookmarks', icon: 'pi pi-bookmark', badge: '3' },
-            { id: 'messages', label: 'Messages', icon: 'pi pi-inbox', badge: '1' },
-          ],
-        },
-        {
-          id: 'account',
-          label: 'Account',
-          expanded: true,
-          items: [
-            {
-              id: 'notifications',
-              label: 'Notifications',
-              icon: 'pi pi-bell',
-              routerLink: `/account/notifications`,
-            },
-          ],
-        },
-      ];
+    const items: readonly MenuItem[] = [
+      {
+        id: 'home',
+        label: 'Home',
+        expanded: true,
+        items: [
+          { id: 'dashboard', label: 'Dashboard', icon: 'pi pi-home', routerLink: prefix || '/' },
+          { id: 'bookmarks', label: 'Bookmarks', icon: 'pi pi-bookmark', badge: '3' },
+          { id: 'messages', label: 'Messages', icon: 'pi pi-inbox', badge: '1' },
+        ],
+      },
+      {
+        id: 'account',
+        label: 'Account',
+        expanded: true,
+        items: [
+          {
+            id: 'notifications',
+            label: 'Notifications',
+            icon: 'pi pi-bell',
+            routerLink: `/account/notifications`,
+          },
+        ],
+      },
+    ];
 
-      if (!query) return [...items];
-      return this.filterMenuItems(items, query);
-    },
-  );
+    if (!query) return [...items];
+    return this.filterMenuItems(items, query);
+  });
   //#endregion
 
   //#region Methods
@@ -173,7 +171,9 @@ export class DashboardSidebarNavigationService {
   private filterMenuItems(items: readonly MenuItem[], query: string): MenuItem[] {
     return items
       .map((item: MenuItem): MenuItem | null => {
-        const filteredChildren: MenuItem[] = item.items ? this.filterMenuItems(item.items, query) : [];
+        const filteredChildren: MenuItem[] = item.items
+          ? this.filterMenuItems(item.items, query)
+          : [];
         const itemMatches: boolean = (item.label ?? '').includes(query);
 
         if (!itemMatches && filteredChildren.length === 0) return null;

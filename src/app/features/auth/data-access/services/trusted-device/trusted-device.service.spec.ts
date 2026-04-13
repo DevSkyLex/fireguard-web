@@ -1,9 +1,9 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { TrustedDeviceService } from './trusted-device.service';
+import { TestBed } from '@angular/core/testing';
 import { provideEnv } from '@core/config/environment/env.provider';
 import { environment } from '@env/environment';
+import { TrustedDeviceService } from './trusted-device.service';
 
 describe('TrustedDeviceService', () => {
   let service: TrustedDeviceService;

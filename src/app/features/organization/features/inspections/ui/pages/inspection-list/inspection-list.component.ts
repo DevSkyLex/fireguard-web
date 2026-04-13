@@ -1,9 +1,16 @@
-import { ChangeDetectionStrategy, Component, inject, input, numberAttribute, type InputSignalWithTransform } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  numberAttribute,
+  type InputSignalWithTransform,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { RequestOptions } from '@core/services/hydra-api';
-import { ActiveOrganizationStore } from '@features/organization/state';
 import { InspectionStore } from '@features/organization/features/inspections/state';
 import { InspectionTable } from '@features/organization/features/inspections/ui/dataviews';
+import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
  * Component InspectionListPage
@@ -35,8 +42,9 @@ export class InspectionListPage {
    *
    * @type {InputSignalWithTransform<number, unknown>}
    */
-  public readonly page: InputSignalWithTransform<number, unknown> =
-    input<number, unknown>(1, { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) });
+  public readonly page: InputSignalWithTransform<number, unknown> = input<number, unknown>(1, {
+    transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)),
+  });
   //#endregion
 
   //#region Properties
@@ -49,8 +57,7 @@ export class InspectionListPage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property route
@@ -61,8 +68,7 @@ export class InspectionListPage {
    *
    * @type {ActivatedRoute}
    */
-  private readonly route: ActivatedRoute =
-    inject<ActivatedRoute>(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property activeOrganizationStore
@@ -85,8 +91,7 @@ export class InspectionListPage {
    *
    * @type {InspectionStore}
    */
-  protected readonly store: InspectionStore =
-    inject<InspectionStore>(InspectionStore);
+  protected readonly store: InspectionStore = inject<InspectionStore>(InspectionStore);
   //#endregion
 
   //#region Constructor
@@ -128,7 +133,8 @@ export class InspectionListPage {
    * @returns {void}
    */
   public onLoad(options: RequestOptions): void {
-    const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
     if (organizationId) {
       this.store.load({ organizationId, options });
     }
@@ -154,4 +160,3 @@ export class InspectionListPage {
   }
   //#endregion
 }
-

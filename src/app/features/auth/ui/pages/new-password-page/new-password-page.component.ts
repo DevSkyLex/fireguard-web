@@ -1,10 +1,17 @@
-import { Component, ChangeDetectionStrategy, inject, computed, effect, type Signal } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  computed,
+  effect,
+  type Signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { NewPasswordForm, type NewPasswordFormValues } from '@features/auth/ui/forms';
-import { PasswordResetStore, passwordResetStoreEvents } from '@features/auth/state';
-import { MessageService } from 'primeng/api';
 import { Events } from '@ngrx/signals/events';
+import { MessageService } from 'primeng/api';
+import { PasswordResetStore, passwordResetStoreEvents } from '@features/auth/state';
+import { NewPasswordForm, type NewPasswordFormValues } from '@features/auth/ui/forms';
 
 /**
  * Component NewPasswordPage
@@ -52,8 +59,7 @@ export class NewPasswordPage {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
 
   /**
    * Property events
@@ -81,8 +87,7 @@ export class NewPasswordPage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Computed isResetting
@@ -97,7 +102,7 @@ export class NewPasswordPage {
    * @type {Signal<boolean>}
    */
   protected readonly isResetting: Signal<boolean> = computed(() =>
-    this.passwordResetStore.isConfirming()
+    this.passwordResetStore.isConfirming(),
   );
 
   //#endregion
@@ -121,11 +126,13 @@ export class NewPasswordPage {
       if (operation.status === 'success') {
         this.passwordResetStore.clear();
 
-        this.router.navigate(['/auth/login'], {
-          queryParams: { passwordReset: 'success' },
-        }).catch((error: unknown) => {
-          console.error('Navigation failed', error);
-        });
+        this.router
+          .navigate(['/auth/login'], {
+            queryParams: { passwordReset: 'success' },
+          })
+          .catch((error: unknown) => {
+            console.error('Navigation failed', error);
+          });
       }
     });
 
@@ -183,8 +190,7 @@ export class NewPasswordPage {
 
     try {
       await this.router.navigate(['/auth/login']);
-    }
-    catch (error: unknown) {
+    } catch (error: unknown) {
       console.error('Navigation failed', error);
     }
   }

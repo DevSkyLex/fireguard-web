@@ -1,9 +1,9 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 
-import { OrganizationService } from './organization.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
+import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
 import type {
   OrganizationOutput,
   CreateOrganizationInput,
@@ -14,7 +14,7 @@ import type {
   OrganizationLegalTypeOutput,
   OrganizationPermissionOutput,
 } from '@features/organization/models';
-import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
+import { OrganizationService } from './organization.service';
 
 describe('OrganizationService', () => {
   let service: OrganizationService;
@@ -169,7 +169,10 @@ describe('OrganizationService', () => {
       });
 
       const req = httpMock.expectOne(baseUrl);
-      req.flush({ status: 422, title: 'Unprocessable Entity' }, { status: 422, statusText: 'Unprocessable Entity' });
+      req.flush(
+        { status: 422, title: 'Unprocessable Entity' },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
     });
   });
 
@@ -245,14 +248,10 @@ describe('OrganizationService', () => {
         },
         overview: {
           members: {
-            summary: [
-              { key: 'memberCount', label: 'Members', value: 5 },
-            ],
+            summary: [{ key: 'memberCount', label: 'Members', value: 5 }],
           },
           facilities: {
-            summary: [
-              { key: 'facilityCount', label: 'Facilities', value: 3 },
-            ],
+            summary: [{ key: 'facilityCount', label: 'Facilities', value: 3 }],
           },
         },
         health: {
@@ -272,33 +271,31 @@ describe('OrganizationService', () => {
           mode: 'previous_period',
           from: '2026-02-01T00:00:00+00:00',
           to: '2026-02-29T23:59:59+00:00',
-          metrics: [
-            { key: 'inspections', label: 'Inspections', value: '+2', direction: 'up' },
-          ],
+          metrics: [{ key: 'inspections', label: 'Inspections', value: '+2', direction: 'up' }],
           health: {
-            metrics: [
-              { key: 'readiness', label: 'Readiness', value: 4, direction: 'up' },
-            ],
+            metrics: [{ key: 'readiness', label: 'Readiness', value: 4, direction: 'up' }],
           },
         },
       };
 
-      service.getDashboard('org-uuid-1', {
-        from: '2026-03-01T00:00:00+00:00',
-        to: '2026-03-30T23:59:59+00:00',
-        compare: true,
-        timezone: 'Europe/Paris',
-        facilityType: 'site',
-        equipmentType: 'fire_extinguisher',
-        equipmentStatus: 'operational',
-        inspectionStatus: 'closed',
-        inspectionResult: 'pass',
-        inspectorType: 'user',
-        nonConformityStatus: 'open',
-        nonConformitySeverity: 'critical',
-      }).subscribe((dashboard) => {
-        expect(dashboard.generatedAt).toBe('2026-03-30T08:00:00+00:00');
-      });
+      service
+        .getDashboard('org-uuid-1', {
+          from: '2026-03-01T00:00:00+00:00',
+          to: '2026-03-30T23:59:59+00:00',
+          compare: true,
+          timezone: 'Europe/Paris',
+          facilityType: 'site',
+          equipmentType: 'fire_extinguisher',
+          equipmentStatus: 'operational',
+          inspectionStatus: 'closed',
+          inspectionResult: 'pass',
+          inspectorType: 'user',
+          nonConformityStatus: 'open',
+          nonConformitySeverity: 'critical',
+        })
+        .subscribe((dashboard) => {
+          expect(dashboard.generatedAt).toBe('2026-03-30T08:00:00+00:00');
+        });
 
       const req = httpMock.expectOne(
         (request) => request.url === `${baseUrl}/org-uuid-1/dashboard`,
@@ -349,25 +346,23 @@ describe('OrganizationService', () => {
           mode: 'previous_period',
           from: '2026-02-01T00:00:00+00:00',
           to: '2026-02-29T23:59:59+00:00',
-          summary: [
-            { key: 'delta', label: 'Delta', value: 2 },
-          ],
-          series: [
-            { bucket: '2026-W09', value: 1 },
-          ],
+          summary: [{ key: 'delta', label: 'Delta', value: 2 }],
+          series: [{ bucket: '2026-W09', value: 1 }],
         },
       };
 
-      service.getDashboardInspectionsTrend('org-uuid-1', {
-        compare: false,
-        granularity: 'week',
-        timezone: 'UTC',
-        inspectionStatus: 'closed',
-        inspectionResult: 'pass',
-        inspectorType: 'user',
-      }).subscribe((trend) => {
-        expect(trend.metric).toBe('inspections');
-      });
+      service
+        .getDashboardInspectionsTrend('org-uuid-1', {
+          compare: false,
+          granularity: 'week',
+          timezone: 'UTC',
+          inspectionStatus: 'closed',
+          inspectionResult: 'pass',
+          inspectorType: 'user',
+        })
+        .subscribe((trend) => {
+          expect(trend.metric).toBe('inspections');
+        });
 
       const req = httpMock.expectOne(
         (request) => request.url === `${baseUrl}/org-uuid-1/dashboard/trends/inspections`,
@@ -409,25 +404,24 @@ describe('OrganizationService', () => {
           mode: 'previous_period',
           from: '2026-02-01T00:00:00+00:00',
           to: '2026-02-29T23:59:59+00:00',
-          summary: [
-            { key: 'delta', label: 'Delta', value: -1 },
-          ],
-          series: [
-            { date: '2026-02-29', value: 1 },
-          ],
+          summary: [{ key: 'delta', label: 'Delta', value: -1 }],
+          series: [{ date: '2026-02-29', value: 1 }],
         },
       };
 
-      service.getDashboardNonConformitiesOpenedTrend('org-uuid-1', {
-        granularity: 'day',
-        nonConformityStatus: 'open',
-        nonConformitySeverity: 'critical',
-      }).subscribe((trend) => {
-        expect(trend.metric).toBe('nonConformitiesOpened');
-      });
+      service
+        .getDashboardNonConformitiesOpenedTrend('org-uuid-1', {
+          granularity: 'day',
+          nonConformityStatus: 'open',
+          nonConformitySeverity: 'critical',
+        })
+        .subscribe((trend) => {
+          expect(trend.metric).toBe('nonConformitiesOpened');
+        });
 
-      const req = httpMock.expectOne((request) =>
-        request.url === `${baseUrl}/org-uuid-1/dashboard/trends/non-conformities-opened`,
+      const req = httpMock.expectOne(
+        (request) =>
+          request.url === `${baseUrl}/org-uuid-1/dashboard/trends/non-conformities-opened`,
       );
       expect(req.request.method).toBe('GET');
       expect(req.request.params.get('granularity')).toBe('day');
@@ -463,12 +457,8 @@ describe('OrganizationService', () => {
           mode: 'previous_period',
           from: '2026-02-01T00:00:00+00:00',
           to: '2026-02-29T23:59:59+00:00',
-          summary: [
-            { key: 'delta', label: 'Delta', value: 1 },
-          ],
-          series: [
-            { date: '2026-02-29', value: 2 },
-          ],
+          summary: [{ key: 'delta', label: 'Delta', value: 1 }],
+          series: [{ date: '2026-02-29', value: 2 }],
         },
       };
 

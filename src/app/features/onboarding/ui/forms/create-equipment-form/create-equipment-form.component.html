@@ -1,8 +1,9 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-6 w-full">
-
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-6">
   <!-- Equipment Type -->
   <div class="flex flex-col gap-2">
-    <label for="equipmentType" class="text-sm font-medium text-surface-700 dark:text-surface-300">Equipment type</label>
+    <label for="equipmentType" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      >Equipment type</label
+    >
     <p-select
       inputId="equipmentType"
       formControlName="type"
@@ -20,7 +21,7 @@
   <!-- Brand -->
   <div class="flex flex-col gap-2">
     <label for="equipmentBrand" class="text-sm font-medium text-surface-700 dark:text-surface-300">
-      Brand <span class="text-surface-400 font-normal">(optional)</span>
+      Brand <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <input
       pInputText
@@ -34,7 +35,7 @@
   <!-- Model -->
   <div class="flex flex-col gap-2">
     <label for="equipmentModel" class="text-sm font-medium text-surface-700 dark:text-surface-300">
-      Model <span class="text-surface-400 font-normal">(optional)</span>
+      Model <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <input
       pInputText
@@ -48,7 +49,7 @@
   <!-- Serial Number -->
   <div class="flex flex-col gap-2">
     <label for="serialNumber" class="text-sm font-medium text-surface-700 dark:text-surface-300">
-      Serial number <span class="text-surface-400 font-normal">(optional)</span>
+      Serial number <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <input
       pInputText

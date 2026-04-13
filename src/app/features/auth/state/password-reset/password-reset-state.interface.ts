@@ -1,9 +1,9 @@
+import type { CallState } from '@core/state/request-state';
 import type {
   PasswordResetRequestOutput,
   PasswordResetResendOutput,
   PasswordResetVerifyOutput,
 } from '@features/auth/models';
-import type { CallState } from '@core/state/request-state';
 
 /**
  * Interface PasswordResetState

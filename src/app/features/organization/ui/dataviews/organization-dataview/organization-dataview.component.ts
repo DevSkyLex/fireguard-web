@@ -1,3 +1,4 @@
+import { DatePipe, TitleCasePipe } from '@angular/common';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -17,10 +18,9 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { DatePipe, TitleCasePipe } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -29,15 +29,15 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { Menu, MenuModule } from 'primeng/menu';
-import { SelectButtonModule } from 'primeng/selectbutton';
-import { SplitButtonModule } from 'primeng/splitbutton';
 import { SelectModule } from 'primeng/select';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
+import { SplitButtonModule } from 'primeng/splitbutton';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import type { OrganizationOutput } from '@features/organization/models';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/services/hydra-api';
-import { MenuItem, PrimeIcons } from 'primeng/api';
+import type { OrganizationOutput } from '@features/organization/models';
 
 /**
  * Component OrganizationDataview
@@ -110,8 +110,7 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {InputSignal<number>}
    */
-  public readonly total: InputSignal<number> =
-    input.required<number>();
+  public readonly total: InputSignal<number> = input.required<number>();
 
   /**
    * Input loading
@@ -125,8 +124,7 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly loading: InputSignal<boolean> =
-    input.required<boolean>();
+  public readonly loading: InputSignal<boolean> = input.required<boolean>();
 
   /**
    * Input deleting
@@ -140,8 +138,7 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly deleting: InputSignal<boolean> =
-    input.required<boolean>();
+  public readonly deleting: InputSignal<boolean> = input.required<boolean>();
 
   /**
    * Input initialPage
@@ -157,8 +154,10 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {InputSignal<number>}
    */
-  public readonly initialPage: InputSignalWithTransform<number, unknown> =
-    input<number, unknown>(1, { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) });
+  public readonly initialPage: InputSignalWithTransform<number, unknown> = input<number, unknown>(
+    1,
+    { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) },
+  );
   //#endregion
 
   //#region Properties
@@ -234,8 +233,10 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {FormControl<'list' | 'grid'>}
    */
-  protected readonly layoutControl: FormControl<'list' | 'grid'> =
-    new FormControl<'list' | 'grid'>('list', { nonNullable: true });
+  protected readonly layoutControl: FormControl<'list' | 'grid'> = new FormControl<'list' | 'grid'>(
+    'list',
+    { nonNullable: true },
+  );
 
   /**
    * Property layout
@@ -249,10 +250,9 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {Signal<'list' | 'grid'>}
    */
-  protected readonly layout: Signal<'list' | 'grid'> = toSignal(
-    this.layoutControl.valueChanges,
-    { initialValue: 'list' },
-  );
+  protected readonly layout: Signal<'list' | 'grid'> = toSignal(this.layoutControl.valueChanges, {
+    initialValue: 'list',
+  });
 
   /**
    * Property layoutOptions
@@ -283,8 +283,9 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {FormControl<string>}
    */
-  protected readonly searchControl: FormControl<string> =
-    new FormControl<string>('', { nonNullable: true });
+  protected readonly searchControl: FormControl<string> = new FormControl<string>('', {
+    nonNullable: true,
+  });
 
   /**
    * Property toolbarActions
@@ -298,15 +299,13 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {Signal<MenuItem[]>}
    */
-  protected readonly toolbarActions: Signal<MenuItem[]> = computed(
-    (): MenuItem[] => [
-      {
-        label: 'Refresh',
-        icon: PrimeIcons.REFRESH,
-        command: (): void => this.onRefresh(),
-      },
-    ],
-  );
+  protected readonly toolbarActions: Signal<MenuItem[]> = computed((): MenuItem[] => [
+    {
+      label: 'Refresh',
+      icon: PrimeIcons.REFRESH,
+      command: (): void => this.onRefresh(),
+    },
+  ]);
 
   /**
    * Property lastLazyEvent
@@ -335,8 +334,7 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {Signal<Menu>}
    */
-  private readonly rowMenu: Signal<Menu> =
-    viewChild.required<Menu>('rowMenu');
+  private readonly rowMenu: Signal<Menu> = viewChild.required<Menu>('rowMenu');
 
   /**
    * Property selectedOrganization
@@ -365,34 +363,31 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {Signal<MenuItem[]>}
    */
-  protected readonly rowMenuItems: Signal<MenuItem[]> = computed(
-    (): MenuItem[] => {
-      const organization: OrganizationOutput | null =
-        this.selectedOrganization();
+  protected readonly rowMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
+    const organization: OrganizationOutput | null = this.selectedOrganization();
 
-      if (!organization) return [];
+    if (!organization) return [];
 
-      return [
-        {
-          label: 'View',
-          icon: PrimeIcons.EYE,
-          command: (): void => this.view.emit(organization),
-        },
-        {
-          label: 'Edit',
-          icon: PrimeIcons.PENCIL,
-          command: (): void => this.edit.emit(organization),
-        },
-        { separator: true },
-        {
-          label: 'Delete',
-          icon: PrimeIcons.TRASH,
-          styleClass: 'text-red-500',
-          command: (): void => this.delete.emit(organization),
-        },
-      ];
-    },
-  );
+    return [
+      {
+        label: 'View',
+        icon: PrimeIcons.EYE,
+        command: (): void => this.view.emit(organization),
+      },
+      {
+        label: 'Edit',
+        icon: PrimeIcons.PENCIL,
+        command: (): void => this.edit.emit(organization),
+      },
+      { separator: true },
+      {
+        label: 'Delete',
+        icon: PrimeIcons.TRASH,
+        styleClass: 'text-red-500',
+        command: (): void => this.delete.emit(organization),
+      },
+    ];
+  });
   //#endregion
 
   //#region Outputs
@@ -408,8 +403,7 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {OutputEmitterRef<OrganizationOutput>}
    */
-  public readonly view: OutputEmitterRef<OrganizationOutput> =
-    output<OrganizationOutput>();
+  public readonly view: OutputEmitterRef<OrganizationOutput> = output<OrganizationOutput>();
 
   /**
    * Output edit
@@ -423,8 +417,7 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {OutputEmitterRef<OrganizationOutput>}
    */
-  public readonly edit: OutputEmitterRef<OrganizationOutput> =
-    output<OrganizationOutput>();
+  public readonly edit: OutputEmitterRef<OrganizationOutput> = output<OrganizationOutput>();
 
   /**
    * Output add
@@ -453,8 +446,7 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {OutputEmitterRef<OrganizationOutput>}
    */
-  public readonly delete: OutputEmitterRef<OrganizationOutput> =
-    output<OrganizationOutput>();
+  public readonly delete: OutputEmitterRef<OrganizationOutput> = output<OrganizationOutput>();
 
   /**
    * Output load
@@ -470,8 +462,7 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {OutputEmitterRef<RequestOptions>}
    */
-  public readonly load: OutputEmitterRef<RequestOptions> =
-    output<RequestOptions>();
+  public readonly load: OutputEmitterRef<RequestOptions> = output<RequestOptions>();
 
   /**
    * Output pageChange
@@ -487,8 +478,7 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {OutputEmitterRef<number>}
    */
-  public readonly pageChange: OutputEmitterRef<number> =
-    output<number>();
+  public readonly pageChange: OutputEmitterRef<number> = output<number>();
   //#endregion
 
   //#region Lifecycle
@@ -525,11 +515,7 @@ export class OrganizationDataview implements OnInit {
    */
   public constructor() {
     this.searchControl.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntilDestroyed(),
-      )
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(() => this.reload());
 
     effect(() => {
@@ -615,10 +601,7 @@ export class OrganizationDataview implements OnInit {
    *
    * @returns {void}
    */
-  public onItemMenuToggle(
-    event: MouseEvent,
-    organization: OrganizationOutput,
-  ): void {
+  public onItemMenuToggle(event: MouseEvent, organization: OrganizationOutput): void {
     this.selectedOrganization.set(organization);
 
     const menu: Menu = this.rowMenu();
@@ -643,13 +626,13 @@ export class OrganizationDataview implements OnInit {
       first: 0,
       rows: this.rows,
       sortField: '',
-      sortOrder: 1
+      sortOrder: 1,
     };
 
     this.onLazyLoad({
       ...event,
       first: 0,
-      rows: event.rows ?? this.rows
+      rows: event.rows ?? this.rows,
     });
   }
   //#endregion

@@ -3,10 +3,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import { FacilityStore, facilityStoreEvents } from '@features/organization/features/facilities/state';
 import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
-import { FacilityForm, type FacilityFormValues } from '@features/organization/features/facilities/ui/forms';
+import {
+  FacilityStore,
+  facilityStoreEvents,
+} from '@features/organization/features/facilities/state';
+import {
+  FacilityForm,
+  type FacilityFormValues,
+} from '@features/organization/features/facilities/ui/forms';
+import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
  * Component FacilityCreatePage
@@ -43,8 +49,7 @@ export class FacilityCreatePage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property route
@@ -59,8 +64,7 @@ export class FacilityCreatePage {
    *
    * @type {ActivatedRoute}
    */
-  private readonly route: ActivatedRoute =
-    inject<ActivatedRoute>(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property messageService
@@ -75,8 +79,7 @@ export class FacilityCreatePage {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
 
   /**
    * Property events
@@ -91,8 +94,7 @@ export class FacilityCreatePage {
    *
    * @type {Events}
    */
-  private readonly events: Events =
-    inject<Events>(Events);
+  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Property activeOrganizationStore
@@ -123,8 +125,7 @@ export class FacilityCreatePage {
    *
    * @type {FacilityStore}
    */
-  protected readonly store: FacilityStore =
-    inject<FacilityStore>(FacilityStore);
+  protected readonly store: FacilityStore = inject<FacilityStore>(FacilityStore);
   //#endregion
 
   //#region Constructor
@@ -140,7 +141,8 @@ export class FacilityCreatePage {
    */
   public constructor() {
     // Load available facilities for parent selection
-    const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
     if (organizationId) {
       this.store.loadFacilities({ organizationId, options: { itemsPerPage: 200 } });
     }
@@ -191,7 +193,8 @@ export class FacilityCreatePage {
    * @returns {void}
    */
   protected handleSubmit(values: FacilityFormValues): void {
-    const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
     if (!organizationId) return;
 
     const input: CreateFacilityInput = {
@@ -222,4 +225,3 @@ export class FacilityCreatePage {
   }
   //#endregion
 }
-

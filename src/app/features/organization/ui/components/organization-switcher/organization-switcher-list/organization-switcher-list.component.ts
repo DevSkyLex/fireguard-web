@@ -10,7 +10,6 @@ import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
 import { RippleModule } from 'primeng/ripple';
 import type { OrganizationOutput } from '@features/organization/models';
 
-
 /**
  * Component OrganizationSwitcherList
  * @class OrganizationSwitcherList
@@ -45,8 +44,9 @@ export class OrganizationSwitcherList {
    *
    * @type {InputSignal<OrganizationOutput[]>}
    */
-  public readonly organizations: InputSignal<OrganizationOutput[]> =
-    input<OrganizationOutput[]>([]);
+  public readonly organizations: InputSignal<OrganizationOutput[]> = input<OrganizationOutput[]>(
+    [],
+  );
 
   /**
    * Input selectedOrganization

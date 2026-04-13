@@ -14,12 +14,15 @@ import {
   Validators,
   type FormGroup,
 } from '@angular/forms';
-import { DatePickerModule } from 'primeng/datepicker';
-import { SelectModule } from 'primeng/select';
-import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
+import { DatePickerModule } from 'primeng/datepicker';
+import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
-import type { InspectionResult, InspectorType } from '@features/organization/features/inspections/models';
+import { SelectModule } from 'primeng/select';
+import type {
+  InspectionResult,
+  InspectorType,
+} from '@features/organization/features/inspections/models';
 import type { CreateInspectionFormData } from './create-inspection-form-data.type';
 import type { CreateInspectionFormValues } from './create-inspection-form-values.type';
 
@@ -86,8 +89,7 @@ export class CreateInspectionForm {
    *
    * @type {InputSignal<EquipmentOption[]>}
    */
-  public readonly equipmentOptions: InputSignal<EquipmentOption[]> =
-    input<EquipmentOption[]>([]);
+  public readonly equipmentOptions: InputSignal<EquipmentOption[]> = input<EquipmentOption[]>([]);
   //#endregion
 
   //#region Outputs

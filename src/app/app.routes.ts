@@ -1,9 +1,9 @@
 import type { Routes } from '@angular/router';
 import { authGuard } from '@features/auth/http/guards';
 import { onboardingGuard } from '@features/onboarding/http/guards';
-import { SplitLayout } from './layouts/split-layout';
-import { FocusedLayout } from './layouts/focused-layout';
 import { DashboardLayout } from './layouts/dashboard-layout';
+import { FocusedLayout } from './layouts/focused-layout';
+import { SplitLayout } from './layouts/split-layout';
 
 /**
  * Constant APP_ROUTES
@@ -15,17 +15,14 @@ import { DashboardLayout } from './layouts/dashboard-layout';
  * Organization-scoped pages live under `/organizations/:organizationId`.
  */
 export const APP_ROUTES: Routes = [
-    {
+  {
     path: '',
     component: DashboardLayout,
     canActivate: [authGuard, onboardingGuard],
     data: {
       breadcrumb: false,
     },
-    loadChildren: () =>
-      import('@features/main/main.routes').then(
-        (m) => m.MAIN_ROUTES,
-      ),
+    loadChildren: () => import('@features/main/main.routes').then((m) => m.MAIN_ROUTES),
   },
   {
     path: 'auth',
@@ -45,9 +42,7 @@ export const APP_ROUTES: Routes = [
       {
         path: '',
         loadChildren: () =>
-          import('@features/onboarding/onboarding.routes').then(
-            (m) => m.ONBOARDING_ROUTES,
-          ),
+          import('@features/onboarding/onboarding.routes').then((m) => m.ONBOARDING_ROUTES),
       },
     ],
   },
@@ -59,9 +54,7 @@ export const APP_ROUTES: Routes = [
       breadcrumb: 'Organizations',
     },
     loadChildren: () =>
-      import('@features/organization/organization.routes').then(
-        (m) => m.ORGANIZATION_ROUTES,
-      ),
+      import('@features/organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
   },
   {
     path: 'account',
@@ -76,5 +69,3 @@ export const APP_ROUTES: Routes = [
     ],
   },
 ];
-
-

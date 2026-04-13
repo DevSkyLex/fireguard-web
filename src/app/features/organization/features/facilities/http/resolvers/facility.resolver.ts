@@ -1,8 +1,14 @@
 import { inject } from '@angular/core';
-import { ActivatedRouteSnapshot, MaybeAsync, RedirectCommand, type ResolveFn, Router } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  MaybeAsync,
+  RedirectCommand,
+  type ResolveFn,
+  Router,
+} from '@angular/router';
 import { catchError, of } from 'rxjs';
-import { ActiveFacilityStore } from '@features/organization/features/facilities/state';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import { ActiveFacilityStore } from '@features/organization/features/facilities/state';
 
 /**
  * Resolver facilityResolver
@@ -23,7 +29,7 @@ import type { FacilityOutput } from '@features/organization/features/facilities/
  * @returns {Observable<FacilityOutput>} An observable emitting the fetched facility, or a redirect on failure.
  */
 export const facilityResolver: ResolveFn<FacilityOutput> = (
-  route: ActivatedRouteSnapshot
+  route: ActivatedRouteSnapshot,
 ): MaybeAsync<FacilityOutput | RedirectCommand> => {
   /**
    * Constant activeFacilityStore
@@ -35,8 +41,7 @@ export const facilityResolver: ResolveFn<FacilityOutput> = (
    *
    * @var {ActiveFacilityStore}
    */
-  const activeFacilityStore: ActiveFacilityStore =
-    inject<ActiveFacilityStore>(ActiveFacilityStore);
+  const activeFacilityStore: ActiveFacilityStore = inject<ActiveFacilityStore>(ActiveFacilityStore);
 
   /**
    * Constant router
@@ -49,8 +54,7 @@ export const facilityResolver: ResolveFn<FacilityOutput> = (
    *
    * @var {Router}
    */
-  const router: Router =
-    inject<Router>(Router);
+  const router: Router = inject<Router>(Router);
 
   // Extract organizationId from parent route parameters
   const organizationId: string | null = route.parent?.paramMap.get('organizationId') ?? null;
@@ -62,7 +66,11 @@ export const facilityResolver: ResolveFn<FacilityOutput> = (
   if (!organizationId || !facilityId) return new RedirectCommand(router.parseUrl('/'));
 
   // Attempt to resolve the facility, redirecting on failure
-  return activeFacilityStore.resolveFacility(organizationId, facilityId).pipe(
-    catchError(() => of(new RedirectCommand(router.parseUrl(`/organizations/${organizationId}`)))),
-  );
+  return activeFacilityStore
+    .resolveFacility(organizationId, facilityId)
+    .pipe(
+      catchError(() =>
+        of(new RedirectCommand(router.parseUrl(`/organizations/${organizationId}`))),
+      ),
+    );
 };

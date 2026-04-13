@@ -1,5 +1,10 @@
 import { computed } from '@angular/core';
-import { signalStoreFeature, withComputed, withState, type PartialStateUpdater } from '@ngrx/signals';
+import {
+  signalStoreFeature,
+  withComputed,
+  withState,
+  type PartialStateUpdater,
+} from '@ngrx/signals';
 import type { StoreError } from './store-error';
 
 /**
@@ -13,11 +18,7 @@ import type { StoreError } from './store-error';
  * - 'success': The query completed successfully and data is available.
  * - 'error': The query failed and an error is available.
  */
-export type QueryStatus =
-  | 'idle'
-  | 'pending'
-  | 'success'
-  | 'error';
+export type QueryStatus = 'idle' | 'pending' | 'success' | 'error';
 
 /**
  * Interface QueryState (internal)
@@ -129,7 +130,7 @@ export function withQueryState<TData>() {
 export function setPendingQuery<TData>(): PartialStateUpdater<QueryState<TData>> {
   return () => ({
     _queryStatus: 'pending',
-    _queryError: null
+    _queryError: null,
   });
 }
 
@@ -152,7 +153,7 @@ export function setSuccessQuery<TData>(data: TData): PartialStateUpdater<QuerySt
   return () => ({
     _queryStatus: 'success',
     _queryData: data,
-    _queryError: null
+    _queryError: null,
   });
 }
 
@@ -174,7 +175,7 @@ export function setSuccessQuery<TData>(data: TData): PartialStateUpdater<QuerySt
 export function setErrorQuery<TData>(error: StoreError): PartialStateUpdater<QueryState<TData>> {
   return () => ({
     _queryStatus: 'error',
-    _queryError: error
+    _queryError: error,
   });
 }
 
@@ -195,6 +196,6 @@ export function resetQuery<TData>(): PartialStateUpdater<QueryState<TData>> {
   return () => ({
     _queryStatus: 'idle',
     _queryData: null,
-    _queryError: null
+    _queryError: null,
   });
 }

@@ -1,14 +1,16 @@
-<p-card
-  [pt]="cardPt"
->
+<p-card [pt]="cardPt">
   <ng-template #header>
     <div class="flex items-start gap-4 px-6 pt-5 pb-4">
-      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/15">
+      <div
+        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/15"
+      >
         <i class="pi pi-map-marker text-base text-primary"></i>
       </div>
       <div class="min-w-0 flex-1">
         <div class="mb-1 flex flex-wrap items-center gap-2">
-          <span class="text-[10px] font-semibold uppercase tracking-widest text-surface-400 dark:text-surface-500">
+          <span
+            class="text-[10px] font-semibold tracking-widest text-surface-400 uppercase dark:text-surface-500"
+          >
             Infrastructure
           </span>
           @if (!step().required) {
@@ -22,7 +24,9 @@
           Add the locations to monitor. You can create up to 5 at once.
         </p>
       </div>
-      <span class="shrink-0 rounded-full bg-surface-100 px-2.5 py-0.5 font-mono text-xs font-medium text-surface-500 dark:bg-surface-800 dark:text-surface-400">
+      <span
+        class="shrink-0 rounded-full bg-surface-100 px-2.5 py-0.5 font-mono text-xs font-medium text-surface-500 dark:bg-surface-800 dark:text-surface-400"
+      >
         {{ stepIndex() + 1 }}&thinsp;/&thinsp;{{ totalSteps() }}
       </span>
     </div>

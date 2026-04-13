@@ -14,18 +14,21 @@ import {
   Validators,
   type FormGroup,
 } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
+import { DatePickerModule } from 'primeng/datepicker';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
-import { DatePickerModule } from 'primeng/datepicker';
+import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
-import type { ChecklistOutput } from '@features/organization/features/checklists/models';
-import type { InspectionResult, InspectorType } from '@features/organization/features/inspections/models';
+import type {
+  InspectionResult,
+  InspectorType,
+} from '@features/organization/features/inspections/models';
 import type { InspectionFormData } from './inspection-form-data.type';
 import type { InspectionFormValues } from './inspection-form-values.type';
 
@@ -86,7 +89,9 @@ export class InspectionForm {
    *
    * @type {InputSignal<readonly EquipmentOutput[]>}
    */
-  public readonly equipments: InputSignal<readonly EquipmentOutput[]> = input<readonly EquipmentOutput[]>([]);
+  public readonly equipments: InputSignal<readonly EquipmentOutput[]> = input<
+    readonly EquipmentOutput[]
+  >([]);
 
   /**
    * Input facilities
@@ -100,7 +105,9 @@ export class InspectionForm {
    *
    * @type {InputSignal<readonly FacilityOutput[]>}
    */
-  public readonly facilities: InputSignal<readonly FacilityOutput[]> = input<readonly FacilityOutput[]>([]);
+  public readonly facilities: InputSignal<readonly FacilityOutput[]> = input<
+    readonly FacilityOutput[]
+  >([]);
 
   /**
    * Input checklists
@@ -114,7 +121,9 @@ export class InspectionForm {
    *
    * @type {InputSignal<readonly ChecklistOutput[]>}
    */
-  public readonly checklists: InputSignal<readonly ChecklistOutput[]> = input<readonly ChecklistOutput[]>([]);
+  public readonly checklists: InputSignal<readonly ChecklistOutput[]> = input<
+    readonly ChecklistOutput[]
+  >([]);
   //#endregion
 
   //#region Outputs
@@ -171,7 +180,9 @@ export class InspectionForm {
     this.formBuilder.group<InspectionFormData>({
       equipmentId: this.formBuilder.control<string>('', [Validators.required]),
       result: this.formBuilder.control<InspectionResult>('pass', [Validators.required]),
-      performedAt: this.formBuilder.control<string>(new Date().toISOString().slice(0, 16), [Validators.required]),
+      performedAt: this.formBuilder.control<string>(new Date().toISOString().slice(0, 16), [
+        Validators.required,
+      ]),
       inspectorType: this.formBuilder.control<InspectorType>('user', [Validators.required]),
       inspectorName: this.formBuilder.control<string>('', [
         Validators.required,

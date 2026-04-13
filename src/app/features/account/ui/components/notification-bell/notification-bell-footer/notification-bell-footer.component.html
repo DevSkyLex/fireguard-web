@@ -1,9 +1,10 @@
-<div class="flex items-center justify-between px-3 py-2 border-t border-surface-200 dark:border-surface-800">
+<div
+  class="flex items-center justify-between border-t border-surface-200 px-3 py-2 dark:border-surface-800"
+>
   @if (hasUnread()) {
     <p-button
       label="Mark all as read"
       [text]="true"
-
       severity="secondary"
       icon="pi pi-check-circle"
       (onClick)="markAllAsRead.emit()"
@@ -14,7 +15,6 @@
 
   <p-button
     label="See all"
-
     severity="secondary"
     [text]="true"
     icon="pi pi-arrow-right"

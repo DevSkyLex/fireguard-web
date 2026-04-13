@@ -1,7 +1,7 @@
 import type { HydraContext } from './hydra-context.type';
 import type { HydraItem } from './hydra-item.interface';
-import type { HydraView } from './hydra-view.interface';
 import type { HydraSearch } from './hydra-search.interface';
+import type { HydraView } from './hydra-view.interface';
 
 /**
  * Interface HydraCollection

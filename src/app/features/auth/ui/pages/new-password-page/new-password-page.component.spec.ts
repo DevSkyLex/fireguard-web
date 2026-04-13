@@ -1,14 +1,17 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { EMPTY } from 'rxjs';
 import { Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { NewPasswordPage } from './new-password-page.component';
+import { EMPTY } from 'rxjs';
 import { PasswordResetStore } from '@features/auth/state';
+import { NewPasswordPage } from './new-password-page.component';
 
 describe('NewPasswordPage', () => {
-  const setup = (options?: { status?: 'idle' | 'loading' | 'success' | 'error'; code?: string | null }) => {
+  const setup = (options?: {
+    status?: 'idle' | 'loading' | 'success' | 'error';
+    code?: string | null;
+  }) => {
     const mockPasswordResetStore = {
       isConfirming: signal(false),
       verificationCode: signal(options?.code ?? null),

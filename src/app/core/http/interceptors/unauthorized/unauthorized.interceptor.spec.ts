@@ -1,15 +1,8 @@
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
-import {
-  HttpClient,
-  provideHttpClient,
-  withInterceptors,
-} from '@angular/common/http';
-import { AUTH_SESSION } from '@features/auth/ports';
 import { Router } from '@angular/router';
+import { AUTH_SESSION } from '@features/auth/ports';
 import { unauthorizedInterceptor } from './unauthorized.interceptor';
 
 describe('unauthorizedInterceptor', () => {

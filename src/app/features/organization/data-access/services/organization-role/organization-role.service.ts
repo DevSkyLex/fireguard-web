@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type { HydraCollection } from '@core/models/api';
+import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
   OrganizationRoleOutput,
   CreateOrganizationRoleInput,
@@ -173,9 +173,7 @@ export class OrganizationRoleService extends HydraApiService {
     memberId: string,
     roleId: string,
   ): Observable<void> {
-    return this.delete(
-      `/api/organizations/${organizationId}/members/${memberId}/roles/${roleId}`,
-    );
+    return this.delete(`/api/organizations/${organizationId}/members/${memberId}/roles/${roleId}`);
   }
   //#endregion
 }

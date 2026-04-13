@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { HydraApiService } from '@core/services/hydra-api';
 import type { HydraCollection } from '@core/models/api';
+import type { MercureSubscriptionOutput } from '@core/models/mercure';
+import { HydraApiService } from '@core/services/hydra-api';
 import type {
   NotificationListOptions,
   NotificationOutput,
   NotificationTypeOutput,
 } from '@features/account/models';
-import type { MercureSubscriptionOutput } from '@core/models/mercure';
 
 /**
  * Service NotificationService

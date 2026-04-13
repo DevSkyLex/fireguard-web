@@ -1,3 +1,4 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,22 +8,20 @@ import {
   type ResourceRef,
   type Signal,
 } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { OrganizationService } from '@features/organization/data-access';
-import { ActiveOrganizationStore } from '@features/organization/state';
 import type {
   OrganizationDashboardOutput,
   OrganizationDashboardComparisonMetric,
   OrganizationDashboardComparisonMetricGroup,
 } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import { MetricCard } from '@shared/components/metric-card';
+import { OrganizationDashboardAssetGrowthTrend } from './organization-dashboard-asset-growth-trend';
+import { OrganizationDashboardInspectionQualityTrend } from './organization-dashboard-inspection-quality-trend';
 import { OrganizationDashboardNonConformitiesOpenedTrend } from './organization-dashboard-non-conformities-opened-trend/organization-dashboard-non-conformities-opened-trend.component';
 import { OrganizationDashboardNonConformitiesResolvedTrend } from './organization-dashboard-non-conformities-resolved-trend/organization-dashboard-non-conformities-resolved-trend.component';
 import { OrganizationDashboardOverviewTrend } from './organization-dashboard-overview-trend/organization-dashboard-overview-trend.component';
-import { OrganizationDashboardAssetGrowthTrend } from './organization-dashboard-asset-growth-trend';
-import { OrganizationDashboardInspectionQualityTrend } from './organization-dashboard-inspection-quality-trend';
-import { MetricCard } from '@shared/components/metric-card';
-
 
 /**
  * Type OrganizationDashboardKpiValue
@@ -211,8 +210,7 @@ export class OrganizationDashboard {
        *
        * @type {OrganizationDashboardOutput | undefined}
        */
-      const dashboard: OrganizationDashboardOutput | undefined =
-        this.dashboardResource.value();
+      const dashboard: OrganizationDashboardOutput | undefined = this.dashboardResource.value();
 
       // Return the value of the first entry in the facilities overview summary, or null if it's not present
       return dashboard?.overview?.['facilities']?.['summary']?.[0]?.['value'] ?? null;
@@ -245,8 +243,7 @@ export class OrganizationDashboard {
        *
        * @type {OrganizationDashboardOutput | undefined}
        */
-      const dashboard: OrganizationDashboardOutput | undefined =
-        this.dashboardResource.value();
+      const dashboard: OrganizationDashboardOutput | undefined = this.dashboardResource.value();
 
       // Return the value of the first entry in the members overview summary, or null if it's not present
       return dashboard?.overview?.['members']?.['summary']?.[0]?.['value'] ?? null;
@@ -279,8 +276,7 @@ export class OrganizationDashboard {
        *
        * @type {OrganizationDashboardOutput | undefined}
        */
-      const dashboard: OrganizationDashboardOutput | undefined =
-        this.dashboardResource.value();
+      const dashboard: OrganizationDashboardOutput | undefined = this.dashboardResource.value();
 
       // Return the value of the first entry in the equipment overview summary, or null if it's not present
       return dashboard?.overview?.['equipment']?.['summary']?.[0]?.['value'] ?? null;
@@ -313,8 +309,7 @@ export class OrganizationDashboard {
        *
        * @type {OrganizationDashboardOutput | undefined}
        */
-      const dashboard: OrganizationDashboardOutput | undefined =
-        this.dashboardResource.value();
+      const dashboard: OrganizationDashboardOutput | undefined = this.dashboardResource.value();
 
       // Return the value of the first entry in the inspections overview summary, or null if it's not present
       return dashboard?.overview?.['inspections']?.['summary']?.[0]?.['value'] ?? null;
@@ -348,8 +343,7 @@ export class OrganizationDashboard {
        *
        * @type {OrganizationDashboardOutput | undefined}
        */
-      const dashboard: OrganizationDashboardOutput | undefined =
-        this.dashboardResource.value();
+      const dashboard: OrganizationDashboardOutput | undefined = this.dashboardResource.value();
 
       /**
        * Constant metrics
@@ -416,8 +410,7 @@ export class OrganizationDashboard {
        *
        * @type {OrganizationDashboardOutput | undefined}
        */
-      const dashboard: OrganizationDashboardOutput | undefined =
-        this.dashboardResource.value();
+      const dashboard: OrganizationDashboardOutput | undefined = this.dashboardResource.value();
 
       /**
        * Constant metrics
@@ -452,7 +445,10 @@ export class OrganizationDashboard {
       // If the entry is not found, return null to indicate that the comparison delta cannot be computed
       if (!entry) return null;
 
-      return { value: entry['value'], direction: entry['direction'] != null ? String(entry['direction']) : null };
+      return {
+        value: entry['value'],
+        direction: entry['direction'] != null ? String(entry['direction']) : null,
+      };
     });
 
   /**
@@ -483,8 +479,7 @@ export class OrganizationDashboard {
        *
        * @type {OrganizationDashboardOutput | undefined}
        */
-      const dashboard: OrganizationDashboardOutput | undefined =
-        this.dashboardResource.value();
+      const dashboard: OrganizationDashboardOutput | undefined = this.dashboardResource.value();
 
       /**
        * Constant metrics
@@ -519,7 +514,10 @@ export class OrganizationDashboard {
       // If the entry is not found, return null to indicate that the comparison delta cannot be computed
       if (!entry) return null;
 
-      return { value: entry['value'], direction: entry['direction'] != null ? String(entry['direction']) : null };
+      return {
+        value: entry['value'],
+        direction: entry['direction'] != null ? String(entry['direction']) : null,
+      };
     });
 
   /**
@@ -550,8 +548,7 @@ export class OrganizationDashboard {
        *
        * @type {OrganizationDashboardOutput | undefined}
        */
-      const dashboard: OrganizationDashboardOutput | undefined =
-        this.dashboardResource.value();
+      const dashboard: OrganizationDashboardOutput | undefined = this.dashboardResource.value();
 
       /**
        * Constant metrics
@@ -586,8 +583,10 @@ export class OrganizationDashboard {
       // If the entry is not found, return null to indicate that the comparison delta cannot be computed
       if (!entry) return null;
 
-      return { value: entry['value'], direction: entry['direction'] != null ? String(entry['direction']) : null };
+      return {
+        value: entry['value'],
+        direction: entry['direction'] != null ? String(entry['direction']) : null,
+      };
     });
   //#endregion
 }
-

@@ -9,11 +9,7 @@ describe('DashboardLayoutHeader', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [DashboardLayoutHeader],
-      providers: [
-        DashboardSidebarService,
-        BreadcrumbService,
-        provideRouter([]),
-      ],
+      providers: [DashboardSidebarService, BreadcrumbService, provideRouter([])],
     });
   });
 

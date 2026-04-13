@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { OrganizationSwitcherTrigger } from './organization-switcher-trigger.component';
 import type { OrganizationOutput } from '@features/organization/models';
+import { OrganizationSwitcherTrigger } from './organization-switcher-trigger.component';
 
 const MOCK_ORG = {
   id: 'org-1',

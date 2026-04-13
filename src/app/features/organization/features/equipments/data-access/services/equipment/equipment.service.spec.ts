@@ -1,9 +1,9 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 
-import { EquipmentService } from './equipment.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
+import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
 import type {
   EquipmentOutput,
   CreateEquipmentInput,
@@ -14,7 +14,7 @@ import type {
   EquipmentTagOutput,
   AddTagInput,
 } from '@features/organization/features/equipments/models';
-import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
+import { EquipmentService } from './equipment.service';
 
 describe('EquipmentService', () => {
   let service: EquipmentService;
@@ -329,7 +329,9 @@ describe('EquipmentService', () => {
         expect(result).toBeUndefined();
       });
 
-      const req = httpMock.expectOne(`${equipmentBaseUrl}/${equipmentId}/attachments/attach-uuid-1`);
+      const req = httpMock.expectOne(
+        `${equipmentBaseUrl}/${equipmentId}/attachments/attach-uuid-1`,
+      );
       expect(req.request.method).toBe('DELETE');
       expect(req.request.withCredentials).toBe(true);
       req.flush(null);

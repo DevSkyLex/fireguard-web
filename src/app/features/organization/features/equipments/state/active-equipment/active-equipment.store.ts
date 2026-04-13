@@ -1,19 +1,10 @@
 import { inject } from '@angular/core';
+import { computed } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import {
-  patchState,
-  signalStore,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { computed } from '@angular/core';
 import { Observable, pipe, switchMap, tap } from 'rxjs';
-import { EquipmentService } from '@features/organization/features/equipments/data-access';
-import type { EquipmentOutput } from '@features/organization/features/equipments/models';
-import type { ActiveEquipmentState } from './active-equipment-state.interface';
 import {
   errorCallState,
   idleCallState,
@@ -24,6 +15,9 @@ import {
   type CallState,
   type StoreError,
 } from '@core/state/request-state';
+import { EquipmentService } from '@features/organization/features/equipments/data-access';
+import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import type { ActiveEquipmentState } from './active-equipment-state.interface';
 import { activeEquipmentStoreEvents } from './active-equipment.events';
 
 //#region Initial State
@@ -105,9 +99,7 @@ export const ActiveEquipmentStore = signalStore(
      *
      * @type {boolean} True if the get operation is currently loading, false otherwise.
      */
-    isLoadingEquipment: computed<boolean>(
-      () => store.getCallState().status === 'pending',
-    ),
+    isLoadingEquipment: computed<boolean>(() => store.getCallState().status === 'pending'),
 
     /**
      * Property getError
@@ -139,104 +131,106 @@ export const ActiveEquipmentStore = signalStore(
    *
    * @returns {object} An object containing the methods to add to the store.
    */
-  withMethods((
-    store,
-    dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
-    equipmentService: EquipmentService = inject<EquipmentService>(EquipmentService),
-  ) => ({
-    /**
-     * Method setEquipment
-     * @method setEquipment
-     *
-     * @description
-     * Directly sets the selected equipment (e.g., resolved from route data
-     * by DashboardLayout after the resolver runs).
-     *
-     * @since 1.0.0
-     *
-     * @param {EquipmentOutput} equipment - Equipment to mark as active.
-     *
-     * @returns {void} No return value.
-     */
-    setEquipment(equipment: EquipmentOutput): void {
-      patchState(store, {
-        selectedEquipment: equipment,
-        getCallState: successCallState(equipment),
-      });
-    },
+  withMethods(
+    (
+      store,
+      dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
+      equipmentService: EquipmentService = inject<EquipmentService>(EquipmentService),
+    ) => ({
+      /**
+       * Method setEquipment
+       * @method setEquipment
+       *
+       * @description
+       * Directly sets the selected equipment (e.g., resolved from route data
+       * by DashboardLayout after the resolver runs).
+       *
+       * @since 1.0.0
+       *
+       * @param {EquipmentOutput} equipment - Equipment to mark as active.
+       *
+       * @returns {void} No return value.
+       */
+      setEquipment(equipment: EquipmentOutput): void {
+        patchState(store, {
+          selectedEquipment: equipment,
+          getCallState: successCallState(equipment),
+        });
+      },
 
-    /**
-     * Method resolveEquipment
-     * @method resolveEquipment
-     *
-     * @description
-     * Fetches a single equipment by organization ID and equipment ID and marks
-     * it as the active one. Returns an Observable so Angular route resolvers
-     * can await the result.
-     *
-     * @since 1.0.0
-     *
-     * @param {string} organizationId - Organization identifier.
-     * @param {string} equipmentId - Equipment identifier.
-     *
-     * @returns {Observable<EquipmentOutput>} Observable that emits the resolved
-     * equipment or an error if it fails.
-     */
-    resolveEquipment(organizationId: string, equipmentId: string): Observable<EquipmentOutput> {
-      patchState(store, { getCallState: pendingCallState() });
+      /**
+       * Method resolveEquipment
+       * @method resolveEquipment
+       *
+       * @description
+       * Fetches a single equipment by organization ID and equipment ID and marks
+       * it as the active one. Returns an Observable so Angular route resolvers
+       * can await the result.
+       *
+       * @since 1.0.0
+       *
+       * @param {string} organizationId - Organization identifier.
+       * @param {string} equipmentId - Equipment identifier.
+       *
+       * @returns {Observable<EquipmentOutput>} Observable that emits the resolved
+       * equipment or an error if it fails.
+       */
+      resolveEquipment(organizationId: string, equipmentId: string): Observable<EquipmentOutput> {
+        patchState(store, { getCallState: pendingCallState() });
 
-      return equipmentService.get(organizationId, equipmentId).pipe(
-        tap({
-          next: (equipment: EquipmentOutput): void => {
-            patchState(store, {
-              selectedEquipment: equipment,
-              getCallState: successCallState(equipment),
-            });
-          },
-          error: (error: unknown): void => {
-            const storeError: StoreError = toStoreError(error);
-            patchState(store, { getCallState: errorCallState(storeError) });
-            dispatcher.dispatch(
-              activeEquipmentStoreEvents.getFailed(
-                toStoreFailureEventPayload(storeError, 'Failed to load equipment'),
-              ),
-            );
-          },
-        }),
-      );
-    },
+        return equipmentService.get(organizationId, equipmentId).pipe(
+          tap({
+            next: (equipment: EquipmentOutput): void => {
+              patchState(store, {
+                selectedEquipment: equipment,
+                getCallState: successCallState(equipment),
+              });
+            },
+            error: (error: unknown): void => {
+              const storeError: StoreError = toStoreError(error);
+              patchState(store, { getCallState: errorCallState(storeError) });
+              dispatcher.dispatch(
+                activeEquipmentStoreEvents.getFailed(
+                  toStoreFailureEventPayload(storeError, 'Failed to load equipment'),
+                ),
+              );
+            },
+          }),
+        );
+      },
 
-    /**
-     * Method clearSelectedEquipment
-     * @method clearSelectedEquipment
-     *
-     * @description
-     * Clears the active equipment selection.
-     *
-     * @since 1.0.0
-     *
-     * @return {void} No return value.
-     */
-    clearSelectedEquipment(): void {
-      patchState(store, { selectedEquipment: null });
-    },
+      /**
+       * Method clearSelectedEquipment
+       * @method clearSelectedEquipment
+       *
+       * @description
+       * Clears the active equipment selection.
+       *
+       * @since 1.0.0
+       *
+       * @return {void} No return value.
+       */
+      clearSelectedEquipment(): void {
+        patchState(store, { selectedEquipment: null });
+      },
 
-    /**
-     * Method clear
-     * @method clear
-     *
-     * @description
-     * Resets the entire active-equipment state to idle.
-     * Should be called on logout.
-     *
-     * @since 1.0.0
-     *
-     * @returns {void} No return value.
-     */
-    clear(): void {
-      patchState(store, INITIAL_ACTIVE_EQUIPMENT_STATE);
-    },
-  })),
+      /**
+       * Method clear
+       * @method clear
+       *
+       * @description
+       * Resets the entire active-equipment state to idle.
+       * Should be called on logout.
+       *
+       * @since 1.0.0
+       *
+       * @returns {void} No return value.
+       */
+      clear(): void {
+        patchState(store, INITIAL_ACTIVE_EQUIPMENT_STATE);
+      },
+    }),
+  ),
   //#endregion
 );
 

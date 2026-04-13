@@ -7,21 +7,21 @@ import {
   type Signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { ChartModule } from 'primeng/chart';
-import { Menu, MenuModule } from 'primeng/menu';
-import { SkeletonModule } from 'primeng/skeleton';
-import { SelectModule } from 'primeng/select';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
-import { DatePickerModule } from 'primeng/datepicker';
-import { ToggleButtonModule } from 'primeng/togglebutton';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
-import { TrendCard } from '@shared/components/trend-card';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import { ButtonModule } from 'primeng/button';
+import { ChartModule } from 'primeng/chart';
+import { DatePickerModule } from 'primeng/datepicker';
+import { InputGroupModule } from 'primeng/inputgroup';
+import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
+import { Menu, MenuModule } from 'primeng/menu';
+import { SelectModule } from 'primeng/select';
+import { SkeletonModule } from 'primeng/skeleton';
+import { ToggleButtonModule } from 'primeng/togglebutton';
 import type { OrganizationOutput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
 import { OrganizationDashboardNonConformitiesOpenedStore } from '@features/organization/state/organization-dashboard';
+import { TrendCard } from '@shared/components/trend-card';
 
 /**
  * Component OrganizationDashboardNonConformitiesOpenedTrend
@@ -39,7 +39,19 @@ import { OrganizationDashboardNonConformitiesOpenedStore } from '@features/organ
 @Component({
   selector: 'app-organization-dashboard-non-conformities-opened-trend',
   templateUrl: './organization-dashboard-non-conformities-opened-trend.component.html',
-  imports: [TrendCard, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule, InputGroupModule, InputGroupAddonModule, ToggleButtonModule, DatePickerModule],
+  imports: [
+    TrendCard,
+    FormsModule,
+    ButtonModule,
+    ChartModule,
+    MenuModule,
+    SkeletonModule,
+    SelectModule,
+    InputGroupModule,
+    InputGroupAddonModule,
+    ToggleButtonModule,
+    DatePickerModule,
+  ],
   providers: [OrganizationDashboardNonConformitiesOpenedStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -73,7 +85,9 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
    * @type {OrganizationDashboardNonConformitiesOpenedStore}
    */
   protected readonly dashboardStore: OrganizationDashboardNonConformitiesOpenedStore =
-    inject<OrganizationDashboardNonConformitiesOpenedStore>(OrganizationDashboardNonConformitiesOpenedStore);
+    inject<OrganizationDashboardNonConformitiesOpenedStore>(
+      OrganizationDashboardNonConformitiesOpenedStore,
+    );
 
   /**
    * Property today
@@ -124,9 +138,7 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
       {
         label: 'View all non-conformities',
         icon: PrimeIcons.LIST,
-        routerLink: organizationId
-          ? ['/organizations', organizationId, 'inspections']
-          : null,
+        routerLink: organizationId ? ['/organizations', organizationId, 'inspections'] : null,
       },
     ];
   });
@@ -150,4 +162,3 @@ export class OrganizationDashboardNonConformitiesOpenedTrend {
   }
   //#endregion
 }
-

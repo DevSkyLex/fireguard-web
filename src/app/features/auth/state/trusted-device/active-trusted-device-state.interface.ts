@@ -1,5 +1,5 @@
-import type { TrustDeviceOutput } from '@features/auth/models';
 import type { CallState } from '@core/state/request-state';
+import type { TrustDeviceOutput } from '@features/auth/models';
 
 /**
  * Interface ActiveTrustedDeviceState

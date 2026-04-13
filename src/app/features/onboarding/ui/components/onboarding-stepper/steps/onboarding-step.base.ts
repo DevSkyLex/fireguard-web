@@ -37,8 +37,7 @@ export abstract class OnboardingStepBase {
    *
    * @type {InputSignal<OnboardingStepOutput>}
    */
-  public readonly step: InputSignal<OnboardingStepOutput> =
-    input.required<OnboardingStepOutput>();
+  public readonly step: InputSignal<OnboardingStepOutput> = input.required<OnboardingStepOutput>();
 
   /**
    * Input stepIndex
@@ -53,8 +52,7 @@ export abstract class OnboardingStepBase {
    *
    * @type {InputSignal<number>}
    */
-  public readonly stepIndex: InputSignal<number> =
-    input.required<number>();
+  public readonly stepIndex: InputSignal<number> = input.required<number>();
 
   /**
    * Input totalSteps
@@ -69,8 +67,6 @@ export abstract class OnboardingStepBase {
    *
    * @type {InputSignal<number>}
    */
-  public readonly totalSteps: InputSignal<number> =
-    input.required<number>();
+  public readonly totalSteps: InputSignal<number> = input.required<number>();
   //#endregion
 }
-

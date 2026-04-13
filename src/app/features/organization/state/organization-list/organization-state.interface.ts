@@ -1,5 +1,5 @@
-import type { OrganizationOutput } from '@features/organization/models';
 import type { CallState } from '@core/state/request-state';
+import type { OrganizationOutput } from '@features/organization/models';
 
 /**
  * Interface OrganizationState

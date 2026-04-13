@@ -4,15 +4,20 @@
     [class.opacity-0]="hiding()"
   >
     <!-- Ambient glows -->
-    <div class="pointer-events-none absolute -right-24 top-16 h-72 w-72 rounded-full bg-primary-500/15 blur-3xl"></div>
-    <div class="pointer-events-none absolute -left-16 bottom-8 h-56 w-56 rounded-full bg-primary-500/5 blur-3xl"></div>
+    <div
+      class="pointer-events-none absolute top-16 -right-24 h-72 w-72 rounded-full bg-primary-500/15 blur-3xl"
+    ></div>
+    <div
+      class="pointer-events-none absolute bottom-8 -left-16 h-56 w-56 rounded-full bg-primary-500/5 blur-3xl"
+    ></div>
 
     <div class="relative flex flex-col items-center gap-6">
-      <span class="text-3xl font-bold tracking-tight text-surface-0">
-        FireGuard
-      </span>
+      <span class="text-3xl font-bold tracking-tight text-surface-0"> FireGuard </span>
       <p-progressSpinner
-        [pt]="{ root: { class: 'w-10 h-10' }, circle: { style: 'stroke: var(--p-primary-500); stroke-width: 4' } }"
+        [pt]="{
+          root: { class: 'w-10 h-10' },
+          circle: { style: 'stroke: var(--p-primary-500); stroke-width: 4' },
+        }"
       />
     </div>
   </div>

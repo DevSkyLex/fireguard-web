@@ -1,8 +1,14 @@
 import { inject } from '@angular/core';
-import { ActivatedRouteSnapshot, MaybeAsync, RedirectCommand, type ResolveFn, Router } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  MaybeAsync,
+  RedirectCommand,
+  type ResolveFn,
+  Router,
+} from '@angular/router';
 import { catchError, of } from 'rxjs';
-import { ActiveOrganizationStore } from '@features/organization/state';
 import type { OrganizationOutput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
  * Resolver organizationResolver
@@ -23,7 +29,7 @@ import type { OrganizationOutput } from '@features/organization/models';
  * @returns {Observable<OrganizationOutput>} An observable emitting the fetched organization, or EMPTY on failure.
  */
 export const organizationResolver: ResolveFn<OrganizationOutput> = (
-  route: ActivatedRouteSnapshot
+  route: ActivatedRouteSnapshot,
 ): MaybeAsync<OrganizationOutput | RedirectCommand> => {
   /**
    * Constant activeOrganizationStore
@@ -49,8 +55,7 @@ export const organizationResolver: ResolveFn<OrganizationOutput> = (
    *
    * @var {Router}
    */
-  const router: Router =
-    inject<Router>(Router);
+  const router: Router = inject<Router>(Router);
 
   // Extract organizationId from route parameters
   const organizationId: string | null = route.paramMap.get('organizationId');
@@ -59,7 +64,7 @@ export const organizationResolver: ResolveFn<OrganizationOutput> = (
   if (!organizationId) return new RedirectCommand(router.parseUrl('/'));
 
   // Attempt to resolve the organization, redirecting on failure
-  return activeOrganizationStore.resolveOrganization(organizationId).pipe(
-    catchError(() => of(new RedirectCommand(router.parseUrl('/')))),
-  );
+  return activeOrganizationStore
+    .resolveOrganization(organizationId)
+    .pipe(catchError(() => of(new RedirectCommand(router.parseUrl('/')))));
 };

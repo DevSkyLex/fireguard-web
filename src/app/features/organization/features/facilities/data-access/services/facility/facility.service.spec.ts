@@ -1,9 +1,9 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 
-import { FacilityService } from './facility.service';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
+import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
 import type {
   FacilityOutput,
   FacilityTypeOutput,
@@ -11,7 +11,7 @@ import type {
   UpdateFacilityInput,
   MoveFacilityInput,
 } from '@features/organization/features/facilities/models';
-import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
+import { FacilityService } from './facility.service';
 
 describe('FacilityService', () => {
   let service: FacilityService;
@@ -175,7 +175,10 @@ describe('FacilityService', () => {
       });
 
       const req = httpMock.expectOne(facilityBaseUrl);
-      req.flush({ status: 422, title: 'Unprocessable Entity' }, { status: 422, statusText: 'Unprocessable Entity' });
+      req.flush(
+        { status: 422, title: 'Unprocessable Entity' },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
     });
   });
 

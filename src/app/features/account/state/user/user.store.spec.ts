@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
 import { Dispatcher } from '@ngrx/signals/events';
+import { of, throwError } from 'rxjs';
 import { OAuth2Service } from '@features/auth/data-access';
-import { UserStore } from './user.store';
 import type { UserInfoOutput } from '@features/auth/models';
+import { UserStore } from './user.store';
 
 const flushEffects = async (): Promise<void> => {
   await Promise.resolve();

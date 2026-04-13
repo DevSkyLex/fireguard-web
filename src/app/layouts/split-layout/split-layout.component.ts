@@ -1,6 +1,11 @@
-import { ChangeDetectionStrategy, Component } from "@angular/core";
-import { RouterOutlet } from "@angular/router";
-import { SplitLayoutHeader, SplitLayoutContent, SplitLayoutFooter, SplitLayoutShowcase } from "@layouts/split-layout/partials";
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import {
+  SplitLayoutHeader,
+  SplitLayoutContent,
+  SplitLayoutFooter,
+  SplitLayoutShowcase,
+} from '@layouts/split-layout/partials';
 
 /**
  * Component SplitLayout
@@ -32,4 +37,3 @@ import { SplitLayoutHeader, SplitLayoutContent, SplitLayoutFooter, SplitLayoutSh
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SplitLayout {}
-

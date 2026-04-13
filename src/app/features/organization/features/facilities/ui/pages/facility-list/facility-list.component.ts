@@ -1,11 +1,18 @@
-import { ChangeDetectionStrategy, Component, inject, input, numberAttribute, type InputSignalWithTransform } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  numberAttribute,
+  type InputSignalWithTransform,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import type { RequestOptions } from '@core/services/hydra-api';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import { FacilityDataview } from '@features/organization/features/facilities/ui/dataviews';
+import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
  * Component FacilityListPage
@@ -43,8 +50,9 @@ export class FacilityListPage {
    *
    * @type {InputSignalWithTransform<number, unknown>}
    */
-  public readonly page: InputSignalWithTransform<number, unknown> =
-    input<number, unknown>(1, { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) });
+  public readonly page: InputSignalWithTransform<number, unknown> = input<number, unknown>(1, {
+    transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)),
+  });
   //#endregion
 
   //#region Properties
@@ -60,8 +68,7 @@ export class FacilityListPage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property route
@@ -76,8 +83,7 @@ export class FacilityListPage {
    *
    * @type {ActivatedRoute}
    */
-  private readonly route: ActivatedRoute =
-    inject<ActivatedRoute>(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property activeOrganizationStore
@@ -107,8 +113,7 @@ export class FacilityListPage {
    *
    * @type {FacilityStore}
    */
-  protected readonly store: FacilityStore =
-    inject<FacilityStore>(FacilityStore);
+  protected readonly store: FacilityStore = inject<FacilityStore>(FacilityStore);
   //#endregion
 
   //#region Methods
@@ -179,7 +184,8 @@ export class FacilityListPage {
    * @returns {void}
    */
   public onArchive(facility: FacilityOutput): void {
-    const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
     if (organizationId) {
       this.store.archive({ organizationId, facilityId: facility.id });
     }
@@ -200,7 +206,8 @@ export class FacilityListPage {
    * @returns {void}
    */
   public onLoad(options: RequestOptions): void {
-    const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
     if (organizationId) {
       this.store.loadFacilities({ organizationId, options });
     }
@@ -231,4 +238,3 @@ export class FacilityListPage {
   }
   //#endregion
 }
-

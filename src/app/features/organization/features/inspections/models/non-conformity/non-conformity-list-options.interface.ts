@@ -1,8 +1,5 @@
 import type { PaginationOptions } from '@core/models/api';
-import type {
-  NonConformitySeverity,
-  NonConformityStatus,
-} from './non-conformity-output.interface';
+import type { NonConformitySeverity, NonConformityStatus } from './non-conformity-output.interface';
 
 /**
  * Interface NonConformityListFilter

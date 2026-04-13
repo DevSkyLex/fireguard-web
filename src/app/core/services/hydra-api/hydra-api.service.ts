@@ -57,8 +57,7 @@ export abstract class HydraApiService {
    *
    * @type {HttpClient}
    */
-  protected readonly http: HttpClient =
-    inject<HttpClient>(HttpClient);
+  protected readonly http: HttpClient = inject<HttpClient>(HttpClient);
 
   /**
    * Property env
@@ -72,8 +71,7 @@ export abstract class HydraApiService {
    *
    * @type {EnvironmentConfig}
    */
-  protected readonly env: EnvironmentConfig =
-    inject<EnvironmentConfig>(ENV_CONFIG);
+  protected readonly env: EnvironmentConfig = inject<EnvironmentConfig>(ENV_CONFIG);
 
   /**
    * Property defaultHeaders
@@ -90,7 +88,7 @@ export abstract class HydraApiService {
    */
   protected readonly defaultHeaders: HttpHeaders = new HttpHeaders({
     'Content-Type': 'application/ld+json',
-    'Accept': 'application/ld+json',
+    Accept: 'application/ld+json',
   });
   //#endregion
 
@@ -313,8 +311,10 @@ export abstract class HydraApiService {
     body: Partial<TInput>,
     options?: ApiRequestOptions,
   ): Observable<TOutput> {
-    const headers: HttpHeaders = this.buildHeaders(options)
-      .set('Content-Type', 'application/merge-patch+json');
+    const headers: HttpHeaders = this.buildHeaders(options).set(
+      'Content-Type',
+      'application/merge-patch+json',
+    );
 
     return this.http
       .patch<TOutput>(this.buildUrl(endpoint), body, {
@@ -371,10 +371,7 @@ export abstract class HydraApiService {
    *
    * @returns {Observable<void>} Observable completing on success.
    */
-  protected delete(
-    endpoint: string,
-    options?: ApiRequestOptions,
-  ): Observable<void> {
+  protected delete(endpoint: string, options?: ApiRequestOptions): Observable<void> {
     return this.http
       .delete<void>(this.buildUrl(endpoint), {
         headers: this.buildHeaders(options),

@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { type Observable, catchError } from 'rxjs';
+import type { HydraCollection } from '@core/models/api';
 import { HydraApiService, type PaginationOptions } from '@core/services/hydra-api';
 import type { SessionOutput } from '@features/auth/models';
-import type { HydraCollection } from '@core/models/api';
 
 /**
  * Service SessionService
@@ -69,10 +69,7 @@ export class SessionService extends HydraApiService {
    * @returns {Observable<HydraCollection<SessionOutput>>} Observable emitting the sessions collection.
    */
   public list(options?: PaginationOptions): Observable<HydraCollection<SessionOutput>> {
-    return this.getCollection<SessionOutput>(
-      SessionService.BASE_PATH,
-      options,
-    );
+    return this.getCollection<SessionOutput>(SessionService.BASE_PATH, options);
   }
 
   /**
@@ -89,9 +86,7 @@ export class SessionService extends HydraApiService {
    * @returns {Observable<SessionOutput>} Observable emitting the session details.
    */
   public get(id: string): Observable<SessionOutput> {
-    return this.getOne<SessionOutput>(
-      `${SessionService.BASE_PATH}/${id}`,
-    );
+    return this.getOne<SessionOutput>(`${SessionService.BASE_PATH}/${id}`);
   }
 
   /**
@@ -109,9 +104,7 @@ export class SessionService extends HydraApiService {
    * @returns {Observable<void>} Observable completing on success.
    */
   public revoke(id: string): Observable<void> {
-    return this.delete(
-      `${SessionService.BASE_PATH}/${id}`,
-    );
+    return this.delete(`${SessionService.BASE_PATH}/${id}`);
   }
 
   /**

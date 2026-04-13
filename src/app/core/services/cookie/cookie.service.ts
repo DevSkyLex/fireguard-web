@@ -1,5 +1,5 @@
-import { isPlatformBrowser } from "@angular/common";
-import { inject, Injectable, PLATFORM_ID, REQUEST } from "@angular/core";
+import { isPlatformBrowser } from '@angular/common';
+import { inject, Injectable, PLATFORM_ID, REQUEST } from '@angular/core';
 
 export type CookieOptions<T> = {
   name: string;
@@ -10,7 +10,7 @@ export type CookieOptions<T> = {
   secure?: boolean;
   httpOnly?: boolean;
   sameSite?: string;
-}
+};
 
 /**
  * Service CookieService
@@ -40,8 +40,7 @@ export class CookieService {
    *
    * @type {Object}
    */
-  private readonly platformId: Object =
-    inject<Object>(PLATFORM_ID);
+  private readonly platformId: Object = inject<Object>(PLATFORM_ID);
 
   /**
    * Property request
@@ -56,8 +55,7 @@ export class CookieService {
    *
    * @type {Request | null}
    */
-  private readonly request: Request | null =
-    inject<Request>(REQUEST, { optional: true });
+  private readonly request: Request | null = inject<Request>(REQUEST, { optional: true });
   //#endregion
 
   //#region Methods
@@ -127,9 +125,9 @@ export class CookieService {
     if (!cookieHeader) return null;
 
     const cookies = cookieHeader.split(';');
-    const cookie = cookies.find(c => c.trim().startsWith(`${name}=`));
+    const cookie = cookies.find((c) => c.trim().startsWith(`${name}=`));
 
-    return cookie ? (cookie.split('=')[1]?.trim() as T) ?? null : null;
+    return cookie ? ((cookie.split('=')[1]?.trim() as T) ?? null) : null;
   }
 
   /**

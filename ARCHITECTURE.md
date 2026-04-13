@@ -147,13 +147,13 @@ Examples:
 
 The frontend is organized into five top-level responsibilities under `src/app`.
 
-| Layer | Owns | Must not own |
-| --- | --- | --- |
-| `app` shell | top-level composition via `app.routes.ts` and `app.config.ts` | feature business logic |
-| `core` | application-wide infrastructure | feature-specific workflows by default |
-| `layouts` | shell composition and layout-local behavior | business workflows, feature stores injected directly |
-| `features` | owned business workflows end-to-end | global infrastructure and generic primitives |
-| `shared` | generic, domain-agnostic primitives | business orchestration, feature state, API access |
+| Layer       | Owns                                                          | Must not own                                         |
+| ----------- | ------------------------------------------------------------- | ---------------------------------------------------- |
+| `app` shell | top-level composition via `app.routes.ts` and `app.config.ts` | feature business logic                               |
+| `core`      | application-wide infrastructure                               | feature-specific workflows by default                |
+| `layouts`   | shell composition and layout-local behavior                   | business workflows, feature stores injected directly |
+| `features`  | owned business workflows end-to-end                           | global infrastructure and generic primitives         |
+| `shared`    | generic, domain-agnostic primitives                           | business orchestration, feature state, API access    |
 
 ## 5. Dependency Direction
 
@@ -190,6 +190,7 @@ An **adapter** is the concrete class that fulfills a port. Adapters live in `cor
 Contracts live beside the concern that owns the behavior.
 
 Preferred locations:
+
 - `features/<feature>/ports/` for business capabilities published outside the owning feature,
 - `core/ports/<port-name>/` when app-wide infrastructure publishes a contract to `shared`, `layouts`, or the app shell,
 - a top-level application contracts area only in the rare case where no stable owner exists.
@@ -201,12 +202,14 @@ In this codebase, the default target is owner-local contracts. A top-level `src/
 Use a feature-owned port when the behavioral contract is owned by one feature but intentionally consumed outside that feature by a layout, `shared`, `core`, or an approved sibling feature.
 
 Good candidates:
+
 - `features/auth/ports/session/` — consumed by auth-owned HTTP interceptors and infrastructure seams,
 - `features/account/ports/user-identity/` — consumed by shell composition,
 - `features/account/ports/notification-center/` — consumed by the shell sidebar,
 - `features/organization/ports/organization-context/` — consumed by layout and sibling features.
 
 Naming convention:
+
 - `features/<feature>/ports/<port-name>/<port-name>.interface.ts`
 - `features/<feature>/ports/<port-name>/<port-name>.token.ts`
 - `features/<feature>/ports/<port-name>/index.ts`
@@ -236,18 +239,18 @@ If infrastructure in `core/` publishes behavior to external consumers, place the
 
 #### Current owner-local feature contracts
 
-| Token | Interface | Feature | Bound by | Consumers |
-| --- | --- | --- | --- | --- |
-| `AUTH_SESSION` | `AuthSessionPort` | `features/auth` | `features/auth` via `provideAuth()` | auth-owned HTTP interceptors, infrastructure seams |
-| `USER_IDENTITY_PORT` | `UserIdentityPort` | `features/account` | `features/account` via `provideAccount()` | layouts, shell widgets |
-| `NOTIFICATION_CENTER_PORT` | `NotificationCenterPort` | `features/account` | `features/account` via `provideAccount()` | layouts |
-| `ORGANIZATION_CONTEXT_PORT` | `OrganizationContextPort` | `features/organization` | `features/organization` via provider | layouts, sibling features |
+| Token                       | Interface                 | Feature                 | Bound by                                  | Consumers                                          |
+| --------------------------- | ------------------------- | ----------------------- | ----------------------------------------- | -------------------------------------------------- |
+| `AUTH_SESSION`              | `AuthSessionPort`         | `features/auth`         | `features/auth` via `provideAuth()`       | auth-owned HTTP interceptors, infrastructure seams |
+| `USER_IDENTITY_PORT`        | `UserIdentityPort`        | `features/account`      | `features/account` via `provideAccount()` | layouts, shell widgets                             |
+| `NOTIFICATION_CENTER_PORT`  | `NotificationCenterPort`  | `features/account`      | `features/account` via `provideAccount()` | layouts                                            |
+| `ORGANIZATION_CONTEXT_PORT` | `OrganizationContextPort` | `features/organization` | `features/organization` via provider      | layouts, sibling features                          |
 
 #### Current owner-local core contracts
 
-| Token | Interface | Concern | Bound by | Consumers |
-| --- | --- | --- | --- | --- |
-| `THEME_PORT` | `ThemePort` | `core/services/theme` | `provideTheme()` | shared UI |
+| Token                | Interface          | Concern                       | Bound by                | Consumers |
+| -------------------- | ------------------ | ----------------------------- | ----------------------- | --------- |
+| `THEME_PORT`         | `ThemePort`        | `core/services/theme`         | `provideTheme()`        | shared UI |
 | `SPLASH_SCREEN_PORT` | `SplashScreenPort` | `core/services/splash-screen` | `provideSplashScreen()` | shared UI |
 
 If a dependency direction feels awkward, the structure is probably wrong.
@@ -792,6 +795,7 @@ Store state interface types belong in `state/` next to the owning store or insid
 Do not centralize feature model catalogs under `core/models`.
 
 `core/models` is reserved for truly shared transport types:
+
 - Hydra envelope types (`HydraCollection`, `HydraItem`, `HydraView`),
 - Mercure subscription types,
 - `ApiError` (RFC 7807 problem details).
@@ -849,9 +853,15 @@ Every async action must expose explicit call state. The `Operation<TData, TError
 
 ```typescript
 import {
-  idleCallState, pendingCallState, successCallState, errorCallState,
-  toStoreError, toStoreFailureEventPayload,
-  type CallState, type StoreError, type StoreFailureEventPayload,
+  idleCallState,
+  pendingCallState,
+  successCallState,
+  errorCallState,
+  toStoreError,
+  toStoreFailureEventPayload,
+  type CallState,
+  type StoreError,
+  type StoreFailureEventPayload,
 } from '@core/state/request-state';
 ```
 
@@ -904,24 +914,32 @@ patchState(store, { createCallState: errorCallState(toStoreError(err)) });
 Use the custom NgRx SignalStore feature for simple single-resource or chart-data stores:
 
 ```typescript
-import { withQueryState, setPendingQuery, setSuccessQuery, setErrorQuery, toStoreError } from '@core/state/request-state';
+import {
+  withQueryState,
+  setPendingQuery,
+  setSuccessQuery,
+  setErrorQuery,
+  toStoreError,
+} from '@core/state/request-state';
 
 export const TrendStore = signalStore(
-  withQueryState<TrendResource>(),   // provides: isQueryLoading, isQueryLoaded, queryData, queryError
+  withQueryState<TrendResource>(), // provides: isQueryLoading, isQueryLoaded, queryData, queryError
   withState<TrendFilterState>(INITIAL_FILTER_STATE),
   withMethods((store) => ({
-    load: rxMethod<Params | undefined>(pipe(
-      switchMap((params) => {
-        if (!params) return EMPTY;
-        patchState(store, setPendingQuery());
-        return service.get(params).pipe(
-          tapResponse({
-            next: (data) => patchState(store, setSuccessQuery(data)),
-            error: (err)  => patchState(store, setErrorQuery(toStoreError(err))),
-          }),
-        );
-      }),
-    )),
+    load: rxMethod<Params | undefined>(
+      pipe(
+        switchMap((params) => {
+          if (!params) return EMPTY;
+          patchState(store, setPendingQuery());
+          return service.get(params).pipe(
+            tapResponse({
+              next: (data) => patchState(store, setSuccessQuery(data)),
+              error: (err) => patchState(store, setErrorQuery(toStoreError(err))),
+            }),
+          );
+        }),
+      ),
+    ),
   })),
 );
 ```
@@ -1488,12 +1506,12 @@ Every async action (API call, multi-step workflow) must expose state through `Op
 
 The four states:
 
-| State | Meaning | Constructor |
-|---|---|---|
-| `idle` | Nothing triggered yet. | `createIdleOperation()` |
-| `loading` | In-flight; may carry previous cached data. | `createLoadingOperation(previousData?)` |
-| `success` | Completed successfully with typed payload. | `createSuccessOperation(data)` |
-| `error` | Failed; normalized error attached, may carry previous data. | `createErrorOperation(error, previousData?)` |
+| State     | Meaning                                                     | Constructor                                  |
+| --------- | ----------------------------------------------------------- | -------------------------------------------- |
+| `idle`    | Nothing triggered yet.                                      | `createIdleOperation()`                      |
+| `loading` | In-flight; may carry previous cached data.                  | `createLoadingOperation(previousData?)`      |
+| `success` | Completed successfully with typed payload.                  | `createSuccessOperation(data)`               |
+| `error`   | Failed; normalized error attached, may carry previous data. | `createErrorOperation(error, previousData?)` |
 
 Error normalization is always done with `createOperationErrorFromUnknown(unknown)` which:
 
@@ -1507,11 +1525,11 @@ Never pass a raw `HttpErrorResponse` or `unknown` to `createErrorOperation`: alw
 
 ```typescript
 interface OperationError<TError = unknown> {
-  readonly error: TError;        // the normalized error object
-  readonly message: string;      // human-friendly message
-  readonly code?: string;        // machine code (e.g. status code or type URI)
-  readonly retryable: boolean;   // hint to the UI for showing a retry button
-  readonly timestamp: number;    // epoch ms
+  readonly error: TError; // the normalized error object
+  readonly message: string; // human-friendly message
+  readonly code?: string; // machine code (e.g. status code or type URI)
+  readonly retryable: boolean; // hint to the UI for showing a retry button
+  readonly timestamp: number; // epoch ms
 }
 ```
 
@@ -1537,22 +1555,18 @@ export const FeatureStore = signalStore(
   withComputed((store) => ({
     isLoading: computed(() => store.loadOperation().status === 'loading'),
     items: computed(() =>
-      isOperationSuccess(store.loadOperation())
-        ? store.loadOperation().data
-        : [],
+      isOperationSuccess(store.loadOperation()) ? store.loadOperation().data : [],
     ),
   })),
 
-  withMethods(
-    (
-      store,
-      service = inject(FeatureService),
-      dispatcher = inject(Dispatcher),
-    ) => ({
-      load: rxMethod<RequestOptions>(pipe(
-        tap(() => patchState(store, {
-          loadOperation: createLoadingOperation(store.loadOperation().data ?? []),
-        })),
+  withMethods((store, service = inject(FeatureService), dispatcher = inject(Dispatcher)) => ({
+    load: rxMethod<RequestOptions>(
+      pipe(
+        tap(() =>
+          patchState(store, {
+            loadOperation: createLoadingOperation(store.loadOperation().data ?? []),
+          }),
+        ),
         switchMap((options) =>
           service.getAll(options).pipe(
             tapResponse({
@@ -1570,9 +1584,9 @@ export const FeatureStore = signalStore(
             }),
           ),
         ),
-      )),
-    }),
-  ),
+      ),
+    ),
+  })),
 
   withHooks((store) => ({
     onInit(): void {
@@ -1584,13 +1598,13 @@ export const FeatureStore = signalStore(
 
 ### 18.3 Root-provided vs component-scoped stores
 
-| Criterion | Root-provided (`{ providedIn: 'root' }`) | Component-scoped (added to `providers:`) |
-|---|---|---|
-| State persists across navigation | Yes | No; destroyed with component |
-| Used by multiple unrelated features | Yes | No |
-| Data is user-session-tied and expensive to reload | Yes | Not recommended |
-| Data is route-specific and must reset | Not recommended | Yes |
-| Used only within one route subtree | Can use either | Prefer scoped |
+| Criterion                                         | Root-provided (`{ providedIn: 'root' }`) | Component-scoped (added to `providers:`) |
+| ------------------------------------------------- | ---------------------------------------- | ---------------------------------------- |
+| State persists across navigation                  | Yes                                      | No; destroyed with component             |
+| Used by multiple unrelated features               | Yes                                      | No                                       |
+| Data is user-session-tied and expensive to reload | Yes                                      | Not recommended                          |
+| Data is route-specific and must reset             | Not recommended                          | Yes                                      |
+| Used only within one route subtree                | Can use either                           | Prefer scoped                            |
 
 Do not use `{ providedIn: 'root' }` as a default for every store. Scoped stores are lower-risk and more predictable for route-specific data.
 

@@ -1,18 +1,9 @@
 import { inject } from '@angular/core';
-import { tapResponse } from '@ngrx/operators';
-import {
-  patchState,
-  signalStore,
-  withComputed,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
-import { Dispatcher } from '@ngrx/signals/events';
 import { computed } from '@angular/core';
+import { tapResponse } from '@ngrx/operators';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { Observable, tap } from 'rxjs';
-import { InspectionService } from '@features/organization/features/inspections/data-access';
-import type { InspectionOutput } from '@features/organization/features/inspections/models';
-import type { ActiveInspectionState } from './active-inspection-state.interface';
 import {
   errorCallState,
   idleCallState,
@@ -23,6 +14,9 @@ import {
   type CallState,
   type StoreError,
 } from '@core/state/request-state';
+import { InspectionService } from '@features/organization/features/inspections/data-access';
+import type { InspectionOutput } from '@features/organization/features/inspections/models';
+import type { ActiveInspectionState } from './active-inspection-state.interface';
 import { activeInspectionStoreEvents } from './active-inspection.events';
 
 //#region Initial State
@@ -103,9 +97,7 @@ export const ActiveInspectionStore = signalStore(
      *
      * @type {boolean}
      */
-    isLoadingInspection: computed<boolean>(
-      () => store.getCallState().status === 'pending',
-    ),
+    isLoadingInspection: computed<boolean>(() => store.getCallState().status === 'pending'),
 
     /**
      * Property getError
@@ -134,104 +126,109 @@ export const ActiveInspectionStore = signalStore(
    *
    * @returns {object} An object containing the methods to add to the store.
    */
-  withMethods((
-    store,
-    dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
-    inspectionService: InspectionService = inject<InspectionService>(InspectionService),
-  ) => ({
-    /**
-     * Method setInspection
-     * @method setInspection
-     *
-     * @description
-     * Directly sets the selected inspection (e.g., resolved from route data
-     * by DashboardLayout after the resolver runs).
-     *
-     * @since 1.0.0
-     *
-     * @param {InspectionOutput} inspection - Inspection to mark as active.
-     *
-     * @returns {void} No return value.
-     */
-    setInspection(inspection: InspectionOutput): void {
-      patchState(store, {
-        selectedInspection: inspection,
-        getCallState: successCallState(inspection),
-      });
-    },
+  withMethods(
+    (
+      store,
+      dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
+      inspectionService: InspectionService = inject<InspectionService>(InspectionService),
+    ) => ({
+      /**
+       * Method setInspection
+       * @method setInspection
+       *
+       * @description
+       * Directly sets the selected inspection (e.g., resolved from route data
+       * by DashboardLayout after the resolver runs).
+       *
+       * @since 1.0.0
+       *
+       * @param {InspectionOutput} inspection - Inspection to mark as active.
+       *
+       * @returns {void} No return value.
+       */
+      setInspection(inspection: InspectionOutput): void {
+        patchState(store, {
+          selectedInspection: inspection,
+          getCallState: successCallState(inspection),
+        });
+      },
 
-    /**
-     * Method resolveInspection
-     * @method resolveInspection
-     *
-     * @description
-     * Fetches a single inspection by organization ID and inspection ID and
-     * marks it as the active one. Returns an Observable so Angular route
-     * resolvers can await the result.
-     *
-     * @since 1.0.0
-     *
-     * @param {string} organizationId - Organization identifier.
-     * @param {string} inspectionId - Inspection identifier.
-     *
-     * @returns {Observable<InspectionOutput>} Observable that emits the resolved
-     * inspection or an error if it fails.
-     */
-    resolveInspection(organizationId: string, inspectionId: string): Observable<InspectionOutput> {
-      patchState(store, { getCallState: pendingCallState() });
+      /**
+       * Method resolveInspection
+       * @method resolveInspection
+       *
+       * @description
+       * Fetches a single inspection by organization ID and inspection ID and
+       * marks it as the active one. Returns an Observable so Angular route
+       * resolvers can await the result.
+       *
+       * @since 1.0.0
+       *
+       * @param {string} organizationId - Organization identifier.
+       * @param {string} inspectionId - Inspection identifier.
+       *
+       * @returns {Observable<InspectionOutput>} Observable that emits the resolved
+       * inspection or an error if it fails.
+       */
+      resolveInspection(
+        organizationId: string,
+        inspectionId: string,
+      ): Observable<InspectionOutput> {
+        patchState(store, { getCallState: pendingCallState() });
 
-      return inspectionService.get(organizationId, inspectionId).pipe(
-        tap({
-          next: (inspection: InspectionOutput): void => {
-            patchState(store, {
-              selectedInspection: inspection,
-              getCallState: successCallState(inspection),
-            });
-          },
-          error: (error: unknown): void => {
-            const storeError: StoreError = toStoreError(error);
-            patchState(store, { getCallState: errorCallState(storeError) });
-            dispatcher.dispatch(
-              activeInspectionStoreEvents.getFailed(
-                toStoreFailureEventPayload(storeError, 'Failed to load inspection'),
-              ),
-            );
-          },
-        }),
-      );
-    },
+        return inspectionService.get(organizationId, inspectionId).pipe(
+          tap({
+            next: (inspection: InspectionOutput): void => {
+              patchState(store, {
+                selectedInspection: inspection,
+                getCallState: successCallState(inspection),
+              });
+            },
+            error: (error: unknown): void => {
+              const storeError: StoreError = toStoreError(error);
+              patchState(store, { getCallState: errorCallState(storeError) });
+              dispatcher.dispatch(
+                activeInspectionStoreEvents.getFailed(
+                  toStoreFailureEventPayload(storeError, 'Failed to load inspection'),
+                ),
+              );
+            },
+          }),
+        );
+      },
 
-    /**
-     * Method clearSelectedInspection
-     * @method clearSelectedInspection
-     *
-     * @description
-     * Clears the active inspection selection.
-     *
-     * @since 1.0.0
-     *
-     * @return {void} No return value.
-     */
-    clearSelectedInspection(): void {
-      patchState(store, { selectedInspection: null });
-    },
+      /**
+       * Method clearSelectedInspection
+       * @method clearSelectedInspection
+       *
+       * @description
+       * Clears the active inspection selection.
+       *
+       * @since 1.0.0
+       *
+       * @return {void} No return value.
+       */
+      clearSelectedInspection(): void {
+        patchState(store, { selectedInspection: null });
+      },
 
-    /**
-     * Method clear
-     * @method clear
-     *
-     * @description
-     * Resets the entire active-inspection state to idle.
-     * Should be called on logout.
-     *
-     * @since 1.0.0
-     *
-     * @returns {void} No return value.
-     */
-    clear(): void {
-      patchState(store, INITIAL_ACTIVE_INSPECTION_STATE);
-    },
-  })),
+      /**
+       * Method clear
+       * @method clear
+       *
+       * @description
+       * Resets the entire active-inspection state to idle.
+       * Should be called on logout.
+       *
+       * @since 1.0.0
+       *
+       * @returns {void} No return value.
+       */
+      clear(): void {
+        patchState(store, INITIAL_ACTIVE_INSPECTION_STATE);
+      },
+    }),
+  ),
   //#endregion
 );
 

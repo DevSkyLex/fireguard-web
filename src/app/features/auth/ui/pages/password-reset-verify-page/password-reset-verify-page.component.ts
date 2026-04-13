@@ -1,17 +1,11 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  computed,
-  type Signal,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed, type Signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/auth/ui/forms';
-import { PasswordResetStore, passwordResetStoreEvents } from '@features/auth/state';
+import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import type { PasswordResetRequestOutput, PasswordResetResendOutput } from '@features/auth/models';
-import { Events } from '@ngrx/signals/events';
+import { PasswordResetStore, passwordResetStoreEvents } from '@features/auth/state';
+import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/auth/ui/forms';
 
 /**
  * Component PasswordResetVerifyPage
@@ -59,8 +53,7 @@ export class PasswordResetVerifyPage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property messageService
@@ -74,8 +67,7 @@ export class PasswordResetVerifyPage {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
 
   /**
    * Property events
@@ -89,8 +81,7 @@ export class PasswordResetVerifyPage {
    *
    * @type {Events}
    */
-  private readonly events: Events =
-    inject<Events>(Events);
+  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Computed loading
@@ -105,7 +96,7 @@ export class PasswordResetVerifyPage {
    * @type {Signal<boolean>}
    */
   protected readonly loading: Signal<boolean> = computed(() =>
-    this.passwordResetStore.isResending()
+    this.passwordResetStore.isResending(),
   );
 
   /**
@@ -121,7 +112,8 @@ export class PasswordResetVerifyPage {
    * @type {Signal<number | null>}
    */
   protected readonly resendIn: Signal<number | null> = computed(() => {
-    const currentRequest: PasswordResetRequestOutput | PasswordResetResendOutput | null = this.passwordResetStore.currentRequest();
+    const currentRequest: PasswordResetRequestOutput | PasswordResetResendOutput | null =
+      this.passwordResetStore.currentRequest();
     return currentRequest?.canResendIn ?? null;
   });
   //#endregion

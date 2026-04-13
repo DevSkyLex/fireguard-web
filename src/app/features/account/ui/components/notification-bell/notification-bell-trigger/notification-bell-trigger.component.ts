@@ -61,8 +61,7 @@ export class NotificationBellTrigger {
    *
    * @type {OutputEmitterRef<MouseEvent>}
    */
-  public readonly toggleMenu: OutputEmitterRef<MouseEvent> =
-    output<MouseEvent>();
+  public readonly toggleMenu: OutputEmitterRef<MouseEvent> = output<MouseEvent>();
   //#endregion
 
   //#region Methods

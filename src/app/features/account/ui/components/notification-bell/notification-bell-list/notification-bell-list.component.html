@@ -1,12 +1,11 @@
 <div class="max-h-80 overflow-y-auto">
-
   <!-- Loading skeletons -->
   @if (loading()) {
     <ul class="flex flex-col divide-y divide-surface-100 dark:divide-surface-800">
       @for (item of skeletonItems; track item) {
         <li class="flex gap-3 px-4 py-3">
           <p-skeleton shape="circle" size="1.75rem" class="shrink-0" />
-          <div class="flex-1 flex flex-col gap-1.5">
+          <div class="flex flex-1 flex-col gap-1.5">
             <p-skeleton width="65%" height="0.875rem" />
             <p-skeleton width="100%" height="0.75rem" />
             <p-skeleton width="40%" height="0.75rem" />
@@ -18,8 +17,10 @@
 
   <!-- Empty state -->
   @if (isEmpty()) {
-    <div class="flex flex-col items-center gap-3 py-10 px-4 text-center">
-      <span class="flex items-center justify-center w-12 h-12 rounded-full bg-surface-100 dark:bg-surface-800">
+    <div class="flex flex-col items-center gap-3 px-4 py-10 text-center">
+      <span
+        class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800"
+      >
         <i class="pi pi-bell text-2xl text-surface-400"></i>
       </span>
       <p class="text-sm text-surface-500">No notifications yet</p>
@@ -40,19 +41,11 @@
     <!-- Loading more indicator -->
     @if (loadingMore()) {
       <div class="flex justify-center py-3">
-        <p-progressSpinner
-          [style]="{ width: '1.5rem', height: '1.5rem' }"
-          strokeWidth="4"
-        />
+        <p-progressSpinner [style]="{ width: '1.5rem', height: '1.5rem' }" strokeWidth="4" />
       </div>
     }
 
     <!-- Infinite scroll sentinel -->
-    <div
-      appInfiniteScroll
-      [disabled]="loading() || !hasMore()"
-      (scrolled)="loadMore.emit()"
-    ></div>
+    <div appInfiniteScroll [disabled]="loading() || !hasMore()" (scrolled)="loadMore.emit()"></div>
   }
-
 </div>

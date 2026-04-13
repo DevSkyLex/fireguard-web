@@ -1,3 +1,4 @@
+import { DatePipe, TitleCasePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -16,10 +17,9 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { DatePipe, TitleCasePipe } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { DataViewModule, type DataViewLazyLoadEvent } from 'primeng/dataview';
@@ -28,13 +28,13 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { SplitButtonModule } from 'primeng/splitbutton';
 import { SkeletonModule } from 'primeng/skeleton';
+import { SplitButtonModule } from 'primeng/splitbutton';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/services/hydra-api';
-import { MenuItem, PrimeIcons } from 'primeng/api';
+import type { FacilityOutput } from '@features/organization/features/facilities/models';
 
 /**
  * Component FacilityDataview
@@ -105,8 +105,7 @@ export class FacilityDataview implements OnInit {
    *
    * @type {InputSignal<number>}
    */
-  public readonly total: InputSignal<number> =
-    input.required<number>();
+  public readonly total: InputSignal<number> = input.required<number>();
 
   /**
    * Input loading
@@ -120,8 +119,7 @@ export class FacilityDataview implements OnInit {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly loading: InputSignal<boolean> =
-    input.required<boolean>();
+  public readonly loading: InputSignal<boolean> = input.required<boolean>();
 
   /**
    * Input initialPage
@@ -137,8 +135,10 @@ export class FacilityDataview implements OnInit {
    *
    * @type {InputSignalWithTransform<number, unknown>}
    */
-  public readonly initialPage: InputSignalWithTransform<number, unknown> =
-    input<number, unknown>(1, { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) });
+  public readonly initialPage: InputSignalWithTransform<number, unknown> = input<number, unknown>(
+    1,
+    { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) },
+  );
   //#endregion
 
   //#region Properties
@@ -214,8 +214,10 @@ export class FacilityDataview implements OnInit {
    *
    * @type {FormControl<'list' | 'grid'>}
    */
-  protected readonly layoutControl: FormControl<'list' | 'grid'> =
-    new FormControl<'list' | 'grid'>('list', { nonNullable: true });
+  protected readonly layoutControl: FormControl<'list' | 'grid'> = new FormControl<'list' | 'grid'>(
+    'list',
+    { nonNullable: true },
+  );
 
   /**
    * Property layout
@@ -229,10 +231,9 @@ export class FacilityDataview implements OnInit {
    *
    * @type {Signal<'list' | 'grid'>}
    */
-  protected readonly layout: Signal<'list' | 'grid'> = toSignal(
-    this.layoutControl.valueChanges,
-    { initialValue: 'list' },
-  );
+  protected readonly layout: Signal<'list' | 'grid'> = toSignal(this.layoutControl.valueChanges, {
+    initialValue: 'list',
+  });
 
   /**
    * Property layoutOptions
@@ -263,8 +264,9 @@ export class FacilityDataview implements OnInit {
    *
    * @type {FormControl<string>}
    */
-  protected readonly searchControl: FormControl<string> =
-    new FormControl<string>('', { nonNullable: true });
+  protected readonly searchControl: FormControl<string> = new FormControl<string>('', {
+    nonNullable: true,
+  });
 
   /**
    * Property toolbarActions
@@ -278,15 +280,13 @@ export class FacilityDataview implements OnInit {
    *
    * @type {Signal<MenuItem[]>}
    */
-  protected readonly toolbarActions: Signal<MenuItem[]> = computed(
-    (): MenuItem[] => [
-      {
-        label: 'Refresh',
-        icon: PrimeIcons.REFRESH,
-        command: (): void => this.onRefresh(),
-      },
-    ],
-  );
+  protected readonly toolbarActions: Signal<MenuItem[]> = computed((): MenuItem[] => [
+    {
+      label: 'Refresh',
+      icon: PrimeIcons.REFRESH,
+      command: (): void => this.onRefresh(),
+    },
+  ]);
 
   /**
    * Property lastLazyEvent
@@ -315,8 +315,7 @@ export class FacilityDataview implements OnInit {
    *
    * @type {Signal<Menu>}
    */
-  private readonly rowMenu: Signal<Menu> =
-    viewChild.required<Menu>('rowMenu');
+  private readonly rowMenu: Signal<Menu> = viewChild.required<Menu>('rowMenu');
 
   /**
    * Property selectedFacility
@@ -345,35 +344,32 @@ export class FacilityDataview implements OnInit {
    *
    * @type {Signal<MenuItem[]>}
    */
-  protected readonly rowMenuItems: Signal<MenuItem[]> = computed(
-    (): MenuItem[] => {
-      const facility: FacilityOutput | null =
-        this.selectedFacility();
+  protected readonly rowMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
+    const facility: FacilityOutput | null = this.selectedFacility();
 
-      if (!facility) return [];
+    if (!facility) return [];
 
-      return [
-        {
-          label: 'View',
-          icon: PrimeIcons.EYE,
-          command: (): void => this.view.emit(facility),
-        },
-        {
-          label: 'Edit',
-          icon: PrimeIcons.PENCIL,
-          command: (): void => this.edit.emit(facility),
-        },
-        { separator: true },
-        {
-          label: facility.status === 'active' ? 'Archive' : 'Archived',
-          icon: PrimeIcons.BOX,
-          styleClass: 'text-red-500',
-          disabled: facility.status === 'archived',
-          command: (): void => this.archive.emit(facility),
-        },
-      ];
-    },
-  );
+    return [
+      {
+        label: 'View',
+        icon: PrimeIcons.EYE,
+        command: (): void => this.view.emit(facility),
+      },
+      {
+        label: 'Edit',
+        icon: PrimeIcons.PENCIL,
+        command: (): void => this.edit.emit(facility),
+      },
+      { separator: true },
+      {
+        label: facility.status === 'active' ? 'Archive' : 'Archived',
+        icon: PrimeIcons.BOX,
+        styleClass: 'text-red-500',
+        disabled: facility.status === 'archived',
+        command: (): void => this.archive.emit(facility),
+      },
+    ];
+  });
 
   /**
    * Property facilityTypeIcons
@@ -409,8 +405,7 @@ export class FacilityDataview implements OnInit {
    *
    * @type {OutputEmitterRef<FacilityOutput>}
    */
-  public readonly view: OutputEmitterRef<FacilityOutput> =
-    output<FacilityOutput>();
+  public readonly view: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
 
   /**
    * Output edit
@@ -424,8 +419,7 @@ export class FacilityDataview implements OnInit {
    *
    * @type {OutputEmitterRef<FacilityOutput>}
    */
-  public readonly edit: OutputEmitterRef<FacilityOutput> =
-    output<FacilityOutput>();
+  public readonly edit: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
 
   /**
    * Output add
@@ -454,8 +448,7 @@ export class FacilityDataview implements OnInit {
    *
    * @type {OutputEmitterRef<FacilityOutput>}
    */
-  public readonly archive: OutputEmitterRef<FacilityOutput> =
-    output<FacilityOutput>();
+  public readonly archive: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
 
   /**
    * Output load
@@ -471,8 +464,7 @@ export class FacilityDataview implements OnInit {
    *
    * @type {OutputEmitterRef<RequestOptions>}
    */
-  public readonly load: OutputEmitterRef<RequestOptions> =
-    output<RequestOptions>();
+  public readonly load: OutputEmitterRef<RequestOptions> = output<RequestOptions>();
 
   /**
    * Output pageChange
@@ -488,8 +480,7 @@ export class FacilityDataview implements OnInit {
    *
    * @type {OutputEmitterRef<number>}
    */
-  public readonly pageChange: OutputEmitterRef<number> =
-    output<number>();
+  public readonly pageChange: OutputEmitterRef<number> = output<number>();
   //#endregion
 
   //#region Lifecycle
@@ -524,11 +515,7 @@ export class FacilityDataview implements OnInit {
    */
   public constructor() {
     this.searchControl.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntilDestroyed(),
-      )
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(() => this.reload());
 
     effect(() => {
@@ -613,10 +600,7 @@ export class FacilityDataview implements OnInit {
    *
    * @returns {void}
    */
-  public onItemMenuToggle(
-    event: MouseEvent,
-    facility: FacilityOutput,
-  ): void {
+  public onItemMenuToggle(event: MouseEvent, facility: FacilityOutput): void {
     this.selectedFacility.set(facility);
 
     const menu: Menu = this.rowMenu();
@@ -641,13 +625,13 @@ export class FacilityDataview implements OnInit {
       first: 0,
       rows: this.rows,
       sortField: '',
-      sortOrder: 1
+      sortOrder: 1,
     };
 
     this.onLazyLoad({
       ...event,
       first: 0,
-      rows: event.rows ?? this.rows
+      rows: event.rows ?? this.rows,
     });
   }
   //#endregion

@@ -1,5 +1,14 @@
-import { DestroyRef, inject, Injectable, PLATFORM_ID, signal, computed, type Signal, type WritableSignal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import {
+  DestroyRef,
+  inject,
+  Injectable,
+  PLATFORM_ID,
+  signal,
+  computed,
+  type Signal,
+  type WritableSignal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   NavigationCancel,
@@ -131,8 +140,7 @@ export class SplashScreenService {
     this.staticFallbackRemoved = true;
 
     requestAnimationFrame(() => {
-      const el: HTMLElement | null =
-        document.getElementById('static-splash');
+      const el: HTMLElement | null = document.getElementById('static-splash');
       el?.remove();
     });
   }

@@ -1,8 +1,9 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-6 w-full">
-
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-6">
   <!-- Equipment -->
   <div class="flex flex-col gap-2">
-    <label for="inspEquipment" class="text-sm font-medium text-surface-700 dark:text-surface-300">Equipment</label>
+    <label for="inspEquipment" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      >Equipment</label
+    >
     <p-select
       inputId="inspEquipment"
       formControlName="equipmentId"
@@ -24,7 +25,9 @@
 
   <!-- Result -->
   <div class="flex flex-col gap-2">
-    <label for="inspResult" class="text-sm font-medium text-surface-700 dark:text-surface-300">Result</label>
+    <label for="inspResult" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      >Result</label
+    >
     <p-select
       inputId="inspResult"
       formControlName="result"
@@ -40,7 +43,9 @@
 
   <!-- Performed At -->
   <div class="flex flex-col gap-2">
-    <label for="performedAt" class="text-sm font-medium text-surface-700 dark:text-surface-300">Inspection date</label>
+    <label for="performedAt" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      >Inspection date</label
+    >
     @defer (on immediate) {
       <p-datepicker
         inputId="performedAt"
@@ -57,7 +62,9 @@
 
   <!-- Inspector Type -->
   <div class="flex flex-col gap-2">
-    <label for="inspectorType" class="text-sm font-medium text-surface-700 dark:text-surface-300">Inspector type</label>
+    <label for="inspectorType" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      >Inspector type</label
+    >
     <p-select
       inputId="inspectorType"
       formControlName="inspectorType"
@@ -70,7 +77,9 @@
 
   <!-- Inspector Name -->
   <div class="flex flex-col gap-2">
-    <label for="inspectorName" class="text-sm font-medium text-surface-700 dark:text-surface-300">Inspector name</label>
+    <label for="inspectorName" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      >Inspector name</label
+    >
     <input
       pInputText
       id="inspectorName"

@@ -1,11 +1,11 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { EMPTY } from 'rxjs';
 import { Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { ForgotPasswordPage } from './forgot-password-page.component';
+import { EMPTY } from 'rxjs';
 import { PasswordResetStore } from '@features/auth/state';
+import { ForgotPasswordPage } from './forgot-password-page.component';
 
 describe('ForgotPasswordPage', () => {
   const setup = (options?: { challengeToken?: string | null }) => {
@@ -18,7 +18,7 @@ describe('ForgotPasswordPage', () => {
           ? {
               challengeToken: options.challengeToken,
             }
-          : null
+          : null,
       ),
     };
     const mockRouter = { navigate: vi.fn().mockResolvedValue(true) };

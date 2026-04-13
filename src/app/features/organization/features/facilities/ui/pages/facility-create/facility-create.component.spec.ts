@@ -1,15 +1,15 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { EMPTY } from 'rxjs';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { FacilityCreatePage } from './facility-create.component';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import { FacilityStore } from '@features/organization/features/facilities/state';
+import { EMPTY } from 'rxjs';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
-import type { OrganizationOutput } from '@features/organization/models';
+import { FacilityStore } from '@features/organization/features/facilities/state';
 import type { FacilityFormValues } from '@features/organization/features/facilities/ui/forms';
+import type { OrganizationOutput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import { FacilityCreatePage } from './facility-create.component';
 
 const MOCK_ORG: OrganizationOutput = {
   id: 'org-1',
@@ -20,7 +20,10 @@ describe('FacilityCreatePage', () => {
   const mockFacilityStore = {
     facilities: signal<readonly FacilityOutput[]>([]),
     isCreating: signal<boolean>(false),
-    createOperation: signal<{ status: string; data: FacilityOutput | null }>({ status: 'idle', data: null }),
+    createOperation: signal<{ status: string; data: FacilityOutput | null }>({
+      status: 'idle',
+      data: null,
+    }),
     createError: signal(null),
     loadFacilities: vi.fn(),
     create: vi.fn(),
@@ -127,4 +130,3 @@ describe('FacilityCreatePage', () => {
     expect(mockFacilityStore.create).not.toHaveBeenCalled();
   });
 });
-

@@ -7,21 +7,21 @@ import {
   type Signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { ChartModule } from 'primeng/chart';
-import { Menu, MenuModule } from 'primeng/menu';
-import { SkeletonModule } from 'primeng/skeleton';
-import { SelectModule } from 'primeng/select';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
-import { DatePickerModule } from 'primeng/datepicker';
-import { ToggleButtonModule } from 'primeng/togglebutton';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
-import { TrendCard } from '@shared/components/trend-card';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import { ButtonModule } from 'primeng/button';
+import { ChartModule } from 'primeng/chart';
+import { DatePickerModule } from 'primeng/datepicker';
+import { InputGroupModule } from 'primeng/inputgroup';
+import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
+import { Menu, MenuModule } from 'primeng/menu';
+import { SelectModule } from 'primeng/select';
+import { SkeletonModule } from 'primeng/skeleton';
+import { ToggleButtonModule } from 'primeng/togglebutton';
 import type { OrganizationOutput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
 import { OrganizationDashboardFacilitiesCreatedStore } from '@features/organization/state/organization-dashboard';
+import { TrendCard } from '@shared/components/trend-card';
 
 /**
  * Component OrganizationDashboardFacilitiesCreatedTrend
@@ -39,7 +39,19 @@ import { OrganizationDashboardFacilitiesCreatedStore } from '@features/organizat
 @Component({
   selector: 'app-organization-dashboard-facilities-created-trend',
   templateUrl: './organization-dashboard-facilities-created-trend.component.html',
-  imports: [TrendCard, FormsModule, ButtonModule, ChartModule, MenuModule, SkeletonModule, SelectModule, InputGroupModule, InputGroupAddonModule, ToggleButtonModule, DatePickerModule],
+  imports: [
+    TrendCard,
+    FormsModule,
+    ButtonModule,
+    ChartModule,
+    MenuModule,
+    SkeletonModule,
+    SelectModule,
+    InputGroupModule,
+    InputGroupAddonModule,
+    ToggleButtonModule,
+    DatePickerModule,
+  ],
   providers: [OrganizationDashboardFacilitiesCreatedStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -59,7 +71,8 @@ export class OrganizationDashboardFacilitiesCreatedTrend {
    *
    * @type {ActiveOrganizationStore}
    */
-  private readonly activeOrganizationStore: ActiveOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+  private readonly activeOrganizationStore: ActiveOrganizationStore =
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property dashboardStore
@@ -73,7 +86,10 @@ export class OrganizationDashboardFacilitiesCreatedTrend {
    *
    * @type {OrganizationDashboardFacilitiesCreatedStore}
    */
-  protected readonly dashboardStore: OrganizationDashboardFacilitiesCreatedStore = inject<OrganizationDashboardFacilitiesCreatedStore>(OrganizationDashboardFacilitiesCreatedStore);
+  protected readonly dashboardStore: OrganizationDashboardFacilitiesCreatedStore =
+    inject<OrganizationDashboardFacilitiesCreatedStore>(
+      OrganizationDashboardFacilitiesCreatedStore,
+    );
 
   /**
    * Property today
@@ -117,7 +133,8 @@ export class OrganizationDashboardFacilitiesCreatedTrend {
    * @type {Signal<MenuItem[]>}
    */
   protected readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>(() => {
-    const organization: OrganizationOutput | null = this.activeOrganizationStore.selectedOrganization();
+    const organization: OrganizationOutput | null =
+      this.activeOrganizationStore.selectedOrganization();
     const organizationId: string | null = organization ? organization.id : null;
     return [
       {

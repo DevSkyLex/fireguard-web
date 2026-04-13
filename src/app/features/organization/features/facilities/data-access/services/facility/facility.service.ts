@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type { HydraCollection, OptionOutput } from '@core/models/api';
+import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
   FacilityOutput,
   FacilityTypeOutput,
@@ -46,10 +46,7 @@ export class FacilityService extends HydraApiService {
    * @return {Observable<HydraCollection<FacilityTypeOutput>>} An observable emitting the facility types collection.
    */
   public listTypes(options?: RequestOptions): Observable<HydraCollection<FacilityTypeOutput>> {
-    return this.getCollection<FacilityTypeOutput>(
-      '/api/facilities/types',
-      options,
-    );
+    return this.getCollection<FacilityTypeOutput>('/api/facilities/types', options);
   }
 
   public listStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
@@ -97,10 +94,7 @@ export class FacilityService extends HydraApiService {
    *
    * @return {Observable<FacilityOutput>} An observable emitting the facility details.
    */
-  public get(
-    organizationId: string,
-    facilityId: string,
-  ): Observable<FacilityOutput> {
+  public get(organizationId: string, facilityId: string): Observable<FacilityOutput> {
     return this.getOne<FacilityOutput>(
       `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}`,
     );
@@ -122,10 +116,7 @@ export class FacilityService extends HydraApiService {
    *
    * @return {Observable<FacilityOutput>} An observable emitting the created facility details.
    */
-  public create(
-    organizationId: string,
-    input: CreateFacilityInput,
-  ): Observable<FacilityOutput> {
+  public create(organizationId: string, input: CreateFacilityInput): Observable<FacilityOutput> {
     return this.post<CreateFacilityInput, FacilityOutput>(
       `${FacilityService.BASE_PATH}/${organizationId}/facilities`,
       input,
@@ -176,10 +167,7 @@ export class FacilityService extends HydraApiService {
    *
    * @return {Observable<FacilityOutput>} An observable emitting the archived facility details.
    */
-  public archive(
-    organizationId: string,
-    facilityId: string,
-  ): Observable<FacilityOutput> {
+  public archive(organizationId: string, facilityId: string): Observable<FacilityOutput> {
     return this.postAction<FacilityOutput>(
       `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/archive`,
     );

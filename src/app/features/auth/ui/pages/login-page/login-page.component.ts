@@ -1,11 +1,18 @@
-import { Component, ChangeDetectionStrategy, inject, effect, computed, type Signal } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  effect,
+  computed,
+  type Signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterModule } from '@angular/router';
-import { LoginForm, type LoginFormValues } from '@features/auth/ui/forms';
-import { AuthStore, authStoreEvents } from '@features/auth/state';
-import { UserStore } from '@features/account/state';
-import { MessageService } from 'primeng/api';
 import { Events } from '@ngrx/signals/events';
+import { MessageService } from 'primeng/api';
+import { UserStore } from '@features/account/state';
+import { AuthStore, authStoreEvents } from '@features/auth/state';
+import { LoginForm, type LoginFormValues } from '@features/auth/ui/forms';
 
 /**
  * Component LoginPage
@@ -39,8 +46,7 @@ export class LoginPage {
    *
    * @type {AuthStore}
    */
-  protected readonly authStore: AuthStore =
-  inject<AuthStore>(AuthStore);
+  protected readonly authStore: AuthStore = inject<AuthStore>(AuthStore);
 
   /**
    * Property userStore
@@ -54,8 +60,7 @@ export class LoginPage {
    *
    * @type {UserStore}
    */
-  private readonly userStore: UserStore =
-  inject<UserStore>(UserStore);
+  private readonly userStore: UserStore = inject<UserStore>(UserStore);
 
   /**
    * Property messageService
@@ -69,8 +74,7 @@ export class LoginPage {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
 
   /**
    * Property events
@@ -98,8 +102,7 @@ export class LoginPage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Computed loading
@@ -113,9 +116,7 @@ export class LoginPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly loading: Signal<boolean> = computed(() =>
-    this.authStore.isLoggingIn()
-  );
+  protected readonly loading: Signal<boolean> = computed(() => this.authStore.isLoggingIn());
 
   //#endregion
 

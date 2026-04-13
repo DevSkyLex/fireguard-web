@@ -3,13 +3,19 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import { InspectionStore, inspectionStoreEvents } from '@features/organization/features/inspections/state';
+import { ChecklistStore } from '@features/organization/features/checklists/state';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import { FacilityStore } from '@features/organization/features/facilities/state';
-import { ChecklistStore } from '@features/organization/features/checklists/state';
 import type { CreateInspectionInput } from '@features/organization/features/inspections/models';
-import { InspectionForm, type InspectionFormValues } from '@features/organization/features/inspections/ui/forms';
+import {
+  InspectionStore,
+  inspectionStoreEvents,
+} from '@features/organization/features/inspections/state';
+import {
+  InspectionForm,
+  type InspectionFormValues,
+} from '@features/organization/features/inspections/ui/forms';
+import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
  * Component InspectionCreatePage
@@ -43,8 +49,7 @@ export class InspectionCreatePage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property route
@@ -55,8 +60,7 @@ export class InspectionCreatePage {
    *
    * @type {ActivatedRoute}
    */
-  private readonly route: ActivatedRoute =
-    inject<ActivatedRoute>(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property messageService
@@ -67,8 +71,7 @@ export class InspectionCreatePage {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
 
   /**
    * Property events
@@ -79,8 +82,7 @@ export class InspectionCreatePage {
    *
    * @type {Events}
    */
-  private readonly events: Events =
-    inject<Events>(Events);
+  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Property activeOrganizationStore
@@ -103,8 +105,7 @@ export class InspectionCreatePage {
    *
    * @type {InspectionStore}
    */
-  protected readonly store: InspectionStore =
-    inject<InspectionStore>(InspectionStore);
+  protected readonly store: InspectionStore = inject<InspectionStore>(InspectionStore);
 
   /**
    * Property equipmentStore
@@ -115,8 +116,7 @@ export class InspectionCreatePage {
    *
    * @type {EquipmentStore}
    */
-  protected readonly equipmentStore: EquipmentStore =
-    inject<EquipmentStore>(EquipmentStore);
+  protected readonly equipmentStore: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
 
   /**
    * Property facilityStore
@@ -127,8 +127,7 @@ export class InspectionCreatePage {
    *
    * @type {FacilityStore}
    */
-  protected readonly facilityStore: FacilityStore =
-    inject<FacilityStore>(FacilityStore);
+  protected readonly facilityStore: FacilityStore = inject<FacilityStore>(FacilityStore);
 
   /**
    * Property checklistStore
@@ -139,8 +138,7 @@ export class InspectionCreatePage {
    *
    * @type {ChecklistStore}
    */
-  protected readonly checklistStore: ChecklistStore =
-    inject<ChecklistStore>(ChecklistStore);
+  protected readonly checklistStore: ChecklistStore = inject<ChecklistStore>(ChecklistStore);
   //#endregion
 
   //#region Constructor
@@ -156,7 +154,8 @@ export class InspectionCreatePage {
    * @since 1.0.0
    */
   public constructor() {
-    const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
     if (organizationId) {
       this.equipmentStore.load({ organizationId, options: { itemsPerPage: 200 } });
       this.facilityStore.loadFacilities({ organizationId, options: { itemsPerPage: 200 } });
@@ -209,7 +208,8 @@ export class InspectionCreatePage {
    * @returns {void}
    */
   protected handleSubmit(values: InspectionFormValues): void {
-    const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
     if (!organizationId) return;
 
     const input: CreateInspectionInput = {
@@ -244,4 +244,3 @@ export class InspectionCreatePage {
   }
   //#endregion
 }
-

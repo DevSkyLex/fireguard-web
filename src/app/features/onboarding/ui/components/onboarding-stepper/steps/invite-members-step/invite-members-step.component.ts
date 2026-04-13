@@ -9,19 +9,16 @@ import {
   type WritableSignal,
 } from '@angular/core';
 
-import { forkJoin } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
+import { forkJoin } from 'rxjs';
 import { OnboardingStore } from '@features/onboarding/state';
-import { OrganizationRoleListStore } from '@features/organization/state';
+import { InviteMembersForm, type InviteMembersFormValues } from '@features/onboarding/ui/forms';
 import { OrganizationInvitationService } from '@features/organization/data-access';
 import type { OrganizationRoleOutput } from '@features/organization/models';
+import { OrganizationRoleListStore } from '@features/organization/state';
 import { OnboardingStepBase } from '../onboarding-step.base';
-import {
-  InviteMembersForm,
-  type InviteMembersFormValues,
-} from '@features/onboarding/ui/forms';
 
 /**
  * Component InviteMembersStep
@@ -53,8 +50,7 @@ export class InviteMembersStep extends OnboardingStepBase {
    *
    * @type {OnboardingStore}
    */
-  private readonly onboardingStore: OnboardingStore =
-    inject<OnboardingStore>(OnboardingStore);
+  private readonly onboardingStore: OnboardingStore = inject<OnboardingStore>(OnboardingStore);
 
   /**
    * Property roleListStore
@@ -89,8 +85,7 @@ export class InviteMembersStep extends OnboardingStepBase {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
   //#endregion
 
   //#region State
@@ -192,7 +187,10 @@ export class InviteMembersStep extends OnboardingStepBase {
    * @since 1.0.0
    */
   protected readonly cardPt: CardPassThroughOptions = {
-    root: { class: 'overflow-hidden border border-surface-200 bg-surface-0 shadow-none dark:border-surface-800 dark:bg-surface-950' },
+    root: {
+      class:
+        'overflow-hidden border border-surface-200 bg-surface-0 shadow-none dark:border-surface-800 dark:bg-surface-950',
+    },
     header: { class: 'p-0' },
     body: { class: 'p-0' },
     content: { class: 'p-0' },
@@ -242,8 +240,8 @@ export class InviteMembersStep extends OnboardingStepBase {
         this.organizationInvitationService.invite(organizationId, {
           email: v.email,
           roleIds: v.roleId ? [v.roleId] : undefined,
-        })
-      )
+        }),
+      ),
     ).subscribe({
       next: () => {
         this.isInviting.set(false);
@@ -251,9 +249,10 @@ export class InviteMembersStep extends OnboardingStepBase {
         this.messageService.add({
           severity: 'success',
           summary: count > 1 ? 'Invitations sent' : 'Invitation sent',
-          detail: count > 1
-            ? `${count} invitations have been sent.`
-            : `An invitation has been sent to ${values[0].email}.`,
+          detail:
+            count > 1
+              ? `${count} invitations have been sent.`
+              : `An invitation has been sent to ${values[0].email}.`,
           life: 4000,
         });
         this.handleComplete();
@@ -305,5 +304,3 @@ export class InviteMembersStep extends OnboardingStepBase {
   }
   //#endregion
 }
-
-

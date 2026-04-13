@@ -1,8 +1,8 @@
 import { inject } from '@angular/core';
 import { type CanActivateFn, GuardResult, MaybeAsync, Router } from '@angular/router';
 import { map, catchError, of } from 'rxjs';
-import { OrganizationService } from '@features/organization/data-access';
 import type { HydraCollection } from '@core/models/api';
+import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 
 /**
@@ -32,8 +32,7 @@ export const noOrganizationGuard: CanActivateFn = (): MaybeAsync<GuardResult> =>
    *
    * @var {OrganizationService}
    */
-  const organizationService: OrganizationService =
-    inject<OrganizationService>(OrganizationService);
+  const organizationService: OrganizationService = inject<OrganizationService>(OrganizationService);
 
   /**
    * Constant router
@@ -45,8 +44,7 @@ export const noOrganizationGuard: CanActivateFn = (): MaybeAsync<GuardResult> =>
    *
    * @var {Router}
    */
-  const router: Router =
-    inject<Router>(Router);
+  const router: Router = inject<Router>(Router);
 
   // Check if the user has any organizations by fetching a single item from the list.
   return organizationService.list({ page: 1, itemsPerPage: 1 }).pipe(

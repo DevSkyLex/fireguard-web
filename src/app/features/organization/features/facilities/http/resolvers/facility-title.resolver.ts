@@ -1,9 +1,9 @@
 import { inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import type { MaybeAsync, ResolveFn } from '@angular/router';
+import { filter, first, map, type Observable } from 'rxjs';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { ActiveFacilityStore } from '@features/organization/features/facilities/state';
-import { filter, first, map, type Observable } from 'rxjs';
 
 /**
  * Resolver facilityTitleResolver
@@ -31,8 +31,7 @@ export const facilityTitleResolver: ResolveFn<string> = (): MaybeAsync<string> =
    *
    * @var {ActiveFacilityStore}
    */
-  const activeFacilityStore: ActiveFacilityStore =
-    inject<ActiveFacilityStore>(ActiveFacilityStore);
+  const activeFacilityStore: ActiveFacilityStore = inject<ActiveFacilityStore>(ActiveFacilityStore);
 
   /**
    * Constant facility

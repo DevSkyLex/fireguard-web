@@ -18,13 +18,13 @@ import {
   type FormGroup,
   Validators,
 } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
+import { CheckboxModule } from 'primeng/checkbox';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputOtpModule } from 'primeng/inputotp';
-import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import type { OtpVerificationFormData } from './otp-verification-form-data.type';
 import type { OtpVerificationFormValues } from './otp-verification-form-values.type';
 
@@ -93,8 +93,7 @@ export class OtpVerificationForm {
    *
    * @default false
    */
-  public readonly showTrustDevice: InputSignal<boolean> =
-    input<boolean>(false);
+  public readonly showTrustDevice: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property loading
@@ -111,8 +110,7 @@ export class OtpVerificationForm {
    *
    * @default false
    */
-  public readonly loading: InputSignal<boolean> =
-    input<boolean>(false);
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property resendIn
@@ -130,8 +128,7 @@ export class OtpVerificationForm {
    *
    * @default null
    */
-  public readonly resendIn: InputSignal<number | null> =
-    input<number | null>(null);
+  public readonly resendIn: InputSignal<number | null> = input<number | null>(null);
   //#endregion
 
   //#region Outputs
@@ -164,8 +161,7 @@ export class OtpVerificationForm {
    *
    * @type {OutputEmitterRef<void>}
    */
-  public readonly cancelled: OutputEmitterRef<void> =
-    output<void>();
+  public readonly cancelled: OutputEmitterRef<void> = output<void>();
 
   /**
    * Property resend
@@ -180,8 +176,7 @@ export class OtpVerificationForm {
    *
    * @type {OutputEmitterRef<void>}
    */
-  public readonly resend: OutputEmitterRef<void> =
-    output<void>();
+  public readonly resend: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
@@ -250,7 +245,7 @@ export class OtpVerificationForm {
    * @type {Signal<boolean>}
    */
   protected readonly canResend: Signal<boolean> = computed<boolean>(
-    () => this.resendCountdown() === 0
+    () => this.resendCountdown() === 0,
   );
   //#endregion
 
@@ -277,7 +272,7 @@ export class OtpVerificationForm {
     effect((onCleanup) => {
       if (this.resendCountdown() > 0) {
         const interval = setInterval(() => {
-          this.resendCountdown.update(value => Math.max(0, value - 1));
+          this.resendCountdown.update((value) => Math.max(0, value - 1));
         }, 1000);
 
         onCleanup(() => clearInterval(interval));

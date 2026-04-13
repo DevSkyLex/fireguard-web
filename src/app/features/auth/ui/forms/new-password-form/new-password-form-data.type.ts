@@ -13,4 +13,4 @@ import type { NewPasswordFormValues } from './new-password-form-values.type';
  */
 export type NewPasswordFormData = {
   [K in keyof NewPasswordFormValues]: FormControl<NewPasswordFormValues[K]>;
-} & { confirmPassword: FormControl<string>; };
+} & { confirmPassword: FormControl<string> };

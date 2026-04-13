@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { convertToParamMap, Router, UrlTree } from '@angular/router';
-import { passwordResetVerifyGuard } from './password-reset-verify.guard';
 import { PasswordResetStore } from '@features/auth/state';
+import { passwordResetVerifyGuard } from './password-reset-verify.guard';
 
 describe('passwordResetVerifyGuard', () => {
   let mockRouter: { createUrlTree: ReturnType<typeof vi.fn> };
@@ -17,7 +17,9 @@ describe('passwordResetVerifyGuard', () => {
       queryParamMap: convertToParamMap(queryToken ? { token: queryToken } : {}),
     } as any;
 
-    return TestBed.runInInjectionContext(() => passwordResetVerifyGuard(route, {} as any)) as boolean | UrlTree;
+    return TestBed.runInInjectionContext(() => passwordResetVerifyGuard(route, {} as any)) as
+      | boolean
+      | UrlTree;
   };
 
   beforeEach(() => {

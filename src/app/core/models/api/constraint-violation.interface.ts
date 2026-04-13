@@ -126,8 +126,5 @@ export function isConstraintViolation(error: unknown): error is ConstraintViolat
 
   const candidate: Record<string, unknown> = error as Record<string, unknown>;
 
-  return (
-    candidate['status'] === 422 &&
-    Array.isArray(candidate['violations'])
-  );
+  return candidate['status'] === 422 && Array.isArray(candidate['violations']);
 }

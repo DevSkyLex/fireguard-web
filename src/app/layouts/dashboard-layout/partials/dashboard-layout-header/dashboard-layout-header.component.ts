@@ -1,10 +1,10 @@
-import { Component, ChangeDetectionStrategy, inject } from "@angular/core";
-import { ButtonModule } from "primeng/button";
-import { DashboardSidebarService } from "@layouts/dashboard-layout/services";
-import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { ButtonModule } from 'primeng/button';
 import { NotificationBell } from '@features/account';
 import { OrganizationSwitcher } from '@features/organization';
+import { DashboardSidebarService } from '@layouts/dashboard-layout/services';
 import { ThemeSwitcher } from '@shared/components/theme-switcher';
+import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
 
 /**
  * Component DashboardLayoutHeader
@@ -33,7 +33,7 @@ import { ThemeSwitcher } from '@shared/components/theme-switcher';
     DashboardLayoutBreadcrumb,
     OrganizationSwitcher,
     ThemeSwitcher,
-    NotificationBell
+    NotificationBell,
   ],
   templateUrl: './dashboard-layout-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

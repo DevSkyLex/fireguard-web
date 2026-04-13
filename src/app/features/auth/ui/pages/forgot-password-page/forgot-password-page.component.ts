@@ -1,10 +1,10 @@
 import { Component, ChangeDetectionStrategy, inject, effect } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { ForgotPasswordForm, type ForgotPasswordFormValues } from '@features/auth/ui/forms';
-import { PasswordResetStore, passwordResetStoreEvents } from '@features/auth/state';
-import { MessageService } from 'primeng/api';
 import { Events } from '@ngrx/signals/events';
+import { MessageService } from 'primeng/api';
+import { PasswordResetStore, passwordResetStoreEvents } from '@features/auth/state';
+import { ForgotPasswordForm, type ForgotPasswordFormValues } from '@features/auth/ui/forms';
 
 /**
  * Component ForgotPasswordPage
@@ -51,8 +51,7 @@ export class ForgotPasswordPage {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
 
   /**
    * Property events
@@ -80,8 +79,7 @@ export class ForgotPasswordPage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   //#endregion
 
@@ -100,11 +98,13 @@ export class ForgotPasswordPage {
     effect(() => {
       const request = this.passwordResetStore.currentRequest();
       if (request?.challengeToken) {
-        this.router.navigate(['/auth/password-reset/verify'], {
-          queryParams: { token: request.challengeToken }
-        }).catch((error: unknown) => {
-          console.error('Navigation failed', error);
-        });
+        this.router
+          .navigate(['/auth/password-reset/verify'], {
+            queryParams: { token: request.challengeToken },
+          })
+          .catch((error: unknown) => {
+            console.error('Navigation failed', error);
+          });
       }
     });
 

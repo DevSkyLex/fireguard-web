@@ -77,4 +77,3 @@ export const passwordResetNewGuard: CanActivateFn = (): MaybeAsync<GuardResult> 
 
   return true;
 };
-

@@ -1,45 +1,48 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { SkeletonModule } from 'primeng/skeleton';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SkeletonModule } from 'primeng/skeleton';
+import type { NotificationOutput } from '@features/account/models';
 import { NotificationStore } from '@features/account/state';
 import { InfiniteScrollDirective } from '@shared/directives';
-import type { NotificationOutput } from '@features/account/models';
 
 const TYPE_ICONS: Record<string, string> = {
-  'user.created':         'pi-user-plus',
-  'user.updated':         'pi-user-edit',
-  'user.deleted':         'pi-user-minus',
-  'user.invited':         'pi-user-plus',
-  'login':                'pi-sign-in',
-  'login.failed':         'pi-lock',
-  'password.reset':       'pi-key',
-  'security':             'pi-shield',
+  'user.created': 'pi-user-plus',
+  'user.updated': 'pi-user-edit',
+  'user.deleted': 'pi-user-minus',
+  'user.invited': 'pi-user-plus',
+  login: 'pi-sign-in',
+  'login.failed': 'pi-lock',
+  'password.reset': 'pi-key',
+  security: 'pi-shield',
   'organization.created': 'pi-building',
   'organization.updated': 'pi-building',
   'organization.deleted': 'pi-trash',
-  'member.added':         'pi-users',
-  'member.removed':       'pi-users',
-  'maintenance':          'pi-wrench',
-  'update':               'pi-sync',
-  'upgrade':              'pi-arrow-circle-up',
-  'alert':                'pi-exclamation-triangle',
-  'error':                'pi-times-circle',
+  'member.added': 'pi-users',
+  'member.removed': 'pi-users',
+  maintenance: 'pi-wrench',
+  update: 'pi-sync',
+  upgrade: 'pi-arrow-circle-up',
+  alert: 'pi-exclamation-triangle',
+  error: 'pi-times-circle',
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
   organization: 'pi-sitemap',
-  system:       'pi-cog',
-  security:     'pi-shield',
-  user:         'pi-user',
+  system: 'pi-cog',
+  security: 'pi-shield',
+  user: 'pi-user',
 };
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  organization: { bg: 'bg-indigo-100 dark:bg-indigo-950', text: 'text-indigo-600 dark:text-indigo-400' },
-  system:       { bg: 'bg-amber-100 dark:bg-amber-950',   text: 'text-amber-600 dark:text-amber-400'   },
-  security:     { bg: 'bg-red-100 dark:bg-red-950',       text: 'text-red-600 dark:text-red-400'       },
-  user:         { bg: 'bg-sky-100 dark:bg-sky-950',       text: 'text-sky-600 dark:text-sky-400'       },
+  organization: {
+    bg: 'bg-indigo-100 dark:bg-indigo-950',
+    text: 'text-indigo-600 dark:text-indigo-400',
+  },
+  system: { bg: 'bg-amber-100 dark:bg-amber-950', text: 'text-amber-600 dark:text-amber-400' },
+  security: { bg: 'bg-red-100 dark:bg-red-950', text: 'text-red-600 dark:text-red-400' },
+  user: { bg: 'bg-sky-100 dark:bg-sky-950', text: 'text-sky-600 dark:text-sky-400' },
 };
 
 /**
@@ -57,13 +60,7 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
  */
 @Component({
   selector: 'app-notification-center-page',
-  imports: [
-    DatePipe,
-    ButtonModule,
-    SkeletonModule,
-    ProgressSpinnerModule,
-    InfiniteScrollDirective,
-  ],
+  imports: [DatePipe, ButtonModule, SkeletonModule, ProgressSpinnerModule, InfiniteScrollDirective],
   templateUrl: './notification-center-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

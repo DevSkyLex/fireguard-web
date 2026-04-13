@@ -29,4 +29,3 @@ describe('FocusedLayout', () => {
     expect(fixture.debugElement.query(By.css('router-outlet'))).not.toBeNull();
   });
 });
-

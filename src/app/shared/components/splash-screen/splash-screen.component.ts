@@ -77,8 +77,7 @@ export class SplashScreen {
    *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly rendered: WritableSignal<boolean> =
-    signal<boolean>(true);
+  protected readonly rendered: WritableSignal<boolean> = signal<boolean>(true);
 
   /**
    * Property hiding
@@ -93,8 +92,7 @@ export class SplashScreen {
    *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly hiding: WritableSignal<boolean> =
-    signal<boolean>(false);
+  protected readonly hiding: WritableSignal<boolean> = signal<boolean>(false);
   //#endregion
 
   //#region Constructor
@@ -103,7 +101,7 @@ export class SplashScreen {
    * @constructor
    *
    * @description
-    * Subscribes to the splash screen port visibility signal
+   * Subscribes to the splash screen port visibility signal
    * to manage the rendered and hiding states, triggering the
    * fade-out effect when the splash screen should be hidden.
    *

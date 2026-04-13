@@ -1,13 +1,30 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, type Signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  type Signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { SkeletonModule } from 'primeng/skeleton';
+import type {
+  FacilityOutput,
+  UpdateFacilityInput,
+} from '@features/organization/features/facilities/models';
+import {
+  ActiveFacilityStore,
+  FacilityStore,
+  facilityStoreEvents,
+} from '@features/organization/features/facilities/state';
+import {
+  FacilityForm,
+  type FacilityFormValues,
+} from '@features/organization/features/facilities/ui/forms';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { ActiveFacilityStore, FacilityStore, facilityStoreEvents } from '@features/organization/features/facilities/state';
-import type { FacilityOutput, UpdateFacilityInput } from '@features/organization/features/facilities/models';
-import { FacilityForm, type FacilityFormValues } from '@features/organization/features/facilities/ui/forms';
 
 /**
  * Component FacilityEditPage
@@ -45,8 +62,7 @@ export class FacilityEditPage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property route
@@ -61,8 +77,7 @@ export class FacilityEditPage {
    *
    * @type {ActivatedRoute}
    */
-  private readonly route: ActivatedRoute =
-    inject<ActivatedRoute>(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property messageService
@@ -77,8 +92,7 @@ export class FacilityEditPage {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
 
   /**
    * Property events
@@ -93,8 +107,7 @@ export class FacilityEditPage {
    *
    * @type {Events}
    */
-  private readonly events: Events =
-    inject<Events>(Events);
+  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Property activeOrganizationStore
@@ -141,8 +154,7 @@ export class FacilityEditPage {
    *
    * @type {FacilityStore}
    */
-  protected readonly store: FacilityStore =
-    inject<FacilityStore>(FacilityStore);
+  protected readonly store: FacilityStore = inject<FacilityStore>(FacilityStore);
 
   /**
    * Property facility
@@ -156,8 +168,9 @@ export class FacilityEditPage {
    *
    * @type {Signal<FacilityOutput | null>}
    */
-  protected readonly facility: Signal<FacilityOutput | null> =
-    computed<FacilityOutput | null>(() => this.activeFacilityStore.selectedFacility());
+  protected readonly facility: Signal<FacilityOutput | null> = computed<FacilityOutput | null>(() =>
+    this.activeFacilityStore.selectedFacility(),
+  );
 
   /**
    * Property isLoading
@@ -172,8 +185,9 @@ export class FacilityEditPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isLoading: Signal<boolean> =
-    computed<boolean>(() => this.activeFacilityStore.isLoadingFacility());
+  protected readonly isLoading: Signal<boolean> = computed<boolean>(() =>
+    this.activeFacilityStore.isLoadingFacility(),
+  );
   //#endregion
 
   //#region Constructor
@@ -234,7 +248,8 @@ export class FacilityEditPage {
    * @returns {void}
    */
   protected handleSubmit(values: FacilityFormValues): void {
-    const organizationId: string | undefined = this.activeOrganizationStore.selectedOrganization()?.id;
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
     const facilityId: string | undefined = this.facility()?.id;
     if (!organizationId || !facilityId) return;
 
@@ -264,4 +279,3 @@ export class FacilityEditPage {
   }
   //#endregion
 }
-

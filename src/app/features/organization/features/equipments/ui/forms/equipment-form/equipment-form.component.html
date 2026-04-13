@@ -1,8 +1,9 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-8 w-full">
-
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
   <!-- Equipment Type -->
   <div class="flex flex-col gap-2">
-    <label for="type" class="text-sm font-medium text-surface-700 dark:text-surface-300">Type</label>
+    <label for="type" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      >Type</label
+    >
     <p-iconfield>
       <p-inputicon class="pi pi-box" />
       <input
@@ -33,17 +34,11 @@
   <div class="flex flex-col gap-2">
     <label for="subType" class="text-sm font-medium text-surface-700 dark:text-surface-300">
       Sub-type
-      <span class="text-surface-400 font-normal">(optional)</span>
+      <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <p-iconfield>
       <p-inputicon class="pi pi-tag" />
-      <input
-        pInputText
-        id="subType"
-        formControlName="subType"
-        class="w-full"
-        placeholder="CO2"
-      />
+      <input pInputText id="subType" formControlName="subType" class="w-full" placeholder="CO2" />
     </p-iconfield>
   </div>
 
@@ -51,17 +46,11 @@
   <div class="flex flex-col gap-2">
     <label for="brand" class="text-sm font-medium text-surface-700 dark:text-surface-300">
       Brand
-      <span class="text-surface-400 font-normal">(optional)</span>
+      <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <p-iconfield>
       <p-inputicon class="pi pi-briefcase" />
-      <input
-        pInputText
-        id="brand"
-        formControlName="brand"
-        class="w-full"
-        placeholder="Kidde"
-      />
+      <input pInputText id="brand" formControlName="brand" class="w-full" placeholder="Kidde" />
     </p-iconfield>
   </div>
 
@@ -69,17 +58,11 @@
   <div class="flex flex-col gap-2">
     <label for="model" class="text-sm font-medium text-surface-700 dark:text-surface-300">
       Model
-      <span class="text-surface-400 font-normal">(optional)</span>
+      <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <p-iconfield>
       <p-inputicon class="pi pi-wrench" />
-      <input
-        pInputText
-        id="model"
-        formControlName="model"
-        class="w-full"
-        placeholder="Pro 210"
-      />
+      <input pInputText id="model" formControlName="model" class="w-full" placeholder="Pro 210" />
     </p-iconfield>
   </div>
 
@@ -87,7 +70,7 @@
   <div class="flex flex-col gap-2">
     <label for="serialNumber" class="text-sm font-medium text-surface-700 dark:text-surface-300">
       Serial Number
-      <span class="text-surface-400 font-normal">(optional)</span>
+      <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <p-iconfield>
       <p-inputicon class="pi pi-hashtag" />
@@ -105,7 +88,7 @@
   <div class="flex flex-col gap-2">
     <label for="locationLabel" class="text-sm font-medium text-surface-700 dark:text-surface-300">
       Location Label
-      <span class="text-surface-400 font-normal">(optional)</span>
+      <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <p-iconfield>
       <p-inputicon class="pi pi-map-marker" />
@@ -120,7 +103,7 @@
   </div>
 
   <!-- Actions -->
-  <div class="flex items-center gap-3 justify-end">
+  <div class="flex items-center justify-end gap-3">
     <p-button
       label="Cancel"
       severity="secondary"

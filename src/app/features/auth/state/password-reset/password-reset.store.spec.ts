@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
 import { Dispatcher } from '@ngrx/signals/events';
-import { PasswordResetStore } from './password-reset.store';
+import { of, throwError } from 'rxjs';
 import { PasswordResetService } from '@features/auth/data-access';
 import type {
   PasswordResetRequestInput,
@@ -9,6 +8,7 @@ import type {
   PasswordResetResendOutput,
   PasswordResetVerifyOutput,
 } from '@features/auth/models';
+import { PasswordResetStore } from './password-reset.store';
 
 const flushEffects = async (): Promise<void> => {
   await Promise.resolve();

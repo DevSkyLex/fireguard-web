@@ -1,16 +1,20 @@
-<div id="organization-list" class="grid grid-rows-[auto_1fr] h-full">
+<div id="organization-list" class="grid h-full grid-rows-[auto_1fr]">
   <!-- Page header -->
-  <section class="flex flex-col gap-2 p-8 bg-surface-50 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
+  <section
+    class="flex flex-col gap-2 border-b border-surface-200 bg-surface-50 p-8 dark:border-surface-800 dark:bg-surface-900"
+  >
     <div class="flex flex-col justify-between">
       <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">Organizations</h1>
-      <p class="text-sm text-surface-700 dark:text-surface-300">Select an organization to manage, or create a new one.</p>
+      <p class="text-sm text-surface-700 dark:text-surface-300">
+        Select an organization to manage, or create a new one.
+      </p>
     </div>
   </section>
 
   <!-- Page Content -->
   <section class="h-full min-h-0 overflow-hidden">
     <app-organization-dataview
-      class="h-full flex flex-col"
+      class="flex h-full flex-col"
       [organizations]="store.organizations()"
       [total]="store.totalOrganizations()"
       [loading]="store.isLoadingOrganizations()"

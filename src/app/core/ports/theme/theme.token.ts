@@ -11,5 +11,4 @@ import type { ThemePort } from './theme.interface';
  *
  * @type {InjectionToken<ThemePort>}
  */
-export const THEME_PORT: InjectionToken<ThemePort> =
-  new InjectionToken<ThemePort>('THEME_PORT');
+export const THEME_PORT: InjectionToken<ThemePort> = new InjectionToken<ThemePort>('THEME_PORT');

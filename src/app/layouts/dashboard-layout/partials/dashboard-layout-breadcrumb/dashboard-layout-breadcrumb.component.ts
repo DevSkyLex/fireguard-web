@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, Signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import type { MenuItem } from 'primeng/api';
 import { BreadcrumbModule, BreadcrumbPassThroughOptions } from 'primeng/breadcrumb';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
-import type { MenuItem } from 'primeng/api';
 import { BreadcrumbService } from '@core/services/breadcrumb';
 
 /**
@@ -116,7 +116,9 @@ export class DashboardLayoutBreadcrumb {
    * @type {object}
    */
   protected readonly breadcrumbPt: BreadcrumbPassThroughOptions = {
-    root: { class: 'text-sm text-surface-500 p-0 bg-surface-0 dark:bg-surface-950 transition-colors' },
+    root: {
+      class: 'text-sm text-surface-500 p-0 bg-surface-0 dark:bg-surface-950 transition-colors',
+    },
   };
   //#endregion
 }

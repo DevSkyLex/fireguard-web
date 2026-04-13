@@ -66,8 +66,7 @@ export class TrendCard {
    *
    * @type {InputSignal<string>}
    */
-  public readonly title: InputSignal<string> =
-    input.required<string>();
+  public readonly title: InputSignal<string> = input.required<string>();
 
   /**
    * Property description
@@ -81,8 +80,7 @@ export class TrendCard {
    *
    * @type {InputSignal<string | undefined>}
    */
-  public readonly description: InputSignal<string | undefined> =
-    input<string>();
+  public readonly description: InputSignal<string | undefined> = input<string>();
 
   /**
    * Property metrics
@@ -97,8 +95,9 @@ export class TrendCard {
    *
    * @type {InputSignal<readonly MetricSummary[]>}
    */
-  public readonly metrics: InputSignal<readonly MetricSummary[]> =
-    input<readonly MetricSummary[]>([]);
+  public readonly metrics: InputSignal<readonly MetricSummary[]> = input<readonly MetricSummary[]>(
+    [],
+  );
 
   /**
    * Property loading
@@ -113,8 +112,7 @@ export class TrendCard {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly loading: InputSignal<boolean> =
-    input<boolean>(false);
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property action
@@ -179,7 +177,8 @@ export class TrendCard {
    */
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
-      class: 'h-full flex flex-col gap-4 border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
+      class:
+        'h-full flex flex-col gap-4 border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
     },
     body: {
       class: 'p-0! flex flex-col flex-1',
@@ -191,7 +190,8 @@ export class TrendCard {
       class: 'px-4 pt-4',
     },
     footer: {
-      class: 'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 px-4 py-3 rounded-b-md',
+      class:
+        'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 px-4 py-3 rounded-b-md',
     },
   };
   //#endregion

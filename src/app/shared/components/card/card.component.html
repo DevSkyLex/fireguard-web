@@ -1,16 +1,16 @@
 <p-card class="h-full" [pt]="cardPt">
   <!-- Header -->
   <ng-template pTemplate="header">
-    <div class="flex justify-between items-center">
+    <div class="flex items-center justify-between">
       <section class="flex flex-col">
         <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-100">{{ title() }}</h2>
         @if (description(); as description) {
-         <p class="text-sm text-surface-500 dark:text-surface-300">{{ description }}</p>
+          <p class="text-sm text-surface-500 dark:text-surface-300">{{ description }}</p>
         }
       </section>
 
       @if (action(); as action) {
-        <ng-container *ngTemplateOutlet="action"/>
+        <ng-container *ngTemplateOutlet="action" />
       }
     </div>
   </ng-template>
@@ -18,14 +18,14 @@
   <!-- Content -->
   @if (content(); as content) {
     <ng-template pTemplate="content">
-      <ng-container *ngTemplateOutlet="content"/>
+      <ng-container *ngTemplateOutlet="content" />
     </ng-template>
   }
 
   <!-- Footer -->
   @if (footer(); as footer) {
     <ng-template pTemplate="footer">
-      <ng-container *ngTemplateOutlet="footer"/>
+      <ng-container *ngTemplateOutlet="footer" />
     </ng-template>
   }
 </p-card>

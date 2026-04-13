@@ -25,14 +25,8 @@ import {
  */
 @Component({
   selector: 'app-focused-layout',
-  imports: [
-    RouterOutlet,
-    FocusedLayoutHeader,
-    FocusedLayoutContent,
-    FocusedLayoutFooter,
-  ],
+  imports: [RouterOutlet, FocusedLayoutHeader, FocusedLayoutContent, FocusedLayoutFooter],
   templateUrl: './focused-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FocusedLayout {}
-

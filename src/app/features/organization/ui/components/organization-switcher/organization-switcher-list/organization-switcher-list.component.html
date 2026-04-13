@@ -5,16 +5,13 @@
       <button
         pRipple
         type="button"
-        class="flex items-center gap-2.5 w-full px-3 py-1.5 text-left transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
+        class="flex w-full items-center gap-2.5 px-3 py-1.5 text-left transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
         (click)="organizationChange.emit(org)"
       >
-        <p-avatar
-          [label]="orgInitials(org.name)"
-          [pt]="avatarPt(org)"
-        />
-        <span class="text-sm truncate flex-1" [class.font-medium]="isActive">{{ org.name }}</span>
+        <p-avatar [label]="orgInitials(org.name)" [pt]="avatarPt(org)" />
+        <span class="flex-1 truncate text-sm" [class.font-medium]="isActive">{{ org.name }}</span>
         @if (isActive) {
-          <i class="pi pi-check text-[11px] text-primary shrink-0"></i>
+          <i class="pi pi-check shrink-0 text-[11px] text-primary"></i>
         }
       </button>
     </li>

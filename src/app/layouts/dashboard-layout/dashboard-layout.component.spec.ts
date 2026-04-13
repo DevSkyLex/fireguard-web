@@ -38,11 +38,7 @@ const dispatchPointerEvent = (
   return event;
 };
 
-const dispatchKeydown = (
-  target: EventTarget,
-  key: string,
-  shiftKey: boolean = false,
-): boolean => {
+const dispatchKeydown = (target: EventTarget, key: string, shiftKey: boolean = false): boolean => {
   const event = new KeyboardEvent('keydown', {
     key,
     shiftKey,

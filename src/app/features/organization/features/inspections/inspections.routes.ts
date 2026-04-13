@@ -12,13 +12,19 @@ import type { Routes } from '@angular/router';
 export const INSPECTION_ROUTES: Routes = [
   {
     path: 'create',
-    loadComponent: () => import('./ui/pages/inspection-create/inspection-create.component').then((m) => m.InspectionCreatePage),
+    loadComponent: () =>
+      import('./ui/pages/inspection-create/inspection-create.component').then(
+        (m) => m.InspectionCreatePage,
+      ),
     title: 'Create Inspection',
   },
   {
     path: '',
     pathMatch: 'full',
-    loadComponent: () => import('./ui/pages/inspection-list/inspection-list.component').then((m) => m.InspectionListPage),
+    loadComponent: () =>
+      import('./ui/pages/inspection-list/inspection-list.component').then(
+        (m) => m.InspectionListPage,
+      ),
     title: 'Inspections',
     data: {
       breadcrumb: false,

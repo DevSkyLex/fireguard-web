@@ -56,7 +56,11 @@ export type {
 export type { AuditEventListOptions } from './organization-audit/audit-event-list-options.interface';
 export type { AuditEventOutput } from './organization-audit/audit-event-output.interface';
 export type { OrganizationCountryOutput } from './legal/organization-country-output.interface';
-export type { OrganizationLegalTypeOutput, OrganizationLegalFieldRequirement, OrganizationLegalProfileRequirements } from './legal/organization-legal-type-output.interface';
+export type {
+  OrganizationLegalTypeOutput,
+  OrganizationLegalFieldRequirement,
+  OrganizationLegalProfileRequirements,
+} from './legal/organization-legal-type-output.interface';
 export type { OrganizationPermissionOutput } from './role/organization-permission-output.interface';
 export type {
   OrganizationLegalFieldRequirementOutput,

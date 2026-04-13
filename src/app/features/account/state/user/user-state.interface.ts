@@ -1,0 +1,46 @@
+import type { UserInfoOutput } from '@features/auth/models';
+import type { CallState } from '@core/state/request-state';
+
+/**
+ * Interface UserState
+ * @interface UserState
+ *
+ * @description
+ * State interface for the user store.
+ * Manages current user profile information.
+ *
+ * @version 1.0.0
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
+export interface UserState {
+  //#region User Data
+  /**
+   * Property profile
+   * @readonly
+   *
+   * @description
+   * Current user profile information from OIDC userinfo endpoint.
+   * Null when not loaded or user is not authenticated.
+   *
+   * @since 1.0.0
+   *
+   * @type {UserInfoOutput | null}
+   */
+  readonly profile: UserInfoOutput | null;
+  //#endregion
+
+  //#region Call States
+  /**
+   * Property loadCallState
+   * @readonly
+   *
+   * @description
+   * Async call state for loading user profile.
+   *
+   * @since 1.0.0
+   *
+   * @type {CallState<UserInfoOutput>}
+   */
+  readonly loadCallState: CallState<UserInfoOutput>;
+  //#endregion
+}

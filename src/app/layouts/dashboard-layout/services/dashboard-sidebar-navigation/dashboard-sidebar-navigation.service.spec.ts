@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActiveOrganizationStore } from '@core/stores/organization';
+import { ActiveOrganizationStore } from '@features/organization/state';
 import { DashboardSidebarNavigationService } from './dashboard-sidebar-navigation.service';
 
 const MOCK_ORG = {

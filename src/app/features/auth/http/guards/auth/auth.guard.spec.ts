@@ -1,0 +1,61 @@
+import { TestBed } from '@angular/core/testing';
+import { PLATFORM_ID } from '@angular/core';
+import { Router, UrlTree } from '@angular/router';
+import { authGuard } from './auth.guard';
+import { AuthStore } from '@features/auth/state';
+
+describe('authGuard', () => {
+  let mockRouter: { createUrlTree: ReturnType<typeof vi.fn> };
+  let mockAuthStore: { isAuthenticated: ReturnType<typeof vi.fn> };
+  const loginUrlTree = {} as UrlTree;
+
+  function runGuard(): boolean | UrlTree {
+    return TestBed.runInInjectionContext(() => authGuard({} as any, {} as any)) as boolean | UrlTree;
+  }
+
+  beforeEach(() => {
+    mockRouter = {
+      createUrlTree: vi.fn().mockReturnValue(loginUrlTree),
+    };
+    mockAuthStore = {
+      isAuthenticated: vi.fn(),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        { provide: Router, useValue: mockRouter },
+        { provide: AuthStore, useValue: mockAuthStore },
+      ],
+    });
+  });
+
+  it('should allow access when user is authenticated', () => {
+    mockAuthStore.isAuthenticated.mockReturnValue(true);
+    const result = runGuard();
+    expect(result).toBe(true);
+  });
+
+  it('should redirect to /auth/login when not authenticated', () => {
+    mockAuthStore.isAuthenticated.mockReturnValue(false);
+    const result = runGuard();
+    expect(result).toBe(loginUrlTree);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login']);
+  });
+
+  it('should redirect to /auth/login during SSR when not authenticated', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: Router, useValue: mockRouter },
+        { provide: AuthStore, useValue: mockAuthStore },
+      ],
+    });
+
+    mockAuthStore.isAuthenticated.mockReturnValue(false);
+    const result = runGuard();
+    expect(result).toBe(loginUrlTree);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login']);
+  });
+});

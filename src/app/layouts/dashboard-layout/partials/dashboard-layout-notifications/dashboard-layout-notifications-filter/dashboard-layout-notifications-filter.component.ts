@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import type { NotificationFilter } from '@core/models/notification';
+import type { NotificationFilter } from '@features/account';
 
 interface TypeOption {
   label: string;

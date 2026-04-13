@@ -6,8 +6,7 @@ import { Ripple } from "primeng/ripple";
 import { DashboardSidebarResizeHandleDirective } from './directives';
 import { DashboardSidebarNavigationService, DashboardSidebarService } from './services';
 import { BreadcrumbService } from '@core/services/breadcrumb';
-import { UserStore } from '@core/stores/user';
-import { NotificationStore } from '@core/stores/notification';
+import { UserStore, NotificationStore } from '@features/account';
 
 /**
  * Component DashboardLayout

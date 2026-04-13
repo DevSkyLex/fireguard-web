@@ -7,7 +7,7 @@ import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
 } from '@layouts/dashboard-layout/services';
-import { OrganizationStore } from '@core/stores/organization';
+import { OrganizationStore } from '@features/organization/state';
 import { DashboardLayoutSidebarNavigation } from './dashboard-layout-sidebar-navigation.component';
 
 @Component({

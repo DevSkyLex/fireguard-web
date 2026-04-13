@@ -10,8 +10,8 @@ import {
 import { ButtonModule } from 'primeng/button';
 import { PopoverModule, PopoverPassThroughOptions } from 'primeng/popover';
 import { Popover } from 'primeng/popover';
-import { NotificationStore } from '@core/stores/notification';
-import type { NotificationFilter } from '@core/models/notification';
+import { NotificationStore } from '@features/account';
+import type { NotificationFilter } from '@features/account';
 import { DashboardLayoutNotificationsHeader } from './dashboard-layout-notifications-header/dashboard-layout-notifications-header.component';
 import { DashboardLayoutNotificationsFilter } from './dashboard-layout-notifications-filter/dashboard-layout-notifications-filter.component';
 import { DashboardLayoutNotificationsList } from './dashboard-layout-notifications-list/dashboard-layout-notifications-list.component';

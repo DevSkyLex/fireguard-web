@@ -1,4 +1,4 @@
-export * from './api';
+export * from './hydra-api';
 export * from './breadcrumb';
 export * from './cookie';
 export * from './splash-screen';

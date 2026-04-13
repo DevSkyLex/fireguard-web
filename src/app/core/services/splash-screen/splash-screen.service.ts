@@ -9,7 +9,7 @@ import {
   Router,
 } from '@angular/router';
 import { filter } from 'rxjs';
-import { AuthStore } from '@core/stores/auth';
+import { AUTH_SESSION, type AuthSessionPort } from '@core/tokens/auth-session.token';
 
 /**
  * Service SplashScreenService
@@ -40,7 +40,7 @@ export class SplashScreenService {
 
   //#region Dependencies
   private readonly router: Router = inject<Router>(Router);
-  private readonly authStore: AuthStore = inject<AuthStore>(AuthStore);
+  private readonly authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION);
   private readonly platformId: object = inject<object>(PLATFORM_ID);
   private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
   //#endregion
@@ -50,7 +50,7 @@ export class SplashScreenService {
    * True while auth has not yet initialized (first load).
    */
   private readonly booting: Signal<boolean> = computed<boolean>(
-    () => !this.authStore.initialized(),
+    () => !this.authSession.initialized(),
   );
 
   /**

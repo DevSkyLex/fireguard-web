@@ -1,0 +1,135 @@
+﻿<p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
+
+<app-trend-card title="Non-Conformities Resolved" description="Resolved non-conformities over time" [metrics]="dashboardStore.summaryMetrics()" [loading]="dashboardStore.isQueryLoading()">
+  <ng-template #action>
+    <div class="flex items-center gap-2">
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-calendar"></i>
+        </p-inputgroup-addon>
+        <p-select
+          [ngModel]="dashboardStore.selectedGranularity()"
+          (ngModelChange)="dashboardStore.setGranularity($event)"
+          [options]="dashboardStore.granularityOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [loading]="dashboardStore.isQueryLoading()"
+          size="small"
+        />
+      </p-inputgroup>
+
+      <p-button
+        icon="pi pi-ellipsis-v"
+        severity="secondary"
+        size="small"
+        outlined
+        (onClick)="onMenuToggle($event)"
+      />
+    </div>
+  </ng-template>
+
+  <ng-template #content>
+    <div class="h-72">
+      @if (dashboardStore.isQueryLoading() && !dashboardStore.queryData()) {
+        <p-skeleton
+          height="100%"
+          class="w-full"
+        />
+      } @else {
+        <p-chart
+          type="line"
+          [data]="dashboardStore.chartData()"
+          [options]="dashboardStore.chartOptions()"
+          class="block h-full"
+          [style]="{ height: '100%' }"
+          fluid
+        />
+      }
+    </div>
+  </ng-template>
+
+  <ng-template #footer>
+    <div class="flex flex-wrap items-center gap-2">
+      <p-select
+        [ngModel]="dashboardStore.selectedNonConformityStatus()"
+        (ngModelChange)="dashboardStore.setNonConformityStatus($event)"
+        [options]="dashboardStore.nonConformityStatusOptions()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Status"
+        [showClear]="true"
+        [loading]="dashboardStore.isQueryLoading()"
+        size="small"
+      >
+        <ng-template #item let-option>
+          <span class="flex items-center gap-2">
+            <i [class]="option.icon" [style.color]="option.color"></i>
+            {{ option.label }}
+          </span>
+        </ng-template>
+        <ng-template #selectedItem>
+          @let option = dashboardStore.selectedNonConformityStatusOption();
+          @if (option) {
+            <span class="flex items-center gap-2">
+              <i [class]="option.icon" [style.color]="option.color"></i>
+              {{ option.label }}
+            </span>
+          }
+        </ng-template>
+      </p-select>
+      <p-select
+        [ngModel]="dashboardStore.selectedNonConformitySeverity()"
+        (ngModelChange)="dashboardStore.setNonConformitySeverity($event)"
+        [options]="dashboardStore.nonConformitySeverityOptions()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Severity"
+        [showClear]="true"
+        [loading]="dashboardStore.isQueryLoading()"
+        size="small"
+      >
+        <ng-template #item let-option>
+          <span class="flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full shrink-0" [style.background-color]="option.color"></span>
+            {{ option.label }}
+          </span>
+        </ng-template>
+        <ng-template #selectedItem>
+          @let option = dashboardStore.selectedSeverityOption();
+          @if (option) {
+            <span class="flex items-center gap-2">
+              <span class="inline-block w-2 h-2 rounded-full shrink-0" [style.background-color]="option.color"></span>
+              {{ option.label }}
+            </span>
+          }
+        </ng-template>
+      </p-select>
+      @defer (on idle) {
+        <p-datepicker
+          selectionMode="range"
+          [ngModel]="dashboardStore.selectedDateRange()"
+          [ngModelOptions]="{ updateOn: 'blur' }"
+          (ngModelChange)="dashboardStore.setDateRange($event)"
+          [maxDate]="today"
+          placeholder="Select date range"
+          [showClear]="true"
+          [showTime]="true"
+          hourFormat="24"
+          size="small"
+          appendTo="body"
+          dateFormat="dd/mm/yy"
+          [disabled]="dashboardStore.isQueryLoading()"
+        />
+      }
+      <p-togglebutton
+        [ngModel]="dashboardStore.compareEnabled()"
+        (ngModelChange)="dashboardStore.setCompareEnabled($event)"
+        onLabel="Compare ON"
+        offLabel="Compare OFF"
+        size="small"
+        [disabled]="dashboardStore.isQueryLoading()"
+      />
+    </div>
+  </ng-template>
+</app-trend-card>
+

@@ -12,7 +12,7 @@ export const ACCOUNT_ROUTES: Routes = [
   {
     path: 'notifications',
     loadComponent: () =>
-      import('./pages/notification-center-page/notification-center-page.component').then(
+      import('./ui/pages/notification-center-page/notification-center-page.component').then(
         (m) => m.NotificationCenterPage,
       ),
     title: 'Notification Center',

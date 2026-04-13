@@ -1,6 +1,6 @@
 import type { Routes } from '@angular/router';
-import { authGuard } from '@core/guards/auth';
-import { onboardingGuard } from '@core/guards/onboarding';
+import { authGuard } from '@features/auth/http/guards';
+import { onboardingGuard } from '@features/onboarding/http/guards';
 import { SplitLayout } from './layouts/split-layout';
 import { FocusedLayout } from './layouts/focused-layout';
 import { DashboardLayout } from './layouts/dashboard-layout';

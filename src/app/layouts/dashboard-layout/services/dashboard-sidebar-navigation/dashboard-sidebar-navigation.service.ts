@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import type { MenuItem } from 'primeng/api';
-import { ActiveOrganizationStore } from '@core/stores/organization';
+import { ActiveOrganizationStore } from '@features/organization';
 
 /**
  * Service DashboardSidebarNavigationService

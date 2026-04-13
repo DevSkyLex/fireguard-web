@@ -15,7 +15,7 @@ export const ONBOARDING_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./pages/onboarding-page/onboarding-page.component').then(
+      import('./ui/pages/onboarding-page/onboarding-page.component').then(
         (module) => module.OnboardingPage,
       ),
     title: 'Organization Setup',

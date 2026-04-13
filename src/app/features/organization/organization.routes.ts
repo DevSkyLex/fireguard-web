@@ -1,6 +1,5 @@
 import type { Routes } from '@angular/router';
-import { organizationResolver } from '@core/resolvers';
-import { organizationTitleResolver } from '@core/resolvers/organization-title';
+import { organizationResolver, organizationTitleResolver } from './http/resolvers';
 
 /**
  * Constant ORGANIZATION_ROUTES
@@ -44,7 +43,7 @@ export const ORGANIZATION_ROUTES: Routes = [
       },
       {
         path: '',
-        loadComponent: () => import('./pages/organization-overview/organization-overview.component').then((m) => m.OrganizationOverviewPage),
+        loadComponent: () => import('./ui/pages/organization-overview/organization-overview.component').then((m) => m.OrganizationOverviewPage),
         title: organizationTitleResolver,
         data: {
           breadcrumb: false,
@@ -55,7 +54,7 @@ export const ORGANIZATION_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    loadComponent: () => import('./pages/organization-list/organization-list.component').then((m) => m.OrganizationListPage),
+    loadComponent: () => import('./ui/pages/organization-list/organization-list.component').then((m) => m.OrganizationListPage),
     title: 'Organizations',
     data: {
       breadcrumb: false,

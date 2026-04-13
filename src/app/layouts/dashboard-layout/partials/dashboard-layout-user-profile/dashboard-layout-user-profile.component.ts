@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { AuthStore, authStoreEvents } from '@core/stores/auth';
-import { UserStore } from '@core/stores/user';
+import { AuthStore, authStoreEvents } from '@features/auth';
+import { UserStore } from '@features/account';
 import { Events } from '@ngrx/signals/events';
 import type { MotionOptions } from '@primeuix/motion';
 import { AvatarModule } from 'primeng/avatar';

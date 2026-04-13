@@ -2,8 +2,8 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { AuthStore } from '@core/stores/auth';
-import { UserStore } from '@core/stores/user';
+import { AuthStore } from '@features/auth/state';
+import { UserStore } from '@features/account/state';
 import { Panel } from 'primeng/panel';
 import { DashboardLayoutUserProfile } from './dashboard-layout-user-profile.component';
 

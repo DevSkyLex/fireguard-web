@@ -10,9 +10,9 @@ import { MessageService } from 'primeng/api';
 import { FireguardTheme } from '@core/themes/fireguard.theme';
 import { provideTheme } from '@core/services/theme';
 import { provideSplashScreen } from '@core/services/splash-screen';
-import { providePageTitleStrategy } from '@core/strategies/page-title';
-import { authInterceptor, ssrCookieForwardInterceptor, unauthorizedInterceptor } from '@core/interceptors';
-import { provideAuth } from '@core/providers/auth';
+import { authInterceptor, ssrCookieForwardInterceptor, unauthorizedInterceptor } from '@core/http/interceptors';
+import { providePageTitleStrategy } from '@core/routing/strategies/page-title';
+import { provideAuth } from '@features/auth/providers';
 
 /**
  * Configuration appConfig

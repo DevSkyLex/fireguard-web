@@ -9,7 +9,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import type { NotificationOutput } from '@core/models/notification';
+import type { NotificationOutput } from '@features/account';
 
 const TYPE_ICONS: Record<string, string> = {
   // user

@@ -2,10 +2,10 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { AuthStore } from '@core/stores/auth';
-import { UserStore } from '@core/stores/user';
-import { ActiveOrganizationStore, OrganizationStore } from '@core/stores/organization';
-import { OrganizationSwitcher } from '@shared/components/organization-switcher';
+import { AuthStore } from '@features/auth/state';
+import { UserStore } from '@features/account/state';
+import { ActiveOrganizationStore, OrganizationStore } from '@features/organization/state';
+import { OrganizationSwitcher } from '@features/organization';
 import { DashboardLayout } from './dashboard-layout.component';
 import { DashboardSidebarService } from './services';
 

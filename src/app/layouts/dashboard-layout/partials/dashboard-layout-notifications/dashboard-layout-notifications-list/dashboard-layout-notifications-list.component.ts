@@ -13,7 +13,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { InfiniteScrollDirective } from '@shared/directives';
 import { DashboardLayoutNotificationsItem } from '../dashboard-layout-notifications-item/dashboard-layout-notifications-item.component';
-import type { NotificationOutput } from '@core/models/notification';
+import type { NotificationOutput } from '@features/account';
 
 @Component({
   selector: 'app-dashboard-layout-notifications-list',

@@ -12,13 +12,13 @@ import type { Routes } from '@angular/router';
 export const EQUIPMENT_ROUTES: Routes = [
   {
     path: 'create',
-    loadComponent: () => import('./pages/equipment-create/equipment-create.component').then((m) => m.EquipmentCreatePage),
+    loadComponent: () => import('./ui/pages/equipment-create/equipment-create.component').then((m) => m.EquipmentCreatePage),
     title: 'Create Equipment',
   },
   {
     path: '',
     pathMatch: 'full',
-    loadComponent: () => import('./pages/equipment-list/equipment-list.component').then((m) => m.EquipmentListPage),
+    loadComponent: () => import('./ui/pages/equipment-list/equipment-list.component').then((m) => m.EquipmentListPage),
     title: 'Equipments',
     data: {
       breadcrumb: false,

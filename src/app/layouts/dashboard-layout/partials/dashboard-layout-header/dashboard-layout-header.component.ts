@@ -2,8 +2,8 @@ import { Component, ChangeDetectionStrategy, inject } from "@angular/core";
 import { ButtonModule } from "primeng/button";
 import { DashboardSidebarService } from "@layouts/dashboard-layout/services";
 import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
-import { NotificationBell } from '@shared/components/notification-bell';
-import { OrganizationSwitcher } from '@shared/components/organization-switcher';
+import { NotificationBell } from '@features/account';
+import { OrganizationSwitcher } from '@features/organization';
 import { ThemeSwitcher } from '@shared/components/theme-switcher';
 
 /**

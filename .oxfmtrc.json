@@ -1,0 +1,49 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "singleQuote": true,
+  "semi": true,
+  "tabWidth": 2,
+  "proseWrap": "preserve",
+  "ignorePatterns": ["dist/**", "out-tsc/**", ".angular/**", "coverage/**", "tmp/**"],
+  "sortImports": {
+    "internalPattern": [
+      "@app",
+      "@app/**",
+      "@core",
+      "@core/**",
+      "@ports",
+      "@ports/**",
+      "@shared",
+      "@shared/**",
+      "@layouts",
+      "@layouts/**",
+      "@features",
+      "@features/**",
+      "@env",
+      "@env/**"
+    ],
+    "newlinesBetween": false,
+    "partitionByNewline": true
+  },
+  "sortTailwindcss": {
+    "stylesheet": "./src/styles.css"
+  },
+  "sortPackageJson": {
+    "sortScripts": false
+  },
+  "overrides": [
+    {
+      "files": ["**/*.html"],
+      "options": {
+        "htmlWhitespaceSensitivity": "css"
+      }
+    },
+    {
+      "files": ["**/*.md"],
+      "options": {
+        "proseWrap": "preserve"
+      }
+    }
+  ]
+}

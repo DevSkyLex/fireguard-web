@@ -1,12 +1,11 @@
-
 /* Tailwind */
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* Tailwind PrimeUI */
-@import "tailwindcss-primeui";
+@import 'tailwindcss-primeui';
 
 /* PrimeIcons */
-@import "primeicons/primeicons.css";
+@import 'primeicons/primeicons.css';
 
 @custom-variant dark (&:where(html[data-theme="dark"], html[data-theme="dark"] *));
 

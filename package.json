@@ -1,6 +1,7 @@
 {
   "name": "fireguard-sso-web",
   "version": "0.0.0",
+  "private": true,
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -9,12 +10,10 @@
     "test": "ng test",
     "lint": "oxlint . --tsconfig tsconfig.json --ignore-path .gitignore --vitest-plugin",
     "lint:fix": "oxlint . --tsconfig tsconfig.json --ignore-path .gitignore --vitest-plugin --fix",
-    "format": "oxfmt .",
-    "format:check": "oxfmt --check .",
+    "format": "oxfmt -c .oxfmtrc.json .",
+    "format:check": "oxfmt -c .oxfmtrc.json --check .",
     "serve:ssr:fireguard-sso-web": "node dist/fireguard-sso-web/server/server.mjs"
   },
-  "private": true,
-  "packageManager": "npm@11.4.1",
   "dependencies": {
     "@angular/animations": "^21.1.2",
     "@angular/cdk": "^21.1.6",
@@ -51,5 +50,6 @@
     "tailwindcss": "^4.1.12",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
-  }
+  },
+  "packageManager": "npm@11.4.1"
 }

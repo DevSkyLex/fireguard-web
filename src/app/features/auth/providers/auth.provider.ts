@@ -7,7 +7,7 @@ import {
   provideAppInitializer,
   REQUEST,
 } from '@angular/core';
-import { AUTH_SESSION } from '@core/tokens/auth-session.token';
+import { AUTH_SESSION } from '@features/auth/ports';
 import { AuthStore } from '@features/auth/state';
 import { UserStore } from '@features/account/state';
 

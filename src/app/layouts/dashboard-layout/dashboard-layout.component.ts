@@ -6,7 +6,12 @@ import { Ripple } from "primeng/ripple";
 import { DashboardSidebarResizeHandleDirective } from './directives';
 import { DashboardSidebarNavigationService, DashboardSidebarService } from './services';
 import { BreadcrumbService } from '@core/services/breadcrumb';
-import { UserStore, NotificationStore } from '@features/account';
+import {
+  NOTIFICATION_CENTER_PORT,
+  USER_IDENTITY_PORT,
+  type NotificationCenterPort,
+  type UserIdentityPort,
+} from '@features/account/ports';
 
 /**
  * Component DashboardLayout
@@ -53,19 +58,19 @@ export class DashboardLayout {
   protected readonly sidebarService: DashboardSidebarService =
     inject<DashboardSidebarService>(DashboardSidebarService);
 
-  protected readonly userStore: UserStore =
-    inject(UserStore);
+  protected readonly userIdentityPort: UserIdentityPort =
+    inject<UserIdentityPort>(USER_IDENTITY_PORT);
 
-  protected readonly notificationStore: NotificationStore =
-    inject(NotificationStore);
+  protected readonly notificationCenterPort: NotificationCenterPort =
+    inject<NotificationCenterPort>(NOTIFICATION_CENTER_PORT);
   //#endregion
 
   constructor() {
     effect(() => {
-      if (this.userStore.profile()) {
+      if (this.userIdentityPort.profile()) {
         untracked(() => {
-          this.notificationStore.load();
-          this.notificationStore.connectMercure();
+          this.notificationCenterPort.load();
+          this.notificationCenterPort.connectMercure();
         });
       }
     });

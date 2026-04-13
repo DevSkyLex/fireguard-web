@@ -8,7 +8,7 @@ import {
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { EMPTY, switchMap, timer } from 'rxjs';
-import { SPLASH_SCREEN_PORT, type SplashScreenPort } from '@ports/splash-screen';
+import { SPLASH_SCREEN_PORT, type SplashScreenPort } from '@core/ports/splash-screen';
 
 /**
  * Constant FADE_DURATION_MS

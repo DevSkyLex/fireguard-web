@@ -8,9 +8,9 @@ import {
   provideHttpClient,
   withInterceptors,
 } from '@angular/common/http';
+import { AUTH_SESSION } from '@features/auth/ports';
 import { Router } from '@angular/router';
 import { unauthorizedInterceptor } from './unauthorized.interceptor';
-import { AUTH_SESSION } from '@core/tokens/auth-session.token';
 
 describe('unauthorizedInterceptor', () => {
   let httpClient: HttpClient;

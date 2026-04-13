@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
-import { THEME_PORT, type ThemeMode, type ThemePort } from '@ports/theme';
+import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/ports/theme';
 
 /**
  * Component ThemeSwitcher

@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { SPLASH_SCREEN_PORT, type SplashScreenPort } from '@ports/splash-screen';
+import { SPLASH_SCREEN_PORT, type SplashScreenPort } from '@core/ports/splash-screen';
 import { SplashScreen } from './splash-screen.component';
 
 describe('SplashScreen', () => {

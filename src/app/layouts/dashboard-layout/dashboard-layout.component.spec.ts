@@ -2,11 +2,11 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { AuthStore } from '@features/auth/state';
-import { UserStore } from '@features/account/state';
-import { ActiveOrganizationStore, OrganizationStore } from '@features/organization/state';
-import { OrganizationSwitcher } from '@features/organization';
+import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
+import { AuthStore } from '@features/auth';
+import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { DashboardLayout } from './dashboard-layout.component';
+import { DashboardLayoutHeader } from './partials';
 import { DashboardSidebarService } from './services';
 
 type PointerEventOptions = {
@@ -83,6 +83,12 @@ describe('DashboardLayout', () => {
     displayName: signal<string | null>('Fireguard User'),
     profile: signal<{ email?: string } | null>({ email: 'user@fireguard.local' }),
   };
+  const mockNotificationCenterPort = {
+    unreadCount: signal(0),
+    hasUnread: signal(false),
+    load: vi.fn(),
+    connectMercure: vi.fn(),
+  };
   const mockAuthStore = {
     isLoggingOut: signal(false),
     logout: vi.fn(),
@@ -99,17 +105,23 @@ describe('DashboardLayout', () => {
   beforeEach(() => {
     mockAuthStore.isLoggingOut.set(false);
     mockAuthStore.logout.mockReset();
+    mockNotificationCenterPort.load.mockReset();
+    mockNotificationCenterPort.connectMercure.mockReset();
 
     TestBed.configureTestingModule({
       imports: [DashboardLayout],
       providers: [
         provideRouter([]),
-        { provide: UserStore, useValue: mockUserStore },
+        { provide: USER_IDENTITY_PORT, useValue: mockUserStore },
+        { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
         { provide: AuthStore, useValue: mockAuthStore },
-        { provide: ActiveOrganizationStore, useValue: mockOrganizationStore },
+        { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
       ],
-    }).overrideComponent(OrganizationSwitcher, {
-      set: { providers: [{ provide: OrganizationStore, useValue: mockOrganizationStore }] },
+    }).overrideComponent(DashboardLayoutHeader, {
+      set: {
+        imports: [],
+        template: '<div data-testid="dashboard-layout-header-stub"></div>',
+      },
     });
   });
 

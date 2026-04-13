@@ -67,8 +67,9 @@ Typical `core` concerns are:
 - transport models shared by the whole app,
 - shared operation primitives used by many stores.
 
-When shared UI needs app-wide behavior, introduce a neutral contract in
-`ports/` and keep the concrete implementation in `core/`.
+When shared UI needs app-wide behavior, inject a neutral contract published by
+the owning concern, usually `core/<concern>/ports/` or `features/<feature>/ports/`,
+and keep the concrete implementation with that owner.
 
 ### 3.3 `shared` is generic and domain-agnostic
 
@@ -78,7 +79,7 @@ Reused does not mean shared.
 
 A component is `shared` only when it is generic by design and has no feature ownership.
 
-Shared UI may depend on neutral contracts from `ports/`, but it must not
+Shared UI may depend on neutral contracts published by an owning concern, but it must not
 import concrete `core` services directly.
 
 ### 3.4 Layouts compose shells, not workflows
@@ -129,7 +130,7 @@ The frontend is organized into five top-level responsibilities under `src/app`.
 | --- | --- | --- |
 | `app` shell | top-level composition via `app.routes.ts` and `app.config.ts` | feature business logic |
 | `core` | application-wide infrastructure | feature-specific workflows by default |
-| `layouts` | shell composition and layout-local behavior | business workflows and domain fetching |
+| `layouts` | shell composition and layout-local behavior | business workflows, feature stores injected directly |
 | `features` | owned business workflows end-to-end | global infrastructure and generic primitives |
 | `shared` | generic, domain-agnostic primitives | business orchestration, feature state, API access |
 
@@ -138,24 +139,95 @@ The frontend is organized into five top-level responsibilities under `src/app`.
 The allowed dependency direction is:
 
 ```text
-app shell -> core, layouts, features, shared, ports
-layouts -> core, shared, features, ports (when wiring shared UI contracts)
-features -> core, shared, ports, owned nested features (through public APIs), explicitly approved sibling-feature public APIs
-shared -> shared, ports
-core -> core, ports
-ports -> ports
+app shell -> core, layouts, features, shared
+layouts -> core, shared, features (through public APIs and published contracts)
+features -> core, shared, owned nested features (through public APIs), explicitly approved sibling-feature public APIs
+shared -> shared, owner-published contracts only
+core -> core
 ```
 
 Additional rules:
 
 - `core` must never depend on `features`.
 - `shared` must never depend on `features`, feature state, or domain services.
-- `shared` may depend on neutral `ports/` contracts, but not on concrete `core` service implementations.
-- `ports/` contains contracts, tokens, and neutral reusable types only. It must not contain concrete behavior.
-- layouts may import feature-owned shell widgets, but only through documented feature or concern public APIs.
+- `shared` may depend on neutral contracts published by `core` or a feature, but not on concrete `core` service implementations.
+- contracts belong to the owner of the behavior, not to a central abstraction folder.
+- layouts may import feature-owned shell widgets through documented feature public APIs, but they must not inject concrete feature stores or feature services directly.
+- when a layout needs behavioral data from a feature (user identity, notifications, organization context), it must consume a stable port instead of injecting the owning feature's store.
 - cross-feature dependencies are forbidden by default.
-- a cross-feature dependency is acceptable only when one feature explicitly owns the business concern and exposes a stable public API for it.
+- a cross-feature dependency is acceptable only when one feature explicitly owns the business concern and exposes a stable port or documented public API for it.
 - parent features and nested child features may depend on each other only through explicit public APIs; nested ownership does not justify private deep imports.
+
+### 5.1 Published Contracts and Adapters
+
+A **port** is a behavioral contract expressed as a TypeScript interface and an `InjectionToken`. It has no implementation. It isolates a consumer from a concrete class.
+
+An **adapter** is the concrete class that fulfills a port. Adapters live in `core/` or `features/<feature>/data-access/` and are bound to their ports through feature providers.
+
+#### Ownership-first contract placement
+
+Contracts live beside the concern that owns the behavior.
+
+Preferred locations:
+- `features/<feature>/ports/` for business capabilities published outside the owning feature,
+- `core/ports/<port-name>/` when app-wide infrastructure publishes a contract to `shared`, `layouts`, or the app shell,
+- a top-level application contracts area only in the rare case where no stable owner exists.
+
+In this codebase, the default target is owner-local contracts. A top-level `src/app/ports/` folder is transitional compatibility only and must not be treated as the default architecture target.
+
+#### Feature-owned ports — `features/<feature>/ports/`
+
+Use a feature-owned port when the behavioral contract is owned by one feature but intentionally consumed outside that feature by a layout, `shared`, `core`, or an approved sibling feature.
+
+Good candidates:
+- `features/auth/ports/session/` — consumed by auth-owned HTTP interceptors and infrastructure seams,
+- `features/account/ports/user-identity/` — consumed by shell composition,
+- `features/account/ports/notification-center/` — consumed by the shell sidebar,
+- `features/organization/ports/organization-context/` — consumed by layout and sibling features.
+
+Naming convention:
+- `features/<feature>/ports/<port-name>/<port-name>.interface.ts`
+- `features/<feature>/ports/<port-name>/<port-name>.token.ts`
+- `features/<feature>/ports/<port-name>/index.ts`
+
+Compatibility shims such as legacy `*.port.ts` files may exist temporarily during migration, but they are not the target structure.
+
+#### Core-owned contracts
+
+If infrastructure in `core/` publishes behavior to external consumers, place the contract under `core/ports/<port-name>/` and bind it from the owning core provider.
+
+#### Placement rule
+
+- Prefer an **owner-local contract** first.
+- Prefer a **feature-owned port** when the contract represents a business capability published by a single owning feature.
+- Prefer a **core-owned contract** when the contract represents app-wide infrastructure published by one core concern.
+- Do not create a port for a contract that is consumed only within a single feature; use a direct injection there.
+- Do not create a top-level global port unless no stable owner can be assigned.
+- Do not create a contract for configuration tokens such as `ENV_CONFIG`. Configuration tokens are not behavioral ports.
+
+#### Adapter and provider binding
+
+- Concrete adapters (feature services, core services) implement the port interface.
+- The provider that binds the port must live in the concern that owns the concrete implementation.
+- Feature-owned ports are bound in `features/<feature>/providers/`.
+- Core-owned contracts are bound in the relevant `core` provider (`provideTheme`, `provideSplashScreen`, and similar owner-local providers).
+- The binding uses `{ provide: PORT_TOKEN, useExisting: ConcreteService }` to avoid double instantiation.
+
+#### Current owner-local feature contracts
+
+| Token | Interface | Feature | Bound by | Consumers |
+| --- | --- | --- | --- | --- |
+| `AUTH_SESSION` | `AuthSessionPort` | `features/auth` | `features/auth` via `provideAuth()` | auth-owned HTTP interceptors, infrastructure seams |
+| `USER_IDENTITY_PORT` | `UserIdentityPort` | `features/account` | `features/account` via `provideAccount()` | layouts, shell widgets |
+| `NOTIFICATION_CENTER_PORT` | `NotificationCenterPort` | `features/account` | `features/account` via `provideAccount()` | layouts |
+| `ORGANIZATION_CONTEXT_PORT` | `OrganizationContextPort` | `features/organization` | `features/organization` via provider | layouts, sibling features |
+
+#### Current owner-local core contracts
+
+| Token | Interface | Concern | Bound by | Consumers |
+| --- | --- | --- | --- | --- |
+| `THEME_PORT` | `ThemePort` | `core/services/theme` | `provideTheme()` | shared UI |
+| `SPLASH_SCREEN_PORT` | `SplashScreenPort` | `core/services/splash-screen` | `provideSplashScreen()` | shared UI |
 
 If a dependency direction feels awkward, the structure is probably wrong.
 
@@ -233,7 +305,6 @@ src/app/
   app.config.ts
   app.routes.ts
   core/
-  ports/
   layouts/
   features/
   shared/
@@ -241,8 +312,11 @@ src/app/
 
 Only create folders when they are needed. Empty architectural buckets are noise.
 
-Use `ports/` only when shared UI needs to consume app-wide behavior through
-an `InjectionToken` without importing a concrete implementation from `core/`.
+Contracts should live with the owning concern by default.
+`features/<feature>/ports/` holds feature-owned contracts intentionally published outside the owning feature.
+`core/<concern>/ports/` holds app-wide infrastructure contracts intentionally published outside that core concern.
+
+See section 5.1 for placement rules and taxonomies.
 
 ## 8. Canonical Folder Templates
 
@@ -353,6 +427,12 @@ features/<feature>/
     guards/               # optional
     resolvers/            # optional
     interceptors/         # optional, feature-scoped only
+  ports/                  # optional — published behavioral contracts
+    index.ts              # optional public API for external port consumers
+    <port-name>/
+      index.ts
+      <port-name>.interface.ts
+      <port-name>.token.ts
   ui/
     pages/                # optional
     components/           # optional
@@ -378,10 +458,11 @@ A feature may contain:
 - route configuration,
 - `data-access/` for transport-facing code, split into `services/` and optional `adapters/`,
 - `http/` for feature-owned guards, resolvers, and rare feature-scoped interceptors,
+- `ports/` for behavioral contracts intentionally published to layouts or approved sibling features,
 - `ui/` for pages and feature-owned presentation code,
 - `state/` for stores and store-local state types,
 - `models/` for feature contracts and reusable feature types,
-- feature-owned providers,
+- feature-owned providers, responsible for binding the feature's ports to their concrete adapters,
 - nested `features/` only when the child is a real ownership boundary.
 
 Notes:
@@ -391,7 +472,9 @@ Notes:
 - `ui/` is the target structure; legacy flat `pages/`, `components/`, `dataviews/`, and `forms/` folders may remain only under the transition rules in section 15,
 - if a feature owns guards, resolvers, or feature-scoped interceptors, they live under `http/`; do not place them at the feature root,
 - keep empty concern folders absent; the template defines ownership boundaries, not mandatory boilerplate,
-- create `providers/` when a feature exposes bootstrap helpers or feature-owned providers consumed by the app shell,
+- create `ports/` only when a feature publishes behavioral contracts consumed by layouts or approved sibling features; do not create `ports/` for contracts consumed only within the feature,
+- inside `ports/`, use one folder per published contract and split the interface from the token (`<port-name>.interface.ts` and `<port-name>.token.ts`),
+- create `providers/` when a feature exposes bootstrap helpers or feature-owned providers; each provider is responsible for binding the feature's ports to their concrete adapters,
 - create `ui/dataviews/` only for substantial list, grid, table, or browsing UIs,
 - create `features/` only when both URL structure and ownership are nested,
 - keep feature internals colocated instead of centralizing them in `core`.
@@ -472,7 +555,7 @@ Allowed in `shared`:
 - pure pipes,
 - pure validators,
 - pure utilities,
-- shared UI that depends only on neutral `@ports/*` contracts.
+- shared UI that depends only on neutral contracts published by an owning concern.
 
 Not allowed in `shared`:
 
@@ -483,8 +566,8 @@ Not allowed in `shared`:
 - domain-aware components,
 - compatibility re-exports that mask real ownership.
 
-If a shared component needs app-wide infrastructure, inject a port from
-`ports/` instead of importing the concrete `core` service.
+If a shared component needs app-wide infrastructure, inject a contract from
+the owning `core` concern instead of importing the concrete implementation.
 
 If a component imports feature models, feature stores, or domain services, it is not shared.
 
@@ -1157,11 +1240,15 @@ The following patterns are approved for new work.
 - a feature resolver loads route-critical context and seeds the owning feature store,
 - a layout keeps its partials, directives, and shell services in its own folder,
 - a layout imports a feature-owned shell widget through the feature public API,
+- a layout that needs behavioral data (user identity, notification count, organization context) injects the relevant port token, never the owning feature's concrete store directly,
+- a feature-owned port is bound in the feature's provider using `{ provide: PORT_TOKEN, useExisting: ConcreteAdapter }`,
+- a core-owned contract is bound in the `core/` provider that owns the concrete implementation,
+- a shared component that needs infrastructure injects an owner-published contract, never a concrete `core/` service,
 - global HTTP concerns remain in `core/http/interceptors`,
-- a feature owns its own `data-access`, `state`, `models`, optional `http`, and optional `providers` folders,
-- async actions use `Operation<TData>` with `createIdleOperation` in initial state and `createLoadingOperation` / `createSuccessOperation` / `createErrorOperation` in methods,
+- a feature owns its own `data-access`, `state`, `models`, optional `http`, optional `ports`, and optional `providers` folders,
+- async actions use `CallState` with `idleCallState` in initial state and `pendingCallState` / `successCallState` / `errorCallState` in methods,
 - stores use `rxMethod` with `tapResponse` for reactive data loading,
-- error normalization uses `createOperationErrorFromUnknown` before calling `createErrorOperation`,
+- error normalization uses `toStoreError(err)` before calling `errorCallState`,
 - entity collections use `withEntities` for O(1) id-based access,
 - notable store transitions dispatch typed events via `eventGroup` and `Dispatcher`,
 - imports target documented feature or concern public APIs instead of implementation files,
@@ -1181,8 +1268,13 @@ The following patterns must not be introduced in new code.
 - putting domain data fetching inside layouts,
 - moving a domain-aware widget into `shared` only because it is rendered from a shell,
 - keeping compatibility re-exports under the wrong layer to avoid updating imports,
-- using ad-hoc `isLoading: boolean` flags instead of the `Operation` lifecycle,
-- passing a raw `HttpErrorResponse` or `unknown` to `createErrorOperation` without calling `createOperationErrorFromUnknown` first,
+- a layout injecting a concrete feature store or feature service directly when a port can express the same contract,
+- a store injecting a concrete service from another feature's `data-access/` when a port boundary is intended,
+- placing a behavioral contract in `core/tokens/` after the contract model is established; behavioral contracts belong with the owning feature or core concern,
+- creating a port for a contract consumed only within a single feature; features may inject their own concrete services directly,
+- putting contracts in a central technical folder when a clear owner exists,
+- using ad-hoc `isLoading: boolean` flags instead of the `CallState` lifecycle,
+- passing a raw `HttpErrorResponse` or `unknown` to `errorCallState` without calling `toStoreError` first,
 - injecting `HttpClient` directly in a feature service instead of extending `HydraApiService`,
 - importing a feature implementation file instead of a documented feature or concern public API,
 - importing another feature's adapters as a reuse shortcut,
@@ -1257,12 +1349,16 @@ Before merging a change, verify the following.
 - For cross-feature or cross-concern imports, are aliases and the narrowest public APIs used instead of deep private files or long relative paths?
 - Are new tests focused on the correct architectural boundary?
 - If the code deviates from this document, is the exception explicit?
-- Does every async action use `Operation<TData>` instead of ad-hoc boolean flags?
-- Is every store error normalized with `createOperationErrorFromUnknown` before being stored?
+- Does every async action use `CallState` (`idleCallState`, `pendingCallState`, `successCallState`, `errorCallState`) instead of ad-hoc boolean flags?
+- Is every store error normalized with `toStoreError(err)` before being stored?
 - Does the feature API service extend `HydraApiService` instead of injecting `HttpClient` directly?
 - If a generic API payload is consumed in multiple places, is there a shared adapter function?
 - Is `withEntities` used for entity collections that need O(1) id-based access?
 - If a notable action can affect sibling parts of the app, does it dispatch a typed event?
+- If a layout depends on behavioral data from a feature (identity, notifications, organization), does it inject a port instead of the concrete feature store?
+- If a feature publishes a contract to external consumers, is that contract expressed as a port in `features/<feature>/ports/` and bound in the feature's provider?
+- If a shared component needs infrastructure, does it inject a contract from the owning `core` concern instead of a concrete `core` service?
+- Are new behavioral contracts placed with the owning feature or core concern rather than in `core/tokens/` or a central dumping folder?
 
 ## 17. HTTP Transport Architecture
 

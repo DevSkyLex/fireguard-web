@@ -1,7 +1,7 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { effect, inject, Injectable, PLATFORM_ID, signal, type WritableSignal } from '@angular/core';
 import { CookieService } from '@core/services/cookie';
-import { isThemeMode, type ThemeMode } from '@ports/theme';
+import { isThemeMode, type ThemeMode } from '@core/ports/theme';
 
 /**
  * Service ThemeService

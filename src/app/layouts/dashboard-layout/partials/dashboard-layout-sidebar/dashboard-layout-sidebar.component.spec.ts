@@ -2,10 +2,10 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { AuthStore } from '@features/auth/state';
+import { USER_IDENTITY_PORT } from '@features/account/ports';
 import type { UserInfoOutput } from '@features/auth/models';
-import { UserStore } from '@features/account/state';
-import { OrganizationStore } from '@features/organization/state';
+import { AuthStore } from '@features/auth';
+import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import type { MenuItem } from 'primeng/api';
 import { DashboardSidebarNavigationService, DashboardSidebarService } from '@layouts/dashboard-layout/services';
 import { DashboardLayoutSidebar } from './dashboard-layout-sidebar.component';
@@ -62,9 +62,9 @@ describe('DashboardLayoutSidebar', () => {
         DashboardSidebarNavigationService,
         DashboardSidebarService,
         provideRouter([]),
-        { provide: UserStore, useValue: mockUserStore },
+        { provide: USER_IDENTITY_PORT, useValue: mockUserStore },
         { provide: AuthStore, useValue: mockAuthStore },
-        { provide: OrganizationStore, useValue: mockOrganizationStore },
+        { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
       ],
     });
   });
@@ -107,7 +107,7 @@ describe('DashboardLayoutSidebar', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebar);
     fixture.detectChanges();
 
-    const profileSection = fixture.debugElement.query(By.css('[data-testid="dashboard-user-profile"]'));
+    const profileSection = fixture.debugElement.query(By.css('[data-testid="auth-user-profile"]'));
     const textContent = fixture.nativeElement.textContent;
 
     expect(profileSection).toBeTruthy();

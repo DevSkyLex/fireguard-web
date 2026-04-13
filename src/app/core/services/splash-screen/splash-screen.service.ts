@@ -9,7 +9,7 @@ import {
   Router,
 } from '@angular/router';
 import { filter } from 'rxjs';
-import { AUTH_SESSION, type AuthSessionPort } from '@core/tokens/auth-session.token';
+import { AUTH_SESSION, type AuthSessionPort } from '@features/auth/ports';
 
 /**
  * Service SplashScreenService

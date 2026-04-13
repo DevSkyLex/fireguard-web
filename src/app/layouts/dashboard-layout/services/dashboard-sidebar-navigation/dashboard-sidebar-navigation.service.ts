@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import type { MenuItem } from 'primeng/api';
-import { ActiveOrganizationStore } from '@features/organization';
+import { ORGANIZATION_CONTEXT_PORT, type OrganizationContextPort } from '@features/organization/ports';
 
 /**
  * Service DashboardSidebarNavigationService
@@ -21,21 +21,21 @@ import { ActiveOrganizationStore } from '@features/organization';
 export class DashboardSidebarNavigationService {
   //#region Properties
   /**
-   * Property activeOrganizationStore
+  * Property organizationContext
    * @readonly
    *
    * @description
-   * Active organization store for accessing the
+  * Organization context port for accessing the
    * currently selected organization and prefixing sidebar
    * links with the correct organization path.
    *
    * @access protected
    * @since 2.0.0
    *
-   * @type {ActiveOrganizationStore}
+   * @type {OrganizationContextPort}
    */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject(ActiveOrganizationStore);
+  private readonly organizationContext: OrganizationContextPort =
+    inject(ORGANIZATION_CONTEXT_PORT);
 
   /**
    * Property _searchQuery
@@ -83,7 +83,7 @@ export class DashboardSidebarNavigationService {
    */
   public readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>(
     (): MenuItem[] => {
-      const organization = this.activeOrganizationStore.selectedOrganization();
+      const organization = this.organizationContext.selectedOrganization();
       const prefix: string = organization ? `/organizations/${organization.id}` : '';
       const query: string = this.searchQuery();
 

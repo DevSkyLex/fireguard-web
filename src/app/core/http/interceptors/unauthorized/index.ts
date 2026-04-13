@@ -1,1 +1,1 @@
-export { unauthorizedInterceptor } from './unauthorized.interceptor';
+export { unauthorizedInterceptor } from '@features/auth/http/interceptors';

@@ -1,0 +1,1 @@
+export { AuthUserProfile } from './auth-user-profile.component';

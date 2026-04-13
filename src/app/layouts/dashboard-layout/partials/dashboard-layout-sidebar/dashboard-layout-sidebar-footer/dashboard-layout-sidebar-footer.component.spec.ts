@@ -2,8 +2,8 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { AuthStore } from '@features/auth/state';
-import { UserStore } from '@features/account/state';
+import { USER_IDENTITY_PORT } from '@features/account/ports';
+import { AuthStore } from '@features/auth';
 import { DashboardLayoutSidebarFooter } from './dashboard-layout-sidebar-footer.component';
 
 describe('DashboardLayoutSidebarFooter', () => {
@@ -32,7 +32,7 @@ describe('DashboardLayoutSidebarFooter', () => {
       imports: [DashboardLayoutSidebarFooter],
       providers: [
         provideRouter([]),
-        { provide: UserStore, useValue: mockUserStore },
+        { provide: USER_IDENTITY_PORT, useValue: mockUserStore },
         { provide: AuthStore, useValue: mockAuthStore },
       ],
     });
@@ -47,8 +47,8 @@ describe('DashboardLayoutSidebarFooter', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarFooter);
     fixture.detectChanges();
 
-    expect(fixture.debugElement.query(By.css('app-dashboard-layout-user-profile'))).toBeTruthy();
-    expect(fixture.debugElement.query(By.css('[data-testid="dashboard-user-profile"]'))).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('app-auth-user-profile'))).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('[data-testid="auth-user-profile"]'))).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Fireguard User');
   });
 });

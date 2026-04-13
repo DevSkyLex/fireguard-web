@@ -4,7 +4,7 @@ import {
   makeEnvironmentProviders,
   provideAppInitializer,
 } from '@angular/core';
-import { THEME_PORT } from '@ports/theme';
+import { THEME_PORT } from '@core/ports/theme';
 import { ThemeService } from './theme.service';
 
 /**

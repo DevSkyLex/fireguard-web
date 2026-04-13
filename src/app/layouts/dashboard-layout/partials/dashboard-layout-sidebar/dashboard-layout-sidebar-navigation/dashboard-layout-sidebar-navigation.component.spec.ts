@@ -7,7 +7,7 @@ import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
 } from '@layouts/dashboard-layout/services';
-import { OrganizationStore } from '@features/organization/state';
+import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { DashboardLayoutSidebarNavigation } from './dashboard-layout-sidebar-navigation.component';
 
 @Component({
@@ -40,7 +40,7 @@ describe('DashboardLayoutSidebarNavigation', () => {
       providers: [
         DashboardSidebarNavigationService,
         DashboardSidebarService,
-        { provide: OrganizationStore, useValue: mockOrganizationStore },
+        { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         provideRouter([
           { path: 'organizations/:organizationId', component: DummyPage },
           { path: 'account/notifications', component: DummyPage },

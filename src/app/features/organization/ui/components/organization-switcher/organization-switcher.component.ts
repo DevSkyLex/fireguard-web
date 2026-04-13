@@ -119,7 +119,21 @@ export class OrganizationSwitcher implements OnInit {
    * @returns {void}
    */
   public ngOnInit(): void {
-    if (!this.organizationStore.organizations().length) {
+    /**
+     * Constant organizations
+     * @const organizations
+     *
+     * @description
+     * List of organizations from the store.
+     * If the list is empty, trigger a load of organizations.
+     *
+     * @type {readonly OrganizationOutput[]}
+     */
+    const organizations: readonly OrganizationOutput[] =
+      this.organizationStore.organizations();
+
+    // If organizations are already loaded, do not trigger another load to avoid unnecessary API calls.
+    if (!organizations.length) {
       this.organizationStore.loadOrganizations();
     }
   }

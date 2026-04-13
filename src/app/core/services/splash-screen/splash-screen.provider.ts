@@ -4,7 +4,7 @@ import {
   makeEnvironmentProviders,
   provideAppInitializer,
 } from '@angular/core';
-import { SPLASH_SCREEN_PORT } from '@ports/splash-screen';
+import { SPLASH_SCREEN_PORT } from '@core/ports/splash-screen';
 import { SplashScreenService } from './splash-screen.service';
 
 /**

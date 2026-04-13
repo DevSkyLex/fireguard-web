@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { DashboardLayoutUserProfile } from '../../dashboard-layout-user-profile/dashboard-layout-user-profile.component';
+import { AuthUserProfile } from '@features/auth';
 
 /**
  * Component DashboardLayoutSidebarFooter
@@ -14,7 +14,7 @@ import { DashboardLayoutUserProfile } from '../../dashboard-layout-user-profile/
  */
 @Component({
   selector: 'app-dashboard-layout-sidebar-footer',
-  imports: [DashboardLayoutUserProfile],
+  imports: [AuthUserProfile],
   templateUrl: './dashboard-layout-sidebar-footer.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

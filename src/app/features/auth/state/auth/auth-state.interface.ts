@@ -13,7 +13,7 @@ import type { CallState } from '@core/state/request-state';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface AuthState {
-  //#region Initialization State
+  //#region Properties
   /**
    * Property initialized
    * @readonly
@@ -27,9 +27,7 @@ export interface AuthState {
    * @type {boolean}
    */
   readonly initialized: boolean;
-  //#endregion
 
-  //#region Token State
   /**
    * Property accessToken
    * @readonly
@@ -100,13 +98,75 @@ export interface AuthState {
    * @type {string | null}
    */
   readonly challengeToken: string | null;
-  //#endregion
 
-  //#region Call States
+  /**
+   * Property loginCallState
+   * @readonly
+   *
+   * @description
+   * Call state for the login operation, including
+   * MFA verification steps.
+   *
+   * @since 1.0.0
+   *
+   * @type {CallState<LoginOutput>}
+   */
   readonly loginCallState: CallState<LoginOutput>;
+
+  /**
+   * Property logoutCallState
+   * @readonly
+   *
+   * @description
+   * Call state for the logout operation, used to
+   * manage async state and errors.
+   *
+   * @since 1.0.0
+   *
+   * @type {CallState<LogoutOutput>}
+   */
   readonly logoutCallState: CallState<LogoutOutput>;
+
+  /**
+   * Property refreshCallState
+   * @readonly
+   *
+   * @description
+   * Call state for the token refresh operation, used to
+   * manage async state and errors during token renewal.
+   *
+   * @since 1.0.0
+   *
+   * @type {CallState<LoginOutput>}
+   */
   readonly refreshCallState: CallState<LoginOutput>;
+
+  /**
+   * Property mfaVerifyCallState
+   * @readonly
+   *
+   * @description
+   * Call state for the MFA verification operation, used to
+   * manage async state and errors during MFA code verification.
+   *
+   * @since 1.0.0
+   *
+   * @type {CallState<LoginOutput>}
+   */
   readonly mfaVerifyCallState: CallState<LoginOutput>;
+
+  /**
+   * Property mfaResendCallState
+   * @readonly
+   *
+   * @description
+   * Call state for the MFA OTP resend operation, used to
+   * manage async state and errors during OTP resend requests.
+   *
+   * @since 1.0.0
+   *
+   * @type {CallState<LoginOutput>}
+   */
   readonly mfaResendCallState: CallState<LoginOutput>;
   //#endregion
 }

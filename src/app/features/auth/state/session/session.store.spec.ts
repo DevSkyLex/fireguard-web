@@ -69,7 +69,7 @@ describe('SessionStore', () => {
     store.loadSessions();
     await flushEffects();
 
-    expect(store.isLoading()).toBe(false);
+    expect(store.listCallState().status).toBe('success');
     expect(store.sessions()).toEqual([currentSession, otherSession]);
     expect(store.totalSessions()).toBe(2);
     expect(store.currentSession()?.id).toBe('current');
@@ -83,7 +83,7 @@ describe('SessionStore', () => {
     store.loadSessions();
     await flushEffects();
 
-    expect(store.isLoading()).toBe(false);
+    expect(store.listCallState().status).toBe('error');
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 
@@ -97,7 +97,7 @@ describe('SessionStore', () => {
     await flushEffects();
 
     expect(mockSessionService.revoke).toHaveBeenCalledWith('other');
-    expect(store.revokeOperation().status).toBe('success');
+    expect(store.revokeCallState().status).toBe('success');
     expect(store.sessions()).toEqual([currentSession]);
     expect(store.totalSessions()).toBe(1);
   });
@@ -112,7 +112,7 @@ describe('SessionStore', () => {
     await flushEffects();
 
     expect(mockSessionService.revokeAll).toHaveBeenCalledTimes(1);
-    expect(store.revokeAllOperation().status).toBe('success');
+    expect(store.revokeAllCallState().status).toBe('success');
     expect(store.sessions()).toEqual([currentSession]);
     expect(store.totalSessions()).toBe(1);
   });
@@ -126,8 +126,8 @@ describe('SessionStore', () => {
 
     expect(store.sessions()).toEqual([]);
     expect(store.totalSessions()).toBe(0);
-    expect(store.isLoading()).toBe(false);
-    expect(store.revokeOperation().status).toBe('idle');
-    expect(store.revokeAllOperation().status).toBe('idle');
+    expect(store.listCallState().status).toBe('idle');
+    expect(store.revokeCallState().status).toBe('idle');
+    expect(store.revokeAllCallState().status).toBe('idle');
   });
 });

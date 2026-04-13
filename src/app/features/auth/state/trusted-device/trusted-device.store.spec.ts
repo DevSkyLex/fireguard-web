@@ -66,7 +66,7 @@ describe('TrustedDeviceStore', () => {
     store.loadDevices();
     await flushEffects();
 
-    expect(store.isLoading()).toBe(false);
+    expect(store.listCallState().status).toBe('success');
     expect(store.devices()).toEqual([device1, device2]);
     expect(store.deviceCount()).toBe(2);
     expect(store.hasDevices()).toBe(true);
@@ -78,7 +78,7 @@ describe('TrustedDeviceStore', () => {
     store.loadDevices();
     await flushEffects();
 
-    expect(store.isLoading()).toBe(false);
+    expect(store.listCallState().status).toBe('error');
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 
@@ -92,7 +92,7 @@ describe('TrustedDeviceStore', () => {
     await flushEffects();
 
     expect(mockTrustedDeviceService.revoke).toHaveBeenCalledWith('device-1');
-    expect(store.revokeOperation().status).toBe('success');
+    expect(store.revokeCallState().status).toBe('success');
     expect(store.devices()).toEqual([device2]);
   });
 
@@ -105,7 +105,7 @@ describe('TrustedDeviceStore', () => {
     store.revokeAllDevices();
     await flushEffects();
 
-    expect(store.revokeAllOperation().status).toBe('success');
+    expect(store.revokeAllCallState().status).toBe('success');
     expect(store.devices()).toEqual([]);
     expect(store.hasDevices()).toBe(false);
   });

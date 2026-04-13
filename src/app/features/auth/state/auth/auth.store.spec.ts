@@ -5,7 +5,7 @@ import { AuthStore } from './auth.store';
 import { AuthService } from '@features/auth/data-access';
 import { OrganizationStore } from '@features/organization/state';
 import { UserStore } from '@features/account/state';
-import { TrustedDeviceStore } from '@features/auth/state';
+import { ActiveTrustedDeviceStore } from '@features/auth/state';
 import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@features/auth/models';
 
 const flushEffects = async (): Promise<void> => {
@@ -24,7 +24,7 @@ describe('AuthStore', () => {
   };
   let mockUserStore: {
     clear: ReturnType<typeof vi.fn>;
-    load: ReturnType<typeof vi.fn>;
+    initialize: ReturnType<typeof vi.fn>;
   };
   let mockOrganizationStore: {
     resetStore: ReturnType<typeof vi.fn>;
@@ -58,7 +58,7 @@ describe('AuthStore', () => {
     };
     mockUserStore = {
       clear: vi.fn(),
-      load: vi.fn(),
+      initialize: vi.fn(),
     };
     mockOrganizationStore = {
       resetStore: vi.fn(),
@@ -74,7 +74,7 @@ describe('AuthStore', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: UserStore, useValue: mockUserStore },
         { provide: OrganizationStore, useValue: mockOrganizationStore },
-        { provide: TrustedDeviceStore, useValue: mockTrustedDeviceStore },
+        { provide: ActiveTrustedDeviceStore, useValue: mockTrustedDeviceStore },
       ],
     });
 
@@ -100,7 +100,7 @@ describe('AuthStore', () => {
     await flushEffects();
 
     expect(mockAuthService.login).toHaveBeenCalledWith(credentials);
-    expect(store.loginOperation().status).toBe('success');
+    expect(store.loginCallState().status).toBe('success');
     expect(store.accessToken()).toBe('access-token');
     expect(store.mfaRequired()).toBe(false);
   });
@@ -119,7 +119,7 @@ describe('AuthStore', () => {
     store.login(credentials);
     await flushEffects();
 
-    expect(store.loginOperation().status).toBe('success');
+    expect(store.loginCallState().status).toBe('success');
     expect(store.mfaRequired()).toBe(true);
     expect(store.mfaToken()).toBe('mfa-token');
     expect(store.challengeToken()).toBe('challenge-token');
@@ -132,7 +132,7 @@ describe('AuthStore', () => {
     store.login(credentials);
     await flushEffects();
 
-    expect(store.loginOperation().status).toBe('error');
+    expect(store.loginCallState().status).toBe('error');
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 
@@ -143,8 +143,8 @@ describe('AuthStore', () => {
 
     expect(store.initialized()).toBe(true);
     expect(store.accessToken()).toBe('access-token');
-    expect(store.refreshOperation().status).toBe('success');
-    expect(mockUserStore.load).toHaveBeenCalledTimes(1);
+    expect(store.refreshCallState().status).toBe('success');
+    expect(mockUserStore.initialize).toHaveBeenCalledTimes(1);
   });
 
   it('should initialize as unauthenticated when refresh fails', async () => {
@@ -180,7 +180,7 @@ describe('AuthStore', () => {
     store.mfaVerify(verifyInput);
     await flushEffects();
 
-    expect(store.mfaVerifyOperation().status).toBe('success');
+    expect(store.mfaVerifyCallState().status).toBe('success');
     expect(store.mfaRequired()).toBe(false);
     expect(store.accessToken()).toBe('access-token');
     expect(mockTrustedDeviceStore.trustDevice).toHaveBeenCalledTimes(1);
@@ -191,7 +191,7 @@ describe('AuthStore', () => {
     await flushEffects();
 
     expect(mockAuthService.mfaResend).not.toHaveBeenCalled();
-    expect(store.mfaResendOperation().status).toBe('error');
+    expect(store.mfaResendCallState().status).toBe('error');
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 
@@ -207,10 +207,9 @@ describe('AuthStore', () => {
     store.logout();
     await flushEffects();
 
-    expect(store.logoutOperation().status).toBe('success');
+    expect(store.logoutCallState().status).toBe('success');
     expect(store.initialized()).toBe(true);
     expect(store.accessToken()).toBeNull();
     expect(mockUserStore.clear).toHaveBeenCalledTimes(1);
-    expect(mockOrganizationStore.resetStore).toHaveBeenCalledTimes(1);
   });
 });

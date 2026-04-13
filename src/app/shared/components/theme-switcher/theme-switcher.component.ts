@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
-import { ThemeService, type ThemeMode } from '@core/services/theme';
+import { THEME_PORT, type ThemeMode, type ThemePort } from '@ports/theme';
 
 /**
  * Component ThemeSwitcher
@@ -17,8 +17,8 @@ import { ThemeService, type ThemeMode } from '@core/services/theme';
  * Compact toggle button that cycles the application theme through
  * the three available modes: light → dark → system → light.
  *
- * Reads and mutates the theme via {@link ThemeService}, which handles
- * cookie persistence and DOM attribute application automatically.
+ * Reads and mutates the theme through a neutral {@link ThemePort},
+ * allowing shared UI to stay decoupled from core implementations.
  * The button icon and tooltip update reactively via computed signals.
  *
  * @since 1.0.0
@@ -34,20 +34,20 @@ import { ThemeService, type ThemeMode } from '@core/services/theme';
 export class ThemeSwitcher {
   //#region Properties
   /**
-   * Property themeService
+   * Property themePort
    * @readonly
    *
    * @description
-   * Injected ThemeService instance used to read the current theme
+   * Injected theme port used to read the current theme
    * and dispatch theme changes.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {ThemeService}
+   * @type {ThemePort}
    */
-  protected readonly themeService: ThemeService =
-    inject<ThemeService>(ThemeService);
+  protected readonly themePort: ThemePort =
+    inject<ThemePort>(THEME_PORT);
   //#endregion
 
   //#region Computed
@@ -72,7 +72,7 @@ export class ThemeSwitcher {
       dark: 'pi pi-sun',
       system: 'pi pi-desktop',
     };
-    return icons[this.themeService.theme()];
+    return icons[this.themePort.theme()];
   });
 
   /**
@@ -94,7 +94,7 @@ export class ThemeSwitcher {
       dark: 'Switch to system mode',
       system: 'Switch to light mode',
     };
-    return labels[this.themeService.theme()];
+    return labels[this.themePort.theme()];
   });
   //#endregion
 
@@ -119,7 +119,7 @@ export class ThemeSwitcher {
       system: 'light',
     };
 
-    this.themeService.setTheme(next[this.themeService.theme()]);
+    this.themePort.setTheme(next[this.themePort.theme()]);
   }
   //#endregion
 }

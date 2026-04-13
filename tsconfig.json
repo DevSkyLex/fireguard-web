@@ -28,6 +28,12 @@
       "@core/*": [
         "src/app/core/*"
       ],
+      "@ports": [
+        "src/app/ports"
+      ],
+      "@ports/*": [
+        "src/app/ports/*"
+      ],
       "@shared": [
         "src/app/shared"
       ],

@@ -82,7 +82,7 @@ describe('PasswordResetStore', () => {
     await flushEffects();
 
     expect(mockPasswordResetService.request).toHaveBeenCalledWith(requestInput);
-    expect(store.requestOperation().status).toBe('success');
+    expect(store.requestCallState().status).toBe('success');
     expect(store.currentRequest()).toEqual(requestResponse);
     expect(store.challengeToken()).toBe('challenge-token');
     expect(store.verificationCode()).toBeNull();
@@ -94,7 +94,7 @@ describe('PasswordResetStore', () => {
     store.request(requestInput);
     await flushEffects();
 
-    expect(store.requestOperation().status).toBe('error');
+    expect(store.requestCallState().status).toBe('error');
     expect(store.requestError()).not.toBeNull();
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
@@ -104,7 +104,7 @@ describe('PasswordResetStore', () => {
     await flushEffects();
 
     expect(mockPasswordResetService.confirm).not.toHaveBeenCalled();
-    expect(store.confirmOperation().status).toBe('error');
+    expect(store.confirmCallState().status).toBe('error');
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 
@@ -122,7 +122,7 @@ describe('PasswordResetStore', () => {
       code: '123456',
       newPassword: 'NewPass123!',
     });
-    expect(store.confirmOperation().status).toBe('success');
+    expect(store.confirmCallState().status).toBe('success');
   });
 
   it('should fail resend when challenge token is missing', async () => {
@@ -130,7 +130,7 @@ describe('PasswordResetStore', () => {
     await flushEffects();
 
     expect(mockPasswordResetService.resend).not.toHaveBeenCalled();
-    expect(store.resendOperation().status).toBe('error');
+    expect(store.resendCallState().status).toBe('error');
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 
@@ -146,7 +146,7 @@ describe('PasswordResetStore', () => {
     expect(mockPasswordResetService.resend).toHaveBeenCalledWith({
       token: 'challenge-token',
     });
-    expect(store.resendOperation().status).toBe('success');
+    expect(store.resendCallState().status).toBe('success');
     expect(store.currentRequest()).toEqual(resendResponse);
     expect(store.challengeToken()).toBe('challenge-token-2');
   });
@@ -162,8 +162,8 @@ describe('PasswordResetStore', () => {
     expect(store.currentRequest()).toBeNull();
     expect(store.challengeToken()).toBeNull();
     expect(store.verificationCode()).toBeNull();
-    expect(store.requestOperation().status).toBe('idle');
-    expect(store.confirmOperation().status).toBe('idle');
-    expect(store.resendOperation().status).toBe('idle');
+    expect(store.requestCallState().status).toBe('idle');
+    expect(store.confirmCallState().status).toBe('idle');
+    expect(store.resendCallState().status).toBe('idle');
   });
 });

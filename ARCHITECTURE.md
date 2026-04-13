@@ -63,8 +63,12 @@ Typical `core` concerns are:
 - SSR and hydration primitives,
 - app-wide routing primitives,
 - theme and shell-level utilities,
+- neutral port implementations backing shared UI contracts,
 - transport models shared by the whole app,
 - shared operation primitives used by many stores.
+
+When shared UI needs app-wide behavior, introduce a neutral contract in
+`ports/` and keep the concrete implementation in `core/`.
 
 ### 3.3 `shared` is generic and domain-agnostic
 
@@ -73,6 +77,9 @@ Typical `core` concerns are:
 Reused does not mean shared.
 
 A component is `shared` only when it is generic by design and has no feature ownership.
+
+Shared UI may depend on neutral contracts from `ports/`, but it must not
+import concrete `core` services directly.
 
 ### 3.4 Layouts compose shells, not workflows
 
@@ -131,17 +138,20 @@ The frontend is organized into five top-level responsibilities under `src/app`.
 The allowed dependency direction is:
 
 ```text
-app shell -> core, layouts, features, shared
-layouts -> core, shared, features (documented public APIs only)
-features -> core, shared, owned nested features (through public APIs), explicitly approved sibling-feature public APIs
-shared -> shared
-core -> core
+app shell -> core, layouts, features, shared, ports
+layouts -> core, shared, features, ports (when wiring shared UI contracts)
+features -> core, shared, ports, owned nested features (through public APIs), explicitly approved sibling-feature public APIs
+shared -> shared, ports
+core -> core, ports
+ports -> ports
 ```
 
 Additional rules:
 
 - `core` must never depend on `features`.
 - `shared` must never depend on `features`, feature state, or domain services.
+- `shared` may depend on neutral `ports/` contracts, but not on concrete `core` service implementations.
+- `ports/` contains contracts, tokens, and neutral reusable types only. It must not contain concrete behavior.
 - layouts may import feature-owned shell widgets, but only through documented feature or concern public APIs.
 - cross-feature dependencies are forbidden by default.
 - a cross-feature dependency is acceptable only when one feature explicitly owns the business concern and exposes a stable public API for it.
@@ -223,12 +233,16 @@ src/app/
   app.config.ts
   app.routes.ts
   core/
+  ports/
   layouts/
   features/
   shared/
 ```
 
 Only create folders when they are needed. Empty architectural buckets are noise.
+
+Use `ports/` only when shared UI needs to consume app-wide behavior through
+an `InjectionToken` without importing a concrete implementation from `core/`.
 
 ## 8. Canonical Folder Templates
 
@@ -457,7 +471,8 @@ Allowed in `shared`:
 - pure directives,
 - pure pipes,
 - pure validators,
-- pure utilities.
+- pure utilities,
+- shared UI that depends only on neutral `@ports/*` contracts.
 
 Not allowed in `shared`:
 
@@ -467,6 +482,9 @@ Not allowed in `shared`:
 - guards with business rules,
 - domain-aware components,
 - compatibility re-exports that mask real ownership.
+
+If a shared component needs app-wide infrastructure, inject a port from
+`ports/` instead of importing the concrete `core` service.
 
 If a component imports feature models, feature stores, or domain services, it is not shared.
 

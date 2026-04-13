@@ -1,7 +1,7 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { effect, inject, Injectable, PLATFORM_ID, signal, type WritableSignal } from '@angular/core';
 import { CookieService } from '@core/services/cookie';
-import { isThemeMode, type ThemeMode } from './theme-mode.type';
+import { isThemeMode, type ThemeMode } from '@ports/theme';
 
 /**
  * Service ThemeService
@@ -21,13 +21,13 @@ export class ThemeService {
   /**
    * Property cookieService
    * @readonly
-   * 
+   *
    * @description
    * Cookie service for persistence.
-   * 
+   *
    * @access private
    * @since 1.0.0
-   * 
+   *
    * @type {CookieService}
    */
   private readonly cookieService: CookieService =
@@ -36,13 +36,13 @@ export class ThemeService {
   /**
    * Property document
    * @readonly
-   * 
+   *
    * @description
    * Document instance for DOM manipulation.
-   * 
+   *
    * @access private
    * @since 1.0.0
-   * 
+   *
    * @type {Document}
    */
   private readonly document: Document =
@@ -51,13 +51,13 @@ export class ThemeService {
   /**
    * Property platformId
    * @readonly
-   * 
+   *
    * @description
    * Platform identifier for SSR detection.
-   * 
+   *
    * @access private
    * @since 1.0.0
-   * 
+   *
    * @type {object}
    */
   private readonly platformId: object =
@@ -66,13 +66,13 @@ export class ThemeService {
   /**
    * Property THEME_COOKIE_NAME
    * @readonly
-   * 
+   *
    * @description
    * Cookie name for theme preference.
-   * 
+   *
    * @access private
    * @since 1.0.0
-   * 
+   *
    * @type {string}
    */
   private static readonly THEME_COOKIE_NAME: string = 'theme-preference';
@@ -80,13 +80,13 @@ export class ThemeService {
   /**
    * Property theme
    * @readonly
-   * 
+   *
    * @description
    * Theme mode signal. Initialized from cookie if available.
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @type {WritableSignal<ThemeMode>}
    */
   public readonly theme: WritableSignal<ThemeMode> =
@@ -97,11 +97,11 @@ export class ThemeService {
   /**
    * Constructor
    * @constructor
-   * 
+   *
    * @description
    * Sets up an effect to persist theme changes to cookie
    * and apply the theme to the document.
-   * 
+   *
    * @access public
    * @since 1.0.0
    */
@@ -120,13 +120,13 @@ export class ThemeService {
   //#region Public Methods
   /**
    * Method switchTheme
-   * 
+   *
    * @description
    * Toggles between LIGHT and DARK theme.
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @returns {void}
    */
   public switchTheme(): void {
@@ -137,16 +137,16 @@ export class ThemeService {
 
   /**
    * Method setTheme
-   * 
+   *
    * @description
-   * Sets the theme mode. Cookie is automatically 
+   * Sets the theme mode. Cookie is automatically
    * persisted via effect().
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @param {ThemeMode} mode - The theme mode to set.
-   * 
+   *
    * @returns {void} - Nothing.
    */
   public setTheme(mode: ThemeMode): void {
@@ -155,13 +155,13 @@ export class ThemeService {
 
   /**
    * Method getTheme
-   * 
+   *
    * @description
    * Gets the current theme mode.
-   * 
+   *
    * @access public
    * @since 1.0.0
-   * 
+   *
    * @returns {ThemeMode} - The current theme mode.
    */
   public getTheme(): ThemeMode {
@@ -170,13 +170,13 @@ export class ThemeService {
 
   /**
    * Method getInitialTheme
-   * 
+   *
    * @description
    * Reads theme from cookie or returns default.
-   * 
+   *
    * @access private
    * @since 1.0.0
-   * 
+   *
    * @returns {ThemeMode} - The initial theme mode.
    */
   private getInitialTheme(): ThemeMode {
@@ -192,15 +192,15 @@ export class ThemeService {
 
   /**
    * Method persistThemeToCookie
-   * 
+   *
    * @description
    * Persists theme value to cookie.
-   * 
+   *
    * @access private
    * @since 1.0.0
-   * 
+   *
    * @param {ThemeMode} mode - The theme to persist.
-   * 
+   *
    * @returns {void} - Nothing.
    */
   private persistThemeToCookie(mode: ThemeMode): void {
@@ -215,17 +215,17 @@ export class ThemeService {
 
   /**
    * Method applyThemeToDocument
-   * 
+   *
    * @description
    * Applies the theme attribute to the document's html element.
    * Resolves 'system' to 'light' or 'dark' based on user preference.
    * Runs in browser and SSR to avoid light->dark flash on hydration.
-   * 
+   *
    * @access private
    * @since 1.0.0
-   * 
+   *
    * @param {ThemeMode} mode - The theme to apply.
-   * 
+   *
    * @returns {void} - Nothing.
    */
   private applyThemeToDocument(mode: ThemeMode): void {
@@ -235,16 +235,16 @@ export class ThemeService {
 
   /**
    * Method resolveTheme
-   * 
+   *
    * @description
    * Resolves 'system' theme to actual 'light' or 'dark' based on
    * the user's system preference (prefers-color-scheme).
-   * 
+   *
    * @access private
    * @since 1.0.0
-   * 
+   *
    * @param {ThemeMode} mode - The theme mode to resolve.
-   * 
+   *
    * @returns {'light' | 'dark'} - The resolved theme.
    */
   private resolveTheme(mode: ThemeMode): 'light' | 'dark' {

@@ -8,7 +8,7 @@ import {
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { EMPTY, switchMap, timer } from 'rxjs';
-import { SplashScreenService } from '@core/services/splash-screen';
+import { SPLASH_SCREEN_PORT, type SplashScreenPort } from '@ports/splash-screen';
 
 /**
  * Constant FADE_DURATION_MS
@@ -33,6 +33,8 @@ const FADE_DURATION_MS: number = 300;
  *
  * Uses a CSS opacity transition (Tailwind) instead of
  * `@angular/animations` to drive the fade-out effect.
+ * Visibility is consumed through a neutral splash port so the
+ * component stays decoupled from core implementations.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -47,20 +49,20 @@ const FADE_DURATION_MS: number = 300;
 export class SplashScreen {
   //#region Properties
   /**
-   * Property splashScreenService
+   * Property splashScreenPort
    * @readonly
    *
    * @description
-   * Injects the SplashScreenService to
+   * Injects the neutral splash screen port to
    * react to visibility changes.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {SplashScreenService}
+   * @type {SplashScreenPort}
    */
-  private readonly splashScreenService: SplashScreenService =
-    inject<SplashScreenService>(SplashScreenService);
+  private readonly splashScreenPort: SplashScreenPort =
+    inject<SplashScreenPort>(SPLASH_SCREEN_PORT);
 
   /**
    * Property rendered
@@ -101,7 +103,7 @@ export class SplashScreen {
    * @constructor
    *
    * @description
-   * Subscribes to the SplashScreenService visibility signal
+    * Subscribes to the splash screen port visibility signal
    * to manage the rendered and hiding states, triggering the
    * fade-out effect when the splash screen should be hidden.
    *
@@ -109,7 +111,7 @@ export class SplashScreen {
    * @since 1.0.0
    */
   public constructor() {
-    toObservable(this.splashScreenService.visible)
+    toObservable(this.splashScreenPort.visible)
       .pipe(
         switchMap((visible) => {
           if (visible) {

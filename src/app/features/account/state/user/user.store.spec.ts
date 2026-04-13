@@ -48,7 +48,7 @@ describe('UserStore', () => {
     store.load();
     await flushEffects();
 
-    expect(store.loadOperation().status).toBe('success');
+    expect(store.loadCallState().status).toBe('success');
     expect(store.profile()).toEqual(profile);
     expect(store.displayName()).toBe('Jane Doe');
     expect(store.initials()).toBe('JD');
@@ -62,7 +62,7 @@ describe('UserStore', () => {
     store.load();
     await flushEffects();
 
-    expect(store.loadOperation().status).toBe('error');
+    expect(store.loadCallState().status).toBe('error');
     expect(store.loadError()).not.toBeNull();
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
@@ -104,6 +104,6 @@ describe('UserStore', () => {
     store.clear();
 
     expect(store.profile()).toBeNull();
-    expect(store.loadOperation().status).toBe('idle');
+    expect(store.loadCallState().status).toBe('idle');
   });
 });

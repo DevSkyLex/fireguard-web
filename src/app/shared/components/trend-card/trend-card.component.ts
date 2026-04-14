@@ -10,21 +10,7 @@ import {
 } from '@angular/core';
 import { CardModule, CardPassThroughOptions } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
-import type { MetricComparison } from '@shared/components/metric-card';
-
-/**
- * Type MetricSummary
- *
- * @description
- * Shape of a single KPI tile rendered inside
- * the trend card's metrics bar.
- */
-export type MetricSummary = {
-  readonly label: string;
-  readonly value: string;
-  readonly icon: string | null;
-  readonly comparison?: MetricComparison | null;
-};
+import type { MetricSummary } from './models';
 
 /**
  * Component TrendCard

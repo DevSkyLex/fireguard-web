@@ -1,4 +1,4 @@
-import type { MetricComparison } from '@shared/components/metric-card';
+import type { MetricComparison } from '@shared/components';
 import { WHOLE_NUMBER_FMT } from './dashboard-number-formatters.constants';
 
 /**

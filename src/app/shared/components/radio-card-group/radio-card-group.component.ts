@@ -9,21 +9,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { RadioCard } from './components';
-
-/**
- * Interface RadioCardOption
- *
- * @description
- * Descriptor for a single option rendered as a selectable card
- * inside {@link RadioCardGroup}.
- *
- * @since 1.0.0
- */
-export interface RadioCardOption {
-  readonly value: unknown;
-  readonly label: string;
-  readonly description?: string | null;
-}
+import type { RadioCardOption } from './models';
 
 /**
  * Component RadioCardGroup

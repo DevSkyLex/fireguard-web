@@ -21,7 +21,7 @@ import { ToggleButtonModule } from 'primeng/togglebutton';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { OrganizationDashboardEquipmentCreatedStore } from '@features/organization/state/organization-dashboard';
-import { TrendCard } from '@shared/components/trend-card';
+import { TrendCard } from '@shared/components';
 import type { ChartData, ChartOptions } from 'chart.js';
 import {
   getDashboardTrendPointValue,

@@ -16,7 +16,7 @@ import type {
   OrganizationDashboardComparisonMetricGroup,
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { MetricCard } from '@shared/components/metric-card';
+import { MetricCard } from '@shared/components';
 import {
   OrganizationDashboardAssetGrowthTrend,
   OrganizationDashboardInspectionQualityTrend,

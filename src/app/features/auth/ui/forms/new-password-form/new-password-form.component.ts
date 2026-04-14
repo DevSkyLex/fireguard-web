@@ -19,7 +19,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
-import { matchFieldsValidator } from '@shared/validators/match-fields';
+import { MATCH_FIELDS_ERROR_KEY, matchFieldsValidator } from '@shared/validators';
 import type { NewPasswordFormData } from './new-password-form-data.type';
 import type { NewPasswordFormValues } from './new-password-form-values.type';
 
@@ -103,6 +103,8 @@ export class NewPasswordForm {
         validators: matchFieldsValidator('newPassword', 'confirmPassword'),
       },
     );
+
+  protected readonly matchFieldsErrorKey: string = MATCH_FIELDS_ERROR_KEY;
 
   /**
    * Property submitted

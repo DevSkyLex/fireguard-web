@@ -10,19 +10,7 @@ import {
 } from '@angular/core';
 import { CardModule, CardPassThroughOptions } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
-
-/**
- * Type MetricComparison
- *
- * @description
- * Scalar delta shown below the KPI value when a previous-period
- * comparison is available. Combines the human-readable formatted
- * value (e.g. `"+3"`) with the direction indicator (`"up"` | `"down"`).
- */
-export type MetricComparison = {
-  readonly value: string | number | null;
-  readonly direction: string | null;
-};
+import type { MetricComparison } from './models';
 
 /**
  * Component MetricCard

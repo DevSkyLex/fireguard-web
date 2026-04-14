@@ -146,13 +146,27 @@ export class BreadcrumbService {
   private resolveLabel(route: ActivatedRoute): string | null {
     const config = route.routeConfig;
     const snapshot = route.snapshot;
+    const routeData = config?.data ?? {};
+    const hasOwnBreadcrumbData = Object.prototype.hasOwnProperty.call(routeData, 'breadcrumb');
+    const hasOwnBreadcrumbResolver = Object.prototype.hasOwnProperty.call(
+      config?.resolve ?? {},
+      'breadcrumb',
+    );
 
     // Explicitly suppressed
-    if (config?.data?.['breadcrumb'] === false) return null;
+    if (routeData['breadcrumb'] === false) return null;
 
-    // Static or resolved breadcrumb label (Angular merges both into snapshot.data)
-    const breadcrumb: unknown = snapshot?.data?.['breadcrumb'];
-    if (typeof breadcrumb === 'string' && breadcrumb.trim()) return breadcrumb;
+    // Prefer route-local breadcrumb data. Angular merges parent data into snapshot.data,
+    // so we must guard against inherited labels leaking into child routes.
+    if (hasOwnBreadcrumbData) {
+      const breadcrumb: unknown = routeData['breadcrumb'];
+      if (typeof breadcrumb === 'string' && breadcrumb.trim()) return breadcrumb;
+    }
+
+    if (hasOwnBreadcrumbResolver) {
+      const breadcrumb: unknown = snapshot?.data?.['breadcrumb'];
+      if (typeof breadcrumb === 'string' && breadcrumb.trim()) return breadcrumb;
+    }
 
     // Fallback to route title (static string or resolved)
     const title: unknown = config?.title;

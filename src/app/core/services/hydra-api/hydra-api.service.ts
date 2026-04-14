@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams, type HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { type Observable, catchError, throwError } from 'rxjs';
+import { type Observable, catchError, map, throwError } from 'rxjs';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type { EnvironmentConfig } from '@core/config/environment/environment-config.interface';
 import {
@@ -378,7 +378,10 @@ export abstract class HydraApiService {
         params: this.buildParams(options),
         withCredentials: true,
       })
-      .pipe(catchError(this.handleError));
+      .pipe(
+        map(() => undefined),
+        catchError(this.handleError),
+      );
   }
 
   /**

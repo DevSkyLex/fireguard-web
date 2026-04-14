@@ -177,8 +177,10 @@ export function alignDashboardTrendSeries(
     }
   }
 
-  const buckets = Array.from(bucketSet).toSorted((left, right) => left.localeCompare(right));
-  const labels = buckets.map((bucket) => formatDashboardTrendBucket(bucket, granularity));
+  const buckets = Array.from(bucketSet).sort((left: string, right: string) =>
+    left.localeCompare(right),
+  );
+  const labels = buckets.map((bucket: string) => formatDashboardTrendBucket(bucket, granularity));
   const datasets = seriesCollection.map((series) => {
     const valueByBucket = new Map<string, number>();
 
@@ -193,7 +195,7 @@ export function alignDashboardTrendSeries(
       );
     }
 
-    return buckets.map((bucket) => valueByBucket.get(bucket) ?? 0);
+    return buckets.map((bucket: string) => valueByBucket.get(bucket) ?? 0);
   });
 
   return {

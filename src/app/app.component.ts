@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
-import { SplashScreen } from '@shared/components/splash-screen';
+import { SplashScreen } from '@shared/components';
 
 /**
  * Component App

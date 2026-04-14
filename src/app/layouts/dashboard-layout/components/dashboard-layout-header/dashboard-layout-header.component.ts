@@ -3,7 +3,7 @@ import { ButtonModule } from 'primeng/button';
 import { NotificationBell } from '@features/account';
 import { OrganizationSwitcher } from '@features/organization';
 import { DashboardSidebarService } from '@layouts/dashboard-layout/services';
-import { ThemeSwitcher } from '@shared/components/theme-switcher';
+import { ThemeSwitcher } from '@shared/components';
 import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
 
 /**

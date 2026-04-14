@@ -1,4 +1,5 @@
 import { AbstractControl, type ValidationErrors, type ValidatorFn } from '@angular/forms';
+import { MATCH_FIELDS_ERROR_KEY } from './utils';
 
 /**
  * Function matchFieldsValidator
@@ -49,7 +50,7 @@ export function matchFieldsValidator(first: string, second: string): ValidatorFn
     return firstControl.value === secondControl.value
       ? null
       : {
-          passwordMismatch: true,
+          [MATCH_FIELDS_ERROR_KEY]: true,
         };
   };
 }

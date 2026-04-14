@@ -10,11 +10,13 @@ import { Router } from '@angular/router';
 import { Popover, PopoverModule, PopoverPassThroughOptions } from 'primeng/popover';
 import type { OrganizationOutput } from '@features/organization/models';
 import { OrganizationStore } from '@features/organization/state';
-import { OrganizationSwitcherFooter } from './organization-switcher-footer/organization-switcher-footer.component';
-import { OrganizationSwitcherHeader } from './organization-switcher-header/organization-switcher-header.component';
-import { OrganizationSwitcherList } from './organization-switcher-list/organization-switcher-list.component';
-import { OrganizationSwitcherNav } from './organization-switcher-nav/organization-switcher-nav.component';
-import { OrganizationSwitcherTrigger } from './organization-switcher-trigger/organization-switcher-trigger.component';
+import {
+  OrganizationSwitcherFooter,
+  OrganizationSwitcherHeader,
+  OrganizationSwitcherList,
+  OrganizationSwitcherNav,
+  OrganizationSwitcherTrigger,
+} from './components';
 
 /**
  * Component OrganizationSwitcher

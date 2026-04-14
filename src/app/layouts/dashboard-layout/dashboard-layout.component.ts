@@ -13,7 +13,7 @@ import {
   DashboardLayoutHeader,
   DashboardLayoutSidebar,
   DashboardLayoutContent,
-} from '@layouts/dashboard-layout/partials';
+} from '@layouts/dashboard-layout/components';
 import { DashboardSidebarResizeHandleDirective } from './directives';
 import { DashboardSidebarNavigationService, DashboardSidebarService } from './services';
 

@@ -29,8 +29,8 @@ import type {
   InspectionResult,
   InspectorType,
 } from '@features/organization/features/inspections/models';
-import type { InspectionFormData } from './inspection-form-data.type';
-import type { InspectionFormValues } from './inspection-form-values.type';
+import type { InspectionFormData, InspectionFormValues } from './models';
+import { INSPECTION_RESULT_OPTIONS, INSPECTOR_TYPE_OPTIONS } from './options';
 
 /**
  * Component InspectionForm
@@ -204,11 +204,7 @@ export class InspectionForm {
    *
    * @type {{ label: string; value: InspectionResult }[]}
    */
-  protected readonly resultOptions: { label: string; value: InspectionResult }[] = [
-    { label: 'Pass', value: 'pass' },
-    { label: 'Fail', value: 'fail' },
-    { label: 'Partial', value: 'partial' },
-  ];
+  protected readonly resultOptions = INSPECTION_RESULT_OPTIONS;
 
   /**
    * Property inspectorTypeOptions
@@ -219,10 +215,7 @@ export class InspectionForm {
    *
    * @type {{ label: string; value: InspectorType }[]}
    */
-  protected readonly inspectorTypeOptions: { label: string; value: InspectorType }[] = [
-    { label: 'Internal User', value: 'user' },
-    { label: 'External Inspector', value: 'external' },
-  ];
+  protected readonly inspectorTypeOptions = INSPECTOR_TYPE_OPTIONS;
   //#endregion
 
   //#region Constructor

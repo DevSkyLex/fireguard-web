@@ -8,7 +8,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { RadioCard } from './radio-card/radio-card.component';
+import { RadioCard } from './components';
 
 /**
  * Interface RadioCardOption

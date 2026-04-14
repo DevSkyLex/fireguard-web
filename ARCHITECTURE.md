@@ -559,7 +559,14 @@ shared/
     index.ts
     <component>/
       index.ts
-      ...
+      <component>.component.ts
+      <component>.component.html
+      <component>.component.css        # optional
+      components/                      # optional nested Angular subcomponents
+      models/                          # optional local UI-only types and view models
+      options/                         # optional static UI option sets
+      utils/                           # optional pure helpers local to the component group
+      testing/                         # optional test-only fixtures and helpers
   directives/
   validators/
   pipes/                  # optional
@@ -595,6 +602,8 @@ the owning `core` concern instead of importing the concrete implementation.
 
 If a component imports feature models, feature stores, or domain services, it is not shared.
 
+The local component-folder structure defined later in section 9.2 also applies to `shared/components/`.
+
 ## 9. Responsibility By File Type
 
 The sections below follow the concern-oriented feature layout from section 8.3.
@@ -629,9 +638,83 @@ If a component is domain-aware, keep it in the owning feature even if it appears
 
 If a component becomes domain-free and reusable across features, move it to `shared/components`.
 
+The structure below is the default convention for any Angular component folder in the app, not only feature `ui/components/`.
+
+Apply it equally to:
+
+- `features/<feature>/ui/components/<component>/`,
+- `shared/components/<component>/`,
+- layout or shell component folders when they grow beyond a single file group.
+
+Recommended local structure for a component folder:
+
+```text
+ui/components/
+  <component-name>/
+    index.ts
+    <component-name>.component.ts
+    <component-name>.component.html
+    <component-name>.component.css        # optional
+    components/                           # optional nested Angular subcomponents
+      <child-component>/
+        index.ts
+        <child-component>.component.ts
+        <child-component>.component.html
+    models/                               # optional local UI-only types and view models
+      index.ts                            # optional
+      <name>.type.ts
+    options/                              # optional static UI option sets
+      index.ts                            # optional
+      <name>.constants.ts
+    utils/                                # optional pure helpers local to the component group
+      index.ts                            # optional
+      <name>.utils.ts
+      <name>.constants.ts
+    testing/                              # optional test-only fixtures and helpers
+```
+
+Structure rules:
+
+- start with the smallest useful shape: a component folder does not need `components/`, `models/`, `options/`, `utils/`, or `testing/` until the local area actually needs them,
+- use `components/` for nested Angular subcomponents only; do not use vague names such as `parts/`,
+- use `models/` for UI-facing local types and view models, not for feature transport contracts,
+- use `options/` for static select, menu, or filter option sets used by the component group,
+- use `utils/` only for pure helpers that are private to the component group,
+- keep these nested folders private by default; external consumers import through the concern-level `ui/components` barrel, not through deep implementation paths,
+- if a nested helper becomes broadly reusable across the feature, promote it to the appropriate feature-level concern instead of importing it through another component's private folder.
+
 ### 9.3 `ui/dataviews/`
 
 `ui/dataviews/` contains presentational browsing UIs for lists, tables, grids, and collection views.
+
+The structure below is the default convention for any dataview folder in the app.
+
+Recommended local structure for a dataview folder:
+
+```text
+ui/dataviews/
+  <dataview-name>/
+    index.ts
+    <dataview-name>.component.ts
+    <dataview-name>.component.html
+    <dataview-name>.component.css        # optional
+    components/                          # optional row, cell, toolbar, or empty-state subcomponents
+      <child-component>/
+        index.ts
+        <child-component>.component.ts
+        <child-component>.component.html
+    models/                              # optional local view models and UI-facing row types
+      index.ts                           # optional
+      <name>.type.ts
+    options/                             # optional static filters, tabs, sort options, or display options
+      index.ts                           # optional
+      <name>.constants.ts
+    utils/                               # optional pure helpers local to the dataview group
+      index.ts                           # optional
+      <name>.utils.ts
+      <name>.constants.ts
+    testing/                             # optional test-only fixtures and helpers
+```
 
 They may:
 
@@ -646,15 +729,68 @@ They must not:
 - own router synchronization,
 - trigger hidden reload chains.
 
+Structure rules:
+
+- start with the smallest useful shape; create `components/`, `models/`, `options/`, `utils/`, or `testing/` only when the dataview area actually needs them,
+- use `components/` for nested Angular subcomponents such as table rows, cell renderers, toolbars, filter bars, or empty states,
+- use `models/` for local row/view-model types used to shape rendering state, not for feature transport contracts,
+- use `options/` for static filter, sort, density, tab, or column option sets used by the dataview group,
+- use `utils/` only for pure helpers private to the dataview group,
+- keep these nested folders private by default; external consumers import through the concern-level `ui/dataviews` barrel, not through deep implementation paths,
+- if a dataview helper becomes broadly reusable across the feature, promote it to the appropriate feature-level concern instead of importing it through another dataview's private folder.
+
 ### 9.4 `ui/forms/`
 
 `ui/forms/` contains typed forms for the owning feature.
+
+The structure below is the default convention for any form folder in the app.
+
+Recommended local structure for a form folder:
+
+```text
+ui/forms/
+  <form-name>/
+    index.ts
+    <form-name>.component.ts
+    <form-name>.component.html
+    <form-name>.component.css            # optional
+    components/                          # optional nested field groups, steps, or field widgets
+      <child-component>/
+        index.ts
+        <child-component>.component.ts
+        <child-component>.component.html
+    models/                              # optional local form values, DTO mappers, or field-state types
+      index.ts                           # optional
+      <name>.type.ts
+    options/                             # optional static select, radio, checkbox, or step option sets
+      index.ts                           # optional
+      <name>.constants.ts
+    validators/                          # optional validators private to the form group
+      index.ts                           # optional
+      <name>.validator.ts
+    utils/                               # optional pure helpers local to the form group
+      index.ts                           # optional
+      <name>.utils.ts
+      <name>.constants.ts
+    testing/                             # optional test-only fixtures and helpers
+```
 
 They may manage internal form state.
 
 They must not own navigation or direct API access.
 
 Cross-feature reusable validators belong in `shared/validators`.
+
+Structure rules:
+
+- start with the smallest useful shape; a form folder does not need `components/`, `models/`, `options/`, `validators/`, `utils/`, or `testing/` until the local form area actually needs them,
+- use `components/` for nested Angular subcomponents such as field groups, repeatable rows, wizard steps, or form-specific controls,
+- use `models/` for local form value types, derived field-state types, and view-models private to the form group,
+- use `options/` for static select, radio, checkbox, or step option sets used by the form group,
+- use `validators/` only for validators private to the form group; promote validators to `shared/validators` only when they are truly cross-feature reusable,
+- use `utils/` only for pure helpers private to the form group,
+- keep these nested folders private by default; external consumers import through the concern-level `ui/forms` barrel, not through deep implementation paths,
+- if a form-local helper or type becomes broadly reusable across the feature, promote it to the appropriate feature-level concern instead of importing it through another form's private folder.
 
 ### 9.5 `data-access/`
 

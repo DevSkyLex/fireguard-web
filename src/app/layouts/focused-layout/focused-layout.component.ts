@@ -4,7 +4,7 @@ import {
   FocusedLayoutContent,
   FocusedLayoutFooter,
   FocusedLayoutHeader,
-} from '@layouts/focused-layout/partials';
+} from '@layouts/focused-layout/components';
 
 /**
  * Component FocusedLayout

@@ -15,12 +15,14 @@ import type {
   OnboardingStepStatus,
 } from '@features/onboarding/models';
 import { OnboardingStore } from '@features/onboarding/state';
-import { CreateEquipmentStep } from './steps/create-equipment-step';
-import { CreateFacilityStep } from './steps/create-facility-step';
-import { CreateOrganizationStep } from './steps/create-organization-step';
-import { InviteMembersStep } from './steps/invite-members-step';
-import { OnboardingStepBase } from './steps/onboarding-step.base';
-import { RunInspectionStep } from './steps/run-inspection-step';
+import {
+  CreateEquipmentStep,
+  CreateFacilityStep,
+  CreateOrganizationStep,
+  InviteMembersStep,
+  OnboardingStepBase,
+  RunInspectionStep,
+} from './components';
 
 /**
  * Interface OnboardingStepMeta

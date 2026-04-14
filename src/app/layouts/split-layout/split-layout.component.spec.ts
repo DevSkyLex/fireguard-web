@@ -18,7 +18,7 @@ describe('SplitLayout', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render all layout partials and router outlet', () => {
+  it('should render all layout components and router outlet', () => {
     const fixture = TestBed.createComponent(SplitLayout);
     fixture.detectChanges();
 

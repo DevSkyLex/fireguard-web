@@ -5,7 +5,7 @@ import {
   SplitLayoutContent,
   SplitLayoutFooter,
   SplitLayoutShowcase,
-} from '@layouts/split-layout/partials';
+} from '@layouts/split-layout/components';
 
 /**
  * Component SplitLayout

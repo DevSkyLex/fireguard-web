@@ -31,16 +31,8 @@ import { TagModule } from 'primeng/tag';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/services/hydra-api';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
-
-function toDisplayLabel(value: string | null | undefined): string {
-  if (!value) return '';
-
-  return value
-    .split(/[_\s-]+/)
-    .filter(Boolean)
-    .map((token: string) => token.charAt(0).toUpperCase() + token.slice(1))
-    .join(' ');
-}
+import { EQUIPMENT_TABLE_LAYOUT_OPTIONS } from './options';
+import { toDisplayLabel } from './utils';
 
 /**
  * Component EquipmentTable
@@ -307,10 +299,7 @@ export class EquipmentTable implements OnInit {
    *
    * @type {{ icon: string; value: 'list' | 'grid' }[]}
    */
-  protected readonly layoutOptions: { icon: string; value: 'list' | 'grid' }[] = [
-    { icon: PrimeIcons.LIST, value: 'list' },
-    { icon: PrimeIcons.TH_LARGE, value: 'grid' },
-  ];
+  protected readonly layoutOptions = EQUIPMENT_TABLE_LAYOUT_OPTIONS;
 
   /**
    * Property searchControl

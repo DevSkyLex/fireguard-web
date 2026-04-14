@@ -6,7 +6,7 @@ import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/
 import { AuthStore } from '@features/auth';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { DashboardLayout } from './dashboard-layout.component';
-import { DashboardLayoutHeader } from './partials';
+import { DashboardLayoutHeader } from './components';
 import { DashboardSidebarService } from './services';
 
 type PointerEventOptions = {

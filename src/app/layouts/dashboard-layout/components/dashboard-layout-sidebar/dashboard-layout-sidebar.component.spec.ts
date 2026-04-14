@@ -11,7 +11,7 @@ import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
 } from '@layouts/dashboard-layout/services';
-import { DashboardLayoutSidebarNavigation } from './dashboard-layout-sidebar-navigation/dashboard-layout-sidebar-navigation.component';
+import { DashboardLayoutSidebarNavigation } from './components';
 import { DashboardLayoutSidebar } from './dashboard-layout-sidebar.component';
 
 const MOCK_ORG = {

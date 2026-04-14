@@ -10,11 +10,13 @@ import {
 import { Popover, PopoverModule, type PopoverPassThroughOptions } from 'primeng/popover';
 import type { NotificationFilter } from '@features/account/models';
 import { NotificationStore } from '@features/account/state';
-import { NotificationBellFilter } from './notification-bell-filter/notification-bell-filter.component';
-import { NotificationBellFooter } from './notification-bell-footer/notification-bell-footer.component';
-import { NotificationBellHeader } from './notification-bell-header/notification-bell-header.component';
-import { NotificationBellList } from './notification-bell-list/notification-bell-list.component';
-import { NotificationBellTrigger } from './notification-bell-trigger/notification-bell-trigger.component';
+import {
+  NotificationBellFilter,
+  NotificationBellFooter,
+  NotificationBellHeader,
+  NotificationBellList,
+  NotificationBellTrigger,
+} from './components';
 
 /**
  * Component NotificationBell

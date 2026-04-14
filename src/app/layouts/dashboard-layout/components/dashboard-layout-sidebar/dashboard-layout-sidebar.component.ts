@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { DividerModule } from 'primeng/divider';
-import { DashboardLayoutSidebarFooter } from './dashboard-layout-sidebar-footer/dashboard-layout-sidebar-footer.component';
-import { DashboardLayoutSidebarHeader } from './dashboard-layout-sidebar-header/dashboard-layout-sidebar-header.component';
-import { DashboardLayoutSidebarNavigation } from './dashboard-layout-sidebar-navigation/dashboard-layout-sidebar-navigation.component';
+import {
+  DashboardLayoutSidebarFooter,
+  DashboardLayoutSidebarHeader,
+  DashboardLayoutSidebarNavigation,
+} from './components';
 
 /**
  * Component DashboardLayoutSidebar

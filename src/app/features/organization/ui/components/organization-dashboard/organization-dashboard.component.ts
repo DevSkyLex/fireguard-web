@@ -17,11 +17,13 @@ import type {
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { MetricCard } from '@shared/components/metric-card';
-import { OrganizationDashboardAssetGrowthTrend } from './organization-dashboard-asset-growth-trend';
-import { OrganizationDashboardInspectionQualityTrend } from './organization-dashboard-inspection-quality-trend';
-import { OrganizationDashboardNonConformitiesOpenedTrend } from './organization-dashboard-non-conformities-opened-trend/organization-dashboard-non-conformities-opened-trend.component';
-import { OrganizationDashboardNonConformitiesResolvedTrend } from './organization-dashboard-non-conformities-resolved-trend/organization-dashboard-non-conformities-resolved-trend.component';
-import { OrganizationDashboardOverviewTrend } from './organization-dashboard-overview-trend/organization-dashboard-overview-trend.component';
+import {
+  OrganizationDashboardAssetGrowthTrend,
+  OrganizationDashboardInspectionQualityTrend,
+  OrganizationDashboardNonConformitiesOpenedTrend,
+  OrganizationDashboardNonConformitiesResolvedTrend,
+  OrganizationDashboardOverviewTrend,
+} from './components';
 
 /**
  * Type OrganizationDashboardKpiValue
@@ -95,7 +97,21 @@ export class OrganizationDashboard {
   private readonly organizationService: OrganizationService =
     inject<OrganizationService>(OrganizationService);
 
-  private readonly platformId = inject(PLATFORM_ID);
+  /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Angular platform ID, used to conditionally disable the dashboard query
+   * when rendering on the server to avoid unnecessary requests
+   * and potential hydration mismatches.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Object}
+   */
+  private readonly platformId: Object = inject<Object>(PLATFORM_ID);
 
   /**
    * Property activeOrganizationStore

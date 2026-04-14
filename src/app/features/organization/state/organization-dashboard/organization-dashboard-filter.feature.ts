@@ -1,0 +1,70 @@
+import { computed } from '@angular/core';
+import { patchState, signalStoreFeature, withComputed, withMethods, withState } from '@ngrx/signals';
+import type { OrganizationDashboardGranularity, OrganizationDashboardTrendResourceParams } from '@features/organization/models';
+import { GRANULARITY_OPTIONS, getDashboardInitialDateRange, toIsoString } from './organization-dashboard.constants';
+import type { GranularityOption } from './organization-dashboard.types';
+
+export type DashboardFilterState = {
+  readonly selectedGranularity: OrganizationDashboardGranularity;
+  readonly selectedDateRange: Date[] | null;
+  readonly compareEnabled: boolean;
+};
+
+export function withDashboardFilterState() {
+  return signalStoreFeature(
+    withState<DashboardFilterState>({
+      selectedGranularity: 'week',
+      selectedDateRange: getDashboardInitialDateRange(),
+      compareEnabled: true,
+    }),
+    withComputed((store) => ({
+      granularityOptions: computed<GranularityOption[]>(() => [...GRANULARITY_OPTIONS]),
+      maxRangeDays: computed<number>(() => {
+        switch (store.selectedGranularity()) {
+          case 'day':
+            return 90;
+          case 'month':
+            return 730;
+          default:
+            return 365;
+        }
+      }),
+    })),
+    withMethods((store) => ({
+      setGranularity(granularity: OrganizationDashboardGranularity): void {
+        patchState(store, { selectedGranularity: granularity });
+      },
+      setDateRange(range: Date[] | null): void {
+        if (!range || range.length < 2 || !range[0] || !range[1]) {
+          patchState(store, { selectedDateRange: range });
+          return;
+        }
+        const [from, to] = range;
+        const maxMs = store.maxRangeDays() * 24 * 60 * 60 * 1000;
+        if (to.getTime() - from.getTime() > maxMs) {
+          patchState(store, { selectedDateRange: [from, new Date(from.getTime() + maxMs)] });
+          return;
+        }
+        patchState(store, { selectedDateRange: range });
+      },
+      setCompareEnabled(compareEnabled: boolean): void {
+        patchState(store, { compareEnabled });
+      },
+    })),
+  );
+}
+
+export function buildDashboardTrendBaseParams(store: {
+  readonly selectedGranularity: () => OrganizationDashboardGranularity;
+  readonly selectedDateRange: () => Date[] | null;
+  readonly compareEnabled: () => boolean;
+}): Omit<OrganizationDashboardTrendResourceParams, 'organizationId'> | null {
+  const range = store.selectedDateRange();
+  if (range !== null && (range.length < 2 || !range[1])) return null;
+  return {
+    granularity: store.selectedGranularity(),
+    from: toIsoString(range?.[0]),
+    to: toIsoString(range?.[1]),
+    compare: store.compareEnabled() || undefined,
+  };
+}

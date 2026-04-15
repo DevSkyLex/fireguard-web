@@ -364,6 +364,7 @@ export const AuthStore = signalStore(
                     initialized: true,
                     logoutCallState: successCallState(response),
                   });
+                  activeTrustedDeviceStore.clear();
                   // Clear user profile on logout
                   userProfilePort.clear();
                   dispatcher.dispatch(authStoreEvents.logoutSucceeded());
@@ -375,6 +376,7 @@ export const AuthStore = signalStore(
                     initialized: true,
                     logoutCallState: errorCallState(storeError),
                   });
+                  activeTrustedDeviceStore.clear();
                   // Clear user profile even on logout error
                   userProfilePort.clear();
                   dispatcher.dispatch(
@@ -600,6 +602,7 @@ export const AuthStore = signalStore(
        * @since 1.0.0
        */
       clearToken(): void {
+        activeTrustedDeviceStore.clear();
         patchState(store, {
           accessToken: null,
           expiresAt: null,
@@ -616,6 +619,7 @@ export const AuthStore = signalStore(
        * @since 1.0.0
        */
       clearMfaState(): void {
+        activeTrustedDeviceStore.clear();
         patchState(store, {
           mfaRequired: false,
           mfaToken: null,

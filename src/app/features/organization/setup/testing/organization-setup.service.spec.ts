@@ -122,6 +122,27 @@ describe('OrganizationSetupService', () => {
     });
   });
 
+  it('should normalize empty invitation batches and nullable role identifiers', () => {
+    const nextSpy = vi.fn();
+    organizationInvitationService.invite.mockImplementation((organizationId: string, input) =>
+      of({ id: `${organizationId}:${input.email}` }),
+    );
+
+    service.inviteMembers('org-1', []).subscribe({ next: nextSpy });
+    service
+      .inviteMembers('org-1', [{ email: 'one@test.dev', roleIds: [null, 'role-1', null] }])
+      .subscribe((result) => {
+        expect(result).toBeUndefined();
+      });
+
+    expect(nextSpy).toHaveBeenCalledWith(undefined);
+    expect(organizationInvitationService.invite).toHaveBeenCalledTimes(1);
+    expect(organizationInvitationService.invite).toHaveBeenCalledWith('org-1', {
+      email: 'one@test.dev',
+      roleIds: ['role-1'],
+    });
+  });
+
   it('should map equipment to the setup summary contract', () => {
     equipmentService.list.mockReturnValue(
       of(
@@ -177,6 +198,15 @@ describe('OrganizationSetupService', () => {
       });
 
     expect(facilityService.create).toHaveBeenCalledTimes(2);
+  });
+
+  it('should complete facility creation immediately when there is nothing to create', () => {
+    const nextSpy = vi.fn();
+
+    service.createFacilities('org-1', []).subscribe({ next: nextSpy });
+
+    expect(nextSpy).toHaveBeenCalledWith(undefined);
+    expect(facilityService.create).not.toHaveBeenCalled();
   });
 
   it('should delegate equipment and inspection creation through the setup contract', () => {

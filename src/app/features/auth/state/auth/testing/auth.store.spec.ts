@@ -28,6 +28,7 @@ describe('AuthStore', () => {
   let mockTrustedDeviceStore: {
     pendingTrustDevice: ReturnType<typeof vi.fn>;
     trustDevice: ReturnType<typeof vi.fn>;
+    clear: ReturnType<typeof vi.fn>;
   };
 
   const credentials: LoginInput = {
@@ -59,6 +60,7 @@ describe('AuthStore', () => {
     mockTrustedDeviceStore = {
       pendingTrustDevice: vi.fn().mockReturnValue(false),
       trustDevice: vi.fn(),
+      clear: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -83,6 +85,7 @@ describe('AuthStore', () => {
 
     expect(store.accessToken()).toBeNull();
     expect(store.isAuthenticated()).toBe(false);
+    expect(mockTrustedDeviceStore.clear).toHaveBeenCalledTimes(1);
   });
 
   it('should store access token on login success without MFA', async () => {
@@ -204,6 +207,7 @@ describe('AuthStore', () => {
     expect(store.logoutCallState().status).toBe('success');
     expect(store.initialized()).toBe(true);
     expect(store.accessToken()).toBeNull();
+    expect(mockTrustedDeviceStore.clear).toHaveBeenCalledTimes(1);
     expect(mockUserProfilePort.clear).toHaveBeenCalledTimes(1);
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
@@ -218,6 +222,7 @@ describe('AuthStore', () => {
     expect(store.logoutCallState().status).toBe('error');
     expect(store.initialized()).toBe(true);
     expect(store.accessToken()).toBeNull();
+    expect(mockTrustedDeviceStore.clear).toHaveBeenCalledTimes(1);
     expect(mockUserProfilePort.clear).toHaveBeenCalledTimes(1);
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
@@ -360,6 +365,7 @@ describe('AuthStore', () => {
     expect(store.mfaRequired()).toBe(false);
     expect(store.mfaToken()).toBeNull();
     expect(store.challengeToken()).toBeNull();
+    expect(mockTrustedDeviceStore.clear).toHaveBeenCalledTimes(1);
   });
 
   it('should reset all operation call states to idle when resetOperations is called', async () => {

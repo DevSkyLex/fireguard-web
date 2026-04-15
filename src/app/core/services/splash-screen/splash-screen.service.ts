@@ -26,13 +26,13 @@ import { AUTH_SESSION, type AuthSessionPort } from '@features/auth/ports';
  *
  * @description
  * Manages the global splash screen visibility for two scenarios:
- * - **Boot**: visible while the auth state is being initialized.
+ * - **Boot**: visible while the auth session has not yet initialized.
  * - **Navigation**: visible during lazy-loaded route transitions
  *   that exceed the anti-flicker threshold.
  *
  * The service exposes a single `visible` signal consumed by the
- * SplashScreenComponent at the root level. On first boot, the
- * static HTML fallback in index.html is also removed.
+ * `SplashScreen` component at the root level through the
+ * `SPLASH_SCREEN_PORT` neutral contract.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -48,27 +48,113 @@ export class SplashScreenService {
   //#endregion
 
   //#region Dependencies
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Angular router used to listen for navigation lifecycle events
+   * and drive the navigation splash visibility.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Router}
+   */
   private readonly router: Router = inject<Router>(Router);
+
+  /**
+   * Property authSession
+   * @readonly
+   *
+   * @description
+   * Auth session port consumed to derive the boot state from
+   * the auth initialization signal.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {AuthSessionPort}
+   */
   private readonly authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION);
+
+  /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Platform identifier used to guard browser-only logic such as
+   * router event subscriptions.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {object}
+   */
   private readonly platformId: object = inject<object>(PLATFORM_ID);
+
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Destroy reference passed to `takeUntilDestroyed` to clean up
+   * the router event subscription when the service is destroyed.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {DestroyRef}
+   */
   private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
   //#endregion
 
   //#region State
   /**
-   * True while auth has not yet initialized (first load).
+   * Property booting
+   * @readonly
+   *
+   * @description
+   * True while the auth session has not yet completed its
+   * initialization on first load.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
    */
   private readonly booting: Signal<boolean> = computed<boolean>(
     () => !this.authSession.initialized(),
   );
 
   /**
-   * True during a navigation transition that exceeded the delay threshold.
+   * Property navigating
+   * @readonly
+   *
+   * @description
+   * True during a navigation transition that exceeded the
+   * anti-flicker delay threshold.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
    */
   private readonly navigating: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
-   * Combined visibility: splash is shown when booting OR navigating.
+   * Property visible
+   * @readonly
+   *
+   * @description
+   * Combined visibility signal: the splash is shown when the app
+   * is booting OR during a navigation transition.
+   * Consumed by `SplashScreen` through the `SPLASH_SCREEN_PORT`.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
    */
   public readonly visible: Signal<boolean> = computed<boolean>(
     () => this.booting() || this.navigating(),
@@ -76,23 +162,44 @@ export class SplashScreenService {
   //#endregion
 
   //#region Internal
+  /**
+   * Property navTimer
+   *
+   * @description
+   * Handle for the anti-flicker timer. Non-null while a navigation
+   * start has been detected but the delay threshold has not elapsed.
+   * Cleared on navigation end or when a new navigation pre-empts it.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ReturnType<typeof setTimeout> | null}
+   */
   private navTimer: ReturnType<typeof setTimeout> | null = null;
-  private staticFallbackRemoved: boolean = false;
   //#endregion
 
   //#region Constructor
   public constructor() {
     if (isPlatformBrowser(this.platformId)) {
       this.listenToRouter();
-      this.scheduleStaticFallbackRemoval();
     }
   }
   //#endregion
 
   //#region Private Methods
   /**
-   * Subscribes to router events and manages the navigating signal
-   * with an anti-flicker delay.
+   * Method listenToRouter
+   *
+   * @description
+   * Subscribes to router lifecycle events and manages the `navigating`
+   * signal with an anti-flicker delay. Only `NavigationStart` triggers
+   * the timer; `NavigationEnd`, `NavigationCancel`, and `NavigationError`
+   * all resolve it.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @returns {void}
    */
   private listenToRouter(): void {
     this.router.events
@@ -115,6 +222,19 @@ export class SplashScreenService {
       });
   }
 
+  /**
+   * Method onNavigationStart
+   *
+   * @description
+   * Schedules the navigation splash appearance after the anti-flicker
+   * delay. Has no effect when a timer is already running, preventing
+   * re-entrant navigations from resetting the countdown.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
   private onNavigationStart(): void {
     if (this.navTimer !== null) return;
 
@@ -123,6 +243,19 @@ export class SplashScreenService {
     }, SplashScreenService.NAV_DELAY_MS);
   }
 
+  /**
+   * Method onNavigationEnd
+   *
+   * @description
+   * Clears any pending anti-flicker timer and hides the navigation
+   * splash. Called on `NavigationEnd`, `NavigationCancel`, and
+   * `NavigationError`.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
   private onNavigationEnd(): void {
     if (this.navTimer !== null) {
       clearTimeout(this.navTimer);
@@ -131,18 +264,5 @@ export class SplashScreenService {
     this.navigating.set(false);
   }
 
-  /**
-   * Removes the static HTML splash fallback from index.html
-   * once Angular has bootstrapped.
-   */
-  private scheduleStaticFallbackRemoval(): void {
-    if (this.staticFallbackRemoved) return;
-    this.staticFallbackRemoved = true;
-
-    requestAnimationFrame(() => {
-      const el: HTMLElement | null = document.getElementById('static-splash');
-      el?.remove();
-    });
-  }
   //#endregion
 }

@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { forkJoin, map } from 'rxjs';
+import { forkJoin, map, of } from 'rxjs';
 import { OrganizationInvitationService, OrganizationRoleService, OrganizationService } from '@features/organization/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
@@ -32,14 +32,89 @@ import type {
   providedIn: 'root',
 })
 export class OrganizationSetupService {
-  public constructor(
-    private readonly organizationService: OrganizationService,
-    private readonly organizationInvitationService: OrganizationInvitationService,
-    private readonly organizationRoleService: OrganizationRoleService,
-    private readonly facilityService: FacilityService,
-    private readonly equipmentService: EquipmentService,
-    private readonly inspectionService: InspectionService,
-  ) {}
+  /**
+   * Property organizationService
+   * @readonly
+   *
+   * @description
+   * Core organization service used to create organizations.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {OrganizationService}
+   */
+  private readonly organizationService: OrganizationService = inject<OrganizationService>(OrganizationService);
+
+  /**
+   * Property organizationInvitationService
+   * @readonly
+   *
+   * @description
+   * Service used to send member invitations to an organization.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {OrganizationInvitationService}
+   */
+  private readonly organizationInvitationService: OrganizationInvitationService = inject<OrganizationInvitationService>(OrganizationInvitationService);
+
+  /**
+   * Property organizationRoleService
+   * @readonly
+   *
+   * @description
+   * Service used to list assignable roles within an organization.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {OrganizationRoleService}
+   */
+  private readonly organizationRoleService: OrganizationRoleService = inject<OrganizationRoleService>(OrganizationRoleService);
+
+  /**
+   * Property facilityService
+   * @readonly
+   *
+   * @description
+   * Service used to create facilities for an organization.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {FacilityService}
+   */
+  private readonly facilityService: FacilityService = inject<FacilityService>(FacilityService);
+
+  /**
+   * Property equipmentService
+   * @readonly
+   *
+   * @description
+   * Service used to list and create equipment records for an organization.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {EquipmentService}
+   */
+  private readonly equipmentService: EquipmentService = inject<EquipmentService>(EquipmentService);
+
+  /**
+   * Property inspectionService
+   * @readonly
+   *
+   * @description
+   * Service used to create inspection records for an organization.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InspectionService}
+   */
+  private readonly inspectionService: InspectionService = inject<InspectionService>(InspectionService);
 
   /**
    * Method createOrganization
@@ -92,10 +167,19 @@ export class OrganizationSetupService {
     organizationId: string,
     invitations: readonly SetupInviteMemberInput[],
   ): Observable<void> {
+    if (invitations.length === 0) return of(undefined);
+
     return forkJoin(
-      invitations.map((invitation) =>
-        this.organizationInvitationService.invite(organizationId, invitation),
-      ),
+      invitations.map((invitation) => {
+        const roleIds: string[] | undefined = invitation.roleIds?.filter(
+          (roleId): roleId is string => roleId !== null,
+        );
+
+        return this.organizationInvitationService.invite(organizationId, {
+          ...invitation,
+          roleIds: roleIds?.length ? roleIds : undefined,
+        });
+      }),
     ).pipe(map(() => undefined));
   }
 
@@ -114,6 +198,8 @@ export class OrganizationSetupService {
     organizationId: string,
     facilities: readonly SetupCreateFacilityInput[],
   ): Observable<void> {
+    if (facilities.length === 0) return of(undefined);
+
     return forkJoin(
       facilities.map((facility) => this.facilityService.create(organizationId, facility)),
     ).pipe(map(() => undefined));

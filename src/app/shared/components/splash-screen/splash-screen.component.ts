@@ -1,13 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  effect,
   inject,
   signal,
   type WritableSignal,
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { EMPTY, switchMap, timer } from 'rxjs';
 import { SPLASH_SCREEN_PORT, type SplashScreenPort } from '@core/ports/splash-screen';
 
 /**
@@ -41,7 +40,6 @@ const FADE_DURATION_MS: number = 300;
  */
 @Component({
   selector: 'app-splash-screen',
-  standalone: true,
   imports: [ProgressSpinnerModule],
   templateUrl: './splash-screen.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -101,31 +99,38 @@ export class SplashScreen {
    * @constructor
    *
    * @description
-   * Subscribes to the splash screen port visibility signal
-   * to manage the rendered and hiding states, triggering the
-   * fade-out effect when the splash screen should be hidden.
+   * Registers an effect that reacts to the splash screen port visibility
+   * signal. When the splash becomes visible the overlay is restored
+   * immediately. When it becomes hidden an opacity fade-out is started
+   * and the overlay is removed from the DOM after the transition
+   * completes.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
-    toObservable(this.splashScreenPort.visible)
-      .pipe(
-        switchMap((visible) => {
-          if (visible) {
-            this.hiding.set(false);
-            this.rendered.set(true);
-            return EMPTY;
-          }
-          this.hiding.set(true);
-          return timer(FADE_DURATION_MS);
-        }),
-        takeUntilDestroyed(),
-      )
-      .subscribe(() => {
+    let fadeTimer: ReturnType<typeof setTimeout> | null = null;
+
+    effect(() => {
+      const visible: boolean = this.splashScreenPort.visible();
+
+      if (visible) {
+        if (fadeTimer !== null) {
+          clearTimeout(fadeTimer);
+          fadeTimer = null;
+        }
+        this.hiding.set(false);
+        this.rendered.set(true);
+        return;
+      }
+
+      this.hiding.set(true);
+      fadeTimer = setTimeout(() => {
         this.rendered.set(false);
         this.hiding.set(false);
-      });
+        fadeTimer = null;
+      }, FADE_DURATION_MS);
+    });
   }
   //#endregion
 }

@@ -371,11 +371,6 @@ export class OrganizationDataview implements OnInit {
         icon: PrimeIcons.EYE,
         command: (): void => this.view.emit(organization),
       },
-      {
-        label: 'Edit',
-        icon: PrimeIcons.PENCIL,
-        command: (): void => this.edit.emit(organization),
-      },
       { separator: true },
       {
         label: 'Delete',
@@ -401,20 +396,6 @@ export class OrganizationDataview implements OnInit {
    * @type {OutputEmitterRef<OrganizationOutput>}
    */
   public readonly view: OutputEmitterRef<OrganizationOutput> = output<OrganizationOutput>();
-
-  /**
-   * Output edit
-   * @readonly
-   *
-   * @description
-   * Emitted when the user selects "Edit" from the item menu.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<OrganizationOutput>}
-   */
-  public readonly edit: OutputEmitterRef<OrganizationOutput> = output<OrganizationOutput>();
 
   /**
    * Output add

@@ -119,24 +119,6 @@ export class OrganizationListPage {
   }
 
   /**
-   * Method onEdit
-   * @method onEdit
-   *
-   * @description
-   * Navigates to the organization edit page.
-   *
-   * @access public
-   * @since 1.2.0
-   *
-   * @param {OrganizationOutput} organization - The selected organization.
-   *
-   * @returns {void}
-   */
-  public onEdit(organization: OrganizationOutput): void {
-    this.router.navigate(['/organizations', organization.id, 'edit']);
-  }
-
-  /**
    * Method onAdd
    * @method onAdd
    *

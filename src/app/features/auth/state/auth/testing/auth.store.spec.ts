@@ -1,3 +1,4 @@
+import { makeStateKey, TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
@@ -14,6 +15,7 @@ const flushEffects = async (): Promise<void> => {
 
 describe('AuthStore', () => {
   let store: AuthStore;
+  let transferState: TransferState;
   let mockDispatcher: { dispatch: ReturnType<typeof vi.fn> };
   let mockAuthService: {
     login: ReturnType<typeof vi.fn>;
@@ -79,6 +81,7 @@ describe('AuthStore', () => {
     });
 
     store = TestBed.inject(AuthStore);
+    transferState = TestBed.inject(TransferState);
   });
 
   it('should set and clear token synchronously', () => {
@@ -155,6 +158,20 @@ describe('AuthStore', () => {
     expect(store.initialized()).toBe(true);
     expect(store.accessToken()).toBeNull();
     expect(store.expiresAt()).toBeNull();
+  });
+
+  it('should retry refresh in the browser when SSR transfer state contains null', async () => {
+    transferState.set(
+      makeStateKey<{ access_token: string; expires_in: number } | null>('auth'),
+      null,
+    );
+    mockAuthService.refresh.mockReturnValue(of(loginResponse));
+
+    await store.initialize();
+
+    expect(mockAuthService.refresh).toHaveBeenCalledTimes(1);
+    expect(store.initialized()).toBe(true);
+    expect(store.accessToken()).toBe('access-token');
   });
 
   it('should verify MFA and trust device when pending flag is true', async () => {

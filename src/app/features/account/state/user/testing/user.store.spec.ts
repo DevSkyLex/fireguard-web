@@ -1,3 +1,4 @@
+import { makeStateKey, TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
@@ -11,6 +12,7 @@ const flushEffects = async (): Promise<void> => {
 
 describe('UserStore', () => {
   let store: UserStore;
+  let transferState: TransferState;
   let mockDispatcher: { dispatch: ReturnType<typeof vi.fn> };
   let mockOauth2Service: { userinfo: ReturnType<typeof vi.fn> };
 
@@ -40,6 +42,7 @@ describe('UserStore', () => {
     });
 
     store = TestBed.inject(UserStore);
+    transferState = TestBed.inject(TransferState);
   });
 
   it('should load profile and expose computed values', async () => {
@@ -94,6 +97,16 @@ describe('UserStore', () => {
 
     expect(mockOauth2Service.userinfo).toHaveBeenCalledTimes(2);
     expect(store.profile()?.name).toBe('Jane Updated');
+  });
+
+  it('should retry userinfo in the browser when SSR transfer state contains null', async () => {
+    transferState.set(makeStateKey<UserInfoOutput | null>('user-profile'), null);
+    mockOauth2Service.userinfo.mockReturnValue(of(profile));
+
+    await store.initialize();
+
+    expect(mockOauth2Service.userinfo).toHaveBeenCalledTimes(1);
+    expect(store.profile()).toEqual(profile);
   });
 
   it('should clear profile and operation state', async () => {

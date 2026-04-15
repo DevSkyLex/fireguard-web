@@ -289,9 +289,10 @@ export const UserStore = signalStore(
               profile: transferred,
               loadCallState: successCallState(transferred),
             });
+              return;
           }
-          // null means SSR userinfo failed — leave state as-is (idle), no retry.
-          return;
+
+          // Retry once in the browser when SSR could not load the profile.
         }
 
         // SSR or browser without transfer: fetch userinfo and store result for hydration.

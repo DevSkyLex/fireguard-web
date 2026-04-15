@@ -43,7 +43,10 @@ const TOKEN_EXPIRY_WARNING_MS: number = 5 * 60 * 1000;
  *
  * @since 1.0.0
  */
-const AUTH_TRANSFER_KEY = makeStateKey<{ access_token: string; expires_in: number } | null>('auth');
+const AUTH_TRANSFER_KEY = makeStateKey<{
+  access_token: string;
+  expires_in: number
+} | null>('auth');
 
 /**
  * Constant INITIAL_AUTH_STATE
@@ -572,9 +575,7 @@ export const AuthStore = signalStore(
             return;
           }
 
-          // Transferred null means SSR refresh failed — skip browser refresh too.
-          patchState(store, { initialized: true, accessToken: null, expiresAt: null });
-          return;
+          // Retry once in the browser when SSR could not restore the session.
         }
 
         try {

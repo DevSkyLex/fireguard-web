@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { EMPTY } from 'rxjs';
-import { UserStore } from '@features/account/state';
+import { USER_PROFILE_PORT } from '@features/account/ports';
 import { AuthStore } from '@features/auth/state';
 import { LoginPage } from '../login-page.component';
 
@@ -23,7 +23,7 @@ describe('LoginPage', () => {
       ...authState,
       login: vi.fn(),
     };
-    const mockUserStore = { load: vi.fn() };
+    const mockUserProfilePort = { load: vi.fn() };
     const mockRouter = { navigate: vi.fn().mockResolvedValue(true) };
     const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
     const mockMessageService = { add: vi.fn() };
@@ -31,7 +31,7 @@ describe('LoginPage', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: AuthStore, useValue: mockAuthStore },
-        { provide: UserStore, useValue: mockUserStore },
+        { provide: USER_PROFILE_PORT, useValue: mockUserProfilePort },
         { provide: Router, useValue: mockRouter },
         { provide: Events, useValue: mockEvents },
         { provide: MessageService, useValue: mockMessageService },
@@ -40,7 +40,7 @@ describe('LoginPage', () => {
 
     const component = TestBed.runInInjectionContext(() => new LoginPage());
     TestBed.tick();
-    return { component, mockAuthStore, mockUserStore, mockRouter };
+    return { component, mockAuthStore, mockUserProfilePort, mockRouter };
   };
 
   it('should call authStore.login when form is submitted', () => {
@@ -67,9 +67,9 @@ describe('LoginPage', () => {
   });
 
   it('should load user and navigate home when user is authenticated', () => {
-    const { mockUserStore, mockRouter } = setup({ authenticated: true });
+    const { mockUserProfilePort, mockRouter } = setup({ authenticated: true });
 
-    expect(mockUserStore.load).toHaveBeenCalledTimes(1);
+    expect(mockUserProfilePort.load).toHaveBeenCalledTimes(1);
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
   });
 });

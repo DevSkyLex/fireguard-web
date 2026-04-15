@@ -10,7 +10,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterModule } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { UserStore } from '@features/account/state';
+import { USER_PROFILE_PORT, type UserProfilePort } from '@features/account/ports';
 import { AuthStore, authStoreEvents } from '@features/auth/state';
 import { LoginForm, type LoginFormValues } from '@features/auth/ui/forms';
 
@@ -49,18 +49,18 @@ export class LoginPage {
   protected readonly authStore: AuthStore = inject<AuthStore>(AuthStore);
 
   /**
-   * Property userStore
+  * Property userProfilePort
    * @readonly
    *
    * @description
-   * User store for loading user profile.
+  * Account-owned contract for loading the authenticated user profile.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {UserStore}
+  * @type {UserProfilePort}
    */
-  private readonly userStore: UserStore = inject<UserStore>(UserStore);
+  private readonly userProfilePort: UserProfilePort = inject<UserProfilePort>(USER_PROFILE_PORT);
 
   /**
    * Property messageService
@@ -143,7 +143,7 @@ export class LoginPage {
     // Navigate to home when authenticated and load user profile
     effect(() => {
       if (this.authStore.isAuthenticated()) {
-        this.userStore.load();
+        this.userProfilePort.load();
         this.router.navigate(['/']).catch(() => undefined);
       }
     });

@@ -25,4 +25,3 @@ export type { PasswordResetVerifyInput } from './password-reset/password-reset-v
 export type { PasswordResetVerifyOutput } from './password-reset/password-reset-verify-output.interface';
 export type { GrantType } from './session/grant-type.type';
 export type { TokenOutput } from './session/token-output.interface';
-export type { UserInfoOutput } from './user/userinfo-output.interface';

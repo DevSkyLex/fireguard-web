@@ -6,6 +6,7 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MessageService } from 'primeng/api';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
@@ -14,7 +15,7 @@ import {
   CreateOrganizationForm,
   type CreateOrganizationFormValues,
 } from '@features/onboarding/ui/forms';
-import { OrganizationService } from '@features/organization/data-access';
+import { OrganizationSetupService } from '@features/organization/setup';
 import { OnboardingStepBase } from '../onboarding-step.base';
 
 /**
@@ -58,8 +59,8 @@ export class CreateOrganizationStep extends OnboardingStepBase {
    *
    * @type {OrganizationService}
    */
-  private readonly organizationService: OrganizationService =
-    inject<OrganizationService>(OrganizationService);
+  private readonly organizationSetupService: OrganizationSetupService =
+    inject<OrganizationSetupService>(OrganizationSetupService);
 
   /**
    * Property messageService
@@ -141,25 +142,28 @@ export class CreateOrganizationStep extends OnboardingStepBase {
     if (this.onboardingStore.isBusy() || this.isCreatingOrganization()) return;
     this.isCreatingOrganization.set(true);
 
-    this.organizationService.create({ name: values.organizationName }).subscribe({
-      next: () => {
-        this.isCreatingOrganization.set(false);
-        if (this.onboardingStore.activeStepIndex() === this.stepIndex()) {
-          this.onboardingStore.executeStep({ stepKey: 'create_organization' });
-        }
-      },
-      error: (error: unknown) => {
-        this.isCreatingOrganization.set(false);
-        const message: string =
-          error instanceof Error ? error.message : 'Failed to create organization.';
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: message,
-          life: 5000,
-        });
-      },
-    });
+    this.organizationSetupService
+      .createOrganization({ name: values.organizationName })
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: () => {
+          this.isCreatingOrganization.set(false);
+          if (this.onboardingStore.activeStepIndex() === this.stepIndex()) {
+            this.onboardingStore.executeStep({ stepKey: 'create_organization' });
+          }
+        },
+        error: (error: unknown) => {
+          this.isCreatingOrganization.set(false);
+          const message: string =
+            error instanceof Error ? error.message : 'Failed to create organization.';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: message,
+            life: 5000,
+          });
+        },
+      });
   }
   //#endregion
 }

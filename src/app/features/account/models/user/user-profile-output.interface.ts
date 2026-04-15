@@ -1,42 +1,24 @@
 import type { HydraItem } from '@core/models/api';
 
 /**
- * Interface UserInfoOutput
- * @interface UserInfoOutput
+ * Interface UserProfileOutput
+ * @interface UserProfileOutput
  *
  * @description
- * OpenID Connect UserInfo response.
- * Returned by GET /api/oauth2/userinfo.
+ * Current authenticated user profile returned by the account-owned
+ * user profile transport. The underlying endpoint currently maps to
+ * the OIDC userinfo resource.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
- *
- * @example
- * ```typescript
- * const userInfo: UserInfoOutput = {
- *   '@id': '/api/oauth2/userinfo',
- *   '@type': 'UserInfo',
- *   sub: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
- *   name: 'John Doe',
- *   given_name: 'John',
- *   family_name: 'Doe',
- *   preferred_username: 'johndoe',
- *   email: 'john.doe@example.com',
- *   email_verified: true,
- *   picture: 'https://cdn.example.com/avatars/johndoe.png',
- *   updated_at: 1733746800
- * };
- * ```
  */
-export interface UserInfoOutput extends HydraItem {
+export interface UserProfileOutput extends HydraItem {
   /**
    * Property sub
    * @readonly
    *
    * @description
-   * Subject identifier (unique user UUID) per OIDC specification.
-   *
-   * @since 1.0.0
+   * Subject identifier of the authenticated user.
    *
    * @type {string}
    */
@@ -47,9 +29,7 @@ export interface UserInfoOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Full name of the user.
-   *
-   * @since 1.0.0
+   * Full display name of the user.
    *
    * @type {string | null | undefined}
    */
@@ -60,9 +40,7 @@ export interface UserInfoOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * First name (given name) of the user.
-   *
-   * @since 1.0.0
+   * Given name of the user.
    *
    * @type {string | null | undefined}
    */
@@ -73,9 +51,7 @@ export interface UserInfoOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Last name (family name) of the user.
-   *
-   * @since 1.0.0
+   * Family name of the user.
    *
    * @type {string | null | undefined}
    */
@@ -86,9 +62,7 @@ export interface UserInfoOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Preferred display name or username.
-   *
-   * @since 1.0.0
+   * Preferred display username.
    *
    * @type {string | null | undefined}
    */
@@ -99,9 +73,7 @@ export interface UserInfoOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * URL of the user profile picture (avatar).
-   *
-   * @since 1.0.0
+   * Avatar URL of the authenticated user.
    *
    * @type {string | null | undefined}
    */
@@ -114,8 +86,6 @@ export interface UserInfoOutput extends HydraItem {
    * @description
    * Email address of the user.
    *
-   * @since 1.0.0
-   *
    * @type {string | null | undefined}
    */
   readonly email?: string | null;
@@ -125,9 +95,7 @@ export interface UserInfoOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Whether the user's email address has been verified.
-   *
-   * @since 1.0.0
+   * Whether the email address has been verified.
    *
    * @type {boolean | null | undefined}
    */
@@ -138,9 +106,7 @@ export interface UserInfoOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Time when the user profile was last updated (Unix timestamp in seconds).
-   *
-   * @since 1.0.0
+   * Last profile update timestamp, in Unix seconds.
    *
    * @type {number | null | undefined}
    */

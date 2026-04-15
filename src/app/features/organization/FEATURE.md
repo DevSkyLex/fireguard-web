@@ -53,8 +53,13 @@ Nested subfeatures under `features/organization/features/` own their own local r
 
 - `ORGANIZATION_CONTEXT_PORT`
 - `OrganizationContextPort`
+- `organization/setup`
+- `OrganizationSetupService`
 
-This contract is the stable boundary for layouts and approved consumers that need the active organization context.
+These contracts are the stable boundaries for approved consumers:
+
+- layouts consume active organization context through `ORGANIZATION_CONTEXT_PORT`,
+- onboarding consumes organization-owned setup workflows through `organization/setup`.
 
 ## Routing Notes
 
@@ -64,6 +69,7 @@ This contract is the stable boundary for layouts and approved consumers that nee
 ## Cross-Feature Dependencies
 
 - May expose organization context to shell composition through ports.
+- May expose onboarding-approved setup workflows through `organization/setup`.
 - Must not move organization-owned widgets into layouts just because they render in the shell.
 
 ## Invariants

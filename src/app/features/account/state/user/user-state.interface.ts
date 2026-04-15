@@ -1,5 +1,5 @@
 import type { CallState } from '@core/state/request-state';
-import type { UserInfoOutput } from '@features/auth/models';
+import type { UserProfileOutput } from '@features/account/models';
 
 /**
  * Interface UserState
@@ -24,9 +24,9 @@ export interface UserState {
    *
    * @since 1.0.0
    *
-   * @type {UserInfoOutput | null}
+  * @type {UserProfileOutput | null}
    */
-  readonly profile: UserInfoOutput | null;
+  readonly profile: UserProfileOutput | null;
   //#endregion
 
   //#region Call States
@@ -39,8 +39,8 @@ export interface UserState {
    *
    * @since 1.0.0
    *
-   * @type {CallState<UserInfoOutput>}
+   * @type {CallState<UserProfileOutput>}
    */
-  readonly loadCallState: CallState<UserInfoOutput>;
+  readonly loadCallState: CallState<UserProfileOutput>;
   //#endregion
 }

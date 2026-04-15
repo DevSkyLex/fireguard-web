@@ -3,15 +3,18 @@ import {
   ChangeDetectionStrategy,
   effect,
   inject,
+  signal,
   untracked,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MessageService } from 'primeng/api';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { OnboardingStore } from '@features/onboarding/state';
 import { CreateEquipmentForm, type CreateEquipmentFormValues } from '@features/onboarding/ui/forms';
-import { EquipmentStore } from '@features/organization/features/equipments/state';
+import { OrganizationSetupService } from '@features/organization/setup';
 import { OnboardingStepBase } from '../onboarding-step.base';
 
 /**
@@ -29,7 +32,6 @@ import { OnboardingStepBase } from '../onboarding-step.base';
 @Component({
   selector: 'app-create-equipment-step',
   imports: [CardModule, TagModule, CreateEquipmentForm],
-  providers: [EquipmentStore],
   templateUrl: './create-equipment-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -55,7 +57,8 @@ export class CreateEquipmentStep extends OnboardingStepBase {
    *
    * @type {EquipmentStore}
    */
-  private readonly equipmentStore: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
+  private readonly organizationSetupService: OrganizationSetupService =
+    inject<OrganizationSetupService>(OrganizationSetupService);
 
   /**
    * Property messageService
@@ -79,7 +82,29 @@ export class CreateEquipmentStep extends OnboardingStepBase {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isCreating: Signal<boolean> = this.equipmentStore.isCreating;
+  private readonly isCreatingState: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property createErrorState
+   * @readonly
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<Error | null>}
+   */
+  private readonly createErrorState: WritableSignal<Error | null> = signal<Error | null>(null);
+
+  /**
+   * Property isCreating
+   * @readonly
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isCreating: Signal<boolean> = this.isCreatingState.asReadonly();
 
   /**
    * Property isExecuting
@@ -127,23 +152,17 @@ export class CreateEquipmentStep extends OnboardingStepBase {
   public constructor() {
     super();
     effect(() => {
-      const operation = this.equipmentStore.createCallState();
-      if (operation.status === 'success') {
-        this.equipmentStore.resetCreateOperation();
+      const error: Error | null = this.createErrorState();
+      if (error) {
         if (untracked(() => this.onboardingStore.activeStepIndex() === this.stepIndex())) {
-          this.onboardingStore.executeStep({ stepKey: 'create_first_equipment' });
-        }
-      } else if (operation.status === 'error') {
-        this.equipmentStore.resetCreateOperation();
-        if (untracked(() => this.onboardingStore.activeStepIndex() === this.stepIndex())) {
-          const message: string = operation.error?.message ?? 'Failed to create the equipment.';
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: message,
+            detail: error.message,
             life: 5000,
           });
         }
+        this.createErrorState.set(null);
       }
     });
   }
@@ -165,18 +184,31 @@ export class CreateEquipmentStep extends OnboardingStepBase {
    */
   protected handleSubmit(values: CreateEquipmentFormValues): void {
     const organizationId: string | null = this.onboardingStore.targetOrganizationId();
-    if (!organizationId || this.onboardingStore.isBusy() || this.equipmentStore.isCreating())
-      return;
+    if (!organizationId || this.onboardingStore.isBusy() || this.isCreating()) return;
 
-    this.equipmentStore.create({
-      organizationId,
-      input: {
+    this.isCreatingState.set(true);
+    this.organizationSetupService
+      .createEquipment(organizationId, {
         type: values.type,
         brand: values.brand ?? undefined,
         model: values.model ?? undefined,
         serialNumber: values.serialNumber ?? undefined,
-      },
-    });
+      })
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: () => {
+          this.isCreatingState.set(false);
+          if (this.onboardingStore.activeStepIndex() === this.stepIndex()) {
+            this.onboardingStore.executeStep({ stepKey: 'create_first_equipment' });
+          }
+        },
+        error: (error: unknown) => {
+          this.isCreatingState.set(false);
+          this.createErrorState.set(
+            error instanceof Error ? error : new Error('Failed to create the equipment.'),
+          );
+        },
+      });
   }
   //#endregion
 }

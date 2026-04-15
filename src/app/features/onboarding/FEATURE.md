@@ -37,6 +37,7 @@ Primary service:
 
 - Works with auth-protected routes because onboarding state may redirect authenticated users away from other areas.
 - Must not take ownership of long-term organization context or shell organization switching.
+- Must consume organization-owned setup operations through `@features/organization/setup`, not through organization subfeature stores.
 
 ## Routing and SSR Notes
 

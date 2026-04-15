@@ -22,7 +22,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
-import type { OrganizationRoleOutput } from '@features/organization/models';
+import type { SetupOrganizationRole } from '@features/organization/setup';
 import { RadioCardGroup, type RadioCardOption } from '@shared/components';
 import type { InviteMembersFormData, InviteeRowData } from './invite-members-form-data.type';
 import type { InviteeRowValues, InviteMembersFormValues } from './invite-members-form-values.type';
@@ -65,10 +65,10 @@ export class InviteMembersForm {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<readonly OrganizationRoleOutput[]>}
+   * @type {InputSignal<readonly SetupOrganizationRole[]>}
    */
-  public readonly roles: InputSignal<readonly OrganizationRoleOutput[]> = input<
-    readonly OrganizationRoleOutput[]
+  public readonly roles: InputSignal<readonly SetupOrganizationRole[]> = input<
+    readonly SetupOrganizationRole[]
   >([]);
 
   /**
@@ -189,8 +189,8 @@ export class InviteMembersForm {
    * @type {Signal<RadioCardOption[]>}
    */
   protected readonly roleOptions: Signal<RadioCardOption[]> = computed<RadioCardOption[]>(() => {
-    const roles: readonly OrganizationRoleOutput[] = this.roles();
-    return roles.map((role: OrganizationRoleOutput) => ({
+    const roles: readonly SetupOrganizationRole[] = this.roles();
+    return roles.map((role: SetupOrganizationRole) => ({
       value: role.id,
       label: role.name.charAt(0).toUpperCase() + role.name.slice(1),
       description: role.description,

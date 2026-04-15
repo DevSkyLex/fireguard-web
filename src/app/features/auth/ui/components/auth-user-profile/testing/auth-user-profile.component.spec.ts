@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { Panel } from 'primeng/panel';
 import { USER_IDENTITY_PORT } from '@features/account/ports';
-import { AuthStore } from '@features/auth';
+import { AuthStore } from '@features/auth/state';
 import { AuthUserProfile } from '../auth-user-profile.component';
 
 describe('AuthUserProfile', () => {

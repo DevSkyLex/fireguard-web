@@ -19,10 +19,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
-import type {
-  InspectionResult,
-  InspectorType,
-} from '@features/organization/features/inspections/models';
+import type { SetupInspectionResult, SetupInspectorType } from '@features/organization/setup';
 import type { CreateInspectionFormData } from './create-inspection-form-data.type';
 import type { CreateInspectionFormValues } from './create-inspection-form-values.type';
 
@@ -129,9 +126,9 @@ export class CreateInspectionForm {
    * @access protected
    * @since 1.0.0
    *
-   * @type {{ label: string; value: InspectionResult }[]}
+  * @type {{ label: string; value: SetupInspectionResult }[]}
    */
-  protected readonly resultOptions: { label: string; value: InspectionResult }[] = [
+  protected readonly resultOptions: { label: string; value: SetupInspectionResult }[] = [
     { label: 'Pass', value: 'pass' },
     { label: 'Fail', value: 'fail' },
     { label: 'Partial', value: 'partial' },
@@ -147,9 +144,9 @@ export class CreateInspectionForm {
    * @access protected
    * @since 1.0.0
    *
-   * @type {{ label: string; value: InspectorType }[]}
+  * @type {{ label: string; value: SetupInspectorType }[]}
    */
-  protected readonly inspectorTypeOptions: { label: string; value: InspectorType }[] = [
+  protected readonly inspectorTypeOptions: { label: string; value: SetupInspectorType }[] = [
     { label: 'Internal technician', value: 'user' },
     { label: 'External contractor', value: 'external' },
   ];
@@ -169,11 +166,11 @@ export class CreateInspectionForm {
   protected readonly form: FormGroup<CreateInspectionFormData> =
     this.formBuilder.group<CreateInspectionFormData>({
       equipmentId: this.formBuilder.control<string>('', [Validators.required]),
-      result: this.formBuilder.control<InspectionResult>('pass', [Validators.required]),
+      result: this.formBuilder.control<SetupInspectionResult>('pass', [Validators.required]),
       performedAt: this.formBuilder.control<string>(new Date().toISOString().slice(0, 16), [
         Validators.required,
       ]),
-      inspectorType: this.formBuilder.control<InspectorType>('user', [Validators.required]),
+      inspectorType: this.formBuilder.control<SetupInspectorType>('user', [Validators.required]),
       inspectorName: this.formBuilder.control<string>('', [
         Validators.required,
         Validators.minLength(2),

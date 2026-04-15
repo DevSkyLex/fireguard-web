@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { USER_IDENTITY_PORT } from '@features/account/ports';
-import { AuthStore } from '@features/auth';
+import { AuthStore } from '@features/auth/state';
 import { DashboardLayoutSidebarFooter } from '../dashboard-layout-sidebar-footer.component';
 
 describe('DashboardLayoutSidebarFooter', () => {

@@ -35,12 +35,14 @@ export const authInterceptor: HttpInterceptorFn = (
   next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> => {
   const authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION);
-  const token: string | null = authSession.accessToken();
 
-  if (!token) return next(req);
   if (!req.url.includes('/api/')) return next(req);
   if (req.headers.has('Authorization')) return next(req);
   if (PUBLIC_ENDPOINTS.some((pattern: RegExp) => pattern.test(req.url))) return next(req);
+  if (!authSession.isAuthenticated()) return next(req);
+
+  const token: string | null = authSession.accessToken();
+  if (!token) return next(req);
 
   const authReq: HttpRequest<unknown> = req.clone({
     setHeaders: { Authorization: `Bearer ${token}` },

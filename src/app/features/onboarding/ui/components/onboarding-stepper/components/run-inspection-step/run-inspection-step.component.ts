@@ -4,9 +4,12 @@ import {
   computed,
   effect,
   inject,
+  signal,
   untracked,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MessageService } from 'primeng/api';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
@@ -16,9 +19,10 @@ import {
   type CreateInspectionFormValues,
   type EquipmentOption,
 } from '@features/onboarding/ui/forms';
-import type { EquipmentOutput } from '@features/organization/features/equipments/models';
-import { EquipmentStore } from '@features/organization/features/equipments/state';
-import { InspectionStore } from '@features/organization/features/inspections/state';
+import {
+  OrganizationSetupService,
+  type SetupEquipmentSummary,
+} from '@features/organization/setup';
 import { OnboardingStepBase } from '../onboarding-step.base';
 
 /**
@@ -37,7 +41,6 @@ import { OnboardingStepBase } from '../onboarding-step.base';
 @Component({
   selector: 'app-run-inspection-step',
   imports: [CardModule, TagModule, CreateInspectionForm],
-  providers: [EquipmentStore, InspectionStore],
   templateUrl: './run-inspection-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -63,18 +66,8 @@ export class RunInspectionStep extends OnboardingStepBase {
    *
    * @type {EquipmentStore}
    */
-  private readonly equipmentStore: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
-
-  /**
-   * Property inspectionStore
-   * @readonly
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {InspectionStore}
-   */
-  private readonly inspectionStore: InspectionStore = inject<InspectionStore>(InspectionStore);
+  private readonly organizationSetupService: OrganizationSetupService =
+    inject<OrganizationSetupService>(OrganizationSetupService);
 
   /**
    * Property messageService
@@ -102,7 +95,44 @@ export class RunInspectionStep extends OnboardingStepBase {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isCreating: Signal<boolean> = this.inspectionStore.isCreating;
+  private readonly isCreatingState: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property isLoadingEquipmentState
+   * @readonly
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  private readonly isLoadingEquipmentState: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property inspectionErrorState
+   * @readonly
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<Error | null>}
+   */
+  private readonly inspectionErrorState: WritableSignal<Error | null> = signal<Error | null>(null);
+
+  /**
+   * Property equipmentState
+   * @readonly
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<readonly SetupEquipmentSummary[]>}
+   */
+  private readonly equipmentState: WritableSignal<readonly SetupEquipmentSummary[]> = signal<
+    readonly SetupEquipmentSummary[]
+  >([]);
+
+  protected readonly isCreating: Signal<boolean> = this.isCreatingState.asReadonly();
 
   /**
    * Property isLoadingEquipment
@@ -117,7 +147,7 @@ export class RunInspectionStep extends OnboardingStepBase {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isLoadingEquipment: Signal<boolean> = this.equipmentStore.isLoadingEquipment;
+  protected readonly isLoadingEquipment: Signal<boolean> = this.isLoadingEquipmentState.asReadonly();
 
   /**
    * Property isExecuting
@@ -166,7 +196,7 @@ export class RunInspectionStep extends OnboardingStepBase {
   protected readonly equipmentOptions: Signal<readonly EquipmentOption[]> = computed<
     readonly EquipmentOption[]
   >(() =>
-    this.equipmentStore.equipmentEntities().map((equipment: EquipmentOutput) => ({
+    this.equipmentState().map((equipment: SetupEquipmentSummary) => ({
       id: equipment.id,
       label: equipment.serialNumber
         ? `${equipment.type} — ${equipment.serialNumber}`
@@ -213,31 +243,38 @@ export class RunInspectionStep extends OnboardingStepBase {
       const isActiveStep: boolean = this.onboardingStore.activeStepIndex() === this.stepIndex();
 
       if (organizationId && isActiveStep) {
-        this.equipmentStore.loadEquipment({
-          organizationId,
-          options: { itemsPerPage: 100 },
-        });
+        this.isLoadingEquipmentState.set(true);
+        this.organizationSetupService
+          .listEquipment(organizationId)
+          .pipe(takeUntilDestroyed())
+          .subscribe({
+            next: (equipment) => {
+              this.equipmentState.set(equipment);
+              this.isLoadingEquipmentState.set(false);
+            },
+            error: () => {
+              this.equipmentState.set([]);
+              this.isLoadingEquipmentState.set(false);
+            },
+          });
+      } else if (!isActiveStep) {
+        this.equipmentState.set([]);
+        this.isLoadingEquipmentState.set(false);
       }
     });
 
     effect(() => {
-      const operation = this.inspectionStore.createCallState();
-      if (operation.status === 'success') {
-        this.inspectionStore.resetCreateOperation();
+      const error: Error | null = this.inspectionErrorState();
+      if (error) {
         if (untracked(() => this.onboardingStore.activeStepIndex() === this.stepIndex())) {
-          this.onboardingStore.executeStep({ stepKey: 'run_first_inspection' });
-        }
-      } else if (operation.status === 'error') {
-        this.inspectionStore.resetCreateOperation();
-        if (untracked(() => this.onboardingStore.activeStepIndex() === this.stepIndex())) {
-          const message: string = operation.error?.message ?? 'Failed to save the inspection.';
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: message,
+            detail: error.message,
             life: 5000,
           });
         }
+        this.inspectionErrorState.set(null);
       }
     });
   }
@@ -262,16 +299,30 @@ export class RunInspectionStep extends OnboardingStepBase {
     const organizationId: string | null = this.onboardingStore.targetOrganizationId();
     if (!organizationId || this.onboardingStore.isBusy() || this.isFormBusy()) return;
 
-    this.inspectionStore.create({
-      organizationId,
-      input: {
+    this.isCreatingState.set(true);
+    this.organizationSetupService
+      .createInspection(organizationId, {
         equipmentId: values.equipmentId,
         result: values.result,
         performedAt: values.performedAt,
         inspectorType: values.inspectorType,
         inspectorName: values.inspectorName,
-      },
-    });
+      })
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: () => {
+          this.isCreatingState.set(false);
+          if (this.onboardingStore.activeStepIndex() === this.stepIndex()) {
+            this.onboardingStore.executeStep({ stepKey: 'run_first_inspection' });
+          }
+        },
+        error: (error: unknown) => {
+          this.isCreatingState.set(false);
+          this.inspectionErrorState.set(
+            error instanceof Error ? error : new Error('Failed to save the inspection.'),
+          );
+        },
+      });
   }
   //#endregion
 }

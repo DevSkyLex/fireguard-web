@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
-import { AuthStore } from '@features/auth';
+import { AuthStore } from '@features/auth/state';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { DashboardLayout } from '../dashboard-layout.component';
 import { DashboardLayoutHeader } from '../components';

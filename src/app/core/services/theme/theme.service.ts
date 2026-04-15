@@ -208,7 +208,7 @@ export class ThemeService {
     this.cookieService.setCookie({
       name: ThemeService.THEME_COOKIE_NAME,
       value: mode,
-      expires: 365 * 24 * 60 * 60,
+      maxAge: 365 * 24 * 60 * 60,
       path: '/',
       sameSite: 'Lax',
     });

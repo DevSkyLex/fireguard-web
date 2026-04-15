@@ -39,7 +39,28 @@ describe('ssrCookieForwardInterceptor', () => {
     httpClient.post('/api/auth/refresh', {}).subscribe();
 
     const req = httpMock.expectOne('/api/auth/refresh');
-    expect(req.request.headers.get('Cookie')).toBe('refresh_token=abc123; theme=dark');
+    expect(req.request.headers.get('Cookie')).toBe('refresh_token=abc123');
+    req.flush({ ok: true });
+    httpMock.verify();
+  });
+
+  it('should forward only whitelisted session-related cookies during SSR', () => {
+    configure(
+      'server',
+      new Request('http://localhost', {
+        headers: {
+          cookie:
+            'theme-preference=dark; __Host-refresh_token=secure123; analytics=enabled; trusted_device_token=device456',
+        },
+      }),
+    );
+
+    httpClient.post('/api/auth/refresh', {}).subscribe();
+
+    const req = httpMock.expectOne('/api/auth/refresh');
+    expect(req.request.headers.get('Cookie')).toBe(
+      '__Host-refresh_token=secure123; trusted_device_token=device456',
+    );
     req.flush({ ok: true });
     httpMock.verify();
   });
@@ -80,6 +101,22 @@ describe('ssrCookieForwardInterceptor', () => {
 
   it('should skip forwarding when SSR request context is missing', () => {
     configure('server');
+
+    httpClient.post('/api/auth/refresh', {}).subscribe();
+
+    const req = httpMock.expectOne('/api/auth/refresh');
+    expect(req.request.headers.has('Cookie')).toBe(false);
+    req.flush({ ok: true });
+    httpMock.verify();
+  });
+
+  it('should skip forwarding when no whitelisted cookies are present', () => {
+    configure(
+      'server',
+      new Request('http://localhost', {
+        headers: { cookie: 'theme-preference=dark; analytics=enabled' },
+      }),
+    );
 
     httpClient.post('/api/auth/refresh', {}).subscribe();
 

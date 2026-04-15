@@ -46,7 +46,6 @@ Primary services:
 - `SessionService`
 - `TrustedDeviceService`
 - `PasswordResetService`
-- `OAuth2Service`
 
 ## Published Contracts
 
@@ -54,17 +53,19 @@ Primary services:
 - `AuthSessionPort`
 
 This contract is the stable boundary consumed by auth-owned infrastructure such as HTTP interceptors.
+It exposes the access token, initialization state, authenticated-session validity, and session clearing.
 
 ## Cross-Feature Dependencies
 
-- May coordinate with `features/account` during bootstrap to load the authenticated user profile.
+- May coordinate with `features/account` during bootstrap and logout through the account-owned `USER_PROFILE_PORT` contract.
 - Must not move account-owned state or UI into auth just because auth initializes first.
 
 ## SSR and Bootstrap Notes
 
 - `provideAuth()` is invoked from the app shell but ownership remains in `features/auth`.
 - SSR initialization attempts session restoration only when a real browser or per-request server context exists.
-- Auth bootstrap is allowed to hydrate user state, but it must await that work when it is part of the startup contract.
+- Auth bootstrap is allowed to await account-owned user profile initialization, but it must not serialize the bearer token into `TransferState`.
+- Global TransferCache must not serialize authenticated API responses; auth-sensitive hydration is handled explicitly by owning features.
 
 ## Invariants
 

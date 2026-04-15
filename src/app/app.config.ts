@@ -10,7 +10,7 @@ import { MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { APP_ROUTES } from '@app/app.routes';
 import { provideEnv } from '@core/config/environment/env.provider';
-import { ssrCookieForwardInterceptor } from '@core/http/interceptors';
+import { ssrCookieForwardInterceptor } from '@core/http/interceptors/ssr-cookie-forward';
 import { providePageTitleStrategy } from '@core/routing/strategies/page-title';
 import { provideSplashScreen } from '@core/services/splash-screen';
 import { provideTheme } from '@core/services/theme';
@@ -48,7 +48,8 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(
       withEventReplay(),
       withHttpTransferCacheOptions({
-        includeRequestsWithAuthHeaders: true,
+        // Authenticated API responses are hydrated explicitly per feature.
+        includeRequestsWithAuthHeaders: false,
       }),
     ),
     provideHttpClient(

@@ -1,5 +1,4 @@
-import { isPlatformBrowser } from '@angular/common';
-import { computed, inject, PLATFORM_ID, makeStateKey, TransferState } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
@@ -14,7 +13,7 @@ import {
   toStoreFailureEventPayload,
   type StoreError,
 } from '@core/state/request-state';
-import { UserStore } from '@features/account/state';
+import { USER_PROFILE_PORT, type UserProfilePort } from '@features/account/ports';
 import { AuthService } from '@features/auth/data-access';
 import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@features/auth/models';
 import { ActiveTrustedDeviceStore } from '@features/auth/state';
@@ -33,20 +32,6 @@ import { authStoreEvents } from './auth.events';
  * @type {number}
  */
 const TOKEN_EXPIRY_WARNING_MS: number = 5 * 60 * 1000;
-
-/**
- * Constant AUTH_TRANSFER_KEY
- *
- * @description
- * TransferState key used to pass the auth token obtained during SSR
- * to the browser, avoiding a duplicate refresh call after hydration.
- *
- * @since 1.0.0
- */
-const AUTH_TRANSFER_KEY = makeStateKey<{
-  access_token: string;
-  expires_in: number
-} | null>('auth');
 
 /**
  * Constant INITIAL_AUTH_STATE
@@ -300,10 +285,8 @@ export const AuthStore = signalStore(
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
       authService = inject<AuthService>(AuthService),
-      userStore = inject<UserStore>(UserStore),
+      userProfilePort = inject<UserProfilePort>(USER_PROFILE_PORT),
       activeTrustedDeviceStore = inject<ActiveTrustedDeviceStore>(ActiveTrustedDeviceStore),
-      platformId = inject<object>(PLATFORM_ID),
-      transferState = inject(TransferState),
     ) => ({
       //#region Reactive Methods
       /**
@@ -382,7 +365,7 @@ export const AuthStore = signalStore(
                     logoutCallState: successCallState(response),
                   });
                   // Clear user profile on logout
-                  userStore.clear();
+                  userProfilePort.clear();
                   dispatcher.dispatch(authStoreEvents.logoutSucceeded());
                 },
                 error: (error: unknown) => {
@@ -393,7 +376,7 @@ export const AuthStore = signalStore(
                     logoutCallState: errorCallState(storeError),
                   });
                   // Clear user profile even on logout error
-                  userStore.clear();
+                  userProfilePort.clear();
                   dispatcher.dispatch(
                     authStoreEvents.logoutFailed(
                       toStoreFailureEventPayload(storeError, 'Logout failed'),
@@ -551,7 +534,9 @@ export const AuthStore = signalStore(
        *
        * @description
        * Initializes the auth state by attempting to refresh the session.
-       * If successful, also loads the user profile.
+        * If successful, also initializes the account-owned user profile.
+        * The access token is never serialized through TransferState, so the
+        * browser and SSR runtimes refresh independently.
        * Returns a Promise that resolves when initialization is complete.
        * Should be called once on app startup via APP_INITIALIZER.
        *
@@ -560,24 +545,6 @@ export const AuthStore = signalStore(
        * @returns {Promise<void>} Resolves when initialization is complete.
        */
       async initialize(): Promise<void> {
-        // Browser: consume the token transferred from SSR to avoid a duplicate refresh.
-        if (isPlatformBrowser(platformId) && transferState.hasKey(AUTH_TRANSFER_KEY)) {
-          const transferred = transferState.get(AUTH_TRANSFER_KEY, null);
-          transferState.remove(AUTH_TRANSFER_KEY);
-
-          if (transferred) {
-            patchState(store, {
-              initialized: true,
-              accessToken: transferred.access_token,
-              expiresAt: calculateExpiresAt(transferred.expires_in),
-            });
-            await userStore.initialize();
-            return;
-          }
-
-          // Retry once in the browser when SSR could not restore the session.
-        }
-
         try {
           const response: LoginOutput = await firstValueFrom(authService.refresh());
 
@@ -588,22 +555,14 @@ export const AuthStore = signalStore(
             refreshCallState: successCallState(response),
           });
 
-          // Store result for browser hydration (SSR only, no-op in browser).
-          transferState.set(AUTH_TRANSFER_KEY, {
-            access_token: response.access_token,
-            expires_in: response.expires_in,
-          });
-
           // Load user profile after successful refresh and wait for it during bootstrap.
-          await userStore.initialize();
+          await userProfilePort.initialize();
         } catch {
           patchState(store, {
             initialized: true,
             accessToken: null,
             expiresAt: null,
           });
-          // Signal SSR failure to the browser.
-          transferState.set(AUTH_TRANSFER_KEY, null);
         }
       },
       //#endregion
@@ -679,6 +638,7 @@ export const AuthStore = signalStore(
           logoutCallState: idleCallState(),
           refreshCallState: idleCallState(),
           mfaVerifyCallState: idleCallState(),
+          mfaResendCallState: idleCallState(),
         });
       },
 

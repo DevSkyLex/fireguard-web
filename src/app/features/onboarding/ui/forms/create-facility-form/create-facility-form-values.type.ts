@@ -1,4 +1,4 @@
-import type { FacilityType } from '@features/organization/features/facilities/models';
+import type { SetupFacilityType } from '@features/organization/setup';
 
 /**
  * Interface CreateFacilityFormValues
@@ -9,7 +9,7 @@ import type { FacilityType } from '@features/organization/features/facilities/mo
  * @since 1.0.0
  */
 export interface CreateFacilityFormValues {
-  readonly type: FacilityType;
+  readonly type: SetupFacilityType;
   readonly name: string;
   readonly address: string | null;
 }

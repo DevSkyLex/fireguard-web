@@ -1,16 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID, REQUEST } from '@angular/core';
-
-export type CookieOptions<T> = {
-  name: string;
-  value: T;
-  expires?: number;
-  path?: string;
-  domain?: string;
-  secure?: boolean;
-  httpOnly?: boolean;
-  sameSite?: string;
-};
+import type { CookieOptions } from './cookie-options.interface';
 
 /**
  * Service CookieService
@@ -149,14 +139,14 @@ export class CookieService {
   public setCookie<T>(options: CookieOptions<T>): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    let cookieString: string = `${options.name}=${options.value};`;
+    let cookieString: string = `${options.name}=${String(options.value)};`;
 
-    if (options.expires) cookieString += ` expires=${options.expires};`;
+    if (options.maxAge !== undefined) cookieString += ` max-age=${options.maxAge};`;
+    if (options.expires) cookieString += ` expires=${options.expires.toUTCString()};`;
     if (options.path) cookieString += ` path=${options.path};`;
     if (options.domain) cookieString += ` domain=${options.domain};`;
     if (options.secure) cookieString += ` secure;`;
-    if (options.httpOnly) cookieString += ` httpOnly;`;
-    if (options.sameSite) cookieString += ` sameSite=${options.sameSite};`;
+    if (options.sameSite) cookieString += ` samesite=${options.sameSite};`;
 
     document.cookie = cookieString;
   }

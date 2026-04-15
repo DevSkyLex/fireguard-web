@@ -10,7 +10,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { UserStore } from '@features/account/state';
+import { USER_PROFILE_PORT, type UserProfilePort } from '@features/account/ports';
 import { AuthStore, authStoreEvents } from '@features/auth/state';
 import { ActiveTrustedDeviceStore } from '@features/auth/state';
 import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/auth/ui/forms';
@@ -80,18 +80,18 @@ export class MfaVerificationPage {
     inject<ActiveTrustedDeviceStore>(ActiveTrustedDeviceStore);
 
   /**
-   * Property userStore
+  * Property userProfilePort
    * @readonly
    *
    * @description
-   * User store for loading user profile after successful MFA.
+  * Account-owned contract for loading user profile after successful MFA.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {UserStore}
+  * @type {UserProfilePort}
    */
-  private readonly userStore: UserStore = inject<UserStore>(UserStore);
+  private readonly userProfilePort: UserProfilePort = inject<UserProfilePort>(USER_PROFILE_PORT);
 
   /**
    * Property router
@@ -199,7 +199,7 @@ export class MfaVerificationPage {
     // Navigate to home when authenticated
     effect(() => {
       if (this.authStore.isAuthenticated()) {
-        this.userStore.load();
+        this.userProfilePort.load();
         this.router.navigate(['/']).catch(() => undefined);
       }
     });

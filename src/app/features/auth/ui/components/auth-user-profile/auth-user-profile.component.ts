@@ -7,7 +7,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { PanelModule, PanelPassThroughOptions } from 'primeng/panel';
 import { SkeletonModule } from 'primeng/skeleton';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
-import { AuthStore, authStoreEvents } from '@features/auth';
+import { AuthStore, authStoreEvents } from '@features/auth/state';
 
 @Component({
   selector: 'app-auth-user-profile',

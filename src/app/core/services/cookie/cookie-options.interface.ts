@@ -113,20 +113,6 @@ export interface CookieOptions<T = string> {
   readonly secure?: boolean;
 
   /**
-   * Property httpOnly
-   * @readonly
-   *
-   * @description
-   * The httpOnly of the cookie.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {boolean}
-   */
-  readonly httpOnly?: boolean;
-
-  /**
    * Property sameSite
    * @readonly
    *

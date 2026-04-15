@@ -6,13 +6,13 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MessageService } from 'primeng/api';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
-import { forkJoin } from 'rxjs';
 import { OnboardingStore } from '@features/onboarding/state';
 import { CreateFacilitiesForm, type CreateFacilityFormValues } from '@features/onboarding/ui/forms';
-import { FacilityService } from '@features/organization/features/facilities/data-access';
+import { OrganizationSetupService } from '@features/organization/setup';
 import { OnboardingStepBase } from '../onboarding-step.base';
 
 /**
@@ -56,7 +56,8 @@ export class CreateFacilityStep extends OnboardingStepBase {
    *
    * @type {FacilityService}
    */
-  private readonly facilityService: FacilityService = inject<FacilityService>(FacilityService);
+  private readonly organizationSetupService: OrganizationSetupService =
+    inject<OrganizationSetupService>(OrganizationSetupService);
 
   /**
    * Property messageService
@@ -149,41 +150,43 @@ export class CreateFacilityStep extends OnboardingStepBase {
 
     this.isCreating.set(true);
 
-    forkJoin(
-      values.map((v) =>
-        this.facilityService.create(organizationId, {
+    this.organizationSetupService
+      .createFacilities(
+        organizationId,
+        values.map((v) => ({
           type: v.type,
           name: v.name,
           address: v.address ?? undefined,
-        }),
-      ),
-    ).subscribe({
-      next: (created) => {
-        this.isCreating.set(false);
-        const count: number = created.length;
-        this.messageService.add({
-          severity: 'success',
-          summary: count > 1 ? 'Facilities created' : 'Facility created',
-          detail:
-            count > 1
-              ? `${count} facilities have been created.`
-              : `${created[0].name} has been created.`,
-          life: 4000,
-        });
-        this.onboardingStore.executeStep({ stepKey: 'create_first_facility' });
-      },
-      error: (error: unknown) => {
-        this.isCreating.set(false);
-        const message: string =
-          error instanceof Error ? error.message : 'Failed to create the facility.';
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: message,
-          life: 5000,
-        });
-      },
-    });
+        })),
+      )
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: () => {
+          this.isCreating.set(false);
+          const count: number = values.length;
+          this.messageService.add({
+            severity: 'success',
+            summary: count > 1 ? 'Facilities created' : 'Facility created',
+            detail:
+              count > 1
+                ? `${count} facilities have been created.`
+                : `${values[0].name} has been created.`,
+            life: 4000,
+          });
+          this.onboardingStore.executeStep({ stepKey: 'create_first_facility' });
+        },
+        error: (error: unknown) => {
+          this.isCreating.set(false);
+          const message: string =
+            error instanceof Error ? error.message : 'Failed to create the facility.';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: message,
+            life: 5000,
+          });
+        },
+      });
   }
   //#endregion
 }

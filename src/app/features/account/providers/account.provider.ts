@@ -1,5 +1,9 @@
 import { type EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
-import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
+import {
+  NOTIFICATION_CENTER_PORT,
+  USER_IDENTITY_PORT,
+  USER_PROFILE_PORT,
+} from '@features/account/ports';
 import { NotificationStore } from '@features/account/state';
 import { UserStore } from '@features/account/state';
 
@@ -19,6 +23,10 @@ export function provideAccount(): EnvironmentProviders {
   return makeEnvironmentProviders([
     {
       provide: USER_IDENTITY_PORT,
+      useExisting: UserStore,
+    },
+    {
+      provide: USER_PROFILE_PORT,
       useExisting: UserStore,
     },
     {

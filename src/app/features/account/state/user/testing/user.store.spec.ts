@@ -2,8 +2,8 @@ import { makeStateKey, TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
-import { OAuth2Service } from '@features/auth/data-access';
-import type { UserInfoOutput } from '@features/auth/models';
+import { UserProfileService } from '@features/account/data-access';
+import type { UserProfileOutput } from '@features/account/models';
 import { UserStore } from '../user.store';
 
 const flushEffects = async (): Promise<void> => {
@@ -14,9 +14,9 @@ describe('UserStore', () => {
   let store: UserStore;
   let transferState: TransferState;
   let mockDispatcher: { dispatch: ReturnType<typeof vi.fn> };
-  let mockOauth2Service: { userinfo: ReturnType<typeof vi.fn> };
+  let mockUserProfileService: { getCurrentProfile: ReturnType<typeof vi.fn> };
 
-  const profile: UserInfoOutput = {
+  const profile: UserProfileOutput = {
     '@id': '/api/oauth2/userinfo',
     '@type': 'UserInfo',
     sub: 'user-1',
@@ -30,14 +30,14 @@ describe('UserStore', () => {
 
   beforeEach(() => {
     mockDispatcher = { dispatch: vi.fn() };
-    mockOauth2Service = {
-      userinfo: vi.fn(),
+    mockUserProfileService = {
+      getCurrentProfile: vi.fn(),
     };
 
     TestBed.configureTestingModule({
       providers: [
         { provide: Dispatcher, useValue: mockDispatcher },
-        { provide: OAuth2Service, useValue: mockOauth2Service },
+        { provide: UserProfileService, useValue: mockUserProfileService },
       ],
     });
 
@@ -46,7 +46,7 @@ describe('UserStore', () => {
   });
 
   it('should load profile and expose computed values', async () => {
-    mockOauth2Service.userinfo.mockReturnValue(of(profile));
+    mockUserProfileService.getCurrentProfile.mockReturnValue(of(profile));
 
     store.load();
     await flushEffects();
@@ -60,7 +60,9 @@ describe('UserStore', () => {
   });
 
   it('should dispatch an event when profile loading fails', async () => {
-    mockOauth2Service.userinfo.mockReturnValue(throwError(() => new Error('Unauthorized')));
+    mockUserProfileService.getCurrentProfile.mockReturnValue(
+      throwError(() => new Error('Unauthorized')),
+    );
 
     store.load();
     await flushEffects();
@@ -71,22 +73,22 @@ describe('UserStore', () => {
   });
 
   it('should not call API again when profile is already loaded', async () => {
-    mockOauth2Service.userinfo.mockReturnValue(of(profile));
+    mockUserProfileService.getCurrentProfile.mockReturnValue(of(profile));
 
     store.load();
     await flushEffects();
     store.load();
     await flushEffects();
 
-    expect(mockOauth2Service.userinfo).toHaveBeenCalledTimes(1);
+    expect(mockUserProfileService.getCurrentProfile).toHaveBeenCalledTimes(1);
   });
 
   it('should force API call on reload', async () => {
-    const updatedProfile: UserInfoOutput = {
+    const updatedProfile: UserProfileOutput = {
       ...profile,
       name: 'Jane Updated',
     };
-    mockOauth2Service.userinfo
+    mockUserProfileService.getCurrentProfile
       .mockReturnValueOnce(of(profile))
       .mockReturnValueOnce(of(updatedProfile));
 
@@ -95,22 +97,22 @@ describe('UserStore', () => {
     store.reload();
     await flushEffects();
 
-    expect(mockOauth2Service.userinfo).toHaveBeenCalledTimes(2);
+    expect(mockUserProfileService.getCurrentProfile).toHaveBeenCalledTimes(2);
     expect(store.profile()?.name).toBe('Jane Updated');
   });
 
   it('should retry userinfo in the browser when SSR transfer state contains null', async () => {
-    transferState.set(makeStateKey<UserInfoOutput | null>('user-profile'), null);
-    mockOauth2Service.userinfo.mockReturnValue(of(profile));
+    transferState.set(makeStateKey<UserProfileOutput | null>('user-profile'), null);
+    mockUserProfileService.getCurrentProfile.mockReturnValue(of(profile));
 
     await store.initialize();
 
-    expect(mockOauth2Service.userinfo).toHaveBeenCalledTimes(1);
+    expect(mockUserProfileService.getCurrentProfile).toHaveBeenCalledTimes(1);
     expect(store.profile()).toEqual(profile);
   });
 
   it('should clear profile and operation state', async () => {
-    mockOauth2Service.userinfo.mockReturnValue(of(profile));
+    mockUserProfileService.getCurrentProfile.mockReturnValue(of(profile));
     store.load();
     await flushEffects();
 

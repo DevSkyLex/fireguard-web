@@ -7,11 +7,15 @@ import { authInterceptor } from '../auth.interceptor';
 describe('authInterceptor', () => {
   let httpClient: HttpClient;
   let httpMock: HttpTestingController;
-  let mockAuthSession: { accessToken: ReturnType<typeof vi.fn> };
+  let mockAuthSession: {
+    accessToken: ReturnType<typeof vi.fn>;
+    isAuthenticated: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     mockAuthSession = {
       accessToken: vi.fn(),
+      isAuthenticated: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -32,6 +36,7 @@ describe('authInterceptor', () => {
 
   it('should add Authorization header for protected API endpoints', () => {
     mockAuthSession.accessToken.mockReturnValue('jwt-token');
+    mockAuthSession.isAuthenticated.mockReturnValue(true);
 
     httpClient.get('/api/users/me').subscribe();
 
@@ -42,6 +47,7 @@ describe('authInterceptor', () => {
 
   it('should not add Authorization header when token is missing', () => {
     mockAuthSession.accessToken.mockReturnValue(null);
+    mockAuthSession.isAuthenticated.mockReturnValue(false);
 
     httpClient.get('/api/users/me').subscribe();
 
@@ -52,6 +58,7 @@ describe('authInterceptor', () => {
 
   it('should not add Authorization header for non API URLs', () => {
     mockAuthSession.accessToken.mockReturnValue('jwt-token');
+    mockAuthSession.isAuthenticated.mockReturnValue(true);
 
     httpClient.get('/assets/config.json').subscribe();
 
@@ -62,6 +69,7 @@ describe('authInterceptor', () => {
 
   it('should not override existing Authorization header', () => {
     mockAuthSession.accessToken.mockReturnValue('jwt-token');
+    mockAuthSession.isAuthenticated.mockReturnValue(true);
 
     httpClient
       .get('/api/users/me', {
@@ -76,10 +84,22 @@ describe('authInterceptor', () => {
 
   it('should skip public endpoints', () => {
     mockAuthSession.accessToken.mockReturnValue('jwt-token');
+    mockAuthSession.isAuthenticated.mockReturnValue(true);
 
     httpClient.post('/api/auth/login', {}).subscribe();
 
     const req = httpMock.expectOne('/api/auth/login');
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({ ok: true });
+  });
+
+  it('should not add Authorization header when the session is no longer authenticated', () => {
+    mockAuthSession.accessToken.mockReturnValue('expired-jwt-token');
+    mockAuthSession.isAuthenticated.mockReturnValue(false);
+
+    httpClient.get('/api/users/me').subscribe();
+
+    const req = httpMock.expectOne('/api/users/me');
     expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({ ok: true });
   });

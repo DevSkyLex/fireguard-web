@@ -3,9 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
-import { USER_IDENTITY_PORT } from '@features/account/ports';
-import { AuthStore } from '@features/auth';
-import type { UserInfoOutput } from '@features/auth/models';
+import { USER_IDENTITY_PORT, type ShellUserProfile } from '@features/account/ports';
+import { AuthStore } from '@features/auth/state';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import {
   DashboardSidebarNavigationService,
@@ -32,13 +31,9 @@ describe('DashboardLayoutSidebar', () => {
     avatarUrl: signal<string | null>(null),
     initials: signal<string | null>('FG'),
     displayName: signal<string | null>('Fireguard User'),
-    profile: signal<UserInfoOutput | null>({
-      '@id': '/api/oauth2/userinfo',
-      '@type': 'UserInfo',
+    profile: signal<ShellUserProfile | null>({
       sub: 'user-id',
       name: 'Fireguard User',
-      given_name: 'Fireguard',
-      family_name: 'Guardian',
       email: 'user@fireguard.local',
     }),
   };

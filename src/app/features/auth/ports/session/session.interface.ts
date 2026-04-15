@@ -14,6 +14,7 @@ import type { Signal } from '@angular/core';
  */
 export interface AuthSessionPort {
   readonly accessToken: Signal<string | null>;
+  readonly isAuthenticated: Signal<boolean>;
   readonly initialized: Signal<boolean>;
 
   clearSession(): void;

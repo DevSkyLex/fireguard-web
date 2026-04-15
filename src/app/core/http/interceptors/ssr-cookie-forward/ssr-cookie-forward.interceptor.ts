@@ -8,6 +8,21 @@ import {
 import { inject, PLATFORM_ID, REQUEST } from '@angular/core';
 import { Observable } from 'rxjs';
 
+const FORWARDED_COOKIE_NAME_PATTERN: RegExp = /^(?:__Host-|__Secure-)?(?:refresh_token|trusted_device(?:_token)?|device_trust_token)$/i;
+
+function filterForwardedCookies(cookieHeader: string): string | null {
+  const forwardedCookies: string[] = cookieHeader
+    .split(';')
+    .map((cookie) => cookie.trim())
+    .filter((cookie) => {
+      const cookieName: string = cookie.split('=')[0] ?? '';
+      return FORWARDED_COOKIE_NAME_PATTERN.test(cookieName);
+    });
+
+  if (forwardedCookies.length === 0) return null;
+  return forwardedCookies.join('; ');
+}
+
 /**
  * SSR Cookie Forward Interceptor
  *
@@ -61,11 +76,13 @@ export const ssrCookieForwardInterceptor: HttpInterceptorFn = (
   // Forward cookies from incoming SSR request to outgoing API call.
   const cookieHeader: string | null = incomingRequest.headers.get('cookie');
   if (!cookieHeader) return next(req);
+  const forwardedCookieHeader: string | null = filterForwardedCookies(cookieHeader);
+  if (!forwardedCookieHeader) return next(req);
 
   // Clone the request and set the Cookie header for SSR.
   const ssrReq: HttpRequest<unknown> = req.clone({
     setHeaders: {
-      Cookie: cookieHeader,
+      Cookie: forwardedCookieHeader,
     },
   });
 

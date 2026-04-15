@@ -7,7 +7,7 @@ import {
   provideAppInitializer,
   REQUEST,
 } from '@angular/core';
-import { UserStore } from '@features/account/state';
+import { USER_PROFILE_PORT, type UserProfilePort } from '@features/account/ports';
 import { AUTH_SESSION } from '@features/auth/ports';
 import { AuthStore } from '@features/auth/state';
 
@@ -73,15 +73,16 @@ export function provideAuth(): EnvironmentProviders {
     }),
     {
       provide: AUTH_SESSION,
-      useFactory: (authStore: AuthStore, userStore: UserStore) => ({
+      useFactory: (authStore: AuthStore, userProfilePort: UserProfilePort) => ({
         accessToken: authStore.accessToken,
+        isAuthenticated: authStore.isAuthenticated,
         initialized: authStore.initialized,
         clearSession: (): void => {
           authStore.clearToken();
-          userStore.clear();
+          userProfilePort.clear();
         },
       }),
-      deps: [AuthStore, UserStore],
+      deps: [AuthStore, USER_PROFILE_PORT],
     },
   ]);
 }

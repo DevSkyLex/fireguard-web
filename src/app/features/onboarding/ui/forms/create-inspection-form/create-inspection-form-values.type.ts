@@ -1,7 +1,4 @@
-import type {
-  InspectionResult,
-  InspectorType,
-} from '@features/organization/features/inspections/models';
+import type { SetupInspectionResult, SetupInspectorType } from '@features/organization/setup';
 
 /**
  * Interface CreateInspectionFormValues
@@ -13,8 +10,8 @@ import type {
  */
 export interface CreateInspectionFormValues {
   readonly equipmentId: string;
-  readonly result: InspectionResult;
+  readonly result: SetupInspectionResult;
   readonly performedAt: string;
-  readonly inspectorType: InspectorType;
+  readonly inspectorType: SetupInspectorType;
   readonly inspectorName: string;
 }

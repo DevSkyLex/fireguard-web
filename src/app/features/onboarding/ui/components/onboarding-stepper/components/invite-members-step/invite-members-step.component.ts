@@ -8,16 +8,17 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { MessageService } from 'primeng/api';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
-import { forkJoin } from 'rxjs';
 import { OnboardingStore } from '@features/onboarding/state';
 import { InviteMembersForm, type InviteMembersFormValues } from '@features/onboarding/ui/forms';
-import { OrganizationInvitationService } from '@features/organization/data-access';
-import type { OrganizationRoleOutput } from '@features/organization/models';
-import { OrganizationRoleListStore } from '@features/organization/state';
+import {
+  OrganizationSetupService,
+  type SetupOrganizationRole,
+} from '@features/organization/setup';
 import { OnboardingStepBase } from '../onboarding-step.base';
 
 /**
@@ -35,7 +36,6 @@ import { OnboardingStepBase } from '../onboarding-step.base';
 @Component({
   selector: 'app-invite-members-step',
   imports: [CardModule, TagModule, InviteMembersForm],
-  providers: [OrganizationRoleListStore],
   templateUrl: './invite-members-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -61,20 +61,8 @@ export class InviteMembersStep extends OnboardingStepBase {
    *
    * @type {OrganizationRoleListStore}
    */
-  private readonly roleListStore: OrganizationRoleListStore =
-    inject<OrganizationRoleListStore>(OrganizationRoleListStore);
-
-  /**
-   * Property organizationInvitationService
-   * @readonly
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {OrganizationInvitationService}
-   */
-  private readonly organizationInvitationService: OrganizationInvitationService =
-    inject<OrganizationInvitationService>(OrganizationInvitationService);
+  private readonly organizationSetupService: OrganizationSetupService =
+    inject<OrganizationSetupService>(OrganizationSetupService);
 
   /**
    * Property messageService
@@ -153,15 +141,39 @@ export class InviteMembersStep extends OnboardingStepBase {
   );
 
   /**
+   * Property rolesState
+   * @readonly
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<readonly SetupOrganizationRole[]>}
+   */
+  private readonly rolesState: WritableSignal<readonly SetupOrganizationRole[]> = signal<
+    readonly SetupOrganizationRole[]
+  >([]);
+
+  /**
+   * Property rolesLoadingState
+   * @readonly
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  private readonly rolesLoadingState: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
    * Property roles
    * @readonly
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<readonly OrganizationRoleOutput[]>}
+  * @type {Signal<readonly SetupOrganizationRole[]>}
    */
-  protected readonly roles: Signal<readonly OrganizationRoleOutput[]> = this.roleListStore.roles;
+  protected readonly roles: Signal<readonly SetupOrganizationRole[]> = this.rolesState.asReadonly();
 
   /**
    * Property rolesLoading
@@ -172,7 +184,7 @@ export class InviteMembersStep extends OnboardingStepBase {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly rolesLoading: Signal<boolean> = this.roleListStore.rolesLoading;
+  protected readonly rolesLoading: Signal<boolean> = this.rolesLoadingState.asReadonly();
   //#endregion
 
   //#region PT
@@ -210,7 +222,23 @@ export class InviteMembersStep extends OnboardingStepBase {
     effect(() => {
       const organizationId: string | null = this.onboardingStore.targetOrganizationId();
       if (organizationId) {
-        this.roleListStore.loadRoles(organizationId);
+        this.rolesLoadingState.set(true);
+        this.organizationSetupService
+          .listRoles(organizationId)
+          .pipe(takeUntilDestroyed())
+          .subscribe({
+            next: (roles) => {
+              this.rolesState.set(roles);
+              this.rolesLoadingState.set(false);
+            },
+            error: () => {
+              this.rolesState.set([]);
+              this.rolesLoadingState.set(false);
+            },
+          });
+      } else {
+        this.rolesState.set([]);
+        this.rolesLoadingState.set(false);
       }
     });
   }
@@ -235,40 +263,42 @@ export class InviteMembersStep extends OnboardingStepBase {
     if (!organizationId || this.anyBusy()) return;
     this.isInviting.set(true);
 
-    forkJoin(
-      values.map((v) =>
-        this.organizationInvitationService.invite(organizationId, {
+    this.organizationSetupService
+      .inviteMembers(
+        organizationId,
+        values.map((v) => ({
           email: v.email,
           roleIds: v.roleId ? [v.roleId] : undefined,
-        }),
-      ),
-    ).subscribe({
-      next: () => {
-        this.isInviting.set(false);
-        const count: number = values.length;
-        this.messageService.add({
-          severity: 'success',
-          summary: count > 1 ? 'Invitations sent' : 'Invitation sent',
-          detail:
-            count > 1
-              ? `${count} invitations have been sent.`
-              : `An invitation has been sent to ${values[0].email}.`,
-          life: 4000,
-        });
-        this.handleComplete();
-      },
-      error: (error: unknown) => {
-        this.isInviting.set(false);
-        const message: string =
-          error instanceof Error ? error.message : 'Failed to send the invitation(s).';
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: message,
-          life: 5000,
-        });
-      },
-    });
+        })),
+      )
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: () => {
+          this.isInviting.set(false);
+          const count: number = values.length;
+          this.messageService.add({
+            severity: 'success',
+            summary: count > 1 ? 'Invitations sent' : 'Invitation sent',
+            detail:
+              count > 1
+                ? `${count} invitations have been sent.`
+                : `An invitation has been sent to ${values[0].email}.`,
+            life: 4000,
+          });
+          this.handleComplete();
+        },
+        error: (error: unknown) => {
+          this.isInviting.set(false);
+          const message: string =
+            error instanceof Error ? error.message : 'Failed to send the invitation(s).';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: message,
+            life: 5000,
+          });
+        },
+      });
   }
 
   /**

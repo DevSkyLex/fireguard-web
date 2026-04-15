@@ -15,8 +15,8 @@ import {
   type CallState,
   type StoreError,
 } from '@core/state/request-state';
-import { OAuth2Service } from '@features/auth/data-access';
-import type { UserInfoOutput } from '@features/auth/models';
+import { UserProfileService } from '@features/account/data-access';
+import type { UserProfileOutput } from '@features/account/models';
 import type { UserState } from './user-state.interface';
 import { userStoreEvents } from './user.events';
 
@@ -29,7 +29,7 @@ import { userStoreEvents } from './user.events';
  *
  * @since 1.0.0
  */
-const USER_TRANSFER_KEY = makeStateKey<UserInfoOutput | null>('user-profile');
+const USER_TRANSFER_KEY = makeStateKey<UserProfileOutput | null>('user-profile');
 
 /**
  * Constant INITIAL_USER_STATE
@@ -126,7 +126,7 @@ export const UserStore = signalStore(
      * @returns {string | null}
      */
     displayName: computed<string | null>(() => {
-      const profile: UserInfoOutput | null = store.profile();
+      const profile: UserProfileOutput | null = store.profile();
       if (!profile) return null;
       return profile.name ?? profile.preferred_username ?? profile.email ?? null;
     }),
@@ -143,7 +143,7 @@ export const UserStore = signalStore(
      * @returns {string | null}
      */
     initials: computed<string | null>(() => {
-      const profile: UserInfoOutput | null = store.profile();
+      const profile: UserProfileOutput | null = store.profile();
       if (!profile) return null;
 
       const givenInitial: string = profile.given_name?.charAt(0).toUpperCase() ?? '';
@@ -177,7 +177,7 @@ export const UserStore = signalStore(
     (
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
-      oauth2Service = inject<OAuth2Service>(OAuth2Service),
+      userProfileService = inject<UserProfileService>(UserProfileService),
       platformId = inject<object>(PLATFORM_ID),
       transferState = inject(TransferState),
     ) => ({
@@ -195,16 +195,16 @@ export const UserStore = signalStore(
       load: rxMethod<void>(
         pipe(
           filter(() => {
-            const callState: CallState<UserInfoOutput> = store.loadCallState();
+            const callState: CallState<UserProfileOutput> = store.loadCallState();
             return callState.status !== 'pending' && callState.status !== 'success';
           }),
           tap(() => {
             patchState(store, { loadCallState: pendingCallState() });
           }),
           switchMap(() =>
-            oauth2Service.userinfo().pipe(
+            userProfileService.getCurrentProfile().pipe(
               tapResponse({
-                next: (response: UserInfoOutput) => {
+                next: (response: UserProfileOutput) => {
                   patchState(store, {
                     profile: response,
                     loadCallState: successCallState(response),
@@ -281,7 +281,7 @@ export const UserStore = signalStore(
       async initialize(): Promise<void> {
         // Browser: consume the profile transferred from SSR to avoid a duplicate request.
         if (isPlatformBrowser(platformId) && transferState.hasKey(USER_TRANSFER_KEY)) {
-          const transferred: UserInfoOutput | null = transferState.get(USER_TRANSFER_KEY, null);
+          const transferred: UserProfileOutput | null = transferState.get(USER_TRANSFER_KEY, null);
           transferState.remove(USER_TRANSFER_KEY);
 
           if (transferred) {
@@ -297,9 +297,9 @@ export const UserStore = signalStore(
 
         // SSR or browser without transfer: fetch userinfo and store result for hydration.
         await firstValueFrom(
-          oauth2Service.userinfo().pipe(
+          userProfileService.getCurrentProfile().pipe(
             tapResponse({
-              next: (response: UserInfoOutput) => {
+              next: (response: UserProfileOutput) => {
                 patchState(store, {
                   profile: response,
                   loadCallState: successCallState(response),

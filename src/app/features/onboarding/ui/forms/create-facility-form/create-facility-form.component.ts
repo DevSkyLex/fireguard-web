@@ -18,7 +18,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
-import type { FacilityType } from '@features/organization/features/facilities/models';
+import type { SetupFacilityType } from '@features/organization/setup';
 import type { CreateFacilityFormData } from './create-facility-form-data.type';
 import type { CreateFacilityFormValues } from './create-facility-form-values.type';
 
@@ -91,9 +91,9 @@ export class CreateFacilityForm {
    * @access protected
    * @since 1.0.0
    *
-   * @type {{ label: string; value: FacilityType }[]}
+  * @type {{ label: string; value: SetupFacilityType }[]}
    */
-  protected readonly facilityTypes: { label: string; value: FacilityType }[] = [
+  protected readonly facilityTypes: { label: string; value: SetupFacilityType }[] = [
     { label: 'Site', value: 'site' },
     { label: 'Building', value: 'building' },
     { label: 'Floor', value: 'floor' },
@@ -115,7 +115,7 @@ export class CreateFacilityForm {
    */
   protected readonly form: FormGroup<CreateFacilityFormData> =
     this.formBuilder.group<CreateFacilityFormData>({
-      type: this.formBuilder.control<FacilityType>('site', [Validators.required]),
+      type: this.formBuilder.control<SetupFacilityType>('site', [Validators.required]),
       name: this.formBuilder.control<string>('', [
         Validators.required,
         Validators.minLength(2),

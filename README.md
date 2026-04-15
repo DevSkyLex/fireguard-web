@@ -12,6 +12,8 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+The development server uses the `development` Angular build configuration and replaces `src/environments/environment.ts` with `src/environments/environment.development.ts`.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
@@ -35,6 +37,12 @@ ng build
 ```
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+
+To build explicitly with the development environment, run:
+
+```bash
+ng build --configuration development
+```
 
 ## Running unit tests
 

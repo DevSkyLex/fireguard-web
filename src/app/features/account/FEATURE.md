@@ -36,20 +36,24 @@ Primary stores:
 Primary services:
 
 - `UserService`
+- `UserProfileService`
 - `NotificationService`
 
 ## Published Contracts
 
 - `USER_IDENTITY_PORT`
 - `UserIdentityPort`
+- `USER_PROFILE_PORT`
+- `UserProfilePort`
 - `NOTIFICATION_CENTER_PORT`
 - `NotificationCenterPort`
 
-These contracts are intended for shell consumers such as layouts and shared shell widgets.
+These contracts are intended for shell consumers such as layouts and shared shell widgets,
+plus approved external workflows that need to bootstrap or clear the authenticated user profile.
 
 ## Cross-Feature Dependencies
 
-- May be initialized by `features/auth` after successful session restoration.
+- May be initialized or cleared by `features/auth` through `USER_PROFILE_PORT` after successful session restoration or logout.
 - Must not own auth guards, auth interceptors, or refresh-token behavior.
 
 ## Shell Integration Notes

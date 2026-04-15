@@ -14,6 +14,8 @@ describe('NotificationCenterPage', () => {
       hasUnread: signal(false),
       unreadCount: signal(0),
       listError: signal(null),
+      initialize: vi.fn().mockResolvedValue(undefined),
+      initializeTypes: vi.fn().mockResolvedValue(undefined),
       load: vi.fn(),
       loadTypes: vi.fn(),
       markAsRead: vi.fn(),
@@ -27,13 +29,13 @@ describe('NotificationCenterPage', () => {
     return { component, mockNotificationStore };
   };
 
-  it('should call load and loadTypes on init', () => {
+  it('should call initialize and initializeTypes on init', () => {
     const { component, mockNotificationStore } = setup();
 
     component.ngOnInit();
 
-    expect(mockNotificationStore.load).toHaveBeenCalledTimes(1);
-    expect(mockNotificationStore.loadTypes).toHaveBeenCalledTimes(1);
+    expect(mockNotificationStore.initialize).toHaveBeenCalledTimes(1);
+    expect(mockNotificationStore.initializeTypes).toHaveBeenCalledTimes(1);
   });
 
   it('should call markAsRead with the correct id', () => {

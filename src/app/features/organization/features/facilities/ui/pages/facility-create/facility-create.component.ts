@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { ChangeDetectionStrategy, Component, effect, inject, PLATFORM_ID } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
@@ -112,6 +113,8 @@ export class FacilityCreatePage {
   private readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
+  private readonly platformId: object = inject<object>(PLATFORM_ID);
+
   /**
    * Property store
    * @readonly
@@ -140,11 +143,11 @@ export class FacilityCreatePage {
    * @since 1.0.0
    */
   public constructor() {
-    // Load available facilities for parent selection
+    // Load available facilities for parent selection only in the browser.
     const organizationId: string | undefined =
       this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) {
-      this.store.loadFacilities({ organizationId, options: { itemsPerPage: 200 } });
+    if (organizationId && isPlatformBrowser(this.platformId)) {
+      this.store.ensureParentOptionsLoaded(organizationId);
     }
 
     // Navigate to the new facility on successful creation

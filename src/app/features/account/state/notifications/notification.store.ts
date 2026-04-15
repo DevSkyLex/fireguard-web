@@ -1,4 +1,5 @@
-import { computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { computed, inject, makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import {
@@ -11,7 +12,16 @@ import {
 } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { catchError, EMPTY, exhaustMap, filter as rxFilter, pipe, switchMap, tap } from 'rxjs';
+import {
+  catchError,
+  EMPTY,
+  exhaustMap,
+  filter as rxFilter,
+  firstValueFrom,
+  pipe,
+  switchMap,
+  tap,
+} from 'rxjs';
 import type { HydraCollection } from '@core/models/api';
 import type { MercureSubscriptionOutput } from '@core/models/mercure';
 import { MercureService } from '@core/services/mercure';
@@ -33,6 +43,14 @@ import type {
 } from '@features/account/models';
 import type { NotificationStoreState } from './notification-state.interface';
 import { notificationStoreEvents } from './notification.events';
+
+const NOTIFICATION_LIST_TRANSFER_KEY = makeStateKey<HydraCollection<NotificationOutput> | null>(
+  'notification-list',
+);
+
+const NOTIFICATION_TYPES_TRANSFER_KEY = makeStateKey<ReadonlyArray<NotificationTypeOutput> | null>(
+  'notification-types',
+);
 
 //#region Initial State
 /**
@@ -213,7 +231,130 @@ export const NotificationStore = signalStore(
       dispatcher = inject<Dispatcher>(Dispatcher),
       notificationService = inject<NotificationService>(NotificationService),
       mercureService = inject<MercureService>(MercureService),
+      platformId = inject<object>(PLATFORM_ID),
+      transferState = inject(TransferState),
     ) => ({
+      /**
+       * Method initialize
+       *
+       * @description
+       * Bootstraps the first notification page using TransferState when the
+       * store is hydrated after SSR, avoiding a duplicate authenticated HTTP
+       * request on the browser.
+       *
+       * @since 1.2.0
+       *
+       * @returns {Promise<void>} Resolves when bootstrap is complete.
+       */
+      async initialize(): Promise<void> {
+        const callState = store.listCallState();
+        if (callState.status === 'pending' || callState.status === 'success') {
+          return;
+        }
+
+        if (isPlatformBrowser(platformId) && transferState.hasKey(NOTIFICATION_LIST_TRANSFER_KEY)) {
+          const transferred = transferState.get(NOTIFICATION_LIST_TRANSFER_KEY, null);
+          transferState.remove(NOTIFICATION_LIST_TRANSFER_KEY);
+
+          if (transferred) {
+            patchState(
+              store,
+              setAllEntities([...transferred.member], { collection: 'notification' }),
+              {
+                totalNotifications: transferred.totalItems,
+                currentPage: 1,
+                listCallState: successCallState(null),
+              },
+            );
+            return;
+          }
+        }
+
+        patchState(store, {
+          currentPage: 1,
+          listCallState: pendingCallState(),
+        });
+
+        const activeFilter: NotificationFilter | null = store.activeFilter();
+        const initialOptions: NotificationListOptions = {
+          limit: store.itemsPerPage(),
+          ...activeFilter,
+          page: 1,
+        };
+
+        await firstValueFrom(
+          notificationService.list(initialOptions).pipe(
+            tapResponse({
+              next: (response: HydraCollection<NotificationOutput>) => {
+                patchState(
+                  store,
+                  setAllEntities([...response.member], { collection: 'notification' }),
+                  {
+                    totalNotifications: response.totalItems,
+                    currentPage: 1,
+                    listCallState: successCallState(null),
+                  },
+                );
+                transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, response);
+              },
+              error: (error: unknown) => {
+                const storeError: StoreError = toStoreError(error);
+                patchState(store, { listCallState: errorCallState(storeError) });
+                transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, null);
+                dispatcher.dispatch(
+                  notificationStoreEvents.loadFailed(
+                    toStoreFailureEventPayload(storeError, 'Failed to load notifications'),
+                  ),
+                );
+              },
+            }),
+          ),
+          { defaultValue: undefined },
+        );
+      },
+
+      /**
+       * Method initializeTypes
+       *
+       * @description
+       * Bootstraps notification type reference data with TransferState so the
+       * notification page can reuse SSR data without a duplicate request.
+       *
+       * @since 1.2.0
+       *
+       * @returns {Promise<void>} Resolves when bootstrap is complete.
+       */
+      async initializeTypes(): Promise<void> {
+        if (store.typesLoaded()) {
+          return;
+        }
+
+        if (isPlatformBrowser(platformId) && transferState.hasKey(NOTIFICATION_TYPES_TRANSFER_KEY)) {
+          const transferred = transferState.get(NOTIFICATION_TYPES_TRANSFER_KEY, null);
+          transferState.remove(NOTIFICATION_TYPES_TRANSFER_KEY);
+
+          if (transferred) {
+            patchState(store, { types: transferred, typesLoaded: true });
+            return;
+          }
+        }
+
+        await firstValueFrom(
+          notificationService.listTypes().pipe(
+            tapResponse({
+              next: (types: ReadonlyArray<NotificationTypeOutput>) => {
+                patchState(store, { types, typesLoaded: true });
+                transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, types);
+              },
+              error: () => {
+                transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, null);
+              },
+            }),
+          ),
+          { defaultValue: undefined },
+        );
+      },
+
       /**
        * Method load
        *
@@ -347,10 +488,11 @@ export const NotificationStore = signalStore(
        */
       connectMercure: rxMethod<void>(
         pipe(
+          rxFilter(() => isPlatformBrowser(platformId) && !store.mercureConnected()),
+          tap(() => patchState(store, { mercureConnected: true })),
           switchMap(() =>
             notificationService.getSubscription().pipe(
               switchMap((subscription: MercureSubscriptionOutput) => {
-                patchState(store, { mercureConnected: true });
                 return mercureService
                   .subscribe<NotificationOutput>(subscription.topic, subscription.token)
                   .pipe(

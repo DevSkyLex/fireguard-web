@@ -1,21 +1,27 @@
 <ul class="max-h-40 overflow-auto">
-  @for (org of organizations(); track org.id) {
-    @let isActive = org.id === selectedOrganization()?.id;
+  @if (isLoading()) {
     <li>
-      <button
-        pRipple
-        type="button"
-        class="flex w-full items-center gap-2.5 px-3 py-1.5 text-left transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
-        (click)="organizationChange.emit(org)"
-      >
-        <p-avatar [label]="orgInitials(org.name)" [pt]="avatarPt(org)" />
-        <span class="flex-1 truncate text-sm" [class.font-medium]="isActive">{{ org.name }}</span>
-        @if (isActive) {
-          <i class="pi pi-check shrink-0 text-[11px] text-primary"></i>
-        }
-      </button>
+      <div class="px-3 py-2 text-sm text-surface-400 dark:text-surface-500">Loading workspaces...</div>
     </li>
-  } @empty {
-    <li class="px-3 py-2 text-sm text-surface-400 dark:text-surface-500">No workspaces found</li>
+  } @else {
+    @for (org of organizations(); track org.id) {
+      @let isActive = org.id === selectedOrganization()?.id;
+      <li>
+        <button
+          pRipple
+          type="button"
+          class="flex w-full items-center gap-2.5 px-3 py-1.5 text-left transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
+          (click)="organizationChange.emit(org)"
+        >
+          <p-avatar [label]="orgInitials(org.name)" [pt]="avatarPt(org)" />
+          <span class="flex-1 truncate text-sm" [class.font-medium]="isActive">{{ org.name }}</span>
+          @if (isActive) {
+            <i class="pi pi-check shrink-0 text-[11px] text-primary"></i>
+          }
+        </button>
+      </li>
+    } @empty {
+      <li class="px-3 py-2 text-sm text-surface-400 dark:text-surface-500">No workspaces found</li>
+    }
   }
 </ul>

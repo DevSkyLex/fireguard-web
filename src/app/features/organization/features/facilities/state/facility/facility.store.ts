@@ -1,4 +1,5 @@
-import { computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import { addEntity, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
@@ -27,6 +28,8 @@ import type {
 import { ActiveFacilityStore } from '../active-facility/active-facility.store';
 import type { FacilityState } from './facility-state.interface';
 import { facilityStoreEvents } from './facility.events';
+
+const FACILITY_PARENT_OPTIONS_ITEMS_PER_PAGE = 200;
 
 //#region Initial State
 /**
@@ -267,6 +270,7 @@ export const FacilityStore = signalStore(
       activeFacilityStore: ActiveFacilityStore = inject<ActiveFacilityStore>(ActiveFacilityStore),
       dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
       facilityService: FacilityService = inject<FacilityService>(FacilityService),
+      platformId = inject<object>(PLATFORM_ID),
     ) => {
       /**
        * Constant loadFn
@@ -314,6 +318,35 @@ export const FacilityStore = signalStore(
 
       return {
         // ── Facility List ──────────────────────────────────────────────────────
+
+        /**
+         * Method ensureParentOptionsLoaded
+         *
+         * @description
+         * Loads facility parent options for browser-side create and move flows.
+         * This data is secondary UI state and must not run during SSR.
+         *
+         * @since 2.1.0
+         *
+         * @param {string} organizationId - Organization owning the facility list.
+         *
+         * @returns {void}
+         */
+        ensureParentOptionsLoaded(organizationId: string): void {
+          if (!isPlatformBrowser(platformId)) {
+            return;
+          }
+
+          const callState = store.listCallState();
+          if (callState.status === 'pending' || callState.status === 'success') {
+            return;
+          }
+
+          loadFn({
+            organizationId,
+            options: { itemsPerPage: FACILITY_PARENT_OPTIONS_ITEMS_PER_PAGE },
+          });
+        },
 
         /**
          * Method load

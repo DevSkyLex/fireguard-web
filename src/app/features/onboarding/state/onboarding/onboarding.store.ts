@@ -1,10 +1,21 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { computed, inject, makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { Observable, catchError, exhaustMap, map, of, pipe, switchMap, tap } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  exhaustMap,
+  firstValueFrom,
+  map,
+  of,
+  pipe,
+  switchMap,
+  tap,
+} from 'rxjs';
 import {
   idleCallState,
   pendingCallState,
@@ -30,6 +41,8 @@ interface ExecuteStepPayload {
 }
 
 const isBlockingState = (state: string): boolean => state === 'in_progress' || state === 'blocked';
+
+const ONBOARDING_TRANSFER_KEY = makeStateKey<OnboardingOutput | null>('organization-onboarding');
 
 //#region Initial State
 /**
@@ -249,7 +262,74 @@ export const OnboardingStore = signalStore(
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
       onboardingService = inject<OnboardingService>(OnboardingService),
+      platformId = inject<object>(PLATFORM_ID),
+      transferState = inject(TransferState),
     ) => ({
+      /**
+       * Method initialize
+       *
+       * @description
+       * Bootstraps the onboarding workflow during SSR and reuses the
+       * transferred state after browser hydration to avoid a duplicate
+       * authenticated request.
+       *
+       * @since 1.1.0
+       *
+       * @param {StartOnboardingInput} input - Bootstrap options passed to the start endpoint.
+       *
+       * @returns {Promise<void>} Resolves when initialization is complete.
+       */
+      async initialize(input: StartOnboardingInput = { reset: false }): Promise<void> {
+        if (store.onboarding() !== null) {
+          return;
+        }
+
+        const callState = store.startCallState();
+        if (callState.status === 'pending' || callState.status === 'success') {
+          return;
+        }
+
+        if (isPlatformBrowser(platformId) && transferState.hasKey(ONBOARDING_TRANSFER_KEY)) {
+          const transferred = transferState.get(ONBOARDING_TRANSFER_KEY, null);
+          transferState.remove(ONBOARDING_TRANSFER_KEY);
+
+          if (transferred) {
+            patchState(store, {
+              onboarding: transferred,
+              startCallState: successCallState(transferred),
+            });
+            return;
+          }
+        }
+
+        patchState(store, { startCallState: pendingCallState() });
+
+        await firstValueFrom(
+          onboardingService.start(input).pipe(
+            tapResponse({
+              next: (response: OnboardingOutput) => {
+                patchState(store, {
+                  onboarding: response,
+                  startCallState: successCallState(response),
+                });
+                transferState.set(ONBOARDING_TRANSFER_KEY, response);
+              },
+              error: (error: unknown) => {
+                const storeError: StoreError = toStoreError(error);
+                patchState(store, { startCallState: errorCallState(storeError) });
+                transferState.set(ONBOARDING_TRANSFER_KEY, null);
+                dispatcher.dispatch(
+                  onboardingStoreEvents.startFailed(
+                    toStoreFailureEventPayload(storeError, 'Failed to start onboarding'),
+                  ),
+                );
+              },
+            }),
+          ),
+          { defaultValue: undefined },
+        );
+      },
+
       /**
        * Method load
        *

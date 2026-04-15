@@ -82,6 +82,7 @@ describe('DashboardLayout', () => {
   const mockNotificationCenterPort = {
     unreadCount: signal(0),
     hasUnread: signal(false),
+    initialize: vi.fn().mockResolvedValue(undefined),
     load: vi.fn(),
     connectMercure: vi.fn(),
   };
@@ -101,7 +102,8 @@ describe('DashboardLayout', () => {
   beforeEach(() => {
     mockAuthStore.isLoggingOut.set(false);
     mockAuthStore.logout.mockReset();
-    mockNotificationCenterPort.load.mockReset();
+    mockNotificationCenterPort.initialize.mockReset();
+    mockNotificationCenterPort.initialize.mockResolvedValue(undefined);
     mockNotificationCenterPort.connectMercure.mockReset();
 
     TestBed.configureTestingModule({
@@ -124,6 +126,14 @@ describe('DashboardLayout', () => {
   it('should create', () => {
     const fixture = TestBed.createComponent(DashboardLayout);
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  it('should initialize notifications and connect Mercure when a profile is available', () => {
+    const fixture = TestBed.createComponent(DashboardLayout);
+    fixture.detectChanges();
+
+    expect(mockNotificationCenterPort.initialize).toHaveBeenCalledTimes(1);
+    expect(mockNotificationCenterPort.connectMercure).toHaveBeenCalledTimes(1);
   });
 
   it('should render an accessible desktop resize handle', () => {

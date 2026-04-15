@@ -65,18 +65,65 @@ describe('OrganizationSwitcher', () => {
     expect(fixture.debugElement.query(By.css('p-popover'))).not.toBeNull();
   });
 
-  it('should call loadOrganizations on init when the organizations list is empty', () => {
+  it('should not call loadOrganizations on init when the organizations list is empty', () => {
     mockOrganizationStore.organizations.set([]);
     const fixture = TestBed.createComponent(OrganizationSwitcher);
     fixture.detectChanges();
 
+    expect(mockOrganizationStore.loadOrganizations).not.toHaveBeenCalled();
+  });
+
+  it('should call loadOrganizations when the menu is opened and organizations are missing', () => {
+    mockOrganizationStore.organizations.set([]);
+    const fixture = TestBed.createComponent(OrganizationSwitcher);
+    fixture.detectChanges();
+
+    const popoverEl = fixture.debugElement.query(By.css('p-popover'));
+    if (popoverEl) {
+      vi.spyOn(popoverEl.componentInstance as { toggle(event: MouseEvent): void }, 'toggle').mockReturnValue(undefined);
+    }
+
+    const component = fixture.componentInstance as unknown as {
+      toggle(event: MouseEvent): void;
+    };
+    component.toggle(new MouseEvent('click'));
+
     expect(mockOrganizationStore.loadOrganizations).toHaveBeenCalledTimes(1);
   });
 
-  it('should not call loadOrganizations on init when organizations are already loaded', () => {
+  it('should not call loadOrganizations when the menu is opened and organizations are already loaded', () => {
     mockOrganizationStore.organizations.set([MOCK_ORG]);
     const fixture = TestBed.createComponent(OrganizationSwitcher);
     fixture.detectChanges();
+
+    const popoverEl = fixture.debugElement.query(By.css('p-popover'));
+    if (popoverEl) {
+      vi.spyOn(popoverEl.componentInstance as { toggle(event: MouseEvent): void }, 'toggle').mockReturnValue(undefined);
+    }
+
+    const component = fixture.componentInstance as unknown as {
+      toggle(event: MouseEvent): void;
+    };
+    component.toggle(new MouseEvent('click'));
+
+    expect(mockOrganizationStore.loadOrganizations).not.toHaveBeenCalled();
+  });
+
+  it('should not call loadOrganizations when the menu is opened while a list request is already pending', () => {
+    mockOrganizationStore.organizations.set([]);
+    mockOrganizationStore.isLoadingOrganizations.set(true);
+    const fixture = TestBed.createComponent(OrganizationSwitcher);
+    fixture.detectChanges();
+
+    const popoverEl = fixture.debugElement.query(By.css('p-popover'));
+    if (popoverEl) {
+      vi.spyOn(popoverEl.componentInstance as { toggle(event: MouseEvent): void }, 'toggle').mockReturnValue(undefined);
+    }
+
+    const component = fixture.componentInstance as unknown as {
+      toggle(event: MouseEvent): void;
+    };
+    component.toggle(new MouseEvent('click'));
 
     expect(mockOrganizationStore.loadOrganizations).not.toHaveBeenCalled();
   });

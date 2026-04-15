@@ -220,14 +220,14 @@
 
         <!-- Equipments Tab -->
         <p-tabpanel [value]="1">
-          @if (facility(); as facility) {
+          @if (activeTab() === 1 && facility(); as facility) {
             <app-facility-equipment-tab [facilityId]="facility.id" />
           }
         </p-tabpanel>
 
         <!-- Inspections Tab -->
         <p-tabpanel [value]="2">
-          @if (facility(); as facility) {
+          @if (activeTab() === 2 && facility(); as facility) {
             <app-facility-inspection-tab [facilityId]="facility.id" />
           }
         </p-tabpanel>

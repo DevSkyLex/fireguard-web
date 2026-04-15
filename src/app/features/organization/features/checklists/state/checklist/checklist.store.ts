@@ -1,4 +1,5 @@
-import { computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import { addEntity, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
@@ -24,6 +25,8 @@ import type {
 import { ActiveChecklistStore } from '../active-checklist/active-checklist.store';
 import type { ChecklistState } from './checklist-state.interface';
 import { checklistStoreEvents } from './checklist.events';
+
+const INSPECTION_CREATE_CHECKLIST_ITEMS_PER_PAGE = 200;
 
 //#region Initial State
 /**
@@ -273,6 +276,7 @@ export const ChecklistStore = signalStore(
         ActiveChecklistStore,
       ),
       dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
+      platformId = inject<object>(PLATFORM_ID),
     ) => {
       /**
        * Constant loadFn
@@ -319,6 +323,36 @@ export const ChecklistStore = signalStore(
       );
 
       return {
+        /**
+         * Method ensureInspectionCreateOptionsLoaded
+         *
+         * @description
+         * Loads the checklist options needed by the inspection-create form on
+         * the browser only. This data is secondary UI state and must not be
+         * serialized through TransferState.
+         *
+         * @since 2.1.0
+         *
+         * @param {string} organizationId - Organization owning the checklist list.
+         *
+         * @returns {void}
+         */
+        ensureInspectionCreateOptionsLoaded(organizationId: string): void {
+          if (!isPlatformBrowser(platformId)) {
+            return;
+          }
+
+          const callState = store.listCallState();
+          if (callState.status === 'pending' || callState.status === 'success') {
+            return;
+          }
+
+          loadFn({
+            organizationId,
+            options: { itemsPerPage: INSPECTION_CREATE_CHECKLIST_ITEMS_PER_PAGE },
+          });
+        },
+
         /**
          * Method load
          * @method load

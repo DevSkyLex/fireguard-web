@@ -1,10 +1,11 @@
-import { DatePipe, KeyValuePipe, TitleCasePipe } from '@angular/common';
+import { isPlatformBrowser, DatePipe, KeyValuePipe, TitleCasePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   inject,
+  PLATFORM_ID,
   signal,
   type Signal,
   type WritableSignal,
@@ -149,6 +150,8 @@ export class FacilityDetailPage {
    */
   private readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+
+  private readonly platformId: object = inject<object>(PLATFORM_ID);
 
   /**
    * Property activeFacilityStore
@@ -343,13 +346,6 @@ export class FacilityDetailPage {
    * @since 1.0.0
    */
   public constructor() {
-    // Load facilities for move dialog parent selection
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) {
-      this.store.loadFacilities({ organizationId, options: { itemsPerPage: 200 } });
-    }
-
     // Close dialog on successful move
     effect(() => {
       const operation = this.store.moveCallState();
@@ -412,6 +408,13 @@ export class FacilityDetailPage {
   protected onOpenMoveDialog(): void {
     const currentParentId: string = this.facility()?.parentFacilityId ?? '';
     this.moveParentId.set(currentParentId);
+
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (organizationId && isPlatformBrowser(this.platformId)) {
+      this.store.ensureParentOptionsLoaded(organizationId);
+    }
+
     this.showMoveDialog.set(true);
   }
 

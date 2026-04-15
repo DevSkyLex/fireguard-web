@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { isPlatformBrowser, DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   input,
+  PLATFORM_ID,
   type InputSignal,
   type Signal,
 } from '@angular/core';
@@ -58,6 +59,8 @@ export class FacilityEquipmentTab {
   private readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
+  private readonly platformId: object = inject<object>(PLATFORM_ID);
+
   protected readonly store: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
 
   protected readonly equipmentList: Signal<ReadonlyArray<EquipmentOutput>> = computed<
@@ -88,6 +91,10 @@ export class FacilityEquipmentTab {
   //#region Constructor
   public constructor() {
     effect(() => {
+      if (!isPlatformBrowser(this.platformId)) {
+        return;
+      }
+
       const facilityId: string = this.facilityId();
       const organizationId: string | undefined =
         this.activeOrganizationStore.selectedOrganization()?.id;

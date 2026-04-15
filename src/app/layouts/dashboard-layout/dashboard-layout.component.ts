@@ -73,7 +73,7 @@ export class DashboardLayout {
     effect(() => {
       if (this.userIdentityPort.profile()) {
         untracked(() => {
-          this.notificationCenterPort.load();
+          void this.notificationCenterPort.initialize();
           this.notificationCenterPort.connectMercure();
         });
       }

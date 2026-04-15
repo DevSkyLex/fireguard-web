@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { ChangeDetectionStrategy, Component, effect, inject, PLATFORM_ID } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
@@ -96,6 +97,8 @@ export class InspectionCreatePage {
   private readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
+  private readonly platformId: object = inject<object>(PLATFORM_ID);
+
   /**
    * Property store
    * @readonly
@@ -156,10 +159,10 @@ export class InspectionCreatePage {
   public constructor() {
     const organizationId: string | undefined =
       this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) {
-      this.equipmentStore.load({ organizationId, options: { itemsPerPage: 200 } });
-      this.facilityStore.loadFacilities({ organizationId, options: { itemsPerPage: 200 } });
-      this.checklistStore.load({ organizationId, options: { itemsPerPage: 200 } });
+    if (organizationId && isPlatformBrowser(this.platformId)) {
+      this.equipmentStore.ensureInspectionCreateOptionsLoaded(organizationId);
+      this.facilityStore.ensureParentOptionsLoaded(organizationId);
+      this.checklistStore.ensureInspectionCreateOptionsLoaded(organizationId);
     }
 
     // Navigate to the inspection list on successful creation

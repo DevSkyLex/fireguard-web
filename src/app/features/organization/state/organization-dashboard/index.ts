@@ -1,3 +1,5 @@
+export { OrganizationDashboardStore } from './organization-dashboard.store';
+export type { OrganizationDashboardStore as OrganizationDashboardStoreType } from './organization-dashboard.store';
 export { OrganizationDashboardAssetGrowthStore } from './asset-growth/organization-dashboard-asset-growth.store';
 export type { OrganizationDashboardAssetGrowthStore as OrganizationDashboardAssetGrowthStoreType } from './asset-growth/organization-dashboard-asset-growth.store';
 export { OrganizationDashboardEquipmentCreatedStore } from './equipment-created-trend/organization-dashboard-equipment-created-trend.store';

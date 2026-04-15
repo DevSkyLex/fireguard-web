@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
@@ -67,6 +67,17 @@ describe('FacilityInspectionTab', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  it('should load inspections on the browser when facility id is available', () => {
+    const fixture = TestBed.createComponent(FacilityInspectionTab);
+    fixture.componentRef.setInput('facilityId', 'fac-1');
+    fixture.detectChanges();
+
+    expect(mockInspectionStore.load).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      options: { facilityId: 'fac-1' },
+    });
+  });
+
   it('should show skeletons while loading', () => {
     mockInspectionStore.isLoadingInspections.set(true);
     const fixture = TestBed.createComponent(FacilityInspectionTab);
@@ -100,6 +111,26 @@ describe('FacilityInspectionTab', () => {
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('No inspections');
+  });
+
+  it('should not load inspections during SSR', () => {
+    TestBed.resetTestingModule();
+
+    TestBed.configureTestingModule({
+      imports: [FacilityInspectionTab],
+      providers: [
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
+      ],
+    }).overrideComponent(FacilityInspectionTab, {
+      set: { providers: [{ provide: InspectionStore, useValue: mockInspectionStore }] },
+    });
+
+    const fixture = TestBed.createComponent(FacilityInspectionTab);
+    fixture.componentRef.setInput('facilityId', 'fac-1');
+    fixture.detectChanges();
+
+    expect(mockInspectionStore.load).not.toHaveBeenCalled();
   });
 });
 

@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -85,7 +85,7 @@ describe('FacilityDetailPage', () => {
       status: 'idle',
       data: null,
     }),
-    loadFacilities: vi.fn(),
+    ensureParentOptionsLoaded: vi.fn(),
     move: vi.fn(),
   };
 
@@ -114,14 +114,17 @@ describe('FacilityDetailPage', () => {
     mockActiveFacilityStore.isLoadingFacility.set(false);
     mockFacilityStore.facilities.set([]);
     mockFacilityStore.moveCallState.set({ status: 'idle', data: null });
-    mockFacilityStore.loadFacilities.mockReset();
+    mockFacilityStore.ensureParentOptionsLoaded.mockReset();
     mockFacilityStore.move.mockReset();
+    mockEquipmentStore.load.mockReset();
+    mockInspectionStore.load.mockReset();
     mockActiveOrgStore.selectedOrganization.set(MOCK_ORG);
 
     TestBed.configureTestingModule({
       imports: [FacilityDetailPage],
       providers: [
         provideRouter([]),
+        { provide: PLATFORM_ID, useValue: 'browser' },
         { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
         { provide: ActiveFacilityStore, useValue: mockActiveFacilityStore },
         { provide: Events, useValue: mockEvents },
@@ -176,6 +179,15 @@ describe('FacilityDetailPage', () => {
     expect(fixture.nativeElement.textContent).toContain('Inspections');
   });
 
+  it('should not load secondary tab data on initial render', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    expect(mockEquipmentStore.load).not.toHaveBeenCalled();
+    expect(mockInspectionStore.load).not.toHaveBeenCalled();
+  });
+
   it('should open the move dialog when onOpenMoveDialog is called', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
@@ -185,6 +197,7 @@ describe('FacilityDetailPage', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance['showMoveDialog']()).toBe(true);
+    expect(mockFacilityStore.ensureParentOptionsLoaded).toHaveBeenCalledWith('org-1');
   });
 
   it('should close the move dialog when onMoveCancel is called', () => {
@@ -228,6 +241,38 @@ describe('FacilityDetailPage', () => {
       facilityId: 'fac-1',
       input: { parentFacilityId: null },
     });
+  });
+
+  it('should not load move dialog parent options during SSR', () => {
+    TestBed.resetTestingModule();
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
+
+    TestBed.configureTestingModule({
+      imports: [FacilityDetailPage],
+      providers: [
+        provideRouter([]),
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
+        { provide: ActiveFacilityStore, useValue: mockActiveFacilityStore },
+        { provide: Events, useValue: mockEvents },
+        { provide: MessageService, useValue: mockMessageService },
+      ],
+    })
+      .overrideComponent(FacilityDetailPage, {
+        set: { providers: [{ provide: FacilityStore, useValue: mockFacilityStore }] },
+      })
+      .overrideComponent(FacilityEquipmentTab, {
+        set: { providers: [{ provide: EquipmentStore, useValue: mockEquipmentStore }] },
+      })
+      .overrideComponent(FacilityInspectionTab, {
+        set: { providers: [{ provide: InspectionStore, useValue: mockInspectionStore }] },
+      });
+
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+    fixture.componentInstance['onOpenMoveDialog']();
+
+    expect(mockFacilityStore.ensureParentOptionsLoaded).not.toHaveBeenCalled();
   });
 });
 

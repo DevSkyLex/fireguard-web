@@ -16,6 +16,7 @@ export interface NotificationCenterPort {
   readonly unreadCount: Signal<number>;
   readonly hasUnread: Signal<boolean>;
 
+  initialize(): Promise<void>;
   load(): void;
   connectMercure(): void;
 }

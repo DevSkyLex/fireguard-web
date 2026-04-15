@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
@@ -25,7 +25,7 @@ describe('FacilityCreatePage', () => {
       data: null,
     }),
     createError: signal(null),
-    loadFacilities: vi.fn(),
+    ensureParentOptionsLoaded: vi.fn(),
     create: vi.fn(),
     resetCreateOperation: vi.fn(),
   };
@@ -41,7 +41,7 @@ describe('FacilityCreatePage', () => {
     mockFacilityStore.facilities.set([]);
     mockFacilityStore.isCreating.set(false);
     mockFacilityStore.createCallState.set({ status: 'idle', data: null });
-    mockFacilityStore.loadFacilities.mockReset();
+    mockFacilityStore.ensureParentOptionsLoaded.mockReset();
     mockFacilityStore.create.mockReset();
     mockActiveOrgStore.selectedOrganization.set(MOCK_ORG);
 
@@ -49,6 +49,7 @@ describe('FacilityCreatePage', () => {
       imports: [FacilityCreatePage],
       providers: [
         provideRouter([]),
+        { provide: PLATFORM_ID, useValue: 'browser' },
         { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
         { provide: Events, useValue: mockEvents },
         { provide: MessageService, useValue: mockMessageService },
@@ -76,20 +77,40 @@ describe('FacilityCreatePage', () => {
     expect(fixture.nativeElement.querySelector('app-facility-form')).not.toBeNull();
   });
 
-  it('should load facilities for parent selection on init', () => {
+  it('should load parent facilities for selection on init in the browser', () => {
     const fixture = TestBed.createComponent(FacilityCreatePage);
     fixture.detectChanges();
-    expect(mockFacilityStore.loadFacilities).toHaveBeenCalledWith({
-      organizationId: 'org-1',
-      options: { itemsPerPage: 200 },
-    });
+    expect(mockFacilityStore.ensureParentOptionsLoaded).toHaveBeenCalledWith('org-1');
   });
 
-  it('should not load facilities when organization is missing', () => {
+  it('should not load parent facilities when organization is missing', () => {
     mockActiveOrgStore.selectedOrganization.set(null);
     const fixture = TestBed.createComponent(FacilityCreatePage);
     fixture.detectChanges();
-    expect(mockFacilityStore.loadFacilities).not.toHaveBeenCalled();
+    expect(mockFacilityStore.ensureParentOptionsLoaded).not.toHaveBeenCalled();
+  });
+
+  it('should not load parent facilities during SSR', () => {
+    TestBed.resetTestingModule();
+    mockActiveOrgStore.selectedOrganization.set(MOCK_ORG);
+
+    TestBed.configureTestingModule({
+      imports: [FacilityCreatePage],
+      providers: [
+        provideRouter([]),
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
+        { provide: Events, useValue: mockEvents },
+        { provide: MessageService, useValue: mockMessageService },
+      ],
+    }).overrideComponent(FacilityCreatePage, {
+      set: { providers: [{ provide: FacilityStore, useValue: mockFacilityStore }] },
+    });
+
+    const fixture = TestBed.createComponent(FacilityCreatePage);
+    fixture.detectChanges();
+
+    expect(mockFacilityStore.ensureParentOptionsLoaded).not.toHaveBeenCalled();
   });
 
   it('should dispatch create action with correct payload on handleSubmit', () => {

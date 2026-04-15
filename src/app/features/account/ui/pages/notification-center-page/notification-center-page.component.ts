@@ -97,8 +97,8 @@ export class NotificationCenterPage implements OnInit {
    * @returns {void}
    */
   public ngOnInit(): void {
-    this.notificationStore.load();
-    this.notificationStore.loadTypes();
+    void this.notificationStore.initialize();
+    void this.notificationStore.initializeTypes();
   }
 
   /**

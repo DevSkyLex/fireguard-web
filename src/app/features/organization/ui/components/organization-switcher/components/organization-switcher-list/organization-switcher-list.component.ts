@@ -33,6 +33,21 @@ import type { OrganizationOutput } from '@features/organization/models';
 export class OrganizationSwitcherList {
   //#region Inputs
   /**
+   * Input isLoading
+   * @readonly
+   *
+   * @description
+   * Whether the organization list is currently being loaded.
+   * Used to avoid showing the empty state during the initial fetch.
+   *
+   * @access public
+   * @since 2.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly isLoading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
    * Input organizations
    * @readonly
    *

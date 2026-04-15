@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
@@ -65,6 +65,17 @@ describe('FacilityEquipmentTab', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
+  it('should load equipment on the browser when facility id is available', () => {
+    const fixture = TestBed.createComponent(FacilityEquipmentTab);
+    fixture.componentRef.setInput('facilityId', 'fac-1');
+    fixture.detectChanges();
+
+    expect(mockEquipmentStore.load).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      options: { params: { facilityId: 'fac-1' } },
+    });
+  });
+
   it('should show skeletons while loading', () => {
     mockEquipmentStore.isLoadingEquipment.set(true);
     const fixture = TestBed.createComponent(FacilityEquipmentTab);
@@ -98,6 +109,26 @@ describe('FacilityEquipmentTab', () => {
     fixture.componentRef.setInput('facilityId', 'fac-1');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('No equipment');
+  });
+
+  it('should not load equipment during SSR', () => {
+    TestBed.resetTestingModule();
+
+    TestBed.configureTestingModule({
+      imports: [FacilityEquipmentTab],
+      providers: [
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
+      ],
+    }).overrideComponent(FacilityEquipmentTab, {
+      set: { providers: [{ provide: EquipmentStore, useValue: mockEquipmentStore }] },
+    });
+
+    const fixture = TestBed.createComponent(FacilityEquipmentTab);
+    fixture.componentRef.setInput('facilityId', 'fac-1');
+    fixture.detectChanges();
+
+    expect(mockEquipmentStore.load).not.toHaveBeenCalled();
   });
 });
 

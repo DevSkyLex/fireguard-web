@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   inject,
-  OnInit,
   Signal,
   viewChild,
 } from '@angular/core';
@@ -45,7 +44,7 @@ import {
   templateUrl: './organization-switcher.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrganizationSwitcher implements OnInit {
+export class OrganizationSwitcher {
   //#region Properties
   /**
    * Property organizationStore
@@ -113,38 +112,6 @@ export class OrganizationSwitcher implements OnInit {
 
   //#region Methods
   /**
-   * Method ngOnInit
-   * @method ngOnInit
-   *
-   * @description
-   * On component initialization, load the list of
-   * organizations from the store.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  public ngOnInit(): void {
-    /**
-     * Constant organizations
-     * @const organizations
-     *
-     * @description
-     * List of organizations from the store.
-     * If the list is empty, trigger a load of organizations.
-     *
-     * @type {readonly OrganizationOutput[]}
-     */
-    const organizations: readonly OrganizationOutput[] = this.organizationStore.organizations();
-
-    // If organizations are already loaded, do not trigger another load to avoid unnecessary API calls.
-    if (!organizations.length) {
-      this.organizationStore.loadOrganizations();
-    }
-  }
-
-  /**
    * Method onOrganizationChange
    * @method onOrganizationChange
    *
@@ -191,6 +158,8 @@ export class OrganizationSwitcher implements OnInit {
    * @returns {void}
    */
   protected toggle(event: MouseEvent): void {
+    this.ensureOrganizationsLoaded();
+
     const popover: Popover = this.popover();
     popover.toggle(event);
   }
@@ -229,6 +198,28 @@ export class OrganizationSwitcher implements OnInit {
     popover.hide();
 
     this.router.navigate(['/onboarding']);
+  }
+
+  /**
+   * Method ensureOrganizationsLoaded
+   * @method ensureOrganizationsLoaded
+   *
+   * @description
+   * Loads organizations only when the switcher is explicitly opened
+   * and no list request is already in flight.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @returns {void}
+   */
+  private ensureOrganizationsLoaded(): void {
+    const organizations: readonly OrganizationOutput[] = this.organizationStore.organizations();
+    if (organizations.length || this.organizationStore.isLoadingOrganizations()) {
+      return;
+    }
+
+    this.organizationStore.loadOrganizations();
   }
   //#endregion
 }

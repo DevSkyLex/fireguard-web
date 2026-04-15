@@ -1214,6 +1214,29 @@ Pattern:
 2. On browser: read `transferState.get(TRANSFER_KEY, null)`, apply to store without fetching, then clear the key.
 3. On browser without key (not SSR-rendered): fetch normally.
 
+`TransferState` is a targeted SSR-to-browser handoff, not a general cache layer.
+
+Use it only when all of the following are true:
+
+1. the data is required for the initial SSR HTML of a route or shell,
+2. the browser would otherwise refetch it immediately after hydration,
+3. the payload is reasonably small and justified in the HTML,
+4. the ownership stays obvious at one store or route boundary.
+
+Prefer this decision order:
+
+1. route-critical data: resolver + shared/root store,
+2. shell or page bootstrap data that must survive hydration without a duplicate auth request: explicit `TransferState`,
+3. secondary data (tabs, dialogs, parent pickers, form option lists, hidden widgets): browser-only lazy load or load-on-open.
+
+Rules:
+
+- do not use `TransferState` as a default answer for authenticated requests,
+- do not serialize large collections just to avoid one browser request,
+- do not hydrate data for UI that is hidden on first paint,
+- do not serialize secrets or bearer tokens,
+- remove the key after browser consumption.
+
 Do not rely on `TransferState` for data that changes per user session within the browser.
 
 ### 9.8 `http/` and `providers/`
@@ -1573,6 +1596,18 @@ Rules:
 - Services must not inject `HttpClient` directly.
 - Services return `Observable<T>`. They never subscribe internally, never `catch`, never transform to view models.
 - Errors propagate without interception to the store layer, which handles them via `tapResponse`.
+
+### 17.4 SSR fetch strategy
+
+Authenticated SSR data must not be treated uniformly.
+
+Use the smallest strategy that matches the UI need:
+
+1. Resolver + shared store for route-critical content that the SSR HTML truly depends on.
+2. Explicit `TransferState` only for first-render shell or page bootstrap data that would immediately duplicate after hydration.
+3. Browser-only lazy load for secondary panels, tabs, dialogs, dropdown option lists, and other non-critical enrichments.
+
+Do not expand `TransferState` to every authenticated list. If the UI can tolerate a client-side skeleton or an on-open fetch, prefer that over serializing extra payload into the HTML.
 - URL construction uses `buildUrl(path, id?)` and `buildParams(options?)`.
 - The base content type is `application/ld+json`. Do not override it unless the endpoint explicitly requires it (e.g., file uploads use `multipart/form-data`).
 

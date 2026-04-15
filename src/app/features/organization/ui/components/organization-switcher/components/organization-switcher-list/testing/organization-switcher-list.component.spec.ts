@@ -46,6 +46,16 @@ describe('OrganizationSwitcherList', () => {
     expect(fixture.nativeElement.textContent).toContain('No workspaces found');
   });
 
+  it('should show a loading state instead of the empty state while organizations are loading', () => {
+    const fixture = TestBed.createComponent(OrganizationSwitcherList);
+    fixture.componentRef.setInput('organizations', []);
+    fixture.componentRef.setInput('isLoading', true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Loading workspaces...');
+    expect(fixture.nativeElement.textContent).not.toContain('No workspaces found');
+  });
+
   it('should render a list item for each organization', () => {
     const fixture = TestBed.createComponent(OrganizationSwitcherList);
     fixture.componentRef.setInput('organizations', [MOCK_ORG_1, MOCK_ORG_2]);

@@ -22,6 +22,7 @@
 
     <!-- Organization list -->
     <app-organization-switcher-list
+      [isLoading]="organizationStore.isLoadingOrganizations()"
       [organizations]="[...organizationStore.organizations()]"
       [selectedOrganization]="organizationStore.selectedOrganization()"
       (organizationChange)="onOrganizationChange($event)"

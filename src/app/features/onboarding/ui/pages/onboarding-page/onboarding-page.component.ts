@@ -45,7 +45,7 @@ export class OnboardingPage {
    * and subscribes to error events for toast notifications.
    */
   public constructor() {
-    this.onboardingStore.start({ reset: false });
+    void this.onboardingStore.initialize({ reset: false });
 
     effect(() => {
       if (this.onboardingStore.isCompleted()) {

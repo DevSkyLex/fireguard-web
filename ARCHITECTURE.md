@@ -954,6 +954,8 @@ Default structure rules:
 - within a feature's `state/`, avoid repeating the feature name when the parent path already gives the context,
 - use descriptive slice names such as `auth/`, `session/`, `trusted-device/`, `password-reset/`, `organization-list/`, or `active-organization/`,
 - colocate `<name>.store.ts`, `<name>-state.interface.ts`, `<name>.events.ts`, and store-local helpers inside the owning slice,
+- each leaf slice should expose a local `index.ts` barrel so the feature-level `state/index.ts` can re-export through slice entrypoints instead of deep file paths,
+- when a slice grows into a parent state domain with its own root store and multiple child slices, switch it to the aggregate-slice layout instead of mixing child slices and support files flat at the same level,
 - when one store depends on another slice, cross-slice imports stay relative only inside the same `state/` concern; all wider consumers go through `state/index.ts`.
 
 Example:
@@ -962,18 +964,58 @@ Example:
 state/
   index.ts
   auth/
+    index.ts
     auth.store.ts
     auth-state.interface.ts
     auth.events.ts
   session/
+    index.ts
     session.store.ts
     session-state.interface.ts
     session.events.ts
   trusted-device/
+    index.ts
     trusted-device.store.ts
     trusted-device-state.interface.ts
     trusted-device.events.ts
 ```
+
+Aggregate slice example:
+
+```text
+state/
+  organization-dashboard/
+    index.ts
+    organization-dashboard.store.ts
+    organization-dashboard-state.interface.ts   # optional
+    slices/
+      overview-trend/
+      inspection-quality-trend/
+      inspections-trend/
+      asset-growth/
+      equipment-created-trend/
+      facilities-created-trend/
+      non-conformities-opened-trend/
+      non-conformities-resolved-trend/
+    features/
+      organization-dashboard-filter.feature.ts
+    models/
+      organization-dashboard.types.ts
+    utils/
+      organization-dashboard.constants.ts
+      organization-dashboard-persistence.utils.ts
+    testing/                                    # optional
+```
+
+Aggregate slice rules:
+
+- use the aggregate layout only when a slice owns both a parent store and multiple related child slices,
+- `slices/` contains child state slices only,
+- child slices inside `slices/` should also expose their own local `index.ts` barrels,
+- `features/` contains shared `signalStoreFeature(...)` building blocks and state-composition helpers,
+- `models/` contains types shared across multiple child slices in the same aggregate state domain,
+- `utils/` contains pure helpers and constants private to the aggregate state domain,
+- store-specific state interfaces, events, and local helpers stay inside the owning child slice until they are truly shared.
 
 When `state/` is split, `state/index.ts` may re-export the primary stores or event groups that other layers are allowed to consume.
 

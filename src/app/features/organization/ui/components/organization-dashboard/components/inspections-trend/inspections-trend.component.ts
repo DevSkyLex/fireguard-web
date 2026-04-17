@@ -11,7 +11,7 @@ import type { MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { OrganizationDashboardInspectionsTrendStore } from '@features/organization/state/organization-dashboard';
+import { InspectionsTrendStore } from '@features/organization/state/organization-dashboard';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   buildDashboardSingleTrendSummaryMetric,
@@ -31,7 +31,7 @@ import { TrendCard } from '@shared/components';
  * @description
  * Dashboard card displaying a line chart of total inspections over time.
  * All state, filtering and API logic is delegated to
- * {@link OrganizationDashboardInspectionsTrendStore}.
+ * {@link InspectionsTrendStore}.
  *
  * @version 2.0.0
  *
@@ -47,7 +47,7 @@ import { TrendCard } from '@shared/components';
     InspectionsChart,
     InspectionsFilters,
   ],
-  providers: [OrganizationDashboardInspectionsTrendStore],
+  providers: [InspectionsTrendStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionsTrend {
@@ -79,10 +79,10 @@ export class InspectionsTrend {
    * @access private
    * @since 1.0.0
    *
-   * @type {OrganizationDashboardInspectionsTrendStore}
+   * @type {InspectionsTrendStore}
    */
-  private readonly dashboardStore: OrganizationDashboardInspectionsTrendStore =
-    inject<OrganizationDashboardInspectionsTrendStore>(OrganizationDashboardInspectionsTrendStore);
+  private readonly dashboardStore: InspectionsTrendStore =
+    inject<InspectionsTrendStore>(InspectionsTrendStore);
 
   /**
    * Property isLoading

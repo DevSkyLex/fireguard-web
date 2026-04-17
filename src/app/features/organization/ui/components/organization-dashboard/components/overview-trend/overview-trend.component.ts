@@ -16,7 +16,7 @@ import type { MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { OrganizationDashboardOverviewTrendStore } from '@features/organization/state/organization-dashboard';
+import { OverviewTrendStore } from '@features/organization/state/organization-dashboard';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   WHOLE_NUMBER_FMT,
@@ -36,7 +36,7 @@ import {
  * @description
  * Dashboard card displaying a multi-series line chart of the operational flow.
  * All state, filtering and API logic is delegated to
- * {@link OrganizationDashboardOverviewTrendStore}.
+ * {@link OverviewTrendStore}.
  *
  * @version 2.0.0
  *
@@ -52,7 +52,7 @@ import {
     OverviewChart,
     OverviewFilters,
   ],
-  providers: [OrganizationDashboardOverviewTrendStore],
+  providers: [OverviewTrendStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OverviewTrend {
@@ -84,10 +84,10 @@ export class OverviewTrend {
    * @access private
    * @since 2.0.0
    *
-   * @type {OrganizationDashboardOverviewTrendStore}
+   * @type {OverviewTrendStore}
    */
-  private readonly dashboardStore: OrganizationDashboardOverviewTrendStore =
-    inject<OrganizationDashboardOverviewTrendStore>(OrganizationDashboardOverviewTrendStore);
+  private readonly dashboardStore: OverviewTrendStore =
+    inject<OverviewTrendStore>(OverviewTrendStore);
 
   /**
    * Property isLoading

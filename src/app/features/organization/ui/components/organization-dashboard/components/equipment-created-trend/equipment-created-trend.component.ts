@@ -11,7 +11,7 @@ import type { MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { OrganizationDashboardEquipmentCreatedStore } from '@features/organization/state/organization-dashboard';
+import { EquipmentCreatedTrendStore } from '@features/organization/state/organization-dashboard';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   buildDashboardSingleTrendSummaryMetric,
@@ -31,7 +31,7 @@ import { TrendCard } from '@shared/components';
  * @description
  * Dashboard card displaying a bar chart of equipment created over time.
  * All state, filtering and API logic is delegated to
- * {@link OrganizationDashboardEquipmentCreatedStore}.
+ * {@link EquipmentCreatedTrendStore}.
  *
  * @version 2.0.0
  *
@@ -47,7 +47,7 @@ import { TrendCard } from '@shared/components';
     EquipmentCreatedChart,
     EquipmentCreatedFilters,
   ],
-  providers: [OrganizationDashboardEquipmentCreatedStore],
+  providers: [EquipmentCreatedTrendStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EquipmentCreatedTrend {
@@ -79,10 +79,10 @@ export class EquipmentCreatedTrend {
    * @access private
    * @since 1.0.0
    *
-   * @type {OrganizationDashboardEquipmentCreatedStore}
+   * @type {EquipmentCreatedTrendStore}
    */
-  private readonly dashboardStore: OrganizationDashboardEquipmentCreatedStore =
-    inject<OrganizationDashboardEquipmentCreatedStore>(OrganizationDashboardEquipmentCreatedStore);
+  private readonly dashboardStore: EquipmentCreatedTrendStore =
+    inject<EquipmentCreatedTrendStore>(EquipmentCreatedTrendStore);
 
   /**
    * Property isLoading

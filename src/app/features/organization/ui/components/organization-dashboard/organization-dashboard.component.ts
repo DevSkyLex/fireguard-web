@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { OrganizationDashboardStore } from '@features/organization/state/organization-dashboard';
+import { DashboardStore } from '@features/organization/state/organization-dashboard';
 import { MetricCard } from '@shared/components';
 import {
   AssetGrowthTrend,
@@ -34,7 +34,7 @@ import {
     NonConformitiesResolvedTrend,
     AssetGrowthTrend,
   ],
-  providers: [OrganizationDashboardStore],
+  providers: [DashboardStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboard {
@@ -51,10 +51,10 @@ export class OrganizationDashboard {
    * @access protected
    * @since 1.1.0
    *
-   * @type {OrganizationDashboardStore}
+   * @type {DashboardStore}
    */
-  protected readonly store: OrganizationDashboardStore = inject<OrganizationDashboardStore>(
-    OrganizationDashboardStore,
+  protected readonly store: DashboardStore = inject<DashboardStore>(
+    DashboardStore,
   );
 
   //#endregion

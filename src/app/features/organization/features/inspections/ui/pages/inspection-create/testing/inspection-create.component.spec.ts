@@ -17,7 +17,7 @@ describe('InspectionCreatePage', () => {
       ensureInspectionCreateOptionsLoaded: vi.fn(),
     };
     const mockFacilityStore = {
-      ensureInspectionCreateOptionsLoaded: vi.fn(),
+      ensureParentOptionsLoaded: vi.fn(),
     };
     const mockChecklistStore = {
       ensureInspectionCreateOptionsLoaded: vi.fn(),
@@ -70,7 +70,7 @@ describe('InspectionCreatePage', () => {
 
     expect(component).toBeTruthy();
     expect(mockEquipmentStore.ensureInspectionCreateOptionsLoaded).toHaveBeenCalledWith('org-1');
-    expect(mockFacilityStore.ensureInspectionCreateOptionsLoaded).toHaveBeenCalledWith('org-1');
+    expect(mockFacilityStore.ensureParentOptionsLoaded).toHaveBeenCalledWith('org-1');
     expect(mockChecklistStore.ensureInspectionCreateOptionsLoaded).toHaveBeenCalledWith('org-1');
   });
 
@@ -78,7 +78,7 @@ describe('InspectionCreatePage', () => {
     const { mockEquipmentStore, mockFacilityStore, mockChecklistStore } = setup(null);
 
     expect(mockEquipmentStore.ensureInspectionCreateOptionsLoaded).not.toHaveBeenCalled();
-    expect(mockFacilityStore.ensureInspectionCreateOptionsLoaded).not.toHaveBeenCalled();
+    expect(mockFacilityStore.ensureParentOptionsLoaded).not.toHaveBeenCalled();
     expect(mockChecklistStore.ensureInspectionCreateOptionsLoaded).not.toHaveBeenCalled();
   });
 
@@ -87,7 +87,7 @@ describe('InspectionCreatePage', () => {
       ensureInspectionCreateOptionsLoaded: vi.fn(),
     };
     const mockFacilityStore = {
-      ensureInspectionCreateOptionsLoaded: vi.fn(),
+      ensureParentOptionsLoaded: vi.fn(),
     };
     const mockChecklistStore = {
       ensureInspectionCreateOptionsLoaded: vi.fn(),
@@ -118,7 +118,7 @@ describe('InspectionCreatePage', () => {
     TestBed.runInInjectionContext(() => new InspectionCreatePage());
 
     expect(mockEquipmentStore.ensureInspectionCreateOptionsLoaded).not.toHaveBeenCalled();
-    expect(mockFacilityStore.ensureInspectionCreateOptionsLoaded).not.toHaveBeenCalled();
+    expect(mockFacilityStore.ensureParentOptionsLoaded).not.toHaveBeenCalled();
     expect(mockChecklistStore.ensureInspectionCreateOptionsLoaded).not.toHaveBeenCalled();
   });
 });

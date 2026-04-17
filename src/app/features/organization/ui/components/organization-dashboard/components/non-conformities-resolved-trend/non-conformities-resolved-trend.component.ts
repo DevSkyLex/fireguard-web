@@ -11,7 +11,7 @@ import type { MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { OrganizationDashboardNonConformitiesResolvedStore } from '@features/organization/state/organization-dashboard';
+import { NonConformitiesResolvedTrendStore } from '@features/organization/state/organization-dashboard';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   buildDashboardSingleTrendSummaryMetric,
@@ -31,7 +31,7 @@ import {
  * @description
  * Dashboard card that displays a line chart of the resolved non-conformities
  * trend. All state, filtering and API logic is delegated to
- * {@link OrganizationDashboardNonConformitiesResolvedStore}.
+ * {@link NonConformitiesResolvedTrendStore}.
  *
  * @version 2.0.0
  *
@@ -47,7 +47,7 @@ import {
     NonConformitiesResolvedChart,
     NonConformitiesResolvedFilters,
   ],
-  providers: [OrganizationDashboardNonConformitiesResolvedStore],
+  providers: [NonConformitiesResolvedTrendStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NonConformitiesResolvedTrend {
@@ -79,11 +79,11 @@ export class NonConformitiesResolvedTrend {
    * @access private
    * @since 2.0.0
    *
-   * @type {OrganizationDashboardNonConformitiesResolvedStore}
+   * @type {NonConformitiesResolvedTrendStore}
    */
-  private readonly dashboardStore: OrganizationDashboardNonConformitiesResolvedStore =
-    inject<OrganizationDashboardNonConformitiesResolvedStore>(
-      OrganizationDashboardNonConformitiesResolvedStore,
+  private readonly dashboardStore: NonConformitiesResolvedTrendStore =
+    inject<NonConformitiesResolvedTrendStore>(
+      NonConformitiesResolvedTrendStore,
     );
 
   /**

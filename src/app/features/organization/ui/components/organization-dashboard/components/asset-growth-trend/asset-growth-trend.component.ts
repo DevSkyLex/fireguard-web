@@ -15,7 +15,7 @@ import type { MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { OrganizationDashboardAssetGrowthStore } from '@features/organization/state/organization-dashboard';
+import { AssetGrowthTrendStore } from '@features/organization/state/organization-dashboard';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   DECIMAL_FMT,
@@ -61,7 +61,7 @@ import {
     AssetGrowthChart,
     AssetGrowthFilters,
   ],
-  providers: [OrganizationDashboardAssetGrowthStore],
+  providers: [AssetGrowthTrendStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AssetGrowthTrend {
@@ -92,10 +92,10 @@ export class AssetGrowthTrend {
    * @access private
    * @since 2.0.0
    *
-   * @type {OrganizationDashboardAssetGrowthStore}
+   * @type {AssetGrowthTrendStore}
    */
-  private readonly dashboardStore: OrganizationDashboardAssetGrowthStore =
-    inject<OrganizationDashboardAssetGrowthStore>(OrganizationDashboardAssetGrowthStore);
+  private readonly dashboardStore: AssetGrowthTrendStore =
+    inject<AssetGrowthTrendStore>(AssetGrowthTrendStore);
 
   /**
    * Property isLoading

@@ -22,7 +22,7 @@ import { SkeletonModule } from 'primeng/skeleton';
  * Reads query data, compare state and active filter selections from
  * {@link OrganizationDashboardInspectionsTrendStore} to build a line chart
  * payload internally. Renders a loading skeleton until data is available for
- * the first time; subsequent refreshes keep the chart visible.
+ * the first time; shows on every reload including filter changes.
  *
  * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -58,7 +58,7 @@ export class InspectionsChart {
    *
    * @description
    * `true` only during the initial load before any data has arrived.
-   * Subsequent refreshes keep the chart visible rather than showing the skeleton.
+   * Shown during every load, including filter-driven reloads.
    *
    * @access protected
    * @since 2.0.0
@@ -66,7 +66,7 @@ export class InspectionsChart {
    * @type {Signal<boolean>}
    */
   protected readonly loading: Signal<boolean> = computed<boolean>(
-    () => this.store.isQueryLoading() && !this.store.queryData(),
+    () => this.store.isQueryLoading(),
   );
 
   /**

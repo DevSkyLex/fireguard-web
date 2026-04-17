@@ -15,7 +15,7 @@ import {
 } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { OrganizationDashboardInspectionQualityStore } from '@features/organization/state/organization-dashboard';
+import { InspectionQualityTrendStore } from '@features/organization/state/organization-dashboard';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   DECIMAL_FMT,
@@ -36,7 +36,7 @@ import { TrendCard } from '@shared/components';
  * @description
  * Dashboard card displaying a bar chart of inspection quality versus
  * non-conformity pressure. All state, filtering and API logic is delegated to
- * {@link OrganizationDashboardInspectionQualityStore}.
+ * {@link InspectionQualityTrendStore}.
  *
  * @version 2.0.0
  *
@@ -52,7 +52,7 @@ import { TrendCard } from '@shared/components';
     InspectionQualityChart,
     InspectionQualityFilters,
   ],
-  providers: [OrganizationDashboardInspectionQualityStore],
+  providers: [InspectionQualityTrendStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionQualityTrend {
@@ -84,11 +84,11 @@ export class InspectionQualityTrend {
    * @access private
    * @since 1.0.0
    *
-   * @type {OrganizationDashboardInspectionQualityStore}
+   * @type {InspectionQualityTrendStore}
    */
-  private readonly dashboardStore: OrganizationDashboardInspectionQualityStore =
-    inject<OrganizationDashboardInspectionQualityStore>(
-      OrganizationDashboardInspectionQualityStore,
+  private readonly dashboardStore: InspectionQualityTrendStore =
+    inject<InspectionQualityTrendStore>(
+      InspectionQualityTrendStore,
     );
 
   /**

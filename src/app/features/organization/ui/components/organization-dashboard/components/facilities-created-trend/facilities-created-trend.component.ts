@@ -11,7 +11,7 @@ import type { MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { OrganizationDashboardFacilitiesCreatedStore } from '@features/organization/state/organization-dashboard';
+import { FacilitiesCreatedTrendStore } from '@features/organization/state/organization-dashboard';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   buildDashboardSingleTrendSummaryMetric,
@@ -31,7 +31,7 @@ import {
  * @description
  * Dashboard card displaying a bar chart of facilities created over time.
  * All state, filtering and API logic is delegated to
- * {@link OrganizationDashboardFacilitiesCreatedStore}.
+ * {@link FacilitiesCreatedTrendStore}.
  *
  * @version 2.0.0
  *
@@ -47,7 +47,7 @@ import {
     FacilitiesCreatedChart,
     FacilitiesCreatedFilters,
   ],
-  providers: [OrganizationDashboardFacilitiesCreatedStore],
+  providers: [FacilitiesCreatedTrendStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilitiesCreatedTrend {
@@ -80,11 +80,11 @@ export class FacilitiesCreatedTrend {
    * @access private
    * @since 2.0.0
    *
-   * @type {OrganizationDashboardFacilitiesCreatedStore}
+   * @type {FacilitiesCreatedTrendStore}
    */
-  private readonly dashboardStore: OrganizationDashboardFacilitiesCreatedStore =
-    inject<OrganizationDashboardFacilitiesCreatedStore>(
-      OrganizationDashboardFacilitiesCreatedStore,
+  private readonly dashboardStore: FacilitiesCreatedTrendStore =
+    inject<FacilitiesCreatedTrendStore>(
+      FacilitiesCreatedTrendStore,
     );
 
   /**

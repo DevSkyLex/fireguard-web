@@ -1,7 +1,8 @@
-export type { ActiveInspectionState } from './active-inspection/active-inspection-state.interface';
-export { activeInspectionStoreEvents } from './active-inspection/active-inspection.events';
-export { ActiveInspectionStore } from './active-inspection/active-inspection.store';
-export type { InspectionState } from './inspection/inspection-state.interface';
-export { inspectionStoreEvents } from './inspection/inspection.events';
-export { InspectionStore } from './inspection/inspection.store';
-export type { InspectionStore as InspectionStoreType } from './inspection/inspection.store';
+export type { ActiveInspectionState } from './active-inspection';
+export { activeInspectionStoreEvents } from './active-inspection';
+export { ActiveInspectionStore } from './active-inspection';
+export type { ActiveInspectionStoreType } from './active-inspection';
+export type { InspectionState } from './inspection';
+export { inspectionStoreEvents } from './inspection';
+export { InspectionStore } from './inspection';
+export type { InspectionStoreType } from './inspection';

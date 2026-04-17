@@ -34,7 +34,7 @@ const hexToRgb = (hex: string): [number, number, number] => [
  * Reads query data and active filter selections from
  * {@link OrganizationDashboardInspectionQualityStore} to build a mixed bar/line
  * payload internally. Renders a loading skeleton until data is available for the
- * first time; subsequent refreshes keep the chart visible.
+ * first time; shows on every reload including filter changes.
  *
  * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -70,7 +70,7 @@ export class InspectionQualityChart {
    *
    * @description
    * `true` only during the initial load before any data has arrived.
-   * Subsequent refreshes keep the chart visible rather than showing the skeleton.
+   * Shown during every load, including filter-driven reloads.
    *
    * @access protected
    * @since 2.0.0
@@ -78,7 +78,7 @@ export class InspectionQualityChart {
    * @type {Signal<boolean>}
    */
   protected readonly loading: Signal<boolean> = computed<boolean>(
-    () => this.store.isQueryLoading() && !this.store.queryData(),
+    () => this.store.isQueryLoading(),
   );
 
   /**

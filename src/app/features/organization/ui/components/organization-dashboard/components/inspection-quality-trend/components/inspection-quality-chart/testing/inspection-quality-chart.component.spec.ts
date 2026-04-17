@@ -45,7 +45,7 @@ describe('InspectionQualityChart', () => {
 
   it('should render the chart when not in initial loading state', () => {
     mockStore.isQueryLoading.set(false);
-    const fixture = TestBed.createComponent(OrganizationDashboardInspectionQualityTrendChart);
+    const fixture = TestBed.createComponent(InspectionQualityChart);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('p-chart')).not.toBeNull();
   });

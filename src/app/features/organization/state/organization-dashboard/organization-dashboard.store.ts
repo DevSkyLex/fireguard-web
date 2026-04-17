@@ -62,7 +62,7 @@ type OrganizationDashboardComparisonDelta = {
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export const OrganizationDashboardStore = signalStore(
+export const DashboardStore = signalStore(
   //#region State
 
   /**
@@ -271,47 +271,49 @@ export const OrganizationDashboardStore = signalStore(
   //#region Hooks
 
   /**
-   * Feature withHooks
+   * Feature withComputed (load params)
    *
    * @description
-   * Wires up the reactive data-fetching effect on store init.
-   * Guards against SSR execution via `isPlatformBrowser`.
+   * Derives the organization ID forwarded to {@link load}. Declared in
+   * `withComputed` so that derived state is not created imperatively
+   * inside `onInit`.
    *
    * @since 1.0.0
    */
-  withHooks((store) => {
+  withComputed((store) => {
     const platformId = inject(PLATFORM_ID);
     const activeOrganizationStore = inject(ActiveOrganizationStore);
 
     return {
-      /**
-       * Hook onInit
-       *
-       * @description
-       * Builds a `computed` signal from the active organization and
-       * connects it to `load` via `rxMethod`. Re-fetches automatically
-       * whenever the active organization changes.
-       *
-       * @returns {void}
-       */
-      onInit(): void {
-        const params = computed<string | undefined>(() => {
-          if (!isPlatformBrowser(platformId)) return undefined;
-          return activeOrganizationStore.selectedOrganization()?.id ?? undefined;
-        });
-
-        store.load(params);
-      },
+      loadParams: computed<string | undefined>(() => {
+        if (!isPlatformBrowser(platformId)) return undefined;
+        return activeOrganizationStore.selectedOrganization()?.id ?? undefined;
+      }),
     };
+  }),
+
+  /**
+   * Feature withHooks
+   *
+   * @description
+   * Connects {@link loadParams} to {@link load} on store init.
+   *
+   * @since 1.0.0
+   */
+  withHooks({
+    onInit(store) {
+      store.load(store.loadParams);
+    },
   }),
   //#endregion
 );
 
 /**
  * Type OrganizationDashboardStore
- * @type OrganizationDashboardStore
+ * @type DashboardStore
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export type OrganizationDashboardStore = InstanceType<typeof OrganizationDashboardStore>;
+export type DashboardStore = InstanceType<typeof DashboardStore>;
+

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, output, OutputEmitterRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { OrganizationDashboardAssetGrowthStore } from '@features/organization/state/organization-dashboard';
+import { OrganizationDashboardAssetGrowthStore as AssetGrowthTrendStore } from '@features/organization/state/organization-dashboard';
 import { ButtonModule } from 'primeng/button';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
@@ -13,7 +13,7 @@ import { SelectModule } from 'primeng/select';
  * @description
  * Action bar for the asset-growth trend card.
  * Reads granularity state directly from
- * {@link OrganizationDashboardAssetGrowthStore} and dispatches updates
+ * {@link AssetGrowthTrendStore} and dispatches updates
  * without intermediate inputs, only propagating the overflow-menu trigger
  * to the parent via {@link menuToggle}.
  *
@@ -41,15 +41,15 @@ export class AssetGrowthToolbar {
    *
    * @description
    * Component-scoped store providing granularity state and the
-   * {@link OrganizationDashboardAssetGrowthStore.setGranularity} mutation.
+   * {@link AssetGrowthTrendStore.setGranularity} mutation.
    *
    * @access protected
    * @since 2.0.0
    *
-   * @type {OrganizationDashboardAssetGrowthStore}
+   * @type {AssetGrowthTrendStore}
    */
-  protected readonly store: OrganizationDashboardAssetGrowthStore =
-    inject<OrganizationDashboardAssetGrowthStore>(OrganizationDashboardAssetGrowthStore);
+  protected readonly store: AssetGrowthTrendStore =
+    inject<AssetGrowthTrendStore>(AssetGrowthTrendStore);
 
   //#endregion
 

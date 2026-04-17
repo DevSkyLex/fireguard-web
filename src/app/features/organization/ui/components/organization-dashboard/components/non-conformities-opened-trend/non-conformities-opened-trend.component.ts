@@ -11,7 +11,7 @@ import type { MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { OrganizationDashboardNonConformitiesOpenedStore } from '@features/organization/state/organization-dashboard';
+import { NonConformitiesOpenedTrendStore } from '@features/organization/state/organization-dashboard';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   buildDashboardSingleTrendSummaryMetric,
@@ -47,7 +47,7 @@ import {
     NonConformitiesOpenedChart,
     NonConformitiesOpenedFilters,
   ],
-  providers: [OrganizationDashboardNonConformitiesOpenedStore],
+  providers: [NonConformitiesOpenedTrendStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NonConformitiesOpenedTrend {
@@ -78,11 +78,11 @@ export class NonConformitiesOpenedTrend {
    * @access private
    * @since 2.0.0
    *
-   * @type {OrganizationDashboardNonConformitiesOpenedStore}
+   * @type {NonConformitiesOpenedTrendStore}
    */
-  private readonly dashboardStore: OrganizationDashboardNonConformitiesOpenedStore =
-    inject<OrganizationDashboardNonConformitiesOpenedStore>(
-      OrganizationDashboardNonConformitiesOpenedStore,
+  private readonly dashboardStore: NonConformitiesOpenedTrendStore =
+    inject<NonConformitiesOpenedTrendStore>(
+      NonConformitiesOpenedTrendStore,
     );
 
   /**

@@ -21,7 +21,7 @@ import { ActiveOrganizationStore } from '@features/organization/state';
 import {
   buildDashboardTrendBaseParams,
   withDashboardFilterState,
-} from '../../features/organization-dashboard-filter.feature';
+} from '../../features';
 import {
   DASHBOARD_PERSISTENCE_VERSION,
   type PersistedDashboardBaseFilters,
@@ -30,7 +30,7 @@ import {
   readDashboardStorage,
   serializeDateRange,
   writeDashboardStorage,
-} from '../../utils/organization-dashboard-persistence.utils';
+} from '../../utils';
 
 /**
  * Type PersistedFacilitiesCreatedFilters

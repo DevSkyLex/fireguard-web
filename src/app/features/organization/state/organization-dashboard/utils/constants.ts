@@ -1,4 +1,4 @@
-import type { GranularityOption } from '../models/organization-dashboard.types';
+import type { GranularityOption } from '../models';
 
 export const GRANULARITY_OPTIONS: readonly GranularityOption[] = [
   { label: 'Daily', value: 'day' },

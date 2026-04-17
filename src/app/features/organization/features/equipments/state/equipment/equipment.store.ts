@@ -35,8 +35,8 @@ import type {
   AddTagInput,
 } from '@features/organization/features/equipments/models';
 import { ActiveEquipmentStore } from '../active-equipment/active-equipment.store';
-import type { EquipmentState } from './equipment-state.interface';
-import { equipmentStoreEvents } from './equipment.events';
+import type { EquipmentState } from './models';
+import { equipmentStoreEvents } from './events';
 
 const INSPECTION_CREATE_EQUIPMENT_ITEMS_PER_PAGE = 200;
 

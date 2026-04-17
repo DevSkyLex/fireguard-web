@@ -1,4 +1,4 @@
-export type { ActiveFacilityState } from './active-facility-state.interface';
-export { activeFacilityStoreEvents } from './active-facility.events';
+export type { ActiveFacilityState } from './models';
+export { activeFacilityStoreEvents } from './events';
 export { ActiveFacilityStore } from './active-facility.store';
 export type { ActiveFacilityStore as ActiveFacilityStoreType } from './active-facility.store';

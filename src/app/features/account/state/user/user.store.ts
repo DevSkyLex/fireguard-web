@@ -17,8 +17,8 @@ import {
 } from '@core/state/request-state';
 import { UserProfileService } from '@features/account/data-access';
 import type { UserProfileOutput } from '@features/account/models';
-import type { UserState } from './user-state.interface';
-import { userStoreEvents } from './user.events';
+import type { UserState } from './models';
+import { userStoreEvents } from './events';
 
 /**
  * Constant USER_TRANSFER_KEY

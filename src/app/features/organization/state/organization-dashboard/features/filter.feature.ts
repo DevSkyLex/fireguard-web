@@ -14,8 +14,8 @@ import {
   GRANULARITY_OPTIONS,
   getDashboardInitialDateRange,
   toIsoString,
-} from '../utils/organization-dashboard.constants';
-import type { GranularityOption } from '../models/organization-dashboard.types';
+} from '../utils';
+import type { GranularityOption } from '../models';
 
 export type DashboardFilterState = {
   readonly selectedGranularity: OrganizationDashboardGranularity;

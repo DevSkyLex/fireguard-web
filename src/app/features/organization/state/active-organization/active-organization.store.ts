@@ -22,8 +22,8 @@ import {
 } from '@core/state/request-state';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
-import type { ActiveOrganizationState } from './active-organization-state.interface';
-import { activeOrganizationStoreEvents } from './active-organization.events';
+import type { ActiveOrganizationState } from './models';
+import { activeOrganizationStoreEvents } from './events';
 
 //#region Initial State
 /**

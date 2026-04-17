@@ -11,7 +11,7 @@ import {
   DASHBOARD_PERSISTENCE_VERSION,
   buildDashboardStorageKey,
   writeDashboardStorage,
-} from '../../../utils/organization-dashboard-persistence.utils';
+} from '../../../utils';
 import { InspectionQualityTrendStore } from '../organization-dashboard-inspection-quality-trend.store';
 
 const flushEffects = async (): Promise<void> => {

@@ -22,8 +22,8 @@ import {
 } from '@core/state/request-state';
 import { TrustedDeviceService } from '@features/auth/data-access';
 import type { TrustedDeviceOutput } from '@features/auth/models';
-import type { TrustedDeviceState } from './trusted-device-state.interface';
-import { trustedDeviceStoreEvents } from './trusted-device.events';
+import type { TrustedDeviceState } from './models';
+import { trustedDeviceStoreEvents } from './events';
 
 //#region Initial State
 /**

@@ -1,4 +1,4 @@
-export type { SessionState } from './session-state.interface';
-export { sessionStoreEvents } from './session.events';
+export type { SessionState } from './models';
+export { sessionStoreEvents } from './events';
 export { SessionStore } from './session.store';
 export type { SessionStore as SessionStoreType } from './session.store';

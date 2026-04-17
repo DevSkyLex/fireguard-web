@@ -13,7 +13,7 @@ import {
   toStoreError,
 } from '@core/state/request-state';
 import { OrganizationRoleService } from '@features/organization/data-access';
-import type { OrganizationRoleListState } from './organization-role-list-state.interface';
+import type { OrganizationRoleListState } from './models';
 
 const INITIAL_STATE: OrganizationRoleListState = {
   rolesCallState: idleCallState(),

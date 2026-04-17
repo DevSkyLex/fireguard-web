@@ -14,8 +14,8 @@ import {
 } from '@core/state/request-state';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
-import type { ActiveEquipmentState } from './active-equipment-state.interface';
-import { activeEquipmentStoreEvents } from './active-equipment.events';
+import type { ActiveEquipmentState } from './models';
+import { activeEquipmentStoreEvents } from './events';
 
 //#region Initial State
 /**

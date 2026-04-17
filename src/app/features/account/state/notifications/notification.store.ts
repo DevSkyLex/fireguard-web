@@ -41,8 +41,8 @@ import type {
   NotificationOutput,
   NotificationTypeOutput,
 } from '@features/account/models';
-import type { NotificationStoreState } from './notification-state.interface';
-import { notificationStoreEvents } from './notification.events';
+import type { NotificationStoreState } from './models';
+import { notificationStoreEvents } from './events';
 
 const NOTIFICATION_LIST_TRANSFER_KEY = makeStateKey<HydraCollection<NotificationOutput> | null>(
   'notification-list',

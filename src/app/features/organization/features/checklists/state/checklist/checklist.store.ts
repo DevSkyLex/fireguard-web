@@ -23,8 +23,8 @@ import type {
   CreateChecklistInput,
 } from '@features/organization/features/checklists/models';
 import { ActiveChecklistStore } from '../active-checklist/active-checklist.store';
-import type { ChecklistState } from './checklist-state.interface';
-import { checklistStoreEvents } from './checklist.events';
+import type { ChecklistState } from './models';
+import { checklistStoreEvents } from './events';
 
 const INSPECTION_CREATE_CHECKLIST_ITEMS_PER_PAGE = 200;
 

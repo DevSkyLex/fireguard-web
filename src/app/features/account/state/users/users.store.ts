@@ -24,8 +24,8 @@ import {
 } from '@core/state/request-state';
 import { UserService } from '@features/account/data-access';
 import type { UpdateUserInput, UserInput, UserOutput } from '@features/account/models';
-import type { UsersState } from './users-state.interface';
-import { usersStoreEvents } from './users.events';
+import type { UsersState } from './models';
+import { usersStoreEvents } from './events';
 
 const INITIAL_USERS_STATE: UsersState = {
   totalUsers: 0,

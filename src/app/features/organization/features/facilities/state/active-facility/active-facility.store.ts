@@ -14,8 +14,8 @@ import {
 } from '@core/state/request-state';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
-import type { ActiveFacilityState } from './active-facility-state.interface';
-import { activeFacilityStoreEvents } from './active-facility.events';
+import type { ActiveFacilityState } from './models';
+import { activeFacilityStoreEvents } from './events';
 
 //#region Initial State
 /**

@@ -289,7 +289,7 @@ export const UserStore = signalStore(
               profile: transferred,
               loadCallState: successCallState(transferred),
             });
-              return;
+            return;
           }
 
           // Retry once in the browser when SSR could not load the profile.

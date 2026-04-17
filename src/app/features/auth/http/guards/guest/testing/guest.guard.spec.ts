@@ -61,4 +61,3 @@ describe('guestGuard', () => {
     expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/']);
   });
 });
-

@@ -17,4 +17,3 @@ describe('SplitLayoutFooter', () => {
     expect(footer).not.toBeNull();
   });
 });
-

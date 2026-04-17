@@ -12,6 +12,5 @@ import type { UserProfilePort } from './user-profile.interface';
  *
  * @type {InjectionToken<UserProfilePort>}
  */
-export const USER_PROFILE_PORT: InjectionToken<UserProfilePort> = new InjectionToken<UserProfilePort>(
-  'USER_PROFILE_PORT',
-);
+export const USER_PROFILE_PORT: InjectionToken<UserProfilePort> =
+  new InjectionToken<UserProfilePort>('USER_PROFILE_PORT');

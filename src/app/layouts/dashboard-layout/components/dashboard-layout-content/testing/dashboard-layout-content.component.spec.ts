@@ -36,4 +36,3 @@ describe('DashboardLayoutContent', () => {
     expect(projected).not.toBeNull();
   });
 });
-

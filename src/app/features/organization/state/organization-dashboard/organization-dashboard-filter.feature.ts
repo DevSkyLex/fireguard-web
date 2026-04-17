@@ -1,7 +1,20 @@
 import { computed } from '@angular/core';
-import { patchState, signalStoreFeature, withComputed, withMethods, withState } from '@ngrx/signals';
-import type { OrganizationDashboardGranularity, OrganizationDashboardTrendResourceParams } from '@features/organization/models';
-import { GRANULARITY_OPTIONS, getDashboardInitialDateRange, toIsoString } from './organization-dashboard.constants';
+import {
+  patchState,
+  signalStoreFeature,
+  withComputed,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
+import type {
+  OrganizationDashboardGranularity,
+  OrganizationDashboardTrendResourceParams,
+} from '@features/organization/models';
+import {
+  GRANULARITY_OPTIONS,
+  getDashboardInitialDateRange,
+  toIsoString,
+} from './organization-dashboard.constants';
 import type { GranularityOption } from './organization-dashboard.types';
 
 export type DashboardFilterState = {

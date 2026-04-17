@@ -3,11 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/ports/theme';
-import { NotificationStore } from '@features/account/state';
-import { NotificationBell } from '@features/account';
 import { BreadcrumbService } from '@core/services/breadcrumb';
-import { OrganizationStore } from '@features/organization/state';
+import { NotificationBell } from '@features/account';
+import { NotificationStore } from '@features/account/state';
 import { OrganizationSwitcher } from '@features/organization';
+import { OrganizationStore } from '@features/organization/state';
 import { DashboardSidebarService } from '@layouts/dashboard-layout/services';
 import { DashboardLayoutHeader } from '../dashboard-layout-header.component';
 
@@ -47,11 +47,13 @@ describe('DashboardLayoutHeader', () => {
         provideRouter([]),
         { provide: THEME_PORT, useValue: mockThemePort },
       ],
-    }).overrideComponent(OrganizationSwitcher, {
-      set: { providers: [{ provide: OrganizationStore, useValue: mockOrganizationStore }] },
-    }).overrideComponent(NotificationBell, {
-      set: { providers: [{ provide: NotificationStore, useValue: mockNotificationStore }] },
-    });
+    })
+      .overrideComponent(OrganizationSwitcher, {
+        set: { providers: [{ provide: OrganizationStore, useValue: mockOrganizationStore }] },
+      })
+      .overrideComponent(NotificationBell, {
+        set: { providers: [{ provide: NotificationStore, useValue: mockNotificationStore }] },
+      });
   });
 
   it('should create', () => {
@@ -79,4 +81,3 @@ describe('DashboardLayoutHeader', () => {
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-breadcrumb'))).toBeTruthy();
   });
 });
-

@@ -118,4 +118,3 @@ describe('AuthUserProfile', () => {
     expect(avatar).toBeFalsy();
   });
 });
-

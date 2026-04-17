@@ -74,4 +74,3 @@ describe('passwordResetVerifyGuard', () => {
     expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/password-reset/forgot']);
   });
 });
-

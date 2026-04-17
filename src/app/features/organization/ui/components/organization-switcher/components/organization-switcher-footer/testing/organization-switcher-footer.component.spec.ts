@@ -33,4 +33,3 @@ describe('OrganizationSwitcherFooter', () => {
     expect(emitSpy).toHaveBeenCalledTimes(1);
   });
 });
-

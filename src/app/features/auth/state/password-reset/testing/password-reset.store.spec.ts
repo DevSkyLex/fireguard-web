@@ -167,4 +167,3 @@ describe('PasswordResetStore', () => {
     expect(store.resendCallState().status).toBe('idle');
   });
 });
-

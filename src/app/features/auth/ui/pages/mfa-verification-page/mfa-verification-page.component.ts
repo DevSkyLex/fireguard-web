@@ -80,16 +80,16 @@ export class MfaVerificationPage {
     inject<ActiveTrustedDeviceStore>(ActiveTrustedDeviceStore);
 
   /**
-  * Property userProfilePort
+   * Property userProfilePort
    * @readonly
    *
    * @description
-  * Account-owned contract for loading user profile after successful MFA.
+   * Account-owned contract for loading user profile after successful MFA.
    *
    * @access private
    * @since 1.0.0
    *
-  * @type {UserProfilePort}
+   * @type {UserProfilePort}
    */
   private readonly userProfilePort: UserProfilePort = inject<UserProfilePort>(USER_PROFILE_PORT);
 

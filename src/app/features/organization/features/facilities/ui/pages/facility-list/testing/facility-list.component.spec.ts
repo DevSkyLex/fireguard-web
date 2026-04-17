@@ -126,4 +126,3 @@ describe('FacilityListPage', () => {
     expect(mockFacilityStore.archive).not.toHaveBeenCalled();
   });
 });
-

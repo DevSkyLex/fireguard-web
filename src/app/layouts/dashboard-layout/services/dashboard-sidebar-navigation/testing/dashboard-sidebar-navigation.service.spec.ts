@@ -72,4 +72,3 @@ describe('DashboardSidebarNavigationService', () => {
     expect(service.menuItems().map((item) => item.label)).toEqual(['Home', 'Account']);
   });
 });
-

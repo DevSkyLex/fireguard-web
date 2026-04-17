@@ -1,7 +1,7 @@
 import { makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { EMPTY, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/models/api';
 import { MercureService } from '@core/services/mercure';
 import { NotificationService } from '@features/account/data-access';

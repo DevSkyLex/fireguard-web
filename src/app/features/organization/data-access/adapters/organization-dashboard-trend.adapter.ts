@@ -177,7 +177,7 @@ export function alignDashboardTrendSeries(
     }
   }
 
-  const buckets = Array.from(bucketSet).sort((left: string, right: string) =>
+  const buckets = Array.from(bucketSet).toSorted((left: string, right: string) =>
     left.localeCompare(right),
   );
   const labels = buckets.map((bucket: string) => formatDashboardTrendBucket(bucket, granularity));
@@ -262,4 +262,25 @@ export function buildPercentageSeries(
  */
 export function sumDashboardTrendValues(values: readonly number[]): number {
   return values.reduce((sum, value) => sum + value, 0);
+}
+
+/**
+ * Function sumTrendSeries
+ *
+ * @description
+ * Convenience wrapper that extracts the numeric value from each point of
+ * a raw trend series and returns their total. Handles nullish series
+ * gracefully by treating them as empty (returns 0).
+ *
+ * Typical use-case: computing period totals from a comparison series
+ * without having to manually `.map(getDashboardTrendPointValue)` first.
+ *
+ * @param {readonly OrganizationDashboardTrendSeriesPoint[] | null | undefined} series
+ *   The raw series returned by the API, or nullish when not yet loaded.
+ * @returns {number} The sum of all point values in the series.
+ */
+export function sumTrendSeries(
+  series: readonly OrganizationDashboardTrendSeriesPoint[] | null | undefined,
+): number {
+  return sumDashboardTrendValues((series ?? []).map(getDashboardTrendPointValue));
 }

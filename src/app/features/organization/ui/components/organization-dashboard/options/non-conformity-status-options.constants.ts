@@ -1,5 +1,5 @@
-import type { NonConformityStatusOption } from '../models';
 import { PrimeIcons } from 'primeng/api';
+import type { NonConformityStatusOption } from '../models';
 
 /**
  * Constant NON_CONFORMITY_STATUS_OPTIONS
@@ -19,24 +19,24 @@ export const NON_CONFORMITY_STATUS_OPTIONS: readonly NonConformityStatusOption[]
     label: 'Open',
     value: 'open',
     icon: PrimeIcons.EXCLAMATION_CIRCLE,
-    color: '#ef4444'
+    color: '#ef4444',
   },
   {
     label: 'In Progress',
     value: 'in_progress',
     icon: PrimeIcons.SPINNER,
-    color: '#f97316'
+    color: '#f97316',
   },
   {
     label: 'Done',
     value: 'done',
     icon: PrimeIcons.CHECK_CIRCLE,
-    color: '#22c55e'
+    color: '#22c55e',
   },
   {
     label: 'Waived',
     value: 'waived',
     icon: PrimeIcons.MINUS_CIRCLE,
-    color: '#94a3b8'
+    color: '#94a3b8',
   },
 ];

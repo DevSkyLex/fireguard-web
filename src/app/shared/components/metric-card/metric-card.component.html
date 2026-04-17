@@ -32,10 +32,12 @@
   <ng-template pTemplate="content">
     @if (loading()) {
       <p-skeleton height="48px" />
-    } @else {
+      <p-skeleton height="16px" width="50%" class="mt-2" />
+    }
+    @else {
       <div class="flex flex-col justify-center gap-3">
         <span class="text-5xl font-semibold">
-          {{ value() ?? '—' }}
+          {{ value() }}
         </span>
 
         @if (comparison(); as comparison) {

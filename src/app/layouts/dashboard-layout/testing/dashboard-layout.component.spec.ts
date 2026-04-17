@@ -5,8 +5,8 @@ import { provideRouter } from '@angular/router';
 import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
 import { AuthStore } from '@features/auth/state';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
-import { DashboardLayout } from '../dashboard-layout.component';
 import { DashboardLayoutHeader } from '../components';
+import { DashboardLayout } from '../dashboard-layout.component';
 import { DashboardSidebarService } from '../services';
 
 type PointerEventOptions = {
@@ -284,4 +284,3 @@ describe('DashboardLayout', () => {
     expect(document.body.style.userSelect).toBe('');
   });
 });
-

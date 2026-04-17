@@ -86,4 +86,3 @@ describe('NewPasswordPage', () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
   });
 });
-

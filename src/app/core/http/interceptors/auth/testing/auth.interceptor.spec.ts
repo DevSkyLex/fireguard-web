@@ -104,4 +104,3 @@ describe('authInterceptor', () => {
     req.flush({ ok: true });
   });
 });
-

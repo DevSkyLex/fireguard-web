@@ -102,4 +102,3 @@ describe('unauthorizedInterceptor', () => {
     req.flush({ id: 1 });
   });
 });
-

@@ -65,4 +65,3 @@ describe('ForgotPasswordPage', () => {
     expect(mockPasswordResetStore.request).toHaveBeenCalledWith({ email: 'test@example.com' });
   });
 });
-

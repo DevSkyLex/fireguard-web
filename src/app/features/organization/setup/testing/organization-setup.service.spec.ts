@@ -1,7 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import type { HydraCollection, HydraItem } from '@core/models/api';
-import { OrganizationInvitationService, OrganizationRoleService, OrganizationService } from '@features/organization/data-access';
+import {
+  OrganizationInvitationService,
+  OrganizationRoleService,
+  OrganizationService,
+} from '@features/organization/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { InspectionService } from '@features/organization/features/inspections/data-access';

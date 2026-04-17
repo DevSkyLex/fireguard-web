@@ -7,6 +7,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import type { ChartData, ChartOptions } from 'chart.js';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -18,26 +19,23 @@ import { Menu, MenuModule } from 'primeng/menu';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToggleButtonModule } from 'primeng/togglebutton';
-import type { OrganizationOutput } from '@features/organization/models';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import { OrganizationDashboardFacilitiesCreatedStore } from '@features/organization/state/organization-dashboard';
-import { TrendCard } from '@shared/components';
-import type { ChartData, ChartOptions } from 'chart.js';
 import {
   getDashboardTrendPointValue,
   sumDashboardTrendValues,
 } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
-import {
-  FACILITY_TYPE_OPTIONS,
-} from '@features/organization/ui/components/organization-dashboard/options';
+import type { OrganizationOutput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import { OrganizationDashboardFacilitiesCreatedStore } from '@features/organization/state/organization-dashboard';
 import type {
   DashboardSummaryMetric,
   FacilityTypeOption,
 } from '@features/organization/ui/components/organization-dashboard/models';
+import { FACILITY_TYPE_OPTIONS } from '@features/organization/ui/components/organization-dashboard/options';
 import {
   WHOLE_NUMBER_FMT,
   buildDashboardComparison,
 } from '@features/organization/ui/components/organization-dashboard/utils';
+import { TrendCard } from '@shared/components';
 
 /**
  * Component OrganizationDashboardFacilitiesCreatedTrend
@@ -110,7 +108,9 @@ export class OrganizationDashboardFacilitiesCreatedTrend {
   protected readonly facilityTypeOptions: FacilityTypeOption[] = [...FACILITY_TYPE_OPTIONS];
 
   protected readonly selectedFacilityTypeOption: Signal<FacilityTypeOption | null> = computed(
-    () => FACILITY_TYPE_OPTIONS.find((o) => o.value === this.dashboardStore.selectedFacilityType()) ?? null,
+    () =>
+      FACILITY_TYPE_OPTIONS.find((o) => o.value === this.dashboardStore.selectedFacilityType()) ??
+      null,
   );
 
   protected readonly summaryMetrics: Signal<readonly DashboardSummaryMetric[]> = computed(() => {

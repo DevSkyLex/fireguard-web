@@ -61,4 +61,3 @@ describe('authGuard', () => {
     expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login']);
   });
 });
-

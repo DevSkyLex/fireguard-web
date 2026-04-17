@@ -131,4 +131,3 @@ describe('SessionStore', () => {
     expect(store.revokeAllCallState().status).toBe('idle');
   });
 });
-

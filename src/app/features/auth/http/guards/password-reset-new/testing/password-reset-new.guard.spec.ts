@@ -65,4 +65,3 @@ describe('passwordResetNewGuard', () => {
     expect(result).toBe(true);
   });
 });
-

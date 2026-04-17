@@ -127,4 +127,3 @@ describe('BreadcrumbService', () => {
     expect(items).toEqual([]);
   });
 });
-

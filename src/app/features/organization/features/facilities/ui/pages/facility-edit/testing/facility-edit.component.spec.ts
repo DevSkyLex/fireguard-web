@@ -155,4 +155,3 @@ describe('FacilityEditPage', () => {
     expect(mockFacilityStore.update).not.toHaveBeenCalled();
   });
 });
-

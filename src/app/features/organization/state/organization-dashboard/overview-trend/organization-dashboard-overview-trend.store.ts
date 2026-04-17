@@ -1,12 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import {
-  patchState,
-  signalStore,
-  withHooks,
-  withMethods,
-} from '@ngrx/signals';
+import { patchState, signalStore, withHooks, withMethods } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, forkJoin, pipe, switchMap } from 'rxjs';
 import {
@@ -26,8 +21,6 @@ import {
   buildDashboardTrendBaseParams,
   withDashboardFilterState,
 } from '../organization-dashboard-filter.feature';
-
-
 
 /**
  * Store OrganizationDashboardOverviewTrendStore
@@ -131,7 +124,6 @@ export const OrganizationDashboardOverviewTrendStore = signalStore(
         }),
       ),
     ),
-
   })),
   //#endregion
 

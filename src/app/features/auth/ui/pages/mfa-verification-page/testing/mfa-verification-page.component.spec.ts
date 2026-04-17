@@ -106,4 +106,3 @@ describe('MfaVerificationPage', () => {
     expect(mockAuthStore.mfaResend).toHaveBeenCalledTimes(1);
   });
 });
-

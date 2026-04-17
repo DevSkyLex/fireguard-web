@@ -39,4 +39,3 @@ describe('organization dashboard trend utils', () => {
     expect(buildPercentageSeries([2, 3, 1], [4, 0, 2])).toEqual([50, 0, 50]);
   });
 });
-

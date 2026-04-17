@@ -151,4 +151,3 @@ describe('FacilityCreatePage', () => {
     expect(mockFacilityStore.create).not.toHaveBeenCalled();
   });
 });
-

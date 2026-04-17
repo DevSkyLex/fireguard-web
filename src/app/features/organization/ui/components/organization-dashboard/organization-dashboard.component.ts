@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { MetricCard } from '@shared/components';
 import { OrganizationDashboardStore } from '@features/organization/state/organization-dashboard';
+import { MetricCard } from '@shared/components';
 import {
   OrganizationDashboardAssetGrowthTrend,
   OrganizationDashboardInspectionQualityTrend,
@@ -53,8 +53,9 @@ export class OrganizationDashboard {
    *
    * @type {OrganizationDashboardStore}
    */
-  protected readonly store: OrganizationDashboardStore =
-    inject<OrganizationDashboardStore>(OrganizationDashboardStore);
+  protected readonly store: OrganizationDashboardStore = inject<OrganizationDashboardStore>(
+    OrganizationDashboardStore,
+  );
 
   //#endregion
 }

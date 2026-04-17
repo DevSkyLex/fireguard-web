@@ -39,4 +39,3 @@ describe('ForgotPasswordForm', () => {
     expect(emitSpy).toHaveBeenCalledWith({ email: 'test@example.com' });
   });
 });
-

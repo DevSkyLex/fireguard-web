@@ -1,5 +1,5 @@
-import type { FacilityTypeOption } from '../models';
 import { PrimeIcons } from 'primeng/api';
+import type { FacilityTypeOption } from '../models';
 
 /**
  * Constant FACILITY_TYPE_OPTIONS
@@ -17,26 +17,26 @@ export const FACILITY_TYPE_OPTIONS: readonly FacilityTypeOption[] = [
   {
     label: 'Site',
     value: 'site',
-    icon: PrimeIcons.MAP_MARKER
+    icon: PrimeIcons.MAP_MARKER,
   },
   {
     label: 'Building',
     value: 'building',
-    icon: PrimeIcons.BUILDING
+    icon: PrimeIcons.BUILDING,
   },
   {
     label: 'Floor',
     value: 'floor',
-    icon: PrimeIcons.TH_LARGE
+    icon: PrimeIcons.TH_LARGE,
   },
   {
     label: 'Zone',
     value: 'zone',
-    icon: PrimeIcons.STOP
+    icon: PrimeIcons.STOP,
   },
   {
     label: 'Area',
     value: 'area',
-    icon: PrimeIcons.TABLE
+    icon: PrimeIcons.TABLE,
   },
 ];

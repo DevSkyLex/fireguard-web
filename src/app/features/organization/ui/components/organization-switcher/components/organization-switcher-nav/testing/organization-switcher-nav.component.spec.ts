@@ -107,4 +107,3 @@ describe('OrganizationSwitcherNav', () => {
     expect(emitSpy).toHaveBeenCalledTimes(3);
   });
 });
-

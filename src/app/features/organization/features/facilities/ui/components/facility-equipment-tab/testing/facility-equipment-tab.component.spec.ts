@@ -131,4 +131,3 @@ describe('FacilityEquipmentTab', () => {
     expect(mockEquipmentStore.load).not.toHaveBeenCalled();
   });
 });
-

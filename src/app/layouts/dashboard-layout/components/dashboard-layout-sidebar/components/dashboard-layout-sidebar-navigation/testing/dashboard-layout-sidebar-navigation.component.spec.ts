@@ -144,4 +144,3 @@ describe('DashboardLayoutSidebarNavigation', () => {
     expect(dashboardLink.nativeElement.getAttribute('aria-current')).toBeNull();
   });
 });
-

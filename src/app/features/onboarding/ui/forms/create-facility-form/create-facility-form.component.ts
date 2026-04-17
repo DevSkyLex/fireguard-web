@@ -91,7 +91,7 @@ export class CreateFacilityForm {
    * @access protected
    * @since 1.0.0
    *
-  * @type {{ label: string; value: SetupFacilityType }[]}
+   * @type {{ label: string; value: SetupFacilityType }[]}
    */
   protected readonly facilityTypes: { label: string; value: SetupFacilityType }[] = [
     { label: 'Site', value: 'site' },

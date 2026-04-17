@@ -139,4 +139,3 @@ describe('PasswordResetService', () => {
     req.flush(errorResponse, { status: 429, statusText: 'Too Many Requests' });
   });
 });
-

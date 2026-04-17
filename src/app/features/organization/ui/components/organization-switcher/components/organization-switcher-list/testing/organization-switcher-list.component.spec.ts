@@ -118,4 +118,3 @@ describe('OrganizationSwitcherList', () => {
     expect(boldSpan?.textContent?.trim()).toBe('Beta Inc');
   });
 });
-

@@ -122,4 +122,3 @@ describe('UserStore', () => {
     expect(store.loadCallState().status).toBe('idle');
   });
 });
-

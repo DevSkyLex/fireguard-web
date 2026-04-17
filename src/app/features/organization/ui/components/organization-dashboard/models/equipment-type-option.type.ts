@@ -26,7 +26,7 @@ export type EquipmentTypeOption = {
    * @readonly
    *
    * @description
-   * Internal value of the equipment type option, 
+   * Internal value of the equipment type option,
    * corresponding to the OrganizationDashboardEquipmentType type.
    *
    * @type {OrganizationDashboardEquipmentType}

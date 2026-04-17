@@ -49,16 +49,16 @@ export class LoginPage {
   protected readonly authStore: AuthStore = inject<AuthStore>(AuthStore);
 
   /**
-  * Property userProfilePort
+   * Property userProfilePort
    * @readonly
    *
    * @description
-  * Account-owned contract for loading the authenticated user profile.
+   * Account-owned contract for loading the authenticated user profile.
    *
    * @access private
    * @since 1.0.0
    *
-  * @type {UserProfilePort}
+   * @type {UserProfilePort}
    */
   private readonly userProfilePort: UserProfilePort = inject<UserProfilePort>(USER_PROFILE_PORT);
 

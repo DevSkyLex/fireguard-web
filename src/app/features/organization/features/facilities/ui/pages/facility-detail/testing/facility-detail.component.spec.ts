@@ -275,4 +275,3 @@ describe('FacilityDetailPage', () => {
     expect(mockFacilityStore.ensureParentOptionsLoaded).not.toHaveBeenCalled();
   });
 });
-

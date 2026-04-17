@@ -79,4 +79,3 @@ describe('mfaGuard', () => {
     expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login']);
   });
 });
-

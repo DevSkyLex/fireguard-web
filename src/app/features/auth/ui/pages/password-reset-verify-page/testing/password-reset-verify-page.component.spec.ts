@@ -77,4 +77,3 @@ describe('PasswordResetVerifyPage', () => {
     expect(mockPasswordResetStore.resend).toHaveBeenCalledTimes(1);
   });
 });
-

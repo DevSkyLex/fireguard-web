@@ -16,4 +16,3 @@ describe('SplitLayoutHeader', () => {
     expect(header).not.toBeNull();
   });
 });
-

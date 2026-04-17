@@ -52,4 +52,3 @@ describe('DashboardLayoutSidebarFooter', () => {
     expect(fixture.nativeElement.textContent).toContain('Fireguard User');
   });
 });
-

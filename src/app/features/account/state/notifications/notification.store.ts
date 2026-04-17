@@ -329,7 +329,10 @@ export const NotificationStore = signalStore(
           return;
         }
 
-        if (isPlatformBrowser(platformId) && transferState.hasKey(NOTIFICATION_TYPES_TRANSFER_KEY)) {
+        if (
+          isPlatformBrowser(platformId) &&
+          transferState.hasKey(NOTIFICATION_TYPES_TRANSFER_KEY)
+        ) {
           const transferred = transferState.get(NOTIFICATION_TYPES_TRANSFER_KEY, null);
           transferState.remove(NOTIFICATION_TYPES_TRANSFER_KEY);
 

@@ -100,4 +100,3 @@ describe('OrganizationSwitcherTrigger', () => {
     expect(fixture.nativeElement.querySelector('.pi-chevron-down')).not.toBeNull();
   });
 });
-

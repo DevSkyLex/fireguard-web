@@ -19,10 +19,7 @@ import {
   type CreateInspectionFormValues,
   type EquipmentOption,
 } from '@features/onboarding/ui/forms';
-import {
-  OrganizationSetupService,
-  type SetupEquipmentSummary,
-} from '@features/organization/setup';
+import { OrganizationSetupService, type SetupEquipmentSummary } from '@features/organization/setup';
 import { OnboardingStepBase } from '../onboarding-step.base';
 
 /**
@@ -147,7 +144,8 @@ export class RunInspectionStep extends OnboardingStepBase {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isLoadingEquipment: Signal<boolean> = this.isLoadingEquipmentState.asReadonly();
+  protected readonly isLoadingEquipment: Signal<boolean> =
+    this.isLoadingEquipmentState.asReadonly();
 
   /**
    * Property isExecuting

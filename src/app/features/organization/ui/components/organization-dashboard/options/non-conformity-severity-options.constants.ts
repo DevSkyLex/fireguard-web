@@ -15,21 +15,21 @@ export const NON_CONFORMITY_SEVERITY_OPTIONS: readonly NonConformitySeverityOpti
   {
     label: 'Low',
     value: 'low',
-    color: '#22c55e'
+    color: '#22c55e',
   },
   {
     label: 'Medium',
     value: 'medium',
-    color: '#eab308'
+    color: '#eab308',
   },
   {
     label: 'High',
     value: 'high',
-    color: '#f97316'
+    color: '#f97316',
   },
   {
     label: 'Critical',
     value: 'critical',
-    color: '#ef4444'
+    color: '#ef4444',
   },
 ];

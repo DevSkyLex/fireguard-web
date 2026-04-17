@@ -39,4 +39,3 @@ describe('OrganizationSwitcherHeader', () => {
     expect(badge).toBeNull();
   });
 });
-

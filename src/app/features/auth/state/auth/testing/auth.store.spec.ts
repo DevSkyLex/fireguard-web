@@ -459,4 +459,3 @@ describe('AuthStore', () => {
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 });
-

@@ -46,4 +46,3 @@ describe('NotificationCenterPage', () => {
     expect(mockNotificationStore.markAsRead).toHaveBeenCalledWith('abc-123');
   });
 });
-

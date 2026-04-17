@@ -1,4 +1,4 @@
-import { PrimeIcons } from "primeng/api";
+import { PrimeIcons } from 'primeng/api';
 
 /**
  * Constant FACILITY_TYPE_ICONS

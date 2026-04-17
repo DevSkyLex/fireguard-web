@@ -24,4 +24,3 @@ describe('TrustedDeviceService', () => {
     expect(service).toBeTruthy();
   });
 });
-

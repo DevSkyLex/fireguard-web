@@ -133,4 +133,3 @@ describe('FacilityInspectionTab', () => {
     expect(mockInspectionStore.load).not.toHaveBeenCalled();
   });
 });
-

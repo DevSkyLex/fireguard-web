@@ -20,4 +20,3 @@ describe('DashboardLayoutSidebarHeader', () => {
     expect(fixture.nativeElement.textContent).toContain('Fireguard');
   });
 });
-

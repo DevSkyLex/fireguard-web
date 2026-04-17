@@ -1,7 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { forkJoin, map, of } from 'rxjs';
-import { OrganizationInvitationService, OrganizationRoleService, OrganizationService } from '@features/organization/data-access';
+import {
+  OrganizationInvitationService,
+  OrganizationRoleService,
+  OrganizationService,
+} from '@features/organization/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
@@ -44,7 +48,8 @@ export class OrganizationSetupService {
    *
    * @type {OrganizationService}
    */
-  private readonly organizationService: OrganizationService = inject<OrganizationService>(OrganizationService);
+  private readonly organizationService: OrganizationService =
+    inject<OrganizationService>(OrganizationService);
 
   /**
    * Property organizationInvitationService
@@ -58,7 +63,8 @@ export class OrganizationSetupService {
    *
    * @type {OrganizationInvitationService}
    */
-  private readonly organizationInvitationService: OrganizationInvitationService = inject<OrganizationInvitationService>(OrganizationInvitationService);
+  private readonly organizationInvitationService: OrganizationInvitationService =
+    inject<OrganizationInvitationService>(OrganizationInvitationService);
 
   /**
    * Property organizationRoleService
@@ -72,7 +78,8 @@ export class OrganizationSetupService {
    *
    * @type {OrganizationRoleService}
    */
-  private readonly organizationRoleService: OrganizationRoleService = inject<OrganizationRoleService>(OrganizationRoleService);
+  private readonly organizationRoleService: OrganizationRoleService =
+    inject<OrganizationRoleService>(OrganizationRoleService);
 
   /**
    * Property facilityService
@@ -114,7 +121,8 @@ export class OrganizationSetupService {
    *
    * @type {InspectionService}
    */
-  private readonly inspectionService: InspectionService = inject<InspectionService>(InspectionService);
+  private readonly inspectionService: InspectionService =
+    inject<InspectionService>(InspectionService);
 
   /**
    * Method createOrganization

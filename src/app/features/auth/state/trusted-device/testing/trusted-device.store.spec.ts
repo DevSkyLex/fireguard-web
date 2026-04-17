@@ -110,4 +110,3 @@ describe('TrustedDeviceStore', () => {
     expect(store.hasDevices()).toBe(false);
   });
 });
-

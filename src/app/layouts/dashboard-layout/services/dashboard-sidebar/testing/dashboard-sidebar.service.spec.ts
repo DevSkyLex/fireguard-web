@@ -80,4 +80,3 @@ describe('DashboardSidebarService', () => {
     expect(service.visible()).toBe(false);
   });
 });
-

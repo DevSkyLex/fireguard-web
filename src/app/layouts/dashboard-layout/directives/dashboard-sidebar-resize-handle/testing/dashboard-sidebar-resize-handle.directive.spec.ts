@@ -173,4 +173,3 @@ describe('DashboardSidebarResizeHandleDirective', () => {
     expect(document.body.style.userSelect).toBe('');
   });
 });
-

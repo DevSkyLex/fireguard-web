@@ -239,4 +239,3 @@ describe('DashboardLayoutSidebar', () => {
     expect(fixture.debugElement.query(By.css('p-menu'))).toBeFalsy();
   });
 });
-

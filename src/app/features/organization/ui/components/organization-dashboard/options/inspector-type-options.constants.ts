@@ -14,10 +14,10 @@ import type { InspectorTypeOption } from '../models';
 export const INSPECTOR_TYPE_OPTIONS: readonly InspectorTypeOption[] = [
   {
     label: 'User',
-    value: 'user'
+    value: 'user',
   },
   {
     label: 'External',
-    value: 'external'
+    value: 'external',
   },
 ];

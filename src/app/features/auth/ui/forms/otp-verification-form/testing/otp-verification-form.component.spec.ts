@@ -61,4 +61,3 @@ describe('OtpVerificationForm', () => {
     expect(emitSpy).toHaveBeenCalledTimes(1);
   });
 });
-

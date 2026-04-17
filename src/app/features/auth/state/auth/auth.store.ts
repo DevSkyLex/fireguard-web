@@ -536,9 +536,9 @@ export const AuthStore = signalStore(
        *
        * @description
        * Initializes the auth state by attempting to refresh the session.
-        * If successful, also initializes the account-owned user profile.
-        * The access token is never serialized through TransferState, so the
-        * browser and SSR runtimes refresh independently.
+       * If successful, also initializes the account-owned user profile.
+       * The access token is never serialized through TransferState, so the
+       * browser and SSR runtimes refresh independently.
        * Returns a Promise that resolves when initialization is complete.
        * Should be called once on app startup via APP_INITIALIZER.
        *

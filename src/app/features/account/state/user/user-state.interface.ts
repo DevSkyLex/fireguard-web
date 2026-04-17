@@ -24,7 +24,7 @@ export interface UserState {
    *
    * @since 1.0.0
    *
-  * @type {UserProfileOutput | null}
+   * @type {UserProfileOutput | null}
    */
   readonly profile: UserProfileOutput | null;
   //#endregion

@@ -15,10 +15,7 @@ import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { OnboardingStore } from '@features/onboarding/state';
 import { InviteMembersForm, type InviteMembersFormValues } from '@features/onboarding/ui/forms';
-import {
-  OrganizationSetupService,
-  type SetupOrganizationRole,
-} from '@features/organization/setup';
+import { OrganizationSetupService, type SetupOrganizationRole } from '@features/organization/setup';
 import { OnboardingStepBase } from '../onboarding-step.base';
 
 /**
@@ -171,7 +168,7 @@ export class InviteMembersStep extends OnboardingStepBase {
    * @access protected
    * @since 1.0.0
    *
-  * @type {Signal<readonly SetupOrganizationRole[]>}
+   * @type {Signal<readonly SetupOrganizationRole[]>}
    */
   protected readonly roles: Signal<readonly SetupOrganizationRole[]> = this.rolesState.asReadonly();
 

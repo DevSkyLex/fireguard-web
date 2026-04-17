@@ -7,6 +7,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import type { ChartData, ChartOptions } from 'chart.js';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -18,21 +19,21 @@ import { Menu, MenuModule } from 'primeng/menu';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToggleButtonModule } from 'primeng/togglebutton';
-import type { OrganizationOutput } from '@features/organization/models';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import { OrganizationDashboardOverviewTrendStore } from '@features/organization/state/organization-dashboard';
-import { TrendCard } from '@shared/components';
-import type { ChartData, ChartOptions } from 'chart.js';
 import {
   alignDashboardTrendSeries,
   buildDifferenceSeries,
-  getDashboardTrendPointValue,
   sumDashboardTrendValues,
+  sumTrendSeries,
 } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
-import { WHOLE_NUMBER_FMT, buildDashboardComparison } from '@features/organization/ui/components/organization-dashboard/utils';
-import type {
-  DashboardSummaryMetric,
-} from '@features/organization/ui/components/organization-dashboard/models';
+import type { OrganizationOutput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import { OrganizationDashboardOverviewTrendStore } from '@features/organization/state/organization-dashboard';
+import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
+import {
+  WHOLE_NUMBER_FMT,
+  buildDashboardComparison,
+} from '@features/organization/ui/components/organization-dashboard/utils';
+import { TrendCard } from '@shared/components';
 
 /**
  * Component OrganizationDashboardOverviewTrend
@@ -100,35 +101,50 @@ export class OrganizationDashboardOverviewTrend {
   protected readonly dashboardStore: OrganizationDashboardOverviewTrendStore =
     inject<OrganizationDashboardOverviewTrendStore>(OrganizationDashboardOverviewTrendStore);
 
-  protected readonly summaryMetrics: Signal<readonly DashboardSummaryMetric[]> = computed(() => {
+  /**
+   * Property alignedTrend
+   * @readonly
+   *
+   * @description
+   * Shared computed that aligns the three sparse API series onto a common
+   * sorted bucket axis. Derived once and consumed by both `summaryMetrics`
+   * and `chartData` to avoid redundant computation.
+   *
+   * @access private
+   * @since 2.1.0
+   */
+  private readonly alignedTrend = computed(() => {
     const result = this.dashboardStore.queryData();
-    const compareEnabled = this.dashboardStore.compareEnabled();
-    const aligned = alignDashboardTrendSeries(
+
+    return alignDashboardTrendSeries(
       [result?.inspections?.series, result?.ncOpened?.series, result?.ncResolved?.series],
       this.dashboardStore.selectedGranularity(),
     );
-    const [inspectionData = [], openedData = [], resolvedData = []] = aligned.datasets;
+  });
+
+  protected readonly summaryMetrics: Signal<readonly DashboardSummaryMetric[]> = computed(() => {
+    const result = this.dashboardStore.queryData();
+    const compareEnabled = this.dashboardStore.compareEnabled();
+    const [inspectionData = [], openedData = [], resolvedData = []] = this.alignedTrend().datasets;
     const netPressureData = buildDifferenceSeries(openedData, resolvedData);
     const inspectionTotal = sumDashboardTrendValues(inspectionData);
     const openedTotal = sumDashboardTrendValues(openedData);
     const resolvedTotal = sumDashboardTrendValues(resolvedData);
     const netPressureTotal = sumDashboardTrendValues(netPressureData);
-    const previousInspectionTotal = sumDashboardTrendValues(
-      (result?.inspections?.comparison?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
-    );
-    const previousOpenedTotal = sumDashboardTrendValues(
-      (result?.ncOpened?.comparison?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
-    );
-    const previousResolvedTotal = sumDashboardTrendValues(
-      (result?.ncResolved?.comparison?.series ?? []).map((p) => getDashboardTrendPointValue(p)),
-    );
+    const previousInspectionTotal = sumTrendSeries(result?.inspections?.comparison?.series);
+    const previousOpenedTotal = sumTrendSeries(result?.ncOpened?.comparison?.series);
+    const previousResolvedTotal = sumTrendSeries(result?.ncResolved?.comparison?.series);
     const previousNetPressure = previousOpenedTotal - previousResolvedTotal;
     return [
       {
         label: 'Inspections',
         value: WHOLE_NUMBER_FMT.format(inspectionTotal),
         icon: 'pi pi-list-check',
-        comparison: buildDashboardComparison(inspectionTotal, previousInspectionTotal, compareEnabled),
+        comparison: buildDashboardComparison(
+          inspectionTotal,
+          previousInspectionTotal,
+          compareEnabled,
+        ),
       },
       {
         label: 'Opened NC',
@@ -152,15 +168,10 @@ export class OrganizationDashboardOverviewTrend {
   });
 
   protected readonly chartData: Signal<ChartData<'line'>> = computed(() => {
-    const result = this.dashboardStore.queryData();
-    const aligned = alignDashboardTrendSeries(
-      [result?.inspections?.series, result?.ncOpened?.series, result?.ncResolved?.series],
-      this.dashboardStore.selectedGranularity(),
-    );
-    const [inspectionData = [], openedData = [], resolvedData = []] = aligned.datasets;
+    const [inspectionData = [], openedData = [], resolvedData = []] = this.alignedTrend().datasets;
     const netPressureData = buildDifferenceSeries(openedData, resolvedData);
     return {
-      labels: [...aligned.labels],
+      labels: [...this.alignedTrend().labels],
       datasets: [
         {
           label: 'Inspections',

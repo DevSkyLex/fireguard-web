@@ -73,4 +73,3 @@ describe('LoginPage', () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
   });
 });
-

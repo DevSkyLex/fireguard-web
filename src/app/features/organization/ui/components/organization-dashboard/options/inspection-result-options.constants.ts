@@ -1,5 +1,5 @@
-import type { InspectionResultOption } from '../models';
 import { PrimeIcons } from 'primeng/api';
+import type { InspectionResultOption } from '../models';
 
 /**
  * Constant INSPECTION_RESULT_OPTIONS
@@ -18,18 +18,18 @@ export const INSPECTION_RESULT_OPTIONS: readonly InspectionResultOption[] = [
     label: 'Pass',
     value: 'pass',
     icon: PrimeIcons.CHECK_CIRCLE,
-    color: '#22c55e'
+    color: '#22c55e',
   },
   {
     label: 'Fail',
     value: 'fail',
     icon: PrimeIcons.TIMES_CIRCLE,
-    color: '#ef4444'
+    color: '#ef4444',
   },
   {
     label: 'Partial',
     value: 'partial',
     icon: PrimeIcons.EXCLAMATION_CIRCLE,
-    color: '#f59e0b'
+    color: '#f59e0b',
   },
 ];

@@ -1608,6 +1608,7 @@ Use the smallest strategy that matches the UI need:
 3. Browser-only lazy load for secondary panels, tabs, dialogs, dropdown option lists, and other non-critical enrichments.
 
 Do not expand `TransferState` to every authenticated list. If the UI can tolerate a client-side skeleton or an on-open fetch, prefer that over serializing extra payload into the HTML.
+
 - URL construction uses `buildUrl(path, id?)` and `buildParams(options?)`.
 - The base content type is `application/ld+json`. Do not override it unless the endpoint explicitly requires it (e.g., file uploads use `multipart/form-data`).
 

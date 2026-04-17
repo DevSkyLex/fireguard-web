@@ -126,7 +126,7 @@ export class CreateInspectionForm {
    * @access protected
    * @since 1.0.0
    *
-  * @type {{ label: string; value: SetupInspectionResult }[]}
+   * @type {{ label: string; value: SetupInspectionResult }[]}
    */
   protected readonly resultOptions: { label: string; value: SetupInspectionResult }[] = [
     { label: 'Pass', value: 'pass' },
@@ -144,7 +144,7 @@ export class CreateInspectionForm {
    * @access protected
    * @since 1.0.0
    *
-  * @type {{ label: string; value: SetupInspectorType }[]}
+   * @type {{ label: string; value: SetupInspectorType }[]}
    */
   protected readonly inspectorTypeOptions: { label: string; value: SetupInspectorType }[] = [
     { label: 'Internal technician', value: 'user' },

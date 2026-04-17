@@ -31,4 +31,3 @@ describe('SplitLayoutContent', () => {
     expect(projected.textContent).toContain('Projected Content');
   });
 });
-

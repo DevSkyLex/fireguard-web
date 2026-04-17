@@ -4,7 +4,6 @@ import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import type { OrganizationOutput } from '@features/organization/models';
 import { OrganizationStore } from '@features/organization/state';
-import { OrganizationDataview } from '@features/organization/ui/dataviews';
 import { OrganizationListPage } from '../organization-list.component';
 
 const MOCK_ORG: OrganizationOutput = {
@@ -115,4 +114,3 @@ describe('OrganizationListPage', () => {
     expect(skeletons.length).toBeGreaterThan(0);
   });
 });
-

@@ -7,6 +7,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -18,23 +19,15 @@ import { Menu, MenuModule } from 'primeng/menu';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToggleButtonModule } from 'primeng/togglebutton';
-import type { OrganizationOutput } from '@features/organization/models';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import { OrganizationDashboardInspectionQualityStore } from '@features/organization/state/organization-dashboard';
-import { TrendCard } from '@shared/components';
-import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
 import {
   alignDashboardTrendSeries,
   buildPercentageSeries,
   getDashboardTrendPointValue,
   sumDashboardTrendValues,
 } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
-import {
-  INSPECTION_RESULT_OPTIONS,
-  INSPECTION_STATUS_OPTIONS,
-  INSPECTOR_TYPE_OPTIONS,
-  NON_CONFORMITY_SEVERITY_OPTIONS,
-} from '@features/organization/ui/components/organization-dashboard/options';
+import type { OrganizationOutput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import { OrganizationDashboardInspectionQualityStore } from '@features/organization/state/organization-dashboard';
 import type {
   DashboardSummaryMetric,
   InspectionResultOption,
@@ -43,10 +36,17 @@ import type {
   NonConformitySeverityOption,
 } from '@features/organization/ui/components/organization-dashboard/models';
 import {
+  INSPECTION_RESULT_OPTIONS,
+  INSPECTION_STATUS_OPTIONS,
+  INSPECTOR_TYPE_OPTIONS,
+  NON_CONFORMITY_SEVERITY_OPTIONS,
+} from '@features/organization/ui/components/organization-dashboard/options';
+import {
   DECIMAL_FMT,
   WHOLE_NUMBER_FMT,
   buildDashboardComparison,
 } from '@features/organization/ui/components/organization-dashboard/utils';
+import { TrendCard } from '@shared/components';
 
 const hexToRgb = (hex: string): [number, number, number] => [
   parseInt(hex.slice(1, 3), 16),
@@ -122,24 +122,41 @@ export class OrganizationDashboardInspectionQualityTrend {
       OrganizationDashboardInspectionQualityStore,
     );
 
-  protected readonly inspectionStatusOptions: InspectionStatusOption[] = [...INSPECTION_STATUS_OPTIONS];
+  protected readonly inspectionStatusOptions: InspectionStatusOption[] = [
+    ...INSPECTION_STATUS_OPTIONS,
+  ];
 
-  protected readonly inspectionResultOptions: InspectionResultOption[] = [...INSPECTION_RESULT_OPTIONS];
+  protected readonly inspectionResultOptions: InspectionResultOption[] = [
+    ...INSPECTION_RESULT_OPTIONS,
+  ];
 
   protected readonly inspectorTypeOptions: InspectorTypeOption[] = [...INSPECTOR_TYPE_OPTIONS];
 
-  protected readonly nonConformitySeverityOptions: NonConformitySeverityOption[] = [...NON_CONFORMITY_SEVERITY_OPTIONS];
+  protected readonly nonConformitySeverityOptions: NonConformitySeverityOption[] = [
+    ...NON_CONFORMITY_SEVERITY_OPTIONS,
+  ];
 
-  protected readonly selectedInspectionStatusOption: Signal<InspectionStatusOption | null> = computed(
-    () => INSPECTION_STATUS_OPTIONS.find((o) => o.value === this.dashboardStore.selectedInspectionStatus()) ?? null,
-  );
+  protected readonly selectedInspectionStatusOption: Signal<InspectionStatusOption | null> =
+    computed(
+      () =>
+        INSPECTION_STATUS_OPTIONS.find(
+          (o) => o.value === this.dashboardStore.selectedInspectionStatus(),
+        ) ?? null,
+    );
 
-  protected readonly selectedInspectionResultOption: Signal<InspectionResultOption | null> = computed(
-    () => INSPECTION_RESULT_OPTIONS.find((o) => o.value === this.dashboardStore.selectedInspectionResult()) ?? null,
-  );
+  protected readonly selectedInspectionResultOption: Signal<InspectionResultOption | null> =
+    computed(
+      () =>
+        INSPECTION_RESULT_OPTIONS.find(
+          (o) => o.value === this.dashboardStore.selectedInspectionResult(),
+        ) ?? null,
+    );
 
   protected readonly selectedSeverityOption: Signal<NonConformitySeverityOption | null> = computed(
-    () => NON_CONFORMITY_SEVERITY_OPTIONS.find((o) => o.value === this.dashboardStore.selectedNonConformitySeverity()) ?? null,
+    () =>
+      NON_CONFORMITY_SEVERITY_OPTIONS.find(
+        (o) => o.value === this.dashboardStore.selectedNonConformitySeverity(),
+      ) ?? null,
   );
 
   private readonly rateSeries: Signal<readonly number[]> = computed(() => {
@@ -171,15 +188,18 @@ export class OrganizationDashboardInspectionQualityTrend {
     const previousNcRate =
       previousInspectionTotal > 0 ? (previousNcOpenedTotal / previousInspectionTotal) * 100 : 0;
     const currentRates = this.rateSeries();
-    const rateShift = currentRates.length >= 2
-      ? currentRates[currentRates.length - 1] - currentRates[0]
-      : 0;
+    const rateShift =
+      currentRates.length >= 2 ? currentRates[currentRates.length - 1] - currentRates[0] : 0;
     return [
       {
         label: 'Inspections',
         value: WHOLE_NUMBER_FMT.format(inspectionTotal),
         icon: 'pi pi-clipboard',
-        comparison: buildDashboardComparison(inspectionTotal, previousInspectionTotal, compareEnabled),
+        comparison: buildDashboardComparison(
+          inspectionTotal,
+          previousInspectionTotal,
+          compareEnabled,
+        ),
       },
       {
         label: 'Opened NC',
@@ -219,7 +239,8 @@ export class OrganizationDashboardInspectionQualityTrend {
         : '#3b82f6';
     const selectedSeverity = this.dashboardStore.selectedNonConformitySeverity();
     const ncHex = selectedSeverity
-      ? (NON_CONFORMITY_SEVERITY_OPTIONS.find((o) => o.value === selectedSeverity)?.color ?? '#f97316')
+      ? (NON_CONFORMITY_SEVERITY_OPTIONS.find((o) => o.value === selectedSeverity)?.color ??
+        '#f97316')
       : '#f97316';
     const [ir, ig, ib] = hexToRgb(inspectionHex);
     const [nr, ng, nb] = hexToRgb(ncHex);

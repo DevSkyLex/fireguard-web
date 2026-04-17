@@ -7,6 +7,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import type { ChartData, ChartOptions } from 'chart.js';
 import { PrimeIcons } from 'primeng/api';
 import type { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -18,21 +19,14 @@ import { Menu, MenuModule } from 'primeng/menu';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToggleButtonModule } from 'primeng/togglebutton';
-import type { OrganizationOutput } from '@features/organization/models';
-import { ActiveOrganizationStore } from '@features/organization/state';
-import { OrganizationDashboardAssetGrowthStore } from '@features/organization/state/organization-dashboard';
-import { TrendCard } from '@shared/components';
-import type { ChartData, ChartOptions } from 'chart.js';
 import {
   alignDashboardTrendSeries,
   getDashboardTrendPointValue,
   sumDashboardTrendValues,
 } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
-import {
-  EQUIPMENT_STATUS_OPTIONS,
-  EQUIPMENT_TYPE_OPTIONS,
-  FACILITY_TYPE_OPTIONS,
-} from '@features/organization/ui/components/organization-dashboard/options';
+import type { OrganizationOutput } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import { OrganizationDashboardAssetGrowthStore } from '@features/organization/state/organization-dashboard';
 import type {
   DashboardSummaryMetric,
   EquipmentStatusOption,
@@ -40,10 +34,16 @@ import type {
   FacilityTypeOption,
 } from '@features/organization/ui/components/organization-dashboard/models';
 import {
+  EQUIPMENT_STATUS_OPTIONS,
+  EQUIPMENT_TYPE_OPTIONS,
+  FACILITY_TYPE_OPTIONS,
+} from '@features/organization/ui/components/organization-dashboard/options';
+import {
   DECIMAL_FMT,
   WHOLE_NUMBER_FMT,
   buildDashboardComparison,
 } from '@features/organization/ui/components/organization-dashboard/utils';
+import { TrendCard } from '@shared/components';
 
 /**
  * Component OrganizationDashboardAssetGrowthTrend
@@ -121,16 +121,23 @@ export class OrganizationDashboardAssetGrowthTrend {
 
   protected readonly equipmentTypeOptions: EquipmentTypeOption[] = [...EQUIPMENT_TYPE_OPTIONS];
 
-  protected readonly equipmentStatusOptions: EquipmentStatusOption[] = [...EQUIPMENT_STATUS_OPTIONS];
+  protected readonly equipmentStatusOptions: EquipmentStatusOption[] = [
+    ...EQUIPMENT_STATUS_OPTIONS,
+  ];
 
   protected readonly facilityTypeOptions: FacilityTypeOption[] = [...FACILITY_TYPE_OPTIONS];
 
   protected readonly selectedEquipmentStatusOption: Signal<EquipmentStatusOption | null> = computed(
-    () => EQUIPMENT_STATUS_OPTIONS.find((o) => o.value === this.dashboardStore.selectedEquipmentStatus()) ?? null,
+    () =>
+      EQUIPMENT_STATUS_OPTIONS.find(
+        (o) => o.value === this.dashboardStore.selectedEquipmentStatus(),
+      ) ?? null,
   );
 
   protected readonly selectedFacilityTypeOption: Signal<FacilityTypeOption | null> = computed(
-    () => FACILITY_TYPE_OPTIONS.find((o) => o.value === this.dashboardStore.selectedFacilityType()) ?? null,
+    () =>
+      FACILITY_TYPE_OPTIONS.find((o) => o.value === this.dashboardStore.selectedFacilityType()) ??
+      null,
   );
 
   protected readonly summaryMetrics: Signal<readonly DashboardSummaryMetric[]> = computed(() => {
@@ -157,7 +164,11 @@ export class OrganizationDashboardAssetGrowthTrend {
         label: 'Equipment Added',
         value: WHOLE_NUMBER_FMT.format(equipmentTotal),
         icon: 'pi pi-shield',
-        comparison: buildDashboardComparison(equipmentTotal, previousEquipmentTotal, compareEnabled),
+        comparison: buildDashboardComparison(
+          equipmentTotal,
+          previousEquipmentTotal,
+          compareEnabled,
+        ),
       },
       {
         label: 'Facilities Added',

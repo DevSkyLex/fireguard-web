@@ -14,50 +14,50 @@ import type { EquipmentTypeOption } from '../models';
 export const EQUIPMENT_TYPE_OPTIONS: readonly EquipmentTypeOption[] = [
   {
     label: 'Fire Extinguisher',
-    value: 'fire_extinguisher'
+    value: 'fire_extinguisher',
   },
   {
     label: 'Smoke Detector',
-    value: 'smoke_detector'
+    value: 'smoke_detector',
   },
   {
     label: 'Heat Detector',
-    value: 'heat_detector'
+    value: 'heat_detector',
   },
   {
     label: 'Sprinkler',
-    value: 'sprinkler'
+    value: 'sprinkler',
   },
   {
     label: 'Fire Alarm Panel',
-    value: 'fire_alarm_panel'
+    value: 'fire_alarm_panel',
   },
   {
     label: 'Hydrant',
-    value: 'hydrant'
+    value: 'hydrant',
   },
   {
     label: 'Fire Door',
-    value: 'fire_door'
+    value: 'fire_door',
   },
   {
     label: 'Emergency Lighting',
-    value: 'emergency_lighting'
+    value: 'emergency_lighting',
   },
   {
     label: 'Access Control',
-    value: 'access_control'
+    value: 'access_control',
   },
   {
     label: 'Camera',
-    value: 'camera'
+    value: 'camera',
   },
   {
     label: 'Gas Detector',
-    value: 'gas_detector'
+    value: 'gas_detector',
   },
   {
     label: 'Other',
-    value: 'other'
+    value: 'other',
   },
 ];

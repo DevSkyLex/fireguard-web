@@ -17,4 +17,3 @@ describe('SplitLayoutShowcase', () => {
     expect(text).toContain('The future of fire safety');
   });
 });
-

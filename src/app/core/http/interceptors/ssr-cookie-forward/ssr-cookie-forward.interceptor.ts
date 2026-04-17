@@ -8,7 +8,8 @@ import {
 import { inject, PLATFORM_ID, REQUEST } from '@angular/core';
 import { Observable } from 'rxjs';
 
-const FORWARDED_COOKIE_NAME_PATTERN: RegExp = /^(?:__Host-|__Secure-)?(?:refresh_token|trusted_device(?:_token)?|device_trust_token)$/i;
+const FORWARDED_COOKIE_NAME_PATTERN: RegExp =
+  /^(?:__Host-|__Secure-)?(?:refresh_token|trusted_device(?:_token)?|device_trust_token)$/i;
 
 function filterForwardedCookies(cookieHeader: string): string | null {
   const forwardedCookies: string[] = cookieHeader

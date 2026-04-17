@@ -80,7 +80,10 @@ describe('OrganizationSwitcher', () => {
 
     const popoverEl = fixture.debugElement.query(By.css('p-popover'));
     if (popoverEl) {
-      vi.spyOn(popoverEl.componentInstance as { toggle(event: MouseEvent): void }, 'toggle').mockReturnValue(undefined);
+      vi.spyOn(
+        popoverEl.componentInstance as { toggle(event: MouseEvent): void },
+        'toggle',
+      ).mockReturnValue(undefined);
     }
 
     const component = fixture.componentInstance as unknown as {
@@ -98,7 +101,10 @@ describe('OrganizationSwitcher', () => {
 
     const popoverEl = fixture.debugElement.query(By.css('p-popover'));
     if (popoverEl) {
-      vi.spyOn(popoverEl.componentInstance as { toggle(event: MouseEvent): void }, 'toggle').mockReturnValue(undefined);
+      vi.spyOn(
+        popoverEl.componentInstance as { toggle(event: MouseEvent): void },
+        'toggle',
+      ).mockReturnValue(undefined);
     }
 
     const component = fixture.componentInstance as unknown as {
@@ -117,7 +123,10 @@ describe('OrganizationSwitcher', () => {
 
     const popoverEl = fixture.debugElement.query(By.css('p-popover'));
     if (popoverEl) {
-      vi.spyOn(popoverEl.componentInstance as { toggle(event: MouseEvent): void }, 'toggle').mockReturnValue(undefined);
+      vi.spyOn(
+        popoverEl.componentInstance as { toggle(event: MouseEvent): void },
+        'toggle',
+      ).mockReturnValue(undefined);
     }
 
     const component = fixture.componentInstance as unknown as {
@@ -222,4 +231,3 @@ describe('OrganizationSwitcher', () => {
     expect(navigateSpy).toHaveBeenCalledWith('/organizations/org-2');
   });
 });
-

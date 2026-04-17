@@ -33,7 +33,6 @@ export type InspectionResultOption = {
    */
   readonly value: InspectionResult;
 
-
   /**
    * Property icon
    * @readonly

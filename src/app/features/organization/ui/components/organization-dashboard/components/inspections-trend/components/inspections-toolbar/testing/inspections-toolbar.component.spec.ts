@@ -1,0 +1,49 @@
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { OrganizationDashboardInspectionsTrendStore } from '@features/organization/state/organization-dashboard';
+import { InspectionsToolbar } from '../inspections-toolbar.component';
+
+const mockStore = {
+  selectedGranularity: signal<string>('week'),
+  granularityOptions: signal([{ label: 'Daily', value: 'day' }, { label: 'Weekly', value: 'week' }]),
+  isQueryLoading: signal(false),
+  setGranularity: vi.fn(),
+};
+
+describe('InspectionsToolbar', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [InspectionsToolbar],
+      providers: [
+        { provide: OrganizationDashboardInspectionsTrendStore, useValue: mockStore },
+      ],
+    });
+  });
+
+  function createComponent() {
+    const fixture = TestBed.createComponent(InspectionsToolbar);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('should create', () => {
+    const fixture = createComponent();
+    expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  it('should render the granularity select and menu button', () => {
+    const fixture = createComponent();
+    expect(fixture.nativeElement.querySelector('p-select')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('p-button')).not.toBeNull();
+  });
+
+  it('should emit menuToggle when the button is clicked', () => {
+    const fixture = createComponent();
+    const emitSpy = vi.fn();
+
+    fixture.componentInstance.menuToggle.subscribe(emitSpy);
+    (fixture.nativeElement.querySelector('button') as HTMLButtonElement).click();
+
+    expect(emitSpy).toHaveBeenCalledTimes(1);
+  });
+});

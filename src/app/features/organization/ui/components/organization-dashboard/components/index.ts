@@ -1,8 +1,8 @@
-export { OrganizationDashboardAssetGrowthTrend } from './organization-dashboard-asset-growth-trend';
-export { OrganizationDashboardEquipmentCreatedTrend } from './organization-dashboard-equipment-created-trend';
-export { OrganizationDashboardFacilitiesCreatedTrend } from './organization-dashboard-facilities-created-trend';
-export { OrganizationDashboardInspectionQualityTrend } from './organization-dashboard-inspection-quality-trend';
-export { OrganizationDashboardInspectionsTrend } from './organization-dashboard-inspections-trend';
-export { OrganizationDashboardNonConformitiesOpenedTrend } from './organization-dashboard-non-conformities-opened-trend';
-export { OrganizationDashboardNonConformitiesResolvedTrend } from './organization-dashboard-non-conformities-resolved-trend';
-export { OrganizationDashboardOverviewTrend } from './organization-dashboard-overview-trend';
+export { AssetGrowthTrend } from './asset-growth-trend';
+export { EquipmentCreatedTrend } from './equipment-created-trend';
+export { FacilitiesCreatedTrend } from './facilities-created-trend';
+export { InspectionQualityTrend } from './inspection-quality-trend';
+export { InspectionsTrend } from './inspections-trend';
+export { NonConformitiesOpenedTrend } from './non-conformities-opened-trend';
+export { NonConformitiesResolvedTrend } from './non-conformities-resolved-trend';
+export { OverviewTrend } from './overview-trend';

@@ -1,0 +1,22 @@
+<p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
+
+<app-trend-card
+  title="Inspections"
+  description="Total inspections over time"
+  [metrics]="summaryMetrics()"
+  [loading]="isLoading()"
+>
+  <ng-template #action>
+    <app-inspections-toolbar
+      (menuToggle)="onMenuToggle($event)"
+    />
+  </ng-template>
+
+  <ng-template #content>
+    <app-inspections-chart />
+  </ng-template>
+
+  <ng-template #footer>
+    <app-inspections-filters />
+  </ng-template>
+</app-trend-card>

@@ -1,0 +1,96 @@
+<div class="flex flex-wrap items-center gap-2">
+  <p-select
+    [ngModel]="store.selectedEquipmentType()"
+    (ngModelChange)="store.setEquipmentType($event)"
+    [options]="equipmentTypeOptions"
+    optionLabel="label"
+    optionValue="value"
+    placeholder="Equipment type"
+    [showClear]="true"
+    [loading]="store.isQueryLoading()"
+    size="small"
+  />
+
+  <p-select
+    [ngModel]="store.selectedEquipmentStatus()"
+    (ngModelChange)="store.setEquipmentStatus($event)"
+    [options]="equipmentStatusOptions"
+    optionLabel="label"
+    optionValue="value"
+    placeholder="Equipment status"
+    [showClear]="true"
+    [loading]="store.isQueryLoading()"
+    size="small"
+  >
+    <ng-template #item let-option>
+      <span class="flex items-center gap-2">
+        <i [class]="option.icon" [style.color]="option.color"></i>
+        {{ option.label }}
+      </span>
+    </ng-template>
+    <ng-template #selectedItem>
+      @let option = selectedEquipmentStatusOption();
+      @if (option) {
+        <span class="flex items-center gap-2">
+          <i [class]="option.icon" [style.color]="option.color"></i>
+          {{ option.label }}
+        </span>
+      }
+    </ng-template>
+  </p-select>
+
+  <p-select
+    [ngModel]="store.selectedFacilityType()"
+    (ngModelChange)="store.setFacilityType($event)"
+    [options]="facilityTypeOptions"
+    optionLabel="label"
+    optionValue="value"
+    placeholder="Facility type"
+    [showClear]="true"
+    [loading]="store.isQueryLoading()"
+    size="small"
+  >
+    <ng-template #item let-option>
+      <span class="flex items-center gap-2">
+        <i [class]="option.icon"></i>
+        {{ option.label }}
+      </span>
+    </ng-template>
+    <ng-template #selectedItem>
+      @let option = selectedFacilityTypeOption();
+      @if (option) {
+        <span class="flex items-center gap-2">
+          <i [class]="option.icon"></i>
+          {{ option.label }}
+        </span>
+      }
+    </ng-template>
+  </p-select>
+
+  @defer (on idle) {
+    <p-datepicker
+      selectionMode="range"
+      [ngModel]="store.selectedDateRange()"
+      [ngModelOptions]="{ updateOn: 'blur' }"
+      (ngModelChange)="store.setDateRange($event)"
+      [maxDate]="today"
+      placeholder="Select date range"
+      [showClear]="true"
+      [showTime]="true"
+      hourFormat="24"
+      size="small"
+      appendTo="body"
+      dateFormat="dd/mm/yy"
+      [disabled]="store.isQueryLoading()"
+    />
+  }
+
+  <p-togglebutton
+    [ngModel]="store.compareEnabled()"
+    (ngModelChange)="store.setCompareEnabled($event)"
+    onLabel="Compare ON"
+    offLabel="Compare OFF"
+    size="small"
+    [disabled]="store.isQueryLoading()"
+  />
+</div>

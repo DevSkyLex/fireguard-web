@@ -54,10 +54,10 @@
       </div>
 
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <app-organization-dashboard-overview-trend class="lg:col-span-7" />
-        <app-organization-dashboard-inspection-quality-trend class="lg:col-span-5" />
-        <app-organization-dashboard-non-conformities-opened-trend class="lg:col-span-6" />
-        <app-organization-dashboard-non-conformities-resolved-trend class="lg:col-span-6" />
+        <app-overview-trend class="lg:col-span-7" />
+        <app-inspection-quality-trend class="lg:col-span-5" />
+        <app-non-conformities-opened-trend class="lg:col-span-6" />
+        <app-non-conformities-resolved-trend class="lg:col-span-6" />
       </div>
     </section>
   </div>
@@ -79,7 +79,7 @@
     <section class="flex flex-col gap-6">
       @defer (on viewport) {
         <div class="grid grid-cols-1 gap-6">
-          <app-organization-dashboard-asset-growth-trend />
+          <app-asset-growth-trend />
         </div>
       } @placeholder {
         <div class="grid grid-cols-1 gap-6">

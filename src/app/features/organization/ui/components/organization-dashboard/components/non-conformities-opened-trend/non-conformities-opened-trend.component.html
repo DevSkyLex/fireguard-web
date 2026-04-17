@@ -1,0 +1,22 @@
+<p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
+
+<app-trend-card
+  title="Non-Conformities Opened"
+  description="New non-conformities opened over time"
+  [metrics]="summaryMetrics()"
+  [loading]="isLoading()"
+>
+  <ng-template #action>
+    <app-non-conformities-opened-toolbar
+      (menuToggle)="onMenuToggle($event)"
+    />
+  </ng-template>
+
+  <ng-template #content>
+    <app-non-conformities-opened-chart />
+  </ng-template>
+
+  <ng-template #footer>
+    <app-non-conformities-opened-filters />
+  </ng-template>
+</app-trend-card>

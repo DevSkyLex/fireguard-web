@@ -1,0 +1,24 @@
+<div class="flex items-center gap-2">
+  <p-inputgroup>
+    <p-inputgroup-addon>
+      <i class="pi pi-calendar"></i>
+    </p-inputgroup-addon>
+    <p-select
+      [ngModel]="store.selectedGranularity()"
+      (ngModelChange)="store.setGranularity($event)"
+      [options]="store.granularityOptions()"
+      optionLabel="label"
+      optionValue="value"
+      [loading]="store.isQueryLoading()"
+      size="small"
+    />
+  </p-inputgroup>
+
+  <p-button
+    icon="pi pi-ellipsis-v"
+    severity="secondary"
+    size="small"
+    outlined
+    (onClick)="menuToggle.emit($event)"
+  />
+</div>

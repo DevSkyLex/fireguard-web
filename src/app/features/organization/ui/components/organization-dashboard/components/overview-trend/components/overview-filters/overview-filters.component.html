@@ -1,0 +1,28 @@
+<div class="flex flex-wrap items-center gap-2">
+  @defer (on idle) {
+    <p-datepicker
+      selectionMode="range"
+      [ngModel]="store.selectedDateRange()"
+      [ngModelOptions]="{ updateOn: 'blur' }"
+      (ngModelChange)="store.setDateRange($event)"
+      [maxDate]="today"
+      placeholder="Select date range"
+      [showClear]="true"
+      [showTime]="true"
+      hourFormat="24"
+      size="small"
+      appendTo="body"
+      dateFormat="dd/mm/yy"
+      [disabled]="store.isQueryLoading()"
+    />
+  }
+
+  <p-togglebutton
+    [ngModel]="store.compareEnabled()"
+    (ngModelChange)="store.setCompareEnabled($event)"
+    onLabel="Compare ON"
+    offLabel="Compare OFF"
+    size="small"
+    [disabled]="store.isQueryLoading()"
+  />
+</div>

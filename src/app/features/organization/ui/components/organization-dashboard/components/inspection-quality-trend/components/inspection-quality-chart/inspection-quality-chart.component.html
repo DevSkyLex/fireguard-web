@@ -1,0 +1,14 @@
+<div class="h-72">
+  @if (loading()) {
+    <p-skeleton height="100%" class="w-full" />
+  } @else {
+    <p-chart
+      type="bar"
+      [data]="data()"
+      [options]="options"
+      class="block h-full"
+      [style]="{ height: '100%' }"
+      fluid
+    />
+  }
+</div>

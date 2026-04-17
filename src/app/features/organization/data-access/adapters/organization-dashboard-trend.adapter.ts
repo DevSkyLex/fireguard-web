@@ -251,6 +251,23 @@ export function buildPercentageSeries(
 }
 
 /**
+ * Function getDashboardTrendSeriesValues
+ *
+ * @description
+ * Maps a raw trend series into a dense numeric array by extracting the
+ * value of each point in order. Nullish series are treated as empty.
+ *
+ * @param {readonly OrganizationDashboardTrendSeriesPoint[] | null | undefined} series
+ *   The raw trend series returned by the API.
+ * @returns {number[]} The ordered numeric values for each point.
+ */
+export function getDashboardTrendSeriesValues(
+  series: readonly OrganizationDashboardTrendSeriesPoint[] | null | undefined,
+): number[] {
+  return (series ?? []).map(getDashboardTrendPointValue);
+}
+
+/**
  * Function sumDashboardTrendValues
  *
  * @description
@@ -282,5 +299,5 @@ export function sumDashboardTrendValues(values: readonly number[]): number {
 export function sumTrendSeries(
   series: readonly OrganizationDashboardTrendSeriesPoint[] | null | undefined,
 ): number {
-  return sumDashboardTrendValues((series ?? []).map(getDashboardTrendPointValue));
+  return sumDashboardTrendValues(getDashboardTrendSeriesValues(series));
 }

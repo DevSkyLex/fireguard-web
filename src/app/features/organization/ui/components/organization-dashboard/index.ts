@@ -1,11 +1,11 @@
 export { OrganizationDashboard } from './organization-dashboard.component';
 export {
-  OrganizationDashboardAssetGrowthTrend,
-  OrganizationDashboardEquipmentCreatedTrend,
-  OrganizationDashboardFacilitiesCreatedTrend,
-  OrganizationDashboardInspectionQualityTrend,
-  OrganizationDashboardInspectionsTrend,
-  OrganizationDashboardNonConformitiesOpenedTrend,
-  OrganizationDashboardNonConformitiesResolvedTrend,
-  OrganizationDashboardOverviewTrend,
+  AssetGrowthTrend,
+  EquipmentCreatedTrend,
+  FacilitiesCreatedTrend,
+  InspectionQualityTrend,
+  InspectionsTrend,
+  NonConformitiesResolvedTrend,
+  NonConformitiesOpenedTrend,
+  OverviewTrend,
 } from './components';

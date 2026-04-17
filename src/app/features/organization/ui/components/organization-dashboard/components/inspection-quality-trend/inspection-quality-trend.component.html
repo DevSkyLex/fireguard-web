@@ -1,0 +1,22 @@
+<p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
+
+<app-trend-card
+  title="Inspection Quality"
+  description="Inspection throughput versus opened non-conformity pressure"
+  [metrics]="summaryMetrics()"
+  [loading]="isLoading()"
+>
+  <ng-template #action>
+    <app-inspection-quality-toolbar
+      (menuToggle)="onMenuToggle($event)"
+    />
+  </ng-template>
+
+  <ng-template #content>
+    <app-inspection-quality-chart />
+  </ng-template>
+
+  <ng-template #footer>
+    <app-inspection-quality-filters />
+  </ng-template>
+</app-trend-card>

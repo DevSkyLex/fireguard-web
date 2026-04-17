@@ -1,9 +1,12 @@
-export type { DashboardSummaryMetric } from './dashboard-summary-metric.type';
-export type { EquipmentStatusOption } from './equipment-status-option.type';
-export type { EquipmentTypeOption } from './equipment-type-option.type';
-export type { FacilityTypeOption } from './facility-type-option.type';
-export type { InspectionResultOption } from './inspection-result-option.type';
-export type { InspectionStatusOption } from './inspection-status-option.type';
-export type { InspectorTypeOption } from './inspector-type-option.type';
-export type { NonConformitySeverityOption } from './non-conformity-severity-option.type';
-export type { NonConformityStatusOption } from './non-conformity-status-option.type';
+export type { DashboardSummaryMetric, DashboardSingleTrendViewModel } from './dashboard';
+export type { EquipmentStatusOption, EquipmentTypeOption } from './equipment';
+export type { FacilityTypeOption } from './facility';
+export type {
+	InspectionResultOption,
+	InspectionStatusOption,
+	InspectorTypeOption,
+} from './inspection';
+export type {
+	NonConformitySeverityOption,
+	NonConformityStatusOption,
+} from './non-conformity';

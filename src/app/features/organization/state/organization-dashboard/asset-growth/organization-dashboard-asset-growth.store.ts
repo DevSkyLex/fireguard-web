@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, forkJoin, pipe, switchMap } from 'rxjs';
 import {
@@ -20,6 +20,10 @@ import type {
   OrganizationDashboardTrendResourceParams,
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
+import {
+  alignDashboardTrendSeries,
+  type AlignedDashboardTrendSeries,
+} from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import {
   buildDashboardTrendBaseParams,
   withDashboardFilterState,
@@ -206,6 +210,28 @@ export const OrganizationDashboardAssetGrowthStore = signalStore(
     setFacilityType(facilityType: FacilityType | null): void {
       patchState(store, { selectedFacilityType: facilityType });
     },
+  })),
+
+  //#endregion
+
+  //#region Computed
+
+  /**
+   * Feature withComputed
+   *
+   * @description
+   * Derives the aligned trend series shared by the chart and summary metrics.
+   *
+   * @since 2.0.0
+   */
+  withComputed((store) => ({
+    alignedTrendData: computed<AlignedDashboardTrendSeries>(() => {
+      const growth = store.queryData();
+      return alignDashboardTrendSeries(
+        [growth?.equipment?.series, growth?.facilities?.series],
+        store.selectedGranularity(),
+      );
+    }),
   })),
 
   //#endregion

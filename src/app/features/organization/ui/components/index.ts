@@ -1,7 +1,7 @@
 export {
   OrganizationDashboard,
-  OrganizationDashboardInspectionsTrend,
-  OrganizationDashboardNonConformitiesOpenedTrend,
-  OrganizationDashboardNonConformitiesResolvedTrend,
-  OrganizationDashboardOverviewTrend,
+  InspectionsTrend,
+  NonConformitiesOpenedTrend,
+  NonConformitiesResolvedTrend,
+  OverviewTrend,
 } from './organization-dashboard';

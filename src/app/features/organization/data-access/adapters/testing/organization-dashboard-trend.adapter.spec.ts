@@ -4,6 +4,8 @@ import {
   buildDifferenceSeries,
   buildPercentageSeries,
   formatDashboardTrendBucket,
+  getDashboardTrendSeriesValues,
+  sumTrendSeries,
 } from '../organization-dashboard-trend.adapter';
 
 describe('organization dashboard trend utils', () => {
@@ -37,5 +39,25 @@ describe('organization dashboard trend utils', () => {
 
   it('builds percentage series and guards zero denominators', () => {
     expect(buildPercentageSeries([2, 3, 1], [4, 0, 2])).toEqual([50, 0, 50]);
+  });
+
+  it('extracts numeric values from a raw trend series', () => {
+    const series: readonly OrganizationDashboardTrendSeriesPoint[] = [
+      { bucket: '2026-03', count: 4 },
+      { bucket: '2026-04', total: 8 },
+      { bucket: '2026-05', value: 2 },
+    ];
+
+    expect(getDashboardTrendSeriesValues(series)).toEqual([4, 8, 2]);
+  });
+
+  it('sums a raw trend series without manual mapping', () => {
+    const series: readonly OrganizationDashboardTrendSeriesPoint[] = [
+      { bucket: '2026-03', count: 4 },
+      { bucket: '2026-04', total: 8 },
+      { bucket: '2026-05', value: 2 },
+    ];
+
+    expect(sumTrendSeries(series)).toBe(14);
   });
 });

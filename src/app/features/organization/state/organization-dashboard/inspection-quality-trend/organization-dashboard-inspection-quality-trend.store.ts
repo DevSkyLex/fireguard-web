@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, forkJoin, pipe, switchMap } from 'rxjs';
 import {
@@ -12,6 +12,11 @@ import {
   toStoreError,
 } from '@core/state/request-state';
 import { OrganizationService } from '@features/organization/data-access';
+import {
+  alignDashboardTrendSeries,
+  buildPercentageSeries,
+  type AlignedDashboardTrendSeries,
+} from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import type {
   InspectionResult,
   InspectionStatus,
@@ -208,6 +213,74 @@ export const OrganizationDashboardInspectionQualityStore = signalStore(
       patchState(store, { selectedNonConformitySeverity: nonConformitySeverity });
     },
   })),
+  //#endregion
+
+  //#region Computed
+
+  /**
+   * Feature withComputed (aligned series)
+   *
+   * @description
+   * Aligns the raw inspection and NC-opened time series onto a shared bucket
+   * axis once per state change. Both the chart component and the summary
+   * metrics consumer read this memoised signal, so {@link alignDashboardTrendSeries}
+   * is only ever called once per reactive cycle.
+   *
+   * @since 2.0.0
+   */
+  withComputed((store) => ({
+    /**
+     * Property alignedTrendData
+     * @readonly
+     *
+     * @description
+     * Shared aligned series used by the chart component (`data` computed)
+     * and the parent component (`summaryMetrics` computed).  Recomputes
+     * whenever `queryData` or `selectedGranularity` changes.
+     *
+     * @since 2.0.0
+     *
+     * @type {Signal<AlignedDashboardTrendSeries>}
+     */
+    alignedTrendData: computed<AlignedDashboardTrendSeries>(() => {
+      const data = store.queryData();
+      return alignDashboardTrendSeries(
+        [data?.inspections?.series, data?.ncOpened?.series],
+        store.selectedGranularity(),
+      );
+    }),
+  })),
+
+  /**
+   * Feature withComputed (rate series)
+   *
+   * @description
+   * Derives the per-bucket NC rate series from {@link alignedTrendData}.
+   * Placed in a separate `withComputed` call so it can reference the
+   * `alignedTrendData` signal already present on the store.
+   *
+   * @since 2.0.0
+   */
+  withComputed((store) => ({
+    /**
+     * Property rateSeriesData
+     * @readonly
+     *
+     * @description
+     * Per-bucket NC rate (0–100 %) derived from the aligned inspection and
+     * NC-opened datasets. Used by the chart for the secondary line dataset
+     * and by the parent component to compute the Rate Shift KPI tile.
+     *
+     * @since 2.0.0
+     *
+     * @type {Signal<readonly number[]>}
+     */
+    rateSeriesData: computed<readonly number[]>(() => {
+      const [inspectionData = [], ncOpenedData = []] = store.alignedTrendData().datasets;
+      return buildPercentageSeries(ncOpenedData, inspectionData);
+    }),
+  })),
+
   //#endregion
 
   //#region Hooks

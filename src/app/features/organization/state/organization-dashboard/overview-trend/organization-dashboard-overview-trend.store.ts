@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, withHooks, withMethods } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, forkJoin, pipe, switchMap } from 'rxjs';
 import {
@@ -17,6 +17,10 @@ import type {
   OrganizationDashboardTrendResourceParams,
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
+import {
+  alignDashboardTrendSeries,
+  type AlignedDashboardTrendSeries,
+} from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import {
   buildDashboardTrendBaseParams,
   withDashboardFilterState,
@@ -125,6 +129,28 @@ export const OrganizationDashboardOverviewTrendStore = signalStore(
       ),
     ),
   })),
+  //#endregion
+
+  //#region Computed
+
+  /**
+   * Feature withComputed
+   *
+   * @description
+   * Derives the aligned trend series shared by chart and summary metrics.
+   *
+   * @since 1.0.0
+   */
+  withComputed((store) => ({
+    alignedTrendData: computed<AlignedDashboardTrendSeries>(() => {
+      const result = store.queryData();
+      return alignDashboardTrendSeries(
+        [result?.inspections?.series, result?.ncOpened?.series, result?.ncResolved?.series],
+        store.selectedGranularity(),
+      );
+    }),
+  })),
+
   //#endregion
 
   //#region Hooks

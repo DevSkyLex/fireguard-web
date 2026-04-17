@@ -2,11 +2,11 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { OrganizationDashboardStore } from '@features/organization/state/organization-dashboard';
 import { MetricCard } from '@shared/components';
 import {
-  OrganizationDashboardAssetGrowthTrend,
-  OrganizationDashboardInspectionQualityTrend,
-  OrganizationDashboardNonConformitiesOpenedTrend,
-  OrganizationDashboardNonConformitiesResolvedTrend,
-  OrganizationDashboardOverviewTrend,
+  AssetGrowthTrend,
+  InspectionQualityTrend,
+  NonConformitiesResolvedTrend,
+  NonConformitiesOpenedTrend,
+  OverviewTrend,
 } from './components';
 
 /**
@@ -28,11 +28,11 @@ import {
   templateUrl: './organization-dashboard.component.html',
   imports: [
     MetricCard,
-    OrganizationDashboardOverviewTrend,
-    OrganizationDashboardInspectionQualityTrend,
-    OrganizationDashboardNonConformitiesOpenedTrend,
-    OrganizationDashboardNonConformitiesResolvedTrend,
-    OrganizationDashboardAssetGrowthTrend,
+    OverviewTrend,
+    InspectionQualityTrend,
+    NonConformitiesOpenedTrend,
+    NonConformitiesResolvedTrend,
+    AssetGrowthTrend,
   ],
   providers: [OrganizationDashboardStore],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,0 +1,22 @@
+<p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
+
+<app-trend-card
+  title="Asset Growth Momentum"
+  description="Equipment and facilities created over time"
+  [metrics]="summaryMetrics()"
+  [loading]="isLoading()"
+>
+  <ng-template #action>
+    <app-asset-growth-toolbar
+      (menuToggle)="onMenuToggle($event)"
+    />
+  </ng-template>
+
+  <ng-template #content>
+    <app-asset-growth-chart />
+  </ng-template>
+
+  <ng-template #footer>
+    <app-asset-growth-filters />
+  </ng-template>
+</app-trend-card>

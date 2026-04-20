@@ -6,109 +6,72 @@ import type { HydraItem } from '@core/models/api';
  *
  * @description
  * Current authenticated user profile returned by the account-owned
- * user profile transport. The underlying endpoint currently maps to
- * the OIDC userinfo resource.
+ * `/api/me` transport.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface UserProfileOutput extends HydraItem {
-  /**
-   * Property sub
-   * @readonly
-   *
-   * @description
-   * Subject identifier of the authenticated user.
-   *
-   * @type {string}
-   */
-  readonly sub: string;
+  /** Stable identifier of the authenticated user. */
+  readonly id: string | null;
 
-  /**
-   * Property name
-   * @readonly
-   *
-   * @description
-   * Full display name of the user.
-   *
-   * @type {string | null | undefined}
-   */
+  /** Username resolved for the authenticated user. */
+  readonly username: string | null;
+
+  /** Email address of the authenticated user. */
+  readonly email: string | null;
+
+  /** Given name of the authenticated user. */
+  readonly firstName: string | null;
+
+  /** Family name of the authenticated user. */
+  readonly lastName: string | null;
+
+  /** Avatar URL of the authenticated user. */
+  readonly avatarUrl: string | null;
+
+  /** Account status returned by the backend. */
+  readonly status: string | null;
+
+  /** Whether the email address has been verified. */
+  readonly emailVerified: boolean;
+
+  /** Tenant identifier when the user belongs to one. */
+  readonly tenantId: string | null;
+
+  /** Account creation timestamp. */
+  readonly createdAt: string | null;
+
+  /** Last successful login timestamp. */
+  readonly lastLoginAt: string | null;
+
+  /** Resolved global role names for the authenticated user. */
+  readonly roles: ReadonlyArray<string>;
+
+  /** Resolved global permission names for the authenticated user. */
+  readonly permissions: ReadonlyArray<string>;
+
+  /** Legacy compatibility alias kept during the `/api/me` migration. */
+  readonly sub?: string | null;
+
+  /** Legacy compatibility alias kept during the `/api/me` migration. */
   readonly name?: string | null;
 
-  /**
-   * Property given_name
-   * @readonly
-   *
-   * @description
-   * Given name of the user.
-   *
-   * @type {string | null | undefined}
-   */
+  /** Legacy compatibility alias kept during the `/api/me` migration. */
   readonly given_name?: string | null;
 
-  /**
-   * Property family_name
-   * @readonly
-   *
-   * @description
-   * Family name of the user.
-   *
-   * @type {string | null | undefined}
-   */
+  /** Legacy compatibility alias kept during the `/api/me` migration. */
   readonly family_name?: string | null;
 
-  /**
-   * Property preferred_username
-   * @readonly
-   *
-   * @description
-   * Preferred display username.
-   *
-   * @type {string | null | undefined}
-   */
+  /** Legacy compatibility alias kept during the `/api/me` migration. */
   readonly preferred_username?: string | null;
 
-  /**
-   * Property picture
-   * @readonly
-   *
-   * @description
-   * Avatar URL of the authenticated user.
-   *
-   * @type {string | null | undefined}
-   */
+  /** Legacy compatibility alias kept during the `/api/me` migration. */
   readonly picture?: string | null;
 
-  /**
-   * Property email
-   * @readonly
-   *
-   * @description
-   * Email address of the user.
-   *
-   * @type {string | null | undefined}
-   */
-  readonly email?: string | null;
-
-  /**
-   * Property email_verified
-   * @readonly
-   *
-   * @description
-   * Whether the email address has been verified.
-   *
-   * @type {boolean | null | undefined}
-   */
+  /** Legacy compatibility alias kept during the `/api/me` migration. */
   readonly email_verified?: boolean | null;
 
-  /**
-   * Property updated_at
-   * @readonly
-   *
-   * @description
-   * Last profile update timestamp, in Unix seconds.
-   *
-   * @type {number | null | undefined}
-   */
+  /** Legacy compatibility alias kept during the `/api/me` migration. */
   readonly updated_at?: number | null;
 }

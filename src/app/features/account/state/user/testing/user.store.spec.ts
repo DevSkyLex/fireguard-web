@@ -17,15 +17,21 @@ describe('UserStore', () => {
   let mockUserProfileService: { getCurrentProfile: ReturnType<typeof vi.fn> };
 
   const profile: UserProfileOutput = {
-    '@id': '/api/oauth2/userinfo',
-    '@type': 'UserInfo',
-    sub: 'user-1',
-    name: 'Jane Doe',
-    given_name: 'Jane',
-    family_name: 'Doe',
-    preferred_username: 'jane',
+    '@id': '/api/me',
+    '@type': 'User',
+    id: 'user-1',
+    username: 'jane',
     email: 'jane@example.com',
-    picture: 'https://example.com/avatar.png',
+    firstName: 'Jane',
+    lastName: 'Doe',
+    avatarUrl: 'https://example.com/avatar.png',
+    status: 'active',
+    emailVerified: true,
+    tenantId: 'tenant-1',
+    createdAt: '2026-04-01T08:00:00+00:00',
+    lastLoginAt: '2026-04-20T08:00:00+00:00',
+    roles: ['ROLE_USER'],
+    permissions: ['account:read'],
   };
 
   beforeEach(() => {
@@ -86,7 +92,8 @@ describe('UserStore', () => {
   it('should force API call on reload', async () => {
     const updatedProfile: UserProfileOutput = {
       ...profile,
-      name: 'Jane Updated',
+      firstName: 'Janet',
+      lastName: 'Updated',
     };
     mockUserProfileService.getCurrentProfile
       .mockReturnValueOnce(of(profile))
@@ -98,10 +105,10 @@ describe('UserStore', () => {
     await flushEffects();
 
     expect(mockUserProfileService.getCurrentProfile).toHaveBeenCalledTimes(2);
-    expect(store.profile()?.name).toBe('Jane Updated');
+    expect(store.displayName()).toBe('Janet Updated');
   });
 
-  it('should retry userinfo in the browser when SSR transfer state contains null', async () => {
+  it('should retry current profile loading in the browser when SSR transfer state contains null', async () => {
     transferState.set(makeStateKey<UserProfileOutput | null>('user-profile'), null);
     mockUserProfileService.getCurrentProfile.mockReturnValue(of(profile));
 

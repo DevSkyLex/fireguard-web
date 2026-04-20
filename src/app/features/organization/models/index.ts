@@ -3,6 +3,7 @@ export type { CreateOrganizationInput } from './organization-entity/create-organ
 export type { InviteOrganizationMemberInput } from './member/invite-organization-member-input.interface';
 export type { OrganizationInvitationOutput } from './member/organization-invitation-output.interface';
 export type { OrganizationMemberOutput } from './member/organization-member-output.interface';
+export type { CurrentOrganizationMemberProfileOutput } from './member/current-organization-member-profile-output.interface';
 export type { OrganizationRoleOutput } from './role/organization-role-output.interface';
 export type { AddOrganizationMemberInput } from './member/add-organization-member-input.interface';
 export type { CreateOrganizationRoleInput } from './role/create-organization-role-input.interface';

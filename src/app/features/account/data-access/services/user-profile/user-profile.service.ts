@@ -10,9 +10,9 @@ import type { UserProfileOutput } from '@features/account/models';
  *
  * @description
  * Account-owned API service for retrieving the current authenticated user
- * profile. The current backend endpoint is backed by the OIDC userinfo
- * resource, but ownership remains with the account feature because it owns
- * current user profile state.
+ * profile. The backend endpoint resolves the authenticated user identity
+ * together with global roles and permissions, while ownership remains with
+ * the account feature because it owns current user profile state.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -29,17 +29,18 @@ export class UserProfileService extends HydraApiService {
    *
    * @type {string}
    */
-  private static readonly BASE_PATH: string = '/api/oauth2';
+  private static readonly BASE_PATH: string = '/api';
 
   /**
    * Method getCurrentProfile
    *
    * @description
-   * Retrieves the authenticated user's current profile.
+   * Retrieves the authenticated user's current profile and effective
+   * global rights.
    *
    * @returns {Observable<UserProfileOutput>} Observable emitting the current profile.
    */
   public getCurrentProfile(): Observable<UserProfileOutput> {
-    return this.getOne<UserProfileOutput>(`${UserProfileService.BASE_PATH}/userinfo`);
+    return this.getOne<UserProfileOutput>(`${UserProfileService.BASE_PATH}/me`);
   }
 }

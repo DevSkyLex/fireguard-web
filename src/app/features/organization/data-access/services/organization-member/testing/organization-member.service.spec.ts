@@ -7,6 +7,9 @@ import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
 import type {
   OrganizationMemberOutput,
   AddOrganizationMemberInput,
+  CurrentOrganizationMemberProfileOutput,
+  OrganizationPermissionOutput,
+  OrganizationRoleOutput,
 } from '@features/organization/models';
 import { OrganizationMemberService } from '../organization-member.service';
 
@@ -17,6 +20,7 @@ describe('OrganizationMemberService', () => {
   const mockEnv = { apiUrl: 'https://api.test.com' };
   const orgId = 'org-uuid-1';
   const baseUrl = `${mockEnv.apiUrl}/api/organizations/${orgId}/members`;
+  const currentProfileUrl = `${mockEnv.apiUrl}/api/organizations/${orgId}/me`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -47,6 +51,39 @@ describe('OrganizationMemberService', () => {
     roleIds: ['role-uuid-1'],
   };
 
+  const mockRole: OrganizationRoleOutput = {
+    '@id': `/api/organizations/${orgId}/roles/role-uuid-1`,
+    '@type': 'OrganizationRole',
+    id: 'role-uuid-1',
+    organizationId: orgId,
+    name: 'Owner',
+    description: 'Organization owner',
+    isSystem: true,
+    permissions: ['organization:read', 'organization:write'],
+    createdAt: '2026-01-01T00:00:00+00:00',
+    updatedAt: '2026-01-01T00:00:00+00:00',
+  };
+
+  const mockPermission: OrganizationPermissionOutput = {
+    '@id': `/api/organizations/${orgId}/permissions/permission-uuid-1`,
+    '@type': 'Permission',
+    id: 'permission-uuid-1',
+    name: 'organization:write',
+    description: 'Write organization settings',
+  };
+
+  const mockCurrentProfile: CurrentOrganizationMemberProfileOutput = {
+    '@id': `/api/organizations/${orgId}/me`,
+    '@type': 'OrganizationMember',
+    id: 'member-uuid-1',
+    organizationId: orgId,
+    userId: 'user-uuid-2',
+    isActive: true,
+    joinedAt: '2026-01-15T10:00:00+00:00',
+    roles: [mockRole],
+    permissions: [mockPermission],
+  };
+
   const mockCollection = <T extends HydraItem>(items: T[]): HydraCollection<T> => ({
     '@context': '/api/contexts/Collection',
     '@id': baseUrl,
@@ -54,6 +91,34 @@ describe('OrganizationMemberService', () => {
     member: items,
     totalItems: items.length,
     view: { '@id': `${baseUrl}?page=1`, '@type': 'hydra:PartialCollectionView' },
+  });
+
+  // ── list ───────────────────────────────────────────────────────────────────
+
+  describe('getCurrentProfile', () => {
+    it('should send GET request and return the current organization member profile', () => {
+      service.getCurrentProfile(orgId).subscribe((response) => {
+        expect(response.id).toBe('member-uuid-1');
+        expect(response.roles[0]?.name).toBe('Owner');
+        expect(response.permissions[0]?.name).toBe('organization:write');
+      });
+
+      const req = httpMock.expectOne(currentProfileUrl);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(mockCurrentProfile);
+    });
+
+    it('should handle not found when the authenticated user is not an active member', () => {
+      service.getCurrentProfile(orgId).subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(404);
+        },
+      });
+
+      const req = httpMock.expectOne(currentProfileUrl);
+      req.flush({ status: 404, title: 'Not Found' }, { status: 404, statusText: 'Not Found' });
+    });
   });
 
   // ── list ───────────────────────────────────────────────────────────────────

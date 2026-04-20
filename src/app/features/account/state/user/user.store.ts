@@ -25,7 +25,7 @@ import { userStoreEvents } from './events';
  *
  * @description
  * TransferState key used to pass the user profile obtained during SSR
- * to the browser, avoiding a duplicate userinfo call after hydration.
+ * to the browser, avoiding a duplicate current-profile call after hydration.
  *
  * @since 1.0.0
  */
@@ -52,7 +52,7 @@ const INITIAL_USER_STATE: UserState = {
  *
  * @description
  * NGRX SignalStore for current user profile management.
- * Handles loading user information from the OIDC userinfo endpoint.
+ * Handles loading user information from the account-owned current-profile endpoint.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -119,7 +119,8 @@ export const UserStore = signalStore(
      * Computed displayName
      *
      * @description
-     * Returns the user's display name (name, preferred_username, or email).
+      * Returns the user's display name derived from the most explicit
+      * profile fields available.
      *
      * @since 1.0.0
      *
@@ -128,15 +129,23 @@ export const UserStore = signalStore(
     displayName: computed<string | null>(() => {
       const profile: UserProfileOutput | null = store.profile();
       if (!profile) return null;
-      return profile.name ?? profile.preferred_username ?? profile.email ?? null;
+
+      const firstName: string = profile.firstName?.trim() ?? '';
+      const lastName: string = profile.lastName?.trim() ?? '';
+      const fullName: string = `${firstName} ${lastName}`.trim();
+
+      if (fullName) {
+        return fullName;
+      }
+
+      return profile.name ?? profile.username ?? profile.preferred_username ?? profile.email ?? null;
     }),
 
     /**
      * Computed initials
      *
      * @description
-     * Returns the user's initials (first letter of given
-     * name and family name).
+      * Returns the user's initials (first letter of first and last name).
      *
      * @since 1.0.0
      *
@@ -146,15 +155,19 @@ export const UserStore = signalStore(
       const profile: UserProfileOutput | null = store.profile();
       if (!profile) return null;
 
-      const givenInitial: string = profile.given_name?.charAt(0).toUpperCase() ?? '';
-      const familyInitial: string = profile.family_name?.charAt(0).toUpperCase() ?? '';
+      const givenInitial: string = (profile.firstName ?? profile.given_name ?? '')
+        .charAt(0)
+        .toUpperCase();
+      const familyInitial: string = (profile.lastName ?? profile.family_name ?? '')
+        .charAt(0)
+        .toUpperCase();
 
       if (givenInitial || familyInitial) {
         return `${givenInitial}${familyInitial}`;
       }
 
-      // Fallback to first letter of name or email
-      const fallback: string | null | undefined = profile.name ?? profile.email;
+      const fallback: string | null | undefined =
+        profile.username ?? profile.name ?? profile.preferred_username ?? profile.email;
       return fallback?.charAt(0).toUpperCase() ?? null;
     }),
 
@@ -168,7 +181,10 @@ export const UserStore = signalStore(
      *
      * @returns {string | null}
      */
-    avatarUrl: computed<string | null>(() => store.profile()?.picture ?? null),
+    avatarUrl: computed<string | null>(() => {
+      const profile: UserProfileOutput | null = store.profile();
+      return profile?.avatarUrl ?? profile?.picture ?? null;
+    }),
   })),
   //#endregion
 
@@ -186,7 +202,7 @@ export const UserStore = signalStore(
        * Method load
        *
        * @description
-       * Loads the current user profile from the OIDC userinfo endpoint.
+        * Loads the current user profile from the account-owned `/api/me` endpoint.
        * Idempotent: skips loading if already loading or successfully loaded.
        * Uses switchMap to cancel previous requests if called multiple times.
        *
@@ -271,7 +287,7 @@ export const UserStore = signalStore(
        *
        * @description
        * Initializes the user profile using TransferState when available (browser
-       * after SSR hydration) to avoid a duplicate userinfo request.
+        * after SSR hydration) to avoid a duplicate current-profile request.
        * Falls back to a regular load() call if no transferred state is found.
        *
        * @since 1.0.0
@@ -295,7 +311,7 @@ export const UserStore = signalStore(
           // Retry once in the browser when SSR could not load the profile.
         }
 
-        // SSR or browser without transfer: fetch userinfo and store result for hydration.
+        // SSR or browser without transfer: fetch current profile and store result for hydration.
         await firstValueFrom(
           userProfileService.getCurrentProfile().pipe(
             tapResponse({

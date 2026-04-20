@@ -7,7 +7,7 @@ import type { Signal } from '@angular/core';
  * @description
  * Minimal user identity subset published by the account feature for
  * shell consumers such as layouts and account-adjacent widgets.
- * This is intentionally narrower than the full OIDC userinfo contract.
+ * This is intentionally narrower than the full current-user profile contract.
  * The concrete adapter (UserStore) maps the full profile to this shape
  * by structural compatibility.
  *

@@ -5,6 +5,7 @@ import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
   OrganizationMemberOutput,
   AddOrganizationMemberInput,
+  CurrentOrganizationMemberProfileOutput,
 } from '@features/organization/models';
 
 /**
@@ -14,8 +15,8 @@ import type {
  *
  * @description
  * API service for organization member management.
- * Handles listing existing members and adding new members
- * to an organization.
+ * Handles loading the authenticated member profile, listing existing
+ * members, and adding or removing members in an organization.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -23,6 +24,28 @@ import type {
 @Injectable({ providedIn: 'root' })
 export class OrganizationMemberService extends HydraApiService {
   //#region Public Methods
+  /**
+   * Method getCurrentProfile
+   * @method getCurrentProfile
+   *
+   * @description
+   * Retrieves the authenticated active member profile for the given organization,
+   * including resolved roles and effective permissions.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   *
+   * @return {Observable<CurrentOrganizationMemberProfileOutput>} An observable emitting the current member profile.
+   */
+  public getCurrentProfile(
+    organizationId: string,
+  ): Observable<CurrentOrganizationMemberProfileOutput> {
+    const url: string = `/api/organizations/${organizationId}/me`;
+    return this.getOne<CurrentOrganizationMemberProfileOutput>(url);
+  }
+
   /**
    * Method list
    * @method list

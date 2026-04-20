@@ -1,5 +1,7 @@
 import type { Routes } from '@angular/router';
+import { organizationPermissionGuard } from './http/guards';
 import { organizationResolver, organizationTitleResolver } from './http/resolvers';
+import { ORGANIZATION_PERMISSION } from './models';
 
 /**
  * Constant ORGANIZATION_ROUTES
@@ -46,6 +48,12 @@ export const ORGANIZATION_ROUTES: Routes = [
       },
       {
         path: '',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
+            redirectTo: ['/organizations'],
+          }),
+        ],
         loadComponent: () =>
           import('./ui/pages/organization-overview/organization-overview.component').then(
             (m) => m.OrganizationOverviewPage,

@@ -1,2 +1,2 @@
-export { facilityResolver } from './facility.resolver';
-export { facilityTitleResolver } from './facility-title.resolver';
+export { facilityResolver } from './facility';
+export { facilityTitleResolver } from './facility-title';

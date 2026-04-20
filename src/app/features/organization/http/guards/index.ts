@@ -1,2 +1,7 @@
-export { noOrganizationGuard } from './no-organization.guard';
-export { organizationGuard } from './organization.guard';
+export { organizationPermissionGuard } from './organization-permission';
+export type {
+  OrganizationPermissionGuardMatch,
+  OrganizationPermissionGuardOptions,
+  OrganizationPermissionGuardRedirect,
+} from './organization-permission';
+export { organizationGuard } from './organization';

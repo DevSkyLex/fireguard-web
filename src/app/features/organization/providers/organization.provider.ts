@@ -1,6 +1,9 @@
 import { type EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
-import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import {
+  ORGANIZATION_CONTEXT_PORT,
+  ORGANIZATION_MEMBER_ACCESS_PORT,
+} from '@features/organization/ports';
+import { ActiveOrganizationStore, OrganizationMemberAccessStore } from '@features/organization/state';
 
 /**
  * Provider provideOrganization
@@ -19,6 +22,10 @@ export function provideOrganization(): EnvironmentProviders {
     {
       provide: ORGANIZATION_CONTEXT_PORT,
       useExisting: ActiveOrganizationStore,
+    },
+    {
+      provide: ORGANIZATION_MEMBER_ACCESS_PORT,
+      useExisting: OrganizationMemberAccessStore,
     },
   ]);
 }

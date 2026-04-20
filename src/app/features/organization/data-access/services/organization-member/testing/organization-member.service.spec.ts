@@ -11,6 +11,7 @@ import type {
   OrganizationPermissionOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { OrganizationMemberService } from '../organization-member.service';
 
 describe('OrganizationMemberService', () => {
@@ -59,7 +60,7 @@ describe('OrganizationMemberService', () => {
     name: 'Owner',
     description: 'Organization owner',
     isSystem: true,
-    permissions: ['organization:read', 'organization:write'],
+    permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ, ORGANIZATION_PERMISSION.FACILITIES_WRITE],
     createdAt: '2026-01-01T00:00:00+00:00',
     updatedAt: '2026-01-01T00:00:00+00:00',
   };
@@ -68,8 +69,8 @@ describe('OrganizationMemberService', () => {
     '@id': `/api/organizations/${orgId}/permissions/permission-uuid-1`,
     '@type': 'Permission',
     id: 'permission-uuid-1',
-    name: 'organization:write',
-    description: 'Write organization settings',
+    name: ORGANIZATION_PERMISSION.FACILITIES_WRITE,
+    description: 'Write facility settings',
   };
 
   const mockCurrentProfile: CurrentOrganizationMemberProfileOutput = {
@@ -100,7 +101,7 @@ describe('OrganizationMemberService', () => {
       service.getCurrentProfile(orgId).subscribe((response) => {
         expect(response.id).toBe('member-uuid-1');
         expect(response.roles[0]?.name).toBe('Owner');
-        expect(response.permissions[0]?.name).toBe('organization:write');
+        expect(response.permissions[0]?.name).toBe(ORGANIZATION_PERMISSION.FACILITIES_WRITE);
       });
 
       const req = httpMock.expectOne(currentProfileUrl);

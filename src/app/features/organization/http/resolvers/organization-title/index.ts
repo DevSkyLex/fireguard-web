@@ -1,0 +1,1 @@
+export { organizationTitleResolver } from './organization-title.resolver';

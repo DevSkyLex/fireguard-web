@@ -1,5 +1,16 @@
-export { ORGANIZATION_CONTEXT_PORT } from './ports';
-export type { OrganizationContextPort } from './ports';
+export { ORGANIZATION_CONTEXT_PORT, ORGANIZATION_MEMBER_ACCESS_PORT } from './ports';
+export type { OrganizationContextPort, OrganizationMemberAccessPort } from './ports';
+export {
+	ORGANIZATION_PERMISSION,
+	ORGANIZATION_PERMISSION_NAMES,
+} from './models';
+export type { OrganizationPermissionName } from './models';
+export { OrganizationPermissionService } from './access';
 export { provideOrganization } from './providers';
-export { noOrganizationGuard, organizationGuard } from './http/guards';
+export { organizationGuard, organizationPermissionGuard } from './http/guards';
+export type {
+	OrganizationPermissionGuardMatch,
+	OrganizationPermissionGuardOptions,
+	OrganizationPermissionGuardRedirect,
+} from './http/guards';
 export { OrganizationSwitcher } from './ui/components/organization-switcher';

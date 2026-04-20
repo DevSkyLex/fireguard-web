@@ -185,6 +185,26 @@ export const UserStore = signalStore(
       const profile: UserProfileOutput | null = store.profile();
       return profile?.avatarUrl ?? profile?.picture ?? null;
     }),
+
+    /**
+     * Computed roles
+     *
+     * @description
+     * Returns the resolved global roles of the authenticated user.
+     *
+     * @returns {ReadonlyArray<string>}
+     */
+    roles: computed<ReadonlyArray<string>>(() => store.profile()?.roles ?? []),
+
+    /**
+     * Computed permissions
+     *
+     * @description
+     * Returns the resolved global permissions of the authenticated user.
+     *
+     * @returns {ReadonlyArray<string>}
+     */
+    permissions: computed<ReadonlyArray<string>>(() => store.profile()?.permissions ?? []),
   })),
   //#endregion
 

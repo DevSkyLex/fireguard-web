@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type { ApiError } from '@core/models/api';
+import { ACCOUNT_PERMISSION } from '@features/account/models';
 import type { UserProfileOutput } from '@features/account/models';
 import { UserProfileService } from '../user-profile.service';
 
@@ -48,7 +49,7 @@ describe('UserProfileService', () => {
         createdAt: '2026-04-01T08:00:00+00:00',
         lastLoginAt: '2026-04-20T08:00:00+00:00',
         roles: ['ROLE_USER'],
-        permissions: ['dashboard:read', 'account:read'],
+        permissions: [ACCOUNT_PERMISSION.PROFILE_READ, ACCOUNT_PERMISSION.SESSIONS_READ],
       };
 
       service.getCurrentProfile().subscribe((user) => {
@@ -56,7 +57,7 @@ describe('UserProfileService', () => {
         expect(user.username).toBe('johndoe');
         expect(user.email).toBe('john.doe@example.com');
         expect(user.emailVerified).toBe(true);
-        expect(user.permissions).toContain('dashboard:read');
+        expect(user.permissions).toContain(ACCOUNT_PERMISSION.PROFILE_READ);
       });
 
       const req = httpMock.expectOne(`${baseUrl}/me`);

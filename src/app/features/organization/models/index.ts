@@ -5,6 +5,11 @@ export type { OrganizationInvitationOutput } from './member/organization-invitat
 export type { OrganizationMemberOutput } from './member/organization-member-output.interface';
 export type { CurrentOrganizationMemberProfileOutput } from './member/current-organization-member-profile-output.interface';
 export type { OrganizationRoleOutput } from './role/organization-role-output.interface';
+export {
+  ORGANIZATION_PERMISSION,
+  ORGANIZATION_PERMISSION_NAMES,
+} from './role/organization-permission-name.model';
+export type { OrganizationPermissionName } from './role/organization-permission-name.model';
 export type { AddOrganizationMemberInput } from './member/add-organization-member-input.interface';
 export type { CreateOrganizationRoleInput } from './role/create-organization-role-input.interface';
 export type { UpdateOrganizationRoleInput } from './role/update-organization-role-input.interface';

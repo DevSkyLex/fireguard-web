@@ -1,4 +1,6 @@
 import type { Routes } from '@angular/router';
+import { organizationPermissionGuard } from '@features/organization/http/guards';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { facilityResolver, facilityTitleResolver } from './http/resolvers';
 
 /**
@@ -16,6 +18,9 @@ import { facilityResolver, facilityTitleResolver } from './http/resolvers';
 export const FACILITY_ROUTES: Routes = [
   {
     path: 'create',
+    canActivate: [
+      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.FACILITIES_WRITE] }),
+    ],
     loadComponent: () =>
       import('./ui/pages/facility-create/facility-create.component').then(
         (m) => m.FacilityCreatePage,
@@ -24,6 +29,7 @@ export const FACILITY_ROUTES: Routes = [
   },
   {
     path: ':facilityId',
+    canActivate: [organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ] })],
     resolve: {
       facility: facilityResolver,
       breadcrumb: facilityTitleResolver,
@@ -31,6 +37,9 @@ export const FACILITY_ROUTES: Routes = [
     children: [
       {
         path: 'edit',
+        canActivate: [
+          organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.FACILITIES_WRITE] }),
+        ],
         loadComponent: () =>
           import('./ui/pages/facility-edit/facility-edit.component').then(
             (m) => m.FacilityEditPage,
@@ -53,6 +62,7 @@ export const FACILITY_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
+    canActivate: [organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ] })],
     loadComponent: () =>
       import('./ui/pages/facility-list/facility-list.component').then((m) => m.FacilityListPage),
     title: 'Facilities',

@@ -8,6 +8,7 @@ This feature is responsible for:
 
 - organization list and active organization context,
 - organization member, invitation, role, and audit data,
+- organization-scoped permission helpers derived from the active member access payload,
 - organization overview pages,
 - nested organization-scoped subfeatures such as facilities, equipments, and inspections,
 - publishing organization context to layouts and approved consumers.
@@ -35,6 +36,7 @@ The `:organizationId` parent route resolves organization context before child pa
 Primary stores:
 
 - `ActiveOrganizationStore`
+- `OrganizationMemberAccessStore`
 - `OrganizationStore`
 - `OrganizationRoleListStore`
 - `AuditStore`
@@ -53,12 +55,15 @@ Nested subfeatures under `features/organization/features/` own their own local r
 
 - `ORGANIZATION_CONTEXT_PORT`
 - `OrganizationContextPort`
+- `ORGANIZATION_MEMBER_ACCESS_PORT`
+- `OrganizationMemberAccessPort`
 - `organization/setup`
 - `OrganizationSetupService`
 
 These contracts are the stable boundaries for approved consumers:
 
 - layouts consume active organization context through `ORGANIZATION_CONTEXT_PORT`,
+- approved sibling features consume current organization member roles and permissions through `ORGANIZATION_MEMBER_ACCESS_PORT`,
 - onboarding consumes organization-owned setup workflows through `organization/setup`.
 
 ## Routing Notes
@@ -69,6 +74,7 @@ These contracts are the stable boundaries for approved consumers:
 ## Cross-Feature Dependencies
 
 - May expose organization context to shell composition through ports.
+- May expose current active member access to approved sibling features through `ORGANIZATION_MEMBER_ACCESS_PORT`.
 - May expose onboarding-approved setup workflows through `organization/setup`.
 - Must not move organization-owned widgets into layouts just because they render in the shell.
 

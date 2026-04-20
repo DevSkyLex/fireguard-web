@@ -1,0 +1,1 @@
+export { UserPermissionService } from './services';

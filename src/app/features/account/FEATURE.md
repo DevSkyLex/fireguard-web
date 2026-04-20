@@ -8,7 +8,8 @@ This feature is responsible for:
 
 - user profile state,
 - notification center state and UI,
-- shell-facing user identity and notification contracts,
+- shell-facing user identity, access, and notification contracts,
+- current-user global permission helpers built on the account-owned access contract,
 - account-specific pages under `/account`.
 
 This feature does not own authentication, session restoration, or auth transport concerns. Those belong to `features/auth`.
@@ -43,6 +44,8 @@ Primary services:
 
 - `USER_IDENTITY_PORT`
 - `UserIdentityPort`
+- `USER_ACCESS_PORT`
+- `UserAccessPort`
 - `USER_PROFILE_PORT`
 - `UserProfilePort`
 - `NOTIFICATION_CENTER_PORT`

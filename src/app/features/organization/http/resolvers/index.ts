@@ -1,2 +1,2 @@
-export { organizationResolver } from './organization.resolver';
-export { organizationTitleResolver } from './organization-title.resolver';
+export { organizationResolver } from './organization';
+export { organizationTitleResolver } from './organization-title';

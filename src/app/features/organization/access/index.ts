@@ -1,0 +1,1 @@
+export { OrganizationPermissionService } from './services';

@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
 import { UserProfileService } from '@features/account/data-access';
+import { ACCOUNT_PERMISSION } from '@features/account/models';
 import type { UserProfileOutput } from '@features/account/models';
 import { UserStore } from '../user.store';
 
@@ -31,7 +32,7 @@ describe('UserStore', () => {
     createdAt: '2026-04-01T08:00:00+00:00',
     lastLoginAt: '2026-04-20T08:00:00+00:00',
     roles: ['ROLE_USER'],
-    permissions: ['account:read'],
+    permissions: [ACCOUNT_PERMISSION.PROFILE_READ],
   };
 
   beforeEach(() => {

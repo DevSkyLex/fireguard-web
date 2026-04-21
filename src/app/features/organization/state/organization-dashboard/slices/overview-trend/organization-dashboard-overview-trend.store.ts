@@ -56,7 +56,8 @@ import {
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export const OverviewTrendStore = signalStore(
+function createOverviewTrendStore() {
+  return signalStore(
   //#region State
 
   /**
@@ -152,7 +153,7 @@ export const OverviewTrendStore = signalStore(
    */
   withComputed((store) => ({
     alignedTrendData: computed<AlignedDashboardTrendSeries>(() => {
-      const result = store.queryData();
+      const result: ReturnType<typeof store.queryData> = store.queryData();
       return alignDashboardTrendSeries(
         [result?.inspections?.series, result?.ncOpened?.series, result?.ncResolved?.series],
         store.selectedGranularity(),
@@ -175,17 +176,19 @@ export const OverviewTrendStore = signalStore(
    * @since 1.0.0
    */
   withComputed((store) => {
-    const platformId = inject(PLATFORM_ID);
-    const activeOrganizationStore = inject(ActiveOrganizationStore);
+    const platformId: Object = inject(PLATFORM_ID);
+    const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
 
     return {
       loadParams: computed<OrganizationDashboardTrendResourceParams | undefined>(() => {
         if (!isPlatformBrowser(platformId)) return undefined;
 
-        const organization = activeOrganizationStore.selectedOrganization();
+        const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+          activeOrganizationStore.selectedOrganization();
         if (!organization) return undefined;
 
-        const baseParams = buildDashboardTrendBaseParams(store);
+        const baseParams: ReturnType<typeof buildDashboardTrendBaseParams> =
+          buildDashboardTrendBaseParams(store);
         if (!baseParams) return undefined;
 
         return { organizationId: organization.id, ...baseParams };
@@ -202,8 +205,8 @@ export const OverviewTrendStore = signalStore(
    * @since 1.0.0
    */
   withHooks((store) => {
-    const platformId = inject(PLATFORM_ID);
-    const activeOrganizationStore = inject(ActiveOrganizationStore);
+    const platformId: Object = inject(PLATFORM_ID);
+    const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
 
     return {
       /**
@@ -219,10 +222,12 @@ export const OverviewTrendStore = signalStore(
       onInit(): void {
         // === Persistence: Hydration ===
         if (isPlatformBrowser(platformId)) {
-          const organization = activeOrganizationStore.selectedOrganization();
+          const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+            activeOrganizationStore.selectedOrganization();
           if (organization) {
-            const key = buildDashboardStorageKey(organization.id, 'overview');
-            const saved = readDashboardStorage<PersistedDashboardBaseFilters>(key);
+            const key: string = buildDashboardStorageKey(organization.id, 'overview');
+            const saved: PersistedDashboardBaseFilters | null =
+              readDashboardStorage<PersistedDashboardBaseFilters>(key);
             if (saved) {
               patchState(store, {
                 selectedGranularity: saved.granularity,
@@ -239,9 +244,10 @@ export const OverviewTrendStore = signalStore(
         // === Persistence: Write effect ===
         effect(() => {
           if (!isPlatformBrowser(platformId)) return;
-          const organization = activeOrganizationStore.selectedOrganization();
+          const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+            activeOrganizationStore.selectedOrganization();
           if (!organization) return;
-          const key = buildDashboardStorageKey(organization.id, 'overview');
+          const key: string = buildDashboardStorageKey(organization.id, 'overview');
           writeDashboardStorage<PersistedDashboardBaseFilters>(key, {
             _v: DASHBOARD_PERSISTENCE_VERSION,
             granularity: store.selectedGranularity(),
@@ -253,7 +259,11 @@ export const OverviewTrendStore = signalStore(
     };
   }),
   //#endregion
-);
+  );
+}
+
+export const OverviewTrendStore: ReturnType<typeof createOverviewTrendStore> =
+  createOverviewTrendStore();
 
 /**
  * Type OrganizationDashboardOverviewTrendStore

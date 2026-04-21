@@ -120,7 +120,8 @@ type OrganizationDashboardAssetGrowthParams = OrganizationDashboardTrendResource
  * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export const AssetGrowthTrendStore = signalStore(
+function createAssetGrowthTrendStore() {
+  return signalStore(
   //#region State
 
   /**
@@ -267,7 +268,7 @@ export const AssetGrowthTrendStore = signalStore(
       ),
     ),
     alignedTrendData: computed<AlignedDashboardTrendSeries>(() => {
-      const growth = store.queryData();
+      const growth: ReturnType<typeof store.queryData> = store.queryData();
       return alignDashboardTrendSeries(
         [growth?.equipment?.series, growth?.facilities?.series],
         store.selectedGranularity(),
@@ -290,24 +291,26 @@ export const AssetGrowthTrendStore = signalStore(
    * @since 2.0.0
    */
   withComputed((store) => {
-    const platformId = inject(PLATFORM_ID);
-    const activeOrganizationStore = inject(ActiveOrganizationStore);
+    const platformId: Object = inject(PLATFORM_ID);
+    const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
 
     return {
       loadParams: computed<OrganizationDashboardAssetGrowthParams | undefined>(() => {
         if (!isPlatformBrowser(platformId)) return undefined;
 
-        const includeEquipment = store.canReadEquipment();
-        const includeFacilities = store.canReadFacilities();
+        const includeEquipment: boolean = store.canReadEquipment();
+        const includeFacilities: boolean = store.canReadFacilities();
 
         if (!includeEquipment && !includeFacilities) {
           return undefined;
         }
 
-        const organization = activeOrganizationStore.selectedOrganization();
+        const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+          activeOrganizationStore.selectedOrganization();
         if (!organization) return undefined;
 
-        const baseParams = buildDashboardTrendBaseParams(store);
+        const baseParams: ReturnType<typeof buildDashboardTrendBaseParams> =
+          buildDashboardTrendBaseParams(store);
         if (!baseParams) return undefined;
 
         return {
@@ -334,8 +337,8 @@ export const AssetGrowthTrendStore = signalStore(
    * @since 2.0.0
    */
   withHooks((store) => {
-    const platformId = inject(PLATFORM_ID);
-    const activeOrganizationStore = inject(ActiveOrganizationStore);
+    const platformId: Object = inject(PLATFORM_ID);
+    const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
 
     return {
       /**
@@ -353,10 +356,12 @@ export const AssetGrowthTrendStore = signalStore(
       onInit(): void {
         // === Persistence: Hydration ===
         if (isPlatformBrowser(platformId)) {
-          const organization = activeOrganizationStore.selectedOrganization();
+          const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+            activeOrganizationStore.selectedOrganization();
           if (organization) {
-            const key = buildDashboardStorageKey(organization.id, 'asset-growth');
-            const saved = readDashboardStorage<PersistedAssetGrowthFilters>(key);
+            const key: string = buildDashboardStorageKey(organization.id, 'asset-growth');
+            const saved: PersistedAssetGrowthFilters | null =
+              readDashboardStorage<PersistedAssetGrowthFilters>(key);
             if (saved) {
               patchState(store, {
                 selectedGranularity: saved.granularity,
@@ -376,9 +381,10 @@ export const AssetGrowthTrendStore = signalStore(
         // === Persistence: Write effect ===
         effect(() => {
           if (!isPlatformBrowser(platformId)) return;
-          const organization = activeOrganizationStore.selectedOrganization();
+          const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+            activeOrganizationStore.selectedOrganization();
           if (!organization) return;
-          const key = buildDashboardStorageKey(organization.id, 'asset-growth');
+          const key: string = buildDashboardStorageKey(organization.id, 'asset-growth');
           writeDashboardStorage<PersistedAssetGrowthFilters>(key, {
             _v: DASHBOARD_PERSISTENCE_VERSION,
             granularity: store.selectedGranularity(),
@@ -394,7 +400,11 @@ export const AssetGrowthTrendStore = signalStore(
   }),
 
   //#endregion
-);
+  );
+}
+
+export const AssetGrowthTrendStore: ReturnType<typeof createAssetGrowthTrendStore> =
+  createAssetGrowthTrendStore();
 
 /**
  * Type OrganizationDashboardAssetGrowthStore
@@ -411,4 +421,3 @@ export const AssetGrowthTrendStore = signalStore(
 export type AssetGrowthTrendStore = InstanceType<
   typeof AssetGrowthTrendStore
 >;
-

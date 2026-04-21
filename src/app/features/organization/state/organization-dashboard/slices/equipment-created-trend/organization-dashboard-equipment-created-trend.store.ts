@@ -69,7 +69,8 @@ type PersistedEquipmentCreatedFilters = PersistedDashboardBaseFilters & {
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export const EquipmentCreatedTrendStore = signalStore(
+function createEquipmentCreatedTrendStore() {
+  return signalStore(
   //#region State
 
   /**
@@ -182,18 +183,20 @@ export const EquipmentCreatedTrendStore = signalStore(
    * @since 1.0.0
    */
   withComputed((store) => {
-    const platformId = inject(PLATFORM_ID);
-    const activeOrganizationStore = inject(ActiveOrganizationStore);
+    const platformId: Object = inject(PLATFORM_ID);
+    const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
 
     return {
       loadParams: computed<OrganizationDashboardEquipmentTrendResourceParams | undefined>(
         () => {
           if (!isPlatformBrowser(platformId)) return undefined;
 
-          const organization = activeOrganizationStore.selectedOrganization();
+          const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+            activeOrganizationStore.selectedOrganization();
           if (!organization) return undefined;
 
-          const baseParams = buildDashboardTrendBaseParams(store);
+          const baseParams: ReturnType<typeof buildDashboardTrendBaseParams> =
+            buildDashboardTrendBaseParams(store);
           if (!baseParams) return undefined;
 
           return {
@@ -216,8 +219,8 @@ export const EquipmentCreatedTrendStore = signalStore(
    * @since 1.0.0
    */
   withHooks((store) => {
-    const platformId = inject(PLATFORM_ID);
-    const activeOrganizationStore = inject(ActiveOrganizationStore);
+    const platformId: Object = inject(PLATFORM_ID);
+    const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
 
     return {
       /**
@@ -233,10 +236,12 @@ export const EquipmentCreatedTrendStore = signalStore(
       onInit(): void {
         // === Persistence: Hydration ===
         if (isPlatformBrowser(platformId)) {
-          const organization = activeOrganizationStore.selectedOrganization();
+          const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+            activeOrganizationStore.selectedOrganization();
           if (organization) {
-            const key = buildDashboardStorageKey(organization.id, 'equipment-created');
-            const saved = readDashboardStorage<PersistedEquipmentCreatedFilters>(key);
+            const key: string = buildDashboardStorageKey(organization.id, 'equipment-created');
+            const saved: PersistedEquipmentCreatedFilters | null =
+              readDashboardStorage<PersistedEquipmentCreatedFilters>(key);
             if (saved) {
               patchState(store, {
                 selectedGranularity: saved.granularity,
@@ -255,9 +260,10 @@ export const EquipmentCreatedTrendStore = signalStore(
         // === Persistence: Write effect ===
         effect(() => {
           if (!isPlatformBrowser(platformId)) return;
-          const organization = activeOrganizationStore.selectedOrganization();
+          const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+            activeOrganizationStore.selectedOrganization();
           if (!organization) return;
-          const key = buildDashboardStorageKey(organization.id, 'equipment-created');
+          const key: string = buildDashboardStorageKey(organization.id, 'equipment-created');
           writeDashboardStorage<PersistedEquipmentCreatedFilters>(key, {
             _v: DASHBOARD_PERSISTENCE_VERSION,
             granularity: store.selectedGranularity(),
@@ -271,7 +277,11 @@ export const EquipmentCreatedTrendStore = signalStore(
     };
   }),
   //#endregion
-);
+  );
+}
+
+export const EquipmentCreatedTrendStore: ReturnType<typeof createEquipmentCreatedTrendStore> =
+  createEquipmentCreatedTrendStore();
 
 /**
  * Type OrganizationDashboardEquipmentCreatedStore

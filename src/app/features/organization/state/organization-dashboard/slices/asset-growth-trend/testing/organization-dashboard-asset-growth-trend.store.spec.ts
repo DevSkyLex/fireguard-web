@@ -10,7 +10,7 @@ import type {
 } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { AssetGrowthTrendStore } from '../organization-dashboard-asset-growth.store';
+import { AssetGrowthTrendStore } from '../organization-dashboard-asset-growth-trend.store';
 
 const flushEffects = async (): Promise<void> => {
   TestBed.tick();
@@ -203,4 +203,3 @@ describe('OrganizationDashboardAssetGrowthStore', () => {
     );
   });
 });
-

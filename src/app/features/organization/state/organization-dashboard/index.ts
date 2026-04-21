@@ -1,7 +1,7 @@
 export { DashboardStore } from './organization-dashboard.store';
 export type { DashboardStore as DashboardStoreType } from './organization-dashboard.store';
-export { AssetGrowthTrendStore } from './slices/asset-growth';
-export type { AssetGrowthTrendStoreType } from './slices/asset-growth';
+export { AssetGrowthTrendStore } from './slices/asset-growth-trend';
+export type { AssetGrowthTrendStoreType } from './slices/asset-growth-trend';
 export { EquipmentCreatedTrendStore } from './slices/equipment-created-trend';
 export type { EquipmentCreatedTrendStoreType } from './slices/equipment-created-trend';
 export { FacilitiesCreatedTrendStore } from './slices/facilities-created-trend';
@@ -19,8 +19,8 @@ export type { OverviewTrendStoreType } from './slices/overview-trend';
 
 export { DashboardStore as OrganizationDashboardStore } from './organization-dashboard.store';
 export type { DashboardStore as OrganizationDashboardStoreType } from './organization-dashboard.store';
-export { AssetGrowthTrendStore as OrganizationDashboardAssetGrowthStore } from './slices/asset-growth';
-export type { AssetGrowthTrendStoreType as OrganizationDashboardAssetGrowthStoreType } from './slices/asset-growth';
+export { AssetGrowthTrendStore as OrganizationDashboardAssetGrowthStore } from './slices/asset-growth-trend';
+export type { AssetGrowthTrendStoreType as OrganizationDashboardAssetGrowthStoreType } from './slices/asset-growth-trend';
 export { EquipmentCreatedTrendStore as OrganizationDashboardEquipmentCreatedStore } from './slices/equipment-created-trend';
 export type { EquipmentCreatedTrendStoreType as OrganizationDashboardEquipmentCreatedStoreType } from './slices/equipment-created-trend';
 export { FacilitiesCreatedTrendStore as OrganizationDashboardFacilitiesCreatedStore } from './slices/facilities-created-trend';

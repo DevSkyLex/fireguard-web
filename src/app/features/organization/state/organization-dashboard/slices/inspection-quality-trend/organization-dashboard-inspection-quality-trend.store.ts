@@ -110,7 +110,8 @@ type OrganizationDashboardInspectionQualityParams = OrganizationDashboardTrendRe
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export const InspectionQualityTrendStore = signalStore(
+function createInspectionQualityTrendStore() {
+  return signalStore(
   //#region State
 
   /**
@@ -269,7 +270,7 @@ export const InspectionQualityTrendStore = signalStore(
      * @type {Signal<AlignedDashboardTrendSeries>}
      */
     alignedTrendData: computed<AlignedDashboardTrendSeries>(() => {
-      const data = store.queryData();
+      const data: ReturnType<typeof store.queryData> = store.queryData();
       return alignDashboardTrendSeries(
         [data?.inspections?.series, data?.ncOpened?.series],
         store.selectedGranularity(),
@@ -302,7 +303,8 @@ export const InspectionQualityTrendStore = signalStore(
      * @type {Signal<readonly number[]>}
      */
     rateSeriesData: computed<readonly number[]>(() => {
-      const [inspectionData = [], ncOpenedData = []] = store.alignedTrendData().datasets;
+      const [inspectionData = [], ncOpenedData = []]: AlignedDashboardTrendSeries['datasets'] =
+        store.alignedTrendData().datasets;
       return buildPercentageSeries(ncOpenedData, inspectionData);
     }),
   })),
@@ -322,17 +324,19 @@ export const InspectionQualityTrendStore = signalStore(
    * @since 1.0.0
    */
   withComputed((store) => {
-    const platformId = inject(PLATFORM_ID);
-    const activeOrganizationStore = inject(ActiveOrganizationStore);
+    const platformId: Object = inject(PLATFORM_ID);
+    const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
 
     return {
       loadParams: computed<OrganizationDashboardInspectionQualityParams | undefined>(() => {
         if (!isPlatformBrowser(platformId)) return undefined;
 
-        const organization = activeOrganizationStore.selectedOrganization();
+        const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+          activeOrganizationStore.selectedOrganization();
         if (!organization) return undefined;
 
-        const baseParams = buildDashboardTrendBaseParams(store);
+        const baseParams: ReturnType<typeof buildDashboardTrendBaseParams> =
+          buildDashboardTrendBaseParams(store);
         if (!baseParams) return undefined;
 
         return {
@@ -356,8 +360,8 @@ export const InspectionQualityTrendStore = signalStore(
    * @since 1.0.0
    */
   withHooks((store) => {
-    const platformId = inject(PLATFORM_ID);
-    const activeOrganizationStore = inject(ActiveOrganizationStore);
+    const platformId: Object = inject(PLATFORM_ID);
+    const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
 
     return {
       /**
@@ -375,10 +379,12 @@ export const InspectionQualityTrendStore = signalStore(
         // Restore saved filters before wiring the reactive load so the first
         // API call uses the persisted filter values instead of the defaults.
         if (isPlatformBrowser(platformId)) {
-          const organization = activeOrganizationStore.selectedOrganization();
+          const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+            activeOrganizationStore.selectedOrganization();
           if (organization) {
-            const key = buildDashboardStorageKey(organization.id, 'inspection-quality');
-            const saved = readDashboardStorage<PersistedInspectionQualityFilters>(key);
+            const key: string = buildDashboardStorageKey(organization.id, 'inspection-quality');
+            const saved: PersistedInspectionQualityFilters | null =
+              readDashboardStorage<PersistedInspectionQualityFilters>(key);
             if (saved) {
               patchState(store, {
                 selectedGranularity: saved.granularity,
@@ -401,9 +407,10 @@ export const InspectionQualityTrendStore = signalStore(
         // Serializes all filter state to localStorage whenever any filter changes.
         effect(() => {
           if (!isPlatformBrowser(platformId)) return;
-          const organization = activeOrganizationStore.selectedOrganization();
+          const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+            activeOrganizationStore.selectedOrganization();
           if (!organization) return;
-          const key = buildDashboardStorageKey(organization.id, 'inspection-quality');
+          const key: string = buildDashboardStorageKey(organization.id, 'inspection-quality');
           writeDashboardStorage<PersistedInspectionQualityFilters>(key, {
             _v: DASHBOARD_PERSISTENCE_VERSION,
             granularity: store.selectedGranularity(),
@@ -419,7 +426,11 @@ export const InspectionQualityTrendStore = signalStore(
     };
   }),
   //#endregion
-);
+  );
+}
+
+export const InspectionQualityTrendStore: ReturnType<typeof createInspectionQualityTrendStore> =
+  createInspectionQualityTrendStore();
 
 /**
  * Type OrganizationDashboardInspectionQualityStore

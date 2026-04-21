@@ -71,7 +71,8 @@ type PersistedNonConformitiesOpenedFilters = PersistedDashboardBaseFilters & {
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export const NonConformitiesOpenedTrendStore = signalStore(
+function createNonConformitiesOpenedTrendStore() {
+  return signalStore(
   //#region State
 
   /**
@@ -184,18 +185,20 @@ export const NonConformitiesOpenedTrendStore = signalStore(
    * @since 1.0.0
    */
   withComputed((store) => {
-    const platformId = inject(PLATFORM_ID);
-    const activeOrganizationStore = inject(ActiveOrganizationStore);
+    const platformId: Object = inject(PLATFORM_ID);
+    const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
 
     return {
       loadParams: computed<OrganizationDashboardNonConformityTrendResourceParams | undefined>(
         () => {
           if (!isPlatformBrowser(platformId)) return undefined;
 
-          const organization = activeOrganizationStore.selectedOrganization();
+          const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+            activeOrganizationStore.selectedOrganization();
           if (!organization) return undefined;
 
-          const baseParams = buildDashboardTrendBaseParams(store);
+          const baseParams: ReturnType<typeof buildDashboardTrendBaseParams> =
+            buildDashboardTrendBaseParams(store);
           if (!baseParams) return undefined;
 
           return {
@@ -218,8 +221,8 @@ export const NonConformitiesOpenedTrendStore = signalStore(
    * @since 1.0.0
    */
   withHooks((store) => {
-    const platformId = inject(PLATFORM_ID);
-    const activeOrganizationStore = inject(ActiveOrganizationStore);
+    const platformId: Object = inject(PLATFORM_ID);
+    const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
 
     return {
       /**
@@ -235,10 +238,12 @@ export const NonConformitiesOpenedTrendStore = signalStore(
       onInit(): void {
         // === Persistence: Hydration ===
         if (isPlatformBrowser(platformId)) {
-          const organization = activeOrganizationStore.selectedOrganization();
+          const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+            activeOrganizationStore.selectedOrganization();
           if (organization) {
-            const key = buildDashboardStorageKey(organization.id, 'non-conformities-opened');
-            const saved = readDashboardStorage<PersistedNonConformitiesOpenedFilters>(key);
+            const key: string = buildDashboardStorageKey(organization.id, 'non-conformities-opened');
+            const saved: PersistedNonConformitiesOpenedFilters | null =
+              readDashboardStorage<PersistedNonConformitiesOpenedFilters>(key);
             if (saved) {
               patchState(store, {
                 selectedGranularity: saved.granularity,
@@ -257,9 +262,10 @@ export const NonConformitiesOpenedTrendStore = signalStore(
         // === Persistence: Write effect ===
         effect(() => {
           if (!isPlatformBrowser(platformId)) return;
-          const organization = activeOrganizationStore.selectedOrganization();
+          const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
+            activeOrganizationStore.selectedOrganization();
           if (!organization) return;
-          const key = buildDashboardStorageKey(organization.id, 'non-conformities-opened');
+          const key: string = buildDashboardStorageKey(organization.id, 'non-conformities-opened');
           writeDashboardStorage<PersistedNonConformitiesOpenedFilters>(key, {
             _v: DASHBOARD_PERSISTENCE_VERSION,
             granularity: store.selectedGranularity(),
@@ -273,7 +279,11 @@ export const NonConformitiesOpenedTrendStore = signalStore(
     };
   }),
   //#endregion
-);
+  );
+}
+
+export const NonConformitiesOpenedTrendStore: ReturnType<typeof createNonConformitiesOpenedTrendStore> =
+  createNonConformitiesOpenedTrendStore();
 
 /**
  * Type OrganizationDashboardNonConformitiesOpenedStore

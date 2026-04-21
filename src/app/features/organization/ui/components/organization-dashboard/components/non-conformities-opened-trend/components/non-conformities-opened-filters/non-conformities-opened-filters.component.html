@@ -1,55 +1,61 @@
-<div class="flex flex-wrap items-center gap-2">
-  <p-select
-    [ngModel]="store.selectedNonConformityStatus()"
-    (ngModelChange)="store.setNonConformityStatus($event)"
-    [options]="nonConformityStatusOptions"
-    optionLabel="label"
-    optionValue="value"
-    placeholder="Status"
-    [showClear]="true"
-    [loading]="store.isQueryLoading()"
-    size="small"
-  >
-    <ng-template #item let-option>
-      <span class="flex items-center gap-2">
-        <i [class]="option.icon" [style.color]="option.color"></i>
-        {{ option.label }}
-      </span>
-    </ng-template>
-    <ng-template #selectedItem>
-      @let option = selectedNonConformityStatusOption();
-      @if (option) {
+<div [formGroup]="form" class="grid gap-4">
+  <div class="flex flex-col gap-2">
+    <label
+      for="non-conformities-opened-status"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
+      Status
+    </label>
+
+    <p-select
+      id="non-conformities-opened-status"
+      formControlName="nonConformityStatus"
+      [options]="nonConformityStatusOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All statuses"
+      [showClear]="true"
+      [loading]="store.isQueryLoading()"
+      class="w-full"
+    >
+      <ng-template #item let-option>
         <span class="flex items-center gap-2">
           <i [class]="option.icon" [style.color]="option.color"></i>
           {{ option.label }}
         </span>
-      }
-    </ng-template>
-  </p-select>
+      </ng-template>
+      <ng-template #selectedItem>
+        @let option = selectedNonConformityStatusOption();
+        @if (option) {
+          <span class="flex items-center gap-2">
+            <i [class]="option.icon" [style.color]="option.color"></i>
+            {{ option.label }}
+          </span>
+        }
+      </ng-template>
+    </p-select>
+  </div>
 
-  <p-select
-    [ngModel]="store.selectedNonConformitySeverity()"
-    (ngModelChange)="store.setNonConformitySeverity($event)"
-    [options]="nonConformitySeverityOptions"
-    optionLabel="label"
-    optionValue="value"
-    placeholder="Severity"
-    [showClear]="true"
-    [loading]="store.isQueryLoading()"
-    size="small"
-  >
-    <ng-template #item let-option>
-      <span class="flex items-center gap-2">
-        <span
-          class="inline-block h-2 w-2 shrink-0 rounded-full"
-          [style.background-color]="option.color"
-        ></span>
-        {{ option.label }}
-      </span>
-    </ng-template>
-    <ng-template #selectedItem>
-      @let option = selectedSeverityOption();
-      @if (option) {
+  <div class="flex flex-col gap-2">
+    <label
+      for="non-conformities-opened-severity"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
+      Severity
+    </label>
+
+    <p-select
+      id="non-conformities-opened-severity"
+      formControlName="nonConformitySeverity"
+      [options]="nonConformitySeverityOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All severities"
+      [showClear]="true"
+      [loading]="store.isQueryLoading()"
+      class="w-full"
+    >
+      <ng-template #item let-option>
         <span class="flex items-center gap-2">
           <span
             class="inline-block h-2 w-2 shrink-0 rounded-full"
@@ -57,34 +63,28 @@
           ></span>
           {{ option.label }}
         </span>
-      }
-    </ng-template>
-  </p-select>
+      </ng-template>
+      <ng-template #selectedItem>
+        @let option = selectedSeverityOption();
+        @if (option) {
+          <span class="flex items-center gap-2">
+            <span
+              class="inline-block h-2 w-2 shrink-0 rounded-full"
+              [style.background-color]="option.color"
+            ></span>
+            {{ option.label }}
+          </span>
+        }
+      </ng-template>
+    </p-select>
+  </div>
 
-  @defer (on idle) {
-    <p-datepicker
-      selectionMode="range"
-      [ngModel]="store.selectedDateRange()"
-      [ngModelOptions]="{ updateOn: 'blur' }"
-      (ngModelChange)="store.setDateRange($event)"
-      [maxDate]="today"
-      placeholder="Select date range"
-      [showClear]="true"
-      [showTime]="true"
-      hourFormat="24"
-      size="small"
-      appendTo="body"
-      dateFormat="dd/mm/yy"
-      [disabled]="store.isQueryLoading()"
-    />
-  }
-
-  <p-togglebutton
-    [ngModel]="store.compareEnabled()"
-    (ngModelChange)="store.setCompareEnabled($event)"
-    onLabel="Compare ON"
-    offLabel="Compare OFF"
-    size="small"
-    [disabled]="store.isQueryLoading()"
+  <app-trend-base-filters-form
+    dateRangeId="non-conformities-opened-date-range"
+    [dateRange]="store.draftDateRange()"
+    [compareEnabled]="store.draftCompareEnabled()"
+    [loading]="store.isQueryLoading()"
+    (dateRangeChange)="store.setDraftDateRange($event)"
+    (compareEnabledChange)="store.setDraftCompareEnabled($event)"
   />
 </div>

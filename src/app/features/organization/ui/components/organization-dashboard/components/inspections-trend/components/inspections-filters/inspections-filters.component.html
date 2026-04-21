@@ -1,96 +1,105 @@
-<div class="flex flex-wrap items-center gap-2">
-  <p-select
-    [ngModel]="store.selectedInspectionStatus()"
-    (ngModelChange)="store.setInspectionStatus($event)"
-    [options]="inspectionStatusOptions"
-    optionLabel="label"
-    optionValue="value"
-    placeholder="Inspection status"
-    [showClear]="true"
-    [loading]="store.isQueryLoading()"
-    size="small"
-  >
-    <ng-template #item let-option>
-      <span class="flex items-center gap-2">
-        <i [class]="option.icon" [style.color]="option.color"></i>
-        {{ option.label }}
-      </span>
-    </ng-template>
-    <ng-template #selectedItem>
-      @let option = selectedInspectionStatusOption();
-      @if (option) {
-        <span class="flex items-center gap-2">
-          <i [class]="option.icon" [style.color]="option.color"></i>
-          {{ option.label }}
-        </span>
-      }
-    </ng-template>
-  </p-select>
+<div [formGroup]="form" class="grid gap-4">
+  <div class="flex flex-col gap-2">
+    <label
+      for="inspections-inspection-status"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
+      Inspection status
+    </label>
 
-  <p-select
-    [ngModel]="store.selectedInspectionResult()"
-    (ngModelChange)="store.setInspectionResult($event)"
-    [options]="inspectionResultOptions"
-    optionLabel="label"
-    optionValue="value"
-    placeholder="Inspection result"
-    [showClear]="true"
-    [loading]="store.isQueryLoading()"
-    size="small"
-  >
-    <ng-template #item let-option>
-      <span class="flex items-center gap-2">
-        <i [class]="option.icon" [style.color]="option.color"></i>
-        {{ option.label }}
-      </span>
-    </ng-template>
-    <ng-template #selectedItem>
-      @let option = selectedInspectionResultOption();
-      @if (option) {
-        <span class="flex items-center gap-2">
-          <i [class]="option.icon" [style.color]="option.color"></i>
-          {{ option.label }}
-        </span>
-      }
-    </ng-template>
-  </p-select>
-
-  <p-select
-    [ngModel]="store.selectedInspectorType()"
-    (ngModelChange)="store.setInspectorType($event)"
-    [options]="inspectorTypeOptions"
-    optionLabel="label"
-    optionValue="value"
-    placeholder="Inspector"
-    [showClear]="true"
-    [loading]="store.isQueryLoading()"
-    size="small"
-  />
-
-  @defer (on idle) {
-    <p-datepicker
-      selectionMode="range"
-      [ngModel]="store.selectedDateRange()"
-      [ngModelOptions]="{ updateOn: 'blur' }"
-      (ngModelChange)="store.setDateRange($event)"
-      [maxDate]="today"
-      placeholder="Select date range"
+    <p-select
+      id="inspections-inspection-status"
+      formControlName="inspectionStatus"
+      [options]="inspectionStatusOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All inspection statuses"
       [showClear]="true"
-      [showTime]="true"
-      hourFormat="24"
-      size="small"
-      appendTo="body"
-      dateFormat="dd/mm/yy"
-      [disabled]="store.isQueryLoading()"
-    />
-  }
+      [loading]="store.isQueryLoading()"
+      class="w-full"
+    >
+      <ng-template #item let-option>
+        <span class="flex items-center gap-2">
+          <i [class]="option.icon" [style.color]="option.color"></i>
+          {{ option.label }}
+        </span>
+      </ng-template>
+      <ng-template #selectedItem>
+        @let option = selectedInspectionStatusOption();
+        @if (option) {
+          <span class="flex items-center gap-2">
+            <i [class]="option.icon" [style.color]="option.color"></i>
+            {{ option.label }}
+          </span>
+        }
+      </ng-template>
+    </p-select>
+  </div>
 
-  <p-togglebutton
-    [ngModel]="store.compareEnabled()"
-    (ngModelChange)="store.setCompareEnabled($event)"
-    onLabel="Compare ON"
-    offLabel="Compare OFF"
-    size="small"
-    [disabled]="store.isQueryLoading()"
+  <div class="flex flex-col gap-2">
+    <label
+      for="inspections-inspection-result"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
+      Inspection result
+    </label>
+
+    <p-select
+      id="inspections-inspection-result"
+      formControlName="inspectionResult"
+      [options]="inspectionResultOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All inspection results"
+      [showClear]="true"
+      [loading]="store.isQueryLoading()"
+      class="w-full"
+    >
+      <ng-template #item let-option>
+        <span class="flex items-center gap-2">
+          <i [class]="option.icon" [style.color]="option.color"></i>
+          {{ option.label }}
+        </span>
+      </ng-template>
+      <ng-template #selectedItem>
+        @let option = selectedInspectionResultOption();
+        @if (option) {
+          <span class="flex items-center gap-2">
+            <i [class]="option.icon" [style.color]="option.color"></i>
+            {{ option.label }}
+          </span>
+        }
+      </ng-template>
+    </p-select>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label
+      for="inspections-inspector-type"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
+      Inspector type
+    </label>
+
+    <p-select
+      id="inspections-inspector-type"
+      formControlName="inspectorType"
+      [options]="inspectorTypeOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All inspector types"
+      [showClear]="true"
+      [loading]="store.isQueryLoading()"
+      class="w-full"
+    />
+  </div>
+
+  <app-trend-base-filters-form
+    dateRangeId="inspections-date-range"
+    [dateRange]="store.draftDateRange()"
+    [compareEnabled]="store.draftCompareEnabled()"
+    [loading]="store.isQueryLoading()"
+    (dateRangeChange)="store.setDraftDateRange($event)"
+    (compareEnabledChange)="store.setDraftCompareEnabled($event)"
   />
 </div>

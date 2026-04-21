@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject, output, OutputEmitterRef } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, effect, inject, output, OutputEmitterRef } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { OrganizationDashboardGranularity } from '@features/organization/models';
 import { OrganizationDashboardAssetGrowthStore as AssetGrowthTrendStore } from '@features/organization/state/organization-dashboard';
 import { ButtonModule } from 'primeng/button';
 import { InputGroupModule } from 'primeng/inputgroup';
@@ -24,7 +26,7 @@ import { SelectModule } from 'primeng/select';
   selector: 'app-asset-growth-toolbar',
   templateUrl: './asset-growth-toolbar.component.html',
   imports: [
-    FormsModule,
+    ReactiveFormsModule,
     ButtonModule,
     InputGroupModule,
     InputGroupAddonModule,
@@ -51,9 +53,39 @@ export class AssetGrowthToolbar {
   protected readonly store: AssetGrowthTrendStore =
     inject<AssetGrowthTrendStore>(AssetGrowthTrendStore);
 
+  /**
+   * Property granularityControl
+   * @readonly
+   *
+   * @description
+   * Typed reactive control mirroring the selected dashboard granularity.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {FormControl<OrganizationDashboardGranularity>}
+   */
+  protected readonly granularityControl: FormControl<OrganizationDashboardGranularity> =
+    new FormControl<OrganizationDashboardGranularity>(this.store.selectedGranularity(), {
+      nonNullable: true,
+    });
+
   //#endregion
 
   //#region Events
+
+  /**
+   * Event filterToggle
+   *
+   * @description
+   * Emitted when the user opens the filter drawer.
+   *
+    * @access public
+   * @since 2.1.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+    public readonly filterToggle: OutputEmitterRef<void> = output<void>();
 
   /**
    * Event menuToggle
@@ -62,11 +94,37 @@ export class AssetGrowthToolbar {
    * Emitted when the user clicks the overflow-menu button.
    * The parent card is responsible for toggling its popup menu instance.
    *
+   * @access public
    * @since 2.0.0
    *
    * @type {OutputEmitterRef<MouseEvent>}
    */
-  readonly menuToggle: OutputEmitterRef<MouseEvent> = output<MouseEvent>();
+  public readonly menuToggle: OutputEmitterRef<MouseEvent> = output<MouseEvent>();
+
+  //#endregion
+
+  //#region Lifecycle
+
+  /**
+   * Creates an instance of AssetGrowthToolbar.
+   *
+   * @description
+   * Synchronizes the typed granularity control with the store state.
+   *
+   * @access public
+   * @since 2.1.0
+   */
+  public constructor() {
+    this.granularityControl.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((granularity: OrganizationDashboardGranularity) => {
+        this.store.setGranularity(granularity);
+      });
+
+    effect(() => {
+      this.granularityControl.setValue(this.store.selectedGranularity(), { emitEvent: false });
+    });
+  }
 
   //#endregion
 }

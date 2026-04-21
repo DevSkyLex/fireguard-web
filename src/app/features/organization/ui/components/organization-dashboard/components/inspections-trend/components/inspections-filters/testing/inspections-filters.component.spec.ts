@@ -9,12 +9,22 @@ const mockStore = {
   selectedInspectorType: signal(null),
   selectedDateRange: signal(null),
   compareEnabled: signal(false),
+  draftInspectionStatus: signal(null),
+  draftInspectionResult: signal(null),
+  draftInspectorType: signal(null),
+  draftDateRange: signal(null),
+  draftCompareEnabled: signal(false),
   isQueryLoading: signal(false),
   setInspectionStatus: vi.fn(),
   setInspectionResult: vi.fn(),
   setInspectorType: vi.fn(),
   setDateRange: vi.fn(),
   setCompareEnabled: vi.fn(),
+  setDraftInspectionStatus: vi.fn(),
+  setDraftInspectionResult: vi.fn(),
+  setDraftInspectorType: vi.fn(),
+  setDraftDateRange: vi.fn(),
+  setDraftCompareEnabled: vi.fn(),
 };
 
 describe('InspectionsFilters', () => {

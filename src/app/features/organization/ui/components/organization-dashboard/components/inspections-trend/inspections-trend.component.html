@@ -8,6 +8,7 @@
 >
   <ng-template #action>
     <app-inspections-toolbar
+      (filterToggle)="onFilterToggle()"
       (menuToggle)="onMenuToggle($event)"
     />
   </ng-template>
@@ -15,8 +16,16 @@
   <ng-template #content>
     <app-inspections-chart />
   </ng-template>
-
-  <ng-template #footer>
-    <app-inspections-filters />
-  </ng-template>
 </app-trend-card>
+
+<app-trend-filter-drawer
+  title="Inspections Filters"
+  description="Refine inspection metrics by status, result, inspector type, period, and comparison mode."
+  [visible]="isFilterDrawerVisible()"
+  [loading]="isLoading()"
+  (cancel)="onCancelFilters()"
+  (reset)="onResetFilters()"
+  (apply)="onApplyFilters()"
+>
+  <app-inspections-filters />
+</app-trend-filter-drawer>

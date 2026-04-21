@@ -8,6 +8,7 @@
 >
   <ng-template #action>
     <app-asset-growth-toolbar
+      (filterToggle)="onFilterToggle()"
       (menuToggle)="onMenuToggle($event)"
     />
   </ng-template>
@@ -15,8 +16,16 @@
   <ng-template #content>
     <app-asset-growth-chart />
   </ng-template>
-
-  <ng-template #footer>
-    <app-asset-growth-filters />
-  </ng-template>
 </app-trend-card>
+
+<app-trend-filter-drawer
+  [title]="cardTitle() + ' Filters'"
+  description="Refine asset growth metrics by equipment, facility, period, and comparison mode."
+  [visible]="isFilterDrawerVisible()"
+  [loading]="isLoading()"
+  (cancel)="onCancelFilters()"
+  (reset)="onResetFilters()"
+  (apply)="onApplyFilters()"
+>
+  <app-asset-growth-filters />
+</app-trend-filter-drawer>

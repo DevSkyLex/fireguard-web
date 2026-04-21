@@ -20,6 +20,9 @@ import type {
 import { ActiveOrganizationStore } from '@features/organization/state';
 import {
   buildDashboardTrendBaseParams,
+  cloneDashboardDateRange,
+  getDashboardInitialFilterDraftState,
+  normalizeDashboardDateRange,
   withDashboardFilterState,
 } from '../../features';
 import {
@@ -83,7 +86,11 @@ function createFacilitiesCreatedTrendStore() {
    */
   withQueryState<OrganizationDashboardTrendOutput>(),
   withDashboardFilterState(),
-  withState({ selectedFacilityType: null as FacilityType | null }),
+  withState(getDashboardInitialFilterDraftState()),
+  withState({
+    selectedFacilityType: null as FacilityType | null,
+    draftFacilityType: null as FacilityType | null,
+  }),
   //#endregion
 
   //#region Methods
@@ -146,6 +153,116 @@ function createFacilitiesCreatedTrendStore() {
      */
     setFacilityType(facilityType: FacilityType | null): void {
       patchState(store, { selectedFacilityType: facilityType });
+    },
+
+    /**
+     * Method setDraftDateRange
+     *
+     * @description
+     * Updates the draft date range edited inside the filter drawer.
+     *
+     * @param {Date[] | null} range - Draft range selected by the user.
+     * @returns {void}
+     */
+    setDraftDateRange(range: Date[] | null): void {
+      patchState(store, {
+        draftDateRange: normalizeDashboardDateRange(range, store.selectedGranularity()),
+      });
+    },
+
+    /**
+     * Method setDraftCompareEnabled
+     *
+     * @description
+     * Updates the draft compare-mode toggle edited inside the filter drawer.
+     *
+     * @param {boolean} compareEnabled - Draft compare-mode value.
+     * @returns {void}
+     */
+    setDraftCompareEnabled(compareEnabled: boolean): void {
+      patchState(store, { draftCompareEnabled: compareEnabled });
+    },
+
+    /**
+     * Method setDraftFacilityType
+     *
+     * @description
+     * Updates the draft facility-type value edited inside the filter drawer.
+     *
+     * @param {FacilityType | null} facilityType - Draft facility type.
+     * @returns {void}
+     */
+    setDraftFacilityType(facilityType: FacilityType | null): void {
+      patchState(store, { draftFacilityType: facilityType });
+    },
+
+    /**
+     * Method openFilters
+     *
+     * @description
+     * Opens the filter drawer and seeds the draft values from the applied filters.
+     *
+     * @returns {void}
+     */
+    openFilters(): void {
+      patchState(store, {
+        isFilterDrawerVisible: true,
+        draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+        draftCompareEnabled: store.compareEnabled(),
+        draftFacilityType: store.selectedFacilityType(),
+      });
+    },
+
+    /**
+     * Method cancelDraftFilters
+     *
+     * @description
+     * Closes the filter drawer and restores the draft values from the applied filters.
+     *
+     * @returns {void}
+     */
+    cancelDraftFilters(): void {
+      patchState(store, {
+        isFilterDrawerVisible: false,
+        draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+        draftCompareEnabled: store.compareEnabled(),
+        draftFacilityType: store.selectedFacilityType(),
+      });
+    },
+
+    /**
+     * Method resetDraftFilters
+     *
+     * @description
+     * Resets the drawer draft values back to their default state without applying them.
+     *
+     * @returns {void}
+     */
+    resetDraftFilters(): void {
+      const initialDraftState = getDashboardInitialFilterDraftState();
+
+      patchState(store, {
+        draftDateRange: initialDraftState.draftDateRange,
+        draftCompareEnabled: initialDraftState.draftCompareEnabled,
+        draftFacilityType: null,
+      });
+    },
+
+    /**
+     * Method applyDraftFilters
+     *
+     * @description
+     * Commits the current drawer draft values to the reactive filter state in one patch.
+     *
+     * @returns {void}
+     */
+    applyDraftFilters(): void {
+      patchState(store, {
+        isFilterDrawerVisible: false,
+        selectedDateRange: cloneDashboardDateRange(store.draftDateRange()),
+        compareEnabled: store.draftCompareEnabled(),
+        selectedFacilityType: store.draftFacilityType(),
+      });
     },
   })),
   //#endregion

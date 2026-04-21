@@ -8,6 +8,7 @@
 >
   <ng-template #action>
     <app-non-conformities-resolved-toolbar
+      (filterToggle)="onFilterToggle()"
       (menuToggle)="onMenuToggle($event)"
     />
   </ng-template>
@@ -15,8 +16,16 @@
   <ng-template #content>
     <app-non-conformities-resolved-chart />
   </ng-template>
-
-  <ng-template #footer>
-    <app-non-conformities-resolved-filters />
-  </ng-template>
 </app-trend-card>
+
+<app-trend-filter-drawer
+  title="Non-Conformities Resolved Filters"
+  description="Refine resolved non-conformity metrics by status, severity, period, and comparison mode."
+  [visible]="isFilterDrawerVisible()"
+  [loading]="isLoading()"
+  (cancel)="onCancelFilters()"
+  (reset)="onResetFilters()"
+  (apply)="onApplyFilters()"
+>
+  <app-non-conformities-resolved-filters />
+</app-trend-filter-drawer>

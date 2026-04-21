@@ -1,0 +1,52 @@
+<p-drawer
+  [visible]="visible()"
+  (visibleChange)="onVisibleChange($event)"
+  [header]="title()"
+  [appendTo]="'body'"
+  [blockScroll]="true"
+  [modal]="true"
+  [dismissible]="true"
+  [closeOnEscape]="true"
+  position="right"
+  styleClass="!w-full sm:!w-[32rem]"
+>
+  <ng-template #content>
+    <div class="flex flex-col gap-4 pr-1">
+      @if (description(); as description) {
+        <p class="text-sm text-surface-600 dark:text-surface-400">
+          {{ description }}
+        </p>
+      }
+
+      <ng-content />
+    </div>
+  </ng-template>
+
+  <ng-template #footer>
+    <div
+      class="flex items-center justify-end gap-3 border-t border-surface-200 bg-surface-0 px-4 py-3 dark:border-surface-700 dark:bg-surface-900"
+    >
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="onCancel()"
+        fluid
+      />
+      <p-button
+        label="Reset"
+        severity="secondary"
+        [text]="true"
+        (onClick)="onReset()"
+        fluid
+      />
+      <p-button
+        label="Apply"
+        icon="pi pi-check"
+        [loading]="loading()"
+        (onClick)="onApply()"
+        fluid
+      />
+    </div>
+  </ng-template>
+</p-drawer>

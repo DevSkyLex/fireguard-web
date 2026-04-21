@@ -23,6 +23,9 @@ import type {
 import { ActiveOrganizationStore } from '@features/organization/state';
 import {
   buildDashboardTrendBaseParams,
+  cloneDashboardDateRange,
+  getDashboardInitialFilterDraftState,
+  normalizeDashboardDateRange,
   withDashboardFilterState,
 } from '../../features';
 import {
@@ -86,9 +89,12 @@ function createNonConformitiesResolvedTrendStore() {
    */
   withQueryState<OrganizationDashboardTrendOutput>(),
   withDashboardFilterState(),
+  withState(getDashboardInitialFilterDraftState()),
   withState({
     selectedNonConformityStatus: null as NonConformityStatus | null,
     selectedNonConformitySeverity: null as NonConformitySeverity | null,
+    draftNonConformityStatus: null as NonConformityStatus | null,
+    draftNonConformitySeverity: null as NonConformitySeverity | null,
   }),
   //#endregion
 
@@ -167,6 +173,135 @@ function createNonConformitiesResolvedTrendStore() {
      */
     setNonConformitySeverity(nonConformitySeverity: NonConformitySeverity | null): void {
       patchState(store, { selectedNonConformitySeverity: nonConformitySeverity });
+    },
+
+    /**
+     * Method setDraftDateRange
+     *
+     * @description
+     * Updates the draft date range edited inside the filter drawer.
+     *
+     * @param {Date[] | null} range - Draft range selected by the user.
+     * @returns {void}
+     */
+    setDraftDateRange(range: Date[] | null): void {
+      patchState(store, {
+        draftDateRange: normalizeDashboardDateRange(range, store.selectedGranularity()),
+      });
+    },
+
+    /**
+     * Method setDraftCompareEnabled
+     *
+     * @description
+     * Updates the draft compare-mode toggle edited inside the filter drawer.
+     *
+     * @param {boolean} compareEnabled - Draft compare-mode value.
+     * @returns {void}
+     */
+    setDraftCompareEnabled(compareEnabled: boolean): void {
+      patchState(store, { draftCompareEnabled: compareEnabled });
+    },
+
+    /**
+     * Method setDraftNonConformityStatus
+     *
+     * @description
+     * Updates the draft NC-status value edited inside the filter drawer.
+     *
+     * @param {NonConformityStatus | null} nonConformityStatus - Draft non-conformity status.
+     * @returns {void}
+     */
+    setDraftNonConformityStatus(nonConformityStatus: NonConformityStatus | null): void {
+      patchState(store, { draftNonConformityStatus: nonConformityStatus });
+    },
+
+    /**
+     * Method setDraftNonConformitySeverity
+     *
+     * @description
+     * Updates the draft NC-severity value edited inside the filter drawer.
+     *
+     * @param {NonConformitySeverity | null} nonConformitySeverity - Draft non-conformity severity.
+     * @returns {void}
+     */
+    setDraftNonConformitySeverity(
+      nonConformitySeverity: NonConformitySeverity | null,
+    ): void {
+      patchState(store, { draftNonConformitySeverity: nonConformitySeverity });
+    },
+
+    /**
+     * Method openFilters
+     *
+     * @description
+     * Opens the filter drawer and seeds the draft values from the applied filters.
+     *
+     * @returns {void}
+     */
+    openFilters(): void {
+      patchState(store, {
+        isFilterDrawerVisible: true,
+        draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+        draftCompareEnabled: store.compareEnabled(),
+        draftNonConformityStatus: store.selectedNonConformityStatus(),
+        draftNonConformitySeverity: store.selectedNonConformitySeverity(),
+      });
+    },
+
+    /**
+     * Method cancelDraftFilters
+     *
+     * @description
+     * Closes the filter drawer and restores the draft values from the applied filters.
+     *
+     * @returns {void}
+     */
+    cancelDraftFilters(): void {
+      patchState(store, {
+        isFilterDrawerVisible: false,
+        draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+        draftCompareEnabled: store.compareEnabled(),
+        draftNonConformityStatus: store.selectedNonConformityStatus(),
+        draftNonConformitySeverity: store.selectedNonConformitySeverity(),
+      });
+    },
+
+    /**
+     * Method resetDraftFilters
+     *
+     * @description
+     * Resets the drawer draft values back to their default state without applying them.
+     *
+     * @returns {void}
+     */
+    resetDraftFilters(): void {
+      const initialDraftState = getDashboardInitialFilterDraftState();
+
+      patchState(store, {
+        draftDateRange: initialDraftState.draftDateRange,
+        draftCompareEnabled: initialDraftState.draftCompareEnabled,
+        draftNonConformityStatus: null,
+        draftNonConformitySeverity: null,
+      });
+    },
+
+    /**
+     * Method applyDraftFilters
+     *
+     * @description
+     * Commits the current drawer draft values to the reactive filter state in one patch.
+     *
+     * @returns {void}
+     */
+    applyDraftFilters(): void {
+      patchState(store, {
+        isFilterDrawerVisible: false,
+        selectedDateRange: cloneDashboardDateRange(store.draftDateRange()),
+        compareEnabled: store.draftCompareEnabled(),
+        selectedNonConformityStatus: store.draftNonConformityStatus(),
+        selectedNonConformitySeverity: store.draftNonConformitySeverity(),
+      });
     },
   })),
   //#endregion

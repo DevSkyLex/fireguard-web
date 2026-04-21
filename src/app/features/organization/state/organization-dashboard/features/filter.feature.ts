@@ -23,6 +23,65 @@ export type DashboardFilterState = {
   readonly compareEnabled: boolean;
 };
 
+export type DashboardFilterDraftState = {
+  readonly isFilterDrawerVisible: boolean;
+  readonly draftDateRange: Date[] | null;
+  readonly draftCompareEnabled: boolean;
+};
+
+export function getDashboardMaxRangeDays(
+  granularity: OrganizationDashboardGranularity,
+): number {
+  switch (granularity) {
+    case 'day':
+      return 90;
+    case 'month':
+      return 730;
+    default:
+      return 365;
+  }
+}
+
+export function cloneDashboardDateRange(range: Date[] | null): Date[] | null {
+  if (!range) {
+    return null;
+  }
+
+  return range.reduce<Date[]>((clonedRange, value) => {
+    if (value instanceof Date) {
+      clonedRange.push(new Date(value));
+    }
+
+    return clonedRange;
+  }, []);
+}
+
+export function normalizeDashboardDateRange(
+  range: Date[] | null,
+  granularity: OrganizationDashboardGranularity,
+): Date[] | null {
+  if (!range || range.length < 2 || !range[0] || !range[1]) {
+    return cloneDashboardDateRange(range);
+  }
+
+  const [from, to] = range;
+  const maxMs = getDashboardMaxRangeDays(granularity) * 24 * 60 * 60 * 1000;
+
+  if (to.getTime() - from.getTime() > maxMs) {
+    return [new Date(from), new Date(from.getTime() + maxMs)];
+  }
+
+  return [new Date(from), new Date(to)];
+}
+
+export function getDashboardInitialFilterDraftState(): DashboardFilterDraftState {
+  return {
+    isFilterDrawerVisible: false,
+    draftDateRange: getDashboardInitialDateRange(),
+    draftCompareEnabled: true,
+  };
+}
+
 export function withDashboardFilterState() {
   return signalStoreFeature(
     withState<DashboardFilterState>({
@@ -32,33 +91,16 @@ export function withDashboardFilterState() {
     }),
     withComputed((store) => ({
       granularityOptions: computed<GranularityOption[]>(() => [...GRANULARITY_OPTIONS]),
-      maxRangeDays: computed<number>(() => {
-        switch (store.selectedGranularity()) {
-          case 'day':
-            return 90;
-          case 'month':
-            return 730;
-          default:
-            return 365;
-        }
-      }),
+      maxRangeDays: computed<number>(() => getDashboardMaxRangeDays(store.selectedGranularity())),
     })),
     withMethods((store) => ({
       setGranularity(granularity: OrganizationDashboardGranularity): void {
         patchState(store, { selectedGranularity: granularity });
       },
       setDateRange(range: Date[] | null): void {
-        if (!range || range.length < 2 || !range[0] || !range[1]) {
-          patchState(store, { selectedDateRange: range });
-          return;
-        }
-        const [from, to] = range;
-        const maxMs = store.maxRangeDays() * 24 * 60 * 60 * 1000;
-        if (to.getTime() - from.getTime() > maxMs) {
-          patchState(store, { selectedDateRange: [from, new Date(from.getTime() + maxMs)] });
-          return;
-        }
-        patchState(store, { selectedDateRange: range });
+        patchState(store, {
+          selectedDateRange: normalizeDashboardDateRange(range, store.selectedGranularity()),
+        });
       },
       setCompareEnabled(compareEnabled: boolean): void {
         patchState(store, { compareEnabled });

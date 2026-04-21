@@ -1,2 +1,8 @@
-export { buildDashboardTrendBaseParams, withDashboardFilterState } from './filter.feature';
-export type { DashboardFilterState } from './filter.feature';
+export {
+	buildDashboardTrendBaseParams,
+	cloneDashboardDateRange,
+	getDashboardInitialFilterDraftState,
+	normalizeDashboardDateRange,
+	withDashboardFilterState,
+} from './filter.feature';
+export type { DashboardFilterDraftState, DashboardFilterState } from './filter.feature';

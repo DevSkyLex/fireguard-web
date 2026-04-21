@@ -8,11 +8,19 @@ const mockStore = {
   selectedNonConformitySeverity: signal(null),
   selectedDateRange: signal(null),
   compareEnabled: signal(false),
+  draftNonConformityStatus: signal(null),
+  draftNonConformitySeverity: signal(null),
+  draftDateRange: signal(null),
+  draftCompareEnabled: signal(false),
   isQueryLoading: signal(false),
   setNonConformityStatus: vi.fn(),
   setNonConformitySeverity: vi.fn(),
   setDateRange: vi.fn(),
   setCompareEnabled: vi.fn(),
+  setDraftNonConformityStatus: vi.fn(),
+  setDraftNonConformitySeverity: vi.fn(),
+  setDraftDateRange: vi.fn(),
+  setDraftCompareEnabled: vi.fn(),
 };
 
 describe('NonConformitiesResolvedFilters', () => {

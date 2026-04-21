@@ -8,10 +8,14 @@ const mockAligned = { labels: [], datasets: [[], [], []] };
 const mockStore = {
   selectedDateRange: signal(null),
   compareEnabled: signal(false),
+  draftDateRange: signal(null),
+  draftCompareEnabled: signal(false),
   isQueryLoading: signal(false),
   alignedTrendData: signal(mockAligned),
   setDateRange: vi.fn(),
   setCompareEnabled: vi.fn(),
+  setDraftDateRange: vi.fn(),
+  setDraftCompareEnabled: vi.fn(),
 };
 
 describe('OverviewFilters', () => {

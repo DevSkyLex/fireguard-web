@@ -35,7 +35,10 @@ describe('AssetGrowthToolbar', () => {
     const fixture = createComponent();
     const emitSpy = vi.fn();
     fixture.componentInstance.menuToggle.subscribe(emitSpy);
-    (fixture.nativeElement.querySelector('button') as HTMLButtonElement).click();
+
+    const actionButtons = fixture.nativeElement.querySelectorAll('p-button button');
+    (actionButtons[1] as HTMLButtonElement).click();
+
     expect(emitSpy).toHaveBeenCalledTimes(1);
   });
 });

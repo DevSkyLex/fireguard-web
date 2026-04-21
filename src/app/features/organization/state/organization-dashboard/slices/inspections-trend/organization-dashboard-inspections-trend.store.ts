@@ -24,6 +24,9 @@ import type {
 import { ActiveOrganizationStore } from '@features/organization/state';
 import {
   buildDashboardTrendBaseParams,
+  cloneDashboardDateRange,
+  getDashboardInitialFilterDraftState,
+  normalizeDashboardDateRange,
   withDashboardFilterState,
 } from '../../features';
 import {
@@ -89,10 +92,14 @@ function createInspectionsTrendStore() {
    */
   withQueryState<OrganizationDashboardTrendOutput>(),
   withDashboardFilterState(),
+  withState(getDashboardInitialFilterDraftState()),
   withState({
     selectedInspectionStatus: null as InspectionStatus | null,
     selectedInspectionResult: null as InspectionResult | null,
     selectedInspectorType: null as InspectorType | null,
+    draftInspectionStatus: null as InspectionStatus | null,
+    draftInspectionResult: null as InspectionResult | null,
+    draftInspectorType: null as InspectorType | null,
   }),
   //#endregion
 
@@ -189,6 +196,150 @@ function createInspectionsTrendStore() {
      */
     setInspectorType(inspectorType: InspectorType | null): void {
       patchState(store, { selectedInspectorType: inspectorType });
+    },
+
+    /**
+     * Method setDraftDateRange
+     *
+     * @description
+     * Updates the draft date range edited inside the filter drawer.
+     *
+     * @param {Date[] | null} range - Draft range selected by the user.
+     * @returns {void}
+     */
+    setDraftDateRange(range: Date[] | null): void {
+      patchState(store, {
+        draftDateRange: normalizeDashboardDateRange(range, store.selectedGranularity()),
+      });
+    },
+
+    /**
+     * Method setDraftCompareEnabled
+     *
+     * @description
+     * Updates the draft compare-mode toggle edited inside the filter drawer.
+     *
+     * @param {boolean} compareEnabled - Draft compare-mode value.
+     * @returns {void}
+     */
+    setDraftCompareEnabled(compareEnabled: boolean): void {
+      patchState(store, { draftCompareEnabled: compareEnabled });
+    },
+
+    /**
+     * Method setDraftInspectionStatus
+     *
+     * @description
+     * Updates the draft inspection-status value edited inside the filter drawer.
+     *
+     * @param {InspectionStatus | null} inspectionStatus - Draft inspection status.
+     * @returns {void}
+     */
+    setDraftInspectionStatus(inspectionStatus: InspectionStatus | null): void {
+      patchState(store, { draftInspectionStatus: inspectionStatus });
+    },
+
+    /**
+     * Method setDraftInspectionResult
+     *
+     * @description
+     * Updates the draft inspection-result value edited inside the filter drawer.
+     *
+     * @param {InspectionResult | null} inspectionResult - Draft inspection result.
+     * @returns {void}
+     */
+    setDraftInspectionResult(inspectionResult: InspectionResult | null): void {
+      patchState(store, { draftInspectionResult: inspectionResult });
+    },
+
+    /**
+     * Method setDraftInspectorType
+     *
+     * @description
+     * Updates the draft inspector-type value edited inside the filter drawer.
+     *
+     * @param {InspectorType | null} inspectorType - Draft inspector type.
+     * @returns {void}
+     */
+    setDraftInspectorType(inspectorType: InspectorType | null): void {
+      patchState(store, { draftInspectorType: inspectorType });
+    },
+
+    /**
+     * Method openFilters
+     *
+     * @description
+     * Opens the filter drawer and seeds the draft values from the applied filters.
+     *
+     * @returns {void}
+     */
+    openFilters(): void {
+      patchState(store, {
+        isFilterDrawerVisible: true,
+        draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+        draftCompareEnabled: store.compareEnabled(),
+        draftInspectionStatus: store.selectedInspectionStatus(),
+        draftInspectionResult: store.selectedInspectionResult(),
+        draftInspectorType: store.selectedInspectorType(),
+      });
+    },
+
+    /**
+     * Method cancelDraftFilters
+     *
+     * @description
+     * Closes the filter drawer and restores the draft values from the applied filters.
+     *
+     * @returns {void}
+     */
+    cancelDraftFilters(): void {
+      patchState(store, {
+        isFilterDrawerVisible: false,
+        draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+        draftCompareEnabled: store.compareEnabled(),
+        draftInspectionStatus: store.selectedInspectionStatus(),
+        draftInspectionResult: store.selectedInspectionResult(),
+        draftInspectorType: store.selectedInspectorType(),
+      });
+    },
+
+    /**
+     * Method resetDraftFilters
+     *
+     * @description
+     * Resets the drawer draft values back to their default state without applying them.
+     *
+     * @returns {void}
+     */
+    resetDraftFilters(): void {
+      const initialDraftState = getDashboardInitialFilterDraftState();
+
+      patchState(store, {
+        draftDateRange: initialDraftState.draftDateRange,
+        draftCompareEnabled: initialDraftState.draftCompareEnabled,
+        draftInspectionStatus: null,
+        draftInspectionResult: null,
+        draftInspectorType: null,
+      });
+    },
+
+    /**
+     * Method applyDraftFilters
+     *
+     * @description
+     * Commits the current drawer draft values to the reactive filter state in one patch.
+     *
+     * @returns {void}
+     */
+    applyDraftFilters(): void {
+      patchState(store, {
+        isFilterDrawerVisible: false,
+        selectedDateRange: cloneDashboardDateRange(store.draftDateRange()),
+        compareEnabled: store.draftCompareEnabled(),
+        selectedInspectionStatus: store.draftInspectionStatus(),
+        selectedInspectionResult: store.draftInspectionResult(),
+        selectedInspectorType: store.draftInspectorType(),
+      });
     },
   })),
   //#endregion

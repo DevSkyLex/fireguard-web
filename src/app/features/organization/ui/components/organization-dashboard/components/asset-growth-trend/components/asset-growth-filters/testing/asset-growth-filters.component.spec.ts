@@ -13,6 +13,11 @@ const mockStore = {
   selectedFacilityType: signal(null),
   selectedDateRange: signal(null),
   compareEnabled: signal(false),
+  draftEquipmentType: signal(null),
+  draftEquipmentStatus: signal(null),
+  draftFacilityType: signal(null),
+  draftDateRange: signal(null),
+  draftCompareEnabled: signal(false),
   isQueryLoading: signal(false),
   alignedTrendData: signal(mockAligned),
   setEquipmentType: vi.fn(),
@@ -20,6 +25,11 @@ const mockStore = {
   setFacilityType: vi.fn(),
   setDateRange: vi.fn(),
   setCompareEnabled: vi.fn(),
+  setDraftEquipmentType: vi.fn(),
+  setDraftEquipmentStatus: vi.fn(),
+  setDraftFacilityType: vi.fn(),
+  setDraftDateRange: vi.fn(),
+  setDraftCompareEnabled: vi.fn(),
 };
 
 describe('AssetGrowthFilters', () => {

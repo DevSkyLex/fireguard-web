@@ -8,6 +8,7 @@
 >
   <ng-template #action>
     <app-overview-toolbar
+      (filterToggle)="onFilterToggle()"
       (menuToggle)="onMenuToggle($event)"
     />
   </ng-template>
@@ -15,8 +16,16 @@
   <ng-template #content>
     <app-overview-chart />
   </ng-template>
-
-  <ng-template #footer>
-    <app-overview-filters />
-  </ng-template>
 </app-trend-card>
+
+<app-trend-filter-drawer
+  title="Operational Flow Filters"
+  description="Refine the time window and comparison settings for the operational flow chart."
+  [visible]="isFilterDrawerVisible()"
+  [loading]="isLoading()"
+  (cancel)="onCancelFilters()"
+  (reset)="onResetFilters()"
+  (apply)="onApplyFilters()"
+>
+  <app-overview-filters />
+</app-trend-filter-drawer>

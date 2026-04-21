@@ -8,6 +8,7 @@
 >
   <ng-template #action>
     <app-equipment-created-toolbar
+      (filterToggle)="onFilterToggle()"
       (menuToggle)="onMenuToggle($event)"
     />
   </ng-template>
@@ -15,8 +16,16 @@
   <ng-template #content>
     <app-equipment-created-chart />
   </ng-template>
-
-  <ng-template #footer>
-    <app-equipment-created-filters />
-  </ng-template>
 </app-trend-card>
+
+<app-trend-filter-drawer
+  title="Equipment Created Filters"
+  description="Refine equipment creation metrics by type, status, period, and comparison mode."
+  [visible]="isFilterDrawerVisible()"
+  [loading]="isLoading()"
+  (cancel)="onCancelFilters()"
+  (reset)="onResetFilters()"
+  (apply)="onApplyFilters()"
+>
+  <app-equipment-created-filters />
+</app-trend-filter-drawer>

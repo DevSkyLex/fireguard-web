@@ -1,56 +1,47 @@
-<div class="flex flex-wrap items-center gap-2">
-  <p-select
-    [ngModel]="store.selectedFacilityType()"
-    (ngModelChange)="store.setFacilityType($event)"
-    [options]="facilityTypeOptions"
-    optionLabel="label"
-    optionValue="value"
-    placeholder="Type"
-    [showClear]="true"
-    [loading]="store.isQueryLoading()"
-    size="small"
-  >
-    <ng-template #item let-option>
-      <span class="flex items-center gap-2">
-        <i [class]="option.icon"></i>
-        {{ option.label }}
-      </span>
-    </ng-template>
-    <ng-template #selectedItem>
-      @let option = selectedFacilityTypeOption();
-      @if (option) {
+<div [formGroup]="form" class="grid gap-4">
+  <div class="flex flex-col gap-2">
+    <label
+      for="facilities-created-facility-type"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
+      Facility type
+    </label>
+
+    <p-select
+      id="facilities-created-facility-type"
+      formControlName="facilityType"
+      [options]="facilityTypeOptions"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All facility types"
+      [showClear]="true"
+      [loading]="store.isQueryLoading()"
+      class="w-full"
+    >
+      <ng-template #item let-option>
         <span class="flex items-center gap-2">
           <i [class]="option.icon"></i>
           {{ option.label }}
         </span>
-      }
-    </ng-template>
-  </p-select>
+      </ng-template>
+      <ng-template #selectedItem>
+        @let option = selectedFacilityTypeOption();
+        @if (option) {
+          <span class="flex items-center gap-2">
+            <i [class]="option.icon"></i>
+            {{ option.label }}
+          </span>
+        }
+      </ng-template>
+    </p-select>
+  </div>
 
-  @defer (on idle) {
-    <p-datepicker
-      selectionMode="range"
-      [ngModel]="store.selectedDateRange()"
-      [ngModelOptions]="{ updateOn: 'blur' }"
-      (ngModelChange)="store.setDateRange($event)"
-      [maxDate]="today"
-      placeholder="Select date range"
-      [showClear]="true"
-      [showTime]="true"
-      hourFormat="24"
-      size="small"
-      appendTo="body"
-      dateFormat="dd/mm/yy"
-      [disabled]="store.isQueryLoading()"
-    />
-  }
-
-  <p-togglebutton
-    [ngModel]="store.compareEnabled()"
-    (ngModelChange)="store.setCompareEnabled($event)"
-    onLabel="Compare ON"
-    offLabel="Compare OFF"
-    size="small"
-    [disabled]="store.isQueryLoading()"
+  <app-trend-base-filters-form
+    dateRangeId="facilities-created-date-range"
+    [dateRange]="store.draftDateRange()"
+    [compareEnabled]="store.draftCompareEnabled()"
+    [loading]="store.isQueryLoading()"
+    (dateRangeChange)="store.setDraftDateRange($event)"
+    (compareEnabledChange)="store.setDraftCompareEnabled($event)"
   />
 </div>

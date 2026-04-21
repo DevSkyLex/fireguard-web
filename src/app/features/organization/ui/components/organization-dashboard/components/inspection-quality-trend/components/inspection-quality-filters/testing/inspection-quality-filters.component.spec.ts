@@ -10,6 +10,12 @@ const mockStore = {
   selectedNonConformitySeverity: signal<string | null>('low'),
   selectedDateRange: signal<Date[] | null>(null),
   compareEnabled: signal(false),
+  draftInspectionStatus: signal<string | null>('draft'),
+  draftInspectionResult: signal<string | null>('pass'),
+  draftInspectorType: signal<string | null>(null),
+  draftNonConformitySeverity: signal<string | null>('low'),
+  draftDateRange: signal<Date[] | null>(null),
+  draftCompareEnabled: signal(false),
   isQueryLoading: signal(false),
   setInspectionStatus: vi.fn(),
   setInspectionResult: vi.fn(),
@@ -17,6 +23,12 @@ const mockStore = {
   setNonConformitySeverity: vi.fn(),
   setDateRange: vi.fn(),
   setCompareEnabled: vi.fn(),
+  setDraftInspectionStatus: vi.fn(),
+  setDraftInspectionResult: vi.fn(),
+  setDraftInspectorType: vi.fn(),
+  setDraftNonConformitySeverity: vi.fn(),
+  setDraftDateRange: vi.fn(),
+  setDraftCompareEnabled: vi.fn(),
 };
 
 describe('InspectionQualityFilters', () => {

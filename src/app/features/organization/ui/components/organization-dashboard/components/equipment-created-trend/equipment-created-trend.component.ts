@@ -23,6 +23,7 @@ import {
   EquipmentCreatedToolbar,
 } from './components';
 import { TrendCard } from '@shared/components';
+import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
 
 /**
  * Component EquipmentCreatedTrend
@@ -43,6 +44,7 @@ import { TrendCard } from '@shared/components';
   imports: [
     TrendCard,
     MenuModule,
+    TrendFilterDrawer,
     EquipmentCreatedToolbar,
     EquipmentCreatedChart,
     EquipmentCreatedFilters,
@@ -99,6 +101,22 @@ export class EquipmentCreatedTrend {
    */
   protected readonly isLoading: Signal<boolean> = computed<boolean>(
     () => this.dashboardStore.isQueryLoading(),
+  );
+
+  /**
+   * Property isFilterDrawerVisible
+   * @readonly
+   *
+   * @description
+   * Controlled visibility state for the trend filter drawer.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(
+    () => this.dashboardStore.isFilterDrawerVisible(),
   );
 
   /**
@@ -183,6 +201,66 @@ export class EquipmentCreatedTrend {
    */
   protected onMenuToggle(event: MouseEvent): void {
     this.menu().toggle(event);
+  }
+
+  /**
+   * Method onFilterToggle
+   *
+   * @description
+   * Opens the draft filter drawer.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected onFilterToggle(): void {
+    this.dashboardStore.openFilters();
+  }
+
+  /**
+   * Method onCancelFilters
+   *
+   * @description
+   * Restores the draft filter state from the applied values and closes the drawer.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected onCancelFilters(): void {
+    this.dashboardStore.cancelDraftFilters();
+  }
+
+  /**
+   * Method onResetFilters
+   *
+   * @description
+   * Resets the draft filter state to its initial defaults.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected onResetFilters(): void {
+    this.dashboardStore.resetDraftFilters();
+  }
+
+  /**
+   * Method onApplyFilters
+   *
+   * @description
+   * Applies the current draft filters and closes the drawer.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected onApplyFilters(): void {
+    this.dashboardStore.applyDraftFilters();
   }
 
   //#endregion

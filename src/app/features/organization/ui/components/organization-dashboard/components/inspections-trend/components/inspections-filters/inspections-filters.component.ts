@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, type Signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
 import { OrganizationDashboardInspectionsTrendStore } from '@features/organization/state/organization-dashboard';
 import type {
   InspectionResultOption,
@@ -11,19 +13,30 @@ import {
   INSPECTION_STATUS_OPTIONS,
   INSPECTOR_TYPE_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
-import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
-import { ToggleButtonModule } from 'primeng/togglebutton';
+
+/**
+ * Type InspectionsFiltersForm
+ *
+ * @description
+ * Typed reactive controls used by the inspections draft filter form.
+ *
+ * @since 2.1.0
+ */
+type InspectionsFiltersForm = {
+  inspectionStatus: FormControl<InspectionStatusOption['value'] | null>;
+  inspectionResult: FormControl<InspectionResultOption['value'] | null>;
+  inspectorType: FormControl<InspectorTypeOption['value'] | null>;
+};
 
 /**
  * Component InspectionsFilters
  * @class InspectionsFilters
  *
  * @description
- * Footer filter section for the inspections trend card.
- * All filter state is read and mutated directly through
- * {@link OrganizationDashboardInspectionsTrendStore} — no inputs or outputs
- * are required.
+ * Drawer filter form for the inspections trend card.
+ * All draft filter state is read and mutated directly through
+ * {@link OrganizationDashboardInspectionsTrendStore}.
  *
  * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -31,7 +44,7 @@ import { ToggleButtonModule } from 'primeng/togglebutton';
 @Component({
   selector: 'app-inspections-filters',
   templateUrl: './inspections-filters.component.html',
-  imports: [FormsModule, DatePickerModule, SelectModule, ToggleButtonModule],
+  imports: [ReactiveFormsModule, SelectModule, TrendBaseFiltersForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionsFilters {
@@ -42,7 +55,7 @@ export class InspectionsFilters {
    * @readonly
    *
    * @description
-   * Component-scoped store used to read and mutate all filter selections.
+  * Component-scoped store used to read and mutate all draft filter selections.
    *
    * @access protected
    * @since 2.0.0
@@ -53,18 +66,22 @@ export class InspectionsFilters {
     inject<OrganizationDashboardInspectionsTrendStore>(OrganizationDashboardInspectionsTrendStore);
 
   /**
-   * Property today
+   * Property form
    * @readonly
    *
    * @description
-   * Upper bound for the date-range picker. Prevents selecting future dates.
+   * Typed reactive form group for inspections-specific draft filters.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 2.1.0
    *
-   * @type {Date}
+   * @type {FormGroup<InspectionsFiltersForm>}
    */
-  protected readonly today: Date = new Date();
+  protected readonly form: FormGroup<InspectionsFiltersForm> = new FormGroup<InspectionsFiltersForm>({
+    inspectionStatus: new FormControl<InspectionStatusOption['value'] | null>(null),
+    inspectionResult: new FormControl<InspectionResultOption['value'] | null>(null),
+    inspectorType: new FormControl<InspectorTypeOption['value'] | null>(null),
+  });
 
   /**
    * Property inspectionStatusOptions
@@ -125,11 +142,11 @@ export class InspectionsFilters {
    * @access public
    * @type {Signal<InspectionStatusOption | null>}
    */
-  readonly selectedInspectionStatusOption: Signal<InspectionStatusOption | null> =
+  public readonly selectedInspectionStatusOption: Signal<InspectionStatusOption | null> =
     computed<InspectionStatusOption | null>(
       () =>
         INSPECTION_STATUS_OPTIONS.find(
-          (o) => o.value === this.store.selectedInspectionStatus(),
+          (o) => o.value === this.store.draftInspectionStatus(),
         ) ?? null,
     );
 
@@ -146,13 +163,57 @@ export class InspectionsFilters {
    * @access public
    * @type {Signal<InspectionResultOption | null>}
    */
-  readonly selectedInspectionResultOption: Signal<InspectionResultOption | null> =
+  public readonly selectedInspectionResultOption: Signal<InspectionResultOption | null> =
     computed<InspectionResultOption | null>(
       () =>
         INSPECTION_RESULT_OPTIONS.find(
-          (o) => o.value === this.store.selectedInspectionResult(),
+          (o) => o.value === this.store.draftInspectionResult(),
         ) ?? null,
     );
+
+  //#endregion
+
+  //#region Constructor
+
+  /**
+   * @constructor
+   *
+   * @description
+   * Synchronises the reactive controls with the dashboard draft state.
+   *
+   * @access public
+   * @since 2.1.0
+   */
+  public constructor() {
+    this.form.controls.inspectionStatus.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((inspectionStatus: InspectionStatusOption['value'] | null): void => {
+        this.store.setDraftInspectionStatus(inspectionStatus);
+      });
+
+    this.form.controls.inspectionResult.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((inspectionResult: InspectionResultOption['value'] | null): void => {
+        this.store.setDraftInspectionResult(inspectionResult);
+      });
+
+    this.form.controls.inspectorType.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((inspectorType: InspectorTypeOption['value'] | null): void => {
+        this.store.setDraftInspectorType(inspectorType);
+      });
+
+    effect((): void => {
+      this.form.patchValue(
+        {
+          inspectionStatus: this.store.draftInspectionStatus(),
+          inspectionResult: this.store.draftInspectionResult(),
+          inspectorType: this.store.draftInspectorType(),
+        },
+        { emitEvent: false },
+      );
+    });
+  }
 
   //#endregion
 }

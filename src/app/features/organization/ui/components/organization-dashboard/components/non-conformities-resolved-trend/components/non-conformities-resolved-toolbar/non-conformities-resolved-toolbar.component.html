@@ -4,8 +4,7 @@
       <i class="pi pi-calendar"></i>
     </p-inputgroup-addon>
     <p-select
-      [ngModel]="store.selectedGranularity()"
-      (ngModelChange)="store.setGranularity($event)"
+      [formControl]="granularityControl"
       [options]="store.granularityOptions()"
       optionLabel="label"
       optionValue="value"
@@ -13,6 +12,15 @@
       size="small"
     />
   </p-inputgroup>
+
+  <p-button
+    label="Filters"
+    icon="pi pi-filter"
+    severity="secondary"
+    size="small"
+    [outlined]="true"
+    (onClick)="filterToggle.emit()"
+  />
 
   <p-button
     icon="pi pi-ellipsis-v"

@@ -8,11 +8,19 @@ const mockStore = {
   selectedEquipmentStatus: signal(null),
   selectedDateRange: signal(null),
   compareEnabled: signal(false),
+  draftEquipmentType: signal(null),
+  draftEquipmentStatus: signal(null),
+  draftDateRange: signal(null),
+  draftCompareEnabled: signal(false),
   isQueryLoading: signal(false),
   setEquipmentType: vi.fn(),
   setEquipmentStatus: vi.fn(),
   setDateRange: vi.fn(),
   setCompareEnabled: vi.fn(),
+  setDraftEquipmentType: vi.fn(),
+  setDraftEquipmentStatus: vi.fn(),
+  setDraftDateRange: vi.fn(),
+  setDraftCompareEnabled: vi.fn(),
 };
 
 describe('EquipmentCreatedFilters', () => {

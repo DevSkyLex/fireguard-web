@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, type Signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
 import { OrganizationDashboardEquipmentCreatedStore } from '@features/organization/state/organization-dashboard';
 import type {
   EquipmentStatusOption,
@@ -9,19 +11,29 @@ import {
   EQUIPMENT_STATUS_OPTIONS,
   EQUIPMENT_TYPE_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
-import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
-import { ToggleButtonModule } from 'primeng/togglebutton';
+
+/**
+ * Type EquipmentCreatedFiltersForm
+ *
+ * @description
+ * Typed reactive controls used by the equipment-created draft filter form.
+ *
+ * @since 2.1.0
+ */
+type EquipmentCreatedFiltersForm = {
+  equipmentType: FormControl<EquipmentTypeOption['value'] | null>;
+  equipmentStatus: FormControl<EquipmentStatusOption['value'] | null>;
+};
 
 /**
  * Component EquipmentCreatedFilters
  * @class EquipmentCreatedFilters
  *
  * @description
- * Footer filter section for the equipment-created trend card.
- * All filter state is read and mutated directly through
- * {@link OrganizationDashboardEquipmentCreatedStore} — no inputs or outputs
- * are required.
+ * Drawer filter form for the equipment-created trend card.
+ * All draft filter state is read and mutated directly through
+ * {@link OrganizationDashboardEquipmentCreatedStore}.
  *
  * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -29,7 +41,7 @@ import { ToggleButtonModule } from 'primeng/togglebutton';
 @Component({
   selector: 'app-equipment-created-filters',
   templateUrl: './equipment-created-filters.component.html',
-  imports: [FormsModule, DatePickerModule, SelectModule, ToggleButtonModule],
+  imports: [ReactiveFormsModule, SelectModule, TrendBaseFiltersForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EquipmentCreatedFilters {
@@ -40,7 +52,7 @@ export class EquipmentCreatedFilters {
    * @readonly
    *
    * @description
-   * Component-scoped store used to read and mutate all filter selections.
+  * Component-scoped store used to read and mutate all draft filter selections.
    *
    * @access protected
    * @since 2.0.0
@@ -51,18 +63,22 @@ export class EquipmentCreatedFilters {
     inject<OrganizationDashboardEquipmentCreatedStore>(OrganizationDashboardEquipmentCreatedStore);
 
   /**
-   * Property today
+   * Property form
    * @readonly
    *
    * @description
-   * Upper bound for the date-range picker. Prevents selecting future dates.
+   * Typed reactive form group for equipment-created-specific draft filters.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 2.1.0
    *
-   * @type {Date}
+   * @type {FormGroup<EquipmentCreatedFiltersForm>}
    */
-  protected readonly today: Date = new Date();
+  protected readonly form: FormGroup<EquipmentCreatedFiltersForm> =
+    new FormGroup<EquipmentCreatedFiltersForm>({
+      equipmentType: new FormControl<EquipmentTypeOption['value'] | null>(null),
+      equipmentStatus: new FormControl<EquipmentStatusOption['value'] | null>(null),
+    });
 
   /**
    * Property equipmentTypeOptions
@@ -107,13 +123,50 @@ export class EquipmentCreatedFilters {
    * @access public
    * @type {Signal<EquipmentStatusOption | null>}
    */
-  readonly selectedEquipmentStatusOption: Signal<EquipmentStatusOption | null> =
+  public readonly selectedEquipmentStatusOption: Signal<EquipmentStatusOption | null> =
     computed<EquipmentStatusOption | null>(
       () =>
         EQUIPMENT_STATUS_OPTIONS.find(
-          (o) => o.value === this.store.selectedEquipmentStatus(),
+          (o) => o.value === this.store.draftEquipmentStatus(),
         ) ?? null,
     );
+
+  //#endregion
+
+  //#region Constructor
+
+  /**
+   * @constructor
+   *
+   * @description
+   * Synchronises the reactive controls with the dashboard draft state.
+   *
+   * @access public
+   * @since 2.1.0
+   */
+  public constructor() {
+    this.form.controls.equipmentType.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((equipmentType: EquipmentTypeOption['value'] | null): void => {
+        this.store.setDraftEquipmentType(equipmentType);
+      });
+
+    this.form.controls.equipmentStatus.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((equipmentStatus: EquipmentStatusOption['value'] | null): void => {
+        this.store.setDraftEquipmentStatus(equipmentStatus);
+      });
+
+    effect((): void => {
+      this.form.patchValue(
+        {
+          equipmentType: this.store.draftEquipmentType(),
+          equipmentStatus: this.store.draftEquipmentStatus(),
+        },
+        { emitEvent: false },
+      );
+    });
+  }
 
   //#endregion
 }

@@ -1,8 +1,8 @@
 <p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
 
 <app-trend-card
-  title="Asset Growth Momentum"
-  description="Equipment and facilities created over time"
+  [title]="cardTitle()"
+  [description]="cardDescription()"
   [metrics]="summaryMetrics()"
   [loading]="isLoading()"
 >

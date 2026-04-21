@@ -114,6 +114,62 @@ export class AssetGrowthTrend {
   );
 
   /**
+   * Property cardTitle
+   * @readonly
+   *
+   * @description
+   * Dynamic card title derived from the visible resource dimensions.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly cardTitle: Signal<string> = computed<string>(() => {
+    if (this.dashboardStore.canReadEquipment() && this.dashboardStore.canReadFacilities()) {
+      return 'Asset Growth Momentum';
+    }
+
+    if (this.dashboardStore.canReadEquipment()) {
+      return 'Equipment Growth Momentum';
+    }
+
+    if (this.dashboardStore.canReadFacilities()) {
+      return 'Facility Growth Momentum';
+    }
+
+    return 'Asset Growth Momentum';
+  });
+
+  /**
+   * Property cardDescription
+   * @readonly
+   *
+   * @description
+   * Dynamic card description aligned with the visible resource dimensions.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly cardDescription: Signal<string> = computed<string>(() => {
+    if (this.dashboardStore.canReadEquipment() && this.dashboardStore.canReadFacilities()) {
+      return 'Equipment and facilities created over time';
+    }
+
+    if (this.dashboardStore.canReadEquipment()) {
+      return 'Equipment created over time';
+    }
+
+    if (this.dashboardStore.canReadFacilities()) {
+      return 'Facilities created over time';
+    }
+
+    return 'Equipment and facilities created over time';
+  });
+
+  /**
    * Property summaryMetrics
    * @readonly
    *
@@ -129,6 +185,13 @@ export class AssetGrowthTrend {
    * @type {Signal<readonly DashboardSummaryMetric[]>}
    */
   protected readonly summaryMetrics: Signal<readonly DashboardSummaryMetric[]> = computed(() => {
+    const canReadEquipment = this.dashboardStore.canReadEquipment();
+    const canReadFacilities = this.dashboardStore.canReadFacilities();
+
+    if (!canReadEquipment && !canReadFacilities) {
+      return [];
+    }
+
     const growth = this.dashboardStore.queryData();
     const compareEnabled = this.dashboardStore.compareEnabled();
     const equipmentSeries = growth?.equipment?.series ?? [];
@@ -147,8 +210,11 @@ export class AssetGrowthTrend {
     );
     const assetsPerFacility =
       facilityTotal > 0 ? Number((equipmentTotal / facilityTotal).toFixed(1)) : 0;
-    return [
-      {
+
+    const metrics: DashboardSummaryMetric[] = [];
+
+    if (canReadEquipment) {
+      metrics.push({
         label: 'Equipment Added',
         value: WHOLE_NUMBER_FMT.format(equipmentTotal),
         icon: 'pi pi-shield',
@@ -157,30 +223,40 @@ export class AssetGrowthTrend {
           previousEquipmentTotal,
           compareEnabled,
         ),
-      },
-      {
+      });
+    }
+
+    if (canReadFacilities) {
+      metrics.push({
         label: 'Facilities Added',
         value: WHOLE_NUMBER_FMT.format(facilityTotal),
         icon: 'pi pi-building',
         comparison: buildDashboardComparison(facilityTotal, previousFacilityTotal, compareEnabled),
-      },
-      {
-        label: 'Combined Growth',
-        value: WHOLE_NUMBER_FMT.format(equipmentTotal + facilityTotal),
-        icon: 'pi pi-arrow-up-right',
-        comparison: buildDashboardComparison(
-          equipmentTotal + facilityTotal,
-          previousEquipmentTotal + previousFacilityTotal,
-          compareEnabled,
-        ),
-      },
-      {
-        label: 'Equipment / Facility',
-        value: `${DECIMAL_FMT.format(assetsPerFacility)}x`,
-        icon: 'pi pi-percentage',
-        comparison: null,
-      },
-    ];
+      });
+    }
+
+    if (canReadEquipment && canReadFacilities) {
+      metrics.push(
+        {
+          label: 'Combined Growth',
+          value: WHOLE_NUMBER_FMT.format(equipmentTotal + facilityTotal),
+          icon: 'pi pi-arrow-up-right',
+          comparison: buildDashboardComparison(
+            equipmentTotal + facilityTotal,
+            previousEquipmentTotal + previousFacilityTotal,
+            compareEnabled,
+          ),
+        },
+        {
+          label: 'Equipment / Facility',
+          value: `${DECIMAL_FMT.format(assetsPerFacility)}x`,
+          icon: 'pi pi-percentage',
+          comparison: null,
+        },
+      );
+    }
+
+    return metrics;
   });
 
   /**
@@ -211,6 +287,9 @@ export class AssetGrowthTrend {
    * @type {Signal<MenuItem[]>}
    */
   protected readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>(() => {
+    const canReadEquipment = this.dashboardStore.canReadEquipment();
+    const canReadFacilities = this.dashboardStore.canReadFacilities();
+
     /**
      * Constant organization
      * @const organization
@@ -237,18 +316,25 @@ export class AssetGrowthTrend {
      */
     const organizationId: string | null = organization ? organization.id : null;
 
-    return [
-      {
+    const items: MenuItem[] = [];
+
+    if (canReadEquipment) {
+      items.push({
         label: 'View all equipment',
         icon: PrimeIcons.SHIELD,
         routerLink: organizationId ? ['/organizations', organizationId, 'equipment'] : null,
-      },
-      {
+      });
+    }
+
+    if (canReadFacilities) {
+      items.push({
         label: 'View all facilities',
         icon: PrimeIcons.BUILDING,
         routerLink: organizationId ? ['/organizations', organizationId, 'facilities'] : null,
-      },
-    ];
+      });
+    }
+
+    return items;
   });
 
   /**

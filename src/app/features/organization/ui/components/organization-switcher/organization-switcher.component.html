@@ -3,6 +3,7 @@
   [organization]="organizationStore.selectedOrganization()"
   [isLoading]="organizationStore.isLoadingOrganizations()"
   [isSwitching]="organizationStore.isLoadingOrganization()"
+  (prefetchMenuData)="prefetchOrganizations()"
   (toggleMenu)="toggle($event)"
 />
 

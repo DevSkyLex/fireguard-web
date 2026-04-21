@@ -26,12 +26,23 @@ describe('OrganizationSwitcherTrigger', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render a skeleton when isLoading is true', () => {
+  it('should render a skeleton when isLoading is true and no organization is selected', () => {
     const fixture = TestBed.createComponent(OrganizationSwitcherTrigger);
     fixture.componentRef.setInput('isLoading', true);
+    fixture.componentRef.setInput('organization', null);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('p-skeleton')).not.toBeNull();
+  });
+
+  it('should keep the trigger button visible when loading with an active organization', () => {
+    const fixture = TestBed.createComponent(OrganizationSwitcherTrigger);
+    fixture.componentRef.setInput('isLoading', true);
+    fixture.componentRef.setInput('organization', MOCK_ORG);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('p-button')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('p-skeleton')).toBeNull();
   });
 
   it('should render the button when isLoading is false', () => {
@@ -68,6 +79,32 @@ describe('OrganizationSwitcherTrigger', () => {
 
     const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
     button.click();
+
+    expect(emitSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should emit prefetchMenuData when the trigger is hovered', () => {
+    const fixture = TestBed.createComponent(OrganizationSwitcherTrigger);
+    fixture.componentRef.setInput('organization', MOCK_ORG);
+    fixture.detectChanges();
+
+    const emitSpy = vi.fn();
+    fixture.componentInstance.prefetchMenuData.subscribe(emitSpy);
+
+    fixture.nativeElement.dispatchEvent(new MouseEvent('mouseenter'));
+
+    expect(emitSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should emit prefetchMenuData when the trigger receives focus', () => {
+    const fixture = TestBed.createComponent(OrganizationSwitcherTrigger);
+    fixture.componentRef.setInput('organization', MOCK_ORG);
+    fixture.detectChanges();
+
+    const emitSpy = vi.fn();
+    fixture.componentInstance.prefetchMenuData.subscribe(emitSpy);
+
+    fixture.nativeElement.dispatchEvent(new FocusEvent('focusin'));
 
     expect(emitSpy).toHaveBeenCalledTimes(1);
   });

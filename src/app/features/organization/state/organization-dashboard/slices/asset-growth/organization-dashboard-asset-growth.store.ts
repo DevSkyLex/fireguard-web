@@ -3,7 +3,7 @@ import { computed, effect, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, forkJoin, pipe, switchMap } from 'rxjs';
+import { EMPTY, forkJoin, of, pipe, switchMap } from 'rxjs';
 import {
   withQueryState,
   setPendingQuery,
@@ -11,6 +11,7 @@ import {
   setErrorQuery,
   toStoreError,
 } from '@core/state/request-state';
+import { OrganizationPermissionService } from '@features/organization/access/services/organization-permission/organization-permission.service';
 import { OrganizationService } from '@features/organization/data-access';
 import type { FacilityType } from '@features/organization/features/facilities/models';
 import type {
@@ -19,6 +20,7 @@ import type {
   OrganizationDashboardTrendOutput,
   OrganizationDashboardTrendResourceParams,
 } from '@features/organization/models';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import {
   alignDashboardTrendSeries,
@@ -65,8 +67,8 @@ type PersistedAssetGrowthFilters = PersistedDashboardBaseFilters & {
  * @since 1.0.0
  */
 type OrganizationDashboardAssetGrowthData = {
-  readonly equipment: OrganizationDashboardTrendOutput;
-  readonly facilities: OrganizationDashboardTrendOutput;
+  readonly equipment: OrganizationDashboardTrendOutput | null;
+  readonly facilities: OrganizationDashboardTrendOutput | null;
 };
 
 /**
@@ -80,6 +82,8 @@ type OrganizationDashboardAssetGrowthData = {
  * @since 1.0.0
  */
 type OrganizationDashboardAssetGrowthParams = OrganizationDashboardTrendResourceParams & {
+  readonly includeEquipment: boolean;
+  readonly includeFacilities: boolean;
   readonly equipmentType?: OrganizationDashboardEquipmentType;
   readonly equipmentStatus?: OrganizationDashboardEquipmentStatus;
   readonly facilityType?: FacilityType;
@@ -160,27 +164,25 @@ export const AssetGrowthTrendStore = signalStore(
           patchState(store, setPendingQuery());
 
           return forkJoin({
-            equipment: organizationService.getDashboardEquipmentCreatedTrend(
-              params.organizationId,
-              {
-                granularity: params.granularity,
-                from: params.from,
-                to: params.to,
-                compare: params.compare,
-                equipmentType: params.equipmentType,
-                equipmentStatus: params.equipmentStatus,
-              },
-            ),
-            facilities: organizationService.getDashboardFacilitiesCreatedTrend(
-              params.organizationId,
-              {
-                granularity: params.granularity,
-                from: params.from,
-                to: params.to,
-                compare: params.compare,
-                facilityType: params.facilityType,
-              },
-            ),
+            equipment: params.includeEquipment
+              ? organizationService.getDashboardEquipmentCreatedTrend(params.organizationId, {
+                  granularity: params.granularity,
+                  from: params.from,
+                  to: params.to,
+                  compare: params.compare,
+                  equipmentType: params.equipmentType,
+                  equipmentStatus: params.equipmentStatus,
+                })
+              : of(null),
+            facilities: params.includeFacilities
+              ? organizationService.getDashboardFacilitiesCreatedTrend(params.organizationId, {
+                  granularity: params.granularity,
+                  from: params.from,
+                  to: params.to,
+                  compare: params.compare,
+                  facilityType: params.facilityType,
+                })
+              : of(null),
           }).pipe(
             tapResponse({
               next: (data) => patchState(store, setSuccessQuery(data)),
@@ -235,6 +237,7 @@ export const AssetGrowthTrendStore = signalStore(
     setFacilityType(facilityType: FacilityType | null): void {
       patchState(store, { selectedFacilityType: facilityType });
     },
+
   })),
 
   //#endregion
@@ -249,7 +252,20 @@ export const AssetGrowthTrendStore = signalStore(
    *
    * @since 2.0.0
    */
-  withComputed((store) => ({
+  withComputed((
+    store,
+    organizationPermissionService = inject(OrganizationPermissionService),
+  ) => ({
+    canReadEquipment: computed<boolean>(() =>
+      organizationPermissionService.hasPermission(
+        ORGANIZATION_PERMISSION.EQUIPMENT_READ,
+      ),
+    ),
+    canReadFacilities: computed<boolean>(() =>
+      organizationPermissionService.hasPermission(
+        ORGANIZATION_PERMISSION.FACILITIES_READ,
+      ),
+    ),
     alignedTrendData: computed<AlignedDashboardTrendSeries>(() => {
       const growth = store.queryData();
       return alignDashboardTrendSeries(
@@ -281,6 +297,13 @@ export const AssetGrowthTrendStore = signalStore(
       loadParams: computed<OrganizationDashboardAssetGrowthParams | undefined>(() => {
         if (!isPlatformBrowser(platformId)) return undefined;
 
+        const includeEquipment = store.canReadEquipment();
+        const includeFacilities = store.canReadFacilities();
+
+        if (!includeEquipment && !includeFacilities) {
+          return undefined;
+        }
+
         const organization = activeOrganizationStore.selectedOrganization();
         if (!organization) return undefined;
 
@@ -289,10 +312,14 @@ export const AssetGrowthTrendStore = signalStore(
 
         return {
           organizationId: organization.id,
+          includeEquipment,
+          includeFacilities,
           ...baseParams,
-          equipmentType: store.selectedEquipmentType() ?? undefined,
-          equipmentStatus: store.selectedEquipmentStatus() ?? undefined,
-          facilityType: store.selectedFacilityType() ?? undefined,
+          equipmentType: includeEquipment ? (store.selectedEquipmentType() ?? undefined) : undefined,
+          equipmentStatus: includeEquipment
+            ? (store.selectedEquipmentStatus() ?? undefined)
+            : undefined,
+          facilityType: includeFacilities ? (store.selectedFacilityType() ?? undefined) : undefined,
         };
       }),
     };

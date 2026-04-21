@@ -1,4 +1,4 @@
-@if (isLoading()) {
+@if (isLoading() && !organization()) {
   <p-skeleton width="9rem" height="2rem" borderRadius="0.375rem" />
 } @else {
   <p-button

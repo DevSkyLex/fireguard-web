@@ -79,23 +79,30 @@ export class AssetGrowthChart {
   protected readonly data: Signal<ChartData<'bar'>> = computed<ChartData<'bar'>>(() => {
     const growth = this.store.queryData();
     const compareEnabled = this.store.compareEnabled();
+    const canReadEquipment = this.store.canReadEquipment();
+    const canReadFacilities = this.store.canReadFacilities();
     const aligned = this.store.alignedTrendData();
     const [equipmentData = [], facilityData = []] = aligned.datasets;
 
-    const datasets: ChartData<'bar'>['datasets'] = [
-      {
+    const datasets: ChartData<'bar'>['datasets'] = [];
+
+    if (canReadEquipment) {
+      datasets.push({
         label: 'Equipment Created',
         data: equipmentData,
         backgroundColor: '#8b5cf6',
         hoverBackgroundColor: '#7c3aed',
-      },
-      {
+      });
+    }
+
+    if (canReadFacilities) {
+      datasets.push({
         label: 'Facilities Created',
         data: facilityData,
         backgroundColor: '#14b8a6',
         hoverBackgroundColor: '#0d9488',
-      },
-    ];
+      });
+    }
 
     const equipmentComparisonData = (growth?.equipment?.comparison?.series ?? []).map((p) =>
       getDashboardTrendPointValue(p),
@@ -104,7 +111,7 @@ export class AssetGrowthChart {
       getDashboardTrendPointValue(p),
     );
 
-    if (compareEnabled && equipmentComparisonData.length > 0) {
+    if (canReadEquipment && compareEnabled && equipmentComparisonData.length > 0) {
       datasets.push({
         label: 'Equipment Previous Period',
         data: equipmentComparisonData,
@@ -113,7 +120,7 @@ export class AssetGrowthChart {
       });
     }
 
-    if (compareEnabled && facilityComparisonData.length > 0) {
+    if (canReadFacilities && compareEnabled && facilityComparisonData.length > 0) {
       datasets.push({
         label: 'Facilities Previous Period',
         data: facilityComparisonData,

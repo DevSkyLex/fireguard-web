@@ -1,11 +1,14 @@
 import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { OrganizationPermissionService } from '@features/organization/access/services/organization-permission/organization-permission.service';
 import { OrganizationService } from '@features/organization/data-access';
 import type {
   OrganizationDashboardTrendOutput,
+  OrganizationPermissionName,
   OrganizationOutput,
 } from '@features/organization/models';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { AssetGrowthTrendStore } from '../organization-dashboard-asset-growth.store';
 
@@ -17,9 +20,16 @@ const flushEffects = async (): Promise<void> => {
 
 describe('OrganizationDashboardAssetGrowthStore', () => {
   let store: AssetGrowthTrendStore;
+  const permissionState = {
+    canReadEquipment: signal(false),
+    canReadFacilities: signal(false),
+  };
   let mockOrganizationService: {
     getDashboardEquipmentCreatedTrend: ReturnType<typeof vi.fn>;
     getDashboardFacilitiesCreatedTrend: ReturnType<typeof vi.fn>;
+  };
+  let mockOrganizationPermissionService: {
+    hasPermission: ReturnType<typeof vi.fn>;
   };
 
   const organization: OrganizationOutput = {
@@ -75,15 +85,36 @@ describe('OrganizationDashboardAssetGrowthStore', () => {
   };
 
   beforeEach(() => {
+    permissionState.canReadEquipment.set(false);
+    permissionState.canReadFacilities.set(false);
+
     mockOrganizationService = {
       getDashboardEquipmentCreatedTrend: vi.fn().mockReturnValue(of(equipmentTrend)),
       getDashboardFacilitiesCreatedTrend: vi.fn().mockReturnValue(of(facilityTrend)),
+    };
+
+    mockOrganizationPermissionService = {
+      hasPermission: vi.fn((permission: OrganizationPermissionName): boolean => {
+        if (permission === ORGANIZATION_PERMISSION.EQUIPMENT_READ) {
+          return permissionState.canReadEquipment();
+        }
+
+        if (permission === ORGANIZATION_PERMISSION.FACILITIES_READ) {
+          return permissionState.canReadFacilities();
+        }
+
+        return false;
+      }),
     };
 
     TestBed.configureTestingModule({
       providers: [
         AssetGrowthTrendStore,
         { provide: OrganizationService, useValue: mockOrganizationService },
+        {
+          provide: OrganizationPermissionService,
+          useValue: mockOrganizationPermissionService,
+        },
         {
           provide: ActiveOrganizationStore,
           useValue: { selectedOrganization: signal<OrganizationOutput | null>(organization) },
@@ -96,6 +127,8 @@ describe('OrganizationDashboardAssetGrowthStore', () => {
   });
 
   it('should load both trend resources and expose summary metrics and chart data', async () => {
+    permissionState.canReadEquipment.set(true);
+    permissionState.canReadFacilities.set(true);
     await flushEffects();
 
     expect(mockOrganizationService.getDashboardEquipmentCreatedTrend).toHaveBeenCalledWith(
@@ -119,6 +152,18 @@ describe('OrganizationDashboardAssetGrowthStore', () => {
     });
   });
 
+  it('should load only the permitted trend resource when a single dimension is visible', async () => {
+    permissionState.canReadEquipment.set(true);
+    await flushEffects();
+
+    expect(mockOrganizationService.getDashboardEquipmentCreatedTrend).toHaveBeenCalledTimes(1);
+    expect(mockOrganizationService.getDashboardFacilitiesCreatedTrend).not.toHaveBeenCalled();
+    expect(store.queryData()).toEqual({
+      equipment: equipmentTrend,
+      facilities: null,
+    });
+  });
+
   it('should clamp date ranges beyond the allowed daily window', () => {
     const from = new Date('2026-01-01T00:00:00Z');
     const tooFar = new Date('2026-05-01T00:00:00Z');
@@ -134,6 +179,8 @@ describe('OrganizationDashboardAssetGrowthStore', () => {
   });
 
   it('should reload with compare disabled when compare mode changes', async () => {
+    permissionState.canReadEquipment.set(true);
+    permissionState.canReadFacilities.set(true);
     await flushEffects();
 
     store.setCompareEnabled(false);

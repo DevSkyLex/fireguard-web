@@ -104,10 +104,6 @@ export class OrganizationSwitcher {
   };
   //#endregion
 
-  public constructor() {
-    this.ensureOrganizationsLoaded();
-  }
-
   //#region Methods
   /**
    * Method onOrganizationChange
@@ -177,6 +173,22 @@ export class OrganizationSwitcher {
    */
   protected closePopover(): void {
     this.popover().hide();
+  }
+
+  /**
+   * Method prefetchOrganizations
+   * @method prefetchOrganizations
+   *
+   * @description
+   * Starts loading organizations when the user shows intent to open the switcher.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected prefetchOrganizations(): void {
+    this.ensureOrganizationsLoaded();
   }
 
   /**

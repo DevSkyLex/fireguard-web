@@ -9,6 +9,8 @@ const mockStore = {
   isQueryLoading: signal(false),
   queryData: signal(null),
   compareEnabled: signal(false),
+  canReadEquipment: signal(true),
+  canReadFacilities: signal(true),
   selectedGranularity: signal('day'),
   alignedTrendData: signal(mockAligned),
 };
@@ -23,9 +25,17 @@ describe('AssetGrowthChart', () => {
     });
   });
 
-  function createComponent(loading = false) {
+  function createComponent(
+    loading = false,
+    visibility: { equipment: boolean; facilities: boolean } = {
+      equipment: true,
+      facilities: true,
+    },
+  ) {
     mockStore.isQueryLoading.set(loading);
     mockStore.queryData.set(null);
+    mockStore.canReadEquipment.set(visibility.equipment);
+    mockStore.canReadFacilities.set(visibility.facilities);
     const fixture = TestBed.createComponent(AssetGrowthChart);
     fixture.detectChanges();
     return fixture;
@@ -46,5 +56,15 @@ describe('AssetGrowthChart', () => {
     const fixture = createComponent(false);
     expect(fixture.nativeElement.querySelector('p-skeleton')).toBeNull();
     expect(fixture.nativeElement.querySelector('p-chart')).not.toBeNull();
+  });
+
+  it('should only expose visible datasets', () => {
+    const fixture = createComponent(false, { equipment: true, facilities: false });
+    const component = fixture.componentInstance as unknown as {
+      data(): { datasets: Array<{ label?: string }> };
+    };
+
+    expect(component.data().datasets).toHaveLength(1);
+    expect(component.data().datasets[0]?.label).toBe('Equipment Created');
   });
 });

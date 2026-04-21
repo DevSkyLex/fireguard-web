@@ -6,6 +6,8 @@ import { AssetGrowthFilters } from '../asset-growth-filters.component';
 const mockAligned = { labels: [], datasets: [[], []] };
 
 const mockStore = {
+  canReadEquipment: signal(true),
+  canReadFacilities: signal(true),
   selectedEquipmentType: signal(null),
   selectedEquipmentStatus: signal(null),
   selectedFacilityType: signal(null),
@@ -30,7 +32,14 @@ describe('AssetGrowthFilters', () => {
     });
   });
 
-  function createComponent() {
+  function createComponent(
+    visibility: { equipment: boolean; facilities: boolean } = {
+      equipment: true,
+      facilities: true,
+    },
+  ) {
+    mockStore.canReadEquipment.set(visibility.equipment);
+    mockStore.canReadFacilities.set(visibility.facilities);
     const fixture = TestBed.createComponent(AssetGrowthFilters);
     fixture.detectChanges();
     return fixture;
@@ -55,5 +64,11 @@ describe('AssetGrowthFilters', () => {
   it('should resolve selectedFacilityTypeOption as null when no facility type selected', () => {
     const fixture = createComponent();
     expect(fixture.componentInstance.selectedFacilityTypeOption()).toBeNull();
+  });
+
+  it('should only render filters for visible resource dimensions', () => {
+    const fixture = createComponent({ equipment: false, facilities: true });
+
+    expect(fixture.nativeElement.querySelectorAll('p-select')).toHaveLength(1);
   });
 });

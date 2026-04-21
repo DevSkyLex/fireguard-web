@@ -65,8 +65,25 @@ describe('OrganizationSwitcher', () => {
     expect(fixture.debugElement.query(By.css('p-popover'))).not.toBeNull();
   });
 
-  it('should not call loadOrganizations on init when the organizations list is empty', () => {
+  it('should call loadOrganizations on init when the organizations list is empty', () => {
     mockOrganizationStore.organizations.set([]);
+    const fixture = TestBed.createComponent(OrganizationSwitcher);
+    fixture.detectChanges();
+
+    expect(mockOrganizationStore.loadOrganizations).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not call loadOrganizations on init when organizations are already loaded', () => {
+    mockOrganizationStore.organizations.set([MOCK_ORG]);
+    const fixture = TestBed.createComponent(OrganizationSwitcher);
+    fixture.detectChanges();
+
+    expect(mockOrganizationStore.loadOrganizations).not.toHaveBeenCalled();
+  });
+
+  it('should not call loadOrganizations on init when a list request is already pending', () => {
+    mockOrganizationStore.organizations.set([]);
+    mockOrganizationStore.isLoadingOrganizations.set(true);
     const fixture = TestBed.createComponent(OrganizationSwitcher);
     fixture.detectChanges();
 
@@ -77,6 +94,7 @@ describe('OrganizationSwitcher', () => {
     mockOrganizationStore.organizations.set([]);
     const fixture = TestBed.createComponent(OrganizationSwitcher);
     fixture.detectChanges();
+    mockOrganizationStore.loadOrganizations.mockClear();
 
     const popoverEl = fixture.debugElement.query(By.css('p-popover'));
     if (popoverEl) {
@@ -120,6 +138,7 @@ describe('OrganizationSwitcher', () => {
     mockOrganizationStore.isLoadingOrganizations.set(true);
     const fixture = TestBed.createComponent(OrganizationSwitcher);
     fixture.detectChanges();
+    mockOrganizationStore.loadOrganizations.mockClear();
 
     const popoverEl = fixture.debugElement.query(By.css('p-popover'));
     if (popoverEl) {

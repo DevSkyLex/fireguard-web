@@ -1,8 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { firstValueFrom, of, Subject } from 'rxjs';
 import { idleCallState, successCallState, type CallState, type StoreError } from '@core/state/request-state';
-import { OrganizationMemberService } from '@features/organization/data-access';
 import {
   ORGANIZATION_PERMISSION,
   type CurrentOrganizationMemberProfileOutput,
@@ -41,9 +39,6 @@ describe('OrganizationPermissionService', () => {
   };
 
   let service: OrganizationPermissionService;
-  let mockOrganizationMemberService: {
-    getCurrentProfile: ReturnType<typeof vi.fn>;
-  };
 
   beforeEach(() => {
     currentOrganizationId.set(null);
@@ -55,9 +50,6 @@ describe('OrganizationPermissionService', () => {
     profile.set(null);
     reload.mockReset();
     clear.mockReset();
-    mockOrganizationMemberService = {
-      getCurrentProfile: vi.fn().mockReturnValue(of(mockCurrentProfile)),
-    };
 
     TestBed.configureTestingModule({
       providers: [
@@ -75,10 +67,6 @@ describe('OrganizationPermissionService', () => {
             clear,
           },
         },
-        {
-          provide: OrganizationMemberService,
-          useValue: mockOrganizationMemberService,
-        },
       ],
     });
 
@@ -91,6 +79,14 @@ describe('OrganizationPermissionService', () => {
     expect(service.permissions()).toEqual([ORGANIZATION_PERMISSION.FACILITIES_WRITE]);
     expect(service.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_WRITE)).toBe(true);
     expect(service.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_READ)).toBe(false);
+  });
+
+  it('should treat organization wildcard permissions as granting all organization permissions', () => {
+    permissions.set([ORGANIZATION_PERMISSION.ALL]);
+
+    expect(service.hasPermission(ORGANIZATION_PERMISSION.DASHBOARD_READ)).toBe(true);
+    expect(service.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_READ)).toBe(true);
+    expect(service.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_WRITE)).toBe(true);
   });
 
   it('should support any/all organization permission checks', () => {
@@ -130,40 +126,46 @@ describe('OrganizationPermissionService', () => {
     accessCallState.set(successCallState(mockCurrentProfile));
     permissions.set([ORGANIZATION_PERMISSION.FACILITIES_WRITE]);
 
-    await expect(
-      firstValueFrom(
-        service.canAccessOrganization('org-1', [ORGANIZATION_PERMISSION.FACILITIES_WRITE]),
-      ),
-    ).resolves.toBe(true);
-    expect(mockOrganizationMemberService.getCurrentProfile).not.toHaveBeenCalled();
+    expect(service.canAccessOrganization('org-1', [ORGANIZATION_PERMISSION.FACILITIES_WRITE])).toBe(
+      true,
+    );
   });
 
-  it('should fetch the current member profile when access is not loaded for the target organization', async () => {
-    await expect(
-      firstValueFrom(
-        service.canAccessOrganization('org-1', [ORGANIZATION_PERMISSION.FACILITIES_WRITE]),
-      ),
-    ).resolves.toBe(true);
-    expect(mockOrganizationMemberService.getCurrentProfile).toHaveBeenCalledWith('org-1');
+  it('should deny access when the target organization access payload has not been preloaded', () => {
+    expect(service.canAccessOrganization('org-1', [ORGANIZATION_PERMISSION.FACILITIES_WRITE])).toBe(
+      false,
+    );
   });
 
-  it('should share a single in-flight current profile request for concurrent checks', async () => {
-    const profileSubject = new Subject<CurrentOrganizationMemberProfileOutput>();
-    mockOrganizationMemberService.getCurrentProfile.mockReset();
-    mockOrganizationMemberService.getCurrentProfile.mockReturnValue(profileSubject.asObservable());
-
-    const firstCheck = firstValueFrom(
-      service.canAccessOrganization('org-1', [ORGANIZATION_PERMISSION.FACILITIES_WRITE]),
+  it('should honor organization wildcard permissions for route access checks', () => {
+    currentOrganizationId.set('org-1');
+    permissions.set([ORGANIZATION_PERMISSION.ALL]);
+    accessCallState.set(
+      successCallState({
+        ...mockCurrentProfile,
+        organizationId: 'org-1',
+        permissions: [
+          {
+            ...mockPermission,
+            id: 'organization-all',
+            name: ORGANIZATION_PERMISSION.ALL,
+            description: 'All organization permissions',
+          },
+        ],
+      }),
     );
-    const secondCheck = firstValueFrom(
-      service.canAccessOrganization('org-1', [ORGANIZATION_PERMISSION.FACILITIES_WRITE]),
+
+    expect(service.canAccessOrganization('org-1', [ORGANIZATION_PERMISSION.EQUIPMENT_WRITE])).toBe(
+      true,
     );
+  });
 
-    profileSubject.next(mockCurrentProfile);
-    profileSubject.complete();
+  it('should deny access while the target organization access payload is still pending', () => {
+    currentOrganizationId.set('org-1');
+    accessCallState.set({ status: 'pending', data: null, error: null });
 
-    await expect(firstCheck).resolves.toBe(true);
-    await expect(secondCheck).resolves.toBe(true);
-    expect(mockOrganizationMemberService.getCurrentProfile).toHaveBeenCalledTimes(1);
+    expect(service.canAccessOrganization('org-1', [ORGANIZATION_PERMISSION.FACILITIES_WRITE])).toBe(
+      false,
+    );
   });
 });

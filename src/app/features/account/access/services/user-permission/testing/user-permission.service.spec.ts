@@ -6,6 +6,7 @@ import { UserStore } from '@features/account/state';
 import { UserPermissionService } from '../user-permission.service';
 
 describe('UserPermissionService', () => {
+  const isLoaded = signal<boolean>(true);
   const permissions = signal<ReadonlyArray<string>>([
     ACCOUNT_PERMISSION.PROFILE_READ,
     ACCOUNT_PERMISSION.SESSIONS_READ,
@@ -18,6 +19,7 @@ describe('UserPermissionService', () => {
   let service: UserPermissionService;
 
   beforeEach(() => {
+    isLoaded.set(true);
     permissions.set([ACCOUNT_PERMISSION.PROFILE_READ, ACCOUNT_PERMISSION.SESSIONS_READ]);
     roles.set(['ROLE_USER']);
     isLoading.set(false);
@@ -30,6 +32,7 @@ describe('UserPermissionService', () => {
           provide: UserStore,
           useValue: {
             isLoading,
+            isLoaded,
             loadError,
             roles,
             permissions,
@@ -73,6 +76,14 @@ describe('UserPermissionService', () => {
     ).toBe(false);
   });
 
+  it('should treat wildcard permissions as granting matching global permissions', () => {
+    permissions.set([ACCOUNT_PERMISSION.USERS_ALL, ACCOUNT_PERMISSION.ALL]);
+
+    expect(service.hasPermission(ACCOUNT_PERMISSION.USERS_READ)).toBe(true);
+    expect(service.hasPermission(ACCOUNT_PERMISSION.USERS_DELETE)).toBe(true);
+    expect(service.hasPermission(ACCOUNT_PERMISSION.AUDIT_EXPORT)).toBe(true);
+  });
+
   it('should expose loading and error state from the user store', () => {
     const error: StoreError = {
       error: new Error('Unable to load current user'),
@@ -87,6 +98,38 @@ describe('UserPermissionService', () => {
 
     expect(service.isLoadingPermissions()).toBe(true);
     expect(service.permissionError()).toEqual(error);
+  });
+
+  it('should expose the resolved state from the user store', () => {
+    isLoaded.set(false);
+
+    expect(service.isResolvedPermissions()).toBe(false);
+
+    isLoaded.set(true);
+
+    expect(service.isResolvedPermissions()).toBe(true);
+  });
+
+  it('should evaluate global access synchronously from the loaded user store', () => {
+    expect(
+      service.canAccessGlobalPermissions([
+        ACCOUNT_PERMISSION.PROFILE_READ,
+        ACCOUNT_PERMISSION.SESSIONS_READ,
+      ]),
+    ).toBe(true);
+
+    expect(
+      service.canAccessGlobalPermissions(
+        [ACCOUNT_PERMISSION.USERS_READ, ACCOUNT_PERMISSION.SESSIONS_READ],
+        'any',
+      ),
+    ).toBe(true);
+  });
+
+  it('should deny global access while the user permissions are unresolved', () => {
+    isLoaded.set(false);
+
+    expect(service.canAccessGlobalPermissions([ACCOUNT_PERMISSION.PROFILE_READ])).toBe(false);
   });
 
   it('should proxy reload to the user store', () => {

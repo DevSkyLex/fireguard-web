@@ -14,5 +14,11 @@ export type {
 export { ACCOUNT_PERMISSION, ACCOUNT_PERMISSION_NAMES } from './models';
 export type { AccountPermissionName } from './models';
 export { UserPermissionService } from './access';
+export { accountPermissionGuard } from './http/guards';
+export type {
+  AccountPermissionGuardMatch,
+  AccountPermissionGuardOptions,
+  AccountPermissionGuardRedirect,
+} from './http/guards';
 export { provideAccount } from './providers';
 export { NotificationBell } from './ui/components';

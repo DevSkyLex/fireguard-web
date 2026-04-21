@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
+import { OrganizationPermissionService } from '@features/organization/access/services/organization-permission/organization-permission.service';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { DashboardStore } from '@features/organization/state/organization-dashboard';
 import { MetricCard } from '@shared/components';
 import {
@@ -55,6 +57,154 @@ export class OrganizationDashboard {
    */
   protected readonly store: DashboardStore = inject<DashboardStore>(
     DashboardStore,
+  );
+
+  /**
+   * Property organizationPermissionService
+   * @readonly
+   *
+   * @description
+   * Organization-owned helper exposing reactive permission checks for the
+   * current active organization.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {OrganizationPermissionService}
+   */
+  protected readonly organizationPermissionService: OrganizationPermissionService =
+    inject<OrganizationPermissionService>(OrganizationPermissionService);
+
+  /**
+   * Property canReadFacilities
+   * @readonly
+   *
+   * @description
+   * Indicates whether facilities metrics and resource trends can be rendered.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadFacilities: Signal<boolean> = computed<boolean>(() =>
+    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_READ),
+  );
+
+  /**
+   * Property canReadMembers
+   * @readonly
+   *
+   * @description
+   * Indicates whether member metrics can be rendered.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadMembers: Signal<boolean> = computed<boolean>(() =>
+    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.MEMBERS_READ),
+  );
+
+  /**
+   * Property canReadEquipment
+   * @readonly
+   *
+   * @description
+   * Indicates whether equipment metrics and resource trends can be rendered.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadEquipment: Signal<boolean> = computed<boolean>(() =>
+    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_READ),
+  );
+
+  /**
+   * Property canReadInspections
+   * @readonly
+   *
+   * @description
+   * Indicates whether inspection metrics and inspection-driven trends can be rendered.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadInspections: Signal<boolean> = computed<boolean>(() =>
+    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_READ),
+  );
+
+  /**
+   * Property hasActivityMetrics
+   * @readonly
+   *
+   * @description
+   * Indicates whether at least one activity KPI card can be rendered.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasActivityMetrics: Signal<boolean> = computed<boolean>(
+    () =>
+      this.canReadFacilities() ||
+      this.canReadMembers() ||
+      this.canReadEquipment() ||
+      this.canReadInspections(),
+  );
+
+  /**
+   * Property hasActivityInsights
+   * @readonly
+   *
+   * @description
+   * Indicates whether at least one activity trend card can be rendered.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasActivityInsights: Signal<boolean> = computed<boolean>(
+    () => this.canReadInspections(),
+  );
+
+  /**
+   * Property showActivitySection
+   * @readonly
+   *
+   * @description
+   * Indicates whether the activity section contains at least one visible block.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly showActivitySection: Signal<boolean> = computed<boolean>(
+    () => this.hasActivityMetrics() || this.hasActivityInsights(),
+  );
+
+  /**
+   * Property showResourcesSection
+   * @readonly
+   *
+   * @description
+   * Indicates whether the resource section contains at least one visible block.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly showResourcesSection: Signal<boolean> = computed<boolean>(
+    () => this.canReadFacilities() || this.canReadEquipment(),
   );
 
   //#endregion

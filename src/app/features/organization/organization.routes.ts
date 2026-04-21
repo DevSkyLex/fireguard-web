@@ -1,5 +1,5 @@
 import type { Routes } from '@angular/router';
-import { organizationPermissionGuard } from './http/guards';
+import { organizationAccessGuard, organizationPermissionGuard } from './http/guards';
 import { organizationResolver, organizationTitleResolver } from './http/resolvers';
 import { ORGANIZATION_PERMISSION } from './models';
 
@@ -17,6 +17,7 @@ import { ORGANIZATION_PERMISSION } from './models';
 export const ORGANIZATION_ROUTES: Routes = [
   {
     path: ':organizationId',
+    canActivate: [organizationAccessGuard],
     resolve: {
       organization: organizationResolver,
       breadcrumb: organizationTitleResolver,

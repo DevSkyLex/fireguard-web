@@ -1,10 +1,5 @@
 import { computed, inject, Injectable, type Signal } from '@angular/core';
-import { catchError, finalize, map, Observable, of, shareReplay } from 'rxjs';
-import { OrganizationMemberService } from '@features/organization/data-access';
-import type {
-  CurrentOrganizationMemberProfileOutput,
-  OrganizationPermissionName,
-} from '@features/organization/models';
+import type { OrganizationPermissionName } from '@features/organization/models';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import type { StoreError } from '@core/state/request-state';
 
@@ -41,20 +36,6 @@ export class OrganizationPermissionService {
    */
   private readonly organizationMemberAccessStore: OrganizationMemberAccessStore =
     inject<OrganizationMemberAccessStore>(OrganizationMemberAccessStore);
-
-  /**
-   * Property organizationMemberService
-   * @readonly
-   *
-   * @description
-   * API service used when permission checks need to be evaluated for a target
-   * organization whose access payload is not already loaded in the current store.
-   *
-   * @access private
-   * @type {OrganizationMemberService}
-   */
-  private readonly organizationMemberService: OrganizationMemberService =
-    inject<OrganizationMemberService>(OrganizationMemberService);
 
   /**
    * Property permissions
@@ -113,20 +94,6 @@ export class OrganizationPermissionService {
     (): ReadonlySet<string> => new Set(this.permissions()),
   );
 
-  /**
-   * Property pendingProfiles
-   * @readonly
-   *
-   * @description
-   * Shared in-flight profile requests keyed by organization identifier.
-   * Prevents multiple guards from issuing duplicate `/me` calls during the
-   * same navigation.
-   *
-   * @access private
-   * @type {Map<string, Observable<CurrentOrganizationMemberProfileOutput>>}
-   */
-  private readonly pendingProfiles: Map<string, Observable<CurrentOrganizationMemberProfileOutput>> =
-    new Map<string, Observable<CurrentOrganizationMemberProfileOutput>>();
   //#endregion
 
   //#region Methods
@@ -161,7 +128,12 @@ export class OrganizationPermissionService {
    */
   public hasPermission(permission: OrganizationPermissionName): boolean {
     const normalizedPermission: string | null = this.normalizePermission(permission);
-    return normalizedPermission !== null && this.permissionSet().has(normalizedPermission);
+
+    if (normalizedPermission === null) {
+      return false;
+    }
+
+    return this.hasGrantedPermission(normalizedPermission);
   }
 
   /**
@@ -206,40 +178,34 @@ export class OrganizationPermissionService {
    *
   * When the requested organization already matches the loaded access store and
   * the access payload is in a successful state, the check is resolved from the
-  * current store synchronously. Otherwise the current member profile is loaded
-  * directly from the API through a shared in-flight request cache so that
-  * concurrent guards reuse the same `/me` call.
+  * current store synchronously.
+  *
+  * Preloading the target organization's access payload is handled upstream by
+  * `organizationAccessGuard`, so this service remains read-only against the
+  * shared organization access store.
    *
    * @access public
    * @param {string} organizationId - Target organization identifier.
    * @param {ReadonlyArray<string>} permissions - Required permission names.
    * @param {'all' | 'any'} [match='all'] - Matching strategy.
-   * @returns {Observable<boolean>} `true` when route access should be granted.
+   * @returns {boolean} `true` when route access should be granted.
    */
   public canAccessOrganization(
     organizationId: string,
     permissions: ReadonlyArray<OrganizationPermissionName>,
     match: 'all' | 'any' = 'all',
-  ): Observable<boolean> {
+  ): boolean {
     const normalizedPermissions: ReadonlyArray<string> = this.normalizePermissions(permissions);
 
     if (normalizedPermissions.length === 0) {
-      return of(true);
+      return true;
     }
 
-    if (
-      this.organizationMemberAccessStore.currentOrganizationId() === organizationId &&
-      this.organizationMemberAccessStore.accessCallState().status === 'success'
-    ) {
-      return of(this.matchesPermissions(this.permissions(), normalizedPermissions, match));
+    if (!this.hasResolvedAccessForOrganization(organizationId)) {
+      return false;
     }
 
-    return this.getCurrentProfileOnce(organizationId).pipe(
-      map((profile: CurrentOrganizationMemberProfileOutput) =>
-        this.matchesPermissions(this.extractPermissionNames(profile), normalizedPermissions, match),
-      ),
-      catchError(() => of(false)),
-    );
+    return this.matchesPermissions(normalizedPermissions, match);
   }
 
   /**
@@ -279,42 +245,6 @@ export class OrganizationPermissionService {
   }
 
   /**
-   * Method getCurrentProfileOnce
-   * @method getCurrentProfileOnce
-   *
-   * @description
-   * Returns a shared in-flight request for the target organization's current
-   * member profile, creating it only once while the request is pending.
-   *
-   * @access private
-   * @param {string} organizationId - Target organization identifier.
-   * @returns {Observable<CurrentOrganizationMemberProfileOutput>} Shared profile request.
-   */
-  private getCurrentProfileOnce(
-    organizationId: string,
-  ): Observable<CurrentOrganizationMemberProfileOutput> {
-    const existingRequest:
-      | Observable<CurrentOrganizationMemberProfileOutput>
-      | undefined = this.pendingProfiles.get(organizationId);
-
-    if (existingRequest) {
-      return existingRequest;
-    }
-
-    const request$: Observable<CurrentOrganizationMemberProfileOutput> = this.organizationMemberService
-      .getCurrentProfile(organizationId)
-      .pipe(
-        finalize(() => {
-          this.pendingProfiles.delete(organizationId);
-        }),
-        shareReplay({ bufferSize: 1, refCount: false }),
-      );
-
-    this.pendingProfiles.set(organizationId, request$);
-    return request$;
-  }
-
-  /**
    * Method matchesPermissions
    * @method matchesPermissions
    *
@@ -323,39 +253,86 @@ export class OrganizationPermissionService {
    * the provided matching strategy.
    *
    * @access private
-   * @param {ReadonlyArray<string>} grantedPermissions - Granted permission names.
    * @param {ReadonlyArray<string>} requiredPermissions - Required permission names.
    * @param {'all' | 'any'} match - Matching strategy.
    * @returns {boolean} `true` when the requirement is satisfied.
    */
   private matchesPermissions(
-    grantedPermissions: ReadonlyArray<string>,
     requiredPermissions: ReadonlyArray<string>,
     match: 'all' | 'any',
   ): boolean {
-    const grantedPermissionSet: ReadonlySet<string> = new Set(grantedPermissions);
-
     return match === 'any'
-      ? requiredPermissions.some((permission: string) => grantedPermissionSet.has(permission))
-      : requiredPermissions.every((permission: string) => grantedPermissionSet.has(permission));
+      ? requiredPermissions.some((permission: string) => this.hasGrantedPermission(permission))
+      : requiredPermissions.every((permission: string) => this.hasGrantedPermission(permission));
   }
 
   /**
-   * Method extractPermissionNames
-   * @method extractPermissionNames
+   * Method hasResolvedAccessForOrganization
+   * @method hasResolvedAccessForOrganization
    *
    * @description
-   * Extracts the effective permission names from a current organization member
-   * profile payload.
+   * Returns whether the shared organization access store currently holds a
+   * successful access payload for the requested organization.
    *
    * @access private
-   * @param {CurrentOrganizationMemberProfileOutput} profile - Current member profile.
-   * @returns {ReadonlyArray<string>} Effective permission names.
+   * @param {string} organizationId - Organization identifier to validate.
+   * @returns {boolean} `true` when the store is resolved for the target organization.
    */
-  private extractPermissionNames(
-    profile: CurrentOrganizationMemberProfileOutput,
-  ): ReadonlyArray<string> {
-    return profile.permissions.map((permission) => permission.name);
+  private hasResolvedAccessForOrganization(organizationId: string): boolean {
+    return (
+      this.organizationMemberAccessStore.currentOrganizationId() === organizationId &&
+      this.organizationMemberAccessStore.accessCallState().status === 'success'
+    );
   }
+
+  /**
+   * Method hasGrantedPermission
+   * @method hasGrantedPermission
+   *
+   * @description
+   * Returns whether the current granted permission set satisfies the provided
+   * normalized permission name, including wildcard matches.
+   *
+   * @access private
+   * @param {string} permission - Normalized permission name to evaluate.
+   * @returns {boolean} `true` when the permission is granted.
+   */
+  private hasGrantedPermission(permission: string): boolean {
+    const grantedPermissionSet: ReadonlySet<string> = this.permissionSet();
+
+    if (grantedPermissionSet.has(permission)) {
+      return true;
+    }
+
+    return Array.from(grantedPermissionSet).some((grantedPermission: string) =>
+      this.matchesPermissionName(grantedPermission, permission),
+    );
+  }
+
+  /**
+   * Method matchesPermissionName
+   * @method matchesPermissionName
+   *
+   * @description
+   * Evaluates whether a granted permission name satisfies a required
+   * permission name, including wildcard permissions such as `organization.*`.
+   *
+   * @access private
+   * @param {string} grantedPermission - Granted permission name.
+   * @param {string} requiredPermission - Required permission name.
+   * @returns {boolean} `true` when the granted permission satisfies the requirement.
+   */
+  private matchesPermissionName(grantedPermission: string, requiredPermission: string): boolean {
+    if (grantedPermission === requiredPermission) {
+      return true;
+    }
+
+    if (!grantedPermission.endsWith('.*')) {
+      return false;
+    }
+
+    return requiredPermission.startsWith(grantedPermission.slice(0, -1));
+  }
+
   //#endregion
 }

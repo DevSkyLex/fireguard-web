@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { firstValueFrom, of, Subject, throwError } from 'rxjs';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import {
   ORGANIZATION_PERMISSION,
@@ -146,6 +146,46 @@ describe('OrganizationMemberAccessStore', () => {
     await flushEffects();
 
     expect(mockOrganizationMemberService.getCurrentProfile).toHaveBeenCalledTimes(1);
+    expect(mockOrganizationMemberService.getCurrentProfile).toHaveBeenCalledWith('org-1');
+  });
+
+  it('should resolve ensured access successfully for an already loaded organization', async () => {
+    selectedOrganization.set({ id: 'org-1' });
+    await flushEffects();
+
+    await expect(firstValueFrom(store.ensureAccessResolved('org-1'))).resolves.toBe(true);
+    expect(mockOrganizationMemberService.getCurrentProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it('should load and resolve access when ensuring a new organization', async () => {
+    await expect(firstValueFrom(store.ensureAccessResolved('org-1'))).resolves.toBe(true);
+
+    expect(mockOrganizationMemberService.getCurrentProfile).toHaveBeenCalledWith('org-1');
+  });
+
+  it('should reuse the same pending request when ensuring access twice for the same organization', async () => {
+    const profileSubject = new Subject<CurrentOrganizationMemberProfileOutput>();
+    mockOrganizationMemberService.getCurrentProfile.mockReset();
+    mockOrganizationMemberService.getCurrentProfile.mockReturnValue(profileSubject.asObservable());
+
+    const firstEnsure = firstValueFrom(store.ensureAccessResolved('org-1'));
+    const secondEnsure = firstValueFrom(store.ensureAccessResolved('org-1'));
+
+    profileSubject.next(profile);
+    profileSubject.complete();
+
+    await expect(firstEnsure).resolves.toBe(true);
+    await expect(secondEnsure).resolves.toBe(true);
+    expect(mockOrganizationMemberService.getCurrentProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it('should resolve ensured access to false when loading fails', async () => {
+    mockOrganizationMemberService.getCurrentProfile.mockReset();
+    mockOrganizationMemberService.getCurrentProfile.mockReturnValue(
+      throwError(() => new Error('Forbidden')),
+    );
+
+    await expect(firstValueFrom(store.ensureAccessResolved('org-1'))).resolves.toBe(false);
     expect(mockOrganizationMemberService.getCurrentProfile).toHaveBeenCalledWith('org-1');
   });
 

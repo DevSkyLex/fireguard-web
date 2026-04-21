@@ -7,7 +7,6 @@ import {
   Router,
   type UrlTree,
 } from '@angular/router';
-import { map } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import type { OrganizationPermissionGuardOptions } from './models';
@@ -92,8 +91,12 @@ export function organizationPermissionGuard(
     const redirectUrlTree: UrlTree = router.createUrlTree([...redirectTo]);
 
     // Check if the user has the required permissions for the organization.
-    return organizationPermissionService
-      .canAccessOrganization(organizationId, options.permissions, options.match ?? 'all')
-      .pipe(map((allowed: boolean): GuardResult => (allowed ? true : redirectUrlTree)));
+    const allowed: boolean = organizationPermissionService.canAccessOrganization(
+      organizationId,
+      options.permissions,
+      options.match ?? 'all',
+    );
+
+    return allowed ? true : redirectUrlTree;
   };
 }

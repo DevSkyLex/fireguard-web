@@ -1,3 +1,4 @@
+export { organizationAccessGuard } from './organization-access';
 export { organizationPermissionGuard } from './organization-permission';
 export type {
   OrganizationPermissionGuardMatch,

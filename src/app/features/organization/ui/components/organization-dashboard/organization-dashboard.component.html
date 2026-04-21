@@ -1,93 +1,112 @@
 ﻿<div id="organization-dashboard" class="flex flex-col gap-6">
-  <div class="flex flex-col gap-6">
-    <section class="flex flex-row items-center gap-4">
-      <div class="rounded-lg border border-surface-200 dark:border-surface-700">
-        <i class="pi pi-chart-line p-3 text-2xl text-surface-600 dark:text-surface-400"></i>
-      </div>
-
-      <div class="flex flex-col">
-        <h2 class="text-xl font-semibold">Activity</h2>
-        <p class="text-surface-600 dark:text-surface-400">
-          Overview of activity trends and key metrics for your organization.
-        </p>
-      </div>
-    </section>
-
-    <section class="flex flex-col gap-6">
-      <div class="flex flex-row flex-wrap items-stretch gap-6">
-        <app-metric-card
-          title="Facilities"
-          description="Registered sites"
-          icon="pi pi-building"
-          [value]="store.facilityCount()"
-          [loading]="store.isQueryLoading()"
-          [comparison]="store.facilitiesComparison()"
-          class="flex-1"
-        />
-        <app-metric-card
-          title="Members"
-          description="Active members"
-          icon="pi pi-users"
-          [value]="store.memberCount()"
-          [loading]="store.isQueryLoading()"
-          [comparison]="store.membersComparison()"
-          class="flex-1"
-        />
-        <app-metric-card
-          title="Equipment"
-          description="Tracked assets"
-          icon="pi pi-shield"
-          [value]="store.equipmentCount()"
-          [loading]="store.isQueryLoading()"
-          [comparison]="store.equipmentComparison()"
-          class="flex-1"
-        />
-        <app-metric-card
-          title="Inspections"
-          description="Performed this period"
-          icon="pi pi-check-square"
-          [value]="store.inspectionCount()"
-          [loading]="store.isQueryLoading()"
-          [comparison]="store.inspectionsComparison()"
-          class="flex-1"
-        />
-      </div>
-
-      <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <app-overview-trend class="lg:col-span-7" />
-        <app-inspection-quality-trend class="lg:col-span-5" />
-        <app-non-conformities-opened-trend class="lg:col-span-6" />
-        <app-non-conformities-resolved-trend class="lg:col-span-6" />
-      </div>
-    </section>
-  </div>
-
-  <div class="flex flex-col gap-6">
-    <section class="flex flex-row items-center gap-4">
-      <div class="rounded-lg border border-surface-200 dark:border-surface-700">
-        <i class="pi pi-building p-3 text-2xl text-surface-600 dark:text-surface-400"></i>
-      </div>
-
-      <div class="flex flex-col">
-        <h2 class="text-xl font-semibold">Resources</h2>
-        <p class="text-surface-600 dark:text-surface-400">
-          Overview of resource trends and key metrics for your organization.
-        </p>
-      </div>
-    </section>
-
-    <section class="flex flex-col gap-6">
-      @defer (on viewport) {
-        <div class="grid grid-cols-1 gap-6">
-          <app-asset-growth-trend />
+  @if (showActivitySection()) {
+    <div class="flex flex-col gap-6">
+      <section class="flex flex-row items-center gap-4">
+        <div class="rounded-lg border border-surface-200 dark:border-surface-700">
+          <i class="pi pi-chart-line p-3 text-2xl text-surface-600 dark:text-surface-400"></i>
         </div>
-      } @placeholder {
-        <div class="grid grid-cols-1 gap-6">
-          <div
-            class="min-h-128 rounded-2xl border border-surface-200 bg-surface-50 dark:border-surface-800 dark:bg-surface-900"
-          ></div>
+
+        <div class="flex flex-col">
+          <h2 class="text-xl font-semibold">Activity</h2>
+          <p class="text-surface-600 dark:text-surface-400">
+            Overview of activity trends and key metrics for your organization.
+          </p>
         </div>
-      }
-    </section>
-  </div>
+      </section>
+
+      <section class="flex flex-col gap-6">
+        @if (hasActivityMetrics()) {
+          <div class="flex flex-row flex-wrap items-stretch gap-6">
+            @if (canReadFacilities()) {
+              <app-metric-card
+                title="Facilities"
+                description="Registered sites"
+                icon="pi pi-building"
+                [value]="store.facilityCount()"
+                [loading]="store.isQueryLoading()"
+                [comparison]="store.facilitiesComparison()"
+                class="flex-1"
+              />
+            }
+
+            @if (canReadMembers()) {
+              <app-metric-card
+                title="Members"
+                description="Active members"
+                icon="pi pi-users"
+                [value]="store.memberCount()"
+                [loading]="store.isQueryLoading()"
+                [comparison]="store.membersComparison()"
+                class="flex-1"
+              />
+            }
+
+            @if (canReadEquipment()) {
+              <app-metric-card
+                title="Equipment"
+                description="Tracked assets"
+                icon="pi pi-shield"
+                [value]="store.equipmentCount()"
+                [loading]="store.isQueryLoading()"
+                [comparison]="store.equipmentComparison()"
+                class="flex-1"
+              />
+            }
+
+            @if (canReadInspections()) {
+              <app-metric-card
+                title="Inspections"
+                description="Performed this period"
+                icon="pi pi-check-square"
+                [value]="store.inspectionCount()"
+                [loading]="store.isQueryLoading()"
+                [comparison]="store.inspectionsComparison()"
+                class="flex-1"
+              />
+            }
+          </div>
+        }
+
+        @if (hasActivityInsights()) {
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <app-overview-trend class="lg:col-span-7" />
+            <app-inspection-quality-trend class="lg:col-span-5" />
+            <app-non-conformities-opened-trend class="lg:col-span-6" />
+            <app-non-conformities-resolved-trend class="lg:col-span-6" />
+          </div>
+        }
+      </section>
+    </div>
+  }
+
+  @if (showResourcesSection()) {
+    <div class="flex flex-col gap-6">
+      <section class="flex flex-row items-center gap-4">
+        <div class="rounded-lg border border-surface-200 dark:border-surface-700">
+          <i class="pi pi-building p-3 text-2xl text-surface-600 dark:text-surface-400"></i>
+        </div>
+
+        <div class="flex flex-col">
+          <h2 class="text-xl font-semibold">Resources</h2>
+          <p class="text-surface-600 dark:text-surface-400">
+            Overview of resource trends and key metrics for your organization.
+          </p>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-6">
+        @defer (on viewport) {
+          <div class="grid grid-cols-1 gap-6">
+            <app-asset-growth-trend />
+          </div>
+        } @placeholder {
+          <div class="grid grid-cols-1 gap-6">
+            <div
+              class="min-h-128 rounded-2xl border border-surface-200 bg-surface-50 dark:border-surface-800 dark:bg-surface-900"
+            ></div>
+          </div>
+        }
+      </section>
+    </div>
+  }
 </div>

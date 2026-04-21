@@ -1,7 +1,6 @@
-import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree, type GuardResult, type MaybeAsync } from '@angular/router';
-import { firstValueFrom, isObservable, of } from 'rxjs';
+import { firstValueFrom, isObservable } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { organizationPermissionGuard } from '../organization-permission.guard';
@@ -56,7 +55,7 @@ describe('organizationPermissionGuard', () => {
   });
 
   it('should allow access when all required permissions are granted', async () => {
-    mockOrganizationPermissionService.canAccessOrganization.mockReturnValue(of(true));
+    mockOrganizationPermissionService.canAccessOrganization.mockReturnValue(true);
 
     const guard = organizationPermissionGuard({
       permissions: [ORGANIZATION_PERMISSION.FACILITIES_WRITE],
@@ -74,7 +73,7 @@ describe('organizationPermissionGuard', () => {
   });
 
   it('should redirect when one required permission is missing', async () => {
-    mockOrganizationPermissionService.canAccessOrganization.mockReturnValue(of(false));
+    mockOrganizationPermissionService.canAccessOrganization.mockReturnValue(false);
 
     const guard = organizationPermissionGuard({
       permissions: [ORGANIZATION_PERMISSION.FACILITIES_WRITE],
@@ -88,7 +87,7 @@ describe('organizationPermissionGuard', () => {
   });
 
   it('should support the any match strategy', async () => {
-    mockOrganizationPermissionService.canAccessOrganization.mockReturnValue(of(true));
+    mockOrganizationPermissionService.canAccessOrganization.mockReturnValue(true);
 
     const guard = organizationPermissionGuard({
       permissions: [
@@ -110,7 +109,7 @@ describe('organizationPermissionGuard', () => {
   });
 
   it('should redirect when the service denies access', async () => {
-    mockOrganizationPermissionService.canAccessOrganization.mockReturnValue(of(false));
+    mockOrganizationPermissionService.canAccessOrganization.mockReturnValue(false);
 
     const guard = organizationPermissionGuard({
       permissions: [ORGANIZATION_PERMISSION.FACILITIES_WRITE],
@@ -124,7 +123,7 @@ describe('organizationPermissionGuard', () => {
   });
 
   it('should delegate empty permission lists to the service', async () => {
-    mockOrganizationPermissionService.canAccessOrganization.mockReturnValue(of(true));
+    mockOrganizationPermissionService.canAccessOrganization.mockReturnValue(true);
 
     const guard = organizationPermissionGuard({ permissions: [] });
     const result = await TestBed.runInInjectionContext(() =>

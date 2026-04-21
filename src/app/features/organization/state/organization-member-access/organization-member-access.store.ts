@@ -1,4 +1,5 @@
 import { computed, effect, inject, untracked } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -9,7 +10,7 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { filter, pipe, switchMap, tap } from 'rxjs';
+import { combineLatest, filter, first, map, of, pipe, switchMap, tap, type Observable } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -72,7 +73,14 @@ export const OrganizationMemberAccessStore = signalStore(
       store,
       organizationMemberService = inject(OrganizationMemberService),
       activeOrganizationStore = inject(ActiveOrganizationStore),
-    ) => ({
+    ) => {
+      const currentOrganizationId$: Observable<string | null> = toObservable(
+        store.currentOrganizationId,
+      );
+      const accessCallState$: Observable<CallState<CurrentOrganizationMemberProfileOutput>> =
+        toObservable(store.accessCallState);
+
+      return {
       /**
        * Method loadAccess
        *
@@ -122,6 +130,48 @@ export const OrganizationMemberAccessStore = signalStore(
       ),
 
       /**
+       * Method ensureAccessResolved
+       *
+       * @description
+       * Ensures the target organization's access payload is either already
+       * resolved or gets loaded once through the shared store, then waits until
+       * the store reaches a success or error state for that organization.
+       *
+       * @param {string} organizationId - Organization identifier to resolve.
+       *
+       * @returns {Observable<boolean>} `true` when access is resolved successfully.
+       */
+      ensureAccessResolved(organizationId: string): Observable<boolean> {
+        const currentOrganizationId: string | null = store.currentOrganizationId();
+        const accessCallState: CallState<CurrentOrganizationMemberProfileOutput> =
+          store.accessCallState();
+
+        if (
+          currentOrganizationId === organizationId &&
+          accessCallState.status === 'success'
+        ) {
+          return of(true);
+        }
+
+        if (
+          currentOrganizationId !== organizationId ||
+          (accessCallState.status !== 'pending' && accessCallState.status !== 'success')
+        ) {
+          this.loadAccess(organizationId);
+        }
+
+        return combineLatest([currentOrganizationId$, accessCallState$]).pipe(
+          first(
+            ([loadedOrganizationId, loadedAccessCallState]) =>
+              loadedOrganizationId === organizationId &&
+              (loadedAccessCallState.status === 'success' ||
+                loadedAccessCallState.status === 'error'),
+          ),
+          map(([, loadedAccessCallState]) => loadedAccessCallState.status === 'success'),
+        );
+      },
+
+      /**
        * Method reload
        *
        * @description
@@ -152,7 +202,8 @@ export const OrganizationMemberAccessStore = signalStore(
       clear(): void {
         patchState(store, INITIAL_STATE);
       },
-    }),
+    };
+    },
   ),
 
   withHooks((store) => {

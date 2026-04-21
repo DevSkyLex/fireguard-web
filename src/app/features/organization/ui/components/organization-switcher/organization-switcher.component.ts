@@ -104,6 +104,10 @@ export class OrganizationSwitcher {
   };
   //#endregion
 
+  public constructor() {
+    this.ensureOrganizationsLoaded();
+  }
+
   //#region Methods
   /**
    * Method onOrganizationChange

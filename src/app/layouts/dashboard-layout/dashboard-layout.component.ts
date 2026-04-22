@@ -13,6 +13,7 @@ import {
   DashboardLayoutHeader,
   DashboardLayoutSidebar,
   DashboardLayoutContent,
+  DashboardLayoutSecondarySidebar,
 } from '@layouts/dashboard-layout/components';
 import { DashboardSidebarResizeHandleDirective } from './directives';
 import { DashboardSidebarNavigationService, DashboardSidebarService } from './services';
@@ -48,6 +49,7 @@ import { DashboardSidebarNavigationService, DashboardSidebarService } from './se
     RouterOutlet,
     DashboardLayoutHeader,
     DashboardLayoutSidebar,
+    DashboardLayoutSecondarySidebar,
     DashboardLayoutContent,
     DrawerModule,
     Ripple,
@@ -61,6 +63,9 @@ export class DashboardLayout {
   //#region Properties
   protected readonly sidebarService: DashboardSidebarService =
     inject<DashboardSidebarService>(DashboardSidebarService);
+
+  protected readonly navigationService: DashboardSidebarNavigationService =
+    inject<DashboardSidebarNavigationService>(DashboardSidebarNavigationService);
 
   protected readonly userIdentityPort: UserIdentityPort =
     inject<UserIdentityPort>(USER_IDENTITY_PORT);

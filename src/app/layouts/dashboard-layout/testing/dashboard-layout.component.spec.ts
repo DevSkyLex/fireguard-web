@@ -9,6 +9,18 @@ import { DashboardLayoutHeader } from '../components';
 import { DashboardLayout } from '../dashboard-layout.component';
 import { DashboardSidebarService } from '../services';
 
+const MOCK_ORG = {
+  id: 'org-1',
+  name: 'Acme Corp',
+  slug: 'acme',
+  isActive: true,
+  status: 'active',
+  ownerUserId: 'u1',
+  createdByUserId: 'u1',
+  createdAt: '2025-01-01',
+  updatedAt: '2025-01-01',
+};
+
 type PointerEventOptions = {
   readonly pointerId?: number;
   readonly clientX?: number;
@@ -55,8 +67,9 @@ const getResizeHandle = (fixture: ComponentFixture<DashboardLayout>): HTMLButton
 };
 
 const getSidebar = (fixture: ComponentFixture<DashboardLayout>): HTMLElement => {
-  const debugElement = fixture.debugElement.query(By.css('aside'));
-  return debugElement.nativeElement as HTMLElement;
+  // Find the sidebar that owns the resize handle (the secondary sidebar).
+  const handle = getResizeHandle(fixture);
+  return handle.closest('aside') as HTMLElement;
 };
 
 const mockPointerCapture = (handle: HTMLButtonElement): ReturnType<typeof vi.fn> => {
@@ -91,8 +104,8 @@ describe('DashboardLayout', () => {
     logout: vi.fn(),
   };
   const mockOrganizationStore = {
-    selectedOrganization: signal(null),
-    organizations: signal([]),
+    selectedOrganization: signal<(typeof MOCK_ORG) | null>(MOCK_ORG),
+    organizations: signal([MOCK_ORG]),
     isLoadingOrganizations: signal(false),
     isLoadingOrganization: signal(false),
     setOrganization: vi.fn(),
@@ -114,6 +127,7 @@ describe('DashboardLayout', () => {
     mockNotificationCenterPort.initialize.mockReset();
     mockNotificationCenterPort.initialize.mockResolvedValue(undefined);
     mockNotificationCenterPort.connectMercure.mockReset();
+    mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
 
     TestBed.configureTestingModule({
       imports: [DashboardLayout],
@@ -136,6 +150,28 @@ describe('DashboardLayout', () => {
   it('should create', () => {
     const fixture = TestBed.createComponent(DashboardLayout);
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  it('should render the secondary sidebar when an organization context is active', () => {
+    mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
+
+    const fixture = TestBed.createComponent(DashboardLayout);
+    fixture.detectChanges();
+
+    expect(
+      fixture.debugElement.query(By.css('app-dashboard-layout-secondary-sidebar')),
+    ).toBeTruthy();
+  });
+
+  it('should not render the secondary sidebar when no organization is active', () => {
+    mockOrganizationStore.selectedOrganization.set(null);
+
+    const fixture = TestBed.createComponent(DashboardLayout);
+    fixture.detectChanges();
+
+    expect(
+      fixture.debugElement.query(By.css('app-dashboard-layout-secondary-sidebar')),
+    ).toBeFalsy();
   });
 
   it('should initialize notifications and connect Mercure when a profile is available', () => {

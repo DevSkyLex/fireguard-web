@@ -98,6 +98,14 @@ describe('DashboardLayoutSidebarNavigation', () => {
     ).toBe(2);
   });
 
+  it('should hide the search input when showSearch is false', () => {
+    const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
+    fixture.componentRef.setInput('showSearch', false);
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('[data-testid="sidebar-search-input"]'))).toBeFalsy();
+  });
+
   it('should filter menu items based on search query', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
     const component = fixture.componentInstance as unknown as {
@@ -171,6 +179,23 @@ describe('DashboardLayoutSidebarNavigation', () => {
     component.onItemClick({});
 
     expect(closeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should render only the sections provided via the items input', () => {
+    const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
+    const service = TestBed.inject(DashboardSidebarNavigationService);
+
+    fixture.componentRef.setInput('items', service.primaryItems);
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance as unknown as {
+      readonly menuItems: () => readonly MenuItem[];
+    };
+
+    const labels = component.menuItems().map((item) => item.label);
+
+    expect(labels).toEqual(['Home', 'Account']);
+    expect(labels).not.toContain('Organization');
   });
 
   it('should surface unread notifications as a badge', () => {

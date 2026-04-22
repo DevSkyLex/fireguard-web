@@ -224,6 +224,97 @@ export class DashboardSidebarNavigationService {
     if (!query) return [...items];
     return this.filterMenuItems(items, query);
   });
+
+  /**
+   * Property primaryItems
+   * @readonly
+   *
+   * @description
+   * Navigation items for the primary (always-visible) sidebar.
+   * Contains the Home and Account sections independently of any
+   * active organization. Not filtered by the search query since
+   * these entries are few and always accessible.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {Signal<MenuItem[]>}
+   */
+  public readonly primaryItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] => {
+    const unreadCount: number = this.notificationCenter.unreadCount();
+
+    return [
+      {
+        id: 'home',
+        label: 'Home',
+        expanded: true,
+        items: HOME_NAVIGATION_ITEMS.map((item: StaticSidebarNavigationItem): MenuItem => ({
+          ...item,
+        })),
+      },
+      {
+        id: 'account',
+        label: 'Account',
+        expanded: true,
+        items: ACCOUNT_NAVIGATION_ITEMS.map((item: StaticSidebarNavigationItem): MenuItem => ({
+          ...item,
+          badge: unreadCount > 0 ? String(unreadCount) : undefined,
+        })),
+      },
+    ];
+  });
+
+  /**
+   * Property secondaryItems
+   * @readonly
+   *
+   * @description
+   * Organization-scoped navigation items for the secondary
+   * (contextual) sidebar. Contains the Organization section only,
+   * filtered by the current search query and member permissions.
+   * Returns an empty array when no organization is active.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {Signal<MenuItem[]>}
+   */
+  public readonly secondaryItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] => {
+    const organization = this.organizationContext.selectedOrganization();
+    const query: string = this.searchQuery().trim();
+    const grantedPermissionSet: ReadonlySet<string> = new Set(
+      this.organizationMemberAccess.permissions(),
+    );
+
+    const section: MenuItem | null = this.buildOrganizationSection(
+      organization?.id ?? null,
+      grantedPermissionSet,
+    );
+
+    if (section === null) return [];
+
+    const items: MenuItem[] = [section];
+    if (!query) return items;
+    return this.filterMenuItems(items, query);
+  });
+
+  /**
+   * Property isOrganizationContextActive
+   * @readonly
+   *
+   * @description
+   * Whether an organization context is currently active.
+   * Consumed by the layout shell to conditionally render
+   * the secondary sidebar.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  public readonly isOrganizationContextActive: Signal<boolean> = computed<boolean>(
+    (): boolean => this.organizationContext.selectedOrganization() !== null,
+  );
   //#endregion
 
   //#region Methods

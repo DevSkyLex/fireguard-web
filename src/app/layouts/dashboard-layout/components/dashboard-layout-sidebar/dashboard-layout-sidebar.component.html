@@ -8,7 +8,14 @@
 
   <!-- Sidebar navigation -->
   <section class="overflow-y-auto [grid-area:navigation]">
-    <app-dashboard-layout-sidebar-navigation />
+    @if (variant() === 'primary') {
+      <app-dashboard-layout-sidebar-navigation
+        [items]="navigationService.primaryItems"
+        [showSearch]="false"
+      />
+    } @else {
+      <app-dashboard-layout-sidebar-navigation />
+    }
   </section>
 
   <!-- Sidebar footer -->

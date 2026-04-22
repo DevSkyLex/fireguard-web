@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, Signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, Signal } from '@angular/core';
 import { IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angular/router';
 import type { MotionOptions } from '@primeuix/motion';
 import type { MenuItem } from 'primeng/api';
@@ -74,6 +74,41 @@ export class DashboardLayoutSidebarNavigation {
     inject<DashboardSidebarNavigationService>(DashboardSidebarNavigationService);
 
   /**
+   * Property items
+   * @readonly
+   *
+   * @description
+   * Optional signal input that overrides the default navigation items.
+   * When provided, the component renders the given signal's items instead
+   * of the merged {@link DashboardSidebarNavigationService#menuItems}.
+   * Pass {@link DashboardSidebarNavigationService#primaryItems} for the
+   * primary sidebar or {@link DashboardSidebarNavigationService#secondaryItems}
+   * for the secondary sidebar.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<Signal<MenuItem[]> | undefined>}
+   */
+  readonly items = input<Signal<MenuItem[]>>();
+
+  /**
+   * Property showSearch
+   * @readonly
+   *
+   * @description
+   * Whether to render the search input above the navigation menu.
+   * Set to `false` for the primary sidebar where the item count
+   * is small and a search field is not useful.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  readonly showSearch = input<boolean>(true);
+
+  /**
    * Property panelMenuPt
    * @readonly
    *
@@ -137,14 +172,20 @@ export class DashboardLayoutSidebarNavigation {
    * @readonly
    *
    * @description
-   * Filtered navigation items.
+   * Navigation items to render. When an {@link items} input is provided
+   * its value is used directly; otherwise falls back to the merged
+   * {@link DashboardSidebarNavigationService#menuItems} (all sections
+   * with search applied — used for the mobile drawer).
    *
    * @access protected
    * @since 1.0.0
    *
    * @type {Signal<MenuItem[]>}
    */
-  protected readonly menuItems: Signal<MenuItem[]> = this.sidebarNavigationService.menuItems;
+  protected readonly menuItems = computed<MenuItem[]>((): MenuItem[] => {
+    const itemsSignal = this.items();
+    return itemsSignal ? itemsSignal() : this.sidebarNavigationService.menuItems();
+  });
 
   /**
    * Property exactMatchOptions

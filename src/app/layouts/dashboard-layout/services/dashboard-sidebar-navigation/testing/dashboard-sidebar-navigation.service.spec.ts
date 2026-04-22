@@ -151,4 +151,90 @@ describe('DashboardSidebarNavigationService', () => {
       'Account',
     ]);
   });
+
+  describe('primaryItems', () => {
+    it('should contain only Home and Account sections', () => {
+      const labels = service.primaryItems().map((item) => item.label);
+
+      expect(labels).toEqual(['Home', 'Account']);
+    });
+
+    it('should never include the Organization section', () => {
+      mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
+
+      const labels = service.primaryItems().map((item) => item.label);
+
+      expect(labels).not.toContain('Organization');
+    });
+
+    it('should surface the notification badge', () => {
+      mockNotificationCenterPort.unreadCount.set(7);
+
+      const account = service.primaryItems().find((item) => item.label === 'Account');
+      const notifications = account?.items?.find((item) => item.label === 'Notifications');
+
+      expect(notifications?.badge).toBe('7');
+    });
+
+    it('should not be filtered by the search query', () => {
+      service.setSearchQuery('zzz-no-match');
+
+      const labels = service.primaryItems().map((item) => item.label);
+
+      expect(labels).toEqual(['Home', 'Account']);
+    });
+  });
+
+  describe('secondaryItems', () => {
+    it('should return an empty array when no organization is active', () => {
+      mockOrganizationStore.selectedOrganization.set(null);
+
+      expect(service.secondaryItems()).toEqual([]);
+    });
+
+    it('should contain only the Organization section when an org is active', () => {
+      mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
+
+      const labels = service.secondaryItems().map((item) => item.label);
+
+      expect(labels).toEqual(['Organization']);
+    });
+
+    it('should return an empty array when the org is active but no permissions are granted', () => {
+      mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
+      mockOrganizationMemberAccess.permissions.set([]);
+
+      expect(service.secondaryItems()).toEqual([]);
+    });
+
+    it('should apply the search query to organization items', () => {
+      mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
+      service.setSearchQuery('Facilities');
+
+      const org = service.secondaryItems().find((item) => item.label === 'Organization');
+
+      expect(org?.items?.map((item) => item.label)).toEqual(['Facilities']);
+    });
+
+    it('should return an empty array when the search query matches nothing', () => {
+      mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
+      service.setSearchQuery('zzz-no-match');
+
+      expect(service.secondaryItems()).toEqual([]);
+    });
+  });
+
+  describe('isOrganizationContextActive', () => {
+    it('should return false when no organization is selected', () => {
+      mockOrganizationStore.selectedOrganization.set(null);
+
+      expect(service.isOrganizationContextActive()).toBe(false);
+    });
+
+    it('should return true when an organization is selected', () => {
+      mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
+
+      expect(service.isOrganizationContextActive()).toBe(true);
+    });
+  });
 });

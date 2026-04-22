@@ -23,9 +23,7 @@ describe('FacilitiesCreatedFilters', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [FacilitiesCreatedFilters],
-      providers: [
-        { provide: OrganizationDashboardFacilitiesCreatedStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardFacilitiesCreatedStore, useValue: mockStore }],
     });
   });
 
@@ -50,8 +48,8 @@ describe('FacilitiesCreatedFilters', () => {
     expect(fixture.nativeElement.querySelector('p-select')).not.toBeNull();
   });
 
-  it('should render the compare togglebutton', () => {
+  it('should render the shared base filters form', () => {
     const fixture = createComponent();
-    expect(fixture.nativeElement.querySelector('p-togglebutton')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-trend-base-filters-form')).not.toBeNull();
   });
 });

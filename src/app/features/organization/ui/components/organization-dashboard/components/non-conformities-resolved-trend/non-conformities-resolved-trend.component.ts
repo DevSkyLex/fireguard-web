@@ -22,12 +22,12 @@ import {
   buildDashboardSingleTrendViewModel,
 } from '@features/organization/ui/components/organization-dashboard/utils';
 import { TrendCard } from '@shared/components';
+import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
 import {
   NonConformitiesResolvedChart,
   NonConformitiesResolvedFilters,
   NonConformitiesResolvedToolbar,
 } from './components';
-import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
 
 /**
  * Component NonConformitiesResolvedTrend
@@ -88,9 +88,7 @@ export class NonConformitiesResolvedTrend {
    * @type {NonConformitiesResolvedTrendStore}
    */
   private readonly dashboardStore: NonConformitiesResolvedTrendStore =
-    inject<NonConformitiesResolvedTrendStore>(
-      NonConformitiesResolvedTrendStore,
-    );
+    inject<NonConformitiesResolvedTrendStore>(NonConformitiesResolvedTrendStore);
 
   /**
    * Property isLoading
@@ -104,8 +102,8 @@ export class NonConformitiesResolvedTrend {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isLoading: Signal<boolean> = computed<boolean>(
-    () => this.dashboardStore.isQueryLoading(),
+  protected readonly isLoading: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isQueryLoading(),
   );
 
   /**
@@ -120,8 +118,8 @@ export class NonConformitiesResolvedTrend {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(
-    () => this.dashboardStore.isFilterDrawerVisible(),
+  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isFilterDrawerVisible(),
   );
 
   /**
@@ -136,15 +134,16 @@ export class NonConformitiesResolvedTrend {
    *
    * @type {Signal<number>}
    */
-  protected readonly activeFilterCount: Signal<number> = computed<number>(() =>
-    getDashboardBaseActiveFilterCount(
-      this.dashboardStore.selectedDateRange(),
-      this.dashboardStore.compareEnabled(),
-    ) +
-    countDefinedDashboardFilters([
-      this.dashboardStore.selectedNonConformityStatus(),
-      this.dashboardStore.selectedNonConformitySeverity(),
-    ]),
+  protected readonly activeFilterCount: Signal<number> = computed<number>(
+    () =>
+      getDashboardBaseActiveFilterCount(
+        this.dashboardStore.selectedDateRange(),
+        this.dashboardStore.compareEnabled(),
+      ) +
+      countDefinedDashboardFilters([
+        this.dashboardStore.selectedNonConformityStatus(),
+        this.dashboardStore.selectedNonConformitySeverity(),
+      ]),
   );
 
   /**

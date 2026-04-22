@@ -146,4 +146,3 @@ export function writeDashboardStorage<T>(key: string, value: T): void {
     // Quota exceeded or private browsing — silently ignore.
   }
 }
-

@@ -33,8 +33,8 @@ import type {
   OnboardingStepOutput,
   StartOnboardingInput,
 } from '@features/onboarding/models';
-import type { OnboardingStoreState } from './models';
 import { onboardingStoreEvents } from './events';
+import type { OnboardingStoreState } from './models';
 
 interface ExecuteStepPayload {
   readonly stepKey: OnboardingStepKey;

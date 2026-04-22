@@ -18,9 +18,7 @@ describe('InspectionQualityChart', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [InspectionQualityChart],
-      providers: [
-        { provide: OrganizationDashboardInspectionQualityStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardInspectionQualityStore, useValue: mockStore }],
     });
   });
 

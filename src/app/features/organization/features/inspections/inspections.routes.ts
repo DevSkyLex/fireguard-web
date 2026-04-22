@@ -26,7 +26,9 @@ export const INSPECTION_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    canActivate: [organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ] })],
+    canActivate: [
+      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ] }),
+    ],
     loadComponent: () =>
       import('./ui/pages/inspection-list/inspection-list.component').then(
         (m) => m.InspectionListPage,

@@ -5,7 +5,10 @@ import { FacilitiesCreatedToolbar } from '../facilities-created-toolbar.componen
 
 const mockStore = {
   selectedGranularity: signal<string>('week'),
-  granularityOptions: signal([{ label: 'Daily', value: 'day' }, { label: 'Weekly', value: 'week' }]),
+  granularityOptions: signal([
+    { label: 'Daily', value: 'day' },
+    { label: 'Weekly', value: 'week' },
+  ]),
   isQueryLoading: signal(false),
   setGranularity: vi.fn(),
 };
@@ -14,9 +17,7 @@ describe('FacilitiesCreatedToolbar', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [FacilitiesCreatedToolbar],
-      providers: [
-        { provide: OrganizationDashboardFacilitiesCreatedStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardFacilitiesCreatedStore, useValue: mockStore }],
     });
   });
 

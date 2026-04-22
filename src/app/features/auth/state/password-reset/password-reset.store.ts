@@ -21,8 +21,8 @@ import type {
   PasswordResetVerifyInput,
   PasswordResetVerifyOutput,
 } from '@features/auth/models';
-import type { PasswordResetState } from './models';
 import { passwordResetStoreEvents } from './events';
+import type { PasswordResetState } from './models';
 
 type PasswordResetConfirmPayload = Omit<PasswordResetVerifyInput, 'token'>;
 

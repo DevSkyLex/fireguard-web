@@ -1,11 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, type Signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  type Signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
+import { SelectModule } from 'primeng/select';
 import { OrganizationDashboardFacilitiesCreatedStore } from '@features/organization/state/organization-dashboard';
+import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
 import type { FacilityTypeOption } from '@features/organization/ui/components/organization-dashboard/models';
 import { FACILITY_TYPE_OPTIONS } from '@features/organization/ui/components/organization-dashboard/options';
-import { SelectModule } from 'primeng/select';
 
 /**
  * Type FacilitiesCreatedFiltersForm
@@ -45,7 +52,7 @@ export class FacilitiesCreatedFilters {
    * @readonly
    *
    * @description
-  * Component-scoped store used to read and mutate all draft filter selections.
+   * Component-scoped store used to read and mutate all draft filter selections.
    *
    * @access protected
    * @since 2.0.0
@@ -53,7 +60,9 @@ export class FacilitiesCreatedFilters {
    * @type {OrganizationDashboardFacilitiesCreatedStore}
    */
   protected readonly store: OrganizationDashboardFacilitiesCreatedStore =
-    inject<OrganizationDashboardFacilitiesCreatedStore>(OrganizationDashboardFacilitiesCreatedStore);
+    inject<OrganizationDashboardFacilitiesCreatedStore>(
+      OrganizationDashboardFacilitiesCreatedStore,
+    );
 
   /**
    * Property form

@@ -24,9 +24,7 @@ import type { AccountPermissionGuardOptions } from './models';
  * @param {AccountPermissionGuardOptions} options - Guard configuration.
  * @returns {CanActivateFn} A functional can-activate guard.
  */
-export function accountPermissionGuard(
-  options: AccountPermissionGuardOptions,
-): CanActivateFn {
+export function accountPermissionGuard(options: AccountPermissionGuardOptions): CanActivateFn {
   return (_route: ActivatedRouteSnapshot): MaybeAsync<GuardResult> => {
     /**
      * Constant router
@@ -58,7 +56,7 @@ export function accountPermissionGuard(
     const redirectTo: ReadonlyArray<string> =
       typeof options.redirectTo === 'function'
         ? options.redirectTo()
-        : options.redirectTo ?? ['/'];
+        : (options.redirectTo ?? ['/']);
     const redirectUrlTree: UrlTree = router.createUrlTree([...redirectTo]);
 
     // Evaluate whether the user has the required permissions based on the specified match strategy

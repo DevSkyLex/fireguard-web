@@ -57,10 +57,7 @@ describe('UserPermissionService', () => {
 
   it('should support any/all global permission checks', () => {
     expect(
-      service.hasAnyPermission([
-        ACCOUNT_PERMISSION.USERS_READ,
-        ACCOUNT_PERMISSION.SESSIONS_READ,
-      ]),
+      service.hasAnyPermission([ACCOUNT_PERMISSION.USERS_READ, ACCOUNT_PERMISSION.SESSIONS_READ]),
     ).toBe(true);
     expect(
       service.hasAllPermissions([
@@ -69,10 +66,7 @@ describe('UserPermissionService', () => {
       ]),
     ).toBe(true);
     expect(
-      service.hasAllPermissions([
-        ACCOUNT_PERMISSION.PROFILE_READ,
-        ACCOUNT_PERMISSION.USERS_READ,
-      ]),
+      service.hasAllPermissions([ACCOUNT_PERMISSION.PROFILE_READ, ACCOUNT_PERMISSION.USERS_READ]),
     ).toBe(false);
   });
 

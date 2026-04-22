@@ -26,7 +26,9 @@ export const EQUIPMENT_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    canActivate: [organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ] })],
+    canActivate: [
+      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ] }),
+    ],
     loadComponent: () =>
       import('./ui/pages/equipment-list/equipment-list.component').then((m) => m.EquipmentListPage),
     title: 'Equipments',

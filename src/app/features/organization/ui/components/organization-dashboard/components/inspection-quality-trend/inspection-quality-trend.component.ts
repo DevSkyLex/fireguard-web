@@ -26,13 +26,13 @@ import {
   WHOLE_NUMBER_FMT,
   buildDashboardComparison,
 } from '@features/organization/ui/components/organization-dashboard/utils';
+import { TrendCard } from '@shared/components';
+import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
 import {
   InspectionQualityChart,
   InspectionQualityFilters,
   InspectionQualityToolbar,
 } from './components';
-import { TrendCard } from '@shared/components';
-import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
 
 /**
  * Component InspectionQualityTrend
@@ -93,9 +93,7 @@ export class InspectionQualityTrend {
    * @type {InspectionQualityTrendStore}
    */
   private readonly dashboardStore: InspectionQualityTrendStore =
-    inject<InspectionQualityTrendStore>(
-      InspectionQualityTrendStore,
-    );
+    inject<InspectionQualityTrendStore>(InspectionQualityTrendStore);
 
   /**
    * Property isLoading
@@ -110,8 +108,8 @@ export class InspectionQualityTrend {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isLoading: Signal<boolean> = computed<boolean>(
-    () => this.dashboardStore.isQueryLoading(),
+  protected readonly isLoading: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isQueryLoading(),
   );
 
   /**
@@ -126,8 +124,8 @@ export class InspectionQualityTrend {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(
-    () => this.dashboardStore.isFilterDrawerVisible(),
+  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isFilterDrawerVisible(),
   );
 
   /**
@@ -142,17 +140,18 @@ export class InspectionQualityTrend {
    *
    * @type {Signal<number>}
    */
-  protected readonly activeFilterCount: Signal<number> = computed<number>(() =>
-    getDashboardBaseActiveFilterCount(
-      this.dashboardStore.selectedDateRange(),
-      this.dashboardStore.compareEnabled(),
-    ) +
-    countDefinedDashboardFilters([
-      this.dashboardStore.selectedInspectionStatus(),
-      this.dashboardStore.selectedInspectionResult(),
-      this.dashboardStore.selectedInspectorType(),
-      this.dashboardStore.selectedNonConformitySeverity(),
-    ]),
+  protected readonly activeFilterCount: Signal<number> = computed<number>(
+    () =>
+      getDashboardBaseActiveFilterCount(
+        this.dashboardStore.selectedDateRange(),
+        this.dashboardStore.compareEnabled(),
+      ) +
+      countDefinedDashboardFilters([
+        this.dashboardStore.selectedInspectionStatus(),
+        this.dashboardStore.selectedInspectionResult(),
+        this.dashboardStore.selectedInspectorType(),
+        this.dashboardStore.selectedNonConformitySeverity(),
+      ]),
   );
 
   /**

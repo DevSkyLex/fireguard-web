@@ -33,8 +33,7 @@
     @if (loading()) {
       <p-skeleton height="48px" />
       <p-skeleton height="16px" width="50%" class="mt-2" />
-    }
-    @else {
+    } @else {
       <div class="flex flex-col justify-center gap-3">
         <span class="text-5xl font-semibold">
           {{ value() }}

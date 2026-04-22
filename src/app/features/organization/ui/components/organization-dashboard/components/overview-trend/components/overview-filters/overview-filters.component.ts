@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
-import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
 import { OrganizationDashboardOverviewTrendStore } from '@features/organization/state/organization-dashboard';
+import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
 
 /**
  * Component OverviewFilters
@@ -29,7 +29,7 @@ export class OverviewFilters {
    * @readonly
    *
    * @description
-  * Component-scoped store used to read and mutate draft filter selections.
+   * Component-scoped store used to read and mutate draft filter selections.
    *
    * @access protected
    * @since 2.0.0

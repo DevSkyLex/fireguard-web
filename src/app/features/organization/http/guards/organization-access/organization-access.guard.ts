@@ -81,9 +81,12 @@ export const organizationAccessGuard: CanActivateFn = (
   if (!organizationId) return router.createUrlTree([...ROOT_REDIRECT]);
 
   // Ensure the organization access payload is resolved in the store and determine access
-  return organizationMemberAccessStore.ensureAccessResolved(organizationId).pipe(
-    map((isResolved: boolean): GuardResult =>
-      isResolved ? true : router.createUrlTree([...ORGANIZATIONS_REDIRECT]),
-    ),
-  );
+  return organizationMemberAccessStore
+    .ensureAccessResolved(organizationId)
+    .pipe(
+      map(
+        (isResolved: boolean): GuardResult =>
+          isResolved ? true : router.createUrlTree([...ORGANIZATIONS_REDIRECT]),
+      ),
+    );
 };

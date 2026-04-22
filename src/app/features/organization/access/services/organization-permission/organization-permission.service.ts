@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, type Signal } from '@angular/core';
+import type { StoreError } from '@core/state/request-state';
 import type { OrganizationPermissionName } from '@features/organization/models';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
-import type { StoreError } from '@core/state/request-state';
 
 /**
  * Service OrganizationPermissionService
@@ -70,8 +70,8 @@ export class OrganizationPermissionService {
    * @readonly
    *
    * @description
-    * Last organization-scoped permission loading error exposed by the
-    * organization access store.
+   * Last organization-scoped permission loading error exposed by the
+   * organization access store.
    *
    * @access public
    * @type {Signal<StoreError | null>}
@@ -149,7 +149,9 @@ export class OrganizationPermissionService {
    * @returns {boolean} `true` when any permission is currently granted.
    */
   public hasAnyPermission(permissions: ReadonlyArray<OrganizationPermissionName>): boolean {
-    return permissions.some((permission: OrganizationPermissionName) => this.hasPermission(permission));
+    return permissions.some((permission: OrganizationPermissionName) =>
+      this.hasPermission(permission),
+    );
   }
 
   /**
@@ -165,7 +167,9 @@ export class OrganizationPermissionService {
    * @returns {boolean} `true` when all permissions are currently granted.
    */
   public hasAllPermissions(permissions: ReadonlyArray<OrganizationPermissionName>): boolean {
-    return permissions.every((permission: OrganizationPermissionName) => this.hasPermission(permission));
+    return permissions.every((permission: OrganizationPermissionName) =>
+      this.hasPermission(permission),
+    );
   }
 
   /**
@@ -176,13 +180,13 @@ export class OrganizationPermissionService {
    * Evaluates whether the authenticated user can access organization-scoped
    * navigation requiring the provided permissions.
    *
-  * When the requested organization already matches the loaded access store and
-  * the access payload is in a successful state, the check is resolved from the
-  * current store synchronously.
-  *
-  * Preloading the target organization's access payload is handled upstream by
-  * `organizationAccessGuard`, so this service remains read-only against the
-  * shared organization access store.
+   * When the requested organization already matches the loaded access store and
+   * the access payload is in a successful state, the check is resolved from the
+   * current store synchronously.
+   *
+   * Preloading the target organization's access payload is handled upstream by
+   * `organizationAccessGuard`, so this service remains read-only against the
+   * shared organization access store.
    *
    * @access public
    * @param {string} organizationId - Target organization identifier.

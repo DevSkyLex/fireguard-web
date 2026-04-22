@@ -3,7 +3,10 @@ import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
 } from '@features/organization/ports';
-import { ActiveOrganizationStore, OrganizationMemberAccessStore } from '@features/organization/state';
+import {
+  ActiveOrganizationStore,
+  OrganizationMemberAccessStore,
+} from '@features/organization/state';
 
 /**
  * Provider provideOrganization

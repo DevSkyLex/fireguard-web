@@ -17,8 +17,8 @@ import {
 } from '@core/state/request-state';
 import { UserProfileService } from '@features/account/data-access';
 import type { UserProfileOutput } from '@features/account/models';
-import type { UserState } from './models';
 import { userStoreEvents } from './events';
+import type { UserState } from './models';
 
 /**
  * Constant USER_TRANSFER_KEY
@@ -119,8 +119,8 @@ export const UserStore = signalStore(
      * Computed displayName
      *
      * @description
-      * Returns the user's display name derived from the most explicit
-      * profile fields available.
+     * Returns the user's display name derived from the most explicit
+     * profile fields available.
      *
      * @since 1.0.0
      *
@@ -138,14 +138,16 @@ export const UserStore = signalStore(
         return fullName;
       }
 
-      return profile.name ?? profile.username ?? profile.preferred_username ?? profile.email ?? null;
+      return (
+        profile.name ?? profile.username ?? profile.preferred_username ?? profile.email ?? null
+      );
     }),
 
     /**
      * Computed initials
      *
      * @description
-      * Returns the user's initials (first letter of first and last name).
+     * Returns the user's initials (first letter of first and last name).
      *
      * @since 1.0.0
      *
@@ -222,7 +224,7 @@ export const UserStore = signalStore(
        * Method load
        *
        * @description
-        * Loads the current user profile from the account-owned `/api/me` endpoint.
+       * Loads the current user profile from the account-owned `/api/me` endpoint.
        * Idempotent: skips loading if already loading or successfully loaded.
        * Uses switchMap to cancel previous requests if called multiple times.
        *
@@ -307,7 +309,7 @@ export const UserStore = signalStore(
        *
        * @description
        * Initializes the user profile using TransferState when available (browser
-        * after SSR hydration) to avoid a duplicate current-profile request.
+       * after SSR hydration) to avoid a duplicate current-profile request.
        * Falls back to a regular load() call if no transferred state is found.
        *
        * @since 1.0.0

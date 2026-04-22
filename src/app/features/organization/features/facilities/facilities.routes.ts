@@ -29,7 +29,9 @@ export const FACILITY_ROUTES: Routes = [
   },
   {
     path: ':facilityId',
-    canActivate: [organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ] })],
+    canActivate: [
+      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ] }),
+    ],
     resolve: {
       facility: facilityResolver,
       breadcrumb: facilityTitleResolver,
@@ -62,7 +64,9 @@ export const FACILITY_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    canActivate: [organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ] })],
+    canActivate: [
+      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ] }),
+    ],
     loadComponent: () =>
       import('./ui/pages/facility-list/facility-list.component').then((m) => m.FacilityListPage),
     title: 'Facilities',

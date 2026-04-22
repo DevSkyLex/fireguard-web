@@ -55,9 +55,7 @@ export class OrganizationDashboard {
    *
    * @type {DashboardStore}
    */
-  protected readonly store: DashboardStore = inject<DashboardStore>(
-    DashboardStore,
-  );
+  protected readonly store: DashboardStore = inject<DashboardStore>(DashboardStore);
 
   /**
    * Property organizationPermissionService
@@ -171,8 +169,8 @@ export class OrganizationDashboard {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly hasActivityInsights: Signal<boolean> = computed<boolean>(
-    () => this.canReadInspections(),
+  protected readonly hasActivityInsights: Signal<boolean> = computed<boolean>(() =>
+    this.canReadInspections(),
   );
 
   /**

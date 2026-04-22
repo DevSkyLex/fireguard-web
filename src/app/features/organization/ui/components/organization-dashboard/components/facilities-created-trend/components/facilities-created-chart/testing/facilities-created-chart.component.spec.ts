@@ -13,9 +13,7 @@ describe('FacilitiesCreatedChart', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [FacilitiesCreatedChart],
-      providers: [
-        { provide: OrganizationDashboardFacilitiesCreatedStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardFacilitiesCreatedStore, useValue: mockStore }],
     });
   });
 

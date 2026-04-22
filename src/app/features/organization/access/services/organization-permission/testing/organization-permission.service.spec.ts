@@ -1,6 +1,11 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { idleCallState, successCallState, type CallState, type StoreError } from '@core/state/request-state';
+import {
+  idleCallState,
+  successCallState,
+  type CallState,
+  type StoreError,
+} from '@core/state/request-state';
 import {
   ORGANIZATION_PERMISSION,
   type CurrentOrganizationMemberProfileOutput,
@@ -11,7 +16,8 @@ import { OrganizationPermissionService } from '../organization-permission.servic
 
 describe('OrganizationPermissionService', () => {
   const currentOrganizationId = signal<string | null>(null);
-  const accessCallState = signal<CallState<CurrentOrganizationMemberProfileOutput>>(idleCallState());
+  const accessCallState =
+    signal<CallState<CurrentOrganizationMemberProfileOutput>>(idleCallState());
   const permissions = signal<ReadonlyArray<string>>([]);
   const roles = signal<ReadonlyArray<string>>([]);
   const isLoadingAccess = signal<boolean>(false);

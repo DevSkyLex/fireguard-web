@@ -280,7 +280,7 @@ export const DashboardStore = signalStore(
    *
    * @since 1.0.0
    */
-  withComputed((store) => {
+  withComputed((_store) => {
     const platformId = inject(PLATFORM_ID);
     const activeOrganizationStore = inject(ActiveOrganizationStore);
 
@@ -316,4 +316,3 @@ export const DashboardStore = signalStore(
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export type DashboardStore = InstanceType<typeof DashboardStore>;
-

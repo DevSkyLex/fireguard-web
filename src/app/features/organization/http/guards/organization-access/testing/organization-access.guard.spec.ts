@@ -55,7 +55,9 @@ describe('organizationAccessGuard', () => {
 
   it('should allow activation when the shared store resolves access successfully', async () => {
     const result = await TestBed.runInInjectionContext(() =>
-      resolveGuardResult(organizationAccessGuard(createRouteWithOrganizationId('org-1'), {} as never)),
+      resolveGuardResult(
+        organizationAccessGuard(createRouteWithOrganizationId('org-1'), {} as never),
+      ),
     );
 
     expect(result).toBe(true);
@@ -66,7 +68,9 @@ describe('organizationAccessGuard', () => {
     mockOrganizationMemberAccessStore.ensureAccessResolved.mockReturnValue(of(false));
 
     const result = await TestBed.runInInjectionContext(() =>
-      resolveGuardResult(organizationAccessGuard(createRouteWithOrganizationId('org-1'), {} as never)),
+      resolveGuardResult(
+        organizationAccessGuard(createRouteWithOrganizationId('org-1'), {} as never),
+      ),
     );
 
     expect(result).toBe(redirectUrlTree);

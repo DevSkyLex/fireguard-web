@@ -1,8 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, type Signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  type Signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
+import { SelectModule } from 'primeng/select';
 import { OrganizationDashboardEquipmentCreatedStore } from '@features/organization/state/organization-dashboard';
+import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
 import type {
   EquipmentStatusOption,
   EquipmentTypeOption,
@@ -11,7 +19,6 @@ import {
   EQUIPMENT_STATUS_OPTIONS,
   EQUIPMENT_TYPE_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
-import { SelectModule } from 'primeng/select';
 
 /**
  * Type EquipmentCreatedFiltersForm
@@ -52,7 +59,7 @@ export class EquipmentCreatedFilters {
    * @readonly
    *
    * @description
-  * Component-scoped store used to read and mutate all draft filter selections.
+   * Component-scoped store used to read and mutate all draft filter selections.
    *
    * @access protected
    * @since 2.0.0
@@ -126,9 +133,7 @@ export class EquipmentCreatedFilters {
   public readonly selectedEquipmentStatusOption: Signal<EquipmentStatusOption | null> =
     computed<EquipmentStatusOption | null>(
       () =>
-        EQUIPMENT_STATUS_OPTIONS.find(
-          (o) => o.value === this.store.draftEquipmentStatus(),
-        ) ?? null,
+        EQUIPMENT_STATUS_OPTIONS.find((o) => o.value === this.store.draftEquipmentStatus()) ?? null,
     );
 
   //#endregion

@@ -106,8 +106,7 @@ export class TrendBaseFiltersForm {
    *
    * @type {OutputEmitterRef<Date[] | null>}
    */
-  public readonly dateRangeChange: OutputEmitterRef<Date[] | null> =
-    output<Date[] | null>();
+  public readonly dateRangeChange: OutputEmitterRef<Date[] | null> = output<Date[] | null>();
 
   /**
    * Output compareEnabledChange

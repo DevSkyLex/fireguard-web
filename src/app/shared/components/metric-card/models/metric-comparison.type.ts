@@ -34,4 +34,4 @@ export type MetricComparison = {
    */
   readonly direction: string | null;
   //#endregion
-}
+};

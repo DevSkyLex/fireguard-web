@@ -214,7 +214,11 @@ describe('OrganizationDashboardInspectionQualityStore — persistence', () => {
 
       const range = store.selectedDateRange();
       expect(range).not.toBeNull();
-      expect(range![1].getTime()).toBe(from.getTime() + 90 * 24 * 60 * 60 * 1000);
+      if (!range?.[1]) {
+        throw new Error('Expected selectedDateRange to contain an end date.');
+      }
+
+      expect(range[1].getTime()).toBe(from.getTime() + 90 * 24 * 60 * 60 * 1000);
     });
   });
 
@@ -225,7 +229,11 @@ describe('OrganizationDashboardInspectionQualityStore — persistence', () => {
 
       const raw = localStorage.getItem(STORAGE_KEY);
       expect(raw).not.toBeNull();
-      const parsed = JSON.parse(raw!);
+      if (raw === null) {
+        throw new Error('Expected persisted dashboard state to be written.');
+      }
+
+      const parsed = JSON.parse(raw);
       expect(parsed._v).toBe(DASHBOARD_PERSISTENCE_VERSION);
       expect(parsed.granularity).toBe('week');
       expect(parsed.compareEnabled).toBe(true);
@@ -239,7 +247,11 @@ describe('OrganizationDashboardInspectionQualityStore — persistence', () => {
       await flushEffects();
 
       const raw = localStorage.getItem(STORAGE_KEY);
-      const parsed = JSON.parse(raw!);
+      if (raw === null) {
+        throw new Error('Expected persisted dashboard state after status update.');
+      }
+
+      const parsed = JSON.parse(raw);
       expect(parsed.inspectionStatus).toBe('completed');
     });
 
@@ -251,7 +263,11 @@ describe('OrganizationDashboardInspectionQualityStore — persistence', () => {
       await flushEffects();
 
       const raw = localStorage.getItem(STORAGE_KEY);
-      const parsed = JSON.parse(raw!);
+      if (raw === null) {
+        throw new Error('Expected persisted dashboard state after granularity update.');
+      }
+
+      const parsed = JSON.parse(raw);
       expect(parsed.granularity).toBe('month');
     });
   });
@@ -305,4 +321,3 @@ describe('OrganizationDashboardInspectionQualityStore — persistence', () => {
     });
   });
 });
-

@@ -1,11 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import type { ChartData, ChartOptions } from 'chart.js';
-import {
-  buildDifferenceSeries,
-} from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
-import { OrganizationDashboardOverviewTrendStore } from '@features/organization/state/organization-dashboard';
 import { ChartModule } from 'primeng/chart';
 import { SkeletonModule } from 'primeng/skeleton';
+import { buildDifferenceSeries } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
+import { OrganizationDashboardOverviewTrendStore } from '@features/organization/state/organization-dashboard';
 
 /**
  * Component OverviewChart
@@ -60,8 +58,8 @@ export class OverviewChart {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly loading: Signal<boolean> = computed<boolean>(
-    () => this.store.isQueryLoading(),
+  protected readonly loading: Signal<boolean> = computed<boolean>(() =>
+    this.store.isQueryLoading(),
   );
 
   /**

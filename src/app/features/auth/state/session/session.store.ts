@@ -23,8 +23,8 @@ import {
 } from '@core/state/request-state';
 import { SessionService } from '@features/auth/data-access';
 import type { SessionOutput } from '@features/auth/models';
-import type { SessionState } from './models';
 import { sessionStoreEvents } from './events';
+import type { SessionState } from './models';
 
 //#region Initial State
 /**

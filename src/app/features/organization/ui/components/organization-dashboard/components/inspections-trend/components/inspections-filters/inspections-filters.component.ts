@@ -1,8 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, type Signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  type Signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
+import { SelectModule } from 'primeng/select';
 import { OrganizationDashboardInspectionsTrendStore } from '@features/organization/state/organization-dashboard';
+import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
 import type {
   InspectionResultOption,
   InspectionStatusOption,
@@ -13,7 +21,6 @@ import {
   INSPECTION_STATUS_OPTIONS,
   INSPECTOR_TYPE_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
-import { SelectModule } from 'primeng/select';
 
 /**
  * Type InspectionsFiltersForm
@@ -55,7 +62,7 @@ export class InspectionsFilters {
    * @readonly
    *
    * @description
-  * Component-scoped store used to read and mutate all draft filter selections.
+   * Component-scoped store used to read and mutate all draft filter selections.
    *
    * @access protected
    * @since 2.0.0
@@ -77,11 +84,12 @@ export class InspectionsFilters {
    *
    * @type {FormGroup<InspectionsFiltersForm>}
    */
-  protected readonly form: FormGroup<InspectionsFiltersForm> = new FormGroup<InspectionsFiltersForm>({
-    inspectionStatus: new FormControl<InspectionStatusOption['value'] | null>(null),
-    inspectionResult: new FormControl<InspectionResultOption['value'] | null>(null),
-    inspectorType: new FormControl<InspectorTypeOption['value'] | null>(null),
-  });
+  protected readonly form: FormGroup<InspectionsFiltersForm> =
+    new FormGroup<InspectionsFiltersForm>({
+      inspectionStatus: new FormControl<InspectionStatusOption['value'] | null>(null),
+      inspectionResult: new FormControl<InspectionResultOption['value'] | null>(null),
+      inspectorType: new FormControl<InspectorTypeOption['value'] | null>(null),
+    });
 
   /**
    * Property inspectionStatusOptions
@@ -145,9 +153,8 @@ export class InspectionsFilters {
   public readonly selectedInspectionStatusOption: Signal<InspectionStatusOption | null> =
     computed<InspectionStatusOption | null>(
       () =>
-        INSPECTION_STATUS_OPTIONS.find(
-          (o) => o.value === this.store.draftInspectionStatus(),
-        ) ?? null,
+        INSPECTION_STATUS_OPTIONS.find((o) => o.value === this.store.draftInspectionStatus()) ??
+        null,
     );
 
   /**
@@ -166,9 +173,8 @@ export class InspectionsFilters {
   public readonly selectedInspectionResultOption: Signal<InspectionResultOption | null> =
     computed<InspectionResultOption | null>(
       () =>
-        INSPECTION_RESULT_OPTIONS.find(
-          (o) => o.value === this.store.draftInspectionResult(),
-        ) ?? null,
+        INSPECTION_RESULT_OPTIONS.find((o) => o.value === this.store.draftInspectionResult()) ??
+        null,
     );
 
   //#endregion

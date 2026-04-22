@@ -26,8 +26,8 @@ import type {
   NonConformityListOptions,
 } from '@features/organization/features/inspections/models';
 import { ActiveInspectionStore } from '../active-inspection/active-inspection.store';
-import type { InspectionState } from './models';
 import { inspectionStoreEvents } from './events';
+import type { InspectionState } from './models';
 
 //#region Initial State
 /**

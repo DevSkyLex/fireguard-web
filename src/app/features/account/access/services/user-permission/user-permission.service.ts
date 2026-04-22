@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, type Signal } from '@angular/core';
+import type { StoreError } from '@core/state/request-state';
 import type { AccountPermissionName } from '@features/account/models';
 import { UserStore } from '@features/account/state';
-import type { StoreError } from '@core/state/request-state';
 
 /**
  * Service UserPermissionService

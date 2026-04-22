@@ -14,9 +14,7 @@ describe('AssetGrowthToolbar', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [AssetGrowthToolbar],
-      providers: [
-        { provide: OrganizationDashboardAssetGrowthStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardAssetGrowthStore, useValue: mockStore }],
     });
   });
 

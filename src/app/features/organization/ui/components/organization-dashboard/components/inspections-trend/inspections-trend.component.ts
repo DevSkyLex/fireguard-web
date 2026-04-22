@@ -21,13 +21,9 @@ import {
   buildDashboardSingleTrendSummaryMetric,
   buildDashboardSingleTrendViewModel,
 } from '@features/organization/ui/components/organization-dashboard/utils';
-import {
-  InspectionsChart,
-  InspectionsFilters,
-  InspectionsToolbar,
-} from './components';
 import { TrendCard } from '@shared/components';
 import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
+import { InspectionsChart, InspectionsFilters, InspectionsToolbar } from './components';
 
 /**
  * Component InspectionsTrend
@@ -103,8 +99,8 @@ export class InspectionsTrend {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isLoading: Signal<boolean> = computed<boolean>(
-    () => this.dashboardStore.isQueryLoading(),
+  protected readonly isLoading: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isQueryLoading(),
   );
 
   /**
@@ -119,8 +115,8 @@ export class InspectionsTrend {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(
-    () => this.dashboardStore.isFilterDrawerVisible(),
+  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isFilterDrawerVisible(),
   );
 
   /**
@@ -135,16 +131,17 @@ export class InspectionsTrend {
    *
    * @type {Signal<number>}
    */
-  protected readonly activeFilterCount: Signal<number> = computed<number>(() =>
-    getDashboardBaseActiveFilterCount(
-      this.dashboardStore.selectedDateRange(),
-      this.dashboardStore.compareEnabled(),
-    ) +
-    countDefinedDashboardFilters([
-      this.dashboardStore.selectedInspectionStatus(),
-      this.dashboardStore.selectedInspectionResult(),
-      this.dashboardStore.selectedInspectorType(),
-    ]),
+  protected readonly activeFilterCount: Signal<number> = computed<number>(
+    () =>
+      getDashboardBaseActiveFilterCount(
+        this.dashboardStore.selectedDateRange(),
+        this.dashboardStore.compareEnabled(),
+      ) +
+      countDefinedDashboardFilters([
+        this.dashboardStore.selectedInspectionStatus(),
+        this.dashboardStore.selectedInspectionResult(),
+        this.dashboardStore.selectedInspectorType(),
+      ]),
   );
 
   /**

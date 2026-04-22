@@ -1,13 +1,22 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  input,
+  output,
+  OutputEmitterRef,
+  type InputSignal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ChangeDetectionStrategy, Component, effect, inject, input, output, OutputEmitterRef, type InputSignal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { OrganizationDashboardGranularity } from '@features/organization/models';
-import { OrganizationDashboardFacilitiesCreatedStore } from '@features/organization/state/organization-dashboard';
 import { ButtonModule } from 'primeng/button';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
 import { SelectModule } from 'primeng/select';
+import { OrganizationDashboardGranularity } from '@features/organization/models';
+import { OrganizationDashboardFacilitiesCreatedStore } from '@features/organization/state/organization-dashboard';
 
 /**
  * Component FacilitiesCreatedToolbar
@@ -53,7 +62,9 @@ export class FacilitiesCreatedToolbar {
    * @type {OrganizationDashboardFacilitiesCreatedStore}
    */
   protected readonly store: OrganizationDashboardFacilitiesCreatedStore =
-    inject<OrganizationDashboardFacilitiesCreatedStore>(OrganizationDashboardFacilitiesCreatedStore);
+    inject<OrganizationDashboardFacilitiesCreatedStore>(
+      OrganizationDashboardFacilitiesCreatedStore,
+    );
 
   /**
    * Property granularityControl
@@ -110,12 +121,12 @@ export class FacilitiesCreatedToolbar {
    * @description
    * Emitted when the user opens the filter drawer.
    *
-    * @access public
+   * @access public
    * @since 2.1.0
    *
    * @type {OutputEmitterRef<void>}
    */
-    public readonly filterToggle: OutputEmitterRef<void> = output<void>();
+  public readonly filterToggle: OutputEmitterRef<void> = output<void>();
 
   /**
    * Event menuToggle

@@ -17,8 +17,8 @@ import { USER_PROFILE_PORT, type UserProfilePort } from '@features/account/ports
 import { AuthService } from '@features/auth/data-access';
 import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@features/auth/models';
 import { ActiveTrustedDeviceStore } from '@features/auth/state';
-import type { AuthState } from './models';
 import { authStoreEvents } from './events';
+import type { AuthState } from './models';
 
 /**
  * Constant TOKEN_EXPIRY_WARNING_MS

@@ -6,13 +6,13 @@ import {
   viewChild,
   type Signal,
 } from '@angular/core';
+import { PrimeIcons } from 'primeng/api';
+import type { MenuItem } from 'primeng/api';
+import { Menu, MenuModule } from 'primeng/menu';
 import {
   getDashboardTrendPointValue,
   sumDashboardTrendValues,
 } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
-import { PrimeIcons } from 'primeng/api';
-import type { MenuItem } from 'primeng/api';
-import { Menu, MenuModule } from 'primeng/menu';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import {
@@ -27,12 +27,8 @@ import {
   buildDashboardComparison,
 } from '@features/organization/ui/components/organization-dashboard/utils';
 import { TrendCard } from '@shared/components';
-import {
-  AssetGrowthChart,
-  AssetGrowthFilters,
-  AssetGrowthToolbar,
-} from './components';
 import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
+import { AssetGrowthChart, AssetGrowthFilters, AssetGrowthToolbar } from './components';
 
 /**
  * Component AssetGrowthTrend
@@ -115,8 +111,8 @@ export class AssetGrowthTrend {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isLoading: Signal<boolean> = computed<boolean>(
-    () => this.dashboardStore.isQueryLoading(),
+  protected readonly isLoading: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isQueryLoading(),
   );
 
   /**
@@ -131,8 +127,8 @@ export class AssetGrowthTrend {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(
-    () => this.dashboardStore.isFilterDrawerVisible(),
+  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isFilterDrawerVisible(),
   );
 
   /**

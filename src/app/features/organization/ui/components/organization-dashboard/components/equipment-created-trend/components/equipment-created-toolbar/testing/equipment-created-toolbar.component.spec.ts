@@ -5,7 +5,10 @@ import { EquipmentCreatedToolbar } from '../equipment-created-toolbar.component'
 
 const mockStore = {
   selectedGranularity: signal<string>('week'),
-  granularityOptions: signal([{ label: 'Daily', value: 'day' }, { label: 'Weekly', value: 'week' }]),
+  granularityOptions: signal([
+    { label: 'Daily', value: 'day' },
+    { label: 'Weekly', value: 'week' },
+  ]),
   isQueryLoading: signal(false),
   setGranularity: vi.fn(),
 };
@@ -14,9 +17,7 @@ describe('EquipmentCreatedToolbar', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [EquipmentCreatedToolbar],
-      providers: [
-        { provide: OrganizationDashboardEquipmentCreatedStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardEquipmentCreatedStore, useValue: mockStore }],
     });
   });
 

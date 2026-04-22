@@ -19,9 +19,7 @@ describe('AssetGrowthChart', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [AssetGrowthChart],
-      providers: [
-        { provide: OrganizationDashboardAssetGrowthStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardAssetGrowthStore, useValue: mockStore }],
     });
   });
 

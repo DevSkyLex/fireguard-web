@@ -31,8 +31,8 @@ export class TrendFilterDrawer {
    * Property skipNextCloseCancel
    *
    * @description
-  * Prevents PrimeNG close notifications triggered by controlled visibility
-  * updates from re-emitting a cancel after the explicit apply action closes the drawer.
+   * Prevents PrimeNG close notifications triggered by controlled visibility
+   * updates from re-emitting a cancel after the explicit apply action closes the drawer.
    *
    * @type {boolean}
    */

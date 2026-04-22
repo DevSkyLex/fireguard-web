@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import type { ChartData, ChartOptions } from 'chart.js';
+import { ChartModule } from 'primeng/chart';
+import { SkeletonModule } from 'primeng/skeleton';
 import { OrganizationDashboardNonConformitiesOpenedStore } from '@features/organization/state/organization-dashboard';
 import type { DashboardSingleTrendViewModel } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   buildDashboardSingleTrendLineChartData,
   buildDashboardSingleTrendViewModel,
 } from '@features/organization/ui/components/organization-dashboard/utils';
-import { ChartModule } from 'primeng/chart';
-import { SkeletonModule } from 'primeng/skeleton';
 
 /**
  * Component NonConformitiesOpenedChart
@@ -63,8 +63,8 @@ export class NonConformitiesOpenedChart {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly loading: Signal<boolean> = computed<boolean>(
-    () => this.store.isQueryLoading(),
+  protected readonly loading: Signal<boolean> = computed<boolean>(() =>
+    this.store.isQueryLoading(),
   );
 
   /**
@@ -119,55 +119,53 @@ export class NonConformitiesOpenedChart {
    *
    * @type {Signal<ChartOptions<'line'>>}
    */
-  protected readonly options: Signal<ChartOptions<'line'>> = computed<ChartOptions<'line'>>(
-    () => ({
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 500 },
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: {
-          display: this.store.compareEnabled(),
-          position: 'bottom',
-          labels: {
-            usePointStyle: true,
-            pointStyle: 'circle',
-            boxWidth: 8,
-            boxHeight: 8,
-            padding: 16,
-          },
-        },
-        tooltip: {
-          backgroundColor: 'rgba(15, 23, 42, 0.92)',
-          titleColor: '#f1f5f9',
-          bodyColor: '#94a3b8',
-          borderColor: 'rgba(255, 255, 255, 0.08)',
-          borderWidth: 1,
-          padding: 12,
-          cornerRadius: 10,
-          callbacks: {
-            title: (items) => items[0]?.label ?? '',
-            label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
-          },
+  protected readonly options: Signal<ChartOptions<'line'>> = computed<ChartOptions<'line'>>(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 500 },
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: {
+        display: this.store.compareEnabled(),
+        position: 'bottom',
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 8,
+          boxHeight: 8,
+          padding: 16,
         },
       },
-      scales: {
-        x: { border: { display: false }, grid: { display: false }, ticks: { display: false } },
-        y: {
-          border: { display: false },
-          beginAtZero: true,
-          grid: { color: 'rgba(0, 0, 0, 0.04)', drawTicks: false },
-          ticks: {
-            precision: 0,
-            maxTicksLimit: 5,
-            color: '#94a3b8',
-            font: { size: 11 },
-            padding: 8,
-          },
+      tooltip: {
+        backgroundColor: 'rgba(15, 23, 42, 0.92)',
+        titleColor: '#f1f5f9',
+        bodyColor: '#94a3b8',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 10,
+        callbacks: {
+          title: (items) => items[0]?.label ?? '',
+          label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
         },
       },
-    }),
-  );
+    },
+    scales: {
+      x: { border: { display: false }, grid: { display: false }, ticks: { display: false } },
+      y: {
+        border: { display: false },
+        beginAtZero: true,
+        grid: { color: 'rgba(0, 0, 0, 0.04)', drawTicks: false },
+        ticks: {
+          precision: 0,
+          maxTicksLimit: 5,
+          color: '#94a3b8',
+          font: { size: 11 },
+          padding: 8,
+        },
+      },
+    },
+  }));
 
   //#endregion
 }

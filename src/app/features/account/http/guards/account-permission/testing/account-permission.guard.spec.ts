@@ -50,7 +50,9 @@ describe('accountPermissionGuard', () => {
     const guard = accountPermissionGuard({
       permissions: [ACCOUNT_PERMISSION.SESSIONS_READ],
     });
-    const result = await TestBed.runInInjectionContext(() => resolveGuardResult(guard({} as never, {} as never)));
+    const result = await TestBed.runInInjectionContext(() =>
+      resolveGuardResult(guard({} as never, {} as never)),
+    );
 
     expect(result).toBe(true);
     expect(mockUserPermissionService.canAccessGlobalPermissions).toHaveBeenCalledWith(
@@ -65,7 +67,9 @@ describe('accountPermissionGuard', () => {
     const guard = accountPermissionGuard({
       permissions: [ACCOUNT_PERMISSION.SESSIONS_READ],
     });
-    const result = await TestBed.runInInjectionContext(() => resolveGuardResult(guard({} as never, {} as never)));
+    const result = await TestBed.runInInjectionContext(() =>
+      resolveGuardResult(guard({} as never, {} as never)),
+    );
 
     expect(result).toBe(redirectUrlTree);
     expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/']);
@@ -78,7 +82,9 @@ describe('accountPermissionGuard', () => {
       permissions: [ACCOUNT_PERMISSION.USERS_READ, ACCOUNT_PERMISSION.SESSIONS_READ],
       match: 'any',
     });
-    const result = await TestBed.runInInjectionContext(() => resolveGuardResult(guard({} as never, {} as never)));
+    const result = await TestBed.runInInjectionContext(() =>
+      resolveGuardResult(guard({} as never, {} as never)),
+    );
 
     expect(result).toBe(true);
     expect(mockUserPermissionService.canAccessGlobalPermissions).toHaveBeenCalledWith(
@@ -94,7 +100,9 @@ describe('accountPermissionGuard', () => {
       permissions: [ACCOUNT_PERMISSION.SESSIONS_READ],
       redirectTo: ['/account', 'notifications'],
     });
-    const result = await TestBed.runInInjectionContext(() => resolveGuardResult(guard({} as never, {} as never)));
+    const result = await TestBed.runInInjectionContext(() =>
+      resolveGuardResult(guard({} as never, {} as never)),
+    );
 
     expect(result).toBe(redirectUrlTree);
     expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/account', 'notifications']);

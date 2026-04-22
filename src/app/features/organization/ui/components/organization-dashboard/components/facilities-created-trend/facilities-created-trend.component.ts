@@ -22,12 +22,12 @@ import {
   buildDashboardSingleTrendViewModel,
 } from '@features/organization/ui/components/organization-dashboard/utils';
 import { TrendCard } from '@shared/components';
+import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
 import {
   FacilitiesCreatedChart,
   FacilitiesCreatedFilters,
   FacilitiesCreatedToolbar,
 } from './components';
-import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
 
 /**
  * Component FacilitiesCreatedTrend
@@ -89,9 +89,7 @@ export class FacilitiesCreatedTrend {
    * @type {FacilitiesCreatedTrendStore}
    */
   private readonly dashboardStore: FacilitiesCreatedTrendStore =
-    inject<FacilitiesCreatedTrendStore>(
-      FacilitiesCreatedTrendStore,
-    );
+    inject<FacilitiesCreatedTrendStore>(FacilitiesCreatedTrendStore);
 
   /**
    * Property isLoading
@@ -106,8 +104,8 @@ export class FacilitiesCreatedTrend {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isLoading: Signal<boolean> = computed<boolean>(
-    () => this.dashboardStore.isQueryLoading(),
+  protected readonly isLoading: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isQueryLoading(),
   );
 
   /**
@@ -122,8 +120,8 @@ export class FacilitiesCreatedTrend {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(
-    () => this.dashboardStore.isFilterDrawerVisible(),
+  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isFilterDrawerVisible(),
   );
 
   /**
@@ -138,11 +136,12 @@ export class FacilitiesCreatedTrend {
    *
    * @type {Signal<number>}
    */
-  protected readonly activeFilterCount: Signal<number> = computed<number>(() =>
-    getDashboardBaseActiveFilterCount(
-      this.dashboardStore.selectedDateRange(),
-      this.dashboardStore.compareEnabled(),
-    ) + countDefinedDashboardFilters([this.dashboardStore.selectedFacilityType()]),
+  protected readonly activeFilterCount: Signal<number> = computed<number>(
+    () =>
+      getDashboardBaseActiveFilterCount(
+        this.dashboardStore.selectedDateRange(),
+        this.dashboardStore.compareEnabled(),
+      ) + countDefinedDashboardFilters([this.dashboardStore.selectedFacilityType()]),
   );
 
   /**

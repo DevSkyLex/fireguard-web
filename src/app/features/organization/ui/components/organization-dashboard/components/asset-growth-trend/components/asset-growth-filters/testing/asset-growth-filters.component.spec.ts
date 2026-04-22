@@ -36,9 +36,7 @@ describe('AssetGrowthFilters', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [AssetGrowthFilters],
-      providers: [
-        { provide: OrganizationDashboardAssetGrowthStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardAssetGrowthStore, useValue: mockStore }],
     });
   });
 
@@ -60,10 +58,10 @@ describe('AssetGrowthFilters', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render three selects and the compare toggle', () => {
+  it('should render three selects and the shared base filters form', () => {
     const fixture = createComponent();
     expect(fixture.nativeElement.querySelectorAll('p-select')).toHaveLength(3);
-    expect(fixture.nativeElement.querySelector('p-togglebutton')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-trend-base-filters-form')).not.toBeNull();
   });
 
   it('should resolve selectedEquipmentStatusOption as null when no status selected', () => {

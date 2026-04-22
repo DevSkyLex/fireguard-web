@@ -21,13 +21,13 @@ import {
   buildDashboardSingleTrendSummaryMetric,
   buildDashboardSingleTrendViewModel,
 } from '@features/organization/ui/components/organization-dashboard/utils';
+import { TrendCard } from '@shared/components';
+import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
 import {
   EquipmentCreatedChart,
   EquipmentCreatedFilters,
   EquipmentCreatedToolbar,
 } from './components';
-import { TrendCard } from '@shared/components';
-import { TrendFilterDrawer } from '../trend-filter-drawer/trend-filter-drawer.component';
 
 /**
  * Component EquipmentCreatedTrend
@@ -87,8 +87,9 @@ export class EquipmentCreatedTrend {
    *
    * @type {EquipmentCreatedTrendStore}
    */
-  private readonly dashboardStore: EquipmentCreatedTrendStore =
-    inject<EquipmentCreatedTrendStore>(EquipmentCreatedTrendStore);
+  private readonly dashboardStore: EquipmentCreatedTrendStore = inject<EquipmentCreatedTrendStore>(
+    EquipmentCreatedTrendStore,
+  );
 
   /**
    * Property isLoading
@@ -103,8 +104,8 @@ export class EquipmentCreatedTrend {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isLoading: Signal<boolean> = computed<boolean>(
-    () => this.dashboardStore.isQueryLoading(),
+  protected readonly isLoading: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isQueryLoading(),
   );
 
   /**
@@ -119,8 +120,8 @@ export class EquipmentCreatedTrend {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(
-    () => this.dashboardStore.isFilterDrawerVisible(),
+  protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(() =>
+    this.dashboardStore.isFilterDrawerVisible(),
   );
 
   /**
@@ -135,15 +136,16 @@ export class EquipmentCreatedTrend {
    *
    * @type {Signal<number>}
    */
-  protected readonly activeFilterCount: Signal<number> = computed<number>(() =>
-    getDashboardBaseActiveFilterCount(
-      this.dashboardStore.selectedDateRange(),
-      this.dashboardStore.compareEnabled(),
-    ) +
-    countDefinedDashboardFilters([
-      this.dashboardStore.selectedEquipmentType(),
-      this.dashboardStore.selectedEquipmentStatus(),
-    ]),
+  protected readonly activeFilterCount: Signal<number> = computed<number>(
+    () =>
+      getDashboardBaseActiveFilterCount(
+        this.dashboardStore.selectedDateRange(),
+        this.dashboardStore.compareEnabled(),
+      ) +
+      countDefinedDashboardFilters([
+        this.dashboardStore.selectedEquipmentType(),
+        this.dashboardStore.selectedEquipmentStatus(),
+      ]),
   );
 
   /**

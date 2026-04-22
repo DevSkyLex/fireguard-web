@@ -35,9 +35,7 @@ describe('InspectionQualityFilters', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [InspectionQualityFilters],
-      providers: [
-        { provide: OrganizationDashboardInspectionQualityStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardInspectionQualityStore, useValue: mockStore }],
     });
   });
 
@@ -52,10 +50,10 @@ describe('InspectionQualityFilters', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render the four selects and the compare toggle', () => {
+  it('should render the four selects and the shared base filters form', () => {
     const fixture = createComponent();
     expect(fixture.nativeElement.querySelectorAll('p-select')).toHaveLength(4);
-    expect(fixture.nativeElement.querySelector('p-togglebutton')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-trend-base-filters-form')).not.toBeNull();
   });
 
   it('should resolve selected option labels from store state', () => {

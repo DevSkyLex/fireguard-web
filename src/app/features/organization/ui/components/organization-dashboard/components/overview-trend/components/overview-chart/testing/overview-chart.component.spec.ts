@@ -15,9 +15,7 @@ describe('OverviewChart', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [OverviewChart],
-      providers: [
-        { provide: OrganizationDashboardOverviewTrendStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardOverviewTrendStore, useValue: mockStore }],
     });
   });
 

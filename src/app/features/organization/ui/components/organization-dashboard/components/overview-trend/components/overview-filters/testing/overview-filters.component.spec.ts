@@ -22,9 +22,7 @@ describe('OverviewFilters', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [OverviewFilters],
-      providers: [
-        { provide: OrganizationDashboardOverviewTrendStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardOverviewTrendStore, useValue: mockStore }],
     });
   });
 
@@ -39,9 +37,9 @@ describe('OverviewFilters', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render only the compare toggle (no selects)', () => {
+  it('should render only the shared base filters form (no selects)', () => {
     const fixture = createComponent();
     expect(fixture.nativeElement.querySelectorAll('p-select')).toHaveLength(0);
-    expect(fixture.nativeElement.querySelector('p-togglebutton')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-trend-base-filters-form')).not.toBeNull();
   });
 });

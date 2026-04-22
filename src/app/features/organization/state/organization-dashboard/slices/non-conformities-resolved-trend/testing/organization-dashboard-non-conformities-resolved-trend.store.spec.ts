@@ -74,9 +74,8 @@ describe('NonConformitiesResolvedTrendStore', () => {
     store.setGranularity('month');
     await flushEffects();
 
-    expect(mockOrganizationService.getDashboardNonConformitiesResolvedTrend).toHaveBeenLastCalledWith(
-      'org-1',
-      expect.objectContaining({ granularity: 'month' }),
-    );
+    expect(
+      mockOrganizationService.getDashboardNonConformitiesResolvedTrend,
+    ).toHaveBeenLastCalledWith('org-1', expect.objectContaining({ granularity: 'month' }));
   });
 });

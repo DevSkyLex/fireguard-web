@@ -1,8 +1,5 @@
 import type { DashboardSingleTrendViewModel } from '@features/organization/ui/components/organization-dashboard/models';
-import {
-  buildDashboardSingleTrendBarChartData,
-  buildDashboardSingleTrendLineChartData,
-} from '..';
+import { buildDashboardSingleTrendBarChartData, buildDashboardSingleTrendLineChartData } from '..';
 
 describe('buildDashboardSingleTrendChartData utils', () => {
   const viewModel: DashboardSingleTrendViewModel = {

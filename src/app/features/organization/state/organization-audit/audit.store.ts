@@ -17,8 +17,8 @@ import {
 } from '@core/state/request-state';
 import { AuditEventService } from '@features/organization/data-access';
 import type { AuditEventListOptions, AuditEventOutput } from '@features/organization/models';
-import type { AuditState } from './models';
 import { auditStoreEvents } from './events';
+import type { AuditState } from './models';
 
 const INITIAL_AUDIT_STATE: AuditState = {
   totalAuditEvents: 0,

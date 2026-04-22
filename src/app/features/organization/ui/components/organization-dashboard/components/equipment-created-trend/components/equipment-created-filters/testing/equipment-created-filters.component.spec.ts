@@ -27,9 +27,7 @@ describe('EquipmentCreatedFilters', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [EquipmentCreatedFilters],
-      providers: [
-        { provide: OrganizationDashboardEquipmentCreatedStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardEquipmentCreatedStore, useValue: mockStore }],
     });
   });
 
@@ -44,10 +42,10 @@ describe('EquipmentCreatedFilters', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render two selects and the compare toggle', () => {
+  it('should render two selects and the shared base filters form', () => {
     const fixture = createComponent();
     expect(fixture.nativeElement.querySelectorAll('p-select')).toHaveLength(2);
-    expect(fixture.nativeElement.querySelector('p-togglebutton')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-trend-base-filters-form')).not.toBeNull();
   });
 
   it('should resolve selectedEquipmentStatusOption as null when no status selected', () => {

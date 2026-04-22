@@ -63,11 +63,7 @@ function getHexRgbChannels(hexColor: string): [number, number, number] | null {
 
   if (!match) return null;
 
-  return [
-    parseInt(match[1], 16),
-    parseInt(match[2], 16),
-    parseInt(match[3], 16),
-  ];
+  return [parseInt(match[1], 16), parseInt(match[2], 16), parseInt(match[3], 16)];
 }
 
 /**

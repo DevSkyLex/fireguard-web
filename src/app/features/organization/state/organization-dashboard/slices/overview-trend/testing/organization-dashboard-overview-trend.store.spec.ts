@@ -76,12 +76,10 @@ describe('OverviewTrendStore', () => {
     await flushEffects();
 
     expect(mockOrganizationService.getDashboardInspectionsTrend).toHaveBeenCalledTimes(1);
-    expect(mockOrganizationService.getDashboardNonConformitiesOpenedTrend).toHaveBeenCalledTimes(
+    expect(mockOrganizationService.getDashboardNonConformitiesOpenedTrend).toHaveBeenCalledTimes(1);
+    expect(mockOrganizationService.getDashboardNonConformitiesResolvedTrend).toHaveBeenCalledTimes(
       1,
     );
-    expect(
-      mockOrganizationService.getDashboardNonConformitiesResolvedTrend,
-    ).toHaveBeenCalledTimes(1);
     expect(store.queryData()).toEqual({
       inspections: inspectionsTrend,
       ncOpened: ncOpenedTrend,

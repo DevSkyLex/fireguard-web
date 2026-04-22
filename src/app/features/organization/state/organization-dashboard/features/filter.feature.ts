@@ -10,12 +10,8 @@ import type {
   OrganizationDashboardGranularity,
   OrganizationDashboardTrendResourceParams,
 } from '@features/organization/models';
-import {
-  GRANULARITY_OPTIONS,
-  getDashboardInitialDateRange,
-  toIsoString,
-} from '../utils';
 import type { GranularityOption } from '../models';
+import { GRANULARITY_OPTIONS, getDashboardInitialDateRange, toIsoString } from '../utils';
 
 export type DashboardFilterState = {
   readonly selectedGranularity: OrganizationDashboardGranularity;
@@ -29,9 +25,7 @@ export type DashboardFilterDraftState = {
   readonly draftCompareEnabled: boolean;
 };
 
-export function getDashboardMaxRangeDays(
-  granularity: OrganizationDashboardGranularity,
-): number {
+export function getDashboardMaxRangeDays(granularity: OrganizationDashboardGranularity): number {
   switch (granularity) {
     case 'day':
       return 90;
@@ -168,4 +162,3 @@ export function buildDashboardTrendBaseParams(store: {
     compare: store.compareEnabled() || undefined,
   };
 }
-

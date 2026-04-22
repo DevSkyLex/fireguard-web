@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import type { ChartData, ChartOptions } from 'chart.js';
+import { ChartModule } from 'primeng/chart';
+import { SkeletonModule } from 'primeng/skeleton';
 import { OrganizationDashboardFacilitiesCreatedStore } from '@features/organization/state/organization-dashboard';
 import type { DashboardSingleTrendViewModel } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   buildDashboardSingleTrendBarChartData,
   buildDashboardSingleTrendViewModel,
 } from '@features/organization/ui/components/organization-dashboard/utils';
-import { ChartModule } from 'primeng/chart';
-import { SkeletonModule } from 'primeng/skeleton';
 
 /**
  * Component FacilitiesCreatedChart
@@ -46,7 +46,9 @@ export class FacilitiesCreatedChart {
    * @type {OrganizationDashboardFacilitiesCreatedStore}
    */
   private readonly store: OrganizationDashboardFacilitiesCreatedStore =
-    inject<OrganizationDashboardFacilitiesCreatedStore>(OrganizationDashboardFacilitiesCreatedStore);
+    inject<OrganizationDashboardFacilitiesCreatedStore>(
+      OrganizationDashboardFacilitiesCreatedStore,
+    );
 
   /**
    * Property loading
@@ -61,8 +63,8 @@ export class FacilitiesCreatedChart {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly loading: Signal<boolean> = computed<boolean>(
-    () => this.store.isQueryLoading(),
+  protected readonly loading: Signal<boolean> = computed<boolean>(() =>
+    this.store.isQueryLoading(),
   );
 
   /**

@@ -17,9 +17,7 @@ describe('OverviewToolbar', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [OverviewToolbar],
-      providers: [
-        { provide: OrganizationDashboardOverviewTrendStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardOverviewTrendStore, useValue: mockStore }],
     });
   });
 

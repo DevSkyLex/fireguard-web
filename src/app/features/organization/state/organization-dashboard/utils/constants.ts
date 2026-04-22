@@ -12,4 +12,3 @@ export const getDashboardInitialDateRange = (): [Date, Date] => [
   new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
   new Date(),
 ];
-

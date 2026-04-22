@@ -31,9 +31,7 @@ describe('InspectionsFilters', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [InspectionsFilters],
-      providers: [
-        { provide: OrganizationDashboardInspectionsTrendStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardInspectionsTrendStore, useValue: mockStore }],
     });
   });
 
@@ -48,10 +46,10 @@ describe('InspectionsFilters', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render three selects and the compare toggle', () => {
+  it('should render three selects and the shared base filters form', () => {
     const fixture = createComponent();
     expect(fixture.nativeElement.querySelectorAll('p-select')).toHaveLength(3);
-    expect(fixture.nativeElement.querySelector('p-togglebutton')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-trend-base-filters-form')).not.toBeNull();
   });
 
   it('should resolve selectedInspectionStatusOption as null when no status selected', () => {

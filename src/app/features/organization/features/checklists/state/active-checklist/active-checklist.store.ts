@@ -14,8 +14,8 @@ import {
 } from '@core/state/request-state';
 import { ChecklistService } from '@features/organization/features/checklists/data-access';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
-import type { ActiveChecklistState } from './models';
 import { activeChecklistStoreEvents } from './events';
+import type { ActiveChecklistState } from './models';
 
 //#region Initial State
 /**

@@ -1,11 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import type { ChartData, ChartOptions } from 'chart.js';
-import {
-  getDashboardTrendPointValue,
-} from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
-import { OrganizationDashboardAssetGrowthStore } from '@features/organization/state/organization-dashboard';
 import { ChartModule } from 'primeng/chart';
 import { SkeletonModule } from 'primeng/skeleton';
+import { getDashboardTrendPointValue } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
+import { OrganizationDashboardAssetGrowthStore } from '@features/organization/state/organization-dashboard';
 
 /**
  * Component AssetGrowthChart
@@ -59,8 +57,8 @@ export class AssetGrowthChart {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly loading: Signal<boolean> = computed<boolean>(
-    () => this.store.isQueryLoading(),
+  protected readonly loading: Signal<boolean> = computed<boolean>(() =>
+    this.store.isQueryLoading(),
   );
 
   /**

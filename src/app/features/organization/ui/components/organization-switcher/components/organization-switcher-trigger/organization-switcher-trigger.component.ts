@@ -57,8 +57,8 @@ export class OrganizationSwitcherTrigger {
    * @readonly
    *
    * @description
-  * Whether the organizations list is currently being fetched.
-  * When no organization is selected yet, a skeleton placeholder is rendered.
+   * Whether the organizations list is currently being fetched.
+   * When no organization is selected yet, a skeleton placeholder is rendered.
    *
    * @access public
    * @since 2.0.0

@@ -5,7 +5,10 @@ import { NonConformitiesOpenedToolbar } from '../non-conformities-opened-toolbar
 
 const mockStore = {
   selectedGranularity: signal<string>('week'),
-  granularityOptions: signal([{ label: 'Daily', value: 'day' }, { label: 'Weekly', value: 'week' }]),
+  granularityOptions: signal([
+    { label: 'Daily', value: 'day' },
+    { label: 'Weekly', value: 'week' },
+  ]),
   isQueryLoading: signal(false),
   setGranularity: vi.fn(),
 };

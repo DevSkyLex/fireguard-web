@@ -81,128 +81,125 @@ export const OrganizationMemberAccessStore = signalStore(
         toObservable(store.accessCallState);
 
       return {
-      /**
-       * Method loadAccess
-       *
-       * @description
-       * Loads the authenticated user's effective access for the given organization.
-       * Skips duplicate successful loads for the same organization identifier.
-       */
-      loadAccess: rxMethod<string>(
-        pipe(
-          filter((organizationId: string) => {
-            const callState: CallState<CurrentOrganizationMemberProfileOutput> =
-              store.accessCallState();
-            return (
-              organizationId !== store.currentOrganizationId() ||
-              (callState.status !== 'success' && callState.status !== 'pending')
-            );
-          }),
-          tap((organizationId: string) => {
-            patchState(store, {
-              currentOrganizationId: organizationId,
-              profile: null,
-              accessCallState: pendingCallState(),
-            });
-          }),
-          switchMap((organizationId: string) =>
-            organizationMemberService.getCurrentProfile(organizationId).pipe(
-              tapResponse({
-                next: (profile: CurrentOrganizationMemberProfileOutput) => {
-                  patchState(store, {
-                    currentOrganizationId: organizationId,
-                    profile,
-                    accessCallState: successCallState(profile),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, {
-                    currentOrganizationId: organizationId,
-                    profile: null,
-                    accessCallState: errorCallState(storeError),
-                  });
-                },
-              }),
+        /**
+         * Method loadAccess
+         *
+         * @description
+         * Loads the authenticated user's effective access for the given organization.
+         * Skips duplicate successful loads for the same organization identifier.
+         */
+        loadAccess: rxMethod<string>(
+          pipe(
+            filter((organizationId: string) => {
+              const callState: CallState<CurrentOrganizationMemberProfileOutput> =
+                store.accessCallState();
+              return (
+                organizationId !== store.currentOrganizationId() ||
+                (callState.status !== 'success' && callState.status !== 'pending')
+              );
+            }),
+            tap((organizationId: string) => {
+              patchState(store, {
+                currentOrganizationId: organizationId,
+                profile: null,
+                accessCallState: pendingCallState(),
+              });
+            }),
+            switchMap((organizationId: string) =>
+              organizationMemberService.getCurrentProfile(organizationId).pipe(
+                tapResponse({
+                  next: (profile: CurrentOrganizationMemberProfileOutput) => {
+                    patchState(store, {
+                      currentOrganizationId: organizationId,
+                      profile,
+                      accessCallState: successCallState(profile),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, {
+                      currentOrganizationId: organizationId,
+                      profile: null,
+                      accessCallState: errorCallState(storeError),
+                    });
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method ensureAccessResolved
-       *
-       * @description
-       * Ensures the target organization's access payload is either already
-       * resolved or gets loaded once through the shared store, then waits until
-       * the store reaches a success or error state for that organization.
-       *
-       * @param {string} organizationId - Organization identifier to resolve.
-       *
-       * @returns {Observable<boolean>} `true` when access is resolved successfully.
-       */
-      ensureAccessResolved(organizationId: string): Observable<boolean> {
-        const currentOrganizationId: string | null = store.currentOrganizationId();
-        const accessCallState: CallState<CurrentOrganizationMemberProfileOutput> =
-          store.accessCallState();
+        /**
+         * Method ensureAccessResolved
+         *
+         * @description
+         * Ensures the target organization's access payload is either already
+         * resolved or gets loaded once through the shared store, then waits until
+         * the store reaches a success or error state for that organization.
+         *
+         * @param {string} organizationId - Organization identifier to resolve.
+         *
+         * @returns {Observable<boolean>} `true` when access is resolved successfully.
+         */
+        ensureAccessResolved(organizationId: string): Observable<boolean> {
+          const currentOrganizationId: string | null = store.currentOrganizationId();
+          const accessCallState: CallState<CurrentOrganizationMemberProfileOutput> =
+            store.accessCallState();
 
-        if (
-          currentOrganizationId === organizationId &&
-          accessCallState.status === 'success'
-        ) {
-          return of(true);
-        }
+          if (currentOrganizationId === organizationId && accessCallState.status === 'success') {
+            return of(true);
+          }
 
-        if (
-          currentOrganizationId !== organizationId ||
-          (accessCallState.status !== 'pending' && accessCallState.status !== 'success')
-        ) {
+          if (
+            currentOrganizationId !== organizationId ||
+            (accessCallState.status !== 'pending' && accessCallState.status !== 'success')
+          ) {
+            this.loadAccess(organizationId);
+          }
+
+          return combineLatest([currentOrganizationId$, accessCallState$]).pipe(
+            first(
+              ([loadedOrganizationId, loadedAccessCallState]) =>
+                loadedOrganizationId === organizationId &&
+                (loadedAccessCallState.status === 'success' ||
+                  loadedAccessCallState.status === 'error'),
+            ),
+            map(([, loadedAccessCallState]) => loadedAccessCallState.status === 'success'),
+          );
+        },
+
+        /**
+         * Method reload
+         *
+         * @description
+         * Forces a reload of the current organization member access payload.
+         */
+        reload(): void {
+          const organizationId: string | null =
+            activeOrganizationStore.selectedOrganization()?.id ?? store.currentOrganizationId();
+
+          if (!organizationId) {
+            this.clear();
+            return;
+          }
+
+          patchState(store, {
+            currentOrganizationId: organizationId,
+            accessCallState: idleCallState(),
+          });
           this.loadAccess(organizationId);
-        }
+        },
 
-        return combineLatest([currentOrganizationId$, accessCallState$]).pipe(
-          first(
-            ([loadedOrganizationId, loadedAccessCallState]) =>
-              loadedOrganizationId === organizationId &&
-              (loadedAccessCallState.status === 'success' ||
-                loadedAccessCallState.status === 'error'),
-          ),
-          map(([, loadedAccessCallState]) => loadedAccessCallState.status === 'success'),
-        );
-      },
-
-      /**
-       * Method reload
-       *
-       * @description
-       * Forces a reload of the current organization member access payload.
-       */
-      reload(): void {
-        const organizationId: string | null =
-          activeOrganizationStore.selectedOrganization()?.id ?? store.currentOrganizationId();
-
-        if (!organizationId) {
-          this.clear();
-          return;
-        }
-
-        patchState(store, {
-          currentOrganizationId: organizationId,
-          accessCallState: idleCallState(),
-        });
-        this.loadAccess(organizationId);
-      },
-
-      /**
-       * Method clear
-       *
-       * @description
-       * Resets the organization member access state.
-       */
-      clear(): void {
-        patchState(store, INITIAL_STATE);
-      },
-    };
+        /**
+         * Method clear
+         *
+         * @description
+         * Resets the organization member access state.
+         */
+        clear(): void {
+          patchState(store, INITIAL_STATE);
+        },
+      };
     },
   ),
 

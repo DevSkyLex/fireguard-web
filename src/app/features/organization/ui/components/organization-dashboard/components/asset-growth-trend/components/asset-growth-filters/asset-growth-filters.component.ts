@@ -1,8 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, type Signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  type Signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
+import { SelectModule } from 'primeng/select';
 import { OrganizationDashboardAssetGrowthStore } from '@features/organization/state/organization-dashboard';
+import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
 import type {
   EquipmentStatusOption,
   EquipmentTypeOption,
@@ -13,7 +21,6 @@ import {
   EQUIPMENT_TYPE_OPTIONS,
   FACILITY_TYPE_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
-import { SelectModule } from 'primeng/select';
 
 /**
  * Type AssetGrowthFiltersForm
@@ -55,7 +62,7 @@ export class AssetGrowthFilters {
    * @readonly
    *
    * @description
-  * Component-scoped store used to read and mutate all draft filter selections.
+   * Component-scoped store used to read and mutate all draft filter selections.
    *
    * @access protected
    * @since 2.0.0
@@ -77,11 +84,12 @@ export class AssetGrowthFilters {
    *
    * @type {FormGroup<AssetGrowthFiltersForm>}
    */
-  protected readonly form: FormGroup<AssetGrowthFiltersForm> = new FormGroup<AssetGrowthFiltersForm>({
-    equipmentType: new FormControl<EquipmentTypeOption['value'] | null>(null),
-    equipmentStatus: new FormControl<EquipmentStatusOption['value'] | null>(null),
-    facilityType: new FormControl<FacilityTypeOption['value'] | null>(null),
-  });
+  protected readonly form: FormGroup<AssetGrowthFiltersForm> =
+    new FormGroup<AssetGrowthFiltersForm>({
+      equipmentType: new FormControl<EquipmentTypeOption['value'] | null>(null),
+      equipmentStatus: new FormControl<EquipmentStatusOption['value'] | null>(null),
+      facilityType: new FormControl<FacilityTypeOption['value'] | null>(null),
+    });
 
   /**
    * Property equipmentTypeOptions
@@ -143,9 +151,7 @@ export class AssetGrowthFilters {
   public readonly selectedEquipmentStatusOption: Signal<EquipmentStatusOption | null> =
     computed<EquipmentStatusOption | null>(
       () =>
-        EQUIPMENT_STATUS_OPTIONS.find(
-          (o) => o.value === this.store.draftEquipmentStatus(),
-        ) ?? null,
+        EQUIPMENT_STATUS_OPTIONS.find((o) => o.value === this.store.draftEquipmentStatus()) ?? null,
     );
 
   /**

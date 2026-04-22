@@ -8,7 +8,6 @@ import {
   type UrlTree,
 } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import type { OrganizationPermissionGuardOptions } from './models';
 
 /**
@@ -87,7 +86,7 @@ export function organizationPermissionGuard(
     const redirectTo: ReadonlyArray<string> =
       typeof options.redirectTo === 'function'
         ? options.redirectTo(organizationId)
-        : options.redirectTo ?? ['/organizations', organizationId];
+        : (options.redirectTo ?? ['/organizations', organizationId]);
     const redirectUrlTree: UrlTree = router.createUrlTree([...redirectTo]);
 
     // Check if the user has the required permissions for the organization.

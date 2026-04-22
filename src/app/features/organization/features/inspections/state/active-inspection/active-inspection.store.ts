@@ -14,8 +14,8 @@ import {
 } from '@core/state/request-state';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
-import type { ActiveInspectionState } from './models';
 import { activeInspectionStoreEvents } from './events';
+import type { ActiveInspectionState } from './models';
 
 //#region Initial State
 /**

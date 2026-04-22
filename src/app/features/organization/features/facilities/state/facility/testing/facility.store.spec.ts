@@ -30,9 +30,7 @@ describe('FacilityStore', () => {
     '@id': '/api/facility-types',
     '@type': 'Collection',
     totalItems: 1,
-    member: [
-      { '@id': '/api/options/site', '@type': 'Option', value: 'site', label: 'Site' },
-    ],
+    member: [{ '@id': '/api/options/site', '@type': 'Option', value: 'site', label: 'Site' }],
   };
 
   beforeEach(() => {

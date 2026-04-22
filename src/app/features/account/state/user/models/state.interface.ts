@@ -19,7 +19,7 @@ export interface UserState {
    * @readonly
    *
    * @description
-    * Current user profile information from the account-owned `/api/me` endpoint.
+   * Current user profile information from the account-owned `/api/me` endpoint.
    * Null when not loaded or user is not authenticated.
    *
    * @since 1.0.0

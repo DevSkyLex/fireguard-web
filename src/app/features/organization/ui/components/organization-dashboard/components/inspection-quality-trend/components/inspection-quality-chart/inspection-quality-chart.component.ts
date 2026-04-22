@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
+import { ChartModule } from 'primeng/chart';
+import { SkeletonModule } from 'primeng/skeleton';
 import { OrganizationDashboardInspectionQualityStore } from '@features/organization/state/organization-dashboard';
 import {
   INSPECTION_RESULT_OPTIONS,
   INSPECTION_STATUS_OPTIONS,
   NON_CONFORMITY_SEVERITY_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
-import { ChartModule } from 'primeng/chart';
-import { SkeletonModule } from 'primeng/skeleton';
 
 /**
  * Function hexToRgb
@@ -62,7 +62,9 @@ export class InspectionQualityChart {
    * @type {OrganizationDashboardInspectionQualityStore}
    */
   private readonly store: OrganizationDashboardInspectionQualityStore =
-    inject<OrganizationDashboardInspectionQualityStore>(OrganizationDashboardInspectionQualityStore);
+    inject<OrganizationDashboardInspectionQualityStore>(
+      OrganizationDashboardInspectionQualityStore,
+    );
 
   /**
    * Property loading
@@ -77,8 +79,8 @@ export class InspectionQualityChart {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly loading: Signal<boolean> = computed<boolean>(
-    () => this.store.isQueryLoading(),
+  protected readonly loading: Signal<boolean> = computed<boolean>(() =>
+    this.store.isQueryLoading(),
   );
 
   /**
@@ -94,84 +96,84 @@ export class InspectionQualityChart {
    *
    * @type {Signal<ChartData<'bar' | 'line'>>}
    */
-  protected readonly data: Signal<ChartData<'bar' | 'line'>> = computed<
-    ChartData<'bar' | 'line'>
-  >(() => {
-    const aligned = this.store.alignedTrendData();
-    const [inspectionData = [], ncOpenedData = []] = aligned.datasets;
-    const rateData = [...this.store.rateSeriesData()];
+  protected readonly data: Signal<ChartData<'bar' | 'line'>> = computed<ChartData<'bar' | 'line'>>(
+    () => {
+      const aligned = this.store.alignedTrendData();
+      const [inspectionData = [], ncOpenedData = []] = aligned.datasets;
+      const rateData = [...this.store.rateSeriesData()];
 
-    const selectedResult = this.store.selectedInspectionResult();
-    const selectedStatus = this.store.selectedInspectionStatus();
-    const inspectionHex = selectedResult
-      ? (INSPECTION_RESULT_OPTIONS.find((o) => o.value === selectedResult)?.color ?? '#3b82f6')
-      : selectedStatus
-        ? (INSPECTION_STATUS_OPTIONS.find((o) => o.value === selectedStatus)?.color ?? '#3b82f6')
-        : '#3b82f6';
+      const selectedResult = this.store.selectedInspectionResult();
+      const selectedStatus = this.store.selectedInspectionStatus();
+      const inspectionHex = selectedResult
+        ? (INSPECTION_RESULT_OPTIONS.find((o) => o.value === selectedResult)?.color ?? '#3b82f6')
+        : selectedStatus
+          ? (INSPECTION_STATUS_OPTIONS.find((o) => o.value === selectedStatus)?.color ?? '#3b82f6')
+          : '#3b82f6';
 
-    const selectedSeverity = this.store.selectedNonConformitySeverity();
-    const ncHex = selectedSeverity
-      ? (NON_CONFORMITY_SEVERITY_OPTIONS.find((o) => o.value === selectedSeverity)?.color ??
-        '#f97316')
-      : '#f97316';
+      const selectedSeverity = this.store.selectedNonConformitySeverity();
+      const ncHex = selectedSeverity
+        ? (NON_CONFORMITY_SEVERITY_OPTIONS.find((o) => o.value === selectedSeverity)?.color ??
+          '#f97316')
+        : '#f97316';
 
-    const [ir, ig, ib] = hexToRgb(inspectionHex);
-    const [nr, ng, nb] = hexToRgb(ncHex);
+      const [ir, ig, ib] = hexToRgb(inspectionHex);
+      const [nr, ng, nb] = hexToRgb(ncHex);
 
-    return {
-      labels: [...aligned.labels],
-      datasets: [
-        {
-          label: 'Inspections',
-          data: inspectionData,
-          backgroundColor: (context: ScriptableContext<'bar'>) => {
-            const { ctx, chartArea } = context.chart;
-            if (!chartArea) return `rgba(${ir}, ${ig}, ${ib}, 0.85)`;
-            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, `rgba(${ir}, ${ig}, ${ib}, 0.95)`);
-            gradient.addColorStop(1, `rgba(${ir}, ${ig}, ${ib}, 0.65)`);
-            return gradient;
+      return {
+        labels: [...aligned.labels],
+        datasets: [
+          {
+            label: 'Inspections',
+            data: inspectionData,
+            backgroundColor: (context: ScriptableContext<'bar'>) => {
+              const { ctx, chartArea } = context.chart;
+              if (!chartArea) return `rgba(${ir}, ${ig}, ${ib}, 0.85)`;
+              const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+              gradient.addColorStop(0, `rgba(${ir}, ${ig}, ${ib}, 0.95)`);
+              gradient.addColorStop(1, `rgba(${ir}, ${ig}, ${ib}, 0.65)`);
+              return gradient;
+            },
+            hoverBackgroundColor: `rgba(${ir}, ${ig}, ${ib}, 1)`,
+            borderRadius: 6,
+            borderWidth: 0,
+            yAxisID: 'y',
           },
-          hoverBackgroundColor: `rgba(${ir}, ${ig}, ${ib}, 1)`,
-          borderRadius: 6,
-          borderWidth: 0,
-          yAxisID: 'y',
-        },
-        {
-          label: 'NC Opened',
-          data: ncOpenedData,
-          backgroundColor: (context: ScriptableContext<'bar'>) => {
-            const { ctx, chartArea } = context.chart;
-            if (!chartArea) return `rgba(${nr}, ${ng}, ${nb}, 0.85)`;
-            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            gradient.addColorStop(0, `rgba(${nr}, ${ng}, ${nb}, 0.95)`);
-            gradient.addColorStop(1, `rgba(${nr}, ${ng}, ${nb}, 0.65)`);
-            return gradient;
+          {
+            label: 'NC Opened',
+            data: ncOpenedData,
+            backgroundColor: (context: ScriptableContext<'bar'>) => {
+              const { ctx, chartArea } = context.chart;
+              if (!chartArea) return `rgba(${nr}, ${ng}, ${nb}, 0.85)`;
+              const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+              gradient.addColorStop(0, `rgba(${nr}, ${ng}, ${nb}, 0.95)`);
+              gradient.addColorStop(1, `rgba(${nr}, ${ng}, ${nb}, 0.65)`);
+              return gradient;
+            },
+            hoverBackgroundColor: `rgba(${nr}, ${ng}, ${nb}, 1)`,
+            borderRadius: 6,
+            borderWidth: 0,
+            yAxisID: 'y',
           },
-          hoverBackgroundColor: `rgba(${nr}, ${ng}, ${nb}, 1)`,
-          borderRadius: 6,
-          borderWidth: 0,
-          yAxisID: 'y',
-        },
-        {
-          type: 'line' as const,
-          label: 'NC Rate (%)',
-          data: rateData,
-          borderColor: '#6366f1',
-          backgroundColor: 'rgba(99, 102, 241, 0.08)',
-          borderWidth: 2,
-          tension: 0.3,
-          pointRadius: 0,
-          pointHoverRadius: 5,
-          pointHoverBorderWidth: 2,
-          pointHoverBorderColor: '#fff',
-          pointHoverBackgroundColor: '#6366f1',
-          fill: false,
-          yAxisID: 'rateAxis',
-        },
-      ],
-    };
-  });
+          {
+            type: 'line' as const,
+            label: 'NC Rate (%)',
+            data: rateData,
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.08)',
+            borderWidth: 2,
+            tension: 0.3,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            pointHoverBorderWidth: 2,
+            pointHoverBorderColor: '#fff',
+            pointHoverBackgroundColor: '#6366f1',
+            fill: false,
+            yAxisID: 'rateAxis',
+          },
+        ],
+      };
+    },
+  );
 
   /**
    * Property options

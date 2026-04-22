@@ -26,8 +26,8 @@ import type {
   MoveFacilityInput,
 } from '@features/organization/features/facilities/models';
 import { ActiveFacilityStore } from '../active-facility/active-facility.store';
-import type { FacilityState } from './models';
 import { facilityStoreEvents } from './events';
+import type { FacilityState } from './models';
 
 const FACILITY_PARENT_OPTIONS_ITEMS_PER_PAGE = 200;
 

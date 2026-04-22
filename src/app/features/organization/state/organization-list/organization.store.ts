@@ -25,8 +25,8 @@ import {
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput, CreateOrganizationInput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../active-organization/active-organization.store';
-import type { OrganizationState } from './models';
 import { organizationStoreEvents } from './events';
+import type { OrganizationState } from './models';
 
 //#region Initial State
 /**

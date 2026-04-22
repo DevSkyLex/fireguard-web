@@ -1,8 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, type Signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  type Signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
+import { SelectModule } from 'primeng/select';
 import { OrganizationDashboardInspectionQualityStore } from '@features/organization/state/organization-dashboard';
+import { TrendBaseFiltersForm } from '@features/organization/ui/components/organization-dashboard/forms';
 import type {
   InspectionResultOption,
   InspectionStatusOption,
@@ -15,7 +23,6 @@ import {
   INSPECTOR_TYPE_OPTIONS,
   NON_CONFORMITY_SEVERITY_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
-import { SelectModule } from 'primeng/select';
 
 /**
  * Type InspectionQualityFiltersForm
@@ -58,7 +65,7 @@ export class InspectionQualityFilters {
    * @readonly
    *
    * @description
-  * Component-scoped store used to read and mutate all draft filter selections.
+   * Component-scoped store used to read and mutate all draft filter selections.
    *
    * @access protected
    * @since 2.0.0
@@ -66,7 +73,9 @@ export class InspectionQualityFilters {
    * @type {OrganizationDashboardInspectionQualityStore}
    */
   protected readonly store: OrganizationDashboardInspectionQualityStore =
-    inject<OrganizationDashboardInspectionQualityStore>(OrganizationDashboardInspectionQualityStore);
+    inject<OrganizationDashboardInspectionQualityStore>(
+      OrganizationDashboardInspectionQualityStore,
+    );
 
   /**
    * Property form
@@ -166,9 +175,8 @@ export class InspectionQualityFilters {
   public readonly selectedInspectionStatusOption: Signal<InspectionStatusOption | null> =
     computed<InspectionStatusOption | null>(
       () =>
-        INSPECTION_STATUS_OPTIONS.find(
-          (o) => o.value === this.store.draftInspectionStatus(),
-        ) ?? null,
+        INSPECTION_STATUS_OPTIONS.find((o) => o.value === this.store.draftInspectionStatus()) ??
+        null,
     );
 
   /**
@@ -187,9 +195,8 @@ export class InspectionQualityFilters {
   public readonly selectedInspectionResultOption: Signal<InspectionResultOption | null> =
     computed<InspectionResultOption | null>(
       () =>
-        INSPECTION_RESULT_OPTIONS.find(
-          (o) => o.value === this.store.draftInspectionResult(),
-        ) ?? null,
+        INSPECTION_RESULT_OPTIONS.find((o) => o.value === this.store.draftInspectionResult()) ??
+        null,
     );
 
   /**

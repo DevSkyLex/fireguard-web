@@ -15,9 +15,7 @@ describe('InspectionsChart', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [InspectionsChart],
-      providers: [
-        { provide: OrganizationDashboardInspectionsTrendStore, useValue: mockStore },
-      ],
+      providers: [{ provide: OrganizationDashboardInspectionsTrendStore, useValue: mockStore }],
     });
   });
 

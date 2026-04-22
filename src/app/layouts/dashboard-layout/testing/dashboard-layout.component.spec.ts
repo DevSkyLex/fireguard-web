@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
 import { AuthStore } from '@features/auth/state';
-import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
+import { ORGANIZATION_CONTEXT_PORT, ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
 import { DashboardLayoutHeader } from '../components';
 import { DashboardLayout } from '../dashboard-layout.component';
 import { DashboardSidebarService } from '../services';
@@ -98,6 +98,15 @@ describe('DashboardLayout', () => {
     setOrganization: vi.fn(),
     loadOrganizations: vi.fn(),
   };
+  const mockOrganizationMemberAccess = {
+    profile: signal(null),
+    roles: signal<ReadonlyArray<string>>([]),
+    permissions: signal<ReadonlyArray<string>>([]),
+    isLoadingAccess: signal(false),
+    accessError: signal(null),
+    reload: vi.fn(),
+    clear: vi.fn(),
+  };
 
   beforeEach(() => {
     mockAuthStore.isLoggingOut.set(false);
@@ -114,6 +123,7 @@ describe('DashboardLayout', () => {
         { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
         { provide: AuthStore, useValue: mockAuthStore },
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
+        { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
       ],
     }).overrideComponent(DashboardLayoutHeader, {
       set: {

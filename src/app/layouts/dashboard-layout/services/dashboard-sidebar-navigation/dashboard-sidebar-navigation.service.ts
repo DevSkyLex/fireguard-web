@@ -1,9 +1,86 @@
 import { computed, inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { NOTIFICATION_CENTER_PORT, type NotificationCenterPort } from '@features/account/ports';
+import {
+  ORGANIZATION_PERMISSION,
+  type OrganizationPermissionName,
+} from '@features/organization/models';
 import type { MenuItem } from 'primeng/api';
 import {
   ORGANIZATION_CONTEXT_PORT,
+  ORGANIZATION_MEMBER_ACCESS_PORT,
   type OrganizationContextPort,
+  type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
+
+type StaticSidebarNavigationItem = Readonly<{
+  id: string;
+  label: string;
+  icon: string;
+  routerLink: string;
+}>;
+
+type OrganizationSidebarNavigationItem = Readonly<{
+  id: string;
+  label: string;
+  icon: string;
+  path: string;
+  permissions: ReadonlyArray<OrganizationPermissionName>;
+}>;
+
+const HOME_NAVIGATION_ITEMS: ReadonlyArray<StaticSidebarNavigationItem> = [
+  {
+    id: 'home',
+    label: 'Home',
+    icon: 'pi pi-home',
+    routerLink: '/',
+  },
+  {
+    id: 'organizations',
+    label: 'Organizations',
+    icon: 'pi pi-sitemap',
+    routerLink: '/organizations',
+  },
+];
+
+const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationSidebarNavigationItem> = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: 'pi pi-chart-bar',
+    path: '',
+    permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
+  },
+  {
+    id: 'facilities',
+    label: 'Facilities',
+    icon: 'pi pi-map',
+    path: 'facilities',
+    permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
+  },
+  {
+    id: 'equipments',
+    label: 'Equipments',
+    icon: 'pi pi-box',
+    path: 'equipments',
+    permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ],
+  },
+  {
+    id: 'inspections',
+    label: 'Inspections',
+    icon: 'pi pi-clipboard',
+    path: 'inspections',
+    permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
+  },
+];
+
+const ACCOUNT_NAVIGATION_ITEMS: ReadonlyArray<StaticSidebarNavigationItem> = [
+  {
+    id: 'notifications',
+    label: 'Notifications',
+    icon: 'pi pi-bell',
+    routerLink: '/account/notifications',
+  },
+];
 
 /**
  * Service DashboardSidebarNavigationService
@@ -40,6 +117,39 @@ export class DashboardSidebarNavigationService {
   private readonly organizationContext: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
 
   /**
+   * Property organizationMemberAccess
+   * @readonly
+   *
+   * @description
+   * Published organization member access port used by the layout to derive
+   * organization-scoped navigation visibility without depending on feature
+   * internals.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @type {OrganizationMemberAccessPort}
+   */
+  private readonly organizationMemberAccess: OrganizationMemberAccessPort = inject(
+    ORGANIZATION_MEMBER_ACCESS_PORT,
+  );
+
+  /**
+   * Property notificationCenter
+   * @readonly
+   *
+   * @description
+   * Published notification center port used to surface the unread count in
+   * the account navigation section.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @type {NotificationCenterPort}
+   */
+  private readonly notificationCenter: NotificationCenterPort = inject(NOTIFICATION_CENTER_PORT);
+
+  /**
    * Property _searchQuery
    * @readonly
    *
@@ -73,8 +183,9 @@ export class DashboardSidebarNavigationService {
    * @readonly
    *
    * @description
-   * Sidebar menu items filtered by current search query.
-   * Route links are prefixed with the active organization path.
+  * Sidebar menu items filtered by current search query.
+  * Organization-scoped routes are prefixed with the active organization path
+  * and hidden when the current member lacks the required permission.
    *
    * @access public
    * @since 2.0.0
@@ -83,34 +194,32 @@ export class DashboardSidebarNavigationService {
    */
   public readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] => {
     const organization = this.organizationContext.selectedOrganization();
-    const prefix: string = organization ? `/organizations/${organization.id}` : '';
-    const query: string = this.searchQuery();
+    const query: string = this.searchQuery().trim();
+    const unreadCount: number = this.notificationCenter.unreadCount();
+    const grantedPermissionSet: ReadonlySet<string> = new Set(
+      this.organizationMemberAccess.permissions(),
+    );
 
-    const items: readonly MenuItem[] = [
+    const items: MenuItem[] = [
       {
         id: 'home',
         label: 'Home',
         expanded: true,
-        items: [
-          { id: 'dashboard', label: 'Dashboard', icon: 'pi pi-home', routerLink: prefix || '/' },
-          { id: 'bookmarks', label: 'Bookmarks', icon: 'pi pi-bookmark', badge: '3' },
-          { id: 'messages', label: 'Messages', icon: 'pi pi-inbox', badge: '1' },
-        ],
+        items: HOME_NAVIGATION_ITEMS.map((item: StaticSidebarNavigationItem): MenuItem => ({
+          ...item,
+        })),
       },
+      this.buildOrganizationSection(organization?.id ?? null, grantedPermissionSet),
       {
         id: 'account',
         label: 'Account',
         expanded: true,
-        items: [
-          {
-            id: 'notifications',
-            label: 'Notifications',
-            icon: 'pi pi-bell',
-            routerLink: `/account/notifications`,
-          },
-        ],
+        items: ACCOUNT_NAVIGATION_ITEMS.map((item: StaticSidebarNavigationItem): MenuItem => ({
+          ...item,
+          badge: unreadCount > 0 ? String(unreadCount) : undefined,
+        })),
       },
-    ];
+    ].filter((item: MenuItem | null): item is MenuItem => item !== null);
 
     if (!query) return [...items];
     return this.filterMenuItems(items, query);
@@ -150,6 +259,140 @@ export class DashboardSidebarNavigationService {
    */
   public clearSearchQuery(): void {
     this._searchQuery.set('');
+  }
+
+  /**
+   * Method buildOrganizationSection
+   * @method buildOrganizationSection
+   *
+   * @description
+   * Builds the organization-scoped section when an active organization exists
+   * and the current member has at least one matching permission.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @param {string | null} organizationId - Active organization identifier.
+   * @param {ReadonlySet<string>} grantedPermissionSet - Granted permissions for the active member.
+   *
+   * @returns {MenuItem | null} Organization section or `null` when unavailable.
+   */
+  private buildOrganizationSection(
+    organizationId: string | null,
+    grantedPermissionSet: ReadonlySet<string>,
+  ): MenuItem | null {
+    if (organizationId === null) {
+      return null;
+    }
+
+    const prefix: string = `/organizations/${organizationId}`;
+    const items: MenuItem[] = ORGANIZATION_NAVIGATION_ITEMS.filter(
+      (item: OrganizationSidebarNavigationItem): boolean =>
+        this.hasAllOrganizationPermissions(item.permissions, grantedPermissionSet),
+    ).map(
+      (item: OrganizationSidebarNavigationItem): MenuItem => ({
+        id: item.id,
+        label: item.label,
+        icon: item.icon,
+        routerLink: item.path.length > 0 ? `${prefix}/${item.path}` : prefix,
+      }),
+    );
+
+    if (items.length === 0) {
+      return null;
+    }
+
+    return {
+      id: 'organization',
+      label: 'Organization',
+      expanded: true,
+      items,
+    };
+  }
+
+  /**
+   * Method hasAllOrganizationPermissions
+   * @method hasAllOrganizationPermissions
+   *
+   * @description
+   * Returns whether every required organization-scoped permission is granted,
+   * including wildcard permissions such as `organization.*`.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @param {ReadonlyArray<OrganizationPermissionName>} permissions - Required permissions.
+   * @param {ReadonlySet<string>} grantedPermissionSet - Granted permissions.
+   *
+   * @returns {boolean} `true` when all permissions are granted.
+   */
+  private hasAllOrganizationPermissions(
+    permissions: ReadonlyArray<OrganizationPermissionName>,
+    grantedPermissionSet: ReadonlySet<string>,
+  ): boolean {
+    return permissions.every((permission: OrganizationPermissionName): boolean =>
+      this.hasGrantedPermission(permission, grantedPermissionSet),
+    );
+  }
+
+  /**
+   * Method hasGrantedPermission
+   * @method hasGrantedPermission
+   *
+   * @description
+   * Evaluates whether the provided granted permission set satisfies the
+   * required organization-scoped permission, including wildcard grants.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @param {OrganizationPermissionName} permission - Required permission.
+   * @param {ReadonlySet<string>} grantedPermissionSet - Granted permissions.
+   *
+   * @returns {boolean} `true` when the permission is granted.
+   */
+  private hasGrantedPermission(
+    permission: OrganizationPermissionName,
+    grantedPermissionSet: ReadonlySet<string>,
+  ): boolean {
+    if (grantedPermissionSet.has(permission)) {
+      return true;
+    }
+
+    return Array.from(grantedPermissionSet).some((grantedPermission: string): boolean =>
+      this.matchesPermissionName(grantedPermission, permission),
+    );
+  }
+
+  /**
+   * Method matchesPermissionName
+   * @method matchesPermissionName
+   *
+   * @description
+   * Evaluates whether a granted permission satisfies a required permission,
+   * including wildcard permissions such as `organization.*`.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @param {string} grantedPermission - Granted permission name.
+   * @param {OrganizationPermissionName} requiredPermission - Required permission name.
+   *
+   * @returns {boolean} `true` when the grant satisfies the requirement.
+   */
+  private matchesPermissionName(
+    grantedPermission: string,
+    requiredPermission: OrganizationPermissionName,
+  ): boolean {
+    if (grantedPermission === requiredPermission) {
+      return true;
+    }
+
+    if (!grantedPermission.endsWith('.*')) {
+      return false;
+    }
+
+    return requiredPermission.startsWith(grantedPermission.slice(0, -1));
   }
 
   /**

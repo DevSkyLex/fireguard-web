@@ -2,8 +2,11 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
+import { NOTIFICATION_CENTER_PORT } from '@features/account/ports';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import type { MenuItem } from 'primeng/api';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
+import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
 import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
@@ -29,11 +32,34 @@ const MOCK_ORG = {
 
 describe('DashboardLayoutSidebarNavigation', () => {
   const mockOrganizationStore = {
-    selectedOrganization: signal(MOCK_ORG),
+    selectedOrganization: signal<(typeof MOCK_ORG) | null>(MOCK_ORG),
+  };
+  const mockOrganizationMemberAccess = {
+    permissions: signal<ReadonlyArray<string>>([
+      ORGANIZATION_PERMISSION.DASHBOARD_READ,
+      ORGANIZATION_PERMISSION.FACILITIES_READ,
+      ORGANIZATION_PERMISSION.EQUIPMENT_READ,
+      ORGANIZATION_PERMISSION.INSPECTION_READ,
+    ]),
+  };
+  const mockNotificationCenterPort = {
+    unreadCount: signal(0),
+    hasUnread: signal(false),
+    initialize: vi.fn(),
+    load: vi.fn(),
+    connectMercure: vi.fn(),
   };
 
   beforeEach(() => {
     mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
+    mockOrganizationMemberAccess.permissions.set([
+      ORGANIZATION_PERMISSION.DASHBOARD_READ,
+      ORGANIZATION_PERMISSION.FACILITIES_READ,
+      ORGANIZATION_PERMISSION.EQUIPMENT_READ,
+      ORGANIZATION_PERMISSION.INSPECTION_READ,
+    ]);
+    mockNotificationCenterPort.unreadCount.set(0);
+    mockNotificationCenterPort.hasUnread.set(false);
 
     TestBed.configureTestingModule({
       imports: [DashboardLayoutSidebarNavigation],
@@ -41,8 +67,15 @@ describe('DashboardLayoutSidebarNavigation', () => {
         DashboardSidebarNavigationService,
         DashboardSidebarService,
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
+        { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
+        { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
         provideRouter([
+          { path: '', component: DummyPage },
+          { path: 'organizations', component: DummyPage },
           { path: 'organizations/:organizationId', component: DummyPage },
+          { path: 'organizations/:organizationId/facilities', component: DummyPage },
+          { path: 'organizations/:organizationId/equipments', component: DummyPage },
+          { path: 'organizations/:organizationId/inspections', component: DummyPage },
           { path: 'account/notifications', component: DummyPage },
         ]),
       ],
@@ -59,10 +92,10 @@ describe('DashboardLayoutSidebarNavigation', () => {
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('[data-testid="sidebar-search-input"]'))).toBeTruthy();
-    expect(fixture.debugElement.queryAll(By.css('p-panelmenu')).length).toBe(2);
+    expect(fixture.debugElement.queryAll(By.css('p-panelmenu')).length).toBe(3);
     expect(
       fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
-    ).toBe(1);
+    ).toBe(2);
   });
 
   it('should filter menu items based on search query', () => {
@@ -90,7 +123,23 @@ describe('DashboardLayoutSidebarNavigation', () => {
     expect(component.menuItems().map((group) => group.label)).toEqual(['Account']);
 
     component.clearSearch();
-    expect(component.menuItems().map((group) => group.label)).toEqual(['Home', 'Account']);
+    expect(component.menuItems().map((group) => group.label)).toEqual([
+      'Home',
+      'Organization',
+      'Account',
+    ]);
+  });
+
+  it('should expose organization links using the active organization id', () => {
+    const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
+    const component = fixture.componentInstance as unknown as {
+      readonly menuItems: () => readonly MenuItem[];
+    };
+
+    const organization = component.menuItems().find((group) => group.label === 'Organization');
+    const facilities = organization?.items?.find((item) => item.label === 'Facilities');
+
+    expect(facilities?.routerLink).toBe('/organizations/org-1/facilities');
   });
 
   it('should show no results state when search does not match anything', () => {
@@ -122,6 +171,21 @@ describe('DashboardLayoutSidebarNavigation', () => {
     component.onItemClick({});
 
     expect(closeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should surface unread notifications as a badge', () => {
+    mockNotificationCenterPort.unreadCount.set(3);
+    mockNotificationCenterPort.hasUnread.set(true);
+
+    const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
+    const component = fixture.componentInstance as unknown as {
+      readonly menuItems: () => readonly MenuItem[];
+    };
+
+    const account = component.menuItems().find((group) => group.label === 'Account');
+    const notifications = account?.items?.find((item) => item.label === 'Notifications');
+
+    expect(notifications?.badge).toBe('3');
   });
 
   it('should highlight the active route item', async () => {

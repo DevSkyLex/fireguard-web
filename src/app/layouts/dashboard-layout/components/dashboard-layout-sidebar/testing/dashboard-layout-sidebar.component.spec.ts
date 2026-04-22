@@ -3,9 +3,15 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
-import { USER_IDENTITY_PORT, type ShellUserProfile } from '@features/account/ports';
+import {
+  NOTIFICATION_CENTER_PORT,
+  USER_IDENTITY_PORT,
+  type ShellUserProfile,
+} from '@features/account/ports';
 import { AuthStore } from '@features/auth/state';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
+import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
 import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
@@ -42,10 +48,25 @@ describe('DashboardLayoutSidebar', () => {
     logout: vi.fn(),
   };
   const mockOrganizationStore = {
-    selectedOrganization: signal(MOCK_ORG),
+    selectedOrganization: signal<(typeof MOCK_ORG) | null>(MOCK_ORG),
     organizations: signal([MOCK_ORG]),
     isLoadingOrganizations: signal(false),
     loadOrganizations: vi.fn(),
+  };
+  const mockOrganizationMemberAccess = {
+    permissions: signal<ReadonlyArray<string>>([
+      ORGANIZATION_PERMISSION.DASHBOARD_READ,
+      ORGANIZATION_PERMISSION.FACILITIES_READ,
+      ORGANIZATION_PERMISSION.EQUIPMENT_READ,
+      ORGANIZATION_PERMISSION.INSPECTION_READ,
+    ]),
+  };
+  const mockNotificationCenterPort = {
+    unreadCount: signal(0),
+    hasUnread: signal(false),
+    initialize: vi.fn(),
+    load: vi.fn(),
+    connectMercure: vi.fn(),
   };
 
   beforeEach(() => {
@@ -53,6 +74,14 @@ describe('DashboardLayoutSidebar', () => {
     mockAuthStore.logout.mockReset();
     mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
     mockOrganizationStore.loadOrganizations.mockReset();
+    mockOrganizationMemberAccess.permissions.set([
+      ORGANIZATION_PERMISSION.DASHBOARD_READ,
+      ORGANIZATION_PERMISSION.FACILITIES_READ,
+      ORGANIZATION_PERMISSION.EQUIPMENT_READ,
+      ORGANIZATION_PERMISSION.INSPECTION_READ,
+    ]);
+    mockNotificationCenterPort.unreadCount.set(0);
+    mockNotificationCenterPort.hasUnread.set(false);
 
     TestBed.configureTestingModule({
       imports: [DashboardLayoutSidebar],
@@ -63,6 +92,8 @@ describe('DashboardLayoutSidebar', () => {
         { provide: USER_IDENTITY_PORT, useValue: mockUserStore },
         { provide: AuthStore, useValue: mockAuthStore },
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
+        { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
+        { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
       ],
     });
   });
@@ -83,15 +114,20 @@ describe('DashboardLayoutSidebar', () => {
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-footer'))).toBeTruthy();
 
     const panelMenus = fixture.debugElement.queryAll(By.css('p-panelmenu'));
-    expect(panelMenus.length).toBe(2);
+    expect(panelMenus.length).toBe(3);
     expect(
       fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
-    ).toBe(1);
+    ).toBe(2);
 
     const textContent = fixture.nativeElement.textContent;
     expect(textContent).toContain('Fireguard');
     expect(textContent).toContain('Home');
+    expect(textContent).toContain('Organizations');
+    expect(textContent).toContain('Organization');
     expect(textContent).toContain('Dashboard');
+    expect(textContent).toContain('Facilities');
+    expect(textContent).toContain('Equipments');
+    expect(textContent).toContain('Inspections');
     expect(textContent).toContain('Account');
     expect(textContent).toContain('Notifications');
   });
@@ -153,10 +189,17 @@ describe('DashboardLayoutSidebar', () => {
     expect(navigation.menuItems().map((group) => group.label)).toEqual(['Account']);
 
     navigation.clearSearch();
-    expect(navigation.menuItems().map((group) => group.label)).toEqual(['Home', 'Account']);
+    expect(navigation.menuItems().map((group) => group.label)).toEqual([
+      'Home',
+      'Organization',
+      'Account',
+    ]);
   });
 
-  it('should configure notification badges in menu model', () => {
+  it('should configure notification badge from notification center state', () => {
+    mockNotificationCenterPort.unreadCount.set(5);
+    mockNotificationCenterPort.hasUnread.set(true);
+
     const fixture = TestBed.createComponent(DashboardLayoutSidebar);
     fixture.detectChanges();
 
@@ -166,13 +209,10 @@ describe('DashboardLayoutSidebar', () => {
     };
 
     const groups = navigation.menuItems();
-    const homeGroup = groups.find((group) => group.label === 'Home');
-    const homeItems = homeGroup?.items ?? [];
-    const bookmarks = homeItems.find((item) => item.label === 'Bookmarks');
-    const messages = homeItems.find((item) => item.label === 'Messages');
+    const accountGroup = groups.find((group) => group.label === 'Account');
+    const notifications = accountGroup?.items?.find((item) => item.label === 'Notifications');
 
-    expect(bookmarks?.badge).toBe('3');
-    expect(messages?.badge).toBe('1');
+    expect(notifications?.badge).toBe('5');
   });
 
   it('should close sidebar only for routerLink leaf items', () => {
@@ -208,8 +248,8 @@ describe('DashboardLayoutSidebar', () => {
       }[];
     };
 
-    const homePanel = navigation.menuItems().find((group) => group.label === 'Home');
-    const dashboard = homePanel?.items?.find((item) => item.label === 'Dashboard');
+    const organizationPanel = navigation.menuItems().find((group) => group.label === 'Organization');
+    const dashboard = organizationPanel?.items?.find((item) => item.label === 'Dashboard');
 
     expect(dashboard?.routerLink).toBe('/organizations/org-1');
   });
@@ -225,7 +265,7 @@ describe('DashboardLayoutSidebar', () => {
 
     const labels = navigation.menuItems().map((group) => group.label);
 
-    expect(labels).toEqual(['Home', 'Account']);
+    expect(labels).toEqual(['Home', 'Organization', 'Account']);
   });
 
   it('should not render collapsed flyout ui', () => {

@@ -1,14 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, Signal } from '@angular/core';
-import { IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angular/router';
-import type { MotionOptions } from '@primeuix/motion';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  type Signal,
+} from '@angular/core';
 import type { MenuItem } from 'primeng/api';
-import { BadgeModule } from 'primeng/badge';
-import { DividerModule } from 'primeng/divider';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { InputTextModule } from 'primeng/inputtext';
-import { PanelMenuModule, PanelMenuPassThroughOptions } from 'primeng/panelmenu';
-import { RippleModule } from 'primeng/ripple';
+import { SidebarNavigation } from '@shared/components/sidebar-navigation';
 import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
@@ -19,25 +18,37 @@ import {
  * @class DashboardLayoutSidebarNavigation
  *
  * @description
- * Sidebar navigation area with search and panel menu.
+ * Layout adapter that bridges {@link DashboardSidebarNavigationService} and
+ * {@link DashboardSidebarService} with the generic {@link SidebarNavigation}
+ * shared component.
  *
- * @version 1.0.0
+ * Responsibilities:
+ * - resolve the items to render (optional override via the `items` input or
+ *   the merged `menuItems` signal from the service for the mobile drawer),
+ * - forward search query reads and writes to the service,
+ * - close the mobile sidebar on leaf item click.
+ *
+ * All visual rendering is delegated to {@link SidebarNavigation}.
+ *
+ * @version 2.0.0
+ *
+ * @example
+ * ```html
+ * <!-- Mobile drawer: all sections with search -->
+ * <app-dashboard-layout-sidebar-navigation />
+ *
+ * <!-- Primary sidebar: primary items without search -->
+ * <app-dashboard-layout-sidebar-navigation
+ *   [items]="navigationService.primaryItems"
+ *   [showSearch]="false"
+ * />
+ * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-dashboard-layout-sidebar-navigation',
-  imports: [
-    BadgeModule,
-    DividerModule,
-    IconFieldModule,
-    InputIconModule,
-    InputTextModule,
-    PanelMenuModule,
-    RippleModule,
-    RouterLink,
-    RouterLinkActive,
-  ],
+  imports: [SidebarNavigation],
   templateUrl: './dashboard-layout-sidebar-navigation.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -48,7 +59,7 @@ export class DashboardLayoutSidebarNavigation {
    * @readonly
    *
    * @description
-   * Service to control sidebar open/close behavior.
+   * Service to close the mobile sidebar when a leaf item is selected.
    *
    * @access protected
    * @since 1.0.0
@@ -63,7 +74,8 @@ export class DashboardLayoutSidebarNavigation {
    * @readonly
    *
    * @description
-   * Service managing sidebar navigation items and filtering.
+   * Service managing navigation items and search filtering for the
+   * primary sidebar and the mobile drawer.
    *
    * @access protected
    * @since 1.0.0
@@ -82,8 +94,7 @@ export class DashboardLayoutSidebarNavigation {
    * When provided, the component renders the given signal's items instead
    * of the merged {@link DashboardSidebarNavigationService#menuItems}.
    * Pass {@link DashboardSidebarNavigationService#primaryItems} for the
-   * primary sidebar or {@link DashboardSidebarNavigationService#secondaryItems}
-   * for the secondary sidebar.
+   * primary sidebar.
    *
    * @access public
    * @since 2.0.0
@@ -98,8 +109,7 @@ export class DashboardLayoutSidebarNavigation {
    *
    * @description
    * Whether to render the search input above the navigation menu.
-   * Set to `false` for the primary sidebar where the item count
-   * is small and a search field is not useful.
+   * Set to `false` for the primary sidebar.
    *
    * @access public
    * @since 2.0.0
@@ -109,76 +119,16 @@ export class DashboardLayoutSidebarNavigation {
   readonly showSearch = input<boolean>(true);
 
   /**
-   * Property panelMenuPt
-   * @readonly
-   *
-   * @description
-   * Pass-through options for PrimeNG PanelMenu.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {PanelMenuPassThroughOptions}
-   */
-  protected readonly panelMenuPt: PanelMenuPassThroughOptions = {
-    submenuIcon: { class: 'hidden' },
-    submenu: { class: 'ml-6 border-l border-surface-200 pl-3' },
-  };
-
-  /**
-   * Property panelMenuMotionOptions
-   * @readonly
-   *
-   * @description
-   * Animation options for submenu enter/leave transitions.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {MotionOptions}
-   */
-  protected readonly panelMenuMotionOptions: MotionOptions = {
-    type: 'transition',
-    autoHeight: true,
-    duration: { enter: 250, leave: 200 },
-    enterClass: {
-      from: 'h-0 opacity-0',
-      active: 'overflow-hidden transition-[height,opacity] duration-250 ease-in-out',
-      to: 'h-[var(--pui-motion-height)] opacity-100',
-    },
-    leaveClass: {
-      from: 'h-[var(--pui-motion-height)] opacity-100',
-      active: 'overflow-hidden transition-[height,opacity] duration-200 ease-in-out',
-      to: 'h-0 opacity-0',
-    },
-  };
-
-  /**
-   * Property searchQuery
-   * @readonly
-   *
-   * @description
-   * Current search query applied to navigation items.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<string>}
-   */
-  protected readonly searchQuery: Signal<string> = this.sidebarNavigationService.searchQuery;
-
-  /**
    * Property menuItems
    * @readonly
    *
    * @description
-   * Navigation items to render. When an {@link items} input is provided
-   * its value is used directly; otherwise falls back to the merged
-   * {@link DashboardSidebarNavigationService#menuItems} (all sections
-   * with search applied — used for the mobile drawer).
+   * Resolved navigation items. Uses the `items` override when provided;
+   * otherwise falls back to the merged `menuItems` from the service
+   * (all sections — used for the mobile drawer).
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
    * @type {Signal<MenuItem[]>}
    */
@@ -186,79 +136,25 @@ export class DashboardLayoutSidebarNavigation {
     const itemsSignal = this.items();
     return itemsSignal ? itemsSignal() : this.sidebarNavigationService.menuItems();
   });
-
-  /**
-   * Property exactMatchOptions
-   * @readonly
-   *
-   * @description
-   * Router active options for exact route matching.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {IsActiveMatchOptions}
-   */
-  private readonly exactMatchOptions: IsActiveMatchOptions = {
-    paths: 'exact',
-    queryParams: 'ignored',
-    matrixParams: 'ignored',
-    fragment: 'ignored',
-  };
-
-  /**
-   * Property subsetMatchOptions
-   * @readonly
-   *
-   * @description
-   * Router active options for non-root route matching.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {IsActiveMatchOptions}
-   */
-  private readonly subsetMatchOptions: IsActiveMatchOptions = {
-    paths: 'subset',
-    queryParams: 'ignored',
-    matrixParams: 'ignored',
-    fragment: 'ignored',
-  };
   //#endregion
 
   //#region Methods
   /**
-   * Method onSearchInput
-   * @method onSearchInput
+   * Method onSearchQueryChange
+   * @method onSearchQueryChange
    *
    * @description
-   * Updates the search query for navigation filtering.
+   * Forwards search query changes to the navigation service.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @param {string} value - Search input value.
+   * @param {string} value - New search query value.
    *
    * @returns {void}
    */
-  protected onSearchInput(value: string): void {
+  protected onSearchQueryChange(value: string): void {
     this.sidebarNavigationService.setSearchQuery(value);
-  }
-
-  /**
-   * Method clearSearch
-   * @method clearSearch
-   *
-   * @description
-   * Clears the search query.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected clearSearch(): void {
-    this.sidebarNavigationService.clearSearchQuery();
   }
 
   /**
@@ -266,10 +162,10 @@ export class DashboardLayoutSidebarNavigation {
    * @method onItemClick
    *
    * @description
-   * Closes sidebar when a leaf navigation item is selected.
+   * Closes the mobile sidebar when a leaf navigation item is selected.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
    * @param {MenuItem} item - Clicked navigation item.
    *
@@ -279,29 +175,6 @@ export class DashboardLayoutSidebarNavigation {
     if (item.routerLink && !item.items?.length) {
       this.sidebarService.close();
     }
-  }
-
-  /**
-   * Method getRouterLinkActiveOptions
-   * @method getRouterLinkActiveOptions
-   *
-   * @description
-   * Returns active route matching options based on item route.
-   * Root route uses exact matching to avoid being active on all URLs.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {MenuItem['routerLink']} routerLink - Navigation item route.
-   *
-   * @returns {IsActiveMatchOptions}
-   */
-  protected getRouterLinkActiveOptions(routerLink: MenuItem['routerLink']): IsActiveMatchOptions {
-    if (typeof routerLink === 'string' && routerLink === '/') {
-      return this.exactMatchOptions;
-    }
-
-    return this.subsetMatchOptions;
   }
   //#endregion
 }

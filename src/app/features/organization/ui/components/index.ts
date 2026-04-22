@@ -5,3 +5,4 @@ export {
   NonConformitiesResolvedTrend,
   OverviewTrend,
 } from './organization-dashboard';
+export { OrganizationSecondarySidebar } from './organization-secondary-sidebar';

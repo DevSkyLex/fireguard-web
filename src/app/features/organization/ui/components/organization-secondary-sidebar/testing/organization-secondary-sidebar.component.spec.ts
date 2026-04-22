@@ -1,0 +1,170 @@
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  ORGANIZATION_CONTEXT_PORT,
+  ORGANIZATION_MEMBER_ACCESS_PORT,
+} from '@features/organization/ports';
+import { OrganizationSecondarySidebar } from '../organization-secondary-sidebar.component';
+
+const MOCK_ORG = {
+  id: 'org-1',
+  name: 'Acme Corp',
+  slug: 'acme',
+  isActive: true,
+  status: 'active',
+  ownerUserId: 'u1',
+  createdByUserId: 'u1',
+  createdAt: '2025-01-01',
+  updatedAt: '2025-01-01',
+};
+
+describe('OrganizationSecondarySidebar', () => {
+  const mockOrganizationContext = {
+    selectedOrganization: signal<typeof MOCK_ORG | null>(MOCK_ORG),
+  };
+  const mockOrganizationMemberAccess = {
+    permissions: signal<ReadonlyArray<string>>([
+      ORGANIZATION_PERMISSION.DASHBOARD_READ,
+      ORGANIZATION_PERMISSION.FACILITIES_READ,
+      ORGANIZATION_PERMISSION.EQUIPMENT_READ,
+      ORGANIZATION_PERMISSION.INSPECTION_READ,
+    ]),
+  };
+
+  beforeEach(() => {
+    mockOrganizationContext.selectedOrganization.set(MOCK_ORG);
+    mockOrganizationMemberAccess.permissions.set([
+      ORGANIZATION_PERMISSION.DASHBOARD_READ,
+      ORGANIZATION_PERMISSION.FACILITIES_READ,
+      ORGANIZATION_PERMISSION.EQUIPMENT_READ,
+      ORGANIZATION_PERMISSION.INSPECTION_READ,
+    ]);
+
+    TestBed.configureTestingModule({
+      imports: [OrganizationSecondarySidebar],
+      providers: [
+        { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationContext },
+        { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
+        provideRouter([
+          { path: '', component: class {} },
+          { path: 'organizations/:organizationId', component: class {} },
+          { path: 'organizations/:organizationId/facilities', component: class {} },
+          { path: 'organizations/:organizationId/equipments', component: class {} },
+          { path: 'organizations/:organizationId/inspections', component: class {} },
+        ]),
+      ],
+    });
+  });
+
+  it('should create', () => {
+    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  it('should render the sidebar-navigation component', () => {
+    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('app-sidebar-navigation'))).toBeTruthy();
+  });
+
+  it('should display a search input', () => {
+    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('[data-testid="sidebar-search-input"]'))).toBeTruthy();
+  });
+
+  it('should display all navigation items when all permissions are granted', () => {
+    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Dashboard');
+    expect(text).toContain('Facilities');
+    expect(text).toContain('Equipments');
+    expect(text).toContain('Inspections');
+  });
+
+  it('should only display items for which the member has permissions', () => {
+    mockOrganizationMemberAccess.permissions.set([ORGANIZATION_PERMISSION.FACILITIES_READ]);
+
+    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Facilities');
+    expect(text).not.toContain('Dashboard');
+    expect(text).not.toContain('Equipments');
+    expect(text).not.toContain('Inspections');
+  });
+
+  it('should display all items when the wildcard permission is granted', () => {
+    mockOrganizationMemberAccess.permissions.set([ORGANIZATION_PERMISSION.ALL]);
+
+    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Dashboard');
+    expect(text).toContain('Facilities');
+    expect(text).toContain('Equipments');
+    expect(text).toContain('Inspections');
+  });
+
+  it('should show no results when search query does not match any item', () => {
+    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    fixture.detectChanges();
+
+    fixture.componentRef.setInput !== undefined;
+    // Trigger search via the component's internal state
+    const component = fixture.componentInstance as unknown as {
+      onSearchQueryChange: (query: string) => void;
+    };
+    component.onSearchQueryChange('zzz-no-match');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('No results found.');
+  });
+
+  it('should filter items when a search query matches a subset', () => {
+    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance as unknown as {
+      onSearchQueryChange: (query: string) => void;
+      navigationItems: () => readonly MenuItem[];
+    };
+    component.onSearchQueryChange('Facilities');
+    fixture.detectChanges();
+
+    const items = component.navigationItems();
+    const section = items[0];
+    expect(section?.items?.map((i: MenuItem) => i.label)).toEqual(['Facilities']);
+  });
+
+  it('should show no items when no organization is selected', () => {
+    mockOrganizationContext.selectedOrganization.set(null);
+
+    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('No results found.');
+  });
+
+  it('should use the active organization id in navigation routerLinks', () => {
+    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance as unknown as {
+      navigationItems: () => readonly MenuItem[];
+    };
+
+    const section = component.navigationItems()[0];
+    const facilities = section?.items?.find((i: MenuItem) => i.label === 'Facilities');
+    expect(facilities?.routerLink).toBe('/organizations/org-1/facilities');
+  });
+});

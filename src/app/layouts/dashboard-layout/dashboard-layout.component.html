@@ -9,8 +9,8 @@
     <app-dashboard-layout-sidebar class="w-full" variant="primary" />
   </aside>
 
-  <!-- Secondary sidebar: visible only when an organization context is active, resizable -->
-  @if (navigationService.isOrganizationContextActive()) {
+  <!-- Secondary sidebar: visible only when a contribution is active, resizable -->
+  @if (hasActiveSecondarySidebar()) {
     <aside
       class="sticky top-0 hidden h-dvh shrink-0 border-r border-surface-200 transition-colors lg:flex dark:border-surface-800"
       [style.width.px]="sidebarService.width()"

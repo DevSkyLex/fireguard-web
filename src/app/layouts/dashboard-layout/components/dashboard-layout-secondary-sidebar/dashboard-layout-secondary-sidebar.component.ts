@@ -1,22 +1,38 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { DashboardSidebarNavigationService } from '@layouts/dashboard-layout/services';
-import { DashboardLayoutSidebarNavigation } from '../dashboard-layout-sidebar/components';
+import { NgComponentOutlet } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  type Signal,
+  type Type,
+} from '@angular/core';
+import {
+  DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
+  type DashboardSecondarySidebarContribution,
+} from '@core/ports/dashboard-secondary-sidebar';
 
 /**
  * Component DashboardLayoutSecondarySidebar
  * @class DashboardLayoutSecondarySidebar
  *
  * @description
- * Contextual sidebar rendered to the right of the primary sidebar when an
- * organization is active. Displays organization-scoped navigation items
- * (Dashboard, Facilities, Equipments, Inspections) filtered by the current
- * member's permissions and the shared search query.
+ * Generic slot host rendered to the right of the primary sidebar when at
+ * least one secondary sidebar contribution is active. Resolves the
+ * highest-priority active contribution and renders its component class
+ * dynamically via `NgComponentOutlet`.
  *
- * The component is intentionally thin: it delegates all navigation state
- * to {@link DashboardSidebarNavigationService} via the `secondaryItems`
- * signal and passes it to {@link DashboardLayoutSidebarNavigation}.
+ * The component is intentionally thin: it owns the slot structure
+ * (scroll area, height constraints) but has no knowledge of what
+ * content it renders. Content ownership stays with the contributing
+ * feature.
  *
- * @version 1.0.0
+ * Features register contributions via:
+ * ```typescript
+ * { provide: DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION, useFactory: ..., multi: true }
+ * ```
+ *
+ * @version 2.0.0
  *
  * @example
  * ```html
@@ -27,26 +43,56 @@ import { DashboardLayoutSidebarNavigation } from '../dashboard-layout-sidebar/co
  */
 @Component({
   selector: 'app-dashboard-layout-secondary-sidebar',
-  imports: [DashboardLayoutSidebarNavigation],
+  imports: [NgComponentOutlet],
   templateUrl: './dashboard-layout-secondary-sidebar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardLayoutSecondarySidebar {
   //#region Properties
   /**
-   * Property navigationService
+   * Property contributions
    * @readonly
    *
    * @description
-   * Navigation service providing the organization-scoped item slice
-   * for the secondary sidebar.
+   * All registered secondary sidebar contributions, injected as a
+   * multi-provider array. Optional: defaults to an empty array when
+   * no feature has registered a contribution.
    *
-   * @access protected
-   * @since 1.0.0
+   * @access private
+   * @since 2.0.0
    *
-   * @type {DashboardSidebarNavigationService}
+   * @type {DashboardSecondarySidebarContribution[]}
    */
-  protected readonly navigationService: DashboardSidebarNavigationService =
-    inject<DashboardSidebarNavigationService>(DashboardSidebarNavigationService);
+  private readonly contributions: DashboardSecondarySidebarContribution[] =
+    inject<DashboardSecondarySidebarContribution[]>(
+      DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
+      { optional: true },
+    ) ?? [];
+
+  /**
+   * Property activeComponent
+   * @readonly
+   *
+   * @description
+   * The component class of the highest-priority active contribution, or
+   * `null` when no contribution is currently active.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {Signal<Type<unknown> | null>}
+   */
+  public readonly activeComponent: Signal<Type<unknown> | null> = computed(
+    (): Type<unknown> | null => {
+      const active = [...this.contributions]
+        .sort(
+          (a: DashboardSecondarySidebarContribution, b: DashboardSecondarySidebarContribution) =>
+            b.priority - a.priority,
+        )
+        .find((c: DashboardSecondarySidebarContribution) => c.isActive());
+
+      return active?.component ?? null;
+    },
+  );
   //#endregion
 }

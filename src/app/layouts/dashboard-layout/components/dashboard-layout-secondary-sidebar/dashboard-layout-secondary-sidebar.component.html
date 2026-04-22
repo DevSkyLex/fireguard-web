@@ -1,8 +1,9 @@
 <div
   class="grid h-dvh max-h-dvh w-full grid-rows-[1fr] overflow-hidden bg-surface-0 text-surface-900 transition-colors dark:bg-surface-950 dark:text-surface-100"
 >
-  <!-- Organization-scoped navigation with search -->
   <section class="overflow-y-auto">
-    <app-dashboard-layout-sidebar-navigation [items]="navigationService.secondaryItems" />
+    @if (activeComponent(); as component) {
+      <ng-container *ngComponentOutlet="component" />
+    }
   </section>
 </div>

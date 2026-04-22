@@ -108,29 +108,27 @@ describe('DashboardLayoutSidebarNavigation', () => {
 
   it('should filter menu items based on search query', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
-    const component = fixture.componentInstance as unknown as {
-      readonly onSearchInput: (value: string) => void;
-      readonly menuItems: () => readonly MenuItem[];
-    };
+    const service = TestBed.inject(DashboardSidebarNavigationService);
 
-    component.onSearchInput('Notifications');
-    const labels = component.menuItems().map((item) => item.label);
+    service.setSearchQuery('Notifications');
+    const labels = (fixture.componentInstance as unknown as { readonly menuItems: () => readonly MenuItem[] })
+      .menuItems()
+      .map((item) => item.label);
 
     expect(labels).toEqual(['Account']);
   });
 
   it('should clear search query and restore full menu', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
+    const service = TestBed.inject(DashboardSidebarNavigationService);
     const component = fixture.componentInstance as unknown as {
-      readonly onSearchInput: (value: string) => void;
-      readonly clearSearch: () => void;
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    component.onSearchInput('Notifications');
+    service.setSearchQuery('Notifications');
     expect(component.menuItems().map((group) => group.label)).toEqual(['Account']);
 
-    component.clearSearch();
+    service.clearSearchQuery();
     expect(component.menuItems().map((group) => group.label)).toEqual([
       'Home',
       'Organization',
@@ -152,11 +150,9 @@ describe('DashboardLayoutSidebarNavigation', () => {
 
   it('should show no results state when search does not match anything', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
-    const component = fixture.componentInstance as unknown as {
-      readonly onSearchInput: (value: string) => void;
-    };
+    const service = TestBed.inject(DashboardSidebarNavigationService);
 
-    component.onSearchInput('NoMatch');
+    service.setSearchQuery('NoMatch');
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('No results found.');

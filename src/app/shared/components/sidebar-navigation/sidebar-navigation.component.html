@@ -1,0 +1,107 @@
+<div class="flex flex-col gap-4 p-3">
+  @if (showSearch()) {
+    <div class="flex flex-col">
+      <label class="sr-only" for="sidebar-search">Search navigation</label>
+      <p-iconfield class="w-full">
+        <p-inputicon class="pi pi-search" />
+        <input
+          #searchInput
+          pInputText
+          id="sidebar-search"
+          type="search"
+          class="w-full"
+          p
+          placeholder="Search..."
+          data-testid="sidebar-search-input"
+          [value]="searchQuery()"
+          (input)="onSearchInput(searchInput.value)"
+        />
+
+        @if (searchQuery()) {
+          <p-inputicon
+            class="pi pi-times cursor-pointer text-xs text-surface-500 transition-colors hover:text-surface-700"
+            role="button"
+            tabindex="0"
+            aria-label="Clear search"
+            data-testid="sidebar-search-clear"
+            (click)="onClearSearch()"
+            (keydown.enter)="onClearSearch()"
+            (keydown.space)="$event.preventDefault(); onClearSearch()"
+          />
+        }
+      </p-iconfield>
+    </div>
+  }
+
+  <nav class="flex-1 overflow-y-auto">
+    @if (items().length === 0) {
+      <div
+        class="flex min-h-28 items-center justify-center rounded-xl border border-dashed border-surface-200 bg-surface-50 px-4 text-center text-sm text-surface-500 transition-colors dark:border-surface-800 dark:bg-surface-900"
+      >
+        No results found.
+      </div>
+    } @else {
+      @for (section of items(); track section.id ?? section.label; let isFirst = $first) {
+        @if (!isFirst) {
+          <p-divider class="my-4! border-surface-200!" data-testid="sidebar-section-divider" />
+        }
+
+        <p-panelmenu
+          [model]="[section]"
+          [multiple]="true"
+          [motionOptions]="panelMenuMotionOptions"
+          [unstyled]="true"
+          [pt]="panelMenuPt"
+          class="w-full"
+        >
+          <ng-template #item let-item>
+            <a
+              pRipple
+              class="relative flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-surface-800 transition-colors hover:bg-surface-50 dark:text-surface-200 dark:hover:bg-surface-900"
+              [routerLink]="item.routerLink ?? null"
+              routerLinkActive
+              [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.routerLink)"
+              #linkActive="routerLinkActive"
+              [attr.aria-current]="item.routerLink && linkActive.isActive ? 'page' : null"
+              [attr.data-sidebar-item-id]="item.id ?? null"
+              (click)="onItemClick(item)"
+            >
+              @if (item.routerLink && linkActive.isActive) {
+                <span
+                  class="pointer-events-none absolute top-1/2 -left-3 size-2 -translate-y-1/2 rounded-full bg-primary-500"
+                  aria-hidden="true"
+                ></span>
+              }
+
+              @if (item.icon) {
+                <i [class]="item.icon + ' text-base text-surface-500 dark:text-surface-400'"></i>
+              }
+
+              <span
+                [class]="
+                  item.icon
+                    ? 'flex-1 text-sm font-medium text-surface-700 dark:text-surface-300'
+                    : 'flex-1 text-base font-semibold text-surface-900 dark:text-surface-100'
+                "
+              >
+                {{ item.label }}
+              </span>
+
+              @if (item.badge) {
+                <p-badge [value]="item.badge" severity="contrast" />
+              }
+
+              @if (item.items?.length) {
+                <i
+                  class="pi text-xs text-surface-500 dark:text-surface-400"
+                  [class.pi-chevron-down]="item.expanded"
+                  [class.pi-chevron-right]="!item.expanded"
+                ></i>
+              }
+            </a>
+          </ng-template>
+        </p-panelmenu>
+      }
+    }
+  </nav>
+</div>

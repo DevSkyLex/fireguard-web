@@ -1,12 +1,15 @@
-import { type EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
+import { computed, inject, type EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
+import { DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION } from '@core/ports/dashboard-secondary-sidebar';
 import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
+  OrganizationContextPort,
 } from '@features/organization/ports';
 import {
   ActiveOrganizationStore,
   OrganizationMemberAccessStore,
 } from '@features/organization/state';
+import { OrganizationSecondarySidebar } from '@features/organization/ui/components/organization-secondary-sidebar';
 
 /**
  * Provider provideOrganization
@@ -29,6 +32,34 @@ export function provideOrganization(): EnvironmentProviders {
     {
       provide: ORGANIZATION_MEMBER_ACCESS_PORT,
       useExisting: OrganizationMemberAccessStore,
+    },
+    {
+      provide: DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
+      useFactory: () => {
+        /**
+         * Constant context
+         * @const context
+         *
+         * @description
+         * Local constant to read the organization context port once and
+         * avoid injecting it multiple times in the computed `isActive`
+         * callback below, which would be inefficient and potentially
+         * cause issues with circular dependencies.
+         *
+         * @type {OrganizationContextPort}
+         */
+        const context: OrganizationContextPort =
+          inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
+
+        // Return the contribution object implementing the contract.
+        return {
+          id: 'organization',
+          priority: 10,
+          component: OrganizationSecondarySidebar,
+          isActive: computed(() => context.selectedOrganization() !== null),
+        };
+      },
+      multi: true,
     },
   ]);
 }

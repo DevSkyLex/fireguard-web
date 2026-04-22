@@ -263,58 +263,6 @@ export class DashboardSidebarNavigationService {
       },
     ];
   });
-
-  /**
-   * Property secondaryItems
-   * @readonly
-   *
-   * @description
-   * Organization-scoped navigation items for the secondary
-   * (contextual) sidebar. Contains the Organization section only,
-   * filtered by the current search query and member permissions.
-   * Returns an empty array when no organization is active.
-   *
-   * @access public
-   * @since 3.0.0
-   *
-   * @type {Signal<MenuItem[]>}
-   */
-  public readonly secondaryItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] => {
-    const organization = this.organizationContext.selectedOrganization();
-    const query: string = this.searchQuery().trim();
-    const grantedPermissionSet: ReadonlySet<string> = new Set(
-      this.organizationMemberAccess.permissions(),
-    );
-
-    const section: MenuItem | null = this.buildOrganizationSection(
-      organization?.id ?? null,
-      grantedPermissionSet,
-    );
-
-    if (section === null) return [];
-
-    const items: MenuItem[] = [section];
-    if (!query) return items;
-    return this.filterMenuItems(items, query);
-  });
-
-  /**
-   * Property isOrganizationContextActive
-   * @readonly
-   *
-   * @description
-   * Whether an organization context is currently active.
-   * Consumed by the layout shell to conditionally render
-   * the secondary sidebar.
-   *
-   * @access public
-   * @since 3.0.0
-   *
-   * @type {Signal<boolean>}
-   */
-  public readonly isOrganizationContextActive: Signal<boolean> = computed<boolean>(
-    (): boolean => this.organizationContext.selectedOrganization() !== null,
-  );
   //#endregion
 
   //#region Methods

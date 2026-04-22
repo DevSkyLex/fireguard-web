@@ -1,8 +1,12 @@
-import { Component, ChangeDetectionStrategy, inject, effect, untracked } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, inject, effect, untracked, type Signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { Ripple } from 'primeng/ripple';
 import { BreadcrumbService } from '@core/services/breadcrumb';
+import {
+  DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
+  type DashboardSecondarySidebarContribution,
+} from '@core/ports/dashboard-secondary-sidebar';
 import {
   NOTIFICATION_CENTER_PORT,
   USER_IDENTITY_PORT,
@@ -64,8 +68,15 @@ export class DashboardLayout {
   protected readonly sidebarService: DashboardSidebarService =
     inject<DashboardSidebarService>(DashboardSidebarService);
 
-  protected readonly navigationService: DashboardSidebarNavigationService =
-    inject<DashboardSidebarNavigationService>(DashboardSidebarNavigationService);
+  private readonly contributions: DashboardSecondarySidebarContribution[] =
+    inject<DashboardSecondarySidebarContribution[]>(
+      DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
+      { optional: true },
+    ) ?? [];
+
+  protected readonly hasActiveSecondarySidebar: Signal<boolean> = computed(
+    (): boolean => this.contributions.some((c: DashboardSecondarySidebarContribution) => c.isActive()),
+  );
 
   protected readonly userIdentityPort: UserIdentityPort =
     inject<UserIdentityPort>(USER_IDENTITY_PORT);

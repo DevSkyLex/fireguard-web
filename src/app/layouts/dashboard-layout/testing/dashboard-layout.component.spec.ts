@@ -1,7 +1,8 @@
-import { signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION } from '@core/ports/dashboard-secondary-sidebar';
 import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
 import { AUTH_LOGOUT_PORT } from '@features/auth';
 import { ORGANIZATION_CONTEXT_PORT, ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
@@ -20,6 +21,9 @@ const MOCK_ORG = {
   createdAt: '2025-01-01',
   updatedAt: '2025-01-01',
 };
+
+@Component({ template: '' })
+class ContributionStub {}
 
 type PointerEventOptions = {
   readonly pointerId?: number;
@@ -121,6 +125,14 @@ describe('DashboardLayout', () => {
     clear: vi.fn(),
   };
 
+  const contributionIsActive = signal(true);
+  const mockContribution = {
+    id: 'test',
+    priority: 10,
+    component: ContributionStub,
+    isActive: contributionIsActive,
+  };
+
   beforeEach(() => {
     mockAuthLogoutPort.isLoggingOut.set(false);
     mockAuthLogoutPort.logout.mockReset();
@@ -128,6 +140,7 @@ describe('DashboardLayout', () => {
     mockNotificationCenterPort.initialize.mockResolvedValue(undefined);
     mockNotificationCenterPort.connectMercure.mockReset();
     mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
+    contributionIsActive.set(true);
 
     TestBed.configureTestingModule({
       imports: [DashboardLayout],
@@ -138,6 +151,7 @@ describe('DashboardLayout', () => {
         { provide: AUTH_LOGOUT_PORT, useValue: mockAuthLogoutPort },
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
+        { provide: DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION, useValue: mockContribution, multi: true },
       ],
     }).overrideComponent(DashboardLayoutHeader, {
       set: {
@@ -152,8 +166,8 @@ describe('DashboardLayout', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render the secondary sidebar when an organization context is active', () => {
-    mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
+  it('should render the secondary sidebar when a contribution is active', () => {
+    contributionIsActive.set(true);
 
     const fixture = TestBed.createComponent(DashboardLayout);
     fixture.detectChanges();
@@ -163,8 +177,8 @@ describe('DashboardLayout', () => {
     ).toBeTruthy();
   });
 
-  it('should not render the secondary sidebar when no organization is active', () => {
-    mockOrganizationStore.selectedOrganization.set(null);
+  it('should not render the secondary sidebar when no contribution is active', () => {
+    contributionIsActive.set(false);
 
     const fixture = TestBed.createComponent(DashboardLayout);
     fixture.detectChanges();

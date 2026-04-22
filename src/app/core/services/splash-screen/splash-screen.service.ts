@@ -18,7 +18,7 @@ import {
   Router,
 } from '@angular/router';
 import { filter } from 'rxjs';
-import { AUTH_SESSION, type AuthSessionPort } from '@features/auth/ports';
+import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 
 /**
  * Service SplashScreenService
@@ -76,7 +76,7 @@ export class SplashScreenService {
    *
    * @type {AuthSessionPort}
    */
-  private readonly authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION);
+  private readonly authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION_PORT);
 
   /**
    * Property platformId

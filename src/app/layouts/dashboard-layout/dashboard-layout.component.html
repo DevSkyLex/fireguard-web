@@ -12,7 +12,7 @@
   <!-- Secondary sidebar: visible only when an organization context is active, resizable -->
   @if (navigationService.isOrganizationContextActive()) {
     <aside
-      class="relative sticky top-0 hidden h-dvh shrink-0 border-r border-surface-200 transition-colors lg:flex dark:border-surface-800"
+      class="sticky top-0 hidden h-dvh shrink-0 border-r border-surface-200 transition-colors lg:flex dark:border-surface-800"
       [style.width.px]="sidebarService.width()"
     >
       <app-dashboard-layout-secondary-sidebar class="w-full" />
@@ -23,7 +23,7 @@
         role="separator"
         aria-label="Resize sidebar"
         aria-orientation="vertical"
-        [attr.aria-valuemin]="sidebarService.minWidth()"
+        [attr.aria-valuemin]="0"
         [attr.aria-valuemax]="sidebarService.maxWidth()"
         [attr.aria-valuenow]="sidebarService.width()"
         appDashboardSidebarResizeHandle

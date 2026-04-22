@@ -5,10 +5,7 @@ import { provideRouter } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
 import {
   NOTIFICATION_CENTER_PORT,
-  USER_IDENTITY_PORT,
-  type ShellUserProfile,
 } from '@features/account/ports';
-import { AuthStore } from '@features/auth/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
@@ -32,21 +29,6 @@ const MOCK_ORG = {
 };
 
 describe('DashboardLayoutSidebar', () => {
-  const mockUserStore = {
-    isLoading: signal(false),
-    avatarUrl: signal<string | null>(null),
-    initials: signal<string | null>('FG'),
-    displayName: signal<string | null>('Fireguard User'),
-    profile: signal<ShellUserProfile | null>({
-      sub: 'user-id',
-      name: 'Fireguard User',
-      email: 'user@fireguard.local',
-    }),
-  };
-  const mockAuthStore = {
-    isLoggingOut: signal(false),
-    logout: vi.fn(),
-  };
   const mockOrganizationStore = {
     selectedOrganization: signal<(typeof MOCK_ORG) | null>(MOCK_ORG),
     organizations: signal([MOCK_ORG]),
@@ -70,8 +52,6 @@ describe('DashboardLayoutSidebar', () => {
   };
 
   beforeEach(() => {
-    mockAuthStore.isLoggingOut.set(false);
-    mockAuthStore.logout.mockReset();
     mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
     mockOrganizationStore.loadOrganizations.mockReset();
     mockOrganizationMemberAccess.permissions.set([
@@ -89,8 +69,6 @@ describe('DashboardLayoutSidebar', () => {
         DashboardSidebarNavigationService,
         DashboardSidebarService,
         provideRouter([]),
-        { provide: USER_IDENTITY_PORT, useValue: mockUserStore },
-        { provide: AuthStore, useValue: mockAuthStore },
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
         { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
@@ -111,7 +89,7 @@ describe('DashboardLayoutSidebar', () => {
     expect(
       fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-navigation')),
     ).toBeTruthy();
-    expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-footer'))).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-footer'))).toBeFalsy();
 
     const panelMenus = fixture.debugElement.queryAll(By.css('p-panelmenu'));
     expect(panelMenus.length).toBe(3);
@@ -139,18 +117,6 @@ describe('DashboardLayoutSidebar', () => {
     const searchInput = fixture.debugElement.query(By.css('[data-testid="sidebar-search-input"]'));
 
     expect(searchInput).toBeTruthy();
-  });
-
-  it('should render user profile section at the bottom', () => {
-    const fixture = TestBed.createComponent(DashboardLayoutSidebar);
-    fixture.detectChanges();
-
-    const profileSection = fixture.debugElement.query(By.css('[data-testid="auth-user-profile"]'));
-    const textContent = fixture.nativeElement.textContent;
-
-    expect(profileSection).toBeTruthy();
-    expect(textContent).toContain('Fireguard User');
-    expect(textContent).toContain('user@fireguard.local');
   });
 
   it('should filter groups and items based on search query', () => {

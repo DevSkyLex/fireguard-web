@@ -6,7 +6,7 @@ import {
 } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { AUTH_SESSION, type AuthSessionPort } from '@features/auth/ports';
+import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 
 /**
  * Public endpoints that don't require authentication
@@ -34,7 +34,7 @@ export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> => {
-  const authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION);
+  const authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION_PORT);
 
   if (!req.url.includes('/api/')) return next(req);
   if (req.headers.has('Authorization')) return next(req);

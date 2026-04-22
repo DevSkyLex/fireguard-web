@@ -1,8 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
-import { DividerModule } from 'primeng/divider';
 import { DashboardSidebarNavigationService } from '@layouts/dashboard-layout/services';
 import {
-  DashboardLayoutSidebarFooter,
   DashboardLayoutSidebarHeader,
   DashboardLayoutSidebarNavigation,
 } from './components';
@@ -24,8 +22,6 @@ import {
   imports: [
     DashboardLayoutSidebarHeader,
     DashboardLayoutSidebarNavigation,
-    DashboardLayoutSidebarFooter,
-    DividerModule,
   ],
   templateUrl: './dashboard-layout-sidebar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

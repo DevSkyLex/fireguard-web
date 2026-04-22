@@ -49,7 +49,7 @@ Primary services:
 
 ## Published Contracts
 
-- `AUTH_SESSION`
+- `AUTH_SESSION_PORT`
 - `AuthSessionPort`
 
 This contract is the stable boundary consumed by auth-owned infrastructure such as HTTP interceptors.
@@ -69,7 +69,7 @@ It exposes the access token, initialization state, authenticated-session validit
 
 ## Invariants
 
-- Auth session state is owned by `AuthStore` and published through `AUTH_SESSION`.
+- Auth session state is owned by `AuthStore` and published through `AUTH_SESSION_PORT`.
 - Public auth routes must stay lazy-loaded under `/auth`.
 - Auth interceptors and guards belong to this feature, not to `core`.
 - Password reset and MFA are auth workflows even when rendered in separate pages.

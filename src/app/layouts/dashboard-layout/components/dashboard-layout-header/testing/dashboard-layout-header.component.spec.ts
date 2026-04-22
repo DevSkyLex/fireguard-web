@@ -8,7 +8,10 @@ import { NotificationBell } from '@features/account';
 import { NotificationStore } from '@features/account/state';
 import { OrganizationSwitcher } from '@features/organization';
 import { OrganizationStore } from '@features/organization/state';
+import { USER_IDENTITY_PORT } from '@features/account/ports';
+import { AUTH_LOGOUT_PORT } from '@features/auth';
 import { DashboardSidebarService } from '@layouts/dashboard-layout/services';
+import { DashboardLayoutHeaderUserMenu } from '../../dashboard-layout-header-user-menu/dashboard-layout-header-user-menu.component';
 import { DashboardLayoutHeader } from '../dashboard-layout-header.component';
 
 describe('DashboardLayoutHeader', () => {
@@ -16,6 +19,17 @@ describe('DashboardLayoutHeader', () => {
   const mockThemePort: ThemePort = {
     theme: currentTheme,
     setTheme: vi.fn((mode: ThemeMode) => currentTheme.set(mode)),
+  };
+  const mockUserStore = {
+    isLoading: signal(false),
+    avatarUrl: signal<string | null>(null),
+    initials: signal<string | null>('FG'),
+    displayName: signal<string | null>('Fireguard User'),
+    profile: signal<{ email?: string } | null>({ email: 'user@fireguard.local' }),
+  };
+  const mockAuthLogoutPort = {
+    isLoggingOut: signal(false),
+    logout: vi.fn(),
   };
 
   beforeEach(() => {
@@ -39,6 +53,12 @@ describe('DashboardLayoutHeader', () => {
       loadMore: vi.fn(),
     };
 
+    mockUserStore.isLoading.set(false);
+    mockUserStore.avatarUrl.set(null);
+    mockUserStore.initials.set('FG');
+    mockAuthLogoutPort.isLoggingOut.set(false);
+    mockAuthLogoutPort.logout.mockReset();
+
     TestBed.configureTestingModule({
       imports: [DashboardLayoutHeader],
       providers: [
@@ -53,6 +73,14 @@ describe('DashboardLayoutHeader', () => {
       })
       .overrideComponent(NotificationBell, {
         set: { providers: [{ provide: NotificationStore, useValue: mockNotificationStore }] },
+      })
+      .overrideComponent(DashboardLayoutHeaderUserMenu, {
+        set: {
+          providers: [
+            { provide: USER_IDENTITY_PORT, useValue: mockUserStore },
+            { provide: AUTH_LOGOUT_PORT, useValue: mockAuthLogoutPort },
+          ],
+        },
       });
   });
 
@@ -79,5 +107,37 @@ describe('DashboardLayoutHeader', () => {
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-breadcrumb'))).toBeTruthy();
+  });
+
+  it('should render the user menu in the header', () => {
+    const fixture = TestBed.createComponent(DashboardLayoutHeader);
+    fixture.detectChanges();
+
+    expect(
+      fixture.debugElement.query(By.css('app-dashboard-layout-header-user-menu')),
+    ).toBeTruthy();
+  });
+
+  it('should show the user avatar trigger when not loading', () => {
+    const fixture = TestBed.createComponent(DashboardLayoutHeader);
+    fixture.detectChanges();
+
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="header-user-menu-trigger"]')),
+    ).toBeTruthy();
+  });
+
+  it('should show a skeleton when user identity is loading', () => {
+    mockUserStore.isLoading.set(true);
+
+    const fixture = TestBed.createComponent(DashboardLayoutHeader);
+    fixture.detectChanges();
+
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="header-user-menu-skeleton"]')),
+    ).toBeTruthy();
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="header-user-menu-trigger"]')),
+    ).toBeFalsy();
   });
 });

@@ -2,8 +2,8 @@ import { InjectionToken } from '@angular/core';
 import type { AuthSessionPort } from './session.interface';
 
 /**
- * Constant AUTH_SESSION
- * @const AUTH_SESSION
+ * Constant AUTH_SESSION_PORT
+ * @const AUTH_SESSION_PORT
  *
  * @description
  * Injection token for the auth-owned AuthSessionPort.
@@ -12,6 +12,6 @@ import type { AuthSessionPort } from './session.interface';
  *
  * @type {InjectionToken<AuthSessionPort>}
  */
-export const AUTH_SESSION: InjectionToken<AuthSessionPort> = new InjectionToken<AuthSessionPort>(
-  'AUTH_SESSION',
+export const AUTH_SESSION_PORT: InjectionToken<AuthSessionPort> = new InjectionToken<AuthSessionPort>(
+  'AUTH_SESSION_PORT',
 );

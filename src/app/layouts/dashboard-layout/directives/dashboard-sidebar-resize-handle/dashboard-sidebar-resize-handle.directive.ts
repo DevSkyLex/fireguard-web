@@ -151,6 +151,37 @@ export class DashboardSidebarResizeHandleDirective {
    * @type {(() => void) | null}
    */
   private releaseResizeListeners: (() => void) | null = null;
+
+  /**
+   * Property hasMoved
+   *
+   * @description
+   * Whether the pointer moved beyond the movement threshold during the
+   * current resize gesture. Used to distinguish a click (no movement)
+   * from a drag, so that clicking the handle while the sidebar is
+   * collapsed triggers `expand()` instead of starting a resize.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {boolean}
+   */
+  private hasMoved: boolean = false;
+
+  /**
+   * Property startClientX
+   *
+   * @description
+   * The clientX position at the start of the current pointer gesture.
+   * Used together with `hasMoved` to detect significant horizontal
+   * movement.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {number}
+   */
+  private startClientX: number = 0;
   //endregion
 
   //region Constructor
@@ -205,6 +236,8 @@ export class DashboardSidebarResizeHandleDirective {
     const handle: HTMLElement = this.elementRef.nativeElement;
     const sidebarElement: Element | null = handle.closest('aside');
     this.activePointerId = event.pointerId;
+    this.hasMoved = false;
+    this.startClientX = event.clientX;
     handle.setPointerCapture?.(event.pointerId);
 
     const onPointerMove = (moveEvent: PointerEvent): void => {
@@ -212,8 +245,18 @@ export class DashboardSidebarResizeHandleDirective {
         return;
       }
 
+      if (Math.abs(moveEvent.clientX - this.startClientX) > 3) {
+        this.hasMoved = true;
+      }
+
       const sidebarLeft: number = sidebarElement?.getBoundingClientRect().left ?? 0;
-      this.sidebarService.setWidth(moveEvent.clientX - sidebarLeft);
+      const rawWidth: number = moveEvent.clientX - sidebarLeft;
+
+      if (rawWidth < DashboardSidebarService.COLLAPSE_THRESHOLD) {
+        this.sidebarService.collapse();
+      } else {
+        this.sidebarService.setWidth(rawWidth);
+      }
     };
 
     const onStopResize = (stopEvent?: Event): void => {
@@ -224,6 +267,10 @@ export class DashboardSidebarResizeHandleDirective {
         stopEvent.pointerId !== this.activePointerId
       ) {
         return;
+      }
+
+      if (!this.hasMoved && this.sidebarService.isCollapsed()) {
+        this.sidebarService.expand();
       }
 
       this.stopResize();
@@ -309,6 +356,7 @@ export class DashboardSidebarResizeHandleDirective {
     this.releaseResizeListeners?.();
     this.releaseResizeListeners = null;
     this.activePointerId = null;
+    this.hasMoved = false;
     this.document.body.style.cursor = '';
     this.document.body.style.userSelect = '';
   }

@@ -8,7 +8,7 @@ import {
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, catchError, throwError } from 'rxjs';
-import { AUTH_SESSION, type AuthSessionPort } from '@features/auth/ports';
+import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 
 /**
  * Endpoints excluded from 401 handling.
@@ -35,7 +35,7 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> => {
-  const authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION);
+  const authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION_PORT);
   const router: Router = inject<Router>(Router);
 
   return next(req).pipe(

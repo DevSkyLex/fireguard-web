@@ -79,4 +79,44 @@ describe('DashboardSidebarService', () => {
     service.setVisible(false);
     expect(service.visible()).toBe(false);
   });
+
+  describe('collapse / expand', () => {
+    it('should not be collapsed initially', () => {
+      expect(service.isCollapsed()).toBe(false);
+      expect(service.width()).toBe(service.defaultWidth());
+    });
+
+    it('should collapse to zero width', () => {
+      service.collapse();
+
+      expect(service.isCollapsed()).toBe(true);
+      expect(service.width()).toBe(0);
+    });
+
+    it('should expand and restore the previous width', () => {
+      service.setWidth(350);
+      service.collapse();
+      service.expand();
+
+      expect(service.isCollapsed()).toBe(false);
+      expect(service.width()).toBe(350);
+    });
+
+    it('should clear collapsed state when setWidth is called', () => {
+      service.collapse();
+      expect(service.isCollapsed()).toBe(true);
+
+      service.setWidth(300);
+
+      expect(service.isCollapsed()).toBe(false);
+      expect(service.width()).toBe(300);
+    });
+
+    it('should expose COLLAPSE_THRESHOLD as a public constant', () => {
+      expect(DashboardSidebarService.COLLAPSE_THRESHOLD).toBeGreaterThan(0);
+      expect(DashboardSidebarService.COLLAPSE_THRESHOLD).toBeLessThan(
+        DashboardSidebarService['INITIAL_MIN_WIDTH' as keyof typeof DashboardSidebarService] as number,
+      );
+    });
+  });
 });

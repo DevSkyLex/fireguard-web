@@ -5,6 +5,7 @@ import { OrganizationSwitcher } from '@features/organization';
 import { DashboardSidebarService } from '@layouts/dashboard-layout/services';
 import { ThemeSwitcher } from '@shared/components';
 import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
+import { DashboardLayoutHeaderUserMenu } from '../dashboard-layout-header-user-menu/dashboard-layout-header-user-menu.component';
 
 /**
  * Component DashboardLayoutHeader
@@ -34,6 +35,7 @@ import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashbo
     OrganizationSwitcher,
     ThemeSwitcher,
     NotificationBell,
+    DashboardLayoutHeaderUserMenu,
   ],
   templateUrl: './dashboard-layout-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

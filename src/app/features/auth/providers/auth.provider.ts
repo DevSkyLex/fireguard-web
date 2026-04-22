@@ -8,7 +8,7 @@ import {
   REQUEST,
 } from '@angular/core';
 import { USER_PROFILE_PORT, type UserProfilePort } from '@features/account/ports';
-import { AUTH_SESSION } from '@features/auth/ports';
+import { AUTH_LOGOUT_PORT, AUTH_SESSION_PORT } from '@features/auth/ports';
 import { AuthStore } from '@features/auth/state';
 
 /**
@@ -72,7 +72,7 @@ export function provideAuth(): EnvironmentProviders {
       return authStore.initialize();
     }),
     {
-      provide: AUTH_SESSION,
+      provide: AUTH_SESSION_PORT,
       useFactory: (authStore: AuthStore, userProfilePort: UserProfilePort) => ({
         accessToken: authStore.accessToken,
         isAuthenticated: authStore.isAuthenticated,
@@ -83,6 +83,14 @@ export function provideAuth(): EnvironmentProviders {
         },
       }),
       deps: [AuthStore, USER_PROFILE_PORT],
+    },
+    {
+      provide: AUTH_LOGOUT_PORT,
+      useFactory: (authStore: AuthStore) => ({
+        isLoggingOut: authStore.isLoggingOut,
+        logout: (): void => { authStore.logout(); },
+      }),
+      deps: [AuthStore],
     },
   ]);
 }

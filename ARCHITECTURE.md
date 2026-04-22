@@ -241,7 +241,7 @@ If infrastructure in `core/` publishes behavior to external consumers, place the
 
 | Token                       | Interface                 | Feature                 | Bound by                                  | Consumers                                          |
 | --------------------------- | ------------------------- | ----------------------- | ----------------------------------------- | -------------------------------------------------- |
-| `AUTH_SESSION`              | `AuthSessionPort`         | `features/auth`         | `features/auth` via `provideAuth()`       | auth-owned HTTP interceptors, infrastructure seams |
+| `AUTH_SESSION_PORT`         | `AuthSessionPort`         | `features/auth`         | `features/auth` via `provideAuth()`       | auth-owned HTTP interceptors, infrastructure seams |
 | `USER_IDENTITY_PORT`        | `UserIdentityPort`        | `features/account`      | `features/account` via `provideAccount()` | layouts, shell widgets                             |
 | `NOTIFICATION_CENTER_PORT`  | `NotificationCenterPort`  | `features/account`      | `features/account` via `provideAccount()` | layouts                                            |
 | `ORGANIZATION_CONTEXT_PORT` | `OrganizationContextPort` | `features/organization` | `features/organization` via provider      | layouts, sibling features                          |

@@ -1,0 +1,62 @@
+@if (userIdentityPort.isLoading()) {
+  <p-skeleton
+    shape="circle"
+    size="2rem"
+    data-testid="header-user-menu-skeleton"
+    aria-busy="true"
+  />
+} @else {
+  <button
+    type="button"
+    class="flex cursor-pointer items-center rounded-full ring-offset-1 transition-all hover:ring-2 hover:ring-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    aria-label="Open user menu"
+    aria-haspopup="true"
+    data-testid="header-user-menu-trigger"
+    (click)="toggleMenu($event)"
+  >
+    @if (userIdentityPort.avatarUrl(); as avatarUrl) {
+      <p-avatar
+        [image]="avatarUrl"
+        [ariaLabel]="(userIdentityPort.displayName() ?? 'User') + ' avatar'"
+        shape="circle"
+        size="normal"
+      />
+    } @else {
+      <p-avatar [label]="userIdentityPort.initials() ?? '?'" shape="circle" size="normal" />
+    }
+  </button>
+}
+
+<p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body">
+  <ng-template #start>
+    <div class="flex items-center gap-3 px-4 py-3" data-testid="header-user-menu-profile">
+      @if (userIdentityPort.avatarUrl(); as avatarUrl) {
+        <p-avatar
+          [image]="avatarUrl"
+          [ariaLabel]="(userIdentityPort.displayName() ?? 'User') + ' avatar'"
+          shape="circle"
+          size="normal"
+        />
+      } @else {
+        <p-avatar [label]="userIdentityPort.initials() ?? '?'" shape="circle" size="normal" />
+      }
+
+      <div class="min-w-0">
+        <p
+          class="truncate text-sm font-semibold text-surface-900 dark:text-surface-100"
+          data-testid="header-user-menu-display-name"
+        >
+          {{ userIdentityPort.displayName() ?? 'User' }}
+        </p>
+        <p
+          class="truncate text-xs text-surface-500 dark:text-surface-400"
+          data-testid="header-user-menu-email"
+        >
+          {{ userIdentityPort.profile()?.email ?? '' }}
+        </p>
+      </div>
+    </div>
+
+    <p-divider class="my-0" />
+  </ng-template>
+</p-menu>

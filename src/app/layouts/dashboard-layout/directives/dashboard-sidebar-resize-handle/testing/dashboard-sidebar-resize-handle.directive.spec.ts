@@ -172,4 +172,79 @@ describe('DashboardSidebarResizeHandleDirective', () => {
     expect(document.body.style.cursor).toBe('');
     expect(document.body.style.userSelect).toBe('');
   });
+
+  it('should collapse the sidebar when dragged below the collapse threshold', () => {
+    const fixture = TestBed.createComponent(TestHostComponent);
+    const sidebarService = TestBed.inject(DashboardSidebarService);
+    const collapseSpy = vi.spyOn(sidebarService, 'collapse');
+    const setWidthSpy = vi.spyOn(sidebarService, 'setWidth');
+
+    fixture.detectChanges();
+    const handle = getHandle(fixture);
+    const aside = getAside(fixture);
+    vi.spyOn(aside, 'getBoundingClientRect').mockReturnValue(createDomRect(80));
+
+    dispatchPointerEvent(handle, 'pointerdown', { pointerId: 3, pointerType: 'mouse', button: 0 });
+
+    // clientX = 80 + 50 = 130 → rawWidth = 50 < COLLAPSE_THRESHOLD
+    dispatchPointerEvent(document, 'pointermove', { pointerId: 3, clientX: 130 });
+
+    expect(collapseSpy).toHaveBeenCalled();
+    expect(setWidthSpy).not.toHaveBeenCalled();
+  });
+
+  it('should not call collapse when dragged above the collapse threshold', () => {
+    const fixture = TestBed.createComponent(TestHostComponent);
+    const sidebarService = TestBed.inject(DashboardSidebarService);
+    const collapseSpy = vi.spyOn(sidebarService, 'collapse');
+    const setWidthSpy = vi.spyOn(sidebarService, 'setWidth');
+
+    fixture.detectChanges();
+    const handle = getHandle(fixture);
+    const aside = getAside(fixture);
+    vi.spyOn(aside, 'getBoundingClientRect').mockReturnValue(createDomRect(80));
+
+    dispatchPointerEvent(handle, 'pointerdown', { pointerId: 4, pointerType: 'mouse', button: 0 });
+
+    // clientX = 80 + 200 = 280 → rawWidth = 200 > COLLAPSE_THRESHOLD
+    dispatchPointerEvent(document, 'pointermove', { pointerId: 4, clientX: 280 });
+
+    expect(collapseSpy).not.toHaveBeenCalled();
+    expect(setWidthSpy).toHaveBeenCalledWith(200);
+  });
+
+  it('should expand the sidebar when the handle is clicked without movement while collapsed', () => {
+    const fixture = TestBed.createComponent(TestHostComponent);
+    const sidebarService = TestBed.inject(DashboardSidebarService);
+    sidebarService.collapse();
+    const expandSpy = vi.spyOn(sidebarService, 'expand');
+
+    fixture.detectChanges();
+    const handle = getHandle(fixture);
+
+    // Click without movement: pointerdown then immediately pointerup
+    dispatchPointerEvent(handle, 'pointerdown', { pointerId: 5, pointerType: 'mouse', button: 0 });
+    dispatchPointerEvent(document, 'pointerup', { pointerId: 5 });
+
+    expect(expandSpy).toHaveBeenCalled();
+  });
+
+  it('should not expand when pointer moves before pointerup while collapsed', () => {
+    const fixture = TestBed.createComponent(TestHostComponent);
+    const sidebarService = TestBed.inject(DashboardSidebarService);
+    sidebarService.collapse();
+    const expandSpy = vi.spyOn(sidebarService, 'expand');
+
+    fixture.detectChanges();
+    const handle = getHandle(fixture);
+    const aside = getAside(fixture);
+    vi.spyOn(aside, 'getBoundingClientRect').mockReturnValue(createDomRect(80));
+
+    dispatchPointerEvent(handle, 'pointerdown', { pointerId: 6, pointerType: 'mouse', button: 0, clientX: 80 });
+    // Move more than 3px → hasMoved = true
+    dispatchPointerEvent(document, 'pointermove', { pointerId: 6, clientX: 300 });
+    dispatchPointerEvent(document, 'pointerup', { pointerId: 6 });
+
+    expect(expandSpy).not.toHaveBeenCalled();
+  });
 });

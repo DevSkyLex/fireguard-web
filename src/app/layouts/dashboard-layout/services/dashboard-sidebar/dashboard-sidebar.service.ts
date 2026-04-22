@@ -66,6 +66,23 @@ export class DashboardSidebarService {
   private static readonly INITIAL_MAX_WIDTH: number = 480;
 
   /**
+   * Property COLLAPSE_THRESHOLD
+   * @readonly
+   * @static
+   *
+   * @description
+   * Width threshold in pixels below which the sidebar snaps to zero.
+   * Used by the resize handle directive to trigger collapse instead of
+   * clamping to minWidth.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {number}
+   */
+  public static readonly COLLAPSE_THRESHOLD: number = 120;
+
+  /**
    * Property _visible
    * @readonly
    *
@@ -79,6 +96,21 @@ export class DashboardSidebarService {
    * @type {WritableSignal<boolean>}
    */
   private readonly _visible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property _isCollapsed
+   * @readonly
+   *
+   * @description
+   * Internal writable signal tracking whether the sidebar is fully collapsed
+   * (width = 0). Exposed publicly through `isCollapsed`.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  private readonly _isCollapsed: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property defaultWidth
@@ -157,11 +189,26 @@ export class DashboardSidebarService {
   public readonly visible: Signal<boolean> = this._visible.asReadonly();
 
   /**
+   * Property isCollapsed
+   * @readonly
+   *
+   * @description
+   * Whether the sidebar is fully collapsed (width = 0). When true,
+   * `width` returns 0 regardless of `_width`.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  public readonly isCollapsed: Signal<boolean> = this._isCollapsed.asReadonly();
+
+  /**
    * Property width
    * @readonly
    *
    * @description
-   * Controls the desktop sidebar width in pixels.
+   * Controls the desktop sidebar width in pixels. Returns 0 when collapsed.
    *
    * @access public
    * @since 1.0.0
@@ -169,7 +216,7 @@ export class DashboardSidebarService {
    * @type {Signal<number>}
    */
   public readonly width: Signal<number> = computed<number>((): number =>
-    this.clampWidth(this._width()),
+    this._isCollapsed() ? 0 : this.clampWidth(this._width()),
   );
 
   //#endregion
@@ -257,7 +304,42 @@ export class DashboardSidebarService {
    * @returns {void} - This method does not return a value.
    */
   public setWidth(width: number): void {
+    this._isCollapsed.set(false);
     this._width.set(this.clampWidth(width));
+  }
+
+  /**
+   * Method collapse
+   * @method collapse
+   *
+   * @description
+   * Collapses the sidebar to zero width. The previously configured width
+   * is preserved so that `expand()` restores it.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @returns {void} - This method does not return a value.
+   */
+  public collapse(): void {
+    this._isCollapsed.set(true);
+  }
+
+  /**
+   * Method expand
+   * @method expand
+   *
+   * @description
+   * Expands the sidebar from its collapsed state, restoring the
+   * previously configured width.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @returns {void} - This method does not return a value.
+   */
+  public expand(): void {
+    this._isCollapsed.set(false);
   }
 
   /**

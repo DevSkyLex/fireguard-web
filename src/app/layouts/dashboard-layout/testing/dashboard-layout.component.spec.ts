@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
-import { AuthStore } from '@features/auth/state';
+import { AUTH_LOGOUT_PORT } from '@features/auth';
 import { ORGANIZATION_CONTEXT_PORT, ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
 import { DashboardLayoutHeader } from '../components';
 import { DashboardLayout } from '../dashboard-layout.component';
@@ -99,7 +99,7 @@ describe('DashboardLayout', () => {
     load: vi.fn(),
     connectMercure: vi.fn(),
   };
-  const mockAuthStore = {
+  const mockAuthLogoutPort = {
     isLoggingOut: signal(false),
     logout: vi.fn(),
   };
@@ -122,8 +122,8 @@ describe('DashboardLayout', () => {
   };
 
   beforeEach(() => {
-    mockAuthStore.isLoggingOut.set(false);
-    mockAuthStore.logout.mockReset();
+    mockAuthLogoutPort.isLoggingOut.set(false);
+    mockAuthLogoutPort.logout.mockReset();
     mockNotificationCenterPort.initialize.mockReset();
     mockNotificationCenterPort.initialize.mockResolvedValue(undefined);
     mockNotificationCenterPort.connectMercure.mockReset();
@@ -135,7 +135,7 @@ describe('DashboardLayout', () => {
         provideRouter([]),
         { provide: USER_IDENTITY_PORT, useValue: mockUserStore },
         { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
-        { provide: AuthStore, useValue: mockAuthStore },
+        { provide: AUTH_LOGOUT_PORT, useValue: mockAuthLogoutPort },
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
       ],

@@ -2,15 +2,16 @@ import {
   ChangeDetectionStrategy,
   Component,
   effect,
+  inject,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, type FormGroup } from '@angular/forms';
 import { DatePickerModule } from 'primeng/datepicker';
-import { ToggleButtonModule } from 'primeng/togglebutton';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import type { TrendBaseFiltersFormData } from './trend-base-filters-form-data.type';
 import type { TrendBaseFiltersFormValues } from './trend-base-filters-form-values.type';
 
@@ -27,7 +28,7 @@ import type { TrendBaseFiltersFormValues } from './trend-base-filters-form-value
 @Component({
   selector: 'app-trend-base-filters-form',
   templateUrl: './trend-base-filters-form.component.html',
-  imports: [ReactiveFormsModule, DatePickerModule, ToggleButtonModule],
+  imports: [ReactiveFormsModule, DatePickerModule, ToggleSwitchModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrendBaseFiltersForm {
@@ -127,6 +128,20 @@ export class TrendBaseFiltersForm {
   //#region Properties
 
   /**
+   * Property formBuilder
+   * @readonly
+   *
+   * @description
+   * Reactive form builder used to create the shared base filters form.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {FormBuilder}
+   */
+  private readonly formBuilder: FormBuilder = inject<FormBuilder>(FormBuilder);
+
+  /**
    * Property form
    * @readonly
    *
@@ -139,11 +154,14 @@ export class TrendBaseFiltersForm {
    * @type {FormGroup<TrendBaseFiltersFormData>}
    */
   protected readonly form: FormGroup<TrendBaseFiltersFormData> =
-    new FormGroup<TrendBaseFiltersFormData>({
-      dateRange: new FormControl<TrendBaseFiltersFormValues['dateRange']>(null),
-      compareEnabled: new FormControl<TrendBaseFiltersFormValues['compareEnabled']>(false, {
-        nonNullable: true,
-      }),
+    this.formBuilder.group<TrendBaseFiltersFormData>({
+      dateRange: this.formBuilder.control<TrendBaseFiltersFormValues['dateRange']>(null),
+      compareEnabled: this.formBuilder.control<TrendBaseFiltersFormValues['compareEnabled']>(
+        false,
+        {
+          nonNullable: true,
+        },
+      ),
     });
 
   /**

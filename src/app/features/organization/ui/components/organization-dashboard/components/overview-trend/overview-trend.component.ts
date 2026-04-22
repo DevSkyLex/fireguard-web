@@ -16,7 +16,10 @@ import type { MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { OverviewTrendStore } from '@features/organization/state/organization-dashboard';
+import {
+  getDashboardBaseActiveFilterCount,
+  OverviewTrendStore,
+} from '@features/organization/state/organization-dashboard';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   WHOLE_NUMBER_FMT,
@@ -121,6 +124,25 @@ export class OverviewTrend {
    */
   protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(
     () => this.dashboardStore.isFilterDrawerVisible(),
+  );
+
+  /**
+   * Property activeFilterCount
+   * @readonly
+   *
+   * @description
+   * Number of currently applied filters reflected on the Filters button.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly activeFilterCount: Signal<number> = computed<number>(() =>
+    getDashboardBaseActiveFilterCount(
+      this.dashboardStore.selectedDateRange(),
+      this.dashboardStore.compareEnabled(),
+    ),
   );
 
   /**

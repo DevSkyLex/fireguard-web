@@ -15,7 +15,11 @@ import type { MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { AssetGrowthTrendStore } from '@features/organization/state/organization-dashboard';
+import {
+  AssetGrowthTrendStore,
+  countDefinedDashboardFilters,
+  getDashboardBaseActiveFilterCount,
+} from '@features/organization/state/organization-dashboard';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   DECIMAL_FMT,
@@ -130,6 +134,51 @@ export class AssetGrowthTrend {
   protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(
     () => this.dashboardStore.isFilterDrawerVisible(),
   );
+
+  /**
+   * Property filtersAvailable
+   * @readonly
+   *
+   * @description
+   * Indicates whether this card exposes any dimension-specific filters.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly filtersAvailable: Signal<boolean> = computed<boolean>(
+    () => this.dashboardStore.canReadEquipment() || this.dashboardStore.canReadFacilities(),
+  );
+
+  /**
+   * Property activeFilterCount
+   * @readonly
+   *
+   * @description
+   * Number of currently applied filters reflected on the Filters button.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly activeFilterCount: Signal<number> = computed<number>(() => {
+    const canReadEquipment = this.dashboardStore.canReadEquipment();
+    const canReadFacilities = this.dashboardStore.canReadFacilities();
+
+    return (
+      getDashboardBaseActiveFilterCount(
+        this.dashboardStore.selectedDateRange(),
+        this.dashboardStore.compareEnabled(),
+      ) +
+      countDefinedDashboardFilters([
+        canReadEquipment ? this.dashboardStore.selectedEquipmentType() : null,
+        canReadEquipment ? this.dashboardStore.selectedEquipmentStatus() : null,
+        canReadFacilities ? this.dashboardStore.selectedFacilityType() : null,
+      ])
+    );
+  });
 
   /**
    * Property cardTitle
@@ -384,6 +433,10 @@ export class AssetGrowthTrend {
    * @returns {void}
    */
   protected onFilterToggle(): void {
+    if (!this.filtersAvailable()) {
+      return;
+    }
+
     this.dashboardStore.openFilters();
   }
 

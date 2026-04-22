@@ -8,6 +8,8 @@
 >
   <ng-template #action>
     <app-asset-growth-toolbar
+      [activeFilterCount]="activeFilterCount()"
+      [filtersAvailable]="filtersAvailable()"
       (filterToggle)="onFilterToggle()"
       (menuToggle)="onMenuToggle($event)"
     />

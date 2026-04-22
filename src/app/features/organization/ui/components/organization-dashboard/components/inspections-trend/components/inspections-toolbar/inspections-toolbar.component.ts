@@ -1,11 +1,12 @@
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ChangeDetectionStrategy, Component, effect, inject, output, OutputEmitterRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, output, OutputEmitterRef, type InputSignal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { OrganizationDashboardGranularity } from '@features/organization/models';
 import { OrganizationDashboardInspectionsTrendStore } from '@features/organization/state/organization-dashboard';
 import { ButtonModule } from 'primeng/button';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
+import { OverlayBadgeModule } from 'primeng/overlaybadge';
 import { SelectModule } from 'primeng/select';
 
 /**
@@ -30,6 +31,7 @@ import { SelectModule } from 'primeng/select';
     ButtonModule,
     InputGroupModule,
     InputGroupAddonModule,
+    OverlayBadgeModule,
     SelectModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -69,6 +71,34 @@ export class InspectionsToolbar {
     new FormControl<OrganizationDashboardGranularity>(this.store.selectedGranularity(), {
       nonNullable: true,
     });
+
+  /**
+   * Property activeFilterCount
+   * @readonly
+   *
+   * @description
+   * Number of currently applied filters displayed on the Filters button.
+   *
+   * @access public
+   * @since 2.2.0
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly activeFilterCount: InputSignal<number> = input<number>(0);
+
+  /**
+   * Property filtersAvailable
+   * @readonly
+   *
+   * @description
+   * Controls whether the filter drawer can be opened from this toolbar.
+   *
+   * @access public
+   * @since 2.2.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly filtersAvailable: InputSignal<boolean> = input<boolean>(true);
 
   //#endregion
 

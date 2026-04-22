@@ -1,7 +1,10 @@
 export {
 	buildDashboardTrendBaseParams,
+	countDefinedDashboardFilters,
 	cloneDashboardDateRange,
+	getDashboardBaseActiveFilterCount,
 	getDashboardInitialFilterDraftState,
+	isDashboardDefaultDateRange,
 	normalizeDashboardDateRange,
 	withDashboardFilterState,
 } from './filter.feature';

@@ -13,14 +13,17 @@
     />
   </p-inputgroup>
 
-  <p-button
-    label="Filters"
-    icon="pi pi-filter"
-    severity="secondary"
-    size="small"
-    [outlined]="true"
-    (onClick)="filterToggle.emit()"
-  />
+  <p-overlay-badge [badgeDisabled]="activeFilterCount() <= 0">
+    <p-button
+      label="Filters"
+      icon="pi pi-filter"
+      severity="secondary"
+      size="small"
+      [outlined]="true"
+      [disabled]="!filtersAvailable()"
+      (onClick)="filterToggle.emit()"
+    />
+  </p-overlay-badge>
 
   <p-button
     icon="pi pi-ellipsis-v"

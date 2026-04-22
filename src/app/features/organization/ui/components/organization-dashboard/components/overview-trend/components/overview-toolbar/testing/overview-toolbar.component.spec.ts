@@ -44,4 +44,21 @@ describe('OverviewToolbar', () => {
 
     expect(emitSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('should reflect the active filter count and availability on the Filters button', () => {
+    const fixture = createComponent();
+
+    fixture.componentRef.setInput('activeFilterCount', 3);
+    fixture.componentRef.setInput('filtersAvailable', false);
+    fixture.detectChanges();
+
+    const actionButtons = fixture.nativeElement.querySelectorAll('p-button button');
+    const filtersButton = actionButtons[0] as HTMLButtonElement;
+    const badge = fixture.nativeElement.querySelector('.p-badge') as HTMLElement | null;
+
+    expect(filtersButton.textContent?.trim()).toContain('Filters');
+    expect(filtersButton.disabled).toBe(true);
+    expect(badge?.classList.contains('p-badge-dot')).toBe(true);
+    expect(badge?.textContent?.trim()).toBe('');
+  });
 });

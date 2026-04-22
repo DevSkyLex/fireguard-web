@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, input, output, type InputSignal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  output,
+  type InputSignal,
+  type OutputEmitterRef,
+} from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
 
@@ -24,8 +31,8 @@ export class TrendFilterDrawer {
    * Property skipNextCloseCancel
    *
    * @description
-   * Prevents PrimeNG close notifications triggered by controlled visibility
-   * updates from re-emitting a cancel after an explicit action button click.
+  * Prevents PrimeNG close notifications triggered by controlled visibility
+  * updates from re-emitting a cancel after the explicit apply action closes the drawer.
    *
    * @type {boolean}
    */
@@ -77,27 +84,45 @@ export class TrendFilterDrawer {
 
   /**
    * Event cancel
+   * @readonly
    *
    * @description
    * Emitted when the user dismisses the drawer without applying changes.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<void>}
    */
-  readonly cancel = output<void>();
+  public readonly cancel: OutputEmitterRef<void> = output<void>();
 
   /**
    * Event reset
+   * @readonly
    *
    * @description
    * Emitted when the user requests a draft reset.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<void>}
    */
-  readonly reset = output<void>();
+  public readonly reset: OutputEmitterRef<void> = output<void>();
 
   /**
    * Event apply
+   * @readonly
    *
    * @description
    * Emitted when the user confirms the current draft filter values.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<void>}
    */
-  readonly apply = output<void>();
+  public readonly apply: OutputEmitterRef<void> = output<void>();
 
   /**
    * Method onVisibleChange
@@ -118,20 +143,6 @@ export class TrendFilterDrawer {
 
       this.cancel.emit();
     }
-  }
-
-  /**
-   * Method onCancel
-   *
-   * @description
-   * Emits an explicit cancel action and suppresses the following controlled
-   * drawer-close notification.
-   *
-   * @returns {void}
-   */
-  protected onCancel(): void {
-    this.skipNextCloseCancel = true;
-    this.cancel.emit();
   }
 
   /**

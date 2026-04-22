@@ -25,17 +25,17 @@ import type { Preset } from '@primeuix/themes/types';
 export const FireguardTheme: Preset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '{blue.50}',
-      100: '{blue.100}',
-      200: '{blue.200}',
-      300: '{blue.300}',
-      400: '{blue.400}',
-      500: '{blue.500}',
-      600: '{blue.600}',
-      700: '{blue.700}',
-      800: '{blue.800}',
-      900: '{blue.900}',
-      950: '{blue.950}',
+      50: '{purple.50}',
+      100: '{purple.100}',
+      200: '{purple.200}',
+      300: '{purple.300}',
+      400: '{purple.400}',
+      500: '{purple.500}',
+      600: '{purple.600}',
+      700: '{purple.700}',
+      800: '{purple.800}',
+      900: '{purple.900}',
+      950: '{purple.950}',
     },
     colorScheme: {
       dark: {

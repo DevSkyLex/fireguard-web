@@ -36,10 +36,10 @@
       </p>
     </div>
 
-    <p-togglebutton
+    <p-toggleswitch
       formControlName="compareEnabled"
-      onLabel="On"
-      offLabel="Off"
+      [inputId]="dateRangeId() + '-compare-enabled'"
+      ariaLabel="Compare previous period"
       class="shrink-0"
     />
   </section>

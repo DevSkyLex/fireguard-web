@@ -8,6 +8,7 @@
 >
   <ng-template #action>
     <app-non-conformities-opened-toolbar
+      [activeFilterCount]="activeFilterCount()"
       (filterToggle)="onFilterToggle()"
       (menuToggle)="onMenuToggle($event)"
     />

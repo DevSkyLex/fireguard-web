@@ -74,6 +74,51 @@ export function normalizeDashboardDateRange(
   return [new Date(from), new Date(to)];
 }
 
+export function countDefinedDashboardFilters(values: readonly unknown[]): number {
+  return values.reduce<number>((count, value) => {
+    if (value === null || value === undefined || value === '') {
+      return count;
+    }
+
+    return count + 1;
+  }, 0);
+}
+
+export function isDashboardDefaultDateRange(range: Date[] | null): boolean {
+  if (!range || range.length < 2 || !range[0] || !range[1]) {
+    return false;
+  }
+
+  const [expectedFrom, expectedTo] = getDashboardInitialDateRange();
+  const [from, to] = range;
+
+  return (
+    from.getFullYear() === expectedFrom.getFullYear() &&
+    from.getMonth() === expectedFrom.getMonth() &&
+    from.getDate() === expectedFrom.getDate() &&
+    to.getFullYear() === expectedTo.getFullYear() &&
+    to.getMonth() === expectedTo.getMonth() &&
+    to.getDate() === expectedTo.getDate()
+  );
+}
+
+export function getDashboardBaseActiveFilterCount(
+  dateRange: Date[] | null,
+  compareEnabled: boolean,
+): number {
+  let activeFilterCount = 0;
+
+  if (!isDashboardDefaultDateRange(dateRange)) {
+    activeFilterCount += 1;
+  }
+
+  if (!compareEnabled) {
+    activeFilterCount += 1;
+  }
+
+  return activeFilterCount;
+}
+
 export function getDashboardInitialFilterDraftState(): DashboardFilterDraftState {
   return {
     isFilterDrawerVisible: false,

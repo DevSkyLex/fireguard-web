@@ -8,6 +8,7 @@
 >
   <ng-template #action>
     <app-inspection-quality-toolbar
+      [activeFilterCount]="activeFilterCount()"
       (filterToggle)="onFilterToggle()"
       (menuToggle)="onMenuToggle($event)"
     />

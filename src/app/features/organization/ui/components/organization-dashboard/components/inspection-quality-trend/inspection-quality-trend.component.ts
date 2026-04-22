@@ -15,7 +15,11 @@ import {
 } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { InspectionQualityTrendStore } from '@features/organization/state/organization-dashboard';
+import {
+  countDefinedDashboardFilters,
+  getDashboardBaseActiveFilterCount,
+  InspectionQualityTrendStore,
+} from '@features/organization/state/organization-dashboard';
 import type { DashboardSummaryMetric } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   DECIMAL_FMT,
@@ -124,6 +128,31 @@ export class InspectionQualityTrend {
    */
   protected readonly isFilterDrawerVisible: Signal<boolean> = computed<boolean>(
     () => this.dashboardStore.isFilterDrawerVisible(),
+  );
+
+  /**
+   * Property activeFilterCount
+   * @readonly
+   *
+   * @description
+   * Number of currently applied filters reflected on the Filters button.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly activeFilterCount: Signal<number> = computed<number>(() =>
+    getDashboardBaseActiveFilterCount(
+      this.dashboardStore.selectedDateRange(),
+      this.dashboardStore.compareEnabled(),
+    ) +
+    countDefinedDashboardFilters([
+      this.dashboardStore.selectedInspectionStatus(),
+      this.dashboardStore.selectedInspectionResult(),
+      this.dashboardStore.selectedInspectorType(),
+      this.dashboardStore.selectedNonConformitySeverity(),
+    ]),
   );
 
   /**

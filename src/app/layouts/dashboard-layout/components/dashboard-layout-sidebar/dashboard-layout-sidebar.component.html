@@ -1,20 +1,23 @@
-<aside
-  class="relative grid h-dvh max-h-dvh w-full grid-cols-1 grid-rows-[auto_1fr] bg-surface-0 text-surface-900 transition-colors [grid-template-areas:'header'_'navigation'] dark:bg-surface-950 dark:text-surface-100"
+<div
+  class="flex h-full w-full flex-col bg-surface-0 text-surface-900 transition-colors dark:bg-surface-950 dark:text-surface-100"
 >
-  <!-- Sidebar header -->
-  <section class="[grid-area:header]">
-    <app-dashboard-layout-sidebar-header />
-  </section>
+  <!-- Sidebar header: only for mobile drawer (logo is in the main header on desktop) -->
+  @if (variant() !== 'primary') {
+    <section class="shrink-0">
+      <app-dashboard-layout-sidebar-header />
+    </section>
+  }
 
   <!-- Sidebar navigation -->
-  <section class="overflow-y-auto [grid-area:navigation]">
+  <section class="min-h-0 flex-1 overflow-y-auto">
     @if (variant() === 'primary') {
       <app-dashboard-layout-sidebar-navigation
         [items]="navigationService.primaryItems"
         [showSearch]="false"
+        [iconOnly]="true"
       />
     } @else {
       <app-dashboard-layout-sidebar-navigation />
     }
   </section>
-</aside>
+</div>

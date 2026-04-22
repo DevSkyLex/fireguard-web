@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { NotificationBell } from '@features/account';
 import { OrganizationSwitcher } from '@features/organization';
@@ -31,6 +32,7 @@ import { DashboardLayoutHeaderUserMenu } from '../dashboard-layout-header-user-m
   selector: 'app-dashboard-layout-header',
   imports: [
     ButtonModule,
+    RouterLink,
     DashboardLayoutBreadcrumb,
     OrganizationSwitcher,
     ThemeSwitcher,

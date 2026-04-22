@@ -1,4 +1,4 @@
-<div id="facility-detail" class="grid h-full grid-rows-[auto_1fr]">
+<div id="facility-detail" class="flex flex-col">
   <!-- Header -->
   <section
     class="flex flex-col gap-4 border-b border-surface-200 bg-surface-50 p-8 dark:border-surface-800 dark:bg-surface-900"
@@ -70,7 +70,7 @@
   </section>
 
   <!-- Tabs -->
-  <section class="h-full min-h-0 overflow-auto">
+  <section class="overflow-y-auto">
     <p-tabs [value]="activeTab()" (valueChange)="activeTab.set(+$event!)">
       <p-tablist>
         <p-tab [value]="0">

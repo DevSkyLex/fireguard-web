@@ -1,4 +1,4 @@
-<div id="equipment-list" class="grid h-full grid-rows-[auto_1fr]">
+<div id="equipment-list" class="flex flex-col">
   <section
     class="flex flex-col gap-2 border-b border-surface-200 bg-surface-50 p-8 dark:border-surface-800 dark:bg-surface-900"
   >
@@ -10,7 +10,7 @@
     </div>
   </section>
 
-  <section class="h-full min-h-0 overflow-hidden">
+  <section class="">
     <app-equipment-table
       class="flex h-full flex-col"
       [equipments]="store.equipmentList()"

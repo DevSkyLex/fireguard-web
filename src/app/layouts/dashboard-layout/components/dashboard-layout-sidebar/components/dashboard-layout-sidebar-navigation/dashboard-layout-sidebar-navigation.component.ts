@@ -10,6 +10,7 @@ import { type IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angula
 import type { MotionOptions } from '@primeuix/motion';
 import type { MenuItem } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
+import { TooltipModule } from 'primeng/tooltip';
 import { DividerModule } from 'primeng/divider';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -62,6 +63,7 @@ import {
     RippleModule,
     RouterLink,
     RouterLinkActive,
+    TooltipModule,
   ],
   templateUrl: './dashboard-layout-sidebar-navigation.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -133,6 +135,23 @@ export class DashboardLayoutSidebarNavigation {
   readonly showSearch = input<boolean>(true);
 
   /**
+   * Property iconOnly
+   * @readonly
+   *
+   * @description
+   * When `true`, renders a compact icon-only version of the navigation:
+   * labels, badges inline text, and section headers are hidden;
+   * icons are centred and a right-side tooltip shows the item label.
+   * Intended for the narrow primary desktop sidebar.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  readonly iconOnly = input<boolean>(false);
+
+  /**
    * Property menuItems
    * @readonly
    *
@@ -150,6 +169,24 @@ export class DashboardLayoutSidebarNavigation {
     const itemsSignal = this.items();
     return itemsSignal ? itemsSignal() : this.sidebarNavigationService.menuItems();
   });
+
+  /**
+   * Property flatItems
+   * @readonly
+   *
+   * @description
+   * Flattened list of all leaf navigation items across sections.
+   * Used in icon-only mode to render a flat icon strip without
+   * PanelMenu grouping.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {Signal<MenuItem[]>}
+   */
+  protected readonly flatItems = computed<MenuItem[]>((): MenuItem[] =>
+    this.menuItems().flatMap((section: MenuItem): MenuItem[] => section.items ?? []),
+  );
 
   /**
    * Property panelMenuPt

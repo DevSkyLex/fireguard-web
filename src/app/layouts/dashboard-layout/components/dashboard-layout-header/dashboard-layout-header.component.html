@@ -1,7 +1,24 @@
 <header
-  class="flex items-center gap-4 border-b border-surface-200 bg-surface-0 px-6 py-2 transition-colors dark:border-surface-800 dark:bg-surface-950"
+  class="flex shrink-0 items-center border-b border-surface-200 bg-surface-0 transition-colors dark:border-surface-800 dark:bg-surface-950"
 >
-  <section class="lg:hidden">
+  <!-- Logo -->
+  <a
+    routerLink="/"
+    class="flex h-full w-16 shrink-0 items-center justify-center text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+    aria-label="Home"
+  >
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12 2L3 7V12C3 16.55 6.84 20.74 12 22C17.16 20.74 21 16.55 21 12V7L12 2Z" fill="currentColor"/>
+    </svg>
+  </a>
+
+  <!-- Separator (desktop) -->
+  <div
+    class="hidden h-6 w-px shrink-0 bg-surface-200 transition-colors dark:bg-surface-800 lg:block"
+  ></div>
+
+  <!-- Mobile sidebar toggle -->
+  <section class="flex items-center px-1 lg:hidden">
     <p-button
       icon="pi pi-bars"
       severity="secondary"
@@ -13,11 +30,11 @@
   </section>
 
   <!-- Header Breadcrumb -->
-  <section class="flex min-w-0 flex-1 overflow-hidden">
+  <section class="flex min-w-0 flex-1 overflow-hidden px-4 py-3">
     <app-dashboard-layout-breadcrumb class="min-w-0 flex-1" />
   </section>
 
-  <section class="ml-auto flex items-center gap-2">
+  <section class="flex shrink-0 items-center gap-2 px-4 py-3">
     <app-organization-switcher />
     <app-theme-switcher />
     <app-notification-bell />

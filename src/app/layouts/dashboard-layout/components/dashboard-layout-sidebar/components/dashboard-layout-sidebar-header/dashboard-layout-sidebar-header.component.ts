@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 /**
  * Component DashboardLayoutSidebarHeader
@@ -16,4 +16,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   templateUrl: './dashboard-layout-sidebar-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DashboardLayoutSidebarHeader {}
+export class DashboardLayoutSidebarHeader {
+  readonly iconOnly = input<boolean>(false);
+}

@@ -1,8 +1,8 @@
 import type { Signal, Type } from '@angular/core';
 
 /**
- * DashboardSecondarySidebarContribution
- * @interface DashboardSecondarySidebarContribution
+ * DashboardContextPanelContribution
+ * @interface DashboardContextPanelContribution
  *
  * @description
  * Neutral contract that a feature publishes to fill the dashboard
@@ -15,13 +15,13 @@ import type { Signal, Type } from '@angular/core';
  *
  * Features register contributions via:
  * ```typescript
- * { provide: DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION, useFactory: ..., multi: true }
+ * { provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION, useFactory: ..., multi: true }
  * ```
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export interface DashboardSecondarySidebarContribution {
+export interface DashboardContextPanelContribution {
   /** Unique identifier for the contribution. */
   readonly id: string;
 

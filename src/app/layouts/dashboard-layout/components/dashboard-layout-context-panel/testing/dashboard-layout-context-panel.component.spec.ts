@@ -1,8 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION } from '@core/ports/dashboard-secondary-sidebar';
-import { DashboardLayoutSecondarySidebar } from '../dashboard-layout-secondary-sidebar.component';
+import { DASHBOARD_CONTEXT_PANEL_CONTRIBUTION } from '@core/ports/dashboard-context-panel';
+import { DashboardLayoutContextPanel } from '../dashboard-layout-context-panel.component';
 
 @Component({
   selector: 'app-contribution-stub',
@@ -22,22 +22,22 @@ class HighPriorityContribution {}
 })
 class LowPriorityContribution {}
 
-describe('DashboardLayoutSecondarySidebar', () => {
+describe('DashboardLayoutContextPanel', () => {
   it('should create', () => {
     TestBed.configureTestingModule({
-      imports: [DashboardLayoutSecondarySidebar],
+      imports: [DashboardLayoutContextPanel],
     });
 
-    const fixture = TestBed.createComponent(DashboardLayoutSecondarySidebar);
+    const fixture = TestBed.createComponent(DashboardLayoutContextPanel);
     expect(fixture.componentInstance).toBeTruthy();
   });
 
   it('should render nothing when there are no contributions', () => {
     TestBed.configureTestingModule({
-      imports: [DashboardLayoutSecondarySidebar],
+      imports: [DashboardLayoutContextPanel],
     });
 
-    const fixture = TestBed.createComponent(DashboardLayoutSecondarySidebar);
+    const fixture = TestBed.createComponent(DashboardLayoutContextPanel);
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('[data-testid="contribution-content"]'))).toBeFalsy();
@@ -45,17 +45,17 @@ describe('DashboardLayoutSecondarySidebar', () => {
 
   it('should render the contribution component when isActive is true', () => {
     TestBed.configureTestingModule({
-      imports: [DashboardLayoutSecondarySidebar],
+      imports: [DashboardLayoutContextPanel],
       providers: [
         {
-          provide: DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
+          provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
           useValue: { id: 'test', priority: 10, component: ContributionStub, isActive: signal(true) },
           multi: true,
         },
       ],
     });
 
-    const fixture = TestBed.createComponent(DashboardLayoutSecondarySidebar);
+    const fixture = TestBed.createComponent(DashboardLayoutContextPanel);
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('[data-testid="contribution-content"]'))).toBeTruthy();
@@ -63,17 +63,17 @@ describe('DashboardLayoutSecondarySidebar', () => {
 
   it('should not render the contribution component when isActive is false', () => {
     TestBed.configureTestingModule({
-      imports: [DashboardLayoutSecondarySidebar],
+      imports: [DashboardLayoutContextPanel],
       providers: [
         {
-          provide: DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
+          provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
           useValue: { id: 'test', priority: 10, component: ContributionStub, isActive: signal(false) },
           multi: true,
         },
       ],
     });
 
-    const fixture = TestBed.createComponent(DashboardLayoutSecondarySidebar);
+    const fixture = TestBed.createComponent(DashboardLayoutContextPanel);
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('[data-testid="contribution-content"]'))).toBeFalsy();
@@ -81,22 +81,22 @@ describe('DashboardLayoutSecondarySidebar', () => {
 
   it('should pick the highest priority active contribution when multiple are registered', () => {
     TestBed.configureTestingModule({
-      imports: [DashboardLayoutSecondarySidebar],
+      imports: [DashboardLayoutContextPanel],
       providers: [
         {
-          provide: DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
+          provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
           useValue: { id: 'low', priority: 5, component: LowPriorityContribution, isActive: signal(true) },
           multi: true,
         },
         {
-          provide: DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
+          provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
           useValue: { id: 'high', priority: 20, component: HighPriorityContribution, isActive: signal(true) },
           multi: true,
         },
       ],
     });
 
-    const fixture = TestBed.createComponent(DashboardLayoutSecondarySidebar);
+    const fixture = TestBed.createComponent(DashboardLayoutContextPanel);
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('[data-testid="high-priority-content"]'))).toBeTruthy();
@@ -105,27 +105,27 @@ describe('DashboardLayoutSecondarySidebar', () => {
 
   it('should expose the activeComponent signal', () => {
     TestBed.configureTestingModule({
-      imports: [DashboardLayoutSecondarySidebar],
+      imports: [DashboardLayoutContextPanel],
       providers: [
         {
-          provide: DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
+          provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
           useValue: { id: 'test', priority: 10, component: ContributionStub, isActive: signal(true) },
           multi: true,
         },
       ],
     });
 
-    const fixture = TestBed.createComponent(DashboardLayoutSecondarySidebar);
+    const fixture = TestBed.createComponent(DashboardLayoutContextPanel);
 
     expect(fixture.componentInstance.activeComponent()).toBe(ContributionStub);
   });
 
   it('should return null from activeComponent when no contribution is active', () => {
     TestBed.configureTestingModule({
-      imports: [DashboardLayoutSecondarySidebar],
+      imports: [DashboardLayoutContextPanel],
     });
 
-    const fixture = TestBed.createComponent(DashboardLayoutSecondarySidebar);
+    const fixture = TestBed.createComponent(DashboardLayoutContextPanel);
 
     expect(fixture.componentInstance.activeComponent()).toBeNull();
   });

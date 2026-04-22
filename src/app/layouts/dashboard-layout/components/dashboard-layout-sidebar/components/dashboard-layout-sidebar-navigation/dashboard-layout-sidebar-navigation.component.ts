@@ -6,8 +6,16 @@ import {
   input,
   type Signal,
 } from '@angular/core';
+import { type IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angular/router';
+import type { MotionOptions } from '@primeuix/motion';
 import type { MenuItem } from 'primeng/api';
-import { SidebarNavigation } from '@shared/components/sidebar-navigation';
+import { BadgeModule } from 'primeng/badge';
+import { DividerModule } from 'primeng/divider';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { PanelMenuModule, type PanelMenuPassThroughOptions } from 'primeng/panelmenu';
+import { RippleModule } from 'primeng/ripple';
 import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
@@ -18,17 +26,13 @@ import {
  * @class DashboardLayoutSidebarNavigation
  *
  * @description
- * Layout adapter that bridges {@link DashboardSidebarNavigationService} and
- * {@link DashboardSidebarService} with the generic {@link SidebarNavigation}
- * shared component.
+ * Layout-owned navigation component for the primary sidebar and the mobile
+ * drawer. Renders a PrimeNG PanelMenu with an optional search field. Drives
+ * its state from {@link DashboardSidebarNavigationService} and closes the
+ * mobile drawer via {@link DashboardSidebarService} on leaf item click.
  *
- * Responsibilities:
- * - resolve the items to render (optional override via the `items` input or
- *   the merged `menuItems` signal from the service for the mobile drawer),
- * - forward search query reads and writes to the service,
- * - close the mobile sidebar on leaf item click.
- *
- * All visual rendering is delegated to {@link SidebarNavigation}.
+ * Design is intentionally independent from the secondary sidebar: the two
+ * panels are expected to diverge visually.
  *
  * @version 2.0.0
  *
@@ -48,7 +52,17 @@ import {
  */
 @Component({
   selector: 'app-dashboard-layout-sidebar-navigation',
-  imports: [SidebarNavigation],
+  imports: [
+    BadgeModule,
+    DividerModule,
+    IconFieldModule,
+    InputIconModule,
+    InputTextModule,
+    PanelMenuModule,
+    RippleModule,
+    RouterLink,
+    RouterLinkActive,
+  ],
   templateUrl: './dashboard-layout-sidebar-navigation.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -136,6 +150,89 @@ export class DashboardLayoutSidebarNavigation {
     const itemsSignal = this.items();
     return itemsSignal ? itemsSignal() : this.sidebarNavigationService.menuItems();
   });
+
+  /**
+   * Property panelMenuPt
+   * @readonly
+   *
+   * @description
+   * Pass-through options for PrimeNG PanelMenu.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {PanelMenuPassThroughOptions}
+   */
+  protected readonly panelMenuPt: PanelMenuPassThroughOptions = {
+    submenuIcon: { class: 'hidden' },
+    submenu: { class: 'ml-6 border-l border-surface-200 pl-3' },
+  };
+
+  /**
+   * Property panelMenuMotionOptions
+   * @readonly
+   *
+   * @description
+   * Animation options for submenu enter/leave transitions.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {MotionOptions}
+   */
+  protected readonly panelMenuMotionOptions: MotionOptions = {
+    type: 'transition',
+    autoHeight: true,
+    duration: { enter: 250, leave: 200 },
+    enterClass: {
+      from: 'h-0 opacity-0',
+      active: 'overflow-hidden transition-[height,opacity] duration-250 ease-in-out',
+      to: 'h-[var(--pui-motion-height)] opacity-100',
+    },
+    leaveClass: {
+      from: 'h-[var(--pui-motion-height)] opacity-100',
+      active: 'overflow-hidden transition-[height,opacity] duration-200 ease-in-out',
+      to: 'h-0 opacity-0',
+    },
+  };
+
+  /**
+   * Property exactMatchOptions
+   * @readonly
+   *
+   * @description
+   * Router active options for exact route matching (used for root `/`).
+   *
+   * @access private
+   * @since 3.0.0
+   *
+   * @type {IsActiveMatchOptions}
+   */
+  private readonly exactMatchOptions: IsActiveMatchOptions = {
+    paths: 'exact',
+    queryParams: 'ignored',
+    matrixParams: 'ignored',
+    fragment: 'ignored',
+  };
+
+  /**
+   * Property subsetMatchOptions
+   * @readonly
+   *
+   * @description
+   * Router active options for non-root route matching.
+   *
+   * @access private
+   * @since 3.0.0
+   *
+   * @type {IsActiveMatchOptions}
+   */
+  private readonly subsetMatchOptions: IsActiveMatchOptions = {
+    paths: 'subset',
+    queryParams: 'ignored',
+    matrixParams: 'ignored',
+    fragment: 'ignored',
+  };
   //#endregion
 
   //#region Methods
@@ -175,6 +272,45 @@ export class DashboardLayoutSidebarNavigation {
     if (item.routerLink && !item.items?.length) {
       this.sidebarService.close();
     }
+  }
+
+  /**
+   * Method onClearSearch
+   * @method onClearSearch
+   *
+   * @description
+   * Clears the current search query.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @returns {void}
+   */
+  protected onClearSearch(): void {
+    this.onSearchQueryChange('');
+  }
+
+  /**
+   * Method getRouterLinkActiveOptions
+   * @method getRouterLinkActiveOptions
+   *
+   * @description
+   * Returns active route matching options based on the item's route.
+   * Root route uses exact matching to avoid being active on all URLs.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @param {MenuItem['routerLink']} routerLink - Navigation item route.
+   *
+   * @returns {IsActiveMatchOptions}
+   */
+  protected getRouterLinkActiveOptions(routerLink: MenuItem['routerLink']): IsActiveMatchOptions {
+    if (typeof routerLink === 'string' && routerLink === '/') {
+      return this.exactMatchOptions;
+    }
+
+    return this.subsetMatchOptions;
   }
   //#endregion
 }

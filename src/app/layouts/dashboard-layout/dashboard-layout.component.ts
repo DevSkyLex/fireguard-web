@@ -4,9 +4,9 @@ import { DrawerModule } from 'primeng/drawer';
 import { Ripple } from 'primeng/ripple';
 import { BreadcrumbService } from '@core/services/breadcrumb';
 import {
-  DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
-  type DashboardSecondarySidebarContribution,
-} from '@core/ports/dashboard-secondary-sidebar';
+  DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
+  type DashboardContextPanelContribution,
+} from '@core/ports/dashboard-context-panel';
 import {
   NOTIFICATION_CENTER_PORT,
   USER_IDENTITY_PORT,
@@ -17,7 +17,7 @@ import {
   DashboardLayoutHeader,
   DashboardLayoutSidebar,
   DashboardLayoutContent,
-  DashboardLayoutSecondarySidebar,
+  DashboardLayoutContextPanel,
 } from '@layouts/dashboard-layout/components';
 import { DashboardSidebarResizeHandleDirective } from './directives';
 import { DashboardSidebarNavigationService, DashboardSidebarService } from './services';
@@ -53,7 +53,7 @@ import { DashboardSidebarNavigationService, DashboardSidebarService } from './se
     RouterOutlet,
     DashboardLayoutHeader,
     DashboardLayoutSidebar,
-    DashboardLayoutSecondarySidebar,
+    DashboardLayoutContextPanel,
     DashboardLayoutContent,
     DrawerModule,
     Ripple,
@@ -68,14 +68,14 @@ export class DashboardLayout {
   protected readonly sidebarService: DashboardSidebarService =
     inject<DashboardSidebarService>(DashboardSidebarService);
 
-  private readonly contributions: DashboardSecondarySidebarContribution[] =
-    inject<DashboardSecondarySidebarContribution[]>(
-      DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
+  private readonly contributions: DashboardContextPanelContribution[] =
+    inject<DashboardContextPanelContribution[]>(
+      DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
       { optional: true },
     ) ?? [];
 
-  protected readonly hasActiveSecondarySidebar: Signal<boolean> = computed(
-    (): boolean => this.contributions.some((c: DashboardSecondarySidebarContribution) => c.isActive()),
+  protected readonly hasActiveContextPanel: Signal<boolean> = computed(
+    (): boolean => this.contributions.some((c: DashboardContextPanelContribution) => c.isActive()),
   );
 
   protected readonly userIdentityPort: UserIdentityPort =

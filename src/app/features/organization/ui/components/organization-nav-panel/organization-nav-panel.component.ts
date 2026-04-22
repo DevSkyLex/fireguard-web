@@ -7,7 +7,16 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { type IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angular/router';
+import type { MotionOptions } from '@primeuix/motion';
 import type { MenuItem } from 'primeng/api';
+import { BadgeModule } from 'primeng/badge';
+import { DividerModule } from 'primeng/divider';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { PanelMenuModule, type PanelMenuPassThroughOptions } from 'primeng/panelmenu';
+import { RippleModule } from 'primeng/ripple';
 import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
@@ -16,7 +25,6 @@ import {
   type OrganizationMemberAccessPort,
   type OrganizationPermissionName,
 } from '@features/organization';
-import { SidebarNavigation } from '@shared/components/sidebar-navigation';
 import { OrganizationOutput } from '@app/features/organization/models';
 
 type OrganizationSidebarItem = Readonly<{
@@ -63,27 +71,36 @@ const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationSidebarItem> = [
  * @class OrganizationSecondarySidebar
  *
  * @description
- * Organization-owned widget rendered in the dashboard secondary sidebar
- * slot when an organization is active. Displays organization-scoped
- * navigation items (Dashboard, Facilities, Equipments, Inspections)
- * filtered by the current member's permissions and a local search query.
+ * Organization-owned navigation panel rendered in the dashboard secondary
+ * sidebar slot when an organization is active. Displays organization-scoped
+ * navigation items (Dashboard, Facilities, Equipments, Inspections) filtered
+ * by the current member's permissions and a local search query.
  *
- * This component is feature-owned: it manages its own state, depends
- * only on organization ports, and is registered as a shell contribution
- * by `provideOrganization()`. The layout renders it dynamically via
- * `NgComponentOutlet` and does not import this class directly.
+ * This component is feature-owned, manages its own state, and is registered
+ * as a slot contribution by `provideOrganization()`. Its design is
+ * intentionally independent from the primary sidebar.
  *
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-organization-secondary-sidebar',
-  imports: [SidebarNavigation],
-  templateUrl: './organization-secondary-sidebar.component.html',
+  selector: 'app-organization-nav-panel',
+  imports: [
+    BadgeModule,
+    DividerModule,
+    IconFieldModule,
+    InputIconModule,
+    InputTextModule,
+    PanelMenuModule,
+    RippleModule,
+    RouterLink,
+    RouterLinkActive,
+  ],
+  templateUrl: './organization-nav-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrganizationSecondarySidebar {
+export class OrganizationNavPanel {
   //#region Properties
   /**
    * Property organizationContext
@@ -197,6 +214,89 @@ export class OrganizationSecondarySidebar {
       return this.filterMenuItems([section], query);
     },
   );
+
+  /**
+   * Property panelMenuPt
+   * @readonly
+   *
+   * @description
+   * Pass-through options for PrimeNG PanelMenu.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {PanelMenuPassThroughOptions}
+   */
+  protected readonly panelMenuPt: PanelMenuPassThroughOptions = {
+    submenuIcon: { class: 'hidden' },
+    submenu: { class: 'ml-6 border-l border-surface-200 pl-3' },
+  };
+
+  /**
+   * Property panelMenuMotionOptions
+   * @readonly
+   *
+   * @description
+   * Animation options for submenu enter/leave transitions.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {MotionOptions}
+   */
+  protected readonly panelMenuMotionOptions: MotionOptions = {
+    type: 'transition',
+    autoHeight: true,
+    duration: { enter: 250, leave: 200 },
+    enterClass: {
+      from: 'h-0 opacity-0',
+      active: 'overflow-hidden transition-[height,opacity] duration-250 ease-in-out',
+      to: 'h-[var(--pui-motion-height)] opacity-100',
+    },
+    leaveClass: {
+      from: 'h-[var(--pui-motion-height)] opacity-100',
+      active: 'overflow-hidden transition-[height,opacity] duration-200 ease-in-out',
+      to: 'h-0 opacity-0',
+    },
+  };
+
+  /**
+   * Property exactMatchOptions
+   * @readonly
+   *
+   * @description
+   * Router active options for exact route matching (used for root `/`).
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {IsActiveMatchOptions}
+   */
+  private readonly exactMatchOptions: IsActiveMatchOptions = {
+    paths: 'exact',
+    queryParams: 'ignored',
+    matrixParams: 'ignored',
+    fragment: 'ignored',
+  };
+
+  /**
+   * Property subsetMatchOptions
+   * @readonly
+   *
+   * @description
+   * Router active options for non-root route matching.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {IsActiveMatchOptions}
+   */
+  private readonly subsetMatchOptions: IsActiveMatchOptions = {
+    paths: 'subset',
+    queryParams: 'ignored',
+    matrixParams: 'ignored',
+    fragment: 'ignored',
+  };
   //#endregion
 
   //#region Methods
@@ -216,6 +316,45 @@ export class OrganizationSecondarySidebar {
    */
   protected onSearchQueryChange(query: string): void {
     this._searchQuery.set(query);
+  }
+
+  /**
+   * Method onClearSearch
+   * @method onClearSearch
+   *
+   * @description
+   * Clears the current search query.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  protected onClearSearch(): void {
+    this._searchQuery.set('');
+  }
+
+  /**
+   * Method getRouterLinkActiveOptions
+   * @method getRouterLinkActiveOptions
+   *
+   * @description
+   * Returns active route matching options based on the item's route.
+   * Root route uses exact matching to avoid being active on all URLs.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {MenuItem['routerLink']} routerLink - Navigation item route.
+   *
+   * @returns {IsActiveMatchOptions}
+   */
+  protected getRouterLinkActiveOptions(routerLink: MenuItem['routerLink']): IsActiveMatchOptions {
+    if (typeof routerLink === 'string' && routerLink === '/') {
+      return this.exactMatchOptions;
+    }
+
+    return this.subsetMatchOptions;
   }
 
   /**

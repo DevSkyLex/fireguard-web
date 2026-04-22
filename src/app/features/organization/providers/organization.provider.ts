@@ -1,5 +1,5 @@
 import { computed, inject, type EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
-import { DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION } from '@core/ports/dashboard-secondary-sidebar';
+import { DASHBOARD_CONTEXT_PANEL_CONTRIBUTION } from '@core/ports/dashboard-context-panel';
 import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
@@ -9,7 +9,7 @@ import {
   ActiveOrganizationStore,
   OrganizationMemberAccessStore,
 } from '@features/organization/state';
-import { OrganizationSecondarySidebar } from '@features/organization/ui/components/organization-secondary-sidebar';
+import { OrganizationNavPanel } from '@features/organization/ui/components/organization-nav-panel';
 
 /**
  * Provider provideOrganization
@@ -34,7 +34,7 @@ export function provideOrganization(): EnvironmentProviders {
       useExisting: OrganizationMemberAccessStore,
     },
     {
-      provide: DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
+      provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
       useFactory: () => {
         /**
          * Constant context
@@ -55,7 +55,7 @@ export function provideOrganization(): EnvironmentProviders {
         return {
           id: 'organization',
           priority: 10,
-          component: OrganizationSecondarySidebar,
+          component: OrganizationNavPanel,
           isActive: computed(() => context.selectedOrganization() !== null),
         };
       },

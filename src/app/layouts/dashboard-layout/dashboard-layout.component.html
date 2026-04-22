@@ -10,12 +10,12 @@
   </aside>
 
   <!-- Secondary sidebar: visible only when a contribution is active, resizable -->
-  @if (hasActiveSecondarySidebar()) {
+  @if (hasActiveContextPanel()) {
     <aside
       class="sticky top-0 hidden h-dvh shrink-0 border-r border-surface-200 transition-colors lg:flex dark:border-surface-800"
       [style.width.px]="sidebarService.width()"
     >
-      <app-dashboard-layout-secondary-sidebar class="w-full" />
+      <app-dashboard-layout-context-panel class="w-full" />
 
       <button
         type="button"

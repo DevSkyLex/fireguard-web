@@ -8,17 +8,17 @@ import {
   type Type,
 } from '@angular/core';
 import {
-  DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
-  type DashboardSecondarySidebarContribution,
-} from '@core/ports/dashboard-secondary-sidebar';
+  DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
+  type DashboardContextPanelContribution,
+} from '@core/ports/dashboard-context-panel';
 
 /**
- * Component DashboardLayoutSecondarySidebar
- * @class DashboardLayoutSecondarySidebar
+ * Component DashboardLayoutContextPanel
+ * @class DashboardLayoutContextPanel
  *
  * @description
  * Generic slot host rendered to the right of the primary sidebar when at
- * least one secondary sidebar contribution is active. Resolves the
+ * least one context panel contribution is active. Resolves the
  * highest-priority active contribution and renders its component class
  * dynamically via `NgComponentOutlet`.
  *
@@ -29,25 +29,25 @@ import {
  *
  * Features register contributions via:
  * ```typescript
- * { provide: DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION, useFactory: ..., multi: true }
+ * { provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION, useFactory: ..., multi: true }
  * ```
  *
  * @version 2.0.0
  *
  * @example
  * ```html
- * <app-dashboard-layout-secondary-sidebar />
+ * <app-dashboard-layout-context-panel />
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-dashboard-layout-secondary-sidebar',
+  selector: 'app-dashboard-layout-context-panel',
   imports: [NgComponentOutlet],
-  templateUrl: './dashboard-layout-secondary-sidebar.component.html',
+  templateUrl: './dashboard-layout-context-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DashboardLayoutSecondarySidebar {
+export class DashboardLayoutContextPanel {
   //#region Properties
   /**
    * Property contributions
@@ -61,11 +61,11 @@ export class DashboardLayoutSecondarySidebar {
    * @access private
    * @since 2.0.0
    *
-   * @type {DashboardSecondarySidebarContribution[]}
+   * @type {DashboardContextPanelContribution[]}
    */
-  private readonly contributions: DashboardSecondarySidebarContribution[] =
-    inject<DashboardSecondarySidebarContribution[]>(
-      DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION,
+  private readonly contributions: DashboardContextPanelContribution[] =
+    inject<DashboardContextPanelContribution[]>(
+      DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
       { optional: true },
     ) ?? [];
 
@@ -84,12 +84,12 @@ export class DashboardLayoutSecondarySidebar {
    */
   public readonly activeComponent: Signal<Type<unknown> | null> = computed(
     (): Type<unknown> | null => {
-      const active = [...this.contributions]
+      const active: DashboardContextPanelContribution | undefined = [...this.contributions]
         .sort(
-          (a: DashboardSecondarySidebarContribution, b: DashboardSecondarySidebarContribution) =>
+          (a: DashboardContextPanelContribution, b: DashboardContextPanelContribution) =>
             b.priority - a.priority,
         )
-        .find((c: DashboardSecondarySidebarContribution) => c.isActive());
+        .find((c: DashboardContextPanelContribution) => c.isActive());
 
       return active?.component ?? null;
     },

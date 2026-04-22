@@ -11,4 +11,4 @@ export type {
   OrganizationPermissionGuardRedirect,
 } from './http/guards';
 export { OrganizationSwitcher } from './ui/components/organization-switcher';
-export { OrganizationSecondarySidebar } from './ui/components/organization-secondary-sidebar';
+export { OrganizationNavPanel } from './ui/components/organization-nav-panel';

@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION } from '@core/ports/dashboard-secondary-sidebar';
+import { DASHBOARD_CONTEXT_PANEL_CONTRIBUTION } from '@core/ports/dashboard-context-panel';
 import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
 import { AUTH_LOGOUT_PORT } from '@features/auth';
 import { ORGANIZATION_CONTEXT_PORT, ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
@@ -151,7 +151,7 @@ describe('DashboardLayout', () => {
         { provide: AUTH_LOGOUT_PORT, useValue: mockAuthLogoutPort },
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
-        { provide: DASHBOARD_SECONDARY_SIDEBAR_CONTRIBUTION, useValue: mockContribution, multi: true },
+        { provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION, useValue: mockContribution, multi: true },
       ],
     }).overrideComponent(DashboardLayoutHeader, {
       set: {
@@ -173,7 +173,7 @@ describe('DashboardLayout', () => {
     fixture.detectChanges();
 
     expect(
-      fixture.debugElement.query(By.css('app-dashboard-layout-secondary-sidebar')),
+      fixture.debugElement.query(By.css('app-dashboard-layout-context-panel')),
     ).toBeTruthy();
   });
 
@@ -184,7 +184,7 @@ describe('DashboardLayout', () => {
     fixture.detectChanges();
 
     expect(
-      fixture.debugElement.query(By.css('app-dashboard-layout-secondary-sidebar')),
+      fixture.debugElement.query(By.css('app-dashboard-layout-context-panel')),
     ).toBeFalsy();
   });
 

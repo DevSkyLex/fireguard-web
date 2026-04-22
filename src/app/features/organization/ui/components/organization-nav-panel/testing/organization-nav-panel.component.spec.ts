@@ -7,7 +7,7 @@ import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
 } from '@features/organization/ports';
-import { OrganizationSecondarySidebar } from '../organization-secondary-sidebar.component';
+import { OrganizationNavPanel } from '../organization-nav-panel.component';
 
 const MOCK_ORG = {
   id: 'org-1',
@@ -21,7 +21,7 @@ const MOCK_ORG = {
   updatedAt: '2025-01-01',
 };
 
-describe('OrganizationSecondarySidebar', () => {
+describe('OrganizationNavPanel', () => {
   const mockOrganizationContext = {
     selectedOrganization: signal<typeof MOCK_ORG | null>(MOCK_ORG),
   };
@@ -44,7 +44,7 @@ describe('OrganizationSecondarySidebar', () => {
     ]);
 
     TestBed.configureTestingModule({
-      imports: [OrganizationSecondarySidebar],
+      imports: [OrganizationNavPanel],
       providers: [
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationContext },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
@@ -60,26 +60,19 @@ describe('OrganizationSecondarySidebar', () => {
   });
 
   it('should create', () => {
-    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    const fixture = TestBed.createComponent(OrganizationNavPanel);
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render the sidebar-navigation component', () => {
-    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
-    fixture.detectChanges();
-
-    expect(fixture.debugElement.query(By.css('app-sidebar-navigation'))).toBeTruthy();
-  });
-
   it('should display a search input', () => {
-    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    const fixture = TestBed.createComponent(OrganizationNavPanel);
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('[data-testid="sidebar-search-input"]'))).toBeTruthy();
   });
 
   it('should display all navigation items when all permissions are granted', () => {
-    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    const fixture = TestBed.createComponent(OrganizationNavPanel);
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent as string;
@@ -92,7 +85,7 @@ describe('OrganizationSecondarySidebar', () => {
   it('should only display items for which the member has permissions', () => {
     mockOrganizationMemberAccess.permissions.set([ORGANIZATION_PERMISSION.FACILITIES_READ]);
 
-    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    const fixture = TestBed.createComponent(OrganizationNavPanel);
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent as string;
@@ -105,7 +98,7 @@ describe('OrganizationSecondarySidebar', () => {
   it('should display all items when the wildcard permission is granted', () => {
     mockOrganizationMemberAccess.permissions.set([ORGANIZATION_PERMISSION.ALL]);
 
-    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    const fixture = TestBed.createComponent(OrganizationNavPanel);
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent as string;
@@ -116,7 +109,7 @@ describe('OrganizationSecondarySidebar', () => {
   });
 
   it('should show no results when search query does not match any item', () => {
-    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    const fixture = TestBed.createComponent(OrganizationNavPanel);
     fixture.detectChanges();
 
     fixture.componentRef.setInput !== undefined;
@@ -131,7 +124,7 @@ describe('OrganizationSecondarySidebar', () => {
   });
 
   it('should filter items when a search query matches a subset', () => {
-    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    const fixture = TestBed.createComponent(OrganizationNavPanel);
     fixture.detectChanges();
 
     const component = fixture.componentInstance as unknown as {
@@ -149,14 +142,14 @@ describe('OrganizationSecondarySidebar', () => {
   it('should show no items when no organization is selected', () => {
     mockOrganizationContext.selectedOrganization.set(null);
 
-    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    const fixture = TestBed.createComponent(OrganizationNavPanel);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('No results found.');
   });
 
   it('should use the active organization id in navigation routerLinks', () => {
-    const fixture = TestBed.createComponent(OrganizationSecondarySidebar);
+    const fixture = TestBed.createComponent(OrganizationNavPanel);
     fixture.detectChanges();
 
     const component = fixture.componentInstance as unknown as {

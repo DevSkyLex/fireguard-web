@@ -12,7 +12,8 @@
     "lint:fix": "oxlint -c .oxlintrc.json . --tsconfig tsconfig.json --ignore-path .gitignore --fix",
     "format": "oxfmt -c .oxfmtrc.json .",
     "format:check": "oxfmt -c .oxfmtrc.json --check .",
-    "serve:ssr:fireguard-sso-web": "node dist/fireguard-sso-web/server/server.mjs"
+    "serve:ssr:fireguard-sso-web": "node dist/fireguard-sso-web/server/server.mjs",
+    "e2e": "ng e2e"
   },
   "dependencies": {
     "@angular/animations": "^21.1.2",
@@ -40,12 +41,14 @@
     "@angular/build": "^21.1.0",
     "@angular/cli": "^21.1.0",
     "@angular/compiler-cli": "^21.1.0",
+    "@playwright/test": "1.59.1",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",
     "jsdom": "^27.1.0",
     "oxfmt": "^0.45.0",
     "oxlint": "^1.60.0",
+    "playwright-ng-schematics": "^21.0.10",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.1.12",
     "typescript": "~5.9.2",

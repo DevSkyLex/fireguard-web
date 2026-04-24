@@ -3,7 +3,11 @@
   "version": 1,
   "cli": {
     "packageManager": "npm",
-    "analytics": "5f34f0ba-6823-4dca-8bd2-2c792b5399bf"
+    "analytics": "5f34f0ba-6823-4dca-8bd2-2c792b5399bf",
+    "schematicCollections": [
+      "@schematics/angular",
+      "playwright-ng-schematics"
+    ]
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -53,7 +57,9 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.css"],
+            "styles": [
+              "src/styles.css"
+            ],
             "server": "src/main.server.ts",
             "outputMode": "server",
             "ssr": {
@@ -104,6 +110,17 @@
         },
         "test": {
           "builder": "@angular/build:unit-test"
+        },
+        "e2e": {
+          "builder": "playwright-ng-schematics:playwright",
+          "options": {
+            "devServerTarget": "fireguard-sso-web:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "fireguard-sso-web:serve:production"
+            }
+          }
         }
       }
     }

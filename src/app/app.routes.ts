@@ -1,6 +1,7 @@
 import type { Routes } from '@angular/router';
 import { authGuard } from '@features/auth/http/guards';
 import { onboardingGuard } from '@features/onboarding/http/guards';
+import { maintenanceGuard } from '@features/maintenance/http/guards';
 import { DashboardLayout } from './layouts/dashboard-layout';
 import { FocusedLayout } from './layouts/focused-layout';
 import { SplitLayout } from './layouts/split-layout';
@@ -18,7 +19,7 @@ export const APP_ROUTES: Routes = [
   {
     path: '',
     component: DashboardLayout,
-    canActivate: [authGuard, onboardingGuard],
+    canActivate: [authGuard, onboardingGuard, maintenanceGuard],
     data: {
       breadcrumb: false,
     },
@@ -37,7 +38,7 @@ export const APP_ROUTES: Routes = [
   {
     path: 'onboarding',
     component: FocusedLayout,
-    canActivate: [authGuard],
+    canActivate: [authGuard, maintenanceGuard],
     children: [
       {
         path: '',
@@ -49,7 +50,7 @@ export const APP_ROUTES: Routes = [
   {
     path: 'organizations',
     component: DashboardLayout,
-    canActivate: [authGuard, onboardingGuard],
+    canActivate: [authGuard, onboardingGuard, maintenanceGuard],
     data: {
       breadcrumb: 'Organizations',
     },
@@ -59,7 +60,7 @@ export const APP_ROUTES: Routes = [
   {
     path: 'account',
     component: DashboardLayout,
-    canActivate: [authGuard, onboardingGuard],
+    canActivate: [authGuard, onboardingGuard, maintenanceGuard],
     children: [
       {
         path: '',
@@ -69,7 +70,29 @@ export const APP_ROUTES: Routes = [
     ],
   },
   {
+    path: 'error',
+    component: FocusedLayout,
+    children: [
+      {
+        path: '',
+        loadChildren: () =>
+          import('@features/error/error.routes').then((m) => m.ERROR_ROUTES),
+      },
+    ],
+  },
+  {
+    path: 'maintenance',
+    component: FocusedLayout,
+    children: [
+      {
+        path: '',
+        loadChildren: () =>
+          import('@features/maintenance/maintenance.routes').then((m) => m.MAINTENANCE_ROUTES),
+      },
+    ],
+  },
+  {
     path: '**',
-    redirectTo: '',
+    redirectTo: 'error/404',
   },
 ];

@@ -85,5 +85,24 @@ export interface EnvironmentConfig {
    * ```
    */
   readonly mercureHubUrl: string;
+
+  /**
+   * Property maintenance
+   * @type {boolean | undefined}
+   * @readonly
+   *
+   * @description
+   * When `true`, the application is considered to be in maintenance mode
+   * at startup. The `provideMaintenanceMode()` initializer reads this flag
+   * and activates the `MaintenanceStore` before any routing occurs.
+   *
+   * @version 1.0.0
+   *
+   * @example
+   * ```typescript
+   * maintenance: true
+   * ```
+   */
+  readonly maintenance?: boolean;
   //#endregion
 }

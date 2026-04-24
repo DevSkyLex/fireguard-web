@@ -40,12 +40,17 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (
-        error.status === 401 &&
-        !EXCLUDED_ENDPOINTS.some((pattern: RegExp) => pattern.test(req.url))
-      ) {
+      const isExcluded: boolean = EXCLUDED_ENDPOINTS.some((pattern: RegExp) =>
+        pattern.test(req.url),
+      );
+
+      if (error.status === 401 && !isExcluded) {
         authSession.clearSession();
         router.navigate(['/auth/login']);
+      }
+
+      if (error.status === 403 && !isExcluded) {
+        router.navigate(['/error/403']);
       }
 
       return throwError(() => error);

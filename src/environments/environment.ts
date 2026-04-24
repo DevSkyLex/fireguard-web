@@ -15,4 +15,5 @@ export const environment: EnvironmentConfig = {
   apiUrl: 'http://localhost:8000',
   appName: 'Fireguard',
   mercureHubUrl: 'http://localhost:3000/.well-known/mercure',
+  maintenance: false,
 };

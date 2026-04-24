@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DASHBOARD_CONTEXT_PANEL_CONTRIBUTION } from '@core/ports/dashboard-context-panel';
+import { CONTEXT_PANEL_SLOT } from '@layouts/dashboard-layout/slots/context-panel';
 import { DashboardLayoutContextPanel } from '../dashboard-layout-context-panel.component';
 
 @Component({
@@ -43,13 +43,13 @@ describe('DashboardLayoutContextPanel', () => {
     expect(fixture.debugElement.query(By.css('[data-testid="contribution-content"]'))).toBeFalsy();
   });
 
-  it('should render the contribution component when isActive is true', () => {
+  it('should render the contribution component when active is true', () => {
     TestBed.configureTestingModule({
       imports: [DashboardLayoutContextPanel],
       providers: [
         {
-          provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
-          useValue: { id: 'test', priority: 10, component: ContributionStub, isActive: signal(true) },
+          provide: CONTEXT_PANEL_SLOT,
+          useValue: { id: 'test', priority: 10, component: ContributionStub, active: signal(true) },
           multi: true,
         },
       ],
@@ -61,13 +61,13 @@ describe('DashboardLayoutContextPanel', () => {
     expect(fixture.debugElement.query(By.css('[data-testid="contribution-content"]'))).toBeTruthy();
   });
 
-  it('should not render the contribution component when isActive is false', () => {
+  it('should not render the contribution component when active is false', () => {
     TestBed.configureTestingModule({
       imports: [DashboardLayoutContextPanel],
       providers: [
         {
-          provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
-          useValue: { id: 'test', priority: 10, component: ContributionStub, isActive: signal(false) },
+          provide: CONTEXT_PANEL_SLOT,
+          useValue: { id: 'test', priority: 10, component: ContributionStub, active: signal(false) },
           multi: true,
         },
       ],
@@ -84,13 +84,13 @@ describe('DashboardLayoutContextPanel', () => {
       imports: [DashboardLayoutContextPanel],
       providers: [
         {
-          provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
-          useValue: { id: 'low', priority: 5, component: LowPriorityContribution, isActive: signal(true) },
+          provide: CONTEXT_PANEL_SLOT,
+          useValue: { id: 'low', priority: 5, component: LowPriorityContribution, active: signal(true) },
           multi: true,
         },
         {
-          provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
-          useValue: { id: 'high', priority: 20, component: HighPriorityContribution, isActive: signal(true) },
+          provide: CONTEXT_PANEL_SLOT,
+          useValue: { id: 'high', priority: 20, component: HighPriorityContribution, active: signal(true) },
           multi: true,
         },
       ],
@@ -108,8 +108,8 @@ describe('DashboardLayoutContextPanel', () => {
       imports: [DashboardLayoutContextPanel],
       providers: [
         {
-          provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
-          useValue: { id: 'test', priority: 10, component: ContributionStub, isActive: signal(true) },
+          provide: CONTEXT_PANEL_SLOT,
+          useValue: { id: 'test', priority: 10, component: ContributionStub, active: signal(true) },
           multi: true,
         },
       ],

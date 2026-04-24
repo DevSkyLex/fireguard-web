@@ -7,11 +7,13 @@
 
   <!-- Body: sidebars + main content -->
   <div class="flex min-h-0 flex-1 overflow-hidden">
-    <!-- Primary sidebar: always visible on desktop, icon-only -->
+    <!-- Primary sidebar: w-16 tablet, w-52 desktop, animated transition -->
     <aside
-      class="hidden w-16 shrink-0 overflow-y-auto border-r border-surface-200 transition-colors lg:flex dark:border-surface-800"
+      class="hidden shrink-0 overflow-y-auto border-r border-surface-200 transition-[width] duration-200 ease-in-out lg:flex dark:border-surface-800"
+      [class.w-16]="!isDesktopSidebar()"
+      [class.w-52]="isDesktopSidebar()"
     >
-      <app-dashboard-layout-sidebar class="w-full" variant="primary" />
+      <app-dashboard-layout-sidebar class="w-full" variant="primary" [iconOnly]="!isDesktopSidebar()" />
     </aside>
 
     <!-- Context panel: visible only when a contribution is active, resizable -->
@@ -19,6 +21,7 @@
       <div
         class="relative hidden shrink-0 lg:flex"
         [style.width.px]="sidebarService.width()"
+        [style.transition]="sidebarService.isResizing() ? 'none' : 'width 200ms ease'"
       >
         <aside
           class="h-full w-full overflow-y-auto border-r border-surface-200 transition-colors dark:border-surface-800"

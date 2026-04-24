@@ -35,9 +35,9 @@
   </section>
 
   <section class="flex shrink-0 items-center gap-2 px-4 py-3">
-    <app-organization-switcher />
+    @for (component of headerActionsService.components; track component) {
+      <ng-container *ngComponentOutlet="component" />
+    }
     <app-theme-switcher />
-    <app-notification-bell />
-    <app-dashboard-layout-header-user-menu />
   </section>
 </header>

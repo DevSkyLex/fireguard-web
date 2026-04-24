@@ -14,7 +14,7 @@
       <app-dashboard-layout-sidebar-navigation
         [items]="navigationService.primaryItems"
         [showSearch]="false"
-        [iconOnly]="true"
+        [iconOnly]="iconOnly()"
       />
     } @else {
       <app-dashboard-layout-sidebar-navigation />

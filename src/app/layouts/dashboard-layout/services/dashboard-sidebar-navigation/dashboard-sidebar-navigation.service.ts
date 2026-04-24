@@ -1,153 +1,53 @@
-import { computed, inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
-import { NOTIFICATION_CENTER_PORT, type NotificationCenterPort } from '@features/account/ports';
 import {
-  ORGANIZATION_PERMISSION,
-  type OrganizationPermissionName,
-} from '@features/organization/models';
+  computed,
+  inject,
+  Injectable,
+  type Signal,
+  signal,
+  type WritableSignal,
+} from '@angular/core';
+import { SIDEBAR_NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/sidebar-navigation';
+import type { SidebarNavigationContribution } from '@layouts/dashboard-layout/slots/sidebar-navigation';
 import type { MenuItem } from 'primeng/api';
-import {
-  ORGANIZATION_CONTEXT_PORT,
-  ORGANIZATION_MEMBER_ACCESS_PORT,
-  type OrganizationContextPort,
-  type OrganizationMemberAccessPort,
-} from '@features/organization/ports';
-
-type StaticSidebarNavigationItem = Readonly<{
-  id: string;
-  label: string;
-  icon: string;
-  routerLink: string;
-}>;
-
-type OrganizationSidebarNavigationItem = Readonly<{
-  id: string;
-  label: string;
-  icon: string;
-  path: string;
-  permissions: ReadonlyArray<OrganizationPermissionName>;
-}>;
-
-const HOME_NAVIGATION_ITEMS: ReadonlyArray<StaticSidebarNavigationItem> = [
-  {
-    id: 'home',
-    label: 'Home',
-    icon: 'pi pi-home',
-    routerLink: '/',
-  },
-  {
-    id: 'organizations',
-    label: 'Organizations',
-    icon: 'pi pi-sitemap',
-    routerLink: '/organizations',
-  },
-];
-
-const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationSidebarNavigationItem> = [
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    icon: 'pi pi-chart-bar',
-    path: '',
-    permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
-  },
-  {
-    id: 'facilities',
-    label: 'Facilities',
-    icon: 'pi pi-map',
-    path: 'facilities',
-    permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
-  },
-  {
-    id: 'equipments',
-    label: 'Equipments',
-    icon: 'pi pi-box',
-    path: 'equipments',
-    permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ],
-  },
-  {
-    id: 'inspections',
-    label: 'Inspections',
-    icon: 'pi pi-clipboard',
-    path: 'inspections',
-    permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
-  },
-];
-
-const ACCOUNT_NAVIGATION_ITEMS: ReadonlyArray<StaticSidebarNavigationItem> = [
-  {
-    id: 'notifications',
-    label: 'Notifications',
-    icon: 'pi pi-bell',
-    routerLink: '/account/notifications',
-  },
-];
 
 /**
  * Service DashboardSidebarNavigationService
  * @class DashboardSidebarNavigationService
  *
  * @description
- * Layout-scoped service managing sidebar navigation items
- * and search filtering logic.
+ * Layout-scoped service aggregating sidebar navigation contributions
+ * registered via the `SIDEBAR_NAVIGATION_SLOT` multi-provider
+ * token and exposing them as reactive `MenuItem[]` signals.
  *
- * Menu items are built dynamically so that every `routerLink`
- * is prefixed with `/organizations/{currentOrgId}`.
+ * The service is contribution-agnostic: it sorts contributions by their
+ * `order` property, resolves the reactive `section` from each, filters
+ * out `null` sections, and applies the current search query.
  *
- * @version 2.0.0
- *
+ * @version 3.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable()
 export class DashboardSidebarNavigationService {
   //#region Properties
   /**
-   * Property organizationContext
+   * Property contributions
    * @readonly
    *
    * @description
-   * Organization context port for accessing the
-   * currently selected organization and prefixing sidebar
-   * links with the correct organization path.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {OrganizationContextPort}
-   */
-  private readonly organizationContext: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
-
-  /**
-   * Property organizationMemberAccess
-   * @readonly
-   *
-   * @description
-   * Published organization member access port used by the layout to derive
-   * organization-scoped navigation visibility without depending on feature
-   * internals.
+   * All navigation contributions injected via the multi-provider token,
+   * sorted by ascending `order`.
    *
    * @access private
-   * @since 2.1.0
+   * @since 3.0.0
    *
-   * @type {OrganizationMemberAccessPort}
+   * @type {SidebarNavigationContribution[]}
    */
-  private readonly organizationMemberAccess: OrganizationMemberAccessPort = inject(
-    ORGANIZATION_MEMBER_ACCESS_PORT,
+  private readonly contributions: SidebarNavigationContribution[] = (
+    inject(SIDEBAR_NAVIGATION_SLOT, { optional: true }) ?? []
+  ).sort(
+    (a: SidebarNavigationContribution, b: SidebarNavigationContribution): number =>
+      a.order - b.order,
   );
-
-  /**
-   * Property notificationCenter
-   * @readonly
-   *
-   * @description
-   * Published notification center port used to surface the unread count in
-   * the account navigation section.
-   *
-   * @access private
-   * @since 2.1.0
-   *
-   * @type {NotificationCenterPort}
-   */
-  private readonly notificationCenter: NotificationCenterPort = inject(NOTIFICATION_CENTER_PORT);
 
   /**
    * Property _searchQuery
@@ -183,45 +83,29 @@ export class DashboardSidebarNavigationService {
    * @readonly
    *
    * @description
-  * Sidebar menu items filtered by current search query.
-  * Organization-scoped routes are prefixed with the active organization path
-  * and hidden when the current member lacks the required permission.
+   * Sidebar menu items filtered by current search query.
+   * Aggregates all contributions, resolves their reactive sections and
+   * drops `null` values, then applies the optional search filter.
    *
    * @access public
-   * @since 2.0.0
+   * @since 3.0.0
    *
    * @type {Signal<MenuItem[]>}
    */
   public readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] => {
-    const organization = this.organizationContext.selectedOrganization();
     const query: string = this.searchQuery().trim();
-    const unreadCount: number = this.notificationCenter.unreadCount();
-    const grantedPermissionSet: ReadonlySet<string> = new Set(
-      this.organizationMemberAccess.permissions(),
-    );
 
-    const items: MenuItem[] = [
-      {
-        id: 'home',
-        label: 'Home',
-        expanded: true,
-        items: HOME_NAVIGATION_ITEMS.map((item: StaticSidebarNavigationItem): MenuItem => ({
-          ...item,
-        })),
-      },
-      this.buildOrganizationSection(organization?.id ?? null, grantedPermissionSet),
-      {
-        id: 'account',
-        label: 'Account',
-        expanded: true,
-        items: ACCOUNT_NAVIGATION_ITEMS.map((item: StaticSidebarNavigationItem): MenuItem => ({
-          ...item,
-          badge: unreadCount > 0 ? String(unreadCount) : undefined,
-        })),
-      },
-    ].filter((item: MenuItem | null): item is MenuItem => item !== null);
+    const items: MenuItem[] = this.contributions
+      .map(
+        (contribution: SidebarNavigationContribution): MenuItem | null =>
+          contribution.section(),
+      )
+      .filter((item: MenuItem | null): item is MenuItem => item !== null);
 
-    if (!query) return [...items];
+    if (!query) {
+      return items;
+    }
+
     return this.filterMenuItems(items, query);
   });
 
@@ -230,42 +114,27 @@ export class DashboardSidebarNavigationService {
    * @readonly
    *
    * @description
-   * Navigation items for the primary (always-visible) sidebar.
-   * Contains the Home and Account sections independently of any
-   * active organization. Not filtered by the search query since
-   * these entries are few and always accessible.
+   * Navigation items for the primary (always-visible collapsed) sidebar.
+   * Aggregates all contributions whose section is currently non-null.
+   * Never filtered by search query.
    *
    * @access public
    * @since 3.0.0
    *
    * @type {Signal<MenuItem[]>}
    */
-  public readonly primaryItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] => {
-    const unreadCount: number = this.notificationCenter.unreadCount();
+  public readonly primaryItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] =>
+    this.contributions
+      .map((contribution: SidebarNavigationContribution): MenuItem | null =>
+        contribution.section(),
+      )
+      .filter((item: MenuItem | null): item is MenuItem => item !== null),
+  );
 
-    return [
-      {
-        id: 'home',
-        label: 'Home',
-        expanded: true,
-        items: HOME_NAVIGATION_ITEMS.map((item: StaticSidebarNavigationItem): MenuItem => ({
-          ...item,
-        })),
-      },
-      {
-        id: 'account',
-        label: 'Account',
-        expanded: true,
-        items: ACCOUNT_NAVIGATION_ITEMS.map((item: StaticSidebarNavigationItem): MenuItem => ({
-          ...item,
-          badge: unreadCount > 0 ? String(unreadCount) : undefined,
-        })),
-      },
-    ];
-  });
   //#endregion
 
   //#region Methods
+
   /**
    * Method setSearchQuery
    * @method setSearchQuery
@@ -298,140 +167,6 @@ export class DashboardSidebarNavigationService {
    */
   public clearSearchQuery(): void {
     this._searchQuery.set('');
-  }
-
-  /**
-   * Method buildOrganizationSection
-   * @method buildOrganizationSection
-   *
-   * @description
-   * Builds the organization-scoped section when an active organization exists
-   * and the current member has at least one matching permission.
-   *
-   * @access private
-   * @since 2.1.0
-   *
-   * @param {string | null} organizationId - Active organization identifier.
-   * @param {ReadonlySet<string>} grantedPermissionSet - Granted permissions for the active member.
-   *
-   * @returns {MenuItem | null} Organization section or `null` when unavailable.
-   */
-  private buildOrganizationSection(
-    organizationId: string | null,
-    grantedPermissionSet: ReadonlySet<string>,
-  ): MenuItem | null {
-    if (organizationId === null) {
-      return null;
-    }
-
-    const prefix: string = `/organizations/${organizationId}`;
-    const items: MenuItem[] = ORGANIZATION_NAVIGATION_ITEMS.filter(
-      (item: OrganizationSidebarNavigationItem): boolean =>
-        this.hasAllOrganizationPermissions(item.permissions, grantedPermissionSet),
-    ).map(
-      (item: OrganizationSidebarNavigationItem): MenuItem => ({
-        id: item.id,
-        label: item.label,
-        icon: item.icon,
-        routerLink: item.path.length > 0 ? `${prefix}/${item.path}` : prefix,
-      }),
-    );
-
-    if (items.length === 0) {
-      return null;
-    }
-
-    return {
-      id: 'organization',
-      label: 'Organization',
-      expanded: true,
-      items,
-    };
-  }
-
-  /**
-   * Method hasAllOrganizationPermissions
-   * @method hasAllOrganizationPermissions
-   *
-   * @description
-   * Returns whether every required organization-scoped permission is granted,
-   * including wildcard permissions such as `organization.*`.
-   *
-   * @access private
-   * @since 2.1.0
-   *
-   * @param {ReadonlyArray<OrganizationPermissionName>} permissions - Required permissions.
-   * @param {ReadonlySet<string>} grantedPermissionSet - Granted permissions.
-   *
-   * @returns {boolean} `true` when all permissions are granted.
-   */
-  private hasAllOrganizationPermissions(
-    permissions: ReadonlyArray<OrganizationPermissionName>,
-    grantedPermissionSet: ReadonlySet<string>,
-  ): boolean {
-    return permissions.every((permission: OrganizationPermissionName): boolean =>
-      this.hasGrantedPermission(permission, grantedPermissionSet),
-    );
-  }
-
-  /**
-   * Method hasGrantedPermission
-   * @method hasGrantedPermission
-   *
-   * @description
-   * Evaluates whether the provided granted permission set satisfies the
-   * required organization-scoped permission, including wildcard grants.
-   *
-   * @access private
-   * @since 2.1.0
-   *
-   * @param {OrganizationPermissionName} permission - Required permission.
-   * @param {ReadonlySet<string>} grantedPermissionSet - Granted permissions.
-   *
-   * @returns {boolean} `true` when the permission is granted.
-   */
-  private hasGrantedPermission(
-    permission: OrganizationPermissionName,
-    grantedPermissionSet: ReadonlySet<string>,
-  ): boolean {
-    if (grantedPermissionSet.has(permission)) {
-      return true;
-    }
-
-    return Array.from(grantedPermissionSet).some((grantedPermission: string): boolean =>
-      this.matchesPermissionName(grantedPermission, permission),
-    );
-  }
-
-  /**
-   * Method matchesPermissionName
-   * @method matchesPermissionName
-   *
-   * @description
-   * Evaluates whether a granted permission satisfies a required permission,
-   * including wildcard permissions such as `organization.*`.
-   *
-   * @access private
-   * @since 2.1.0
-   *
-   * @param {string} grantedPermission - Granted permission name.
-   * @param {OrganizationPermissionName} requiredPermission - Required permission name.
-   *
-   * @returns {boolean} `true` when the grant satisfies the requirement.
-   */
-  private matchesPermissionName(
-    grantedPermission: string,
-    requiredPermission: OrganizationPermissionName,
-  ): boolean {
-    if (grantedPermission === requiredPermission) {
-      return true;
-    }
-
-    if (!grantedPermission.endsWith('.*')) {
-      return false;
-    }
-
-    return requiredPermission.startsWith(grantedPermission.slice(0, -1));
   }
 
   /**

@@ -1,12 +1,10 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { NgComponentOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { NotificationBell } from '@features/account';
-import { OrganizationSwitcher } from '@features/organization';
-import { DashboardSidebarService } from '@layouts/dashboard-layout/services';
+import { DashboardSidebarService, DashboardHeaderActionsService } from '@layouts/dashboard-layout/services';
 import { ThemeSwitcher } from '@shared/components';
 import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
-import { DashboardLayoutHeaderUserMenu } from '../dashboard-layout-header-user-menu/dashboard-layout-header-user-menu.component';
 
 /**
  * Component DashboardLayoutHeader
@@ -33,11 +31,9 @@ import { DashboardLayoutHeaderUserMenu } from '../dashboard-layout-header-user-m
   imports: [
     ButtonModule,
     RouterLink,
+    NgComponentOutlet,
     DashboardLayoutBreadcrumb,
-    OrganizationSwitcher,
     ThemeSwitcher,
-    NotificationBell,
-    DashboardLayoutHeaderUserMenu,
   ],
   templateUrl: './dashboard-layout-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,5 +55,21 @@ export class DashboardLayoutHeader {
    */
   protected readonly sidebarService: DashboardSidebarService =
     inject<DashboardSidebarService>(DashboardSidebarService);
+
+  /**
+   * Property headerActionsService
+   * @readonly
+   *
+   * @description
+   * Injected DashboardHeaderActionsService instance providing
+   * the sorted list of header action components.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {DashboardHeaderActionsService}
+   */
+  protected readonly headerActionsService: DashboardHeaderActionsService =
+    inject<DashboardHeaderActionsService>(DashboardHeaderActionsService);
   //#endregion
 }

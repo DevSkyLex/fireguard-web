@@ -234,11 +234,12 @@ export class DashboardSidebarResizeHandleDirective {
     const doc: Document = this.document;
     const view: Window | null = doc.defaultView;
     const handle: HTMLElement = this.elementRef.nativeElement;
-    const sidebarElement: Element | null = handle.closest('aside');
+    const sidebarElement: Element | null = handle.closest('aside') ?? handle.parentElement;
     this.activePointerId = event.pointerId;
     this.hasMoved = false;
     this.startClientX = event.clientX;
     handle.setPointerCapture?.(event.pointerId);
+    this.sidebarService.startResize();
 
     const onPointerMove = (moveEvent: PointerEvent): void => {
       if (this.activePointerId !== moveEvent.pointerId) {
@@ -359,6 +360,7 @@ export class DashboardSidebarResizeHandleDirective {
     this.hasMoved = false;
     this.document.body.style.cursor = '';
     this.document.body.style.userSelect = '';
+    this.sidebarService.endResize();
   }
   //endregion
 }

@@ -25,42 +25,17 @@ import type { Preset } from '@primeuix/themes/types';
 export const FireguardTheme: Preset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '{sky.50}',
-      100: '{sky.100}',
-      200: '{sky.200}',
-      300: '{sky.300}',
-      400: '{sky.400}',
-      500: '{sky.500}',
-      600: '{sky.600}',
-      700: '{sky.700}',
-      800: '{sky.800}',
-      900: '{sky.900}',
-      950: '{sky.950}',
-    },
-    colorScheme: {
-      dark: {
-        formField: {
-          borderColor: '{surface.800}',
-          hoverBorderColor: '{surface.700}',
-        },
-        content: {
-          borderColor: '{surface.800}',
-        },
-      },
-    },
-  },
-  components: {
-    datatable: {
-      row: {
-        hoverBackground: '{surface.50}',
-      },
-      colorScheme: {
-        dark: {
-          row: {
-            hoverBackground: '{surface.800}',
-          },
-        },
-      },
+      50: '{purple.50}',
+      100: '{purple.100}',
+      200: '{purple.200}',
+      300: '{purple.300}',
+      400: '{purple.400}',
+      500: '{purple.500}',
+      600: '{purple.600}',
+      700: '{purple.700}',
+      800: '{purple.800}',
+      900: '{purple.900}',
+      950: '{purple.950}',
     },
   },
 });

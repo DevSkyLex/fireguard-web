@@ -113,6 +113,21 @@ export class DashboardSidebarService {
   private readonly _isCollapsed: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property _isResizing
+   * @readonly
+   *
+   * @description
+   * Internal writable signal tracking whether the user is actively
+   * dragging the resize handle. Exposed publicly through `isResizing`.
+   *
+   * @access private
+   * @since 3.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  private readonly _isResizing: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
    * Property defaultWidth
    *
    * @description
@@ -202,6 +217,21 @@ export class DashboardSidebarService {
    * @type {Signal<boolean>}
    */
   public readonly isCollapsed: Signal<boolean> = this._isCollapsed.asReadonly();
+
+  /**
+   * Property isResizing
+   * @readonly
+   *
+   * @description
+   * Whether the user is actively dragging the resize handle.
+   * When true, width transitions should be disabled to avoid lag.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  public readonly isResizing: Signal<boolean> = this._isResizing.asReadonly();
 
   /**
    * Property width
@@ -340,6 +370,40 @@ export class DashboardSidebarService {
    */
   public expand(): void {
     this._isCollapsed.set(false);
+  }
+
+  /**
+   * Method startResize
+   * @method startResize
+   *
+   * @description
+   * Marks the sidebar as being actively resized by the drag handle.
+   * Disables width transitions to avoid lag during pointer move.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @returns {void}
+   */
+  public startResize(): void {
+    this._isResizing.set(true);
+  }
+
+  /**
+   * Method endResize
+   * @method endResize
+   *
+   * @description
+   * Marks the end of an active resize gesture, re-enabling
+   * width transitions for collapse/expand animations.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @returns {void}
+   */
+  public endResize(): void {
+    this._isResizing.set(false);
   }
 
   /**

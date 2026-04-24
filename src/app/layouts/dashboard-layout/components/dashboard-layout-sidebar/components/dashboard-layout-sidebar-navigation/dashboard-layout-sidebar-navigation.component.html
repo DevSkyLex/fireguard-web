@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-4 p-3">
-  @if (iconOnly()) {
-    <!-- Icon-only mode: flat icon strip with right-side tooltips -->
+  @if (iconOnly() || !showSearch()) {
+    <!-- Primary sidebar: icon-only (tablet) or icon+label (desktop) -->
     <nav class="flex-1 overflow-y-auto">
       <ul class="flex flex-col gap-0.5">
         @for (section of menuItems(); track section.id ?? section.label; let isFirst = $first) {
@@ -12,9 +12,11 @@
             <li>
               <a
                 pRipple
-                [pTooltip]="item.label ?? ''"
+                [pTooltip]="iconOnly() ? (item.label ?? '') : ''"
                 tooltipPosition="right"
-                class="relative flex w-full cursor-pointer items-center justify-center rounded-lg p-3 text-surface-800 transition-colors hover:bg-surface-50 dark:text-surface-200 dark:hover:bg-surface-900"
+                class="relative flex w-full cursor-pointer items-center rounded-lg p-3 transition-colors hover:bg-surface-50 dark:hover:bg-surface-900"
+                [class.justify-center]="iconOnly()"
+                [class.gap-3]="!iconOnly()"
                 [routerLink]="item.routerLink ?? null"
                 routerLinkActive
                 [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.routerLink)"
@@ -25,19 +27,31 @@
               >
                 @if (item.routerLink && linkActive.isActive) {
                   <span
-                    class="pointer-events-none absolute top-1/2 left-0 size-1.5 -translate-y-1/2 rounded-full bg-primary-500"
+                    class="pointer-events-none absolute size-9 rounded-full bg-primary-500/20 blur-sm"
                     aria-hidden="true"
                   ></span>
                 }
 
                 @if (item.icon) {
                   <i
-                    [class]="item.icon + ' text-xl'"
+                    [class]="item.icon + ' relative z-10 text-xl'"
                     [class.text-primary-500]="linkActive.isActive"
                     [class.text-surface-500]="!linkActive.isActive"
                     [class.dark:text-primary-400]="linkActive.isActive"
                     [class.dark:text-surface-400]="!linkActive.isActive"
                   ></i>
+                }
+
+                @if (!iconOnly()) {
+                  <span
+                    class="relative z-10 flex-1 truncate text-sm font-medium"
+                    [class.text-surface-900]="linkActive.isActive"
+                    [class.text-surface-600]="!linkActive.isActive"
+                    [class.dark:text-surface-100]="linkActive.isActive"
+                    [class.dark:text-surface-400]="!linkActive.isActive"
+                  >
+                    {{ item.label }}
+                  </span>
                 }
 
                 @if (item.badge) {

@@ -3,18 +3,13 @@ import {
   Component,
   computed,
   inject,
-  signal,
   type Signal,
-  type WritableSignal,
 } from '@angular/core';
 import { type IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angular/router';
 import type { MotionOptions } from '@primeuix/motion';
 import type { MenuItem } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
 import { DividerModule } from 'primeng/divider';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { InputTextModule } from 'primeng/inputtext';
 import { PanelMenuModule, type PanelMenuPassThroughOptions } from 'primeng/panelmenu';
 import { RippleModule } from 'primeng/ripple';
 import {
@@ -89,9 +84,6 @@ const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationSidebarItem> = [
   imports: [
     BadgeModule,
     DividerModule,
-    IconFieldModule,
-    InputIconModule,
-    InputTextModule,
     PanelMenuModule,
     RippleModule,
     RouterLink,
@@ -134,34 +126,6 @@ export class OrganizationNavPanel {
     inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT);
 
   /**
-   * Property _searchQuery
-   * @readonly
-   *
-   * @description
-   * Internal writable signal for the local search query.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {WritableSignal<string>}
-   */
-  private readonly _searchQuery: WritableSignal<string> = signal<string>('');
-
-  /**
-   * Property searchQuery
-   * @readonly
-   *
-   * @description
-   * Read-only search query signal consumed by the sidebar UI.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<string>}
-   */
-  protected readonly searchQuery: Signal<string> = this._searchQuery.asReadonly();
-
-  /**
    * Property navigationItems
    * @readonly
    *
@@ -186,7 +150,6 @@ export class OrganizationNavPanel {
         this.organizationMemberAccess.permissions(),
       );
       const prefix: string = `/organizations/${organization.id}`;
-      const query: string = this._searchQuery().trim();
 
       const visibleItems: MenuItem[] = ORGANIZATION_NAVIGATION_ITEMS.filter(
         (item: OrganizationSidebarItem): boolean =>
@@ -202,16 +165,12 @@ export class OrganizationNavPanel {
 
       if (visibleItems.length === 0) return [];
 
-      const section: MenuItem = {
+      return [{
         id: 'organization',
         label: 'Organization',
         expanded: true,
         items: visibleItems,
-      };
-
-      if (!query) return [section];
-
-      return this.filterMenuItems([section], query);
+      }];
     },
   );
 
@@ -301,40 +260,6 @@ export class OrganizationNavPanel {
 
   //#region Methods
   /**
-   * Method onSearchQueryChange
-   * @method onSearchQueryChange
-   *
-   * @description
-   * Updates the local search query when the user types in the search field.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {string} query - New search query value.
-   *
-   * @returns {void}
-   */
-  protected onSearchQueryChange(query: string): void {
-    this._searchQuery.set(query);
-  }
-
-  /**
-   * Method onClearSearch
-   * @method onClearSearch
-   *
-   * @description
-   * Clears the current search query.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected onClearSearch(): void {
-    this._searchQuery.set('');
-  }
-
-  /**
    * Method getRouterLinkActiveOptions
    * @method getRouterLinkActiveOptions
    *
@@ -388,39 +313,5 @@ export class OrganizationNavPanel {
     });
   }
 
-  /**
-   * Method filterMenuItems
-   * @method filterMenuItems
-   *
-   * @description
-   * Recursively filters menu items by label while keeping parent nodes
-   * when a child matches.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @param {readonly MenuItem[]} items - Source menu items.
-   * @param {string} query - Search query.
-   *
-   * @returns {MenuItem[]}
-   */
-  private filterMenuItems(items: readonly MenuItem[], query: string): MenuItem[] {
-    return items
-      .map((item: MenuItem): MenuItem | null => {
-        const filteredChildren: MenuItem[] = item.items
-          ? this.filterMenuItems(item.items, query)
-          : [];
-        const itemMatches: boolean = (item.label ?? '').includes(query);
-
-        if (!itemMatches && filteredChildren.length === 0) return null;
-
-        return {
-          ...item,
-          expanded: filteredChildren.length > 0 ? true : item.expanded,
-          items: filteredChildren.length > 0 ? filteredChildren : undefined,
-        };
-      })
-      .filter((item: MenuItem | null): item is MenuItem => item !== null);
-  }
   //#endregion
 }

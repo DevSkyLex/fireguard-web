@@ -31,12 +31,12 @@ import { AuthStore } from '@features/auth/state';
  * // In app.config.ts
  * export const appConfig: ApplicationConfig = {
  *   providers: [
- *     provideAuth()
+ *     provideAuthFeature()
  *   ]
  * };
  * ```
  */
-export function provideAuth(): EnvironmentProviders {
+export function provideAuthFeature(): EnvironmentProviders {
   return makeEnvironmentProviders([
     provideAppInitializer(() => {
       /**
@@ -49,7 +49,29 @@ export function provideAuth(): EnvironmentProviders {
        * @var {object}
        */
       const platformId: object = inject<object>(PLATFORM_ID);
+
+      /**
+       * Constant request
+       * @const request
+       *
+       * @description
+       * Optional request object available in server contexts. Used to determine
+       * if we're in a valid SSR context with a per-request session.
+       *
+       * @var {Request | null}
+       */
       const request: Request | null = inject<Request>(REQUEST, { optional: true });
+
+      /**
+       * Constant canInitialize
+       * @const canInitialize
+       *
+       * @description
+       * Determines if auth initialization can proceed based
+       * on the runtime context.
+       *
+       * @var {boolean}
+       */
       const canInitialize: boolean =
         isPlatformBrowser(platformId) || (isPlatformServer(platformId) && !!request);
 

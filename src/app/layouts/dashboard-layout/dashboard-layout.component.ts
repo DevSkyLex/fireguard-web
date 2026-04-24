@@ -1,18 +1,15 @@
-import { Component, ChangeDetectionStrategy, computed, inject, effect, untracked, type Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, inject, type Signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { map } from 'rxjs';
 import { DrawerModule } from 'primeng/drawer';
 import { Ripple } from 'primeng/ripple';
 import { BreadcrumbService } from '@core/services/breadcrumb';
 import {
-  DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
-  type DashboardContextPanelContribution,
-} from '@core/ports/dashboard-context-panel';
-import {
-  NOTIFICATION_CENTER_PORT,
-  USER_IDENTITY_PORT,
-  type NotificationCenterPort,
-  type UserIdentityPort,
-} from '@features/account/ports';
+  CONTEXT_PANEL_SLOT,
+  type ContextPanelContribution,
+} from '@layouts/dashboard-layout/slots/context-panel';
 import {
   DashboardLayoutHeader,
   DashboardLayoutSidebar,
@@ -20,7 +17,7 @@ import {
   DashboardLayoutContextPanel,
 } from '@layouts/dashboard-layout/components';
 import { DashboardSidebarResizeHandleDirective } from './directives';
-import { DashboardSidebarNavigationService, DashboardSidebarService } from './services';
+import { DashboardSidebarNavigationService, DashboardSidebarService, DashboardHeaderActionsService } from './services';
 
 /**
  * Component DashboardLayout
@@ -59,7 +56,7 @@ import { DashboardSidebarNavigationService, DashboardSidebarService } from './se
     Ripple,
     DashboardSidebarResizeHandleDirective,
   ],
-  providers: [DashboardSidebarService, DashboardSidebarNavigationService, BreadcrumbService],
+  providers: [DashboardSidebarService, DashboardSidebarNavigationService, DashboardHeaderActionsService, BreadcrumbService],
   templateUrl: './dashboard-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -68,31 +65,22 @@ export class DashboardLayout {
   protected readonly sidebarService: DashboardSidebarService =
     inject<DashboardSidebarService>(DashboardSidebarService);
 
-  private readonly contributions: DashboardContextPanelContribution[] =
-    inject<DashboardContextPanelContribution[]>(
-      DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
+  private readonly contributions: ContextPanelContribution[] =
+    inject<ContextPanelContribution[]>(
+      CONTEXT_PANEL_SLOT,
       { optional: true },
     ) ?? [];
 
   protected readonly hasActiveContextPanel: Signal<boolean> = computed(
-    (): boolean => this.contributions.some((c: DashboardContextPanelContribution) => c.isActive()),
+    (): boolean => this.contributions.some((c: ContextPanelContribution) => c.active()),
   );
 
-  protected readonly userIdentityPort: UserIdentityPort =
-    inject<UserIdentityPort>(USER_IDENTITY_PORT);
+  protected readonly isDesktopSidebar: Signal<boolean> = toSignal(
+    inject(BreakpointObserver)
+      .observe('(min-width: 1280px)')
+      .pipe(map((result) => result.matches)),
+    { initialValue: false },
+  );
 
-  protected readonly notificationCenterPort: NotificationCenterPort =
-    inject<NotificationCenterPort>(NOTIFICATION_CENTER_PORT);
   //#endregion
-
-  constructor() {
-    effect(() => {
-      if (this.userIdentityPort.profile()) {
-        untracked(() => {
-          void this.notificationCenterPort.initialize();
-          this.notificationCenterPort.connectMercure();
-        });
-      }
-    });
-  }
 }

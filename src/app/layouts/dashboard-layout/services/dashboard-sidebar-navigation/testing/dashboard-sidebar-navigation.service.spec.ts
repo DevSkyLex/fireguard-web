@@ -1,61 +1,72 @@
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { NOTIFICATION_CENTER_PORT } from '@features/account/ports';
-import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
-import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
+import { SIDEBAR_NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/sidebar-navigation';
+import type { SidebarNavigationContribution } from '@layouts/dashboard-layout/slots/sidebar-navigation';
 import { DashboardSidebarNavigationService } from '../dashboard-sidebar-navigation.service';
-
-const MOCK_ORG = {
-  id: 'org-1',
-  name: 'Acme Corp',
-  slug: 'acme',
-  isActive: true,
-  status: 'active',
-  ownerUserId: 'u1',
-  createdByUserId: 'u1',
-  createdAt: '2025-01-01',
-  updatedAt: '2025-01-01',
-};
 
 describe('DashboardSidebarNavigationService', () => {
   let service: DashboardSidebarNavigationService;
-  const mockOrganizationStore = {
-    selectedOrganization: signal<(typeof MOCK_ORG) | null>(MOCK_ORG),
+
+  const orgSectionVisible = signal(true);
+  const notificationBadge = signal<string | undefined>(undefined);
+
+  const homeContribution: SidebarNavigationContribution = {
+    id: 'home',
+    order: 10,
+    section: signal({
+      id: 'home',
+      label: 'Home',
+      expanded: true,
+      items: [
+        { id: 'home', label: 'Home', routerLink: '/' },
+        { id: 'organizations', label: 'Organizations', routerLink: '/organizations' },
+      ],
+    }),
   };
-  const mockOrganizationMemberAccess = {
-    permissions: signal<ReadonlyArray<string>>([
-      ORGANIZATION_PERMISSION.DASHBOARD_READ,
-      ORGANIZATION_PERMISSION.FACILITIES_READ,
-      ORGANIZATION_PERMISSION.EQUIPMENT_READ,
-      ORGANIZATION_PERMISSION.INSPECTION_READ,
-    ]),
+
+  const orgContribution: SidebarNavigationContribution = {
+    id: 'organization',
+    order: 20,
+    section: computed(() =>
+      orgSectionVisible()
+        ? {
+            id: 'organization',
+            label: 'Organization',
+            expanded: true,
+            items: [{ id: 'dashboard', label: 'Dashboard', routerLink: '/organizations/org-1' }],
+          }
+        : null,
+    ),
   };
-  const mockNotificationCenterPort = {
-    unreadCount: signal(0),
-    hasUnread: signal(false),
-    initialize: vi.fn(),
-    load: vi.fn(),
-    connectMercure: vi.fn(),
+
+  const accountContribution: SidebarNavigationContribution = {
+    id: 'account',
+    order: 30,
+    section: computed(() => ({
+      id: 'account',
+      label: 'Account',
+      expanded: true,
+      items: [
+        {
+          id: 'notifications',
+          label: 'Notifications',
+          routerLink: '/account/notifications',
+          badge: notificationBadge(),
+        },
+      ],
+    })),
   };
 
   beforeEach(() => {
-    mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
-    mockOrganizationMemberAccess.permissions.set([
-      ORGANIZATION_PERMISSION.DASHBOARD_READ,
-      ORGANIZATION_PERMISSION.FACILITIES_READ,
-      ORGANIZATION_PERMISSION.EQUIPMENT_READ,
-      ORGANIZATION_PERMISSION.INSPECTION_READ,
-    ]);
-    mockNotificationCenterPort.unreadCount.set(0);
-    mockNotificationCenterPort.hasUnread.set(false);
+    orgSectionVisible.set(true);
+    notificationBadge.set(undefined);
 
     TestBed.configureTestingModule({
       providers: [
         DashboardSidebarNavigationService,
-        { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
-        { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
-        { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
+        { provide: SIDEBAR_NAVIGATION_SLOT, useValue: homeContribution, multi: true },
+        { provide: SIDEBAR_NAVIGATION_SLOT, useValue: orgContribution, multi: true },
+        { provide: SIDEBAR_NAVIGATION_SLOT, useValue: accountContribution, multi: true },
       ],
     });
 
@@ -72,55 +83,39 @@ describe('DashboardSidebarNavigationService', () => {
     expect(labels).toEqual(['Home', 'Organization', 'Account']);
   });
 
-  it('should prefix organization routerLinks with the active organization path', () => {
-    const menuItems = service.menuItems();
-    const organization = menuItems.find((item) => item.label === 'Organization');
-    const dashboardItem = organization?.items?.find((item) => item.label === 'Dashboard');
-
-    expect(dashboardItem?.routerLink).toBe('/organizations/org-1');
-  });
-
   it('should expose global navigation entries for home and organizations', () => {
-    const menuItems = service.menuItems();
-    const home = menuItems.find((item) => item.label === 'Home');
+    const home = service.menuItems().find((item) => item.label === 'Home');
 
     expect(home?.items?.map((item) => item.label)).toEqual(['Home', 'Organizations']);
-    expect(home?.items?.find((item) => item.label === 'Home')?.routerLink).toBe('/');
-    expect(home?.items?.find((item) => item.label === 'Organizations')?.routerLink).toBe(
-      '/organizations',
-    );
   });
 
-  it('should filter organization navigation items by granted permissions', () => {
-    mockOrganizationMemberAccess.permissions.set([ORGANIZATION_PERMISSION.FACILITIES_READ]);
+  it('should respect contribution order when sections are registered out of order', () => {
+    TestBed.resetTestingModule();
 
-    const organization = service.menuItems().find((item) => item.label === 'Organization');
+    TestBed.configureTestingModule({
+      providers: [
+        DashboardSidebarNavigationService,
+        // Registered in reverse order to validate sorting by `order`
+        { provide: SIDEBAR_NAVIGATION_SLOT, useValue: accountContribution, multi: true },
+        { provide: SIDEBAR_NAVIGATION_SLOT, useValue: orgContribution, multi: true },
+        { provide: SIDEBAR_NAVIGATION_SLOT, useValue: homeContribution, multi: true },
+      ],
+    });
 
-    expect(organization?.items?.map((item) => item.label)).toEqual(['Facilities']);
+    const outOfOrderService = TestBed.inject(DashboardSidebarNavigationService);
+    const labels = outOfOrderService.menuItems().map((item) => item.label);
+
+    expect(labels).toEqual(['Home', 'Organization', 'Account']);
   });
 
-  it('should support wildcard organization permissions', () => {
-    mockOrganizationMemberAccess.permissions.set([ORGANIZATION_PERMISSION.ALL]);
-
-    const organization = service.menuItems().find((item) => item.label === 'Organization');
-
-    expect(organization?.items?.map((item) => item.label)).toEqual([
-      'Dashboard',
-      'Facilities',
-      'Equipments',
-      'Inspections',
-    ]);
-  });
-
-  it('should hide the organization section when no active organization is selected', () => {
-    mockOrganizationStore.selectedOrganization.set(null);
+  it('should hide a section when its contribution returns null', () => {
+    orgSectionVisible.set(false);
 
     expect(service.menuItems().map((item) => item.label)).toEqual(['Home', 'Account']);
   });
 
-  it('should expose notification unread count as a badge', () => {
-    mockNotificationCenterPort.unreadCount.set(4);
-    mockNotificationCenterPort.hasUnread.set(true);
+  it('should surface the notification badge from the account contribution', () => {
+    notificationBadge.set('4');
 
     const account = service.menuItems().find((item) => item.label === 'Account');
     const notifications = account?.items?.find((item) => item.label === 'Notifications');
@@ -153,22 +148,22 @@ describe('DashboardSidebarNavigationService', () => {
   });
 
   describe('primaryItems', () => {
-    it('should contain only Home and Account sections', () => {
+    it('should contain all non-null sections', () => {
+      const labels = service.primaryItems().map((item) => item.label);
+
+      expect(labels).toEqual(['Home', 'Organization', 'Account']);
+    });
+
+    it('should exclude sections with a null contribution', () => {
+      orgSectionVisible.set(false);
+
       const labels = service.primaryItems().map((item) => item.label);
 
       expect(labels).toEqual(['Home', 'Account']);
     });
 
-    it('should never include the Organization section', () => {
-      mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
-
-      const labels = service.primaryItems().map((item) => item.label);
-
-      expect(labels).not.toContain('Organization');
-    });
-
     it('should surface the notification badge', () => {
-      mockNotificationCenterPort.unreadCount.set(7);
+      notificationBadge.set('7');
 
       const account = service.primaryItems().find((item) => item.label === 'Account');
       const notifications = account?.items?.find((item) => item.label === 'Notifications');
@@ -181,7 +176,7 @@ describe('DashboardSidebarNavigationService', () => {
 
       const labels = service.primaryItems().map((item) => item.label);
 
-      expect(labels).toEqual(['Home', 'Account']);
+      expect(labels).toEqual(['Home', 'Organization', 'Account']);
     });
   });
 });

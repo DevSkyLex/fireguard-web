@@ -1,6 +1,6 @@
 export { AUTH_SESSION_PORT, AUTH_LOGOUT_PORT } from './ports';
 export type { AuthSessionPort, AuthLogoutPort } from './ports';
-export { provideAuth } from './providers';
+export { provideAuthFeature } from './auth.feature';
 export { authInterceptor, unauthorizedInterceptor } from './http/interceptors';
 export {
   authGuard,

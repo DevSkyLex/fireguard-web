@@ -2,9 +2,7 @@ import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { DASHBOARD_CONTEXT_PANEL_CONTRIBUTION } from '@core/ports/dashboard-context-panel';
-import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
-import { AUTH_LOGOUT_PORT } from '@features/auth';
+import { CONTEXT_PANEL_SLOT } from '@layouts/dashboard-layout/slots/context-panel';
 import { ORGANIZATION_CONTEXT_PORT, ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
 import { DashboardLayoutHeader } from '../components';
 import { DashboardLayout } from '../dashboard-layout.component';
@@ -89,24 +87,6 @@ const mockPointerCapture = (handle: HTMLButtonElement): ReturnType<typeof vi.fn>
 const createDomRect = (left: number): DOMRect => new DOMRect(left, 0, 0, 0);
 
 describe('DashboardLayout', () => {
-  const mockUserStore = {
-    isLoading: signal(false),
-    avatarUrl: signal<string | null>(null),
-    initials: signal<string | null>('FG'),
-    displayName: signal<string | null>('Fireguard User'),
-    profile: signal<{ email?: string } | null>({ email: 'user@fireguard.local' }),
-  };
-  const mockNotificationCenterPort = {
-    unreadCount: signal(0),
-    hasUnread: signal(false),
-    initialize: vi.fn().mockResolvedValue(undefined),
-    load: vi.fn(),
-    connectMercure: vi.fn(),
-  };
-  const mockAuthLogoutPort = {
-    isLoggingOut: signal(false),
-    logout: vi.fn(),
-  };
   const mockOrganizationStore = {
     selectedOrganization: signal<(typeof MOCK_ORG) | null>(MOCK_ORG),
     organizations: signal([MOCK_ORG]),
@@ -130,15 +110,10 @@ describe('DashboardLayout', () => {
     id: 'test',
     priority: 10,
     component: ContributionStub,
-    isActive: contributionIsActive,
+    active: contributionIsActive,
   };
 
   beforeEach(() => {
-    mockAuthLogoutPort.isLoggingOut.set(false);
-    mockAuthLogoutPort.logout.mockReset();
-    mockNotificationCenterPort.initialize.mockReset();
-    mockNotificationCenterPort.initialize.mockResolvedValue(undefined);
-    mockNotificationCenterPort.connectMercure.mockReset();
     mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
     contributionIsActive.set(true);
 
@@ -146,12 +121,9 @@ describe('DashboardLayout', () => {
       imports: [DashboardLayout],
       providers: [
         provideRouter([]),
-        { provide: USER_IDENTITY_PORT, useValue: mockUserStore },
-        { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
-        { provide: AUTH_LOGOUT_PORT, useValue: mockAuthLogoutPort },
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
-        { provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION, useValue: mockContribution, multi: true },
+        { provide: CONTEXT_PANEL_SLOT, useValue: mockContribution, multi: true },
       ],
     }).overrideComponent(DashboardLayoutHeader, {
       set: {
@@ -186,14 +158,6 @@ describe('DashboardLayout', () => {
     expect(
       fixture.debugElement.query(By.css('app-dashboard-layout-context-panel')),
     ).toBeFalsy();
-  });
-
-  it('should initialize notifications and connect Mercure when a profile is available', () => {
-    const fixture = TestBed.createComponent(DashboardLayout);
-    fixture.detectChanges();
-
-    expect(mockNotificationCenterPort.initialize).toHaveBeenCalledTimes(1);
-    expect(mockNotificationCenterPort.connectMercure).toHaveBeenCalledTimes(1);
   });
 
   it('should render an accessible desktop resize handle', () => {

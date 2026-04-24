@@ -11,8 +11,8 @@ import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/por
 import { AUTH_LOGOUT_PORT, authStoreEvents, type AuthLogoutPort } from '@features/auth';
 
 /**
- * Component DashboardLayoutHeaderUserMenu
- * @class DashboardLayoutHeaderUserMenu
+ * Component AccountUserMenu
+ * @class AccountUserMenu
  *
  * @description
  * Compact avatar button rendered in the dashboard header (far-right slot)
@@ -25,18 +25,18 @@ import { AUTH_LOGOUT_PORT, authStoreEvents, type AuthLogoutPort } from '@feature
  *
  * @example
  * ```html
- * <app-dashboard-layout-header-user-menu />
+ * <app-account-user-menu />
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-dashboard-layout-header-user-menu',
+  selector: 'app-account-user-menu',
   imports: [AvatarModule, DividerModule, MenuModule, SkeletonModule],
-  templateUrl: './dashboard-layout-header-user-menu.component.html',
+  templateUrl: './account-user-menu.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DashboardLayoutHeaderUserMenu {
+export class AccountUserMenu {
   //#region Properties
   /**
    * Property menu
@@ -74,7 +74,7 @@ export class DashboardLayoutHeaderUserMenu {
    *
    * @description
    * Port providing logout state and triggering logout without coupling
-   * the layout to the concrete AuthStore.
+   * the component to the concrete AuthStore.
    *
    * @access protected
    * @since 1.0.0

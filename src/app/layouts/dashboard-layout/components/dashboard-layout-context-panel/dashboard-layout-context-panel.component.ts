@@ -8,9 +8,9 @@ import {
   type Type,
 } from '@angular/core';
 import {
-  DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
-  type DashboardContextPanelContribution,
-} from '@core/ports/dashboard-context-panel';
+  CONTEXT_PANEL_SLOT,
+  type ContextPanelContribution,
+} from '@layouts/dashboard-layout/slots/context-panel';
 
 /**
  * Component DashboardLayoutContextPanel
@@ -29,7 +29,7 @@ import {
  *
  * Features register contributions via:
  * ```typescript
- * { provide: DASHBOARD_CONTEXT_PANEL_CONTRIBUTION, useFactory: ..., multi: true }
+ * { provide: CONTEXT_PANEL_SLOT, useFactory: ..., multi: true }
  * ```
  *
  * @version 2.0.0
@@ -61,11 +61,11 @@ export class DashboardLayoutContextPanel {
    * @access private
    * @since 2.0.0
    *
-   * @type {DashboardContextPanelContribution[]}
+   * @type {ContextPanelContribution[]}
    */
-  private readonly contributions: DashboardContextPanelContribution[] =
-    inject<DashboardContextPanelContribution[]>(
-      DASHBOARD_CONTEXT_PANEL_CONTRIBUTION,
+  private readonly contributions: ContextPanelContribution[] =
+    inject<ContextPanelContribution[]>(
+      CONTEXT_PANEL_SLOT,
       { optional: true },
     ) ?? [];
 
@@ -84,12 +84,12 @@ export class DashboardLayoutContextPanel {
    */
   public readonly activeComponent: Signal<Type<unknown> | null> = computed(
     (): Type<unknown> | null => {
-      const active: DashboardContextPanelContribution | undefined = [...this.contributions]
+      const active: ContextPanelContribution | undefined = [...this.contributions]
         .sort(
-          (a: DashboardContextPanelContribution, b: DashboardContextPanelContribution) =>
+          (a: ContextPanelContribution, b: ContextPanelContribution) =>
             b.priority - a.priority,
         )
-        .find((c: DashboardContextPanelContribution) => c.isActive());
+        .find((c: ContextPanelContribution) => c.active());
 
       return active?.component ?? null;
     },

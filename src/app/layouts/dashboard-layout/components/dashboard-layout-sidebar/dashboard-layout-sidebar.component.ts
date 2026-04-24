@@ -60,5 +60,20 @@ export class DashboardLayoutSidebar {
    * @type {InputSignal<'primary' | 'mobile'>}
    */
   readonly variant = input<'primary' | 'mobile'>('mobile');
+
+  /**
+   * Property iconOnly
+   * @readonly
+   *
+   * @description
+   * When true, renders the navigation in icon-only mode (no labels).
+   * Used for the tablet breakpoint of the primary sidebar.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  readonly iconOnly = input<boolean>(false);
   //#endregion
 }

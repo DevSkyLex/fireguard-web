@@ -1,35 +1,4 @@
 <div class="flex flex-col gap-4 p-3">
-  <div class="flex flex-col">
-    <label class="sr-only" for="org-nav-search">Search navigation</label>
-    <p-iconfield class="w-full">
-      <p-inputicon class="pi pi-search" />
-      <input
-        #searchInput
-        pInputText
-        id="org-nav-search"
-        type="search"
-        class="w-full"
-        placeholder="Search..."
-        data-testid="sidebar-search-input"
-        [value]="searchQuery()"
-        (input)="onSearchQueryChange(searchInput.value)"
-      />
-
-      @if (searchQuery()) {
-        <p-inputicon
-          class="pi pi-times cursor-pointer text-xs text-surface-500 transition-colors hover:text-surface-700"
-          role="button"
-          tabindex="0"
-          aria-label="Clear search"
-          data-testid="sidebar-search-clear"
-          (click)="onClearSearch()"
-          (keydown.enter)="onClearSearch()"
-          (keydown.space)="$event.preventDefault(); onClearSearch()"
-        />
-      }
-    </p-iconfield>
-  </div>
-
   <nav class="flex-1 overflow-y-auto">
     @if (navigationItems().length === 0) {
       <div

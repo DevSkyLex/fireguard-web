@@ -1,14 +1,9 @@
 @if (userIdentityPort.isLoading()) {
-  <p-skeleton
-    shape="circle"
-    size="2rem"
-    data-testid="header-user-menu-skeleton"
-    aria-busy="true"
-  />
+  <p-skeleton shape="circle" size="2rem" data-testid="header-user-menu-skeleton" aria-busy="true" />
 } @else {
   <button
     type="button"
-    class="flex cursor-pointer items-center rounded-full ring-offset-1 transition-all hover:ring-2 hover:ring-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    class="flex cursor-pointer items-center rounded-full ring-offset-1 transition-all hover:ring-2 hover:ring-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
     aria-label="Open user menu"
     aria-haspopup="true"
     data-testid="header-user-menu-trigger"

@@ -3,7 +3,9 @@
   class="flex min-h-full flex-col items-center justify-center px-4 py-16 text-center"
 >
   <!-- Icon -->
-  <div class="mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-950">
+  <div
+    class="mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-950"
+  >
     <i class="pi pi-wrench text-5xl text-primary-500"></i>
   </div>
 
@@ -19,9 +21,5 @@
   </p>
 
   <!-- Retry -->
-  <p-button
-    label="Try again"
-    icon="pi pi-refresh"
-    (onClick)="refresh()"
-  />
+  <p-button label="Try again" icon="pi pi-refresh" (onClick)="refresh()" />
 </div>

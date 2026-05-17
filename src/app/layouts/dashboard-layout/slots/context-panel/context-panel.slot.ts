@@ -14,7 +14,6 @@ import type { ContextPanelContribution } from './context-panel-contribution.inte
  *
  * @type {InjectionToken<ContextPanelContribution[]>}
  */
-export const CONTEXT_PANEL_SLOT: InjectionToken<ContextPanelContribution[]> =
-  new InjectionToken<ContextPanelContribution[]>(
-    'CONTEXT_PANEL_SLOT',
-  );
+export const CONTEXT_PANEL_SLOT: InjectionToken<ContextPanelContribution[]> = new InjectionToken<
+  ContextPanelContribution[]
+>('CONTEXT_PANEL_SLOT');

@@ -13,7 +13,11 @@
       [class.w-16]="!isDesktopSidebar()"
       [class.w-52]="isDesktopSidebar()"
     >
-      <app-dashboard-layout-sidebar class="w-full" variant="primary" [iconOnly]="!isDesktopSidebar()" />
+      <app-dashboard-layout-sidebar
+        class="w-full"
+        variant="primary"
+        [iconOnly]="!isDesktopSidebar()"
+      />
     </aside>
 
     <!-- Context panel: visible only when a contribution is active, resizable -->

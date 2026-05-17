@@ -7,10 +7,20 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   quality:
-    name: Validate build
+    name: Quality gates
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: true
 
     steps:
       - name: Checkout repository
@@ -25,9 +35,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint (non-blocking)
-        continue-on-error: true
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint
         run: npm run lint
+
+      - name: Run unit tests
+        run: npm run test:ci
 
       - name: Build
         run: npm run build
@@ -37,6 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality
     if: github.event_name != 'pull_request'
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
@@ -62,8 +78,8 @@ jobs:
       - name: Validate build configuration
         shell: bash
         run: |
-          test -n "${{ secrets['APP_API_URL'] }}" || { echo "APP_API_URL secret is required."; exit 1; }
-          test -n "${{ secrets['APP_MERCURE_HUB_URL'] }}" || { echo "APP_MERCURE_HUB_URL secret is required."; exit 1; }
+          test -n "${{ secrets.APP_API_URL }}" || { echo "APP_API_URL secret is required."; exit 1; }
+          test -n "${{ secrets.APP_MERCURE_HUB_URL }}" || { echo "APP_MERCURE_HUB_URL secret is required."; exit 1; }
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -84,22 +100,23 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            APP_API_URL=${{ secrets['APP_API_URL'] }}
-            APP_MERCURE_HUB_URL=${{ secrets['APP_MERCURE_HUB_URL'] }}
-            APP_NAME=${{ vars['APP_NAME'] || 'Fireguard' }}
-            APP_MAINTENANCE=${{ vars['APP_MAINTENANCE'] || 'false' }}
+            APP_API_URL=${{ secrets.APP_API_URL }}
+            APP_MERCURE_HUB_URL=${{ secrets.APP_MERCURE_HUB_URL }}
+            APP_NAME=${{ vars.APP_NAME || 'Fireguard' }}
+            APP_MAINTENANCE=${{ vars.APP_MAINTENANCE || 'false' }}
 
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
     needs: docker
     if: github.event_name != 'pull_request'
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: read
     env:
-      APP_DIR: ${{ vars['VPS_APP_DIR'] || 'apps/fireguard-sso-web' }}
-      APP_PORT: ${{ vars['VPS_APP_PORT'] || '4000' }}
+      APP_DIR: ${{ vars.VPS_APP_DIR || 'apps/fireguard-sso-web' }}
+      APP_PORT: ${{ vars.VPS_APP_PORT || '4000' }}
       CONTAINER_NAME: fireguard-sso-web
       GHCR_USERNAME: ${{ github.actor }}
       GHCR_TOKEN: ${{ github.token }}
@@ -109,9 +126,9 @@ jobs:
       - name: Validate deploy configuration
         shell: bash
         run: |
-          test -n "${{ secrets['VPS_HOST'] }}" || { echo "VPS_HOST secret is required."; exit 1; }
-          test -n "${{ secrets['VPS_USER'] }}" || { echo "VPS_USER secret is required."; exit 1; }
-          test -n "${{ secrets['VPS_SSH_KEY'] }}" || { echo "VPS_SSH_KEY secret is required."; exit 1; }
+          test -n "${{ secrets.VPS_HOST }}" || { echo "VPS_HOST secret is required."; exit 1; }
+          test -n "${{ secrets.VPS_USER }}" || { echo "VPS_USER secret is required."; exit 1; }
+          test -n "${{ secrets.VPS_SSH_KEY }}" || { echo "VPS_SSH_KEY secret is required."; exit 1; }
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -119,10 +136,10 @@ jobs:
       - name: Prepare remote directory
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets['VPS_HOST'] }}
-          username: ${{ secrets['VPS_USER'] }}
-          key: ${{ secrets['VPS_SSH_KEY'] }}
-          port: ${{ secrets['VPS_PORT'] || '22' }}
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
           script_stop: true
           script: |
             mkdir -p "${{ env.APP_DIR }}"
@@ -130,10 +147,10 @@ jobs:
       - name: Upload docker-compose file
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets['VPS_HOST'] }}
-          username: ${{ secrets['VPS_USER'] }}
-          key: ${{ secrets['VPS_SSH_KEY'] }}
-          port: ${{ secrets['VPS_PORT'] || '22' }}
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
           source: docker-compose.prod.yml
           target: ${{ env.APP_DIR }}
 
@@ -147,10 +164,10 @@ jobs:
           GHCR_TOKEN: ${{ env.GHCR_TOKEN }}
           IMAGE_REF: ${{ env.IMAGE_REF }}
         with:
-          host: ${{ secrets['VPS_HOST'] }}
-          username: ${{ secrets['VPS_USER'] }}
-          key: ${{ secrets['VPS_SSH_KEY'] }}
-          port: ${{ secrets['VPS_PORT'] || '22' }}
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
           envs: APP_DIR,APP_PORT,CONTAINER_NAME,GHCR_USERNAME,GHCR_TOKEN,IMAGE_REF
           script_stop: true
           script: |

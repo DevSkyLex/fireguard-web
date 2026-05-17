@@ -27,6 +27,7 @@ describe('DashboardSidebarNavigationService', () => {
   const orgContribution: SidebarNavigationContribution = {
     id: 'organization',
     order: 20,
+    includeInPrimary: false,
     section: computed(() =>
       orgSectionVisible()
         ? {
@@ -148,10 +149,10 @@ describe('DashboardSidebarNavigationService', () => {
   });
 
   describe('primaryItems', () => {
-    it('should contain all non-null sections', () => {
+    it('should contain only sections included in the primary sidebar', () => {
       const labels = service.primaryItems().map((item) => item.label);
 
-      expect(labels).toEqual(['Home', 'Organization', 'Account']);
+      expect(labels).toEqual(['Home', 'Account']);
     });
 
     it('should exclude sections with a null contribution', () => {
@@ -176,7 +177,7 @@ describe('DashboardSidebarNavigationService', () => {
 
       const labels = service.primaryItems().map((item) => item.label);
 
-      expect(labels).toEqual(['Home', 'Organization', 'Account']);
+      expect(labels).toEqual(['Home', 'Account']);
     });
   });
 });

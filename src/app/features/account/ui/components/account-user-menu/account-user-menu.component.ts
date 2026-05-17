@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, viewChild, type Signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  viewChild,
+  type Signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
@@ -81,8 +88,7 @@ export class AccountUserMenu {
    *
    * @type {AuthLogoutPort}
    */
-  protected readonly authLogoutPort: AuthLogoutPort =
-    inject<AuthLogoutPort>(AUTH_LOGOUT_PORT);
+  protected readonly authLogoutPort: AuthLogoutPort = inject<AuthLogoutPort>(AUTH_LOGOUT_PORT);
 
   /**
    * Property router
@@ -125,24 +131,22 @@ export class AccountUserMenu {
    *
    * @type {Signal<MenuItem[]>}
    */
-  protected readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>(
-    (): MenuItem[] => [
-      {
-        label: 'Settings',
-        icon: 'pi pi-cog',
-        routerLink: '/account',
-        data: { testid: 'header-user-menu-settings' },
-      },
-      { separator: true },
-      {
-        label: this.authLogoutPort.isLoggingOut() ? 'Logging out...' : 'Logout',
-        icon: 'pi pi-sign-out',
-        disabled: this.authLogoutPort.isLoggingOut(),
-        command: (): void => this.onLogout(),
-        data: { testid: 'header-user-menu-logout' },
-      },
-    ],
-  );
+  protected readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] => [
+    {
+      label: 'Settings',
+      icon: 'pi pi-cog',
+      routerLink: '/account',
+      data: { testid: 'header-user-menu-settings' },
+    },
+    { separator: true },
+    {
+      label: this.authLogoutPort.isLoggingOut() ? 'Logging out...' : 'Logout',
+      icon: 'pi pi-sign-out',
+      disabled: this.authLogoutPort.isLoggingOut(),
+      command: (): void => this.onLogout(),
+      data: { testid: 'header-user-menu-logout' },
+    },
+  ]);
   //#endregion
 
   //#region Constructor

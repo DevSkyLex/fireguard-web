@@ -1,6 +1,6 @@
 import type { OrganizationFeature } from '@features/organization/organization.feature';
-import { HEADER_ACTION_SLOT } from '@layouts/dashboard-layout/slots/header-action';
 import { OrganizationSwitcher } from '@features/organization/ui/components/organization-switcher/organization-switcher.component';
+import { HEADER_ACTION_SLOT } from '@layouts/dashboard-layout/slots/header-action';
 
 /**
  * Function withOrganizationHeaderAction

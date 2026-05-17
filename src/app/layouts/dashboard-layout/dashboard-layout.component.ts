@@ -1,23 +1,27 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ChangeDetectionStrategy, computed, inject, type Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { map } from 'rxjs';
 import { DrawerModule } from 'primeng/drawer';
 import { Ripple } from 'primeng/ripple';
+import { map } from 'rxjs';
 import { BreadcrumbService } from '@core/services/breadcrumb';
-import {
-  CONTEXT_PANEL_SLOT,
-  type ContextPanelContribution,
-} from '@layouts/dashboard-layout/slots/context-panel';
 import {
   DashboardLayoutHeader,
   DashboardLayoutSidebar,
   DashboardLayoutContent,
   DashboardLayoutContextPanel,
 } from '@layouts/dashboard-layout/components';
+import {
+  CONTEXT_PANEL_SLOT,
+  type ContextPanelContribution,
+} from '@layouts/dashboard-layout/slots/context-panel';
 import { DashboardSidebarResizeHandleDirective } from './directives';
-import { DashboardSidebarNavigationService, DashboardSidebarService, DashboardHeaderActionsService } from './services';
+import {
+  DashboardSidebarNavigationService,
+  DashboardSidebarService,
+  DashboardHeaderActionsService,
+} from './services';
 
 /**
  * Component DashboardLayout
@@ -56,7 +60,12 @@ import { DashboardSidebarNavigationService, DashboardSidebarService, DashboardHe
     Ripple,
     DashboardSidebarResizeHandleDirective,
   ],
-  providers: [DashboardSidebarService, DashboardSidebarNavigationService, DashboardHeaderActionsService, BreadcrumbService],
+  providers: [
+    DashboardSidebarService,
+    DashboardSidebarNavigationService,
+    DashboardHeaderActionsService,
+    BreadcrumbService,
+  ],
   templateUrl: './dashboard-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -66,13 +75,10 @@ export class DashboardLayout {
     inject<DashboardSidebarService>(DashboardSidebarService);
 
   private readonly contributions: ContextPanelContribution[] =
-    inject<ContextPanelContribution[]>(
-      CONTEXT_PANEL_SLOT,
-      { optional: true },
-    ) ?? [];
+    inject<ContextPanelContribution[]>(CONTEXT_PANEL_SLOT, { optional: true }) ?? [];
 
-  protected readonly hasActiveContextPanel: Signal<boolean> = computed(
-    (): boolean => this.contributions.some((c: ContextPanelContribution) => c.active()),
+  protected readonly hasActiveContextPanel: Signal<boolean> = computed((): boolean =>
+    this.contributions.some((c: ContextPanelContribution) => c.active()),
   );
 
   protected readonly isDesktopSidebar: Signal<boolean> = toSignal(

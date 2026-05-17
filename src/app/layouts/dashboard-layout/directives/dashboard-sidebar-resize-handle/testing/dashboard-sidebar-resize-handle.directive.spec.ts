@@ -240,7 +240,12 @@ describe('DashboardSidebarResizeHandleDirective', () => {
     const aside = getAside(fixture);
     vi.spyOn(aside, 'getBoundingClientRect').mockReturnValue(createDomRect(80));
 
-    dispatchPointerEvent(handle, 'pointerdown', { pointerId: 6, pointerType: 'mouse', button: 0, clientX: 80 });
+    dispatchPointerEvent(handle, 'pointerdown', {
+      pointerId: 6,
+      pointerType: 'mouse',
+      button: 0,
+      clientX: 80,
+    });
     // Move more than 3px → hasMoved = true
     dispatchPointerEvent(document, 'pointermove', { pointerId: 6, clientX: 300 });
     dispatchPointerEvent(document, 'pointerup', { pointerId: 6 });

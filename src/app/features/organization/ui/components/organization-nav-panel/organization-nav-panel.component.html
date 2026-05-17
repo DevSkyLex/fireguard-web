@@ -1,4 +1,33 @@
 <div class="flex flex-col gap-4 p-3">
+  <div class="flex flex-col">
+    <label class="sr-only" for="organization-sidebar-search">Search organization navigation</label>
+    <p-iconfield class="w-full">
+      <p-inputicon class="pi pi-search" />
+      <input
+        #searchInput
+        pInputText
+        id="organization-sidebar-search"
+        type="search"
+        class="w-full"
+        placeholder="Search..."
+        data-testid="sidebar-search-input"
+        (input)="onSearchQueryChange(searchInput.value)"
+      />
+
+      @if (navigationItems().length === 0 && searchInput.value) {
+        <p-inputicon
+          class="pi pi-times cursor-pointer text-xs text-surface-500 transition-colors hover:text-surface-700"
+          role="button"
+          tabindex="0"
+          aria-label="Clear search"
+          (click)="onClearSearch(); searchInput.value = ''"
+          (keydown.enter)="onClearSearch(); searchInput.value = ''"
+          (keydown.space)="$event.preventDefault(); onClearSearch(); searchInput.value = ''"
+        />
+      }
+    </p-iconfield>
+  </div>
+
   <nav class="flex-1 overflow-y-auto">
     @if (navigationItems().length === 0) {
       <div

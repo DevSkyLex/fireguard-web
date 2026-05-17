@@ -3,15 +3,21 @@ import {
   Component,
   computed,
   inject,
+  signal,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { type IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angular/router';
 import type { MotionOptions } from '@primeuix/motion';
 import type { MenuItem } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
 import { DividerModule } from 'primeng/divider';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
 import { PanelMenuModule, type PanelMenuPassThroughOptions } from 'primeng/panelmenu';
 import { RippleModule } from 'primeng/ripple';
+import { OrganizationOutput } from '@app/features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
@@ -20,7 +26,6 @@ import {
   type OrganizationMemberAccessPort,
   type OrganizationPermissionName,
 } from '@features/organization';
-import { OrganizationOutput } from '@app/features/organization/models';
 
 type OrganizationSidebarItem = Readonly<{
   id: string;
@@ -84,6 +89,9 @@ const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationSidebarItem> = [
   imports: [
     BadgeModule,
     DividerModule,
+    IconFieldModule,
+    InputIconModule,
+    InputTextModule,
     PanelMenuModule,
     RippleModule,
     RouterLink,
@@ -126,6 +134,11 @@ export class OrganizationNavPanel {
     inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT);
 
   /**
+   * Local search query used to filter organization navigation items.
+   */
+  private readonly searchQuery: WritableSignal<string> = signal<string>('');
+
+  /**
    * Property navigationItems
    * @readonly
    *
@@ -139,40 +152,46 @@ export class OrganizationNavPanel {
    *
    * @type {Signal<MenuItem[]>}
    */
-  protected readonly navigationItems: Signal<MenuItem[]> = computed<MenuItem[]>(
-    (): MenuItem[] => {
-      const organization: OrganizationOutput | null = this.organizationContext.selectedOrganization();
+  protected readonly navigationItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] => {
+    const organization: OrganizationOutput | null = this.organizationContext.selectedOrganization();
 
-      if (organization === null) return [];
+    if (organization === null) return [];
 
+    const grantedPermissions: ReadonlySet<string> = new Set(
+      this.organizationMemberAccess.permissions(),
+    );
+    const prefix: string = `/organizations/${organization.id}`;
+    const query: string = this.searchQuery().trim().toLowerCase();
 
-      const grantedPermissions: ReadonlySet<string> = new Set(
-        this.organizationMemberAccess.permissions(),
-      );
-      const prefix: string = `/organizations/${organization.id}`;
+    const visibleItems: MenuItem[] = ORGANIZATION_NAVIGATION_ITEMS.filter(
+      (item: OrganizationSidebarItem): boolean =>
+        this.hasPermissions(item.permissions, grantedPermissions),
+    ).map(
+      (item: OrganizationSidebarItem): MenuItem => ({
+        id: item.id,
+        label: item.label,
+        icon: item.icon,
+        routerLink: item.path.length > 0 ? `${prefix}/${item.path}` : prefix,
+      }),
+    );
 
-      const visibleItems: MenuItem[] = ORGANIZATION_NAVIGATION_ITEMS.filter(
-        (item: OrganizationSidebarItem): boolean =>
-          this.hasPermissions(item.permissions, grantedPermissions),
-      ).map(
-        (item: OrganizationSidebarItem): MenuItem => ({
-          id: item.id,
-          label: item.label,
-          icon: item.icon,
-          routerLink: item.path.length > 0 ? `${prefix}/${item.path}` : prefix,
-        }),
-      );
+    const filteredItems: MenuItem[] = query
+      ? visibleItems.filter(
+          (item: MenuItem): boolean => item.label?.toLowerCase().includes(query) ?? false,
+        )
+      : visibleItems;
 
-      if (visibleItems.length === 0) return [];
+    if (filteredItems.length === 0) return [];
 
-      return [{
+    return [
+      {
         id: 'organization',
         label: 'Organization',
         expanded: true,
-        items: visibleItems,
-      }];
-    },
-  );
+        items: filteredItems,
+      },
+    ];
+  });
 
   /**
    * Property panelMenuPt
@@ -257,6 +276,15 @@ export class OrganizationNavPanel {
     fragment: 'ignored',
   };
   //#endregion
+
+  //#region Methods
+  protected onSearchQueryChange(query: string): void {
+    this.searchQuery.set(query);
+  }
+
+  protected onClearSearch(): void {
+    this.searchQuery.set('');
+  }
 
   //#region Methods
   /**

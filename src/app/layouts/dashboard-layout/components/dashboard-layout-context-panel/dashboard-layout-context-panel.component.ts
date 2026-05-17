@@ -64,10 +64,7 @@ export class DashboardLayoutContextPanel {
    * @type {ContextPanelContribution[]}
    */
   private readonly contributions: ContextPanelContribution[] =
-    inject<ContextPanelContribution[]>(
-      CONTEXT_PANEL_SLOT,
-      { optional: true },
-    ) ?? [];
+    inject<ContextPanelContribution[]>(CONTEXT_PANEL_SLOT, { optional: true }) ?? [];
 
   /**
    * Property activeComponent
@@ -84,10 +81,9 @@ export class DashboardLayoutContextPanel {
    */
   public readonly activeComponent: Signal<Type<unknown> | null> = computed(
     (): Type<unknown> | null => {
-      const active: ContextPanelContribution | undefined = [...this.contributions]
-        .sort(
-          (a: ContextPanelContribution, b: ContextPanelContribution) =>
-            b.priority - a.priority,
+      const active: ContextPanelContribution | undefined = this.contributions
+        .toSorted(
+          (a: ContextPanelContribution, b: ContextPanelContribution) => b.priority - a.priority,
         )
         .find((c: ContextPanelContribution) => c.active());
 

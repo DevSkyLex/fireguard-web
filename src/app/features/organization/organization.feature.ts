@@ -45,7 +45,9 @@ export interface OrganizationFeature {
  * )
  * ```
  */
-export function provideOrganizationFeature(...features: OrganizationFeature[]): EnvironmentProviders {
+export function provideOrganizationFeature(
+  ...features: OrganizationFeature[]
+): EnvironmentProviders {
   return makeEnvironmentProviders([
     {
       provide: ORGANIZATION_CONTEXT_PORT,

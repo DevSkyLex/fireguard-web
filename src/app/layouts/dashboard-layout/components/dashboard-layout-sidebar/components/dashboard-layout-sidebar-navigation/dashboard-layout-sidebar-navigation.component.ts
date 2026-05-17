@@ -10,13 +10,13 @@ import { type IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angula
 import type { MotionOptions } from '@primeuix/motion';
 import type { MenuItem } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
-import { TooltipModule } from 'primeng/tooltip';
 import { DividerModule } from 'primeng/divider';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { PanelMenuModule, type PanelMenuPassThroughOptions } from 'primeng/panelmenu';
 import { RippleModule } from 'primeng/ripple';
+import { TooltipModule } from 'primeng/tooltip';
 import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,

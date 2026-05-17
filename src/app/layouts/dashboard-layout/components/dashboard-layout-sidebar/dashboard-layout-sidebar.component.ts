@@ -1,9 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { DashboardSidebarNavigationService } from '@layouts/dashboard-layout/services';
-import {
-  DashboardLayoutSidebarHeader,
-  DashboardLayoutSidebarNavigation,
-} from './components';
+import { DashboardLayoutSidebarHeader, DashboardLayoutSidebarNavigation } from './components';
 
 /**
  * Component DashboardLayoutSidebar
@@ -19,10 +16,7 @@ import {
  */
 @Component({
   selector: 'app-dashboard-layout-sidebar',
-  imports: [
-    DashboardLayoutSidebarHeader,
-    DashboardLayoutSidebarNavigation,
-  ],
+  imports: [DashboardLayoutSidebarHeader, DashboardLayoutSidebarNavigation],
   templateUrl: './dashboard-layout-sidebar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

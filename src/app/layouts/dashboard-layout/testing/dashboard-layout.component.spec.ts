@@ -2,8 +2,11 @@ import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import {
+  ORGANIZATION_CONTEXT_PORT,
+  ORGANIZATION_MEMBER_ACCESS_PORT,
+} from '@features/organization/ports';
 import { CONTEXT_PANEL_SLOT } from '@layouts/dashboard-layout/slots/context-panel';
-import { ORGANIZATION_CONTEXT_PORT, ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
 import { DashboardLayoutHeader } from '../components';
 import { DashboardLayout } from '../dashboard-layout.component';
 import { DashboardSidebarService } from '../services';
@@ -68,10 +71,10 @@ const getResizeHandle = (fixture: ComponentFixture<DashboardLayout>): HTMLButton
   return debugElement.nativeElement as HTMLButtonElement;
 };
 
-const getSidebar = (fixture: ComponentFixture<DashboardLayout>): HTMLElement => {
-  // Find the sidebar that owns the resize handle (the secondary sidebar).
+const getResizeContainer = (fixture: ComponentFixture<DashboardLayout>): HTMLElement => {
+  // The resize handle now sits beside the aside inside a shared wrapper.
   const handle = getResizeHandle(fixture);
-  return handle.closest('aside') as HTMLElement;
+  return handle.parentElement as HTMLElement;
 };
 
 const mockPointerCapture = (handle: HTMLButtonElement): ReturnType<typeof vi.fn> => {
@@ -88,7 +91,7 @@ const createDomRect = (left: number): DOMRect => new DOMRect(left, 0, 0, 0);
 
 describe('DashboardLayout', () => {
   const mockOrganizationStore = {
-    selectedOrganization: signal<(typeof MOCK_ORG) | null>(MOCK_ORG),
+    selectedOrganization: signal<typeof MOCK_ORG | null>(MOCK_ORG),
     organizations: signal([MOCK_ORG]),
     isLoadingOrganizations: signal(false),
     isLoadingOrganization: signal(false),
@@ -144,9 +147,7 @@ describe('DashboardLayout', () => {
     const fixture = TestBed.createComponent(DashboardLayout);
     fixture.detectChanges();
 
-    expect(
-      fixture.debugElement.query(By.css('app-dashboard-layout-context-panel')),
-    ).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('app-dashboard-layout-context-panel'))).toBeTruthy();
   });
 
   it('should not render the secondary sidebar when no contribution is active', () => {
@@ -155,9 +156,7 @@ describe('DashboardLayout', () => {
     const fixture = TestBed.createComponent(DashboardLayout);
     fixture.detectChanges();
 
-    expect(
-      fixture.debugElement.query(By.css('app-dashboard-layout-context-panel')),
-    ).toBeFalsy();
+    expect(fixture.debugElement.query(By.css('app-dashboard-layout-context-panel'))).toBeFalsy();
   });
 
   it('should render an accessible desktop resize handle', () => {
@@ -176,9 +175,9 @@ describe('DashboardLayout', () => {
 
     fixture.detectChanges();
     const handle = getResizeHandle(fixture);
-    const aside = getSidebar(fixture);
+    const resizeContainer = getResizeContainer(fixture);
     const captureSpy = mockPointerCapture(handle);
-    vi.spyOn(aside, 'getBoundingClientRect').mockReturnValue(createDomRect(100));
+    vi.spyOn(resizeContainer, 'getBoundingClientRect').mockReturnValue(createDomRect(100));
 
     dispatchPointerEvent(handle, 'pointerdown', { pointerId: 7, pointerType: 'mouse', button: 0 });
     expect(captureSpy).toHaveBeenCalledWith(7);
@@ -200,9 +199,9 @@ describe('DashboardLayout', () => {
 
     fixture.detectChanges();
     const handle = getResizeHandle(fixture);
-    const aside = getSidebar(fixture);
+    const resizeContainer = getResizeContainer(fixture);
     mockPointerCapture(handle);
-    vi.spyOn(aside, 'getBoundingClientRect')
+    vi.spyOn(resizeContainer, 'getBoundingClientRect')
       .mockReturnValueOnce(createDomRect(100))
       .mockReturnValueOnce(createDomRect(140));
 

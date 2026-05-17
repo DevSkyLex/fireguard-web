@@ -1,8 +1,8 @@
 import { computed, inject } from '@angular/core';
+import { PrimeIcons, type MenuItem } from 'primeng/api';
 import { NOTIFICATION_CENTER_PORT } from '@features/account/ports';
 import type { NotificationCenterPort } from '@features/account/ports';
 import { SIDEBAR_NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/sidebar-navigation';
-import { PrimeIcons, type MenuItem } from 'primeng/api';
 import type { AccountFeature } from '../../account.feature';
 
 /**

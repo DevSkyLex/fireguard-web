@@ -8,10 +8,12 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:ci": "ng test --watch=false",
     "lint": "oxlint -c .oxlintrc.json . --tsconfig tsconfig.json --ignore-path .gitignore",
     "lint:fix": "oxlint -c .oxlintrc.json . --tsconfig tsconfig.json --ignore-path .gitignore --fix",
     "format": "oxfmt -c .oxfmtrc.json .",
     "format:check": "oxfmt -c .oxfmtrc.json --check .",
+    "quality": "npm run format:check && npm run lint && npm run test:ci && npm run build",
     "serve:ssr:fireguard-sso-web": "node dist/fireguard-sso-web/server/server.mjs",
     "e2e": "ng e2e"
   },

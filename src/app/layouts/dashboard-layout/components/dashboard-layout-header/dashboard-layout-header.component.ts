@@ -1,8 +1,11 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { NgComponentOutlet } from '@angular/common';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { DashboardSidebarService, DashboardHeaderActionsService } from '@layouts/dashboard-layout/services';
+import {
+  DashboardSidebarService,
+  DashboardHeaderActionsService,
+} from '@layouts/dashboard-layout/services';
 import { ThemeSwitcher } from '@shared/components';
 import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
 
@@ -28,13 +31,7 @@ import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashbo
  */
 @Component({
   selector: 'app-dashboard-layout-header',
-  imports: [
-    ButtonModule,
-    RouterLink,
-    NgComponentOutlet,
-    DashboardLayoutBreadcrumb,
-    ThemeSwitcher,
-  ],
+  imports: [ButtonModule, RouterLink, NgComponentOutlet, DashboardLayoutBreadcrumb, ThemeSwitcher],
   templateUrl: './dashboard-layout-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

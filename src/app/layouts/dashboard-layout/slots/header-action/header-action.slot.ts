@@ -14,5 +14,6 @@ import type { HeaderActionContribution } from './header-action-contribution.inte
  *
  * @type {InjectionToken<HeaderActionContribution[]>}
  */
-export const HEADER_ACTION_SLOT: InjectionToken<HeaderActionContribution[]> =
-  new InjectionToken<HeaderActionContribution[]>('HEADER_ACTION_SLOT');
+export const HEADER_ACTION_SLOT: InjectionToken<HeaderActionContribution[]> = new InjectionToken<
+  HeaderActionContribution[]
+>('HEADER_ACTION_SLOT');

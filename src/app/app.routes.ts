@@ -1,7 +1,7 @@
 import type { Routes } from '@angular/router';
 import { authGuard } from '@features/auth/http/guards';
-import { onboardingGuard } from '@features/onboarding/http/guards';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
+import { onboardingGuard } from '@features/onboarding/http/guards';
 import { DashboardLayout } from './layouts/dashboard-layout';
 import { FocusedLayout } from './layouts/focused-layout';
 import { SplitLayout } from './layouts/split-layout';
@@ -56,8 +56,7 @@ export const APP_ROUTES: Routes = [
       },
       {
         path: 'error',
-        loadChildren: () =>
-          import('@features/error/error.routes').then((m) => m.ERROR_ROUTES),
+        loadChildren: () => import('@features/error/error.routes').then((m) => m.ERROR_ROUTES),
       },
       {
         path: 'maintenance',

@@ -67,7 +67,12 @@ describe('DashboardLayoutContextPanel', () => {
       providers: [
         {
           provide: CONTEXT_PANEL_SLOT,
-          useValue: { id: 'test', priority: 10, component: ContributionStub, active: signal(false) },
+          useValue: {
+            id: 'test',
+            priority: 10,
+            component: ContributionStub,
+            active: signal(false),
+          },
           multi: true,
         },
       ],
@@ -85,12 +90,22 @@ describe('DashboardLayoutContextPanel', () => {
       providers: [
         {
           provide: CONTEXT_PANEL_SLOT,
-          useValue: { id: 'low', priority: 5, component: LowPriorityContribution, active: signal(true) },
+          useValue: {
+            id: 'low',
+            priority: 5,
+            component: LowPriorityContribution,
+            active: signal(true),
+          },
           multi: true,
         },
         {
           provide: CONTEXT_PANEL_SLOT,
-          useValue: { id: 'high', priority: 20, component: HighPriorityContribution, active: signal(true) },
+          useValue: {
+            id: 'high',
+            priority: 20,
+            component: HighPriorityContribution,
+            active: signal(true),
+          },
           multi: true,
         },
       ],
@@ -99,7 +114,9 @@ describe('DashboardLayoutContextPanel', () => {
     const fixture = TestBed.createComponent(DashboardLayoutContextPanel);
     fixture.detectChanges();
 
-    expect(fixture.debugElement.query(By.css('[data-testid="high-priority-content"]'))).toBeTruthy();
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="high-priority-content"]')),
+    ).toBeTruthy();
     expect(fixture.debugElement.query(By.css('[data-testid="low-priority-content"]'))).toBeFalsy();
   });
 

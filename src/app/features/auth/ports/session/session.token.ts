@@ -12,6 +12,5 @@ import type { AuthSessionPort } from './session.interface';
  *
  * @type {InjectionToken<AuthSessionPort>}
  */
-export const AUTH_SESSION_PORT: InjectionToken<AuthSessionPort> = new InjectionToken<AuthSessionPort>(
-  'AUTH_SESSION_PORT',
-);
+export const AUTH_SESSION_PORT: InjectionToken<AuthSessionPort> =
+  new InjectionToken<AuthSessionPort>('AUTH_SESSION_PORT');

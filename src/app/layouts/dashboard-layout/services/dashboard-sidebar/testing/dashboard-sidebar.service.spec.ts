@@ -115,7 +115,9 @@ describe('DashboardSidebarService', () => {
     it('should expose COLLAPSE_THRESHOLD as a public constant', () => {
       expect(DashboardSidebarService.COLLAPSE_THRESHOLD).toBeGreaterThan(0);
       expect(DashboardSidebarService.COLLAPSE_THRESHOLD).toBeLessThan(
-        DashboardSidebarService['INITIAL_MIN_WIDTH' as keyof typeof DashboardSidebarService] as number,
+        DashboardSidebarService[
+          'INITIAL_MIN_WIDTH' as keyof typeof DashboardSidebarService
+        ] as number,
       );
     });
   });

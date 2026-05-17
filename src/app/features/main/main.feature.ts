@@ -32,5 +32,5 @@ export interface MainFeature {
  * ```
  */
 export function provideMainFeature(...features: MainFeature[]): EnvironmentProviders {
-  return makeEnvironmentProviders([...features.flatMap((f) => f.providers)]);
+  return makeEnvironmentProviders(features.flatMap((f) => f.providers));
 }

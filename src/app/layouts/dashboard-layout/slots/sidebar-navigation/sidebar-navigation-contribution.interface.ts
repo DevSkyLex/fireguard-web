@@ -54,6 +54,12 @@ export interface SidebarNavigationContribution {
   readonly order: number;
 
   /**
+   * Whether this section should appear in the desktop primary sidebar.
+   * Defaults to `true`. Set to `false` for mobile/context-only sections.
+   */
+  readonly includeInPrimary?: boolean;
+
+  /**
    * Property section
    * @readonly
    *

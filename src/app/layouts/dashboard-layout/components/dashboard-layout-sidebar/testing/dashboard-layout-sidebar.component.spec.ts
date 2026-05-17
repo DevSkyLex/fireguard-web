@@ -3,9 +3,10 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
-import {
-  NOTIFICATION_CENTER_PORT,
-} from '@features/account/ports';
+import { withAccountNavigation } from '@features/account';
+import { NOTIFICATION_CENTER_PORT } from '@features/account/ports';
+import { withMainNavigation } from '@features/main';
+import { withOrganizationNavigation } from '@features/organization';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
@@ -30,7 +31,7 @@ const MOCK_ORG = {
 
 describe('DashboardLayoutSidebar', () => {
   const mockOrganizationStore = {
-    selectedOrganization: signal<(typeof MOCK_ORG) | null>(MOCK_ORG),
+    selectedOrganization: signal<typeof MOCK_ORG | null>(MOCK_ORG),
     organizations: signal([MOCK_ORG]),
     isLoadingOrganizations: signal(false),
     loadOrganizations: vi.fn(),
@@ -69,6 +70,9 @@ describe('DashboardLayoutSidebar', () => {
         DashboardSidebarNavigationService,
         DashboardSidebarService,
         provideRouter([]),
+        ...withMainNavigation().providers,
+        ...withOrganizationNavigation().providers,
+        ...withAccountNavigation().providers,
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
         { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
@@ -125,11 +129,11 @@ describe('DashboardLayoutSidebar', () => {
 
     const navigation = fixture.debugElement.query(By.directive(DashboardLayoutSidebarNavigation))
       .componentInstance as unknown as {
-      readonly onSearchInput: (value: string) => void;
+      readonly onSearchQueryChange: (value: string) => void;
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    navigation.onSearchInput('Notifications');
+    navigation.onSearchQueryChange('Notifications');
 
     const menuItems = navigation.menuItems();
     const rootLabels = menuItems.map((item) => item.label);
@@ -146,15 +150,15 @@ describe('DashboardLayoutSidebar', () => {
 
     const navigation = fixture.debugElement.query(By.directive(DashboardLayoutSidebarNavigation))
       .componentInstance as unknown as {
-      readonly onSearchInput: (value: string) => void;
-      readonly clearSearch: () => void;
+      readonly onSearchQueryChange: (value: string) => void;
+      readonly onClearSearch: () => void;
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    navigation.onSearchInput('Notifications');
+    navigation.onSearchQueryChange('Notifications');
     expect(navigation.menuItems().map((group) => group.label)).toEqual(['Account']);
 
-    navigation.clearSearch();
+    navigation.onClearSearch();
     expect(navigation.menuItems().map((group) => group.label)).toEqual([
       'Home',
       'Organization',
@@ -214,7 +218,9 @@ describe('DashboardLayoutSidebar', () => {
       }[];
     };
 
-    const organizationPanel = navigation.menuItems().find((group) => group.label === 'Organization');
+    const organizationPanel = navigation
+      .menuItems()
+      .find((group) => group.label === 'Organization');
     const dashboard = organizationPanel?.items?.find((item) => item.label === 'Dashboard');
 
     expect(dashboard?.routerLink).toBe('/organizations/org-1');

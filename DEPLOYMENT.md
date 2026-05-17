@@ -7,7 +7,9 @@ Ce projet est prepare pour un deploiement GitHub Actions vers un VPS avec Docker
 - `Dockerfile`: build multi-stage pour l'application Angular SSR.
 - `docker-compose.prod.yml`: definition du service a lancer sur le VPS.
 - `.github/workflows/ci-cd.yml`: pipeline CI/CD GitHub.
-- `Dockerfile`: generation inline du fichier Angular `src/environments/environment.ts` pendant le build de l'image.
+- `package.json`: scripts `test:ci` et `quality` pour reproduire localement les controles CI.
+
+Le `Dockerfile` genere inline le fichier Angular `src/environments/environment.ts` pendant le build de l'image.
 
 ## Secrets GitHub a creer
 
@@ -39,9 +41,13 @@ Ce projet est prepare pour un deploiement GitHub Actions vers un VPS avec Docker
 
 ## Fonctionnement du pipeline
 
-1. Sur pull request, la pipeline lance `npm ci`, `npm run lint` et `npm run build`.
+1. Sur pull request, la pipeline lance `npm ci`, `npm run format:check`, `npm run lint`, `npm run test:ci` et `npm run build`.
 2. Sur `main` et en execution manuelle, la pipeline injecte la configuration Angular de production au build de l'image Docker SSR puis pousse l'image sur GHCR.
 3. GitHub Actions copie `docker-compose.prod.yml` sur le VPS, ecrit un fichier `.env` minimal et relance le service.
+
+## Verification locale avant push
+
+- `npm run quality`: reproduit les controles bloquants de la CI.
 
 ## Premiere mise en service
 
@@ -58,4 +64,3 @@ La configuration front publique est compilee dans l'image via le mecanisme Angul
 ## Methode Angular retenue
 
 L'application utilise a nouveau le pattern officiel Angular de configuration par fichier d'environnement compile au build. Le code Angular importe `@env/environment`; la partie Docker/CI se contente de generer ce fichier de production juste avant `ng build`.
-

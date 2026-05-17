@@ -12,5 +12,6 @@ import type { AuthLogoutPort } from './logout.interface';
  *
  * @type {InjectionToken<AuthLogoutPort>}
  */
-export const AUTH_LOGOUT_PORT: InjectionToken<AuthLogoutPort> =
-  new InjectionToken<AuthLogoutPort>('AUTH_LOGOUT_PORT');
+export const AUTH_LOGOUT_PORT: InjectionToken<AuthLogoutPort> = new InjectionToken<AuthLogoutPort>(
+  'AUTH_LOGOUT_PORT',
+);

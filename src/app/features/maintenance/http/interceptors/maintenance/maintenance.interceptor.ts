@@ -35,8 +35,7 @@ export const maintenanceInterceptor: HttpInterceptorFn = (
    *
    * @type {MaintenanceStore}
    */
-  const store: MaintenanceStore =
-    inject<MaintenanceStore>(MaintenanceStore);
+  const store: MaintenanceStore = inject<MaintenanceStore>(MaintenanceStore);
 
   /**
    * Constant router
@@ -48,8 +47,7 @@ export const maintenanceInterceptor: HttpInterceptorFn = (
    *
    * @type {Router}
    */
-  const router: Router =
-    inject<Router>(Router);
+  const router: Router = inject<Router>(Router);
 
   // Pass through the request and catch errors
   return next(req).pipe(

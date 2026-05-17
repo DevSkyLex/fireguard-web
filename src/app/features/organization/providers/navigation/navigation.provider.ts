@@ -1,16 +1,16 @@
 import { computed, inject } from '@angular/core';
+import type { MenuItem } from 'primeng/api';
+import {
+  ORGANIZATION_PERMISSION,
+  type OrganizationPermissionName,
+} from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
   type OrganizationContextPort,
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
-import {
-  ORGANIZATION_PERMISSION,
-  type OrganizationPermissionName,
-} from '@features/organization/models';
 import { SIDEBAR_NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/sidebar-navigation';
-import type { MenuItem } from 'primeng/api';
 import type { OrganizationFeature } from '../../organization.feature';
 
 type OrganizationSidebarNavigationItem = Readonly<{
@@ -138,11 +138,14 @@ export function withOrganizationNavigation(): OrganizationFeature {
         provide: SIDEBAR_NAVIGATION_SLOT,
         useFactory: () => {
           const context: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
-          const memberAccess: OrganizationMemberAccessPort = inject(ORGANIZATION_MEMBER_ACCESS_PORT);
+          const memberAccess: OrganizationMemberAccessPort = inject(
+            ORGANIZATION_MEMBER_ACCESS_PORT,
+          );
 
           return {
             id: 'organization',
             order: 20,
+            includeInPrimary: false,
             section: computed((): MenuItem | null => {
               const organization = context.selectedOrganization();
               const grantedPermissionSet: ReadonlySet<string> = new Set(memberAccess.permissions());

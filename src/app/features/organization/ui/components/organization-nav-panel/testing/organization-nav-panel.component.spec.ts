@@ -1,13 +1,19 @@
-import { signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import type { MenuItem } from 'primeng/api';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
 } from '@features/organization/ports';
 import { OrganizationNavPanel } from '../organization-nav-panel.component';
+
+@Component({
+  template: '',
+})
+class DummyRouteComponent {}
 
 const MOCK_ORG = {
   id: 'org-1',
@@ -49,11 +55,11 @@ describe('OrganizationNavPanel', () => {
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationContext },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
         provideRouter([
-          { path: '', component: class {} },
-          { path: 'organizations/:organizationId', component: class {} },
-          { path: 'organizations/:organizationId/facilities', component: class {} },
-          { path: 'organizations/:organizationId/equipments', component: class {} },
-          { path: 'organizations/:organizationId/inspections', component: class {} },
+          { path: '', component: DummyRouteComponent },
+          { path: 'organizations/:organizationId', component: DummyRouteComponent },
+          { path: 'organizations/:organizationId/facilities', component: DummyRouteComponent },
+          { path: 'organizations/:organizationId/equipments', component: DummyRouteComponent },
+          { path: 'organizations/:organizationId/inspections', component: DummyRouteComponent },
         ]),
       ],
     });
@@ -112,7 +118,6 @@ describe('OrganizationNavPanel', () => {
     const fixture = TestBed.createComponent(OrganizationNavPanel);
     fixture.detectChanges();
 
-    fixture.componentRef.setInput !== undefined;
     // Trigger search via the component's internal state
     const component = fixture.componentInstance as unknown as {
       onSearchQueryChange: (query: string) => void;

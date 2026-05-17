@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { signal, type Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -16,7 +16,7 @@ describe('DashboardLayoutHeader', () => {
     theme: currentTheme,
     setTheme: vi.fn((mode: ThemeMode) => currentTheme.set(mode)),
   };
-  const mockHeaderActionsService: Partial<DashboardHeaderActionsService> = {
+  const mockHeaderActionsService: { components: Type<unknown>[] } = {
     components: [],
   };
 
@@ -60,5 +60,3 @@ describe('DashboardLayoutHeader', () => {
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-breadcrumb'))).toBeTruthy();
   });
 });
-
-

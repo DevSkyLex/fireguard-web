@@ -38,7 +38,7 @@ export class DashboardHeaderActionsService {
   public readonly components: Type<unknown>[] = (
     inject(HEADER_ACTION_SLOT, { optional: true }) ?? []
   )
-    .sort(
+    .toSorted(
       (a: HeaderActionContribution, b: HeaderActionContribution): number => a.order - b.order,
     )
     .map((contribution: HeaderActionContribution): Type<unknown> => contribution.component);

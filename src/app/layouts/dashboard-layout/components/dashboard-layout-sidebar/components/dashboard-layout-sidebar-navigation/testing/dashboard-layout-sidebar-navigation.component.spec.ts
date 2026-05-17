@@ -2,9 +2,11 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
-import { NOTIFICATION_CENTER_PORT } from '@features/account/ports';
-import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import type { MenuItem } from 'primeng/api';
+import { NOTIFICATION_CENTER_PORT, withAccountNavigation } from '@features/account';
+import { withMainNavigation } from '@features/main';
+import { withOrganizationNavigation } from '@features/organization';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
 import {
@@ -32,7 +34,7 @@ const MOCK_ORG = {
 
 describe('DashboardLayoutSidebarNavigation', () => {
   const mockOrganizationStore = {
-    selectedOrganization: signal<(typeof MOCK_ORG) | null>(MOCK_ORG),
+    selectedOrganization: signal<typeof MOCK_ORG | null>(MOCK_ORG),
   };
   const mockOrganizationMemberAccess = {
     permissions: signal<ReadonlyArray<string>>([
@@ -66,6 +68,9 @@ describe('DashboardLayoutSidebarNavigation', () => {
       providers: [
         DashboardSidebarNavigationService,
         DashboardSidebarService,
+        ...withMainNavigation().providers,
+        ...withOrganizationNavigation().providers,
+        ...withAccountNavigation().providers,
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
         { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
@@ -111,7 +116,9 @@ describe('DashboardLayoutSidebarNavigation', () => {
     const service = TestBed.inject(DashboardSidebarNavigationService);
 
     service.setSearchQuery('Notifications');
-    const labels = (fixture.componentInstance as unknown as { readonly menuItems: () => readonly MenuItem[] })
+    const labels = (
+      fixture.componentInstance as unknown as { readonly menuItems: () => readonly MenuItem[] }
+    )
       .menuItems()
       .map((item) => item.label);
 

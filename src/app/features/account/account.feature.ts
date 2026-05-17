@@ -83,8 +83,7 @@ export function provideAccountFeature(...features: AccountFeature[]): Environmen
        *
        * @type {UserIdentityPort}
        */
-      const userIdentityPort: UserIdentityPort =
-        inject<UserIdentityPort>(USER_IDENTITY_PORT);
+      const userIdentityPort: UserIdentityPort = inject<UserIdentityPort>(USER_IDENTITY_PORT);
 
       /**
        * Constant notificationCenterPort

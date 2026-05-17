@@ -110,7 +110,9 @@ export function provideAuthFeature(): EnvironmentProviders {
       provide: AUTH_LOGOUT_PORT,
       useFactory: (authStore: AuthStore) => ({
         isLoggingOut: authStore.isLoggingOut,
-        logout: (): void => { authStore.logout(); },
+        logout: (): void => {
+          authStore.logout();
+        },
       }),
       deps: [AuthStore],
     },

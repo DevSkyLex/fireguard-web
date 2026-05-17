@@ -1,6 +1,6 @@
-import { makeEnvironmentProviders, signal } from '@angular/core';
-import { SIDEBAR_NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/sidebar-navigation';
+import { signal } from '@angular/core';
 import type { MenuItem } from 'primeng/api';
+import { SIDEBAR_NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/sidebar-navigation';
 import type { MainFeature } from '../../main.feature';
 
 /**

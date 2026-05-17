@@ -1,7 +1,7 @@
 import type { AccountFeature } from '@features/account/account.feature';
-import { HEADER_ACTION_SLOT } from '@layouts/dashboard-layout/slots/header-action';
-import { NotificationBell } from '@features/account/ui/components/notification-bell/notification-bell.component';
 import { AccountUserMenu } from '@features/account/ui/components/account-user-menu/account-user-menu.component';
+import { NotificationBell } from '@features/account/ui/components/notification-bell/notification-bell.component';
+import { HEADER_ACTION_SLOT } from '@layouts/dashboard-layout/slots/header-action';
 
 /**
  * Function withAccountHeaderActions

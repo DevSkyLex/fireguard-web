@@ -6,9 +6,9 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
+import type { MenuItem } from 'primeng/api';
 import { SIDEBAR_NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/sidebar-navigation';
 import type { SidebarNavigationContribution } from '@layouts/dashboard-layout/slots/sidebar-navigation';
-import type { MenuItem } from 'primeng/api';
 
 /**
  * Service DashboardSidebarNavigationService
@@ -44,7 +44,7 @@ export class DashboardSidebarNavigationService {
    */
   private readonly contributions: SidebarNavigationContribution[] = (
     inject(SIDEBAR_NAVIGATION_SLOT, { optional: true }) ?? []
-  ).sort(
+  ).toSorted(
     (a: SidebarNavigationContribution, b: SidebarNavigationContribution): number =>
       a.order - b.order,
   );
@@ -96,10 +96,7 @@ export class DashboardSidebarNavigationService {
     const query: string = this.searchQuery().trim();
 
     const items: MenuItem[] = this.contributions
-      .map(
-        (contribution: SidebarNavigationContribution): MenuItem | null =>
-          contribution.section(),
-      )
+      .map((contribution: SidebarNavigationContribution): MenuItem | null => contribution.section())
       .filter((item: MenuItem | null): item is MenuItem => item !== null);
 
     if (!query) {
@@ -125,9 +122,11 @@ export class DashboardSidebarNavigationService {
    */
   public readonly primaryItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] =>
     this.contributions
-      .map((contribution: SidebarNavigationContribution): MenuItem | null =>
-        contribution.section(),
+      .filter(
+        (contribution: SidebarNavigationContribution): boolean =>
+          contribution.includeInPrimary !== false,
       )
+      .map((contribution: SidebarNavigationContribution): MenuItem | null => contribution.section())
       .filter((item: MenuItem | null): item is MenuItem => item !== null),
   );
 

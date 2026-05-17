@@ -5,10 +5,13 @@
       <ul class="flex flex-col gap-0.5">
         @for (section of menuItems(); track section.id ?? section.label; let isFirst = $first) {
           @if (!isFirst) {
-            <li role="separator" class="mx-2 my-1 border-t border-surface-200 dark:border-surface-800"></li>
+            <li
+              role="separator"
+              class="mx-2 my-1 border-t border-surface-200 dark:border-surface-800"
+            ></li>
           }
 
-          @for (item of (section.items ?? []); track item.id ?? item.label) {
+          @for (item of section.items ?? []; track item.id ?? item.label) {
             <li>
               <a
                 pRipple

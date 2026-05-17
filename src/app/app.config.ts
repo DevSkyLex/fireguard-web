@@ -14,13 +14,17 @@ import { ssrCookieForwardInterceptor } from '@core/http/interceptors/ssr-cookie-
 import { providePageTitleStrategy } from '@core/routing/strategies/page-title';
 import { provideSplashScreen } from '@core/services/splash-screen';
 import { provideTheme } from '@core/services/theme';
-import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
-import { provideMaintenanceMode } from '@features/maintenance/state';
 import { FireguardTheme } from '@core/themes/fireguard.theme';
 import { environment } from '@env/environment';
-import { provideMainFeature, withMainNavigation } from '@features/main';
-import { provideAccountFeature, withAccountNavigation, withAccountHeaderActions } from '@features/account';
+import {
+  provideAccountFeature,
+  withAccountNavigation,
+  withAccountHeaderActions,
+} from '@features/account';
 import { authInterceptor, provideAuthFeature, unauthorizedInterceptor } from '@features/auth';
+import { provideMainFeature, withMainNavigation } from '@features/main';
+import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
+import { provideMaintenanceMode } from '@features/maintenance/state';
 import {
   provideOrganizationFeature,
   withOrganizationContextPanel,
@@ -62,18 +66,18 @@ export const appConfig: ApplicationConfig = {
     ),
     provideHttpClient(
       withFetch(),
-      withInterceptors([ssrCookieForwardInterceptor, authInterceptor, unauthorizedInterceptor, maintenanceInterceptor]),
+      withInterceptors([
+        ssrCookieForwardInterceptor,
+        authInterceptor,
+        unauthorizedInterceptor,
+        maintenanceInterceptor,
+      ]),
     ),
     provideEnv(environment),
     provideMaintenanceMode(),
     provideAuthFeature(),
-    provideMainFeature(
-      withMainNavigation()
-    ),
-    provideAccountFeature(
-      withAccountNavigation(),
-      withAccountHeaderActions(),
-    ),
+    provideMainFeature(withMainNavigation()),
+    provideAccountFeature(withAccountNavigation(), withAccountHeaderActions()),
     provideOrganizationFeature(
       withOrganizationNavigation(),
       withOrganizationContextPanel(),

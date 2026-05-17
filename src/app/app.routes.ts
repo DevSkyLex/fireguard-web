@@ -20,72 +20,47 @@ export const APP_ROUTES: Routes = [
     path: '',
     component: DashboardLayout,
     canActivate: [authGuard, onboardingGuard, maintenanceGuard],
-    data: {
-      breadcrumb: false,
-    },
-    loadChildren: () => import('@features/main/main.routes').then((m) => m.MAIN_ROUTES),
-  },
-  {
-    path: 'auth',
-    component: SplitLayout,
     children: [
       {
         path: '',
-        loadChildren: () => import('@features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
+        data: { breadcrumb: false },
+        loadChildren: () => import('@features/main/main.routes').then((m) => m.MAIN_ROUTES),
       },
-    ],
-  },
-  {
-    path: 'onboarding',
-    component: FocusedLayout,
-    canActivate: [authGuard, maintenanceGuard],
-    children: [
       {
-        path: '',
+        path: 'organizations',
+        data: { breadcrumb: 'Organizations' },
         loadChildren: () =>
-          import('@features/onboarding/onboarding.routes').then((m) => m.ONBOARDING_ROUTES),
+          import('@features/organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
       },
-    ],
-  },
-  {
-    path: 'organizations',
-    component: DashboardLayout,
-    canActivate: [authGuard, onboardingGuard, maintenanceGuard],
-    data: {
-      breadcrumb: 'Organizations',
-    },
-    loadChildren: () =>
-      import('@features/organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
-  },
-  {
-    path: 'account',
-    component: DashboardLayout,
-    canActivate: [authGuard, onboardingGuard, maintenanceGuard],
-    children: [
       {
-        path: '',
+        path: 'account',
         loadChildren: () =>
           import('@features/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
       },
     ],
   },
   {
-    path: 'error',
+    path: 'auth',
+    component: SplitLayout,
+    loadChildren: () => import('@features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
+  },
+  {
+    path: '',
     component: FocusedLayout,
     children: [
       {
-        path: '',
+        path: 'onboarding',
+        canActivate: [authGuard, maintenanceGuard],
+        loadChildren: () =>
+          import('@features/onboarding/onboarding.routes').then((m) => m.ONBOARDING_ROUTES),
+      },
+      {
+        path: 'error',
         loadChildren: () =>
           import('@features/error/error.routes').then((m) => m.ERROR_ROUTES),
       },
-    ],
-  },
-  {
-    path: 'maintenance',
-    component: FocusedLayout,
-    children: [
       {
-        path: '',
+        path: 'maintenance',
         loadChildren: () =>
           import('@features/maintenance/maintenance.routes').then((m) => m.MAINTENANCE_ROUTES),
       },

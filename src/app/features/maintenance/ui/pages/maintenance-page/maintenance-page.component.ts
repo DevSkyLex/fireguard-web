@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ButtonModule } from 'primeng/button';
 
 /**
  * Component MaintenancePage
@@ -13,7 +14,12 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
  */
 @Component({
   selector: 'app-maintenance-page',
+  imports: [ButtonModule],
   templateUrl: './maintenance-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MaintenancePage {}
+export class MaintenancePage {
+  public refresh(): void {
+    window.location.reload();
+  }
+}

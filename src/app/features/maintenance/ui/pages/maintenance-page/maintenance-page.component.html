@@ -1,4 +1,27 @@
-<section class="maintenance-page">
-  <h1>Under Maintenance</h1>
-  <p>The application is currently undergoing scheduled maintenance. Please check back soon.</p>
-</section>
+<div
+  id="maintenance-page"
+  class="flex min-h-full flex-col items-center justify-center px-4 py-16 text-center"
+>
+  <!-- Icon -->
+  <div class="mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-950">
+    <i class="pi pi-wrench text-5xl text-primary-500"></i>
+  </div>
+
+  <!-- Heading -->
+  <h1 class="mb-3 text-3xl font-bold tracking-tight text-surface-900 dark:text-surface-100">
+    Under Maintenance
+  </h1>
+
+  <!-- Description -->
+  <p class="mb-8 max-w-sm text-sm text-surface-500 dark:text-surface-400">
+    We're performing scheduled maintenance to improve your experience.<br />
+    Please check back in a few moments.
+  </p>
+
+  <!-- Retry -->
+  <p-button
+    label="Try again"
+    icon="pi pi-refresh"
+    (onClick)="refresh()"
+  />
+</div>

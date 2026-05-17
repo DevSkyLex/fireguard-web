@@ -1,0 +1,10 @@
+services:
+  fireguard-sso-web:
+    image: ${IMAGE_REF:?IMAGE_REF is required}
+    container_name: ${CONTAINER_NAME:-fireguard-sso-web}
+    restart: unless-stopped
+    ports:
+      - '${APP_PORT:-4000}:4000'
+    environment:
+      NODE_ENV: production
+      PORT: 4000

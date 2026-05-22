@@ -6,7 +6,9 @@ Ce projet est prepare pour un deploiement GitHub Actions vers un VPS avec Docker
 
 - `Dockerfile`: build multi-stage pour l'application Angular SSR.
 - `docker-compose.prod.yml`: definition du service a lancer sur le VPS.
-- `.github/workflows/ci-cd.yml`: pipeline CI/CD GitHub.
+- `.github/workflows/ci.yml`: controles qualite.
+- `.github/workflows/docker.yml`: build et publication de l'image Docker sur GHCR.
+- `.github/workflows/deploy-vps.yml`: deploiement VPS.
 - `package.json`: scripts `test:ci` et `quality` pour reproduire localement les controles CI.
 
 Le `Dockerfile` genere inline le fichier Angular `src/environments/environment.ts` pendant le build de l'image.
@@ -29,7 +31,7 @@ Le `Dockerfile` genere inline le fichier Angular `src/environments/environment.t
 
 - `APP_NAME`: nom d'application injecte au build. Valeur par defaut: `Fireguard`.
 - `APP_MAINTENANCE`: `true` ou `false`. Valeur par defaut: `false`.
-- `VPS_APP_DIR`: dossier de deploiement sur le VPS, relatif au home de l'utilisateur SSH. Valeur par defaut: `apps/fireguard-sso-web`.
+- `VPS_APP_DIR`: dossier de deploiement sur le VPS, relatif au home de l'utilisateur SSH. Valeur par defaut: `apps/fireguard-web`.
 - `VPS_APP_PORT`: port expose sur le VPS. Valeur par defaut: `4000`.
 
 ## Prerequis sur le VPS
@@ -41,9 +43,9 @@ Le `Dockerfile` genere inline le fichier Angular `src/environments/environment.t
 
 ## Fonctionnement du pipeline
 
-1. Sur pull request, la pipeline lance `npm ci`, `npm run format:check`, `npm run lint`, `npm run test:ci` et `npm run build`.
-2. Sur `main` et en execution manuelle, la pipeline injecte la configuration Angular de production au build de l'image Docker SSR puis pousse l'image sur GHCR.
-3. GitHub Actions copie `docker-compose.prod.yml` sur le VPS, ecrit un fichier `.env` minimal et relance le service.
+1. `CI` lance `npm ci`, `npm run format:check`, `npm run lint`, `npm run test:ci` et `npm run build` sur pull request, push `main` et execution manuelle.
+2. `Docker Image` se lance apres un `CI` reussi sur `main`, ou manuellement, injecte la configuration Angular de production au build de l'image Docker SSR puis pousse l'image sur GHCR.
+3. `Deploy VPS` se lance apres une publication Docker reussie, ou manuellement, copie `docker-compose.prod.yml` sur le VPS, ecrit un fichier `.env` minimal et relance le service.
 
 ## Verification locale avant push
 
@@ -54,7 +56,7 @@ Le `Dockerfile` genere inline le fichier Angular `src/environments/environment.t
 1. Cree les secrets et variables GitHub.
 2. Verifie que le VPS accepte la connexion SSH depuis GitHub Actions.
 3. Verifie que `docker` et `docker compose` fonctionnent avec l'utilisateur cible.
-4. Pousse sur `main` ou lance manuellement le workflow `CI/CD VPS`.
+4. Pousse sur `main` pour declencher `CI`, puis `Docker Image`, puis `Deploy VPS`.
 5. Place ensuite un reverse proxy Nginx ou Caddy devant le port expose par `VPS_APP_PORT`.
 
 ## Point important

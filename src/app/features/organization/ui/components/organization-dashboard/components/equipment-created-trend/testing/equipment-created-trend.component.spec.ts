@@ -8,6 +8,7 @@ import type {
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { EquipmentCreatedTrendStore } from '@features/organization/state/organization-dashboard';
+import { installMatchMediaMock } from '@shared/testing/match-media.mock';
 import { EquipmentCreatedTrend } from '../equipment-created-trend.component';
 
 type EquipmentCreatedTrendHarness = {
@@ -103,6 +104,7 @@ const mockActiveOrganizationStore: MockActiveOrganizationStore = {
 
 describe('EquipmentCreatedTrend', () => {
   beforeEach(() => {
+    installMatchMediaMock();
     mockDashboardStore.isQueryLoading.set(false);
     mockDashboardStore.isFilterDrawerVisible.set(false);
     mockDashboardStore.selectedDateRange.set(null);

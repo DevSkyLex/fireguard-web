@@ -8,6 +8,7 @@ import type {
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { NonConformitiesOpenedTrendStore } from '@features/organization/state/organization-dashboard';
+import { installMatchMediaMock } from '@shared/testing/match-media.mock';
 import { NonConformitiesOpenedTrend } from '../non-conformities-opened-trend.component';
 
 type NonConformitiesOpenedTrendHarness = {
@@ -103,6 +104,7 @@ const mockActiveOrganizationStore: MockActiveOrganizationStore = {
 
 describe('NonConformitiesOpenedTrend', () => {
   beforeEach(() => {
+    installMatchMediaMock();
     mockDashboardStore.isQueryLoading.set(false);
     mockDashboardStore.isFilterDrawerVisible.set(false);
     mockDashboardStore.selectedDateRange.set(null);

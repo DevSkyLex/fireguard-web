@@ -1,7 +1,9 @@
+name: fireguard-web
+
 services:
-  fireguard-sso-web:
+  fireguard-web:
     image: ${IMAGE_REF:?IMAGE_REF is required}
-    container_name: ${CONTAINER_NAME:-fireguard-sso-web}
+    container_name: ${CONTAINER_NAME:-fireguard-web}
     restart: unless-stopped
     ports:
       - '${APP_PORT:-4000}:4000'

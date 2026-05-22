@@ -1,0 +1,121 @@
+name: Deploy VPS
+
+on:
+  workflow_run:
+    workflows:
+      - Docker Image
+    branches:
+      - main
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      image_ref:
+        description: Full Docker image reference to deploy. Defaults to the latest GHCR image.
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    timeout-minutes: 20
+    env:
+      APP_DIR: ${{ vars.VPS_APP_DIR || 'apps/fireguard-web' }}
+      APP_PORT: ${{ vars.VPS_APP_PORT || '4000' }}
+      CONTAINER_NAME: fireguard-web
+
+    steps:
+      - name: Validate deploy configuration
+        shell: bash
+        run: |
+          test -n "${{ secrets.VPS_HOST }}" || { echo "VPS_HOST secret is required."; exit 1; }
+          test -n "${{ secrets.VPS_USER }}" || { echo "VPS_USER secret is required."; exit 1; }
+          test -n "${{ secrets.VPS_SSH_KEY }}" || { echo "VPS_SSH_KEY secret is required."; exit 1; }
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Prepare image reference
+        id: image
+        shell: bash
+        env:
+          INPUT_IMAGE_REF: ${{ inputs.image_ref }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          image_name="ghcr.io/${GITHUB_REPOSITORY,,}"
+
+          if [ -n "$INPUT_IMAGE_REF" ]; then
+            image_ref="$INPUT_IMAGE_REF"
+          elif [ -n "$SOURCE_SHA" ]; then
+            image_ref="${image_name}:sha-${SOURCE_SHA}"
+          else
+            image_ref="${image_name}:latest"
+          fi
+
+          echo "image_ref=${image_ref}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare remote directory
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          script_stop: true
+          script: |
+            mkdir -p "${{ env.APP_DIR }}"
+
+      - name: Upload Docker Compose file
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          source: docker-compose.prod.yml
+          target: ${{ env.APP_DIR }}
+
+      - name: Deploy application
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          APP_DIR: ${{ env.APP_DIR }}
+          APP_PORT: ${{ env.APP_PORT }}
+          CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_TOKEN: ${{ github.token }}
+          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          envs: APP_DIR,APP_PORT,CONTAINER_NAME,GHCR_USERNAME,GHCR_TOKEN,IMAGE_REF
+          script_stop: true
+          script: |
+            mkdir -p "$APP_DIR"
+
+            cat > "$APP_DIR/.env" <<EOF
+            IMAGE_REF=$IMAGE_REF
+            APP_PORT=$APP_PORT
+            CONTAINER_NAME=$CONTAINER_NAME
+            EOF
+
+            cd "$APP_DIR"
+
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml ps
+            docker logout ghcr.io

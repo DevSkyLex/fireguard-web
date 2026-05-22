@@ -8,6 +8,7 @@ import type {
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { OverviewTrendStore } from '@features/organization/state/organization-dashboard';
+import { installMatchMediaMock } from '@shared/testing/match-media.mock';
 import { OverviewTrend } from '../overview-trend.component';
 
 type OverviewTrendData = {
@@ -109,6 +110,7 @@ const mockActiveOrganizationStore: MockActiveOrganizationStore = {
 
 describe('OverviewTrend', () => {
   beforeEach(() => {
+    installMatchMediaMock();
     mockDashboardStore.isQueryLoading.set(false);
     mockDashboardStore.isFilterDrawerVisible.set(false);
     mockDashboardStore.selectedDateRange.set(null);

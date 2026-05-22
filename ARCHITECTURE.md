@@ -1,6 +1,6 @@
 # Frontend Architecture
 
-This document defines the target frontend architecture for `fireguard-sso-web`.
+This document defines the target frontend architecture for `fireguard-web`.
 
 It is normative.
 

@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { Panel } from 'primeng/panel';
 import { USER_IDENTITY_PORT } from '@features/account/ports';
 import { AuthStore } from '@features/auth/state';
+import { installMatchMediaMock } from '@shared/testing/match-media.mock';
 import { AuthUserProfile } from '../auth-user-profile.component';
 
 describe('AuthUserProfile', () => {
@@ -21,6 +22,7 @@ describe('AuthUserProfile', () => {
   };
 
   beforeEach(() => {
+    installMatchMediaMock();
     mockUserStore.isLoading.set(false);
     mockUserStore.avatarUrl.set(null);
     mockUserStore.initials.set('FG');

@@ -8,6 +8,7 @@ import type {
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { AssetGrowthTrendStore } from '@features/organization/state/organization-dashboard';
+import { installMatchMediaMock } from '@shared/testing/match-media.mock';
 import { AssetGrowthTrend } from '../asset-growth-trend.component';
 
 type MockAssetGrowthData = {
@@ -170,6 +171,7 @@ const mockActiveOrganizationStore: MockActiveOrganizationStore = {
 
 describe('AssetGrowthTrend', () => {
   beforeEach(() => {
+    installMatchMediaMock();
     mockDashboardStore.isQueryLoading.set(false);
     mockDashboardStore.isFilterDrawerVisible.set(false);
     mockDashboardStore.canReadEquipment.set(true);

@@ -8,6 +8,7 @@ import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
 } from '@features/organization/ports';
+import { installMatchMediaMock } from '@shared/testing/match-media.mock';
 import { OrganizationNavPanel } from '../organization-nav-panel.component';
 
 @Component({
@@ -41,6 +42,7 @@ describe('OrganizationNavPanel', () => {
   };
 
   beforeEach(() => {
+    installMatchMediaMock();
     mockOrganizationContext.selectedOrganization.set(MOCK_ORG);
     mockOrganizationMemberAccess.permissions.set([
       ORGANIZATION_PERMISSION.DASHBOARD_READ,

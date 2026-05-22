@@ -14,6 +14,9 @@ ARG APP_MERCURE_HUB_URL
 ARG APP_NAME=Fireguard
 ARG APP_MAINTENANCE=false
 
+RUN test -n "$APP_API_URL" || (echo "APP_API_URL build arg is required" >&2; exit 1)
+RUN test -n "$APP_MERCURE_HUB_URL" || (echo "APP_MERCURE_HUB_URL build arg is required" >&2; exit 1)
+
 RUN APP_API_URL="$APP_API_URL" \
   APP_MERCURE_HUB_URL="$APP_MERCURE_HUB_URL" \
   APP_NAME="$APP_NAME" \
@@ -39,4 +42,4 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || 4000) + '/').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-CMD ["node", "dist/fireguard-sso-web/server/server.mjs"]
+CMD ["node", "dist/fireguard-web/server/server.mjs"]

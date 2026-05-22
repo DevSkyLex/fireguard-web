@@ -1,5 +1,5 @@
 {
-  "name": "fireguard-sso-web",
+  "name": "fireguard-web",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -14,7 +14,7 @@
     "format": "oxfmt -c .oxfmtrc.json .",
     "format:check": "oxfmt -c .oxfmtrc.json --check .",
     "quality": "npm run format:check && npm run lint && npm run test:ci && npm run build",
-    "serve:ssr:fireguard-sso-web": "node dist/fireguard-sso-web/server/server.mjs",
+    "serve:ssr:fireguard-web": "node dist/fireguard-web/server/server.mjs",
     "e2e": "ng e2e"
   },
   "dependencies": {

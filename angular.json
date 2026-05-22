@@ -8,7 +8,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "fireguard-sso-web": {
+    "fireguard-web": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -95,10 +95,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "fireguard-sso-web:build:production"
+              "buildTarget": "fireguard-web:build:production"
             },
             "development": {
-              "buildTarget": "fireguard-sso-web:build:development"
+              "buildTarget": "fireguard-web:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -109,11 +109,11 @@
         "e2e": {
           "builder": "playwright-ng-schematics:playwright",
           "options": {
-            "devServerTarget": "fireguard-sso-web:serve"
+            "devServerTarget": "fireguard-web:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "fireguard-sso-web:serve:production"
+              "devServerTarget": "fireguard-web:serve:production"
             }
           }
         }

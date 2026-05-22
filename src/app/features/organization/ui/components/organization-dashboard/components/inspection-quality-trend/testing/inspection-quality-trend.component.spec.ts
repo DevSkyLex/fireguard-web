@@ -8,6 +8,7 @@ import type {
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { InspectionQualityTrendStore } from '@features/organization/state/organization-dashboard';
+import { installMatchMediaMock } from '@shared/testing/match-media.mock';
 import { InspectionQualityTrend } from '../inspection-quality-trend.component';
 
 type InspectionQualityTrendData = {
@@ -115,6 +116,7 @@ const mockActiveOrganizationStore: MockActiveOrganizationStore = {
 
 describe('InspectionQualityTrend', () => {
   beforeEach(() => {
+    installMatchMediaMock();
     mockDashboardStore.isQueryLoading.set(false);
     mockDashboardStore.isFilterDrawerVisible.set(false);
     mockDashboardStore.selectedDateRange.set(null);

@@ -12,8 +12,8 @@ import { type EnvironmentConfig } from '@core/config/environment';
  */
 export const environment: EnvironmentConfig = {
   production: true,
-  apiUrl: 'http://localhost:8000',
+  apiUrl: 'https://api.fireguard.valentin-fortin.pro',
   appName: 'Fireguard',
-  mercureHubUrl: 'http://localhost:3000/.well-known/mercure',
+  mercureHubUrl: 'https://api.fireguard.valentin-fortin.pro/.well-known/mercure',
   maintenance: false,
 };

@@ -38,14 +38,16 @@ Les variables et secrets ci-dessous peuvent etre crees dans cet environnement. L
 - `APP_NAME`: nom d'application injecte au build. Valeur par defaut: `Fireguard`.
 - `APP_MAINTENANCE`: `true` ou `false`. Valeur par defaut: `false`.
 - `VPS_APP_DIR`: dossier de deploiement sur le VPS, relatif au home de l'utilisateur SSH. Valeur par defaut: `apps/fireguard-web`.
-- `VPS_APP_PORT`: port expose sur le VPS. Valeur par defaut: `4000`.
+- `APP_HOST`: domaine public expose par Traefik. Valeur par defaut: `app.fireguard.valentin-fortin.pro`.
 
 ## Prerequis sur le VPS
 
 - Docker Engine installe.
 - Plugin Docker Compose installe (`docker compose`).
 - L'utilisateur SSH doit pouvoir executer Docker.
-- Un reverse proxy externe est recommande si tu publies l'application derriere un domaine.
+- Traefik doit deja tourner sur le VPS.
+- Le reseau Docker externe `traefik_proxy` doit exister.
+- Traefik doit exposer l'entrypoint `websecure` et le certresolver `letsencrypt`.
 
 ## Fonctionnement du pipeline
 
@@ -64,7 +66,7 @@ Les variables et secrets ci-dessous peuvent etre crees dans cet environnement. L
 2. Verifie que le VPS accepte la connexion SSH depuis GitHub Actions.
 3. Verifie que `docker` et `docker compose` fonctionnent avec l'utilisateur cible.
 4. Pousse sur `main` pour declencher `CI`, puis `Docker Image`, puis `Deploy VPS`.
-5. Place ensuite un reverse proxy Nginx ou Caddy devant le port expose par `VPS_APP_PORT`.
+5. Verifie que le DNS de `APP_HOST` pointe vers le VPS, puis teste `https://app.fireguard.valentin-fortin.pro/auth/login`.
 
 ## Point important
 

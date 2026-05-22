@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 20
     env:
       APP_DIR: ${{ vars.VPS_APP_DIR || 'apps/fireguard-web' }}
-      APP_PORT: ${{ vars.VPS_APP_PORT || '4000' }}
+      APP_HOST: ${{ vars.APP_HOST || 'app.fireguard.valentin-fortin.pro' }}
       CONTAINER_NAME: fireguard-web
 
     steps:
@@ -79,7 +79,7 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         env:
           APP_DIR: ${{ env.APP_DIR }}
-          APP_PORT: ${{ env.APP_PORT }}
+          APP_HOST: ${{ env.APP_HOST }}
           CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
           GHCR_USERNAME: ${{ github.actor }}
           GHCR_TOKEN: ${{ github.token }}
@@ -89,14 +89,14 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || '22' }}
-          envs: APP_DIR,APP_PORT,CONTAINER_NAME,GHCR_USERNAME,GHCR_TOKEN,IMAGE_REF
+          envs: APP_DIR,APP_HOST,CONTAINER_NAME,GHCR_USERNAME,GHCR_TOKEN,IMAGE_REF
           script_stop: true
           script: |
             mkdir -p "$APP_DIR"
 
             cat > "$APP_DIR/.env" <<EOF
             IMAGE_REF=$IMAGE_REF
-            APP_PORT=$APP_PORT
+            APP_HOST=$APP_HOST
             CONTAINER_NAME=$CONTAINER_NAME
             EOF
 
@@ -104,6 +104,7 @@ jobs:
 
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
             docker compose -f docker-compose.prod.yml pull
+            docker network inspect traefik_proxy >/dev/null
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
             docker compose -f docker-compose.prod.yml ps
             docker logout ghcr.io

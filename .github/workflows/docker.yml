@@ -17,6 +17,7 @@ concurrency:
 permissions:
   contents: read
   packages: write
+  actions: write
 
 jobs:
   publish:
@@ -74,3 +75,10 @@ jobs:
             APP_MERCURE_HUB_URL=${{ secrets.APP_MERCURE_HUB_URL }}
             APP_NAME=${{ vars.APP_NAME || 'Fireguard' }}
             APP_MAINTENANCE=${{ vars.APP_MAINTENANCE || 'false' }}
+
+      - name: Trigger VPS deployment
+        if: github.event_name == 'workflow_run' || github.ref_name == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
+        run: gh workflow run deploy-vps.yml --repo "$GITHUB_REPOSITORY" --ref main -f image_ref="$IMAGE_REF"

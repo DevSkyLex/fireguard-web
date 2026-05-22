@@ -1,13 +1,6 @@
 name: Deploy VPS
 
 on:
-  workflow_run:
-    workflows:
-      - Docker Image
-    branches:
-      - main
-    types:
-      - completed
   workflow_dispatch:
     inputs:
       image_ref:
@@ -27,7 +20,6 @@ jobs:
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     timeout-minutes: 20
     env:
       APP_DIR: ${{ vars.VPS_APP_DIR || 'apps/fireguard-web' }}
@@ -44,22 +36,17 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Prepare image reference
         id: image
         shell: bash
         env:
           INPUT_IMAGE_REF: ${{ inputs.image_ref }}
-          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           image_name="ghcr.io/${GITHUB_REPOSITORY,,}"
 
           if [ -n "$INPUT_IMAGE_REF" ]; then
             image_ref="$INPUT_IMAGE_REF"
-          elif [ -n "$SOURCE_SHA" ]; then
-            image_ref="${image_name}:sha-${SOURCE_SHA}"
           else
             image_ref="${image_name}:latest"
           fi

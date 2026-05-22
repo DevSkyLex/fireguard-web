@@ -45,7 +45,8 @@ Le `Dockerfile` genere inline le fichier Angular `src/environments/environment.t
 
 1. `CI` lance `npm ci`, `npm run format:check`, `npm run lint`, `npm run test:ci` et `npm run build` sur pull request, push `main` et execution manuelle.
 2. `Docker Image` se lance apres un `CI` reussi sur `main`, ou manuellement, injecte la configuration Angular de production au build de l'image Docker SSR puis pousse l'image sur GHCR.
-3. `Deploy VPS` se lance apres une publication Docker reussie, ou manuellement, copie `docker-compose.prod.yml` sur le VPS, ecrit un fichier `.env` minimal et relance le service.
+3. Apres une publication Docker reussie, `Docker Image` declenche `Deploy VPS` avec la reference exacte de l'image a deployer.
+4. `Deploy VPS` peut aussi etre lance manuellement avec une image precise ou, sans saisie, avec l'image `latest`.
 
 ## Verification locale avant push
 

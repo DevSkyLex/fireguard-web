@@ -70,7 +70,7 @@ Les variables et secrets ci-dessous peuvent etre crees dans cet environnement. L
 
 La configuration front publique est compilee dans l'image via le mecanisme Angular `environment.ts`. Si tu changes `APP_API_URL` ou `APP_MERCURE_HUB_URL`, il faut reconstruire puis redeployer l'image.
 
-`APP_API_URL` sert de base a tous les appels HTTP du front. Les services ajoutent ensuite les routes comme `/api/auth`, `/api/organizations`, etc. Si le backend n'est pas encore deploye, tu peux laisser la valeur par defaut et definir `APP_MAINTENANCE=true` pour publier le front sans exposer une interface qui essaie d'appeler une API inexistante.
+`APP_API_URL` sert de base a tous les appels HTTP du front. Les services ajoutent ensuite les routes comme `/api/auth`, `/api/organizations`, etc. Si le backend n'est pas encore deploye, tu peux ne pas definir `APP_API_URL` ou le laisser a `none`; le build utilisera la valeur locale par defaut. Definis aussi `APP_MAINTENANCE=true` pour publier le front sans exposer une interface qui essaie d'appeler une API inexistante.
 
 ## Methode Angular retenue
 

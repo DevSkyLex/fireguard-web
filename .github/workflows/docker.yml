@@ -47,6 +47,37 @@ jobs:
           echo "image_ref=${image_ref}" >> "$GITHUB_OUTPUT"
           echo "latest_ref=${latest_ref}" >> "$GITHUB_OUTPUT"
 
+      - name: Prepare build configuration
+        id: build_config
+        shell: bash
+        env:
+          APP_API_URL: ${{ vars.APP_API_URL }}
+          APP_MERCURE_HUB_URL: ${{ vars.APP_MERCURE_HUB_URL }}
+          APP_NAME: ${{ vars.APP_NAME }}
+          APP_MAINTENANCE: ${{ vars.APP_MAINTENANCE }}
+        run: |
+          optional_value() {
+            local value
+            value="$(printf '%s' "$1" | xargs)"
+
+            case "${value,,}" in
+              ''|'none'|'null')
+                printf '%s' "$2"
+                ;;
+              *)
+                printf '%s' "$value"
+                ;;
+            esac
+          }
+
+          echo "app_api_url=$(optional_value "$APP_API_URL" "http://localhost:8000")" >> "$GITHUB_OUTPUT"
+          echo "app_mercure_hub_url=$(optional_value "$APP_MERCURE_HUB_URL" "http://localhost:3000/.well-known/mercure")" >> "$GITHUB_OUTPUT"
+          echo "app_name=$(optional_value "$APP_NAME" "Fireguard")" >> "$GITHUB_OUTPUT"
+          echo "app_maintenance=$(optional_value "$APP_MAINTENANCE" "false")" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -66,10 +97,10 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            APP_API_URL=${{ vars.APP_API_URL }}
-            APP_MERCURE_HUB_URL=${{ vars.APP_MERCURE_HUB_URL }}
-            APP_NAME=${{ vars.APP_NAME || 'Fireguard' }}
-            APP_MAINTENANCE=${{ vars.APP_MAINTENANCE || 'false' }}
+            APP_API_URL=${{ steps.build_config.outputs.app_api_url }}
+            APP_MERCURE_HUB_URL=${{ steps.build_config.outputs.app_mercure_hub_url }}
+            APP_NAME=${{ steps.build_config.outputs.app_name }}
+            APP_MAINTENANCE=${{ steps.build_config.outputs.app_maintenance }}
 
       - name: Trigger VPS deployment
         if: github.event_name == 'workflow_run' || github.ref_name == 'main'

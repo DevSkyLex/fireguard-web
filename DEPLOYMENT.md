@@ -11,13 +11,13 @@ Ce projet est prepare pour un deploiement GitHub Actions vers un VPS avec Docker
 - `.github/workflows/deploy-vps.yml`: deploiement VPS.
 - `package.json`: scripts `test:ci` et `quality` pour reproduire localement les controles CI.
 
-Le `Dockerfile` genere inline le fichier Angular `src/environments/environment.ts` pendant le build de l'image.
+Le build Docker utilise directement les fichiers Angular `src/environments/environment.ts` et `src/environments/environment.development.ts` deja presents dans le depot.
 
 ## Environnement GitHub
 
 Cree un environnement GitHub nomme `production` dans `Settings > Environments`.
 
-Les variables et secrets ci-dessous peuvent etre crees dans cet environnement. Les workflows `Docker Image` et `Deploy VPS` declarent `environment: production`, sinon les variables d'environnement GitHub restent vides dans les jobs.
+Les secrets ci-dessous peuvent etre crees dans cet environnement. Les workflows `Docker Image` et `Deploy VPS` declarent `environment: production`.
 
 ## Secrets GitHub a creer
 
@@ -33,10 +33,6 @@ Les variables et secrets ci-dessous peuvent etre crees dans cet environnement. L
 
 ## Variables GitHub optionnelles
 
-- `APP_API_URL`: URL publique de l'API backend en production. Valeur par defaut: `http://localhost:8000`.
-- `APP_MERCURE_HUB_URL`: URL publique du hub Mercure en production. Valeur par defaut: `http://localhost:3000/.well-known/mercure`.
-- `APP_NAME`: nom d'application injecte au build. Valeur par defaut: `Fireguard`.
-- `APP_MAINTENANCE`: `true` ou `false`. Valeur par defaut: `false`.
 - `VPS_APP_DIR`: dossier de deploiement sur le VPS, relatif au home de l'utilisateur SSH. Valeur par defaut: `apps/fireguard-web`.
 - `APP_HOST`: domaine public expose par Traefik. Valeur par defaut: `app.fireguard.valentin-fortin.pro`.
 
@@ -52,7 +48,7 @@ Les variables et secrets ci-dessous peuvent etre crees dans cet environnement. L
 ## Fonctionnement du pipeline
 
 1. `CI` lance `npm ci`, `npm run format:check`, `npm run lint`, `npm run test:ci` et `npm run build` sur pull request, push `main` et execution manuelle.
-2. `Docker Image` se lance apres un `CI` reussi sur `main`, ou manuellement, injecte la configuration Angular de production au build de l'image Docker SSR puis pousse l'image sur GHCR.
+2. `Docker Image` se lance apres un `CI` reussi sur `main`, ou manuellement, build l'image Docker SSR avec les fichiers d'environnement Angular presents dans le depot puis pousse l'image sur GHCR.
 3. Apres une publication Docker reussie, `Docker Image` declenche `Deploy VPS` avec la reference exacte de l'image a deployer.
 4. `Deploy VPS` peut aussi etre lance manuellement avec une image precise ou, sans saisie, avec l'image `latest`.
 
@@ -70,10 +66,8 @@ Les variables et secrets ci-dessous peuvent etre crees dans cet environnement. L
 
 ## Point important
 
-La configuration front publique est compilee dans l'image via le mecanisme Angular `environment.ts`. Si tu changes `APP_API_URL` ou `APP_MERCURE_HUB_URL`, il faut reconstruire puis redeployer l'image.
-
-`APP_API_URL` sert de base a tous les appels HTTP du front. Les services ajoutent ensuite les routes comme `/api/auth`, `/api/organizations`, etc. Si le backend n'est pas encore deploye, tu peux ne pas definir `APP_API_URL` ou le laisser a `none`; le build utilisera la valeur locale par defaut. Definis aussi `APP_MAINTENANCE=true` pour publier le front sans exposer une interface qui essaie d'appeler une API inexistante.
+La configuration front publique reste compilee dans l'image via le mecanisme Angular `environment.ts`. Si tu changes une valeur de production dans `src/environments/environment.ts`, il faut reconstruire puis redeployer l'image.
 
 ## Methode Angular retenue
 
-L'application utilise a nouveau le pattern officiel Angular de configuration par fichier d'environnement compile au build. Le code Angular importe `@env/environment`; la partie Docker/CI se contente de generer ce fichier de production juste avant `ng build`.
+L'application utilise le pattern officiel Angular de configuration par fichier d'environnement compile au build. Le code Angular importe `@env/environment`; la production utilise `src/environments/environment.ts` et le developpement utilise `src/environments/environment.development.ts` via les file replacements definis dans `angular.json`.

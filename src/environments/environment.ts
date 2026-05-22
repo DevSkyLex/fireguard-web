@@ -14,6 +14,6 @@ export const environment: EnvironmentConfig = {
   production: true,
   apiUrl: 'https://api.fireguard.valentin-fortin.pro',
   appName: 'Fireguard',
-  mercureHubUrl: 'https://api.fireguard.valentin-fortin.pro/.well-known/mercure',
+  mercureHubUrl: 'https://mercure.fireguard.valentin-fortin.pro/.well-known/mercure',
   maintenance: false,
 };

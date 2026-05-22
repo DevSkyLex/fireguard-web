@@ -49,8 +49,8 @@ jobs:
       - name: Validate build configuration
         shell: bash
         run: |
-          test -n "${{ secrets.APP_API_URL }}" || { echo "APP_API_URL secret is required."; exit 1; }
-          test -n "${{ secrets.APP_MERCURE_HUB_URL }}" || { echo "APP_MERCURE_HUB_URL secret is required."; exit 1; }
+          test -n "${{ vars.APP_API_URL }}" || { echo "APP_API_URL variable is required."; exit 1; }
+          test -n "${{ vars.APP_MERCURE_HUB_URL }}" || { echo "APP_MERCURE_HUB_URL variable is required."; exit 1; }
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -71,8 +71,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            APP_API_URL=${{ secrets.APP_API_URL }}
-            APP_MERCURE_HUB_URL=${{ secrets.APP_MERCURE_HUB_URL }}
+            APP_API_URL=${{ vars.APP_API_URL }}
+            APP_MERCURE_HUB_URL=${{ vars.APP_MERCURE_HUB_URL }}
             APP_NAME=${{ vars.APP_NAME || 'Fireguard' }}
             APP_MAINTENANCE=${{ vars.APP_MAINTENANCE || 'false' }}
 

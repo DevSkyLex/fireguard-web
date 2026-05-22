@@ -17,8 +17,6 @@ Le `Dockerfile` genere inline le fichier Angular `src/environments/environment.t
 
 ### Obligatoires
 
-- `APP_API_URL`: URL publique de l'API backend en production.
-- `APP_MERCURE_HUB_URL`: URL publique du hub Mercure en production.
 - `VPS_HOST`: hostname ou IP du VPS.
 - `VPS_USER`: utilisateur SSH du VPS.
 - `VPS_SSH_KEY`: cle privee SSH pour se connecter au VPS.
@@ -27,7 +25,14 @@ Le `Dockerfile` genere inline le fichier Angular `src/environments/environment.t
 
 - `VPS_PORT`: port SSH si different de `22`.
 
-## Variables GitHub optionnelles
+## Variables GitHub a creer
+
+### Obligatoires
+
+- `APP_API_URL`: URL publique de l'API backend en production.
+- `APP_MERCURE_HUB_URL`: URL publique du hub Mercure en production.
+
+### Optionnelles
 
 - `APP_NAME`: nom d'application injecte au build. Valeur par defaut: `Fireguard`.
 - `APP_MAINTENANCE`: `true` ou `false`. Valeur par defaut: `false`.

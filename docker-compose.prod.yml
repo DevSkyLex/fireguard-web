@@ -12,7 +12,12 @@ services:
       - traefik_proxy
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.fireguard-web.rule=Host(`${APP_HOST:-app.fireguard.valentin-fortin.pro}`)'
+
+      - 'traefik.http.routers.fireguard-web-http.rule=Host(`app.fireguard.valentin-fortin.pro`)'
+      - 'traefik.http.routers.fireguard-web-http.entrypoints=web'
+      - 'traefik.http.routers.fireguard-web-http.middlewares=fireguard-web-https-redirect'
+      - 'traefik.http.middlewares.fireguard-web-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.fireguard-web.rule=Host(`app.fireguard.valentin-fortin.pro`)'
       - 'traefik.http.routers.fireguard-web.entrypoints=websecure'
       - 'traefik.http.routers.fireguard-web.tls=true'
       - 'traefik.http.routers.fireguard-web.tls.certresolver=letsencrypt'

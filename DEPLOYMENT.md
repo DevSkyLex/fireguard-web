@@ -13,6 +13,12 @@ Ce projet est prepare pour un deploiement GitHub Actions vers un VPS avec Docker
 
 Le `Dockerfile` genere inline le fichier Angular `src/environments/environment.ts` pendant le build de l'image.
 
+## Environnement GitHub
+
+Cree un environnement GitHub nomme `production` dans `Settings > Environments`.
+
+Les variables et secrets ci-dessous peuvent etre crees dans cet environnement. Les workflows `Docker Image` et `Deploy VPS` declarent `environment: production`, sinon les variables d'environnement GitHub restent vides dans les jobs.
+
 ## Secrets GitHub a creer
 
 ### Obligatoires
@@ -25,15 +31,10 @@ Le `Dockerfile` genere inline le fichier Angular `src/environments/environment.t
 
 - `VPS_PORT`: port SSH si different de `22`.
 
-## Variables GitHub a creer
+## Variables GitHub optionnelles
 
-### Obligatoires
-
-- `APP_API_URL`: URL publique de l'API backend en production.
-- `APP_MERCURE_HUB_URL`: URL publique du hub Mercure en production.
-
-### Optionnelles
-
+- `APP_API_URL`: URL publique de l'API backend en production. Valeur par defaut: `http://localhost:8000`.
+- `APP_MERCURE_HUB_URL`: URL publique du hub Mercure en production. Valeur par defaut: `http://localhost:3000/.well-known/mercure`.
 - `APP_NAME`: nom d'application injecte au build. Valeur par defaut: `Fireguard`.
 - `APP_MAINTENANCE`: `true` ou `false`. Valeur par defaut: `false`.
 - `VPS_APP_DIR`: dossier de deploiement sur le VPS, relatif au home de l'utilisateur SSH. Valeur par defaut: `apps/fireguard-web`.
@@ -68,6 +69,8 @@ Le `Dockerfile` genere inline le fichier Angular `src/environments/environment.t
 ## Point important
 
 La configuration front publique est compilee dans l'image via le mecanisme Angular `environment.ts`. Si tu changes `APP_API_URL` ou `APP_MERCURE_HUB_URL`, il faut reconstruire puis redeployer l'image.
+
+`APP_API_URL` sert de base a tous les appels HTTP du front. Les services ajoutent ensuite les routes comme `/api/auth`, `/api/organizations`, etc. Si le backend n'est pas encore deploye, tu peux laisser la valeur par defaut et definir `APP_MAINTENANCE=true` pour publier le front sans exposer une interface qui essaie d'appeler une API inexistante.
 
 ## Methode Angular retenue
 

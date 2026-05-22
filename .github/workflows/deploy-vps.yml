@@ -20,6 +20,7 @@ jobs:
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
+    environment: production
     timeout-minutes: 20
     env:
       APP_DIR: ${{ vars.VPS_APP_DIR || 'apps/fireguard-web' }}

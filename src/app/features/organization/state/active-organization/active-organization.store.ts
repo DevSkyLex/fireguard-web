@@ -1,6 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router } from '@angular/router';
+import { type ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import {
   patchState,
   signalStore,
@@ -43,6 +43,13 @@ const INITIAL_ACTIVE_ORGANIZATION_STATE: ActiveOrganizationState = {
   getCallState: idleCallState(),
 } as const;
 //#endregion
+
+function routeTreeHasParam(route: ActivatedRouteSnapshot, paramName: string): boolean {
+  return (
+    route.paramMap.has(paramName) ||
+    route.children.some((child: ActivatedRouteSnapshot) => routeTreeHasParam(child, paramName))
+  );
+}
 
 /**
  * Store ActiveOrganizationStore
@@ -199,10 +206,10 @@ export const ActiveOrganizationStore = signalStore(
             takeUntilDestroyed(),
           )
           .subscribe((): void => {
-            const hasOrganizationId: boolean =
-              router.routerState.snapshot.root.firstChild?.children.some((child) =>
-                child.paramMap.has('organizationId'),
-              ) ?? false;
+            const hasOrganizationId: boolean = routeTreeHasParam(
+              router.routerState.snapshot.root,
+              'organizationId',
+            );
 
             if (!hasOrganizationId && store.selectedOrganization() !== null) {
               store.clearSelectedOrganization();

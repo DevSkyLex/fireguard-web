@@ -6,6 +6,7 @@ import { DashboardStore } from '@features/organization/state/organization-dashbo
 import { OrganizationDashboard } from '../organization-dashboard.component';
 
 type OrganizationDashboardHarness = {
+  readonly canReadDashboard: () => boolean;
   readonly canReadFacilities: () => boolean;
   readonly canReadMembers: () => boolean;
   readonly canReadEquipment: () => boolean;
@@ -87,13 +88,27 @@ describe('OrganizationDashboard', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should hide both sections when no dashboard permissions are granted', () => {
+  it('should hide both sections when no dashboard or resource permissions are granted', () => {
     const component = createComponent();
 
+    expect(component.canReadDashboard()).toBe(false);
     expect(component.hasActivityMetrics()).toBe(false);
     expect(component.hasActivityInsights()).toBe(false);
     expect(component.showActivitySection()).toBe(false);
     expect(component.showResourcesSection()).toBe(false);
+  });
+
+  it('should expose the dashboard sections when dashboard read access is granted', () => {
+    grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.DASHBOARD_READ]);
+    const component = createComponent();
+
+    expect(component.canReadDashboard()).toBe(true);
+    expect(component.canReadFacilities()).toBe(true);
+    expect(component.canReadMembers()).toBe(true);
+    expect(component.canReadEquipment()).toBe(true);
+    expect(component.canReadInspections()).toBe(true);
+    expect(component.showActivitySection()).toBe(true);
+    expect(component.showResourcesSection()).toBe(true);
   });
 
   it('should expose both sections when inspections and resources are readable', () => {

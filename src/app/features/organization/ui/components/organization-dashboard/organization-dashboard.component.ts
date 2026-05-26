@@ -74,6 +74,23 @@ export class OrganizationDashboard {
     inject<OrganizationPermissionService>(OrganizationPermissionService);
 
   /**
+   * Property canReadDashboard
+   * @readonly
+   *
+   * @description
+   * Indicates whether the authenticated user can read the organization
+   * dashboard itself. This is the same permission used by the overview route.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadDashboard: Signal<boolean> = computed<boolean>(() =>
+    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.DASHBOARD_READ),
+  );
+
+  /**
    * Property canReadFacilities
    * @readonly
    *
@@ -86,6 +103,7 @@ export class OrganizationDashboard {
    * @type {Signal<boolean>}
    */
   protected readonly canReadFacilities: Signal<boolean> = computed<boolean>(() =>
+    this.canReadDashboard() ||
     this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_READ),
   );
 
@@ -102,6 +120,7 @@ export class OrganizationDashboard {
    * @type {Signal<boolean>}
    */
   protected readonly canReadMembers: Signal<boolean> = computed<boolean>(() =>
+    this.canReadDashboard() ||
     this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.MEMBERS_READ),
   );
 
@@ -118,6 +137,7 @@ export class OrganizationDashboard {
    * @type {Signal<boolean>}
    */
   protected readonly canReadEquipment: Signal<boolean> = computed<boolean>(() =>
+    this.canReadDashboard() ||
     this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_READ),
   );
 
@@ -134,6 +154,7 @@ export class OrganizationDashboard {
    * @type {Signal<boolean>}
    */
   protected readonly canReadInspections: Signal<boolean> = computed<boolean>(() =>
+    this.canReadDashboard() ||
     this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_READ),
   );
 

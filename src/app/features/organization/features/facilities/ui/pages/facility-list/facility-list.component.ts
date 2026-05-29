@@ -9,7 +9,10 @@ import {
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import type { RequestOptions } from '@core/services/hydra-api';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import type {
+  FacilityListOptions,
+  FacilityOutput,
+} from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import { FacilityDataview } from '@features/organization/features/facilities/ui/dataviews';
 import { ActiveOrganizationStore } from '@features/organization/state';
@@ -196,21 +199,31 @@ export class FacilityListPage {
    * @method onLoad
    *
    * @description
-   * Forwards the dataview lazy-load params to the store.
+   * Forwards the dataview root page request to the store, loading only
+   * top-level facilities for the requested page. The free-text search is
+   * extracted from the dataview request params and mapped to the
+   * facility-specific list options.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {RequestOptions} options - Pagination and filter params.
+   * @param {RequestOptions} options - Pagination and search options.
    *
    * @returns {void}
    */
   public onLoad(options: RequestOptions): void {
     const organizationId: string | undefined =
       this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) {
-      this.store.loadFacilities({ organizationId, options });
-    }
+    if (!organizationId) return;
+
+    const search: unknown = options.params?.['search'];
+    const listOptions: FacilityListOptions = {
+      page: options.page,
+      itemsPerPage: options.itemsPerPage,
+      ...(typeof search === 'string' && search ? { search } : {}),
+    };
+
+    this.store.loadRootFacilities({ organizationId, options: listOptions });
   }
 
   /**

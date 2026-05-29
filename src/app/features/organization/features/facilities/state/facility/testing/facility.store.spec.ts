@@ -16,6 +16,7 @@ describe('FacilityStore', () => {
   let store: FacilityStore;
   let mockFacilityService: {
     list: ReturnType<typeof vi.fn>;
+    listChildren: ReturnType<typeof vi.fn>;
     listTypes: ReturnType<typeof vi.fn>;
   };
 
@@ -36,6 +37,7 @@ describe('FacilityStore', () => {
   beforeEach(() => {
     mockFacilityService = {
       list: vi.fn().mockReturnValue(of(collection)),
+      listChildren: vi.fn().mockReturnValue(of(collection)),
       listTypes: vi.fn().mockReturnValue(of(typesCollection)),
     };
 
@@ -74,5 +76,59 @@ describe('FacilityStore', () => {
     expect(mockFacilityService.listTypes).toHaveBeenCalledTimes(1);
     expect(store.facilityTypes()).toEqual(typesCollection.member);
     expect(store.typesCallState().status).toBe('success');
+  });
+
+  it('should load root facilities scoped with a null parent', async () => {
+    store.loadRootFacilities({ organizationId: 'org-1' });
+    await flushEffects();
+
+    expect(mockFacilityService.list).toHaveBeenCalledWith('org-1', { rootsOnly: true });
+    expect(store.rootFacilities()).toEqual([facility]);
+    expect(store.totalRootFacilities()).toBe(1);
+    expect(store.isLoadingRootFacilities()).toBe(false);
+  });
+
+  it('should lazily load child facilities for a parent', async () => {
+    const child = { id: 'facility-2', name: 'Floor 1' } as unknown as FacilityOutput;
+    const childCollection: HydraCollection<FacilityOutput> = {
+      '@id': '/api/organizations/org-1/facilities',
+      '@type': 'Collection',
+      totalItems: 1,
+      member: [child],
+    };
+    mockFacilityService.listChildren.mockReturnValueOnce(of(childCollection));
+
+    store.loadChildFacilities({ organizationId: 'org-1', parentFacilityId: 'facility-1' });
+    await flushEffects();
+
+    expect(mockFacilityService.listChildren).toHaveBeenCalledWith('org-1', 'facility-1', {
+      page: 1,
+      itemsPerPage: 30,
+    });
+    expect(store.childFacilitiesByParent()['facility-1']).toEqual([child]);
+    expect(store.loadedParentIds()).toContain('facility-1');
+    expect(store.loadingParentIds()).not.toContain('facility-1');
+  });
+
+  it('should reset expansion maps when root facilities reload', async () => {
+    const child = { id: 'facility-2', name: 'Floor 1' } as unknown as FacilityOutput;
+    const childCollection: HydraCollection<FacilityOutput> = {
+      '@id': '/api/organizations/org-1/facilities',
+      '@type': 'Collection',
+      totalItems: 1,
+      member: [child],
+    };
+    mockFacilityService.listChildren.mockReturnValueOnce(of(childCollection));
+
+    store.loadChildFacilities({ organizationId: 'org-1', parentFacilityId: 'facility-1' });
+    await flushEffects();
+    expect(store.loadedParentIds()).toContain('facility-1');
+
+    store.loadRootFacilities({ organizationId: 'org-1' });
+    await flushEffects();
+
+    expect(store.childFacilitiesByParent()).toEqual({});
+    expect(store.loadedParentIds()).toEqual([]);
+    expect(store.rootFacilities()).toEqual([facility]);
   });
 });

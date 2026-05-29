@@ -22,6 +22,7 @@ const MOCK_FACILITY: FacilityOutput = {
   status: 'active',
   code: null,
   parentFacilityId: null,
+  hasChildren: false,
   createdAt: '2025-01-01',
   updatedAt: '2025-01-01',
 } as FacilityOutput;
@@ -44,11 +45,11 @@ describe('FacilityListPage', () => {
   });
 
   const mockFacilityStore = {
-    facilities: signal<readonly FacilityOutput[]>([]),
-    totalFacilities: signal<number>(0),
-    isLoadingFacilities: signal<boolean>(false),
-    isEmpty: signal<boolean>(true),
-    loadFacilities: vi.fn(),
+    rootFacilities: signal<readonly FacilityOutput[]>([]),
+    totalRootFacilities: signal<number>(0),
+    isLoadingRootFacilities: signal<boolean>(false),
+    isRootEmpty: signal<boolean>(true),
+    loadRootFacilities: vi.fn(),
     archive: vi.fn(),
   };
 
@@ -57,11 +58,11 @@ describe('FacilityListPage', () => {
   };
 
   beforeEach(() => {
-    mockFacilityStore.facilities.set([]);
-    mockFacilityStore.totalFacilities.set(0);
-    mockFacilityStore.isLoadingFacilities.set(false);
-    mockFacilityStore.isEmpty.set(true);
-    mockFacilityStore.loadFacilities.mockReset();
+    mockFacilityStore.rootFacilities.set([]);
+    mockFacilityStore.totalRootFacilities.set(0);
+    mockFacilityStore.isLoadingRootFacilities.set(false);
+    mockFacilityStore.isRootEmpty.set(true);
+    mockFacilityStore.loadRootFacilities.mockReset();
     mockFacilityStore.archive.mockReset();
 
     TestBed.configureTestingModule({
@@ -88,23 +89,34 @@ describe('FacilityListPage', () => {
   });
 
   it('should show facilities when loaded', () => {
-    mockFacilityStore.facilities.set([MOCK_FACILITY]);
-    mockFacilityStore.isEmpty.set(false);
-    mockFacilityStore.totalFacilities.set(1);
+    mockFacilityStore.rootFacilities.set([MOCK_FACILITY]);
+    mockFacilityStore.isRootEmpty.set(false);
+    mockFacilityStore.totalRootFacilities.set(1);
 
     const fixture = TestBed.createComponent(FacilityListPage);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Main Site');
   });
 
-  it('should show skeletons while loading', () => {
-    mockFacilityStore.isLoadingFacilities.set(true);
-    mockFacilityStore.isEmpty.set(false);
+  it('should show skeleton placeholders while loading', () => {
+    mockFacilityStore.isLoadingRootFacilities.set(true);
+    mockFacilityStore.isRootEmpty.set(false);
 
     const fixture = TestBed.createComponent(FacilityListPage);
     fixture.detectChanges();
-    const skeletons = fixture.debugElement.queryAll(By.css('p-skeleton'));
-    expect(skeletons.length).toBeGreaterThan(0);
+    const skeleton = fixture.debugElement.query(By.css('.p-skeleton'));
+    expect(skeleton).toBeTruthy();
+  });
+
+  it('should forward the root load request to the store', () => {
+    mockActiveOrgStore.selectedOrganization.set(MOCK_ORG);
+    const fixture = TestBed.createComponent(FacilityListPage);
+    fixture.detectChanges();
+    fixture.componentInstance.onLoad({ page: 2, itemsPerPage: 20 });
+    expect(mockFacilityStore.loadRootFacilities).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      options: { page: 2, itemsPerPage: 20 },
+    });
   });
 
   it('should forward the archive event to the store', () => {

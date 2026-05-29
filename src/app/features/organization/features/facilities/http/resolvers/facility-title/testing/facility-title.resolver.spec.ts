@@ -12,6 +12,7 @@ describe('facilityTitleResolver', () => {
     id: 'fac-1',
     organizationId: 'org-1',
     parentFacilityId: null,
+    hasChildren: false,
     type: 'building',
     name: 'HQ',
     code: 'HQ',

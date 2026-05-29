@@ -5,8 +5,8 @@ import { PrimeIcons } from 'primeng/api';
  * @const FACILITY_TYPE_ICONS
  *
  * @description
- * Mapping of facility types to PrimeIcons for
- * display in the UI.
+ * Mapping of facility types to PrimeIcons for display in the facilities
+ * dataview.
  *
  * @type {Record<string, string>}
  */

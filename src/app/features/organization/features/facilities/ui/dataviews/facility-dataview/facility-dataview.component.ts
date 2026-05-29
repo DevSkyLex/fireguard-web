@@ -8,12 +8,12 @@ import {
   numberAttribute,
   OnInit,
   output,
-  Signal,
   signal,
   viewChild,
   type InputSignal,
   type InputSignalWithTransform,
   type OutputEmitterRef,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -34,7 +34,10 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/services/hydra-api';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import type {
+  FacilityOutput,
+  FacilityStatus,
+} from '@features/organization/features/facilities/models';
 import { FACILITY_DATAVIEW_LAYOUT_OPTIONS, FACILITY_TYPE_ICONS } from './options';
 
 /**
@@ -42,13 +45,13 @@ import { FACILITY_DATAVIEW_LAYOUT_OPTIONS, FACILITY_TYPE_ICONS } from './options
  * @class FacilityDataview
  *
  * @description
- * Presentational dataview component that displays a paginated list of
- * facilities using PrimeNG's lazy-loaded `p-dataview`.
+ * Presentational dataview component that displays a paginated, flat list of
+ * root facilities using PrimeNG's lazy-loaded `p-dataview`.
  * Supports toggling between list and grid layout.
  *
- * Receives data via `input()` signals and communicates user actions
- * upward via `output()` emitters. All store interactions are delegated
- * to the parent page component.
+ * Receives data via `input()` signals and communicates user actions upward
+ * via `output()` emitters. All store interactions are delegated to the
+ * parent page component.
  *
  * @version 1.0.0
  *
@@ -68,8 +71,8 @@ import { FACILITY_DATAVIEW_LAYOUT_OPTIONS, FACILITY_TYPE_ICONS } from './options
     InputTextModule,
     MenuModule,
     SelectButtonModule,
-    SplitButtonModule,
     SkeletonModule,
+    SplitButtonModule,
     TagModule,
     TitleCasePipe,
     TooltipModule,
@@ -84,7 +87,7 @@ export class FacilityDataview implements OnInit {
    * @readonly
    *
    * @description
-   * List of facilities to display.
+   * Root facilities to display for the current page.
    *
    * @access public
    * @since 1.0.0
@@ -99,7 +102,7 @@ export class FacilityDataview implements OnInit {
    * @readonly
    *
    * @description
-   * Total number of facilities (used by paginator).
+   * Total number of root facilities (used by the paginator).
    *
    * @access public
    * @since 1.0.0
@@ -123,12 +126,25 @@ export class FacilityDataview implements OnInit {
   public readonly loading: InputSignal<boolean> = input.required<boolean>();
 
   /**
+   * Input empty
+   * @readonly
+   *
+   * @description
+   * Whether no root facilities exist for the current organization.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly empty: InputSignal<boolean> = input.required<boolean>();
+
+  /**
    * Input initialPage
    * @readonly
    *
    * @description
-   * Initial page number to display when the dataview is first rendered.
-   * Typically bound from the `?page=` query param via the parent page.
+   * Initial page to display, typically bound from the `?page=` query param.
    * Defaults to 1.
    *
    * @access public
@@ -140,6 +156,94 @@ export class FacilityDataview implements OnInit {
     1,
     { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) },
   );
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Output load
+   * @readonly
+   *
+   * @description
+   * Emitted whenever the dataview needs to fetch a new page. Carries the
+   * resolved `RequestOptions` (page, itemsPerPage, params).
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<RequestOptions>}
+   */
+  public readonly load: OutputEmitterRef<RequestOptions> = output<RequestOptions>();
+
+  /**
+   * Output pageChange
+   * @readonly
+   *
+   * @description
+   * Emitted when the user navigates to a different page (1-indexed) so the
+   * parent can sync the `?page=` query param.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly pageChange: OutputEmitterRef<number> = output<number>();
+
+  /**
+   * Output view
+   * @readonly
+   *
+   * @description
+   * Emitted when the user selects "View" from a row menu.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<FacilityOutput>}
+   */
+  public readonly view: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
+
+  /**
+   * Output edit
+   * @readonly
+   *
+   * @description
+   * Emitted when the user selects "Edit" from a row menu.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<FacilityOutput>}
+   */
+  public readonly edit: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
+
+  /**
+   * Output add
+   * @readonly
+   *
+   * @description
+   * Emitted when the user clicks the "New facility" button.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly add: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Output archive
+   * @readonly
+   *
+   * @description
+   * Emitted when the user requests archival of a facility from a row menu.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<FacilityOutput>}
+   */
+  public readonly archive: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
   //#endregion
 
   //#region Properties
@@ -155,16 +259,14 @@ export class FacilityDataview implements OnInit {
    *
    * @type {number}
    */
-  protected readonly rows: number = 12;
+  protected readonly rows: number = 30;
 
   /**
    * Property firstPage
    *
    * @description
-   * Zero-based offset passed to `p-dataview [first]` to open on the
-   * correct page. Computed once in `ngOnInit` from `initialPage()` so
-   * that subsequent query-param changes never reactively reset the
-   * paginator position.
+   * Zero-based offset passed to `p-dataview [first]` so the view opens on
+   * the correct page. Computed once in `ngOnInit`.
    *
    * @access protected
    * @since 1.0.0
@@ -177,9 +279,8 @@ export class FacilityDataview implements OnInit {
    * Property initialized
    *
    * @description
-   * Tracks whether the first `onLazyLoad` event (fired automatically by
-   * PrimeNG on init) has already been processed. `pageChange` is only
-   * emitted for subsequent, user-initiated page navigations.
+   * Tracks whether the first automatic `onLazyLoad` event has already been
+   * processed. `pageChange` is emitted only on user navigation.
    *
    * @access private
    * @since 1.0.0
@@ -193,8 +294,7 @@ export class FacilityDataview implements OnInit {
    * @readonly
    *
    * @description
-   * Fixed-length array used to render skeleton placeholders
-   * while the store is loading. Length matches `rows`.
+   * Fixed-length array used to render skeleton placeholders while loading.
    *
    * @access protected
    * @since 1.0.0
@@ -204,11 +304,25 @@ export class FacilityDataview implements OnInit {
   protected readonly skeletonItems: undefined[] = Array(this.rows);
 
   /**
+   * Property facilityTypeIcons
+   * @readonly
+   *
+   * @description
+   * Maps facility types to PrimeNG icons for visual display.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Record<string, string>}
+   */
+  protected readonly facilityTypeIcons = FACILITY_TYPE_ICONS;
+
+  /**
    * Property layoutControl
    * @readonly
    *
    * @description
-   * FormControl for the layout select button.
+   * FormControl driving the list/grid layout select button.
    *
    * @access protected
    * @since 1.0.0
@@ -225,7 +339,7 @@ export class FacilityDataview implements OnInit {
    * @readonly
    *
    * @description
-   * Current display layout derived from the layoutControl value.
+   * Current display layout derived from the layout control value.
    *
    * @access protected
    * @since 1.0.0
@@ -241,7 +355,7 @@ export class FacilityDataview implements OnInit {
    * @readonly
    *
    * @description
-   * Options for the layout select button.
+   * Options for the layout toggle button.
    *
    * @access protected
    * @since 1.0.0
@@ -255,7 +369,7 @@ export class FacilityDataview implements OnInit {
    * @readonly
    *
    * @description
-   * FormControl for the search input.
+   * FormControl driving the free-text search filter.
    *
    * @access protected
    * @since 1.0.0
@@ -287,26 +401,11 @@ export class FacilityDataview implements OnInit {
   ]);
 
   /**
-   * Property lastLazyEvent
-   *
-   * @description
-   * Stores the last PrimeNG lazy-load event emitted by `p-dataview`.
-   * Used by {@link reload} to replay the current page after a
-   * search or filter change.
-   *
-   * @access private
-   * @since 1.0.0
-   */
-  private readonly lastLazyEvent: WritableSignal<DataViewLazyLoadEvent | null> =
-    signal<DataViewLazyLoadEvent | null>(null);
-
-  /**
    * Property rowMenu
    * @readonly
    *
    * @description
-   * Reference to the single shared popup menu used for
-   * item context actions.
+   * Reference to the single shared popup menu used for row actions.
    *
    * @access private
    * @since 1.0.0
@@ -319,8 +418,7 @@ export class FacilityDataview implements OnInit {
    * Property selectedFacility
    *
    * @description
-   * Tracks the facility currently targeted by the
-   * context menu.
+   * Tracks the facility currently targeted by the row context menu.
    *
    * @access private
    * @since 1.0.0
@@ -329,6 +427,21 @@ export class FacilityDataview implements OnInit {
    */
   private readonly selectedFacility: WritableSignal<FacilityOutput | null> =
     signal<FacilityOutput | null>(null);
+
+  /**
+   * Property lastLazyEvent
+   *
+   * @description
+   * Stores the last PrimeNG lazy-load event so {@link reload} can replay
+   * the current page after a search change.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<DataViewLazyLoadEvent | null>}
+   */
+  private readonly lastLazyEvent: WritableSignal<DataViewLazyLoadEvent | null> =
+    signal<DataViewLazyLoadEvent | null>(null);
 
   /**
    * Property rowMenuItems
@@ -368,111 +481,6 @@ export class FacilityDataview implements OnInit {
       },
     ];
   });
-
-  /**
-   * Property facilityTypeIcons
-   * @readonly
-   *
-   * @description
-   * Maps facility types to PrimeNG icons for visual display.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Record<string, string>}
-   */
-  protected readonly facilityTypeIcons = FACILITY_TYPE_ICONS;
-  //#endregion
-
-  //#region Outputs
-  /**
-   * Output view
-   * @readonly
-   *
-   * @description
-   * Emitted when the user selects "View" from the item menu.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<FacilityOutput>}
-   */
-  public readonly view: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
-
-  /**
-   * Output edit
-   * @readonly
-   *
-   * @description
-   * Emitted when the user selects "Edit" from the item menu.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<FacilityOutput>}
-   */
-  public readonly edit: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
-
-  /**
-   * Output add
-   * @readonly
-   *
-   * @description
-   * Emitted when the user clicks the "New facility" button.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<void>}
-   */
-  public readonly add: OutputEmitterRef<void> = output<void>();
-
-  /**
-   * Output archive
-   * @readonly
-   *
-   * @description
-   * Emitted when the user requests archival of a facility
-   * from the item context menu. The parent page handles the store call.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<FacilityOutput>}
-   */
-  public readonly archive: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
-
-  /**
-   * Output load
-   * @readonly
-   *
-   * @description
-   * Emitted whenever the dataview needs to fetch a new page.
-   * Carries the resolved `RequestOptions` (page, itemsPerPage, params).
-   * The parent page is responsible for forwarding this to the store.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<RequestOptions>}
-   */
-  public readonly load: OutputEmitterRef<RequestOptions> = output<RequestOptions>();
-
-  /**
-   * Output pageChange
-   * @readonly
-   *
-   * @description
-   * Emitted when the user navigates to a different page.
-   * Carries the 1-indexed page number so the parent can sync
-   * the `?page=` query param in the URL.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<number>}
-   */
-  public readonly pageChange: OutputEmitterRef<number> = output<number>();
   //#endregion
 
   //#region Lifecycle
@@ -481,8 +489,8 @@ export class FacilityDataview implements OnInit {
    * @method ngOnInit
    *
    * @description
-   * Reads `initialPage()` once after Angular has set all input signals
-   * and stores the result as a plain number.
+   * Reads `initialPage()` once after Angular has set the input signals and
+   * computes the zero-based paginator offset.
    *
    * @since 1.0.0
    *
@@ -499,8 +507,8 @@ export class FacilityDataview implements OnInit {
    * @constructor
    *
    * @description
-   * Sets up subscriptions to search changes to trigger
-   * dataview reloads.
+   * Wires up search debouncing and disables the search field while a
+   * fetch is in-flight.
    *
    * @access public
    * @since 1.0.0
@@ -526,9 +534,9 @@ export class FacilityDataview implements OnInit {
    * @method onLazyLoad
    *
    * @description
-   * Called by p-dataview when the user changes page or rows-per-page.
-   * Translates PrimeNG's offset-based event into the API's
-   * 1-indexed page/itemsPerPage model and triggers a store load.
+   * Called by `p-dataview` when the page or rows-per-page changes.
+   * Translates PrimeNG's offset-based event into the API's 1-indexed
+   * page/itemsPerPage model and emits a load request.
    *
    * @access public
    * @since 1.0.0
@@ -545,16 +553,15 @@ export class FacilityDataview implements OnInit {
     const page: number = Math.floor(first / rowsPerPage) + 1;
     const params: Record<string, string | number | boolean> = {};
 
-    const search: string = this.searchControl.value;
+    const search: string = this.searchControl.value.trim();
     if (search) params['search'] = search;
 
     this.load.emit({
-      page: page,
+      page,
       itemsPerPage: rowsPerPage,
-      params: params,
+      params,
     });
 
-    // Skip pageChange on the very first onLazyLoad (PrimeNG init event).
     if (this.initialized) {
       this.pageChange.emit(page);
     }
@@ -578,25 +585,41 @@ export class FacilityDataview implements OnInit {
   }
 
   /**
-   * Method onItemMenuToggle
-   * @method onItemMenuToggle
+   * Method onRowMenuToggle
+   * @method onRowMenuToggle
    *
    * @description
-   * Sets the selected facility and toggles the shared context menu.
+   * Sets the selected facility and toggles the shared row context menu.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {MouseEvent} event - The click event from the item button.
+   * @param {MouseEvent} event - The click event from the row button.
    * @param {FacilityOutput} facility - The targeted facility.
    *
    * @returns {void}
    */
-  public onItemMenuToggle(event: MouseEvent, facility: FacilityOutput): void {
+  public onRowMenuToggle(event: MouseEvent, facility: FacilityOutput): void {
     this.selectedFacility.set(facility);
+    this.rowMenu().toggle(event);
+  }
 
-    const menu: Menu = this.rowMenu();
-    menu.toggle(event);
+  /**
+   * Method getStatusSeverity
+   * @method getStatusSeverity
+   *
+   * @description
+   * Maps a facility status to a PrimeNG tag severity.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {FacilityStatus} status - Facility status.
+   *
+   * @returns {'success' | 'secondary'}
+   */
+  protected getStatusSeverity(status: FacilityStatus): 'success' | 'secondary' {
+    return status === 'active' ? 'success' : 'secondary';
   }
 
   /**
@@ -604,8 +627,8 @@ export class FacilityDataview implements OnInit {
    * @method reload
    *
    * @description
-   * Replays the last lazy-load event, resetting to page 1.
-   * Used internally after search or filter changes.
+   * Replays the last lazy-load event, resetting to page 1. Used after a
+   * search change or an explicit refresh.
    *
    * @access private
    * @since 1.0.0

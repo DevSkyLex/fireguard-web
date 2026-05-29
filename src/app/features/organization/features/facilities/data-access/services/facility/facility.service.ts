@@ -5,6 +5,8 @@ import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
   FacilityOutput,
   FacilityTypeOutput,
+  FacilityListOptions,
+  FacilityChildrenOptions,
   CreateFacilityInput,
   UpdateFacilityInput,
   MoveFacilityInput,
@@ -64,18 +66,74 @@ export class FacilityService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
+   * Mirrors the backend contract for the hierarchical TreeTable:
+   * - `rootsOnly: true` returns only root facilities (no parent),
+   * - `includeArchived`, `status`, `search` and `order` are forwarded as
+   *   query parameters,
+   * - direct children are fetched separately via {@link listChildren}.
+   *
    * @param {string} organizationId - The ID of the organization.
-   * @param {RequestOptions} [options] - Optional pagination parameters.
+   * @param {FacilityListOptions} [options] - Optional pagination, root scoping and filters.
    *
    * @return {Observable<HydraCollection<FacilityOutput>>} An observable emitting the facilities collection.
    */
   public list(
     organizationId: string,
-    options?: RequestOptions,
+    options?: FacilityListOptions,
   ): Observable<HydraCollection<FacilityOutput>> {
+    const params: NonNullable<RequestOptions['params']> = {};
+
+    if (options?.rootsOnly) params['rootsOnly'] = true;
+    if (options?.includeArchived) params['includeArchived'] = true;
+    if (options?.status) params['status'] = options.status;
+    if (options?.search) params['search'] = options.search;
+    if (options?.order) {
+      for (const [field, direction] of Object.entries(options.order)) {
+        params[`order[${field}]`] = direction;
+      }
+    }
+
     return this.getCollection<FacilityOutput>(
       `${FacilityService.BASE_PATH}/${organizationId}/facilities`,
-      options,
+      {
+        page: options?.page,
+        itemsPerPage: options?.itemsPerPage,
+        params,
+      },
+    );
+  }
+
+  /**
+   * Method listChildren
+   * @method listChildren
+   *
+   * @description
+   * Retrieves the direct children of a facility via the dedicated
+   * `/children` endpoint. This is the primary endpoint for lazy TreeTable
+   * expansion — it returns only the immediate children of the given
+   * facility, never the full subtree (use the backend `/descendants`
+   * endpoint for bulk operations instead).
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} facilityId - The ID of the parent facility.
+   * @param {FacilityChildrenOptions} [options] - Optional pagination.
+   *
+   * @return {Observable<HydraCollection<FacilityOutput>>} An observable emitting the direct children collection.
+   */
+  public listChildren(
+    organizationId: string,
+    facilityId: string,
+    options?: FacilityChildrenOptions,
+  ): Observable<HydraCollection<FacilityOutput>> {
+    return this.getCollection<FacilityOutput>(
+      `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/children`,
+      {
+        page: options?.page,
+        itemsPerPage: options?.itemsPerPage,
+      },
     );
   }
 

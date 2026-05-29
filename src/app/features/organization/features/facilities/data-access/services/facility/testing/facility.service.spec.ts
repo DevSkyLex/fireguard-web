@@ -47,6 +47,7 @@ describe('FacilityService', () => {
     id: facilityId,
     organizationId: orgId,
     parentFacilityId: null,
+    hasChildren: false,
     type: 'building',
     name: 'Building A',
     code: 'BLDG-A',
@@ -112,6 +113,36 @@ describe('FacilityService', () => {
       req.flush(mockCollection([]));
     });
 
+    it('should request only root facilities when rootsOnly is set', () => {
+      service.list(orgId, { rootsOnly: true }).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === facilityBaseUrl);
+      expect(req.request.params.get('rootsOnly')).toBe('true');
+      expect(req.request.params.has('parentFacility')).toBe(false);
+      expect(req.request.params.has('exists[parentFacility]')).toBe(false);
+      req.flush(mockCollection([]));
+    });
+
+    it('should forward includeArchived, status, search and order params', () => {
+      service
+        .list(orgId, {
+          rootsOnly: true,
+          includeArchived: true,
+          status: 'active',
+          search: 'tower',
+          order: { name: 'asc' },
+        })
+        .subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === facilityBaseUrl);
+      expect(req.request.params.get('rootsOnly')).toBe('true');
+      expect(req.request.params.get('includeArchived')).toBe('true');
+      expect(req.request.params.get('status')).toBe('active');
+      expect(req.request.params.get('search')).toBe('tower');
+      expect(req.request.params.get('order[name]')).toBe('asc');
+      req.flush(mockCollection([]));
+    });
+
     it('should handle unauthorized error', () => {
       service.list(orgId).subscribe({
         error: (error: ApiError) => expect(error.status).toBe(403),
@@ -119,6 +150,25 @@ describe('FacilityService', () => {
 
       const req = httpMock.expectOne(facilityBaseUrl);
       req.flush({ status: 403, title: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
+    });
+  });
+
+  // ── listChildren ─────────────────────────────────────────────────────────────
+
+  describe('listChildren', () => {
+    it('should send GET request to the children endpoint with pagination', () => {
+      service.listChildren(orgId, facilityId, { page: 1, itemsPerPage: 30 }).subscribe((response) => {
+        expect(response.member).toEqual([mockFacility]);
+      });
+
+      const childrenUrl = `${facilityBaseUrl}/${facilityId}/children`;
+      const req = httpMock.expectOne((r) => r.url === childrenUrl);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      expect(req.request.params.get('page')).toBe('1');
+      expect(req.request.params.get('itemsPerPage')).toBe('30');
+      expect(req.request.params.has('rootsOnly')).toBe(false);
+      req.flush(mockCollection([mockFacility]));
     });
   });
 

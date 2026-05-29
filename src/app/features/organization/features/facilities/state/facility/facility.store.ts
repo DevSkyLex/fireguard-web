@@ -2,10 +2,10 @@ import { isPlatformBrowser } from '@angular/common';
 import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
-import { addEntity, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
+import { addEntity, setAllEntities, setEntity, upsertEntities, withEntities } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
+import { exhaustMap, mergeMap, pipe, switchMap, tap } from 'rxjs';
 import type { HydraCollection } from '@core/models/api';
 import type { RequestOptions } from '@core/services/hydra-api';
 import {
@@ -21,6 +21,7 @@ import { FacilityService } from '@features/organization/features/facilities/data
 import type {
   FacilityOutput,
   FacilityTypeOutput,
+  FacilityListOptions,
   CreateFacilityInput,
   UpdateFacilityInput,
   MoveFacilityInput,
@@ -52,6 +53,12 @@ const INITIAL_FACILITY_STATE: FacilityState = {
   updateCallState: idleCallState(),
   archiveCallState: idleCallState(),
   moveCallState: idleCallState(),
+  rootFacilityIds: [],
+  totalRootFacilities: 0,
+  rootListCallState: idleCallState(),
+  childFacilityIdsByParent: {},
+  loadedParentIds: [],
+  loadingParentIds: [],
   facilityTypes: [],
   typesCallState: idleCallState(),
 } as const;
@@ -243,6 +250,79 @@ export const FacilityStore = signalStore(
        * @type {OperationError<unknown> | null}
        */
       createError: computed<StoreError | null>(() => store.createCallState().error),
+
+      /**
+       * Property rootFacilities
+       *
+       * @description
+       * Resolved root facility entities for the current page, in API order.
+       * Drives the top level of the hierarchical TreeTable.
+       *
+       * @since 3.0.0
+       *
+       * @type {ReadonlyArray<FacilityOutput>}
+       */
+      rootFacilities: computed<ReadonlyArray<FacilityOutput>>(() => {
+        const map = store.facilityEntityMap();
+        return store
+          .rootFacilityIds()
+          .map((id) => map[id])
+          .filter((facility): facility is FacilityOutput => facility !== undefined);
+      }),
+
+      /**
+       * Property childFacilitiesByParent
+       *
+       * @description
+       * Map of parent facility id → resolved direct children entities, for
+       * the branches that have been lazily expanded.
+       *
+       * @since 3.0.0
+       *
+       * @type {Readonly<Record<string, ReadonlyArray<FacilityOutput>>>}
+       */
+      childFacilitiesByParent: computed<Readonly<Record<string, ReadonlyArray<FacilityOutput>>>>(
+        () => {
+          const map = store.facilityEntityMap();
+          const idsByParent = store.childFacilityIdsByParent();
+          const result: Record<string, ReadonlyArray<FacilityOutput>> = {};
+          for (const [parentId, childIds] of Object.entries(idsByParent)) {
+            result[parentId] = childIds
+              .map((id) => map[id])
+              .filter((facility): facility is FacilityOutput => facility !== undefined);
+          }
+          return result;
+        },
+      ),
+
+      /**
+       * Property isLoadingRootFacilities
+       *
+       * @description
+       * True while the root facilities page is loading.
+       *
+       * @since 3.0.0
+       *
+       * @type {boolean}
+       */
+      isLoadingRootFacilities: computed<boolean>(
+        () => store.rootListCallState().status === 'pending',
+      ),
+
+      /**
+       * Property isRootEmpty
+       *
+       * @description
+       * True when there are no root facilities and no root request is in-flight.
+       *
+       * @since 3.0.0
+       *
+       * @type {boolean}
+       */
+      isRootEmpty: computed<boolean>(
+        () =>
+          store.rootFacilityIds().length === 0 && store.rootListCallState().status !== 'pending',
+      ),
     };
   }),
 
@@ -374,6 +454,131 @@ export const FacilityStore = signalStore(
          * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>}
          */
         loadFacilities: loadFn,
+
+        // ── Hierarchy (TreeTable) ───────────────────────────────────────────────
+
+        /**
+         * Method loadRootFacilities
+         * @method loadRootFacilities
+         *
+         * @description
+         * Loads one page of root facilities (no parent) for the hierarchical
+         * TreeTable. Uses `switchMap` so a new request (page change, search,
+         * refresh) cancels any in-flight one. Entities are **upserted** (never
+         * replaced) so already-loaded child branches survive a root reload,
+         * while the expansion maps are reset for the fresh page.
+         *
+         * @since 3.0.0
+         *
+         * @type {RxMethod<{ organizationId: string; options?: FacilityListOptions }>}
+         */
+        loadRootFacilities: rxMethod<{ organizationId: string; options?: FacilityListOptions }>(
+          pipe(
+            tap((): void => {
+              patchState(store, {
+                rootListCallState: pendingCallState(),
+                childFacilityIdsByParent: {},
+                loadedParentIds: [],
+                loadingParentIds: [],
+              });
+            }),
+            switchMap(({ organizationId, options }) =>
+              facilityService
+                .list(organizationId, { ...options, rootsOnly: true })
+                .pipe(
+                  tapResponse({
+                    next: (response: HydraCollection<FacilityOutput>): void => {
+                      patchState(
+                        store,
+                        upsertEntities([...response.member], { collection: 'facility' }),
+                        {
+                          rootFacilityIds: response.member.map((facility) => facility.id),
+                          totalRootFacilities: response.totalItems,
+                          rootListCallState: successCallState(null),
+                        },
+                      );
+                    },
+                    error: (error: unknown): void => {
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { rootListCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        facilityStoreEvents.listFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to load facilities'),
+                        ),
+                      );
+                    },
+                  }),
+                ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method loadChildFacilities
+         * @method loadChildFacilities
+         *
+         * @description
+         * Lazily loads the direct children of a facility when its TreeTable node
+         * is expanded. Uses `mergeMap` so several branches can expand
+         * concurrently. Entities are **upserted** to preserve the rest of the
+         * tree, and the parent id is tracked in `loadedParentIds` to avoid
+         * duplicate fetches on re-expansion.
+         *
+         * @since 3.0.0
+         *
+         * @type {RxMethod<{ organizationId: string; parentFacilityId: string }>}
+         */
+        loadChildFacilities: rxMethod<{ organizationId: string; parentFacilityId: string }>(
+          pipe(
+            tap(({ parentFacilityId }): void => {
+              patchState(store, {
+                loadingParentIds: [...new Set([...store.loadingParentIds(), parentFacilityId])],
+              });
+            }),
+            mergeMap(({ organizationId, parentFacilityId }) =>
+              facilityService
+                .listChildren(organizationId, parentFacilityId, { page: 1, itemsPerPage: 30 })
+                .pipe(
+                  tapResponse({
+                    next: (response: HydraCollection<FacilityOutput>): void => {
+                      patchState(
+                        store,
+                        upsertEntities([...response.member], { collection: 'facility' }),
+                        {
+                          childFacilityIdsByParent: {
+                            ...store.childFacilityIdsByParent(),
+                            [parentFacilityId]: response.member.map((facility) => facility.id),
+                          },
+                          loadedParentIds: [
+                            ...new Set([...store.loadedParentIds(), parentFacilityId]),
+                          ],
+                          loadingParentIds: store
+                            .loadingParentIds()
+                            .filter((id) => id !== parentFacilityId),
+                        },
+                      );
+                    },
+                    error: (error: unknown): void => {
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, {
+                        loadingParentIds: store
+                          .loadingParentIds()
+                          .filter((id) => id !== parentFacilityId),
+                      });
+                      dispatcher.dispatch(
+                        facilityStoreEvents.listFailed(
+                          toStoreFailureEventPayload(
+                            storeError,
+                            'Failed to load child facilities',
+                          ),
+                        ),
+                      );
+                    },
+                  }),
+                ),
+            ),
+          ),
+        ),
 
         // ── Facility CRUD ──────────────────────────────────────────────────────
 

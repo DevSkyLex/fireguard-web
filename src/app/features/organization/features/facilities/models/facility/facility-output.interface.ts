@@ -59,6 +59,20 @@ export interface FacilityOutput extends HydraItem {
   readonly parentFacilityId: string | null;
 
   /**
+   * Property hasChildren
+   * @readonly
+   *
+   * @description
+   * Whether the facility has at least one direct child. Drives the
+   * TreeTable chevron: `true` shows an expand toggler (children fetched
+   * lazily via the `/children` endpoint), `false` renders the node as a
+   * leaf without triggering a children request.
+   *
+   * @type {boolean}
+   */
+  readonly hasChildren: boolean;
+
+  /**
    * Property type
    * @readonly
    *

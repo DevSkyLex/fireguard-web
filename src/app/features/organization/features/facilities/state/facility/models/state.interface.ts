@@ -99,6 +99,89 @@ export interface FacilityState {
   readonly moveCallState: CallState<FacilityOutput | null>;
   //#endregion
 
+  //#region Hierarchy (TreeTable)
+  /**
+   * Property rootFacilityIds
+   * @readonly
+   *
+   * @description
+   * Ordered ids of the root facilities (facilities without a parent) for
+   * the current page. Drives the top level of the hierarchical TreeTable.
+   *
+   * @since 3.0.0
+   *
+   * @type {ReadonlyArray<string>}
+   */
+  readonly rootFacilityIds: ReadonlyArray<string>;
+
+  /**
+   * Property totalRootFacilities
+   * @readonly
+   *
+   * @description
+   * Total number of root facilities reported by the API (for root pagination).
+   *
+   * @since 3.0.0
+   *
+   * @type {number}
+   */
+  readonly totalRootFacilities: number;
+
+  /**
+   * Property rootListCallState
+   * @readonly
+   *
+   * @description
+   * Tracks the root facilities list request state.
+   *
+   * @since 3.0.0
+   *
+   * @type {CallState}
+   */
+  readonly rootListCallState: CallState;
+
+  /**
+   * Property childFacilityIdsByParent
+   * @readonly
+   *
+   * @description
+   * Map of parent facility id → ordered ids of its direct children, as
+   * loaded lazily on node expansion.
+   *
+   * @since 3.0.0
+   *
+   * @type {Readonly<Record<string, ReadonlyArray<string>>>}
+   */
+  readonly childFacilityIdsByParent: Readonly<Record<string, ReadonlyArray<string>>>;
+
+  /**
+   * Property loadedParentIds
+   * @readonly
+   *
+   * @description
+   * Ids of parent facilities whose children have already been fetched,
+   * preventing duplicate child requests on re-expansion.
+   *
+   * @since 3.0.0
+   *
+   * @type {ReadonlyArray<string>}
+   */
+  readonly loadedParentIds: ReadonlyArray<string>;
+
+  /**
+   * Property loadingParentIds
+   * @readonly
+   *
+   * @description
+   * Ids of parent facilities whose children are currently being fetched.
+   *
+   * @since 3.0.0
+   *
+   * @type {ReadonlyArray<string>}
+   */
+  readonly loadingParentIds: ReadonlyArray<string>;
+  //#endregion
+
   //#region Types
   /**
    * Property facilityTypes

@@ -31,6 +31,7 @@ const MOCK_FACILITY: FacilityOutput = {
   code: 'MS-01',
   address: null,
   parentFacilityId: null,
+  hasChildren: false,
   metadata: {},
   createdAt: '2025-01-01',
   updatedAt: '2025-01-01',

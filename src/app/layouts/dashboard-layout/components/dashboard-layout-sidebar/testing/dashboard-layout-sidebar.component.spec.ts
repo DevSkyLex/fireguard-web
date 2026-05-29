@@ -93,10 +93,10 @@ describe('DashboardLayoutSidebar', () => {
     expect(
       fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-navigation')),
     ).toBeTruthy();
-    expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-footer'))).toBeFalsy();
+    expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-footer'))).toBeTruthy();
 
-    const panelMenus = fixture.debugElement.queryAll(By.css('p-panelmenu'));
-    expect(panelMenus.length).toBe(3);
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(7);
+    expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
     expect(
       fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
     ).toBe(2);
@@ -112,58 +112,16 @@ describe('DashboardLayoutSidebar', () => {
     expect(textContent).toContain('Inspections');
     expect(textContent).toContain('Account');
     expect(textContent).toContain('Notifications');
+    expect(textContent).toContain('2026 Fireguard, Inc.');
   });
 
-  it('should render a search input in the sidebar', () => {
+  it('should hide the footer in primary icon-only mode', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebar);
+    fixture.componentRef.setInput('variant', 'primary');
+    fixture.componentRef.setInput('iconOnly', true);
     fixture.detectChanges();
 
-    const searchInput = fixture.debugElement.query(By.css('[data-testid="sidebar-search-input"]'));
-
-    expect(searchInput).toBeTruthy();
-  });
-
-  it('should filter groups and items based on search query', () => {
-    const fixture = TestBed.createComponent(DashboardLayoutSidebar);
-    fixture.detectChanges();
-
-    const navigation = fixture.debugElement.query(By.directive(DashboardLayoutSidebarNavigation))
-      .componentInstance as unknown as {
-      readonly onSearchQueryChange: (value: string) => void;
-      readonly menuItems: () => readonly MenuItem[];
-    };
-
-    navigation.onSearchQueryChange('Notifications');
-
-    const menuItems = navigation.menuItems();
-    const rootLabels = menuItems.map((item) => item.label);
-    const account = menuItems.find((item) => item.label === 'Account');
-    const notifItem = account?.items?.find((item) => item.label === 'Notifications');
-
-    expect(rootLabels).toEqual(['Account']);
-    expect(notifItem).toBeDefined();
-  });
-
-  it('should clear search query and restore full menu', () => {
-    const fixture = TestBed.createComponent(DashboardLayoutSidebar);
-    fixture.detectChanges();
-
-    const navigation = fixture.debugElement.query(By.directive(DashboardLayoutSidebarNavigation))
-      .componentInstance as unknown as {
-      readonly onSearchQueryChange: (value: string) => void;
-      readonly onClearSearch: () => void;
-      readonly menuItems: () => readonly MenuItem[];
-    };
-
-    navigation.onSearchQueryChange('Notifications');
-    expect(navigation.menuItems().map((group) => group.label)).toEqual(['Account']);
-
-    navigation.onClearSearch();
-    expect(navigation.menuItems().map((group) => group.label)).toEqual([
-      'Home',
-      'Organization',
-      'Account',
-    ]);
+    expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-footer'))).toBeFalsy();
   });
 
   it('should configure notification badge from notification center state', () => {
@@ -206,7 +164,7 @@ describe('DashboardLayoutSidebar', () => {
     expect(closeSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should expose route as panelmenu routerLink with organization prefix', () => {
+  it('should expose route as sidebar routerLink with organization prefix', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebar);
     fixture.detectChanges();
 

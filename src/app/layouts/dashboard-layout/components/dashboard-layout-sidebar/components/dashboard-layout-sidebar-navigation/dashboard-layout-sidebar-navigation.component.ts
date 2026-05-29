@@ -4,17 +4,12 @@ import {
   computed,
   inject,
   input,
+  InputSignal,
   type Signal,
 } from '@angular/core';
 import { type IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angular/router';
-import type { MotionOptions } from '@primeuix/motion';
 import type { MenuItem } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
-import { DividerModule } from 'primeng/divider';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { InputTextModule } from 'primeng/inputtext';
-import { PanelMenuModule, type PanelMenuPassThroughOptions } from 'primeng/panelmenu';
 import { RippleModule } from 'primeng/ripple';
 import { TooltipModule } from 'primeng/tooltip';
 import {
@@ -28,9 +23,9 @@ import {
  *
  * @description
  * Layout-owned navigation component for the primary sidebar and the mobile
- * drawer. Renders a PrimeNG PanelMenu with an optional search field. Drives
- * its state from {@link DashboardSidebarNavigationService} and closes the
- * mobile drawer via {@link DashboardSidebarService} on leaf item click.
+ * drawer. Renders a shared list-based navigation, driven by
+ * {@link DashboardSidebarNavigationService}, and closes the mobile drawer
+ * via {@link DashboardSidebarService} on leaf item click.
  *
  * Design is intentionally independent from the secondary sidebar: the two
  * panels are expected to diverge visually.
@@ -39,13 +34,12 @@ import {
  *
  * @example
  * ```html
- * <!-- Mobile drawer: all sections with search -->
+ * <!-- Mobile drawer: all sections -->
  * <app-dashboard-layout-sidebar-navigation />
  *
- * <!-- Primary sidebar: primary items without search -->
+ * <!-- Primary sidebar: primary items only -->
  * <app-dashboard-layout-sidebar-navigation
  *   [items]="navigationService.primaryItems"
- *   [showSearch]="false"
  * />
  * ```
  *
@@ -55,11 +49,6 @@ import {
   selector: 'app-dashboard-layout-sidebar-navigation',
   imports: [
     BadgeModule,
-    DividerModule,
-    IconFieldModule,
-    InputIconModule,
-    InputTextModule,
-    PanelMenuModule,
     RippleModule,
     RouterLink,
     RouterLinkActive,
@@ -115,24 +104,9 @@ export class DashboardLayoutSidebarNavigation {
    * @access public
    * @since 2.0.0
    *
-   * @type {InputSignal<Signal<MenuItem[]> | undefined>}
+   * @type {InputSignal<MenuItem[] | undefined>}
    */
-  readonly items = input<Signal<MenuItem[]>>();
-
-  /**
-   * Property showSearch
-   * @readonly
-   *
-   * @description
-   * Whether to render the search input above the navigation menu.
-   * Set to `false` for the primary sidebar.
-   *
-   * @access public
-   * @since 2.0.0
-   *
-   * @type {InputSignal<boolean>}
-   */
-  readonly showSearch = input<boolean>(true);
+  public readonly items: InputSignal<MenuItem[] | undefined> = input<MenuItem[] | undefined>();
 
   /**
    * Property iconOnly
@@ -149,7 +123,7 @@ export class DashboardLayoutSidebarNavigation {
    *
    * @type {InputSignal<boolean>}
    */
-  readonly iconOnly = input<boolean>(false);
+  public readonly iconOnly: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property menuItems
@@ -165,73 +139,11 @@ export class DashboardLayoutSidebarNavigation {
    *
    * @type {Signal<MenuItem[]>}
    */
-  protected readonly menuItems = computed<MenuItem[]>((): MenuItem[] => {
-    const itemsSignal = this.items();
-    return itemsSignal ? itemsSignal() : this.sidebarNavigationService.menuItems();
+  protected readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] => {
+    const overrideItems: MenuItem[] | undefined = this.items();
+    if (overrideItems) return overrideItems;
+    return this.sidebarNavigationService.menuItems();
   });
-
-  /**
-   * Property flatItems
-   * @readonly
-   *
-   * @description
-   * Flattened list of all leaf navigation items across sections.
-   * Used in icon-only mode to render a flat icon strip without
-   * PanelMenu grouping.
-   *
-   * @access protected
-   * @since 3.0.0
-   *
-   * @type {Signal<MenuItem[]>}
-   */
-  protected readonly flatItems = computed<MenuItem[]>((): MenuItem[] =>
-    this.menuItems().flatMap((section: MenuItem): MenuItem[] => section.items ?? []),
-  );
-
-  /**
-   * Property panelMenuPt
-   * @readonly
-   *
-   * @description
-   * Pass-through options for PrimeNG PanelMenu.
-   *
-   * @access protected
-   * @since 3.0.0
-   *
-   * @type {PanelMenuPassThroughOptions}
-   */
-  protected readonly panelMenuPt: PanelMenuPassThroughOptions = {
-    submenuIcon: { class: 'hidden' },
-    submenu: { class: 'ml-6 border-l border-surface-200 pl-3' },
-  };
-
-  /**
-   * Property panelMenuMotionOptions
-   * @readonly
-   *
-   * @description
-   * Animation options for submenu enter/leave transitions.
-   *
-   * @access protected
-   * @since 3.0.0
-   *
-   * @type {MotionOptions}
-   */
-  protected readonly panelMenuMotionOptions: MotionOptions = {
-    type: 'transition',
-    autoHeight: true,
-    duration: { enter: 250, leave: 200 },
-    enterClass: {
-      from: 'h-0 opacity-0',
-      active: 'overflow-hidden transition-[height,opacity] duration-250 ease-in-out',
-      to: 'h-[var(--pui-motion-height)] opacity-100',
-    },
-    leaveClass: {
-      from: 'h-[var(--pui-motion-height)] opacity-100',
-      active: 'overflow-hidden transition-[height,opacity] duration-200 ease-in-out',
-      to: 'h-0 opacity-0',
-    },
-  };
 
   /**
    * Property exactMatchOptions
@@ -274,24 +186,6 @@ export class DashboardLayoutSidebarNavigation {
 
   //#region Methods
   /**
-   * Method onSearchQueryChange
-   * @method onSearchQueryChange
-   *
-   * @description
-   * Forwards search query changes to the navigation service.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @param {string} value - New search query value.
-   *
-   * @returns {void}
-   */
-  protected onSearchQueryChange(value: string): void {
-    this.sidebarNavigationService.setSearchQuery(value);
-  }
-
-  /**
    * Method onItemClick
    * @method onItemClick
    *
@@ -309,22 +203,6 @@ export class DashboardLayoutSidebarNavigation {
     if (item.routerLink && !item.items?.length) {
       this.sidebarService.close();
     }
-  }
-
-  /**
-   * Method onClearSearch
-   * @method onClearSearch
-   *
-   * @description
-   * Clears the current search query.
-   *
-   * @access protected
-   * @since 3.0.0
-   *
-   * @returns {void}
-   */
-  protected onClearSearch(): void {
-    this.onSearchQueryChange('');
   }
 
   /**
@@ -348,6 +226,25 @@ export class DashboardLayoutSidebarNavigation {
     }
 
     return this.subsetMatchOptions;
+  }
+
+  /**
+   * Method isNumericBadge
+   * @method isNumericBadge
+   *
+   * @description
+   * Returns true when the given badge value is purely numeric. Used to
+   * pick between a discrete count style and a labelled pill style.
+   *
+   * @access protected
+   * @since 3.1.0
+   *
+   * @param {string | undefined} badge - Badge value to inspect.
+   *
+   * @returns {boolean}
+   */
+  protected isNumericBadge(badge: string | undefined): boolean {
+    return !!badge && /^\d+$/.test(badge);
   }
   //#endregion
 }

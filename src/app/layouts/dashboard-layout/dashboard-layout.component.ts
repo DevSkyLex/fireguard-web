@@ -88,5 +88,23 @@ export class DashboardLayout {
     { initialValue: false },
   );
 
+  /**
+   * Property primaryIconOnly
+   * @readonly
+   *
+   * @description
+   * Whether the primary sidebar should render in its icon-only (reduced)
+   * form. True either when below the desktop breakpoint (tablet) or when
+   * the user has explicitly collapsed the sidebar via the header toggle.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly primaryIconOnly: Signal<boolean> = computed(
+    (): boolean => !this.isDesktopSidebar() || this.sidebarService.primaryCollapsed(),
+  );
+
   //#endregion
 }

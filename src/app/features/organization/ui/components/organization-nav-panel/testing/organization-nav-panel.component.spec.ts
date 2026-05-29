@@ -72,13 +72,6 @@ describe('OrganizationNavPanel', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should display a search input', () => {
-    const fixture = TestBed.createComponent(OrganizationNavPanel);
-    fixture.detectChanges();
-
-    expect(fixture.debugElement.query(By.css('[data-testid="sidebar-search-input"]'))).toBeTruthy();
-  });
-
   it('should display all navigation items when all permissions are granted', () => {
     const fixture = TestBed.createComponent(OrganizationNavPanel);
     fixture.detectChanges();
@@ -116,43 +109,13 @@ describe('OrganizationNavPanel', () => {
     expect(text).toContain('Inspections');
   });
 
-  it('should show no results when search query does not match any item', () => {
-    const fixture = TestBed.createComponent(OrganizationNavPanel);
-    fixture.detectChanges();
-
-    // Trigger search via the component's internal state
-    const component = fixture.componentInstance as unknown as {
-      onSearchQueryChange: (query: string) => void;
-    };
-    component.onSearchQueryChange('zzz-no-match');
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.textContent).toContain('No results found.');
-  });
-
-  it('should filter items when a search query matches a subset', () => {
-    const fixture = TestBed.createComponent(OrganizationNavPanel);
-    fixture.detectChanges();
-
-    const component = fixture.componentInstance as unknown as {
-      onSearchQueryChange: (query: string) => void;
-      navigationItems: () => readonly MenuItem[];
-    };
-    component.onSearchQueryChange('Facilities');
-    fixture.detectChanges();
-
-    const items = component.navigationItems();
-    const section = items[0];
-    expect(section?.items?.map((i: MenuItem) => i.label)).toEqual(['Facilities']);
-  });
-
   it('should show no items when no organization is selected', () => {
     mockOrganizationContext.selectedOrganization.set(null);
 
     const fixture = TestBed.createComponent(OrganizationNavPanel);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('No results found.');
+    expect(fixture.nativeElement.textContent).toContain('No organization navigation available.');
   });
 
   it('should use the active organization id in navigation routerLinks', () => {

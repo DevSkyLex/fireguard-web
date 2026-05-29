@@ -1,180 +1,102 @@
-<div class="flex flex-col gap-4 p-3">
-  @if (iconOnly() || !showSearch()) {
-    <!-- Primary sidebar: icon-only (tablet) or icon+label (desktop) -->
-    <nav class="flex-1 overflow-y-auto">
-      <ul class="flex flex-col gap-0.5">
+<div class="flex min-h-full flex-col gap-3 py-5">
+  <nav
+    class="flex-1 overflow-y-auto overflow-x-clip"
+    [attr.aria-label]="items() ? 'Primary navigation' : 'Sidebar navigation'"
+  >
+    @if (menuItems().length === 0) {
+      <div
+        class="flex min-h-28 items-center justify-center rounded-md border border-dashed border-surface-200 bg-surface-50 px-4 text-center text-[13px] text-surface-500 transition-colors dark:border-surface-800 dark:bg-surface-900"
+      >
+        No navigation items available.
+      </div>
+    } @else {
+      <ul class="flex flex-col">
         @for (section of menuItems(); track section.id ?? section.label; let isFirst = $first) {
-          @if (!isFirst) {
+          @if (!isFirst && !iconOnly()) {
             <li
               role="separator"
-              class="mx-2 my-1 border-t border-surface-200 dark:border-surface-800"
+              data-testid="sidebar-section-divider"
+              class="my-5 border-t border-surface-200 dark:border-surface-800"
             ></li>
           }
 
-          @for (item of section.items ?? []; track item.id ?? item.label) {
-            <li>
-              <a
-                pRipple
-                [pTooltip]="iconOnly() ? (item.label ?? '') : ''"
-                tooltipPosition="right"
-                class="relative flex w-full cursor-pointer items-center rounded-lg p-3 transition-colors hover:bg-surface-50 dark:hover:bg-surface-900"
-                [class.justify-center]="iconOnly()"
-                [class.gap-3]="!iconOnly()"
-                [routerLink]="item.routerLink ?? null"
-                routerLinkActive
-                [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.routerLink)"
-                #linkActive="routerLinkActive"
-                [attr.aria-current]="item.routerLink && linkActive.isActive ? 'page' : null"
-                [attr.data-sidebar-item-id]="item.id ?? null"
-                (click)="onItemClick(item)"
-              >
-                @if (item.routerLink && linkActive.isActive) {
-                  <span
-                    class="pointer-events-none absolute size-9 rounded-full bg-primary-500/20 blur-sm"
-                    aria-hidden="true"
-                  ></span>
-                }
+          <li class="px-3">
+            @if (!iconOnly()) {
+              <p class="px-2 pb-1.5 pt-1 text-[10px] font-medium uppercase tracking-widest text-surface-400 dark:text-surface-500">
+                {{ section.label }}
+              </p>
+            }
 
-                @if (item.icon) {
-                  <i
-                    [class]="item.icon + ' relative z-10 text-xl'"
-                    [class.text-primary-500]="linkActive.isActive"
-                    [class.text-surface-500]="!linkActive.isActive"
-                    [class.dark:text-primary-400]="linkActive.isActive"
-                    [class.dark:text-surface-400]="!linkActive.isActive"
-                  ></i>
-                }
-
-                @if (!iconOnly()) {
-                  <span
-                    class="relative z-10 flex-1 truncate text-sm font-medium"
-                    [class.text-surface-900]="linkActive.isActive"
-                    [class.text-surface-600]="!linkActive.isActive"
-                    [class.dark:text-surface-100]="linkActive.isActive"
-                    [class.dark:text-surface-400]="!linkActive.isActive"
+            <ul class="flex flex-col gap-0.5">
+              @for (item of section.items ?? []; track item.id ?? item.label) {
+                <li>
+                  <a
+                    pRipple
+                    [pTooltip]="iconOnly() ? (item.label ?? '') : ''"
+                    tooltipPosition="right"
+                    class="group relative flex min-h-9 w-full cursor-pointer items-center rounded-md border border-transparent px-3 py-2 text-[13px] font-medium text-surface-600 transition-colors hover:bg-surface-100/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-300 dark:hover:bg-surface-900/70"
+                    [class.justify-center]="iconOnly()"
+                    [class.gap-2.5]="!iconOnly()"
+                    [class.bg-surface-50]="linkActive.isActive"
+                    [class.border-surface-200]="linkActive.isActive"
+                    [class.shadow-xs]="linkActive.isActive"
+                    [class.text-surface-950]="linkActive.isActive"
+                    [class.font-semibold]="linkActive.isActive"
+                    [class.dark:bg-surface-900]="linkActive.isActive"
+                    [class.dark:border-surface-800]="linkActive.isActive"
+                    [class.dark:text-surface-50]="linkActive.isActive"
+                    [routerLink]="item.routerLink ?? null"
+                    routerLinkActive
+                    [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.routerLink)"
+                    #linkActive="routerLinkActive"
+                    [attr.aria-current]="item.routerLink && linkActive.isActive ? 'page' : null"
+                    [attr.data-sidebar-item-id]="item.id ?? null"
+                    (click)="onItemClick(item)"
                   >
-                    {{ item.label }}
-                  </span>
-                }
+                    @if (item.icon) {
+                      <i
+                        [class]="item.icon + ' shrink-0 w-4 text-center'"
+                        [class.text-surface-950]="linkActive.isActive"
+                        [class.dark:text-surface-50]="linkActive.isActive"
+                        aria-hidden="true"
+                      ></i>
+                    }
 
-                @if (item.badge) {
-                  <p-badge
-                    class="absolute top-1 right-1"
-                    [value]="item.badge"
-                    severity="contrast"
-                    size="small"
-                  />
-                }
-              </a>
-            </li>
-          }
+                    @if (!iconOnly()) {
+                      <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
+                    }
+
+                    @if (item.badge && !iconOnly()) {
+                      @if (isNumericBadge(item.badge)) {
+                        <span
+                          class="inline-flex h-4 min-w-4 items-center justify-center rounded px-1 text-[10px] font-semibold text-surface-500 dark:text-surface-400"
+                        >
+                          {{ item.badge }}
+                        </span>
+                      } @else {
+                        <span
+                          class="inline-flex items-center rounded-sm bg-primary-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary-700 dark:bg-primary-950 dark:text-primary-300"
+                        >
+                          {{ item.badge }}
+                        </span>
+                      }
+                    }
+
+                    @if (item.badge && iconOnly()) {
+                      <p-badge
+                        class="absolute top-0.5 right-0.5"
+                        [value]="item.badge"
+                        severity="contrast"
+                        size="small"
+                      />
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+          </li>
         }
       </ul>
-    </nav>
-  } @else {
-    @if (showSearch()) {
-      <div class="flex flex-col">
-        <label class="sr-only" for="sidebar-search">Search navigation</label>
-        <p-iconfield class="w-full">
-          <p-inputicon class="pi pi-search" />
-          <input
-            #searchInput
-            pInputText
-            id="sidebar-search"
-            type="search"
-            class="w-full"
-            placeholder="Search..."
-            data-testid="sidebar-search-input"
-            [value]="sidebarNavigationService.searchQuery()"
-            (input)="onSearchQueryChange(searchInput.value)"
-          />
-
-          @if (sidebarNavigationService.searchQuery()) {
-            <p-inputicon
-              class="pi pi-times cursor-pointer text-xs text-surface-500 transition-colors hover:text-surface-700"
-              role="button"
-              tabindex="0"
-              aria-label="Clear search"
-              data-testid="sidebar-search-clear"
-              (click)="onClearSearch()"
-              (keydown.enter)="onClearSearch()"
-              (keydown.space)="$event.preventDefault(); onClearSearch()"
-            />
-          }
-        </p-iconfield>
-      </div>
     }
-
-    <nav class="flex-1 overflow-y-auto">
-      @if (menuItems().length === 0) {
-        <div
-          class="flex min-h-28 items-center justify-center rounded-xl border border-dashed border-surface-200 bg-surface-50 px-4 text-center text-sm text-surface-500 transition-colors dark:border-surface-800 dark:bg-surface-900"
-        >
-          No results found.
-        </div>
-      } @else {
-        @for (section of menuItems(); track section.id ?? section.label; let isFirst = $first) {
-          @if (!isFirst) {
-            <p-divider class="my-4! border-surface-200!" data-testid="sidebar-section-divider" />
-          }
-
-          <p-panelmenu
-            [model]="[section]"
-            [multiple]="true"
-            [motionOptions]="panelMenuMotionOptions"
-            [unstyled]="true"
-            [pt]="panelMenuPt"
-            class="w-full"
-          >
-            <ng-template #item let-item>
-              <a
-                pRipple
-                class="relative flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-surface-800 transition-colors hover:bg-surface-50 dark:text-surface-200 dark:hover:bg-surface-900"
-                [routerLink]="item.routerLink ?? null"
-                routerLinkActive
-                [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.routerLink)"
-                #linkActive="routerLinkActive"
-                [attr.aria-current]="item.routerLink && linkActive.isActive ? 'page' : null"
-                [attr.data-sidebar-item-id]="item.id ?? null"
-                (click)="onItemClick(item)"
-              >
-                @if (item.routerLink && linkActive.isActive) {
-                  <span
-                    class="pointer-events-none absolute top-1/2 -left-3 size-2 -translate-y-1/2 rounded-full bg-primary-500"
-                    aria-hidden="true"
-                  ></span>
-                }
-
-                @if (item.icon) {
-                  <i [class]="item.icon + ' text-base text-surface-500 dark:text-surface-400'"></i>
-                }
-
-                <span
-                  [class]="
-                    item.icon
-                      ? 'flex-1 text-sm font-medium text-surface-700 dark:text-surface-300'
-                      : 'flex-1 text-base font-semibold text-surface-900 dark:text-surface-100'
-                  "
-                >
-                  {{ item.label }}
-                </span>
-
-                @if (item.badge) {
-                  <p-badge [value]="item.badge" severity="contrast" />
-                }
-
-                @if (item.items?.length) {
-                  <i
-                    class="pi text-xs text-surface-500 dark:text-surface-400"
-                    [class.pi-chevron-down]="item.expanded"
-                    [class.pi-chevron-right]="!item.expanded"
-                  ></i>
-                }
-              </a>
-            </ng-template>
-          </p-panelmenu>
-        }
-      }
-    </nav>
-  }
+  </nav>
 </div>

@@ -3,19 +3,10 @@ import {
   Component,
   computed,
   inject,
-  signal,
   type Signal,
-  type WritableSignal,
 } from '@angular/core';
 import { type IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angular/router';
-import type { MotionOptions } from '@primeuix/motion';
 import type { MenuItem } from 'primeng/api';
-import { BadgeModule } from 'primeng/badge';
-import { DividerModule } from 'primeng/divider';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { InputTextModule } from 'primeng/inputtext';
-import { PanelMenuModule, type PanelMenuPassThroughOptions } from 'primeng/panelmenu';
 import { RippleModule } from 'primeng/ripple';
 import { OrganizationOutput } from '@app/features/organization/models';
 import {
@@ -74,7 +65,7 @@ const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationSidebarItem> = [
  * Organization-owned navigation panel rendered in the dashboard secondary
  * sidebar slot when an organization is active. Displays organization-scoped
  * navigation items (Dashboard, Facilities, Equipments, Inspections) filtered
- * by the current member's permissions and a local search query.
+ * by the current member's permissions.
  *
  * This component is feature-owned, manages its own state, and is registered
  * as a slot contribution by `provideOrganization()`. Its design is
@@ -86,17 +77,7 @@ const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationSidebarItem> = [
  */
 @Component({
   selector: 'app-organization-nav-panel',
-  imports: [
-    BadgeModule,
-    DividerModule,
-    IconFieldModule,
-    InputIconModule,
-    InputTextModule,
-    PanelMenuModule,
-    RippleModule,
-    RouterLink,
-    RouterLinkActive,
-  ],
+  imports: [RippleModule, RouterLink, RouterLinkActive],
   templateUrl: './organization-nav-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -134,18 +115,29 @@ export class OrganizationNavPanel {
     inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT);
 
   /**
-   * Local search query used to filter organization navigation items.
+   * Property selectedOrganization
+   * @readonly
+   *
+   * @description
+   * Currently active organization exposed to the template for the panel header.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<OrganizationOutput | null>}
    */
-  private readonly searchQuery: WritableSignal<string> = signal<string>('');
+  protected readonly selectedOrganization: Signal<OrganizationOutput | null> = computed(
+    (): OrganizationOutput | null => this.organizationContext.selectedOrganization(),
+  );
 
   /**
    * Property navigationItems
    * @readonly
    *
    * @description
-   * Organization-scoped navigation items filtered by the current member's
-   * permissions and the local search query. Returns an empty array when
-   * no organization is active or no items pass the permission filter.
+    * Organization-scoped navigation items filtered by the current member's
+    * permissions. Returns an empty array when no organization is active
+    * or no items pass the permission filter.
    *
    * @access protected
    * @since 1.0.0
@@ -161,7 +153,6 @@ export class OrganizationNavPanel {
       this.organizationMemberAccess.permissions(),
     );
     const prefix: string = `/organizations/${organization.id}`;
-    const query: string = this.searchQuery().trim().toLowerCase();
 
     const visibleItems: MenuItem[] = ORGANIZATION_NAVIGATION_ITEMS.filter(
       (item: OrganizationSidebarItem): boolean =>
@@ -175,68 +166,17 @@ export class OrganizationNavPanel {
       }),
     );
 
-    const filteredItems: MenuItem[] = query
-      ? visibleItems.filter(
-          (item: MenuItem): boolean => item.label?.toLowerCase().includes(query) ?? false,
-        )
-      : visibleItems;
-
-    if (filteredItems.length === 0) return [];
+    if (visibleItems.length === 0) return [];
 
     return [
       {
         id: 'organization',
         label: 'Organization',
         expanded: true,
-        items: filteredItems,
+        items: visibleItems,
       },
     ];
   });
-
-  /**
-   * Property panelMenuPt
-   * @readonly
-   *
-   * @description
-   * Pass-through options for PrimeNG PanelMenu.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {PanelMenuPassThroughOptions}
-   */
-  protected readonly panelMenuPt: PanelMenuPassThroughOptions = {
-    submenuIcon: { class: 'hidden' },
-    submenu: { class: 'ml-6 border-l border-surface-200 pl-3' },
-  };
-
-  /**
-   * Property panelMenuMotionOptions
-   * @readonly
-   *
-   * @description
-   * Animation options for submenu enter/leave transitions.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {MotionOptions}
-   */
-  protected readonly panelMenuMotionOptions: MotionOptions = {
-    type: 'transition',
-    autoHeight: true,
-    duration: { enter: 250, leave: 200 },
-    enterClass: {
-      from: 'h-0 opacity-0',
-      active: 'overflow-hidden transition-[height,opacity] duration-250 ease-in-out',
-      to: 'h-[var(--pui-motion-height)] opacity-100',
-    },
-    leaveClass: {
-      from: 'h-[var(--pui-motion-height)] opacity-100',
-      active: 'overflow-hidden transition-[height,opacity] duration-200 ease-in-out',
-      to: 'h-0 opacity-0',
-    },
-  };
 
   /**
    * Property exactMatchOptions
@@ -276,15 +216,6 @@ export class OrganizationNavPanel {
     fragment: 'ignored',
   };
   //#endregion
-
-  //#region Methods
-  protected onSearchQueryChange(query: string): void {
-    this.searchQuery.set(query);
-  }
-
-  protected onClearSearch(): void {
-    this.searchQuery.set('');
-  }
 
   //#region Methods
   /**

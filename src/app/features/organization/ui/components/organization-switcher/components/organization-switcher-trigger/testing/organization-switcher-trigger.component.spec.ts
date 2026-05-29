@@ -83,32 +83,6 @@ describe('OrganizationSwitcherTrigger', () => {
     expect(emitSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should emit prefetchMenuData when the trigger is hovered', () => {
-    const fixture = TestBed.createComponent(OrganizationSwitcherTrigger);
-    fixture.componentRef.setInput('organization', MOCK_ORG);
-    fixture.detectChanges();
-
-    const emitSpy = vi.fn();
-    fixture.componentInstance.prefetchMenuData.subscribe(emitSpy);
-
-    fixture.nativeElement.dispatchEvent(new MouseEvent('mouseenter'));
-
-    expect(emitSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('should emit prefetchMenuData when the trigger receives focus', () => {
-    const fixture = TestBed.createComponent(OrganizationSwitcherTrigger);
-    fixture.componentRef.setInput('organization', MOCK_ORG);
-    fixture.detectChanges();
-
-    const emitSpy = vi.fn();
-    fixture.componentInstance.prefetchMenuData.subscribe(emitSpy);
-
-    fixture.nativeElement.dispatchEvent(new FocusEvent('focusin'));
-
-    expect(emitSpy).toHaveBeenCalledTimes(1);
-  });
-
   it('should disable the button when isSwitching is true', () => {
     const fixture = TestBed.createComponent(OrganizationSwitcherTrigger);
     fixture.componentRef.setInput('organization', MOCK_ORG);

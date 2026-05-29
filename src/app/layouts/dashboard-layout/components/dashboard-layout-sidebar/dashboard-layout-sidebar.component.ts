@@ -1,6 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, InputSignal } from '@angular/core';
 import { DashboardSidebarNavigationService } from '@layouts/dashboard-layout/services';
-import { DashboardLayoutSidebarHeader, DashboardLayoutSidebarNavigation } from './components';
+import {
+  DashboardLayoutSidebarFooter,
+  DashboardLayoutSidebarHeader,
+  DashboardLayoutSidebarNavigation,
+} from './components';
 
 /**
  * Component DashboardLayoutSidebar
@@ -16,7 +20,11 @@ import { DashboardLayoutSidebarHeader, DashboardLayoutSidebarNavigation } from '
  */
 @Component({
   selector: 'app-dashboard-layout-sidebar',
-  imports: [DashboardLayoutSidebarHeader, DashboardLayoutSidebarNavigation],
+  imports: [
+    DashboardLayoutSidebarHeader,
+    DashboardLayoutSidebarNavigation,
+    DashboardLayoutSidebarFooter,
+  ],
   templateUrl: './dashboard-layout-sidebar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -53,7 +61,7 @@ export class DashboardLayoutSidebar {
    *
    * @type {InputSignal<'primary' | 'mobile'>}
    */
-  readonly variant = input<'primary' | 'mobile'>('mobile');
+  public readonly variant: InputSignal<'primary' | 'mobile'> = input<'primary' | 'mobile'>('mobile');
 
   /**
    * Property iconOnly
@@ -68,6 +76,22 @@ export class DashboardLayoutSidebar {
    *
    * @type {InputSignal<boolean>}
    */
-  readonly iconOnly = input<boolean>(false);
+  public readonly iconOnly: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property collapsible
+   * @readonly
+   *
+   * @description
+   * When true, the sidebar header exposes a toggle button allowing the user
+   * to collapse/expand the primary sidebar between its full and icon-only
+   * forms. Only meaningful for the desktop `'primary'` variant.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly collapsible: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 }

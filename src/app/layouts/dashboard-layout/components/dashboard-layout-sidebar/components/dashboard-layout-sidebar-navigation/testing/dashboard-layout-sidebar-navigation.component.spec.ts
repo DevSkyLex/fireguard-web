@@ -92,55 +92,15 @@ describe('DashboardLayoutSidebarNavigation', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render search input and panelmenu', () => {
+  it('should render navigation links and section dividers', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
     fixture.detectChanges();
 
-    expect(fixture.debugElement.query(By.css('[data-testid="sidebar-search-input"]'))).toBeTruthy();
-    expect(fixture.debugElement.queryAll(By.css('p-panelmenu')).length).toBe(3);
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(7);
     expect(
       fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
     ).toBe(2);
-  });
-
-  it('should hide the search input when showSearch is false', () => {
-    const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
-    fixture.componentRef.setInput('showSearch', false);
-    fixture.detectChanges();
-
-    expect(fixture.debugElement.query(By.css('[data-testid="sidebar-search-input"]'))).toBeFalsy();
-  });
-
-  it('should filter menu items based on search query', () => {
-    const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
-    const service = TestBed.inject(DashboardSidebarNavigationService);
-
-    service.setSearchQuery('Notifications');
-    const labels = (
-      fixture.componentInstance as unknown as { readonly menuItems: () => readonly MenuItem[] }
-    )
-      .menuItems()
-      .map((item) => item.label);
-
-    expect(labels).toEqual(['Account']);
-  });
-
-  it('should clear search query and restore full menu', () => {
-    const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
-    const service = TestBed.inject(DashboardSidebarNavigationService);
-    const component = fixture.componentInstance as unknown as {
-      readonly menuItems: () => readonly MenuItem[];
-    };
-
-    service.setSearchQuery('Notifications');
-    expect(component.menuItems().map((group) => group.label)).toEqual(['Account']);
-
-    service.clearSearchQuery();
-    expect(component.menuItems().map((group) => group.label)).toEqual([
-      'Home',
-      'Organization',
-      'Account',
-    ]);
+    expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
   });
 
   it('should expose organization links using the active organization id', () => {
@@ -155,15 +115,13 @@ describe('DashboardLayoutSidebarNavigation', () => {
     expect(facilities?.routerLink).toBe('/organizations/org-1/facilities');
   });
 
-  it('should show no results state when search does not match anything', () => {
+  it('should show an empty state when no menu items are available', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
-    const service = TestBed.inject(DashboardSidebarNavigationService);
-
-    service.setSearchQuery('NoMatch');
+    fixture.componentRef.setInput('items', signal<MenuItem[]>([]));
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('No results found.');
-    expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
+    expect(fixture.nativeElement.textContent).toContain('No navigation items available.');
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(0);
   });
 
   it('should close sidebar only for leaf items with routerLink', () => {

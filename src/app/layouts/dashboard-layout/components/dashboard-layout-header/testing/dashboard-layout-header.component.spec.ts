@@ -1,4 +1,4 @@
-import { signal, type Type } from '@angular/core';
+import { Component, signal, type Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -9,6 +9,20 @@ import {
   DashboardSidebarService,
 } from '@layouts/dashboard-layout/services';
 import { DashboardLayoutHeader } from '../dashboard-layout-header.component';
+
+@Component({
+  selector: 'app-test-header-action-a',
+  standalone: true,
+  template: '<button type="button">Action A</button>',
+})
+class TestHeaderActionA {}
+
+@Component({
+  selector: 'app-test-header-action-b',
+  standalone: true,
+  template: '<button type="button">Action B</button>',
+})
+class TestHeaderActionB {}
 
 describe('DashboardLayoutHeader', () => {
   const currentTheme = signal<ThemeMode>('light');
@@ -58,5 +72,14 @@ describe('DashboardLayoutHeader', () => {
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-breadcrumb'))).toBeTruthy();
+  });
+
+  it('should render a vertical divider between header actions', () => {
+    mockHeaderActionsService.components = [TestHeaderActionA, TestHeaderActionB];
+    const fixture = TestBed.createComponent(DashboardLayoutHeader);
+
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.queryAll(By.css('p-divider[layout="vertical"]'))).toHaveLength(1);
   });
 });

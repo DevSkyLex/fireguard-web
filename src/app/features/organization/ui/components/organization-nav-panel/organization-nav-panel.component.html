@@ -1,101 +1,101 @@
-<div class="flex flex-col gap-4 p-3">
-  <div class="flex flex-col">
-    <label class="sr-only" for="organization-sidebar-search">Search organization navigation</label>
-    <p-iconfield class="w-full">
-      <p-inputicon class="pi pi-search" />
-      <input
-        #searchInput
-        pInputText
-        id="organization-sidebar-search"
-        type="search"
-        class="w-full"
-        placeholder="Search..."
-        data-testid="sidebar-search-input"
-        (input)="onSearchQueryChange(searchInput.value)"
-      />
+<div
+  class="flex h-full w-full flex-col bg-surface-0 text-surface-950 dark:bg-surface-950 dark:text-surface-50"
+>
+  @if (selectedOrganization(); as organization) {
+    <section
+      class="flex h-16 shrink-0 items-center gap-2.5 border-b border-surface-200 px-5 dark:border-surface-800"
+    >
+      <span
+        class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary-600 text-surface-0 dark:bg-primary-500"
+        aria-hidden="true"
+      >
+        <i class="pi pi-building text-sm"></i>
+      </span>
 
-      @if (navigationItems().length === 0 && searchInput.value) {
-        <p-inputicon
-          class="pi pi-times cursor-pointer text-xs text-surface-500 transition-colors hover:text-surface-700"
-          role="button"
-          tabindex="0"
-          aria-label="Clear search"
-          (click)="onClearSearch(); searchInput.value = ''"
-          (keydown.enter)="onClearSearch(); searchInput.value = ''"
-          (keydown.space)="$event.preventDefault(); onClearSearch(); searchInput.value = ''"
-        />
-      }
-    </p-iconfield>
-  </div>
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-[13px] font-semibold text-surface-950 dark:text-surface-50">
+          {{ organization.name }}
+        </p>
+        <p
+          class="truncate text-[10px] font-medium uppercase tracking-widest text-surface-400 dark:text-surface-500"
+        >
+          Organization
+        </p>
+      </div>
+    </section>
+  }
 
-  <nav class="flex-1 overflow-y-auto">
+  <nav class="min-h-0 flex-1 overflow-y-auto" aria-label="Organization navigation">
     @if (navigationItems().length === 0) {
       <div
-        class="flex min-h-28 items-center justify-center rounded-xl border border-dashed border-surface-200 bg-surface-50 px-4 text-center text-sm text-surface-500 transition-colors dark:border-surface-800 dark:bg-surface-900"
+        class="m-3 flex min-h-28 items-center justify-center rounded-md border border-dashed border-surface-200 bg-surface-50 px-4 text-center text-[13px] text-surface-500 transition-colors dark:border-surface-800 dark:bg-surface-900"
       >
-        No results found.
+        No organization navigation available.
       </div>
     } @else {
-      @for (section of navigationItems(); track section.id ?? section.label; let isFirst = $first) {
-        @if (!isFirst) {
-          <p-divider class="my-4! border-surface-200!" data-testid="sidebar-section-divider" />
-        }
+      <ul class="flex flex-col py-5">
+        @for (section of navigationItems(); track section.id ?? section.label; let isFirst = $first) {
+          @if (!isFirst) {
+            <li
+              role="separator"
+              data-testid="sidebar-section-divider"
+              class="my-5 border-t border-surface-200 dark:border-surface-800"
+            ></li>
+          }
 
-        <p-panelmenu
-          [model]="[section]"
-          [multiple]="true"
-          [motionOptions]="panelMenuMotionOptions"
-          [unstyled]="true"
-          [pt]="panelMenuPt"
-          class="w-full"
-        >
-          <ng-template #item let-item>
-            <a
-              pRipple
-              class="relative flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-surface-800 transition-colors hover:bg-surface-50 dark:text-surface-200 dark:hover:bg-surface-900"
-              [routerLink]="item.routerLink ?? null"
-              routerLinkActive
-              [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.routerLink)"
-              #linkActive="routerLinkActive"
-              [attr.aria-current]="item.routerLink && linkActive.isActive ? 'page' : null"
-              [attr.data-sidebar-item-id]="item.id ?? null"
+          <li class="px-3">
+            <p
+              class="px-2 pb-1.5 pt-1 text-[10px] font-medium uppercase tracking-widest text-surface-400 dark:text-surface-500"
             >
-              @if (item.routerLink && linkActive.isActive) {
-                <span
-                  class="pointer-events-none absolute top-1/2 -left-3 size-2 -translate-y-1/2 rounded-full bg-primary-500"
-                  aria-hidden="true"
-                ></span>
-              }
+              {{ section.label }}
+            </p>
 
-              @if (item.icon) {
-                <i [class]="item.icon + ' text-base text-surface-500 dark:text-surface-400'"></i>
-              }
+            <ul class="flex flex-col gap-0.5">
+              @for (item of section.items ?? []; track item.id ?? item.label) {
+                <li>
+                  <a
+                    pRipple
+                    class="group relative flex min-h-9 w-full cursor-pointer items-center gap-2.5 rounded-md border border-transparent px-3 py-2 text-[13px] font-medium text-surface-600 transition-colors hover:bg-surface-100/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-300 dark:hover:bg-surface-900/70"
+                    [class.bg-surface-50]="linkActive.isActive"
+                    [class.border-surface-200]="linkActive.isActive"
+                    [class.shadow-xs]="linkActive.isActive"
+                    [class.text-surface-950]="linkActive.isActive"
+                    [class.font-semibold]="linkActive.isActive"
+                    [class.dark:bg-surface-900]="linkActive.isActive"
+                    [class.dark:border-surface-800]="linkActive.isActive"
+                    [class.dark:text-surface-50]="linkActive.isActive"
+                    [routerLink]="item.routerLink ?? null"
+                    routerLinkActive
+                    [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.routerLink)"
+                    #linkActive="routerLinkActive"
+                    [attr.aria-current]="item.routerLink && linkActive.isActive ? 'page' : null"
+                    [attr.data-sidebar-item-id]="item.id ?? null"
+                  >
+                    @if (item.icon) {
+                      <i
+                        [class]="item.icon + ' shrink-0 w-4 text-center'"
+                        [class.text-surface-950]="linkActive.isActive"
+                        [class.dark:text-surface-50]="linkActive.isActive"
+                        aria-hidden="true"
+                      ></i>
+                    }
 
-              <span
-                [class]="
-                  item.icon
-                    ? 'flex-1 text-sm font-medium text-surface-700 dark:text-surface-300'
-                    : 'flex-1 text-base font-semibold text-surface-900 dark:text-surface-100'
-                "
-              >
-                {{ item.label }}
-              </span>
+                    <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
 
-              @if (item.badge) {
-                <p-badge [value]="item.badge" severity="contrast" />
+                    @if (item.badge) {
+                      <span
+                        class="inline-flex items-center rounded-sm bg-primary-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary-700 dark:bg-primary-950 dark:text-primary-300"
+                      >
+                        {{ item.badge }}
+                      </span>
+                    }
+                  </a>
+                </li>
               }
-
-              @if (item.items?.length) {
-                <i
-                  class="pi text-xs text-surface-500 dark:text-surface-400"
-                  [class.pi-chevron-down]="item.expanded"
-                  [class.pi-chevron-right]="!item.expanded"
-                ></i>
-              }
-            </a>
-          </ng-template>
-        </p-panelmenu>
-      }
+            </ul>
+          </li>
+        }
+      </ul>
     }
   </nav>
 </div>

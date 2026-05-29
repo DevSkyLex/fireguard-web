@@ -124,30 +124,6 @@ describe('DashboardSidebarNavigationService', () => {
     expect(notifications?.badge).toBe('4');
   });
 
-  it('should filter menu items by query while keeping parent nodes', () => {
-    service.setSearchQuery('Notifications');
-
-    const menuItems = service.menuItems();
-    const rootLabels = menuItems.map((item) => item.label);
-    const account = menuItems.find((item) => item.label === 'Account');
-    const notifItem = account?.items?.find((item) => item.label === 'Notifications');
-
-    expect(rootLabels).toEqual(['Account']);
-    expect(notifItem).toBeDefined();
-  });
-
-  it('should clear the query and restore full menu', () => {
-    service.setSearchQuery('Notifications');
-    expect(service.menuItems().map((item) => item.label)).toEqual(['Account']);
-
-    service.clearSearchQuery();
-    expect(service.menuItems().map((item) => item.label)).toEqual([
-      'Home',
-      'Organization',
-      'Account',
-    ]);
-  });
-
   describe('primaryItems', () => {
     it('should contain only sections included in the primary sidebar', () => {
       const labels = service.primaryItems().map((item) => item.label);
@@ -170,14 +146,6 @@ describe('DashboardSidebarNavigationService', () => {
       const notifications = account?.items?.find((item) => item.label === 'Notifications');
 
       expect(notifications?.badge).toBe('7');
-    });
-
-    it('should not be filtered by the search query', () => {
-      service.setSearchQuery('zzz-no-match');
-
-      const labels = service.primaryItems().map((item) => item.label);
-
-      expect(labels).toEqual(['Home', 'Account']);
     });
   });
 });

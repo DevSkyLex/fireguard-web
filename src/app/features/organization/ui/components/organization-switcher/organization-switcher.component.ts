@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, Signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  Signal,
+  viewChild,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Popover, PopoverModule, PopoverPassThroughOptions } from 'primeng/popover';
 import type { OrganizationOutput } from '@features/organization/models';
@@ -38,7 +45,7 @@ import {
   templateUrl: './organization-switcher.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrganizationSwitcher {
+export class OrganizationSwitcher implements OnInit {
   //#region Properties
   /**
    * Property organizationStore
@@ -102,6 +109,25 @@ export class OrganizationSwitcher {
       class: 'p-0 overflow-hidden',
     },
   };
+  //#endregion
+
+  //#region Lifecycle
+  /**
+   * Method ngOnInit
+   * @method ngOnInit
+   *
+   * @description
+   * Eagerly loads the organization list as soon as the switcher is mounted,
+   * so the header trigger does not start fetching on hover.
+   *
+   * @access public
+   * @since 2.2.0
+   *
+   * @returns {void}
+   */
+  public ngOnInit(): void {
+    this.ensureOrganizationsLoaded();
+  }
   //#endregion
 
   //#region Methods
@@ -176,22 +202,6 @@ export class OrganizationSwitcher {
   }
 
   /**
-   * Method prefetchOrganizations
-   * @method prefetchOrganizations
-   *
-   * @description
-   * Starts loading organizations when the user shows intent to open the switcher.
-   *
-   * @access protected
-   * @since 2.1.0
-   *
-   * @returns {void}
-   */
-  protected prefetchOrganizations(): void {
-    this.ensureOrganizationsLoaded();
-  }
-
-  /**
    * Method navigateToNewOrganization
    * @method navigateToNewOrganization
    *
@@ -215,8 +225,8 @@ export class OrganizationSwitcher {
    * @method ensureOrganizationsLoaded
    *
    * @description
-   * Loads organizations only when the switcher is explicitly opened
-   * and no list request is already in flight.
+    * Loads organizations when the switcher mounts or is explicitly opened,
+    * provided no list is already available and no request is in flight.
    *
    * @access private
    * @since 2.0.0

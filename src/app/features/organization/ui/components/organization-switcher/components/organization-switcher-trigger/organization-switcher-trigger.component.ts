@@ -30,10 +30,6 @@ import type { OrganizationOutput } from '@features/organization/models';
   imports: [AvatarModule, ButtonModule, SkeletonModule],
   templateUrl: './organization-switcher-trigger.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: {
-    '(mouseenter)': 'onTriggerIntent()',
-    '(focusin)': 'onTriggerIntent()',
-  },
 })
 export class OrganizationSwitcherTrigger {
   //#region Properties
@@ -98,38 +94,9 @@ export class OrganizationSwitcherTrigger {
    */
   public readonly toggleMenu: OutputEmitterRef<MouseEvent> = output<MouseEvent>();
 
-  /**
-   * Property prefetchMenuData
-   * @readonly
-   *
-   * @description
-   * Emitted when the user shows intent to open the switcher, so the parent
-   * can warm up the organization list without eagerly loading it at bootstrap.
-   *
-   * @access public
-   * @since 2.1.0
-   *
-   * @type {OutputEmitterRef<void>}
-   */
-  public readonly prefetchMenuData: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Methods
-  /**
-   * Method onTriggerIntent
-   * @method onTriggerIntent
-   *
-   * @description
-   * Emits a warm-up signal when the user hovers or focuses the trigger.
-   *
-   * @access protected
-   * @since 2.1.0
-   *
-   * @returns {void}
-   */
-  protected onTriggerIntent(): void {
-    this.prefetchMenuData.emit();
-  }
 
   /**
    * Method onButtonClick

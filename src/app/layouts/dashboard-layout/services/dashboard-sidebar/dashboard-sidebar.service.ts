@@ -128,6 +128,22 @@ export class DashboardSidebarService {
   private readonly _isResizing: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property _primaryCollapsed
+   * @readonly
+   *
+   * @description
+   * Internal writable signal tracking whether the desktop primary sidebar
+   * is collapsed to its icon-only (reduced) form. Exposed publicly through
+   * `primaryCollapsed`.
+   *
+   * @access private
+   * @since 4.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  private readonly _primaryCollapsed: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
    * Property defaultWidth
    *
    * @description
@@ -232,6 +248,22 @@ export class DashboardSidebarService {
    * @type {Signal<boolean>}
    */
   public readonly isResizing: Signal<boolean> = this._isResizing.asReadonly();
+
+  /**
+   * Property primaryCollapsed
+   * @readonly
+   *
+   * @description
+   * Whether the desktop primary sidebar is collapsed to its icon-only
+   * (reduced) form. Controlled by the user through the sidebar header
+   * toggle button.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  public readonly primaryCollapsed: Signal<boolean> = this._primaryCollapsed.asReadonly();
 
   /**
    * Property width
@@ -370,6 +402,41 @@ export class DashboardSidebarService {
    */
   public expand(): void {
     this._isCollapsed.set(false);
+  }
+
+  /**
+   * Method togglePrimaryCollapsed
+   * @method togglePrimaryCollapsed
+   *
+   * @description
+   * Toggles the desktop primary sidebar between its full and icon-only
+   * (reduced) forms.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @returns {void} - This method does not return a value.
+   */
+  public togglePrimaryCollapsed(): void {
+    this._primaryCollapsed.update((collapsed: boolean) => !collapsed);
+  }
+
+  /**
+   * Method setPrimaryCollapsed
+   * @method setPrimaryCollapsed
+   *
+   * @description
+   * Sets the desktop primary sidebar collapsed (icon-only) state.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @param {boolean} collapsed - Whether the primary sidebar should be collapsed.
+   *
+   * @returns {void} - This method does not return a value.
+   */
+  public setPrimaryCollapsed(collapsed: boolean): void {
+    this._primaryCollapsed.set(collapsed);
   }
 
   /**

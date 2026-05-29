@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { AuthUserProfile } from '@features/auth';
 
 /**
  * Component DashboardLayoutSidebarFooter
  * @class DashboardLayoutSidebarFooter
  *
  * @description
- * Sidebar footer containing user profile information.
+ * Sidebar footer containing the copyright line.
  *
  * @version 1.0.0
  *
@@ -14,7 +13,6 @@ import { AuthUserProfile } from '@features/auth';
  */
 @Component({
   selector: 'app-dashboard-layout-sidebar-footer',
-  imports: [AuthUserProfile],
   templateUrl: './dashboard-layout-sidebar-footer.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

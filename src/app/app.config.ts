@@ -76,8 +76,13 @@ export const appConfig: ApplicationConfig = {
     provideEnv(environment),
     provideMaintenanceMode(),
     provideAuthFeature(),
-    provideMainFeature(withMainNavigation()),
-    provideAccountFeature(withAccountNavigation(), withAccountHeaderActions()),
+    provideMainFeature(
+      withMainNavigation()
+    ),
+    provideAccountFeature(
+      withAccountNavigation(),
+      withAccountHeaderActions()
+    ),
     provideOrganizationFeature(
       withOrganizationNavigation(),
       withOrganizationContextPanel(),

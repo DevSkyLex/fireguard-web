@@ -131,4 +131,26 @@ describe('FacilityStore', () => {
     expect(store.loadedParentIds()).toEqual([]);
     expect(store.rootFacilities()).toEqual([facility]);
   });
+
+  it('should lazily load children through the guard on first request', async () => {
+    store.ensureChildFacilitiesLoaded({ organizationId: 'org-1', parentFacilityId: 'facility-1' });
+    await flushEffects();
+
+    expect(mockFacilityService.listChildren).toHaveBeenCalledWith('org-1', 'facility-1', {
+      page: 1,
+      itemsPerPage: 30,
+    });
+    expect(store.loadedParentIds()).toContain('facility-1');
+  });
+
+  it('should skip the guarded load when children are already loaded', async () => {
+    store.ensureChildFacilitiesLoaded({ organizationId: 'org-1', parentFacilityId: 'facility-1' });
+    await flushEffects();
+    expect(mockFacilityService.listChildren).toHaveBeenCalledTimes(1);
+
+    store.ensureChildFacilitiesLoaded({ organizationId: 'org-1', parentFacilityId: 'facility-1' });
+    await flushEffects();
+
+    expect(mockFacilityService.listChildren).toHaveBeenCalledTimes(1);
+  });
 });

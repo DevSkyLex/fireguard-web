@@ -33,9 +33,11 @@ import {
 } from '@features/organization/features/facilities/state';
 import {
   FacilityEquipmentTab,
+  FacilityHierarchyChart,
   FacilityInspectionTab,
 } from '@features/organization/features/facilities/ui/components';
 import { ActiveOrganizationStore } from '@features/organization/state';
+import { Card } from '@shared/components';
 
 /**
  * Component FacilityDetailPage
@@ -66,7 +68,9 @@ import { ActiveOrganizationStore } from '@features/organization/state';
     SkeletonModule,
     TagModule,
     TabsModule,
+    Card,
     FacilityEquipmentTab,
+    FacilityHierarchyChart,
     FacilityInspectionTab,
   ],
   providers: [FacilityStore],
@@ -372,6 +376,22 @@ export class FacilityDetailPage {
           life: 5000,
         });
       });
+
+    // Eagerly load the first descendant level once the facility is resolved
+    // (browser-only — the hierarchy chart is secondary UI data).
+    effect(() => {
+      const organizationId: string | undefined =
+        this.activeOrganizationStore.selectedOrganization()?.id;
+      const facility: FacilityOutput | null = this.facility();
+      if (!organizationId || !facility || !facility.hasChildren) {
+        return;
+      }
+
+      this.store.ensureChildFacilitiesLoaded({
+        organizationId,
+        parentFacilityId: facility.id,
+      });
+    });
   }
   //#endregion
 
@@ -459,6 +479,50 @@ export class FacilityDetailPage {
    */
   protected onMoveCancel(): void {
     this.showMoveDialog.set(false);
+  }
+
+  /**
+   * Method onExpandHierarchyNode
+   * @method onExpandHierarchyNode
+   *
+   * @description
+   * Lazily loads the direct children of a facility when its hierarchy-chart
+   * node is expanded. Delegates to the guarded store loader, which skips
+   * already-loaded or in-flight branches.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {string} parentFacilityId - Id of the expanded facility.
+   *
+   * @returns {void}
+   */
+  protected onExpandHierarchyNode(parentFacilityId: string): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (!organizationId) {
+      return;
+    }
+
+    this.store.ensureChildFacilitiesLoaded({ organizationId, parentFacilityId });
+  }
+
+  /**
+   * Method onNavigateToFacility
+   * @method onNavigateToFacility
+   *
+   * @description
+   * Navigates to a descendant facility's detail page from the hierarchy chart.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {FacilityOutput} facility - Facility to open.
+   *
+   * @returns {void}
+   */
+  protected onNavigateToFacility(facility: FacilityOutput): void {
+    this.router.navigate(['..', '..', facility.id], { relativeTo: this.route });
   }
   //#endregion
 }

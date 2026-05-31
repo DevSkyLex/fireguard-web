@@ -51,6 +51,25 @@ Search and pagination operate on the **root level only** (the `?page=` query
 param is synced for roots). Row actions reuse the existing view / edit /
 archive flows.
 
+## Facility Hierarchy (Detail Overview)
+
+The facility detail page's **Overview** tab renders the descendant hierarchy
+with a PrimeNG `p-organization-chart` (`FacilityHierarchyChart`). Loading is
+**hybrid**:
+
+- the first descendant level is auto-loaded once the facility resolves (only
+  when `facility.hasChildren` is `true`), via an `effect` calling
+  `FacilityStore.ensureChildFacilitiesLoaded`,
+- deeper levels are fetched lazily on node expansion (`expandRequest`), each
+  guarded by `ensureChildFacilitiesLoaded` so a parent is fetched at most once,
+- unloaded-but-expandable nodes render a skeleton placeholder child so the
+  chart shows its expand toggle before children arrive,
+- all secondary fetches are **browser-only** (no `TransferState`), and node
+  selection navigates to the chosen facility's detail page.
+
+The list page stays **roots-only**; hierarchy navigation lives here in the
+detail Overview.
+
 ## State and Data Access
 
 Primary stores:

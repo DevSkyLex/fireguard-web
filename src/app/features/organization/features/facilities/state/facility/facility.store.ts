@@ -396,6 +396,75 @@ export const FacilityStore = signalStore(
         ),
       );
 
+      /**
+       * Constant loadChildFacilitiesFn
+       * @const loadChildFacilitiesFn
+       *
+       * @description
+       * Shared rxMethod implementation that lazily loads the direct children of
+       * a facility when a hierarchy node is expanded. Uses `mergeMap` so several
+       * branches can expand concurrently. Entities are **upserted** to preserve
+       * the rest of the tree, and the parent id is tracked in `loadedParentIds`
+       * to avoid duplicate fetches on re-expansion. Exposed as
+       * {@link loadChildFacilities} and used internally by the guarded
+       * {@link ensureChildFacilitiesLoaded}.
+       *
+       * @since 3.0.0
+       *
+       * @type {RxMethod<{ organizationId: string; parentFacilityId: string }>}
+       */
+      const loadChildFacilitiesFn = rxMethod<{
+        organizationId: string;
+        parentFacilityId: string;
+      }>(
+        pipe(
+          tap(({ parentFacilityId }): void => {
+            patchState(store, {
+              loadingParentIds: [...new Set([...store.loadingParentIds(), parentFacilityId])],
+            });
+          }),
+          mergeMap(({ organizationId, parentFacilityId }) =>
+            facilityService
+              .listChildren(organizationId, parentFacilityId, { page: 1, itemsPerPage: 30 })
+              .pipe(
+                tapResponse({
+                  next: (response: HydraCollection<FacilityOutput>): void => {
+                    patchState(
+                      store,
+                      upsertEntities([...response.member], { collection: 'facility' }),
+                      {
+                        childFacilityIdsByParent: {
+                          ...store.childFacilityIdsByParent(),
+                          [parentFacilityId]: response.member.map((facility) => facility.id),
+                        },
+                        loadedParentIds: [
+                          ...new Set([...store.loadedParentIds(), parentFacilityId]),
+                        ],
+                        loadingParentIds: store
+                          .loadingParentIds()
+                          .filter((id) => id !== parentFacilityId),
+                      },
+                    );
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, {
+                      loadingParentIds: store
+                        .loadingParentIds()
+                        .filter((id) => id !== parentFacilityId),
+                    });
+                    dispatcher.dispatch(
+                      facilityStoreEvents.listFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to load child facilities'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+          ),
+        ),
+      );
+
       return {
         // ── Facility List ──────────────────────────────────────────────────────
 
@@ -528,57 +597,44 @@ export const FacilityStore = signalStore(
          *
          * @type {RxMethod<{ organizationId: string; parentFacilityId: string }>}
          */
-        loadChildFacilities: rxMethod<{ organizationId: string; parentFacilityId: string }>(
-          pipe(
-            tap(({ parentFacilityId }): void => {
-              patchState(store, {
-                loadingParentIds: [...new Set([...store.loadingParentIds(), parentFacilityId])],
-              });
-            }),
-            mergeMap(({ organizationId, parentFacilityId }) =>
-              facilityService
-                .listChildren(organizationId, parentFacilityId, { page: 1, itemsPerPage: 30 })
-                .pipe(
-                  tapResponse({
-                    next: (response: HydraCollection<FacilityOutput>): void => {
-                      patchState(
-                        store,
-                        upsertEntities([...response.member], { collection: 'facility' }),
-                        {
-                          childFacilityIdsByParent: {
-                            ...store.childFacilityIdsByParent(),
-                            [parentFacilityId]: response.member.map((facility) => facility.id),
-                          },
-                          loadedParentIds: [
-                            ...new Set([...store.loadedParentIds(), parentFacilityId]),
-                          ],
-                          loadingParentIds: store
-                            .loadingParentIds()
-                            .filter((id) => id !== parentFacilityId),
-                        },
-                      );
-                    },
-                    error: (error: unknown): void => {
-                      const storeError: StoreError = toStoreError(error);
-                      patchState(store, {
-                        loadingParentIds: store
-                          .loadingParentIds()
-                          .filter((id) => id !== parentFacilityId),
-                      });
-                      dispatcher.dispatch(
-                        facilityStoreEvents.listFailed(
-                          toStoreFailureEventPayload(
-                            storeError,
-                            'Failed to load child facilities',
-                          ),
-                        ),
-                      );
-                    },
-                  }),
-                ),
-            ),
-          ),
-        ),
+        loadChildFacilities: loadChildFacilitiesFn,
+
+        /**
+         * Method ensureChildFacilitiesLoaded
+         * @method ensureChildFacilitiesLoaded
+         *
+         * @description
+         * Guarded loader for the direct children of a facility. Delegates to
+         * {@link loadChildFacilities} only when the children of the given parent
+         * have not already been fetched and are not currently being fetched.
+         * Used by the facility detail hierarchy chart to lazily expand a branch
+         * without issuing duplicate requests. Browser-only: child facilities are
+         * secondary UI data and must not be fetched during SSR.
+         *
+         * @since 3.1.0
+         *
+         * @param {{ organizationId: string; parentFacilityId: string }} params - Organization and parent facility identifiers.
+         *
+         * @returns {void}
+         */
+        ensureChildFacilitiesLoaded(params: {
+          organizationId: string;
+          parentFacilityId: string;
+        }): void {
+          if (!isPlatformBrowser(platformId)) {
+            return;
+          }
+
+          const { parentFacilityId } = params;
+          if (
+            store.loadedParentIds().includes(parentFacilityId) ||
+            store.loadingParentIds().includes(parentFacilityId)
+          ) {
+            return;
+          }
+
+          loadChildFacilitiesFn(params);
+        },
 
         // ── Facility CRUD ──────────────────────────────────────────────────────
 

@@ -91,129 +91,139 @@
         <!-- Overview Tab -->
         <p-tabpanel [value]="0">
           @if (facility(); as facility) {
-            <div class="grid grid-cols-1 gap-6 p-6 lg:grid-cols-2">
-              <!-- General Information -->
-              <!-- General Information -->
-              <div
-                class="overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-700 dark:bg-surface-900"
-              >
-                <div class="border-b border-surface-200 px-4 py-3 dark:border-surface-700">
-                  <h3 class="text-sm font-semibold text-surface-900 dark:text-surface-100">
-                    General Information
-                  </h3>
-                </div>
-                <dl class="divide-y divide-surface-100 dark:divide-surface-800">
-                  <div class="flex items-baseline gap-6 px-4 py-3">
-                    <dt class="w-28 shrink-0 text-sm text-surface-500">Name</dt>
-                    <dd class="min-w-0 text-sm text-surface-900 dark:text-surface-100">
-                      {{ facility.name }}
-                    </dd>
-                  </div>
-
-                  <div class="flex items-center gap-6 px-4 py-3">
-                    <dt class="w-28 shrink-0 text-sm text-surface-500">Type</dt>
-                    <dd>
-                      <p-tag
-                        class="rounded-md text-xs"
-                        [severity]="facility.type === 'site' ? 'info' : 'secondary'"
-                      >
-                        <div class="flex items-center gap-1.5">
-                          <i [class]="facilityTypeIcons[facility.type]" class="text-xs"></i>
-                          <span class="font-semibold">{{ facility.type | titlecase }}</span>
-                        </div>
-                      </p-tag>
-                    </dd>
-                  </div>
-
-                  @if (facility.code) {
-                    <div class="flex items-baseline gap-6 px-4 py-3">
-                      <dt class="w-28 shrink-0 text-sm text-surface-500">Code</dt>
-                      <dd class="font-mono text-sm text-surface-900 dark:text-surface-100">
-                        {{ facility.code }}
-                      </dd>
-                    </div>
-                  }
-
-                  @if (facility.address) {
-                    <div class="flex items-baseline gap-6 px-4 py-3">
-                      <dt class="w-28 shrink-0 text-sm text-surface-500">Address</dt>
-                      <dd class="min-w-0 text-sm text-surface-900 dark:text-surface-100">
-                        {{ facility.address }}
-                      </dd>
-                    </div>
-                  }
-
-                  <div class="flex items-center gap-6 px-4 py-3">
-                    <dt class="w-28 shrink-0 text-sm text-surface-500">Status</dt>
-                    <dd>
-                      <span
-                        class="inline-flex items-center gap-1.5 rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-400"
-                      >
-                        <span
-                          class="h-1.5 w-1.5 shrink-0 rounded-full"
-                          [class.bg-green-500]="facility.status === 'active'"
-                          [class.bg-orange-500]="facility.status === 'archived'"
-                        ></span>
-                        {{ facility.status | titlecase }}
-                      </span>
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-
-              <!-- Details -->
-              <div
-                class="overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-700 dark:bg-surface-900"
-              >
-                <div class="border-b border-surface-200 px-4 py-3 dark:border-surface-700">
-                  <h3 class="text-sm font-semibold text-surface-900 dark:text-surface-100">
-                    Details
-                  </h3>
-                </div>
-                <dl class="divide-y divide-surface-100 dark:divide-surface-800">
-                  @if (facility.parentFacilityId) {
-                    <div class="flex items-center gap-6 px-4 py-3">
-                      <dt class="w-28 shrink-0 text-sm text-surface-500">Parent</dt>
-                      <dd>
-                        <a
-                          [routerLink]="['..', '..', facility.parentFacilityId]"
-                          class="flex items-center gap-1.5 text-sm text-primary hover:underline"
-                        >
-                          <i class="pi pi-link text-xs"></i>
-                          <span>{{ facility.parentFacilityId }}</span>
-                        </a>
-                      </dd>
-                    </div>
-                  }
-
-                  <div class="flex items-baseline gap-6 px-4 py-3">
-                    <dt class="w-28 shrink-0 text-sm text-surface-500">Created</dt>
-                    <dd class="text-sm text-surface-900 dark:text-surface-100">
-                      {{ facility.createdAt | date: 'medium' }}
-                    </dd>
-                  </div>
-
-                  <div class="flex items-baseline gap-6 px-4 py-3">
-                    <dt class="w-28 shrink-0 text-sm text-surface-500">Last updated</dt>
-                    <dd class="text-sm text-surface-900 dark:text-surface-100">
-                      {{ facility.updatedAt | date: 'medium' }}
-                    </dd>
-                  </div>
-
-                  @if (facility.metadata && (facility.metadata | keyvalue).length > 0) {
-                    @for (entry of facility.metadata | keyvalue; track entry.key) {
-                      <div class="flex items-baseline gap-6 px-4 py-3">
-                        <dt class="w-28 shrink-0 truncate text-sm text-surface-500">
-                          {{ entry.key }}
-                        </dt>
+            <div class="flex flex-col gap-6 p-6">
+              <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+                <!-- General Information -->
+                <app-card title="General information" class="lg:col-span-6">
+                  <ng-template #content>
+                    <dl class="divide-y divide-surface-100 dark:divide-surface-800">
+                      <div class="flex items-baseline gap-6 py-3 first:pt-0">
+                        <dt class="w-28 shrink-0 text-sm text-surface-500">Name</dt>
                         <dd class="min-w-0 text-sm text-surface-900 dark:text-surface-100">
-                          {{ entry.value ?? '—' }}
+                          {{ facility.name }}
                         </dd>
                       </div>
-                    }
-                  }
-                </dl>
+
+                      <div class="flex items-center gap-6 py-3">
+                        <dt class="w-28 shrink-0 text-sm text-surface-500">Type</dt>
+                        <dd>
+                          <p-tag
+                            class="rounded-md text-xs"
+                            [severity]="facility.type === 'site' ? 'info' : 'secondary'"
+                          >
+                            <div class="flex items-center gap-1.5">
+                              <i [class]="facilityTypeIcons[facility.type]" class="text-xs"></i>
+                              <span class="font-semibold">{{ facility.type | titlecase }}</span>
+                            </div>
+                          </p-tag>
+                        </dd>
+                      </div>
+
+                      @if (facility.code) {
+                        <div class="flex items-baseline gap-6 py-3">
+                          <dt class="w-28 shrink-0 text-sm text-surface-500">Code</dt>
+                          <dd class="font-mono text-sm text-surface-900 dark:text-surface-100">
+                            {{ facility.code }}
+                          </dd>
+                        </div>
+                      }
+
+                      @if (facility.address) {
+                        <div class="flex items-baseline gap-6 py-3">
+                          <dt class="w-28 shrink-0 text-sm text-surface-500">Address</dt>
+                          <dd class="min-w-0 text-sm text-surface-900 dark:text-surface-100">
+                            {{ facility.address }}
+                          </dd>
+                        </div>
+                      }
+
+                      <div class="flex items-center gap-6 py-3 last:pb-0">
+                        <dt class="w-28 shrink-0 text-sm text-surface-500">Status</dt>
+                        <dd>
+                          <span
+                            class="inline-flex items-center gap-1.5 rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-400"
+                          >
+                            <span
+                              class="h-1.5 w-1.5 shrink-0 rounded-full"
+                              [class.bg-green-500]="facility.status === 'active'"
+                              [class.bg-orange-500]="facility.status === 'archived'"
+                            ></span>
+                            {{ facility.status | titlecase }}
+                          </span>
+                        </dd>
+                      </div>
+                    </dl>
+                  </ng-template>
+                </app-card>
+
+                <!-- Details -->
+                <app-card title="Details" class="lg:col-span-6">
+                  <ng-template #content>
+                    <dl class="divide-y divide-surface-100 dark:divide-surface-800">
+                      @if (facility.parentFacilityId) {
+                        <div class="flex items-center gap-6 py-3 first:pt-0">
+                          <dt class="w-28 shrink-0 text-sm text-surface-500">Parent</dt>
+                          <dd>
+                            <a
+                              [routerLink]="['..', '..', facility.parentFacilityId]"
+                              class="flex items-center gap-1.5 text-sm text-primary hover:underline"
+                            >
+                              <i class="pi pi-link text-xs"></i>
+                              <span>{{ facility.parentFacilityId }}</span>
+                            </a>
+                          </dd>
+                        </div>
+                      }
+
+                      <div class="flex items-baseline gap-6 py-3 first:pt-0">
+                        <dt class="w-28 shrink-0 text-sm text-surface-500">Created</dt>
+                        <dd class="text-sm text-surface-900 dark:text-surface-100">
+                          {{ facility.createdAt | date: 'medium' }}
+                        </dd>
+                      </div>
+
+                      <div class="flex items-baseline gap-6 py-3 last:pb-0">
+                        <dt class="w-28 shrink-0 text-sm text-surface-500">Last updated</dt>
+                        <dd class="text-sm text-surface-900 dark:text-surface-100">
+                          {{ facility.updatedAt | date: 'medium' }}
+                        </dd>
+                      </div>
+
+                      @if (facility.metadata && (facility.metadata | keyvalue).length > 0) {
+                        @for (entry of facility.metadata | keyvalue; track entry.key) {
+                          <div class="flex items-baseline gap-6 py-3 last:pb-0">
+                            <dt class="w-28 shrink-0 truncate text-sm text-surface-500">
+                              {{ entry.key }}
+                            </dt>
+                            <dd class="min-w-0 text-sm text-surface-900 dark:text-surface-100">
+                              {{ entry.value ?? '—' }}
+                            </dd>
+                          </div>
+                        }
+                      }
+                    </dl>
+                  </ng-template>
+                </app-card>
               </div>
+
+              <!-- Hierarchy -->
+              @if (facility.hasChildren) {
+                <app-card
+                  title="Hierarchy"
+                  description="Sub-facilities contained within this facility."
+                >
+                  <ng-template #content>
+                    <app-facility-hierarchy-chart
+                      [root]="facility"
+                      [childrenByParent]="store.childFacilitiesByParent()"
+                      [loadedParentIds]="store.loadedParentIds()"
+                      [loadingParentIds]="store.loadingParentIds()"
+                      (expandRequest)="onExpandHierarchyNode($event)"
+                      (navigate)="onNavigateToFacility($event)"
+                    />
+                  </ng-template>
+                </app-card>
+              }
             </div>
           }
         </p-tabpanel>

@@ -1,7 +1,7 @@
 import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { EMPTY } from 'rxjs';
@@ -13,6 +13,7 @@ import {
 } from '@features/organization/features/facilities/state';
 import {
   FacilityEquipmentTab,
+  FacilityHierarchyChart,
   FacilityInspectionTab,
 } from '@features/organization/features/facilities/ui/components';
 import { InspectionStore } from '@features/organization/features/inspections/state';
@@ -40,6 +41,11 @@ const MOCK_FACILITY: FacilityOutput = {
   metadata: {},
   createdAt: '2025-01-01',
   updatedAt: '2025-06-01',
+} as unknown as FacilityOutput;
+
+const MOCK_FACILITY_WITH_CHILDREN: FacilityOutput = {
+  ...MOCK_FACILITY,
+  hasChildren: true,
 } as unknown as FacilityOutput;
 
 describe('FacilityDetailPage', () => {
@@ -86,7 +92,11 @@ describe('FacilityDetailPage', () => {
       status: 'idle',
       data: null,
     }),
+    childFacilitiesByParent: signal<Record<string, readonly FacilityOutput[]>>({}),
+    loadedParentIds: signal<readonly string[]>([]),
+    loadingParentIds: signal<readonly string[]>([]),
     ensureParentOptionsLoaded: vi.fn(),
+    ensureChildFacilitiesLoaded: vi.fn(),
     move: vi.fn(),
   };
 
@@ -115,7 +125,11 @@ describe('FacilityDetailPage', () => {
     mockActiveFacilityStore.isLoadingFacility.set(false);
     mockFacilityStore.facilities.set([]);
     mockFacilityStore.moveCallState.set({ status: 'idle', data: null });
+    mockFacilityStore.childFacilitiesByParent.set({});
+    mockFacilityStore.loadedParentIds.set([]);
+    mockFacilityStore.loadingParentIds.set([]);
     mockFacilityStore.ensureParentOptionsLoaded.mockReset();
+    mockFacilityStore.ensureChildFacilitiesLoaded.mockReset();
     mockFacilityStore.move.mockReset();
     mockEquipmentStore.load.mockReset();
     mockInspectionStore.load.mockReset();
@@ -140,6 +154,9 @@ describe('FacilityDetailPage', () => {
       })
       .overrideComponent(FacilityInspectionTab, {
         set: { providers: [{ provide: InspectionStore, useValue: mockInspectionStore }] },
+      })
+      .overrideComponent(FacilityHierarchyChart, {
+        set: { template: '', imports: [] },
       });
   });
 
@@ -187,6 +204,53 @@ describe('FacilityDetailPage', () => {
 
     expect(mockEquipmentStore.load).not.toHaveBeenCalled();
     expect(mockInspectionStore.load).not.toHaveBeenCalled();
+  });
+
+  it('should not load child facilities when the facility has no children', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    expect(mockFacilityStore.ensureChildFacilitiesLoaded).not.toHaveBeenCalled();
+  });
+
+  it('should eagerly load the first descendant level when the facility has children', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY_WITH_CHILDREN);
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    expect(mockFacilityStore.ensureChildFacilitiesLoaded).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      parentFacilityId: 'fac-1',
+    });
+  });
+
+  it('should request children when a hierarchy node is expanded', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY_WITH_CHILDREN);
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+    mockFacilityStore.ensureChildFacilitiesLoaded.mockReset();
+
+    fixture.componentInstance['onExpandHierarchyNode']('fac-2');
+
+    expect(mockFacilityStore.ensureChildFacilitiesLoaded).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      parentFacilityId: 'fac-2',
+    });
+  });
+
+  it('should navigate to a facility chosen from the hierarchy chart', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY_WITH_CHILDREN);
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const child = { ...MOCK_FACILITY, id: 'fac-2' } as unknown as FacilityOutput;
+    fixture.componentInstance['onNavigateToFacility'](child);
+
+    expect(navigateSpy).toHaveBeenCalledWith(['..', '..', 'fac-2'], expect.anything());
   });
 
   it('should open the move dialog when onOpenMoveDialog is called', () => {
@@ -267,6 +331,9 @@ describe('FacilityDetailPage', () => {
       })
       .overrideComponent(FacilityInspectionTab, {
         set: { providers: [{ provide: InspectionStore, useValue: mockInspectionStore }] },
+      })
+      .overrideComponent(FacilityHierarchyChart, {
+        set: { template: '', imports: [] },
       });
 
     const fixture = TestBed.createComponent(FacilityDetailPage);

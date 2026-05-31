@@ -11,6 +11,11 @@ import { ButtonModule } from 'primeng/button';
 import type { RequestOptions } from '@core/services/hydra-api';
 import type { OrganizationOutput } from '@features/organization/models';
 import { OrganizationStore } from '@features/organization/state';
+import {
+  OrganizationActiveMetric,
+  OrganizationCountMetric,
+  OrganizationMembersMetric,
+} from '@features/organization/ui/components';
 import { OrganizationDataview } from '@features/organization/ui/dataviews';
 
 /**
@@ -27,7 +32,14 @@ import { OrganizationDataview } from '@features/organization/ui/dataviews';
  */
 @Component({
   selector: 'app-organization-list',
-  imports: [RouterModule, ButtonModule, OrganizationDataview],
+  imports: [
+    RouterModule,
+    ButtonModule,
+    OrganizationDataview,
+    OrganizationCountMetric,
+    OrganizationActiveMetric,
+    OrganizationMembersMetric,
+  ],
   providers: [OrganizationStore],
   templateUrl: './organization-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -97,6 +109,7 @@ export class OrganizationListPage {
    * @type {OrganizationStore}
    */
   protected readonly store: OrganizationStore = inject<OrganizationStore>(OrganizationStore);
+
   //#endregion
 
   //#region Methods

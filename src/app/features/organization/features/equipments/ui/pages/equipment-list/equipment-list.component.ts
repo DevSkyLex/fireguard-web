@@ -9,6 +9,12 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import type { RequestOptions } from '@core/services/hydra-api';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
+import {
+  EquipmentCommissionedMetric,
+  EquipmentCountMetric,
+  EquipmentInStockMetric,
+  EquipmentMaintenanceMetric,
+} from '@features/organization/features/equipments/ui/components';
 import { EquipmentTable } from '@features/organization/features/equipments/ui/dataviews';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
@@ -26,7 +32,13 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-equipment-list',
-  imports: [EquipmentTable],
+  imports: [
+    EquipmentTable,
+    EquipmentCountMetric,
+    EquipmentCommissionedMetric,
+    EquipmentMaintenanceMetric,
+    EquipmentInStockMetric,
+  ],
   providers: [EquipmentStore],
   templateUrl: './equipment-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -95,6 +107,7 @@ export class EquipmentListPage {
    * @type {EquipmentStore}
    */
   protected readonly store: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
+
   //#endregion
 
   //#region Constructor

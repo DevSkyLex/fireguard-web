@@ -1,26 +1,20 @@
-<div id="equipment-list" class="flex flex-col">
-  <section
-    class="flex flex-col gap-2 border-b border-surface-200 bg-surface-50 p-8 dark:border-surface-800 dark:bg-surface-900"
-  >
-    <div class="flex flex-col justify-between">
-      <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">Equipments</h1>
-      <p class="text-sm text-surface-700 dark:text-surface-300">
-        Manage equipment for this organization.
-      </p>
-    </div>
+<div id="equipment-list" class="flex h-full flex-col gap-6">
+  <section class="flex flex-row flex-wrap items-stretch gap-6">
+    <app-equipment-count-metric class="min-w-56 flex-1" />
+    <app-equipment-commissioned-metric class="min-w-56 flex-1" />
+    <app-equipment-maintenance-metric class="min-w-56 flex-1" />
+    <app-equipment-in-stock-metric class="min-w-56 flex-1" />
   </section>
 
-  <section class="">
-    <app-equipment-table
-      class="flex h-full flex-col"
-      [equipments]="store.equipmentList()"
-      [total]="store.totalEquipment()"
-      [loading]="store.isLoadingEquipment()"
-      [empty]="store.isEmpty()"
-      [initialPage]="page()"
-      (load)="onLoad($event)"
-      (pageChange)="onPageChange($event)"
-      (add)="onAdd()"
-    />
-  </section>
+  <app-equipment-table
+    class="flex min-h-0 flex-1 flex-col"
+    [equipments]="store.equipmentList()"
+    [total]="store.totalEquipment()"
+    [loading]="store.isLoadingEquipment()"
+    [empty]="store.isEmpty()"
+    [initialPage]="page()"
+    (load)="onLoad($event)"
+    (pageChange)="onPageChange($event)"
+    (add)="onAdd()"
+  />
 </div>

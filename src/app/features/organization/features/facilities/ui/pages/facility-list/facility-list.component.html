@@ -1,6 +1,13 @@
-<div id="facility-list" class="flex h-full flex-col">
+<div id="facility-list" class="flex h-full flex-col gap-6">
+  <section class="flex flex-row flex-wrap items-stretch gap-6">
+    <app-facility-sites-metric class="min-w-56 flex-1" />
+    <app-facility-active-metric class="min-w-56 flex-1" />
+    <app-facility-archived-metric class="min-w-56 flex-1" />
+    <app-facility-sub-sites-metric class="min-w-56 flex-1" />
+  </section>
+
   <app-facility-dataview
-    class="flex h-full min-h-0 flex-col"
+    class="flex min-h-0 flex-1 flex-col"
     [facilities]="store.rootFacilities()"
     [total]="store.totalRootFacilities()"
     [loading]="store.isLoadingRootFacilities()"

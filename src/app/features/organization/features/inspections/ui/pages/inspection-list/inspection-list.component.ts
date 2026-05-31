@@ -9,6 +9,12 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import type { RequestOptions } from '@core/services/hydra-api';
 import { InspectionStore } from '@features/organization/features/inspections/state';
+import {
+  InspectionCountMetric,
+  InspectionFailedMetric,
+  InspectionNonConformityMetric,
+  InspectionPassedMetric,
+} from '@features/organization/features/inspections/ui/components';
 import { InspectionTable } from '@features/organization/features/inspections/ui/dataviews';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
@@ -26,7 +32,13 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-inspection-list',
-  imports: [InspectionTable],
+  imports: [
+    InspectionTable,
+    InspectionCountMetric,
+    InspectionPassedMetric,
+    InspectionFailedMetric,
+    InspectionNonConformityMetric,
+  ],
   providers: [InspectionStore],
   templateUrl: './inspection-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -92,6 +104,7 @@ export class InspectionListPage {
    * @type {InspectionStore}
    */
   protected readonly store: InspectionStore = inject<InspectionStore>(InspectionStore);
+
   //#endregion
 
   //#region Constructor

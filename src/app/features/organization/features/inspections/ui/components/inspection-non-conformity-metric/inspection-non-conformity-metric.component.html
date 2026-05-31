@@ -1,0 +1,7 @@
+<app-metric-card
+  title="Non-conformities"
+  description="Open findings"
+  icon="pi pi-exclamation-triangle"
+  [value]="store.totalNonConformities()"
+  [loading]="store.isLoadingInspections()"
+/>

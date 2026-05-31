@@ -1,69 +1,70 @@
-<div class="flex h-full flex-col bg-surface-0 dark:bg-surface-900">
-  <div
-    class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-700"
-  >
-    <div class="flex items-center gap-2">
-      <h2 class="font-semibold">Equipments</h2>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-2">
-      <p-iconfield class="flex-1 sm:flex-none">
-        <p-inputicon class="pi pi-search" />
-        <input
-          pInputText
-          type="text"
-          pSize="small"
-          placeholder="Search equipments..."
-          [formControl]="searchControl"
-          class="w-full"
-        />
-      </p-iconfield>
-
-      <p-selectbutton
-        [options]="layoutOptions"
-        [formControl]="layoutControl"
-        [allowEmpty]="false"
-        optionValue="value"
-        optionLabel="icon"
-        size="small"
+<div class="flex h-full flex-col bg-surface-0 dark:bg-surface-950">
+  <p-card [pt]="cardPt">
+    <ng-template pTemplate="header">
+      <div
+        class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
       >
-        <ng-template #item let-item>
-          <i [class]="item.icon"></i>
-        </ng-template>
-      </p-selectbutton>
+        <div class="flex items-center gap-2">
+          <h2 class="font-semibold">Equipments</h2>
+        </div>
 
-      <p-splitbutton
-        label="New equipment"
-        icon="pi pi-plus"
-        severity="primary"
-        [model]="toolbarActions()"
-        size="small"
-        (onClick)="add.emit()"
-        [disabled]="loading()"
-        class="w-full sm:w-auto"
-      />
-    </div>
-  </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <p-iconfield class="flex-1 sm:flex-none">
+            <p-inputicon class="pi pi-search" />
+            <input
+              pInputText
+              type="text"
+              pSize="small"
+              placeholder="Search equipments..."
+              [formControl]="searchControl"
+              class="w-full"
+            />
+          </p-iconfield>
 
-  <p-dataview
-    [value]="loading() ? skeletonItems : empty() ? [] : [...equipments()]"
-    [layout]="layout()"
-    [paginator]="true"
-    [rows]="rows"
-    [first]="firstPage"
-    [totalRecords]="total()"
-    [lazy]="true"
-    (onLazyLoad)="onLazyLoad($event)"
-    [rowsPerPageOptions]="[12, 24, 48]"
-    [showCurrentPageReport]="true"
-    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} equipments"
-    paginatorStyleClass="border-t border-surface-200 dark:border-surface-700 mt-auto rounded-none"
-    [pt]="{
-      root: { class: 'flex flex-col flex-1 min-h-0' },
-      pcPaginator: { root: { class: 'rounded-none justify-end' } },
-    }"
-    class="flex min-h-0 flex-1 flex-col"
-  >
+          <p-selectbutton
+            [options]="layoutOptions"
+            [formControl]="layoutControl"
+            [allowEmpty]="false"
+            optionValue="value"
+            optionLabel="icon"
+            size="small"
+          >
+            <ng-template #item let-item>
+              <i [class]="item.icon"></i>
+            </ng-template>
+          </p-selectbutton>
+
+          <p-splitbutton
+            label="New equipment"
+            icon="pi pi-plus"
+            severity="primary"
+            [model]="toolbarActions()"
+            size="small"
+            (onClick)="add.emit()"
+            [disabled]="loading()"
+            class="w-full sm:w-auto"
+          />
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      <p-dataview
+        [value]="loading() ? skeletonItems : empty() ? [] : [...equipments()]"
+        [layout]="layout()"
+        [paginator]="true"
+        [rows]="rows"
+        [first]="firstPage"
+        [totalRecords]="total()"
+        [lazy]="true"
+        (onLazyLoad)="onLazyLoad($event)"
+        [rowsPerPageOptions]="[12, 24, 48]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} equipments"
+        paginatorStyleClass="border-t border-surface-200 dark:border-surface-800 mt-auto rounded-none"
+        [pt]="dataviewPt"
+        class="flex min-h-0 flex-1 flex-col"
+      >
     <ng-template #list let-items>
       <div class="flex flex-col divide-y divide-surface-200 dark:divide-surface-700">
         @if (loading()) {
@@ -96,10 +97,20 @@
         } @else {
           @for (equipment of items; track equipment.id) {
             <div
-              class="flex items-center justify-between px-4 py-3 transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
+              class="group relative flex items-center justify-between px-4 py-3.5 transition-colors hover:bg-surface-50 dark:hover:bg-surface-900"
             >
+              <span
+                class="absolute inset-y-0 left-0 w-0.5 origin-left scale-x-0 bg-primary-500 transition-transform group-hover:scale-x-100"
+                aria-hidden="true"
+              ></span>
+
               <div class="flex min-w-0 items-center gap-3">
-                <p-avatar [icon]="getEquipmentIcon(equipment)" shape="square" size="normal" />
+                <p-avatar
+                  [icon]="getEquipmentIcon(equipment)"
+                  shape="square"
+                  size="normal"
+                  class="rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300"
+                />
 
                 <div class="flex min-w-0 flex-col">
                   <span class="truncate font-medium text-surface-900 dark:text-surface-100">
@@ -167,10 +178,15 @@
         } @else {
           @for (equipment of items; track equipment.id) {
             <div
-              class="flex flex-col gap-3 rounded-lg border border-surface-200 bg-surface-0 p-4 transition-shadow hover:shadow-md dark:border-surface-700 dark:bg-surface-900"
+              class="flex flex-col gap-3 rounded-lg border border-surface-200 bg-surface-0 p-4 transition-shadow hover:shadow-md dark:border-surface-800 dark:bg-surface-900"
             >
               <div class="flex items-start justify-between">
-                <p-avatar [icon]="getEquipmentIcon(equipment)" shape="square" size="large" />
+                <p-avatar
+                  [icon]="getEquipmentIcon(equipment)"
+                  shape="square"
+                  size="large"
+                  class="rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300"
+                />
 
                 <p-tag
                   class="rounded-md text-xs"
@@ -241,5 +257,7 @@
         </span>
       </div>
     </ng-template>
-  </p-dataview>
+      </p-dataview>
+    </ng-template>
+  </p-card>
 </div>

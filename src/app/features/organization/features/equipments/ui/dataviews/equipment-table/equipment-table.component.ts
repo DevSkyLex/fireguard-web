@@ -20,7 +20,12 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { DataViewModule, type DataViewLazyLoadEvent } from 'primeng/dataview';
+import { CardModule, type CardPassThroughOptions } from 'primeng/card';
+import {
+  DataViewModule,
+  type DataViewLazyLoadEvent,
+  type DataViewPassThroughOptions,
+} from 'primeng/dataview';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
@@ -56,6 +61,7 @@ import { toDisplayLabel } from './utils';
   imports: [
     AvatarModule,
     ButtonModule,
+    CardModule,
     DataViewModule,
     DatePipe,
     IconFieldModule,
@@ -197,6 +203,60 @@ export class EquipmentTable implements OnInit {
   //#endregion
 
   //#region Properties
+  /**
+   * Property cardPt
+   * @readonly
+   *
+   * @description
+   * Pass-through options giving the wrapping card a bordered, flat panel
+   * appearance consistent with the facilities dataview.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {CardPassThroughOptions}
+   */
+  protected readonly cardPt: CardPassThroughOptions = {
+    root: {
+      class:
+        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
+    },
+    body: {
+      class: 'p-0! flex flex-col flex-1',
+    },
+    footer: {
+      class:
+        'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 rounded-b-md',
+    },
+  };
+
+  /**
+   * Property dataviewPt
+   * @readonly
+   *
+   * @description
+   * Pass-through options for consistent dataview styling and proper paginator
+   * alignment within the card.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {DataViewPassThroughOptions}
+   */
+  protected readonly dataviewPt: DataViewPassThroughOptions = {
+    root: {
+      class: 'flex flex-col flex-1 min-h-0 bg-surface-0 dark:bg-surface-950',
+    },
+    content: {
+      class: 'flex-1 min-h-0 overflow-auto bg-surface-0 dark:bg-surface-950',
+    },
+    pcPaginator: {
+      root: {
+        class: 'rounded-none justify-end bg-surface-0 dark:bg-surface-950',
+      },
+    },
+  };
+
   /**
    * Property rows
    * @readonly

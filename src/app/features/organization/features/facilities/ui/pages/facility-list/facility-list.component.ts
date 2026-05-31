@@ -11,6 +11,12 @@ import { ButtonModule } from 'primeng/button';
 import type { RequestOptions } from '@core/services/hydra-api';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
+import {
+  FacilityActiveMetric,
+  FacilityArchivedMetric,
+  FacilitySitesMetric,
+  FacilitySubSitesMetric,
+} from '@features/organization/features/facilities/ui/components';
 import { FacilityDataview } from '@features/organization/features/facilities/ui/dataviews';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
@@ -28,7 +34,15 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-facility-list',
-  imports: [RouterModule, ButtonModule, FacilityDataview],
+  imports: [
+    RouterModule,
+    ButtonModule,
+    FacilityDataview,
+    FacilitySitesMetric,
+    FacilityActiveMetric,
+    FacilityArchivedMetric,
+    FacilitySubSitesMetric,
+  ],
   providers: [FacilityStore],
   templateUrl: './facility-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -114,6 +128,7 @@ export class FacilityListPage {
    * @type {FacilityStore}
    */
   protected readonly store: FacilityStore = inject<FacilityStore>(FacilityStore);
+
   //#endregion
 
   //#region Methods

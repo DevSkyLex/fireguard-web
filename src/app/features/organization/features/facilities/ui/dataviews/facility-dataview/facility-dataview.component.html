@@ -95,19 +95,14 @@
             } @else {
               @for (facility of items; track facility.id) {
                 <div
-                  class="group relative flex items-center justify-between gap-4 px-4 py-3.5 transition-colors hover:bg-surface-50 dark:hover:bg-surface-900"
+                  class="group flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50"
                 >
-                  <span
-                    class="absolute inset-y-0 left-0 w-0.5 origin-left scale-x-0 bg-primary-500 transition-transform group-hover:scale-x-100"
-                    aria-hidden="true"
-                  ></span>
-
                   <div class="flex min-w-0 items-center gap-3">
                     <p-avatar
                       [icon]="facilityTypeIcons[facility.type]"
                       shape="square"
                       size="normal"
-                      class="rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300"
+                      class="rounded-md bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
                     />
 
                     <div class="flex min-w-0 flex-col gap-0.5">
@@ -131,7 +126,7 @@
 
                   <div class="flex shrink-0 items-center gap-4">
                     <p-tag
-                      class="hidden rounded-md text-xs font-medium sm:block"
+                      class="hidden rounded-full text-xs font-medium sm:block"
                       [severity]="getStatusSeverity(facility.status)"
                       [value]="facility.status | titlecase"
                     />
@@ -226,7 +221,7 @@
                     class="mt-auto flex items-center justify-between border-t border-surface-100 pt-2 dark:border-surface-800"
                   >
                     <p-tag
-                      class="rounded-md text-xs"
+                      class="rounded-full text-xs font-medium"
                       [severity]="getStatusSeverity(facility.status)"
                       [value]="facility.status | titlecase"
                     />

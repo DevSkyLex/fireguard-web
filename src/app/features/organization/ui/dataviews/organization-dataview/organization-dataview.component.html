@@ -96,19 +96,14 @@
         } @else {
           @for (organization of items; track organization.id) {
             <div
-              class="group relative flex items-center justify-between px-4 py-3.5 transition-colors hover:bg-surface-50 dark:hover:bg-surface-900"
+              class="flex items-center justify-between px-4 py-3 transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50"
             >
-              <span
-                class="absolute inset-y-0 left-0 w-0.5 origin-left scale-x-0 bg-primary-500 transition-transform group-hover:scale-x-100"
-                aria-hidden="true"
-              ></span>
-
               <div class="flex min-w-0 items-center gap-3">
                 <p-avatar
                   [label]="organization.name.charAt(0).toUpperCase()"
                   shape="square"
                   size="normal"
-                  class="rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300"
+                  class="rounded-md bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
                 />
                 <div class="flex min-w-0 flex-col">
                   <span class="truncate font-medium text-surface-900 dark:text-surface-100">
@@ -120,16 +115,16 @@
 
               <div class="ml-4 flex shrink-0 items-center gap-4">
                 <p-tag
-                  class="rounded-md border border-surface-200 bg-surface-0 text-sm"
+                  class="rounded-full border border-surface-200 bg-surface-0 text-xs font-medium dark:border-surface-700 dark:bg-surface-900"
                   severity="secondary"
                 >
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1.5">
                     <div
-                      class="h-2 w-2 rounded-full"
+                      class="h-1.5 w-1.5 rounded-full"
                       [class.bg-green-500]="organization.status === 'active'"
                       [class.bg-red-500]="organization.status === 'inactive'"
                     ></div>
-                    <span class="font-semibold">{{ organization.status | titlecase }}</span>
+                    <span>{{ organization.status | titlecase }}</span>
                   </div>
                 </p-tag>
 
@@ -207,7 +202,7 @@
                 class="mt-auto flex items-center justify-between border-t border-surface-100 pt-2 dark:border-surface-800"
               >
                 <p-tag
-                  class="rounded-md border border-surface-200 bg-surface-0 text-xs"
+                  class="rounded-full border border-surface-200 bg-surface-0 text-xs font-medium dark:border-surface-700 dark:bg-surface-900"
                   severity="secondary"
                 >
                   <div class="flex items-center gap-1.5">
@@ -216,7 +211,7 @@
                       [class.bg-green-500]="organization.status === 'active'"
                       [class.bg-red-500]="organization.status === 'inactive'"
                     ></div>
-                    <span class="font-semibold">{{ organization.status | titlecase }}</span>
+                    <span>{{ organization.status | titlecase }}</span>
                   </div>
                 </p-tag>
                 <span class="text-xs text-surface-400">{{

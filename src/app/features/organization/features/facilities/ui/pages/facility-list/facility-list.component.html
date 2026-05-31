@@ -1,18 +1,16 @@
-<div id="facility-list" class="flex flex-col">
-  <section>
-    <app-facility-dataview
-      class="flex h-full flex-col"
-      [facilities]="store.rootFacilities()"
-      [total]="store.totalRootFacilities()"
-      [loading]="store.isLoadingRootFacilities()"
-      [empty]="store.isRootEmpty()"
-      [initialPage]="page()"
-      (load)="onLoad($event)"
-      (pageChange)="onPageChange($event)"
-      (view)="onView($event)"
-      (edit)="onEdit($event)"
-      (add)="onAdd()"
-      (archive)="onArchive($event)"
-    />
-  </section>
+<div id="facility-list" class="flex h-full flex-col">
+  <app-facility-dataview
+    class="flex h-full min-h-0 flex-col"
+    [facilities]="store.rootFacilities()"
+    [total]="store.totalRootFacilities()"
+    [loading]="store.isLoadingRootFacilities()"
+    [empty]="store.isRootEmpty()"
+    [initialPage]="page()"
+    (load)="onLoad($event)"
+    (pageChange)="onPageChange($event)"
+    (view)="onView($event)"
+    (edit)="onEdit($event)"
+    (add)="onAdd()"
+    (archive)="onArchive($event)"
+  />
 </div>

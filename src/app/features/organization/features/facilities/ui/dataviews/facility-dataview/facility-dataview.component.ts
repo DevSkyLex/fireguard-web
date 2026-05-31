@@ -22,7 +22,7 @@ import { RouterModule } from '@angular/router';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { DataViewModule, type DataViewLazyLoadEvent } from 'primeng/dataview';
+import { DataViewModule, DataViewPassThroughOptions, type DataViewLazyLoadEvent } from 'primeng/dataview';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
@@ -39,6 +39,7 @@ import type {
   FacilityStatus,
 } from '@features/organization/features/facilities/models';
 import { FACILITY_DATAVIEW_LAYOUT_OPTIONS, FACILITY_TYPE_ICONS } from './options';
+import { CardModule, CardPassThroughOptions } from 'primeng/card';
 
 /**
  * Component FacilityDataview
@@ -76,6 +77,7 @@ import { FACILITY_DATAVIEW_LAYOUT_OPTIONS, FACILITY_TYPE_ICONS } from './options
     TagModule,
     TitleCasePipe,
     TooltipModule,
+    CardModule,
   ],
   templateUrl: './facility-dataview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -153,9 +155,59 @@ export class FacilityDataview implements OnInit {
    * @type {InputSignalWithTransform<number, unknown>}
    */
   public readonly initialPage: InputSignalWithTransform<number, unknown> = input<number, unknown>(
-    1,
-    { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) },
+    1, { transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)) },
   );
+
+  /**
+   * Property cardPt
+   * @readonly
+   *
+   * @description
+   * Pass-through options for consistent card styling in list and grid layouts.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {CardPassThroughOptions}
+   */
+  protected readonly cardPt: CardPassThroughOptions = {
+    root: {
+      class: 'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
+    },
+    body: {
+      class: 'p-0! flex flex-col flex-1',
+    },
+    footer: {
+      class: 'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 rounded-b-md',
+    },
+  };
+
+  /**
+   * Property dataviewPt
+   * @readonly
+   *
+   * @description
+   * Pass-through options for consistent dataview styling and proper paginator
+   * alignment.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {DataViewPassThroughOptions}
+   */
+  protected readonly dataviewPt: DataViewPassThroughOptions = {
+    root: {
+      class: 'flex flex-col flex-1 min-h-0 bg-surface-0 dark:bg-surface-950'
+    },
+    content: {
+      class: 'flex-1 min-h-0 overflow-auto bg-surface-0 dark:bg-surface-950'
+    },
+    pcPaginator: {
+      root: {
+        class: 'rounded-none justify-end bg-surface-0 dark:bg-surface-950'
+      },
+    },
+  };
   //#endregion
 
   //#region Outputs

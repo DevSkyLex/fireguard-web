@@ -1,262 +1,260 @@
 <div class="flex h-full flex-col bg-surface-0 dark:bg-surface-950">
-  <div
-    class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
-  >
-    <div class="flex items-center gap-2">
-      <h2 class="font-semibold">Facilities</h2>
-    </div>
+  <p-card [pt]="cardPt">
+    <ng-template pTemplate="header">
+      <div class="flex flex-col gap-4 sm:flex-row px-4 py-3 sm:items-center border-b border-surface-200 dark:border-surface-800 sm:justify-between">
+        <div class="flex items-center gap-2">
+          <h2 class="font-semibold">Facilities</h2>
+        </div>
 
-    <div class="flex flex-wrap items-center gap-2">
-      <p-iconfield class="flex-1 sm:flex-none">
-        <p-inputicon class="pi pi-search" />
-        <input
-          pInputText
-          type="text"
-          pSize="small"
-          placeholder="Search facilities..."
-          [formControl]="searchControl"
-          class="w-full"
-        />
-      </p-iconfield>
+        <div class="flex flex-wrap items-center gap-2">
+          <p-iconfield class="flex-1 sm:flex-none">
+            <p-inputicon class="pi pi-search" />
+            <input
+              pInputText
+              type="text"
+              pSize="small"
+              placeholder="Search facilities..."
+              [formControl]="searchControl"
+              class="w-full"
+            />
+          </p-iconfield>
 
-      <p-selectbutton
-        [options]="layoutOptions"
-        [formControl]="layoutControl"
-        [allowEmpty]="false"
-        optionValue="value"
-        optionLabel="icon"
-        size="small"
+          <p-selectbutton
+            [options]="layoutOptions"
+            [formControl]="layoutControl"
+            [allowEmpty]="false"
+            optionValue="value"
+            optionLabel="icon"
+            size="small"
+          >
+            <ng-template #item let-item>
+              <i [class]="item.icon"></i>
+            </ng-template>
+          </p-selectbutton>
+
+          <p-splitbutton
+            label="New facility"
+            icon="pi pi-plus"
+            severity="primary"
+            [model]="toolbarActions()"
+            size="small"
+            (onClick)="add.emit()"
+            [disabled]="loading()"
+            class="w-full sm:w-auto"
+          />
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      <p-dataview
+        [value]="loading() ? skeletonItems : empty() ? [] : [...facilities()]"
+        [layout]="layout()"
+        [paginator]="true"
+        [rows]="rows"
+        [first]="firstPage"
+        [totalRecords]="total()"
+        [lazy]="true"
+        (onLazyLoad)="onLazyLoad($event)"
+        [rowsPerPageOptions]="[30, 60, 120]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} facilities"
+        paginatorStyleClass="border-t border-surface-200 dark:border-surface-800 mt-auto rounded-none"
+        [pt]="dataviewPt"
+        class="flex min-h-0 flex-1 flex-col"
       >
-        <ng-template #item let-item>
-          <i [class]="item.icon"></i>
-        </ng-template>
-      </p-selectbutton>
-
-      <p-splitbutton
-        label="New facility"
-        icon="pi pi-plus"
-        severity="primary"
-        [model]="toolbarActions()"
-        size="small"
-        (onClick)="add.emit()"
-        [disabled]="loading()"
-        class="w-full sm:w-auto"
-      />
-    </div>
-  </div>
-
-  <p-dataview
-    [value]="loading() ? skeletonItems : empty() ? [] : [...facilities()]"
-    [layout]="layout()"
-    [paginator]="true"
-    [rows]="rows"
-    [first]="firstPage"
-    [totalRecords]="total()"
-    [lazy]="true"
-    (onLazyLoad)="onLazyLoad($event)"
-    [rowsPerPageOptions]="[30, 60, 120]"
-    [showCurrentPageReport]="true"
-    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} facilities"
-    paginatorStyleClass="border-t border-surface-200 dark:border-surface-800 mt-auto rounded-none"
-    [pt]="{
-      root: { class: 'flex flex-col flex-1 min-h-0 bg-surface-0 dark:bg-surface-950' },
-      content: { class: 'flex-1 min-h-0 overflow-auto bg-surface-0 dark:bg-surface-950' },
-      pcPaginator: {
-        root: { class: 'rounded-none justify-end bg-surface-0 dark:bg-surface-950' },
-      },
-    }"
-    class="flex min-h-0 flex-1 flex-col"
-  >
-    <ng-template #list let-items>
-      <div class="flex flex-col divide-y divide-surface-200 dark:divide-surface-800">
-        @if (loading()) {
-          @for (_ of skeletonItems; track $index) {
-            <div class="flex items-center justify-between px-4 py-3">
-              <div class="flex min-w-0 items-center gap-3">
-                <p-skeleton shape="square" size="2.5rem" />
-                <div class="flex flex-col gap-1.5">
-                  <p-skeleton width="11rem" height="0.875rem" />
-                  <p-skeleton width="8rem" height="0.75rem" />
-                </div>
-              </div>
-              <div class="ml-4 flex shrink-0 items-center gap-4">
-                <p-skeleton
-                  width="5rem"
-                  height="1.25rem"
-                  borderRadius="0.375rem"
-                  styleClass="hidden sm:block"
-                />
-                <p-skeleton
-                  width="5rem"
-                  height="1.5rem"
-                  borderRadius="0.375rem"
-                  styleClass="hidden sm:block"
-                />
-                <p-skeleton width="4rem" height="0.875rem" styleClass="hidden lg:block" />
-              </div>
-            </div>
-          }
-        } @else {
-          @for (facility of items; track facility.id) {
-            <div
-              class="group relative flex items-center justify-between gap-4 px-4 py-3.5 transition-colors hover:bg-surface-50 dark:hover:bg-surface-900"
-            >
-              <span
-                class="absolute inset-y-0 left-0 w-0.5 origin-left scale-x-0 bg-primary-500 transition-transform group-hover:scale-x-100"
-                aria-hidden="true"
-              ></span>
-
-              <div class="flex min-w-0 items-center gap-3">
-                <p-avatar
-                  [icon]="facilityTypeIcons[facility.type]"
-                  shape="square"
-                  size="normal"
-                  styleClass="rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300"
-                />
-
-                <div class="flex min-w-0 flex-col gap-0.5">
-                  <a
-                    class="cursor-pointer truncate font-medium text-surface-900 transition-colors group-hover:text-primary-600 dark:text-surface-100 dark:group-hover:text-primary-400"
-                    (click)="view.emit(facility)"
-                  >
-                    {{ facility.name }}
-                  </a>
-
-                  <div class="flex items-center gap-1.5 truncate text-xs text-surface-500">
-                    <span class="truncate font-medium">{{ facility.type | titlecase }}</span>
-
-                    @if (facility.code) {
-                      <span class="text-surface-300 dark:text-surface-600">•</span>
-                      <span class="truncate font-mono">{{ facility.code }}</span>
-                    }
+        <ng-template #list let-items>
+          <div class="flex flex-col divide-y divide-surface-200 dark:divide-surface-800">
+            @if (loading()) {
+              @for (_ of skeletonItems; track $index) {
+                <div class="flex items-center justify-between px-4 py-3">
+                  <div class="flex min-w-0 items-center gap-3">
+                    <p-skeleton shape="square" size="2.5rem" />
+                    <div class="flex flex-col gap-1.5">
+                      <p-skeleton width="11rem" height="0.875rem" />
+                      <p-skeleton width="8rem" height="0.75rem" />
+                    </div>
+                  </div>
+                  <div class="ml-4 flex shrink-0 items-center gap-4">
+                    <p-skeleton
+                      width="5rem"
+                      height="1.25rem"
+                      borderRadius="0.375rem"
+                      class="hidden sm:block"
+                    />
+                    <p-skeleton
+                      width="5rem"
+                      height="1.5rem"
+                      borderRadius="0.375rem"
+                      class="hidden sm:block"
+                    />
+                    <p-skeleton width="4rem" height="0.875rem" class="hidden lg:block" />
                   </div>
                 </div>
-              </div>
-
-              <div class="flex shrink-0 items-center gap-4">
-                <p-tag
-                  class="hidden rounded-md text-xs font-medium sm:block"
-                  [severity]="getStatusSeverity(facility.status)"
-                  [value]="facility.status | titlecase"
-                />
-
-                <span
-                  class="hidden text-sm text-surface-500 lg:flex lg:items-center lg:gap-1.5 dark:text-surface-400"
+              }
+            } @else {
+              @for (facility of items; track facility.id) {
+                <div
+                  class="group relative flex items-center justify-between gap-4 px-4 py-3.5 transition-colors hover:bg-surface-50 dark:hover:bg-surface-900"
                 >
-                  <i class="pi pi-clock text-[0.7rem]" aria-hidden="true"></i>
-                  {{ facility.updatedAt | date: 'mediumDate' }}
-                </span>
+                  <span
+                    class="absolute inset-y-0 left-0 w-0.5 origin-left scale-x-0 bg-primary-500 transition-transform group-hover:scale-x-100"
+                    aria-hidden="true"
+                  ></span>
 
-                <p-button
-                  type="button"
-                  icon="pi pi-ellipsis-v"
-                  severity="secondary"
-                  [text]="true"
-                  [rounded]="true"
-                  size="small"
-                  ariaLabel="Facility actions"
-                  (click)="onRowMenuToggle($event, facility)"
-                />
-              </div>
-            </div>
-          }
-        }
-      </div>
-    </ng-template>
+                  <div class="flex min-w-0 items-center gap-3">
+                    <p-avatar
+                      [icon]="facilityTypeIcons[facility.type]"
+                      shape="square"
+                      size="normal"
+                      class="rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300"
+                    />
 
-    <ng-template #grid let-items>
-      <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        @if (loading()) {
-          @for (_ of skeletonItems; track $index) {
-            <div
-              class="flex flex-col gap-3 rounded-lg border border-surface-200 p-4 dark:border-surface-700"
-            >
-              <div class="flex items-start justify-between">
-                <p-skeleton shape="square" size="3rem" />
-                <p-skeleton width="5rem" height="1.25rem" borderRadius="0.375rem" />
-              </div>
-              <div class="flex flex-col gap-1.5">
-                <p-skeleton width="9rem" height="0.875rem" />
-                <p-skeleton width="7rem" height="0.75rem" />
-              </div>
-              <div
-                class="flex items-center justify-between border-t border-surface-100 pt-2 dark:border-surface-800"
-              >
-                <p-skeleton width="4.5rem" height="1.25rem" borderRadius="0.375rem" />
-                <p-skeleton width="4rem" height="0.75rem" />
-              </div>
-            </div>
-          }
-        } @else {
-          @for (facility of items; track facility.id) {
-            <div
-              class="flex flex-col gap-3 rounded-lg border border-surface-200 bg-surface-0 p-4 transition-shadow hover:shadow-md dark:border-surface-800 dark:bg-surface-900"
-            >
-              <div class="flex items-start justify-between">
-                <p-avatar
-                  [icon]="facilityTypeIcons[facility.type]"
-                  shape="square"
-                  size="large"
-                  styleClass="rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300"
-                />
+                    <div class="flex min-w-0 flex-col gap-0.5">
+                      <a
+                        class="cursor-pointer truncate font-medium text-surface-900 transition-colors group-hover:text-primary-600 dark:text-surface-100 dark:group-hover:text-primary-400"
+                        (click)="view.emit(facility)"
+                      >
+                        {{ facility.name }}
+                      </a>
 
-                <p-button
-                  type="button"
-                  icon="pi pi-ellipsis-v"
-                  severity="secondary"
-                  [text]="true"
-                  [rounded]="true"
-                  size="small"
-                  ariaLabel="Facility actions"
-                  (click)="onRowMenuToggle($event, facility)"
-                />
-              </div>
+                      <div class="flex items-center gap-1.5 truncate text-xs text-surface-500">
+                        <span class="truncate font-medium">{{ facility.type | titlecase }}</span>
 
-              <div class="flex min-w-0 flex-col gap-1">
-                <a
-                  class="cursor-pointer truncate font-semibold text-surface-900 hover:underline dark:text-surface-100"
-                  (click)="view.emit(facility)"
+                        @if (facility.code) {
+                          <span class="text-surface-300 dark:text-surface-600">•</span>
+                          <span class="truncate font-mono">{{ facility.code }}</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex shrink-0 items-center gap-4">
+                    <p-tag
+                      class="hidden rounded-md text-xs font-medium sm:block"
+                      [severity]="getStatusSeverity(facility.status)"
+                      [value]="facility.status | titlecase"
+                    />
+
+                    <span
+                      class="hidden text-sm text-surface-500 lg:flex lg:items-center lg:gap-1.5 dark:text-surface-400"
+                    >
+                      <i class="pi pi-clock text-[0.7rem]" aria-hidden="true"></i>
+                      {{ facility.updatedAt | date: 'mediumDate' }}
+                    </span>
+
+                    <p-button
+                      type="button"
+                      icon="pi pi-ellipsis-v"
+                      severity="secondary"
+                      [text]="true"
+                      [rounded]="true"
+                      size="small"
+                      ariaLabel="Facility actions"
+                      (click)="onRowMenuToggle($event, facility)"
+                    />
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </ng-template>
+
+        <ng-template #grid let-items>
+          <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            @if (loading()) {
+              @for (_ of skeletonItems; track $index) {
+                <div
+                  class="flex flex-col gap-3 rounded-lg border border-surface-200 p-4 dark:border-surface-700"
                 >
-                  {{ facility.name }}
-                </a>
-                <span class="truncate text-xs text-surface-500">
-                  {{ facility.type | titlecase }}@if (facility.code) {
-                    • {{ facility.code }}
-                  }
-                </span>
-              </div>
+                  <div class="flex items-start justify-between">
+                    <p-skeleton shape="square" size="3rem" />
+                    <p-skeleton width="5rem" height="1.25rem" borderRadius="0.375rem" />
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <p-skeleton width="9rem" height="0.875rem" />
+                    <p-skeleton width="7rem" height="0.75rem" />
+                  </div>
+                  <div
+                    class="flex items-center justify-between border-t border-surface-100 pt-2 dark:border-surface-800"
+                  >
+                    <p-skeleton width="4.5rem" height="1.25rem" borderRadius="0.375rem" />
+                    <p-skeleton width="4rem" height="0.75rem" />
+                  </div>
+                </div>
+              }
+            } @else {
+              @for (facility of items; track facility.id) {
+                <div
+                  class="flex flex-col gap-3 rounded-lg border border-surface-200 bg-surface-0 p-4 transition-shadow hover:shadow-md dark:border-surface-800 dark:bg-surface-900"
+                >
+                  <div class="flex items-start justify-between">
+                    <p-avatar
+                      [icon]="facilityTypeIcons[facility.type]"
+                      shape="square"
+                      size="large"
+                      class="rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300"
+                    />
 
-              <div
-                class="mt-auto flex items-center justify-between border-t border-surface-100 pt-2 dark:border-surface-800"
-              >
-                <p-tag
-                  class="rounded-md text-xs"
-                  [severity]="getStatusSeverity(facility.status)"
-                  [value]="facility.status | titlecase"
-                />
+                    <p-button
+                      type="button"
+                      icon="pi pi-ellipsis-v"
+                      severity="secondary"
+                      [text]="true"
+                      [rounded]="true"
+                      size="small"
+                      ariaLabel="Facility actions"
+                      (click)="onRowMenuToggle($event, facility)"
+                    />
+                  </div>
 
-                <span class="text-xs text-surface-400">
-                  {{ facility.updatedAt | date: 'mediumDate' }}
-                </span>
-              </div>
-            </div>
-          }
-        }
-      </div>
+                  <div class="flex min-w-0 flex-col gap-1">
+                    <a
+                      class="cursor-pointer truncate font-semibold text-surface-900 hover:underline dark:text-surface-100"
+                      (click)="view.emit(facility)"
+                    >
+                      {{ facility.name }}
+                    </a>
+                    <span class="truncate text-xs text-surface-500">
+                      {{ facility.type | titlecase }}@if (facility.code) {
+                        • {{ facility.code }}
+                      }
+                    </span>
+                  </div>
+
+                  <div
+                    class="mt-auto flex items-center justify-between border-t border-surface-100 pt-2 dark:border-surface-800"
+                  >
+                    <p-tag
+                      class="rounded-md text-xs"
+                      [severity]="getStatusSeverity(facility.status)"
+                      [value]="facility.status | titlecase"
+                    />
+
+                    <span class="text-xs text-surface-400">
+                      {{ facility.updatedAt | date: 'mediumDate' }}
+                    </span>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </ng-template>
+
+        <ng-template #emptymessage>
+          <div class="flex flex-col items-center gap-3 py-16">
+            <i class="pi pi-sitemap text-6xl text-surface-400"></i>
+            <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
+              No facilities yet
+            </h3>
+            <span class="text-sm text-surface-500">
+              Create a new facility to get started.
+            </span>
+          </div>
+        </ng-template>
+      </p-dataview>
     </ng-template>
 
-    <ng-template #emptymessage>
-      <div class="flex flex-col items-center gap-3 py-16">
-        <i class="pi pi-sitemap text-6xl text-surface-400"></i>
-        <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
-          No facilities yet
-        </h3>
-        <span class="text-sm text-surface-500">
-          Create a new facility to get started.
-        </span>
-      </div>
-    </ng-template>
-  </p-dataview>
-
-  <p-menu #rowMenu [model]="rowMenuItems()" [popup]="true" appendTo="body" />
+    <p-menu #rowMenu [model]="rowMenuItems()" [popup]="true" appendTo="body" />
+  </p-card>
 </div>

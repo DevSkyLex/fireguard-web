@@ -2,11 +2,11 @@ import { NgComponentOutlet } from '@angular/common';
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
+import type { DividerPassThroughOptions } from 'primeng/types/divider';
 import {
   DashboardSidebarService,
   DashboardHeaderActionsService,
 } from '@layouts/dashboard-layout/services';
-import { ThemeSwitcher } from '@shared/components';
 import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
 
 /**
@@ -31,7 +31,7 @@ import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashbo
  */
 @Component({
   selector: 'app-dashboard-layout-header',
-  imports: [ButtonModule, DividerModule, NgComponentOutlet, DashboardLayoutBreadcrumb, ThemeSwitcher],
+  imports: [ButtonModule, DividerModule, NgComponentOutlet, DashboardLayoutBreadcrumb],
   templateUrl: './dashboard-layout-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -68,5 +68,23 @@ export class DashboardLayoutHeader {
    */
   protected readonly headerActionsService: DashboardHeaderActionsService =
     inject<DashboardHeaderActionsService>(DashboardHeaderActionsService);
+
+  /**
+   * Property dividerPt
+   * @readonly
+   *
+   * @description
+   * PrimeNG Divider passthrough options used by the header action separator.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {DividerPassThroughOptions}
+   */
+  protected readonly dividerPt: DividerPassThroughOptions = {
+    root: {
+      class: 'my-2',
+    },
+  };
   //#endregion
 }

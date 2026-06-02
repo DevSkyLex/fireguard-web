@@ -7,6 +7,7 @@ export type {
   FacilityListFilter,
   FacilityListOptions,
   FacilityChildrenOptions,
+  FacilityDescendantsOptions,
   FacilityOrderDirection,
 } from './facility/facility-list-options.interface';
 export type { CreateFacilityInput } from './facility/create-facility-input.interface';

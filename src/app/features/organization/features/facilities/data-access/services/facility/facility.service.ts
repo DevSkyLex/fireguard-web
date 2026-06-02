@@ -7,6 +7,7 @@ import type {
   FacilityTypeOutput,
   FacilityListOptions,
   FacilityChildrenOptions,
+  FacilityDescendantsOptions,
   CreateFacilityInput,
   UpdateFacilityInput,
   MoveFacilityInput,
@@ -27,7 +28,23 @@ import type {
  */
 @Injectable({ providedIn: 'root' })
 export class FacilityService extends HydraApiService {
-  //#region Constants
+  //#region Properties
+  /**
+   * Property BASE_PATH
+   * @readonly
+   *
+   * @description
+   * The base API path for all facility-related endpoints.
+   *
+   * This constant is used to construct the full endpoint URLs for
+   * all methods in this service, ensuring consistency and ease of maintenance.
+   * If the API path changes, only this constant needs to be updated.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
   private static readonly BASE_PATH: string = '/api/organizations';
   //#endregion
 
@@ -51,6 +68,21 @@ export class FacilityService extends HydraApiService {
     return this.getCollection<FacilityTypeOutput>('/api/facilities/types', options);
   }
 
+  /**
+   * Method listStatuses
+   * @method listStatuses
+   *
+   * @description
+   * Retrieves the list of possible facility statuses (active, archived, etc.)
+   * as a labelled collection. This can be used to populate status filters in the UI.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {RequestOptions} [options] - Optional request parameters.
+   *
+   * @return {Observable<HydraCollection<OptionOutput>>} An observable emitting the facility statuses collection.
+   */
   public listStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
     return this.getCollection<OptionOutput>('/api/facilities/statuses', options);
   }
@@ -134,6 +166,40 @@ export class FacilityService extends HydraApiService {
         page: options?.page,
         itemsPerPage: options?.itemsPerPage,
       },
+    );
+  }
+
+  /**
+   * Method listDescendants
+   * @method listDescendants
+   *
+   * @description
+   * Retrieves all descendants of a facility through the dedicated
+   * `/descendants` endpoint. The API returns a flat Hydra collection; callers
+   * can rebuild the hierarchy by grouping facilities by `parentFacilityId`.
+   *
+   * @access public
+   * @since 3.2.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} facilityId - The ID of the root facility.
+   * @param {FacilityDescendantsOptions} [options] - Optional descendants filters.
+   *
+   * @return {Observable<HydraCollection<FacilityOutput>>} An observable emitting the descendant collection.
+   */
+  public listDescendants(
+    organizationId: string,
+    facilityId: string,
+    options?: FacilityDescendantsOptions,
+  ): Observable<HydraCollection<FacilityOutput>> {
+    const params: NonNullable<RequestOptions['params']> = {};
+
+    if (options?.includeArchived) params['includeArchived'] = true;
+    if (options?.search) params['search'] = options.search;
+
+    return this.getCollection<FacilityOutput>(
+      `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/descendants`,
+      { params },
     );
   }
 

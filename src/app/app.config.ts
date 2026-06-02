@@ -31,6 +31,7 @@ import {
   withOrganizationHeaderAction,
   withOrganizationNavigation,
 } from '@features/organization';
+import { provideThemeHeaderAction } from '@layouts/dashboard-layout';
 
 /**
  * Configuration appConfig
@@ -88,6 +89,7 @@ export const appConfig: ApplicationConfig = {
       withOrganizationContextPanel(),
       withOrganizationHeaderAction(),
     ),
+    provideThemeHeaderAction(),
     provideTheme(),
     provideSplashScreen(),
     providePrimeNG({

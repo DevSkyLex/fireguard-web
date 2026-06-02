@@ -43,9 +43,9 @@ flat, paginated PrimeNG `p-dataview` with a list/grid layout toggle:
   available for the detail page; the dedicated
   `GET /organizations/{orgId}/facilities/{facilityId}/children` endpoint and
   `FacilityStore.loadChildFacilities` / `FacilityService.listChildren` remain
-  in place for that future drill-down,
-- the `/descendants` endpoint is reserved for bulk operations and is **not**
-  used for normal listing.
+  in place for direct-child lazy loading,
+- the `/descendants` endpoint is used by the facility detail overview, not by
+  the root listing.
 
 Search and pagination operate on the **root level only** (the `?page=` query
 param is synced for roots). Row actions reuse the existing view / edit /
@@ -55,15 +55,17 @@ archive flows.
 
 The facility detail page's **Overview** tab renders the descendant hierarchy
 with a PrimeNG `p-organization-chart` (`FacilityHierarchyChart`). Loading is
-**hybrid**:
+based on the backend descendants endpoint:
 
-- the first descendant level is auto-loaded once the facility resolves (only
-  when `facility.hasChildren` is `true`), via an `effect` calling
-  `FacilityStore.ensureChildFacilitiesLoaded`,
-- deeper levels are fetched lazily on node expansion (`expandRequest`), each
-  guarded by `ensureChildFacilitiesLoaded` so a parent is fetched at most once,
-- unloaded-but-expandable nodes render a skeleton placeholder child so the
-  chart shows its expand toggle before children arrive,
+- all descendants are auto-loaded once the facility resolves (only when
+  `facility.hasChildren` is `true`), via an `effect` calling
+  `FacilityStore.ensureFacilityDescendantsLoaded`,
+- `FacilityService.listDescendants` calls
+  `GET /organizations/{orgId}/facilities/{facilityId}/descendants`, then the
+  store groups the flat Hydra `member` collection by `parentFacilityId` for
+  `FacilityHierarchyChart`,
+- `FacilityStore.loadChildFacilities` remains available for direct-child
+  loading flows, but the detail overview uses `/descendants`,
 - all secondary fetches are **browser-only** (no `TransferState`), and node
   selection navigates to the chosen facility's detail page.
 

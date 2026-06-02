@@ -97,6 +97,7 @@ describe('FacilityDetailPage', () => {
     loadingParentIds: signal<readonly string[]>([]),
     ensureParentOptionsLoaded: vi.fn(),
     ensureChildFacilitiesLoaded: vi.fn(),
+    ensureFacilityDescendantsLoaded: vi.fn(),
     move: vi.fn(),
   };
 
@@ -130,6 +131,7 @@ describe('FacilityDetailPage', () => {
     mockFacilityStore.loadingParentIds.set([]);
     mockFacilityStore.ensureParentOptionsLoaded.mockReset();
     mockFacilityStore.ensureChildFacilitiesLoaded.mockReset();
+    mockFacilityStore.ensureFacilityDescendantsLoaded.mockReset();
     mockFacilityStore.move.mockReset();
     mockEquipmentStore.load.mockReset();
     mockInspectionStore.load.mockReset();
@@ -212,16 +214,17 @@ describe('FacilityDetailPage', () => {
     fixture.detectChanges();
 
     expect(mockFacilityStore.ensureChildFacilitiesLoaded).not.toHaveBeenCalled();
+    expect(mockFacilityStore.ensureFacilityDescendantsLoaded).not.toHaveBeenCalled();
   });
 
-  it('should eagerly load the first descendant level when the facility has children', () => {
+  it('should eagerly load descendants when the facility has children', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY_WITH_CHILDREN);
     const fixture = TestBed.createComponent(FacilityDetailPage);
     fixture.detectChanges();
 
-    expect(mockFacilityStore.ensureChildFacilitiesLoaded).toHaveBeenCalledWith({
+    expect(mockFacilityStore.ensureFacilityDescendantsLoaded).toHaveBeenCalledWith({
       organizationId: 'org-1',
-      parentFacilityId: 'fac-1',
+      facilityId: 'fac-1',
     });
   });
 

@@ -1,12 +1,13 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   OnInit,
   Signal,
   viewChild,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { PRIMARY_OUTLET, Router, UrlTree } from '@angular/router';
 import { Popover, PopoverModule, PopoverPassThroughOptions } from 'primeng/popover';
 import type { OrganizationOutput } from '@features/organization/models';
 import { OrganizationStore } from '@features/organization/state';
@@ -62,6 +63,38 @@ export class OrganizationSwitcher implements OnInit {
    */
   protected readonly organizationStore: OrganizationStore =
     inject<OrganizationStore>(OrganizationStore);
+
+  /**
+   * Property organizations
+   * @readonly
+   *
+   * @description
+   * Reactive organization list used by the switcher template.
+   *
+   * @access protected
+   * @since 2.3.0
+   *
+   * @type {Signal<readonly OrganizationOutput[]>}
+   */
+  protected readonly organizations: Signal<OrganizationOutput[]> = computed(
+    (): OrganizationOutput[] => [...this.organizationStore.organizations()],
+  );
+
+  /**
+   * Property organizationCount
+   * @readonly
+   *
+   * @description
+   * Number of organizations available in the switcher list.
+   *
+   * @access protected
+   * @since 2.3.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly organizationCount: Signal<number> = computed(
+    (): number => this.organizations().length,
+  );
 
   /**
    * Property router
@@ -152,16 +185,8 @@ export class OrganizationSwitcher implements OnInit {
     const popover: Popover = this.popover();
     popover.hide();
 
-    const currentUrl: string = this.router.url;
-    const orgPattern: RegExp = /\/organizations\/[^/?#]+/;
-
-    // If already on an organization page, swap the org segment and keep the sub-route.
-    // Otherwise, redirect to the selected organization's dashboard.
-    const newUrl: string = orgPattern.test(currentUrl)
-      ? currentUrl.replace(orgPattern, `/organizations/${organization.id}`)
-      : `/organizations/${organization.id}`;
-
-    this.router.navigateByUrl(newUrl);
+    const targetUrlTree: UrlTree = this.buildOrganizationTargetUrlTree(organization.id);
+    this.router.navigateByUrl(targetUrlTree);
   }
 
   /**
@@ -240,6 +265,42 @@ export class OrganizationSwitcher implements OnInit {
     }
 
     this.organizationStore.loadOrganizations();
+  }
+
+  /**
+   * Method buildOrganizationTargetUrlTree
+   * @method buildOrganizationTargetUrlTree
+   *
+   * @description
+   * Builds a navigation target that preserves the current sub-route, query
+   * parameters and fragment when the user is already inside `/organizations/:id`.
+   * Falls back to `/organizations/:id` from other areas.
+   *
+   * @access private
+   * @since 2.3.0
+   *
+   * @param {string} organizationId - Target organization identifier.
+   * @returns {UrlTree} Navigation target URL tree.
+   */
+  private buildOrganizationTargetUrlTree(organizationId: string): UrlTree {
+    const currentUrlTree: UrlTree = this.router.parseUrl(this.router.url);
+    const primarySegments: string[] =
+      currentUrlTree.root.children[PRIMARY_OUTLET]?.segments.map((segment) => segment.path) ?? [];
+
+    const organizationsIndex: number = primarySegments.indexOf('organizations');
+    const hasOrganizationSegment: boolean =
+      organizationsIndex >= 0 && organizationsIndex + 1 < primarySegments.length;
+
+    const nextPrimarySegments: string[] = hasOrganizationSegment
+      ? primarySegments.map((segment: string, index: number): string =>
+          index === organizationsIndex + 1 ? organizationId : segment,
+        )
+      : ['organizations', organizationId];
+
+    return this.router.createUrlTree(nextPrimarySegments, {
+      queryParams: currentUrlTree.queryParams,
+      fragment: currentUrlTree.fragment ?? undefined,
+    });
   }
   //#endregion
 }

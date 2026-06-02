@@ -106,3 +106,22 @@ export type FacilityListOptions = FacilityListFilter & PaginationOptions;
  * Pagination-only for the standard lazy-expansion flow.
  */
 export type FacilityChildrenOptions = PaginationOptions;
+
+/**
+ * Interface FacilityDescendantsOptions
+ *
+ * @description
+ * Query options supported by the descendants endpoint
+ * `GET /api/organizations/{organizationId}/facilities/{facilityId}/descendants`.
+ */
+export interface FacilityDescendantsOptions {
+  /**
+   * When `true`, archived descendants are included in the result.
+   */
+  readonly includeArchived?: boolean;
+
+  /**
+   * Free-text search applied across descendant facilities.
+   */
+  readonly search?: string;
+}

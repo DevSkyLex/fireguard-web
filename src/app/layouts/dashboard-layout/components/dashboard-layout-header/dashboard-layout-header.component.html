@@ -19,13 +19,12 @@
   </section>
 
   <section class="flex shrink-0 items-center gap-2 px-5">
-    @for (component of headerActionsService.components; track component; let isLast = $last) {
-      <ng-container *ngComponentOutlet="component" />
-
-      @if (!isLast) {
-        <p-divider class="h-6" layout="vertical" />
+    @for (action of headerActionsService.actions; track action.id) {
+      @if (action.id === 'user-menu') {
+        <p-divider class="-mx-1 h-6" layout="vertical" [pt]="dividerPt" />
       }
+
+      <ng-container *ngComponentOutlet="action.component" />
     }
-    <app-theme-switcher />
   </section>
 </header>

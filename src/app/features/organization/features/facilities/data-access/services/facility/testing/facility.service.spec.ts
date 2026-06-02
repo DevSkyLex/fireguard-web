@@ -172,6 +172,26 @@ describe('FacilityService', () => {
     });
   });
 
+  // ── listDescendants ───────────────────────────────────────────────────────
+
+  describe('listDescendants', () => {
+    it('should send GET request to the descendants endpoint with filters', () => {
+      service
+        .listDescendants(orgId, facilityId, { includeArchived: true, search: 'floor' })
+        .subscribe((response) => {
+          expect(response.member).toEqual([mockFacility]);
+        });
+
+      const descendantsUrl = `${facilityBaseUrl}/${facilityId}/descendants`;
+      const req = httpMock.expectOne((r) => r.url === descendantsUrl);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      expect(req.request.params.get('includeArchived')).toBe('true');
+      expect(req.request.params.get('search')).toBe('floor');
+      req.flush(mockCollection([mockFacility]));
+    });
+  });
+
   // ── get ────────────────────────────────────────────────────────────────────
 
   describe('get', () => {

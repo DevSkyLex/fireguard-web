@@ -1,7 +1,10 @@
 export { DashboardLayout } from './dashboard-layout.component';
 export { DashboardSidebarResizeHandleDirective } from './directives';
+export { provideThemeHeaderAction } from './providers';
 export { DashboardSidebarService } from './services';
 export { CONTEXT_PANEL_SLOT } from './slots/context-panel';
 export type { ContextPanelContribution } from './slots/context-panel';
+export { HEADER_ACTION_SLOT } from './slots/header-action';
+export type { HeaderActionContribution } from './slots/header-action';
 export { SIDEBAR_NAVIGATION_SLOT } from './slots/sidebar-navigation';
 export type { SidebarNavigationContribution } from './slots/sidebar-navigation';

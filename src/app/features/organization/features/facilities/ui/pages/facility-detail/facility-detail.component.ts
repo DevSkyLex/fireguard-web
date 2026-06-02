@@ -17,10 +17,12 @@ import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
+import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TabsModule } from 'primeng/tabs';
+import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
 import { TagModule } from 'primeng/tag';
 import type {
   FacilityOutput,
@@ -37,7 +39,6 @@ import {
   FacilityInspectionTab,
 } from '@features/organization/features/facilities/ui/components';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { Card } from '@shared/components';
 
 /**
  * Component FacilityDetailPage
@@ -63,12 +64,12 @@ import { Card } from '@shared/components';
     TitleCasePipe,
     AvatarModule,
     ButtonModule,
+    CardModule,
     DialogModule,
     SelectModule,
     SkeletonModule,
     TagModule,
     TabsModule,
-    Card,
     FacilityEquipmentTab,
     FacilityHierarchyChart,
     FacilityInspectionTab,
@@ -333,6 +334,43 @@ export class FacilityDetailPage {
     zone: 'pi pi-map',
     area: 'pi pi-map-marker',
   };
+
+  protected readonly workspaceCardPt: CardPassThroughOptions = {
+    root: {
+      class:
+        'h-full flex flex-col overflow-hidden border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
+    },
+    body: {
+      class: 'p-0! flex min-h-0 flex-1 flex-col',
+    },
+    content: {
+      class: 'p-0! flex min-h-0 flex-1 flex-col',
+    },
+  };
+
+  protected readonly tabsPt: TabsPassThrough = {
+    root: {
+      class: 'flex min-h-0 flex-1 flex-col',
+    },
+  };
+
+  protected readonly tabListPt: TabListPassThrough = {
+    root: {
+      class: 'border-b border-surface-200 dark:border-surface-800',
+    },
+    content: {
+      class: 'rounded-t-md',
+    },
+    tabList: {
+      class: 'px-4',
+    },
+  };
+
+  protected readonly tabPanelsPt: TabPanelsPassThrough = {
+    root: {
+      class: 'min-h-0 flex-1 overflow-y-auto p-4!',
+    },
+  };
   //#endregion
 
   //#region Constructor
@@ -377,7 +415,7 @@ export class FacilityDetailPage {
         });
       });
 
-    // Eagerly load the first descendant level once the facility is resolved
+    // Eagerly load the descendant tree once the facility is resolved
     // (browser-only — the hierarchy chart is secondary UI data).
     effect(() => {
       const organizationId: string | undefined =
@@ -387,9 +425,9 @@ export class FacilityDetailPage {
         return;
       }
 
-      this.store.ensureChildFacilitiesLoaded({
+      this.store.ensureFacilityDescendantsLoaded({
         organizationId,
-        parentFacilityId: facility.id,
+        facilityId: facility.id,
       });
     });
   }

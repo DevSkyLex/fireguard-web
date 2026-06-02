@@ -1,13 +1,13 @@
-import { Component, signal, type Type } from '@angular/core';
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/ports/theme';
 import { BreadcrumbService } from '@core/services/breadcrumb';
 import {
   DashboardHeaderActionsService,
   DashboardSidebarService,
 } from '@layouts/dashboard-layout/services';
+import type { HeaderActionContribution } from '@layouts/dashboard-layout/slots/header-action';
 import { DashboardLayoutHeader } from '../dashboard-layout-header.component';
 
 @Component({
@@ -25,17 +25,14 @@ class TestHeaderActionA {}
 class TestHeaderActionB {}
 
 describe('DashboardLayoutHeader', () => {
-  const currentTheme = signal<ThemeMode>('light');
-  const mockThemePort: ThemePort = {
-    theme: currentTheme,
-    setTheme: vi.fn((mode: ThemeMode) => currentTheme.set(mode)),
-  };
-  const mockHeaderActionsService: { components: Type<unknown>[] } = {
-    components: [],
+  const mockHeaderActionsService: {
+    actions: HeaderActionContribution[];
+  } = {
+    actions: [],
   };
 
   beforeEach(() => {
-    mockHeaderActionsService.components = [];
+    mockHeaderActionsService.actions = [];
 
     TestBed.configureTestingModule({
       imports: [DashboardLayoutHeader],
@@ -43,7 +40,6 @@ describe('DashboardLayoutHeader', () => {
         DashboardSidebarService,
         BreadcrumbService,
         provideRouter([]),
-        { provide: THEME_PORT, useValue: mockThemePort },
         { provide: DashboardHeaderActionsService, useValue: mockHeaderActionsService },
       ],
     });
@@ -74,8 +70,11 @@ describe('DashboardLayoutHeader', () => {
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-breadcrumb'))).toBeTruthy();
   });
 
-  it('should render a vertical divider between header actions', () => {
-    mockHeaderActionsService.components = [TestHeaderActionA, TestHeaderActionB];
+  it('should render a vertical divider before the user menu action', () => {
+    mockHeaderActionsService.actions = [
+      { id: 'notification-bell', order: 20, component: TestHeaderActionA },
+      { id: 'user-menu', order: 30, component: TestHeaderActionB },
+    ];
     const fixture = TestBed.createComponent(DashboardLayoutHeader);
 
     fixture.detectChanges();

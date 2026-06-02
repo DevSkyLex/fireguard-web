@@ -23,6 +23,24 @@ export class DashboardHeaderActionsService {
   //#region Properties
 
   /**
+   * Property actions
+   * @readonly
+   *
+   * @description
+   * Sorted list of header action contributions.
+   *
+   * @access public
+   * @since 1.4.0
+   *
+   * @type {HeaderActionContribution[]}
+   */
+  public readonly actions: HeaderActionContribution[] = (
+    inject(HEADER_ACTION_SLOT, { optional: true }) ?? []
+  ).toSorted(
+    (a: HeaderActionContribution, b: HeaderActionContribution): number => a.order - b.order,
+  );
+
+  /**
    * Property components
    * @readonly
    *
@@ -35,13 +53,9 @@ export class DashboardHeaderActionsService {
    *
    * @type {Type<unknown>[]}
    */
-  public readonly components: Type<unknown>[] = (
-    inject(HEADER_ACTION_SLOT, { optional: true }) ?? []
-  )
-    .toSorted(
-      (a: HeaderActionContribution, b: HeaderActionContribution): number => a.order - b.order,
-    )
-    .map((contribution: HeaderActionContribution): Type<unknown> => contribution.component);
+  public readonly components: Type<unknown>[] = this.actions.map(
+    (contribution: HeaderActionContribution): Type<unknown> => contribution.component,
+  );
 
   //#endregion
 }

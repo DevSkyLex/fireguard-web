@@ -10,9 +10,7 @@
 <p-popover #popover [pt]="popoverPt">
   <div class="flex w-75 flex-col">
     <!-- Header -->
-    <app-organization-switcher-header
-      [organizationCount]="[...organizationStore.organizations()].length"
-    />
+    <app-organization-switcher-header [organizationCount]="organizationCount()" />
 
     <!-- Current org nav -->
     <app-organization-switcher-nav
@@ -23,7 +21,7 @@
     <!-- Organization list -->
     <app-organization-switcher-list
       [isLoading]="organizationStore.isLoadingOrganizations()"
-      [organizations]="[...organizationStore.organizations()]"
+      [organizations]="organizations()"
       [selectedOrganization]="organizationStore.selectedOrganization()"
       (organizationChange)="onOrganizationChange($event)"
     />

@@ -32,6 +32,31 @@ import type { FacilityState } from './models';
 
 const FACILITY_PARENT_OPTIONS_ITEMS_PER_PAGE = 200;
 
+function toChildFacilityIdsByParent(
+  rootFacilityId: string,
+  descendants: readonly FacilityOutput[],
+): Readonly<Record<string, ReadonlyArray<string>>> {
+  const idsByParent: Record<string, string[]> = {};
+
+  for (const descendant of descendants) {
+    const parentId = descendant.parentFacilityId;
+    if (!parentId) {
+      continue;
+    }
+
+    idsByParent[parentId] = [...(idsByParent[parentId] ?? []), descendant.id];
+  }
+
+  return { [rootFacilityId]: idsByParent[rootFacilityId] ?? [], ...idsByParent };
+}
+
+function toLoadedHierarchyParentIds(
+  rootFacilityId: string,
+  descendants: readonly FacilityOutput[],
+): readonly string[] {
+  return [...new Set([rootFacilityId, ...descendants.map((facility) => facility.id)])];
+}
+
 //#region Initial State
 /**
  * Constant INITIAL_FACILITY_STATE
@@ -465,6 +490,55 @@ export const FacilityStore = signalStore(
         ),
       );
 
+      const loadFacilityDescendantsFn = rxMethod<{
+        organizationId: string;
+        facilityId: string;
+      }>(
+        pipe(
+          tap(({ facilityId }): void => {
+            patchState(store, {
+              loadingParentIds: [...new Set([...store.loadingParentIds(), facilityId])],
+            });
+          }),
+          switchMap(({ organizationId, facilityId }) =>
+            facilityService.listDescendants(organizationId, facilityId).pipe(
+              tapResponse({
+                next: (response: HydraCollection<FacilityOutput>): void => {
+                  patchState(
+                    store,
+                    upsertEntities([...response.member], { collection: 'facility' }),
+                    {
+                      childFacilityIdsByParent: toChildFacilityIdsByParent(
+                        facilityId,
+                        response.member,
+                      ),
+                      loadedParentIds: toLoadedHierarchyParentIds(facilityId, response.member),
+                      loadingParentIds: store
+                        .loadingParentIds()
+                        .filter((id) => id !== facilityId),
+                    },
+                  );
+                },
+                error: (error: unknown): void => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, {
+                    loadingParentIds: store.loadingParentIds().filter((id) => id !== facilityId),
+                  });
+                  dispatcher.dispatch(
+                    facilityStoreEvents.listFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        'Failed to load facility descendants',
+                      ),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      );
+
       return {
         // ── Facility List ──────────────────────────────────────────────────────
 
@@ -598,6 +672,27 @@ export const FacilityStore = signalStore(
          * @type {RxMethod<{ organizationId: string; parentFacilityId: string }>}
          */
         loadChildFacilities: loadChildFacilitiesFn,
+
+        loadFacilityDescendants: loadFacilityDescendantsFn,
+
+        ensureFacilityDescendantsLoaded(params: {
+          organizationId: string;
+          facilityId: string;
+        }): void {
+          if (!isPlatformBrowser(platformId)) {
+            return;
+          }
+
+          const { facilityId } = params;
+          if (
+            store.loadedParentIds().includes(facilityId) ||
+            store.loadingParentIds().includes(facilityId)
+          ) {
+            return;
+          }
+
+          loadFacilityDescendantsFn(params);
+        },
 
         /**
          * Method ensureChildFacilitiesLoaded

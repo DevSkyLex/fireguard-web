@@ -1,10 +1,27 @@
 import type { Routes } from '@angular/router';
+import {
+  withAccountNavigation,
+  withAccountProfile,
+  withNotificationBell,
+} from '@features/account';
 import { authGuard } from '@features/auth/http/guards';
+import { provideMainFeature, withMainNavigation } from '@features/main';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
 import { onboardingGuard } from '@features/onboarding/http/guards';
-import { DashboardLayout } from './layouts/dashboard-layout';
+import {
+  provideOrganizationFeature,
+  withOrganizationContext,
+  withOrganizationNavigation,
+  withOrganizationSwitcher,
+} from '@features/organization';
+import {
+  DashboardLayout,
+  provideDashboardLayoutSlots,
+} from '@layouts/dashboard-layout';
+import { withThemeSwitcher } from '@shared/components';
 import { FocusedLayout } from './layouts/focused-layout';
 import { SplitLayout } from './layouts/split-layout';
+import { provideAccountFeature } from '@features/account';
 
 /**
  * Constant APP_ROUTES
@@ -17,9 +34,34 @@ import { SplitLayout } from './layouts/split-layout';
  */
 export const APP_ROUTES: Routes = [
   {
+    path: 'auth',
+    component: SplitLayout,
+    loadChildren: () => import('@features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
+  },
+  {
     path: '',
     component: DashboardLayout,
     canActivate: [authGuard, onboardingGuard, maintenanceGuard],
+    providers: [
+      provideMainFeature(),
+      provideOrganizationFeature(),
+      provideDashboardLayoutSlots({
+        navigation: [
+          withMainNavigation(),
+          withOrganizationNavigation(),
+          withAccountNavigation(),
+        ],
+        topbar: [
+          withOrganizationSwitcher(),
+          withThemeSwitcher(),
+          withNotificationBell(),
+          withAccountProfile(),
+        ],
+        aside: [
+          withOrganizationContext(),
+        ],
+      }),
+    ],
     children: [
       {
         path: '',
@@ -38,11 +80,6 @@ export const APP_ROUTES: Routes = [
           import('@features/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
       },
     ],
-  },
-  {
-    path: 'auth',
-    component: SplitLayout,
-    loadChildren: () => import('@features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
   },
   {
     path: '',

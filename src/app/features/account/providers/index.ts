@@ -1,2 +1,2 @@
 export { withAccountNavigation } from './navigation/navigation.provider';
-export { withAccountHeaderActions } from './header-actions';
+export { withAccountProfile, withNotificationBell } from './topbar';

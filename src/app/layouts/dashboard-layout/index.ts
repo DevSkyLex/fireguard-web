@@ -1,10 +1,15 @@
 export { DashboardLayout } from './dashboard-layout.component';
 export { DashboardSidebarResizeHandleDirective } from './directives';
-export { provideThemeHeaderAction } from './providers';
+export {
+  provideDashboardLayoutSlots,
+  type DashboardLayoutAsideSlotFeature,
+  type DashboardLayoutNavigationSlotFeature,
+  type DashboardLayoutSlotFeature,
+  type DashboardLayoutSlotsConfig,
+  type DashboardLayoutTopbarSlotFeature,
+} from './providers';
 export { DashboardSidebarService } from './services';
-export { CONTEXT_PANEL_SLOT } from './slots/context-panel';
-export type { ContextPanelContribution } from './slots/context-panel';
-export { HEADER_ACTION_SLOT } from './slots/header-action';
-export type { HeaderActionContribution } from './slots/header-action';
-export { SIDEBAR_NAVIGATION_SLOT } from './slots/sidebar-navigation';
-export type { SidebarNavigationContribution } from './slots/sidebar-navigation';
+export type { AsideContribution } from './slots/aside';
+export type { TopbarContribution } from './slots/topbar';
+export type { NavigationContribution } from './slots/navigation';
+

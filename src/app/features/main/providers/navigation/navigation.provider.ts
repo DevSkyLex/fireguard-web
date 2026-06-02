@@ -1,7 +1,6 @@
 import { signal } from '@angular/core';
 import type { MenuItem } from 'primeng/api';
-import { SIDEBAR_NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/sidebar-navigation';
-import type { MainFeature } from '../../main.feature';
+import type { DashboardLayoutNavigationSlotFeature } from '@layouts/dashboard-layout';
 
 /**
  * Feature withMainNavigation
@@ -15,39 +14,34 @@ import type { MainFeature } from '../../main.feature';
  *
  * @example
  * ```typescript
- * provideMainFeature(withMainNavigation())
+ * provideDashboardLayoutSlots({ navigation: [withMainNavigation()] })
  * ```
  */
-export function withMainNavigation(): MainFeature {
+export function withMainNavigation(): DashboardLayoutNavigationSlotFeature {
   return {
-    providers: [
-      {
-        provide: SIDEBAR_NAVIGATION_SLOT,
-        useFactory: () => ({
-          id: 'home',
-          order: 10,
-          section: signal<MenuItem>({
+    useFactory: () => ({
+      id: 'home',
+      order: 10,
+      section: signal<MenuItem>({
+        id: 'home',
+        label: 'Home',
+        expanded: true,
+        items: [
+          {
             id: 'home',
             label: 'Home',
-            expanded: true,
-            items: [
-              {
-                id: 'home',
-                label: 'Home',
-                icon: 'pi pi-home',
-                routerLink: '/',
-              },
-              {
-                id: 'organizations',
-                label: 'Organizations',
-                icon: 'pi pi-sitemap',
-                routerLink: '/organizations',
-              },
-            ],
-          }),
-        }),
-        multi: true,
-      },
-    ],
+            icon: 'pi pi-home',
+            routerLink: '/',
+          },
+          {
+            id: 'organizations',
+            label: 'Organizations',
+            icon: 'pi pi-sitemap',
+            routerLink: '/organizations',
+          },
+        ],
+      }),
+    }),
   };
 }
+

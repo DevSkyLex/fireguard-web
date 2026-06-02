@@ -10,8 +10,7 @@ import {
   type OrganizationContextPort,
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
-import { SIDEBAR_NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/sidebar-navigation';
-import type { OrganizationFeature } from '../../organization.feature';
+import type { DashboardLayoutNavigationSlotFeature } from '@layouts/dashboard-layout';
 
 type OrganizationSidebarNavigationItem = Readonly<{
   id: string;
@@ -128,34 +127,29 @@ function buildOrganizationSection(
  *
  * @example
  * ```typescript
- * provideOrganizationFeature(withOrganizationNavigation())
+ * provideDashboardLayoutSlots({ navigation: [withOrganizationNavigation()] })
  * ```
  */
-export function withOrganizationNavigation(): OrganizationFeature {
+export function withOrganizationNavigation(): DashboardLayoutNavigationSlotFeature {
   return {
-    providers: [
-      {
-        provide: SIDEBAR_NAVIGATION_SLOT,
-        useFactory: () => {
-          const context: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
-          const memberAccess: OrganizationMemberAccessPort = inject(
-            ORGANIZATION_MEMBER_ACCESS_PORT,
-          );
+    useFactory: () => {
+      const context: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
+      const memberAccess: OrganizationMemberAccessPort = inject(
+        ORGANIZATION_MEMBER_ACCESS_PORT,
+      );
 
-          return {
-            id: 'organization',
-            order: 20,
-            includeInPrimary: false,
-            section: computed((): MenuItem | null => {
-              const organization = context.selectedOrganization();
-              const grantedPermissionSet: ReadonlySet<string> = new Set(memberAccess.permissions());
+      return {
+        id: 'organization',
+        order: 20,
+        includeInPrimary: false,
+        section: computed((): MenuItem | null => {
+          const organization = context.selectedOrganization();
+          const grantedPermissionSet: ReadonlySet<string> = new Set(memberAccess.permissions());
 
-              return buildOrganizationSection(organization?.id ?? null, grantedPermissionSet);
-            }),
-          };
-        },
-        multi: true,
-      },
-    ],
+          return buildOrganizationSection(organization?.id ?? null, grantedPermissionSet);
+        }),
+      };
+    },
   };
 }
+

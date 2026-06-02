@@ -5,4 +5,4 @@ export {
   type DashboardLayoutSlotFeature,
   type DashboardLayoutSlotsConfig,
   type DashboardLayoutTopbarSlotFeature,
-} from './dashboard-layout-slots';
+} from './dashboard-layout-slots.provider';

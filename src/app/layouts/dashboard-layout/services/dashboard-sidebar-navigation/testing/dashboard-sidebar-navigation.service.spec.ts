@@ -1,7 +1,7 @@
 import { computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { SIDEBAR_NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/sidebar-navigation';
-import type { SidebarNavigationContribution } from '@layouts/dashboard-layout/slots/sidebar-navigation';
+import { NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/navigation';
+import type { NavigationContribution } from '@layouts/dashboard-layout/slots/navigation';
 import { DashboardSidebarNavigationService } from '../dashboard-sidebar-navigation.service';
 
 describe('DashboardSidebarNavigationService', () => {
@@ -10,7 +10,7 @@ describe('DashboardSidebarNavigationService', () => {
   const orgSectionVisible = signal(true);
   const notificationBadge = signal<string | undefined>(undefined);
 
-  const homeContribution: SidebarNavigationContribution = {
+  const homeContribution: NavigationContribution = {
     id: 'home',
     order: 10,
     section: signal({
@@ -24,7 +24,7 @@ describe('DashboardSidebarNavigationService', () => {
     }),
   };
 
-  const orgContribution: SidebarNavigationContribution = {
+  const orgContribution: NavigationContribution = {
     id: 'organization',
     order: 20,
     includeInPrimary: false,
@@ -40,7 +40,7 @@ describe('DashboardSidebarNavigationService', () => {
     ),
   };
 
-  const accountContribution: SidebarNavigationContribution = {
+  const accountContribution: NavigationContribution = {
     id: 'account',
     order: 30,
     section: computed(() => ({
@@ -65,9 +65,9 @@ describe('DashboardSidebarNavigationService', () => {
     TestBed.configureTestingModule({
       providers: [
         DashboardSidebarNavigationService,
-        { provide: SIDEBAR_NAVIGATION_SLOT, useValue: homeContribution, multi: true },
-        { provide: SIDEBAR_NAVIGATION_SLOT, useValue: orgContribution, multi: true },
-        { provide: SIDEBAR_NAVIGATION_SLOT, useValue: accountContribution, multi: true },
+        { provide: NAVIGATION_SLOT, useValue: homeContribution, multi: true },
+        { provide: NAVIGATION_SLOT, useValue: orgContribution, multi: true },
+        { provide: NAVIGATION_SLOT, useValue: accountContribution, multi: true },
       ],
     });
 
@@ -97,9 +97,9 @@ describe('DashboardSidebarNavigationService', () => {
       providers: [
         DashboardSidebarNavigationService,
         // Registered in reverse order to validate sorting by `order`
-        { provide: SIDEBAR_NAVIGATION_SLOT, useValue: accountContribution, multi: true },
-        { provide: SIDEBAR_NAVIGATION_SLOT, useValue: orgContribution, multi: true },
-        { provide: SIDEBAR_NAVIGATION_SLOT, useValue: homeContribution, multi: true },
+        { provide: NAVIGATION_SLOT, useValue: accountContribution, multi: true },
+        { provide: NAVIGATION_SLOT, useValue: orgContribution, multi: true },
+        { provide: NAVIGATION_SLOT, useValue: homeContribution, multi: true },
       ],
     });
 
@@ -149,3 +149,4 @@ describe('DashboardSidebarNavigationService', () => {
     });
   });
 });
+

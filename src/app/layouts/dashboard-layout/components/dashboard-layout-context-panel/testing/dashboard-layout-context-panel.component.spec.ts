@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { CONTEXT_PANEL_SLOT } from '@layouts/dashboard-layout/slots/context-panel';
+import { ASIDE_SLOT } from '@layouts/dashboard-layout/slots/aside';
 import { DashboardLayoutContextPanel } from '../dashboard-layout-context-panel.component';
 
 @Component({
@@ -48,7 +48,7 @@ describe('DashboardLayoutContextPanel', () => {
       imports: [DashboardLayoutContextPanel],
       providers: [
         {
-          provide: CONTEXT_PANEL_SLOT,
+          provide: ASIDE_SLOT,
           useValue: { id: 'test', priority: 10, component: ContributionStub, active: signal(true) },
           multi: true,
         },
@@ -66,7 +66,7 @@ describe('DashboardLayoutContextPanel', () => {
       imports: [DashboardLayoutContextPanel],
       providers: [
         {
-          provide: CONTEXT_PANEL_SLOT,
+          provide: ASIDE_SLOT,
           useValue: {
             id: 'test',
             priority: 10,
@@ -89,7 +89,7 @@ describe('DashboardLayoutContextPanel', () => {
       imports: [DashboardLayoutContextPanel],
       providers: [
         {
-          provide: CONTEXT_PANEL_SLOT,
+          provide: ASIDE_SLOT,
           useValue: {
             id: 'low',
             priority: 5,
@@ -99,7 +99,7 @@ describe('DashboardLayoutContextPanel', () => {
           multi: true,
         },
         {
-          provide: CONTEXT_PANEL_SLOT,
+          provide: ASIDE_SLOT,
           useValue: {
             id: 'high',
             priority: 20,
@@ -125,7 +125,7 @@ describe('DashboardLayoutContextPanel', () => {
       imports: [DashboardLayoutContextPanel],
       providers: [
         {
-          provide: CONTEXT_PANEL_SLOT,
+          provide: ASIDE_SLOT,
           useValue: { id: 'test', priority: 10, component: ContributionStub, active: signal(true) },
           multi: true,
         },
@@ -147,3 +147,4 @@ describe('DashboardLayoutContextPanel', () => {
     expect(fixture.componentInstance.activeComponent()).toBeNull();
   });
 });
+

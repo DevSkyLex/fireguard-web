@@ -8,9 +8,9 @@ import {
   type Type,
 } from '@angular/core';
 import {
-  CONTEXT_PANEL_SLOT,
-  type ContextPanelContribution,
-} from '@layouts/dashboard-layout/slots/context-panel';
+  ASIDE_SLOT,
+  type AsideContribution,
+} from '@layouts/dashboard-layout/slots/aside';
 
 /**
  * Component DashboardLayoutContextPanel
@@ -29,7 +29,7 @@ import {
  *
  * Features register contributions via:
  * ```typescript
- * { provide: CONTEXT_PANEL_SLOT, useFactory: ..., multi: true }
+ * provideDashboardLayoutSlots({ aside: [withOrganizationContext()] })
  * ```
  *
  * @version 2.0.0
@@ -61,10 +61,10 @@ export class DashboardLayoutContextPanel {
    * @access private
    * @since 2.0.0
    *
-   * @type {ContextPanelContribution[]}
+   * @type {AsideContribution[]}
    */
-  private readonly contributions: ContextPanelContribution[] =
-    inject<ContextPanelContribution[]>(CONTEXT_PANEL_SLOT, { optional: true }) ?? [];
+  private readonly contributions: AsideContribution[] =
+    inject<AsideContribution[]>(ASIDE_SLOT, { optional: true }) ?? [];
 
   /**
    * Property activeComponent
@@ -81,14 +81,15 @@ export class DashboardLayoutContextPanel {
    */
   public readonly activeComponent: Signal<Type<unknown> | null> = computed(
     (): Type<unknown> | null => {
-      const active: ContextPanelContribution | undefined = this.contributions
+      const active: AsideContribution | undefined = this.contributions
         .toSorted(
-          (a: ContextPanelContribution, b: ContextPanelContribution) => b.priority - a.priority,
+          (a: AsideContribution, b: AsideContribution) => b.priority - a.priority,
         )
-        .find((c: ContextPanelContribution) => c.active());
+        .find((c: AsideContribution) => c.active());
 
       return active?.component ?? null;
     },
   );
   //#endregion
 }
+

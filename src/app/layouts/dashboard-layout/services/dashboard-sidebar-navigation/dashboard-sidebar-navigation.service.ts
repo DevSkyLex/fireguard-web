@@ -5,8 +5,8 @@ import {
   type Signal,
 } from '@angular/core';
 import type { MenuItem } from 'primeng/api';
-import { SIDEBAR_NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/sidebar-navigation';
-import type { SidebarNavigationContribution } from '@layouts/dashboard-layout/slots/sidebar-navigation';
+import { NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/navigation';
+import type { NavigationContribution } from '@layouts/dashboard-layout/slots/navigation';
 
 /**
  * Service DashboardSidebarNavigationService
@@ -14,7 +14,7 @@ import type { SidebarNavigationContribution } from '@layouts/dashboard-layout/sl
  *
  * @description
  * Layout-scoped service aggregating sidebar navigation contributions
- * registered via the `SIDEBAR_NAVIGATION_SLOT` multi-provider
+ * registered via the `NAVIGATION_SLOT` multi-provider
  * token and exposing them as reactive `MenuItem[]` signals.
  *
  * The service is contribution-agnostic: it sorts contributions by their
@@ -38,12 +38,12 @@ export class DashboardSidebarNavigationService {
    * @access private
    * @since 3.0.0
    *
-   * @type {SidebarNavigationContribution[]}
+   * @type {NavigationContribution[]}
    */
-  private readonly contributions: SidebarNavigationContribution[] = (
-    inject(SIDEBAR_NAVIGATION_SLOT, { optional: true }) ?? []
+  private readonly contributions: NavigationContribution[] = (
+    inject(NAVIGATION_SLOT, { optional: true }) ?? []
   ).toSorted(
-    (a: SidebarNavigationContribution, b: SidebarNavigationContribution): number =>
+    (a: NavigationContribution, b: NavigationContribution): number =>
       a.order - b.order,
   );
 
@@ -63,7 +63,7 @@ export class DashboardSidebarNavigationService {
    */
   public readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] =>
     this.contributions
-      .map((contribution: SidebarNavigationContribution): MenuItem | null => contribution.section())
+      .map((contribution: NavigationContribution): MenuItem | null => contribution.section())
       .filter((item: MenuItem | null): item is MenuItem => item !== null),
   );
 
@@ -84,10 +84,10 @@ export class DashboardSidebarNavigationService {
   public readonly primaryItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] =>
     this.contributions
       .filter(
-        (contribution: SidebarNavigationContribution): boolean =>
+        (contribution: NavigationContribution): boolean =>
           contribution.includeInPrimary !== false,
       )
-      .map((contribution: SidebarNavigationContribution): MenuItem | null => contribution.section())
+      .map((contribution: NavigationContribution): MenuItem | null => contribution.section())
       .filter((item: MenuItem | null): item is MenuItem => item !== null),
   );
 
@@ -95,3 +95,4 @@ export class DashboardSidebarNavigationService {
 
   //#endregion
 }
+

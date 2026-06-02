@@ -83,7 +83,7 @@ export class DashboardLayoutHeader {
    */
   protected readonly dividerPt: DividerPassThroughOptions = {
     root: {
-      class: 'my-2',
+      class: 'mx-1',
     },
   };
   //#endregion

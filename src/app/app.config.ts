@@ -16,22 +16,10 @@ import { provideSplashScreen } from '@core/services/splash-screen';
 import { provideTheme } from '@core/services/theme';
 import { FireguardTheme } from '@core/themes/fireguard.theme';
 import { environment } from '@env/environment';
-import {
-  provideAccountFeature,
-  withAccountNavigation,
-  withAccountHeaderActions,
-} from '@features/account';
+import { provideAccountFeature } from '@features/account';
 import { authInterceptor, provideAuthFeature, unauthorizedInterceptor } from '@features/auth';
-import { provideMainFeature, withMainNavigation } from '@features/main';
 import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
 import { provideMaintenanceMode } from '@features/maintenance/state';
-import {
-  provideOrganizationFeature,
-  withOrganizationContextPanel,
-  withOrganizationHeaderAction,
-  withOrganizationNavigation,
-} from '@features/organization';
-import { provideThemeHeaderAction } from '@layouts/dashboard-layout';
 
 /**
  * Configuration appConfig
@@ -77,19 +65,7 @@ export const appConfig: ApplicationConfig = {
     provideEnv(environment),
     provideMaintenanceMode(),
     provideAuthFeature(),
-    provideMainFeature(
-      withMainNavigation()
-    ),
-    provideAccountFeature(
-      withAccountNavigation(),
-      withAccountHeaderActions()
-    ),
-    provideOrganizationFeature(
-      withOrganizationNavigation(),
-      withOrganizationContextPanel(),
-      withOrganizationHeaderAction(),
-    ),
-    provideThemeHeaderAction(),
+    provideAccountFeature(),
     provideTheme(),
     provideSplashScreen(),
     providePrimeNG({

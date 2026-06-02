@@ -5,7 +5,6 @@ import {
   provideAppInitializer,
   untracked,
   type EnvironmentProviders,
-  type Provider,
 } from '@angular/core';
 import {
   NOTIFICATION_CENTER_PORT,
@@ -18,21 +17,6 @@ import {
 import { NotificationStore, UserStore } from '@features/account/state';
 
 /**
- * Interface AccountFeature
- *
- * @description
- * Represents an optional feature that can be composed into `provideAccountFeature()`.
- * Follows the Angular `RouterFeature` / `HttpClientFeature` pattern where `with*`
- * functions return a feature object that is spread into the provider list.
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
- */
-export interface AccountFeature {
-  providers: Provider[];
-}
-
-/**
  * Provider provideAccountFeature
  *
  * @description
@@ -41,18 +25,15 @@ export interface AccountFeature {
  * concrete implementations (`UserStore`, `NotificationStore`) so that shell
  * consumers such as layouts can inject the ports instead of the concrete stores.
  *
- * Accepts optional `AccountFeature` objects (e.g. `withAccountNavigation()`) to
- * compose additional providers into the environment.
- *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
  * @example
  * ```typescript
- * provideAccountFeature(withAccountNavigation())
+ * provideAccountFeature()
  * ```
  */
-export function provideAccountFeature(...features: AccountFeature[]): EnvironmentProviders {
+export function provideAccountFeature(): EnvironmentProviders {
   return makeEnvironmentProviders([
     {
       provide: USER_IDENTITY_PORT,
@@ -111,6 +92,5 @@ export function provideAccountFeature(...features: AccountFeature[]): Environmen
         }
       });
     }),
-    ...features.flatMap((f) => f.providers),
   ]);
 }

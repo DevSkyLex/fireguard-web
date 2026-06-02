@@ -13,9 +13,9 @@ import {
   DashboardLayoutContextPanel,
 } from '@layouts/dashboard-layout/components';
 import {
-  CONTEXT_PANEL_SLOT,
-  type ContextPanelContribution,
-} from '@layouts/dashboard-layout/slots/context-panel';
+  ASIDE_SLOT,
+  type AsideContribution,
+} from '@layouts/dashboard-layout/slots/aside';
 import { DashboardSidebarResizeHandleDirective } from './directives';
 import {
   DashboardSidebarNavigationService,
@@ -74,11 +74,11 @@ export class DashboardLayout {
   protected readonly sidebarService: DashboardSidebarService =
     inject<DashboardSidebarService>(DashboardSidebarService);
 
-  private readonly contributions: ContextPanelContribution[] =
-    inject<ContextPanelContribution[]>(CONTEXT_PANEL_SLOT, { optional: true }) ?? [];
+  private readonly contributions: AsideContribution[] =
+    inject<AsideContribution[]>(ASIDE_SLOT, { optional: true }) ?? [];
 
   protected readonly hasActiveContextPanel: Signal<boolean> = computed((): boolean =>
-    this.contributions.some((c: ContextPanelContribution) => c.active()),
+    this.contributions.some((c: AsideContribution) => c.active()),
   );
 
   protected readonly isDesktopSidebar: Signal<boolean> = toSignal(
@@ -108,3 +108,4 @@ export class DashboardLayout {
 
   //#endregion
 }
+

@@ -1,6 +1,6 @@
 import { inject, Injectable, type Type } from '@angular/core';
-import { HEADER_ACTION_SLOT } from '@layouts/dashboard-layout/slots/header-action';
-import type { HeaderActionContribution } from '@layouts/dashboard-layout/slots/header-action';
+import { TOPBAR_SLOT } from '@layouts/dashboard-layout/slots/topbar';
+import type { TopbarContribution } from '@layouts/dashboard-layout/slots/topbar';
 
 /**
  * Service DashboardHeaderActionsService
@@ -8,7 +8,7 @@ import type { HeaderActionContribution } from '@layouts/dashboard-layout/slots/h
  *
  * @description
  * Layout-scoped service aggregating header action contributions
- * registered via the `HEADER_ACTION_SLOT` multi-provider token
+ * registered via the `TOPBAR_SLOT` multi-provider token
  * and exposing them as a sorted list of component types.
  *
  * The service is contribution-agnostic: it sorts contributions by their
@@ -32,12 +32,12 @@ export class DashboardHeaderActionsService {
    * @access public
    * @since 1.4.0
    *
-   * @type {HeaderActionContribution[]}
+   * @type {TopbarContribution[]}
    */
-  public readonly actions: HeaderActionContribution[] = (
-    inject(HEADER_ACTION_SLOT, { optional: true }) ?? []
+  public readonly actions: TopbarContribution[] = (
+    inject(TOPBAR_SLOT, { optional: true }) ?? []
   ).toSorted(
-    (a: HeaderActionContribution, b: HeaderActionContribution): number => a.order - b.order,
+    (a: TopbarContribution, b: TopbarContribution): number => a.order - b.order,
   );
 
   /**
@@ -54,8 +54,9 @@ export class DashboardHeaderActionsService {
    * @type {Type<unknown>[]}
    */
   public readonly components: Type<unknown>[] = this.actions.map(
-    (contribution: HeaderActionContribution): Type<unknown> => contribution.component,
+    (contribution: TopbarContribution): Type<unknown> => contribution.component,
   );
 
   //#endregion
 }
+

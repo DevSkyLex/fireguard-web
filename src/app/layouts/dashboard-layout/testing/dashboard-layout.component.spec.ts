@@ -6,7 +6,7 @@ import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
 } from '@features/organization/ports';
-import { CONTEXT_PANEL_SLOT } from '@layouts/dashboard-layout/slots/context-panel';
+import { ASIDE_SLOT } from '@layouts/dashboard-layout/slots/aside';
 import { DashboardLayoutHeader } from '../components';
 import { DashboardLayout } from '../dashboard-layout.component';
 import { DashboardSidebarService } from '../services';
@@ -126,7 +126,7 @@ describe('DashboardLayout', () => {
         provideRouter([]),
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
-        { provide: CONTEXT_PANEL_SLOT, useValue: mockContribution, multi: true },
+        { provide: ASIDE_SLOT, useValue: mockContribution, multi: true },
       ],
     }).overrideComponent(DashboardLayoutHeader, {
       set: {
@@ -307,3 +307,4 @@ describe('DashboardLayout', () => {
     expect(document.body.style.userSelect).toBe('');
   });
 });
+

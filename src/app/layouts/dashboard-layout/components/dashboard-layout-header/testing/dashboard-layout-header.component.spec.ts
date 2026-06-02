@@ -7,7 +7,7 @@ import {
   DashboardHeaderActionsService,
   DashboardSidebarService,
 } from '@layouts/dashboard-layout/services';
-import type { HeaderActionContribution } from '@layouts/dashboard-layout/slots/header-action';
+import type { TopbarContribution } from '@layouts/dashboard-layout/slots/topbar';
 import { DashboardLayoutHeader } from '../dashboard-layout-header.component';
 
 @Component({
@@ -26,7 +26,7 @@ class TestHeaderActionB {}
 
 describe('DashboardLayoutHeader', () => {
   const mockHeaderActionsService: {
-    actions: HeaderActionContribution[];
+    actions: TopbarContribution[];
   } = {
     actions: [],
   };
@@ -82,3 +82,4 @@ describe('DashboardLayoutHeader', () => {
     expect(fixture.debugElement.queryAll(By.css('p-divider[layout="vertical"]'))).toHaveLength(1);
   });
 });
+

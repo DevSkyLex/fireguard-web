@@ -14,6 +14,7 @@ import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
 } from '@layouts/dashboard-layout/services';
+import { provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
 import { DashboardLayoutSidebarNavigation } from '../components';
 import { DashboardLayoutSidebar } from '../dashboard-layout-sidebar.component';
 
@@ -70,9 +71,13 @@ describe('DashboardLayoutSidebar', () => {
         DashboardSidebarNavigationService,
         DashboardSidebarService,
         provideRouter([]),
-        ...withMainNavigation().providers,
-        ...withOrganizationNavigation().providers,
-        ...withAccountNavigation().providers,
+        provideDashboardLayoutSlots({
+          navigation: [
+            withMainNavigation(),
+            withOrganizationNavigation(),
+            withAccountNavigation(),
+          ],
+        }),
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
         { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },

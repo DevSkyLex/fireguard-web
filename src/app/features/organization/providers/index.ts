@@ -1,3 +1,3 @@
 export { withOrganizationNavigation } from './navigation';
-export { withOrganizationContextPanel } from './context-panel';
-export { withOrganizationHeaderAction } from './header-action';
+export { withOrganizationContext } from './aside';
+export { withOrganizationSwitcher } from './topbar';

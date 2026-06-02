@@ -13,6 +13,7 @@ import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
 } from '@layouts/dashboard-layout/services';
+import { provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
 import { DashboardLayoutSidebarNavigation } from '../dashboard-layout-sidebar-navigation.component';
 
 @Component({
@@ -68,9 +69,13 @@ describe('DashboardLayoutSidebarNavigation', () => {
       providers: [
         DashboardSidebarNavigationService,
         DashboardSidebarService,
-        ...withMainNavigation().providers,
-        ...withOrganizationNavigation().providers,
-        ...withAccountNavigation().providers,
+        provideDashboardLayoutSlots({
+          navigation: [
+            withMainNavigation(),
+            withOrganizationNavigation(),
+            withAccountNavigation(),
+          ],
+        }),
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
         { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
@@ -117,7 +122,7 @@ describe('DashboardLayoutSidebarNavigation', () => {
 
   it('should show an empty state when no menu items are available', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
-    fixture.componentRef.setInput('items', signal<MenuItem[]>([]));
+    fixture.componentRef.setInput('items', []);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('No navigation items available.');
@@ -146,7 +151,7 @@ describe('DashboardLayoutSidebarNavigation', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
     const service = TestBed.inject(DashboardSidebarNavigationService);
 
-    fixture.componentRef.setInput('items', service.primaryItems);
+    fixture.componentRef.setInput('items', service.primaryItems());
     fixture.detectChanges();
 
     const component = fixture.componentInstance as unknown as {

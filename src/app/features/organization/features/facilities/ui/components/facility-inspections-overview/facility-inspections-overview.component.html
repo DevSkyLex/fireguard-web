@@ -1,0 +1,75 @@
+<section
+  class="rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-950"
+>
+  <header
+    class="flex flex-wrap items-center justify-between gap-3 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
+  >
+    <div class="flex items-center gap-2">
+      <i class="pi pi-clipboard text-sm text-surface-500"></i>
+      <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Inspections</h2>
+      <span class="text-xs text-surface-500">{{ store.inspections().length }}</span>
+    </div>
+
+    <div
+      class="inline-flex items-center gap-1 rounded-full bg-surface-100 p-0.5 dark:bg-surface-800"
+    >
+      @for (item of filters; track item.value) {
+        <button
+          type="button"
+          class="rounded-full px-3 py-1 text-xs font-medium transition-colors"
+          [class]="
+            filter() === item.value
+              ? 'bg-surface-0 text-surface-900 shadow-sm dark:bg-surface-950 dark:text-surface-100'
+              : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'
+          "
+          (click)="filter.set(item.value)"
+        >
+          {{ item.label }}
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (store.isLoadingInspections()) {
+    <div class="space-y-3 p-4">
+      @for (_ of [1, 2, 3, 4]; track $index) {
+        <p-skeleton width="100%" height="2.5rem" />
+      }
+    </div>
+  } @else if (visibleInspections().length === 0) {
+    <div class="p-6 text-sm text-surface-500">No inspection matches this filter.</div>
+  } @else {
+    <div class="divide-y divide-surface-100 dark:divide-surface-800">
+      @for (inspection of visibleInspections(); track inspection.id) {
+        <article class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <div class="min-w-0">
+            <p class="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
+              {{ inspection.inspectorName }}
+            </p>
+            <p class="text-xs text-surface-500">
+              {{ inspection.performedAt | date: 'mediumDate' }}
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-400"
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full"
+                [class]="getResultDotClass(inspection.result)"
+              ></span>
+              {{ getResultLabel(inspection.result) }}
+            </span>
+
+            <span
+              class="rounded-full border border-surface-200 px-2 py-0.5 text-xs text-surface-600 dark:border-surface-700 dark:text-surface-300"
+            >
+              {{ getStatusLabel(inspection.status) }}
+            </span>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

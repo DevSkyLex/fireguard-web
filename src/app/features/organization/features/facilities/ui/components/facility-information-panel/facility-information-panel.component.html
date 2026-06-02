@@ -1,0 +1,60 @@
+@let facility = this.facility();
+
+<section
+  class="rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-950"
+>
+  <header class="border-b border-surface-200 px-4 py-3 dark:border-surface-800">
+    <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Site information</h2>
+  </header>
+
+  <dl class="divide-y divide-surface-100 px-4 py-2 dark:divide-surface-800">
+    <div class="py-2">
+      <dt class="text-xs text-surface-500">Type</dt>
+      <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
+        {{ facility.type | titlecase }}
+      </dd>
+    </div>
+
+    <div class="py-2">
+      <dt class="text-xs text-surface-500">Status</dt>
+      <dd class="mt-1">
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-400"
+        >
+          <span class="h-1.5 w-1.5 rounded-full" [class]="getStatusDotClass(facility.status)"></span>
+          {{ facility.status | titlecase }}
+        </span>
+      </dd>
+    </div>
+
+    @if (facility.code) {
+      <div class="py-2">
+        <dt class="text-xs text-surface-500">Code</dt>
+        <dd class="mt-1 font-mono text-sm text-surface-900 dark:text-surface-100">
+          {{ facility.code }}
+        </dd>
+      </div>
+    }
+
+    @if (facility.address) {
+      <div class="py-2">
+        <dt class="text-xs text-surface-500">Address</dt>
+        <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">{{ facility.address }}</dd>
+      </div>
+    }
+
+    <div class="py-2">
+      <dt class="text-xs text-surface-500">Created</dt>
+      <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
+        {{ facility.createdAt | date: 'mediumDate' }}
+      </dd>
+    </div>
+
+    <div class="py-2">
+      <dt class="text-xs text-surface-500">Last updated</dt>
+      <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
+        {{ facility.updatedAt | date: 'mediumDate' }}
+      </dd>
+    </div>
+  </dl>
+</section>

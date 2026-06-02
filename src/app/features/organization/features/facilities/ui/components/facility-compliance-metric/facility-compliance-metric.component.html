@@ -1,0 +1,7 @@
+<app-metric-card
+  title="Compliance"
+  description="Inspection pass rate"
+  icon="pi pi-verified"
+  [value]="store.complianceDisplay()"
+  [loading]="store.isLoadingInspections()"
+/>

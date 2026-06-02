@@ -1,4 +1,4 @@
-import { isPlatformBrowser, DatePipe, KeyValuePipe, TitleCasePipe } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,10 +12,9 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
@@ -23,20 +22,28 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TabsModule } from 'primeng/tabs';
 import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
-import { TagModule } from 'primeng/tag';
 import type {
   FacilityOutput,
   MoveFacilityInput,
 } from '@features/organization/features/facilities/models';
 import {
   ActiveFacilityStore,
+  FacilityOverviewStore,
   FacilityStore,
   facilityStoreEvents,
 } from '@features/organization/features/facilities/state';
 import {
+  FacilityComplianceMetric,
+  FacilityDetailHeader,
+  FacilityEquipmentOverview,
+  FacilityEquipmentsMetric,
   FacilityEquipmentTab,
-  FacilityHierarchyChart,
+  FacilityInformationPanel,
+  FacilityInspectionsOverview,
   FacilityInspectionTab,
+  FacilityInstallationsPanel,
+  FacilityNextInspectionMetric,
+  FacilityOverdueInspectionsMetric,
 } from '@features/organization/features/facilities/ui/components';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
@@ -57,24 +64,26 @@ import { ActiveOrganizationStore } from '@features/organization/state';
 @Component({
   selector: 'app-facility-detail',
   imports: [
-    RouterModule,
-    DatePipe,
     FormsModule,
-    KeyValuePipe,
-    TitleCasePipe,
-    AvatarModule,
     ButtonModule,
     CardModule,
     DialogModule,
     SelectModule,
     SkeletonModule,
-    TagModule,
     TabsModule,
+    FacilityDetailHeader,
+    FacilityComplianceMetric,
+    FacilityOverdueInspectionsMetric,
+    FacilityNextInspectionMetric,
+    FacilityEquipmentsMetric,
+    FacilityInspectionsOverview,
+    FacilityEquipmentOverview,
+    FacilityInformationPanel,
+    FacilityInstallationsPanel,
     FacilityEquipmentTab,
-    FacilityHierarchyChart,
     FacilityInspectionTab,
   ],
-  providers: [FacilityStore],
+  providers: [FacilityStore, FacilityOverviewStore],
   templateUrl: './facility-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -189,6 +198,22 @@ export class FacilityDetailPage {
    * @type {FacilityStore}
    */
   protected readonly store: FacilityStore = inject<FacilityStore>(FacilityStore);
+
+  /**
+   * Property overviewStore
+   * @readonly
+   *
+   * @description
+   * Component-scoped store that loads the compact inspection and equipment
+   * previews powering the overview tab's KPI metrics and summary cards.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FacilityOverviewStore}
+   */
+  protected readonly overviewStore: InstanceType<typeof FacilityOverviewStore> =
+    inject(FacilityOverviewStore);
 
   /**
    * Property facility
@@ -314,27 +339,6 @@ export class FacilityDetailPage {
     return options;
   });
 
-  /**
-   * Property facilityTypeIcons
-   * @readonly
-   *
-   * @description
-   * Maps facility types to PrimeNG icon classes for use in
-   * avatar icons and tags throughout the template.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Record<string, string>}
-   */
-  protected readonly facilityTypeIcons: Record<string, string> = {
-    site: 'pi pi-globe',
-    building: 'pi pi-building',
-    floor: 'pi pi-th-large',
-    zone: 'pi pi-map',
-    area: 'pi pi-map-marker',
-  };
-
   protected readonly workspaceCardPt: CardPassThroughOptions = {
     root: {
       class:
@@ -421,7 +425,12 @@ export class FacilityDetailPage {
       const organizationId: string | undefined =
         this.activeOrganizationStore.selectedOrganization()?.id;
       const facility: FacilityOutput | null = this.facility();
-      if (!organizationId || !facility || !facility.hasChildren) {
+      if (
+        !organizationId ||
+        !facility ||
+        !facility.hasChildren ||
+        !isPlatformBrowser(this.platformId)
+      ) {
         return;
       }
 
@@ -429,6 +438,20 @@ export class FacilityDetailPage {
         organizationId,
         facilityId: facility.id,
       });
+    });
+
+    // Load compact inspection/equipment previews used by the overview cards
+    // (browser-only — secondary, non-critical KPI data).
+    effect(() => {
+      const organizationId: string | undefined =
+        this.activeOrganizationStore.selectedOrganization()?.id;
+      const facilityId: string | undefined = this.facility()?.id;
+
+      if (!organizationId || !facilityId || !isPlatformBrowser(this.platformId)) {
+        return;
+      }
+
+      this.overviewStore.load({ organizationId, facilityId });
     });
   }
   //#endregion
@@ -520,37 +543,12 @@ export class FacilityDetailPage {
   }
 
   /**
-   * Method onExpandHierarchyNode
-   * @method onExpandHierarchyNode
-   *
-   * @description
-   * Lazily loads the direct children of a facility when its hierarchy-chart
-   * node is expanded. Delegates to the guarded store loader, which skips
-   * already-loaded or in-flight branches.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {string} parentFacilityId - Id of the expanded facility.
-   *
-   * @returns {void}
-   */
-  protected onExpandHierarchyNode(parentFacilityId: string): void {
-    const organizationId: string | undefined =
-      this.activeOrganizationStore.selectedOrganization()?.id;
-    if (!organizationId) {
-      return;
-    }
-
-    this.store.ensureChildFacilitiesLoaded({ organizationId, parentFacilityId });
-  }
-
-  /**
    * Method onNavigateToFacility
    * @method onNavigateToFacility
    *
    * @description
-   * Navigates to a descendant facility's detail page from the hierarchy chart.
+   * Navigates to a descendant facility's detail page from the installations
+   * panel.
    *
    * @access protected
    * @since 1.0.0

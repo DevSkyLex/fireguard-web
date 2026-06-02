@@ -1,0 +1,7 @@
+<app-metric-card
+  title="Overdue inspections"
+  description="Past their due date"
+  icon="pi pi-exclamation-triangle"
+  [value]="store.overdueInspectionsCount()"
+  [loading]="store.isLoadingInspections()"
+/>

@@ -4,18 +4,20 @@ import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
-import { EMPTY } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
+import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import {
   ActiveFacilityStore,
+  FacilityOverviewStore,
   FacilityStore,
 } from '@features/organization/features/facilities/state';
 import {
   FacilityEquipmentTab,
-  FacilityHierarchyChart,
   FacilityInspectionTab,
 } from '@features/organization/features/facilities/ui/components';
+import { InspectionService } from '@features/organization/features/inspections/data-access';
 import { InspectionStore } from '@features/organization/features/inspections/state';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
@@ -107,6 +109,14 @@ describe('FacilityDetailPage', () => {
   const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
   const mockMessageService = { add: vi.fn() };
 
+  const mockEquipmentService = {
+    list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+  };
+
+  const mockInspectionService = {
+    list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+  };
+
   const mockEquipmentStore = {
     equipmentList: signal([]),
     isLoadingEquipment: signal(false),
@@ -136,6 +146,10 @@ describe('FacilityDetailPage', () => {
     mockEquipmentStore.load.mockReset();
     mockInspectionStore.load.mockReset();
     mockActiveOrgStore.selectedOrganization.set(MOCK_ORG);
+    mockEquipmentService.list.mockReset();
+    mockEquipmentService.list.mockReturnValue(of({ member: [], totalItems: 0 }));
+    mockInspectionService.list.mockReset();
+    mockInspectionService.list.mockReturnValue(of({ member: [], totalItems: 0 }));
 
     TestBed.configureTestingModule({
       imports: [FacilityDetailPage],
@@ -146,19 +160,23 @@ describe('FacilityDetailPage', () => {
         { provide: ActiveFacilityStore, useValue: mockActiveFacilityStore },
         { provide: Events, useValue: mockEvents },
         { provide: MessageService, useValue: mockMessageService },
+        { provide: EquipmentService, useValue: mockEquipmentService },
+        { provide: InspectionService, useValue: mockInspectionService },
       ],
     })
       .overrideComponent(FacilityDetailPage, {
-        set: { providers: [{ provide: FacilityStore, useValue: mockFacilityStore }] },
+        set: {
+          providers: [
+            { provide: FacilityStore, useValue: mockFacilityStore },
+            FacilityOverviewStore,
+          ],
+        },
       })
       .overrideComponent(FacilityEquipmentTab, {
         set: { providers: [{ provide: EquipmentStore, useValue: mockEquipmentStore }] },
       })
       .overrideComponent(FacilityInspectionTab, {
         set: { providers: [{ provide: InspectionStore, useValue: mockInspectionStore }] },
-      })
-      .overrideComponent(FacilityHierarchyChart, {
-        set: { template: '', imports: [] },
       });
   });
 
@@ -228,21 +246,7 @@ describe('FacilityDetailPage', () => {
     });
   });
 
-  it('should request children when a hierarchy node is expanded', () => {
-    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY_WITH_CHILDREN);
-    const fixture = TestBed.createComponent(FacilityDetailPage);
-    fixture.detectChanges();
-    mockFacilityStore.ensureChildFacilitiesLoaded.mockReset();
-
-    fixture.componentInstance['onExpandHierarchyNode']('fac-2');
-
-    expect(mockFacilityStore.ensureChildFacilitiesLoaded).toHaveBeenCalledWith({
-      organizationId: 'org-1',
-      parentFacilityId: 'fac-2',
-    });
-  });
-
-  it('should navigate to a facility chosen from the hierarchy chart', () => {
+  it('should navigate to a facility chosen from the installations panel', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY_WITH_CHILDREN);
     const fixture = TestBed.createComponent(FacilityDetailPage);
     fixture.detectChanges();
@@ -324,19 +328,23 @@ describe('FacilityDetailPage', () => {
         { provide: ActiveFacilityStore, useValue: mockActiveFacilityStore },
         { provide: Events, useValue: mockEvents },
         { provide: MessageService, useValue: mockMessageService },
+        { provide: EquipmentService, useValue: mockEquipmentService },
+        { provide: InspectionService, useValue: mockInspectionService },
       ],
     })
       .overrideComponent(FacilityDetailPage, {
-        set: { providers: [{ provide: FacilityStore, useValue: mockFacilityStore }] },
+        set: {
+          providers: [
+            { provide: FacilityStore, useValue: mockFacilityStore },
+            FacilityOverviewStore,
+          ],
+        },
       })
       .overrideComponent(FacilityEquipmentTab, {
         set: { providers: [{ provide: EquipmentStore, useValue: mockEquipmentStore }] },
       })
       .overrideComponent(FacilityInspectionTab, {
         set: { providers: [{ provide: InspectionStore, useValue: mockInspectionStore }] },
-      })
-      .overrideComponent(FacilityHierarchyChart, {
-        set: { template: '', imports: [] },
       });
 
     const fixture = TestBed.createComponent(FacilityDetailPage);

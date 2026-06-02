@@ -1,0 +1,11 @@
+<app-metric-card
+  title="Next inspection"
+  [description]="
+    store.nextInspectionAt()
+      ? 'Due ' + (store.nextInspectionAt() | date: 'mediumDate')
+      : 'No upcoming date'
+  "
+  icon="pi pi-calendar"
+  [value]="store.nextInspectionInDays() === null ? '—' : store.nextInspectionInDays() + ' d'"
+  [loading]="store.isLoadingInspections()"
+/>

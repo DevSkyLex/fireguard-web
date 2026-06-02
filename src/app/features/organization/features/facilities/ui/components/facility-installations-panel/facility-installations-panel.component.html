@@ -1,0 +1,78 @@
+@let facility = this.facility();
+
+<section
+  class="rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-950"
+>
+  <header
+    class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
+  >
+    <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Installations</h2>
+    <span class="text-xs text-surface-500">{{ installationCount() }}</span>
+  </header>
+
+  <div class="space-y-2 p-4">
+    <div
+      class="flex items-center justify-between rounded-md border border-surface-200 px-3 py-2 dark:border-surface-700"
+    >
+      <div class="flex min-w-0 items-center gap-2">
+        <i [class]="facilityTypeIcons[facility.type]" class="text-sm text-surface-500"></i>
+        <span class="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
+          {{ facility.name }}
+        </span>
+      </div>
+      <span class="h-1.5 w-1.5 rounded-full" [class]="getStatusDotClass(facility.status)"></span>
+    </div>
+
+    @if (directChildren().length === 0) {
+      <p class="px-1 text-xs text-surface-500">No child installation loaded.</p>
+    } @else {
+      <ul class="space-y-1 pl-3">
+        @for (child of directChildren(); track child.id) {
+          <li>
+            <button
+              type="button"
+              class="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left hover:bg-surface-50 dark:hover:bg-surface-800/60"
+              (click)="navigate.emit(child)"
+            >
+              <span class="flex min-w-0 items-center gap-2">
+                <i [class]="facilityTypeIcons[child.type]" class="text-xs text-surface-500"></i>
+                <span class="truncate text-xs text-surface-700 dark:text-surface-300">
+                  {{ child.name }}
+                </span>
+              </span>
+              <span class="h-1.5 w-1.5 rounded-full" [class]="getStatusDotClass(child.status)"></span>
+            </button>
+
+            @if (childrenOf(child.id).length > 0) {
+              <ul class="space-y-1 border-l border-surface-200 pl-3 dark:border-surface-700">
+                @for (grandChild of childrenOf(child.id); track grandChild.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="flex w-full items-center justify-between rounded-md px-2 py-1 text-left hover:bg-surface-50 dark:hover:bg-surface-800/60"
+                      (click)="navigate.emit(grandChild)"
+                    >
+                      <span class="flex min-w-0 items-center gap-2">
+                        <i
+                          [class]="facilityTypeIcons[grandChild.type]"
+                          class="text-xs text-surface-400"
+                        ></i>
+                        <span class="truncate text-xs text-surface-600 dark:text-surface-400">
+                          {{ grandChild.name }}
+                        </span>
+                      </span>
+                      <span
+                        class="h-1.5 w-1.5 rounded-full"
+                        [class]="getStatusDotClass(grandChild.status)"
+                      ></span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

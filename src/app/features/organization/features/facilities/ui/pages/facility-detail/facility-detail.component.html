@@ -1,11 +1,11 @@
-<div id="facility-detail" class="flex h-full min-h-0 flex-col gap-4">
+<div id="facility-detail" class="flex h-full min-h-0 flex-col gap-6">
   <!-- Header -->
   <section>
-    @if (isLoading()) {
+    @if (isLoading(); as loading) {
       <div
         class="flex items-center justify-between rounded-xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-950"
       >
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-6">
           <p-skeleton shape="square" size="3.5rem" />
           <div class="flex flex-col gap-2">
             <p-skeleton width="12rem" height="1.25rem" />
@@ -17,7 +17,8 @@
           <p-skeleton width="5rem" height="2rem" />
         </div>
       </div>
-    } @else if (facility(); as facility) {
+    }
+    @else if (facility(); as facility) {
       <app-facility-detail-header
         [facility]="facility"
         (edit)="onEdit()"
@@ -27,8 +28,8 @@
   </section>
 
   <!-- KPI metrics -->
-  @if (facility()) {
-    <section class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  @if (facility(); as facility) {
+    <section class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
       <app-facility-compliance-metric />
       <app-facility-overdue-inspections-metric />
       <app-facility-next-inspection-metric />
@@ -37,58 +38,56 @@
   }
 
   <!-- Workspace -->
-  <section class="min-h-0 flex-1">
-    <p-card class="flex h-full min-h-0 flex-col" [pt]="workspaceCardPt">
-      <p-tabs [value]="activeTab()" [pt]="tabsPt" (valueChange)="activeTab.set(+$event!)">
-        <p-tablist [pt]="tabListPt">
-          <p-tab [value]="0">
-            <i class="pi pi-chart-line mr-2"></i>
-            Overview
-          </p-tab>
-          <p-tab [value]="1">
-            <i class="pi pi-wrench mr-2"></i>
-            Equipments
-          </p-tab>
-          <p-tab [value]="2">
-            <i class="pi pi-clipboard mr-2"></i>
-            Inspections
-          </p-tab>
-        </p-tablist>
+  <section class="flex min-h-0 flex-1 flex-col">
+    <p-tabs [value]="activeTab()" [pt]="tabsPt" (valueChange)="activeTab.set(+$event!)">
+      <p-tablist [pt]="tabListPt">
+        <p-tab [value]="0">
+          <i class="pi pi-chart-line text-sm mr-2"></i>
+          <span class="text-sm">Overview</span>
+        </p-tab>
+        <p-tab [value]="1">
+          <i class="pi pi-wrench text-sm mr-2"></i>
+          <span class="text-sm">Equipments</span>
+        </p-tab>
+        <p-tab [value]="2">
+          <i class="pi pi-clipboard text-sm mr-2"></i>
+          <span class="text-sm">Inspections</span>
+        </p-tab>
+      </p-tablist>
 
-        <p-tabpanels [pt]="tabPanelsPt">
-          <p-tabpanel [value]="0">
-            @if (facility(); as facility) {
-              <div class="grid min-h-0 grid-cols-1 gap-4 xl:grid-cols-12">
-                <div class="flex min-h-0 flex-col gap-4 xl:col-span-8">
-                  <app-facility-inspections-overview />
-                  <app-facility-equipment-overview />
-                </div>
-
-                <aside class="flex min-h-0 flex-col gap-4 xl:col-span-4">
-                  <app-facility-information-panel [facility]="facility" />
-                  <app-facility-installations-panel
-                    [facility]="facility"
-                    (navigate)="onNavigateToFacility($event)"
-                  />
-                </aside>
+      <p-tabpanels [pt]="tabPanelsPt">
+        <p-tabpanel [value]="0">
+          @if (facility(); as facility) {
+            <div class="grid min-h-0 grid-cols-1 gap-6 xl:grid-cols-12">
+              <div class="flex min-h-0 flex-col gap-6 xl:col-span-8">
+                <app-facility-inspection-dataview />
+                <app-facility-equipment-dataview />
               </div>
-            }
-          </p-tabpanel>
 
-          <p-tabpanel [value]="1">
-            @if (activeTab() === 1 && facility(); as facility) {
-              <app-facility-equipment-tab [facilityId]="facility.id" />
-            }
-          </p-tabpanel>
+              <aside class="flex min-h-0 flex-col gap-6 xl:col-span-4">
+                <app-facility-information-panel [facility]="facility" />
+                <app-facility-installations-panel
+                  [facility]="facility"
+                  (navigate)="onNavigateToFacility($event)"
+                />
+              </aside>
+            </div>
+          }
+        </p-tabpanel>
 
-          <p-tabpanel [value]="2">
-            @if (activeTab() === 2 && facility(); as facility) {
-              <app-facility-inspection-tab [facilityId]="facility.id" />
-            }
-          </p-tabpanel>
-        </p-tabpanels>
-      </p-tabs>
-    </p-card>
+        <p-tabpanel [value]="1">
+          @if (activeTab() === 1 && facility(); as facility) {
+            <app-facility-equipment-tab [facilityId]="facility.id" />
+          }
+        </p-tabpanel>
+
+        <p-tabpanel [value]="2">
+          @if (activeTab() === 2 && facility(); as facility) {
+            <app-facility-inspection-tab [facilityId]="facility.id" />
+          }
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
   </section>
 </div>
 
@@ -101,7 +100,7 @@
   [style]="{ width: '28rem' }"
   [closable]="!isMoving()"
 >
-  <div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-6">
     <p class="text-sm text-surface-600 dark:text-surface-400">
       Select a new parent facility or choose "None" to move this facility to the root level.
     </p>

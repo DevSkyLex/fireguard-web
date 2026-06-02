@@ -23,7 +23,9 @@ describe('EquipmentService', () => {
   const mockEnv = { apiUrl: 'https://api.test.com' };
   const orgId = 'org-uuid-1';
   const equipmentId = 'equipment-uuid-1';
+  const facilityId = 'facility-uuid-1';
   const equipmentBaseUrl = `${mockEnv.apiUrl}/api/organizations/${orgId}/equipment`;
+  const facilityEquipmentBaseUrl = `${mockEnv.apiUrl}/api/organizations/${orgId}/facilities/${facilityId}/equipment`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -112,6 +114,16 @@ describe('EquipmentService', () => {
 
       const req = httpMock.expectOne((r) => r.url === equipmentBaseUrl);
       expect(req.request.params.get('page')).toBe('2');
+      req.flush(mockCollection([]));
+    });
+
+    it('should route to facility endpoint when facilityId filter is provided', () => {
+      service.list(orgId, { page: 2, itemsPerPage: 25, params: { facilityId } }).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === facilityEquipmentBaseUrl);
+      expect(req.request.params.get('page')).toBe('2');
+      expect(req.request.params.get('itemsPerPage')).toBe('25');
+      expect(req.request.params.get('facilityId')).toBeNull();
       req.flush(mockCollection([]));
     });
   });

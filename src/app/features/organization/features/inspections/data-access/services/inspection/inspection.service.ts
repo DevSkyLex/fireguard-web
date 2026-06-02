@@ -52,6 +52,25 @@ export class InspectionService extends HydraApiService {
     const base: string = `${InspectionService.BASE_PATH}/${organizationId}/inspections`;
     return inspectionId ? `${base}/${inspectionId}` : base;
   }
+
+  /**
+   * Method facilityInspectionPath
+   * @method facilityInspectionPath
+   *
+   * @description
+   * Builds the base URL path for facility-scoped inspections endpoints.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} facilityId - The ID of the facility.
+   *
+   * @return {string} The constructed URL path for facility inspections.
+   */
+  private facilityInspectionPath(organizationId: string, facilityId: string): string {
+    return `${InspectionService.BASE_PATH}/${organizationId}/facilities/${facilityId}/inspections`;
+  }
   //#endregion
 
   public listStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
@@ -93,18 +112,55 @@ export class InspectionService extends HydraApiService {
     organizationId: string,
     options?: InspectionListOptions,
   ): Observable<HydraCollection<InspectionOutput>> {
-    const params: NonNullable<RequestOptions['params']> = {};
+    const params: NonNullable<RequestOptions['params']> = {
+      ...(options?.params ?? {}),
+    };
+    const facilityId: string | undefined = options?.facilityId;
 
     if (options?.equipmentId) params['equipmentId'] = options.equipmentId;
-    if (options?.facilityId) params['facilityId'] = options.facilityId;
     if (options?.result) params['result'] = options.result;
     if (options?.status) params['status'] = options.status;
+
+    if (facilityId) {
+      return this.listByFacility(organizationId, facilityId, {
+        page: options?.page,
+        itemsPerPage: options?.itemsPerPage,
+        params,
+      });
+    }
 
     return this.getCollection<InspectionOutput>(this.inspectionPath(organizationId), {
       page: options?.page,
       itemsPerPage: options?.itemsPerPage,
       params,
     });
+  }
+
+  /**
+   * Method listByFacility
+   * @method listByFacility
+   *
+   * @description
+   * Retrieves a paginated list of inspections for a specific facility.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} facilityId - The ID of the facility.
+   * @param {RequestOptions} [options] - Optional pagination and filter params.
+   *
+   * @return {Observable<HydraCollection<InspectionOutput>>} An observable emitting the inspections collection.
+   */
+  public listByFacility(
+    organizationId: string,
+    facilityId: string,
+    options?: RequestOptions,
+  ): Observable<HydraCollection<InspectionOutput>> {
+    return this.getCollection<InspectionOutput>(
+      this.facilityInspectionPath(organizationId, facilityId),
+      options,
+    );
   }
 
   /**

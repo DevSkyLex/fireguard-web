@@ -1,22 +1,20 @@
-import { isPlatformBrowser, DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
-  effect,
   inject,
   input,
-  PLATFORM_ID,
+  signal,
   type InputSignal,
-  type Signal,
 } from '@angular/core';
-import { SkeletonModule } from 'primeng/skeleton';
+import { ActivatedRoute, Router } from '@angular/router';
+import type { RequestOptions } from '@core/services/hydra-api';
 import type {
-  InspectionOutput,
+  InspectionListOptions,
   InspectionResult,
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
 import { InspectionStore } from '@features/organization/features/inspections/state';
+import { InspectionTable } from '@features/organization/features/inspections/ui/tables';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
@@ -35,7 +33,7 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-facility-inspection-tab',
-  imports: [DatePipe, SkeletonModule],
+  imports: [InspectionTable],
   providers: [InspectionStore],
   templateUrl: './facility-inspection-tab.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,7 +72,9 @@ export class FacilityInspectionTab {
   private readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
-  private readonly platformId: object = inject<object>(PLATFORM_ID);
+  private readonly router: Router = inject<Router>(Router);
+
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property store
@@ -91,235 +91,61 @@ export class FacilityInspectionTab {
    */
   protected readonly store: InspectionStore = inject<InspectionStore>(InspectionStore);
 
-  /**
-   * Property inspections
-   * @readonly
-   *
-   * @description
-   * Flat list of inspections currently held in the store.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<ReadonlyArray<InspectionOutput>>}
-   */
-  protected readonly inspections: Signal<ReadonlyArray<InspectionOutput>> = computed<
-    ReadonlyArray<InspectionOutput>
-  >(() => this.store.inspections());
-
-  /**
-   * Property isLoading
-   * @readonly
-   *
-   * @description
-   * Whether the inspection list request is currently in-flight.
-   * Used to toggle skeleton placeholders.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly isLoading: Signal<boolean> = computed<boolean>(() =>
-    this.store.isLoadingInspections(),
-  );
-
-  /**
-   * Property isEmpty
-   * @readonly
-   *
-   * @description
-   * Whether the inspection collection is empty and no request is
-   * in-flight. Used to display the empty-state placeholder.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly isEmpty: Signal<boolean> = computed<boolean>(() => this.store.isEmpty());
-
-  /**
-   * Property statusColors
-   * @readonly
-   *
-   * @description
-   * Maps each {@link InspectionStatus} to a Tailwind background
-   * color class used for the status dot indicator.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Record<InspectionStatus, string>}
-   */
-  private readonly statusColors: Record<InspectionStatus, string> = {
-    draft: 'bg-surface-400',
-    submitted: 'bg-blue-500',
-    closed: 'bg-green-500',
-  };
-
-  /**
-   * Property statusLabels
-   * @readonly
-   *
-   * @description
-   * Maps each {@link InspectionStatus} to a human-readable label
-   * displayed inside the status badge.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Record<InspectionStatus, string>}
-   */
-  private readonly statusLabels: Record<InspectionStatus, string> = {
-    draft: 'Draft',
-    submitted: 'Submitted',
-    closed: 'Closed',
-  };
-
-  /**
-   * Property resultColors
-   * @readonly
-   *
-   * @description
-   * Maps each {@link InspectionResult} to a Tailwind background
-   * color class used for the result dot indicator.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Record<InspectionResult, string>}
-   */
-  private readonly resultColors: Record<InspectionResult, string> = {
-    pass: 'bg-green-500',
-    fail: 'bg-red-500',
-    partial: 'bg-orange-500',
-  };
-
-  /**
-   * Property resultLabels
-   * @readonly
-   *
-   * @description
-   * Maps each {@link InspectionResult} to a human-readable label
-   * displayed inside the result badge.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Record<InspectionResult, string>}
-   */
-  private readonly resultLabels: Record<InspectionResult, string> = {
-    pass: 'Pass',
-    fail: 'Fail',
-    partial: 'Partial',
-  };
-  //#endregion
-
-  //#region Constructor
-  /**
-   * Constructor
-   * @constructor
-   *
-   * @description
-   * Sets up a reactive effect that reloads the inspection list
-   * whenever `facilityId` or the current organisation changes.
-   *
-   * @access public
-   * @since 1.0.0
-   */
-  public constructor() {
-    effect(() => {
-      if (!isPlatformBrowser(this.platformId)) {
-        return;
-      }
-
-      const facilityId: string = this.facilityId();
-      const organizationId: string | undefined =
-        this.activeOrganizationStore.selectedOrganization()?.id;
-      if (organizationId && facilityId) {
-        this.store.load({
-          organizationId,
-          options: { facilityId },
-        });
-      }
-    });
-  }
+  protected readonly page = signal<number>(1);
   //#endregion
 
   //#region Methods
-  /**
-   * Method getStatusColor
-   * @method getStatusColor
-   *
-   * @description
-   * Returns the Tailwind background class corresponding to the
-   * given inspection status for use in dot indicators.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {InspectionStatus} status - The inspection status.
-   *
-   * @returns {string} A Tailwind `bg-*` class name.
-   */
-  protected getStatusColor(status: InspectionStatus): string {
-    return this.statusColors[status];
+  protected onAdd(): void {
+    this.router.navigate(['..', '..', 'inspections', 'create'], {
+      relativeTo: this.route,
+      queryParams: { facilityId: this.facilityId() },
+    });
   }
 
-  /**
-   * Method getStatusLabel
-   * @method getStatusLabel
-   *
-   * @description
-   * Returns a human-readable label for the given inspection status.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {InspectionStatus} status - The inspection status.
-   *
-   * @returns {string} A display-ready label string.
-   */
-  protected getStatusLabel(status: InspectionStatus): string {
-    return this.statusLabels[status];
+  protected onLoad(options: RequestOptions): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    const facilityId: string = this.facilityId();
+    const result: InspectionResult | undefined =
+      typeof options.params?.['result'] === 'string'
+        ? (options.params['result'] as InspectionResult)
+        : undefined;
+    const status: InspectionStatus | undefined =
+      typeof options.params?.['status'] === 'string'
+        ? (options.params['status'] as InspectionStatus)
+        : undefined;
+
+    if (organizationId && facilityId) {
+      const listOptions: InspectionListOptions = {
+        page: options.page,
+        itemsPerPage: options.itemsPerPage,
+        facilityId,
+        params: this.getPassthroughParams(options),
+        ...(result ? { result } : {}),
+        ...(status ? { status } : {}),
+      };
+
+      this.store.load({
+        organizationId,
+        options: listOptions,
+      });
+    }
   }
 
-  /**
-   * Method getResultColor
-   * @method getResultColor
-   *
-   * @description
-   * Returns the Tailwind background class corresponding to the
-   * given inspection result for use in dot indicators.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {InspectionResult} result - The inspection result.
-   *
-   * @returns {string} A Tailwind `bg-*` class name.
-   */
-  protected getResultColor(result: InspectionResult): string {
-    return this.resultColors[result];
+  protected onPageChange(page: number): void {
+    this.page.set(page);
   }
 
-  /**
-   * Method getResultLabel
-   * @method getResultLabel
-   *
-   * @description
-   * Returns a human-readable label for the given inspection result.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {InspectionResult} result - The inspection result.
-   *
-   * @returns {string} A display-ready label string.
-   */
-  protected getResultLabel(result: InspectionResult): string {
-    return this.resultLabels[result];
+  private getPassthroughParams(options: RequestOptions): RequestOptions['params'] {
+    const params: RequestOptions['params'] = {};
+
+    for (const [key, value] of Object.entries(options.params ?? {})) {
+      if (key.startsWith('order[')) {
+        params[key] = value;
+      }
+    }
+
+    return params;
   }
   //#endregion
 }

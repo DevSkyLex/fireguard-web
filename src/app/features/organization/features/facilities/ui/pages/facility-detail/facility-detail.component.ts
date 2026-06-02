@@ -16,7 +16,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -35,16 +34,18 @@ import {
 import {
   FacilityComplianceMetric,
   FacilityDetailHeader,
-  FacilityEquipmentOverview,
   FacilityEquipmentsMetric,
   FacilityEquipmentTab,
   FacilityInformationPanel,
-  FacilityInspectionsOverview,
   FacilityInspectionTab,
   FacilityInstallationsPanel,
   FacilityNextInspectionMetric,
   FacilityOverdueInspectionsMetric,
 } from '@features/organization/features/facilities/ui/components';
+import {
+  FacilityEquipmentDataview,
+  FacilityInspectionDataview,
+} from '@features/organization/features/facilities/ui/dataviews';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
@@ -66,7 +67,6 @@ import { ActiveOrganizationStore } from '@features/organization/state';
   imports: [
     FormsModule,
     ButtonModule,
-    CardModule,
     DialogModule,
     SelectModule,
     SkeletonModule,
@@ -76,8 +76,8 @@ import { ActiveOrganizationStore } from '@features/organization/state';
     FacilityOverdueInspectionsMetric,
     FacilityNextInspectionMetric,
     FacilityEquipmentsMetric,
-    FacilityInspectionsOverview,
-    FacilityEquipmentOverview,
+    FacilityInspectionDataview,
+    FacilityEquipmentDataview,
     FacilityInformationPanel,
     FacilityInstallationsPanel,
     FacilityEquipmentTab,
@@ -102,7 +102,8 @@ export class FacilityDetailPage {
    *
    * @type {Router}
    */
-  private readonly router: Router = inject<Router>(Router);
+  private readonly router: Router =
+    inject<Router>(Router);
 
   /**
    * Property route
@@ -117,7 +118,8 @@ export class FacilityDetailPage {
    *
    * @type {ActivatedRoute}
    */
-  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
+  private readonly route: ActivatedRoute =
+    inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property messageService
@@ -132,7 +134,8 @@ export class FacilityDetailPage {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService = inject<MessageService>(MessageService);
+  private readonly messageService: MessageService =
+    inject<MessageService>(MessageService);
 
   /**
    * Property events
@@ -165,6 +168,21 @@ export class FacilityDetailPage {
   private readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
+  /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Angular DI token for the current platform ID, used to conditionally
+   * execute browser-only code (e.g. loading the hierarchy chart data and
+   * overview KPIs, which are secondary UI data that don't need to be loaded
+   * during server-side rendering).
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {object}
+   */
   private readonly platformId: object = inject<object>(PLATFORM_ID);
 
   /**
@@ -339,19 +357,6 @@ export class FacilityDetailPage {
     return options;
   });
 
-  protected readonly workspaceCardPt: CardPassThroughOptions = {
-    root: {
-      class:
-        'h-full flex flex-col overflow-hidden border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
-    },
-    body: {
-      class: 'p-0! flex min-h-0 flex-1 flex-col',
-    },
-    content: {
-      class: 'p-0! flex min-h-0 flex-1 flex-col',
-    },
-  };
-
   protected readonly tabsPt: TabsPassThrough = {
     root: {
       class: 'flex min-h-0 flex-1 flex-col',
@@ -359,9 +364,6 @@ export class FacilityDetailPage {
   };
 
   protected readonly tabListPt: TabListPassThrough = {
-    root: {
-      class: 'border-b border-surface-200 dark:border-surface-800',
-    },
     content: {
       class: 'rounded-t-md',
     },
@@ -370,9 +372,11 @@ export class FacilityDetailPage {
     },
   };
 
+
+
   protected readonly tabPanelsPt: TabPanelsPassThrough = {
     root: {
-      class: 'min-h-0 flex-1 overflow-y-auto p-4!',
+      class: 'min-h-0 flex-1 overflow-y-auto px-0 pt-6',
     },
   };
   //#endregion

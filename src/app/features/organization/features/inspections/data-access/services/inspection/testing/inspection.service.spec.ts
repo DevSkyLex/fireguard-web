@@ -22,7 +22,9 @@ describe('InspectionService', () => {
   const mockEnv = { apiUrl: 'https://api.test.com' };
   const orgId = 'org-uuid-1';
   const inspectionId = 'inspection-uuid-1';
+  const facilityId = 'facility-uuid-1';
   const inspectionsBaseUrl = `${mockEnv.apiUrl}/api/organizations/${orgId}/inspections`;
+  const facilityInspectionsBaseUrl = `${mockEnv.apiUrl}/api/organizations/${orgId}/facilities/${facilityId}/inspections`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -153,7 +155,7 @@ describe('InspectionService', () => {
     it('should map OpenAPI inspection filters to query params', () => {
       const options: InspectionListOptions = {
         equipmentId: 'equipment-uuid-1',
-        facilityId: 'facility-uuid-1',
+        facilityId,
         result: 'fail',
         status: 'submitted',
         page: 3,
@@ -162,9 +164,9 @@ describe('InspectionService', () => {
 
       service.list(orgId, options).subscribe();
 
-      const req = httpMock.expectOne((r) => r.url === inspectionsBaseUrl);
+      const req = httpMock.expectOne((r) => r.url === facilityInspectionsBaseUrl);
       expect(req.request.params.get('equipmentId')).toBe('equipment-uuid-1');
-      expect(req.request.params.get('facilityId')).toBe('facility-uuid-1');
+      expect(req.request.params.get('facilityId')).toBeNull();
       expect(req.request.params.get('result')).toBe('fail');
       expect(req.request.params.get('status')).toBe('submitted');
       expect(req.request.params.get('page')).toBe('3');

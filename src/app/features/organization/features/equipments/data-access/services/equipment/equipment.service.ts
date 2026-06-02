@@ -70,6 +70,25 @@ export class EquipmentService extends HydraApiService {
   }
 
   /**
+   * Method facilityEquipmentPath
+   * @method facilityEquipmentPath
+   *
+   * @description
+   * Constructs the API path for facility-scoped equipment listing.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} facilityId - The ID of the facility.
+   *
+   * @return {string} The constructed API path for facility equipment list.
+   */
+  private facilityEquipmentPath(organizationId: string, facilityId: string): string {
+    return `${EquipmentService.BASE_PATH}/${organizationId}/facilities/${facilityId}/equipment`;
+  }
+
+  /**
    * Method list
    * @method list
    *
@@ -89,7 +108,51 @@ export class EquipmentService extends HydraApiService {
     organizationId: string,
     options?: RequestOptions,
   ): Observable<HydraCollection<EquipmentOutput>> {
+    const facilityId: string | undefined =
+      typeof options?.params?.['facilityId'] === 'string'
+        ? (options.params['facilityId'] as string)
+        : undefined;
+
+    if (facilityId) {
+      const currentParams: Record<string, string | number | boolean> = {
+        ...(options?.params ?? {}),
+      };
+      delete currentParams['facilityId'];
+
+      return this.listByFacility(organizationId, facilityId, {
+        ...options,
+        params: currentParams,
+      });
+    }
+
     return this.getCollection<EquipmentOutput>(this.equipmentPath(organizationId), options);
+  }
+
+  /**
+   * Method listByFacility
+   * @method listByFacility
+   *
+   * @description
+   * Retrieves a paginated list of equipment assigned to a specific facility.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} facilityId - The ID of the facility.
+   * @param {RequestOptions} [options] - Optional request options.
+   *
+   * @return {Observable<HydraCollection<EquipmentOutput>>} An observable emitting a collection of equipment.
+   */
+  public listByFacility(
+    organizationId: string,
+    facilityId: string,
+    options?: RequestOptions,
+  ): Observable<HydraCollection<EquipmentOutput>> {
+    return this.getCollection<EquipmentOutput>(
+      this.facilityEquipmentPath(organizationId, facilityId),
+      options,
+    );
   }
 
   public listStatuses(

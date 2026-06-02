@@ -1,0 +1,220 @@
+<div class="flex h-full flex-col bg-surface-0 dark:bg-surface-950">
+  <p-card [pt]="cardPt">
+    <ng-template pTemplate="header">
+      <div
+        class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
+      >
+        <div class="flex items-center gap-2">
+          <h2 class="font-semibold">Equipments</h2>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <p-iconfield class="flex-1 sm:flex-none">
+            <p-inputicon class="pi pi-search" />
+            <input
+              pInputText
+              type="text"
+              pSize="small"
+              placeholder="Search equipments..."
+              [formControl]="searchControl"
+              class="w-full"
+            />
+          </p-iconfield>
+
+          <input
+            pInputText
+            type="text"
+            pSize="small"
+            placeholder="Type"
+            [formControl]="typeControl"
+            class="w-full sm:w-36"
+          />
+
+          <p-select
+            [options]="statusOptions"
+            [formControl]="statusControl"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Status"
+            size="small"
+            [showClear]="true"
+            class="w-full sm:w-44"
+          />
+
+          <p-splitbutton
+            label="New equipment"
+            icon="pi pi-plus"
+            severity="primary"
+            [model]="toolbarActions()"
+            size="small"
+            (onClick)="add.emit()"
+            [disabled]="loading()"
+            class="w-full sm:w-auto"
+          />
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      <p-table
+        [value]="loading() ? skeletonItems : empty() ? [] : [...equipments()]"
+        [loading]="loading()"
+        [paginator]="true"
+        [rows]="rows"
+        [first]="firstPage"
+        [totalRecords]="total()"
+        [lazy]="true"
+        (onLazyLoad)="onLazyLoad($event)"
+        [rowsPerPageOptions]="[12, 24, 48]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} equipments"
+        [pt]="tablePt"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th
+              pSortableColumn="type"
+              class="min-w-64 text-xs font-medium tracking-wide text-surface-500 uppercase"
+            >
+              Equipment
+              <p-sortIcon field="type" />
+            </th>
+            <th class="min-w-40 text-xs font-medium tracking-wide text-surface-500 uppercase">
+              Reference
+            </th>
+            <th class="min-w-36 text-xs font-medium tracking-wide text-surface-500 uppercase">
+              Serial
+            </th>
+            <th
+              pSortableColumn="status"
+              class="min-w-36 text-xs font-medium tracking-wide text-surface-500 uppercase"
+            >
+              Status
+              <p-sortIcon field="status" />
+            </th>
+            <th class="min-w-40 text-xs font-medium tracking-wide text-surface-500 uppercase">
+              Location
+            </th>
+            <th
+              pSortableColumn="installedAt"
+              class="min-w-32 text-right text-xs font-medium tracking-wide text-surface-500 uppercase"
+            >
+              Installed
+              <p-sortIcon field="installedAt" />
+            </th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="loadingbody">
+          @for (_ of skeletonItems; track $index) {
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <p-skeleton shape="square" size="2.25rem" />
+                  <div class="flex flex-col gap-1.5">
+                    <p-skeleton width="10rem" height="0.875rem" />
+                    <p-skeleton width="7rem" height="0.75rem" />
+                  </div>
+                </div>
+              </td>
+              <td><p-skeleton width="8rem" height="0.875rem" /></td>
+              <td><p-skeleton width="6rem" height="0.875rem" /></td>
+              <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
+              <td><p-skeleton width="8rem" height="0.875rem" /></td>
+              <td><p-skeleton width="5rem" height="0.875rem" styleClass="ml-auto" /></td>
+            </tr>
+          }
+        </ng-template>
+
+        <ng-template pTemplate="body" let-equipment>
+          @if (loading()) {
+            <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
+              <td>
+                <div class="flex items-center gap-3">
+                  <p-skeleton shape="square" size="2.25rem" />
+                  <div class="flex flex-col gap-1.5">
+                    <p-skeleton width="10rem" height="0.875rem" />
+                    <p-skeleton width="7rem" height="0.75rem" />
+                  </div>
+                </div>
+              </td>
+              <td><p-skeleton width="8rem" height="0.875rem" /></td>
+              <td><p-skeleton width="6rem" height="0.875rem" /></td>
+              <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
+              <td><p-skeleton width="8rem" height="0.875rem" /></td>
+              <td><p-skeleton width="5rem" height="0.875rem" styleClass="ml-auto" /></td>
+            </tr>
+          } @else {
+            <tr>
+              <td>
+                <div class="flex min-w-0 flex-col">
+                  <span class="truncate font-medium text-surface-900 dark:text-surface-100">
+                    {{ getEquipmentTitle(equipment) }}
+                  </span>
+                  <span class="truncate text-xs text-surface-500">
+                    {{ equipment.subType || equipment.type }}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <span class="text-surface-600 dark:text-surface-400">
+                  {{ getReference(equipment) }}
+                </span>
+              </td>
+              <td>
+                @if (equipment.serialNumber) {
+                  <code class="font-mono text-xs text-surface-500 dark:text-surface-400">
+                    {{ equipment.serialNumber }}
+                  </code>
+                } @else {
+                  <span class="text-surface-300 dark:text-surface-600">-</span>
+                }
+              </td>
+              <td>
+                <p-tag
+                  class="rounded-full text-xs font-medium"
+                  [severity]="getStatusSeverity(equipment.status)"
+                  [value]="getStatusLabel(equipment.status)"
+                />
+              </td>
+              <td>
+                @if (equipment.locationLabel) {
+                  <span class="text-surface-600 dark:text-surface-400">
+                    {{ equipment.locationLabel }}
+                  </span>
+                } @else {
+                  <span class="text-surface-300 dark:text-surface-600">-</span>
+                }
+              </td>
+              <td class="text-right">
+                @if (equipment.installedAt) {
+                  <span class="text-surface-500 dark:text-surface-400">
+                    {{ equipment.installedAt | date: 'mediumDate' }}
+                  </span>
+                } @else {
+                  <span class="text-surface-300 dark:text-surface-600">-</span>
+                }
+              </td>
+            </tr>
+          }
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6">
+              <div class="flex flex-col items-center gap-3 py-16">
+                <i class="pi pi-box text-6xl text-surface-400"></i>
+                <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
+                  No equipments found
+                </h3>
+                <span class="text-sm text-surface-500">
+                  Try adjusting your filters or create a new equipment to get started.
+                </span>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </ng-template>
+  </p-card>
+</div>

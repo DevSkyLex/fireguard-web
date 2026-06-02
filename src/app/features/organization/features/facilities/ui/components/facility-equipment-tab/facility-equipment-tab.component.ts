@@ -1,21 +1,15 @@
-import { isPlatformBrowser, DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
-  effect,
   inject,
   input,
-  PLATFORM_ID,
+  signal,
   type InputSignal,
-  type Signal,
 } from '@angular/core';
-import { SkeletonModule } from 'primeng/skeleton';
-import type {
-  EquipmentOutput,
-  EquipmentStatus,
-} from '@features/organization/features/equipments/models';
+import { ActivatedRoute, Router } from '@angular/router';
+import type { RequestOptions } from '@core/services/hydra-api';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
+import { EquipmentTable } from '@features/organization/features/equipments/ui/tables';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
@@ -33,7 +27,7 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-facility-equipment-tab',
-  imports: [DatePipe, SkeletonModule],
+  imports: [EquipmentTable],
   providers: [EquipmentStore],
   templateUrl: './facility-equipment-tab.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,62 +53,44 @@ export class FacilityEquipmentTab {
   private readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
-  private readonly platformId: object = inject<object>(PLATFORM_ID);
+  private readonly router: Router = inject<Router>(Router);
+
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   protected readonly store: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
 
-  protected readonly equipmentList: Signal<ReadonlyArray<EquipmentOutput>> = computed<
-    ReadonlyArray<EquipmentOutput>
-  >(() => this.store.equipmentList());
-
-  protected readonly isLoading: Signal<boolean> = computed<boolean>(() =>
-    this.store.isLoadingEquipment(),
-  );
-
-  protected readonly isEmpty: Signal<boolean> = computed<boolean>(() => this.store.isEmpty());
-
-  private readonly statusColors: Record<EquipmentStatus, string> = {
-    in_stock: 'bg-blue-500',
-    commissioned: 'bg-green-500',
-    decommissioned: 'bg-surface-400',
-    under_maintenance: 'bg-orange-500',
-  };
-
-  private readonly statusLabels: Record<EquipmentStatus, string> = {
-    in_stock: 'In Stock',
-    commissioned: 'Commissioned',
-    decommissioned: 'Decommissioned',
-    under_maintenance: 'Maintenance',
-  };
-  //#endregion
-
-  //#region Constructor
-  public constructor() {
-    effect(() => {
-      if (!isPlatformBrowser(this.platformId)) {
-        return;
-      }
-
-      const facilityId: string = this.facilityId();
-      const organizationId: string | undefined =
-        this.activeOrganizationStore.selectedOrganization()?.id;
-      if (organizationId && facilityId) {
-        this.store.load({
-          organizationId,
-          options: { params: { facilityId } },
-        });
-      }
-    });
-  }
+  protected readonly page = signal<number>(1);
   //#endregion
 
   //#region Methods
-  protected getStatusColor(status: EquipmentStatus): string {
-    return this.statusColors[status];
+  protected onAdd(): void {
+    this.router.navigate(['..', '..', 'equipments', 'create'], {
+      relativeTo: this.route,
+      queryParams: { facilityId: this.facilityId() },
+    });
   }
 
-  protected getStatusLabel(status: EquipmentStatus): string {
-    return this.statusLabels[status];
+  protected onLoad(options: RequestOptions): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    const facilityId: string = this.facilityId();
+
+    if (organizationId && facilityId) {
+      this.store.load({
+        organizationId,
+        options: {
+          ...options,
+          params: {
+            ...(options.params ?? {}),
+            facilityId,
+          },
+        },
+      });
+    }
+  }
+
+  protected onPageChange(page: number): void {
+    this.page.set(page);
   }
   //#endregion
 }

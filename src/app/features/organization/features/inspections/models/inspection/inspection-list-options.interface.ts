@@ -1,4 +1,4 @@
-import type { PaginationOptions } from '@core/models/api';
+import type { PaginationOptions, RequestOptions } from '@core/models/api';
 import type { InspectionResult, InspectionStatus } from './inspection-output.interface';
 
 /**
@@ -18,6 +18,8 @@ export interface InspectionListFilter {
   readonly result?: InspectionResult;
   /** @type {InspectionStatus} */
   readonly status?: InspectionStatus;
+  /** Additional API query parameters such as order[field]. */
+  readonly params?: RequestOptions['params'];
   //#endregion
 }
 

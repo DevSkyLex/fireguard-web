@@ -2,6 +2,7 @@ export type {
   InspectionOutput,
   InspectionResult,
   InspectionStatus,
+  InspectorOutput,
   InspectorType,
 } from './inspection/inspection-output.interface';
 export type {

@@ -4,11 +4,13 @@ import {
   Component,
   computed,
   effect,
+  inject,
   input,
   numberAttribute,
   OnInit,
   output,
   signal,
+  viewChild,
   type InputSignal,
   type InputSignalWithTransform,
   type OutputEmitterRef,
@@ -18,18 +20,22 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
+import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
+import { Menu, MenuModule } from 'primeng/menu';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
 import type { RequestOptions } from '@core/services/hydra-api';
+import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   InspectionOutput,
   InspectionResult,
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import type { InspectionFilterOption } from './models';
 
 /**
@@ -48,9 +54,11 @@ import type { InspectionFilterOption } from './models';
 @Component({
   selector: 'app-facility-inspection-table',
   imports: [
+    AvatarModule,
     ButtonModule,
     CardModule,
     DatePipe,
+    MenuModule,
     ReactiveFormsModule,
     SelectModule,
     SkeletonModule,
@@ -186,9 +194,71 @@ export class FacilityInspectionTable implements OnInit {
    * @type {OutputEmitterRef<void>}
    */
   public readonly add: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Output edit
+   * @readonly
+   *
+   * @description
+   * Emits the inspection selected from the row action menu when the user
+   * requests an edit flow. The parent decides how to route or open the editor.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<InspectionOutput>}
+   */
+  public readonly edit: OutputEmitterRef<InspectionOutput> = output<InspectionOutput>();
+
+  /**
+   * Output delete
+   * @readonly
+   *
+   * @description
+   * Emits the inspection selected from the row action menu when the user
+   * requests deletion. The parent owns confirmation and store interaction.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<InspectionOutput>}
+   */
+  public readonly delete: OutputEmitterRef<InspectionOutput> = output<InspectionOutput>();
+
+  /**
+   * Output bulkDelete
+   * @readonly
+   *
+   * @description
+   * Emits the currently selected inspection rows when the user requests a bulk
+   * deletion from the toolbar split button.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<readonly InspectionOutput[]>}
+   */
+  public readonly bulkDelete: OutputEmitterRef<readonly InspectionOutput[]> =
+    output<readonly InspectionOutput[]>();
   //#endregion
 
   //#region Properties
+  /**
+   * Property organizationPermissionService
+   * @readonly
+   *
+   * @description
+   * Organization-scoped permission helper used to decide whether inspection
+   * row actions can be displayed.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {OrganizationPermissionService}
+   */
+  private readonly organizationPermissionService: OrganizationPermissionService =
+    inject<OrganizationPermissionService>(OrganizationPermissionService);
+
   /**
    * Property cardPt
    * @readonly
@@ -340,6 +410,22 @@ export class FacilityInspectionTable implements OnInit {
     new FormControl<InspectionStatus | null>(null);
 
   /**
+   * Property selectedInspections
+   * @readonly
+   *
+   * @description
+   * Inspection rows currently selected through the table checkbox column.
+   * Stored as a signal so toolbar bulk actions can react to selection changes.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<InspectionOutput[]>}
+   */
+  protected readonly selectedInspections: WritableSignal<InspectionOutput[]> =
+    signal<InspectionOutput[]>([]);
+
+  /**
    * Property toolbarActions
    * @readonly
    *
@@ -362,7 +448,109 @@ export class FacilityInspectionTable implements OnInit {
       icon: PrimeIcons.FILTER_SLASH,
       command: (): void => this.onClearFilters(),
     },
+    ...(this.selectedInspections().length > 0
+      ? [
+          {
+            label: 'Clear selection',
+            icon: PrimeIcons.TIMES,
+            command: (): void => this.onClearSelection(),
+          },
+        ]
+      : []),
+    ...(this.canManageInspections()
+      ? [
+          { separator: true },
+          {
+            label: `Delete selected (${this.selectedInspections().length})`,
+            icon: PrimeIcons.TRASH,
+            disabled: this.selectedInspections().length === 0,
+            styleClass: 'text-red-500',
+            command: (): void => this.onBulkDelete(),
+          },
+        ]
+      : []),
   ]);
+
+  /**
+   * Property canManageInspections
+   * @readonly
+   *
+   * @description
+   * Whether the authenticated organization member can access inspection row
+   * mutation actions such as edit and delete.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canManageInspections: Signal<boolean> = computed((): boolean =>
+    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_WRITE),
+  );
+
+  /**
+   * Property actionMenu
+   * @readonly
+   *
+   * @description
+   * Shared popup menu used by inspection rows for contextual actions.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Signal<Menu>}
+   */
+  private readonly actionMenu: Signal<Menu> = viewChild.required<Menu>('actionMenu');
+
+  /**
+   * Property selectedInspection
+   * @readonly
+   *
+   * @description
+   * Inspection row currently targeted by the shared action menu.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<InspectionOutput | null>}
+   */
+  private readonly selectedInspection: WritableSignal<InspectionOutput | null> =
+    signal<InspectionOutput | null>(null);
+
+  /**
+   * Property actionMenuItems
+   * @readonly
+   *
+   * @description
+   * Menu items shown for the currently selected inspection row. Items are
+   * hidden unless the member has the inspection write permission.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<MenuItem[]>}
+   */
+  protected readonly actionMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
+    const inspection: InspectionOutput | null = this.selectedInspection();
+
+    if (!inspection || !this.canManageInspections()) {
+      return [];
+    }
+
+    return [
+      {
+        label: 'Edit',
+        icon: PrimeIcons.PENCIL,
+        command: (): void => this.edit.emit(inspection),
+      },
+      {
+        label: 'Delete',
+        icon: PrimeIcons.TRASH,
+        styleClass: 'text-red-500',
+        command: (): void => this.delete.emit(inspection),
+      },
+    ];
+  });
 
   /**
    * Property firstPage
@@ -522,6 +710,62 @@ export class FacilityInspectionTable implements OnInit {
   }
 
   /**
+   * Method onClearSelection
+   *
+   * @description
+   * Clears the current checkbox selection without reloading the table.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  protected onClearSelection(): void {
+    this.selectedInspections.set([]);
+  }
+
+  /**
+   * Method onBulkDelete
+   *
+   * @description
+   * Emits selected inspection rows when the user triggers the bulk delete
+   * toolbar action.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  protected onBulkDelete(): void {
+    const selectedInspections: InspectionOutput[] = this.selectedInspections();
+
+    if (selectedInspections.length === 0 || !this.canManageInspections()) {
+      return;
+    }
+
+    this.bulkDelete.emit(selectedInspections);
+  }
+
+  /**
+   * Method onActionMenuToggle
+   *
+   * @description
+   * Stores the targeted inspection row and toggles the shared action menu.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {MouseEvent} event Click event emitted by the row action button.
+   * @param {InspectionOutput} inspection Inspection row targeted by the menu.
+   *
+   * @returns {void}
+   */
+  protected onActionMenuToggle(event: MouseEvent, inspection: InspectionOutput): void {
+    this.selectedInspection.set(inspection);
+    this.actionMenu().toggle(event);
+  }
+
+  /**
    * Method getInspectorContextLabel
    *
    * @description
@@ -536,11 +780,71 @@ export class FacilityInspectionTable implements OnInit {
    * @returns {string} Inspector context label.
    */
   protected getInspectorContextLabel(inspection: InspectionOutput): string {
-    const inspectorType: string = this.toDisplayLabel(inspection.inspectorType);
+    const inspectorType: string = this.toDisplayLabel(inspection.inspector?.type);
 
-    return inspection.inspectorOrganizationName
-      ? `${inspectorType} - ${inspection.inspectorOrganizationName}`
-      : `${inspectorType} inspector`;
+    return inspection.inspector?.organizationName
+      ? `${inspectorType} - ${inspection.inspector.organizationName}`
+      : `${inspectorType || 'Unknown'} inspector`;
+  }
+
+  /**
+   * Method getInspectorDisplayName
+   *
+   * @description
+   * Returns the display name of the embedded inspector summary.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {InspectionOutput} inspection Inspection row rendered by the table.
+   *
+   * @returns {string} Inspector display name or fallback text.
+   */
+  protected getInspectorDisplayName(inspection: InspectionOutput): string {
+    return (
+      [inspection.inspector?.firstName, inspection.inspector?.lastName].filter(Boolean).join(' ') ||
+      inspection.inspector?.displayName ||
+      'Unknown inspector'
+    );
+  }
+
+  /**
+   * Method getInspectorTypeLabel
+   *
+   * @description
+   * Converts the embedded inspector type into a compact display label.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {InspectionOutput} inspection Inspection row rendered by the table.
+   *
+   * @returns {string} Inspector type label or fallback text.
+   */
+  protected getInspectorTypeLabel(inspection: InspectionOutput): string {
+    return this.toDisplayLabel(inspection.inspector?.type) || 'Unknown';
+  }
+
+  /**
+   * Method getInspectorInitials
+   *
+   * @description
+   * Builds initials used by the inspector avatar when no image URL is
+   * available.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {InspectionOutput} inspection Inspection row rendered by the table.
+   *
+   * @returns {string} One or two uppercase initials.
+   */
+  protected getInspectorInitials(inspection: InspectionOutput): string {
+    const firstName: string = inspection.inspector?.firstName ?? '';
+    const lastName: string = inspection.inspector?.lastName ?? '';
+    const initials: string = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+
+    return initials || this.getInspectorDisplayName(inspection).charAt(0).toUpperCase() || '?';
   }
 
   /**

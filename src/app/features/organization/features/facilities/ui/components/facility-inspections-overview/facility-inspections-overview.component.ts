@@ -195,5 +195,15 @@ export class FacilityInspectionsOverview {
         return 'bg-surface-400';
     }
   }
+
+  /**
+   * Returns the display name of the embedded inspector summary.
+   *
+   * @param {InspectionOutput} inspection - Inspection row to format.
+   * @returns {string} Inspector display name or fallback text.
+   */
+  protected getInspectorDisplayName(inspection: InspectionOutput): string {
+    return inspection.inspector?.displayName || 'Unknown inspector';
+  }
   //#endregion
 }

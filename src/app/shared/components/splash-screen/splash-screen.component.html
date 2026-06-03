@@ -1,6 +1,6 @@
 @if (rendered()) {
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-linear-to-br from-surface-950 via-surface-900 to-surface-800 transition-opacity duration-300 ease-out"
+    class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-linear-to-br from-primary-950 via-primary-900 to-primary-800 transition-opacity duration-300 ease-out"
     [class.opacity-0]="hiding()"
   >
     <!-- Ambient glows -->
@@ -12,10 +12,10 @@
     ></div>
 
     <div class="relative flex flex-col items-center gap-6">
-      <span class="text-3xl font-bold tracking-tight text-surface-0"> FireGuard </span>
+      <span class="text-3xl font-bold tracking-tight text-surface-0 uppercase"> Fireguard </span>
       <p-progressSpinner
         [pt]="{
-          root: { class: 'w-10 h-10' },
+          root: { colorOne: 'var(--p-primary-500)', colorTwo: 'var(--p-primary-300)', colorThree: 'var(--p-primary-100)', animationDuration: '1.5s' },
           circle: { style: 'stroke: var(--p-primary-500); stroke-width: 4' },
         }"
       />

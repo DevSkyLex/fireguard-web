@@ -165,5 +165,9 @@ export class FacilityInspectionDataview {
   protected getStatusSeverity(status: InspectionStatus): 'secondary' | 'info' | 'success' {
     return this.statusSeverities[status];
   }
+
+  protected getInspectorDisplayName(inspection: InspectionOutput): string {
+    return inspection.inspector?.displayName || 'Unknown inspector';
+  }
   //#endregion
 }

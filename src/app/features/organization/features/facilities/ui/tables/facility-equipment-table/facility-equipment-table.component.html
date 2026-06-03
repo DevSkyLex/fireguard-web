@@ -1,4 +1,6 @@
 <div class="flex h-full flex-col bg-surface-0 dark:bg-surface-950">
+  <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
+
   <p-card [pt]="cardPt">
     <ng-template pTemplate="header">
       <div class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800">
@@ -69,6 +71,9 @@
     <ng-template pTemplate="content">
       <p-table
         [value]="loading() ? skeletonItems : empty() ? [] : [...equipments()]"
+        [selection]="selectedEquipments()"
+        (selectionChange)="selectedEquipments.set($event)"
+        dataKey="id"
         [loading]="loading()"
         [paginator]="true"
         [rows]="rows"
@@ -79,10 +84,14 @@
         [rowsPerPageOptions]="[12, 24, 48]"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} equipments"
+        [stripedRows]="true"
         [pt]="tablePt"
       >
         <ng-template pTemplate="header">
           <tr>
+            <th class="w-12">
+              <p-tableHeaderCheckbox />
+            </th>
             <th pSortableColumn="type" class="min-w-64">
               <div class="flex items-center gap-2">
                 <span>Equipment</span>
@@ -116,12 +125,18 @@
                 <p-sortIcon field="installedAt" />
               </div>
             </th>
+            @if (canManageEquipment()) {
+              <th class="w-20">
+                <span class="sr-only">Actions</span>
+              </th>
+            }
           </tr>
         </ng-template>
 
         <ng-template pTemplate="loadingbody">
           @for (_ of skeletonItems; track $index) {
             <tr>
+              <td><p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" /></td>
               <td>
                 <div class="flex items-center gap-3">
                   <p-skeleton shape="square" size="2.25rem" />
@@ -136,6 +151,9 @@
               <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
               <td><p-skeleton width="8rem" height="0.875rem" /></td>
               <td><p-skeleton width="5rem" height="0.875rem" class="ml-auto" /></td>
+              @if (canManageEquipment()) {
+                <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
+              }
             </tr>
           }
         </ng-template>
@@ -143,6 +161,7 @@
         <ng-template pTemplate="body" let-equipment>
           @if (loading()) {
             <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
+              <td><p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" /></td>
               <td>
                 <div class="flex items-center gap-3">
                   <p-skeleton shape="square" size="2.25rem" />
@@ -157,9 +176,15 @@
               <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
               <td><p-skeleton width="8rem" height="0.875rem" /></td>
               <td><p-skeleton width="5rem" height="0.875rem" class="ml-auto" /></td>
+              @if (canManageEquipment()) {
+                <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
+              }
             </tr>
           } @else {
             <tr>
+              <td>
+                <p-tableCheckbox [value]="equipment" />
+              </td>
               <td>
                 <div class="flex min-w-0 flex-col">
                   <span class="truncate font-medium text-surface-900 dark:text-surface-100">
@@ -215,13 +240,25 @@
                   <span class="text-surface-300 dark:text-surface-600">-</span>
                 }
               </td>
+              @if (canManageEquipment()) {
+                <td class="text-right">
+                  <p-button
+                    icon="pi pi-ellipsis-v"
+                    severity="secondary"
+                    size="small"
+                    [outlined]="true"
+                    ariaLabel="Equipment actions"
+                    (onClick)="onActionMenuToggle($event, equipment)"
+                  />
+                </td>
+              }
             </tr>
           }
         </ng-template>
 
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="6">
+            <td [attr.colspan]="canManageEquipment() ? 8 : 7">
               <div class="flex flex-col items-center gap-3 py-16">
                 <i class="pi pi-box text-6xl text-surface-400"></i>
                 <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">

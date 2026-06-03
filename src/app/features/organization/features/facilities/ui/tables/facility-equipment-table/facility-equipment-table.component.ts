@@ -4,11 +4,13 @@ import {
   Component,
   computed,
   effect,
+  inject,
   input,
   numberAttribute,
   OnInit,
   output,
   signal,
+  viewChild,
   type InputSignal,
   type InputSignalWithTransform,
   type OutputEmitterRef,
@@ -23,16 +25,19 @@ import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { Menu, MenuModule } from 'primeng/menu';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/services/hydra-api';
+import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   EquipmentOutput,
   EquipmentStatus,
 } from '@features/organization/features/equipments/models';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import type { EquipmentStatusOption } from './models';
 
 /**
@@ -57,6 +62,7 @@ import type { EquipmentStatusOption } from './models';
     IconFieldModule,
     InputIconModule,
     InputTextModule,
+    MenuModule,
     ReactiveFormsModule,
     SelectModule,
     SkeletonModule,
@@ -192,9 +198,71 @@ export class FacilityEquipmentTable implements OnInit {
    * @type {OutputEmitterRef<void>}
    */
   public readonly add: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Output edit
+   * @readonly
+   *
+   * @description
+   * Emits the equipment selected from the row action menu when the user
+   * requests an edit flow. The parent decides how to route or open the editor.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<EquipmentOutput>}
+   */
+  public readonly edit: OutputEmitterRef<EquipmentOutput> = output<EquipmentOutput>();
+
+  /**
+   * Output delete
+   * @readonly
+   *
+   * @description
+   * Emits the equipment selected from the row action menu when the user
+   * requests deletion. The parent owns confirmation and store interaction.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<EquipmentOutput>}
+   */
+  public readonly delete: OutputEmitterRef<EquipmentOutput> = output<EquipmentOutput>();
+
+  /**
+   * Output bulkDelete
+   * @readonly
+   *
+   * @description
+   * Emits the currently selected equipment rows when the user requests a bulk
+   * deletion from the toolbar split button.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<readonly EquipmentOutput[]>}
+   */
+  public readonly bulkDelete: OutputEmitterRef<readonly EquipmentOutput[]> =
+    output<readonly EquipmentOutput[]>();
   //#endregion
 
   //#region Properties
+  /**
+   * Property organizationPermissionService
+   * @readonly
+   *
+   * @description
+   * Organization-scoped permission helper used to decide whether equipment
+   * row actions can be displayed.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {OrganizationPermissionService}
+   */
+  private readonly organizationPermissionService: OrganizationPermissionService =
+    inject<OrganizationPermissionService>(OrganizationPermissionService);
+
   /**
    * Property cardPt
    * @readonly
@@ -330,6 +398,22 @@ export class FacilityEquipmentTable implements OnInit {
     new FormControl<EquipmentStatus | null>(null);
 
   /**
+   * Property selectedEquipments
+   * @readonly
+   *
+   * @description
+   * Equipment rows currently selected through the table checkbox column.
+   * Stored as a signal so toolbar bulk actions can react to selection changes.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<EquipmentOutput[]>}
+   */
+  protected readonly selectedEquipments: WritableSignal<EquipmentOutput[]> =
+    signal<EquipmentOutput[]>([]);
+
+  /**
    * Property toolbarActions
    * @readonly
    *
@@ -352,7 +436,109 @@ export class FacilityEquipmentTable implements OnInit {
       icon: PrimeIcons.FILTER_SLASH,
       command: (): void => this.onClearFilters(),
     },
+    ...(this.selectedEquipments().length > 0
+      ? [
+          {
+            label: 'Clear selection',
+            icon: PrimeIcons.TIMES,
+            command: (): void => this.onClearSelection(),
+          },
+        ]
+      : []),
+    ...(this.canManageEquipment()
+      ? [
+          { separator: true },
+          {
+            label: `Delete selected (${this.selectedEquipments().length})`,
+            icon: PrimeIcons.TRASH,
+            disabled: this.selectedEquipments().length === 0,
+            styleClass: 'text-red-500',
+            command: (): void => this.onBulkDelete(),
+          },
+        ]
+      : []),
   ]);
+
+  /**
+   * Property canManageEquipment
+   * @readonly
+   *
+   * @description
+   * Whether the authenticated organization member can access equipment row
+   * mutation actions such as edit and delete.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canManageEquipment: Signal<boolean> = computed((): boolean =>
+    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_WRITE),
+  );
+
+  /**
+   * Property actionMenu
+   * @readonly
+   *
+   * @description
+   * Shared popup menu used by equipment rows for contextual actions.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Signal<Menu>}
+   */
+  private readonly actionMenu: Signal<Menu> = viewChild.required<Menu>('actionMenu');
+
+  /**
+   * Property selectedEquipment
+   * @readonly
+   *
+   * @description
+   * Equipment row currently targeted by the shared action menu.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<EquipmentOutput | null>}
+   */
+  private readonly selectedEquipment: WritableSignal<EquipmentOutput | null> =
+    signal<EquipmentOutput | null>(null);
+
+  /**
+   * Property actionMenuItems
+   * @readonly
+   *
+   * @description
+   * Menu items shown for the currently selected equipment row. Items are
+   * hidden unless the member has the equipment write permission.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<MenuItem[]>}
+   */
+  protected readonly actionMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
+    const equipment: EquipmentOutput | null = this.selectedEquipment();
+
+    if (!equipment || !this.canManageEquipment()) {
+      return [];
+    }
+
+    return [
+      {
+        label: 'Edit',
+        icon: PrimeIcons.PENCIL,
+        command: (): void => this.edit.emit(equipment),
+      },
+      {
+        label: 'Delete',
+        icon: PrimeIcons.TRASH,
+        styleClass: 'text-red-500',
+        command: (): void => this.delete.emit(equipment),
+      },
+    ];
+  });
 
   /**
    * Property firstPage
@@ -512,6 +698,62 @@ export class FacilityEquipmentTable implements OnInit {
     this.searchControl.setValue('', { emitEvent: false });
     this.statusControl.setValue(null, { emitEvent: false });
     this.reload();
+  }
+
+  /**
+   * Method onClearSelection
+   *
+   * @description
+   * Clears the current checkbox selection without reloading the table.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  protected onClearSelection(): void {
+    this.selectedEquipments.set([]);
+  }
+
+  /**
+   * Method onBulkDelete
+   *
+   * @description
+   * Emits selected equipment rows when the user triggers the bulk delete
+   * toolbar action.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  protected onBulkDelete(): void {
+    const selectedEquipments: EquipmentOutput[] = this.selectedEquipments();
+
+    if (selectedEquipments.length === 0 || !this.canManageEquipment()) {
+      return;
+    }
+
+    this.bulkDelete.emit(selectedEquipments);
+  }
+
+  /**
+   * Method onActionMenuToggle
+   *
+   * @description
+   * Stores the targeted equipment row and toggles the shared action menu.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {MouseEvent} event Click event emitted by the row action button.
+   * @param {EquipmentOutput} equipment Equipment row targeted by the menu.
+   *
+   * @returns {void}
+   */
+  protected onActionMenuToggle(event: MouseEvent, equipment: EquipmentOutput): void {
+    this.selectedEquipment.set(equipment);
+    this.actionMenu().toggle(event);
   }
 
   /**

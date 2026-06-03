@@ -25,6 +25,32 @@ export type InspectionStatus = 'draft' | 'submitted' | 'closed';
 export type InspectorType = 'user' | 'external';
 
 /**
+ * Interface InspectorOutput
+ * @interface InspectorOutput
+ *
+ * @description
+ * Inspector summary embedded in an inspection resource.
+ */
+export interface InspectorOutput {
+  //#region Properties
+  /** @type {InspectorType | string} */
+  readonly type: InspectorType | string;
+  /** @type {string | null} */
+  readonly id: string | null;
+  /** @type {string | null} */
+  readonly firstName: string | null;
+  /** @type {string | null} */
+  readonly lastName: string | null;
+  /** @type {string} */
+  readonly displayName: string;
+  /** @type {string | null} */
+  readonly avatarUrl: string | null;
+  /** @type {string | null} */
+  readonly organizationName: string | null;
+  //#endregion
+}
+
+/**
  * Interface InspectionOutput
  * @interface InspectionOutput
  *
@@ -47,14 +73,8 @@ export interface InspectionOutput extends HydraItem {
   readonly status: InspectionStatus;
   /** @type {string} */
   readonly performedAt: string;
-  /** @type {InspectorType} */
-  readonly inspectorType: InspectorType;
-  /** @type {string} */
-  readonly inspectorName: string;
-  /** @type {string | null} */
-  readonly inspectorUserId: string | null;
-  /** @type {string | null} */
-  readonly inspectorOrganizationName: string | null;
+  /** @type {InspectorOutput | null} */
+  readonly inspector: InspectorOutput | null;
   /** @type {string | null} */
   readonly checklistId: string | null;
   /** @type {string | null} */

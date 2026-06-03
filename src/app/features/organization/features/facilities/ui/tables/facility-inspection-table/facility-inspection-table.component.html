@@ -1,4 +1,6 @@
 <div class="flex h-full flex-col bg-surface-0 dark:bg-surface-950">
+  <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
+
   <p-card [pt]="cardPt">
     <ng-template pTemplate="header">
       <div
@@ -92,6 +94,9 @@
     <ng-template pTemplate="content">
       <p-table
         [value]="loading() ? skeletonItems : empty() ? [] : [...inspections()]"
+        [selection]="selectedInspections()"
+        (selectionChange)="selectedInspections.set($event)"
+        dataKey="id"
         [loading]="loading()"
         [paginator]="true"
         [rows]="rows"
@@ -102,14 +107,17 @@
         [rowsPerPageOptions]="[12, 24, 48]"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} inspections"
+        [stripedRows]="true"
         [pt]="tablePt"
       >
         <ng-template pTemplate="header">
           <tr>
-            <th pSortableColumn="inspectorName" class="min-w-56">
+            <th class="w-12">
+              <p-tableHeaderCheckbox />
+            </th>
+            <th class="min-w-56">
               <div class="flex items-center gap-2">
                 <span>Inspector</span>
-                <p-sortIcon field="inspectorName" />
               </div>
             </th>
 
@@ -142,12 +150,18 @@
                 <p-sortIcon field="performedAt" />
               </div>
             </th>
+            @if (canManageInspections()) {
+              <th class="w-20">
+                <span class="sr-only">Actions</span>
+              </th>
+            }
           </tr>
         </ng-template>
 
         <ng-template pTemplate="loadingbody">
           @for (_ of skeletonItems; track $index) {
             <tr>
+              <td><p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" /></td>
               <td>
                 <div class="flex flex-col gap-1.5">
                   <p-skeleton width="10rem" height="0.875rem" />
@@ -159,6 +173,9 @@
               <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
               <td><p-skeleton width="4rem" height="0.875rem" styleClass="ml-auto" /></td>
               <td><p-skeleton width="7rem" height="0.875rem" styleClass="ml-auto" /></td>
+              @if (canManageInspections()) {
+                <td><p-skeleton shape="circle" size="2rem" styleClass="ml-auto" /></td>
+              }
             </tr>
           }
         </ng-template>
@@ -166,6 +183,7 @@
         <ng-template pTemplate="body" let-inspection>
           @if (loading()) {
             <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
+              <td><p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" /></td>
               <td>
                 <div class="flex flex-col gap-1.5">
                   <p-skeleton width="10rem" height="0.875rem" />
@@ -177,17 +195,33 @@
               <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
               <td><p-skeleton width="4rem" height="0.875rem" styleClass="ml-auto" /></td>
               <td><p-skeleton width="7rem" height="0.875rem" styleClass="ml-auto" /></td>
+              @if (canManageInspections()) {
+                <td><p-skeleton shape="circle" size="2rem" styleClass="ml-auto" /></td>
+              }
             </tr>
           } @else {
             <tr>
               <td>
-                <div class="flex min-w-0 flex-col">
-                  <span class="truncate font-medium text-surface-900 dark:text-surface-100">
-                    {{ inspection.inspectorName }}
-                  </span>
-                  <span class="truncate text-xs text-surface-500">
-                    {{ inspection.inspectorType }}
-                  </span>
+                <p-tableCheckbox [value]="inspection" />
+              </td>
+              <td>
+                <div class="flex min-w-0 items-center gap-3">
+                  <p-avatar
+                    [image]="inspection.inspector?.avatarUrl || undefined"
+                    [label]="inspection.inspector?.avatarUrl ? undefined : getInspectorInitials(inspection)"
+                    shape="circle"
+                    size="normal"
+                    class="shrink-0 bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                  />
+
+                  <div class="flex min-w-0 flex-col">
+                    <span class="truncate font-medium text-surface-900 dark:text-surface-100">
+                      {{ getInspectorDisplayName(inspection) }}
+                    </span>
+                    <span class="truncate text-xs text-surface-500">
+                      {{ getInspectorTypeLabel(inspection) }}
+                    </span>
+                  </div>
                 </div>
               </td>
               <td>
@@ -241,13 +275,25 @@
                   {{ inspection.performedAt | date: 'medium' }}
                 </span>
               </td>
+              @if (canManageInspections()) {
+                <td class="text-right">
+                  <p-button
+                    icon="pi pi-ellipsis-v"
+                    severity="secondary"
+                    size="small"
+                    [outlined]="true"
+                    ariaLabel="Inspection actions"
+                    (onClick)="onActionMenuToggle($event, inspection)"
+                  />
+                </td>
+              }
             </tr>
           }
         </ng-template>
 
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="6">
+            <td [attr.colspan]="canManageInspections() ? 8 : 7">
               <div class="flex flex-col items-center gap-3 py-16">
                 <i class="pi pi-search text-6xl text-surface-400"></i>
                 <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">

@@ -528,7 +528,7 @@ export class InspectionTable implements OnInit {
    * @returns {string}
    */
   protected getInspectionTitle(inspection: InspectionOutput): string {
-    return inspection.inspectorName;
+    return this.getInspectorDisplayName(inspection);
   }
 
   /**
@@ -546,11 +546,29 @@ export class InspectionTable implements OnInit {
    * @returns {string}
    */
   protected getInspectorContextLabel(inspection: InspectionOutput): string {
-    const inspectorType: string = toDisplayLabel(inspection.inspectorType);
+    const inspectorType: string = toDisplayLabel(inspection.inspector?.type);
 
-    return inspection.inspectorOrganizationName
-      ? `${inspectorType} • ${inspection.inspectorOrganizationName}`
-      : `${inspectorType} inspector`;
+    return inspection.inspector?.organizationName
+      ? `${inspectorType} • ${inspection.inspector.organizationName}`
+      : `${inspectorType || 'Unknown'} inspector`;
+  }
+
+  /**
+   * Method getInspectorDisplayName
+   * @method getInspectorDisplayName
+   *
+   * @description
+   * Returns the display name of the embedded inspector summary.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {InspectionOutput} inspection - Inspection item to format.
+   *
+   * @returns {string}
+   */
+  protected getInspectorDisplayName(inspection: InspectionOutput): string {
+    return inspection.inspector?.displayName || 'Unknown inspector';
   }
 
   /**

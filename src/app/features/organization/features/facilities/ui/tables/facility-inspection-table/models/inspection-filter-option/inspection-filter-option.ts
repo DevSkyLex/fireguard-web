@@ -30,4 +30,27 @@ export interface InspectionFilterOption<TValue extends string> {
    * @type {TValue}
    */
   readonly value: TValue;
+
+  /**
+   * Property icon
+   * @readonly
+   *
+   * @description
+   * PrimeIcons class used by the filter badge to visually identify the
+   * inspection result or workflow status.
+   *
+   * @type {string}
+   */
+  readonly icon: string;
+
+  /**
+   * Property color
+   * @readonly
+   *
+   * @description
+   * Hexadecimal color applied to the filter badge icon.
+   *
+   * @type {string}
+   */
+  readonly color: string;
 }

@@ -24,7 +24,6 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
 import type { RequestOptions } from '@core/services/hydra-api';
 import type {
   InspectionOutput,
@@ -57,7 +56,6 @@ import type { InspectionFilterOption } from './models';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
-    TagModule,
   ],
   templateUrl: './facility-inspection-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -288,9 +286,9 @@ export class FacilityInspectionTable implements OnInit {
    * @type {InspectionFilterOption<InspectionResult>[]}
    */
   protected readonly resultOptions: InspectionFilterOption<InspectionResult>[] = [
-    { label: 'Pass', value: 'pass' },
-    { label: 'Partial', value: 'partial' },
-    { label: 'Fail', value: 'fail' },
+    { label: 'Pass', value: 'pass', icon: PrimeIcons.CHECK_CIRCLE, color: '#22c55e' },
+    { label: 'Partial', value: 'partial', icon: PrimeIcons.EXCLAMATION_CIRCLE, color: '#f59e0b' },
+    { label: 'Fail', value: 'fail', icon: PrimeIcons.TIMES_CIRCLE, color: '#ef4444' },
   ];
 
   /**
@@ -306,9 +304,9 @@ export class FacilityInspectionTable implements OnInit {
    * @type {InspectionFilterOption<InspectionStatus>[]}
    */
   protected readonly statusOptions: InspectionFilterOption<InspectionStatus>[] = [
-    { label: 'Draft', value: 'draft' },
-    { label: 'Submitted', value: 'submitted' },
-    { label: 'Closed', value: 'closed' },
+    { label: 'Draft', value: 'draft', icon: PrimeIcons.FILE_EDIT, color: '#3b82f6' },
+    { label: 'Submitted', value: 'submitted', icon: PrimeIcons.SEND, color: '#f59e0b' },
+    { label: 'Closed', value: 'closed', icon: PrimeIcons.LOCK, color: '#64748b' },
   ];
 
   /**
@@ -546,37 +544,55 @@ export class FacilityInspectionTable implements OnInit {
   }
 
   /**
-   * Method getResultLabel
+   * Method getResultOption
    *
    * @description
-   * Converts an inspection result value into a display label.
+   * Resolves the visual badge option matching an inspection result.
    *
    * @access protected
    * @since 1.0.0
    *
    * @param {InspectionResult} result API inspection result.
    *
-   * @returns {string} Human-readable result label.
+   * @returns {InspectionFilterOption<InspectionResult>} Matching result badge option.
    */
-  protected getResultLabel(result: InspectionResult): string {
-    return this.toDisplayLabel(result);
+  protected getResultOption(result: InspectionResult): InspectionFilterOption<InspectionResult> {
+    return (
+      this.resultOptions.find(
+        (option: InspectionFilterOption<InspectionResult>): boolean => option.value === result,
+      ) ?? {
+        label: this.toDisplayLabel(result),
+        value: result,
+        icon: PrimeIcons.CIRCLE,
+        color: '#64748b',
+      }
+    );
   }
 
   /**
-   * Method getStatusLabel
+   * Method getStatusOption
    *
    * @description
-   * Converts an inspection status value into a display label.
+   * Resolves the visual badge option matching an inspection status.
    *
    * @access protected
    * @since 1.0.0
    *
    * @param {InspectionStatus} status API inspection status.
    *
-   * @returns {string} Human-readable status label.
+   * @returns {InspectionFilterOption<InspectionStatus>} Matching status badge option.
    */
-  protected getStatusLabel(status: InspectionStatus): string {
-    return this.toDisplayLabel(status);
+  protected getStatusOption(status: InspectionStatus): InspectionFilterOption<InspectionStatus> {
+    return (
+      this.statusOptions.find(
+        (option: InspectionFilterOption<InspectionStatus>): boolean => option.value === status,
+      ) ?? {
+        label: this.toDisplayLabel(status),
+        value: status,
+        icon: PrimeIcons.CIRCLE,
+        color: '#64748b',
+      }
+    );
   }
 
   /**
@@ -594,62 +610,6 @@ export class FacilityInspectionTable implements OnInit {
    */
   protected getFindingsLabel(count: number): string {
     return `${count} finding${count > 1 ? 's' : ''}`;
-  }
-
-  /**
-   * Method getResultSeverity
-   *
-   * @description
-   * Maps an inspection result to a PrimeNG tag severity.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {InspectionResult} result API inspection result.
-   *
-   * @returns {'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'} PrimeNG tag severity.
-   */
-  protected getResultSeverity(
-    result: InspectionResult,
-  ): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
-    switch (result) {
-      case 'pass':
-        return 'success';
-      case 'fail':
-        return 'danger';
-      case 'partial':
-        return 'warn';
-      default:
-        return 'secondary';
-    }
-  }
-
-  /**
-   * Method getStatusSeverity
-   *
-   * @description
-   * Maps an inspection status to a PrimeNG tag severity.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {InspectionStatus} status API inspection status.
-   *
-   * @returns {'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'} PrimeNG tag severity.
-   */
-  protected getStatusSeverity(
-    status: InspectionStatus,
-  ): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
-    switch (status) {
-      case 'draft':
-        return 'info';
-      case 'submitted':
-        return 'warn';
-      case 'closed':
-        return 'secondary';
-      default:
-        return 'secondary';
-    }
   }
 
   /**

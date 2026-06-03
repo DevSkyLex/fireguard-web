@@ -27,7 +27,6 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/services/hydra-api';
 import type {
@@ -63,7 +62,6 @@ import type { EquipmentStatusOption } from './models';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
-    TagModule,
   ],
   templateUrl: './facility-equipment-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -294,10 +292,10 @@ export class FacilityEquipmentTable implements OnInit {
    * @type {EquipmentStatusOption[]}
    */
   protected readonly statusOptions: EquipmentStatusOption[] = [
-    { label: 'In Stock', value: 'in_stock' },
-    { label: 'Operational', value: 'operational' },
-    { label: 'Maintenance', value: 'under_maintenance' },
-    { label: 'Decommissioned', value: 'decommissioned' },
+    { label: 'In Stock', value: 'in_stock', icon: PrimeIcons.BOX, color: '#94a3b8' },
+    { label: 'Operational', value: 'operational', icon: PrimeIcons.CHECK_CIRCLE, color: '#22c55e' },
+    { label: 'Maintenance', value: 'under_maintenance', icon: PrimeIcons.WRENCH, color: '#f97316' },
+    { label: 'Decommissioned', value: 'decommissioned', icon: PrimeIcons.BAN, color: '#ef4444' },
   ];
 
   /**
@@ -554,50 +552,27 @@ export class FacilityEquipmentTable implements OnInit {
   }
 
   /**
-   * Method getStatusLabel
+   * Method getStatusOption
    *
    * @description
-   * Converts an equipment status value into a display label.
+   * Resolves the visual badge option matching an equipment status.
    *
    * @access protected
    * @since 1.0.0
    *
    * @param {EquipmentStatus} status API equipment status.
    *
-   * @returns {string} Human-readable status label.
+   * @returns {EquipmentStatusOption} Matching status badge option.
    */
-  protected getStatusLabel(status: EquipmentStatus): string {
-    return this.toDisplayLabel(status);
-  }
-
-  /**
-   * Method getStatusSeverity
-   *
-   * @description
-   * Maps an equipment status to a PrimeNG tag severity.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {EquipmentStatus} status API equipment status.
-   *
-   * @returns {'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'} PrimeNG tag severity.
-   */
-  protected getStatusSeverity(
-    status: EquipmentStatus,
-  ): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
-    switch (status) {
-      case 'operational':
-        return 'success';
-      case 'in_stock':
-        return 'info';
-      case 'under_maintenance':
-        return 'warn';
-      case 'decommissioned':
-        return 'danger';
-      default:
-        return 'secondary';
-    }
+  protected getStatusOption(status: EquipmentStatus): EquipmentStatusOption {
+    return (
+      this.statusOptions.find((option: EquipmentStatusOption): boolean => option.value === status) ?? {
+        label: this.toDisplayLabel(status),
+        value: status,
+        icon: PrimeIcons.CIRCLE,
+        color: '#64748b',
+      }
+    );
   }
 
   /**

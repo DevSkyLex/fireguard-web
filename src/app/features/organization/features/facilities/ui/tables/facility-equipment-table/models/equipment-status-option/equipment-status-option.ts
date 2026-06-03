@@ -30,4 +30,27 @@ export interface EquipmentStatusOption {
    * @type {EquipmentStatus}
    */
   readonly value: EquipmentStatus;
+
+  /**
+   * Property icon
+   * @readonly
+   *
+   * @description
+   * PrimeIcons class used by the status badge to visually identify the
+   * equipment lifecycle state.
+   *
+   * @type {string}
+   */
+  readonly icon: string;
+
+  /**
+   * Property color
+   * @readonly
+   *
+   * @description
+   * Hexadecimal color applied to the status badge icon.
+   *
+   * @type {string}
+   */
+  readonly color: string;
 }

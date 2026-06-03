@@ -18,7 +18,29 @@
             size="small"
             [showClear]="true"
             class="w-full sm:w-36"
-          />
+          >
+            <ng-template pTemplate="selectedItem" let-option>
+              <span class="inline-flex min-w-0 items-center gap-1.5 leading-none">
+                <i
+                  [class]="option.icon + ' text-[0.7rem]'"
+                  [style.color]="option.color"
+                  aria-hidden="true"
+                ></i>
+                <span class="truncate leading-none">{{ option.label }}</span>
+              </span>
+            </ng-template>
+
+            <ng-template pTemplate="item" let-option>
+              <span class="inline-flex min-w-0 items-center gap-2 leading-none">
+                <i
+                  [class]="option.icon + ' text-[0.7rem]'"
+                  [style.color]="option.color"
+                  aria-hidden="true"
+                ></i>
+                <span class="truncate leading-none">{{ option.label }}</span>
+              </span>
+            </ng-template>
+          </p-select>
 
           <p-select
             [options]="statusOptions"
@@ -29,7 +51,29 @@
             size="small"
             [showClear]="true"
             class="w-full sm:w-40"
-          />
+          >
+            <ng-template pTemplate="selectedItem" let-option>
+              <span class="inline-flex min-w-0 items-center gap-1.5 leading-none">
+                <i
+                  [class]="option.icon + ' text-[0.7rem]'"
+                  [style.color]="option.color"
+                  aria-hidden="true"
+                ></i>
+                <span class="truncate leading-none">{{ option.label }}</span>
+              </span>
+            </ng-template>
+
+            <ng-template pTemplate="item" let-option>
+              <span class="inline-flex min-w-0 items-center gap-2 leading-none">
+                <i
+                  [class]="option.icon + ' text-[0.7rem]'"
+                  [style.color]="option.color"
+                  aria-hidden="true"
+                ></i>
+                <span class="truncate leading-none">{{ option.label }}</span>
+              </span>
+            </ng-template>
+          </p-select>
 
           <p-splitbutton
             label="New inspection"
@@ -152,25 +196,41 @@
                 </span>
               </td>
               <td>
-                <p-tag
-                  class="rounded-full text-xs font-medium"
-                  [severity]="getResultSeverity(inspection.result)"
-                  [value]="getResultLabel(inspection.result)"
-                />
+                @let resultOption = getResultOption(inspection.result);
+                <span
+                  class="inline-flex h-7 items-center gap-1.5 rounded-full border border-surface-200 bg-surface-0 px-2.5 text-xs font-semibold leading-none text-surface-900 dark:border-surface-700 dark:bg-surface-950 dark:text-surface-100"
+                >
+                  <i
+                    [class]="resultOption.icon + ' inline-flex items-center text-[0.7rem] leading-none'"
+                    [style.color]="resultOption.color"
+                    aria-hidden="true"
+                  ></i>
+                  <span class="leading-none">{{ resultOption.label }}</span>
+                </span>
               </td>
               <td>
-                <p-tag
-                  class="rounded-full text-xs font-medium"
-                  [severity]="getStatusSeverity(inspection.status)"
-                  [value]="getStatusLabel(inspection.status)"
-                />
+                @let statusOption = getStatusOption(inspection.status);
+                <span
+                  class="inline-flex h-7 items-center gap-1.5 rounded-full border border-surface-200 bg-surface-0 px-2.5 text-xs font-semibold leading-none text-surface-900 dark:border-surface-700 dark:bg-surface-950 dark:text-surface-100"
+                >
+                  <i
+                    [class]="statusOption.icon + ' inline-flex items-center text-[0.7rem] leading-none'"
+                    [style.color]="statusOption.color"
+                    aria-hidden="true"
+                  ></i>
+                  <span class="leading-none">{{ statusOption.label }}</span>
+                </span>
               </td>
               <td class="text-right">
                 @if (inspection.nonConformitiesCount > 0) {
                   <span
-                    class="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-red-50 px-2 text-xs font-medium text-red-600 dark:bg-red-500/10 dark:text-red-400"
+                    class="inline-flex h-7 items-center gap-1.5 rounded-full border border-surface-200 bg-surface-0 px-2.5 text-xs font-semibold leading-none text-surface-900 dark:border-surface-700 dark:bg-surface-950 dark:text-surface-100"
                   >
-                    {{ inspection.nonConformitiesCount }}
+                    <i
+                      class="pi pi-exclamation-circle inline-flex items-center text-[0.7rem] leading-none text-red-500"
+                      aria-hidden="true"
+                    ></i>
+                    <span class="leading-none">{{ getFindingsLabel(inspection.nonConformitiesCount) }}</span>
                   </span>
                 } @else {
                   <span class="text-surface-300 dark:text-surface-600">-</span>

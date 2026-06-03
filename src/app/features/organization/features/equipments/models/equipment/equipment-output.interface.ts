@@ -8,7 +8,7 @@ import type { EquipmentTagOutput } from '../equipment-tag/equipment-tag-output.i
  * Supported lifecycle statuses for an equipment
  * resource.
  */
-export type EquipmentStatus = 'in_stock' | 'commissioned' | 'decommissioned' | 'under_maintenance';
+export type EquipmentStatus = 'in_stock' | 'operational' | 'decommissioned' | 'under_maintenance';
 
 /**
  * Interface EquipmentOutput

@@ -55,14 +55,14 @@ export class FacilityEquipmentDataview {
 
   private readonly statusSeverities: Record<EquipmentStatus, 'secondary' | 'success' | 'warn' | 'danger'> = {
     in_stock: 'secondary',
-    commissioned: 'success',
+    operational: 'success',
     under_maintenance: 'warn',
     decommissioned: 'danger',
   };
 
   private readonly statusLabels: Record<EquipmentStatus, string> = {
     in_stock: 'In stock',
-    commissioned: 'Commissioned',
+    operational: 'Operational',
     under_maintenance: 'Maintenance',
     decommissioned: 'Decommissioned',
   };

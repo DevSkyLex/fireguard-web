@@ -20,7 +20,7 @@ const MOCK_EQUIPMENT: EquipmentOutput = {
   facilityId: 'fac-1',
   type: 'Fire Extinguisher',
   subType: 'ABC',
-  status: 'commissioned',
+  status: 'operational',
   brand: 'Amerex',
   model: 'B500',
   serialNumber: 'SN-001',

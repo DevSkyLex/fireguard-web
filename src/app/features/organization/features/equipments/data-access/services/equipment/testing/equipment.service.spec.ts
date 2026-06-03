@@ -245,12 +245,12 @@ describe('EquipmentService', () => {
     it('should send POST action request to commission equipment', () => {
       const commissioned: EquipmentOutput = {
         ...mockEquipment,
-        status: 'commissioned',
+        status: 'operational',
         commissionedAt: '2026-03-01T00:00:00+00:00',
       };
 
       service.commission(orgId, equipmentId).subscribe((equipment) => {
-        expect(equipment.status).toBe('commissioned');
+        expect(equipment.status).toBe('operational');
       });
 
       const req = httpMock.expectOne(`${equipmentBaseUrl}/${equipmentId}/commission`);

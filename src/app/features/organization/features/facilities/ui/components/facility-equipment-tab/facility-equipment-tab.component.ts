@@ -9,7 +9,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import type { RequestOptions } from '@core/services/hydra-api';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
-import { EquipmentTable } from '@features/organization/features/equipments/ui/tables';
+import { FacilityEquipmentTable } from '@features/organization/features/facilities/ui/tables';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
@@ -27,7 +27,7 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-facility-equipment-tab',
-  imports: [EquipmentTable],
+  imports: [FacilityEquipmentTable],
   providers: [EquipmentStore],
   templateUrl: './facility-equipment-tab.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

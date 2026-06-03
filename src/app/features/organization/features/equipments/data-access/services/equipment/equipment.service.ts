@@ -310,7 +310,7 @@ export class EquipmentService extends HydraApiService {
    *
    * @description
    * Commissions an equipment, changing its status to
-   * 'commissioned' and making it operational.
+   * 'operational'.
    * This action does not require any input data,
    * as it simply updates the equipment's lifecycle status.
    *

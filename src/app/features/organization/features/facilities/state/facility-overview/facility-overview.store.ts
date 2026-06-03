@@ -174,7 +174,7 @@ export const FacilityOverviewStore = signalStore(
 
       const byStatus: Record<EquipmentStatus, number> = {
         in_stock: 0,
-        commissioned: 0,
+        operational: 0,
         decommissioned: 0,
         under_maintenance: 0,
       };
@@ -186,9 +186,9 @@ export const FacilityOverviewStore = signalStore(
       return [
         {
           label: 'Commissioned',
-          count: byStatus.commissioned,
+          count: byStatus.operational,
           total,
-          ratio: total > 0 ? byStatus.commissioned / total : 0,
+          ratio: total > 0 ? byStatus.operational / total : 0,
           colorClass: 'bg-green-600',
         },
         {

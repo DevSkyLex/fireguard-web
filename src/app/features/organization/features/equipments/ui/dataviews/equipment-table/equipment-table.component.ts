@@ -633,7 +633,7 @@ export class EquipmentTable implements OnInit {
     status: EquipmentOutput['status'],
   ): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
     switch (status) {
-      case 'commissioned':
+      case 'operational':
         return 'success';
       case 'in_stock':
         return 'info';

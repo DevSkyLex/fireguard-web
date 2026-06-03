@@ -14,7 +14,7 @@ import { MetricCard } from '@shared/components';
  * @class EquipmentCommissionedMetric
  *
  * @description
- * Metric card wrapper displaying the number of commissioned equipment items,
+ * Metric card wrapper displaying the number of operational equipment items,
  * derived from the loaded items in the page-scoped {@link EquipmentStore}.
  *
  * @version 1.0.0
@@ -48,7 +48,7 @@ export class EquipmentCommissionedMetric {
    * @readonly
    *
    * @description
-   * Count of loaded equipment whose status is `commissioned`.
+   * Count of loaded equipment whose status is `operational`.
    *
    * @access protected
    * @since 1.0.0
@@ -59,7 +59,7 @@ export class EquipmentCommissionedMetric {
     () =>
       this.store
         .equipmentList()
-        .filter((equipment: EquipmentOutput) => equipment.status === 'commissioned').length,
+        .filter((equipment: EquipmentOutput) => equipment.status === 'operational').length,
   );
   //#endregion
 }

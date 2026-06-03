@@ -14,7 +14,7 @@ import type {
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
 import { InspectionStore } from '@features/organization/features/inspections/state';
-import { InspectionTable } from '@features/organization/features/inspections/ui/tables';
+import { FacilityInspectionTable } from '@features/organization/features/facilities/ui/tables';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
@@ -33,7 +33,7 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-facility-inspection-tab',
-  imports: [InspectionTable],
+  imports: [FacilityInspectionTable],
   providers: [InspectionStore],
   templateUrl: './facility-inspection-tab.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

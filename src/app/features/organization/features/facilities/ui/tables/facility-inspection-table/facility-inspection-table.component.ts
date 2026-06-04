@@ -273,11 +273,10 @@ export class FacilityInspectionTable implements OnInit {
    */
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
-      class:
-        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
+      class: 'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
     },
     body: {
-      class: 'p-0! flex flex-col flex-1 min-h-0',
+      class: 'p-0 flex flex-col flex-1 min-h-0',
     },
   };
 
@@ -305,12 +304,11 @@ export class FacilityInspectionTable implements OnInit {
       class: 'text-sm',
     },
     header: {
-      class: 'border-0 p-0 bg-surface-0 dark:bg-surface-950',
+      class: 'border-0 p-0 bg-surface-0 dark:bg-surface-900',
     },
     pcPaginator: {
       root: {
-        class:
-          'mt-auto rounded-none border-t border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-950 justify-end',
+        class: 'mt-auto rounted-t-none rounded-b-2xl bg-surface-0 dark:bg-surface-900 justify-end',
       },
     },
   };
@@ -356,9 +354,24 @@ export class FacilityInspectionTable implements OnInit {
    * @type {InspectionFilterOption<InspectionResult>[]}
    */
   protected readonly resultOptions: InspectionFilterOption<InspectionResult>[] = [
-    { label: 'Pass', value: 'pass', icon: PrimeIcons.CHECK_CIRCLE, color: '#22c55e' },
-    { label: 'Partial', value: 'partial', icon: PrimeIcons.EXCLAMATION_CIRCLE, color: '#f59e0b' },
-    { label: 'Fail', value: 'fail', icon: PrimeIcons.TIMES_CIRCLE, color: '#ef4444' },
+    {
+      label: 'Pass',
+      value: 'pass',
+      icon: PrimeIcons.CHECK_CIRCLE,
+      color: '#22c55e'
+    },
+    {
+      label: 'Partial',
+      value: 'partial',
+      icon: PrimeIcons.EXCLAMATION_CIRCLE,
+      color: '#f59e0b'
+    },
+    {
+      label: 'Fail',
+      value: 'fail',
+      icon: PrimeIcons.TIMES_CIRCLE,
+      color: '#ef4444'
+    },
   ];
 
   /**
@@ -374,9 +387,24 @@ export class FacilityInspectionTable implements OnInit {
    * @type {InspectionFilterOption<InspectionStatus>[]}
    */
   protected readonly statusOptions: InspectionFilterOption<InspectionStatus>[] = [
-    { label: 'Draft', value: 'draft', icon: PrimeIcons.FILE_EDIT, color: '#3b82f6' },
-    { label: 'Submitted', value: 'submitted', icon: PrimeIcons.SEND, color: '#f59e0b' },
-    { label: 'Closed', value: 'closed', icon: PrimeIcons.LOCK, color: '#64748b' },
+    {
+      label: 'Draft',
+      value: 'draft',
+      icon: PrimeIcons.FILE_EDIT,
+      color: '#3b82f6'
+    },
+    {
+      label: 'Submitted',
+      value: 'submitted',
+      icon: PrimeIcons.SEND,
+      color: '#f59e0b'
+    },
+    {
+      label: 'Closed',
+      value: 'closed',
+      icon: PrimeIcons.LOCK,
+      color: '#64748b'
+    },
   ];
 
   /**
@@ -561,9 +589,9 @@ export class FacilityInspectionTable implements OnInit {
    * @access protected
    * @since 1.0.0
    *
-   * @type {number}
+   * @type {WritableSignal<number>}
    */
-  protected firstPage: number = 0;
+  protected readonly firstPage: WritableSignal<number> = signal<number>(0);
 
   /**
    * Property initialized
@@ -632,7 +660,7 @@ export class FacilityInspectionTable implements OnInit {
    * @returns {void}
    */
   public ngOnInit(): void {
-    this.firstPage = (this.initialPage() - 1) * this.rows;
+    this.firstPage.set((this.initialPage() - 1) * this.rows);
   }
   //#endregion
 
@@ -652,14 +680,22 @@ export class FacilityInspectionTable implements OnInit {
    * @returns {void}
    */
   public onLazyLoad(event: TableLazyLoadEvent): void {
-    this.lastLazyEvent.set(event);
-
     const first: number = event.first ?? 0;
     const rowsPerPage: number = event.rows ?? this.rows;
     const page: number = Math.floor(first / rowsPerPage) + 1;
+    const previousEvent: TableLazyLoadEvent | null = this.lastLazyEvent();
+    const shouldClearSelection: boolean =
+      this.initialized && this.hasLazyEventChanged(previousEvent, event);
     const params: Record<string, string | number | boolean> = {};
     const result: InspectionResult | null = this.resultControl.value;
     const status: InspectionStatus | null = this.statusControl.value;
+
+    this.firstPage.set(first);
+    this.lastLazyEvent.set(event);
+
+    if (shouldClearSelection) {
+      this.onClearSelection();
+    }
 
     if (result) params['result'] = result;
     if (status) params['status'] = status;
@@ -928,6 +964,9 @@ export class FacilityInspectionTable implements OnInit {
    * @returns {void}
    */
   private reload(): void {
+    this.onClearSelection();
+    this.firstPage.set(0);
+
     const event: TableLazyLoadEvent = this.lastLazyEvent() ?? {
       first: 0,
       rows: this.rows,
@@ -938,6 +977,36 @@ export class FacilityInspectionTable implements OnInit {
       first: 0,
       rows: event.rows ?? this.rows,
     });
+  }
+
+  /**
+   * Method hasLazyEventChanged
+   *
+   * @description
+   * Checks whether a lazy-load event targets a different table dataset.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {TableLazyLoadEvent | null} previousEvent Previous lazy-load event.
+   * @param {TableLazyLoadEvent} event Current lazy-load event.
+   *
+   * @returns {boolean} Whether the table dataset changed.
+   */
+  private hasLazyEventChanged(
+    previousEvent: TableLazyLoadEvent | null,
+    event: TableLazyLoadEvent,
+  ): boolean {
+    if (!previousEvent) {
+      return false;
+    }
+
+    return (
+      (previousEvent.first ?? 0) !== (event.first ?? 0) ||
+      (previousEvent.rows ?? this.rows) !== (event.rows ?? this.rows) ||
+      previousEvent.sortOrder !== event.sortOrder ||
+      this.getSortField(previousEvent) !== this.getSortField(event)
+    );
   }
 
   /**
@@ -958,15 +1027,30 @@ export class FacilityInspectionTable implements OnInit {
     params: Record<string, string | number | boolean>,
     event: TableLazyLoadEvent,
   ): void {
-    const sortField: string | null | undefined = Array.isArray(event.sortField)
-      ? event.sortField[0]
-      : event.sortField;
+    const sortField: string | null | undefined = this.getSortField(event);
 
     if (!sortField || !event.sortOrder) {
       return;
     }
 
     params[`order[${sortField}]`] = event.sortOrder === 1 ? 'asc' : 'desc';
+  }
+
+  /**
+   * Method getSortField
+   *
+   * @description
+   * Extracts PrimeNG's active sort field from a lazy-load event.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {TableLazyLoadEvent} event PrimeNG lazy-load event.
+   *
+   * @returns {string | null | undefined} Active sort field.
+   */
+  private getSortField(event: TableLazyLoadEvent): string | null | undefined {
+    return Array.isArray(event.sortField) ? event.sortField[0] : event.sortField;
   }
 
   /**

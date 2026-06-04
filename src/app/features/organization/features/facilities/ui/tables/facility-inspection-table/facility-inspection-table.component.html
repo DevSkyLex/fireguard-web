@@ -1,4 +1,4 @@
-<div class="flex h-full flex-col bg-surface-0 dark:bg-surface-950">
+<div class="flex h-full flex-col bg-surface-0 dark:bg-surface-900">
   <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
   <p-card [pt]="cardPt">
@@ -77,16 +77,40 @@
             </ng-template>
           </p-select>
 
-          <p-splitbutton
-            label="New inspection"
-            icon="pi pi-plus"
-            severity="primary"
-            [model]="toolbarActions()"
-            size="small"
-            (onClick)="add.emit()"
-            [disabled]="loading()"
-            class="w-full sm:w-auto"
-          />
+          @if (canManageInspections()) {
+            <p-splitbutton
+              label="New inspection"
+              icon="pi pi-plus"
+              severity="primary"
+              [model]="toolbarActions()"
+              size="small"
+              (onClick)="add.emit()"
+              [disabled]="loading()"
+              class="w-full sm:w-auto"
+            />
+          } @else {
+            <p-button
+              label="Refresh"
+              icon="pi pi-refresh"
+              severity="secondary"
+              size="small"
+              [outlined]="true"
+              [disabled]="loading()"
+              class="w-full sm:w-auto"
+              (onClick)="onRefresh()"
+            />
+
+            <p-button
+              label="Clear filters"
+              icon="pi pi-filter-slash"
+              severity="secondary"
+              size="small"
+              [outlined]="true"
+              [disabled]="loading()"
+              class="w-full sm:w-auto"
+              (onClick)="onClearFilters()"
+            />
+          }
         </div>
       </div>
     </ng-template>
@@ -100,7 +124,7 @@
         [loading]="loading()"
         [paginator]="true"
         [rows]="rows"
-        [first]="firstPage"
+        [first]="firstPage()"
         [totalRecords]="total()"
         [lazy]="true"
         (onLazyLoad)="onLazyLoad($event)"
@@ -112,9 +136,11 @@
       >
         <ng-template pTemplate="header">
           <tr>
-            <th class="w-12">
-              <p-tableHeaderCheckbox />
-            </th>
+            @if (canManageInspections()) {
+              <th class="w-12">
+                <p-tableHeaderCheckbox />
+              </th>
+            }
             <th class="min-w-56">
               <div class="flex items-center gap-2">
                 <span>Inspector</span>
@@ -161,7 +187,9 @@
         <ng-template pTemplate="loadingbody">
           @for (_ of skeletonItems; track $index) {
             <tr>
-              <td><p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" /></td>
+              @if (canManageInspections()) {
+                <td><p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" /></td>
+              }
               <td>
                 <div class="flex flex-col gap-1.5">
                   <p-skeleton width="10rem" height="0.875rem" />
@@ -183,7 +211,9 @@
         <ng-template pTemplate="body" let-inspection>
           @if (loading()) {
             <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
-              <td><p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" /></td>
+              @if (canManageInspections()) {
+                <td><p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" /></td>
+              }
               <td>
                 <div class="flex flex-col gap-1.5">
                   <p-skeleton width="10rem" height="0.875rem" />
@@ -201,9 +231,11 @@
             </tr>
           } @else {
             <tr>
-              <td>
-                <p-tableCheckbox [value]="inspection" />
-              </td>
+              @if (canManageInspections()) {
+                <td>
+                  <p-tableCheckbox [value]="inspection" />
+                </td>
+              }
               <td>
                 <div class="flex min-w-0 items-center gap-3">
                   <p-avatar
@@ -232,7 +264,7 @@
               <td>
                 @let resultOption = getResultOption(inspection.result);
                 <span
-                  class="inline-flex h-7 items-center gap-1.5 rounded-full border border-surface-200 bg-surface-0 px-2.5 text-xs font-semibold leading-none text-surface-900 dark:border-surface-700 dark:bg-surface-950 dark:text-surface-100"
+                  class="inline-flex h-7 items-center gap-1.5 rounded-full border border-surface-200 bg-surface-0 px-2.5 text-xs font-semibold leading-none text-surface-900 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100"
                 >
                   <i
                     [class]="resultOption.icon + ' inline-flex items-center text-[0.7rem] leading-none'"
@@ -245,7 +277,7 @@
               <td>
                 @let statusOption = getStatusOption(inspection.status);
                 <span
-                  class="inline-flex h-7 items-center gap-1.5 rounded-full border border-surface-200 bg-surface-0 px-2.5 text-xs font-semibold leading-none text-surface-900 dark:border-surface-700 dark:bg-surface-950 dark:text-surface-100"
+                  class="inline-flex h-7 items-center gap-1.5 rounded-full border border-surface-200 bg-surface-0 px-2.5 text-xs font-semibold leading-none text-surface-900 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100"
                 >
                   <i
                     [class]="statusOption.icon + ' inline-flex items-center text-[0.7rem] leading-none'"
@@ -258,7 +290,7 @@
               <td class="text-right">
                 @if (inspection.nonConformitiesCount > 0) {
                   <span
-                    class="inline-flex h-7 items-center gap-1.5 rounded-full border border-surface-200 bg-surface-0 px-2.5 text-xs font-semibold leading-none text-surface-900 dark:border-surface-700 dark:bg-surface-950 dark:text-surface-100"
+                    class="inline-flex h-7 items-center gap-1.5 rounded-full border border-surface-200 bg-surface-0 px-2.5 text-xs font-semibold leading-none text-surface-900 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100"
                   >
                     <i
                       class="pi pi-exclamation-circle inline-flex items-center text-[0.7rem] leading-none text-red-500"
@@ -293,7 +325,7 @@
 
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td [attr.colspan]="canManageInspections() ? 8 : 7">
+            <td [attr.colspan]="canManageInspections() ? 8 : 6">
               <div class="flex flex-col items-center gap-3 py-16">
                 <i class="pi pi-search text-6xl text-surface-400"></i>
                 <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">

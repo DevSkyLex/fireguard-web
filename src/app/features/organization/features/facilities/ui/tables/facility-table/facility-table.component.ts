@@ -20,13 +20,13 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
+import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { Menu, MenuModule } from 'primeng/menu';
-import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
@@ -34,28 +34,31 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/services/hydra-api';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
-  EquipmentOutput,
-  EquipmentStatus,
-} from '@features/organization/features/equipments/models';
+  FacilityOutput,
+  FacilityStatus,
+  FacilityType,
+} from '@features/organization/features/facilities/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import type { EquipmentStatusOption } from './models';
+import type { FacilityStatusOption, FacilityTypeIconMap } from './models';
 
 /**
- * Component FacilityEquipmentTable
- * @class FacilityEquipmentTable
+ * Component FacilityTable
+ * @class FacilityTable
  *
  * @description
- * Facility-scoped equipment table with lazy loading, pagination, sorting,
- * and local filter controls. The component only emits table query options;
- * the parent facility tab owns the actual facility ID injection and store load.
+ * Presentational table component that displays a paginated, lazy-loaded list
+ * of root facilities. It owns local search, pagination, sorting, and row menu
+ * state while delegating data loading and mutations to the parent page through
+ * output emitters.
  *
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-facility-equipment-table',
+  selector: 'app-facility-table',
   imports: [
+    AvatarModule,
     ButtonModule,
     CardModule,
     DatePipe,
@@ -64,38 +67,36 @@ import type { EquipmentStatusOption } from './models';
     InputTextModule,
     MenuModule,
     ReactiveFormsModule,
-    SelectModule,
     SkeletonModule,
     SplitButtonModule,
     TableModule,
   ],
-  templateUrl: './facility-equipment-table.component.html',
+  templateUrl: './facility-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FacilityEquipmentTable implements OnInit {
+export class FacilityTable implements OnInit {
   //#region Inputs
   /**
-   * Input equipments
+   * Input facilities
    * @readonly
    *
    * @description
-   * Equipment rows currently displayed by the table.
+   * Root facility rows currently displayed by the table.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<readonly EquipmentOutput[]>}
+   * @type {InputSignal<readonly FacilityOutput[]>}
    */
-  public readonly equipments: InputSignal<readonly EquipmentOutput[]> =
-    input.required<readonly EquipmentOutput[]>();
+  public readonly facilities: InputSignal<readonly FacilityOutput[]> =
+    input.required<readonly FacilityOutput[]>();
 
   /**
    * Input total
    * @readonly
    *
    * @description
-   * Total number of facility equipment records matching the current query.
-   * Used by PrimeNG pagination to compute available pages.
+   * Total number of root facilities matching the current query.
    *
    * @access public
    * @since 1.0.0
@@ -109,8 +110,7 @@ export class FacilityEquipmentTable implements OnInit {
    * @readonly
    *
    * @description
-   * Whether the table is waiting for equipment data. Disables filters and
-   * displays skeleton rows while the parent tab loads the page.
+   * Whether the facility list is currently loading.
    *
    * @access public
    * @since 1.0.0
@@ -124,8 +124,7 @@ export class FacilityEquipmentTable implements OnInit {
    * @readonly
    *
    * @description
-   * Whether the current query has no facility equipment rows. Used to render
-   * the empty-state template instead of stale row data.
+   * Whether the current query has no root facility rows.
    *
    * @access public
    * @since 1.0.0
@@ -139,8 +138,7 @@ export class FacilityEquipmentTable implements OnInit {
    * @readonly
    *
    * @description
-   * One-based page restored by the parent tab when the facility detail view
-   * keeps the current table state. Values lower than 1 are normalized to 1.
+   * One-based page restored from the parent route query parameter.
    *
    * @access public
    * @since 1.0.0
@@ -159,9 +157,7 @@ export class FacilityEquipmentTable implements OnInit {
    * @readonly
    *
    * @description
-   * Emits lazy-load options built from pagination, sorting, and filters.
-   * The parent tab enriches these options with the active facility ID before
-   * delegating to the equipment store.
+   * Emits normalized lazy-load request options for the parent store.
    *
    * @access public
    * @since 1.0.0
@@ -175,8 +171,7 @@ export class FacilityEquipmentTable implements OnInit {
    * @readonly
    *
    * @description
-   * Emits the one-based page selected by the user after PrimeNG has completed
-   * the first lazy-load cycle.
+   * Emits the one-based page selected by the user.
    *
    * @access public
    * @since 1.0.0
@@ -186,11 +181,39 @@ export class FacilityEquipmentTable implements OnInit {
   public readonly pageChange: OutputEmitterRef<number> = output<number>();
 
   /**
+   * Output view
+   * @readonly
+   *
+   * @description
+   * Emits the facility selected for detail navigation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<FacilityOutput>}
+   */
+  public readonly view: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
+
+  /**
+   * Output edit
+   * @readonly
+   *
+   * @description
+   * Emits the facility selected for edit navigation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<FacilityOutput>}
+   */
+  public readonly edit: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
+
+  /**
    * Output add
    * @readonly
    *
    * @description
-   * Requests navigation to the facility-aware equipment creation flow.
+   * Requests navigation to facility creation.
    *
    * @access public
    * @since 1.0.0
@@ -200,50 +223,18 @@ export class FacilityEquipmentTable implements OnInit {
   public readonly add: OutputEmitterRef<void> = output<void>();
 
   /**
-   * Output edit
+   * Output archive
    * @readonly
    *
    * @description
-   * Emits the equipment selected from the row action menu when the user
-   * requests an edit flow. The parent decides how to route or open the editor.
+   * Emits the facility selected for archival.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {OutputEmitterRef<EquipmentOutput>}
+   * @type {OutputEmitterRef<FacilityOutput>}
    */
-  public readonly edit: OutputEmitterRef<EquipmentOutput> = output<EquipmentOutput>();
-
-  /**
-   * Output delete
-   * @readonly
-   *
-   * @description
-   * Emits the equipment selected from the row action menu when the user
-   * requests deletion. The parent owns confirmation and store interaction.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<EquipmentOutput>}
-   */
-  public readonly delete: OutputEmitterRef<EquipmentOutput> = output<EquipmentOutput>();
-
-  /**
-   * Output bulkDelete
-   * @readonly
-   *
-   * @description
-   * Emits the currently selected equipment rows when the user requests a bulk
-   * deletion from the toolbar split button.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<readonly EquipmentOutput[]>}
-   */
-  public readonly bulkDelete: OutputEmitterRef<readonly EquipmentOutput[]> =
-    output<readonly EquipmentOutput[]>();
+  public readonly archive: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
   //#endregion
 
   //#region Properties
@@ -252,8 +243,7 @@ export class FacilityEquipmentTable implements OnInit {
    * @readonly
    *
    * @description
-   * Organization-scoped permission helper used to decide whether equipment
-   * row actions can be displayed.
+   * Permission helper used to gate facility mutation actions.
    *
    * @access private
    * @since 1.0.0
@@ -268,7 +258,7 @@ export class FacilityEquipmentTable implements OnInit {
    * @readonly
    *
    * @description
-   * PrimeNG card pass-through classes used to make the table fill the tab.
+   * PrimeNG card pass-through classes used to make the table fill the page.
    *
    * @access protected
    * @since 1.0.0
@@ -289,8 +279,7 @@ export class FacilityEquipmentTable implements OnInit {
    * @readonly
    *
    * @description
-   * PrimeNG table pass-through classes used for full-height table layout and
-   * paginator alignment.
+   * PrimeNG table pass-through classes used for full-height table layout.
    *
    * @access protected
    * @since 1.0.0
@@ -322,21 +311,21 @@ export class FacilityEquipmentTable implements OnInit {
    * @readonly
    *
    * @description
-   * Default row count per lazy-loaded page.
+   * Default number of facility rows per page.
    *
    * @access protected
    * @since 1.0.0
    *
    * @type {number}
    */
-  protected readonly rows: number = 12;
+  protected readonly rows: number = 30;
 
   /**
    * Property skeletonItems
    * @readonly
    *
    * @description
-   * Placeholder collection used by PrimeNG skeleton rows while loading.
+   * Placeholder collection rendered while loading.
    *
    * @access protected
    * @since 1.0.0
@@ -346,22 +335,50 @@ export class FacilityEquipmentTable implements OnInit {
   protected readonly skeletonItems: undefined[] = Array(this.rows);
 
   /**
-   * Property statusOptions
+   * Property facilityTypeIcons
    * @readonly
    *
    * @description
-   * Status filter choices available for facility equipment.
+   * PrimeIcon mapping used for facility type avatars.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {EquipmentStatusOption[]}
+   * @type {FacilityTypeIconMap}
    */
-  protected readonly statusOptions: EquipmentStatusOption[] = [
-    { label: 'In Stock', value: 'in_stock', icon: PrimeIcons.BOX, color: '#94a3b8' },
-    { label: 'Operational', value: 'operational', icon: PrimeIcons.CHECK_CIRCLE, color: '#22c55e' },
-    { label: 'Maintenance', value: 'under_maintenance', icon: PrimeIcons.WRENCH, color: '#f97316' },
-    { label: 'Decommissioned', value: 'decommissioned', icon: PrimeIcons.BAN, color: '#ef4444' },
+  protected readonly facilityTypeIcons: FacilityTypeIconMap = {
+    site: PrimeIcons.GLOBE,
+    building: PrimeIcons.BUILDING,
+    floor: PrimeIcons.TH_LARGE,
+    zone: PrimeIcons.MAP,
+    area: PrimeIcons.MAP_MARKER,
+  };
+
+  /**
+   * Property statusOptions
+   * @readonly
+   *
+   * @description
+   * Visual options used to render facility status badges.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FacilityStatusOption[]}
+   */
+  protected readonly statusOptions: FacilityStatusOption[] = [
+    {
+      label: 'Active',
+      value: 'active',
+      icon: PrimeIcons.CHECK_CIRCLE,
+      color: '#22c55e'
+    },
+    {
+      label: 'Archived',
+      value: 'archived',
+      icon: PrimeIcons.BOX,
+      color: '#64748b'
+    },
   ];
 
   /**
@@ -379,37 +396,6 @@ export class FacilityEquipmentTable implements OnInit {
   protected readonly searchControl: FormControl<string> = new FormControl<string>('', {
     nonNullable: true,
   });
-
-  /**
-   * Property statusControl
-   * @readonly
-   *
-   * @description
-   * Equipment status filter forwarded as the `status` query parameter.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {FormControl<EquipmentStatus | null>}
-   */
-  protected readonly statusControl: FormControl<EquipmentStatus | null> =
-    new FormControl<EquipmentStatus | null>(null);
-
-  /**
-   * Property selectedEquipments
-   * @readonly
-   *
-   * @description
-   * Equipment rows currently selected through the table checkbox column.
-   * Stored as a signal so toolbar bulk actions can react to selection changes.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {WritableSignal<EquipmentOutput[]>}
-   */
-  protected readonly selectedEquipments: WritableSignal<EquipmentOutput[]> =
-    signal<EquipmentOutput[]>([]);
 
   /**
    * Property toolbarActions
@@ -434,115 +420,104 @@ export class FacilityEquipmentTable implements OnInit {
       icon: PrimeIcons.FILTER_SLASH,
       command: (): void => this.onClearFilters(),
     },
-    ...(this.selectedEquipments().length > 0
-      ? [
-          {
-            label: 'Clear selection',
-            icon: PrimeIcons.TIMES,
-            command: (): void => this.onClearSelection(),
-          },
-        ]
-      : []),
-    ...(this.canManageEquipment()
-      ? [
-          { separator: true },
-          {
-            label: `Delete selected (${this.selectedEquipments().length})`,
-            icon: PrimeIcons.TRASH,
-            disabled: this.selectedEquipments().length === 0,
-            styleClass: 'text-red-500',
-            command: (): void => this.onBulkDelete(),
-          },
-        ]
-      : []),
   ]);
 
   /**
-   * Property canManageEquipment
+   * Property canManageFacilities
    * @readonly
    *
    * @description
-   * Whether the authenticated organization member can access equipment row
-   * mutation actions such as edit and delete.
+   * Whether the member can create, edit, or archive facilities.
    *
    * @access protected
    * @since 1.0.0
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canManageEquipment: Signal<boolean> = computed((): boolean =>
-    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_WRITE),
+  protected readonly canManageFacilities: Signal<boolean> = computed((): boolean =>
+    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_WRITE),
   );
 
   /**
-   * Property actionMenu
+   * Property rowMenu
    * @readonly
    *
    * @description
-   * Shared popup menu used by equipment rows for contextual actions.
+   * Shared popup menu used by facility rows for contextual actions.
    *
    * @access private
    * @since 1.0.0
    *
    * @type {Signal<Menu>}
    */
-  private readonly actionMenu: Signal<Menu> = viewChild.required<Menu>('actionMenu');
+  private readonly rowMenu: Signal<Menu> = viewChild.required<Menu>('rowMenu');
 
   /**
-   * Property selectedEquipment
+   * Property selectedFacility
    * @readonly
    *
    * @description
-   * Equipment row currently targeted by the shared action menu.
+   * Facility currently targeted by the row menu.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {WritableSignal<EquipmentOutput | null>}
+   * @type {WritableSignal<FacilityOutput | null>}
    */
-  private readonly selectedEquipment: WritableSignal<EquipmentOutput | null> =
-    signal<EquipmentOutput | null>(null);
+  private readonly selectedFacility: WritableSignal<FacilityOutput | null> =
+    signal<FacilityOutput | null>(null);
 
   /**
-   * Property actionMenuItems
+   * Property rowMenuItems
    * @readonly
    *
    * @description
-   * Menu items shown for the currently selected equipment row. Items are
-   * hidden unless the member has the equipment write permission.
+   * Contextual row actions for the selected facility.
    *
    * @access protected
    * @since 1.0.0
    *
    * @type {Signal<MenuItem[]>}
    */
-  protected readonly actionMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
-    const equipment: EquipmentOutput | null = this.selectedEquipment();
+  protected readonly rowMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
+    const facility: FacilityOutput | null = this.selectedFacility();
 
-    if (!equipment || !this.canManageEquipment()) {
+    if (!facility) {
       return [];
     }
 
     return [
       {
-        label: 'Edit',
-        icon: PrimeIcons.PENCIL,
-        command: (): void => this.edit.emit(equipment),
+        label: 'View',
+        icon: PrimeIcons.EYE,
+        command: (): void => this.view.emit(facility),
       },
-      {
-        label: 'Delete',
-        icon: PrimeIcons.TRASH,
-        styleClass: 'text-red-500',
-        command: (): void => this.delete.emit(equipment),
-      },
+      ...(this.canManageFacilities()
+        ? [
+            {
+              label: 'Edit',
+              icon: PrimeIcons.PENCIL,
+              command: (): void => this.edit.emit(facility),
+            },
+            { separator: true },
+            {
+              label: facility.status === 'active' ? 'Archive' : 'Archived',
+              icon: PrimeIcons.BOX,
+              styleClass: 'text-red-500',
+              disabled: facility.status === 'archived',
+              command: (): void => this.archive.emit(facility),
+            },
+          ]
+        : []),
     ];
   });
 
   /**
    * Property firstPage
+   * @readonly
    *
    * @description
-   * Zero-based row offset consumed by PrimeNG for the initial page.
+   * Zero-based row offset consumed by PrimeNG for the current page.
    *
    * @access protected
    * @since 1.0.0
@@ -555,8 +530,7 @@ export class FacilityEquipmentTable implements OnInit {
    * Property initialized
    *
    * @description
-   * Tracks whether PrimeNG has already emitted the initial lazy-load event.
-   * Prevents the initial load from being reported as a user page change.
+   * Tracks whether PrimeNG has emitted the initial lazy-load event.
    *
    * @access private
    * @since 1.0.0
@@ -570,7 +544,7 @@ export class FacilityEquipmentTable implements OnInit {
    * @readonly
    *
    * @description
-   * Last table lazy-load event reused when filters trigger a reload.
+   * Last lazy-load event reused when filters trigger a reload.
    *
    * @access private
    * @since 1.0.0
@@ -586,22 +560,18 @@ export class FacilityEquipmentTable implements OnInit {
    * Constructor
    *
    * @description
-   * Registers filter subscriptions and disables controls while loading.
+   * Registers search subscriptions and disables controls while loading.
    */
   public constructor() {
     this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(() => this.reload());
 
-    this.statusControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.reload());
-
     effect(() => {
       if (this.loading()) {
         this.searchControl.disable({ emitEvent: false });
-        this.statusControl.disable({ emitEvent: false });
       } else {
         this.searchControl.enable({ emitEvent: false });
-        this.statusControl.enable({ emitEvent: false });
       }
     });
   }
@@ -630,13 +600,12 @@ export class FacilityEquipmentTable implements OnInit {
    * Method onLazyLoad
    *
    * @description
-   * Handles PrimeNG lazy-load events and emits the normalized request options
-   * expected by the parent facility tab.
+   * Handles PrimeNG lazy-load events and emits normalized request options.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {TableLazyLoadEvent} event PrimeNG lazy-load event containing paging and sorting data.
+   * @param {TableLazyLoadEvent} event PrimeNG lazy-load event.
    *
    * @returns {void}
    */
@@ -644,22 +613,13 @@ export class FacilityEquipmentTable implements OnInit {
     const first: number = event.first ?? 0;
     const rowsPerPage: number = event.rows ?? this.rows;
     const page: number = Math.floor(first / rowsPerPage) + 1;
-    const previousEvent: TableLazyLoadEvent | null = this.lastLazyEvent();
-    const shouldClearSelection: boolean =
-      this.initialized && this.hasLazyEventChanged(previousEvent, event);
     const params: Record<string, string | number | boolean> = {};
     const search: string = this.searchControl.value.trim();
-    const status: EquipmentStatus | null = this.statusControl.value;
 
     this.firstPage.set(first);
     this.lastLazyEvent.set(event);
 
-    if (shouldClearSelection) {
-      this.onClearSelection();
-    }
-
     if (search) params['search'] = search;
-    if (status) params['status'] = status;
     this.appendSortParams(params, event);
 
     this.load.emit({
@@ -702,125 +662,84 @@ export class FacilityEquipmentTable implements OnInit {
    */
   protected onClearFilters(): void {
     this.searchControl.setValue('', { emitEvent: false });
-    this.statusControl.setValue(null, { emitEvent: false });
     this.reload();
   }
 
   /**
-   * Method onClearSelection
+   * Method onRowMenuToggle
    *
    * @description
-   * Clears the current checkbox selection without reloading the table.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected onClearSelection(): void {
-    this.selectedEquipments.set([]);
-  }
-
-  /**
-   * Method onBulkDelete
-   *
-   * @description
-   * Emits selected equipment rows when the user triggers the bulk delete
-   * toolbar action.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected onBulkDelete(): void {
-    const selectedEquipments: EquipmentOutput[] = this.selectedEquipments();
-
-    if (selectedEquipments.length === 0 || !this.canManageEquipment()) {
-      return;
-    }
-
-    this.bulkDelete.emit(selectedEquipments);
-  }
-
-  /**
-   * Method onActionMenuToggle
-   *
-   * @description
-   * Stores the targeted equipment row and toggles the shared action menu.
+   * Stores the targeted facility and toggles the shared row menu.
    *
    * @access protected
    * @since 1.0.0
    *
    * @param {MouseEvent} event Click event emitted by the row action button.
-   * @param {EquipmentOutput} equipment Equipment row targeted by the menu.
+   * @param {FacilityOutput} facility Facility targeted by the menu.
    *
    * @returns {void}
    */
-  protected onActionMenuToggle(event: MouseEvent, equipment: EquipmentOutput): void {
-    this.selectedEquipment.set(equipment);
-    this.actionMenu().toggle(event);
-  }
-
-  /**
-   * Method getEquipmentTitle
-   *
-   * @description
-   * Builds the main equipment label from type and subtype.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {EquipmentOutput} equipment Equipment row rendered by the table.
-   *
-   * @returns {string} Display title for the equipment row.
-   */
-  protected getEquipmentTitle(equipment: EquipmentOutput): string {
-    const typeLabel: string = this.toDisplayLabel(equipment.type);
-    const subTypeLabel: string = this.toDisplayLabel(equipment.subType);
-
-    return subTypeLabel ? `${typeLabel} / ${subTypeLabel}` : typeLabel;
-  }
-
-  /**
-   * Method getReference
-   *
-   * @description
-   * Builds a compact brand/model reference label.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {EquipmentOutput} equipment Equipment row rendered by the table.
-   *
-   * @returns {string} Equipment reference label or fallback text.
-   */
-  protected getReference(equipment: EquipmentOutput): string {
-    return [equipment.brand, equipment.model].filter(Boolean).join(' ').trim() || 'No reference';
+  protected onRowMenuToggle(event: MouseEvent, facility: FacilityOutput): void {
+    this.selectedFacility.set(facility);
+    this.rowMenu().toggle(event);
   }
 
   /**
    * Method getStatusOption
    *
    * @description
-   * Resolves the visual badge option matching an equipment status.
+   * Resolves the visual badge option matching a facility status.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @param {EquipmentStatus} status API equipment status.
+   * @param {FacilityStatus} status API facility status.
    *
-   * @returns {EquipmentStatusOption} Matching status badge option.
+   * @returns {FacilityStatusOption} Matching status badge option.
    */
-  protected getStatusOption(status: EquipmentStatus): EquipmentStatusOption {
+  protected getStatusOption(status: FacilityStatus): FacilityStatusOption {
     return (
-      this.statusOptions.find((option: EquipmentStatusOption): boolean => option.value === status) ?? {
+      this.statusOptions.find((option: FacilityStatusOption): boolean => option.value === status) ?? {
         label: this.toDisplayLabel(status),
         value: status,
         icon: PrimeIcons.CIRCLE,
         color: '#64748b',
       }
     );
+  }
+
+  /**
+   * Method getTypeIcon
+   *
+   * @description
+   * Resolves the PrimeIcon matching a facility type.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {FacilityType} type Facility type.
+   *
+   * @returns {string} PrimeIcon class.
+   */
+  protected getTypeIcon(type: FacilityType): string {
+    return this.facilityTypeIcons[type] ?? PrimeIcons.MAP_MARKER;
+  }
+
+  /**
+   * Method getChildrenLabel
+   *
+   * @description
+   * Formats the hierarchy children indicator.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {FacilityOutput} facility Facility rendered by the table.
+   *
+   * @returns {string} Children indicator label.
+   */
+  protected getChildrenLabel(facility: FacilityOutput): string {
+    return facility.hasChildren ? 'Has children' : 'Leaf';
   }
 
   /**
@@ -835,7 +754,6 @@ export class FacilityEquipmentTable implements OnInit {
    * @returns {void}
    */
   private reload(): void {
-    this.onClearSelection();
     this.firstPage.set(0);
 
     const event: TableLazyLoadEvent = this.lastLazyEvent() ?? {
@@ -851,36 +769,6 @@ export class FacilityEquipmentTable implements OnInit {
   }
 
   /**
-   * Method hasLazyEventChanged
-   *
-   * @description
-   * Checks whether a lazy-load event targets a different table dataset.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @param {TableLazyLoadEvent | null} previousEvent Previous lazy-load event.
-   * @param {TableLazyLoadEvent} event Current lazy-load event.
-   *
-   * @returns {boolean} Whether the table dataset changed.
-   */
-  private hasLazyEventChanged(
-    previousEvent: TableLazyLoadEvent | null,
-    event: TableLazyLoadEvent,
-  ): boolean {
-    if (!previousEvent) {
-      return false;
-    }
-
-    return (
-      (previousEvent.first ?? 0) !== (event.first ?? 0) ||
-      (previousEvent.rows ?? this.rows) !== (event.rows ?? this.rows) ||
-      previousEvent.sortOrder !== event.sortOrder ||
-      this.getSortField(previousEvent) !== this.getSortField(event)
-    );
-  }
-
-  /**
    * Method appendSortParams
    *
    * @description
@@ -889,8 +777,8 @@ export class FacilityEquipmentTable implements OnInit {
    * @access private
    * @since 1.0.0
    *
-   * @param {Record<string, string | number | boolean>} params Request parameter object to enrich.
-   * @param {TableLazyLoadEvent} event PrimeNG lazy-load event containing sort metadata.
+   * @param {Record<string, string | number | boolean>} params Request parameter object.
+   * @param {TableLazyLoadEvent} event PrimeNG lazy-load event.
    *
    * @returns {void}
    */
@@ -933,9 +821,9 @@ export class FacilityEquipmentTable implements OnInit {
    * @access private
    * @since 1.0.0
    *
-   * @param {string | null | undefined} value Raw enum-like API value.
+   * @param {string | null | undefined} value Raw enum-like value.
    *
-   * @returns {string} Human-readable title-cased label.
+   * @returns {string} Human-readable label.
    */
   private toDisplayLabel(value: string | null | undefined): string {
     if (!value) return '';

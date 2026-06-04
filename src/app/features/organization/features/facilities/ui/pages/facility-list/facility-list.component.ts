@@ -17,7 +17,7 @@ import {
   FacilitySitesMetric,
   FacilitySubSitesMetric,
 } from '@features/organization/features/facilities/ui/components';
-import { FacilityDataview } from '@features/organization/features/facilities/ui/dataviews';
+import { FacilityTable } from '@features/organization/features/facilities/ui/tables';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
@@ -37,7 +37,7 @@ import { ActiveOrganizationStore } from '@features/organization/state';
   imports: [
     RouterModule,
     ButtonModule,
-    FacilityDataview,
+    FacilityTable,
     FacilitySitesMetric,
     FacilityActiveMetric,
     FacilityArchivedMetric,

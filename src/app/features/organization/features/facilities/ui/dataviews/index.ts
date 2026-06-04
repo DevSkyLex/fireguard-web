@@ -1,4 +1,3 @@
-export { FacilityDataview } from './facility-dataview';
 export { FacilityEquipmentDataview } from './facility-equipment-dataview';
 export {
 	FacilityInspectionDataview,

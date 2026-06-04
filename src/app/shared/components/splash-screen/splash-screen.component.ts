@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SPLASH_SCREEN_PORT, type SplashScreenPort } from '@core/ports/splash-screen';
+import { ProgressSpinnerPassThroughOptions } from 'primeng/types/progressspinner';
 
 /**
  * Constant FADE_DURATION_MS
@@ -91,6 +92,33 @@ export class SplashScreen {
    * @type {WritableSignal<boolean>}
    */
   protected readonly hiding: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property progressSpinnerPt
+   * @readonly
+   *
+   * @description
+   * Pass-through options for the progress spinner to
+   * apply custom styles.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {ProgressSpinnerPassThroughOptions}
+   */
+  protected readonly progressSpinnerPt: ProgressSpinnerPassThroughOptions = {
+    root: {
+      color: {
+        one: 'text-primary-500/25',
+        two: 'text-primary-500',
+        three: 'text-primary-500/75',
+      }
+    },
+    circle: {
+      class: 'text-primary-500',
+      stoleWidth: '4',
+    },
+  };
   //#endregion
 
   //#region Constructor

@@ -4,6 +4,7 @@ import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
+import { OrganizationPermissionService } from '@features/organization/access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { FacilityListPage } from '../facility-list.component';
@@ -70,6 +71,10 @@ describe('FacilityListPage', () => {
       providers: [
         provideRouter([]),
         { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
+        {
+          provide: OrganizationPermissionService,
+          useValue: { hasPermission: vi.fn(() => true) },
+        },
       ],
     }).overrideComponent(FacilityListPage, {
       set: { providers: [{ provide: FacilityStore, useValue: mockFacilityStore }] },

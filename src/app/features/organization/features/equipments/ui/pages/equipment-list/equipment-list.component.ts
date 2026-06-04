@@ -15,7 +15,7 @@ import {
   EquipmentInStockMetric,
   EquipmentMaintenanceMetric,
 } from '@features/organization/features/equipments/ui/components';
-import { EquipmentTable } from '@features/organization/features/equipments/ui/dataviews';
+import { EquipmentTable } from '@features/organization/features/equipments/ui/tables';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**

@@ -27,6 +27,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { Menu, MenuModule } from 'primeng/menu';
+import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
@@ -34,29 +35,29 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/services/hydra-api';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
-  FacilityOutput,
-  FacilityStatus,
-  FacilityType,
-} from '@features/organization/features/facilities/models';
+  InspectionOutput,
+  InspectionResult,
+  InspectionStatus,
+} from '@features/organization/features/inspections/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import type { FacilityStatusOption, FacilityTypeIconMap } from './models';
+import type { InspectionFilterOption } from './models';
 
 /**
- * Component FacilityTable
- * @class FacilityTable
+ * Component InspectionTable
+ * @class InspectionTable
  *
  * @description
  * Presentational table component that displays a paginated, lazy-loaded list
- * of root facilities. It owns local search, pagination, sorting, and row menu
- * state while delegating data loading and mutations to the parent page through
- * output emitters.
+ * of organization inspections. It owns local search, result/status filters,
+ * pagination, sorting, selection, and row action menu state while delegating
+ * data loading and mutations to the parent page through output emitters.
  *
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-facility-table',
+  selector: 'app-inspection-table',
   imports: [
     AvatarModule,
     ButtonModule,
@@ -67,36 +68,37 @@ import type { FacilityStatusOption, FacilityTypeIconMap } from './models';
     InputTextModule,
     MenuModule,
     ReactiveFormsModule,
+    SelectModule,
     SkeletonModule,
     SplitButtonModule,
     TableModule,
   ],
-  templateUrl: './facility-table.component.html',
+  templateUrl: './inspection-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FacilityTable implements OnInit {
+export class InspectionTable implements OnInit {
   //#region Inputs
   /**
-   * Input facilities
+   * Input inspections
    * @readonly
    *
    * @description
-   * Root facility rows currently displayed by the table.
+   * Inspection rows currently displayed by the table.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<readonly FacilityOutput[]>}
+   * @type {InputSignal<readonly InspectionOutput[]>}
    */
-  public readonly facilities: InputSignal<readonly FacilityOutput[]> =
-    input.required<readonly FacilityOutput[]>();
+  public readonly inspections: InputSignal<readonly InspectionOutput[]> =
+    input.required<readonly InspectionOutput[]>();
 
   /**
    * Input total
    * @readonly
    *
    * @description
-   * Total number of root facilities matching the current query.
+   * Total number of inspection records matching the current query.
    *
    * @access public
    * @since 1.0.0
@@ -110,7 +112,7 @@ export class FacilityTable implements OnInit {
    * @readonly
    *
    * @description
-   * Whether the facility list is currently loading.
+   * Whether the inspection list is currently loading.
    *
    * @access public
    * @since 1.0.0
@@ -124,7 +126,7 @@ export class FacilityTable implements OnInit {
    * @readonly
    *
    * @description
-   * Whether the current query has no root facility rows.
+   * Whether the current query has no inspection rows.
    *
    * @access public
    * @since 1.0.0
@@ -181,39 +183,11 @@ export class FacilityTable implements OnInit {
   public readonly pageChange: OutputEmitterRef<number> = output<number>();
 
   /**
-   * Output view
-   * @readonly
-   *
-   * @description
-   * Emits the facility selected for detail navigation.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<FacilityOutput>}
-   */
-  public readonly view: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
-
-  /**
-   * Output edit
-   * @readonly
-   *
-   * @description
-   * Emits the facility selected for edit navigation.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<FacilityOutput>}
-   */
-  public readonly edit: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
-
-  /**
    * Output add
    * @readonly
    *
    * @description
-   * Requests navigation to facility creation.
+   * Requests navigation to inspection creation.
    *
    * @access public
    * @since 1.0.0
@@ -223,34 +197,47 @@ export class FacilityTable implements OnInit {
   public readonly add: OutputEmitterRef<void> = output<void>();
 
   /**
-   * Output archive
+   * Output edit
    * @readonly
    *
    * @description
-   * Emits the facility selected for archival.
+   * Emits the inspection selected from the row action menu for editing.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {OutputEmitterRef<FacilityOutput>}
+   * @type {OutputEmitterRef<InspectionOutput>}
    */
-  public readonly archive: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
+  public readonly edit: OutputEmitterRef<InspectionOutput> = output<InspectionOutput>();
 
   /**
-   * Output bulkArchive
+   * Output delete
    * @readonly
    *
    * @description
-   * Emits the selected facilities when the user requests a bulk archival from
-   * the toolbar split button.
+   * Emits the inspection selected from the row action menu for deletion.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {OutputEmitterRef<readonly FacilityOutput[]>}
+   * @type {OutputEmitterRef<InspectionOutput>}
    */
-  public readonly bulkArchive: OutputEmitterRef<readonly FacilityOutput[]> =
-    output<readonly FacilityOutput[]>();
+  public readonly delete: OutputEmitterRef<InspectionOutput> = output<InspectionOutput>();
+
+  /**
+   * Output bulkDelete
+   * @readonly
+   *
+   * @description
+   * Emits the selected inspection rows when the bulk delete action is used.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<readonly InspectionOutput[]>}
+   */
+  public readonly bulkDelete: OutputEmitterRef<readonly InspectionOutput[]> =
+    output<readonly InspectionOutput[]>();
   //#endregion
 
   //#region Properties
@@ -259,7 +246,7 @@ export class FacilityTable implements OnInit {
    * @readonly
    *
    * @description
-   * Permission helper used to gate facility mutation actions.
+   * Organization-scoped permission helper used to gate inspection mutations.
    *
    * @access private
    * @since 1.0.0
@@ -283,7 +270,8 @@ export class FacilityTable implements OnInit {
    */
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
-      class: 'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
+      class:
+        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
     },
     body: {
       class: 'p-0 flex flex-col flex-1 min-h-0',
@@ -317,7 +305,7 @@ export class FacilityTable implements OnInit {
     },
     pcPaginator: {
       root: {
-        class: 'mt-auto rounted-t-none rounded-b-2xl bg-surface-0 dark:bg-surface-900 justify-end',
+        class: 'mt-auto rounded-t-none rounded-b-2xl bg-surface-0 dark:bg-surface-900 justify-end',
       },
     },
   };
@@ -327,14 +315,14 @@ export class FacilityTable implements OnInit {
    * @readonly
    *
    * @description
-   * Default number of facility rows per page.
+   * Default number of inspection rows per page.
    *
    * @access protected
    * @since 1.0.0
    *
    * @type {number}
    */
-  protected readonly rows: number = 30;
+  protected readonly rows: number = 12;
 
   /**
    * Property skeletonItems
@@ -351,50 +339,39 @@ export class FacilityTable implements OnInit {
   protected readonly skeletonItems: undefined[] = Array(this.rows);
 
   /**
-   * Property facilityTypeIcons
+   * Property resultOptions
    * @readonly
    *
    * @description
-   * PrimeIcon mapping used for facility type avatars.
+   * Visual options used to render and filter inspection results.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {FacilityTypeIconMap}
+   * @type {InspectionFilterOption<InspectionResult>[]}
    */
-  protected readonly facilityTypeIcons: FacilityTypeIconMap = {
-    site: PrimeIcons.GLOBE,
-    building: PrimeIcons.BUILDING,
-    floor: PrimeIcons.TH_LARGE,
-    zone: PrimeIcons.MAP,
-    area: PrimeIcons.MAP_MARKER,
-  };
+  protected readonly resultOptions: InspectionFilterOption<InspectionResult>[] = [
+    { label: 'Pass', value: 'pass', icon: PrimeIcons.CHECK_CIRCLE, color: '#22c55e' },
+    { label: 'Partial', value: 'partial', icon: PrimeIcons.EXCLAMATION_CIRCLE, color: '#f59e0b' },
+    { label: 'Fail', value: 'fail', icon: PrimeIcons.TIMES_CIRCLE, color: '#ef4444' },
+  ];
 
   /**
    * Property statusOptions
    * @readonly
    *
    * @description
-   * Visual options used to render facility status badges.
+   * Visual options used to render and filter inspection statuses.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {FacilityStatusOption[]}
+   * @type {InspectionFilterOption<InspectionStatus>[]}
    */
-  protected readonly statusOptions: FacilityStatusOption[] = [
-    {
-      label: 'Active',
-      value: 'active',
-      icon: PrimeIcons.CHECK_CIRCLE,
-      color: '#22c55e'
-    },
-    {
-      label: 'Archived',
-      value: 'archived',
-      icon: PrimeIcons.BOX,
-      color: '#64748b'
-    },
+  protected readonly statusOptions: InspectionFilterOption<InspectionStatus>[] = [
+    { label: 'Draft', value: 'draft', icon: PrimeIcons.FILE_EDIT, color: '#3b82f6' },
+    { label: 'Submitted', value: 'submitted', icon: PrimeIcons.SEND, color: '#f59e0b' },
+    { label: 'Closed', value: 'closed', icon: PrimeIcons.LOCK, color: '#64748b' },
   ];
 
   /**
@@ -414,26 +391,56 @@ export class FacilityTable implements OnInit {
   });
 
   /**
-   * Property selectedFacilities
+   * Property resultControl
    * @readonly
    *
    * @description
-   * Facility rows currently selected through the table checkbox column.
+   * Inspection result filter forwarded as the `result` query parameter.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<FacilityOutput[]>}
+   * @type {FormControl<InspectionResult | null>}
    */
-  protected readonly selectedFacilities: WritableSignal<FacilityOutput[]> =
-    signal<FacilityOutput[]>([]);
+  protected readonly resultControl: FormControl<InspectionResult | null> =
+    new FormControl<InspectionResult | null>(null);
+
+  /**
+   * Property statusControl
+   * @readonly
+   *
+   * @description
+   * Inspection status filter forwarded as the `status` query parameter.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FormControl<InspectionStatus | null>}
+   */
+  protected readonly statusControl: FormControl<InspectionStatus | null> =
+    new FormControl<InspectionStatus | null>(null);
+
+  /**
+   * Property selectedInspections
+   * @readonly
+   *
+   * @description
+   * Inspection rows selected through the checkbox column.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<InspectionOutput[]>}
+   */
+  protected readonly selectedInspections: WritableSignal<InspectionOutput[]> =
+    signal<InspectionOutput[]>([]);
 
   /**
    * Property toolbarActions
    * @readonly
    *
    * @description
-   * Split-button actions for refresh and filter reset.
+   * Split-button actions for refresh, filter reset, and permitted bulk actions.
    *
    * @access protected
    * @since 1.0.0
@@ -451,7 +458,7 @@ export class FacilityTable implements OnInit {
       icon: PrimeIcons.FILTER_SLASH,
       command: (): void => this.onClearFilters(),
     },
-    ...(this.selectedFacilities().length > 0
+    ...(this.selectedInspections().length > 0
       ? [
           {
             label: 'Clear selection',
@@ -460,107 +467,96 @@ export class FacilityTable implements OnInit {
           },
         ]
       : []),
-    ...(this.canManageFacilities()
+    ...(this.canManageInspections()
       ? [
           { separator: true },
           {
-            label: `Archive selected (${this.selectedFacilities().length})`,
-            icon: PrimeIcons.BOX,
-            disabled: this.selectedFacilities().length === 0,
+            label: `Delete selected (${this.selectedInspections().length})`,
+            icon: PrimeIcons.TRASH,
+            disabled: this.selectedInspections().length === 0,
             styleClass: 'text-red-500',
-            command: (): void => this.onBulkArchive(),
+            command: (): void => this.onBulkDelete(),
           },
         ]
       : []),
   ]);
 
   /**
-   * Property canManageFacilities
+   * Property canManageInspections
    * @readonly
    *
    * @description
-   * Whether the member can create, edit, or archive facilities.
+   * Whether the member can create, edit, or delete inspections.
    *
    * @access protected
    * @since 1.0.0
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canManageFacilities: Signal<boolean> = computed((): boolean =>
-    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_WRITE),
+  protected readonly canManageInspections: Signal<boolean> = computed((): boolean =>
+    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_WRITE),
   );
 
   /**
-   * Property rowMenu
+   * Property actionMenu
    * @readonly
    *
    * @description
-   * Shared popup menu used by facility rows for contextual actions.
+   * Shared popup menu used by inspection rows for contextual actions.
    *
    * @access private
    * @since 1.0.0
    *
    * @type {Signal<Menu>}
    */
-  private readonly rowMenu: Signal<Menu> = viewChild.required<Menu>('rowMenu');
+  private readonly actionMenu: Signal<Menu> = viewChild.required<Menu>('actionMenu');
 
   /**
-   * Property selectedFacility
+   * Property selectedInspection
    * @readonly
    *
    * @description
-   * Facility currently targeted by the row menu.
+   * Inspection row currently targeted by the action menu.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {WritableSignal<FacilityOutput | null>}
+   * @type {WritableSignal<InspectionOutput | null>}
    */
-  private readonly selectedFacility: WritableSignal<FacilityOutput | null> =
-    signal<FacilityOutput | null>(null);
+  private readonly selectedInspection: WritableSignal<InspectionOutput | null> =
+    signal<InspectionOutput | null>(null);
 
   /**
-   * Property rowMenuItems
+   * Property actionMenuItems
    * @readonly
    *
    * @description
-   * Contextual row actions for the selected facility.
+   * Row action menu items, hidden unless the member has write permission.
    *
    * @access protected
    * @since 1.0.0
    *
    * @type {Signal<MenuItem[]>}
    */
-  protected readonly rowMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
-    const facility: FacilityOutput | null = this.selectedFacility();
+  protected readonly actionMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
+    const inspection: InspectionOutput | null = this.selectedInspection();
 
-    if (!facility) {
+    if (!inspection || !this.canManageInspections()) {
       return [];
     }
 
     return [
       {
-        label: 'View',
-        icon: PrimeIcons.EYE,
-        command: (): void => this.view.emit(facility),
+        label: 'Edit',
+        icon: PrimeIcons.PENCIL,
+        command: (): void => this.edit.emit(inspection),
       },
-      ...(this.canManageFacilities()
-        ? [
-            {
-              label: 'Edit',
-              icon: PrimeIcons.PENCIL,
-              command: (): void => this.edit.emit(facility),
-            },
-            { separator: true },
-            {
-              label: facility.status === 'active' ? 'Archive' : 'Archived',
-              icon: PrimeIcons.BOX,
-              styleClass: 'text-red-500',
-              disabled: facility.status === 'archived',
-              command: (): void => this.archive.emit(facility),
-            },
-          ]
-        : []),
+      {
+        label: 'Delete',
+        icon: PrimeIcons.TRASH,
+        styleClass: 'text-red-500',
+        command: (): void => this.delete.emit(inspection),
+      },
     ];
   });
 
@@ -612,18 +608,25 @@ export class FacilityTable implements OnInit {
    * Constructor
    *
    * @description
-   * Registers search subscriptions and disables controls while loading.
+   * Registers filter subscriptions and disables controls while loading.
    */
   public constructor() {
     this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(() => this.reload());
 
+    this.resultControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.reload());
+    this.statusControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.reload());
+
     effect(() => {
       if (this.loading()) {
         this.searchControl.disable({ emitEvent: false });
+        this.resultControl.disable({ emitEvent: false });
+        this.statusControl.disable({ emitEvent: false });
       } else {
         this.searchControl.enable({ emitEvent: false });
+        this.resultControl.enable({ emitEvent: false });
+        this.statusControl.enable({ emitEvent: false });
       }
     });
   }
@@ -670,6 +673,8 @@ export class FacilityTable implements OnInit {
       this.initialized && this.hasLazyEventChanged(previousEvent, event);
     const params: Record<string, string | number | boolean> = {};
     const search: string = this.searchControl.value.trim();
+    const result: InspectionResult | null = this.resultControl.value;
+    const status: InspectionStatus | null = this.statusControl.value;
 
     this.firstPage.set(first);
     this.lastLazyEvent.set(event);
@@ -679,6 +684,8 @@ export class FacilityTable implements OnInit {
     }
 
     if (search) params['search'] = search;
+    if (result) params['result'] = result;
+    if (status) params['status'] = status;
     this.appendSortParams(params, event);
 
     this.load.emit({
@@ -721,6 +728,8 @@ export class FacilityTable implements OnInit {
    */
   protected onClearFilters(): void {
     this.searchControl.setValue('', { emitEvent: false });
+    this.resultControl.setValue(null, { emitEvent: false });
+    this.statusControl.setValue(null, { emitEvent: false });
     this.reload();
   }
 
@@ -736,65 +745,153 @@ export class FacilityTable implements OnInit {
    * @returns {void}
    */
   protected onClearSelection(): void {
-    this.selectedFacilities.set([]);
+    this.selectedInspections.set([]);
   }
 
   /**
-   * Method onBulkArchive
+   * Method onBulkDelete
    *
    * @description
-   * Emits selected facilities when the user triggers the bulk archive action.
+   * Emits selected inspection rows when the bulk delete action is triggered.
    *
    * @access protected
    * @since 1.0.0
    *
    * @returns {void}
    */
-  protected onBulkArchive(): void {
-    const selectedFacilities: FacilityOutput[] = this.selectedFacilities();
+  protected onBulkDelete(): void {
+    const selectedInspections: InspectionOutput[] = this.selectedInspections();
 
-    if (selectedFacilities.length === 0 || !this.canManageFacilities()) {
+    if (selectedInspections.length === 0 || !this.canManageInspections()) {
       return;
     }
 
-    this.bulkArchive.emit(selectedFacilities);
+    this.bulkDelete.emit(selectedInspections);
   }
 
   /**
-   * Method onRowMenuToggle
+   * Method onActionMenuToggle
    *
    * @description
-   * Stores the targeted facility and toggles the shared row menu.
+   * Stores the targeted inspection row and toggles the shared action menu.
    *
    * @access protected
    * @since 1.0.0
    *
    * @param {MouseEvent} event Click event emitted by the row action button.
-   * @param {FacilityOutput} facility Facility targeted by the menu.
+   * @param {InspectionOutput} inspection Inspection row targeted by the menu.
    *
    * @returns {void}
    */
-  protected onRowMenuToggle(event: MouseEvent, facility: FacilityOutput): void {
-    this.selectedFacility.set(facility);
-    this.rowMenu().toggle(event);
+  protected onActionMenuToggle(event: MouseEvent, inspection: InspectionOutput): void {
+    this.selectedInspection.set(inspection);
+    this.actionMenu().toggle(event);
+  }
+
+  /**
+   * Method getInspectorDisplayName
+   *
+   * @description
+   * Returns the embedded inspector display name from first and last name with
+   * the API display name as fallback.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {InspectionOutput} inspection Inspection row rendered by the table.
+   *
+   * @returns {string} Inspector display name or fallback text.
+   */
+  protected getInspectorDisplayName(inspection: InspectionOutput): string {
+    return (
+      [inspection.inspector?.firstName, inspection.inspector?.lastName].filter(Boolean).join(' ') ||
+      inspection.inspector?.displayName ||
+      'Unknown inspector'
+    );
+  }
+
+  /**
+   * Method getInspectorTypeLabel
+   *
+   * @description
+   * Converts the embedded inspector type into a compact display label.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {InspectionOutput} inspection Inspection row rendered by the table.
+   *
+   * @returns {string} Inspector type label or fallback text.
+   */
+  protected getInspectorTypeLabel(inspection: InspectionOutput): string {
+    return this.toDisplayLabel(inspection.inspector?.type) || 'Unknown';
+  }
+
+  /**
+   * Method getInspectorInitials
+   *
+   * @description
+   * Builds initials used by the inspector avatar when no image URL exists.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {InspectionOutput} inspection Inspection row rendered by the table.
+   *
+   * @returns {string} One or two uppercase initials.
+   */
+  protected getInspectorInitials(inspection: InspectionOutput): string {
+    const firstName: string = inspection.inspector?.firstName ?? '';
+    const lastName: string = inspection.inspector?.lastName ?? '';
+    const initials: string = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+
+    return initials || this.getInspectorDisplayName(inspection).charAt(0).toUpperCase() || '?';
+  }
+
+  /**
+   * Method getResultOption
+   *
+   * @description
+   * Resolves the visual badge option matching an inspection result.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {InspectionResult} result API inspection result.
+   *
+   * @returns {InspectionFilterOption<InspectionResult>} Matching result option.
+   */
+  protected getResultOption(result: InspectionResult): InspectionFilterOption<InspectionResult> {
+    return (
+      this.resultOptions.find(
+        (option: InspectionFilterOption<InspectionResult>): boolean => option.value === result,
+      ) ?? {
+        label: this.toDisplayLabel(result),
+        value: result,
+        icon: PrimeIcons.CIRCLE,
+        color: '#64748b',
+      }
+    );
   }
 
   /**
    * Method getStatusOption
    *
    * @description
-   * Resolves the visual badge option matching a facility status.
+   * Resolves the visual badge option matching an inspection status.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @param {FacilityStatus} status API facility status.
+   * @param {InspectionStatus} status API inspection status.
    *
-   * @returns {FacilityStatusOption} Matching status badge option.
+   * @returns {InspectionFilterOption<InspectionStatus>} Matching status option.
    */
-  protected getStatusOption(status: FacilityStatus): FacilityStatusOption {
+  protected getStatusOption(status: InspectionStatus): InspectionFilterOption<InspectionStatus> {
     return (
-      this.statusOptions.find((option: FacilityStatusOption): boolean => option.value === status) ?? {
+      this.statusOptions.find(
+        (option: InspectionFilterOption<InspectionStatus>): boolean => option.value === status,
+      ) ?? {
         label: this.toDisplayLabel(status),
         value: status,
         icon: PrimeIcons.CIRCLE,
@@ -804,37 +901,20 @@ export class FacilityTable implements OnInit {
   }
 
   /**
-   * Method getTypeIcon
+   * Method getFindingsLabel
    *
    * @description
-   * Resolves the PrimeIcon matching a facility type.
+   * Formats the non-conformity count with singular/plural text.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @param {FacilityType} type Facility type.
+   * @param {number} count Non-conformity count.
    *
-   * @returns {string} PrimeIcon class.
+   * @returns {string} Human-readable findings label.
    */
-  protected getTypeIcon(type: FacilityType): string {
-    return this.facilityTypeIcons[type] ?? PrimeIcons.MAP_MARKER;
-  }
-
-  /**
-   * Method getChildrenLabel
-   *
-   * @description
-   * Formats the hierarchy children indicator.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {FacilityOutput} facility Facility rendered by the table.
-   *
-   * @returns {string} Children indicator label.
-   */
-  protected getChildrenLabel(facility: FacilityOutput): string {
-    return facility.hasChildren ? 'Has children' : 'Leaf';
+  protected getFindingsLabel(count: number): string {
+    return `${count} finding${count > 1 ? 's' : ''}`;
   }
 
   /**
@@ -865,33 +945,6 @@ export class FacilityTable implements OnInit {
   }
 
   /**
-   * Method appendSortParams
-   *
-   * @description
-   * Adds PrimeNG sort metadata to Hydra request parameters.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @param {Record<string, string | number | boolean>} params Request parameter object.
-   * @param {TableLazyLoadEvent} event PrimeNG lazy-load event.
-   *
-   * @returns {void}
-   */
-  private appendSortParams(
-    params: Record<string, string | number | boolean>,
-    event: TableLazyLoadEvent,
-  ): void {
-    const sortField: string | null | undefined = this.getSortField(event);
-
-    if (!sortField || !event.sortOrder) {
-      return;
-    }
-
-    params[`order[${sortField}]`] = event.sortOrder === 1 ? 'asc' : 'desc';
-  }
-
-  /**
    * Method hasLazyEventChanged
    *
    * @description
@@ -919,6 +972,33 @@ export class FacilityTable implements OnInit {
       previousEvent.sortOrder !== event.sortOrder ||
       this.getSortField(previousEvent) !== this.getSortField(event)
     );
+  }
+
+  /**
+   * Method appendSortParams
+   *
+   * @description
+   * Adds PrimeNG sort metadata to Hydra request parameters.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {Record<string, string | number | boolean>} params Request parameter object.
+   * @param {TableLazyLoadEvent} event PrimeNG lazy-load event.
+   *
+   * @returns {void}
+   */
+  private appendSortParams(
+    params: Record<string, string | number | boolean>,
+    event: TableLazyLoadEvent,
+  ): void {
+    const sortField: string | null | undefined = this.getSortField(event);
+
+    if (!sortField || !event.sortOrder) {
+      return;
+    }
+
+    params[`order[${sortField}]`] = event.sortOrder === 1 ? 'asc' : 'desc';
   }
 
   /**

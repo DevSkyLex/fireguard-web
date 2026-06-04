@@ -207,6 +207,33 @@ export class FacilityListPage {
   }
 
   /**
+   * Method onBulkArchive
+   * @method onBulkArchive
+   *
+   * @description
+   * Archives the selected facilities via the store.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {readonly FacilityOutput[]} facilities - Selected facilities.
+   *
+   * @returns {void}
+   */
+  public onBulkArchive(facilities: readonly FacilityOutput[]): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+
+    if (!organizationId) {
+      return;
+    }
+
+    for (const facility of facilities) {
+      this.store.archive({ organizationId, facilityId: facility.id });
+    }
+  }
+
+  /**
    * Method onLoad
    * @method onLoad
    *

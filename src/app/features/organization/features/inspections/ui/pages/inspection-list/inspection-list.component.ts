@@ -15,7 +15,7 @@ import {
   InspectionNonConformityMetric,
   InspectionPassedMetric,
 } from '@features/organization/features/inspections/ui/components';
-import { InspectionTable } from '@features/organization/features/inspections/ui/dataviews';
+import { InspectionTable } from '@features/organization/features/inspections/ui/tables';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**

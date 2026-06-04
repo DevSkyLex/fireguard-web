@@ -1,0 +1,314 @@
+<div class="flex h-full flex-col bg-surface-0 dark:bg-surface-900">
+  <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
+
+  <p-card [pt]="cardPt">
+    <ng-template pTemplate="header">
+      <div
+        class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
+      >
+        <div class="flex items-center gap-2">
+          <h2 class="font-semibold">Inspections</h2>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <p-iconfield class="flex-1 sm:flex-none">
+            <p-inputicon class="pi pi-search" />
+            <input
+              pInputText
+              type="text"
+              pSize="small"
+              placeholder="Search inspections..."
+              [formControl]="searchControl"
+              class="w-full"
+            />
+          </p-iconfield>
+
+          <p-select
+            [options]="resultOptions"
+            [formControl]="resultControl"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Result"
+            size="small"
+            [showClear]="true"
+            class="w-full sm:w-40"
+          >
+            <ng-template pTemplate="item" let-option>
+              <div class="flex items-center gap-2">
+                <i
+                  [class]="option.icon + ' inline-flex items-center text-[0.7rem] leading-none'"
+                  [style.color]="option.color"
+                  aria-hidden="true"
+                ></i>
+                <span>{{ option.label }}</span>
+              </div>
+            </ng-template>
+
+            <ng-template pTemplate="selectedItem" let-option>
+              @if (option) {
+                <div class="flex items-center gap-2">
+                  <i
+                    [class]="option.icon + ' inline-flex items-center text-[0.7rem] leading-none'"
+                    [style.color]="option.color"
+                    aria-hidden="true"
+                  ></i>
+                  <span>{{ option.label }}</span>
+                </div>
+              }
+            </ng-template>
+          </p-select>
+
+          <p-select
+            [options]="statusOptions"
+            [formControl]="statusControl"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Status"
+            size="small"
+            [showClear]="true"
+            class="w-full sm:w-44"
+          >
+            <ng-template pTemplate="item" let-option>
+              <div class="flex items-center gap-2">
+                <i
+                  [class]="option.icon + ' inline-flex items-center text-[0.7rem] leading-none'"
+                  [style.color]="option.color"
+                  aria-hidden="true"
+                ></i>
+                <span>{{ option.label }}</span>
+              </div>
+            </ng-template>
+
+            <ng-template pTemplate="selectedItem" let-option>
+              @if (option) {
+                <div class="flex items-center gap-2">
+                  <i
+                    [class]="option.icon + ' inline-flex items-center text-[0.7rem] leading-none'"
+                    [style.color]="option.color"
+                    aria-hidden="true"
+                  ></i>
+                  <span>{{ option.label }}</span>
+                </div>
+              }
+            </ng-template>
+          </p-select>
+
+          @if (canManageInspections()) {
+            <p-splitbutton
+              label="New inspection"
+              icon="pi pi-plus"
+              severity="primary"
+              [model]="toolbarActions()"
+              size="small"
+              (onClick)="add.emit()"
+              [disabled]="loading()"
+              class="w-full sm:w-auto"
+            />
+          } @else {
+            <p-button
+              label="Refresh"
+              icon="pi pi-refresh"
+              severity="secondary"
+              size="small"
+              [outlined]="true"
+              [disabled]="loading()"
+              class="w-full sm:w-auto"
+              (onClick)="onRefresh()"
+            />
+
+            <p-button
+              label="Clear filters"
+              icon="pi pi-filter-slash"
+              severity="secondary"
+              size="small"
+              [outlined]="true"
+              [disabled]="loading()"
+              class="w-full sm:w-auto"
+              (onClick)="onClearFilters()"
+            />
+          }
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      <p-table
+        [value]="loading() ? skeletonItems : empty() ? [] : [...inspections()]"
+        [selection]="selectedInspections()"
+        (selectionChange)="selectedInspections.set($event)"
+        dataKey="id"
+        [loading]="loading()"
+        [paginator]="true"
+        [rows]="rows"
+        [first]="firstPage()"
+        [totalRecords]="total()"
+        [lazy]="true"
+        (onLazyLoad)="onLazyLoad($event)"
+        [rowsPerPageOptions]="[12, 24, 48]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} inspections"
+        [stripedRows]="true"
+        [pt]="tablePt"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            @if (canManageInspections()) {
+              <th class="w-12">
+                <p-tableHeaderCheckbox />
+              </th>
+            }
+            <th class="min-w-72">
+              <div class="flex items-center gap-2">
+                <span>Inspector</span>
+              </div>
+            </th>
+            <th pSortableColumn="result" class="min-w-36">
+              <div class="flex items-center gap-2">
+                <span>Result</span>
+                <p-sortIcon field="result" />
+              </div>
+            </th>
+            <th pSortableColumn="status" class="min-w-36">
+              <div class="flex items-center gap-2">
+                <span>Status</span>
+                <p-sortIcon field="status" />
+              </div>
+            </th>
+            <th class="min-w-36">
+              <div class="flex items-center gap-2">
+                <span>Findings</span>
+              </div>
+            </th>
+            <th pSortableColumn="performedAt" class="min-w-40">
+              <div class="flex items-center gap-2">
+                <span>Performed</span>
+                <p-sortIcon field="performedAt" />
+              </div>
+            </th>
+            <th class="w-20">
+              <span class="sr-only">Actions</span>
+            </th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-inspection>
+          @if (loading()) {
+            <tr>
+              @if (canManageInspections()) {
+                <td><p-skeleton shape="square" size="1.25rem" /></td>
+              }
+              <td>
+                <div class="flex items-center gap-3">
+                  <p-skeleton shape="circle" size="2.25rem" />
+                  <div class="flex flex-col gap-1.5">
+                    <p-skeleton width="10rem" height="0.875rem" />
+                    <p-skeleton width="7rem" height="0.75rem" />
+                  </div>
+                </div>
+              </td>
+              <td><p-skeleton width="5rem" height="1.75rem" borderRadius="999px" /></td>
+              <td><p-skeleton width="6rem" height="1.75rem" borderRadius="999px" /></td>
+              <td><p-skeleton width="5rem" height="0.875rem" /></td>
+              <td><p-skeleton width="8rem" height="0.875rem" /></td>
+              @if (canManageInspections()) {
+                <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
+              }
+            </tr>
+          } @else {
+            <tr>
+              @if (canManageInspections()) {
+                <td>
+                  <p-tableCheckbox [value]="inspection" />
+                </td>
+              }
+              <td>
+                <div class="flex min-w-0 items-center gap-3">
+                  <p-avatar
+                    [image]="inspection.inspector?.avatarUrl ?? undefined"
+                    [label]="inspection.inspector?.avatarUrl ? undefined : getInspectorInitials(inspection)"
+                    shape="circle"
+                    size="normal"
+                    class="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                  />
+
+                  <div class="flex min-w-0 flex-col">
+                    <span class="truncate font-medium text-surface-900 dark:text-surface-100">
+                      {{ getInspectorDisplayName(inspection) }}
+                    </span>
+                    <span class="truncate text-xs text-surface-500">
+                      {{ getInspectorTypeLabel(inspection) }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                @let resultOption = getResultOption(inspection.result);
+                <span
+                  class="inline-flex h-7 items-center gap-1.5 rounded-full border border-surface-200 bg-surface-0 px-2.5 text-xs font-semibold leading-none text-surface-900 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100"
+                >
+                  <i
+                    [class]="resultOption.icon + ' inline-flex items-center text-[0.7rem] leading-none'"
+                    [style.color]="resultOption.color"
+                    aria-hidden="true"
+                  ></i>
+                  <span class="leading-none">{{ resultOption.label }}</span>
+                </span>
+              </td>
+              <td>
+                @let statusOption = getStatusOption(inspection.status);
+                <span
+                  class="inline-flex h-7 items-center gap-1.5 rounded-full border border-surface-200 bg-surface-0 px-2.5 text-xs font-semibold leading-none text-surface-900 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100"
+                >
+                  <i
+                    [class]="statusOption.icon + ' inline-flex items-center text-[0.7rem] leading-none'"
+                    [style.color]="statusOption.color"
+                    aria-hidden="true"
+                  ></i>
+                  <span class="leading-none">{{ statusOption.label }}</span>
+                </span>
+              </td>
+              <td>
+                <span class="text-surface-600 dark:text-surface-400">
+                  {{ getFindingsLabel(inspection.nonConformitiesCount) }}
+                </span>
+              </td>
+              <td class="text-right">
+                <span class="text-surface-500 dark:text-surface-400">
+                  {{ inspection.performedAt | date: 'medium' }}
+                </span>
+              </td>
+              @if (canManageInspections()) {
+                <td class="text-right">
+                  <p-button
+                    icon="pi pi-ellipsis-v"
+                    severity="secondary"
+                    size="small"
+                    [outlined]="true"
+                    ariaLabel="Inspection actions"
+                    (onClick)="onActionMenuToggle($event, inspection)"
+                  />
+                </td>
+              }
+            </tr>
+          }
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td [attr.colspan]="canManageInspections() ? 7 : 5">
+              <div class="flex flex-col items-center gap-3 py-16">
+                <i class="pi pi-search text-6xl text-surface-400"></i>
+                <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
+                  No inspections found
+                </h3>
+                <span class="text-sm text-surface-500">
+                  Try adjusting your filters or create a new inspection to get started.
+                </span>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </ng-template>
+  </p-card>
+</div>

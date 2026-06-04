@@ -65,17 +65,18 @@ export const APP_ROUTES: Routes = [
     children: [
       {
         path: '',
-        data: { breadcrumb: false },
+        data: { breadcrumb: false, preload: true },
         loadChildren: () => import('@features/main/main.routes').then((m) => m.MAIN_ROUTES),
       },
       {
         path: 'organizations',
-        data: { breadcrumb: 'Organizations' },
+        data: { breadcrumb: 'Organizations', preload: true },
         loadChildren: () =>
           import('@features/organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
       },
       {
         path: 'account',
+        data: { preload: true },
         loadChildren: () =>
           import('@features/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
       },

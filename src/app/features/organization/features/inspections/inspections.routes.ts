@@ -36,6 +36,7 @@ export const INSPECTION_ROUTES: Routes = [
     title: 'Inspections',
     data: {
       breadcrumb: false,
+      preload: true,
     },
   },
 ];

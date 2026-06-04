@@ -45,6 +45,7 @@ export class SplashScreenService {
    * Navigation splash only appears if the transition takes longer.
    */
   private static readonly NAV_DELAY_MS: number = 150;
+
   //#endregion
 
   //#region Dependencies
@@ -128,6 +129,17 @@ export class SplashScreenService {
   );
 
   /**
+   * Property initialNavigationPending
+   *
+   * @description
+   * Keeps the splash visible until the first navigation lifecycle settles.
+   * This avoids exposing a white frame between app bootstrap and route render.
+   */
+  private readonly initialNavigationPending: WritableSignal<boolean> = signal<boolean>(
+    !this.router.navigated,
+  );
+
+  /**
    * Property navigating
    * @readonly
    *
@@ -157,7 +169,7 @@ export class SplashScreenService {
    * @type {Signal<boolean>}
    */
   public readonly visible: Signal<boolean> = computed<boolean>(
-    () => this.booting() || this.navigating(),
+    () => this.booting() || this.initialNavigationPending() || this.navigating(),
   );
   //#endregion
 
@@ -262,6 +274,10 @@ export class SplashScreenService {
       this.navTimer = null;
     }
     this.navigating.set(false);
+
+    if (this.initialNavigationPending()) {
+      this.initialNavigationPending.set(false);
+    }
   }
 
   //#endregion

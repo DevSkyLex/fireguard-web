@@ -18,6 +18,7 @@ export const MAIN_ROUTES: Routes = [
     title: 'Home',
     data: {
       breadcrumb: false,
+      preload: true,
     },
   },
 ];

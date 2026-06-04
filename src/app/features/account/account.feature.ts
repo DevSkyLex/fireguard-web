@@ -83,13 +83,16 @@ export function provideAccountFeature(): EnvironmentProviders {
 
       // Initialize the notification center if the user is already authenticated
       effect((): void => {
-        if (userIdentityPort.profile()) {
-          untracked((): void => {
-            notificationCenterPort
-              .initialize()
-              .then((): void => notificationCenterPort.connectMercure());
-          });
+        if (!userIdentityPort.profile()) {
+          return;
         }
+
+        untracked((): void => {
+          notificationCenterPort
+            .initialize()
+            .then((): void => notificationCenterPort.connectMercure())
+            .catch(() => undefined);
+        });
       });
     }),
   ]);

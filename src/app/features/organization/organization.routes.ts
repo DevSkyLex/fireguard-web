@@ -25,27 +25,30 @@ export const ORGANIZATION_ROUTES: Routes = [
     children: [
       {
         path: 'facilities',
-        loadChildren: () =>
-          import('./features/facilities/facilities.routes').then((m) => m.FACILITY_ROUTES),
         data: {
           breadcrumb: 'Facilities',
+          preload: true,
         },
+        loadChildren: () =>
+          import('./features/facilities/facilities.routes').then((m) => m.FACILITY_ROUTES),
       },
       {
         path: 'equipments',
-        loadChildren: () =>
-          import('./features/equipments/equipments.routes').then((m) => m.EQUIPMENT_ROUTES),
         data: {
           breadcrumb: 'Equipments',
+          preload: true,
         },
+        loadChildren: () =>
+          import('./features/equipments/equipments.routes').then((m) => m.EQUIPMENT_ROUTES),
       },
       {
         path: 'inspections',
-        loadChildren: () =>
-          import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
         data: {
           breadcrumb: 'Inspections',
+          preload: true,
         },
+        loadChildren: () =>
+          import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
       },
       {
         path: '',
@@ -62,6 +65,7 @@ export const ORGANIZATION_ROUTES: Routes = [
         title: organizationTitleResolver,
         data: {
           breadcrumb: false,
+          preload: true,
         },
       },
     ],
@@ -76,6 +80,7 @@ export const ORGANIZATION_ROUTES: Routes = [
     title: 'Organizations',
     data: {
       breadcrumb: false,
+      preload: true,
     },
   },
 ];

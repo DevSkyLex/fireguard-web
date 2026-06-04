@@ -34,6 +34,7 @@ export const EQUIPMENT_ROUTES: Routes = [
     title: 'Equipments',
     data: {
       breadcrumb: false,
+      preload: true,
     },
   },
 ];

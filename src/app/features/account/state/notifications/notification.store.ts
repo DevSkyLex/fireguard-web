@@ -233,7 +233,11 @@ export const NotificationStore = signalStore(
       mercureService = inject<MercureService>(MercureService),
       platformId = inject<object>(PLATFORM_ID),
       transferState = inject(TransferState),
-    ) => ({
+    ) => {
+      let initializePromise: Promise<void> | null = null;
+      let initializeTypesPromise: Promise<void> | null = null;
+
+      return {
       /**
        * Method initialize
        *
@@ -247,70 +251,83 @@ export const NotificationStore = signalStore(
        * @returns {Promise<void>} Resolves when bootstrap is complete.
        */
       async initialize(): Promise<void> {
-        const callState = store.listCallState();
-        if (callState.status === 'pending' || callState.status === 'success') {
-          return;
+        if (initializePromise !== null) {
+          return initializePromise;
         }
 
-        if (isPlatformBrowser(platformId) && transferState.hasKey(NOTIFICATION_LIST_TRANSFER_KEY)) {
-          const transferred = transferState.get(NOTIFICATION_LIST_TRANSFER_KEY, null);
-          transferState.remove(NOTIFICATION_LIST_TRANSFER_KEY);
-
-          if (transferred) {
-            patchState(
-              store,
-              setAllEntities([...transferred.member], { collection: 'notification' }),
-              {
-                totalNotifications: transferred.totalItems,
-                currentPage: 1,
-                listCallState: successCallState(null),
-              },
-            );
+        initializePromise = (async (): Promise<void> => {
+          const callState = store.listCallState();
+          if (callState.status === 'pending' || callState.status === 'success') {
             return;
           }
-        }
 
-        patchState(store, {
-          currentPage: 1,
-          listCallState: pendingCallState(),
+          if (
+            isPlatformBrowser(platformId) &&
+            transferState.hasKey(NOTIFICATION_LIST_TRANSFER_KEY)
+          ) {
+            const transferred = transferState.get(NOTIFICATION_LIST_TRANSFER_KEY, null);
+            transferState.remove(NOTIFICATION_LIST_TRANSFER_KEY);
+
+            if (transferred) {
+              patchState(
+                store,
+                setAllEntities([...transferred.member], { collection: 'notification' }),
+                {
+                  totalNotifications: transferred.totalItems,
+                  currentPage: 1,
+                  listCallState: successCallState(null),
+                },
+              );
+              return;
+            }
+          }
+
+          patchState(store, {
+            currentPage: 1,
+            listCallState: pendingCallState(),
+          });
+
+          const activeFilter: NotificationFilter | null = store.activeFilter();
+          const initialOptions: NotificationListOptions = {
+            limit: store.itemsPerPage(),
+            ...activeFilter,
+            page: 1,
+          };
+
+          await firstValueFrom(
+            notificationService.list(initialOptions).pipe(
+              tapResponse({
+                next: (response: HydraCollection<NotificationOutput>) => {
+                  patchState(
+                    store,
+                    setAllEntities([...response.member], { collection: 'notification' }),
+                    {
+                      totalNotifications: response.totalItems,
+                      currentPage: 1,
+                      listCallState: successCallState(null),
+                    },
+                  );
+                  transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, response);
+                },
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { listCallState: errorCallState(storeError) });
+                  transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, null);
+                  dispatcher.dispatch(
+                    notificationStoreEvents.loadFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load notifications'),
+                    ),
+                  );
+                },
+              }),
+            ),
+            { defaultValue: undefined },
+          );
+        })().finally(() => {
+          initializePromise = null;
         });
 
-        const activeFilter: NotificationFilter | null = store.activeFilter();
-        const initialOptions: NotificationListOptions = {
-          limit: store.itemsPerPage(),
-          ...activeFilter,
-          page: 1,
-        };
-
-        await firstValueFrom(
-          notificationService.list(initialOptions).pipe(
-            tapResponse({
-              next: (response: HydraCollection<NotificationOutput>) => {
-                patchState(
-                  store,
-                  setAllEntities([...response.member], { collection: 'notification' }),
-                  {
-                    totalNotifications: response.totalItems,
-                    currentPage: 1,
-                    listCallState: successCallState(null),
-                  },
-                );
-                transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, response);
-              },
-              error: (error: unknown) => {
-                const storeError: StoreError = toStoreError(error);
-                patchState(store, { listCallState: errorCallState(storeError) });
-                transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, null);
-                dispatcher.dispatch(
-                  notificationStoreEvents.loadFailed(
-                    toStoreFailureEventPayload(storeError, 'Failed to load notifications'),
-                  ),
-                );
-              },
-            }),
-          ),
-          { defaultValue: undefined },
-        );
+        return initializePromise;
       },
 
       /**
@@ -325,37 +342,47 @@ export const NotificationStore = signalStore(
        * @returns {Promise<void>} Resolves when bootstrap is complete.
        */
       async initializeTypes(): Promise<void> {
-        if (store.typesLoaded()) {
-          return;
+        if (initializeTypesPromise !== null) {
+          return initializeTypesPromise;
         }
 
-        if (
-          isPlatformBrowser(platformId) &&
-          transferState.hasKey(NOTIFICATION_TYPES_TRANSFER_KEY)
-        ) {
-          const transferred = transferState.get(NOTIFICATION_TYPES_TRANSFER_KEY, null);
-          transferState.remove(NOTIFICATION_TYPES_TRANSFER_KEY);
-
-          if (transferred) {
-            patchState(store, { types: transferred, typesLoaded: true });
+        initializeTypesPromise = (async (): Promise<void> => {
+          if (store.typesLoaded()) {
             return;
           }
-        }
 
-        await firstValueFrom(
-          notificationService.listTypes().pipe(
-            tapResponse({
-              next: (types: ReadonlyArray<NotificationTypeOutput>) => {
-                patchState(store, { types, typesLoaded: true });
-                transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, types);
-              },
-              error: () => {
-                transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, null);
-              },
-            }),
-          ),
-          { defaultValue: undefined },
-        );
+          if (
+            isPlatformBrowser(platformId) &&
+            transferState.hasKey(NOTIFICATION_TYPES_TRANSFER_KEY)
+          ) {
+            const transferred = transferState.get(NOTIFICATION_TYPES_TRANSFER_KEY, null);
+            transferState.remove(NOTIFICATION_TYPES_TRANSFER_KEY);
+
+            if (transferred) {
+              patchState(store, { types: transferred, typesLoaded: true });
+              return;
+            }
+          }
+
+          await firstValueFrom(
+            notificationService.listTypes().pipe(
+              tapResponse({
+                next: (types: ReadonlyArray<NotificationTypeOutput>) => {
+                  patchState(store, { types, typesLoaded: true });
+                  transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, types);
+                },
+                error: () => {
+                  transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, null);
+                },
+              }),
+            ),
+            { defaultValue: undefined },
+          );
+        })().finally(() => {
+          initializeTypesPromise = null;
+        });
+
+        return initializeTypesPromise;
       },
 
       /**
@@ -634,7 +661,8 @@ export const NotificationStore = signalStore(
       setFilter(notificationFilter: NotificationFilter | null): void {
         patchState(store, { activeFilter: notificationFilter });
       },
-    }),
+      };
+    },
   ),
   //#endregion
 );

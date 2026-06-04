@@ -72,6 +72,7 @@ export const FACILITY_ROUTES: Routes = [
     title: 'Facilities',
     data: {
       breadcrumb: false,
+      preload: true,
     },
   },
 ];

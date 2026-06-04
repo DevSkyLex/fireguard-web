@@ -5,7 +5,7 @@ import {
   withEventReplay,
   withHttpTransferCacheOptions,
 } from '@angular/platform-browser';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { APP_ROUTES } from '@app/app.routes';
@@ -20,6 +20,7 @@ import { provideAccountFeature } from '@features/account';
 import { authInterceptor, provideAuthFeature, unauthorizedInterceptor } from '@features/auth';
 import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
 import { provideMaintenanceMode } from '@features/maintenance/state';
+import { SelectivePreloadingStrategy } from '@core/routing/strategies/selective-preloading/selective-preloading.strategy';
 
 /**
  * Configuration appConfig
@@ -45,7 +46,7 @@ import { provideMaintenanceMode } from '@features/maintenance/state';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(APP_ROUTES, withComponentInputBinding()),
+    provideRouter(APP_ROUTES, withComponentInputBinding(), withPreloading(SelectivePreloadingStrategy)),
     provideClientHydration(
       withEventReplay(),
       withHttpTransferCacheOptions({

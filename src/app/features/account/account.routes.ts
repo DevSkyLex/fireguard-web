@@ -18,6 +18,7 @@ export const ACCOUNT_ROUTES: Routes = [
     title: 'Notification Center',
     data: {
       breadcrumb: 'Notifications',
+      preload: true,
     },
   },
   {

@@ -4,6 +4,7 @@ import { TitleService } from '@core/services/title';
 
 /**
  * Strategy PageTitleStrategy
+ * @class PageTitleStrategy
  *
  * @description
  * Custom TitleStrategy that uses the TitleService to format
@@ -27,7 +28,8 @@ export class PageTitleStrategy extends TitleStrategy {
    *
    * @type {TitleService}
    */
-  private readonly titleService: TitleService = inject<TitleService>(TitleService);
+  private readonly titleService: TitleService =
+    inject<TitleService>(TitleService);
   //#endregion
 
   //#region Methods

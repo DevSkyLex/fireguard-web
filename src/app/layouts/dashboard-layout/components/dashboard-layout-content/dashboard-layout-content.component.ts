@@ -1,14 +1,15 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { DashboardLayoutPageHeader } from '../dashboard-layout-page-header/dashboard-layout-page-header.component';
 
 /**
  * Component DashboardLayoutContent
  * @class DashboardLayoutContent
  *
  * @description
- * Content component for dashboard layout, contains the main content of the page
- * and other relevant information for the user.
+ * Content component for dashboard layout. Renders the route-driven page header
+ * banner ({@link DashboardLayoutPageHeader}) above the projected page content.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -19,6 +20,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
  */
 @Component({
   selector: 'app-dashboard-layout-content',
+  imports: [DashboardLayoutPageHeader],
   templateUrl: './dashboard-layout-content.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

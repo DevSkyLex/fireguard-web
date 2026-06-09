@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
-import { NOTIFICATION_CENTER_PORT, withAccountNavigation } from '@features/account';
 import { withMainNavigation } from '@features/main';
 import { withOrganizationNavigation } from '@features/organization';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
@@ -45,13 +44,6 @@ describe('DashboardLayoutSidebarNavigation', () => {
       ORGANIZATION_PERMISSION.INSPECTION_READ,
     ]),
   };
-  const mockNotificationCenterPort = {
-    unreadCount: signal(0),
-    hasUnread: signal(false),
-    initialize: vi.fn(),
-    load: vi.fn(),
-    connectMercure: vi.fn(),
-  };
 
   beforeEach(() => {
     mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
@@ -61,8 +53,6 @@ describe('DashboardLayoutSidebarNavigation', () => {
       ORGANIZATION_PERMISSION.EQUIPMENT_READ,
       ORGANIZATION_PERMISSION.INSPECTION_READ,
     ]);
-    mockNotificationCenterPort.unreadCount.set(0);
-    mockNotificationCenterPort.hasUnread.set(false);
 
     TestBed.configureTestingModule({
       imports: [DashboardLayoutSidebarNavigation],
@@ -70,11 +60,10 @@ describe('DashboardLayoutSidebarNavigation', () => {
         DashboardSidebarNavigationService,
         DashboardSidebarService,
         provideDashboardLayoutSlots({
-          navigation: [withMainNavigation(), withOrganizationNavigation(), withAccountNavigation()],
+          navigation: [withMainNavigation(), withOrganizationNavigation()],
         }),
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
-        { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
         provideRouter([
           { path: '', component: DummyPage },
           { path: 'organizations', component: DummyPage },
@@ -82,7 +71,6 @@ describe('DashboardLayoutSidebarNavigation', () => {
           { path: 'organizations/:organizationId/facilities', component: DummyPage },
           { path: 'organizations/:organizationId/equipments', component: DummyPage },
           { path: 'organizations/:organizationId/inspections', component: DummyPage },
-          { path: 'account/notifications', component: DummyPage },
         ]),
       ],
     });
@@ -97,10 +85,10 @@ describe('DashboardLayoutSidebarNavigation', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
     fixture.detectChanges();
 
-    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(11);
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(7);
     expect(
       fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
-    ).toBe(2);
+    ).toBe(1);
     expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
   });
 
@@ -156,28 +144,13 @@ describe('DashboardLayoutSidebarNavigation', () => {
 
     const labels = component.menuItems().map((item) => item.label);
 
-    expect(labels).toEqual(['Home', 'Account']);
+    expect(labels).toEqual(['Home']);
     expect(labels).not.toContain('Organization');
-  });
-
-  it('should surface unread notifications as a badge', () => {
-    mockNotificationCenterPort.unreadCount.set(3);
-    mockNotificationCenterPort.hasUnread.set(true);
-
-    const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
-    const component = fixture.componentInstance as unknown as {
-      readonly menuItems: () => readonly MenuItem[];
-    };
-
-    const account = component.menuItems().find((group) => group.label === 'Account');
-    const notifications = account?.items?.find((item) => item.label === 'Notifications');
-
-    expect(notifications?.badge).toBe('3');
   });
 
   it('should highlight the active route item', async () => {
     const router = TestBed.inject(Router);
-    await router.navigateByUrl('/account/notifications');
+    await router.navigateByUrl('/');
 
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
     fixture.detectChanges();
@@ -185,13 +158,11 @@ describe('DashboardLayoutSidebarNavigation', () => {
     fixture.detectChanges();
 
     const activeLinks = fixture.debugElement.queryAll(By.css('a[aria-current="page"]'));
-    const notificationsLink = fixture.debugElement.query(
-      By.css('a[data-sidebar-item-id="notifications"]'),
-    );
+    const homeLink = fixture.debugElement.query(By.css('a[data-sidebar-item-id="home"]'));
     const dashboardLink = fixture.debugElement.query(By.css('a[data-sidebar-item-id="dashboard"]'));
 
     expect(activeLinks.length).toBe(1);
-    expect(notificationsLink.nativeElement.getAttribute('aria-current')).toBe('page');
+    expect(homeLink.nativeElement.getAttribute('aria-current')).toBe('page');
     expect(dashboardLink.nativeElement.getAttribute('aria-current')).toBeNull();
   });
 });

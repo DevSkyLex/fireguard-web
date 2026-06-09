@@ -12,15 +12,13 @@ import {
   DashboardLayoutContent,
   DashboardLayoutContextPanel,
 } from '@layouts/dashboard-layout/components';
-import {
-  ASIDE_SLOT,
-  type AsideContribution,
-} from '@layouts/dashboard-layout/slots/aside';
+import { ASIDE_SLOT, type AsideContribution } from '@layouts/dashboard-layout/slots/aside';
 import { DashboardSidebarResizeHandleDirective } from './directives';
 import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
   DashboardHeaderActionsService,
+  DashboardPageHeaderService,
 } from './services';
 
 /**
@@ -64,6 +62,7 @@ import {
     DashboardSidebarService,
     DashboardSidebarNavigationService,
     DashboardHeaderActionsService,
+    DashboardPageHeaderService,
     BreadcrumbService,
   ],
   templateUrl: './dashboard-layout.component.html',
@@ -108,4 +107,3 @@ export class DashboardLayout {
 
   //#endregion
 }
-

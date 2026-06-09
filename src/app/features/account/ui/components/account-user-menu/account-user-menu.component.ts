@@ -14,7 +14,12 @@ import { AvatarModule } from 'primeng/avatar';
 import { DividerModule } from 'primeng/divider';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
-import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
+import {
+  NOTIFICATION_CENTER_PORT,
+  USER_IDENTITY_PORT,
+  type NotificationCenterPort,
+  type UserIdentityPort,
+} from '@features/account/ports';
 import { AUTH_LOGOUT_PORT, authStoreEvents, type AuthLogoutPort } from '@features/auth';
 
 /**
@@ -23,7 +28,9 @@ import { AUTH_LOGOUT_PORT, authStoreEvents, type AuthLogoutPort } from '@feature
  *
  * @description
  * Compact avatar button rendered in the dashboard header (far-right slot)
- * that opens a PrimeNG Menu popup with user actions: Settings and Logout.
+ * that opens a PrimeNG Menu popup with the account sections (Profile,
+ * Security, Notifications) and a Logout action. The Notifications entry shows
+ * the unread count as a badge.
  *
  * Subscribes to `authStoreEvents.logoutSucceeded` and
  * `authStoreEvents.logoutFailed` to redirect to `/auth/login` after logout.
@@ -91,6 +98,22 @@ export class AccountUserMenu {
   protected readonly authLogoutPort: AuthLogoutPort = inject<AuthLogoutPort>(AUTH_LOGOUT_PORT);
 
   /**
+   * Property notificationCenter
+   * @readonly
+   *
+   * @description
+   * Port exposing the authenticated user's notification center state, used to
+   * surface the unread count as a badge on the Notifications menu entry.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {NotificationCenterPort}
+   */
+  private readonly notificationCenter: NotificationCenterPort =
+    inject<NotificationCenterPort>(NOTIFICATION_CENTER_PORT);
+
+  /**
    * Property router
    * @readonly
    *
@@ -131,22 +154,44 @@ export class AccountUserMenu {
    *
    * @type {Signal<MenuItem[]>}
    */
-  protected readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] => [
-    {
-      label: 'Settings',
-      icon: 'pi pi-cog',
-      routerLink: '/account/profile',
-      data: { testid: 'header-user-menu-settings' },
-    },
-    { separator: true },
-    {
-      label: this.authLogoutPort.isLoggingOut() ? 'Logging out...' : 'Logout',
-      icon: 'pi pi-sign-out',
-      disabled: this.authLogoutPort.isLoggingOut(),
-      command: (): void => this.onLogout(),
-      data: { testid: 'header-user-menu-logout' },
-    },
-  ]);
+  protected readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] => {
+    const unreadBadge: string | undefined = this.notificationCenter.hasUnread()
+      ? String(this.notificationCenter.unreadCount())
+      : undefined;
+
+    return [
+      {
+        label: 'Profile',
+        icon: 'pi pi-user',
+        routerLink: '/account',
+        queryParams: { tab: 'profile' },
+        data: { testid: 'header-user-menu-profile-link' },
+      },
+      {
+        label: 'Security',
+        icon: 'pi pi-shield',
+        routerLink: '/account',
+        queryParams: { tab: 'security' },
+        data: { testid: 'header-user-menu-security' },
+      },
+      {
+        label: 'Notifications',
+        icon: 'pi pi-bell',
+        routerLink: '/account',
+        queryParams: { tab: 'notifications' },
+        badge: unreadBadge,
+        data: { testid: 'header-user-menu-notifications' },
+      },
+      { separator: true },
+      {
+        label: this.authLogoutPort.isLoggingOut() ? 'Logging out...' : 'Logout',
+        icon: 'pi pi-sign-out',
+        disabled: this.authLogoutPort.isLoggingOut(),
+        command: (): void => this.onLogout(),
+        data: { testid: 'header-user-menu-logout' },
+      },
+    ];
+  });
   //#endregion
 
   //#region Constructor

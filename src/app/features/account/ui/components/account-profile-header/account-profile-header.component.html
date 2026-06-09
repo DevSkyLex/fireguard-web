@@ -1,0 +1,99 @@
+<section
+  class="overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-950"
+>
+  <!-- Decorative mesh-gradient banner -->
+  <div class="account-banner h-32 w-full sm:h-40"></div>
+
+  <!-- Identity -->
+  <div class="px-4 pb-4 sm:px-6 sm:pb-6">
+    @if (userStore.isLoading()) {
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-end">
+        <p-skeleton
+          shape="circle"
+          size="6rem"
+          styleClass="-mt-12 ring-4 ring-surface-0 sm:-mt-14 dark:ring-surface-950"
+        />
+        <div class="flex flex-col gap-2">
+          <p-skeleton width="14rem" height="1.5rem" />
+          <p-skeleton width="18rem" height="0.875rem" />
+        </div>
+      </div>
+    } @else if (userStore.profile(); as profile) {
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-end">
+          <!-- Avatar overlapping the banner -->
+          <p-avatar
+            [image]="userStore.avatarUrl() || undefined"
+            [label]="userStore.avatarUrl() ? undefined : userStore.initials() || '?'"
+            shape="circle"
+            size="xlarge"
+            styleClass="relative z-10 -mt-12 ring-4 ring-surface-0 sm:-mt-14 dark:ring-surface-950"
+          />
+
+          <div class="flex min-w-0 flex-col gap-2">
+            <div class="flex flex-col gap-0.5">
+              <h1 class="truncate text-2xl font-semibold text-surface-900 dark:text-surface-100">
+                {{ userStore.displayName() || 'User' }}
+              </h1>
+              @if (profile.email) {
+                <p class="truncate text-sm text-surface-500 dark:text-surface-400">
+                  {{ profile.email }}
+                </p>
+              }
+            </div>
+
+            <!-- Read-only identity badges -->
+            <div class="flex flex-wrap items-center gap-2">
+              @if (profile.status) {
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                >
+                  <span class="h-1.5 w-1.5 rounded-full" [class]="statusDotClass(profile.status)">
+                  </span>
+                  {{ profile.status | titlecase }}
+                </span>
+              }
+
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+                [class]="
+                  profile.emailVerified
+                    ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400'
+                    : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400'
+                "
+              >
+                <i
+                  class="pi text-xs"
+                  [class]="profile.emailVerified ? 'pi-verified' : 'pi-exclamation-circle'"
+                ></i>
+                {{ profile.emailVerified ? 'Email verified' : 'Email not verified' }}
+              </span>
+
+              @for (role of userStore.roles(); track role) {
+                <p-tag [value]="role" severity="secondary" class="rounded-md text-xs" />
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Read-only metadata -->
+        <dl
+          class="flex flex-col gap-1.5 text-sm text-surface-500 sm:items-end dark:text-surface-400"
+        >
+          @if (profile.createdAt) {
+            <div class="inline-flex items-center gap-1.5">
+              <i class="pi pi-calendar text-xs"></i>
+              <span>Member since {{ profile.createdAt | date: 'mediumDate' }}</span>
+            </div>
+          }
+          @if (profile.lastLoginAt) {
+            <div class="inline-flex items-center gap-1.5">
+              <i class="pi pi-clock text-xs"></i>
+              <span>Last login {{ profile.lastLoginAt | date: 'medium' }}</span>
+            </div>
+          }
+        </dl>
+      </div>
+    }
+  </div>
+</section>

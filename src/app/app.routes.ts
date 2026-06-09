@@ -1,5 +1,5 @@
 import type { Routes } from '@angular/router';
-import { withAccountNavigation, withAccountProfile, withNotificationBell } from '@features/account';
+import { withAccountProfile, withNotificationBell } from '@features/account';
 import { authGuard } from '@features/auth/http/guards';
 import { provideMainFeature, withMainNavigation } from '@features/main';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
@@ -38,7 +38,7 @@ export const APP_ROUTES: Routes = [
       provideMainFeature(),
       provideOrganizationFeature(),
       provideDashboardLayoutSlots({
-        navigation: [withMainNavigation(), withOrganizationNavigation(), withAccountNavigation()],
+        navigation: [withMainNavigation(), withOrganizationNavigation()],
         topbar: [
           withOrganizationSwitcher(),
           withThemeSwitcher(),

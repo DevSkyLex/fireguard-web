@@ -3,8 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
-import { withAccountNavigation } from '@features/account';
-import { NOTIFICATION_CENTER_PORT } from '@features/account/ports';
 import { withMainNavigation } from '@features/main';
 import { withOrganizationNavigation } from '@features/organization';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
@@ -45,13 +43,6 @@ describe('DashboardLayoutSidebar', () => {
       ORGANIZATION_PERMISSION.INSPECTION_READ,
     ]),
   };
-  const mockNotificationCenterPort = {
-    unreadCount: signal(0),
-    hasUnread: signal(false),
-    initialize: vi.fn(),
-    load: vi.fn(),
-    connectMercure: vi.fn(),
-  };
 
   beforeEach(() => {
     mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
@@ -62,8 +53,6 @@ describe('DashboardLayoutSidebar', () => {
       ORGANIZATION_PERMISSION.EQUIPMENT_READ,
       ORGANIZATION_PERMISSION.INSPECTION_READ,
     ]);
-    mockNotificationCenterPort.unreadCount.set(0);
-    mockNotificationCenterPort.hasUnread.set(false);
 
     TestBed.configureTestingModule({
       imports: [DashboardLayoutSidebar],
@@ -72,11 +61,10 @@ describe('DashboardLayoutSidebar', () => {
         DashboardSidebarService,
         provideRouter([]),
         provideDashboardLayoutSlots({
-          navigation: [withMainNavigation(), withOrganizationNavigation(), withAccountNavigation()],
+          navigation: [withMainNavigation(), withOrganizationNavigation()],
         }),
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
-        { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
       ],
     });
   });
@@ -96,11 +84,11 @@ describe('DashboardLayoutSidebar', () => {
     ).toBeTruthy();
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-footer'))).toBeTruthy();
 
-    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(11);
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(7);
     expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
     expect(
       fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
-    ).toBe(2);
+    ).toBe(1);
 
     const textContent = fixture.nativeElement.textContent;
     expect(textContent).toContain('Fireguard');
@@ -112,11 +100,6 @@ describe('DashboardLayoutSidebar', () => {
     expect(textContent).toContain('Equipments');
     expect(textContent).toContain('Inspections');
     expect(textContent).toContain('Checklists');
-    expect(textContent).toContain('Account');
-    expect(textContent).toContain('Profile');
-    expect(textContent).toContain('Sessions');
-    expect(textContent).toContain('Trusted Devices');
-    expect(textContent).toContain('Notifications');
     expect(textContent).toContain('2026 Fireguard, Inc.');
   });
 
@@ -127,25 +110,6 @@ describe('DashboardLayoutSidebar', () => {
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-footer'))).toBeFalsy();
-  });
-
-  it('should configure notification badge from notification center state', () => {
-    mockNotificationCenterPort.unreadCount.set(5);
-    mockNotificationCenterPort.hasUnread.set(true);
-
-    const fixture = TestBed.createComponent(DashboardLayoutSidebar);
-    fixture.detectChanges();
-
-    const navigation = fixture.debugElement.query(By.directive(DashboardLayoutSidebarNavigation))
-      .componentInstance as unknown as {
-      readonly menuItems: () => readonly MenuItem[];
-    };
-
-    const groups = navigation.menuItems();
-    const accountGroup = groups.find((group) => group.label === 'Account');
-    const notifications = accountGroup?.items?.find((item) => item.label === 'Notifications');
-
-    expect(notifications?.badge).toBe('5');
   });
 
   it('should close sidebar only for routerLink leaf items', () => {
@@ -200,7 +164,7 @@ describe('DashboardLayoutSidebar', () => {
 
     const labels = navigation.menuItems().map((group) => group.label);
 
-    expect(labels).toEqual(['Home', 'Organization', 'Account']);
+    expect(labels).toEqual(['Home', 'Organization']);
   });
 
   it('should not render collapsed flyout ui', () => {

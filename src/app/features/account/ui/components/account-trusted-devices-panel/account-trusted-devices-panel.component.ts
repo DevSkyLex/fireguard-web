@@ -7,16 +7,26 @@ import type { TrustedDeviceOutput } from '@features/auth/models';
 import { TrustedDeviceStore } from '@features/auth/state';
 
 /**
- * Account security page coordinating trusted device revocation.
+ * Component AccountTrustedDevicesPanel
+ * @class AccountTrustedDevicesPanel
+ *
+ * @description
+ * Trusted devices section of the account page. Coordinates trusted device
+ * revocation and renders the device list. Rendered inside the "Security"
+ * tab of {@link AccountPage}.
+ *
+ * @since 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-trusted-devices-page',
+  selector: 'app-account-trusted-devices-panel',
   imports: [ButtonModule, MessageModule, TrustedDeviceTable],
   providers: [TrustedDeviceStore],
-  templateUrl: './trusted-devices-page.component.html',
+  templateUrl: './account-trusted-devices-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TrustedDevicesPage {
+export class AccountTrustedDevicesPanel {
   /** PrimeNG confirmation service used before revocation. */
   private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
   /** Trusted device store exposed to the template. */

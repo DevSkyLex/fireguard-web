@@ -14,16 +14,26 @@ import type { SessionOutput } from '@features/auth/models';
 import { SessionStore } from '@features/auth/state';
 
 /**
- * Account security page coordinating active session revocation.
+ * Component AccountSessionsPanel
+ * @class AccountSessionsPanel
+ *
+ * @description
+ * Active sessions section of the account page. Coordinates active session
+ * revocation and renders the session list. Rendered inside the "Security"
+ * tab of {@link AccountPage}.
+ *
+ * @since 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-sessions-page',
+  selector: 'app-account-sessions-panel',
   imports: [ButtonModule, DialogModule, MessageModule, SessionTable],
   providers: [SessionStore],
-  templateUrl: './sessions-page.component.html',
+  templateUrl: './account-sessions-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SessionsPage {
+export class AccountSessionsPanel {
   /** PrimeNG confirmation service used before revocation. */
   private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
   /** Account session store exposed to the template. */

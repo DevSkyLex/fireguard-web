@@ -2,6 +2,7 @@ export {
   provideDashboardLayoutSlots,
   type DashboardLayoutAsideSlotFeature,
   type DashboardLayoutNavigationSlotFeature,
+  type DashboardLayoutPageHeaderSlotFeature,
   type DashboardLayoutSlotFeature,
   type DashboardLayoutSlotsConfig,
   type DashboardLayoutTopbarSlotFeature,

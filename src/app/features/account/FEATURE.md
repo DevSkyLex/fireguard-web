@@ -23,12 +23,18 @@ This feature does not own authentication, session restoration, or auth transport
 
 ## Routes
 
-- `/account/profile`
-- `/account/sessions`
-- `/account/trusted-devices`
-- `/account/notifications`
+- `/account` — single profile page with a hero header (decorative banner, avatar and
+  read-only user identity) followed by a sticky **vertical navigation menu** that switches
+  between three sections: **Profile** (detailed identity/access attributes), **Security**
+  (active sessions + trusted devices) and **Notifications**. The active section is driven
+  by the `tab` query parameter (`?tab=profile|security|notifications`).
 
-The feature redirects `/account` to the profile page.
+The former per-section paths (`/account/profile`, `/account/sessions`,
+`/account/trusted-devices`, `/account/notifications`) are kept as backward-compatible
+redirects that deep-link into the matching tab.
+
+Account navigation is exposed through the **header user menu** (`AccountUserMenu`),
+not the sidebar.
 
 ## State and Data Access
 

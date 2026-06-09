@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { ASIDE_SLOT, type AsideContribution } from '../../slots/aside';
 import { NAVIGATION_SLOT, type NavigationContribution } from '../../slots/navigation';
+import { PAGE_HEADER_SLOT, type PageHeaderContribution } from '../../slots/page-header';
 import { TOPBAR_SLOT, type TopbarContribution } from '../../slots/topbar';
 
 /**
@@ -28,6 +29,9 @@ export type DashboardLayoutTopbarSlotFeature = DashboardLayoutSlotFeature<Topbar
 
 export type DashboardLayoutAsideSlotFeature = DashboardLayoutSlotFeature<AsideContribution>;
 
+export type DashboardLayoutPageHeaderSlotFeature =
+  DashboardLayoutSlotFeature<PageHeaderContribution>;
+
 /**
  * DashboardLayoutSlotsConfig
  *
@@ -41,6 +45,7 @@ export interface DashboardLayoutSlotsConfig {
   readonly navigation?: DashboardLayoutNavigationSlotFeature[];
   readonly topbar?: DashboardLayoutTopbarSlotFeature[];
   readonly aside?: DashboardLayoutAsideSlotFeature[];
+  readonly pageHeader?: DashboardLayoutPageHeaderSlotFeature[];
 }
 
 /**
@@ -62,6 +67,7 @@ export function provideDashboardLayoutSlots(
     ...provideSlotContributions(NAVIGATION_SLOT, config.navigation),
     ...provideSlotContributions(TOPBAR_SLOT, config.topbar),
     ...provideSlotContributions(ASIDE_SLOT, config.aside),
+    ...provideSlotContributions(PAGE_HEADER_SLOT, config.pageHeader),
   ]);
 }
 

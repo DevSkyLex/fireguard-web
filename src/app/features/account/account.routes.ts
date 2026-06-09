@@ -1,4 +1,5 @@
-import type { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, type Routes } from '@angular/router';
 
 /**
  * Constant ACCOUNT_ROUTES
@@ -6,56 +7,44 @@ import type { Routes } from '@angular/router';
  * @description
  * Routes for the account feature module (user account management area).
  *
+ * The feature now exposes a single page at `/account` presenting the profile,
+ * security and notifications sections in a tab layout. The former per-section
+ * routes are kept as backward-compatible redirects that deep-link into the
+ * matching tab via the `tab` query parameter.
+ *
  * @since 1.0.0
  */
 export const ACCOUNT_ROUTES: Routes = [
   {
-    path: 'profile',
+    path: '',
+    pathMatch: 'full',
     loadComponent: () =>
-      import('./ui/pages/profile-page/profile-page.component').then((m) => m.ProfilePage),
-    title: 'Profile',
+      import('./ui/pages/account-page/account-page.component').then((m) => m.AccountPage),
+    title: 'Account',
     data: {
-      breadcrumb: 'Profile',
+      breadcrumb: 'Account',
       preload: true,
     },
+  },
+  // Backward-compatible redirects from the former per-section routes.
+  {
+    path: 'profile',
+    redirectTo: (): ReturnType<Router['parseUrl']> =>
+      inject(Router).parseUrl('/account?tab=profile'),
   },
   {
     path: 'sessions',
-    loadComponent: () =>
-      import('./ui/pages/sessions-page/sessions-page.component').then((m) => m.SessionsPage),
-    title: 'Sessions',
-    data: {
-      breadcrumb: 'Sessions',
-      preload: true,
-    },
+    redirectTo: (): ReturnType<Router['parseUrl']> =>
+      inject(Router).parseUrl('/account?tab=security'),
   },
   {
     path: 'trusted-devices',
-    loadComponent: () =>
-      import('./ui/pages/trusted-devices-page/trusted-devices-page.component').then(
-        (m) => m.TrustedDevicesPage,
-      ),
-    title: 'Trusted Devices',
-    data: {
-      breadcrumb: 'Trusted Devices',
-      preload: true,
-    },
+    redirectTo: (): ReturnType<Router['parseUrl']> =>
+      inject(Router).parseUrl('/account?tab=security'),
   },
   {
     path: 'notifications',
-    loadComponent: () =>
-      import('./ui/pages/notification-center-page/notification-center-page.component').then(
-        (m) => m.NotificationCenterPage,
-      ),
-    title: 'Notification Center',
-    data: {
-      breadcrumb: 'Notifications',
-      preload: true,
-    },
-  },
-  {
-    path: '',
-    redirectTo: 'profile',
-    pathMatch: 'full',
+    redirectTo: (): ReturnType<Router['parseUrl']> =>
+      inject(Router).parseUrl('/account?tab=notifications'),
   },
 ];

@@ -46,33 +46,33 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 /**
- * Component NotificationCenterPage
- * @class NotificationCenterPage
+ * Component AccountNotificationsPanel
+ * @class AccountNotificationsPanel
  *
  * @description
- * Full-page notification center. Lists all notifications for the
- * authenticated user, allows filtering by read/unread state, and
- * lets the user mark individual notifications as read.
+ * Notifications section of the account page. Lists all notifications for the
+ * authenticated user, allows filtering by read/unread state, and lets the
+ * user mark individual notifications as read. Rendered inside the
+ * "Notifications" tab of {@link AccountPage}.
  *
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-notification-center-page',
+  selector: 'app-account-notifications-panel',
   imports: [DatePipe, ButtonModule, SkeletonModule, ProgressSpinnerModule, InfiniteScrollDirective],
-  templateUrl: './notification-center-page.component.html',
+  templateUrl: './account-notifications-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NotificationCenterPage implements OnInit {
-  //#region Properties
+export class AccountNotificationsPanel implements OnInit {
   /**
    * Property notificationStore
    * @readonly
    *
    * @description
-   * Signal store providing the current notification list,
-   * loading state and actions.
+   * Signal store providing the current notification list, loading state and
+   * actions.
    *
    * @access protected
    * @since 1.0.0
@@ -81,9 +81,7 @@ export class NotificationCenterPage implements OnInit {
    */
   protected readonly notificationStore: NotificationStore =
     inject<NotificationStore>(NotificationStore);
-  //#endregion
 
-  //#region Methods
   /**
    * Method ngOnInit
    *
@@ -180,5 +178,4 @@ export class NotificationCenterPage implements OnInit {
   public iconTextFor(n: NotificationOutput): string {
     return CATEGORY_COLORS[n.category]?.text ?? 'text-surface-500';
   }
-  //#endregion
 }

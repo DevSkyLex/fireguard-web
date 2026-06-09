@@ -4,6 +4,7 @@ export {
   provideDashboardLayoutSlots,
   type DashboardLayoutAsideSlotFeature,
   type DashboardLayoutNavigationSlotFeature,
+  type DashboardLayoutPageHeaderSlotFeature,
   type DashboardLayoutSlotFeature,
   type DashboardLayoutSlotsConfig,
   type DashboardLayoutTopbarSlotFeature,
@@ -12,4 +13,4 @@ export { DashboardSidebarService } from './services';
 export type { AsideContribution } from './slots/aside';
 export type { TopbarContribution } from './slots/topbar';
 export type { NavigationContribution } from './slots/navigation';
-
+export type { PageHeaderContribution } from './slots/page-header';

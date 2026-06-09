@@ -1,0 +1,65 @@
+@if (userStore.profile(); as profile) {
+  <p-card>
+    <div class="flex flex-col gap-1">
+      <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
+        Profile information
+      </h2>
+      <p class="text-sm text-surface-500 dark:text-surface-400">
+        Your account identity and access details.
+      </p>
+    </div>
+
+    <dl class="mt-6 grid gap-x-6 gap-y-5 sm:grid-cols-2">
+      <div class="flex flex-col gap-1">
+        <dt class="text-xs font-medium text-surface-500 dark:text-surface-400">Username</dt>
+        <dd class="text-sm text-surface-900 dark:text-surface-100">
+          {{ profile.username || '-' }}
+        </dd>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <dt class="text-xs font-medium text-surface-500 dark:text-surface-400">Email</dt>
+        <dd class="text-sm text-surface-900 dark:text-surface-100">{{ profile.email || '-' }}</dd>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <dt class="text-xs font-medium text-surface-500 dark:text-surface-400">Status</dt>
+        <dd class="text-sm text-surface-900 dark:text-surface-100">
+          {{ profile.status ? (profile.status | titlecase) : '-' }}
+        </dd>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <dt class="text-xs font-medium text-surface-500 dark:text-surface-400">Email verified</dt>
+        <dd class="text-sm text-surface-900 dark:text-surface-100">
+          {{ profile.emailVerified ? 'Yes' : 'No' }}
+        </dd>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <dt class="text-xs font-medium text-surface-500 dark:text-surface-400">Member since</dt>
+        <dd class="text-sm text-surface-900 dark:text-surface-100">
+          {{ profile.createdAt ? (profile.createdAt | date: 'mediumDate') : '-' }}
+        </dd>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <dt class="text-xs font-medium text-surface-500 dark:text-surface-400">Last login</dt>
+        <dd class="text-sm text-surface-900 dark:text-surface-100">
+          {{ profile.lastLoginAt ? (profile.lastLoginAt | date: 'medium') : '-' }}
+        </dd>
+      </div>
+
+      <div class="flex flex-col gap-1 sm:col-span-2">
+        <dt class="text-xs font-medium text-surface-500 dark:text-surface-400">Roles</dt>
+        <dd class="flex flex-wrap gap-2">
+          @for (role of userStore.roles(); track role) {
+            <p-tag [value]="role" severity="secondary" class="rounded-md text-xs" />
+          } @empty {
+            <span class="text-sm text-surface-900 dark:text-surface-100">-</span>
+          }
+        </dd>
+      </div>
+    </dl>
+  </p-card>
+}

@@ -1,31 +1,20 @@
-<div id="notification-center-page" class="flex flex-col">
-  <!-- Page header -->
-  <section
-    class="flex flex-col border-b border-surface-200 bg-surface-50 p-8 dark:border-surface-800 dark:bg-surface-900"
-  >
-    <div class="flex items-center justify-between gap-4">
-      <div class="flex flex-col gap-1">
-        <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">
-          Notification Center
-        </h1>
-        <p class="text-sm text-surface-600">
-          @if (notificationStore.isLoading()) {
-            Loading notifications…
-          } @else {
-            {{ notificationStore.totalNotifications() }} notification{{
-              notificationStore.totalNotifications() === 1 ? '' : 's'
-            }}
-            @if (notificationStore.hasUnread()) {
-              —
-              <span class="font-medium text-primary"
-                >{{ notificationStore.unreadCount() }} unread</span
-              >
-            }
-          }
-        </p>
-      </div>
-    </div>
-  </section>
+<div id="account-notifications-panel" class="flex flex-col">
+  <!-- Summary line -->
+  <div class="px-6 pb-2">
+    <p class="text-sm text-surface-600">
+      @if (notificationStore.isLoading()) {
+        Loading notifications…
+      } @else {
+        {{ notificationStore.totalNotifications() }} notification{{
+          notificationStore.totalNotifications() === 1 ? '' : 's'
+        }}
+        @if (notificationStore.hasUnread()) {
+          —
+          <span class="font-medium text-primary">{{ notificationStore.unreadCount() }} unread</span>
+        }
+      }
+    </p>
+  </div>
 
   <!-- Notification list -->
   @if (notificationStore.isLoading()) {

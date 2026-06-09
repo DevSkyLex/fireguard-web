@@ -2,21 +2,24 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { NotificationOutput } from '@features/account/models';
 import { NotificationStore } from '@features/account/state';
-import { NotificationCenterPage } from '../notification-center-page.component';
+import { AccountNotificationsPanel } from '../account-notifications-panel.component';
 
-describe('NotificationCenterPage', () => {
+describe('AccountNotificationsPanel', () => {
   const setup = () => {
     const mockNotificationStore = {
       notifications: signal<NotificationOutput[]>([]),
       totalNotifications: signal(0),
       isLoading: signal(false),
+      isLoadingMore: signal(false),
       isMarkingAsRead: signal(false),
       hasUnread: signal(false),
+      hasMore: signal(false),
       unreadCount: signal(0),
       listError: signal(null),
       initialize: vi.fn().mockResolvedValue(undefined),
       initializeTypes: vi.fn().mockResolvedValue(undefined),
       load: vi.fn(),
+      loadMore: vi.fn(),
       loadTypes: vi.fn(),
       markAsRead: vi.fn(),
     };
@@ -25,7 +28,7 @@ describe('NotificationCenterPage', () => {
       providers: [{ provide: NotificationStore, useValue: mockNotificationStore }],
     });
 
-    const component = TestBed.runInInjectionContext(() => new NotificationCenterPage());
+    const component = TestBed.runInInjectionContext(() => new AccountNotificationsPanel());
     return { component, mockNotificationStore };
   };
 
@@ -44,5 +47,13 @@ describe('NotificationCenterPage', () => {
     component.onMarkAsRead('abc-123');
 
     expect(mockNotificationStore.markAsRead).toHaveBeenCalledWith('abc-123');
+  });
+
+  it('should load the next page on loadMore', () => {
+    const { component, mockNotificationStore } = setup();
+
+    component.onLoadMore();
+
+    expect(mockNotificationStore.loadMore).toHaveBeenCalledTimes(1);
   });
 });

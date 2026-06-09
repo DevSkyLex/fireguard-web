@@ -1,0 +1,35 @@
+<div class="flex flex-col gap-4">
+  @if (store.listCallState().error; as error) {
+    <p-message severity="error">
+      <div class="flex flex-wrap items-center gap-3">
+        <span>{{ error.message ?? 'Trusted devices could not be loaded.' }}</span>
+        <p-button
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          (onClick)="reload()"
+        />
+      </div>
+    </p-message>
+  }
+  @if (store.revokeCallState().error; as error) {
+    <p-message severity="error">{{
+      error.message ?? 'The trusted device could not be revoked.'
+    }}</p-message>
+  }
+  @if (store.revokeAllCallState().error; as error) {
+    <p-message severity="error">{{
+      error.message ?? 'Trusted devices could not be revoked.'
+    }}</p-message>
+  }
+
+  <app-trusted-device-table
+    [devices]="store.devices()"
+    [loading]="store.listCallState().status === 'pending'"
+    [revokingAll]="store.isRevokingAll()"
+    [hasDevices]="store.hasDevices()"
+    (revokeAll)="revokeAll()"
+    (revoke)="revoke($event)"
+  />
+</div>

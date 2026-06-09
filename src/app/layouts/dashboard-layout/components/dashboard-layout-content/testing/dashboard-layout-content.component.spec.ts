@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
+import { DashboardPageHeaderService } from '@layouts/dashboard-layout/services';
 import { DashboardLayoutContent } from '../dashboard-layout-content.component';
 
 @Component({
@@ -18,6 +20,7 @@ describe('DashboardLayoutContent', () => {
   it('should create', () => {
     TestBed.configureTestingModule({
       imports: [DashboardLayoutContent],
+      providers: [DashboardPageHeaderService, provideRouter([])],
     });
 
     const fixture = TestBed.createComponent(DashboardLayoutContent);
@@ -27,6 +30,7 @@ describe('DashboardLayoutContent', () => {
   it('should project content', () => {
     TestBed.configureTestingModule({
       imports: [HostComponent],
+      providers: [DashboardPageHeaderService, provideRouter([])],
     });
 
     const fixture = TestBed.createComponent(HostComponent);

@@ -1,0 +1,69 @@
+<div class="flex flex-col gap-4">
+  @if (store.listCallState().error; as error) {
+    <p-message severity="error">
+      <div class="flex flex-wrap items-center gap-3">
+        <span>{{ error.message ?? 'Active sessions could not be loaded.' }}</span>
+        <p-button
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          (onClick)="reload()"
+        />
+      </div>
+    </p-message>
+  }
+  @if (store.revokeCallState().error; as error) {
+    <p-message severity="error">{{
+      error.message ?? 'The session could not be revoked.'
+    }}</p-message>
+  }
+  @if (store.revokeAllCallState().error; as error) {
+    <p-message severity="error">{{
+      error.message ?? 'The other sessions could not be revoked.'
+    }}</p-message>
+  }
+
+  <app-session-table
+    [sessions]="store.sessions()"
+    [loading]="store.listCallState().status === 'pending'"
+    [revokingAll]="store.isRevokingAll()"
+    [hasOtherSessions]="store.hasOtherSessions()"
+    (revokeAll)="revokeAll()"
+    (details)="selectedSession.set($event)"
+    (revoke)="revoke($event)"
+  />
+</div>
+
+<p-dialog
+  header="Session details"
+  [modal]="true"
+  [visible]="selectedSession() !== null"
+  (visibleChange)="!$event && selectedSession.set(null)"
+  [style]="{ width: '42rem' }"
+>
+  @if (selectedSession(); as session) {
+    <dl class="grid gap-4 md:grid-cols-2">
+      <div>
+        <dt class="text-xs text-surface-500">Created</dt>
+        <dd>{{ session.createdAt }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs text-surface-500">Last activity</dt>
+        <dd>{{ session.lastActivityAt }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs text-surface-500">IP address</dt>
+        <dd>{{ session.ipAddress }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs text-surface-500">Current session</dt>
+        <dd>{{ session.isCurrent ? 'Yes' : 'No' }}</dd>
+      </div>
+      <div class="md:col-span-2">
+        <dt class="text-xs text-surface-500">User agent</dt>
+        <dd class="break-all">{{ session.userAgent }}</dd>
+      </div>
+    </dl>
+  }
+</p-dialog>

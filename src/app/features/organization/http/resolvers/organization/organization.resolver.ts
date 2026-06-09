@@ -6,9 +6,39 @@ import {
   type ResolveFn,
   Router,
 } from '@angular/router';
-import { catchError, of } from 'rxjs';
+import { catchError, map, of, switchMap, type Observable } from 'rxjs';
+import type { HydraCollection } from '@core/models/api';
+import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
+
+/** Maximum OpenAPI-supported page size used by the resolver fallback. */
+const ORGANIZATION_PAGE_SIZE = 30;
+
+/**
+ * Searches paginated accessible organizations when the detail endpoint is unavailable.
+ */
+function findAccessibleOrganization(
+  organizationService: OrganizationService,
+  organizationId: string,
+  page: number = 1,
+): Observable<OrganizationOutput | null> {
+  return organizationService.list({ page, itemsPerPage: ORGANIZATION_PAGE_SIZE }).pipe(
+    switchMap((collection: HydraCollection<OrganizationOutput>) => {
+      const organization: OrganizationOutput | undefined = collection.member.find(
+        (candidate: OrganizationOutput): boolean => candidate.id === organizationId,
+      );
+
+      if (organization) {
+        return of(organization);
+      }
+
+      return page * ORGANIZATION_PAGE_SIZE < collection.totalItems
+        ? findAccessibleOrganization(organizationService, organizationId, page + 1)
+        : of(null);
+    }),
+  );
+}
 
 /**
  * Resolver organizationResolver
@@ -43,6 +73,7 @@ export const organizationResolver: ResolveFn<OrganizationOutput> = (
    */
   const activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+  const organizationService: OrganizationService = inject(OrganizationService);
 
   /**
    * Constant router
@@ -64,7 +95,19 @@ export const organizationResolver: ResolveFn<OrganizationOutput> = (
   if (!organizationId) return new RedirectCommand(router.parseUrl('/'));
 
   // Attempt to resolve the organization, redirecting on failure
-  return activeOrganizationStore
-    .resolveOrganization(organizationId)
-    .pipe(catchError(() => of(new RedirectCommand(router.parseUrl('/')))));
+  return activeOrganizationStore.resolveOrganization(organizationId).pipe(
+    catchError(() =>
+      findAccessibleOrganization(organizationService, organizationId).pipe(
+        map((organization: OrganizationOutput | null): OrganizationOutput | RedirectCommand => {
+          if (!organization) {
+            return new RedirectCommand(router.parseUrl('/'));
+          }
+
+          activeOrganizationStore.setOrganization(organization);
+          return organization;
+        }),
+        catchError(() => of(new RedirectCommand(router.parseUrl('/')))),
+      ),
+    ),
+  );
 };

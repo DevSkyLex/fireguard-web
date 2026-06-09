@@ -102,8 +102,7 @@ export class FacilityDetailPage {
    *
    * @type {Router}
    */
-  private readonly router: Router =
-    inject<Router>(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property route
@@ -118,8 +117,7 @@ export class FacilityDetailPage {
    *
    * @type {ActivatedRoute}
    */
-  private readonly route: ActivatedRoute =
-    inject<ActivatedRoute>(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property messageService
@@ -134,8 +132,7 @@ export class FacilityDetailPage {
    *
    * @type {MessageService}
    */
-  private readonly messageService: MessageService =
-    inject<MessageService>(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
 
   /**
    * Property events
@@ -371,8 +368,6 @@ export class FacilityDetailPage {
       class: 'px-4',
     },
   };
-
-
 
   protected readonly tabPanelsPt: TabPanelsPassThrough = {
     root: {

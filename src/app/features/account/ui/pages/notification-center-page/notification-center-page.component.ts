@@ -88,9 +88,9 @@ export class NotificationCenterPage implements OnInit {
    * Method ngOnInit
    *
    * @description
-    * Loads notification reference types when the component is initialised.
-    * The initial notification list is bootstrapped globally via account
-    * feature initializers to avoid duplicate startup requests.
+   * Loads notification reference types when the component is initialised.
+   * The initial notification list is bootstrapped globally via account
+   * feature initializers to avoid duplicate startup requests.
    *
    * @access public
    * @since 1.0.0

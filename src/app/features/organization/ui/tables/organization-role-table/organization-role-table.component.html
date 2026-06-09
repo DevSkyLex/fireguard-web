@@ -1,0 +1,62 @@
+<p-card>
+  <p-table [value]="loading() ? skeletonItems : [...roles()]" dataKey="id" [stripedRows]="true">
+    <ng-template pTemplate="header"
+      ><tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Permissions</th>
+        <th class="w-28"><span class="sr-only">Actions</span></th>
+      </tr></ng-template
+    >
+    <ng-template pTemplate="body" let-role>
+      @if (loading()) {
+        <tr>
+          <td><p-skeleton width="8rem" /></td>
+          <td><p-skeleton width="12rem" /></td>
+          <td><p-skeleton width="14rem" /></td>
+          <td><p-skeleton width="5rem" /></td>
+        </tr>
+      } @else {
+        <tr>
+          <td class="font-medium">
+            {{ role.name }}
+            @if (role.isSystem) {
+              <span class="text-xs text-surface-500">(system)</span>
+            }
+          </td>
+          <td>{{ role.description || 'No description' }}</td>
+          <td class="max-w-xl text-sm text-surface-500">
+            {{ role.permissions.join(', ') || 'No permissions' }}
+          </td>
+          <td class="text-right">
+            @if (canManage()) {
+              <p-button
+                icon="pi pi-pencil"
+                severity="secondary"
+                [text]="true"
+                [rounded]="true"
+                ariaLabel="Edit role"
+                (onClick)="edit.emit(role)"
+              />
+              @if (!role.isSystem) {
+                <p-button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  [text]="true"
+                  [rounded]="true"
+                  ariaLabel="Delete role"
+                  (onClick)="remove.emit(role)"
+                />
+              }
+            }
+          </td>
+        </tr>
+      }
+    </ng-template>
+    <ng-template pTemplate="emptymessage"
+      ><tr>
+        <td colspan="4" class="py-12 text-center text-surface-500">No roles.</td>
+      </tr></ng-template
+    >
+  </p-table>
+</p-card>

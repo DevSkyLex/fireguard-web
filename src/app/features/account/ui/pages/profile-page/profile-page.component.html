@@ -1,0 +1,44 @@
+<div id="profile-page" class="flex flex-col">
+  <section
+    class="flex flex-col border-b border-surface-200 bg-surface-50 p-8 dark:border-surface-800 dark:bg-surface-900"
+  >
+    <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">Profile</h1>
+    <p class="text-sm text-surface-600">Review your account identity and access status.</p>
+  </section>
+  <section class="max-w-4xl p-8">
+    @if (userStore.profile(); as profile) {
+      <p-card>
+        <div class="mb-6 flex items-center gap-4">
+          <p-avatar
+            [image]="userStore.avatarUrl() || undefined"
+            [label]="userStore.avatarUrl() ? undefined : userStore.initials() || '?'"
+            shape="circle"
+            size="xlarge"
+          />
+          <div>
+            <h2 class="text-xl font-semibold">{{ userStore.displayName() }}</h2>
+            <p class="text-sm text-surface-500">{{ profile.email }}</p>
+          </div>
+        </div>
+        <dl class="grid gap-4 md:grid-cols-2">
+          <div>
+            <dt class="text-xs text-surface-500">Username</dt>
+            <dd>{{ profile.username || '-' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-surface-500">Status</dt>
+            <dd>{{ profile.status || '-' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-surface-500">Email verified</dt>
+            <dd>{{ profile.emailVerified ? 'Yes' : 'No' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-surface-500">Last login</dt>
+            <dd>{{ profile.lastLoginAt ? (profile.lastLoginAt | date: 'medium') : '-' }}</dd>
+          </div>
+        </dl>
+      </p-card>
+    }
+  </section>
+</div>

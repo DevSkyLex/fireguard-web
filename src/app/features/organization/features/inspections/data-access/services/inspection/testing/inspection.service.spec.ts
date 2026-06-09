@@ -7,6 +7,7 @@ import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
 import type {
   InspectionOutput,
   CreateInspectionInput,
+  UpdateInspectionInput,
   NonConformityOutput,
   AddNonConformityInput,
   UpdateNonConformityStatusInput,
@@ -252,6 +253,45 @@ describe('InspectionService', () => {
     });
   });
 
+  // ── update ─────────────────────────────────────────────────────────────────
+
+  describe('update', () => {
+    const input: UpdateInspectionInput = {
+      result: 'fail',
+      notes: 'Follow-up required',
+    };
+
+    it('should send PATCH request and return updated inspection', () => {
+      const updated: InspectionOutput = { ...mockInspection, ...input };
+
+      service.update(orgId, inspectionId, input).subscribe((inspection) => {
+        expect(inspection.result).toBe('fail');
+        expect(inspection.notes).toBe('Follow-up required');
+      });
+
+      const req = httpMock.expectOne(`${inspectionsBaseUrl}/${inspectionId}`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual(input);
+      expect(req.request.withCredentials).toBe(true);
+      expect(req.request.headers.get('Content-Type')).toBe('application/merge-patch+json');
+      req.flush(updated);
+    });
+  });
+
+  // ── cancel ─────────────────────────────────────────────────────────────────
+
+  describe('cancel', () => {
+    it('should send DELETE request to cancel inspection', () => {
+      service.cancel(orgId, inspectionId).subscribe();
+
+      const req = httpMock.expectOne(`${inspectionsBaseUrl}/${inspectionId}`);
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.body).toBeNull();
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(null);
+    });
+  });
+
   // ── submit ─────────────────────────────────────────────────────────────────
 
   describe('submit', () => {
@@ -340,6 +380,23 @@ describe('InspectionService', () => {
       expect(req.request.params.get('page')).toBe('4');
       expect(req.request.params.get('itemsPerPage')).toBe('15');
       req.flush(mockCollection([]));
+    });
+  });
+
+  // ── getNonConformity ───────────────────────────────────────────────────────
+
+  describe('getNonConformity', () => {
+    it('should send GET request and return a non-conformity', () => {
+      service.getNonConformity(orgId, inspectionId, mockNonConformity.id).subscribe((nc) => {
+        expect(nc).toEqual(mockNonConformity);
+      });
+
+      const req = httpMock.expectOne(
+        `${inspectionsBaseUrl}/${inspectionId}/non-conformities/${mockNonConformity.id}`,
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(mockNonConformity);
     });
   });
 

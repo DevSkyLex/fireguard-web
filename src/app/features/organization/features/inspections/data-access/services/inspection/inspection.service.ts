@@ -5,6 +5,7 @@ import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
   InspectionOutput,
   CreateInspectionInput,
+  UpdateInspectionInput,
   NonConformityOutput,
   AddNonConformityInput,
   UpdateNonConformityStatusInput,
@@ -113,7 +114,7 @@ export class InspectionService extends HydraApiService {
     options?: InspectionListOptions,
   ): Observable<HydraCollection<InspectionOutput>> {
     const params: NonNullable<RequestOptions['params']> = {
-      ...(options?.params ?? {}),
+      ...options?.params,
     };
     const facilityId: string | undefined = options?.facilityId;
 
@@ -209,6 +210,27 @@ export class InspectionService extends HydraApiService {
   }
 
   /**
+   * Updates a draft inspection using JSON Merge Patch.
+   */
+  public update(
+    organizationId: string,
+    inspectionId: string,
+    input: UpdateInspectionInput,
+  ): Observable<InspectionOutput> {
+    return this.patch<UpdateInspectionInput, InspectionOutput>(
+      this.inspectionPath(organizationId, inspectionId),
+      input,
+    );
+  }
+
+  /**
+   * Cancels an inspection.
+   */
+  public cancel(organizationId: string, inspectionId: string): Observable<void> {
+    return this.delete(this.inspectionPath(organizationId, inspectionId));
+  }
+
+  /**
    * Method submit
    * @method submit
    *
@@ -288,6 +310,19 @@ export class InspectionService extends HydraApiService {
         itemsPerPage: options?.itemsPerPage,
         params,
       },
+    );
+  }
+
+  /**
+   * Retrieves a single non-conformity.
+   */
+  public getNonConformity(
+    organizationId: string,
+    inspectionId: string,
+    nonConformityId: string,
+  ): Observable<NonConformityOutput> {
+    return this.getOne<NonConformityOutput>(
+      `${this.inspectionPath(organizationId, inspectionId)}/non-conformities/${nonConformityId}`,
     );
   }
 

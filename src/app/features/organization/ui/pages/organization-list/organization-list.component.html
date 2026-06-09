@@ -10,12 +10,10 @@
     [organizations]="store.organizations()"
     [total]="store.totalOrganizations()"
     [loading]="store.isLoadingOrganizations()"
-    [deleting]="store.isDeleting()"
     [initialPage]="page()"
     (load)="onLoad($event)"
     (pageChange)="onPageChange($event)"
     (view)="onView($event)"
     (add)="onAdd()"
-    (delete)="onDelete($event)"
   />
 </div>

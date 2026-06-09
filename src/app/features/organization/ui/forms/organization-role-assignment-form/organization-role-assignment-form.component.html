@@ -1,0 +1,25 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+  <p-select
+    [options]="[...members()]"
+    optionLabel="userId"
+    optionValue="id"
+    formControlName="memberId"
+    placeholder="Member"
+    [filter]="true"
+  />
+  <p-select
+    [options]="[...roles()]"
+    optionLabel="name"
+    optionValue="id"
+    formControlName="roleId"
+    placeholder="Role"
+    [filter]="true"
+  />
+  <p-button
+    type="submit"
+    label="Assign role"
+    icon="pi pi-plus"
+    [loading]="loading()"
+    [disabled]="form.invalid || loading()"
+  />
+</form>

@@ -27,6 +27,7 @@ import type { EquipmentOutput } from '@features/organization/features/equipments
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import type {
   InspectionResult,
+  InspectionOutput,
   InspectorType,
 } from '@features/organization/features/inspections/models';
 import type { InspectionFormData, InspectionFormValues } from './models';
@@ -124,6 +125,11 @@ export class InspectionForm {
   public readonly checklists: InputSignal<readonly ChecklistOutput[]> = input<
     readonly ChecklistOutput[]
   >([]);
+
+  /** Existing inspection when the form is used in edit mode. */
+  public readonly inspection: InputSignal<InspectionOutput | null> = input<InspectionOutput | null>(
+    null,
+  );
   //#endregion
 
   //#region Outputs
@@ -226,6 +232,28 @@ export class InspectionForm {
       } else {
         this.form.enable({ emitEvent: false });
       }
+    });
+
+    effect(() => {
+      const inspection: InspectionOutput | null = this.inspection();
+      if (!inspection) {
+        return;
+      }
+
+      this.form.patchValue(
+        {
+          equipmentId: inspection.equipmentId,
+          result: inspection.result,
+          performedAt: inspection.performedAt.slice(0, 16),
+          inspectorType: 'external',
+          inspectorName: inspection.inspector?.displayName ?? 'Inspector',
+          facilityId: inspection.facilityId ?? '',
+          checklistId: inspection.checklistId ?? '',
+          notes: inspection.notes ?? '',
+          signature: inspection.signature ?? '',
+        },
+        { emitEvent: false },
+      );
     });
   }
   //#endregion

@@ -85,6 +85,9 @@ export interface FacilityState {
    */
   readonly archiveCallState: CallState<FacilityOutput | null>;
 
+  /** Tracks the restore facility operation state. */
+  readonly restoreCallState: CallState<FacilityOutput | null>;
+
   /**
    * Property moveOperation
    * @readonly

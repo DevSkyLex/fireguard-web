@@ -1,0 +1,59 @@
+<section
+  class="flex min-h-0 flex-1 flex-col rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-950"
+>
+  <header
+    class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
+  >
+    <div class="flex items-center gap-2">
+      <i class="pi pi-wrench text-sm text-surface-500"></i>
+      <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">
+        Maintenance history
+      </h2>
+    </div>
+    <span class="text-xs text-surface-500">{{ logs().length }} event(s)</span>
+  </header>
+  <p-table [value]="loading() ? skeletonItems : [...logs()]" dataKey="id" [stripedRows]="true">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Started</th>
+        <th>Completed</th>
+        <th>Status</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-log>
+      @if (loading()) {
+        <tr>
+          <td><p-skeleton width="8rem" /></td>
+          <td><p-skeleton width="8rem" /></td>
+          <td><p-skeleton width="6rem" height="1.75rem" borderRadius="999px" /></td>
+        </tr>
+      } @else {
+        <tr>
+          <td>{{ log.startedAt | date: 'medium' }}</td>
+          <td>{{ log.completedAt ? (log.completedAt | date: 'medium') : 'In progress' }}</td>
+          <td>
+            <p-tag
+              [value]="log.completedAt ? 'Completed' : 'Active'"
+              [severity]="log.completedAt ? 'success' : 'warn'"
+            />
+          </td>
+        </tr>
+      }
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="3">
+          <div class="flex flex-col items-center gap-3 py-16 text-center">
+            <i class="pi pi-wrench text-5xl text-surface-300 dark:text-surface-700"></i>
+            <div>
+              <p class="font-medium text-surface-900 dark:text-surface-100">
+                No maintenance history
+              </p>
+              <p class="text-sm text-surface-500">Lifecycle maintenance events will appear here.</p>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>

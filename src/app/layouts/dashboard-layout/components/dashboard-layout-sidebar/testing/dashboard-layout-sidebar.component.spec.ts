@@ -10,11 +10,11 @@ import { withOrganizationNavigation } from '@features/organization';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
+import { provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
 import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
 } from '@layouts/dashboard-layout/services';
-import { provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
 import { DashboardLayoutSidebarNavigation } from '../components';
 import { DashboardLayoutSidebar } from '../dashboard-layout-sidebar.component';
 
@@ -72,11 +72,7 @@ describe('DashboardLayoutSidebar', () => {
         DashboardSidebarService,
         provideRouter([]),
         provideDashboardLayoutSlots({
-          navigation: [
-            withMainNavigation(),
-            withOrganizationNavigation(),
-            withAccountNavigation(),
-          ],
+          navigation: [withMainNavigation(), withOrganizationNavigation(), withAccountNavigation()],
         }),
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
@@ -100,7 +96,7 @@ describe('DashboardLayoutSidebar', () => {
     ).toBeTruthy();
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-footer'))).toBeTruthy();
 
-    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(7);
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(11);
     expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
     expect(
       fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
@@ -115,7 +111,11 @@ describe('DashboardLayoutSidebar', () => {
     expect(textContent).toContain('Facilities');
     expect(textContent).toContain('Equipments');
     expect(textContent).toContain('Inspections');
+    expect(textContent).toContain('Checklists');
     expect(textContent).toContain('Account');
+    expect(textContent).toContain('Profile');
+    expect(textContent).toContain('Sessions');
+    expect(textContent).toContain('Trusted Devices');
     expect(textContent).toContain('Notifications');
     expect(textContent).toContain('2026 Fireguard, Inc.');
   });

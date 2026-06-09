@@ -7,7 +7,7 @@ Owns organization context and organization-scoped business workflows.
 This feature is responsible for:
 
 - organization list and active organization context,
-- organization member, invitation, role, and audit data,
+- organization member, invitation, role, legal profile, and audit data,
 - organization-scoped permission helpers derived from the active member access payload,
 - organization overview pages,
 - nested organization-scoped subfeatures such as facilities, equipments, and inspections,
@@ -28,8 +28,13 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId/facilities`
 - `/organizations/:organizationId/equipments`
 - `/organizations/:organizationId/inspections`
+- `/organizations/:organizationId/checklists`
+- `/organizations/:organizationId/team`
+- `/organizations/:organizationId/settings/legal`
+- `/organizations/invitations/accept`
 
 The `:organizationId` parent route resolves organization context before child pages render.
+Organization navigation and routes are filtered by the active member permissions.
 
 ## State and Data Access
 

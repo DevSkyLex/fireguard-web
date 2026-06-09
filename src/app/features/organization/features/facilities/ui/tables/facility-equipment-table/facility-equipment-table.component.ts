@@ -200,6 +200,11 @@ export class FacilityEquipmentTable implements OnInit {
   public readonly add: OutputEmitterRef<void> = output<void>();
 
   /**
+   * Emits the equipment selected for detail navigation.
+   */
+  public readonly view: OutputEmitterRef<EquipmentOutput> = output<EquipmentOutput>();
+
+  /**
    * Output edit
    * @readonly
    *
@@ -214,36 +219,6 @@ export class FacilityEquipmentTable implements OnInit {
    */
   public readonly edit: OutputEmitterRef<EquipmentOutput> = output<EquipmentOutput>();
 
-  /**
-   * Output delete
-   * @readonly
-   *
-   * @description
-   * Emits the equipment selected from the row action menu when the user
-   * requests deletion. The parent owns confirmation and store interaction.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<EquipmentOutput>}
-   */
-  public readonly delete: OutputEmitterRef<EquipmentOutput> = output<EquipmentOutput>();
-
-  /**
-   * Output bulkDelete
-   * @readonly
-   *
-   * @description
-   * Emits the currently selected equipment rows when the user requests a bulk
-   * deletion from the toolbar split button.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<readonly EquipmentOutput[]>}
-   */
-  public readonly bulkDelete: OutputEmitterRef<readonly EquipmentOutput[]> =
-    output<readonly EquipmentOutput[]>();
   //#endregion
 
   //#region Properties
@@ -277,7 +252,8 @@ export class FacilityEquipmentTable implements OnInit {
    */
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
-      class: 'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
+      class:
+        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
     },
     body: {
       class: 'p-0 flex flex-col flex-1 min-h-0',
@@ -408,8 +384,9 @@ export class FacilityEquipmentTable implements OnInit {
    *
    * @type {WritableSignal<EquipmentOutput[]>}
    */
-  protected readonly selectedEquipments: WritableSignal<EquipmentOutput[]> =
-    signal<EquipmentOutput[]>([]);
+  protected readonly selectedEquipments: WritableSignal<EquipmentOutput[]> = signal<
+    EquipmentOutput[]
+  >([]);
 
   /**
    * Property toolbarActions
@@ -440,18 +417,6 @@ export class FacilityEquipmentTable implements OnInit {
             label: 'Clear selection',
             icon: PrimeIcons.TIMES,
             command: (): void => this.onClearSelection(),
-          },
-        ]
-      : []),
-    ...(this.canManageEquipment()
-      ? [
-          { separator: true },
-          {
-            label: `Delete selected (${this.selectedEquipments().length})`,
-            icon: PrimeIcons.TRASH,
-            disabled: this.selectedEquipments().length === 0,
-            styleClass: 'text-red-500',
-            command: (): void => this.onBulkDelete(),
           },
         ]
       : []),
@@ -519,22 +484,25 @@ export class FacilityEquipmentTable implements OnInit {
   protected readonly actionMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
     const equipment: EquipmentOutput | null = this.selectedEquipment();
 
-    if (!equipment || !this.canManageEquipment()) {
+    if (!equipment) {
       return [];
     }
 
     return [
       {
-        label: 'Edit',
-        icon: PrimeIcons.PENCIL,
-        command: (): void => this.edit.emit(equipment),
+        label: 'View',
+        icon: PrimeIcons.EYE,
+        command: (): void => this.view.emit(equipment),
       },
-      {
-        label: 'Delete',
-        icon: PrimeIcons.TRASH,
-        styleClass: 'text-red-500',
-        command: (): void => this.delete.emit(equipment),
-      },
+      ...(this.canManageEquipment()
+        ? [
+            {
+              label: 'Edit',
+              icon: PrimeIcons.PENCIL,
+              command: (): void => this.edit.emit(equipment),
+            },
+          ]
+        : []),
     ];
   });
 
@@ -722,28 +690,6 @@ export class FacilityEquipmentTable implements OnInit {
   }
 
   /**
-   * Method onBulkDelete
-   *
-   * @description
-   * Emits selected equipment rows when the user triggers the bulk delete
-   * toolbar action.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected onBulkDelete(): void {
-    const selectedEquipments: EquipmentOutput[] = this.selectedEquipments();
-
-    if (selectedEquipments.length === 0 || !this.canManageEquipment()) {
-      return;
-    }
-
-    this.bulkDelete.emit(selectedEquipments);
-  }
-
-  /**
    * Method onActionMenuToggle
    *
    * @description
@@ -814,7 +760,9 @@ export class FacilityEquipmentTable implements OnInit {
    */
   protected getStatusOption(status: EquipmentStatus): EquipmentStatusOption {
     return (
-      this.statusOptions.find((option: EquipmentStatusOption): boolean => option.value === status) ?? {
+      this.statusOptions.find(
+        (option: EquipmentStatusOption): boolean => option.value === status,
+      ) ?? {
         label: this.toDisplayLabel(status),
         value: status,
         icon: PrimeIcons.CIRCLE,

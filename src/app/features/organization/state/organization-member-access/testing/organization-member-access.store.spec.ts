@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { NavigationEnd, Router } from '@angular/router';
 import { firstValueFrom, of, Subject, throwError } from 'rxjs';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import {
@@ -63,9 +64,33 @@ describe('OrganizationMemberAccessStore', () => {
   let mockOrganizationMemberService: {
     getCurrentProfile: ReturnType<typeof vi.fn>;
   };
+  let routerEvents: Subject<NavigationEnd>;
+  let mockRouter: {
+    events: Subject<NavigationEnd>;
+    routerState: {
+      snapshot: {
+        root: {
+          paramMap: { has: ReturnType<typeof vi.fn> };
+          children: [];
+        };
+      };
+    };
+  };
 
   beforeEach(() => {
     selectedOrganization.set(null);
+    routerEvents = new Subject<NavigationEnd>();
+    mockRouter = {
+      events: routerEvents,
+      routerState: {
+        snapshot: {
+          root: {
+            paramMap: { has: vi.fn().mockReturnValue(false) },
+            children: [],
+          },
+        },
+      },
+    };
     mockOrganizationMemberService = {
       getCurrentProfile: vi.fn().mockReturnValue(of(profile)),
     };
@@ -81,6 +106,10 @@ describe('OrganizationMemberAccessStore', () => {
         {
           provide: OrganizationMemberService,
           useValue: mockOrganizationMemberService,
+        },
+        {
+          provide: Router,
+          useValue: mockRouter,
         },
       ],
     });
@@ -98,16 +127,46 @@ describe('OrganizationMemberAccessStore', () => {
     expect(store.accessCallState().status).toBe('success');
   });
 
-  it('should clear access when the active organization becomes null', async () => {
+  it('should clear access after navigation outside an organization completes', async () => {
+    selectedOrganization.set({ id: 'org-1' });
+    await flushEffects();
+
+    routerEvents.next(new NavigationEnd(1, '/organizations/org-1', '/organizations'));
+
+    expect(store.profile()).toBeNull();
+    expect(store.permissions()).toEqual([]);
+    expect(store.accessCallState().status).toBe('idle');
+  });
+
+  it('should preserve access while the active organization is temporarily null', async () => {
     selectedOrganization.set({ id: 'org-1' });
     await flushEffects();
 
     selectedOrganization.set(null);
     await flushEffects();
 
-    expect(store.profile()).toBeNull();
-    expect(store.permissions()).toEqual([]);
-    expect(store.accessCallState().status).toBe('idle');
+    expect(store.profile()).toEqual(profile);
+    expect(store.permissions()).toEqual([ORGANIZATION_PERMISSION.FACILITIES_WRITE]);
+    expect(store.accessCallState().status).toBe('success');
+  });
+
+  it('should resolve direct navigation access before the active organization resolver completes', async () => {
+    const profileSubject = new Subject<CurrentOrganizationMemberProfileOutput>();
+    mockOrganizationMemberService.getCurrentProfile.mockReset();
+    mockOrganizationMemberService.getCurrentProfile.mockReturnValue(profileSubject.asObservable());
+
+    const accessResolved = firstValueFrom(store.ensureAccessResolved('org-1'));
+    await flushEffects();
+
+    expect(store.currentOrganizationId()).toBe('org-1');
+    expect(store.accessCallState().status).toBe('pending');
+
+    profileSubject.next(profile);
+    profileSubject.complete();
+
+    await expect(accessResolved).resolves.toBe(true);
+    expect(store.currentOrganizationId()).toBe('org-1');
+    expect(store.accessCallState().status).toBe('success');
   });
 
   it('should reload the current organization member access payload', async () => {

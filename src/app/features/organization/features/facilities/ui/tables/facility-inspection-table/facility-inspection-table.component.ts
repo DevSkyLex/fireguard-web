@@ -196,6 +196,11 @@ export class FacilityInspectionTable implements OnInit {
   public readonly add: OutputEmitterRef<void> = output<void>();
 
   /**
+   * Emits the inspection selected for detail navigation.
+   */
+  public readonly view: OutputEmitterRef<InspectionOutput> = output<InspectionOutput>();
+
+  /**
    * Output edit
    * @readonly
    *
@@ -210,36 +215,8 @@ export class FacilityInspectionTable implements OnInit {
    */
   public readonly edit: OutputEmitterRef<InspectionOutput> = output<InspectionOutput>();
 
-  /**
-   * Output delete
-   * @readonly
-   *
-   * @description
-   * Emits the inspection selected from the row action menu when the user
-   * requests deletion. The parent owns confirmation and store interaction.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<InspectionOutput>}
-   */
-  public readonly delete: OutputEmitterRef<InspectionOutput> = output<InspectionOutput>();
-
-  /**
-   * Output bulkDelete
-   * @readonly
-   *
-   * @description
-   * Emits the currently selected inspection rows when the user requests a bulk
-   * deletion from the toolbar split button.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<readonly InspectionOutput[]>}
-   */
-  public readonly bulkDelete: OutputEmitterRef<readonly InspectionOutput[]> =
-    output<readonly InspectionOutput[]>();
+  /** Emits the draft inspection selected for cancellation. */
+  public readonly cancel: OutputEmitterRef<InspectionOutput> = output<InspectionOutput>();
   //#endregion
 
   //#region Properties
@@ -273,7 +250,8 @@ export class FacilityInspectionTable implements OnInit {
    */
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
-      class: 'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
+      class:
+        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
     },
     body: {
       class: 'p-0 flex flex-col flex-1 min-h-0',
@@ -358,19 +336,19 @@ export class FacilityInspectionTable implements OnInit {
       label: 'Pass',
       value: 'pass',
       icon: PrimeIcons.CHECK_CIRCLE,
-      color: '#22c55e'
+      color: '#22c55e',
     },
     {
       label: 'Partial',
       value: 'partial',
       icon: PrimeIcons.EXCLAMATION_CIRCLE,
-      color: '#f59e0b'
+      color: '#f59e0b',
     },
     {
       label: 'Fail',
       value: 'fail',
       icon: PrimeIcons.TIMES_CIRCLE,
-      color: '#ef4444'
+      color: '#ef4444',
     },
   ];
 
@@ -391,19 +369,19 @@ export class FacilityInspectionTable implements OnInit {
       label: 'Draft',
       value: 'draft',
       icon: PrimeIcons.FILE_EDIT,
-      color: '#3b82f6'
+      color: '#3b82f6',
     },
     {
       label: 'Submitted',
       value: 'submitted',
       icon: PrimeIcons.SEND,
-      color: '#f59e0b'
+      color: '#f59e0b',
     },
     {
       label: 'Closed',
       value: 'closed',
       icon: PrimeIcons.LOCK,
-      color: '#64748b'
+      color: '#64748b',
     },
   ];
 
@@ -438,22 +416,6 @@ export class FacilityInspectionTable implements OnInit {
     new FormControl<InspectionStatus | null>(null);
 
   /**
-   * Property selectedInspections
-   * @readonly
-   *
-   * @description
-   * Inspection rows currently selected through the table checkbox column.
-   * Stored as a signal so toolbar bulk actions can react to selection changes.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {WritableSignal<InspectionOutput[]>}
-   */
-  protected readonly selectedInspections: WritableSignal<InspectionOutput[]> =
-    signal<InspectionOutput[]>([]);
-
-  /**
    * Property toolbarActions
    * @readonly
    *
@@ -476,27 +438,6 @@ export class FacilityInspectionTable implements OnInit {
       icon: PrimeIcons.FILTER_SLASH,
       command: (): void => this.onClearFilters(),
     },
-    ...(this.selectedInspections().length > 0
-      ? [
-          {
-            label: 'Clear selection',
-            icon: PrimeIcons.TIMES,
-            command: (): void => this.onClearSelection(),
-          },
-        ]
-      : []),
-    ...(this.canManageInspections()
-      ? [
-          { separator: true },
-          {
-            label: `Delete selected (${this.selectedInspections().length})`,
-            icon: PrimeIcons.TRASH,
-            disabled: this.selectedInspections().length === 0,
-            styleClass: 'text-red-500',
-            command: (): void => this.onBulkDelete(),
-          },
-        ]
-      : []),
   ]);
 
   /**
@@ -505,7 +446,7 @@ export class FacilityInspectionTable implements OnInit {
    *
    * @description
    * Whether the authenticated organization member can access inspection row
-   * mutation actions such as edit and delete.
+   * mutation actions such as edit and cancel.
    *
    * @access protected
    * @since 1.0.0
@@ -561,22 +502,31 @@ export class FacilityInspectionTable implements OnInit {
   protected readonly actionMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
     const inspection: InspectionOutput | null = this.selectedInspection();
 
-    if (!inspection || !this.canManageInspections()) {
+    if (!inspection) {
       return [];
     }
 
     return [
       {
-        label: 'Edit',
-        icon: PrimeIcons.PENCIL,
-        command: (): void => this.edit.emit(inspection),
+        label: 'View',
+        icon: PrimeIcons.EYE,
+        command: (): void => this.view.emit(inspection),
       },
-      {
-        label: 'Delete',
-        icon: PrimeIcons.TRASH,
-        styleClass: 'text-red-500',
-        command: (): void => this.delete.emit(inspection),
-      },
+      ...(this.canManageInspections() && inspection.status === 'draft'
+        ? [
+            {
+              label: 'Edit',
+              icon: PrimeIcons.PENCIL,
+              command: (): void => this.edit.emit(inspection),
+            },
+            {
+              label: 'Cancel',
+              icon: PrimeIcons.TIMES,
+              styleClass: 'text-red-500',
+              command: (): void => this.cancel.emit(inspection),
+            },
+          ]
+        : []),
     ];
   });
 
@@ -683,19 +633,12 @@ export class FacilityInspectionTable implements OnInit {
     const first: number = event.first ?? 0;
     const rowsPerPage: number = event.rows ?? this.rows;
     const page: number = Math.floor(first / rowsPerPage) + 1;
-    const previousEvent: TableLazyLoadEvent | null = this.lastLazyEvent();
-    const shouldClearSelection: boolean =
-      this.initialized && this.hasLazyEventChanged(previousEvent, event);
     const params: Record<string, string | number | boolean> = {};
     const result: InspectionResult | null = this.resultControl.value;
     const status: InspectionStatus | null = this.statusControl.value;
 
     this.firstPage.set(first);
     this.lastLazyEvent.set(event);
-
-    if (shouldClearSelection) {
-      this.onClearSelection();
-    }
 
     if (result) params['result'] = result;
     if (status) params['status'] = status;
@@ -743,43 +686,6 @@ export class FacilityInspectionTable implements OnInit {
     this.resultControl.setValue(null, { emitEvent: false });
     this.statusControl.setValue(null, { emitEvent: false });
     this.reload();
-  }
-
-  /**
-   * Method onClearSelection
-   *
-   * @description
-   * Clears the current checkbox selection without reloading the table.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected onClearSelection(): void {
-    this.selectedInspections.set([]);
-  }
-
-  /**
-   * Method onBulkDelete
-   *
-   * @description
-   * Emits selected inspection rows when the user triggers the bulk delete
-   * toolbar action.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected onBulkDelete(): void {
-    const selectedInspections: InspectionOutput[] = this.selectedInspections();
-
-    if (selectedInspections.length === 0 || !this.canManageInspections()) {
-      return;
-    }
-
-    this.bulkDelete.emit(selectedInspections);
   }
 
   /**
@@ -964,7 +870,6 @@ export class FacilityInspectionTable implements OnInit {
    * @returns {void}
    */
   private reload(): void {
-    this.onClearSelection();
     this.firstPage.set(0);
 
     const event: TableLazyLoadEvent = this.lastLazyEvent() ?? {
@@ -977,36 +882,6 @@ export class FacilityInspectionTable implements OnInit {
       first: 0,
       rows: event.rows ?? this.rows,
     });
-  }
-
-  /**
-   * Method hasLazyEventChanged
-   *
-   * @description
-   * Checks whether a lazy-load event targets a different table dataset.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @param {TableLazyLoadEvent | null} previousEvent Previous lazy-load event.
-   * @param {TableLazyLoadEvent} event Current lazy-load event.
-   *
-   * @returns {boolean} Whether the table dataset changed.
-   */
-  private hasLazyEventChanged(
-    previousEvent: TableLazyLoadEvent | null,
-    event: TableLazyLoadEvent,
-  ): boolean {
-    if (!previousEvent) {
-      return false;
-    }
-
-    return (
-      (previousEvent.first ?? 0) !== (event.first ?? 0) ||
-      (previousEvent.rows ?? this.rows) !== (event.rows ?? this.rows) ||
-      previousEvent.sortOrder !== event.sortOrder ||
-      this.getSortField(previousEvent) !== this.getSortField(event)
-    );
   }
 
   /**

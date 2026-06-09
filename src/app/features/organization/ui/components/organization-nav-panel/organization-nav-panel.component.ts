@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  type Signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { type IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
 import { RippleModule } from 'primeng/ripple';
@@ -12,50 +6,14 @@ import { OrganizationOutput } from '@app/features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
-  ORGANIZATION_PERMISSION,
   type OrganizationContextPort,
   type OrganizationMemberAccessPort,
-  type OrganizationPermissionName,
 } from '@features/organization';
-
-type OrganizationSidebarItem = Readonly<{
-  id: string;
-  label: string;
-  icon: string;
-  path: string;
-  permissions: ReadonlyArray<OrganizationPermissionName>;
-}>;
-
-const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationSidebarItem> = [
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    icon: 'pi pi-chart-bar',
-    path: '',
-    permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
-  },
-  {
-    id: 'facilities',
-    label: 'Facilities',
-    icon: 'pi pi-map',
-    path: 'facilities',
-    permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
-  },
-  {
-    id: 'equipments',
-    label: 'Equipments',
-    icon: 'pi pi-box',
-    path: 'equipments',
-    permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ],
-  },
-  {
-    id: 'inspections',
-    label: 'Inspections',
-    icon: 'pi pi-clipboard',
-    path: 'inspections',
-    permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
-  },
-];
+import {
+  hasOrganizationNavigationAccess,
+  ORGANIZATION_NAVIGATION_ITEMS,
+  type OrganizationNavigationItem,
+} from '@features/organization/navigation';
 
 /**
  * Component OrganizationSecondarySidebar
@@ -135,9 +93,9 @@ export class OrganizationNavPanel {
    * @readonly
    *
    * @description
-    * Organization-scoped navigation items filtered by the current member's
-    * permissions. Returns an empty array when no organization is active
-    * or no items pass the permission filter.
+   * Organization-scoped navigation items filtered by the current member's
+   * permissions. Returns an empty array when no organization is active
+   * or no items pass the permission filter.
    *
    * @access protected
    * @since 1.0.0
@@ -155,10 +113,10 @@ export class OrganizationNavPanel {
     const prefix: string = `/organizations/${organization.id}`;
 
     const visibleItems: MenuItem[] = ORGANIZATION_NAVIGATION_ITEMS.filter(
-      (item: OrganizationSidebarItem): boolean =>
-        this.hasPermissions(item.permissions, grantedPermissions),
+      (item: OrganizationNavigationItem): boolean =>
+        hasOrganizationNavigationAccess(item, grantedPermissions),
     ).map(
-      (item: OrganizationSidebarItem): MenuItem => ({
+      (item: OrganizationNavigationItem): MenuItem => ({
         id: item.id,
         label: item.label,
         icon: item.icon,
@@ -239,37 +197,6 @@ export class OrganizationNavPanel {
     }
 
     return this.subsetMatchOptions;
-  }
-
-  /**
-   * Method hasPermissions
-   * @method hasPermissions
-   *
-   * @description
-   * Returns whether every required permission is in the granted set,
-   * including wildcard grants such as `organization.*`.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @param {ReadonlyArray<OrganizationPermissionName>} required - Required permissions.
-   * @param {ReadonlySet<string>} granted - Granted permissions.
-   *
-   * @returns {boolean}
-   */
-  private hasPermissions(
-    required: ReadonlyArray<OrganizationPermissionName>,
-    granted: ReadonlySet<string>,
-  ): boolean {
-    return required.every((permission: OrganizationPermissionName): boolean => {
-      if (granted.has(permission)) return true;
-
-      return Array.from(granted).some((grantedPermission: string): boolean => {
-        if (grantedPermission === permission) return true;
-        if (!grantedPermission.endsWith('.*')) return false;
-        return permission.startsWith(grantedPermission.slice(0, -1));
-      });
-    });
   }
 
   //#endregion

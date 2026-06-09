@@ -1,0 +1,25 @@
+<div id="inspection-edit" class="flex flex-col">
+  <section class="max-w-2xl p-8">
+    <h1 class="mb-6 text-2xl font-semibold text-surface-900 dark:text-surface-0">
+      Edit Inspection Draft
+    </h1>
+    @if (isLoading()) {
+      <div class="flex flex-col gap-8">
+        <p-skeleton width="100%" height="2.5rem" />
+        <p-skeleton width="100%" height="2.5rem" />
+        <p-skeleton width="100%" height="2.5rem" />
+        <p-skeleton width="100%" height="2.5rem" />
+      </div>
+    } @else if (inspection(); as inspection) {
+      <app-inspection-form
+        [inspection]="inspection"
+        [loading]="store.isUpdating()"
+        [equipments]="equipmentStore.equipmentList()"
+        [facilities]="facilityStore.facilities()"
+        [checklists]="checklistStore.checklists()"
+        (submitted)="handleSubmit($event)"
+        (cancelled)="handleCancel()"
+      />
+    }
+  </section>
+</div>

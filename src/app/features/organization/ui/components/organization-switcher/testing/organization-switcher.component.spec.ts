@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Router, provideRouter } from '@angular/router';
+import { Router, provideRouter, type UrlTree } from '@angular/router';
 import type { OrganizationOutput } from '@features/organization/models';
 import { OrganizationStore } from '@features/organization/state';
 import { OrganizationSwitcher } from '../organization-switcher.component';
@@ -180,7 +180,7 @@ describe('OrganizationSwitcher', () => {
     component.onOrganizationChange(newOrg);
 
     expect(navigateSpy).toHaveBeenCalledTimes(1);
-    const calledUrl = navigateSpy.mock.calls[0][0] as string;
+    const calledUrl = router.serializeUrl(navigateSpy.mock.calls[0][0] as UrlTree);
     expect(calledUrl).toContain('org-2');
     expect(calledUrl).toContain('dashboard');
   });
@@ -249,6 +249,8 @@ describe('OrganizationSwitcher', () => {
     };
     component.onOrganizationChange(newOrg);
 
-    expect(navigateSpy).toHaveBeenCalledWith('/organizations/org-2');
+    expect(router.serializeUrl(navigateSpy.mock.calls[0][0] as UrlTree)).toBe(
+      '/organizations/org-2',
+    );
   });
 });

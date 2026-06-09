@@ -19,6 +19,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import type { EquipmentFormData } from './equipment-form-data.type';
 import type { EquipmentFormValues } from './equipment-form-values.type';
 
@@ -63,6 +64,11 @@ export class EquipmentForm {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /** Existing equipment when the form is used in edit mode. */
+  public readonly equipment: InputSignal<EquipmentOutput | null> = input<EquipmentOutput | null>(
+    null,
+  );
   //#endregion
 
   //#region Outputs
@@ -144,6 +150,25 @@ export class EquipmentForm {
       } else {
         this.form.enable({ emitEvent: false });
       }
+    });
+
+    effect(() => {
+      const equipment: EquipmentOutput | null = this.equipment();
+      if (!equipment) {
+        return;
+      }
+
+      this.form.patchValue(
+        {
+          type: equipment.type,
+          subType: equipment.subType ?? '',
+          brand: equipment.brand ?? '',
+          model: equipment.model ?? '',
+          serialNumber: equipment.serialNumber ?? '',
+          locationLabel: equipment.locationLabel ?? '',
+        },
+        { emitEvent: false },
+      );
     });
   }
   //#endregion

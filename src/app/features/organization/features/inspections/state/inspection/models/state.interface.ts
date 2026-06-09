@@ -26,6 +26,10 @@ export interface InspectionState {
   readonly listCallState: CallState;
   /** Tracks the create inspection operation state. */
   readonly createCallState: CallState<InspectionOutput | null>;
+  /** Tracks the update inspection operation state. */
+  readonly updateCallState: CallState<InspectionOutput | null>;
+  /** Tracks the cancel inspection operation state. */
+  readonly cancelCallState: CallState<string | null>;
   /** Tracks the submit inspection operation state. */
   readonly submitCallState: CallState<InspectionOutput | null>;
   /** Tracks the close inspection operation state. */
@@ -37,6 +41,8 @@ export interface InspectionState {
   readonly totalNonConformities: number;
   /** Tracks the load non-conformities list operation state. */
   readonly nonConformitiesListCallState: CallState;
+  /** Tracks loading one non-conformity. */
+  readonly nonConformityGetCallState: CallState<NonConformityOutput | null>;
   /** Tracks the add non-conformity operation state. */
   readonly addNonConformityCallState: CallState<NonConformityOutput | null>;
   /** Tracks the update non-conformity status operation state. */

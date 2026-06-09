@@ -1,0 +1,97 @@
+<div id="equipment-detail" class="flex h-full min-h-0 flex-col gap-6">
+  <section>
+    @if (isLoading()) {
+      <div
+        class="flex items-center justify-between rounded-xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-950"
+      >
+        <div class="flex items-center gap-6">
+          <p-skeleton shape="square" size="3.5rem" />
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="12rem" height="1.25rem" />
+            <p-skeleton width="9rem" height="0.875rem" />
+          </div>
+        </div>
+        <p-skeleton class="hidden md:block" width="8rem" height="2rem" />
+      </div>
+    } @else if (equipment(); as equipment) {
+      <app-equipment-detail-header
+        [equipment]="equipment"
+        [canManage]="canManage()"
+        [lifecycleLoading]="store.isChangingLifecycle()"
+        (edit)="onEdit()"
+        (commission)="commission()"
+        (maintenance)="maintenance()"
+        (decommission)="decommission()"
+      />
+    }
+  </section>
+
+  <section class="flex min-h-0 flex-1 flex-col">
+    <p-tabs [value]="activeTab()" [pt]="tabsPt" (valueChange)="activeTab.set(+$event!)">
+      <p-tablist [pt]="tabListPt">
+        <p-tab [value]="0"><i class="pi pi-chart-line mr-2 text-sm"></i>Overview</p-tab>
+        <p-tab [value]="1"><i class="pi pi-paperclip mr-2 text-sm"></i>Attachments</p-tab>
+        <p-tab [value]="2"><i class="pi pi-wrench mr-2 text-sm"></i>Maintenance</p-tab>
+      </p-tablist>
+      <p-tabpanels [pt]="tabPanelsPt">
+        <p-tabpanel [value]="0">
+          @if (equipment(); as equipment) {
+            <div class="grid min-h-0 grid-cols-1 gap-6 xl:grid-cols-12">
+              <div class="xl:col-span-8">
+                <app-equipment-information-panel [equipment]="equipment" />
+              </div>
+              <aside class="flex flex-col gap-6 xl:col-span-4">
+                <app-equipment-assignment-panel
+                  [facilityId]="equipment.facilityId"
+                  [options]="facilityOptions()"
+                  [canManage]="canManage()"
+                  [loading]="
+                    store.assignToFacilityCallState().status === 'pending' ||
+                    store.unassignFromFacilityCallState().status === 'pending'
+                  "
+                  (assign)="assign($event)"
+                  (unassign)="unassign()"
+                />
+                <app-equipment-tags-panel
+                  [tags]="equipment.tags"
+                  [canManage]="canManage()"
+                  [loading]="
+                    store.addTagCallState().status === 'pending' ||
+                    store.removeTagCallState().status === 'pending'
+                  "
+                  (add)="addTag($event)"
+                  (remove)="removeTag($event)"
+                />
+              </aside>
+            </div>
+          }
+        </p-tabpanel>
+        <p-tabpanel [value]="1">
+          @if (activeTab() === 1) {
+            <app-equipment-attachment-table
+              class="flex min-h-0 flex-1 flex-col"
+              [attachments]="store.attachments()"
+              [loading]="store.isLoadingAttachments()"
+              [mutating]="
+                store.addAttachmentCallState().status === 'pending' ||
+                store.deleteAttachmentCallState().status === 'pending'
+              "
+              [canManage]="canManage()"
+              (add)="addAttachment($event)"
+              (remove)="deleteAttachment($event)"
+            />
+          }
+        </p-tabpanel>
+        <p-tabpanel [value]="2">
+          @if (activeTab() === 2) {
+            <app-equipment-maintenance-log-table
+              class="flex min-h-0 flex-1 flex-col"
+              [logs]="store.maintenanceLogs()"
+              [loading]="store.isLoadingMaintenanceLogs()"
+            />
+          }
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
+  </section>
+</div>

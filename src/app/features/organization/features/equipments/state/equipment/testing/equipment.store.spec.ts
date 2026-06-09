@@ -4,7 +4,10 @@ import { Dispatcher } from '@ngrx/signals/events';
 import { of } from 'rxjs';
 import type { HydraCollection } from '@core/models/api';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
-import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import type {
+  EquipmentMaintenanceLogOutput,
+  EquipmentOutput,
+} from '@features/organization/features/equipments/models';
 import { ActiveEquipmentStore } from '../../active-equipment/active-equipment.store';
 import { EquipmentStore } from '../equipment.store';
 
@@ -16,6 +19,7 @@ describe('EquipmentStore', () => {
   let store: EquipmentStore;
   let mockEquipmentService: {
     list: ReturnType<typeof vi.fn>;
+    listMaintenanceLogs: ReturnType<typeof vi.fn>;
   };
 
   const equipment = { id: 'equipment-1', name: 'Generator' } as unknown as EquipmentOutput;
@@ -29,6 +33,16 @@ describe('EquipmentStore', () => {
   beforeEach(() => {
     mockEquipmentService = {
       list: vi.fn().mockReturnValue(of(collection)),
+      listMaintenanceLogs: vi.fn().mockReturnValue(
+        of({
+          '@id': '/api/organizations/org-1/equipment/equipment-1/maintenance-logs',
+          '@type': 'Collection',
+          totalItems: 1,
+          member: [
+            { id: 'log-1', equipmentId: 'equipment-1' } as unknown as EquipmentMaintenanceLogOutput,
+          ],
+        }),
+      ),
     };
 
     TestBed.configureTestingModule({
@@ -64,5 +78,18 @@ describe('EquipmentStore', () => {
     await flushEffects();
 
     expect(mockEquipmentService.list).toHaveBeenCalledWith('org-1', { itemsPerPage: 200 });
+  });
+
+  it('should load maintenance logs through the store', async () => {
+    store.loadMaintenanceLogs({ organizationId: 'org-1', equipmentId: 'equipment-1' });
+    await flushEffects();
+
+    expect(mockEquipmentService.listMaintenanceLogs).toHaveBeenCalledWith(
+      'org-1',
+      'equipment-1',
+      undefined,
+    );
+    expect(store.maintenanceLogs()).toHaveLength(1);
+    expect(store.totalMaintenanceLogs()).toBe(1);
   });
 });

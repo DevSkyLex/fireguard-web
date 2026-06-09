@@ -1,20 +1,24 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   inject,
   input,
+  PLATFORM_ID,
   signal,
   type InputSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ConfirmationService } from 'primeng/api';
 import type { RequestOptions } from '@core/services/hydra-api';
+import { FacilityInspectionTable } from '@features/organization/features/facilities/ui/tables';
 import type {
   InspectionListOptions,
+  InspectionOutput,
   InspectionResult,
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
 import { InspectionStore } from '@features/organization/features/inspections/state';
-import { FacilityInspectionTable } from '@features/organization/features/facilities/ui/tables';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
@@ -76,6 +80,10 @@ export class FacilityInspectionTab {
 
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
+  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+
+  private readonly platformId: object = inject<object>(PLATFORM_ID);
+
   /**
    * Property store
    * @readonly
@@ -102,7 +110,34 @@ export class FacilityInspectionTab {
     });
   }
 
+  protected onView(inspection: InspectionOutput): void {
+    this.router.navigate(['..', '..', 'inspections', inspection.id], { relativeTo: this.route });
+  }
+
+  protected onEdit(inspection: InspectionOutput): void {
+    this.router.navigate(['..', '..', 'inspections', inspection.id, 'edit'], {
+      relativeTo: this.route,
+    });
+  }
+
+  protected onCancel(inspection: InspectionOutput): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (!organizationId || inspection.status !== 'draft') return;
+
+    this.confirmationService.confirm({
+      header: 'Cancel inspection',
+      message: 'Cancel this draft inspection?',
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: { label: 'Cancel inspection', severity: 'danger' },
+      rejectButtonProps: { label: 'Keep draft', severity: 'secondary', outlined: true },
+      accept: () => this.store.cancel({ organizationId, inspectionId: inspection.id }),
+    });
+  }
+
   protected onLoad(options: RequestOptions): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     const organizationId: string | undefined =
       this.activeOrganizationStore.selectedOrganization()?.id;
     const facilityId: string = this.facilityId();

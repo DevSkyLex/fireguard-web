@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { MetricCard } from '@shared/components';
 import { FacilityOverviewStore } from '@features/organization/features/facilities/state';
+import { MetricCard } from '@shared/components';
 
 /**
  * Component FacilityNextInspectionMetric

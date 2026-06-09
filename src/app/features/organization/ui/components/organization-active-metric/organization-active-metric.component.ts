@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  type Signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import type { OrganizationOutput } from '@features/organization/models';
 import { OrganizationStore } from '@features/organization/state';
 import { MetricCard } from '@shared/components';
@@ -57,9 +51,8 @@ export class OrganizationActiveMetric {
    */
   protected readonly value: Signal<number> = computed<number>(
     () =>
-      this.store
-        .organizations()
-        .filter((organization: OrganizationOutput) => organization.isActive).length,
+      this.store.organizations().filter((organization: OrganizationOutput) => organization.isActive)
+        .length,
   );
   //#endregion
 }

@@ -131,20 +131,6 @@ export class OrganizationDataview implements OnInit {
   public readonly loading: InputSignal<boolean> = input.required<boolean>();
 
   /**
-   * Input deleting
-   * @readonly
-   *
-   * @description
-   * Whether a delete operation is currently in-flight.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<boolean>}
-   */
-  public readonly deleting: InputSignal<boolean> = input.required<boolean>();
-
-  /**
    * Input initialPage
    * @readonly
    *
@@ -429,13 +415,6 @@ export class OrganizationDataview implements OnInit {
         icon: PrimeIcons.EYE,
         command: (): void => this.view.emit(organization),
       },
-      { separator: true },
-      {
-        label: 'Delete',
-        icon: PrimeIcons.TRASH,
-        styleClass: 'text-red-500',
-        command: (): void => this.delete.emit(organization),
-      },
     ];
   });
   //#endregion
@@ -468,21 +447,6 @@ export class OrganizationDataview implements OnInit {
    * @type {OutputEmitterRef<void>}
    */
   public readonly add: OutputEmitterRef<void> = output<void>();
-
-  /**
-   * Output delete
-   * @readonly
-   *
-   * @description
-   * Emitted when the user requests deletion of an organization
-   * from the item context menu. The parent page handles the store call.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<OrganizationOutput>}
-   */
-  public readonly delete: OutputEmitterRef<OrganizationOutput> = output<OrganizationOutput>();
 
   /**
    * Output load
@@ -555,7 +519,7 @@ export class OrganizationDataview implements OnInit {
       .subscribe(() => this.reload());
 
     effect(() => {
-      if (this.loading() || this.deleting()) {
+      if (this.loading()) {
         this.searchControl.disable({ emitEvent: false });
       } else {
         this.searchControl.enable({ emitEvent: false });

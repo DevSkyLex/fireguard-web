@@ -1,0 +1,74 @@
+<div
+  class="flex flex-col gap-4 rounded-xl border border-surface-200 bg-surface-0 p-4 lg:flex-row lg:items-start lg:justify-between dark:border-surface-800 dark:bg-surface-950"
+>
+  <div class="flex min-w-0 items-start gap-3">
+    <p-avatar icon="pi pi-clipboard" shape="square" size="xlarge" />
+    <div class="flex min-w-0 flex-col gap-1">
+      <div class="flex flex-wrap items-center gap-2">
+        <h1 class="truncate text-2xl font-semibold text-surface-900 dark:text-surface-100">
+          Inspection {{ inspection().performedAt | date: 'mediumDate' }}
+        </h1>
+        <p-tag
+          [value]="inspection().status | titlecase"
+          [severity]="inspection().status === 'closed' ? 'success' : 'secondary'"
+        />
+        <p-tag
+          [value]="inspection().result | titlecase"
+          [severity]="
+            inspection().result === 'pass'
+              ? 'success'
+              : inspection().result === 'fail'
+                ? 'danger'
+                : 'warn'
+          "
+        />
+      </div>
+      <div class="flex flex-wrap items-center gap-3 text-sm text-surface-500 dark:text-surface-300">
+        <span class="inline-flex items-center gap-1.5">
+          <i class="pi pi-user text-xs"></i>
+          {{ inspection().inspector?.displayName || 'Unknown inspector' }}
+        </span>
+        <span>{{ inspection().performedAt | date: 'medium' }}</span>
+      </div>
+    </div>
+  </div>
+  @if (canManage()) {
+    <div class="flex flex-wrap items-center gap-2">
+      @if (inspection().status === 'draft') {
+        <p-button
+          label="Edit draft"
+          icon="pi pi-pencil"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (onClick)="edit.emit()"
+        />
+        <p-button
+          label="Submit"
+          icon="pi pi-send"
+          size="small"
+          [loading]="loading()"
+          (onClick)="submitInspection.emit()"
+        />
+        <p-button
+          label="Cancel"
+          icon="pi pi-times"
+          severity="danger"
+          [outlined]="true"
+          size="small"
+          [loading]="loading()"
+          (onClick)="cancelInspection.emit()"
+        />
+      }
+      @if (inspection().status === 'submitted') {
+        <p-button
+          label="Close inspection"
+          icon="pi pi-lock"
+          size="small"
+          [loading]="loading()"
+          (onClick)="closeInspection.emit()"
+        />
+      }
+    </div>
+  }
+</div>

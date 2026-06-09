@@ -7,7 +7,9 @@ import {
   type InputSignalWithTransform,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ConfirmationService } from 'primeng/api';
 import type { RequestOptions } from '@core/services/hydra-api';
+import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { InspectionStore } from '@features/organization/features/inspections/state';
 import {
   InspectionCountMetric,
@@ -83,6 +85,11 @@ export class InspectionListPage {
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
+   * PrimeNG confirmation service used before cancelling a draft inspection.
+   */
+  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+
+  /**
    * Property activeOrganizationStore
    * @readonly
    *
@@ -132,6 +139,33 @@ export class InspectionListPage {
    */
   public onAdd(): void {
     this.router.navigate(['create'], { relativeTo: this.route });
+  }
+
+  /**
+   * Navigates to the selected inspection detail page.
+   */
+  public onView(inspectionId: string): void {
+    this.router.navigate([inspectionId], { relativeTo: this.route });
+  }
+
+  /**
+   * Confirms and cancels a selected draft inspection.
+   */
+  public onCancel(inspection: InspectionOutput): void {
+    if (inspection.status !== 'draft') return;
+
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (!organizationId) return;
+
+    this.confirmationService.confirm({
+      header: 'Cancel inspection',
+      message: 'Cancel this draft inspection?',
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: { label: 'Cancel inspection', severity: 'danger' },
+      rejectButtonProps: { label: 'Keep draft', severity: 'secondary', outlined: true },
+      accept: () => this.store.cancel({ organizationId, inspectionId: inspection.id }),
+    });
   }
 
   /**

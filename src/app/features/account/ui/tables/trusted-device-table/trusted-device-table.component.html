@@ -1,0 +1,52 @@
+<p-card>
+  <p-table [value]="loading() ? skeletonItems : [...devices()]" dataKey="id" [stripedRows]="true">
+    <ng-template pTemplate="header"
+      ><tr>
+        <th>Device</th>
+        <th>Created</th>
+        <th>Last used</th>
+        <th>Expires</th>
+        <th class="w-20"><span class="sr-only">Actions</span></th>
+      </tr></ng-template
+    >
+    <ng-template pTemplate="body" let-device>
+      @if (loading()) {
+        <tr>
+          <td><p-skeleton width="12rem" /></td>
+          <td><p-skeleton width="8rem" /></td>
+          <td><p-skeleton width="8rem" /></td>
+          <td><p-skeleton width="8rem" /></td>
+          <td><p-skeleton shape="circle" size="2rem" /></td>
+        </tr>
+      } @else {
+        <tr>
+          <td>
+            <div class="flex items-center gap-3">
+              <i class="pi pi-shield text-surface-400"></i
+              ><span class="font-medium">{{ device.name }}</span>
+            </div>
+          </td>
+          <td>{{ device.createdAt | date: 'medium' }}</td>
+          <td>{{ device.lastUsedAt | date: 'medium' }}</td>
+          <td>{{ device.expiresAt | date: 'medium' }}</td>
+          <td class="text-right">
+            <p-button
+              icon="pi pi-times"
+              severity="danger"
+              [text]="true"
+              [rounded]="true"
+              [loading]="revoking()"
+              ariaLabel="Revoke trusted device"
+              (onClick)="revoke.emit(device)"
+            />
+          </td>
+        </tr>
+      }
+    </ng-template>
+    <ng-template pTemplate="emptymessage"
+      ><tr>
+        <td colspan="5" class="py-12 text-center text-surface-500">No trusted devices.</td>
+      </tr></ng-template
+    >
+  </p-table>
+</p-card>

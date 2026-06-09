@@ -1,0 +1,16 @@
+<div id="checklist-list" class="flex h-full flex-col">
+  <app-checklist-table
+    class="flex min-h-0 flex-1 flex-col"
+    [checklists]="store.checklists()"
+    [total]="store.totalChecklists()"
+    [loading]="store.isLoadingChecklists()"
+    [empty]="store.isEmpty()"
+    [canManage]="canManage()"
+    [initialPage]="page()"
+    (load)="onLoad($event)"
+    (pageChange)="onPageChange($event)"
+    (add)="onCreate()"
+    (view)="onView($event)"
+    (archive)="onArchive($event)"
+  />
+</div>

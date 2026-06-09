@@ -115,7 +115,7 @@ export class EquipmentService extends HydraApiService {
 
     if (facilityId) {
       const currentParams: Record<string, string | number | boolean> = {
-        ...(options?.params ?? {}),
+        ...options?.params,
       };
       delete currentParams['facilityId'];
 

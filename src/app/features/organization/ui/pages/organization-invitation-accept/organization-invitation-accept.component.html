@@ -1,0 +1,30 @@
+<section class="mx-auto flex max-w-xl flex-col gap-6 p-8">
+  <p-card header="Accept invitation">
+    @if (!token) {
+      <p-message severity="error">The invitation token is missing.</p-message>
+    } @else if (store.acceptCallState().status === 'success') {
+      <p-message severity="success" class="mb-4"
+        >Invitation accepted. You can now open your organizations.</p-message
+      >
+      <p-button
+        label="Open organizations"
+        icon="pi pi-arrow-right"
+        (onClick)="goToOrganizations()"
+      />
+    } @else {
+      @if (store.acceptCallState().status === 'error') {
+        <p-message severity="error" class="mb-4"
+          >The invitation could not be accepted. It may be expired or revoked.</p-message
+        >
+      } @else {
+        <p class="mb-4 text-sm text-surface-500">Accept the invitation to join the organization.</p>
+      }
+      <p-button
+        label="Accept invitation"
+        icon="pi pi-check"
+        [loading]="store.isAccepting()"
+        (onClick)="accept()"
+      />
+    }
+  </p-card>
+</section>

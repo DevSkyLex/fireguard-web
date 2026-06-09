@@ -6,6 +6,7 @@ import {
   Router,
 } from '@angular/router';
 import { firstValueFrom, isObservable, of, throwError } from 'rxjs';
+import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { organizationResolver } from '../organization.resolver';
@@ -32,6 +33,10 @@ describe('organizationResolver', () => {
   };
   let mockActiveOrganizationStore: {
     resolveOrganization: ReturnType<typeof vi.fn>;
+    setOrganization: ReturnType<typeof vi.fn>;
+  };
+  let mockOrganizationService: {
+    list: ReturnType<typeof vi.fn>;
   };
 
   async function resolveMaybeAsync<T>(result: MaybeAsync<T>): Promise<T> {
@@ -61,11 +66,21 @@ describe('organizationResolver', () => {
 
     mockActiveOrganizationStore = {
       resolveOrganization: vi.fn().mockReturnValue(of(organization)),
+      setOrganization: vi.fn(),
+    };
+    mockOrganizationService = {
+      list: vi.fn().mockReturnValue(
+        of({
+          member: [],
+          totalItems: 0,
+        }),
+      ),
     };
 
     TestBed.configureTestingModule({
       providers: [
         { provide: ActiveOrganizationStore, useValue: mockActiveOrganizationStore },
+        { provide: OrganizationService, useValue: mockOrganizationService },
         { provide: Router, useValue: mockRouter },
       ],
     });
@@ -101,5 +116,25 @@ describe('organizationResolver', () => {
 
     expect(result).toBeInstanceOf(RedirectCommand);
     expect((result as RedirectCommand).redirectTo).toBe(parsedRootUrl);
+  });
+
+  it('should resolve an accessible listed organization when detail loading is forbidden', async () => {
+    mockActiveOrganizationStore.resolveOrganization.mockReturnValue(
+      throwError(() => new Error('Forbidden')),
+    );
+    mockOrganizationService.list.mockReturnValue(
+      of({
+        member: [organization],
+        totalItems: 1,
+      }),
+    );
+
+    const result = await TestBed.runInInjectionContext(() =>
+      resolveMaybeAsync(organizationResolver(createRoute('org-1'), {} as never)),
+    );
+
+    expect(result).toEqual(organization);
+    expect(mockActiveOrganizationStore.setOrganization).toHaveBeenCalledWith(organization);
+    expect(mockOrganizationService.list).toHaveBeenCalledWith({ page: 1, itemsPerPage: 30 });
   });
 });

@@ -1,7 +1,13 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
-import { addEntity, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
+import {
+  addEntity,
+  removeEntity,
+  setAllEntities,
+  setEntity,
+  withEntities,
+} from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
@@ -19,6 +25,7 @@ import { InspectionService } from '@features/organization/features/inspections/d
 import type {
   InspectionOutput,
   CreateInspectionInput,
+  UpdateInspectionInput,
   NonConformityOutput,
   AddNonConformityInput,
   UpdateNonConformityStatusInput,
@@ -46,10 +53,13 @@ const INITIAL_INSPECTION_STATE: InspectionState = {
   totalInspections: 0,
   listCallState: idleCallState(),
   createCallState: idleCallState(),
+  updateCallState: idleCallState(),
+  cancelCallState: idleCallState(),
   submitCallState: idleCallState(),
   closeCallState: idleCallState(),
   totalNonConformities: 0,
   nonConformitiesListCallState: idleCallState(),
+  nonConformityGetCallState: idleCallState(),
   addNonConformityCallState: idleCallState(),
   updateNonConformityStatusCallState: idleCallState(),
 } as const;
@@ -125,6 +135,35 @@ export const InspectionStore = signalStore(
 
       /** True while a create operation is in-flight. */
       isCreating: computed<boolean>(() => store.createCallState().status === 'pending'),
+
+      /** True while an update operation is in-flight. */
+      isUpdating: computed<boolean>(() => store.updateCallState().status === 'pending'),
+
+      /** True while a cancellation is in-flight. */
+      isCancelling: computed<boolean>(() => store.cancelCallState().status === 'pending'),
+
+      /** True while an inspection lifecycle transition is in-flight. */
+      isChangingLifecycle: computed<boolean>(
+        () =>
+          store.submitCallState().status === 'pending' ||
+          store.closeCallState().status === 'pending' ||
+          store.cancelCallState().status === 'pending',
+      ),
+
+      /** True while the inspection non-conformity list is loading. */
+      isLoadingNonConformities: computed<boolean>(
+        () => store.nonConformitiesListCallState().status === 'pending',
+      ),
+
+      /** True while a non-conformity is being added. */
+      isAddingNonConformity: computed<boolean>(
+        () => store.addNonConformityCallState().status === 'pending',
+      ),
+
+      /** True while a non-conformity status is being updated. */
+      isUpdatingNonConformity: computed<boolean>(
+        () => store.updateNonConformityStatusCallState().status === 'pending',
+      ),
 
       /** Error from the last create operation, if any. */
       createError: computed<StoreError | null>(() => store.createCallState().error),
@@ -234,6 +273,77 @@ export const InspectionStore = signalStore(
                     dispatcher.dispatch(
                       inspectionStoreEvents.createFailed(
                         toStoreFailureEventPayload(storeError, 'Failed to create inspection'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Updates a draft inspection and synchronizes the active inspection.
+         */
+        update: rxMethod<{
+          organizationId: string;
+          inspectionId: string;
+          input: UpdateInspectionInput;
+        }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { updateCallState: pendingCallState() });
+            }),
+            exhaustMap(({ organizationId, inspectionId, input }) =>
+              inspectionService.update(organizationId, inspectionId, input).pipe(
+                tapResponse({
+                  next: (inspection: InspectionOutput): void => {
+                    patchState(store, setEntity(inspection, { collection: 'inspection' }), {
+                      updateCallState: successCallState(inspection),
+                    });
+                    activeInspectionStore.setInspection(inspection);
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { updateCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      inspectionStoreEvents.updateFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to update inspection'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Cancels an inspection and removes it from the local collection.
+         */
+        cancel: rxMethod<{ organizationId: string; inspectionId: string }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { cancelCallState: pendingCallState() });
+            }),
+            exhaustMap(({ organizationId, inspectionId }) =>
+              inspectionService.cancel(organizationId, inspectionId).pipe(
+                tapResponse({
+                  next: (): void => {
+                    patchState(store, removeEntity(inspectionId, { collection: 'inspection' }), {
+                      totalInspections: Math.max(0, store.totalInspections() - 1),
+                      cancelCallState: successCallState(inspectionId),
+                    });
+                    if (activeInspectionStore.selectedInspection()?.id === inspectionId) {
+                      activeInspectionStore.clearSelectedInspection();
+                    }
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { cancelCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      inspectionStoreEvents.cancelFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to cancel inspection'),
                       ),
                     );
                   },
@@ -370,6 +480,45 @@ export const InspectionStore = signalStore(
                   },
                 }),
               ),
+            ),
+          ),
+        ),
+
+        /**
+         * Loads one non-conformity and synchronizes the local collection.
+         */
+        loadNonConformity: rxMethod<{
+          organizationId: string;
+          inspectionId: string;
+          nonConformityId: string;
+        }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { nonConformityGetCallState: pendingCallState() });
+            }),
+            switchMap(({ organizationId, inspectionId, nonConformityId }) =>
+              inspectionService
+                .getNonConformity(organizationId, inspectionId, nonConformityId)
+                .pipe(
+                  tapResponse({
+                    next: (nonConformity: NonConformityOutput): void => {
+                      patchState(store, setEntity(nonConformity, { collection: 'nonConformity' }), {
+                        nonConformityGetCallState: successCallState(nonConformity),
+                      });
+                    },
+                    error: (error: unknown): void => {
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, {
+                        nonConformityGetCallState: errorCallState(storeError),
+                      });
+                      dispatcher.dispatch(
+                        inspectionStoreEvents.nonConformityGetFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to load non-conformity'),
+                        ),
+                      );
+                    },
+                  }),
+                ),
             ),
           ),
         ),

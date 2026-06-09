@@ -27,20 +27,24 @@
           }
         </div>
       } @else if (items.length === 0) {
-        <div class="px-4 py-8 text-sm text-surface-500">No equipment assigned to this facility.</div>
+        <div class="px-4 py-8 text-sm text-surface-500">
+          No equipment assigned to this facility.
+        </div>
       } @else {
         <div class="divide-y divide-surface-100 dark:divide-surface-800">
           @for (item of items; track item.id) {
             <article class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
               <div class="min-w-0">
                 <p class="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
-                  {{ item.type }}@if (item.subType) {
+                  {{ item.type }}
+                  @if (item.subType) {
                     · {{ item.subType }}
                   }
                 </p>
                 <p class="truncate text-xs text-surface-500">
                   @if (item.brand || item.model) {
-                    {{ item.brand ?? '' }}{{ item.brand && item.model ? ' · ' : '' }}{{ item.model ?? '' }}
+                    {{ item.brand ?? '' }}{{ item.brand && item.model ? ' · ' : ''
+                    }}{{ item.model ?? '' }}
                   } @else {
                     —
                   }

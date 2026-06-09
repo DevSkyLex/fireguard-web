@@ -33,6 +33,7 @@ import type {
   AddAttachmentInput,
   EquipmentTagOutput,
   AddTagInput,
+  EquipmentMaintenanceLogOutput,
 } from '@features/organization/features/equipments/models';
 import { ActiveEquipmentStore } from '../active-equipment/active-equipment.store';
 import { equipmentStoreEvents } from './events';
@@ -72,6 +73,8 @@ const INITIAL_EQUIPMENT_STATE: EquipmentState = {
   tagsListCallState: idleCallState(),
   addTagCallState: idleCallState(),
   removeTagCallState: idleCallState(),
+  totalMaintenanceLogs: 0,
+  maintenanceLogsListCallState: idleCallState(),
 } as const;
 //#endregion
 
@@ -120,6 +123,7 @@ export const EquipmentStore = signalStore(
   withEntities({ entity: type<EquipmentOutput>(), collection: 'equipment' }),
   withEntities({ entity: type<EquipmentAttachmentOutput>(), collection: 'attachment' }),
   withEntities({ entity: type<EquipmentTagOutput>(), collection: 'tag' }),
+  withEntities({ entity: type<EquipmentMaintenanceLogOutput>(), collection: 'maintenanceLog' }),
 
   /**
    * Feature withState
@@ -200,6 +204,32 @@ export const EquipmentStore = signalStore(
        * @type {ReadonlyArray<EquipmentTagOutput>}
        */
       tags: computed<ReadonlyArray<EquipmentTagOutput>>(() => store.tagEntities()),
+
+      /** All cached maintenance log entries. */
+      maintenanceLogs: computed<ReadonlyArray<EquipmentMaintenanceLogOutput>>(() =>
+        store.maintenanceLogEntities(),
+      ),
+
+      /** True while equipment attachments are loading. */
+      isLoadingAttachments: computed<boolean>(
+        () => store.attachmentsListCallState().status === 'pending',
+      ),
+
+      /** True while the organization equipment tag catalog is loading. */
+      isLoadingTags: computed<boolean>(() => store.tagsListCallState().status === 'pending'),
+
+      /** True while equipment maintenance logs are loading. */
+      isLoadingMaintenanceLogs: computed<boolean>(
+        () => store.maintenanceLogsListCallState().status === 'pending',
+      ),
+
+      /** True while an equipment lifecycle transition is in-flight. */
+      isChangingLifecycle: computed<boolean>(
+        () =>
+          store.commissionCallState().status === 'pending' ||
+          store.maintenanceCallState().status === 'pending' ||
+          store.decommissionCallState().status === 'pending',
+      ),
 
       /**
        * Property isEmpty
@@ -956,6 +986,16 @@ export const EquipmentStore = signalStore(
                       totalTags: store.totalTags() + 1,
                       addTagCallState: successCallState(tag),
                     });
+                    const activeEquipment = activeEquipmentStore.selectedEquipment();
+                    if (
+                      activeEquipment?.id === equipmentId &&
+                      !activeEquipment.tags.some((activeTag) => activeTag.id === tag.id)
+                    ) {
+                      activeEquipmentStore.setEquipment({
+                        ...activeEquipment,
+                        tags: [...activeEquipment.tags, tag],
+                      });
+                    }
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -997,6 +1037,13 @@ export const EquipmentStore = signalStore(
                       totalTags: Math.max(0, store.totalTags() - 1),
                       removeTagCallState: successCallState(null),
                     });
+                    const activeEquipment = activeEquipmentStore.selectedEquipment();
+                    if (activeEquipment?.id === equipmentId) {
+                      activeEquipmentStore.setEquipment({
+                        ...activeEquipment,
+                        tags: activeEquipment.tags.filter((tag) => tag.id !== tagId),
+                      });
+                    }
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -1004,6 +1051,48 @@ export const EquipmentStore = signalStore(
                     dispatcher.dispatch(
                       equipmentStoreEvents.removeTagFailed(
                         toStoreFailureEventPayload(storeError, 'Failed to remove tag'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Loads the maintenance log collection for one equipment.
+         */
+        loadMaintenanceLogs: rxMethod<{
+          organizationId: string;
+          equipmentId: string;
+          options?: RequestOptions;
+        }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { maintenanceLogsListCallState: pendingCallState() });
+            }),
+            switchMap(({ organizationId, equipmentId, options }) =>
+              equipmentService.listMaintenanceLogs(organizationId, equipmentId, options).pipe(
+                tapResponse({
+                  next: (response: HydraCollection<EquipmentMaintenanceLogOutput>): void => {
+                    patchState(
+                      store,
+                      setAllEntities([...response.member], { collection: 'maintenanceLog' }),
+                      {
+                        totalMaintenanceLogs: response.totalItems,
+                        maintenanceLogsListCallState: successCallState(null),
+                      },
+                    );
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, {
+                      maintenanceLogsListCallState: errorCallState(storeError),
+                    });
+                    dispatcher.dispatch(
+                      equipmentStoreEvents.listFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to load maintenance logs'),
                       ),
                     );
                   },

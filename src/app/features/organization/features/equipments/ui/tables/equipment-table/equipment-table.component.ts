@@ -196,6 +196,11 @@ export class EquipmentTable implements OnInit {
   public readonly add: OutputEmitterRef<void> = output<void>();
 
   /**
+   * Requests navigation to the equipment detail page.
+   */
+  public readonly view: OutputEmitterRef<EquipmentOutput> = output<EquipmentOutput>();
+
+  /**
    * Output edit
    * @readonly
    *
@@ -209,34 +214,6 @@ export class EquipmentTable implements OnInit {
    */
   public readonly edit: OutputEmitterRef<EquipmentOutput> = output<EquipmentOutput>();
 
-  /**
-   * Output delete
-   * @readonly
-   *
-   * @description
-   * Emits the equipment selected from the row action menu for deletion.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<EquipmentOutput>}
-   */
-  public readonly delete: OutputEmitterRef<EquipmentOutput> = output<EquipmentOutput>();
-
-  /**
-   * Output bulkDelete
-   * @readonly
-   *
-   * @description
-   * Emits the selected equipment rows when the bulk delete action is used.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<readonly EquipmentOutput[]>}
-   */
-  public readonly bulkDelete: OutputEmitterRef<readonly EquipmentOutput[]> =
-    output<readonly EquipmentOutput[]>();
   //#endregion
 
   //#region Properties
@@ -399,8 +376,9 @@ export class EquipmentTable implements OnInit {
    *
    * @type {WritableSignal<EquipmentOutput[]>}
    */
-  protected readonly selectedEquipments: WritableSignal<EquipmentOutput[]> =
-    signal<EquipmentOutput[]>([]);
+  protected readonly selectedEquipments: WritableSignal<EquipmentOutput[]> = signal<
+    EquipmentOutput[]
+  >([]);
 
   /**
    * Property toolbarActions
@@ -434,18 +412,6 @@ export class EquipmentTable implements OnInit {
           },
         ]
       : []),
-    ...(this.canManageEquipment()
-      ? [
-          { separator: true },
-          {
-            label: `Delete selected (${this.selectedEquipments().length})`,
-            icon: PrimeIcons.TRASH,
-            disabled: this.selectedEquipments().length === 0,
-            styleClass: 'text-red-500',
-            command: (): void => this.onBulkDelete(),
-          },
-        ]
-      : []),
   ]);
 
   /**
@@ -453,7 +419,7 @@ export class EquipmentTable implements OnInit {
    * @readonly
    *
    * @description
-   * Whether the member can create, edit, or delete equipment.
+   * Whether the member can create, edit, or change equipment lifecycle state.
    *
    * @access protected
    * @since 1.0.0
@@ -508,22 +474,25 @@ export class EquipmentTable implements OnInit {
   protected readonly actionMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
     const equipment: EquipmentOutput | null = this.selectedEquipment();
 
-    if (!equipment || !this.canManageEquipment()) {
+    if (!equipment) {
       return [];
     }
 
     return [
       {
-        label: 'Edit',
-        icon: PrimeIcons.PENCIL,
-        command: (): void => this.edit.emit(equipment),
+        label: 'View',
+        icon: PrimeIcons.EYE,
+        command: (): void => this.view.emit(equipment),
       },
-      {
-        label: 'Delete',
-        icon: PrimeIcons.TRASH,
-        styleClass: 'text-red-500',
-        command: (): void => this.delete.emit(equipment),
-      },
+      ...(this.canManageEquipment()
+        ? [
+            {
+              label: 'Edit',
+              icon: PrimeIcons.PENCIL,
+              command: (): void => this.edit.emit(equipment),
+            },
+          ]
+        : []),
     ];
   });
 
@@ -710,27 +679,6 @@ export class EquipmentTable implements OnInit {
   }
 
   /**
-   * Method onBulkDelete
-   *
-   * @description
-   * Emits selected equipment rows when the bulk delete action is triggered.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected onBulkDelete(): void {
-    const selectedEquipments: EquipmentOutput[] = this.selectedEquipments();
-
-    if (selectedEquipments.length === 0 || !this.canManageEquipment()) {
-      return;
-    }
-
-    this.bulkDelete.emit(selectedEquipments);
-  }
-
-  /**
    * Method onActionMenuToggle
    *
    * @description
@@ -825,7 +773,9 @@ export class EquipmentTable implements OnInit {
    */
   protected getStatusOption(status: EquipmentStatus): EquipmentStatusOption {
     return (
-      this.statusOptions.find((option: EquipmentStatusOption): boolean => option.value === status) ?? {
+      this.statusOptions.find(
+        (option: EquipmentStatusOption): boolean => option.value === status,
+      ) ?? {
         label: this.toDisplayLabel(status),
         value: status,
         icon: PrimeIcons.CIRCLE,

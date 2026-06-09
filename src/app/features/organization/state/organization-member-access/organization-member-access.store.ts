@@ -1,5 +1,6 @@
 import { computed, effect, inject, untracked } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { type ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -30,6 +31,13 @@ const INITIAL_STATE: OrganizationMemberAccessState = {
   profile: null,
   accessCallState: idleCallState(),
 };
+
+function routeTreeHasParam(route: ActivatedRouteSnapshot, paramName: string): boolean {
+  return (
+    route.paramMap.has(paramName) ||
+    route.children.some((child: ActivatedRouteSnapshot) => routeTreeHasParam(child, paramName))
+  );
+}
 
 /**
  * Store OrganizationMemberAccessStore
@@ -205,6 +213,7 @@ export const OrganizationMemberAccessStore = signalStore(
 
   withHooks((store) => {
     const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+    const router: Router = inject(Router);
 
     return {
       onInit(): void {
@@ -213,12 +222,27 @@ export const OrganizationMemberAccessStore = signalStore(
             activeOrganizationStore.selectedOrganization()?.id ?? null;
 
           if (!organizationId) {
-            untracked(() => store.clear());
             return;
           }
 
           untracked(() => store.loadAccess(organizationId));
         });
+
+        router.events
+          .pipe(
+            filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+            takeUntilDestroyed(),
+          )
+          .subscribe((): void => {
+            const hasOrganizationId: boolean = routeTreeHasParam(
+              router.routerState.snapshot.root,
+              'organizationId',
+            );
+
+            if (!hasOrganizationId) {
+              store.clear();
+            }
+          });
       },
     };
   }),

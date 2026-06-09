@@ -40,7 +40,10 @@
                   {{ child.name }}
                 </span>
               </span>
-              <span class="h-1.5 w-1.5 rounded-full" [class]="getStatusDotClass(child.status)"></span>
+              <span
+                class="h-1.5 w-1.5 rounded-full"
+                [class]="getStatusDotClass(child.status)"
+              ></span>
             </button>
 
             @if (childrenOf(child.id).length > 0) {

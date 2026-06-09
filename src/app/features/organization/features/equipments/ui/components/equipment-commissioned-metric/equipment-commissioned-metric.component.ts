@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  type Signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import { MetricCard } from '@shared/components';

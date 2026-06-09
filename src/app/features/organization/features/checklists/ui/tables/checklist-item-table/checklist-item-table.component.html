@@ -1,0 +1,57 @@
+<section
+  class="flex min-h-0 flex-1 flex-col rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-950"
+>
+  <header
+    class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
+  >
+    <div class="flex items-center gap-2">
+      <i class="pi pi-list-check text-sm text-surface-500"></i>
+      <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Checklist lines</h2>
+    </div>
+    <span class="text-xs text-surface-500">{{ items().length }} line(s)</span>
+  </header>
+  <p-table class="min-h-0 flex-1" [value]="[...items()]" dataKey="id" [stripedRows]="true">
+    <ng-template pTemplate="header">
+      <tr>
+        <th class="w-24">Position</th>
+        <th>Line</th>
+        <th>Description</th>
+        <th class="w-32">Requirement</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-item>
+      <tr>
+        <td>
+          <span
+            class="inline-flex size-7 items-center justify-center rounded-full bg-surface-100 text-xs font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+          >
+            {{ item.position }}
+          </span>
+        </td>
+        <td class="font-medium text-surface-900 dark:text-surface-100">{{ item.label }}</td>
+        <td class="text-surface-500">{{ item.description || 'No description' }}</td>
+        <td>
+          <p-tag
+            [value]="item.required ? 'Required' : 'Optional'"
+            [severity]="item.required ? 'warn' : 'secondary'"
+          />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="4">
+          <div class="flex flex-col items-center gap-3 py-16 text-center">
+            <i class="pi pi-list-check text-5xl text-surface-300 dark:text-surface-700"></i>
+            <div>
+              <p class="font-medium text-surface-900 dark:text-surface-100">
+                This checklist has no lines
+              </p>
+              <p class="text-sm text-surface-500">Checklist items will appear here.</p>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>

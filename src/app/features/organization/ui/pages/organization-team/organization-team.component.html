@@ -1,0 +1,116 @@
+<div id="organization-team" class="flex h-full min-h-0 flex-col">
+  <section
+    class="border-b border-surface-200 bg-surface-50 p-8 dark:border-surface-800 dark:bg-surface-900"
+  >
+    <h1 class="text-2xl font-semibold">Team</h1>
+    <p class="text-sm text-surface-500">Manage members, invitations, roles and permissions.</p>
+  </section>
+
+  <section class="flex min-h-0 flex-1 flex-col px-6 py-6">
+    @if (store.loadError(); as error) {
+      <p-message severity="error" class="mb-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <span>{{ error.message ?? 'The team administration data could not be loaded.' }}</span>
+          <p-button
+            label="Retry"
+            icon="pi pi-refresh"
+            severity="secondary"
+            [text]="true"
+            (onClick)="reload()"
+          />
+        </div>
+      </p-message>
+    }
+    @if (store.mutationError(); as error) {
+      <p-message severity="error" class="mb-4">{{
+        error.message ?? 'The team operation could not be completed.'
+      }}</p-message>
+    }
+    <p-tabs [value]="defaultTab()" [pt]="tabsPt">
+      <p-tablist [pt]="tabListPt">
+        @if (canViewMembers()) {
+          <p-tab value="members">Members</p-tab>
+          <p-tab value="invitations">Invitations</p-tab>
+        }
+        @if (canViewRoles()) {
+          <p-tab value="roles">Roles</p-tab>
+        }
+      </p-tablist>
+      <p-tabpanels [pt]="tabPanelsPt">
+        @if (canViewMembers()) {
+          <p-tabpanel value="members">
+            <div class="flex flex-col gap-6 pt-4">
+              @if (canManageMembers()) {
+                <p-card header="Add member"
+                  ><app-organization-member-form
+                    [roles]="store.roles()"
+                    [loading]="store.isMutating()"
+                    (submitted)="addMember($event)"
+                /></p-card>
+              }
+              @if (canManageRoles()) {
+                <p-card header="Assign role"
+                  ><app-organization-role-assignment-form
+                    [members]="store.members()"
+                    [roles]="store.roles()"
+                    [loading]="store.isMutating()"
+                    (submitted)="assignRole($event)"
+                /></p-card>
+              }
+              <app-organization-member-table
+                [members]="store.members()"
+                [roles]="store.roles()"
+                [loading]="store.isLoading()"
+                [canRemoveMember]="canManageMembers()"
+                [canManageRoles]="canManageRoles()"
+                (remove)="removeMember($event)"
+                (removeRole)="removeRoleFromMember($event)"
+              />
+            </div>
+          </p-tabpanel>
+          <p-tabpanel value="invitations">
+            <div class="flex flex-col gap-6 pt-4">
+              @if (canManageMembers()) {
+                <p-card header="Invite member"
+                  ><app-organization-invitation-form
+                    [roles]="store.roles()"
+                    [loading]="store.isMutating()"
+                    (submitted)="invite($event)"
+                /></p-card>
+              }
+              <app-organization-invitation-table
+                [invitations]="store.invitations()"
+                [loading]="store.isLoading()"
+                [canManage]="canManageMembers()"
+                (revoke)="revokeInvitation($event)"
+              />
+            </div>
+          </p-tabpanel>
+        }
+        @if (canViewRoles()) {
+          <p-tabpanel value="roles">
+            <div class="flex flex-col gap-6 pt-4">
+              @if (canManageRoles()) {
+                <p-card [header]="selectedRole() ? 'Edit role' : 'Create role'"
+                  ><app-organization-role-form
+                    [role]="selectedRole()"
+                    [permissions]="store.permissions()"
+                    [loading]="store.isMutating()"
+                    (submitted)="saveRole($event)"
+                    (cancelled)="selectedRole.set(null)"
+                /></p-card>
+              }
+              <app-organization-role-table
+                [roles]="store.roles()"
+                [loading]="store.isLoading()"
+                [canManage]="canManageRoles()"
+                (edit)="selectedRole.set($event)"
+                (remove)="removeRole($event)"
+              />
+            </div>
+          </p-tabpanel>
+        }
+      </p-tabpanels>
+    </p-tabs>
+  </section>
+</div>

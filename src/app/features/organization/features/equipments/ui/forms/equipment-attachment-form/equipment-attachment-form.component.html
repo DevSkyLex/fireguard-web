@@ -1,0 +1,17 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3 lg:grid-cols-[1fr_1fr_2fr_auto]">
+  <input pInputText formControlName="fileName" placeholder="File name" />
+  <input pInputText formControlName="mimeType" placeholder="MIME type" />
+  <input pInputText formControlName="content" placeholder="Base64 content" />
+  <p-button
+    type="submit"
+    label="Attach"
+    icon="pi pi-paperclip"
+    [loading]="loading()"
+    [disabled]="form.invalid || loading()"
+  />
+  @if (form.invalid && form.touched) {
+    <p-message severity="error" variant="simple" class="lg:col-span-4"
+      >File name, MIME type and Base64 content are required.</p-message
+    >
+  }
+</form>

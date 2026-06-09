@@ -1,0 +1,66 @@
+<div id="checklist-detail" class="flex h-full min-h-0 flex-col gap-6">
+  <section>
+    @if (isLoading()) {
+      <div
+        class="flex items-center justify-between rounded-xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-950"
+      >
+        <div class="flex items-center gap-6">
+          <p-skeleton shape="square" size="3.5rem" />
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="12rem" height="1.25rem" />
+            <p-skeleton width="9rem" height="0.875rem" />
+          </div>
+        </div>
+        <p-skeleton class="hidden md:block" width="8rem" height="2rem" />
+      </div>
+    } @else if (checklist(); as checklist) {
+      <app-checklist-detail-header
+        [checklist]="checklist"
+        [canManage]="canManage()"
+        [archiving]="store.isArchiving()"
+        (back)="back()"
+        (archive)="archive()"
+      />
+    }
+  </section>
+  <section class="flex min-h-0 flex-1 flex-col">
+    @if (checklist(); as checklist) {
+      <div class="mb-6 grid gap-4 sm:grid-cols-3">
+        <div
+          class="rounded-lg border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-950"
+        >
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-surface-500">Total lines</span>
+            <i class="pi pi-list text-sm text-surface-400"></i>
+          </div>
+          <p class="mt-2 text-2xl font-semibold text-surface-900 dark:text-surface-100">
+            {{ checklist.items.length }}
+          </p>
+        </div>
+        <div
+          class="rounded-lg border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-950"
+        >
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-surface-500">Required lines</span>
+            <i class="pi pi-asterisk text-sm text-orange-400"></i>
+          </div>
+          <p class="mt-2 text-2xl font-semibold text-surface-900 dark:text-surface-100">
+            {{ requiredItemCount(checklist.items) }}
+          </p>
+        </div>
+        <div
+          class="rounded-lg border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-950"
+        >
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-surface-500">Version</span>
+            <i class="pi pi-history text-sm text-surface-400"></i>
+          </div>
+          <p class="mt-2 text-2xl font-semibold text-surface-900 dark:text-surface-100">
+            {{ checklist.version }}
+          </p>
+        </div>
+      </div>
+      <app-checklist-item-table [items]="checklist.items" />
+    }
+  </section>
+</div>

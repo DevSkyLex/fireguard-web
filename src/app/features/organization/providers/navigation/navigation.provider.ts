@@ -1,9 +1,10 @@
 import { computed, inject } from '@angular/core';
 import type { MenuItem } from 'primeng/api';
 import {
-  ORGANIZATION_PERMISSION,
-  type OrganizationPermissionName,
-} from '@features/organization/models';
+  hasOrganizationNavigationAccess,
+  ORGANIZATION_NAVIGATION_ITEMS,
+  type OrganizationNavigationItem,
+} from '@features/organization/navigation';
 import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
@@ -12,73 +13,20 @@ import {
 } from '@features/organization/ports';
 import type { DashboardLayoutNavigationSlotFeature } from '@layouts/dashboard-layout';
 
-type OrganizationSidebarNavigationItem = Readonly<{
-  id: string;
-  label: string;
-  icon: string;
-  path: string;
-  permissions: ReadonlyArray<OrganizationPermissionName>;
-}>;
-
-const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationSidebarNavigationItem> = [
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    icon: 'pi pi-chart-bar',
-    path: '',
-    permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
-  },
-  {
-    id: 'facilities',
-    label: 'Facilities',
-    icon: 'pi pi-map',
-    path: 'facilities',
-    permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
-  },
-  {
-    id: 'equipments',
-    label: 'Equipments',
-    icon: 'pi pi-box',
-    path: 'equipments',
-    permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ],
-  },
-  {
-    id: 'inspections',
-    label: 'Inspections',
-    icon: 'pi pi-clipboard',
-    path: 'inspections',
-    permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
-  },
-];
-
-function matchesPermissionName(
-  grantedPermission: string,
-  requiredPermission: OrganizationPermissionName,
-): boolean {
-  if (grantedPermission === requiredPermission) {
-    return true;
-  }
-
-  if (!grantedPermission.endsWith('.*')) {
-    return false;
-  }
-
-  return requiredPermission.startsWith(grantedPermission.slice(0, -1));
-}
-
-function hasGrantedPermission(
-  permission: OrganizationPermissionName,
-  grantedPermissionSet: ReadonlySet<string>,
-): boolean {
-  if (grantedPermissionSet.has(permission)) {
-    return true;
-  }
-
-  return Array.from(grantedPermissionSet).some((grantedPermission: string): boolean =>
-    matchesPermissionName(grantedPermission, permission),
-  );
-}
-
+/**
+ * Function buildOrganizationSection
+ *
+ * @description
+ * Builds the dashboard layout organization section from the active
+ * organization and the canonical permission-filtered navigation contract.
+ *
+ * @param {string | null} organizationId - Active organization identifier.
+ * @param {ReadonlySet<string>} grantedPermissionSet - Active member grants.
+ *
+ * @returns {MenuItem | null} Organization menu section or null when unavailable.
+ *
+ * @since 1.0.0
+ */
 function buildOrganizationSection(
   organizationId: string | null,
   grantedPermissionSet: ReadonlySet<string>,
@@ -89,12 +37,10 @@ function buildOrganizationSection(
 
   const prefix: string = `/organizations/${organizationId}`;
   const items: MenuItem[] = ORGANIZATION_NAVIGATION_ITEMS.filter(
-    (item: OrganizationSidebarNavigationItem): boolean =>
-      item.permissions.every((p: OrganizationPermissionName): boolean =>
-        hasGrantedPermission(p, grantedPermissionSet),
-      ),
+    (item: OrganizationNavigationItem): boolean =>
+      hasOrganizationNavigationAccess(item, grantedPermissionSet),
   ).map(
-    (item: OrganizationSidebarNavigationItem): MenuItem => ({
+    (item: OrganizationNavigationItem): MenuItem => ({
       id: item.id,
       label: item.label,
       icon: item.icon,
@@ -134,9 +80,7 @@ export function withOrganizationNavigation(): DashboardLayoutNavigationSlotFeatu
   return {
     useFactory: () => {
       const context: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
-      const memberAccess: OrganizationMemberAccessPort = inject(
-        ORGANIZATION_MEMBER_ACCESS_PORT,
-      );
+      const memberAccess: OrganizationMemberAccessPort = inject(ORGANIZATION_MEMBER_ACCESS_PORT);
 
       return {
         id: 'organization',
@@ -152,4 +96,3 @@ export function withOrganizationNavigation(): DashboardLayoutNavigationSlotFeatu
     },
   };
 }
-

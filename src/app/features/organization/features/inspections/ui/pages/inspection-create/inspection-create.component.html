@@ -1,16 +1,6 @@
 <div id="inspection-create" class="flex flex-col">
-  <section
-    class="flex flex-col gap-2 border-b border-surface-200 bg-surface-50 p-8 dark:border-surface-800 dark:bg-surface-900"
-  >
-    <div class="flex flex-col justify-between">
-      <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">New Inspection</h1>
-      <p class="text-sm text-surface-700 dark:text-surface-300">
-        Create a new inspection for this organization.
-      </p>
-    </div>
-  </section>
-
   <section class="max-w-2xl p-8">
+    <h1 class="mb-6 text-2xl font-semibold text-surface-900 dark:text-surface-0">New Inspection</h1>
     <app-inspection-form
       [loading]="store.isCreating()"
       [equipments]="equipmentStore.equipmentList()"

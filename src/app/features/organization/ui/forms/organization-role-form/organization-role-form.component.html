@@ -1,0 +1,32 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-4 lg:grid-cols-2">
+  <input pInputText formControlName="name" placeholder="Role name" />
+  <textarea pTextarea formControlName="description" placeholder="Role description"></textarea>
+  <p-multiselect
+    class="lg:col-span-2"
+    [options]="[...permissions()]"
+    optionLabel="name"
+    optionValue="name"
+    formControlName="permissions"
+    placeholder="Select permissions"
+    [filter]="true"
+    display="chip"
+  />
+  <div class="flex justify-end gap-2 lg:col-span-2">
+    @if (role()) {
+      <p-button
+        type="button"
+        label="Cancel edit"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="cancelled.emit()"
+      />
+    }
+    <p-button
+      type="submit"
+      [label]="role() ? 'Update role' : 'Create role'"
+      icon="pi pi-check"
+      [loading]="loading()"
+      [disabled]="form.invalid || loading()"
+    />
+  </div>
+</form>

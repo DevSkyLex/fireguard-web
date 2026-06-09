@@ -157,9 +157,11 @@ describe('FacilityService', () => {
 
   describe('listChildren', () => {
     it('should send GET request to the children endpoint with pagination', () => {
-      service.listChildren(orgId, facilityId, { page: 1, itemsPerPage: 30 }).subscribe((response) => {
-        expect(response.member).toEqual([mockFacility]);
-      });
+      service
+        .listChildren(orgId, facilityId, { page: 1, itemsPerPage: 30 })
+        .subscribe((response) => {
+          expect(response.member).toEqual([mockFacility]);
+        });
 
       const childrenUrl = `${facilityBaseUrl}/${facilityId}/children`;
       const req = httpMock.expectOne((r) => r.url === childrenUrl);
@@ -290,6 +292,25 @@ describe('FacilityService', () => {
       expect(req.request.body).toBeNull();
       expect(req.request.withCredentials).toBe(true);
       req.flush(archived);
+    });
+  });
+
+  // ── restore ────────────────────────────────────────────────────────────────
+
+  describe('restore', () => {
+    it('should send PATCH action request to restore facility', () => {
+      const restored: FacilityOutput = { ...mockFacility, status: 'active' };
+
+      service.restore(orgId, facilityId).subscribe((facility) => {
+        expect(facility.status).toBe('active');
+      });
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/restore`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({});
+      expect(req.request.withCredentials).toBe(true);
+      expect(req.request.headers.get('Content-Type')).toBe('application/merge-patch+json');
+      req.flush(restored);
     });
   });
 

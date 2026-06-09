@@ -3,7 +3,10 @@ import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { DataViewModule, type DataViewPassThroughOptions } from 'primeng/dataview';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
-import type { EquipmentOutput, EquipmentStatus } from '@features/organization/features/equipments/models';
+import type {
+  EquipmentOutput,
+  EquipmentStatus,
+} from '@features/organization/features/equipments/models';
 import { FacilityOverviewStore } from '@features/organization/features/facilities/state';
 
 /**
@@ -53,7 +56,10 @@ export class FacilityEquipmentDataview {
     emptyMessage: { class: 'hidden' },
   };
 
-  private readonly statusSeverities: Record<EquipmentStatus, 'secondary' | 'success' | 'warn' | 'danger'> = {
+  private readonly statusSeverities: Record<
+    EquipmentStatus,
+    'secondary' | 'success' | 'warn' | 'danger'
+  > = {
     in_stock: 'secondary',
     operational: 'success',
     under_maintenance: 'warn',

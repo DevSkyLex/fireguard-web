@@ -1,10 +1,13 @@
 import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
+import { OrganizationPermissionService } from '@features/organization/access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
+import { installMatchMediaMock } from '@shared/testing/match-media.mock';
 import { FacilityEquipmentTab } from '../facility-equipment-tab.component';
 
 const MOCK_ORG: OrganizationOutput = {
@@ -37,6 +40,7 @@ describe('FacilityEquipmentTab', () => {
     isLoadingEquipment: signal<boolean>(false),
     isEmpty: signal<boolean>(true),
     equipmentList: signal<ReadonlyArray<EquipmentOutput>>([]),
+    totalEquipment: signal<number>(0),
     load: vi.fn(),
   };
 
@@ -45,14 +49,23 @@ describe('FacilityEquipmentTab', () => {
   };
 
   beforeEach(() => {
+    installMatchMediaMock();
     mockEquipmentStore.isLoadingEquipment.set(false);
     mockEquipmentStore.isEmpty.set(true);
     mockEquipmentStore.equipmentList.set([]);
+    mockEquipmentStore.totalEquipment.set(0);
     mockEquipmentStore.load.mockReset();
 
     TestBed.configureTestingModule({
       imports: [FacilityEquipmentTab],
-      providers: [{ provide: ActiveOrganizationStore, useValue: mockActiveOrgStore }],
+      providers: [
+        provideRouter([]),
+        {
+          provide: OrganizationPermissionService,
+          useValue: { hasPermission: vi.fn(() => true) },
+        },
+        { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
+      ],
     }).overrideComponent(FacilityEquipmentTab, {
       set: { providers: [{ provide: EquipmentStore, useValue: mockEquipmentStore }] },
     });
@@ -72,7 +85,7 @@ describe('FacilityEquipmentTab', () => {
 
     expect(mockEquipmentStore.load).toHaveBeenCalledWith({
       organizationId: 'org-1',
-      options: { params: { facilityId: 'fac-1' } },
+      options: { page: 1, itemsPerPage: 12, params: { facilityId: 'fac-1' } },
     });
   });
 
@@ -117,7 +130,12 @@ describe('FacilityEquipmentTab', () => {
     TestBed.configureTestingModule({
       imports: [FacilityEquipmentTab],
       providers: [
+        provideRouter([]),
         { provide: PLATFORM_ID, useValue: 'server' },
+        {
+          provide: OrganizationPermissionService,
+          useValue: { hasPermission: vi.fn(() => true) },
+        },
         { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
       ],
     }).overrideComponent(FacilityEquipmentTab, {

@@ -1,0 +1,113 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
+  <div class="grid gap-6 md:grid-cols-2">
+    <div class="flex flex-col gap-2">
+      <label for="checklist-name" class="text-sm font-medium">Name</label>
+      <input
+        pInputText
+        id="checklist-name"
+        formControlName="name"
+        placeholder="Annual fire audit"
+      />
+      @if (form.controls.name.invalid && form.controls.name.touched) {
+        <p-message severity="error" variant="simple"
+          >A name of at least 2 characters is required.</p-message
+        >
+      }
+    </div>
+    <div class="flex flex-col gap-2">
+      <label for="checklist-version" class="text-sm font-medium">Version</label>
+      <input pInputText id="checklist-version" formControlName="version" placeholder="1.0" />
+      @if (form.controls.version.invalid && form.controls.version.touched) {
+        <p-message severity="error" variant="simple">A version is required.</p-message>
+      }
+    </div>
+  </div>
+
+  <section class="flex flex-col gap-4" formArrayName="items">
+    <header class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="font-semibold">Checklist lines</h2>
+        <p class="text-sm text-surface-500">Lines are immutable after the checklist is created.</p>
+      </div>
+      <p-button
+        type="button"
+        label="Add line"
+        icon="pi pi-plus"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="loading()"
+        (onClick)="addItem()"
+      />
+    </header>
+
+    @for (item of items.controls; track item; let index = $index) {
+      <div
+        class="grid gap-4 rounded-xl border border-surface-200 p-4 md:grid-cols-[auto_1fr_auto] dark:border-surface-800"
+        [formGroupName]="index"
+      >
+        <span
+          class="flex size-8 items-center justify-center rounded-full bg-primary-50 text-sm font-semibold text-primary-700 dark:bg-primary-950 dark:text-primary-300"
+        >
+          {{ index + 1 }}
+        </span>
+        <div class="grid gap-4">
+          <div class="flex flex-col gap-2">
+            <label [for]="'line-label-' + index" class="text-sm font-medium">Label</label>
+            <input
+              pInputText
+              [id]="'line-label-' + index"
+              formControlName="label"
+              placeholder="Verify emergency exit signage"
+            />
+            @if (item.controls.label.invalid && item.controls.label.touched) {
+              <p-message severity="error" variant="simple">The line label is required.</p-message>
+            }
+          </div>
+          <div class="flex flex-col gap-2">
+            <label [for]="'line-description-' + index" class="text-sm font-medium">
+              Description <span class="font-normal text-surface-400">(optional)</span>
+            </label>
+            <textarea
+              pTextarea
+              [id]="'line-description-' + index"
+              formControlName="description"
+              rows="2"
+            ></textarea>
+          </div>
+          <label class="flex items-center gap-2 text-sm">
+            <p-checkbox formControlName="required" [binary]="true" />
+            Required line
+          </label>
+        </div>
+        <p-button
+          type="button"
+          icon="pi pi-trash"
+          severity="danger"
+          [text]="true"
+          [rounded]="true"
+          ariaLabel="Remove checklist line"
+          [disabled]="items.length === 1 || loading()"
+          (onClick)="removeItem(index)"
+        />
+      </div>
+    }
+  </section>
+
+  <div class="flex justify-end gap-3">
+    <p-button
+      type="button"
+      label="Cancel"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="loading()"
+      (onClick)="cancelled.emit()"
+    />
+    <p-button
+      type="submit"
+      label="Create checklist"
+      icon="pi pi-check"
+      [loading]="loading()"
+      [disabled]="form.invalid || loading()"
+    />
+  </div>
+</form>

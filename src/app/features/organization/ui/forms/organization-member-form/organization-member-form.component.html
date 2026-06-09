@@ -1,0 +1,18 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3 md:grid-cols-[2fr_1fr_auto]">
+  <input pInputText formControlName="userId" placeholder="Existing user ID" />
+  <p-select
+    [options]="[...roles()]"
+    optionLabel="name"
+    optionValue="id"
+    formControlName="roleId"
+    placeholder="Initial role"
+    [showClear]="true"
+  />
+  <p-button
+    type="submit"
+    label="Add member"
+    icon="pi pi-user-plus"
+    [loading]="loading()"
+    [disabled]="form.invalid || loading()"
+  />
+</form>

@@ -1,6 +1,5 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
@@ -107,6 +106,15 @@ describe('OrganizationNavPanel', () => {
     expect(text).toContain('Facilities');
     expect(text).toContain('Equipments');
     expect(text).toContain('Inspections');
+  });
+
+  it('should display Team when a role read permission is granted', () => {
+    mockOrganizationMemberAccess.permissions.set([ORGANIZATION_PERMISSION.ROLES_READ]);
+
+    const fixture = TestBed.createComponent(OrganizationNavPanel);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Team');
   });
 
   it('should show no items when no organization is selected', () => {

@@ -7,7 +7,9 @@ Owns organization-scoped inspection workflows.
 This subfeature is responsible for:
 
 - listing inspections for the active organization,
-- inspection creation,
+- inspection creation, draft editing, detail, and cancellation,
+- submission and closure lifecycle actions,
+- non-conformity creation, detail, listing, and status updates,
 - active inspection state,
 - orchestration of inspection forms and inspection page flows.
 
@@ -22,6 +24,11 @@ This subfeature does not own facility, equipment, or checklist data, even when i
 
 - `/organizations/:organizationId/inspections`
 - `/organizations/:organizationId/inspections/create`
+- `/organizations/:organizationId/inspections/:inspectionId`
+- `/organizations/:organizationId/inspections/:inspectionId/edit`
+
+Inspection detail routes resolve active inspection context before rendering. The API delete
+operation represents cancellation and is exposed as such in the UI.
 
 ## State and Data Access
 
@@ -45,3 +52,4 @@ Primary service:
 - Inspection pages remain the orchestrators of inspection workflows.
 - Supporting dropdown or selector data from sibling subfeatures is consumed, not re-owned.
 - Inspection business rules and mutation flows remain local to this subfeature.
+- Only draft inspections can be edited, submitted, or cancelled; submitted inspections can be closed.

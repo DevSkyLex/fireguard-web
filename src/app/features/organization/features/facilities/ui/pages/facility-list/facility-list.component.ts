@@ -207,6 +207,17 @@ export class FacilityListPage {
   }
 
   /**
+   * Restores an archived facility via the store.
+   */
+  public onRestore(facility: FacilityOutput): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (organizationId) {
+      this.store.restore({ organizationId, facilityId: facility.id });
+    }
+  }
+
+  /**
    * Method onBulkArchive
    * @method onBulkArchive
    *

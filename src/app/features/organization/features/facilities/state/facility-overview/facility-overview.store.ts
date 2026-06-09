@@ -1,8 +1,8 @@
 import { computed } from '@angular/core';
+import { inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { inject } from '@angular/core';
 import { pipe, switchMap, tap } from 'rxjs';
 import type { HydraCollection } from '@core/models/api';
 import {
@@ -84,7 +84,9 @@ export const FacilityOverviewStore = signalStore(
     /**
      * Whether the inspection preview request is in flight.
      */
-    isLoadingInspections: computed<boolean>(() => store.inspectionsCallState().status === 'pending'),
+    isLoadingInspections: computed<boolean>(
+      () => store.inspectionsCallState().status === 'pending',
+    ),
 
     /**
      * Whether the equipment preview request is in flight.
@@ -160,8 +162,7 @@ export const FacilityOverviewStore = signalStore(
           .equipment()
           .filter(
             (equipment) =>
-              equipment.status === 'under_maintenance' ||
-              equipment.status === 'decommissioned',
+              equipment.status === 'under_maintenance' || equipment.status === 'decommissioned',
           ).length,
     ),
 

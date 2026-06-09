@@ -6,12 +6,13 @@ import {
   withHttpTransferCacheOptions,
 } from '@angular/platform-browser';
 import { provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { APP_ROUTES } from '@app/app.routes';
 import { provideEnv } from '@core/config/environment/env.provider';
 import { ssrCookieForwardInterceptor } from '@core/http/interceptors/ssr-cookie-forward';
 import { providePageTitleStrategy } from '@core/routing/strategies/page-title';
+import { SelectivePreloadingStrategy } from '@core/routing/strategies/selective-preloading/selective-preloading.strategy';
 import { provideSplashScreen } from '@core/services/splash-screen';
 import { provideTheme } from '@core/services/theme';
 import { FireguardTheme } from '@core/themes/fireguard.theme';
@@ -20,7 +21,6 @@ import { provideAccountFeature } from '@features/account';
 import { authInterceptor, provideAuthFeature, unauthorizedInterceptor } from '@features/auth';
 import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
 import { provideMaintenanceMode } from '@features/maintenance/state';
-import { SelectivePreloadingStrategy } from '@core/routing/strategies/selective-preloading/selective-preloading.strategy';
 
 /**
  * Configuration appConfig
@@ -46,7 +46,11 @@ import { SelectivePreloadingStrategy } from '@core/routing/strategies/selective-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(APP_ROUTES, withComponentInputBinding(), withPreloading(SelectivePreloadingStrategy)),
+    provideRouter(
+      APP_ROUTES,
+      withComponentInputBinding(),
+      withPreloading(SelectivePreloadingStrategy),
+    ),
     provideClientHydration(
       withEventReplay(),
       withHttpTransferCacheOptions({
@@ -83,6 +87,7 @@ export const appConfig: ApplicationConfig = {
       },
     }),
     MessageService,
+    ConfirmationService,
     providePageTitleStrategy(),
   ],
 };

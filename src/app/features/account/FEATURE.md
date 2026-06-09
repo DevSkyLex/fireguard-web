@@ -7,6 +7,7 @@ Owns authenticated user account data exposed to the shell and account-facing pag
 This feature is responsible for:
 
 - user profile state,
+- active session and trusted device management,
 - notification center state and UI,
 - shell-facing user identity, access, and notification contracts,
 - current-user global permission helpers built on the account-owned access contract,
@@ -22,9 +23,12 @@ This feature does not own authentication, session restoration, or auth transport
 
 ## Routes
 
+- `/account/profile`
+- `/account/sessions`
+- `/account/trusted-devices`
 - `/account/notifications`
 
-The feature currently redirects `/account` to the notification center.
+The feature redirects `/account` to the profile page.
 
 ## State and Data Access
 
@@ -32,12 +36,16 @@ Primary stores:
 
 - `UserStore`
 - `UsersStore`
+- `SessionStore`
+- `TrustedDeviceStore`
 - `NotificationStore`
 
 Primary services:
 
 - `UserService`
 - `UserProfileService`
+- `SessionService`
+- `TrustedDeviceService`
 - `NotificationService`
 
 ## Published Contracts

@@ -1,0 +1,115 @@
+<section
+  class="flex min-h-0 flex-1 flex-col rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-950"
+>
+  <header
+    class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
+  >
+    <div class="flex items-center gap-2">
+      <i class="pi pi-exclamation-triangle text-sm text-surface-500"></i>
+      <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Non-conformities</h2>
+    </div>
+    <span class="text-xs text-surface-500">{{ nonConformities().length }} finding(s)</span>
+  </header>
+
+  @if (canAdd()) {
+    <app-non-conformity-form
+      class="block border-b border-surface-200 p-4 dark:border-surface-800"
+      [loading]="mutating()"
+      (submitted)="add.emit($event)"
+    />
+  }
+
+  <p-table
+    class="min-h-0 flex-1"
+    [value]="loading() ? skeletonItems : [...nonConformities()]"
+    dataKey="id"
+    [stripedRows]="true"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Description</th>
+        <th>Severity</th>
+        <th>Status</th>
+        <th>Due</th>
+        <th class="w-20"><span class="sr-only">Actions</span></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-nonConformity>
+      @if (loading()) {
+        <tr>
+          <td><p-skeleton width="14rem" /></td>
+          <td><p-skeleton width="5rem" /></td>
+          <td><p-skeleton width="7rem" /></td>
+          <td><p-skeleton width="7rem" /></td>
+          <td><p-skeleton shape="circle" size="2rem" /></td>
+        </tr>
+      } @else {
+        <tr>
+          <td>
+            <div class="max-w-xl">
+              <p class="truncate font-medium text-surface-900 dark:text-surface-100">
+                {{ nonConformity.description }}
+              </p>
+              @if (nonConformity.notes) {
+                <p class="truncate text-xs text-surface-500">{{ nonConformity.notes }}</p>
+              }
+            </div>
+          </td>
+          <td>
+            <p-tag
+              [value]="nonConformity.severity | titlecase"
+              [severity]="
+                nonConformity.severity === 'critical' || nonConformity.severity === 'high'
+                  ? 'danger'
+                  : nonConformity.severity === 'medium'
+                    ? 'warn'
+                    : 'secondary'
+              "
+            />
+          </td>
+          <td>
+            @if (canManage()) {
+              <p-select
+                [options]="statusOptions"
+                optionLabel="label"
+                optionValue="value"
+                size="small"
+                [ngModel]="nonConformity.status"
+                (ngModelChange)="statusChange.emit({ nonConformity, status: $event })"
+              />
+            } @else {
+              <p-tag [value]="nonConformity.status | titlecase" severity="secondary" />
+            }
+          </td>
+          <td>{{ nonConformity.dueAt ? (nonConformity.dueAt | date: 'mediumDate') : 'None' }}</td>
+          <td class="text-right">
+            <p-button
+              icon="pi pi-eye"
+              severity="secondary"
+              size="small"
+              [text]="true"
+              [rounded]="true"
+              ariaLabel="View non-conformity"
+              (onClick)="view.emit(nonConformity)"
+            />
+          </td>
+        </tr>
+      }
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="5">
+          <div class="flex flex-col items-center gap-3 py-16 text-center">
+            <i class="pi pi-check-circle text-5xl text-green-400"></i>
+            <div>
+              <p class="font-medium text-surface-900 dark:text-surface-100">No non-conformities</p>
+              <p class="text-sm text-surface-500">
+                No findings have been reported for this inspection.
+              </p>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>

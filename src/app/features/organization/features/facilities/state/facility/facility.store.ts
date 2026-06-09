@@ -2,7 +2,13 @@ import { isPlatformBrowser } from '@angular/common';
 import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
-import { addEntity, setAllEntities, setEntity, upsertEntities, withEntities } from '@ngrx/signals/entities';
+import {
+  addEntity,
+  setAllEntities,
+  setEntity,
+  upsertEntities,
+  withEntities,
+} from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, mergeMap, pipe, switchMap, tap } from 'rxjs';
@@ -77,6 +83,7 @@ const INITIAL_FACILITY_STATE: FacilityState = {
   createCallState: idleCallState(),
   updateCallState: idleCallState(),
   archiveCallState: idleCallState(),
+  restoreCallState: idleCallState(),
   moveCallState: idleCallState(),
   rootFacilityIds: [],
   totalRootFacilities: 0,
@@ -513,9 +520,7 @@ export const FacilityStore = signalStore(
                         response.member,
                       ),
                       loadedParentIds: toLoadedHierarchyParentIds(facilityId, response.member),
-                      loadingParentIds: store
-                        .loadingParentIds()
-                        .filter((id) => id !== facilityId),
+                      loadingParentIds: store.loadingParentIds().filter((id) => id !== facilityId),
                     },
                   );
                 },
@@ -526,10 +531,7 @@ export const FacilityStore = signalStore(
                   });
                   dispatcher.dispatch(
                     facilityStoreEvents.listFailed(
-                      toStoreFailureEventPayload(
-                        storeError,
-                        'Failed to load facility descendants',
-                      ),
+                      toStoreFailureEventPayload(storeError, 'Failed to load facility descendants'),
                     ),
                   );
                 },
@@ -626,32 +628,30 @@ export const FacilityStore = signalStore(
               });
             }),
             switchMap(({ organizationId, options }) =>
-              facilityService
-                .list(organizationId, { ...options, rootsOnly: true })
-                .pipe(
-                  tapResponse({
-                    next: (response: HydraCollection<FacilityOutput>): void => {
-                      patchState(
-                        store,
-                        upsertEntities([...response.member], { collection: 'facility' }),
-                        {
-                          rootFacilityIds: response.member.map((facility) => facility.id),
-                          totalRootFacilities: response.totalItems,
-                          rootListCallState: successCallState(null),
-                        },
-                      );
-                    },
-                    error: (error: unknown): void => {
-                      const storeError: StoreError = toStoreError(error);
-                      patchState(store, { rootListCallState: errorCallState(storeError) });
-                      dispatcher.dispatch(
-                        facilityStoreEvents.listFailed(
-                          toStoreFailureEventPayload(storeError, 'Failed to load facilities'),
-                        ),
-                      );
-                    },
-                  }),
-                ),
+              facilityService.list(organizationId, { ...options, rootsOnly: true }).pipe(
+                tapResponse({
+                  next: (response: HydraCollection<FacilityOutput>): void => {
+                    patchState(
+                      store,
+                      upsertEntities([...response.member], { collection: 'facility' }),
+                      {
+                        rootFacilityIds: response.member.map((facility) => facility.id),
+                        totalRootFacilities: response.totalItems,
+                        rootListCallState: successCallState(null),
+                      },
+                    );
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { rootListCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      facilityStoreEvents.listFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to load facilities'),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
@@ -859,6 +859,40 @@ export const FacilityStore = signalStore(
                     dispatcher.dispatch(
                       facilityStoreEvents.archiveFailed(
                         toStoreFailureEventPayload(storeError, 'Failed to archive facility'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Restores an archived facility and synchronises the active facility.
+         */
+        restore: rxMethod<{ organizationId: string; facilityId: string }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { restoreCallState: pendingCallState() });
+            }),
+            exhaustMap(({ organizationId, facilityId }) =>
+              facilityService.restore(organizationId, facilityId).pipe(
+                tapResponse({
+                  next: (facility: FacilityOutput): void => {
+                    patchState(store, setEntity(facility, { collection: 'facility' }), {
+                      restoreCallState: successCallState(facility),
+                    });
+                    if (activeFacilityStore.selectedFacility()?.id === facility.id) {
+                      activeFacilityStore.setFacility(facility);
+                    }
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { restoreCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      facilityStoreEvents.restoreFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to restore facility'),
                       ),
                     );
                   },

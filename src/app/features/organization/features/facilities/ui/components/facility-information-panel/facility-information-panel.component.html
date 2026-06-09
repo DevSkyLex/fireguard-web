@@ -21,7 +21,10 @@
         <span
           class="inline-flex items-center gap-1.5 rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-400"
         >
-          <span class="h-1.5 w-1.5 rounded-full" [class]="getStatusDotClass(facility.status)"></span>
+          <span
+            class="h-1.5 w-1.5 rounded-full"
+            [class]="getStatusDotClass(facility.status)"
+          ></span>
           {{ facility.status | titlecase }}
         </span>
       </dd>

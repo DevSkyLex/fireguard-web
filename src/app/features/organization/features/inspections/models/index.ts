@@ -10,6 +10,7 @@ export type {
   InspectionListOptions,
 } from './inspection/inspection-list-options.interface';
 export type { CreateInspectionInput } from './inspection/create-inspection-input.interface';
+export type { UpdateInspectionInput } from './inspection/update-inspection-input.interface';
 export type {
   NonConformityOutput,
   NonConformitySeverity,

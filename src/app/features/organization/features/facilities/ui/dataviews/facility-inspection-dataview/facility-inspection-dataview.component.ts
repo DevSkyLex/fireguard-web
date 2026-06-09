@@ -10,19 +10,16 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
-import {
-  DataViewModule,
-  type DataViewPassThroughOptions,
-} from 'primeng/dataview';
+import { DataViewModule, type DataViewPassThroughOptions } from 'primeng/dataview';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
+import { FacilityOverviewStore } from '@features/organization/features/facilities/state';
 import type {
   InspectionOutput,
   InspectionResult,
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
-import { FacilityOverviewStore } from '@features/organization/features/facilities/state';
 
 /**
  * Type InspectionOverviewFilter
@@ -82,22 +79,24 @@ export class FacilityInspectionDataview {
   >(() => {
     const nowTimestamp: number = Date.now();
 
-    const filtered: ReadonlyArray<InspectionOutput> = this.store.inspections().filter((inspection) => {
-      const performedTimestamp: number = Date.parse(inspection.performedAt);
+    const filtered: ReadonlyArray<InspectionOutput> = this.store
+      .inspections()
+      .filter((inspection) => {
+        const performedTimestamp: number = Date.parse(inspection.performedAt);
 
-      switch (this.filter()) {
-        case 'overdue':
-          return (
-            inspection.status !== 'closed' &&
-            Number.isFinite(performedTimestamp) &&
-            performedTimestamp < nowTimestamp
-          );
-        case 'upcoming':
-          return Number.isFinite(performedTimestamp) && performedTimestamp >= nowTimestamp;
-        default:
-          return true;
-      }
-    });
+        switch (this.filter()) {
+          case 'overdue':
+            return (
+              inspection.status !== 'closed' &&
+              Number.isFinite(performedTimestamp) &&
+              performedTimestamp < nowTimestamp
+            );
+          case 'upcoming':
+            return Number.isFinite(performedTimestamp) && performedTimestamp >= nowTimestamp;
+          default:
+            return true;
+        }
+      });
 
     return filtered
       .toSorted((left, right) => Date.parse(left.performedAt) - Date.parse(right.performedAt))

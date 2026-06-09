@@ -1,0 +1,44 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-5 md:grid-cols-2">
+  <div class="flex flex-col gap-2">
+    <label for="countryCode" class="text-sm font-medium">Country code</label
+    ><input pInputText id="countryCode" formControlName="countryCode" maxlength="2" />
+  </div>
+  <div class="flex flex-col gap-2">
+    <label for="legalType" class="text-sm font-medium">Legal type</label
+    ><p-select
+      id="legalType"
+      [options]="legalTypeOptions"
+      optionLabel="label"
+      optionValue="value"
+      formControlName="legalType"
+    />
+  </div>
+  <div class="flex flex-col gap-2 md:col-span-2">
+    <label for="legalName" class="text-sm font-medium">Legal name</label
+    ><input pInputText id="legalName" formControlName="legalName" />
+    @if (form.controls.legalName.invalid && form.controls.legalName.touched) {
+      <p-message severity="error" variant="simple">Legal name is required.</p-message>
+    }
+  </div>
+  <div class="flex flex-col gap-2">
+    <label for="registrationNumber" class="text-sm font-medium">{{
+      profile()?.requirements?.registrationNumber?.label || 'Registration number'
+    }}</label
+    ><input pInputText id="registrationNumber" formControlName="registrationNumber" />
+  </div>
+  <div class="flex flex-col gap-2">
+    <label for="vatNumber" class="text-sm font-medium">{{
+      profile()?.requirements?.vatNumber?.label || 'VAT number'
+    }}</label
+    ><input pInputText id="vatNumber" formControlName="vatNumber" />
+  </div>
+  <div class="flex justify-end md:col-span-2">
+    <p-button
+      type="submit"
+      label="Save legal profile"
+      icon="pi pi-check"
+      [loading]="loading()"
+      [disabled]="form.invalid || loading()"
+    />
+  </div>
+</form>

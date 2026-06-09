@@ -1,0 +1,100 @@
+<section
+  class="flex min-h-0 flex-1 flex-col rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-950"
+>
+  <header
+    class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
+  >
+    <div class="flex items-center gap-2">
+      <i class="pi pi-paperclip text-sm text-surface-500"></i>
+      <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Attachments</h2>
+    </div>
+    <span class="text-xs text-surface-500">{{ attachments().length }} file(s)</span>
+  </header>
+
+  @if (canManage()) {
+    <app-equipment-attachment-form
+      class="block border-b border-surface-200 p-4 dark:border-surface-800"
+      [loading]="mutating()"
+      (submitted)="add.emit($event)"
+    />
+  }
+
+  <p-table
+    class="min-h-0 flex-1"
+    [value]="loading() ? skeletonItems : [...attachments()]"
+    dataKey="id"
+    [stripedRows]="true"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th>File</th>
+        <th>Type</th>
+        <th>Size</th>
+        <th>Uploaded</th>
+        <th class="w-20"><span class="sr-only">Actions</span></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-attachment>
+      @if (loading()) {
+        <tr>
+          <td><p-skeleton width="12rem" /></td>
+          <td><p-skeleton width="8rem" /></td>
+          <td><p-skeleton width="4rem" /></td>
+          <td><p-skeleton width="8rem" /></td>
+          <td><p-skeleton shape="circle" size="2rem" /></td>
+        </tr>
+      } @else {
+        <tr>
+          <td>
+            <div class="flex items-center gap-3">
+              <span
+                class="flex size-9 shrink-0 items-center justify-center rounded-md bg-surface-100 dark:bg-surface-800"
+              >
+                <i class="pi pi-file text-sm text-surface-500"></i>
+              </span>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
+                  {{ attachment.label || attachment.fileName }}
+                </p>
+                @if (attachment.label) {
+                  <p class="truncate text-xs text-surface-500">{{ attachment.fileName }}</p>
+                }
+              </div>
+            </div>
+          </td>
+          <td>{{ attachment.mimeType }}</td>
+          <td>{{ attachment.size / 1024 | number: '1.0-1' }} KB</td>
+          <td>{{ attachment.uploadedAt | date: 'medium' }}</td>
+          <td class="text-right">
+            @if (canManage()) {
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                ariaLabel="Delete attachment"
+                (onClick)="remove.emit(attachment)"
+              />
+            }
+          </td>
+        </tr>
+      }
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="5">
+          <div class="flex flex-col items-center gap-3 py-16 text-center">
+            <i class="pi pi-paperclip text-5xl text-surface-300 dark:text-surface-700"></i>
+            <div>
+              <p class="font-medium text-surface-900 dark:text-surface-100">No attachments</p>
+              <p class="text-sm text-surface-500">
+                Files linked to this equipment will appear here.
+              </p>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>

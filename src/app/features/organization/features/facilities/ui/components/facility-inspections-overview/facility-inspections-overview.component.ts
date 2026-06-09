@@ -9,12 +9,12 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
+import { FacilityOverviewStore } from '@features/organization/features/facilities/state';
 import type {
   InspectionOutput,
   InspectionResult,
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
-import { FacilityOverviewStore } from '@features/organization/features/facilities/state';
 
 /**
  * Type InspectionOverviewFilter

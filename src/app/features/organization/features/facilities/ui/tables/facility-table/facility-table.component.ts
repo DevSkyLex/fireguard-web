@@ -237,6 +237,15 @@ export class FacilityTable implements OnInit {
   public readonly archive: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
 
   /**
+   * Output restore
+   * @readonly
+   *
+   * @description
+   * Emits the archived facility selected for restoration.
+   */
+  public readonly restore: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
+
+  /**
    * Output bulkArchive
    * @readonly
    *
@@ -283,7 +292,8 @@ export class FacilityTable implements OnInit {
    */
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
-      class: 'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
+      class:
+        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
     },
     body: {
       class: 'p-0 flex flex-col flex-1 min-h-0',
@@ -387,13 +397,13 @@ export class FacilityTable implements OnInit {
       label: 'Active',
       value: 'active',
       icon: PrimeIcons.CHECK_CIRCLE,
-      color: '#22c55e'
+      color: '#22c55e',
     },
     {
       label: 'Archived',
       value: 'archived',
       icon: PrimeIcons.BOX,
-      color: '#64748b'
+      color: '#64748b',
     },
   ];
 
@@ -425,8 +435,9 @@ export class FacilityTable implements OnInit {
    *
    * @type {WritableSignal<FacilityOutput[]>}
    */
-  protected readonly selectedFacilities: WritableSignal<FacilityOutput[]> =
-    signal<FacilityOutput[]>([]);
+  protected readonly selectedFacilities: WritableSignal<FacilityOutput[]> = signal<
+    FacilityOutput[]
+  >([]);
 
   /**
    * Property toolbarActions
@@ -552,13 +563,18 @@ export class FacilityTable implements OnInit {
               command: (): void => this.edit.emit(facility),
             },
             { separator: true },
-            {
-              label: facility.status === 'active' ? 'Archive' : 'Archived',
-              icon: PrimeIcons.BOX,
-              styleClass: 'text-red-500',
-              disabled: facility.status === 'archived',
-              command: (): void => this.archive.emit(facility),
-            },
+            facility.status === 'archived'
+              ? {
+                  label: 'Restore',
+                  icon: PrimeIcons.REFRESH,
+                  command: (): void => this.restore.emit(facility),
+                }
+              : {
+                  label: 'Archive',
+                  icon: PrimeIcons.BOX,
+                  styleClass: 'text-red-500',
+                  command: (): void => this.archive.emit(facility),
+                },
           ]
         : []),
     ];
@@ -794,7 +810,9 @@ export class FacilityTable implements OnInit {
    */
   protected getStatusOption(status: FacilityStatus): FacilityStatusOption {
     return (
-      this.statusOptions.find((option: FacilityStatusOption): boolean => option.value === status) ?? {
+      this.statusOptions.find(
+        (option: FacilityStatusOption): boolean => option.value === status,
+      ) ?? {
         label: this.toDisplayLabel(status),
         value: status,
         icon: PrimeIcons.CIRCLE,

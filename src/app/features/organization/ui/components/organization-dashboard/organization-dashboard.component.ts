@@ -102,9 +102,10 @@ export class OrganizationDashboard {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canReadFacilities: Signal<boolean> = computed<boolean>(() =>
-    this.canReadDashboard() ||
-    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_READ),
+  protected readonly canReadFacilities: Signal<boolean> = computed<boolean>(
+    () =>
+      this.canReadDashboard() ||
+      this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_READ),
   );
 
   /**
@@ -119,9 +120,10 @@ export class OrganizationDashboard {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canReadMembers: Signal<boolean> = computed<boolean>(() =>
-    this.canReadDashboard() ||
-    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.MEMBERS_READ),
+  protected readonly canReadMembers: Signal<boolean> = computed<boolean>(
+    () =>
+      this.canReadDashboard() ||
+      this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.MEMBERS_READ),
   );
 
   /**
@@ -136,9 +138,10 @@ export class OrganizationDashboard {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canReadEquipment: Signal<boolean> = computed<boolean>(() =>
-    this.canReadDashboard() ||
-    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_READ),
+  protected readonly canReadEquipment: Signal<boolean> = computed<boolean>(
+    () =>
+      this.canReadDashboard() ||
+      this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_READ),
   );
 
   /**
@@ -153,9 +156,10 @@ export class OrganizationDashboard {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canReadInspections: Signal<boolean> = computed<boolean>(() =>
-    this.canReadDashboard() ||
-    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_READ),
+  protected readonly canReadInspections: Signal<boolean> = computed<boolean>(
+    () =>
+      this.canReadDashboard() ||
+      this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_READ),
   );
 
   /**

@@ -56,10 +56,10 @@ describe('MfaVerificationPage', () => {
     };
   };
 
-  it('should load user and navigate home when authenticated', () => {
+  it('should navigate home when authenticated', () => {
     const { mockUserProfilePort, mockRouter } = setup({ authenticated: true });
 
-    expect(mockUserProfilePort.load).toHaveBeenCalledTimes(1);
+    expect(mockUserProfilePort.load).not.toHaveBeenCalled();
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
   });
 

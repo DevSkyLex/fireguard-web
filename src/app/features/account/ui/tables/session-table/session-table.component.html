@@ -1,0 +1,67 @@
+<p-card>
+  <p-table [value]="loading() ? skeletonItems : [...sessions()]" dataKey="id" [stripedRows]="true">
+    <ng-template pTemplate="header"
+      ><tr>
+        <th>Device</th>
+        <th>IP address</th>
+        <th>Last activity</th>
+        <th class="w-32"><span class="sr-only">Actions</span></th>
+      </tr></ng-template
+    >
+    <ng-template pTemplate="body" let-session>
+      @if (loading()) {
+        <tr>
+          <td><p-skeleton width="12rem" /></td>
+          <td><p-skeleton width="7rem" /></td>
+          <td><p-skeleton width="9rem" /></td>
+          <td><p-skeleton width="5rem" /></td>
+        </tr>
+      } @else {
+        <tr>
+          <td>
+            <div class="flex items-center gap-3">
+              <i class="pi pi-desktop text-surface-400"></i>
+              <div>
+                <div class="font-medium">{{ session.browser || 'Unknown browser' }}</div>
+                <div class="text-xs text-surface-500">
+                  {{ session.deviceType || 'Unknown device' }}
+                  @if (session.isCurrent) {
+                    · Current session
+                  }
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>{{ session.ipAddress }}</td>
+          <td>{{ session.lastActivityAt | date: 'medium' }}</td>
+          <td class="text-right">
+            <p-button
+              icon="pi pi-eye"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
+              ariaLabel="View session"
+              (onClick)="details.emit(session)"
+            />
+            @if (!session.isCurrent) {
+              <p-button
+                icon="pi pi-times"
+                severity="danger"
+                [text]="true"
+                [rounded]="true"
+                [loading]="revoking()"
+                ariaLabel="Revoke session"
+                (onClick)="revoke.emit(session)"
+              />
+            }
+          </td>
+        </tr>
+      }
+    </ng-template>
+    <ng-template pTemplate="emptymessage"
+      ><tr>
+        <td colspan="4" class="py-12 text-center text-surface-500">No active sessions.</td>
+      </tr></ng-template
+    >
+  </p-table>
+</p-card>

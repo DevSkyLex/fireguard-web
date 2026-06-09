@@ -66,10 +66,10 @@ describe('LoginPage', () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/mfa-verify']);
   });
 
-  it('should load user and navigate home when user is authenticated', () => {
+  it('should navigate home when user is authenticated', () => {
     const { mockUserProfilePort, mockRouter } = setup({ authenticated: true });
 
-    expect(mockUserProfilePort.load).toHaveBeenCalledTimes(1);
+    expect(mockUserProfilePort.load).not.toHaveBeenCalled();
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
   });
 });

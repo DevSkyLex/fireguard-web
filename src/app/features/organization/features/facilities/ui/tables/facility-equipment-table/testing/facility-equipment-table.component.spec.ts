@@ -6,6 +6,8 @@ import type { EquipmentOutput } from '@features/organization/features/equipments
 import { FacilityEquipmentTable } from '../facility-equipment-table.component';
 
 const MOCK_EQUIPMENT: EquipmentOutput = {
+  '@id': '/api/organizations/org-1/equipments/eq-1',
+  '@type': 'Equipment',
   id: 'eq-1',
   organizationId: 'org-1',
   facilityId: 'fac-1',

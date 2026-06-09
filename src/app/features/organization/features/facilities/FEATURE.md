@@ -49,7 +49,7 @@ flat, paginated PrimeNG `p-dataview` with a list/grid layout toggle:
 
 Search and pagination operate on the **root level only** (the `?page=` query
 param is synced for roots). Row actions reuse the existing view / edit /
-archive flows.
+archive / restore flows.
 
 ## Facility Hierarchy (Detail Overview)
 
@@ -92,4 +92,5 @@ Primary service:
 
 - Facility routes remain organization-scoped.
 - Active facility state belongs to this subfeature.
+- Archived facilities can be restored; facilities are never deleted from the UI.
 - Facility resolvers and facility page orchestration belong here, not in the parent feature or layouts.

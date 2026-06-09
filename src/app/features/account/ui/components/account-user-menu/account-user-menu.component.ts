@@ -135,7 +135,7 @@ export class AccountUserMenu {
     {
       label: 'Settings',
       icon: 'pi pi-cog',
-      routerLink: '/account',
+      routerLink: '/account/profile',
       data: { testid: 'header-user-menu-settings' },
     },
     { separator: true },

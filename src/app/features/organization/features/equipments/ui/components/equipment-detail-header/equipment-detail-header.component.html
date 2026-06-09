@@ -1,0 +1,82 @@
+<div
+  class="flex flex-col gap-4 rounded-xl border border-surface-200 bg-surface-0 p-4 lg:flex-row lg:items-start lg:justify-between dark:border-surface-800 dark:bg-surface-950"
+>
+  <div class="flex min-w-0 items-start gap-3">
+    <p-avatar icon="pi pi-box" shape="square" size="xlarge" />
+    <div class="flex min-w-0 flex-col gap-1">
+      <div class="flex flex-wrap items-center gap-2">
+        <h1 class="truncate text-2xl font-semibold text-surface-900 dark:text-surface-100">
+          {{ equipment().type }} {{ equipment().brand }} {{ equipment().model }}
+        </h1>
+        <p-tag
+          [value]="equipment().status | titlecase"
+          [severity]="
+            equipment().status === 'operational'
+              ? 'success'
+              : equipment().status === 'under_maintenance'
+                ? 'warn'
+                : equipment().status === 'decommissioned'
+                  ? 'danger'
+                  : 'secondary'
+          "
+        />
+      </div>
+      <div class="flex flex-wrap items-center gap-3 text-sm text-surface-500 dark:text-surface-300">
+        <span class="inline-flex items-center gap-1.5">
+          <i class="pi pi-hashtag text-xs"></i>
+          {{ equipment().serialNumber || 'No serial number' }}
+        </span>
+        @if (equipment().facilityId) {
+          <span class="inline-flex items-center gap-1.5">
+            <i class="pi pi-building text-xs"></i>
+            Assigned
+          </span>
+        }
+        <span>Updated {{ equipment().updatedAt | date: 'mediumDate' }}</span>
+      </div>
+    </div>
+  </div>
+  @if (canManage()) {
+    <div class="flex flex-wrap items-center gap-2">
+      <p-button
+        label="Edit"
+        icon="pi pi-pencil"
+        severity="success"
+        [outlined]="true"
+        size="small"
+        (onClick)="edit.emit()"
+      />
+      @if (equipment().status !== 'operational') {
+        <p-button
+          label="Commission"
+          icon="pi pi-check"
+          severity="success"
+          size="small"
+          [loading]="lifecycleLoading()"
+          (onClick)="commission.emit()"
+        />
+      }
+      @if (equipment().status === 'operational') {
+        <p-button
+          label="Maintenance"
+          icon="pi pi-wrench"
+          severity="warn"
+          size="small"
+          [loading]="lifecycleLoading()"
+          (onClick)="maintenance.emit()"
+        />
+      }
+      @if (equipment().status !== 'decommissioned') {
+        <p-button
+          label="Decommission"
+          icon="pi pi-ban"
+          severity="danger"
+          [outlined]="true"
+          size="small"
+          [loading]="lifecycleLoading()"
+          (onClick)="decommission.emit()"
+        />
+      }
+    </div>
+  }
+</div>

@@ -252,4 +252,11 @@ export interface EquipmentState {
    */
   readonly removeTagCallState: CallState;
   //#endregion
+
+  //#region Maintenance logs
+  /** Server-reported total maintenance log count for the active query. */
+  readonly totalMaintenanceLogs: number;
+  /** Tracks the maintenance log list request state. */
+  readonly maintenanceLogsListCallState: CallState;
+  //#endregion
 }

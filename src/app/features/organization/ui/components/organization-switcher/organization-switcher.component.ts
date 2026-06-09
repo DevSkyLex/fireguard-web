@@ -250,8 +250,8 @@ export class OrganizationSwitcher implements OnInit {
    * @method ensureOrganizationsLoaded
    *
    * @description
-    * Loads organizations when the switcher mounts or is explicitly opened,
-    * provided no list is already available and no request is in flight.
+   * Loads organizations when the switcher mounts or is explicitly opened,
+   * provided no list is already available and no request is in flight.
    *
    * @access private
    * @since 2.0.0

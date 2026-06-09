@@ -29,12 +29,12 @@ describe('NotificationCenterPage', () => {
     return { component, mockNotificationStore };
   };
 
-  it('should call initialize and initializeTypes on init', () => {
+  it('should initialize reference types on init', () => {
     const { component, mockNotificationStore } = setup();
 
     component.ngOnInit();
 
-    expect(mockNotificationStore.initialize).toHaveBeenCalledTimes(1);
+    expect(mockNotificationStore.initialize).not.toHaveBeenCalled();
     expect(mockNotificationStore.initializeTypes).toHaveBeenCalledTimes(1);
   });
 

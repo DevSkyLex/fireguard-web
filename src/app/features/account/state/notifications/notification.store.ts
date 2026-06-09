@@ -238,429 +238,432 @@ export const NotificationStore = signalStore(
       let initializeTypesPromise: Promise<void> | null = null;
 
       return {
-      /**
-       * Method initialize
-       *
-       * @description
-       * Bootstraps the first notification page using TransferState when the
-       * store is hydrated after SSR, avoiding a duplicate authenticated HTTP
-       * request on the browser.
-       *
-       * @since 1.2.0
-       *
-       * @returns {Promise<void>} Resolves when bootstrap is complete.
-       */
-      async initialize(): Promise<void> {
-        if (initializePromise !== null) {
-          return initializePromise;
-        }
-
-        initializePromise = (async (): Promise<void> => {
-          const callState = store.listCallState();
-          if (callState.status === 'pending' || callState.status === 'success') {
-            return;
+        /**
+         * Method initialize
+         *
+         * @description
+         * Bootstraps the first notification page using TransferState when the
+         * store is hydrated after SSR, avoiding a duplicate authenticated HTTP
+         * request on the browser.
+         *
+         * @since 1.2.0
+         *
+         * @returns {Promise<void>} Resolves when bootstrap is complete.
+         */
+        async initialize(): Promise<void> {
+          if (initializePromise !== null) {
+            return initializePromise;
           }
 
-          if (
-            isPlatformBrowser(platformId) &&
-            transferState.hasKey(NOTIFICATION_LIST_TRANSFER_KEY)
-          ) {
-            const transferred = transferState.get(NOTIFICATION_LIST_TRANSFER_KEY, null);
-            transferState.remove(NOTIFICATION_LIST_TRANSFER_KEY);
-
-            if (transferred) {
-              patchState(
-                store,
-                setAllEntities([...transferred.member], { collection: 'notification' }),
-                {
-                  totalNotifications: transferred.totalItems,
-                  currentPage: 1,
-                  listCallState: successCallState(null),
-                },
-              );
+          initializePromise = (async (): Promise<void> => {
+            const callState = store.listCallState();
+            if (callState.status === 'pending' || callState.status === 'success') {
               return;
             }
-          }
 
-          patchState(store, {
-            currentPage: 1,
-            listCallState: pendingCallState(),
-          });
+            if (
+              isPlatformBrowser(platformId) &&
+              transferState.hasKey(NOTIFICATION_LIST_TRANSFER_KEY)
+            ) {
+              const transferred = transferState.get(NOTIFICATION_LIST_TRANSFER_KEY, null);
+              transferState.remove(NOTIFICATION_LIST_TRANSFER_KEY);
 
-          const activeFilter: NotificationFilter | null = store.activeFilter();
-          const initialOptions: NotificationListOptions = {
-            limit: store.itemsPerPage(),
-            ...activeFilter,
-            page: 1,
-          };
-
-          await firstValueFrom(
-            notificationService.list(initialOptions).pipe(
-              tapResponse({
-                next: (response: HydraCollection<NotificationOutput>) => {
-                  patchState(
-                    store,
-                    setAllEntities([...response.member], { collection: 'notification' }),
-                    {
-                      totalNotifications: response.totalItems,
-                      currentPage: 1,
-                      listCallState: successCallState(null),
-                    },
-                  );
-                  transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, response);
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { listCallState: errorCallState(storeError) });
-                  transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, null);
-                  dispatcher.dispatch(
-                    notificationStoreEvents.loadFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to load notifications'),
-                    ),
-                  );
-                },
-              }),
-            ),
-            { defaultValue: undefined },
-          );
-        })().finally(() => {
-          initializePromise = null;
-        });
-
-        return initializePromise;
-      },
-
-      /**
-       * Method initializeTypes
-       *
-       * @description
-       * Bootstraps notification type reference data with TransferState so the
-       * notification page can reuse SSR data without a duplicate request.
-       *
-       * @since 1.2.0
-       *
-       * @returns {Promise<void>} Resolves when bootstrap is complete.
-       */
-      async initializeTypes(): Promise<void> {
-        if (initializeTypesPromise !== null) {
-          return initializeTypesPromise;
-        }
-
-        initializeTypesPromise = (async (): Promise<void> => {
-          if (store.typesLoaded()) {
-            return;
-          }
-
-          if (
-            isPlatformBrowser(platformId) &&
-            transferState.hasKey(NOTIFICATION_TYPES_TRANSFER_KEY)
-          ) {
-            const transferred = transferState.get(NOTIFICATION_TYPES_TRANSFER_KEY, null);
-            transferState.remove(NOTIFICATION_TYPES_TRANSFER_KEY);
-
-            if (transferred) {
-              patchState(store, { types: transferred, typesLoaded: true });
-              return;
+              if (transferred) {
+                patchState(
+                  store,
+                  setAllEntities([...transferred.member], { collection: 'notification' }),
+                  {
+                    totalNotifications: transferred.totalItems,
+                    currentPage: 1,
+                    listCallState: successCallState(null),
+                  },
+                );
+                return;
+              }
             }
-          }
 
-          await firstValueFrom(
-            notificationService.listTypes().pipe(
-              tapResponse({
-                next: (types: ReadonlyArray<NotificationTypeOutput>) => {
-                  patchState(store, { types, typesLoaded: true });
-                  transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, types);
-                },
-                error: () => {
-                  transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, null);
-                },
-              }),
-            ),
-            { defaultValue: undefined },
-          );
-        })().finally(() => {
-          initializeTypesPromise = null;
-        });
-
-        return initializeTypesPromise;
-      },
-
-      /**
-       * Method load
-       *
-       * @description
-       * Loads (or reloads) the first page of notifications. Resets `currentPage`
-       * to 1 and replaces all entities. Options are merged with the current
-       * `activeFilter`.
-       *
-       * Uses `switchMap` so a new request cancels any in-flight one.
-       *
-       * @param {NotificationListOptions | void} options  Optional list options
-       *   (limit, page, type filter, etc.). Merged with the active filter.
-       *
-       * @fires notificationStoreEvents.loadFailed  On API error.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      load: rxMethod<NotificationListOptions | void>(
-        pipe(
-          tap(() =>
             patchState(store, {
               currentPage: 1,
               listCallState: pendingCallState(),
-            }),
-          ),
-          switchMap((options) => {
-            // When called with no options, merge the active filter from state
+            });
+
             const activeFilter: NotificationFilter | null = store.activeFilter();
-            const mergedOptions: NotificationListOptions = {
+            const initialOptions: NotificationListOptions = {
               limit: store.itemsPerPage(),
-              ...options,
               ...activeFilter,
               page: 1,
             };
-            return notificationService.list(mergedOptions).pipe(
-              tapResponse({
-                next: (response: HydraCollection<NotificationOutput>) => {
-                  patchState(
-                    store,
-                    setAllEntities([...response.member], { collection: 'notification' }),
-                    {
-                      totalNotifications: response.totalItems,
-                      currentPage: 1,
-                      listCallState: successCallState(null),
-                    },
-                  );
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { listCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    notificationStoreEvents.loadFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to load notifications'),
-                    ),
-                  );
-                },
-              }),
+
+            await firstValueFrom(
+              notificationService.list(initialOptions).pipe(
+                tapResponse({
+                  next: (response: HydraCollection<NotificationOutput>) => {
+                    patchState(
+                      store,
+                      setAllEntities([...response.member], { collection: 'notification' }),
+                      {
+                        totalNotifications: response.totalItems,
+                        currentPage: 1,
+                        listCallState: successCallState(null),
+                      },
+                    );
+                    transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, response);
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { listCallState: errorCallState(storeError) });
+                    transferState.set(NOTIFICATION_LIST_TRANSFER_KEY, null);
+                    dispatcher.dispatch(
+                      notificationStoreEvents.loadFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to load notifications'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+              { defaultValue: undefined },
             );
-          }),
-        ),
-      ),
+          })().finally(() => {
+            initializePromise = null;
+          });
 
-      /**
-       * Method loadMore
-       *
-       * @description
-       * Loads the next page of notifications and **appends** them to the
-       * existing entity collection. Increments `currentPage` on success.
-       *
-       * Uses `switchMap` so a new request cancels any in-flight one.
-       *
-       * @fires notificationStoreEvents.loadFailed  On API error.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      loadMore: rxMethod<void>(
-        pipe(
-          tap(() => patchState(store, { listCallState: pendingCallState() })),
-          switchMap(() => {
-            const nextPage: number = store.currentPage() + 1;
-            const activeFilter: NotificationFilter | null = store.activeFilter();
-            const mergedOptions: NotificationListOptions = {
-              limit: store.itemsPerPage(),
-              ...activeFilter,
-              page: nextPage,
-            };
-            return notificationService.list(mergedOptions).pipe(
-              tapResponse({
-                next: (response: HydraCollection<NotificationOutput>) => {
-                  patchState(
-                    store,
-                    addEntities([...response.member], { collection: 'notification' }),
-                    {
-                      totalNotifications: response.totalItems,
-                      currentPage: nextPage,
-                      listCallState: successCallState(null),
-                    },
-                  );
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { listCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    notificationStoreEvents.loadFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to load more notifications'),
-                    ),
-                  );
-                },
-              }),
+          return initializePromise;
+        },
+
+        /**
+         * Method initializeTypes
+         *
+         * @description
+         * Bootstraps notification type reference data with TransferState so the
+         * notification page can reuse SSR data without a duplicate request.
+         *
+         * @since 1.2.0
+         *
+         * @returns {Promise<void>} Resolves when bootstrap is complete.
+         */
+        async initializeTypes(): Promise<void> {
+          if (initializeTypesPromise !== null) {
+            return initializeTypesPromise;
+          }
+
+          initializeTypesPromise = (async (): Promise<void> => {
+            if (store.typesLoaded()) {
+              return;
+            }
+
+            if (
+              isPlatformBrowser(platformId) &&
+              transferState.hasKey(NOTIFICATION_TYPES_TRANSFER_KEY)
+            ) {
+              const transferred = transferState.get(NOTIFICATION_TYPES_TRANSFER_KEY, null);
+              transferState.remove(NOTIFICATION_TYPES_TRANSFER_KEY);
+
+              if (transferred) {
+                patchState(store, { types: transferred, typesLoaded: true });
+                return;
+              }
+            }
+
+            await firstValueFrom(
+              notificationService.listTypes().pipe(
+                tapResponse({
+                  next: (types: ReadonlyArray<NotificationTypeOutput>) => {
+                    patchState(store, { types, typesLoaded: true });
+                    transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, types);
+                  },
+                  error: () => {
+                    transferState.set(NOTIFICATION_TYPES_TRANSFER_KEY, null);
+                  },
+                }),
+              ),
+              { defaultValue: undefined },
             );
-          }),
-        ),
-      ),
+          })().finally(() => {
+            initializeTypesPromise = null;
+          });
 
-      /**
-       * Method connectMercure
-       *
-       * @description
-       * Establishes a Server-Sent Events (SSE) connection via Mercure to
-       * receive real-time notification pushes. Incoming notifications are
-       * prepended to the entity collection. Sets `mercureConnected` to
-       * `true` once subscribed, and back to `false` on connection error.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      connectMercure: rxMethod<void>(
-        pipe(
-          rxFilter(() => isPlatformBrowser(platformId) && !store.mercureConnected()),
-          tap(() => patchState(store, { mercureConnected: true })),
-          switchMap(() =>
-            notificationService.getSubscription().pipe(
-              switchMap((subscription: MercureSubscriptionOutput) => {
-                return mercureService
-                  .subscribe<NotificationOutput>(subscription.topic, subscription.token)
-                  .pipe(
-                    tap((notification: NotificationOutput) => {
-                      patchState(
-                        store,
-                        prependEntity(notification, { collection: 'notification' }),
-                        { totalNotifications: store.totalNotifications() + 1 },
-                      );
-                    }),
-                    catchError(() => {
-                      patchState(store, { mercureConnected: false });
-                      return EMPTY;
-                    }),
-                  );
+          return initializeTypesPromise;
+        },
+
+        /**
+         * Method load
+         *
+         * @description
+         * Loads (or reloads) the first page of notifications. Resets `currentPage`
+         * to 1 and replaces all entities. Options are merged with the current
+         * `activeFilter`.
+         *
+         * Uses `switchMap` so a new request cancels any in-flight one.
+         *
+         * @param {NotificationListOptions | void} options  Optional list options
+         *   (limit, page, type filter, etc.). Merged with the active filter.
+         *
+         * @fires notificationStoreEvents.loadFailed  On API error.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        load: rxMethod<NotificationListOptions | void>(
+          pipe(
+            tap(() =>
+              patchState(store, {
+                currentPage: 1,
+                listCallState: pendingCallState(),
               }),
-              catchError(() => {
-                patchState(store, { mercureConnected: false });
-                return EMPTY;
-              }),
+            ),
+            switchMap((options) => {
+              // When called with no options, merge the active filter from state
+              const activeFilter: NotificationFilter | null = store.activeFilter();
+              const mergedOptions: NotificationListOptions = {
+                limit: store.itemsPerPage(),
+                ...options,
+                ...activeFilter,
+                page: 1,
+              };
+              return notificationService.list(mergedOptions).pipe(
+                tapResponse({
+                  next: (response: HydraCollection<NotificationOutput>) => {
+                    patchState(
+                      store,
+                      setAllEntities([...response.member], { collection: 'notification' }),
+                      {
+                        totalNotifications: response.totalItems,
+                        currentPage: 1,
+                        listCallState: successCallState(null),
+                      },
+                    );
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { listCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      notificationStoreEvents.loadFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to load notifications'),
+                      ),
+                    );
+                  },
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /**
+         * Method loadMore
+         *
+         * @description
+         * Loads the next page of notifications and **appends** them to the
+         * existing entity collection. Increments `currentPage` on success.
+         *
+         * Uses `switchMap` so a new request cancels any in-flight one.
+         *
+         * @fires notificationStoreEvents.loadFailed  On API error.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        loadMore: rxMethod<void>(
+          pipe(
+            tap(() => patchState(store, { listCallState: pendingCallState() })),
+            switchMap(() => {
+              const nextPage: number = store.currentPage() + 1;
+              const activeFilter: NotificationFilter | null = store.activeFilter();
+              const mergedOptions: NotificationListOptions = {
+                limit: store.itemsPerPage(),
+                ...activeFilter,
+                page: nextPage,
+              };
+              return notificationService.list(mergedOptions).pipe(
+                tapResponse({
+                  next: (response: HydraCollection<NotificationOutput>) => {
+                    patchState(
+                      store,
+                      addEntities([...response.member], { collection: 'notification' }),
+                      {
+                        totalNotifications: response.totalItems,
+                        currentPage: nextPage,
+                        listCallState: successCallState(null),
+                      },
+                    );
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { listCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      notificationStoreEvents.loadFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to load more notifications'),
+                      ),
+                    );
+                  },
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /**
+         * Method connectMercure
+         *
+         * @description
+         * Establishes a Server-Sent Events (SSE) connection via Mercure to
+         * receive real-time notification pushes. Incoming notifications are
+         * prepended to the entity collection. Sets `mercureConnected` to
+         * `true` once subscribed, and back to `false` on connection error.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        connectMercure: rxMethod<void>(
+          pipe(
+            rxFilter(() => isPlatformBrowser(platformId) && !store.mercureConnected()),
+            tap(() => patchState(store, { mercureConnected: true })),
+            switchMap(() =>
+              notificationService.getSubscription().pipe(
+                switchMap((subscription: MercureSubscriptionOutput) => {
+                  return mercureService
+                    .subscribe<NotificationOutput>(subscription.topic, subscription.token)
+                    .pipe(
+                      tap((notification: NotificationOutput) => {
+                        patchState(
+                          store,
+                          prependEntity(notification, { collection: 'notification' }),
+                          { totalNotifications: store.totalNotifications() + 1 },
+                        );
+                      }),
+                      catchError(() => {
+                        patchState(store, { mercureConnected: false });
+                        return EMPTY;
+                      }),
+                    );
+                }),
+                catchError(() => {
+                  patchState(store, { mercureConnected: false });
+                  return EMPTY;
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method markAsRead
-       *
-       * @description
-       * Marks a single notification as read by its ID. Updates the entity
-       * in the local collection on success.
-       *
-       * Uses `exhaustMap` to prevent duplicate requests.
-       *
-       * @param {string} id  The notification ID to mark as read.
-       *
-       * @fires notificationStoreEvents.markAsReadFailed  On API error.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      markAsRead: rxMethod<string>(
-        pipe(
-          tap(() => patchState(store, { markAsReadCallState: pendingCallState() })),
-          exhaustMap((id) =>
-            notificationService.markAsRead(id).pipe(
-              tapResponse({
-                next: (updated: NotificationOutput) => {
-                  patchState(store, setEntity(updated, { collection: 'notification' }), {
-                    markAsReadCallState: successCallState(updated),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { markAsReadCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    notificationStoreEvents.markAsReadFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to mark notification as read'),
-                    ),
-                  );
-                },
-              }),
+        /**
+         * Method markAsRead
+         *
+         * @description
+         * Marks a single notification as read by its ID. Updates the entity
+         * in the local collection on success.
+         *
+         * Uses `exhaustMap` to prevent duplicate requests.
+         *
+         * @param {string} id  The notification ID to mark as read.
+         *
+         * @fires notificationStoreEvents.markAsReadFailed  On API error.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        markAsRead: rxMethod<string>(
+          pipe(
+            tap(() => patchState(store, { markAsReadCallState: pendingCallState() })),
+            exhaustMap((id) =>
+              notificationService.markAsRead(id).pipe(
+                tapResponse({
+                  next: (updated: NotificationOutput) => {
+                    patchState(store, setEntity(updated, { collection: 'notification' }), {
+                      markAsReadCallState: successCallState(updated),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { markAsReadCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      notificationStoreEvents.markAsReadFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          'Failed to mark notification as read',
+                        ),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method clear
-       *
-       * @description
-       * Resets the store to its initial state: removes all notification
-       * entities and restores all scalar state properties to their defaults.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      clear(): void {
-        patchState(
-          store,
-          removeAllEntities({ collection: 'notification' }),
-          INITIAL_NOTIFICATION_STATE,
-        );
-      },
+        /**
+         * Method clear
+         *
+         * @description
+         * Resets the store to its initial state: removes all notification
+         * entities and restores all scalar state properties to their defaults.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        clear(): void {
+          patchState(
+            store,
+            removeAllEntities({ collection: 'notification' }),
+            INITIAL_NOTIFICATION_STATE,
+          );
+        },
 
-      /**
-       * Method loadTypes
-       *
-       * @description
-       * Loads notification type reference data (labels, slugs) from the API.
-       * Guarded by `typesLoaded` — subsequent calls are no-ops once types
-       * have been fetched successfully.
-       *
-       * Failures are silent; the flag remains `false` so the next call
-       * will retry.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      loadTypes: rxMethod<void>(
-        pipe(
-          rxFilter(() => !store.typesLoaded()),
-          switchMap(() =>
-            notificationService.listTypes().pipe(
-              tapResponse({
-                next: (types: ReadonlyArray<NotificationTypeOutput>) => {
-                  patchState(store, { types, typesLoaded: true });
-                },
-                error: () => {
-                  // Silent fail — will retry on next call
-                },
-              }),
+        /**
+         * Method loadTypes
+         *
+         * @description
+         * Loads notification type reference data (labels, slugs) from the API.
+         * Guarded by `typesLoaded` — subsequent calls are no-ops once types
+         * have been fetched successfully.
+         *
+         * Failures are silent; the flag remains `false` so the next call
+         * will retry.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        loadTypes: rxMethod<void>(
+          pipe(
+            rxFilter(() => !store.typesLoaded()),
+            switchMap(() =>
+              notificationService.listTypes().pipe(
+                tapResponse({
+                  next: (types: ReadonlyArray<NotificationTypeOutput>) => {
+                    patchState(store, { types, typesLoaded: true });
+                  },
+                  error: () => {
+                    // Silent fail — will retry on next call
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method setFilter
-       *
-       * @description
-       * Sets the active notification filter. The filter is merged into
-       * `load()` and `loadMore()` options on the next call. Setting
-       * `null` clears any active filter.
-       *
-       * @param {NotificationFilter | null} filter  The filter to apply,
-       *   or `null` to clear.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      setFilter(notificationFilter: NotificationFilter | null): void {
-        patchState(store, { activeFilter: notificationFilter });
-      },
+        /**
+         * Method setFilter
+         *
+         * @description
+         * Sets the active notification filter. The filter is merged into
+         * `load()` and `loadMore()` options on the next call. Setting
+         * `null` clears any active filter.
+         *
+         * @param {NotificationFilter | null} filter  The filter to apply,
+         *   or `null` to clear.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        setFilter(notificationFilter: NotificationFilter | null): void {
+          patchState(store, { activeFilter: notificationFilter });
+        },
       };
     },
   ),

@@ -298,6 +298,16 @@ export class FacilityService extends HydraApiService {
   }
 
   /**
+   * Restores an archived facility.
+   */
+  public restore(organizationId: string, facilityId: string): Observable<FacilityOutput> {
+    return this.patch<Record<string, never>, FacilityOutput>(
+      `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/restore`,
+      {},
+    );
+  }
+
+  /**
    * Method move
    * @method move
    *

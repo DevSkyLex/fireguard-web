@@ -1,9 +1,5 @@
 import type { Routes } from '@angular/router';
-import {
-  withAccountNavigation,
-  withAccountProfile,
-  withNotificationBell,
-} from '@features/account';
+import { withAccountNavigation, withAccountProfile, withNotificationBell } from '@features/account';
 import { authGuard } from '@features/auth/http/guards';
 import { provideMainFeature, withMainNavigation } from '@features/main';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
@@ -14,14 +10,10 @@ import {
   withOrganizationNavigation,
   withOrganizationSwitcher,
 } from '@features/organization';
-import {
-  DashboardLayout,
-  provideDashboardLayoutSlots,
-} from '@layouts/dashboard-layout';
+import { DashboardLayout, provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
 import { withThemeSwitcher } from '@shared/components';
 import { FocusedLayout } from './layouts/focused-layout';
 import { SplitLayout } from './layouts/split-layout';
-import { provideAccountFeature } from '@features/account';
 
 /**
  * Constant APP_ROUTES
@@ -46,20 +38,14 @@ export const APP_ROUTES: Routes = [
       provideMainFeature(),
       provideOrganizationFeature(),
       provideDashboardLayoutSlots({
-        navigation: [
-          withMainNavigation(),
-          withOrganizationNavigation(),
-          withAccountNavigation(),
-        ],
+        navigation: [withMainNavigation(), withOrganizationNavigation(), withAccountNavigation()],
         topbar: [
           withOrganizationSwitcher(),
           withThemeSwitcher(),
           withNotificationBell(),
           withAccountProfile(),
         ],
-        aside: [
-          withOrganizationContext(),
-        ],
+        aside: [withOrganizationContext()],
       }),
     ],
     children: [

@@ -148,25 +148,6 @@ export class OrganizationListPage {
   }
 
   /**
-   * Method onDelete
-   * @method onDelete
-   *
-   * @description
-   * No action is needed here since deletion is
-   * handled within the table component.
-   *
-   * @access public
-   * @since 1.2.0
-   *
-   * @param {OrganizationOutput} organization - The selected organization.
-   *
-   * @returns {void} No return value.
-   */
-  public onDelete(organization: OrganizationOutput): void {
-    this.store.deleteOne(organization.id);
-  }
-
-  /**
    * Method onLoad
    * @method onLoad
    *

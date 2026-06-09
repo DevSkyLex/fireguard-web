@@ -1,0 +1,57 @@
+<p-card>
+  <p-table [value]="loading() ? skeletonItems : [...members()]" dataKey="id" [stripedRows]="true">
+    <ng-template pTemplate="header"
+      ><tr>
+        <th>User</th>
+        <th>Roles</th>
+        <th>Joined</th>
+        <th class="w-20"><span class="sr-only">Actions</span></th>
+      </tr></ng-template
+    >
+    <ng-template pTemplate="body" let-member>
+      @if (loading()) {
+        <tr>
+          <td><p-skeleton width="12rem" /></td>
+          <td><p-skeleton width="10rem" /></td>
+          <td><p-skeleton width="8rem" /></td>
+          <td><p-skeleton shape="circle" size="2rem" /></td>
+        </tr>
+      } @else {
+        <tr>
+          <td class="font-medium">{{ member.userId }}</td>
+          <td>
+            <div class="flex flex-wrap gap-2">
+              @for (roleId of member.roleIds; track roleId) {
+                <p-chip
+                  [label]="roleName(roleId)"
+                  [removable]="canManageRoles()"
+                  (onRemove)="removeRole.emit({ member, roleId })"
+                />
+              } @empty {
+                <span class="text-sm text-surface-500">No roles</span>
+              }
+            </div>
+          </td>
+          <td>{{ member.joinedAt | date: 'mediumDate' }}</td>
+          <td class="text-right">
+            @if (canRemoveMember()) {
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                [text]="true"
+                [rounded]="true"
+                ariaLabel="Remove member"
+                (onClick)="remove.emit(member)"
+              />
+            }
+          </td>
+        </tr>
+      }
+    </ng-template>
+    <ng-template pTemplate="emptymessage"
+      ><tr>
+        <td colspan="4" class="py-12 text-center text-surface-500">No members.</td>
+      </tr></ng-template
+    >
+  </p-table>
+</p-card>

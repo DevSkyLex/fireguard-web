@@ -9,11 +9,11 @@ import { withOrganizationNavigation } from '@features/organization';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
+import { provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
 import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
 } from '@layouts/dashboard-layout/services';
-import { provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
 import { DashboardLayoutSidebarNavigation } from '../dashboard-layout-sidebar-navigation.component';
 
 @Component({
@@ -70,11 +70,7 @@ describe('DashboardLayoutSidebarNavigation', () => {
         DashboardSidebarNavigationService,
         DashboardSidebarService,
         provideDashboardLayoutSlots({
-          navigation: [
-            withMainNavigation(),
-            withOrganizationNavigation(),
-            withAccountNavigation(),
-          ],
+          navigation: [withMainNavigation(), withOrganizationNavigation(), withAccountNavigation()],
         }),
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
@@ -101,7 +97,7 @@ describe('DashboardLayoutSidebarNavigation', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
     fixture.detectChanges();
 
-    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(7);
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(11);
     expect(
       fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
     ).toBe(2);

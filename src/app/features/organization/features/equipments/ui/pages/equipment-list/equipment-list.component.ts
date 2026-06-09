@@ -138,6 +138,13 @@ export class EquipmentListPage {
   }
 
   /**
+   * Navigates to the selected equipment detail page.
+   */
+  public onView(equipmentId: string): void {
+    this.router.navigate([equipmentId], { relativeTo: this.route });
+  }
+
+  /**
    * Method onLoad
    * @method onLoad
    *

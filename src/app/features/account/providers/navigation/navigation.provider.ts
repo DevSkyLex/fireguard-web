@@ -66,6 +66,24 @@ export function withAccountNavigation(): DashboardLayoutNavigationSlotFeature {
             expanded: true,
             items: [
               {
+                id: 'profile',
+                label: 'Profile',
+                icon: PrimeIcons.USER,
+                routerLink: '/account/profile',
+              },
+              {
+                id: 'sessions',
+                label: 'Sessions',
+                icon: PrimeIcons.DESKTOP,
+                routerLink: '/account/sessions',
+              },
+              {
+                id: 'trusted-devices',
+                label: 'Trusted Devices',
+                icon: PrimeIcons.SHIELD,
+                routerLink: '/account/trusted-devices',
+              },
+              {
                 id: 'notifications',
                 label: 'Notifications',
                 icon: PrimeIcons.BELL,
@@ -79,4 +97,3 @@ export function withAccountNavigation(): DashboardLayoutNavigationSlotFeature {
     },
   };
 }
-

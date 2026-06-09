@@ -1,5 +1,9 @@
 import type { Routes } from '@angular/router';
-import { organizationAccessGuard, organizationPermissionGuard } from './http/guards';
+import {
+  organizationAccessGuard,
+  organizationLandingGuard,
+  organizationPermissionGuard,
+} from './http/guards';
 import { organizationResolver, organizationTitleResolver } from './http/resolvers';
 import { ORGANIZATION_PERMISSION } from './models';
 
@@ -15,6 +19,17 @@ import { ORGANIZATION_PERMISSION } from './models';
  * @since 1.0.0
  */
 export const ORGANIZATION_ROUTES: Routes = [
+  {
+    path: 'invitations/accept',
+    loadComponent: () =>
+      import('./ui/pages/organization-invitation-accept/organization-invitation-accept.component').then(
+        (m) => m.OrganizationInvitationAcceptPage,
+      ),
+    title: 'Accept Invitation',
+    data: {
+      breadcrumb: false,
+    },
+  },
   {
     path: ':organizationId',
     canActivate: [organizationAccessGuard],
@@ -51,13 +66,59 @@ export const ORGANIZATION_ROUTES: Routes = [
           import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
       },
       {
-        path: '',
+        path: 'checklists',
+        data: {
+          breadcrumb: 'Checklists',
+          preload: true,
+        },
+        loadChildren: () =>
+          import('./features/checklists/checklists.routes').then((m) => m.CHECKLIST_ROUTES),
+      },
+      {
+        path: 'team',
         canActivate: [
           organizationPermissionGuard({
-            permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
+            permissions: [
+              ORGANIZATION_PERMISSION.MEMBERS_READ,
+              ORGANIZATION_PERMISSION.MEMBERS_MANAGE,
+              ORGANIZATION_PERMISSION.ROLES_READ,
+              ORGANIZATION_PERMISSION.ROLES_MANAGE,
+            ],
+            match: 'any',
             redirectTo: ['/organizations'],
           }),
         ],
+        loadComponent: () =>
+          import('./ui/pages/organization-team/organization-team.component').then(
+            (m) => m.OrganizationTeamPage,
+          ),
+        title: 'Team',
+        data: {
+          breadcrumb: 'Team',
+          preload: true,
+        },
+      },
+      {
+        path: 'settings/legal',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.LEGAL_PROFILE_WRITE],
+            redirectTo: ['/organizations'],
+          }),
+        ],
+        loadComponent: () =>
+          import('./ui/pages/organization-legal-profile/organization-legal-profile.component').then(
+            (m) => m.OrganizationLegalProfilePage,
+          ),
+        title: 'Legal Profile',
+        data: {
+          breadcrumb: 'Legal Profile',
+          preload: true,
+        },
+      },
+      {
+        path: '',
+        canActivate: [organizationLandingGuard],
         loadComponent: () =>
           import('./ui/pages/organization-overview/organization-overview.component').then(
             (m) => m.OrganizationOverviewPage,

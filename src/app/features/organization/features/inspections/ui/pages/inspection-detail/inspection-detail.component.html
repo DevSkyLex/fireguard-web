@@ -1,0 +1,90 @@
+<div id="inspection-detail" class="flex h-full min-h-0 flex-col gap-6">
+  <section>
+    @if (isLoading()) {
+      <div
+        class="flex items-center justify-between rounded-xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-950"
+      >
+        <div class="flex items-center gap-6">
+          <p-skeleton shape="square" size="3.5rem" />
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="12rem" height="1.25rem" />
+            <p-skeleton width="9rem" height="0.875rem" />
+          </div>
+        </div>
+        <p-skeleton class="hidden md:block" width="8rem" height="2rem" />
+      </div>
+    } @else if (inspection(); as inspection) {
+      <app-inspection-detail-header
+        [inspection]="inspection"
+        [canManage]="canManage()"
+        [loading]="store.isChangingLifecycle()"
+        (edit)="onEdit()"
+        (submitInspection)="submit()"
+        (closeInspection)="close()"
+        (cancelInspection)="cancel()"
+      />
+    }
+  </section>
+
+  <section class="flex min-h-0 flex-1 flex-col">
+    <p-tabs [value]="activeTab()" [pt]="tabsPt" (valueChange)="activeTab.set(+$event!)">
+      <p-tablist [pt]="tabListPt">
+        <p-tab [value]="0"><i class="pi pi-chart-line mr-2 text-sm"></i>Overview</p-tab>
+        <p-tab [value]="1"
+          ><i class="pi pi-exclamation-triangle mr-2 text-sm"></i>Non-conformities</p-tab
+        >
+      </p-tablist>
+      <p-tabpanels [pt]="tabPanelsPt">
+        <p-tabpanel [value]="0">
+          @if (inspection(); as inspection) {
+            <app-inspection-information-panel [inspection]="inspection" />
+          }
+        </p-tabpanel>
+        <p-tabpanel [value]="1">
+          @if (activeTab() === 1 && inspection(); as inspection) {
+            <app-non-conformity-table
+              class="flex min-h-0 flex-1 flex-col"
+              [nonConformities]="store.nonConformities()"
+              [loading]="store.isLoadingNonConformities()"
+              [mutating]="store.isAddingNonConformity() || store.isUpdatingNonConformity()"
+              [canManage]="canManage() && inspection.status !== 'closed'"
+              [canAdd]="canManage() && inspection.status !== 'closed'"
+              (add)="addNonConformity($event)"
+              (statusChange)="updateStatus($event)"
+              (view)="viewNonConformity($event)"
+            />
+          }
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
+  </section>
+</div>
+
+<p-dialog
+  header="Non-conformity details"
+  [modal]="true"
+  [visible]="selectedNonConformity() !== null"
+  (visibleChange)="!$event && selectedNonConformity.set(null)"
+  [style]="{ width: '36rem' }"
+>
+  @if (selectedNonConformity(); as nonConformity) {
+    <dl class="grid gap-4 sm:grid-cols-2">
+      <div class="sm:col-span-2">
+        <dt class="text-xs text-surface-500">Description</dt>
+        <dd class="font-medium">{{ nonConformity.description }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs text-surface-500">Severity</dt>
+        <dd>{{ nonConformity.severity }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs text-surface-500">Status</dt>
+        <dd>{{ nonConformity.status }}</dd>
+      </div>
+      <div class="sm:col-span-2">
+        <dt class="text-xs text-surface-500">Notes</dt>
+        <dd class="whitespace-pre-line">{{ nonConformity.notes || 'No notes' }}</dd>
+      </div>
+    </dl>
+  }
+</p-dialog>

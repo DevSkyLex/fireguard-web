@@ -9,7 +9,7 @@
     data-testid="header-user-menu-trigger"
     (click)="toggleMenu($event)"
   >
-    @if (userIdentityPort.avatarUrl(); as avatarUrl) {
+    @if (userIdentityPort.avatarUrlSmall(); as avatarUrl) {
       <p-avatar
         [image]="avatarUrl"
         [ariaLabel]="(userIdentityPort.displayName() ?? 'User') + ' avatar'"
@@ -25,7 +25,7 @@
 <p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body">
   <ng-template #start>
     <div class="flex items-center gap-3 px-4 py-3" data-testid="header-user-menu-profile">
-      @if (userIdentityPort.avatarUrl(); as avatarUrl) {
+      @if (userIdentityPort.avatarUrlSmall(); as avatarUrl) {
         <p-avatar
           [image]="avatarUrl"
           [ariaLabel]="(userIdentityPort.displayName() ?? 'User') + ' avatar'"

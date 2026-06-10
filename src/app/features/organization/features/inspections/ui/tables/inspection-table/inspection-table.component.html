@@ -207,9 +207,11 @@
               <td>
                 <div class="flex min-w-0 items-center gap-3">
                   <p-avatar
-                    [image]="inspection.inspector?.avatarUrl ?? undefined"
+                    [image]="getInspectorAvatarUrl(inspection) ?? undefined"
                     [label]="
-                      inspection.inspector?.avatarUrl ? undefined : getInspectorInitials(inspection)
+                      getInspectorAvatarUrl(inspection)
+                        ? undefined
+                        : getInspectorInitials(inspection)
                     "
                     shape="circle"
                     size="normal"

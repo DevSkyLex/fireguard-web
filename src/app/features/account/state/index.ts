@@ -8,3 +8,4 @@ export type { NotificationStoreState } from './notifications';
 export { NotificationStore } from './notifications';
 export type { NotificationStoreType } from './notifications';
 export { notificationStoreEvents } from './notifications';
+export { AccountProfileEditStore } from './profile-edit';

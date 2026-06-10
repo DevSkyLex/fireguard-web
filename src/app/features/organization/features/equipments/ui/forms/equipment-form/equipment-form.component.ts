@@ -20,8 +20,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
-import type { EquipmentFormData } from './equipment-form-data.type';
-import type { EquipmentFormValues } from './equipment-form-values.type';
+import type { EquipmentFormData, EquipmentFormValues } from './models';
 
 /**
  * Component EquipmentForm

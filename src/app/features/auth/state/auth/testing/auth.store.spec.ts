@@ -24,6 +24,7 @@ describe('AuthStore', () => {
   let mockUserProfilePort: {
     clear: ReturnType<typeof vi.fn>;
     initialize: ReturnType<typeof vi.fn>;
+    load: ReturnType<typeof vi.fn>;
   };
   let mockTrustedDeviceStore: {
     pendingTrustDevice: ReturnType<typeof vi.fn>;
@@ -56,6 +57,7 @@ describe('AuthStore', () => {
     mockUserProfilePort = {
       clear: vi.fn(),
       initialize: vi.fn(),
+      load: vi.fn(),
     };
     mockTrustedDeviceStore = {
       pendingTrustDevice: vi.fn().mockReturnValue(false),
@@ -99,6 +101,7 @@ describe('AuthStore', () => {
     expect(store.accessToken()).toBe('access-token');
     expect(store.expiresAt()).not.toBeNull();
     expect(store.mfaRequired()).toBe(false);
+    expect(mockUserProfilePort.load).toHaveBeenCalledTimes(1);
   });
 
   it('should store MFA state when login requires MFA', async () => {
@@ -120,6 +123,7 @@ describe('AuthStore', () => {
     expect(store.mfaToken()).toBe('mfa-token');
     expect(store.challengeToken()).toBe('challenge-token');
     expect(store.accessToken()).toBeNull();
+    expect(mockUserProfilePort.load).not.toHaveBeenCalled();
   });
 
   it('should dispatch an event on login error', async () => {
@@ -180,6 +184,7 @@ describe('AuthStore', () => {
     expect(store.mfaVerifyCallState().status).toBe('success');
     expect(store.mfaRequired()).toBe(false);
     expect(store.accessToken()).toBe('access-token');
+    expect(mockUserProfilePort.load).toHaveBeenCalledTimes(1);
     expect(mockTrustedDeviceStore.trustDevice).toHaveBeenCalledTimes(1);
   });
 

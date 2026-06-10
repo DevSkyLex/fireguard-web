@@ -1,2 +1,2 @@
 export { CreateFacilitiesForm } from './create-facilities-form.component';
-export type { CreateFacilitiesFormData } from './create-facilities-form-data.type';
+export type { CreateFacilitiesFormData } from './models';

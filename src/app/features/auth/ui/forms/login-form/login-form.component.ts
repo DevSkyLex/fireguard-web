@@ -21,8 +21,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
-import type { LoginFormData } from './login-form-data.type';
-import type { LoginFormValues } from './login-form-values.type';
+import type { LoginFormData, LoginFormValues } from './models';
 
 /**
  * Component LoginForm

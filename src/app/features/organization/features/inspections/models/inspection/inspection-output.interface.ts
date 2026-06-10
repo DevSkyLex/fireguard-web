@@ -1,4 +1,4 @@
-import type { HydraItem } from '@core/models/api';
+import type { AvatarUrls, HydraItem } from '@core/models/api';
 
 /**
  * Type InspectionResult
@@ -45,6 +45,8 @@ export interface InspectorOutput {
   readonly displayName: string;
   /** @type {string | null} */
   readonly avatarUrl: string | null;
+  /** @type {AvatarUrls | null} */
+  readonly avatarUrls?: AvatarUrls | null;
   /** @type {string | null} */
   readonly organizationName: string | null;
   //#endregion

@@ -15,12 +15,7 @@ import type {
   OrganizationMemberOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-
-/** Values required to assign an organization role to a member. */
-export interface OrganizationRoleAssignmentValues {
-  readonly memberId: string;
-  readonly roleId: string;
-}
+import type { OrganizationRoleAssignmentValues } from './models';
 
 /**
  * Form used to assign an organization role to a member.

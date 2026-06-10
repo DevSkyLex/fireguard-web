@@ -28,7 +28,7 @@
           class="flex w-full cursor-pointer items-center gap-3 p-4 text-left transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
           data-testid="auth-user-profile-trigger"
         >
-          @if (userIdentityPort.avatarUrl(); as avatarUrl) {
+          @if (userIdentityPort.avatarUrlSmall(); as avatarUrl) {
             <p-avatar
               [image]="avatarUrl"
               [ariaLabel]="(userIdentityPort.displayName() ?? 'User') + ' avatar'"

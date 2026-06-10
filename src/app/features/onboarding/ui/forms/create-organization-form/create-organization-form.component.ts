@@ -19,8 +19,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
-import type { CreateOrganizationFormData } from './create-organization-form-data.type';
-import type { CreateOrganizationFormValues } from './create-organization-form-values.type';
+import type { CreateOrganizationFormData, CreateOrganizationFormValues } from './models';
 
 /**
  * Component CreateOrganizationForm

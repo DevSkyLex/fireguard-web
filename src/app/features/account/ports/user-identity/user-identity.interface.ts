@@ -38,6 +38,9 @@ export interface UserIdentityPort {
   readonly profile: Signal<ShellUserProfile | null>;
   readonly displayName: Signal<string | null>;
   readonly initials: Signal<string | null>;
+  /** Full-size avatar URL (256px variant). */
   readonly avatarUrl: Signal<string | null>;
+  /** Small avatar URL (64px variant) for menus and headers. */
+  readonly avatarUrlSmall: Signal<string | null>;
   readonly isLoading: Signal<boolean>;
 }

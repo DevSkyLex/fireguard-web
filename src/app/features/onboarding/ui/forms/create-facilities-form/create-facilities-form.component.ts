@@ -22,9 +22,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import type { SetupFacilityType } from '@features/organization/setup';
-import type { CreateFacilityFormData } from '../create-facility-form/create-facility-form-data.type';
-import type { CreateFacilityFormValues } from '../create-facility-form/create-facility-form-values.type';
-import type { CreateFacilitiesFormData } from './create-facilities-form-data.type';
+import type {
+  CreateFacilityFormData,
+  CreateFacilityFormValues,
+} from '../create-facility-form/models';
+import type { CreateFacilitiesFormData } from './models';
 
 /**
  * Component CreateFacilitiesForm

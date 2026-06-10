@@ -1,0 +1,158 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col">
+  <div class="flex flex-col gap-1 pb-6">
+    <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-100">Profile Details</h2>
+    <p class="text-sm text-surface-500 dark:text-surface-400">
+      You can change your profile details here seamlessly.
+    </p>
+  </div>
+
+  @if (hasSaveError()) {
+    <p-message severity="error" styleClass="mb-6 w-full" [closable]="false">
+      We couldn't save your profile. Please try again.
+    </p-message>
+  }
+  @if (hasAvatarError()) {
+    <p-message severity="error" styleClass="mb-6 w-full" [closable]="false">
+      We couldn't upload your picture. Please try again.
+    </p-message>
+  }
+
+  <div
+    class="grid grid-cols-1 gap-x-8 gap-y-3 border-t border-surface-200 py-6 lg:grid-cols-3 dark:border-surface-800"
+  >
+    <div class="flex flex-col gap-1">
+      <span class="text-sm font-medium text-surface-900 dark:text-surface-100">Public Profile</span>
+      <p class="text-sm text-surface-500 dark:text-surface-400">
+        This is the main profile that will be visible for everyone.
+      </p>
+    </div>
+    <div class="flex flex-col gap-3 lg:col-span-2">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <p-iconfield>
+          <p-inputicon class="pi pi-user" />
+          <input
+            pInputText
+            formControlName="firstName"
+            placeholder="First name"
+            maxlength="100"
+            class="w-full"
+          />
+        </p-iconfield>
+        <input
+          pInputText
+          formControlName="lastName"
+          placeholder="Last name"
+          maxlength="100"
+          class="w-full"
+        />
+      </div>
+      <p-inputgroup>
+        <p-inputgroup-addon>{{ '@' }}</p-inputgroup-addon>
+        <input
+          pInputText
+          [value]="profile()?.username ?? ''"
+          placeholder="username"
+          readonly
+          class="w-full"
+        />
+      </p-inputgroup>
+      <p class="text-xs text-surface-400 dark:text-surface-500">
+        Your username cannot be changed here.
+      </p>
+    </div>
+  </div>
+
+  <div
+    class="grid grid-cols-1 gap-x-8 gap-y-3 border-t border-surface-200 py-6 lg:grid-cols-3 dark:border-surface-800"
+  >
+    <div class="flex flex-col gap-1">
+      <span class="text-sm font-medium text-surface-900 dark:text-surface-100">Email Address</span>
+      <p class="text-sm text-surface-500 dark:text-surface-400">
+        Used for sign-in and account notifications.
+      </p>
+    </div>
+    <div class="flex flex-col gap-2 lg:col-span-2">
+      <p-iconfield>
+        <p-inputicon class="pi pi-envelope" />
+        <input
+          pInputText
+          type="email"
+          [value]="profile()?.email ?? ''"
+          placeholder="you@example.com"
+          readonly
+          class="w-full"
+        />
+      </p-iconfield>
+      <p class="text-xs text-surface-400 dark:text-surface-500">
+        Your email address cannot be changed here.
+      </p>
+    </div>
+  </div>
+
+  <div
+    class="grid grid-cols-1 gap-x-8 gap-y-3 border-t border-surface-200 py-6 lg:grid-cols-3 dark:border-surface-800"
+  >
+    <div class="flex flex-col gap-1">
+      <span class="text-sm font-medium text-surface-900 dark:text-surface-100">
+        Profile Picture
+      </span>
+      <p class="text-sm text-surface-500 dark:text-surface-400">
+        This is where people will see your actual face.
+      </p>
+    </div>
+    <div class="flex items-start gap-4 lg:col-span-2">
+      <p-avatar
+        [image]="avatarUrl() || undefined"
+        [label]="avatarUrl() ? undefined : initials() || '?'"
+        shape="circle"
+        size="xlarge"
+      />
+      <p-fileupload
+        #avatarUpload
+        class="min-w-0 flex-1"
+        mode="advanced"
+        [accept]="acceptedAvatarTypes"
+        [auto]="true"
+        [customUpload]="true"
+        [maxFileSize]="maxAvatarSize"
+        [showUploadButton]="false"
+        [showCancelButton]="false"
+        chooseLabel="Choose file"
+        chooseIcon="pi pi-upload"
+        (uploadHandler)="onAvatarUpload($event, avatarUpload)"
+      >
+        <ng-template #empty>
+          <div class="flex flex-col items-center justify-center gap-2 py-4 text-center">
+            <i class="pi pi-cloud-upload text-2xl text-surface-400"></i>
+            <p class="text-sm text-surface-600 dark:text-surface-400">
+              <span class="font-medium text-primary">Click here</span> to upload your file or drag.
+            </p>
+            <p class="text-xs text-surface-400 dark:text-surface-500">
+              Supported formats: JPEG, PNG, WebP or GIF (5 MB max)
+            </p>
+          </div>
+        </ng-template>
+      </p-fileupload>
+    </div>
+  </div>
+
+  <div
+    class="flex items-center justify-end gap-2 border-t border-surface-200 pt-6 dark:border-surface-800"
+  >
+    <p-button
+      type="button"
+      label="Reset"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="saving()"
+      (onClick)="reset()"
+    />
+    <p-button
+      type="submit"
+      label="Save changes"
+      icon="pi pi-check"
+      [loading]="saving()"
+      [disabled]="form.invalid || form.pristine || saving()"
+    />
+  </div>
+</form>

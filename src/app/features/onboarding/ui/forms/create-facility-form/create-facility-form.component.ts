@@ -19,8 +19,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import type { SetupFacilityType } from '@features/organization/setup';
-import type { CreateFacilityFormData } from './create-facility-form-data.type';
-import type { CreateFacilityFormValues } from './create-facility-form-values.type';
+import type { CreateFacilityFormData, CreateFacilityFormValues } from './models';
 
 /**
  * Component CreateFacilityForm

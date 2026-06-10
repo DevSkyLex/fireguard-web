@@ -17,9 +17,7 @@ import type {
   OrganizationLegalProfileOutput,
   UpsertOrganizationLegalProfileInput,
 } from '@features/organization/models';
-
-/** Legal type accepted by the organization legal profile API. */
-type LegalType = UpsertOrganizationLegalProfileInput['legalType'];
+import type { LegalType } from './models';
 
 /**
  * Form used to create or update an organization legal profile.

@@ -24,8 +24,7 @@ import type {
   FacilityOutput,
   FacilityType,
 } from '@features/organization/features/facilities/models';
-import type { FacilityFormData } from './facility-form-data.type';
-import type { FacilityFormValues } from './facility-form-values.type';
+import type { FacilityFormData, FacilityFormValues } from './models';
 
 /**
  * Component FacilityForm

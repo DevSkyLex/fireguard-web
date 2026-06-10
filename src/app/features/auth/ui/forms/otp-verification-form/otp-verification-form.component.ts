@@ -25,8 +25,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputOtpModule } from 'primeng/inputotp';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
-import type { OtpVerificationFormData } from './otp-verification-form-data.type';
-import type { OtpVerificationFormValues } from './otp-verification-form-values.type';
+import type { OtpVerificationFormData, OtpVerificationFormValues } from './models';
 
 /**
  * Component OtpVerificationForm

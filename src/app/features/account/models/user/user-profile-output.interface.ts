@@ -1,4 +1,4 @@
-import type { HydraItem } from '@core/models/api';
+import type { AvatarUrls, HydraItem } from '@core/models/api';
 
 /**
  * Interface UserProfileOutput
@@ -27,8 +27,11 @@ export interface UserProfileOutput extends HydraItem {
   /** Family name of the authenticated user. */
   readonly lastName: string | null;
 
-  /** Avatar URL of the authenticated user. */
+  /** Default avatar URL (256px variant) of the authenticated user. */
   readonly avatarUrl: string | null;
+
+  /** Avatar variant URLs keyed by pixel size. */
+  readonly avatarUrls?: AvatarUrls | null;
 
   /** Account status returned by the backend. */
   readonly status: string | null;

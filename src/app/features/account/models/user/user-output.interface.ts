@@ -1,4 +1,4 @@
-import type { HydraItem } from '@core/models/api';
+import type { AvatarUrls, HydraItem } from '@core/models/api';
 
 /**
  * Interface UserOutput
@@ -13,6 +13,7 @@ export interface UserOutput extends HydraItem {
   readonly firstName: string;
   readonly lastName: string;
   readonly avatarUrl?: string | null;
+  readonly avatarUrls?: AvatarUrls | null;
   readonly status?: string | null;
   readonly emailVerified: boolean;
   readonly tenantId?: string | null;

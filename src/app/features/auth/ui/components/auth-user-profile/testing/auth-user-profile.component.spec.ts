@@ -12,6 +12,7 @@ describe('AuthUserProfile', () => {
   const mockUserStore = {
     isLoading: signal(false),
     avatarUrl: signal<string | null>(null),
+    avatarUrlSmall: signal<string | null>(null),
     initials: signal<string | null>('FG'),
     displayName: signal<string | null>('Fireguard User'),
     profile: signal<{ email?: string } | null>({ email: 'user@fireguard.local' }),
@@ -25,6 +26,7 @@ describe('AuthUserProfile', () => {
     installMatchMediaMock();
     mockUserStore.isLoading.set(false);
     mockUserStore.avatarUrl.set(null);
+    mockUserStore.avatarUrlSmall.set(null);
     mockUserStore.initials.set('FG');
     mockUserStore.displayName.set('Fireguard User');
     mockUserStore.profile.set({ email: 'user@fireguard.local' });
@@ -96,7 +98,7 @@ describe('AuthUserProfile', () => {
   });
 
   it('should render avatar image when available', () => {
-    mockUserStore.avatarUrl.set('https://example.com/avatar.png');
+    mockUserStore.avatarUrlSmall.set('https://example.com/avatar.png');
     const fixture = TestBed.createComponent(AuthUserProfile);
     fixture.detectChanges();
 

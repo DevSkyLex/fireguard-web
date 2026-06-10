@@ -12,8 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, type FormGroup } from '@angular/forms';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import type { TrendBaseFiltersFormData } from './trend-base-filters-form-data.type';
-import type { TrendBaseFiltersFormValues } from './trend-base-filters-form-values.type';
+import type { TrendBaseFiltersFormData, TrendBaseFiltersFormValues } from './models';
 
 /**
  * Component TrendBaseFiltersForm

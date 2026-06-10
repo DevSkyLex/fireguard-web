@@ -13,6 +13,7 @@ describe('AccountUserMenu', () => {
     const mockUserIdentityPort = {
       isLoading: signal(false),
       avatarUrl: signal<string | null>(null),
+      avatarUrlSmall: signal<string | null>(null),
       displayName: signal('Valentin'),
       initials: signal('VF'),
       profile: signal({ email: 'valentin@example.com' }),

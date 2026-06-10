@@ -17,13 +17,7 @@ import type {
   OrganizationPermissionOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-
-/** Values used to create or update an organization role. */
-export interface OrganizationRoleFormValues {
-  readonly name: string;
-  readonly description: string;
-  readonly permissions: readonly string[];
-}
+import type { OrganizationRoleFormValues } from './models';
 
 /**
  * Form used to create or update an organization role.

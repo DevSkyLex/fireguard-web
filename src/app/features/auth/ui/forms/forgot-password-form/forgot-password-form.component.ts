@@ -20,8 +20,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
-import type { ForgotPasswordFormData } from './forgot-password-form-data.type';
-import type { ForgotPasswordFormValues } from './forgot-password-form-values.type';
+import type { ForgotPasswordFormData, ForgotPasswordFormValues } from './models';
 
 /**
  * Component ForgotPasswordForm

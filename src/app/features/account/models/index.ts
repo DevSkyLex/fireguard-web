@@ -1,5 +1,6 @@
 export type { UserInput } from './user/user-input.interface';
 export type { UpdateUserInput } from './user/update-user-input.type';
+export type { UpdateCurrentUserProfileInput } from './user/update-current-user-profile-input.interface';
 export type { UserOutput } from './user/user-output.interface';
 export type { UserProfileOutput } from './user/user-profile-output.interface';
 export { ACCOUNT_PERMISSION, ACCOUNT_PERMISSION_NAMES } from './user/account-permission-name.model';

@@ -66,6 +66,27 @@ describe('UserStore', () => {
     expect(store.isLoaded()).toBe(true);
   });
 
+  it('should resolve avatar size variants from avatarUrls with legacy fallback', () => {
+    store.setProfile({
+      ...profile,
+      avatarUrls: {
+        '256': 'https://example.com/avatar/256.webp',
+        '128': 'https://example.com/avatar/128.webp',
+        '64': 'https://example.com/avatar/64.webp',
+        '32': 'https://example.com/avatar/32.webp',
+      },
+    });
+
+    expect(store.avatarUrl()).toBe('https://example.com/avatar/256.webp');
+    expect(store.avatarUrlMedium()).toBe('https://example.com/avatar/128.webp');
+    expect(store.avatarUrlSmall()).toBe('https://example.com/avatar/64.webp');
+
+    store.setProfile(profile);
+
+    expect(store.avatarUrlSmall()).toBe('https://example.com/avatar.png');
+    expect(store.avatarUrlMedium()).toBe('https://example.com/avatar.png');
+  });
+
   it('should dispatch an event when profile loading fails', async () => {
     mockUserProfileService.getCurrentProfile.mockReturnValue(
       throwError(() => new Error('Unauthorized')),
@@ -107,6 +128,21 @@ describe('UserStore', () => {
 
     expect(mockUserProfileService.getCurrentProfile).toHaveBeenCalledTimes(2);
     expect(store.displayName()).toBe('Janet Updated');
+  });
+
+  it('should replace the profile without calling the API', () => {
+    const updatedProfile: UserProfileOutput = {
+      ...profile,
+      firstName: 'Janet',
+      lastName: 'Updated',
+    };
+
+    store.setProfile(updatedProfile);
+
+    expect(store.profile()).toEqual(updatedProfile);
+    expect(store.displayName()).toBe('Janet Updated');
+    expect(store.loadCallState().status).toBe('success');
+    expect(mockUserProfileService.getCurrentProfile).not.toHaveBeenCalled();
   });
 
   it('should retry current profile loading in the browser when SSR transfer state contains null', async () => {

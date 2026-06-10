@@ -8,27 +8,13 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
-import {
-  FormArray,
-  NonNullableFormBuilder,
-  ReactiveFormsModule,
-  Validators,
-  type FormControl,
-  type FormGroup,
-} from '@angular/forms';
+import { FormArray, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { TextareaModule } from 'primeng/textarea';
-import type { ChecklistFormValues } from './checklist-form-values.type';
-
-/** Strictly typed controls for one checklist item row. */
-type ChecklistItemForm = FormGroup<{
-  label: FormControl<string>;
-  description: FormControl<string>;
-  required: FormControl<boolean>;
-}>;
+import type { ChecklistFormValues, ChecklistItemForm } from './models';
 
 /**
  * Form used to create an immutable checklist and its dynamic item rows.

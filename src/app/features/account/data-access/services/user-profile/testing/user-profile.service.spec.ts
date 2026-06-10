@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type { ApiError } from '@core/models/api';
 import { ACCOUNT_PERMISSION } from '@features/account/models';
-import type { UserProfileOutput } from '@features/account/models';
+import type { UserOutput, UserProfileOutput } from '@features/account/models';
 import { UserProfileService } from '../user-profile.service';
 
 describe('UserProfileService', () => {
@@ -140,6 +140,47 @@ describe('UserProfileService', () => {
 
       const req = httpMock.expectOne(`${baseUrl}/me`);
       req.flush(errorResponse, { status: 401, statusText: 'Unauthorized' });
+    });
+  });
+
+  describe('updateCurrentProfile', () => {
+    it('should send a merge patch to the current profile endpoint', () => {
+      const input = { firstName: 'Ada' };
+      const response = { firstName: 'Ada' } as UserProfileOutput;
+
+      service.updateCurrentProfile(input).subscribe((profile) => {
+        expect(profile.firstName).toBe('Ada');
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/me`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual(input);
+      expect(req.request.headers.get('Content-Type')).toBe('application/merge-patch+json');
+      expect(req.request.withCredentials).toBe(true);
+
+      req.flush(response);
+    });
+  });
+
+  describe('uploadCurrentAvatar', () => {
+    it('should send a multipart PUT to the current avatar endpoint', () => {
+      const avatar = new File(['avatar'], 'avatar.png', { type: 'image/png' });
+      const response = { avatarUrl: 'https://example.com/avatar.webp' } as UserOutput;
+
+      service.uploadCurrentAvatar(avatar, avatar.name).subscribe((user) => {
+        expect(user.avatarUrl).toBe(response.avatarUrl);
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/me/avatar`);
+      const uploadedAvatar = req.request.body.get('avatar') as File;
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toBeInstanceOf(FormData);
+      expect(uploadedAvatar.name).toBe(avatar.name);
+      expect(uploadedAvatar.type).toBe(avatar.type);
+      expect(req.request.headers.has('Content-Type')).toBe(false);
+      expect(req.request.withCredentials).toBe(true);
+
+      req.flush(response);
     });
   });
 });

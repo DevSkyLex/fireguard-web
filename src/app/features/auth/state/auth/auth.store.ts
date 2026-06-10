@@ -325,6 +325,8 @@ export const AuthStore = signalStore(
                       challengeToken: null,
                       loginCallState: successCallState(response),
                     });
+                    // Bootstrap account-owned profile state after authentication completes.
+                    userProfilePort.load();
                   }
                 },
                 error: (error: unknown) => {
@@ -455,6 +457,8 @@ export const AuthStore = signalStore(
                     challengeToken: null,
                     mfaVerifyCallState: successCallState(response),
                   });
+                  // Bootstrap account-owned profile state after MFA authentication completes.
+                  userProfilePort.load();
 
                   // Trust device if pending
                   if (activeTrustedDeviceStore.pendingTrustDevice()) {

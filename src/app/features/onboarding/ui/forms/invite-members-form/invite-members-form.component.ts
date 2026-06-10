@@ -24,8 +24,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import type { SetupOrganizationRole } from '@features/organization/setup';
 import { RadioCardGroup, type RadioCardOption } from '@shared/components';
-import type { InviteMembersFormData, InviteeRowData } from './invite-members-form-data.type';
-import type { InviteeRowValues, InviteMembersFormValues } from './invite-members-form-values.type';
+import type {
+  InviteeRowData,
+  InviteeRowValues,
+  InviteMembersFormData,
+  InviteMembersFormValues,
+} from './models';
 
 /**
  * Component InviteMembersForm

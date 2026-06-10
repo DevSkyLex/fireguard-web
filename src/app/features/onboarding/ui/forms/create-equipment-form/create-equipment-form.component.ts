@@ -18,8 +18,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
-import type { CreateEquipmentFormData } from './create-equipment-form-data.type';
-import type { CreateEquipmentFormValues } from './create-equipment-form-values.type';
+import type { CreateEquipmentFormData, CreateEquipmentFormValues } from './models';
 
 /**
  * Component CreateEquipmentForm

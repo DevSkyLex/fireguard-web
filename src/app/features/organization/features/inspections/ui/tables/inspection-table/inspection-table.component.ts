@@ -32,6 +32,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { pickAvatarUrl } from '@core/models/api';
 import type { RequestOptions } from '@core/services/hydra-api';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
@@ -755,6 +756,24 @@ export class InspectionTable implements OnInit {
     const initials: string = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 
     return initials || this.getInspectorDisplayName(inspection).charAt(0).toUpperCase() || '?';
+  }
+
+  /**
+   * Method getInspectorAvatarUrl
+   *
+   * @description
+   * Resolves the inspector avatar URL using the 64px variant when
+   * available, falling back to the legacy single avatar URL.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {InspectionOutput} inspection Inspection row rendered by the table.
+   *
+   * @returns {string | null} Avatar URL suited for the table avatar size.
+   */
+  protected getInspectorAvatarUrl(inspection: InspectionOutput): string | null {
+    return pickAvatarUrl(inspection.inspector?.avatarUrls, '64', inspection.inspector?.avatarUrl);
   }
 
   /**

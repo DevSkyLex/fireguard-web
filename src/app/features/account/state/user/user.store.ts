@@ -5,6 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { filter, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
+import { pickAvatarUrl } from '@core/models/api';
 import {
   idleCallState,
   pendingCallState,
@@ -177,7 +178,7 @@ export const UserStore = signalStore(
      * Computed avatarUrl
      *
      * @description
-     * Returns the user's avatar URL if available.
+     * Returns the user's full-size avatar URL (256px variant) if available.
      *
      * @since 1.0.0
      *
@@ -185,7 +186,39 @@ export const UserStore = signalStore(
      */
     avatarUrl: computed<string | null>(() => {
       const profile: UserProfileOutput | null = store.profile();
-      return profile?.avatarUrl ?? profile?.picture ?? null;
+      return pickAvatarUrl(profile?.avatarUrls, '256', profile?.avatarUrl ?? profile?.picture);
+    }),
+
+    /**
+     * Computed avatarUrlMedium
+     *
+     * @description
+     * Returns the 128px avatar variant, suited for large avatars
+     * (e.g. the profile form picture, rendered at ~64px).
+     *
+     * @since 1.0.0
+     *
+     * @returns {string | null}
+     */
+    avatarUrlMedium: computed<string | null>(() => {
+      const profile: UserProfileOutput | null = store.profile();
+      return pickAvatarUrl(profile?.avatarUrls, '128', profile?.avatarUrl ?? profile?.picture);
+    }),
+
+    /**
+     * Computed avatarUrlSmall
+     *
+     * @description
+     * Returns the 64px avatar variant, suited for small avatars
+     * (e.g. menus and headers, rendered at ~32px).
+     *
+     * @since 1.0.0
+     *
+     * @returns {string | null}
+     */
+    avatarUrlSmall: computed<string | null>(() => {
+      const profile: UserProfileOutput | null = store.profile();
+      return pickAvatarUrl(profile?.avatarUrls, '64', profile?.avatarUrl ?? profile?.picture);
     }),
 
     /**
@@ -277,6 +310,24 @@ export const UserStore = signalStore(
       reload(): void {
         patchState(store, { loadCallState: idleCallState() });
         this.load();
+      },
+
+      /**
+       * Method setProfile
+       *
+       * @description
+       * Replaces the current authenticated-user profile with an authoritative
+       * profile response without issuing another API request.
+       *
+       * @since 1.0.0
+       *
+       * @param {UserProfileOutput} profile - Current user profile to store.
+       */
+      setProfile(profile: UserProfileOutput): void {
+        patchState(store, {
+          profile,
+          loadCallState: successCallState(profile),
+        });
       },
 
       /**

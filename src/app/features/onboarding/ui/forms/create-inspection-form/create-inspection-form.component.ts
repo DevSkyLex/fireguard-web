@@ -20,21 +20,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import type { SetupInspectionResult, SetupInspectorType } from '@features/organization/setup';
-import type { CreateInspectionFormData } from './create-inspection-form-data.type';
-import type { CreateInspectionFormValues } from './create-inspection-form-values.type';
-
-/**
- * Interface EquipmentOption
- *
- * @description
- * Lightweight option shape used by the equipment selector.
- *
- * @since 1.0.0
- */
-export interface EquipmentOption {
-  readonly id: string;
-  readonly label: string;
-}
+import type {
+  CreateInspectionFormData,
+  CreateInspectionFormValues,
+  EquipmentOption,
+} from './models';
 
 /**
  * Component CreateInspectionForm

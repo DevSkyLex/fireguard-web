@@ -1,0 +1,65 @@
+<section class="flex flex-col gap-4" data-testid="account-avatar-form">
+  @if (hasError()) {
+    <p-message severity="error" class="w-full" [closable]="false">
+      We couldn't upload your picture. Please try again.
+    </p-message>
+  }
+
+  <div class="grid grid-cols-1 gap-x-8 gap-y-3 lg:grid-cols-3">
+    <div class="flex flex-col gap-1">
+      <span class="text-sm font-medium text-surface-900 dark:text-surface-100">
+        Profile Picture
+      </span>
+      <p class="text-sm text-surface-500 dark:text-surface-400">
+        This is where people will see your actual face.
+      </p>
+    </div>
+
+    <div class="flex items-start gap-4 lg:col-span-2">
+      <div class="relative shrink-0">
+        <p-avatar
+          [image]="avatarUrl() || undefined"
+          [label]="avatarUrl() ? undefined : initials() || '?'"
+          shape="circle"
+          size="xlarge"
+        />
+        @if (uploading()) {
+          <span
+            class="absolute inset-0 flex items-center justify-center rounded-full bg-surface-900/40"
+            aria-hidden="true"
+          >
+            <i class="pi pi-spinner pi-spin text-surface-0"></i>
+          </span>
+        }
+      </div>
+
+      <p-fileupload
+        #avatarUpload
+        class="min-w-0 flex-1"
+        mode="advanced"
+        [accept]="acceptedAvatarTypes"
+        [auto]="true"
+        [customUpload]="true"
+        [maxFileSize]="maxAvatarSize"
+        [showUploadButton]="false"
+        [showCancelButton]="false"
+        [disabled]="uploading()"
+        chooseLabel="Choose file"
+        chooseIcon="pi pi-upload"
+        (uploadHandler)="onAvatarUpload($event, avatarUpload)"
+      >
+        <ng-template #empty>
+          <div class="flex flex-col items-center justify-center gap-2 py-4 text-center">
+            <i class="pi pi-cloud-upload text-2xl text-surface-400"></i>
+            <p class="text-sm text-surface-600 dark:text-surface-400">
+              <span class="font-medium text-primary">Click here</span> to upload your file or drag.
+            </p>
+            <p class="text-xs text-surface-400 dark:text-surface-500">
+              Supported formats: JPEG, PNG, WebP or GIF (5 MB max)
+            </p>
+          </div>
+        </ng-template>
+      </p-fileupload>
+    </div>
+  </div>
+</section>

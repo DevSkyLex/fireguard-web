@@ -9,9 +9,7 @@ import {
   type OutputEmitterRef,
 } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { FileUploadModule, type FileUpload } from 'primeng/fileupload';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
@@ -19,16 +17,17 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import type { UpdateCurrentUserProfileInput, UserProfileOutput } from '@features/account/models';
-import type { AccountProfileFormData, AvatarUploadEvent } from './models';
+import type { AccountProfileFormData } from './models';
 
 /**
  * Component AccountProfileForm
  * @class AccountProfileForm
  *
  * @description
- * Presentational form used to edit the authenticated user's profile. Owns
- * reactive-form state, validation, reset behavior and avatar selection while
- * emitting user intents without depending on account stores.
+ * Presentational form used to edit the authenticated user's profile fields.
+ * Owns reactive-form state, validation and reset behavior while emitting
+ * user intents without depending on account stores. The avatar lives in the
+ * dedicated {@link AccountAvatarForm} since it targets its own endpoint.
  *
  * @version 1.0.0
  *
@@ -38,7 +37,6 @@ import type { AccountProfileFormData, AvatarUploadEvent } from './models';
  *   [profile]="profile()"
  *   [saving]="saving()"
  *   (submitted)="save($event)"
- *   (avatarSelected)="uploadAvatar($event)"
  * />
  * ```
  *
@@ -48,9 +46,7 @@ import type { AccountProfileFormData, AvatarUploadEvent } from './models';
   selector: 'app-account-profile-form',
   imports: [
     ReactiveFormsModule,
-    AvatarModule,
     ButtonModule,
-    FileUploadModule,
     IconFieldModule,
     InputIconModule,
     InputGroupModule,
@@ -78,34 +74,6 @@ export class AccountProfileForm {
   public readonly profile: InputSignal<UserProfileOutput | null> = input<UserProfileOutput | null>(
     null,
   );
-
-  /**
-   * Input avatarUrl
-   * @input
-   *
-   * @description
-   * Current avatar URL displayed beside the upload control.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<string | null>}
-   */
-  public readonly avatarUrl: InputSignal<string | null> = input<string | null>(null);
-
-  /**
-   * Input initials
-   * @input
-   *
-   * @description
-   * User initials displayed when no avatar URL is available.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<string | null>}
-   */
-  public readonly initials: InputSignal<string | null> = input<string | null>(null);
 
   /**
    * Input saving
@@ -136,20 +104,6 @@ export class AccountProfileForm {
   public readonly hasSaveError: InputSignal<boolean> = input<boolean>(false);
 
   /**
-   * Input hasAvatarError
-   * @input
-   *
-   * @description
-   * Indicates whether the latest avatar upload operation failed.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<boolean>}
-   */
-  public readonly hasAvatarError: InputSignal<boolean> = input<boolean>(false);
-
-  /**
    * Output submitted
    * @output
    *
@@ -163,48 +117,6 @@ export class AccountProfileForm {
    */
   public readonly submitted: OutputEmitterRef<UpdateCurrentUserProfileInput> =
     output<UpdateCurrentUserProfileInput>();
-
-  /**
-   * Output avatarSelected
-   * @output
-   *
-   * @description
-   * Emits the avatar file selected through the upload control.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<File>}
-   */
-  public readonly avatarSelected: OutputEmitterRef<File> = output<File>();
-
-  /**
-   * Property maxAvatarSize
-   * @readonly
-   *
-   * @description
-   * Maximum avatar size accepted by the upload field, in bytes.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {number}
-   */
-  protected readonly maxAvatarSize: number = 5 * 1024 * 1024;
-
-  /**
-   * Property acceptedAvatarTypes
-   * @readonly
-   *
-   * @description
-   * MIME types accepted by the avatar upload endpoint.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {string}
-   */
-  protected readonly acceptedAvatarTypes: string = 'image/jpeg,image/png,image/webp,image/gif';
 
   /**
    * Property formBuilder
@@ -310,26 +222,6 @@ export class AccountProfileForm {
       },
       { emitEvent: false },
     );
-  }
-
-  /**
-   * Method onAvatarUpload
-   * @method onAvatarUpload
-   *
-   * @description
-   * Emits the first selected avatar file and clears the PrimeNG upload field.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {AvatarUploadEvent} event - PrimeNG upload event containing selected files.
-   * @param {FileUpload} fileUpload - Upload component instance to clear.
-   * @returns {void}
-   */
-  protected onAvatarUpload(event: AvatarUploadEvent, fileUpload: FileUpload): void {
-    const file: File | undefined = event.files[0];
-    if (file) this.avatarSelected.emit(file);
-    fileUpload.clear();
   }
   //#endregion
 }

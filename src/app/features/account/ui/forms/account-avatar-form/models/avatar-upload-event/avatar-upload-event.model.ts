@@ -3,7 +3,7 @@
  * @interface AvatarUploadEvent
  *
  * @description
- * Minimal PrimeNG upload event contract consumed by the account profile form.
+ * Minimal PrimeNG upload event contract consumed by the account avatar form.
  *
  * @since 1.0.0
  */

@@ -1,36 +1,29 @@
-<form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col">
-  <div class="flex flex-col gap-1 pb-6">
-    <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-100">Profile Details</h2>
-    <p class="text-sm text-surface-500 dark:text-surface-400">
-      You can change your profile details here seamlessly.
-    </p>
-  </div>
-
+<form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-6">
   @if (hasSaveError()) {
-    <p-message severity="error" styleClass="mb-6 w-full" [closable]="false">
+    <p-message severity="error" class="w-full" [closable]="false">
       We couldn't save your profile. Please try again.
     </p-message>
   }
-  @if (hasAvatarError()) {
-    <p-message severity="error" styleClass="mb-6 w-full" [closable]="false">
-      We couldn't upload your picture. Please try again.
-    </p-message>
-  }
 
-  <div
-    class="grid grid-cols-1 gap-x-8 gap-y-3 border-t border-surface-200 py-6 lg:grid-cols-3 dark:border-surface-800"
-  >
+  <div class="grid grid-cols-1 gap-x-8 gap-y-3 lg:grid-cols-3">
     <div class="flex flex-col gap-1">
-      <span class="text-sm font-medium text-surface-900 dark:text-surface-100">Public Profile</span>
+      <span class="text-sm font-medium text-surface-900 dark:text-surface-100">Name</span>
       <p class="text-sm text-surface-500 dark:text-surface-400">
-        This is the main profile that will be visible for everyone.
+        This is the name that will be visible to everyone.
       </p>
     </div>
-    <div class="flex flex-col gap-3 lg:col-span-2">
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-2">
+      <div class="flex flex-col gap-1.5">
+        <label
+          for="profile-first-name"
+          class="text-sm font-medium text-surface-700 dark:text-surface-300"
+        >
+          First name
+        </label>
         <p-iconfield>
           <p-inputicon class="pi pi-user" />
           <input
+            id="profile-first-name"
             pInputText
             formControlName="firstName"
             placeholder="First name"
@@ -38,7 +31,16 @@
             class="w-full"
           />
         </p-iconfield>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label
+          for="profile-last-name"
+          class="text-sm font-medium text-surface-700 dark:text-surface-300"
+        >
+          Last name
+        </label>
         <input
+          id="profile-last-name"
           pInputText
           formControlName="lastName"
           placeholder="Last name"
@@ -46,99 +48,63 @@
           class="w-full"
         />
       </div>
-      <p-inputgroup>
-        <p-inputgroup-addon>{{ '@' }}</p-inputgroup-addon>
-        <input
-          pInputText
-          [value]="profile()?.username ?? ''"
-          placeholder="username"
-          readonly
-          class="w-full"
-        />
-      </p-inputgroup>
-      <p class="text-xs text-surface-400 dark:text-surface-500">
-        Your username cannot be changed here.
-      </p>
     </div>
   </div>
 
-  <div
-    class="grid grid-cols-1 gap-x-8 gap-y-3 border-t border-surface-200 py-6 lg:grid-cols-3 dark:border-surface-800"
-  >
+  <div class="grid grid-cols-1 gap-x-8 gap-y-3 lg:grid-cols-3">
     <div class="flex flex-col gap-1">
-      <span class="text-sm font-medium text-surface-900 dark:text-surface-100">Email Address</span>
+      <span class="text-sm font-medium text-surface-900 dark:text-surface-100">Sign-in</span>
       <p class="text-sm text-surface-500 dark:text-surface-400">
-        Used for sign-in and account notifications.
+        Your username and email are managed by your identity provider.
       </p>
     </div>
-    <div class="flex flex-col gap-2 lg:col-span-2">
-      <p-iconfield>
-        <p-inputicon class="pi pi-envelope" />
-        <input
-          pInputText
-          type="email"
-          [value]="profile()?.email ?? ''"
-          placeholder="you@example.com"
-          readonly
-          class="w-full"
-        />
-      </p-iconfield>
-      <p class="text-xs text-surface-400 dark:text-surface-500">
-        Your email address cannot be changed here.
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-2">
+      <div class="flex flex-col gap-1.5">
+        <label
+          for="profile-username"
+          class="text-sm font-medium text-surface-700 dark:text-surface-300"
+        >
+          Username
+        </label>
+        <p-inputgroup>
+          <p-inputgroup-addon>{{ '@' }}</p-inputgroup-addon>
+          <input
+            id="profile-username"
+            pInputText
+            [value]="profile()?.username ?? ''"
+            placeholder="username"
+            readonly
+            class="w-full"
+          />
+        </p-inputgroup>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label
+          for="profile-email"
+          class="text-sm font-medium text-surface-700 dark:text-surface-300"
+        >
+          Email address
+        </label>
+        <p-iconfield>
+          <p-inputicon class="pi pi-envelope" />
+          <input
+            id="profile-email"
+            pInputText
+            type="email"
+            [value]="profile()?.email ?? ''"
+            placeholder="you@example.com"
+            readonly
+            class="w-full"
+          />
+        </p-iconfield>
+      </div>
+      <p class="text-xs text-surface-400 sm:col-span-2 dark:text-surface-500">
+        Your username and email address cannot be changed here.
       </p>
     </div>
   </div>
 
-  <div
-    class="grid grid-cols-1 gap-x-8 gap-y-3 border-t border-surface-200 py-6 lg:grid-cols-3 dark:border-surface-800"
-  >
-    <div class="flex flex-col gap-1">
-      <span class="text-sm font-medium text-surface-900 dark:text-surface-100">
-        Profile Picture
-      </span>
-      <p class="text-sm text-surface-500 dark:text-surface-400">
-        This is where people will see your actual face.
-      </p>
-    </div>
-    <div class="flex items-start gap-4 lg:col-span-2">
-      <p-avatar
-        [image]="avatarUrl() || undefined"
-        [label]="avatarUrl() ? undefined : initials() || '?'"
-        shape="circle"
-        size="xlarge"
-      />
-      <p-fileupload
-        #avatarUpload
-        class="min-w-0 flex-1"
-        mode="advanced"
-        [accept]="acceptedAvatarTypes"
-        [auto]="true"
-        [customUpload]="true"
-        [maxFileSize]="maxAvatarSize"
-        [showUploadButton]="false"
-        [showCancelButton]="false"
-        chooseLabel="Choose file"
-        chooseIcon="pi pi-upload"
-        (uploadHandler)="onAvatarUpload($event, avatarUpload)"
-      >
-        <ng-template #empty>
-          <div class="flex flex-col items-center justify-center gap-2 py-4 text-center">
-            <i class="pi pi-cloud-upload text-2xl text-surface-400"></i>
-            <p class="text-sm text-surface-600 dark:text-surface-400">
-              <span class="font-medium text-primary">Click here</span> to upload your file or drag.
-            </p>
-            <p class="text-xs text-surface-400 dark:text-surface-500">
-              Supported formats: JPEG, PNG, WebP or GIF (5 MB max)
-            </p>
-          </div>
-        </ng-template>
-      </p-fileupload>
-    </div>
-  </div>
-
-  <div
-    class="flex items-center justify-end gap-2 border-t border-surface-200 pt-6 dark:border-surface-800"
-  >
+  <div class="flex items-center justify-end gap-2">
     <p-button
       type="button"
       label="Reset"

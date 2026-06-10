@@ -1,36 +1,95 @@
-<div id="account-page" class="flex flex-col gap-6">
-  <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
-    <!-- Vertical section navigation (sticky on large screens) -->
-    <nav
-      class="flex flex-col gap-1 rounded-xl border border-surface-200 bg-surface-0 p-2 lg:sticky lg:top-6 dark:border-surface-800 dark:bg-surface-950"
-      aria-label="Account sections"
-    >
-      @for (item of navItems; track item.id) {
-        <button
-          type="button"
-          class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors"
-          [class.bg-primary-50]="activeTab() === item.id"
-          [class.text-primary]="activeTab() === item.id"
-          [class.font-medium]="activeTab() === item.id"
-          [class.dark:bg-primary-950]="activeTab() === item.id"
-          [class.text-surface-600]="activeTab() !== item.id"
-          [class.hover:bg-surface-100]="activeTab() !== item.id"
-          [class.dark:text-surface-300]="activeTab() !== item.id"
-          [class.dark:hover:bg-surface-800]="activeTab() !== item.id"
-          [attr.aria-current]="activeTab() === item.id ? 'page' : null"
-          (click)="onTabChange(item.id)"
-        >
-          <i [class]="item.icon"></i>
-          <span class="flex-1">{{ item.label }}</span>
-          @if (item.id === 'notifications' && notificationStore.hasUnread()) {
-            <p-badge [value]="notificationStore.unreadCount()" severity="contrast" size="small" />
-          }
-        </button>
+<div id="account-page" class="mx-auto flex w-full max-w-6xl flex-col gap-8">
+  <!-- GitHub-style account header -->
+  <header
+    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+    data-testid="account-page-header"
+  >
+    <div class="flex min-w-0 items-center gap-4">
+      @if (userStore.avatarUrlMedium(); as avatarUrl) {
+        <p-avatar
+          [image]="avatarUrl"
+          [ariaLabel]="(userStore.displayName() ?? 'User') + ' avatar'"
+          shape="circle"
+          size="xlarge"
+          class="shrink-0"
+        />
+      } @else {
+        <p-avatar
+          [label]="userStore.initials() ?? '?'"
+          shape="circle"
+          size="xlarge"
+          class="shrink-0"
+        />
       }
+
+      <div class="min-w-0">
+        <div class="flex min-w-0 flex-wrap items-baseline gap-x-2">
+          <h1
+            class="truncate text-xl font-semibold text-surface-900 dark:text-surface-50"
+            data-testid="account-page-display-name"
+          >
+            {{ userStore.displayName() ?? 'Your account' }}
+          </h1>
+          @if (userStore.profile()?.username; as username) {
+            <span class="truncate text-base text-surface-500 dark:text-surface-400"
+              >({{ username }})</span
+            >
+          }
+        </div>
+
+        <p class="text-sm text-surface-500 dark:text-surface-400">Your personal account</p>
+
+        <div
+          class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-surface-500 dark:text-surface-400"
+        >
+          @if (userStore.profile()?.email; as email) {
+            <span class="inline-flex items-center gap-1.5">
+              <i class="pi pi-envelope text-xs" aria-hidden="true"></i>
+              {{ email }}
+            </span>
+          }
+          @if (userStore.profile()?.createdAt; as createdAt) {
+            <span class="inline-flex items-center gap-1.5">
+              <i class="pi pi-calendar text-xs" aria-hidden="true"></i>
+              Member since {{ createdAt | date: 'MMMM yyyy' }}
+            </span>
+          }
+          @if (userStore.profile()?.emailVerified) {
+            <p-tag severity="success" value="Verified" [rounded]="true" class="text-xs" />
+          }
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <p-divider class="my-0" />
+
+  <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
+    <!-- GitHub-settings-style vertical navigation (sticky on large screens) -->
+    <nav class="lg:sticky lg:top-6" aria-label="Account sections">
+      <p-menu
+        [model]="menuItems()"
+        class="block w-full [&_.p-menu]:w-full [&_.p-menu]:border-0 [&_.p-menu]:bg-transparent"
+        data-testid="account-page-nav"
+      />
     </nav>
 
     <!-- Active section content -->
-    <div class="min-w-0">
+    <div class="flex min-w-0 flex-col gap-6">
+      <!-- GitHub-settings-style section heading -->
+      <div>
+        <h2
+          class="text-lg font-semibold text-surface-900 dark:text-surface-50"
+          data-testid="account-page-section-title"
+        >
+          {{ activeNavItem().label }}
+        </h2>
+        <p class="mt-0.5 text-sm text-surface-500 dark:text-surface-400">
+          {{ activeNavItem().description }}
+        </p>
+        <p-divider class="mb-0" />
+      </div>
+
       @switch (activeTab()) {
         @case ('profile') {
           <app-account-profile-panel />

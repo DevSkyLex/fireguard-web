@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { NotificationStore } from '@features/account/state';
+import { NotificationStore, UserStore } from '@features/account/state';
 import { AccountPage } from '../account-page.component';
 
 describe('AccountPage', () => {
@@ -17,12 +17,19 @@ describe('AccountPage', () => {
       hasUnread: signal(false),
       unreadCount: signal(0),
     };
+    const mockUserStore = {
+      profile: signal(null),
+      displayName: signal<string | null>(null),
+      initials: signal<string | null>(null),
+      avatarUrlMedium: signal<string | null>(null),
+    };
 
     TestBed.configureTestingModule({
       providers: [
         { provide: ActivatedRoute, useValue: mockRoute },
         { provide: Router, useValue: mockRouter },
         { provide: NotificationStore, useValue: mockNotificationStore },
+        { provide: UserStore, useValue: mockUserStore },
       ],
     });
 

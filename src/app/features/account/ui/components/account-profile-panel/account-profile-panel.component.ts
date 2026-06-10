@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { DividerModule } from 'primeng/divider';
 import type { UpdateCurrentUserProfileInput } from '@features/account/models';
 import { AccountProfileEditStore, UserStore } from '@features/account/state';
-import { AccountProfileForm } from '../../forms';
+import { AccountAvatarForm, AccountProfileForm } from '../../forms';
 
 /**
  * Component AccountProfilePanel
@@ -17,7 +20,7 @@ import { AccountProfileForm } from '../../forms';
  */
 @Component({
   selector: 'app-account-profile-panel',
-  imports: [AccountProfileForm],
+  imports: [RouterLink, ButtonModule, DividerModule, AccountAvatarForm, AccountProfileForm],
   providers: [AccountProfileEditStore],
   templateUrl: './account-profile-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -39,4 +39,14 @@ export interface AccountNavItem {
    * @type {string}
    */
   readonly icon: string;
+
+  /**
+   * Property description
+   *
+   * @description
+   * Short sentence shown under the section heading.
+   *
+   * @type {string}
+   */
+  readonly description: string;
 }

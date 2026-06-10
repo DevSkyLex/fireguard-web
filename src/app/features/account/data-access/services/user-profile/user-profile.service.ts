@@ -2,6 +2,10 @@ import { Injectable } from '@angular/core';
 import { catchError, type Observable } from 'rxjs';
 import { HydraApiService } from '@core/services/hydra-api';
 import type {
+  ConfirmPasswordChangeInput,
+  ConfirmPasswordChangeOutput,
+  RequestPasswordChangeInput,
+  RequestPasswordChangeOutput,
   UpdateCurrentUserProfileInput,
   UserOutput,
   UserProfileOutput,
@@ -84,5 +88,43 @@ export class UserProfileService extends HydraApiService {
         withCredentials: true,
       })
       .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Method requestPasswordChange
+   *
+   * @description
+   * Starts the authenticated password change flow: verifies the current
+   * password then sends a one-time code to the user's email address.
+   *
+   * @param {RequestPasswordChangeInput} input - Current password to verify.
+   * @returns {Observable<RequestPasswordChangeOutput>} Observable emitting the OTP challenge details.
+   */
+  public requestPasswordChange(
+    input: RequestPasswordChangeInput,
+  ): Observable<RequestPasswordChangeOutput> {
+    return this.post<RequestPasswordChangeInput, RequestPasswordChangeOutput>(
+      `${UserProfileService.BASE_PATH}/me/password/request`,
+      input,
+    );
+  }
+
+  /**
+   * Method confirmPasswordChange
+   *
+   * @description
+   * Completes the authenticated password change flow with the OTP code.
+   * On success the backend revokes every active session and OAuth token.
+   *
+   * @param {ConfirmPasswordChangeInput} input - Challenge token, OTP code and new password.
+   * @returns {Observable<ConfirmPasswordChangeOutput>} Observable emitting the change result.
+   */
+  public confirmPasswordChange(
+    input: ConfirmPasswordChangeInput,
+  ): Observable<ConfirmPasswordChangeOutput> {
+    return this.post<ConfirmPasswordChangeInput, ConfirmPasswordChangeOutput>(
+      `${UserProfileService.BASE_PATH}/me/password/confirm`,
+      input,
+    );
   }
 }

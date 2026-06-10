@@ -9,3 +9,5 @@ export { NotificationStore } from './notifications';
 export type { NotificationStoreType } from './notifications';
 export { notificationStoreEvents } from './notifications';
 export { AccountProfileEditStore } from './profile-edit';
+export { AccountPasswordChangeStore } from './password-change';
+export type { AccountPasswordChangeStep } from './password-change';

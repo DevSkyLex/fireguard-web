@@ -1,10 +1,17 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import type { UpdateCurrentUserProfileInput } from '@features/account/models';
-import { AccountProfileEditStore, UserStore } from '@features/account/state';
-import { AccountAvatarForm, AccountProfileForm } from '../../forms';
+import {
+  AccountPasswordChangeStore,
+  AccountProfileEditStore,
+  UserStore,
+} from '@features/account/state';
+import {
+  AccountAvatarForm,
+  AccountPasswordForm,
+  AccountProfileForm,
+  type PasswordChangeConfirmation,
+} from '../../forms';
 
 /**
  * Component AccountProfilePanel
@@ -20,8 +27,8 @@ import { AccountAvatarForm, AccountProfileForm } from '../../forms';
  */
 @Component({
   selector: 'app-account-profile-panel',
-  imports: [RouterLink, ButtonModule, DividerModule, AccountAvatarForm, AccountProfileForm],
-  providers: [AccountProfileEditStore],
+  imports: [DividerModule, AccountAvatarForm, AccountPasswordForm, AccountProfileForm],
+  providers: [AccountProfileEditStore, AccountPasswordChangeStore],
   templateUrl: './account-profile-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -56,6 +63,23 @@ export class AccountProfilePanel {
    */
   protected readonly editStore: AccountProfileEditStore =
     inject<AccountProfileEditStore>(AccountProfileEditStore);
+
+  /**
+   * Property passwordStore
+   * @readonly
+   *
+   * @description
+   * Component-scoped workflow store driving the two-step authenticated
+   * password change flow.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {AccountPasswordChangeStore}
+   */
+  protected readonly passwordStore: AccountPasswordChangeStore = inject<AccountPasswordChangeStore>(
+    AccountPasswordChangeStore,
+  );
   //#endregion
 
   //#region Methods
@@ -92,6 +116,57 @@ export class AccountProfilePanel {
    */
   protected uploadAvatar(file: File): void {
     this.editStore.uploadAvatar(file);
+  }
+
+  /**
+   * Method requestPasswordChange
+   * @method requestPasswordChange
+   *
+   * @description
+   * Starts the password change workflow with the verified current password.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {string} currentPassword - Current password to verify.
+   * @returns {void}
+   */
+  protected requestPasswordChange(currentPassword: string): void {
+    this.passwordStore.request(currentPassword);
+  }
+
+  /**
+   * Method confirmPasswordChange
+   * @method confirmPasswordChange
+   *
+   * @description
+   * Completes the password change workflow with the one-time code and the
+   * new password.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {PasswordChangeConfirmation} confirmation - OTP code and new password.
+   * @returns {void}
+   */
+  protected confirmPasswordChange(confirmation: PasswordChangeConfirmation): void {
+    this.passwordStore.confirm(confirmation);
+  }
+
+  /**
+   * Method restartPasswordChange
+   * @method restartPasswordChange
+   *
+   * @description
+   * Resets the password change workflow back to its first step.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @returns {void}
+   */
+  protected restartPasswordChange(): void {
+    this.passwordStore.restart();
   }
   //#endregion
 }

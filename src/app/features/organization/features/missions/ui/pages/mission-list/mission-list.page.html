@@ -1,0 +1,13 @@
+<div id="mission-list" class="flex h-full flex-col gap-6">
+  <app-mission-table
+    class="flex min-h-0 flex-1 flex-col"
+    [missions]="store.missionList()"
+    [total]="store.totalMissions()"
+    [loading]="store.isLoadingMissions()"
+    [creating]="store.isCreating()"
+    [empty]="store.isEmpty()"
+    (create)="onCreate($event)"
+    (refresh)="onRefresh()"
+    (view)="onView($event)"
+  />
+</div>

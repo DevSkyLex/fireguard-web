@@ -38,6 +38,21 @@ export const ORGANIZATION_ROUTES: Routes = [
       breadcrumb: organizationTitleResolver,
     },
     children: [
+      /**
+       * Mission workspace entrypoint.
+       *
+       * The mission subfeature remains fully lazy-loaded and owns its own
+       * permission gates and page orchestration.
+       */
+      {
+        path: 'missions',
+        data: {
+          breadcrumb: 'Missions',
+          preload: true,
+        },
+        loadChildren: () =>
+          import('./features/missions/missions.routes').then((m) => m.MISSION_ROUTES),
+      },
       {
         path: 'facilities',
         data: {

@@ -50,6 +50,14 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     path: '',
     permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
   },
+  /** Mission workspace entry for field preparation and publication flows. */
+  {
+    id: 'missions',
+    label: 'Missions',
+    icon: 'pi pi-compass',
+    path: 'missions',
+    permissions: [ORGANIZATION_PERMISSION.MISSIONS_READ],
+  },
   {
     id: 'facilities',
     label: 'Facilities',

@@ -1,0 +1,45 @@
+import type { Routes } from '@angular/router';
+import { organizationPermissionGuard } from '@features/organization/http/guards';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+
+/**
+ * Constant MISSION_ROUTES
+ *
+ * @description
+ * Route tree for organization-scoped mission workflows.
+ *
+ * - `/organizations/:organizationId/missions` exposes the mission list page
+ *   used to start or resume field missions.
+ * - `/organizations/:organizationId/missions/:missionId` exposes the mission
+ *   detail page that orchestrates facilities, equipment and inspections for
+ *   one mission.
+ *
+ * Access is protected by organization permission guards so mission pages are
+ * available only when the active member can read mission data.
+ *
+ * @since 1.0.0
+ */
+export const MISSION_ROUTES: Routes = [
+  {
+    path: ':missionId',
+    canActivate: [
+      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.MISSIONS_READ] }),
+    ],
+    loadComponent: () =>
+      import('./ui/pages/mission-detail/mission-detail.page').then(
+        (module) => module.MissionDetailPage,
+      ),
+    title: 'Mission',
+  },
+  {
+    path: '',
+    pathMatch: 'full',
+    canActivate: [
+      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.MISSIONS_READ] }),
+    ],
+    loadComponent: () =>
+      import('./ui/pages/mission-list/mission-list.page').then((module) => module.MissionListPage),
+    title: 'Missions',
+    data: { breadcrumb: false, preload: true },
+  },
+];

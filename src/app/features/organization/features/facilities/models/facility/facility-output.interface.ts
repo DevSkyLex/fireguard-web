@@ -24,6 +24,18 @@ export type FacilityStatus = 'active' | 'archived';
  * Facility resource returned by the API.
  */
 export interface FacilityOutput extends HydraItem {
+  /**
+   * Optional mission IRI when this facility is mission-scoped.
+   */
+  readonly mission?: string | null;
+  /**
+   * Record lifecycle state supporting draft/publish mission workflows.
+   */
+  readonly recordStatus?: 'draft' | 'published';
+  /**
+   * Monotonic revision returned by backend for publication consistency.
+   */
+  readonly revision?: number;
   //#region Properties
   /**
    * Property id

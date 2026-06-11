@@ -6,6 +6,7 @@ import {
   withHttpTransferCacheOptions,
 } from '@angular/platform-browser';
 import { provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
+import { provideServiceWorker } from '@angular/service-worker';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { APP_ROUTES } from '@app/app.routes';
@@ -21,6 +22,7 @@ import { provideAccountFeature } from '@features/account';
 import { authInterceptor, provideAuthFeature, unauthorizedInterceptor } from '@features/auth';
 import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
 import { provideMaintenanceMode } from '@features/maintenance/state';
+import { provideMissionsFeature } from '@features/organization/features/missions';
 
 /**
  * Configuration appConfig
@@ -67,6 +69,18 @@ export const appConfig: ApplicationConfig = {
         maintenanceInterceptor,
       ]),
     ),
+    /**
+     * Enables Angular service-worker only in production builds.
+     *
+     * Registration waits until the app is stable (or 30s max) to avoid
+     * competing with initial route hydration.
+     */
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: environment.production,
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
+    /** Mission feature bootstrap (PWA update guard + offline safety). */
+    provideMissionsFeature(),
     provideEnv(environment),
     provideMaintenanceMode(),
     provideAuthFeature(),

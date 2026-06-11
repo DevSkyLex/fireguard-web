@@ -18,6 +18,18 @@ export type EquipmentStatus = 'in_stock' | 'operational' | 'decommissioned' | 'u
  * Equipment resource returned by the API.
  */
 export interface EquipmentOutput extends HydraItem {
+  /**
+   * Optional mission IRI when equipment belongs to a mission-scoped workflow.
+   */
+  readonly mission?: string | null;
+  /**
+   * Record lifecycle state used by draft/publish mission workflows.
+   */
+  readonly recordStatus?: 'draft' | 'published';
+  /**
+   * Monotonic revision returned by backend for optimistic publication checks.
+   */
+  readonly revision?: number;
   //#region Properties
   /**
    * Property id

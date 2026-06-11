@@ -21,6 +21,12 @@ export const ORGANIZATION_PERMISSION = {
   EQUIPMENT_WRITE: 'organization.equipment.write',
   INSPECTION_READ: 'organization.inspection.read',
   INSPECTION_WRITE: 'organization.inspection.write',
+  /** Read access to mission pages and mission-linked resources. */
+  MISSIONS_READ: 'organization.missions.read',
+  /** Write access to mission entities during preparation phase. */
+  MISSIONS_WRITE: 'organization.missions.write',
+  /** Permission required to trigger mission publication. */
+  MISSIONS_PUBLISH: 'organization.missions.publish',
   LEGAL_PROFILE_WRITE: 'organization.legal_profile.write',
   ALL: 'organization.*',
 } as const;

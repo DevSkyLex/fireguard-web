@@ -13,4 +13,17 @@ type FacilityWritableFields = Pick<
  * organization.
  */
 export type CreateFacilityInput = Pick<FacilityWritableFields, 'type' | 'name'> &
-  Partial<Omit<FacilityWritableFields, 'type' | 'name'>>;
+  Partial<Omit<FacilityWritableFields, 'type' | 'name'>> & {
+    /**
+     * Optional client-generated id used by offline replay idempotency.
+     */
+    readonly clientId?: string;
+    /**
+     * Optional organization IRI override for mission orchestrations.
+     */
+    readonly organization?: string;
+    /**
+     * Optional mission IRI used to attach created facilities to one mission.
+     */
+    readonly mission?: string;
+  };

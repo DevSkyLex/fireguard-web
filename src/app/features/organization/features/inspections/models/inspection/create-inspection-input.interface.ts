@@ -8,6 +8,18 @@ import type { InspectionResult, InspectorType } from './inspection-output.interf
  * Payload used to create an inspection resource.
  */
 export interface CreateInspectionInput {
+  /**
+   * Optional client-generated id enabling idempotent offline replay.
+   */
+  readonly clientId?: string;
+  /**
+   * Optional organization IRI override for mission orchestrations.
+   */
+  readonly organization?: string;
+  /**
+   * Optional mission IRI used to bind inspection creation to one mission.
+   */
+  readonly mission?: string;
   //#region Properties
   /** @type {string} */
   readonly equipmentId: string;

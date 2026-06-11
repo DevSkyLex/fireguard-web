@@ -60,6 +60,18 @@ export interface InspectorOutput {
  * Inspection resource returned by the API.
  */
 export interface InspectionOutput extends HydraItem {
+  /**
+   * Optional mission IRI when inspection belongs to a mission.
+   */
+  readonly mission?: string | null;
+  /**
+   * Record lifecycle state supporting draft/publish mission workflows.
+   */
+  readonly recordStatus?: 'draft' | 'published';
+  /**
+   * Monotonic revision used for publication and optimistic checks.
+   */
+  readonly revision?: number;
   //#region Properties
   /** @type {string} */
   readonly id: string;

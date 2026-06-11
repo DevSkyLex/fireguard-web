@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { type Observable } from 'rxjs';
 import type { HydraCollection } from '@core/models/api';
-import { HydraApiService } from '@core/services/hydra-api';
+import { HydraApiService, type PaginationOptions } from '@core/services/hydra-api';
 import type { TrustDeviceOutput, TrustedDeviceOutput } from '@features/auth/models';
 
 /**
@@ -78,15 +78,16 @@ export class TrustedDeviceService extends HydraApiService {
    * Method list
    *
    * @description
-   * Retrieves all trusted devices for the current user.
+   * Retrieves a paginated list of trusted devices for the current user.
    *
    * @access public
    * @since 1.0.0
    *
+   * @param {PaginationOptions} [options] - Pagination options (page, itemsPerPage).
    * @returns {Observable<HydraCollection<TrustedDeviceOutput>>} Observable emitting the collection.
    */
-  public list(): Observable<HydraCollection<TrustedDeviceOutput>> {
-    return this.getCollection<TrustedDeviceOutput>(TrustedDeviceService.BASE_PATH);
+  public list(options?: PaginationOptions): Observable<HydraCollection<TrustedDeviceOutput>> {
+    return this.getCollection<TrustedDeviceOutput>(TrustedDeviceService.BASE_PATH, options);
   }
 
   /**

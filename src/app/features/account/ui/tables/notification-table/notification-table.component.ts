@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, TitleCasePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -20,25 +20,27 @@ import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import type { RequestOptions } from '@core/services/hydra-api';
-import type { TrustedDeviceOutput } from '@features/auth/models';
+import type { NotificationOutput } from '@features/account/models';
+import type { NotificationCategoryColor } from './models';
 
 /**
- * Component TrustedDeviceTable
- * @class TrustedDeviceTable
+ * Component NotificationTable
+ * @class NotificationTable
  *
  * @description
  * Presentational table component that displays a paginated, lazy-loaded list
- * of trusted devices. It owns pagination and row action menu state while
- * delegating data loading and revocation actions to the parent panel through
- * output emitters.
+ * of account notifications. It owns pagination, notification appearance, and
+ * row action menu state while delegating data loading and mutations to the
+ * parent panel through output emitters.
  *
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-trusted-device-table',
+  selector: 'app-notification-table',
   imports: [
     AvatarModule,
     ButtonModule,
@@ -47,33 +49,35 @@ import type { TrustedDeviceOutput } from '@features/auth/models';
     MenuModule,
     SkeletonModule,
     TableModule,
+    TagModule,
+    TitleCasePipe,
   ],
-  templateUrl: './trusted-device-table.component.html',
+  templateUrl: './notification-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TrustedDeviceTable {
+export class NotificationTable {
   //#region Inputs
   /**
-   * Input devices
+   * Input notifications
    * @readonly
    *
    * @description
-   * Trusted device rows currently displayed by the table.
+   * Notification rows currently displayed by the table.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<readonly TrustedDeviceOutput[]>}
+   * @type {InputSignal<readonly NotificationOutput[]>}
    */
-  public readonly devices: InputSignal<readonly TrustedDeviceOutput[]> =
-    input.required<readonly TrustedDeviceOutput[]>();
+  public readonly notifications: InputSignal<readonly NotificationOutput[]> =
+    input.required<readonly NotificationOutput[]>();
 
   /**
    * Input total
    * @readonly
    *
    * @description
-   * Total number of trusted devices across all pages.
+   * Total number of notifications across all pages.
    *
    * @access public
    * @since 1.0.0
@@ -87,7 +91,7 @@ export class TrustedDeviceTable {
    * @readonly
    *
    * @description
-   * Whether the trusted device list is currently loading.
+   * Whether the notification list is currently loading.
    *
    * @access public
    * @since 1.0.0
@@ -101,7 +105,7 @@ export class TrustedDeviceTable {
    * @readonly
    *
    * @description
-   * Whether the trusted device collection is empty.
+   * Whether the notification collection is empty.
    *
    * @access public
    * @since 1.0.0
@@ -111,32 +115,18 @@ export class TrustedDeviceTable {
   public readonly empty: InputSignal<boolean> = input.required<boolean>();
 
   /**
-   * Input revokingAll
+   * Input unreadCount
    * @readonly
    *
    * @description
-   * Whether the revoke-all-trusted-devices operation is pending.
+   * Number of unread notifications in the current table collection.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<boolean>}
+   * @type {InputSignal<number>}
    */
-  public readonly revokingAll: InputSignal<boolean> = input.required<boolean>();
-
-  /**
-   * Input hasDevices
-   * @readonly
-   *
-   * @description
-   * Whether at least one trusted device exists.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<boolean>}
-   */
-  public readonly hasDevices: InputSignal<boolean> = input.required<boolean>();
+  public readonly unreadCount: InputSignal<number> = input.required<number>();
   //#endregion
 
   //#region Outputs
@@ -155,32 +145,18 @@ export class TrustedDeviceTable {
   public readonly load: OutputEmitterRef<RequestOptions> = output<RequestOptions>();
 
   /**
-   * Output revoke
+   * Output markAsRead
    * @readonly
    *
    * @description
-   * Emits the trusted device selected for revocation.
+   * Emits the unread notification selected to be marked as read.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {OutputEmitterRef<TrustedDeviceOutput>}
+   * @type {OutputEmitterRef<NotificationOutput>}
    */
-  public readonly revoke: OutputEmitterRef<TrustedDeviceOutput> = output<TrustedDeviceOutput>();
-
-  /**
-   * Output revokeAll
-   * @readonly
-   *
-   * @description
-   * Requests revocation of every trusted device.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<void>}
-   */
-  public readonly revokeAll: OutputEmitterRef<void> = output<void>();
+  public readonly markAsRead: OutputEmitterRef<NotificationOutput> = output<NotificationOutput>();
   //#endregion
 
   //#region Properties
@@ -243,7 +219,7 @@ export class TrustedDeviceTable {
    * @readonly
    *
    * @description
-   * Default number of trusted device rows per page.
+   * Default number of notification rows per page.
    *
    * @access protected
    * @since 1.0.0
@@ -281,11 +257,94 @@ export class TrustedDeviceTable {
   protected readonly skeletonItems: undefined[] = Array(this.rows);
 
   /**
+   * Property typeIcons
+   * @readonly
+   *
+   * @description
+   * PrimeIcon mapping keyed by notification type.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Readonly<Record<string, string>>}
+   */
+  private readonly typeIcons: Readonly<Record<string, string>> = {
+    'user.created': 'pi-user-plus',
+    'user.updated': 'pi-user-edit',
+    'user.deleted': 'pi-user-minus',
+    'user.invited': 'pi-user-plus',
+    login: 'pi-sign-in',
+    'login.failed': 'pi-lock',
+    'password.reset': 'pi-key',
+    security: 'pi-shield',
+    'organization.created': 'pi-building',
+    'organization.updated': 'pi-building',
+    'organization.deleted': 'pi-trash',
+    'member.added': 'pi-users',
+    'member.removed': 'pi-users',
+    maintenance: 'pi-wrench',
+    update: 'pi-sync',
+    upgrade: 'pi-arrow-circle-up',
+    alert: 'pi-exclamation-triangle',
+    error: 'pi-times-circle',
+  };
+
+  /**
+   * Property categoryIcons
+   * @readonly
+   *
+   * @description
+   * Fallback PrimeIcon mapping keyed by notification category.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Readonly<Record<string, string>>}
+   */
+  private readonly categoryIcons: Readonly<Record<string, string>> = {
+    organization: 'pi-sitemap',
+    system: 'pi-cog',
+    security: 'pi-shield',
+    user: 'pi-user',
+  };
+
+  /**
+   * Property categoryColors
+   * @readonly
+   *
+   * @description
+   * Tailwind background and text color classes keyed by notification category.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Readonly<Record<string, NotificationCategoryColor>>}
+   */
+  private readonly categoryColors: Readonly<Record<string, NotificationCategoryColor>> = {
+    organization: {
+      background: 'bg-indigo-100 dark:bg-indigo-950',
+      text: 'text-indigo-600 dark:text-indigo-400',
+    },
+    system: {
+      background: 'bg-amber-100 dark:bg-amber-950',
+      text: 'text-amber-600 dark:text-amber-400',
+    },
+    security: {
+      background: 'bg-red-100 dark:bg-red-950',
+      text: 'text-red-600 dark:text-red-400',
+    },
+    user: {
+      background: 'bg-sky-100 dark:bg-sky-950',
+      text: 'text-sky-600 dark:text-sky-400',
+    },
+  };
+
+  /**
    * Property actionMenu
    * @readonly
    *
    * @description
-   * Shared popup menu used by trusted device rows for contextual actions.
+   * Shared popup menu used by notification rows for contextual actions.
    *
    * @access private
    * @since 1.0.0
@@ -295,26 +354,26 @@ export class TrustedDeviceTable {
   private readonly actionMenu: Signal<Menu> = viewChild.required<Menu>('actionMenu');
 
   /**
-   * Property selectedDevice
+   * Property selectedNotification
    * @readonly
    *
    * @description
-   * Trusted device row currently targeted by the action menu.
+   * Notification row currently targeted by the action menu.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {WritableSignal<TrustedDeviceOutput | null>}
+   * @type {WritableSignal<NotificationOutput | null>}
    */
-  private readonly selectedDevice: WritableSignal<TrustedDeviceOutput | null> =
-    signal<TrustedDeviceOutput | null>(null);
+  private readonly selectedNotification: WritableSignal<NotificationOutput | null> =
+    signal<NotificationOutput | null>(null);
 
   /**
    * Property actionMenuItems
    * @readonly
    *
    * @description
-   * Contextual row actions for the selected trusted device.
+   * Contextual row actions for the selected notification.
    *
    * @access protected
    * @since 1.0.0
@@ -322,18 +381,17 @@ export class TrustedDeviceTable {
    * @type {Signal<MenuItem[]>}
    */
   protected readonly actionMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
-    const device: TrustedDeviceOutput | null = this.selectedDevice();
+    const notification: NotificationOutput | null = this.selectedNotification();
 
-    if (!device) {
+    if (!notification || notification.isRead) {
       return [];
     }
 
     return [
       {
-        label: 'Revoke device',
-        icon: PrimeIcons.TIMES_CIRCLE,
-        styleClass: 'text-red-500',
-        command: (): void => this.revoke.emit(device),
+        label: 'Mark as read',
+        icon: PrimeIcons.CHECK,
+        command: (): void => this.markAsRead.emit(notification),
       },
     ];
   });
@@ -373,8 +431,8 @@ export class TrustedDeviceTable {
    * Constructor
    *
    * @description
-   * Keeps the paginator on an existing page when a mutation reduces the
-   * server-reported total below the current page offset.
+   * Keeps the paginator on an existing page when the server-reported total
+   * becomes smaller than the current page offset.
    */
   public constructor() {
     effect(() => {
@@ -442,19 +500,60 @@ export class TrustedDeviceTable {
    * Method onActionMenuToggle
    *
    * @description
-   * Stores the targeted trusted device and toggles the shared action menu.
+   * Stores the targeted notification and toggles the shared action menu.
    *
    * @access protected
    * @since 1.0.0
    *
    * @param {MouseEvent} event Click event emitted by the row action button.
-   * @param {TrustedDeviceOutput} device Trusted device row targeted by the menu.
+   * @param {NotificationOutput} notification Notification row targeted by the menu.
    *
    * @returns {void}
    */
-  protected onActionMenuToggle(event: MouseEvent, device: TrustedDeviceOutput): void {
-    this.selectedDevice.set(device);
+  protected onActionMenuToggle(event: MouseEvent, notification: NotificationOutput): void {
+    this.selectedNotification.set(notification);
     this.actionMenu().toggle(event);
+  }
+
+  /**
+   * Method iconFor
+   *
+   * @description
+   * Resolves the PrimeIcon class matching a notification type or category.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {NotificationOutput} notification Notification rendered by the table.
+   *
+   * @returns {string} PrimeIcon class without the common `pi` prefix.
+   */
+  protected iconFor(notification: NotificationOutput): string {
+    return (
+      this.typeIcons[notification.type] ?? this.categoryIcons[notification.category] ?? 'pi-bell'
+    );
+  }
+
+  /**
+   * Method iconClassesFor
+   *
+   * @description
+   * Resolves the Tailwind background and text classes matching a notification category.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {NotificationOutput} notification Notification rendered by the table.
+   *
+   * @returns {string} Space-separated Tailwind classes.
+   */
+  protected iconClassesFor(notification: NotificationOutput): string {
+    const colors: NotificationCategoryColor | undefined =
+      this.categoryColors[notification.category];
+
+    return `${colors?.background ?? 'bg-surface-100 dark:bg-surface-800'} ${
+      colors?.text ?? 'text-surface-500'
+    }`;
   }
 
   /**

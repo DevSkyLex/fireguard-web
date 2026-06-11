@@ -9,15 +9,15 @@
         <p-avatar
           [image]="avatarUrl"
           [ariaLabel]="(userStore.displayName() ?? 'User') + ' avatar'"
+          [pt]="headerAvatarPt"
           shape="circle"
-          size="xlarge"
           class="shrink-0"
         />
       } @else {
         <p-avatar
           [label]="userStore.initials() ?? '?'"
+          [pt]="headerAvatarPt"
           shape="circle"
-          size="xlarge"
           class="shrink-0"
         />
       }
@@ -69,7 +69,8 @@
     <nav class="lg:sticky lg:top-6" aria-label="Account sections">
       <p-menu
         [model]="menuItems()"
-        class="block w-full [&_.p-menu]:w-full [&_.p-menu]:border-0 [&_.p-menu]:bg-transparent"
+        [pt]="navMenuPt"
+        class="block w-full"
         data-testid="account-page-nav"
       />
     </nav>
@@ -92,10 +93,12 @@
 
       @switch (activeTab()) {
         @case ('profile') {
-          <app-account-profile-panel />
+          <p-card [pt]="sectionCardPt">
+            <app-account-profile-panel />
+          </p-card>
         }
         @case ('security') {
-          <div class="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
+          <div class="flex flex-col gap-6">
             <app-account-sessions-panel />
             <app-account-trusted-devices-panel />
           </div>

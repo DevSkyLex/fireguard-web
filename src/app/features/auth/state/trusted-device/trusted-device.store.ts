@@ -11,6 +11,7 @@ import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
 import type { HydraCollection } from '@core/models/api';
+import type { PaginationOptions } from '@core/services/hydra-api';
 import {
   idleCallState,
   pendingCallState,
@@ -40,6 +41,7 @@ import type { TrustedDeviceState } from './models';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 const INITIAL_TRUSTED_DEVICE_STATE: TrustedDeviceState = {
+  totalDevices: 0,
   listCallState: idleCallState(),
   revokeCallState: idleCallState(),
   revokeAllCallState: idleCallState(),
@@ -140,14 +142,14 @@ export const TrustedDeviceStore = signalStore(
      * Computed hasDevices
      *
      * @description
-     * Quick check whether any trusted devices exist. Drives the
-     * visibility of "Revoke all" controls.
+     * Quick check whether any trusted devices exist across all pages. Drives
+     * the visibility of "Revoke all" controls.
      *
      * @since 1.0.0
      *
      * @returns {boolean}
      */
-    hasDevices: computed<boolean>(() => store.deviceEntities().length > 0),
+    hasDevices: computed<boolean>(() => store.totalDevices() > 0),
   })),
   //#endregion
 
@@ -170,19 +172,22 @@ export const TrustedDeviceStore = signalStore(
        *
        * @since 2.0.0
        */
-      const loadFn = rxMethod<void>(
+      const loadFn = rxMethod<PaginationOptions | void>(
         pipe(
           tap(() => {
             patchState(store, { listCallState: pendingCallState() });
           }),
-          switchMap(() =>
-            trustedDeviceService.list().pipe(
+          switchMap((options) =>
+            trustedDeviceService.list(options ?? undefined).pipe(
               tapResponse({
                 next: (response: HydraCollection<TrustedDeviceOutput>) => {
                   patchState(
                     store,
                     setAllEntities([...response.member], { collection: 'device' }),
-                    { listCallState: successCallState(null) },
+                    {
+                      totalDevices: response.totalItems,
+                      listCallState: successCallState(null),
+                    },
                   );
                 },
                 error: (error: unknown) => {
@@ -230,6 +235,7 @@ export const TrustedDeviceStore = signalStore(
                 tapResponse({
                   next: () => {
                     patchState(store, removeEntity(deviceId, { collection: 'device' }), {
+                      totalDevices: Math.max(0, store.totalDevices() - 1),
                       revokeCallState: successCallState(null),
                     });
                   },
@@ -267,6 +273,7 @@ export const TrustedDeviceStore = signalStore(
                 tapResponse({
                   next: () => {
                     patchState(store, removeAllEntities({ collection: 'device' }), {
+                      totalDevices: 0,
                       revokeAllCallState: successCallState(null),
                     });
                   },
@@ -315,6 +322,18 @@ export const TrustedDeviceStore = signalStore(
          */
         resetRevokeOperation(): void {
           patchState(store, { revokeCallState: idleCallState() });
+        },
+
+        /**
+         * Method resetRevokeAllOperation
+         *
+         * @description
+         * Resets the revoke-all call state to idle.
+         *
+         * @since 1.0.0
+         */
+        resetRevokeAllOperation(): void {
+          patchState(store, { revokeAllCallState: idleCallState() });
         },
         //#endregion
       };

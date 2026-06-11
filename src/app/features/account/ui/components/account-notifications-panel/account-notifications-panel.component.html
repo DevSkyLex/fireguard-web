@@ -1,120 +1,26 @@
-<div id="account-notifications-panel" class="flex flex-col">
-  <!-- Summary line -->
-  <div class="px-6 pb-2">
-    <p class="text-sm text-surface-600">
-      @if (notificationStore.isLoading()) {
-        Loading notifications…
-      } @else {
-        {{ notificationStore.totalNotifications() }} notification{{
-          notificationStore.totalNotifications() === 1 ? '' : 's'
-        }}
-        @if (notificationStore.hasUnread()) {
-          —
-          <span class="font-medium text-primary">{{ notificationStore.unreadCount() }} unread</span>
-        }
-      }
-    </p>
-  </div>
-
-  <!-- Notification list -->
-  @if (notificationStore.isLoading()) {
-    <!-- Skeleton loading -->
-    <ul class="flex flex-col divide-y divide-surface-200 px-6 py-4 dark:divide-surface-800">
-      @for (skeleton of [1, 2, 3, 4, 5]; track skeleton) {
-        <li class="flex gap-4 py-4">
-          <p-skeleton shape="circle" size="2.25rem" styleClass="shrink-0" />
-          <div class="flex flex-1 flex-col gap-2">
-            <p-skeleton width="50%" height="0.875rem" />
-            <p-skeleton width="85%" height="0.75rem" />
-            <p-skeleton width="35%" height="0.75rem" />
-          </div>
-        </li>
-      }
-    </ul>
-  } @else {
-    <!-- Notification items -->
-    <ul class="flex flex-col divide-y divide-surface-200 dark:divide-surface-800">
-      @for (notification of notificationStore.notifications(); track notification.id) {
-        <li
-          class="flex gap-4 px-6 py-4 transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
-          [class.bg-primary-50]="!notification.isRead"
-        >
-          <!-- Category icon -->
-          <span
-            class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-            [class]="iconBgFor(notification) + ' ' + iconTextFor(notification)"
-            [title]="notification.type"
-          >
-            <i class="pi text-sm" [class]="iconFor(notification)"></i>
-          </span>
-
-          <!-- Content -->
-          <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-            <p
-              class="truncate text-sm font-semibold text-surface-900 dark:text-surface-100"
-              [title]="notification.subject"
-            >
-              {{ notification.subject }}
-            </p>
-            <p class="line-clamp-2 text-sm text-surface-500 dark:text-surface-400">
-              {{ notification.body }}
-            </p>
-            <span class="mt-1 text-xs text-surface-400 dark:text-surface-500">
-              {{ notification.createdAt | date: 'medium' }}
-            </span>
-          </div>
-
-          <!-- Unread dot -->
-          @if (!notification.isRead) {
-            <button
-              type="button"
-              class="mt-2 h-2.5 w-2.5 shrink-0 cursor-pointer rounded-full bg-primary transition-transform hover:scale-125"
-              title="Mark as read"
-              (click)="onMarkAsRead(notification.id)"
-            ></button>
-          }
-        </li>
-      } @empty {
-        <li class="flex flex-col items-center gap-3 px-4 py-16 text-center">
-          <span
-            class="flex h-14 w-14 items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800"
-          >
-            <i class="pi pi-bell text-2xl text-surface-400"></i>
-          </span>
-          <p class="text-sm text-surface-500">No notifications yet</p>
-        </li>
-      }
-    </ul>
-
-    <!-- Loading more indicator -->
-    @if (notificationStore.isLoadingMore()) {
-      <div class="flex justify-center py-4">
-        <p-progressSpinner [style]="{ width: '2rem', height: '2rem' }" strokeWidth="4" />
-      </div>
-    }
-
-    <!-- Infinite scroll sentinel -->
-    <div
-      appInfiniteScroll
-      [disabled]="notificationStore.isLoading() || !notificationStore.hasMore()"
-      (scrolled)="onLoadMore()"
-    ></div>
-  }
-
-  <!-- Error state -->
+<div id="account-notifications-panel" class="flex flex-col gap-4">
   @if (notificationStore.listError()) {
-    <div
-      class="mx-6 mb-6 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-400"
-    >
-      <i class="pi pi-exclamation-triangle shrink-0"></i>
-      <span>Failed to load notifications. Please try again later.</span>
-      <p-button
-        label="Retry"
-        [text]="true"
-        severity="danger"
-        class="ml-auto"
-        (onClick)="notificationStore.load()"
-      />
-    </div>
+    <p-message severity="error">
+      <div class="flex flex-wrap items-center gap-3">
+        <span>Failed to load notifications. Please try again later.</span>
+        <p-button
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          (onClick)="retry()"
+        />
+      </div>
+    </p-message>
   }
+
+  <app-notification-table
+    [notifications]="notificationStore.notifications()"
+    [total]="notificationStore.totalNotifications()"
+    [loading]="notificationStore.isLoading()"
+    [empty]="notificationStore.totalNotifications() === 0"
+    [unreadCount]="notificationStore.unreadCount()"
+    (load)="onLoad($event)"
+    (markAsRead)="onMarkAsRead($event)"
+  />
 </div>

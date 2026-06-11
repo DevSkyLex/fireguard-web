@@ -1,58 +1,19 @@
-import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { SkeletonModule } from 'primeng/skeleton';
+import { MessageModule } from 'primeng/message';
+import type { RequestOptions } from '@core/services/hydra-api';
 import type { NotificationOutput } from '@features/account/models';
 import { NotificationStore } from '@features/account/state';
-import { InfiniteScrollDirective } from '@shared/directives';
-
-const TYPE_ICONS: Record<string, string> = {
-  'user.created': 'pi-user-plus',
-  'user.updated': 'pi-user-edit',
-  'user.deleted': 'pi-user-minus',
-  'user.invited': 'pi-user-plus',
-  login: 'pi-sign-in',
-  'login.failed': 'pi-lock',
-  'password.reset': 'pi-key',
-  security: 'pi-shield',
-  'organization.created': 'pi-building',
-  'organization.updated': 'pi-building',
-  'organization.deleted': 'pi-trash',
-  'member.added': 'pi-users',
-  'member.removed': 'pi-users',
-  maintenance: 'pi-wrench',
-  update: 'pi-sync',
-  upgrade: 'pi-arrow-circle-up',
-  alert: 'pi-exclamation-triangle',
-  error: 'pi-times-circle',
-};
-
-const CATEGORY_ICONS: Record<string, string> = {
-  organization: 'pi-sitemap',
-  system: 'pi-cog',
-  security: 'pi-shield',
-  user: 'pi-user',
-};
-
-const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  organization: {
-    bg: 'bg-indigo-100 dark:bg-indigo-950',
-    text: 'text-indigo-600 dark:text-indigo-400',
-  },
-  system: { bg: 'bg-amber-100 dark:bg-amber-950', text: 'text-amber-600 dark:text-amber-400' },
-  security: { bg: 'bg-red-100 dark:bg-red-950', text: 'text-red-600 dark:text-red-400' },
-  user: { bg: 'bg-sky-100 dark:bg-sky-950', text: 'text-sky-600 dark:text-sky-400' },
-};
+import { NotificationTable } from '../../tables';
 
 /**
  * Component AccountNotificationsPanel
  * @class AccountNotificationsPanel
  *
  * @description
- * Notifications section of the account page. Lists all notifications for the
- * authenticated user, allows filtering by read/unread state, and lets the
- * user mark individual notifications as read. Rendered inside the
+ * Notifications section of the account page. Connects the presentational
+ * {@link NotificationTable} to the account-owned notification store and
+ * lets the user mark individual notifications as read. Rendered inside the
  * "Notifications" tab of {@link AccountPage}.
  *
  * @since 1.0.0
@@ -61,18 +22,21 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
  */
 @Component({
   selector: 'app-account-notifications-panel',
-  imports: [DatePipe, ButtonModule, SkeletonModule, ProgressSpinnerModule, InfiniteScrollDirective],
+  imports: [ButtonModule, MessageModule, NotificationTable],
+  providers: [NotificationStore],
   templateUrl: './account-notifications-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AccountNotificationsPanel implements OnInit {
+export class AccountNotificationsPanel {
+  //#region Properties
   /**
    * Property notificationStore
    * @readonly
    *
    * @description
-   * Signal store providing the current notification list, loading state and
-   * actions.
+   * Component-scoped notification store used by the paginated account table.
+   * Its local collection is isolated from the root store that backs the global
+   * notification bell and unread badge.
    *
    * @access protected
    * @since 1.0.0
@@ -83,22 +47,88 @@ export class AccountNotificationsPanel implements OnInit {
     inject<NotificationStore>(NotificationStore);
 
   /**
-   * Method ngOnInit
+   * Property rootNotificationStore
+   * @readonly
    *
    * @description
-   * Loads notification reference types when the component is initialised.
-   * The initial notification list is bootstrapped globally via account
-   * feature initializers to avoid duplicate startup requests.
+   * Root notification center store used by global badges, the bell and the
+   * Mercure subscription.
    *
-   * @access public
-   * @since 1.0.0
+   * @access private
+   * @since 1.2.0
    *
-   * @returns {void}
+   * @type {NotificationStore}
    */
-  public ngOnInit(): void {
-    void this.notificationStore.initializeTypes();
-  }
+  private readonly rootNotificationStore: NotificationStore =
+    inject<NotificationStore>(NotificationStore, { skipSelf: true, optional: true }) ??
+    this.notificationStore;
 
+  /**
+   * Property lastLoadOptions
+   *
+   * @description
+   * Last table request replayed after a list-loading error.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @type {RequestOptions}
+   */
+  private lastLoadOptions: RequestOptions = { page: 1, itemsPerPage: 10 };
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   *
+   * @description
+   * Synchronizes read-state changes between the isolated paginated store and
+   * the root notification center. A new Mercure notification refreshes the
+   * first table page after it has already been loaded.
+   */
+  public constructor() {
+    effect(() => {
+      const updated: NotificationOutput | null = this.notificationStore.markAsReadCallState().data;
+
+      if (this.notificationStore.markAsReadCallState().status !== 'success' || !updated) {
+        return;
+      }
+
+      untracked(() => this.rootNotificationStore.synchronizeNotification(updated));
+    });
+
+    effect(() => {
+      const updated: NotificationOutput | null =
+        this.rootNotificationStore.markAsReadCallState().data;
+
+      if (this.rootNotificationStore.markAsReadCallState().status !== 'success' || !updated) {
+        return;
+      }
+
+      untracked(() => this.notificationStore.synchronizeNotification(updated));
+    });
+
+    effect(() => {
+      const rootTotal: number = this.rootNotificationStore.totalNotifications();
+      const localTotal: number = this.notificationStore.totalNotifications();
+      const currentPage: number = this.notificationStore.currentPage();
+      const listStatus: string = this.notificationStore.listCallState().status;
+
+      if (listStatus !== 'success' || currentPage !== 1 || rootTotal <= localTotal) {
+        return;
+      }
+
+      untracked(() =>
+        this.notificationStore.loadPage({
+          page: 1,
+          limit: this.notificationStore.itemsPerPage(),
+        }),
+      );
+    });
+  }
+  //#endregion
+
+  //#region Methods
   /**
    * Method onMarkAsRead
    *
@@ -108,74 +138,48 @@ export class AccountNotificationsPanel implements OnInit {
    * @access public
    * @since 1.0.0
    *
-   * @param {string} id - Notification identifier.
-   *
-   * @returns {void} - No return value.
-   */
-  public onMarkAsRead(id: string): void {
-    this.notificationStore.markAsRead(id);
-  }
-
-  /**
-   * Method onLoadMore
-   *
-   * @description
-   * Loads the next page of notifications (infinite scroll).
-   *
-   * @access public
-   * @since 1.1.0
+   * @param {NotificationOutput} notification - Notification to mark as read.
    *
    * @returns {void}
    */
-  public onLoadMore(): void {
-    this.notificationStore.loadMore();
+  public onMarkAsRead(notification: NotificationOutput): void {
+    this.notificationStore.markAsRead(notification.id);
   }
 
   /**
-   * Method iconFor
+   * Method onLoad
    *
    * @description
-   * Returns the PrimeIcons class for a notification's type/category.
+   * Loads the notification page requested by the lazy table.
    *
    * @access public
-   * @since 1.0.0
+   * @since 1.2.0
    *
-   * @param {NotificationOutput} n
-   * @returns {string}
+   * @param {RequestOptions} options - Normalized request options from the table.
+   *
+   * @returns {void}
    */
-  public iconFor(n: NotificationOutput): string {
-    return TYPE_ICONS[n.type] ?? CATEGORY_ICONS[n.category] ?? 'pi-bell';
+  public onLoad(options: RequestOptions): void {
+    this.lastLoadOptions = options;
+    this.notificationStore.loadPage({
+      page: options.page ?? 1,
+      limit: options.itemsPerPage,
+    });
   }
 
   /**
-   * Method iconBgFor
+   * Method retry
    *
    * @description
-   * Returns the Tailwind background class for a notification's category icon.
+   * Replays the failed table request without changing its page or page size.
    *
-   * @access public
-   * @since 1.0.0
+   * @access protected
+   * @since 1.2.0
    *
-   * @param {NotificationOutput} n
-   * @returns {string}
+   * @returns {void}
    */
-  public iconBgFor(n: NotificationOutput): string {
-    return CATEGORY_COLORS[n.category]?.bg ?? 'bg-surface-100';
+  protected retry(): void {
+    this.onLoad(this.lastLoadOptions);
   }
-
-  /**
-   * Method iconTextFor
-   *
-   * @description
-   * Returns the Tailwind text-color class for a notification's category icon.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {NotificationOutput} n
-   * @returns {string}
-   */
-  public iconTextFor(n: NotificationOutput): string {
-    return CATEGORY_COLORS[n.category]?.text ?? 'text-surface-500';
-  }
+  //#endregion
 }

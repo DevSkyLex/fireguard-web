@@ -169,16 +169,14 @@ export const SessionStore = signalStore(
      * Computed hasOtherSessions
      *
      * @description
-     * Quick check whether any other active sessions exist. Drives
-     * the visibility of "Revoke all other sessions" controls.
+     * Quick check whether any other active sessions exist across all pages.
+     * Drives the visibility of "Revoke all other sessions" controls.
      *
      * @since 1.0.0
      *
      * @returns {boolean}
      */
-    hasOtherSessions: computed<boolean>(() => {
-      return store.sessionEntities().some((session) => !session.isCurrent);
-    }),
+    hasOtherSessions: computed<boolean>(() => store.totalSessions() > 1),
   })),
   //#endregion
 
@@ -265,7 +263,7 @@ export const SessionStore = signalStore(
                 tapResponse({
                   next: () => {
                     patchState(store, removeEntity(sessionId, { collection: 'session' }), {
-                      totalSessions: store.totalSessions() - 1,
+                      totalSessions: Math.max(0, store.totalSessions() - 1),
                       revokeCallState: successCallState(null),
                     });
                   },
@@ -312,7 +310,7 @@ export const SessionStore = signalStore(
                         collection: 'session',
                       }),
                       {
-                        totalSessions: currentSession ? 1 : 0,
+                        totalSessions: 1,
                         revokeAllCallState: successCallState(null),
                       },
                     );

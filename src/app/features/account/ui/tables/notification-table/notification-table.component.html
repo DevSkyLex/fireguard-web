@@ -7,11 +7,25 @@
         class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
       >
         <div class="flex flex-col">
-          <h2 class="font-semibold">Active sessions</h2>
-          <p class="text-sm text-surface-500">Review and revoke access to your account.</p>
+          <h2 class="font-semibold">Notifications</h2>
+          <p class="text-sm text-surface-500">
+            @if (loading()) {
+              Loading notifications…
+            } @else {
+              {{ total() }} notification{{ total() === 1 ? '' : 's' }} across your account.
+            }
+          </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
+          @if (unreadCount() > 0) {
+            <p-tag
+              severity="info"
+              [rounded]="true"
+              [value]="unreadCount() + ' unread on this page'"
+            />
+          }
+
           <p-button
             label="Refresh"
             icon="pi pi-refresh"
@@ -22,26 +36,13 @@
             class="w-full sm:w-auto"
             (onClick)="onRefresh()"
           />
-
-          @if (hasOtherSessions()) {
-            <p-button
-              label="Revoke all other sessions"
-              icon="pi pi-sign-out"
-              severity="danger"
-              size="small"
-              [outlined]="true"
-              [loading]="revokingAll()"
-              class="w-full sm:w-auto"
-              (onClick)="revokeAll.emit()"
-            />
-          }
         </div>
       </div>
     </ng-template>
 
     <ng-template pTemplate="content">
       <p-table
-        [value]="loading() ? skeletonItems : empty() ? [] : [...sessions()]"
+        [value]="loading() ? skeletonItems : empty() ? [] : [...notifications()]"
         dataKey="id"
         [paginator]="true"
         [rows]="rows"
@@ -52,15 +53,15 @@
         (onLazyLoad)="onLazyLoad($event)"
         [rowsPerPageOptions]="rowsPerPageOptions"
         [showCurrentPageReport]="true"
-        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sessions"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} notifications"
         [stripedRows]="true"
         [pt]="tablePt"
       >
         <ng-template pTemplate="header">
           <tr>
-            <th class="min-w-64">Device</th>
-            <th class="min-w-32">IP address</th>
-            <th class="min-w-40">Last activity</th>
+            <th class="min-w-72">Notification</th>
+            <th class="min-w-28">Category</th>
+            <th class="min-w-40">Received</th>
             <th class="w-20"><span class="sr-only">Actions</span></th>
           </tr>
         </ng-template>
@@ -72,81 +73,91 @@
                 <div class="flex items-center gap-3">
                   <p-skeleton shape="circle" size="2.25rem" />
                   <div class="flex flex-col gap-1.5">
-                    <p-skeleton width="10rem" height="0.875rem" />
-                    <p-skeleton width="7rem" height="0.75rem" />
+                    <p-skeleton width="12rem" height="0.875rem" />
+                    <p-skeleton width="16rem" height="0.75rem" />
                   </div>
                 </div>
               </td>
-              <td><p-skeleton width="7rem" height="0.875rem" /></td>
+              <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
               <td><p-skeleton width="9rem" height="0.875rem" /></td>
               <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
             </tr>
           }
         </ng-template>
 
-        <ng-template pTemplate="body" let-session>
+        <ng-template pTemplate="body" let-notification>
           @if (loading()) {
             <tr>
               <td>
                 <div class="flex items-center gap-3">
                   <p-skeleton shape="circle" size="2.25rem" />
                   <div class="flex flex-col gap-1.5">
-                    <p-skeleton width="10rem" height="0.875rem" />
-                    <p-skeleton width="7rem" height="0.75rem" />
+                    <p-skeleton width="12rem" height="0.875rem" />
+                    <p-skeleton width="16rem" height="0.75rem" />
                   </div>
                 </div>
               </td>
-              <td><p-skeleton width="7rem" height="0.875rem" /></td>
+              <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
               <td><p-skeleton width="9rem" height="0.875rem" /></td>
               <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
             </tr>
           } @else {
-            <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
+            <tr
+              class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50"
+              [class.bg-primary-50]="!notification.isRead"
+              [class.dark:bg-primary-950/30]="!notification.isRead"
+            >
               <td>
                 <div class="flex min-w-0 items-center gap-3">
                   <p-avatar
-                    icon="pi pi-desktop"
+                    [icon]="'pi ' + iconFor(notification)"
                     shape="circle"
                     size="normal"
-                    class="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                    [class]="'shrink-0 ' + iconClassesFor(notification)"
+                    [title]="notification.type"
                   />
 
                   <div class="flex min-w-0 flex-col">
                     <span
                       class="flex items-center gap-2 truncate font-medium text-surface-900 dark:text-surface-100"
+                      [title]="notification.subject"
                     >
-                      {{ session.browser || 'Unknown browser' }}
-                      @if (session.isCurrent) {
+                      {{ notification.subject }}
+                      @if (!notification.isRead) {
                         <span
-                          class="inline-flex h-5 items-center rounded-full border border-primary-200 bg-primary-50 px-2 text-[0.65rem] leading-none font-semibold text-primary-700 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300"
-                        >
-                          Current
-                        </span>
+                          class="h-2 w-2 shrink-0 rounded-full bg-primary"
+                          title="Unread"
+                          aria-label="Unread"
+                        ></span>
                       }
                     </span>
-                    <span class="truncate text-xs text-surface-500">
-                      {{ session.deviceType || 'Unknown device' }}
+                    <span class="line-clamp-1 text-xs text-surface-500">
+                      {{ notification.body }}
                     </span>
                   </div>
                 </div>
               </td>
               <td>
-                <span class="text-surface-600 dark:text-surface-400">{{ session.ipAddress }}</span>
+                <span class="text-surface-600 dark:text-surface-400">
+                  {{ notification.category | titlecase }}
+                </span>
               </td>
               <td>
                 <span class="text-surface-500 dark:text-surface-400">
-                  {{ session.lastActivityAt | date: 'medium' }}
+                  {{ notification.createdAt | date: 'medium' }}
                 </span>
               </td>
               <td class="text-right">
-                <p-button
-                  icon="pi pi-ellipsis-v"
-                  severity="secondary"
-                  size="small"
-                  [outlined]="true"
-                  ariaLabel="Session actions"
-                  (onClick)="onActionMenuToggle($event, session)"
-                />
+                @if (!notification.isRead) {
+                  <p-button
+                    icon="pi pi-ellipsis-v"
+                    severity="secondary"
+                    size="small"
+                    [outlined]="true"
+                    ariaLabel="Notification actions"
+                    (onClick)="onActionMenuToggle($event, notification)"
+                  />
+                }
               </td>
             </tr>
           }
@@ -156,12 +167,12 @@
           <tr>
             <td colspan="4">
               <div class="flex flex-col items-center gap-3 py-16">
-                <i class="pi pi-desktop text-6xl text-surface-400"></i>
+                <i class="pi pi-bell text-6xl text-surface-400"></i>
                 <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
-                  No active sessions
+                  No notifications yet
                 </h3>
                 <span class="text-sm text-surface-500">
-                  There are no other active sessions on your account.
+                  Account and organization activity will show up here.
                 </span>
               </div>
             </td>

@@ -26,9 +26,12 @@
 
   <app-session-table
     [sessions]="store.sessions()"
+    [total]="store.totalSessions()"
     [loading]="store.listCallState().status === 'pending'"
+    [empty]="store.totalSessions() === 0"
     [revokingAll]="store.isRevokingAll()"
-    [hasOtherSessions]="store.hasOtherSessions()"
+    [hasOtherSessions]="store.totalSessions() > 1"
+    (load)="load($event)"
     (revokeAll)="revokeAll()"
     (details)="selectedSession.set($event)"
     (revoke)="revoke($event)"

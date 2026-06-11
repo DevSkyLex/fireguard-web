@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
+import type { RequestOptions } from '@core/services/hydra-api';
 import { TrustedDeviceTable } from '@features/account/ui/tables';
 import type { TrustedDeviceOutput } from '@features/auth/models';
 import { TrustedDeviceStore } from '@features/auth/state';
@@ -31,15 +32,18 @@ export class AccountTrustedDevicesPanel {
   private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
   /** Trusted device store exposed to the template. */
   protected readonly store: TrustedDeviceStore = inject(TrustedDeviceStore);
+  /** Last table request replayed after a list-loading error. */
+  private lastLoadOptions: RequestOptions = { page: 1, itemsPerPage: 10 };
 
-  /** Loads the initial trusted device collection. */
-  public constructor() {
-    this.reload();
+  /** Loads a trusted device page requested by the lazy table. */
+  protected load(options: RequestOptions): void {
+    this.lastLoadOptions = options;
+    this.store.loadDevices(options);
   }
 
-  /** Reloads the trusted device collection. */
+  /** Replays the failed trusted-device page request. */
   protected reload(): void {
-    this.store.loadDevices();
+    this.store.loadDevices(this.lastLoadOptions);
   }
 
   /** Confirms and revokes one trusted device. */

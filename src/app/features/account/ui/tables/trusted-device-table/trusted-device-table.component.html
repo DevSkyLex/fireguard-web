@@ -1,120 +1,164 @@
-<p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
+<div class="flex h-full flex-col bg-surface-0 dark:bg-surface-900">
+  <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
-<p-card [pt]="cardPt">
-  <ng-template pTemplate="header">
-    <div
-      class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
-    >
-      <div class="flex flex-col">
-        <h2 class="font-semibold">Trusted devices</h2>
-        <p class="text-sm text-surface-500">Devices allowed to bypass repeated MFA verification.</p>
+  <p-card [pt]="cardPt">
+    <ng-template pTemplate="header">
+      <div
+        class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
+      >
+        <div class="flex flex-col">
+          <h2 class="font-semibold">Trusted devices</h2>
+          <p class="text-sm text-surface-500">
+            Devices allowed to bypass repeated MFA verification.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <p-button
+            label="Refresh"
+            icon="pi pi-refresh"
+            severity="secondary"
+            size="small"
+            [outlined]="true"
+            [disabled]="loading()"
+            class="w-full sm:w-auto"
+            (onClick)="onRefresh()"
+          />
+
+          @if (hasDevices()) {
+            <p-button
+              label="Revoke all"
+              icon="pi pi-shield"
+              severity="danger"
+              size="small"
+              [outlined]="true"
+              [loading]="revokingAll()"
+              class="w-full sm:w-auto"
+              (onClick)="revokeAll.emit()"
+            />
+          }
+        </div>
       </div>
+    </ng-template>
 
-      @if (hasDevices()) {
-        <p-button
-          label="Revoke all"
-          icon="pi pi-shield"
-          severity="danger"
-          size="small"
-          [outlined]="true"
-          [loading]="revokingAll()"
-          class="w-full sm:w-auto"
-          (onClick)="revokeAll.emit()"
-        />
-      }
-    </div>
-  </ng-template>
-
-  <ng-template pTemplate="content">
-    <p-table
-      [value]="loading() ? skeletonItems : [...devices()]"
-      dataKey="id"
-      [stripedRows]="true"
-      [pt]="tablePt"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th class="min-w-64">Device</th>
-          <th class="min-w-36">Created</th>
-          <th class="min-w-36">Last used</th>
-          <th class="min-w-36">Expires</th>
-          <th class="w-20"><span class="sr-only">Actions</span></th>
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="body" let-device>
-        @if (loading()) {
+    <ng-template pTemplate="content">
+      <p-table
+        [value]="loading() ? skeletonItems : empty() ? [] : [...devices()]"
+        dataKey="id"
+        [paginator]="true"
+        [rows]="rows"
+        [first]="firstPage()"
+        [totalRecords]="total()"
+        [lazy]="true"
+        [loading]="loading()"
+        (onLazyLoad)="onLazyLoad($event)"
+        [rowsPerPageOptions]="rowsPerPageOptions"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} devices"
+        [stripedRows]="true"
+        [pt]="tablePt"
+      >
+        <ng-template pTemplate="header">
           <tr>
-            <td>
-              <div class="flex items-center gap-3">
-                <p-skeleton shape="circle" size="2.25rem" />
-                <p-skeleton width="10rem" height="0.875rem" />
-              </div>
-            </td>
-            <td><p-skeleton width="8rem" height="0.875rem" /></td>
-            <td><p-skeleton width="8rem" height="0.875rem" /></td>
-            <td><p-skeleton width="8rem" height="0.875rem" /></td>
-            <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
+            <th class="min-w-64">Device</th>
+            <th class="min-w-36">Created</th>
+            <th class="min-w-36">Last used</th>
+            <th class="min-w-36">Expires</th>
+            <th class="w-20"><span class="sr-only">Actions</span></th>
           </tr>
-        } @else {
-          <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
-            <td>
-              <div class="flex min-w-0 items-center gap-3">
-                <p-avatar
-                  icon="pi pi-shield"
-                  shape="circle"
-                  size="normal"
-                  class="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+        </ng-template>
+
+        <ng-template pTemplate="loadingbody">
+          @for (_ of skeletonItems; track $index) {
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <p-skeleton shape="circle" size="2.25rem" />
+                  <p-skeleton width="10rem" height="0.875rem" />
+                </div>
+              </td>
+              <td><p-skeleton width="8rem" height="0.875rem" /></td>
+              <td><p-skeleton width="8rem" height="0.875rem" /></td>
+              <td><p-skeleton width="8rem" height="0.875rem" /></td>
+              <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
+            </tr>
+          }
+        </ng-template>
+
+        <ng-template pTemplate="body" let-device>
+          @if (loading()) {
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <p-skeleton shape="circle" size="2.25rem" />
+                  <p-skeleton width="10rem" height="0.875rem" />
+                </div>
+              </td>
+              <td><p-skeleton width="8rem" height="0.875rem" /></td>
+              <td><p-skeleton width="8rem" height="0.875rem" /></td>
+              <td><p-skeleton width="8rem" height="0.875rem" /></td>
+              <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
+            </tr>
+          } @else {
+            <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
+              <td>
+                <div class="flex min-w-0 items-center gap-3">
+                  <p-avatar
+                    icon="pi pi-shield"
+                    shape="circle"
+                    size="normal"
+                    class="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                  />
+                  <span class="truncate font-medium text-surface-900 dark:text-surface-100">
+                    {{ device.name }}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <span class="text-surface-500 dark:text-surface-400">
+                  {{ device.createdAt | date: 'medium' }}
+                </span>
+              </td>
+              <td>
+                <span class="text-surface-500 dark:text-surface-400">
+                  {{ device.lastUsedAt | date: 'medium' }}
+                </span>
+              </td>
+              <td>
+                <span class="text-surface-500 dark:text-surface-400">
+                  {{ device.expiresAt | date: 'medium' }}
+                </span>
+              </td>
+              <td class="text-right">
+                <p-button
+                  icon="pi pi-ellipsis-v"
+                  severity="secondary"
+                  size="small"
+                  [outlined]="true"
+                  ariaLabel="Trusted device actions"
+                  (onClick)="onActionMenuToggle($event, device)"
                 />
-                <span class="truncate font-medium text-surface-900 dark:text-surface-100">
-                  {{ device.name }}
+              </td>
+            </tr>
+          }
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5">
+              <div class="flex flex-col items-center gap-3 py-16">
+                <i class="pi pi-shield text-6xl text-surface-400"></i>
+                <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
+                  No trusted devices
+                </h3>
+                <span class="text-sm text-surface-500">
+                  Devices you mark as trusted during sign-in will appear here.
                 </span>
               </div>
             </td>
-            <td>
-              <span class="text-surface-500 dark:text-surface-400">
-                {{ device.createdAt | date: 'medium' }}
-              </span>
-            </td>
-            <td>
-              <span class="text-surface-500 dark:text-surface-400">
-                {{ device.lastUsedAt | date: 'medium' }}
-              </span>
-            </td>
-            <td>
-              <span class="text-surface-500 dark:text-surface-400">
-                {{ device.expiresAt | date: 'medium' }}
-              </span>
-            </td>
-            <td class="text-right">
-              <p-button
-                icon="pi pi-ellipsis-v"
-                severity="secondary"
-                size="small"
-                [outlined]="true"
-                ariaLabel="Trusted device actions"
-                (onClick)="onActionMenuToggle($event, device)"
-              />
-            </td>
           </tr>
-        }
-      </ng-template>
-
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="5">
-            <div class="flex flex-col items-center gap-3 py-16">
-              <i class="pi pi-shield text-6xl text-surface-400"></i>
-              <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
-                No trusted devices
-              </h3>
-              <span class="text-sm text-surface-500">
-                Devices you mark as trusted during sign-in will appear here.
-              </span>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </ng-template>
-</p-card>
+        </ng-template>
+      </p-table>
+    </ng-template>
+  </p-card>
+</div>

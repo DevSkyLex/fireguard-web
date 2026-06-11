@@ -26,9 +26,12 @@
 
   <app-trusted-device-table
     [devices]="store.devices()"
+    [total]="store.totalDevices()"
     [loading]="store.listCallState().status === 'pending'"
+    [empty]="store.totalDevices() === 0"
     [revokingAll]="store.isRevokingAll()"
-    [hasDevices]="store.hasDevices()"
+    [hasDevices]="store.totalDevices() > 0"
+    (load)="load($event)"
     (revokeAll)="revokeAll()"
     (revoke)="revoke($event)"
   />

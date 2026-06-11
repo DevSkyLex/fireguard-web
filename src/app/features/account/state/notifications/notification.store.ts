@@ -450,6 +450,62 @@ export const NotificationStore = signalStore(
         ),
 
         /**
+         * Method loadPage
+         *
+         * @description
+         * Loads a specific notification page and **replaces** the entity
+         * collection, for paginated table consumption. Unlike `load`, the
+         * requested page is honored; unlike `loadMore`, results are not
+         * appended.
+         *
+         * @fires notificationStoreEvents.loadFailed  On API error.
+         *
+         * @since 1.2.0
+         *
+         * @param {NotificationListOptions} options - List options (page, limit).
+         */
+        loadPage: rxMethod<NotificationListOptions>(
+          pipe(
+            tap(() => patchState(store, { listCallState: pendingCallState() })),
+            switchMap((options) => {
+              const activeFilter: NotificationFilter | null = store.activeFilter();
+              const page: number = options.page ?? 1;
+              const mergedOptions: NotificationListOptions = {
+                limit: store.itemsPerPage(),
+                ...activeFilter,
+                ...options,
+                page,
+              };
+              return notificationService.list(mergedOptions).pipe(
+                tapResponse({
+                  next: (response: HydraCollection<NotificationOutput>) => {
+                    patchState(
+                      store,
+                      setAllEntities([...response.member], { collection: 'notification' }),
+                      {
+                        totalNotifications: response.totalItems,
+                        currentPage: page,
+                        itemsPerPage: options.limit ?? store.itemsPerPage(),
+                        listCallState: successCallState(null),
+                      },
+                    );
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { listCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      notificationStoreEvents.loadFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to load notifications'),
+                      ),
+                    );
+                  },
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /**
          * Method loadMore
          *
          * @description
@@ -572,9 +628,13 @@ export const NotificationStore = signalStore(
               notificationService.markAsRead(id).pipe(
                 tapResponse({
                   next: (updated: NotificationOutput) => {
-                    patchState(store, setEntity(updated, { collection: 'notification' }), {
-                      markAsReadCallState: successCallState(updated),
-                    });
+                    if (store.notificationEntityMap()[updated.id]) {
+                      patchState(store, setEntity(updated, { collection: 'notification' }), {
+                        markAsReadCallState: successCallState(updated),
+                      });
+                    } else {
+                      patchState(store, { markAsReadCallState: successCallState(updated) });
+                    }
                   },
                   error: (error: unknown) => {
                     const storeError: StoreError = toStoreError(error);
@@ -593,6 +653,28 @@ export const NotificationStore = signalStore(
             ),
           ),
         ),
+
+        /**
+         * Method synchronizeNotification
+         *
+         * @description
+         * Replaces a notification only when it is already present in the
+         * current collection. This synchronizes isolated notification views
+         * without inserting a row that belongs to another paginated page.
+         *
+         * @since 1.2.0
+         *
+         * @param {NotificationOutput} notification - Updated notification.
+         *
+         * @returns {void}
+         */
+        synchronizeNotification(notification: NotificationOutput): void {
+          if (!store.notificationEntityMap()[notification.id]) {
+            return;
+          }
+
+          patchState(store, setEntity(notification, { collection: 'notification' }));
+        },
 
         /**
          * Method clear

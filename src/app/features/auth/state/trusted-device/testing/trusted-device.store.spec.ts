@@ -68,6 +68,7 @@ describe('TrustedDeviceStore', () => {
 
     expect(store.listCallState().status).toBe('success');
     expect(store.devices()).toEqual([device1, device2]);
+    expect(store.totalDevices()).toBe(2);
     expect(store.deviceCount()).toBe(2);
     expect(store.hasDevices()).toBe(true);
   });
@@ -94,6 +95,7 @@ describe('TrustedDeviceStore', () => {
     expect(mockTrustedDeviceService.revoke).toHaveBeenCalledWith('device-1');
     expect(store.revokeCallState().status).toBe('success');
     expect(store.devices()).toEqual([device2]);
+    expect(store.totalDevices()).toBe(1);
   });
 
   it('should revoke all devices and clear local collection', async () => {
@@ -107,6 +109,7 @@ describe('TrustedDeviceStore', () => {
 
     expect(store.revokeAllCallState().status).toBe('success');
     expect(store.devices()).toEqual([]);
+    expect(store.totalDevices()).toBe(0);
     expect(store.hasDevices()).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 import { makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/models/api';
 import { MercureService } from '@core/services/mercure';
 import { NotificationService } from '@features/account/data-access';
@@ -32,6 +32,20 @@ describe('NotificationStore', () => {
     '@type': 'Collection',
     totalItems: 1,
     member: [notification],
+  };
+
+  const otherNotification: NotificationOutput = {
+    ...notification,
+    '@id': '/api/notifications/2',
+    id: '2',
+    subject: 'Other subject',
+  };
+
+  const otherNotificationCollection: HydraCollection<NotificationOutput> = {
+    '@id': '/api/notifications?page=2',
+    '@type': 'Collection',
+    totalItems: 2,
+    member: [otherNotification],
   };
 
   const notificationTypes: ReadonlyArray<NotificationTypeOutput> = [
@@ -150,5 +164,41 @@ describe('NotificationStore', () => {
     await store.initialize();
 
     expect(mockNotificationService.list).toHaveBeenCalledTimes(1);
+  });
+
+  it('should load and replace a specific page for table pagination', async () => {
+    mockNotificationService.list.mockReturnValue(of(notificationCollection));
+
+    store.loadPage({ page: 2, limit: 10 });
+    await Promise.resolve();
+
+    expect(mockNotificationService.list).toHaveBeenCalledWith({ page: 2, limit: 10 });
+    expect(store.notifications()).toEqual([notification]);
+    expect(store.currentPage()).toBe(2);
+    expect(store.itemsPerPage()).toBe(10);
+  });
+
+  it('should not insert a delayed mark-as-read response into another page', async () => {
+    const markAsReadResponse = new Subject<NotificationOutput>();
+    const updatedNotification: NotificationOutput = {
+      ...notification,
+      isRead: true,
+      readAt: '2026-04-15T11:00:00Z',
+    };
+    mockNotificationService.list
+      .mockReturnValueOnce(of(notificationCollection))
+      .mockReturnValueOnce(of(otherNotificationCollection));
+    mockNotificationService.markAsRead.mockReturnValue(markAsReadResponse);
+
+    store.loadPage({ page: 1, limit: 10 });
+    await Promise.resolve();
+    store.markAsRead(notification.id);
+    store.loadPage({ page: 2, limit: 10 });
+    await Promise.resolve();
+    markAsReadResponse.next(updatedNotification);
+    await Promise.resolve();
+
+    expect(store.notifications()).toEqual([otherNotification]);
+    expect(store.markAsReadCallState().data).toEqual(updatedNotification);
   });
 });

@@ -3,9 +3,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
-import { AvatarModule } from 'primeng/avatar';
+import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
+import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { DividerModule } from 'primeng/divider';
-import { MenuModule } from 'primeng/menu';
+import { MenuModule, type MenuPassThroughOptions } from 'primeng/menu';
 import { TagModule } from 'primeng/tag';
 import { map } from 'rxjs';
 import { NotificationStore, UserStore } from '@features/account/state';
@@ -35,6 +36,7 @@ import { ACCOUNT_TABS, type AccountNavItem, type AccountTab } from './models';
   imports: [
     DatePipe,
     AvatarModule,
+    CardModule,
     DividerModule,
     MenuModule,
     TagModule,
@@ -44,24 +46,6 @@ import { ACCOUNT_TABS, type AccountNavItem, type AccountTab } from './models';
     AccountNotificationsPanel,
   ],
   templateUrl: './account-page.component.html',
-  styles: `
-    :host ::ng-deep .account-nav-item-active > .p-menu-item-content {
-      position: relative;
-      background: var(--p-menu-item-focus-background);
-      font-weight: 600;
-    }
-
-    :host ::ng-deep .account-nav-item-active > .p-menu-item-content::before {
-      content: '';
-      position: absolute;
-      left: -0.5rem;
-      top: 0.375rem;
-      bottom: 0.375rem;
-      width: 0.25rem;
-      border-radius: 9999px;
-      background: var(--p-primary-color);
-    }
-  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountPage {
@@ -195,6 +179,67 @@ export class AccountPage {
   );
 
   /**
+   * Property headerAvatarPt
+   * @readonly
+   *
+   * @description
+   * Pass-through options of the header avatar: larger rounded surface with
+   * a subtle ring, matching the GitHub-profile-style header.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {AvatarPassThroughOptions}
+   */
+  protected readonly headerAvatarPt: AvatarPassThroughOptions = {
+    root: {
+      class:
+        'h-16 w-16 text-xl ring-1 ring-surface-200 dark:ring-surface-700 ring-offset-2 ring-offset-surface-0 dark:ring-offset-surface-950',
+    },
+  };
+
+  /**
+   * Property navMenuPt
+   * @readonly
+   *
+   * @description
+   * Pass-through options of the section navigation menu: borderless,
+   * transparent and full-width to blend into the page like a settings
+   * sidebar.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {MenuPassThroughOptions}
+   */
+  protected readonly navMenuPt: MenuPassThroughOptions = {
+    root: { class: 'w-full border-0 bg-transparent p-0' },
+    list: { class: 'flex flex-col gap-0.5 p-0' },
+    itemIcon: { class: 'text-surface-500 dark:text-surface-400' },
+  };
+
+  /**
+   * Property sectionCardPt
+   * @readonly
+   *
+   * @description
+   * Pass-through options of the section content card, matching the
+   * bordered flat surface used by the account tables.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {CardPassThroughOptions}
+   */
+  protected readonly sectionCardPt: CardPassThroughOptions = {
+    root: {
+      class:
+        'border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
+    },
+    body: { class: 'p-6' },
+  };
+
+  /**
    * Property menuItems
    * @readonly
    *
@@ -217,7 +262,12 @@ export class AccountPage {
           item.id === 'notifications' && this.notificationStore.hasUnread()
             ? String(this.notificationStore.unreadCount())
             : undefined,
-        styleClass: this.activeTab() === item.id ? 'account-nav-item-active' : undefined,
+        styleClass:
+          this.activeTab() === item.id
+            ? 'relative before:absolute before:-left-2 before:inset-y-1.5 before:w-1 before:rounded-full before:bg-primary ' +
+              '[&>.p-menu-item-content]:bg-surface-100 dark:[&>.p-menu-item-content]:bg-surface-800 ' +
+              '[&_.p-menu-item-label]:font-semibold [&_.p-menu-item-label]:text-surface-900 dark:[&_.p-menu-item-label]:text-surface-50'
+            : undefined,
         command: (): void => this.onTabChange(item.id),
       }),
     ),

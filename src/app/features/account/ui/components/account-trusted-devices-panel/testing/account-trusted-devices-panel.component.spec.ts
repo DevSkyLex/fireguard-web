@@ -33,10 +33,24 @@ describe('AccountTrustedDevicesPanel', () => {
     return { component, mockTrustedDeviceStore, mockConfirmationService };
   };
 
-  it('should load devices on construction', () => {
-    const { mockTrustedDeviceStore } = setup();
+  it('should forward lazy table load requests to the store', () => {
+    const { component, mockTrustedDeviceStore } = setup();
 
-    expect(mockTrustedDeviceStore.loadDevices).toHaveBeenCalledTimes(1);
+    (component as unknown as { load: (o: object) => void }).load({ page: 2, itemsPerPage: 10 });
+
+    expect(mockTrustedDeviceStore.loadDevices).toHaveBeenCalledWith({ page: 2, itemsPerPage: 10 });
+  });
+
+  it('should retry the last requested page', () => {
+    const { component, mockTrustedDeviceStore } = setup();
+
+    (component as unknown as { load: (o: object) => void }).load({ page: 3, itemsPerPage: 20 });
+    (component as unknown as { reload: () => void }).reload();
+
+    expect(mockTrustedDeviceStore.loadDevices).toHaveBeenLastCalledWith({
+      page: 3,
+      itemsPerPage: 20,
+    });
   });
 
   it('should confirm before revoking a device', () => {

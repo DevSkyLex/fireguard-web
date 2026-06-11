@@ -19,6 +19,19 @@ import type { CallState } from '@core/state/request-state';
 export interface TrustedDeviceState {
   //#region Properties
   /**
+   * Property totalDevices
+   * @readonly
+   *
+   * @description
+   * Total number of trusted devices across all pages.
+   *
+   * @since 2.1.0
+   *
+   * @type {number}
+   */
+  readonly totalDevices: number;
+
+  /**
    * Property listCallState
    * @readonly
    *

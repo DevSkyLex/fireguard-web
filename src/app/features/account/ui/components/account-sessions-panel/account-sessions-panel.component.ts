@@ -9,6 +9,7 @@ import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
+import type { RequestOptions } from '@core/services/hydra-api';
 import { SessionTable } from '@features/account/ui/tables';
 import type { SessionOutput } from '@features/auth/models';
 import { SessionStore } from '@features/auth/state';
@@ -40,15 +41,18 @@ export class AccountSessionsPanel {
   protected readonly store: SessionStore = inject(SessionStore);
   /** Session selected for detail display. */
   protected readonly selectedSession: WritableSignal<SessionOutput | null> = signal(null);
+  /** Last table request replayed after a list-loading error. */
+  private lastLoadOptions: RequestOptions = { page: 1, itemsPerPage: 10 };
 
-  /** Loads the initial active session collection. */
-  public constructor() {
-    this.reload();
+  /** Loads a session page requested by the lazy table. */
+  protected load(options: RequestOptions): void {
+    this.lastLoadOptions = options;
+    this.store.loadSessions(options);
   }
 
-  /** Reloads the active session collection. */
+  /** Replays the failed session-page request. */
   protected reload(): void {
-    this.store.loadSessions({ itemsPerPage: 30 });
+    this.store.loadSessions(this.lastLoadOptions);
   }
 
   /** Confirms and revokes one active session. */

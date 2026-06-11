@@ -35,10 +35,21 @@ describe('AccountSessionsPanel', () => {
     return { component, mockSessionStore, mockConfirmationService };
   };
 
-  it('should load sessions on construction', () => {
-    const { mockSessionStore } = setup();
+  it('should forward lazy table load requests to the store', () => {
+    const { component, mockSessionStore } = setup();
 
-    expect(mockSessionStore.loadSessions).toHaveBeenCalledWith({ itemsPerPage: 30 });
+    (component as unknown as { load: (o: object) => void }).load({ page: 2, itemsPerPage: 10 });
+
+    expect(mockSessionStore.loadSessions).toHaveBeenCalledWith({ page: 2, itemsPerPage: 10 });
+  });
+
+  it('should retry the last requested page', () => {
+    const { component, mockSessionStore } = setup();
+
+    (component as unknown as { load: (o: object) => void }).load({ page: 3, itemsPerPage: 20 });
+    (component as unknown as { reload: () => void }).reload();
+
+    expect(mockSessionStore.loadSessions).toHaveBeenLastCalledWith({ page: 3, itemsPerPage: 20 });
   });
 
   it('should confirm before revoking a non-current session', () => {

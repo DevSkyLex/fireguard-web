@@ -4,13 +4,14 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import type { EquipmentMaintenanceLogOutput } from '@features/organization/features/equipments/models';
+import { EmptyState } from '@shared/components';
 
 /**
  * Read-only table presenting equipment maintenance log entries.
  */
 @Component({
   selector: 'app-equipment-maintenance-log-table',
-  imports: [DatePipe, SkeletonModule, TableModule, TagModule],
+  imports: [DatePipe, EmptyState, SkeletonModule, TableModule, TagModule],
   templateUrl: './equipment-maintenance-log-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

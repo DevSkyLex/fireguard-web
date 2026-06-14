@@ -158,25 +158,9 @@ export class AccountPage {
       id: 'notifications',
       label: 'Notifications',
       icon: 'pi pi-bell',
-      description: 'Choose how and when you want to be notified.',
+      description: 'Account and organization activity in one place.',
     },
   ];
-
-  /**
-   * Property activeNavItem
-   * @readonly
-   *
-   * @description
-   * Navigation entry matching the active tab, used for the section heading.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<AccountNavItem>}
-   */
-  protected readonly activeNavItem: Signal<AccountNavItem> = computed(
-    () => this.navItems.find((item) => item.id === this.activeTab()) ?? this.navItems[0],
-  );
 
   /**
    * Property headerAvatarPt

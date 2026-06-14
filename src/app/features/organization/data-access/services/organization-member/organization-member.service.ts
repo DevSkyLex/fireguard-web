@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { EMPTY, expand, reduce, type Observable } from 'rxjs';
 import type { HydraCollection } from '@core/models/api';
 import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
@@ -67,6 +67,27 @@ export class OrganizationMemberService extends HydraApiService {
   ): Observable<HydraCollection<OrganizationMemberOutput>> {
     const url: string = `/api/organizations/${organizationId}/members`;
     return this.getCollection<OrganizationMemberOutput>(url, options);
+  }
+
+  /**
+   * Lists every member by consuming the server-paginated collection.
+   */
+  public listAll(
+    organizationId: string,
+    options?: RequestOptions,
+  ): Observable<readonly OrganizationMemberOutput[]> {
+    const pageSize = 100;
+    return this.list(organizationId, { ...options, page: 1, itemsPerPage: pageSize }).pipe(
+      expand((collection, pageIndex) =>
+        (pageIndex + 1) * pageSize < collection.totalItems
+          ? this.list(organizationId, { ...options, page: pageIndex + 2, itemsPerPage: pageSize })
+          : EMPTY,
+      ),
+      reduce(
+        (items, collection) => [...items, ...collection.member],
+        [] as readonly OrganizationMemberOutput[],
+      ),
+    );
   }
 
   /**

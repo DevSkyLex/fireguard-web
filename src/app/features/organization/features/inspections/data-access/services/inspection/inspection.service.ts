@@ -29,6 +29,18 @@ import type {
 @Injectable({ providedIn: 'root' })
 export class InspectionService extends HydraApiService {
   //#region Constants
+  /**
+   * Property BASE_PATH
+   * @readonly
+   *
+   * @description
+   * Provides the base path value.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
   private static readonly BASE_PATH: string = '/api/organizations';
   //#endregion
 
@@ -74,18 +86,74 @@ export class InspectionService extends HydraApiService {
   }
   //#endregion
 
+  /**
+   * Method listStatuses
+   * @method listStatuses
+   *
+   * @description
+   * Executes the list statuses operation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {RequestOptions} [options] - options value.
+   *
+   * @return {Observable<HydraCollection<OptionOutput>>} Result of the list statuses operation.
+   */
   public listStatuses(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
     return this.getCollection<OptionOutput>('/api/inspections/statuses', options);
   }
 
+  /**
+   * Method listResults
+   * @method listResults
+   *
+   * @description
+   * Executes the list results operation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {RequestOptions} [options] - options value.
+   *
+   * @return {Observable<HydraCollection<OptionOutput>>} Result of the list results operation.
+   */
   public listResults(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
     return this.getCollection<OptionOutput>('/api/inspections/results', options);
   }
 
+  /**
+   * Method listInspectorTypes
+   * @method listInspectorTypes
+   *
+   * @description
+   * Executes the list inspector types operation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {RequestOptions} [options] - options value.
+   *
+   * @return {Observable<HydraCollection<OptionOutput>>} Result of the list inspector types operation.
+   */
   public listInspectorTypes(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
     return this.getCollection<OptionOutput>('/api/inspections/inspector-types', options);
   }
 
+  /**
+   * Method listNonConformityStatuses
+   * @method listNonConformityStatuses
+   *
+   * @description
+   * Executes the list non conformity statuses operation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {RequestOptions} [options] - options value.
+   *
+   * @return {Observable<HydraCollection<OptionOutput>>} Result of the list non conformity statuses operation.
+   */
   public listNonConformityStatuses(
     options?: RequestOptions,
   ): Observable<HydraCollection<OptionOutput>> {
@@ -207,6 +275,43 @@ export class InspectionService extends HydraApiService {
       this.inspectionPath(organizationId),
       input,
     );
+  }
+
+  /**
+   * Method createForMission
+   * @method createForMission
+   *
+   * @description
+   * Executes the create for mission operation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - organization Id value.
+   * @param {string} missionId - mission Id value.
+   * @param {CreateInspectionInput} input - input value.
+   *
+   * @return {Observable<InspectionOutput>} Result of the create for mission operation.
+   */
+  public createForMission(
+    organizationId: string,
+    missionId: string,
+    input: CreateInspectionInput,
+  ): Observable<InspectionOutput> {
+    const payload: CreateInspectionInput = {
+      ...input,
+      organization: `/api/organizations/${organizationId}`,
+      mission: `/api/missions/${missionId}`,
+    };
+    if (input.clientId) {
+      return this.put<CreateInspectionInput, InspectionOutput>(
+        `/api/inspections/${input.clientId}`,
+        payload,
+        { headers: { 'If-None-Match': '*' } },
+      );
+    }
+
+    return this.post<CreateInspectionInput, InspectionOutput>('/api/inspections', payload);
   }
 
   /**

@@ -41,6 +41,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/services/hydra-api';
 import type { OrganizationOutput } from '@features/organization/models';
+import { EmptyState } from '@shared/components';
 import { ORGANIZATION_DATAVIEW_LAYOUT_OPTIONS } from './options';
 
 /**
@@ -70,6 +71,7 @@ import { ORGANIZATION_DATAVIEW_LAYOUT_OPTIONS } from './options';
     ButtonModule,
     CardModule,
     DataViewModule,
+    EmptyState,
     IconFieldModule,
     InputIconModule,
     InputTextModule,
@@ -189,21 +191,25 @@ export class OrganizationDataview implements OnInit {
    * @access protected
    * @since 1.1.0
    *
-   * @type {DataViewPassThroughOptions}
+   * @type {Signal<DataViewPassThroughOptions>}
    */
-  protected readonly dataviewPt: DataViewPassThroughOptions = {
-    root: {
-      class: 'flex flex-col flex-1 min-h-0 bg-surface-0 dark:bg-surface-950',
-    },
-    content: {
-      class: 'flex-1 min-h-0 overflow-auto bg-surface-0 dark:bg-surface-950',
-    },
-    pcPaginator: {
+  protected readonly dataviewPt: Signal<DataViewPassThroughOptions> = computed(
+    (): DataViewPassThroughOptions => ({
       root: {
-        class: 'rounded-none justify-end bg-surface-0 dark:bg-surface-950',
+        class: 'flex flex-col flex-1 min-h-0 bg-surface-0 dark:bg-surface-950',
       },
-    },
-  };
+      content: {
+        class: 'flex-1 min-h-0 overflow-auto bg-surface-0 dark:bg-surface-950',
+      },
+      pcPaginator: {
+        root: {
+          class:
+            'rounded-none justify-end bg-surface-0 dark:bg-surface-950' +
+            (this.total() === 0 ? ' hidden' : ''),
+        },
+      },
+    }),
+  );
 
   /**
    * Property rows
@@ -602,10 +608,36 @@ export class OrganizationDataview implements OnInit {
    * @returns {void}
    */
   public onItemMenuToggle(event: MouseEvent, organization: OrganizationOutput): void {
+    // The toggle button sits inside a clickable item: stop the event
+    // here so it does not bubble up and trigger the item navigation.
+    event.stopPropagation();
     this.selectedOrganization.set(organization);
 
     const menu: Menu = this.rowMenu();
     menu.toggle(event);
+  }
+
+  /**
+   * Method onItemKeydown
+   * @method onItemKeydown
+   *
+   * @description
+   * Keyboard activation of a clickable item. Ignores key events bubbling
+   * from interactive children (e.g. the row menu button) so opening the
+   * menu with the keyboard never triggers the item navigation.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {Event} event - The keydown event from the item element.
+   * @param {OrganizationOutput} organization - The targeted organization.
+   *
+   * @returns {void}
+   */
+  protected onItemKeydown(event: Event, organization: OrganizationOutput): void {
+    if (event.target !== event.currentTarget) return;
+    event.preventDefault();
+    this.view.emit(organization);
   }
 
   /**

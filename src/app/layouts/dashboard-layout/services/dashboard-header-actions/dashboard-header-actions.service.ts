@@ -36,9 +36,7 @@ export class DashboardHeaderActionsService {
    */
   public readonly actions: TopbarContribution[] = (
     inject(TOPBAR_SLOT, { optional: true }) ?? []
-  ).toSorted(
-    (a: TopbarContribution, b: TopbarContribution): number => a.order - b.order,
-  );
+  ).toSorted((a: TopbarContribution, b: TopbarContribution): number => a.order - b.order);
 
   /**
    * Property components
@@ -59,4 +57,3 @@ export class DashboardHeaderActionsService {
 
   //#endregion
 }
-

@@ -1,0 +1,256 @@
+<section class="flex min-h-0 flex-1 flex-col gap-5">
+  <input
+    #scanInput
+    type="file"
+    accept="image/*"
+    capture="environment"
+    hidden
+    (change)="captureScan($event)"
+  />
+  <input
+    #photoInput
+    type="file"
+    accept="image/*"
+    capture="environment"
+    hidden
+    (change)="capturePhoto($event)"
+  />
+
+  @if (fieldMessage(); as message) {
+    <p-message severity="info" [closable]="false">{{ message }}</p-message>
+  }
+
+  @if (nextWorkItem(); as next) {
+    <div
+      class="rounded-xl border border-primary-200 bg-primary-50 p-5 dark:border-primary-900 dark:bg-primary-950"
+    >
+      <p
+        class="text-xs font-semibold tracking-wide text-primary-700 uppercase dark:text-primary-300"
+      >
+        Next recommended action
+      </p>
+      <div class="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 class="text-xl font-semibold capitalize">{{ next.action.replace('_', ' ') }}</h2>
+          <p class="mt-1 text-sm text-surface-600 dark:text-surface-300">
+            {{ next.target || 'Site-level work item' }}
+          </p>
+        </div>
+        <p-button
+          [label]="next.status === 'in_progress' ? 'Complete' : 'Start work'"
+          [icon]="next.status === 'in_progress' ? 'pi pi-check' : 'pi pi-play'"
+          [loading]="saving()"
+          (onClick)="
+            updateWorkItem.emit({
+              workItemId: next.id,
+              status: next.status === 'in_progress' ? 'completed' : 'in_progress',
+            })
+          "
+        />
+      </div>
+    </div>
+  } @else {
+    <p-message severity="success">All prepared work items are complete or skipped.</p-message>
+  }
+
+  <div class="grid grid-cols-2 gap-3 sm:flex">
+    <p-button
+      class="block"
+      styleClass="w-full sm:w-auto"
+      label="Scan QR"
+      icon="pi pi-qrcode"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="saving() || !scanSupported()"
+      (onClick)="scanInput.click()"
+    />
+    <p-button
+      class="block"
+      styleClass="w-full sm:w-auto"
+      label="Add discovery"
+      icon="pi pi-plus"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="saving()"
+      (onClick)="discoveryDrawerVisible.set(true)"
+    />
+  </div>
+
+  <div
+    class="min-h-0 flex-1 rounded-xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-950"
+  >
+    <div class="mb-4 flex items-center justify-between gap-4">
+      <div>
+        <h2 class="font-semibold">Field work</h2>
+        <p class="mt-1 text-sm text-surface-500">
+          {{ progress() }}% complete · {{ workItems().length }} task(s)
+        </p>
+      </div>
+      <p-tag [value]="mission().status.replace('_', ' ')" severity="info" />
+    </div>
+
+    <p-scroller [items]="scrollerItems()" [itemSize]="84" scrollHeight="min(54vh, 36rem)">
+      <ng-template pTemplate="item" let-item>
+        <article
+          class="mr-2 flex min-h-20 items-center justify-between gap-3 border-b border-surface-200 py-3 dark:border-surface-800"
+        >
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <p class="truncate font-medium capitalize">{{ item.action.replace('_', ' ') }}</p>
+              @if (item.source === 'discovered') {
+                <p-tag value="Discovered" severity="warn" />
+              }
+            </div>
+            <p class="mt-1 truncate text-sm text-surface-500">
+              {{ item.target || 'Site-level work item' }}
+            </p>
+          </div>
+          <div class="flex shrink-0 items-center gap-2">
+            <p-tag
+              [value]="item.status.replace('_', ' ')"
+              [severity]="
+                item.status === 'completed'
+                  ? 'success'
+                  : item.status === 'skipped'
+                    ? 'warn'
+                    : 'secondary'
+              "
+            />
+            @if (isEquipmentTarget(item.target)) {
+              <p-button
+                icon="pi pi-camera"
+                severity="secondary"
+                [text]="true"
+                [disabled]="saving()"
+                ariaLabel="Add evidence photo"
+                (onClick)="openPhotoCapture(item, photoInput)"
+              />
+            }
+            @if (item.status !== 'completed' && item.status !== 'skipped') {
+              <p-button
+                icon="pi pi-forward"
+                severity="secondary"
+                [text]="true"
+                ariaLabel="Skip work item"
+                (onClick)="openSkip(item)"
+              />
+            }
+          </div>
+        </article>
+      </ng-template>
+    </p-scroller>
+  </div>
+
+  <div
+    class="sticky bottom-0 z-10 flex items-center justify-between gap-3 border-t border-surface-200 bg-surface-0/95 py-3 backdrop-blur dark:border-surface-800 dark:bg-surface-950/95"
+  >
+    <p class="text-sm text-surface-500">
+      {{
+        canSubmit()
+          ? 'Submit once every work item is resolved.'
+          : 'Only the responsible agent can submit the mission.'
+      }}
+    </p>
+    <p-button
+      label="Submit for review"
+      icon="pi pi-send"
+      [loading]="saving()"
+      [disabled]="!canSubmit() || progress() < 100"
+      (onClick)="submitMission.emit()"
+    />
+  </div>
+</section>
+
+<p-drawer
+  [(visible)]="skipDrawerVisible"
+  position="bottom"
+  [style]="{ height: 'min(28rem, 80dvh)' }"
+  header="Skip work item"
+>
+  <div class="flex h-full flex-col gap-4">
+    <p class="text-sm text-surface-600 dark:text-surface-300">
+      Explain why this work cannot be completed. The manager will review this reason before
+      publication.
+    </p>
+    <textarea
+      class="min-h-32 w-full rounded-md border border-surface-300 bg-surface-0 p-3 outline-none focus:border-primary dark:border-surface-700 dark:bg-surface-950"
+      [value]="skipReason()"
+      (input)="skipReason.set($any($event.target).value)"
+      placeholder="Required reason"
+    ></textarea>
+    <p-button
+      class="mt-auto"
+      styleClass="w-full"
+      label="Confirm skip"
+      icon="pi pi-forward"
+      [disabled]="!skipReason().trim()"
+      (onClick)="confirmSkip()"
+    />
+  </div>
+</p-drawer>
+
+<p-drawer
+  [(visible)]="discoveryDrawerVisible"
+  position="bottom"
+  [style]="{ height: 'min(30rem, 90dvh)' }"
+  header="Add field discovery"
+>
+  <div class="flex h-full flex-col gap-5">
+    <p class="text-sm text-surface-600 dark:text-surface-300">
+      Record work that was not part of the prepared scope. It will be highlighted during review.
+    </p>
+    <label class="grid gap-2 text-sm font-medium">
+      Action
+      <p-select
+        [options]="[...actionOptions]"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="discoveryAction()"
+        (onChange)="discoveryAction.set($event.value)"
+      />
+    </label>
+    <label class="grid gap-2 text-sm font-medium">
+      {{
+        discoveryAction() === 'site_setup'
+          ? 'Facility name'
+          : discoveryAction() === 'inventory'
+            ? 'Equipment type'
+            : 'Equipment resource'
+      }}
+      <input
+        type="text"
+        class="rounded-md border border-surface-300 bg-transparent px-3 py-2.5 outline-none focus:border-primary dark:border-surface-700"
+        [value]="discoveryTarget()"
+        [placeholder]="
+          discoveryAction() === 'site_setup'
+            ? 'Example: Electrical room'
+            : discoveryAction() === 'inventory'
+              ? 'Example: fire_extinguisher'
+              : '/api/equipment/...'
+        "
+        (input)="discoveryTarget.set($any($event.target).value)"
+      />
+    </label>
+    @if (discoveryAction() === 'inspection') {
+      <label class="grid gap-2 text-sm font-medium">
+        Initial result
+        <p-select
+          [options]="[...resultOptions]"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="discoveryResult()"
+          (onChange)="discoveryResult.set($event.value)"
+        />
+      </label>
+    }
+    <p-button
+      class="mt-auto"
+      styleClass="w-full"
+      label="Add discovery"
+      icon="pi pi-plus"
+      [loading]="saving()"
+      [disabled]="!discoveryTarget().trim()"
+      (onClick)="confirmDiscovery()"
+    />
+  </div>
+</p-drawer>

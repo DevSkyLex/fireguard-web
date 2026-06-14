@@ -23,6 +23,7 @@ import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } fr
 import { TagModule } from 'primeng/tag';
 import type { RequestOptions } from '@core/services/hydra-api';
 import type { NotificationOutput } from '@features/account/models';
+import { EmptyState } from '@shared/components';
 import type { NotificationCategoryColor } from './models';
 
 /**
@@ -46,6 +47,7 @@ import type { NotificationCategoryColor } from './models';
     ButtonModule,
     CardModule,
     DatePipe,
+    EmptyState,
     MenuModule,
     SkeletonModule,
     TableModule,
@@ -192,27 +194,31 @@ export class NotificationTable {
    * @access protected
    * @since 1.0.0
    *
-   * @type {TablePassThroughOptions}
+   * @type {Signal<TablePassThroughOptions>}
    */
-  protected readonly tablePt: TablePassThroughOptions = {
-    root: {
-      class: 'flex min-h-0 flex-1 flex-col',
-    },
-    tableContainer: {
-      class: 'flex-1 min-h-0',
-    },
-    table: {
-      class: 'text-sm',
-    },
-    header: {
-      class: 'border-0 p-0 bg-surface-0 dark:bg-surface-900',
-    },
-    pcPaginator: {
+  protected readonly tablePt: Signal<TablePassThroughOptions> = computed(
+    (): TablePassThroughOptions => ({
       root: {
-        class: 'mt-auto rounded-t-none rounded-b-2xl bg-surface-0 dark:bg-surface-900 justify-end',
+        class: 'flex min-h-0 flex-1 flex-col',
       },
-    },
-  };
+      tableContainer: {
+        class: 'flex-1 min-h-0 rounded-b-xl overflow-hidden',
+      },
+      table: {
+        class: 'text-sm',
+      },
+      header: {
+        class: 'border-0 p-0 bg-surface-0 dark:bg-surface-900',
+      },
+      pcPaginator: {
+        root: {
+          class:
+            'mt-auto rounded-t-none rounded-b-2xl bg-surface-0 dark:bg-surface-900 justify-end' +
+            (this.total() === 0 ? ' hidden' : ''),
+        },
+      },
+    }),
+  );
 
   /**
    * Property rows

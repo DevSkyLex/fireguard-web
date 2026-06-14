@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@an
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import type { ChecklistItemOutput } from '@features/organization/features/checklists/models';
+import { EmptyState } from '@shared/components';
 
 /**
  * Read-only table presenting the item rows of a checklist.
  */
 @Component({
   selector: 'app-checklist-item-table',
-  imports: [TableModule, TagModule],
+  imports: [EmptyState, TableModule, TagModule],
   templateUrl: './checklist-item-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

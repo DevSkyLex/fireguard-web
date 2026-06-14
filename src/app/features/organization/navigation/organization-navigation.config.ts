@@ -24,11 +24,70 @@ export type OrganizationNavigationMatch = 'all' | 'any';
  * @since 1.0.0
  */
 export interface OrganizationNavigationItem {
+  /**
+   * Property id
+   * @readonly
+   *
+   * @description
+   * Provides the id value.
+   *
+   * @type {string}
+   */
   readonly id: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Provides the label value.
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property icon
+   * @readonly
+   *
+   * @description
+   * Provides the icon value.
+   *
+   * @type {string}
+   */
   readonly icon: string;
+
+  /**
+   * Property path
+   * @readonly
+   *
+   * @description
+   * Provides the path value.
+   *
+   * @type {string}
+   */
   readonly path: string;
+
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Provides the permissions value.
+   *
+   * @type {ReadonlyArray<OrganizationPermissionName>}
+   */
   readonly permissions: ReadonlyArray<OrganizationPermissionName>;
+
+  /**
+   * Property match
+   * @readonly
+   *
+   * @description
+   * Provides the match value.
+   *
+   * @type {OrganizationNavigationMatch}
+   */
   readonly match?: OrganizationNavigationMatch;
 }
 
@@ -50,6 +109,14 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     path: '',
     permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
   },
+  {
+    id: 'my-missions',
+    label: 'My missions',
+    icon: 'pi pi-briefcase',
+    path: 'missions/my',
+    permissions: [ORGANIZATION_PERMISSION.MISSIONS_READ],
+  },
+
   /** Mission workspace entry for field preparation and publication flows. */
   {
     id: 'missions',

@@ -1,4 +1,7 @@
 <div id="mission-list" class="flex h-full flex-col gap-6">
+  <div class="flex justify-end">
+    <p-button label="Create guided mission" icon="pi pi-plus" (onClick)="createGuidedMission()" />
+  </div>
   <app-mission-table
     class="flex min-h-0 flex-1 flex-col"
     [missions]="store.missionList()"

@@ -53,10 +53,16 @@
         </tr>
       }
     </ng-template>
-    <ng-template pTemplate="emptymessage"
-      ><tr>
-        <td colspan="4" class="py-12 text-center text-surface-500">No roles.</td>
-      </tr></ng-template
-    >
+    <ng-template pTemplate="emptymessage">
+      <tr class="bg-transparent! [&>td]:border-b-0!">
+        <td colspan="4">
+          <app-empty-state
+            icon="pi-id-card"
+            title="No roles yet"
+            description="Roles you create for this organization will appear here."
+          />
+        </td>
+      </tr>
+    </ng-template>
   </p-table>
 </p-card>

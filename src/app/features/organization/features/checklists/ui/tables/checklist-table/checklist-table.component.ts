@@ -28,6 +28,7 @@ import type {
   ChecklistOutput,
   ChecklistStatus,
 } from '@features/organization/features/checklists/models';
+import { EmptyState } from '@shared/components';
 
 /**
  * Paginated checklist table with status filtering and contextual actions.
@@ -38,6 +39,7 @@ import type {
     ButtonModule,
     CardModule,
     DatePipe,
+    EmptyState,
     MenuModule,
     ReactiveFormsModule,
     SelectModule,
@@ -96,13 +98,21 @@ export class ChecklistTable {
     body: { class: 'p-0 flex flex-col flex-1 min-h-0' },
   };
   /** PrimeNG pass-through configuration for the table. */
-  protected readonly tablePt: TablePassThroughOptions = {
-    root: { class: 'flex min-h-0 flex-1 flex-col' },
-    tableContainer: { class: 'flex-1 min-h-0' },
-    table: { class: 'text-sm' },
-    header: { class: 'border-0 p-0' },
-    pcPaginator: { root: { class: 'mt-auto rounded-t-none rounded-b-2xl justify-end' } },
-  };
+  protected readonly tablePt: Signal<TablePassThroughOptions> = computed(
+    (): TablePassThroughOptions => ({
+      root: { class: 'flex min-h-0 flex-1 flex-col' },
+      tableContainer: { class: 'flex-1 min-h-0 rounded-b-xl overflow-hidden' },
+      table: { class: 'text-sm' },
+      header: { class: 'border-0 p-0' },
+      pcPaginator: {
+        root: {
+          class:
+            'mt-auto rounded-t-none rounded-b-2xl bg-surface-0 dark:bg-surface-900 justify-end' +
+            (this.total() === 0 ? ' hidden' : ''),
+        },
+      },
+    }),
+  );
   /** Read-only toolbar actions. */
   protected readonly toolbarActions: Signal<MenuItem[]> = computed(() => [
     { label: 'Refresh', icon: PrimeIcons.REFRESH, command: () => this.reload() },

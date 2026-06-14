@@ -65,7 +65,7 @@
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} organizations"
         paginatorStyleClass="border-t border-surface-200 dark:border-surface-800 mt-auto rounded-none"
-        [pt]="dataviewPt"
+        [pt]="dataviewPt()"
         class="flex min-h-0 flex-1 flex-col"
       >
         <!-- List layout -->
@@ -96,7 +96,13 @@
             } @else {
               @for (organization of items; track organization.id) {
                 <div
-                  class="flex items-center justify-between px-4 py-3 transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50"
+                  class="flex cursor-pointer items-center justify-between px-4 py-3 transition-colors hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-900/50"
+                  role="button"
+                  tabindex="0"
+                  [attr.aria-label]="'Open ' + organization.name"
+                  (click)="view.emit(organization)"
+                  (keydown.enter)="onItemKeydown($event, organization)"
+                  (keydown.space)="onItemKeydown($event, organization)"
                 >
                   <div class="flex min-w-0 items-center gap-3">
                     <p-avatar
@@ -175,7 +181,13 @@
             } @else {
               @for (organization of items; track organization.id) {
                 <div
-                  class="flex flex-col gap-3 rounded-lg border border-surface-200 bg-surface-0 p-4 transition-shadow hover:shadow-md dark:border-surface-800 dark:bg-surface-900"
+                  class="flex cursor-pointer flex-col gap-3 rounded-lg border border-surface-200 bg-surface-0 p-4 transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-800 dark:bg-surface-900"
+                  role="button"
+                  tabindex="0"
+                  [attr.aria-label]="'Open ' + organization.name"
+                  (click)="view.emit(organization)"
+                  (keydown.enter)="onItemKeydown($event, organization)"
+                  (keydown.space)="onItemKeydown($event, organization)"
                 >
                   <div class="flex items-start justify-between">
                     <p-avatar
@@ -228,15 +240,27 @@
 
         <!-- Empty state -->
         <ng-template #emptymessage>
-          <div class="flex flex-col items-center gap-3 py-16">
-            <i class="pi pi-building text-6xl text-surface-400"></i>
-            <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
-              No organizations found
-            </h3>
-            <span class="text-sm text-surface-500">
-              Try adjusting your search or filter to find what you're looking for.
-            </span>
-          </div>
+          @if (searchControl.value) {
+            <app-empty-state
+              icon="pi-building"
+              title="No organizations found"
+              description="No organization matches your search. Try different keywords."
+            />
+          } @else {
+            <app-empty-state
+              icon="pi-building"
+              title="No organizations yet"
+              description="Organizations group your facilities, equipment, inspections and team."
+            >
+              <p-button
+                label="New organization"
+                icon="pi pi-plus"
+                severity="primary"
+                size="small"
+                (onClick)="add.emit()"
+              />
+            </app-empty-state>
+          }
         </ng-template>
       </p-dataview>
     </ng-template>

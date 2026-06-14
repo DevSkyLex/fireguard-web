@@ -11,13 +11,14 @@ import { CardModule } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import type { OrganizationRoleOutput } from '@features/organization/models';
+import { EmptyState } from '@shared/components';
 
 /**
  * Table presenting organization roles and role management actions.
  */
 @Component({
   selector: 'app-organization-role-table',
-  imports: [ButtonModule, CardModule, SkeletonModule, TableModule],
+  imports: [ButtonModule, CardModule, EmptyState, SkeletonModule, TableModule],
   templateUrl: './organization-role-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

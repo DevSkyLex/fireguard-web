@@ -12,13 +12,14 @@ import { CardModule } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import type { OrganizationInvitationOutput } from '@features/organization/models';
+import { EmptyState } from '@shared/components';
 
 /**
  * Table presenting pending organization invitations.
  */
 @Component({
   selector: 'app-organization-invitation-table',
-  imports: [ButtonModule, CardModule, DatePipe, SkeletonModule, TableModule],
+  imports: [ButtonModule, CardModule, DatePipe, EmptyState, SkeletonModule, TableModule],
   templateUrl: './organization-invitation-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

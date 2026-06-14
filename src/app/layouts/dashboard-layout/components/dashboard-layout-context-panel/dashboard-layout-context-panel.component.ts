@@ -7,10 +7,7 @@ import {
   type Signal,
   type Type,
 } from '@angular/core';
-import {
-  ASIDE_SLOT,
-  type AsideContribution,
-} from '@layouts/dashboard-layout/slots/aside';
+import { ASIDE_SLOT, type AsideContribution } from '@layouts/dashboard-layout/slots/aside';
 
 /**
  * Component DashboardLayoutContextPanel
@@ -82,9 +79,7 @@ export class DashboardLayoutContextPanel {
   public readonly activeComponent: Signal<Type<unknown> | null> = computed(
     (): Type<unknown> | null => {
       const active: AsideContribution | undefined = this.contributions
-        .toSorted(
-          (a: AsideContribution, b: AsideContribution) => b.priority - a.priority,
-        )
+        .toSorted((a: AsideContribution, b: AsideContribution): number => b.priority - a.priority)
         .find((c: AsideContribution) => c.active());
 
       return active?.component ?? null;
@@ -92,4 +87,3 @@ export class DashboardLayoutContextPanel {
   );
   //#endregion
 }
-

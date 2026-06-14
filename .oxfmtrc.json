@@ -5,7 +5,14 @@
   "semi": true,
   "tabWidth": 2,
   "proseWrap": "preserve",
-  "ignorePatterns": ["dist/**", "out-tsc/**", ".angular/**", "coverage/**", "tmp/**"],
+  "ignorePatterns": [
+    "dist/**",
+    "out-tsc/**",
+    ".angular/**",
+    "coverage/**",
+    "tmp/**",
+    ".build-check-*/**"
+  ],
   "sortImports": {
     "internalPattern": [
       "@app",

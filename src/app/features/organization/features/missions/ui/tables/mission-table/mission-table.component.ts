@@ -15,6 +15,33 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule, type TablePassThroughOptions } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import type { MissionOutput } from '@features/organization/features/missions/models';
+import { EmptyState } from '@shared/components';
+
+/**
+ * Constant MISSION_NAME_MAX_LENGTH
+ * @const MISSION_NAME_MAX_LENGTH
+ *
+ * @description
+ * Maximum length accepted for a mission name.
+ *
+ * @since 1.0.0
+ *
+ * @type {number}
+ */
+const MISSION_NAME_MAX_LENGTH = 160;
+
+/**
+ * Constant SKELETON_ROW_COUNT
+ * @const SKELETON_ROW_COUNT
+ *
+ * @description
+ * Number of placeholder rows rendered while the list is loading.
+ *
+ * @since 1.0.0
+ *
+ * @type {number}
+ */
+const SKELETON_ROW_COUNT = 5;
 
 /**
  * Component MissionTable
@@ -26,6 +53,7 @@ import type { MissionOutput } from '@features/organization/features/missions/mod
  * navigation and creation orchestration to the parent page through outputs.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -34,6 +62,7 @@ import type { MissionOutput } from '@features/organization/features/missions/mod
     ButtonModule,
     CardModule,
     DatePipe,
+    EmptyState,
     InputTextModule,
     ReactiveFormsModule,
     SkeletonModule,
@@ -45,36 +74,135 @@ import type { MissionOutput } from '@features/organization/features/missions/mod
 })
 export class MissionTable {
   //#region Inputs
-  /** Mission rows currently displayed. */
+  /**
+   * Input missions
+   * @readonly
+   *
+   * @description
+   * Mission rows currently displayed.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<readonly MissionOutput[]>}
+   */
   public readonly missions: InputSignal<readonly MissionOutput[]> =
     input.required<readonly MissionOutput[]>();
 
-  /** Total number of missions for the active organization. */
+  /**
+   * Input total
+   * @readonly
+   *
+   * @description
+   * Total number of missions for the active organization.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<number>}
+   */
   public readonly total: InputSignal<number> = input.required<number>();
 
-  /** Whether the list is currently loading. */
+  /**
+   * Input loading
+   * @readonly
+   *
+   * @description
+   * Whether the mission list is currently loading.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
   public readonly loading: InputSignal<boolean> = input.required<boolean>();
 
-  /** Whether mission creation is currently in-flight. */
+  /**
+   * Input creating
+   * @readonly
+   *
+   * @description
+   * Whether mission creation is currently in-flight.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
   public readonly creating: InputSignal<boolean> = input.required<boolean>();
 
-  /** Whether the active organization has no missions. */
+  /**
+   * Input empty
+   * @readonly
+   *
+   * @description
+   * Whether the active organization has no missions.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
   public readonly empty: InputSignal<boolean> = input.required<boolean>();
   //#endregion
 
   //#region Outputs
-  /** Requests a list refresh from the parent page. */
+  /**
+   * Output refresh
+   * @readonly
+   *
+   * @description
+   * Requests a list refresh from the parent page.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
   public readonly refresh: OutputEmitterRef<void> = output<void>();
 
-  /** Emits a mission selected for detail navigation. */
+  /**
+   * Output view
+   * @readonly
+   *
+   * @description
+   * Emits a mission selected for detail navigation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<MissionOutput>}
+   */
   public readonly view: OutputEmitterRef<MissionOutput> = output<MissionOutput>();
 
-  /** Emits the mission name requested by the creation form. */
+  /**
+   * Output create
+   * @readonly
+   *
+   * @description
+   * Emits the mission name requested by the creation form.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<string>}
+   */
   public readonly create: OutputEmitterRef<string> = output<string>();
   //#endregion
 
   //#region Properties
-  /** PrimeNG card pass-through classes used for full-height table layout. */
+  /**
+   * Property cardPt
+   * @readonly
+   *
+   * @description
+   * PrimeNG card pass-through classes used for full-height table layout.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {CardPassThroughOptions}
+   */
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
       class:
@@ -85,31 +213,81 @@ export class MissionTable {
     },
   };
 
-  /** PrimeNG table pass-through classes aligned with organization tables. */
+  /**
+   * Property tablePt
+   * @readonly
+   *
+   * @description
+   * PrimeNG table pass-through classes aligned with organization tables.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {TablePassThroughOptions}
+   */
   protected readonly tablePt: TablePassThroughOptions = {
     root: {
       class: 'flex min-h-0 flex-1 flex-col',
     },
     tableContainer: {
-      class: 'flex-1 min-h-0',
+      class: 'flex-1 min-h-0 rounded-b-xl overflow-hidden',
     },
     table: {
       class: 'text-sm',
     },
+    tbody: {
+      // No paginator closes this table: the last row would otherwise
+      // stack its own border on top of the card border.
+      class: '[&>tr:last-child>td]:border-b-0!',
+    },
   };
 
-  /** Mission name control used by the create form. */
+  /**
+   * Property nameControl
+   * @readonly
+   *
+   * @description
+   * Mission name control used by the create form.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FormControl<string>}
+   */
   protected readonly nameControl: FormControl<string> = new FormControl<string>('', {
     nonNullable: true,
-    validators: [Validators.required, Validators.maxLength(160)],
+    validators: [Validators.required, Validators.maxLength(MISSION_NAME_MAX_LENGTH)],
   });
 
-  /** Placeholder rows rendered while the list is loading. */
-  protected readonly skeletonItems: undefined[] = Array(5);
+  /**
+   * Property skeletonItems
+   * @readonly
+   *
+   * @description
+   * Placeholder rows rendered while the list is loading.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {undefined[]}
+   */
+  protected readonly skeletonItems: undefined[] = Array(SKELETON_ROW_COUNT);
   //#endregion
 
   //#region Methods
-  /** Emits a create request when the mission name is valid. */
+  /**
+   * Method onCreate
+   * @method onCreate
+   *
+   * @description
+   * Emits a create request when the mission name is valid and no creation is
+   * already in-flight.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @return {void}
+   */
   protected onCreate(): void {
     if (this.nameControl.invalid || this.creating()) {
       return;
@@ -118,7 +296,18 @@ export class MissionTable {
     this.create.emit(this.nameControl.value.trim());
   }
 
-  /** Emits a refresh request to the parent page. */
+  /**
+   * Method onRefresh
+   * @method onRefresh
+   *
+   * @description
+   * Emits a refresh request to the parent page.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @return {void}
+   */
   protected onRefresh(): void {
     this.refresh.emit();
   }

@@ -61,7 +61,9 @@ export class DashboardLayoutSidebar {
    *
    * @type {InputSignal<'primary' | 'mobile'>}
    */
-  public readonly variant: InputSignal<'primary' | 'mobile'> = input<'primary' | 'mobile'>('mobile');
+  public readonly variant: InputSignal<'primary' | 'mobile'> = input<'primary' | 'mobile'>(
+    'mobile',
+  );
 
   /**
    * Property iconOnly

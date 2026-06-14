@@ -54,7 +54,7 @@
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sessions"
         [stripedRows]="true"
-        [pt]="tablePt"
+        [pt]="tablePt()"
       >
         <ng-template pTemplate="header">
           <tr>
@@ -153,17 +153,13 @@
         </ng-template>
 
         <ng-template pTemplate="emptymessage">
-          <tr>
+          <tr class="bg-transparent! [&>td]:border-b-0!">
             <td colspan="4">
-              <div class="flex flex-col items-center gap-3 py-16">
-                <i class="pi pi-desktop text-6xl text-surface-400"></i>
-                <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
-                  No active sessions
-                </h3>
-                <span class="text-sm text-surface-500">
-                  There are no other active sessions on your account.
-                </span>
-              </div>
+              <app-empty-state
+                icon="pi-desktop"
+                title="No active sessions"
+                description="There are no other active sessions on your account."
+              />
             </td>
           </tr>
         </ng-template>

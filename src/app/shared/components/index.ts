@@ -1,4 +1,5 @@
 export { Card } from './card';
+export { EmptyState } from './empty-state';
 export { MetricCard } from './metric-card';
 export type { MetricComparison } from './metric-card';
 export { RadioCardGroup } from './radio-card-group';

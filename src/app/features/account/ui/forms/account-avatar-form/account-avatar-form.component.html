@@ -8,14 +8,14 @@
   <div class="grid grid-cols-1 gap-x-8 gap-y-3 lg:grid-cols-3">
     <div class="flex flex-col gap-1">
       <span class="text-sm font-medium text-surface-900 dark:text-surface-100">
-        Profile Picture
+        Profile picture
       </span>
       <p class="text-sm text-surface-500 dark:text-surface-400">
-        This is where people will see your actual face.
+        Shown next to your name across the app.
       </p>
     </div>
 
-    <div class="flex items-start gap-4 lg:col-span-2">
+    <div class="flex items-center gap-4 lg:col-span-2">
       <div class="relative shrink-0">
         <p-avatar
           [image]="avatarUrl() || undefined"
@@ -33,33 +33,24 @@
         }
       </div>
 
-      <p-fileupload
-        #avatarUpload
-        class="min-w-0 flex-1"
-        mode="advanced"
-        [accept]="acceptedAvatarTypes"
-        [auto]="true"
-        [customUpload]="true"
-        [maxFileSize]="maxAvatarSize"
-        [showUploadButton]="false"
-        [showCancelButton]="false"
-        [disabled]="uploading()"
-        chooseLabel="Choose file"
-        chooseIcon="pi pi-upload"
-        (uploadHandler)="onAvatarUpload($event, avatarUpload)"
-      >
-        <ng-template #empty>
-          <div class="flex flex-col items-center justify-center gap-2 py-4 text-center">
-            <i class="pi pi-cloud-upload text-2xl text-surface-400"></i>
-            <p class="text-sm text-surface-600 dark:text-surface-400">
-              <span class="font-medium text-primary">Click here</span> to upload your file or drag.
-            </p>
-            <p class="text-xs text-surface-400 dark:text-surface-500">
-              Supported formats: JPEG, PNG, WebP or GIF (5 MB max)
-            </p>
-          </div>
-        </ng-template>
-      </p-fileupload>
+      <div class="flex min-w-0 flex-col items-start gap-1.5">
+        <p-fileupload
+          #avatarUpload
+          mode="basic"
+          [accept]="acceptedAvatarTypes"
+          [auto]="true"
+          [customUpload]="true"
+          [maxFileSize]="maxAvatarSize"
+          [disabled]="uploading()"
+          chooseLabel="Change picture"
+          chooseIcon="pi pi-upload"
+          [chooseButtonProps]="chooseButtonProps"
+          (uploadHandler)="onAvatarUpload($event, avatarUpload)"
+        />
+        <p class="text-xs text-surface-500 dark:text-surface-400">
+          JPEG, PNG, WebP or GIF — 5 MB max.
+        </p>
+      </div>
     </div>
   </div>
 </section>

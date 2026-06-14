@@ -39,17 +39,13 @@
       </tr>
     </ng-template>
     <ng-template pTemplate="emptymessage">
-      <tr>
+      <tr class="bg-transparent! [&>td]:border-b-0!">
         <td colspan="4">
-          <div class="flex flex-col items-center gap-3 py-16 text-center">
-            <i class="pi pi-list-check text-5xl text-surface-300 dark:text-surface-700"></i>
-            <div>
-              <p class="font-medium text-surface-900 dark:text-surface-100">
-                This checklist has no lines
-              </p>
-              <p class="text-sm text-surface-500">Checklist items will appear here.</p>
-            </div>
-          </div>
+          <app-empty-state
+            icon="pi-list-check"
+            title="This checklist has no lines"
+            description="Checklist items will appear here."
+          />
         </td>
       </tr>
     </ng-template>

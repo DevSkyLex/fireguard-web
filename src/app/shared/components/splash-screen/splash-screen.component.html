@@ -1,12 +1,19 @@
 @if (rendered()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-linear-to-br from-surface-900 via-surface-950 to-surface-900 transition-opacity duration-300 ease-out" [class.opacity-0]="hiding()">
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-linear-to-br from-surface-900 via-surface-950 to-surface-900 transition-opacity duration-300 ease-out"
+    [class.opacity-0]="hiding()"
+  >
     <!-- Ambient glows -->
-    <div class="pointer-events-none absolute top-16 -right-24 h-72 w-72 rounded-full bg-primary-500/15 blur-3xl"></div>
-    <div class="pointer-events-none absolute bottom-8 -left-16 h-56 w-56 rounded-full bg-primary-500/5 blur-3xl"></div>
+    <div
+      class="pointer-events-none absolute top-16 -right-24 h-72 w-72 rounded-full bg-primary-500/15 blur-3xl"
+    ></div>
+    <div
+      class="pointer-events-none absolute bottom-8 -left-16 h-56 w-56 rounded-full bg-primary-500/5 blur-3xl"
+    ></div>
 
     <div class="relative flex flex-col items-center gap-6">
       <span class="text-3xl font-bold tracking-tight text-surface-0 uppercase"> Fireguard </span>
-      <p-progressSpinner [pt]="progressSpinnerPt"/>
+      <p-progressSpinner strokeWidth="4" />
     </div>
   </div>
 }

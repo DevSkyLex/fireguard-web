@@ -82,4 +82,3 @@ describe('DashboardLayoutHeader', () => {
     expect(fixture.debugElement.queryAll(By.css('p-divider[layout="vertical"]'))).toHaveLength(1);
   });
 });
-

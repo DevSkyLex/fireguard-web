@@ -5,16 +5,18 @@ import {
   inject,
   input,
   output,
+  signal,
   type InputSignal,
   type OutputEmitterRef,
+  type WritableSignal,
 } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputOtpModule } from 'primeng/inputotp';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
-import { MATCH_FIELDS_ERROR_KEY, matchFieldsValidator } from '@shared/validators';
 import type { AccountPasswordChangeStep } from '@features/account/state';
+import { MATCH_FIELDS_ERROR_KEY, matchFieldsValidator } from '@shared/validators';
 import type {
   AccountPasswordConfirmFormData,
   AccountPasswordRequestFormData,
@@ -278,6 +280,22 @@ export class AccountPasswordForm {
    * @type {string}
    */
   protected readonly matchFieldsErrorKey: string = MATCH_FIELDS_ERROR_KEY;
+
+  /**
+   * Property expanded
+   * @readonly
+   *
+   * @description
+   * Whether the request step shows the full form. Collapsed by default so
+   * the rarely-used password change stays a single quiet action until the
+   * user opts in (progressive disclosure).
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly expanded: WritableSignal<boolean> = signal<boolean>(false);
   //#endregion
 
   //#region Constructor
@@ -352,6 +370,24 @@ export class AccountPasswordForm {
     }
     const { code, newPassword } = this.confirmForm.getRawValue();
     this.confirmed.emit({ code, newPassword });
+  }
+
+  /**
+   * Method collapse
+   * @method collapse
+   *
+   * @description
+   * Clears the request form and returns to the collapsed single-action
+   * state without leaving the request step.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @returns {void}
+   */
+  protected collapse(): void {
+    this.requestForm.reset({}, { emitEvent: false });
+    this.expanded.set(false);
   }
   //#endregion
 }

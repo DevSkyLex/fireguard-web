@@ -5,7 +5,6 @@ import { addEntity, setAllEntities, withEntities } from '@ngrx/signals/entities'
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
-import type { HydraCollection } from '@core/models/api';
 import {
   errorCallState,
   idleCallState,
@@ -13,12 +12,11 @@ import {
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
-  type StoreError,
 } from '@core/state/request-state';
 import { MissionService } from '@features/organization/features/missions/data-access';
 import type { MissionOutput } from '@features/organization/features/missions/models';
 import { missionStoreEvents } from './events';
-import type { MissionState } from './models';
+import type { MissionCreateCommand, MissionListLoadCommand, MissionState } from './models';
 
 //#region Initial State
 /**
@@ -29,6 +27,8 @@ import type { MissionState } from './models';
  * Initial state for the component-scoped MissionStore.
  *
  * @since 1.0.0
+ *
+ * @type {MissionState}
  */
 const INITIAL_MISSION_STATE: MissionState = {
   totalMissions: 0,
@@ -73,8 +73,8 @@ export const MissionStore = signalStore(
   withMethods(
     (
       store,
-      dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
-      missionService: MissionService = inject<MissionService>(MissionService),
+      dispatcher = inject<Dispatcher>(Dispatcher),
+      missionService = inject<MissionService>(MissionService),
     ) => ({
       /**
        * Method load
@@ -83,15 +83,19 @@ export const MissionStore = signalStore(
        * @description
        * Loads missions for the active organization.
        *
+       * @access public
+       * @since 1.0.0
+       *
        * @type {RxMethod<{ organizationId: string }>}
        */
-      load: rxMethod<{ organizationId: string }>(
+
+      load: rxMethod<MissionListLoadCommand>(
         pipe(
-          tap((): void => patchState(store, { listCallState: pendingCallState() })),
+          tap(() => patchState(store, { listCallState: pendingCallState() })),
           switchMap(({ organizationId }) =>
             missionService.list(organizationId).pipe(
               tapResponse({
-                next: (response: HydraCollection<MissionOutput>): void => {
+                next: (response) => {
                   patchState(
                     store,
                     setAllEntities([...response.member], { collection: 'mission' }),
@@ -101,8 +105,8 @@ export const MissionStore = signalStore(
                     },
                   );
                 },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
+                error: (error: unknown) => {
+                  const storeError = toStoreError(error);
                   patchState(store, { listCallState: errorCallState(storeError) });
                   dispatcher.dispatch(
                     missionStoreEvents.listFailed(
@@ -124,24 +128,26 @@ export const MissionStore = signalStore(
        * Creates a mission and stores it in the local entity collection.
        * Uses `exhaustMap` to avoid duplicate submissions.
        *
+       * @access public
+       * @since 1.0.0
+       *
        * @type {RxMethod<{ organizationId: string; name: string }>}
        */
-      create: rxMethod<{ organizationId: string; name: string }>(
+
+      create: rxMethod<MissionCreateCommand>(
         pipe(
-          tap((): void =>
-            patchState(store, { createCallState: pendingCallState<MissionOutput>() }),
-          ),
+          tap(() => patchState(store, { createCallState: pendingCallState<MissionOutput>() })),
           exhaustMap(({ organizationId, name }) =>
             missionService.create(organizationId, name).pipe(
               tapResponse({
-                next: (mission: MissionOutput): void => {
+                next: (mission) => {
                   patchState(store, addEntity(mission, { collection: 'mission' }), {
                     totalMissions: store.totalMissions() + 1,
                     createCallState: successCallState(mission),
                   });
                 },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
+                error: (error: unknown) => {
+                  const storeError = toStoreError(error);
                   patchState(store, { createCallState: errorCallState(storeError) });
                   dispatcher.dispatch(
                     missionStoreEvents.createFailed(
@@ -155,7 +161,18 @@ export const MissionStore = signalStore(
         ),
       ),
 
-      /** Clears the last created mission navigation handoff. */
+      /**
+       * Method clearCreatedMission
+       * @method clearCreatedMission
+       *
+       * @description
+       * Clears the last created mission navigation handoff.
+       *
+       * @access public
+       * @since 1.0.0
+       *
+       * @return {void}
+       */
       clearCreatedMission(): void {
         patchState(store, { createCallState: idleCallState<MissionOutput>() });
       },
@@ -163,4 +180,10 @@ export const MissionStore = signalStore(
   ),
 );
 
+/**
+ * Type MissionStoreType
+ *
+ * @description
+ * Defines the supported mission store type values.
+ */
 export type MissionStoreType = InstanceType<typeof MissionStore>;

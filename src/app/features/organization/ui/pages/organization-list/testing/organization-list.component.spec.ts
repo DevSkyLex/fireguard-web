@@ -101,7 +101,7 @@ describe('OrganizationListPage', () => {
     const fixture = TestBed.createComponent(OrganizationListPage);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('No organizations found');
+    expect(fixture.nativeElement.textContent).toContain('No organizations yet');
   });
 
   it('should show skeletons when loading', () => {

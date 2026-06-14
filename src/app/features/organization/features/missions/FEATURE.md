@@ -24,15 +24,25 @@ This subfeature is responsible for:
 
 ## State and Data Access
 
-Primary store:
+Stores:
 
-- `MissionStore`
+- `MissionStore` — root-scoped; mission list and creation (normalized entities + request state).
+- `MissionWorkspaceStore` — component-scoped (provided in `MissionDetailPage`); the active mission workspace (mission, work items, changes, issues) with online/offline mutations.
 
 Primary services:
 
 - `MissionService`
-- `MissionOfflineService`
+- `MissionOfflineService` — thin façade + cross-cutting purges. Delegates to:
+  - `MissionDatabaseService` — IndexedDB connection/schema, CRUD primitives, owner binding.
+  - `MissionOutboxStore` — replay outbox + `hasUnsyncedChanges` signal.
+  - `MissionWorkspaceRepository` — normalized workspace persistence.
+- `MissionSyncService` — outbox replay.
+- `MissionSyncCoordinatorService` — replays the outbox when connectivity/visibility is regained.
 - `MissionPwaUpdateService`
+- `MissionPrefetchService`
+
+Connectivity decisions across the feature read the shared
+`ConnectivityService` (`core`), not `navigator.onLine` directly.
 
 Architecture note:
 

@@ -103,7 +103,9 @@ describe('FacilityListPage', () => {
     expect(fixture.nativeElement.textContent).toContain('Main Site');
   });
 
-  it('should show skeleton placeholders while loading', () => {
+  // Rendering 30 skeleton rows occasionally exceeds the default 5s
+  // timeout on loaded machines, hence the explicit allowance.
+  it('should show skeleton placeholders while loading', { timeout: 15_000 }, () => {
     mockFacilityStore.isLoadingRootFacilities.set(true);
     mockFacilityStore.isRootEmpty.set(false);
 

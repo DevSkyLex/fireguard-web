@@ -1,0 +1,226 @@
+<section class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
+  <div class="flex flex-col gap-5">
+    <div
+      class="rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-950"
+    >
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold tracking-wide text-surface-500 uppercase">
+            Prepared scope
+          </p>
+          <h2 class="mt-1 text-xl font-semibold">Define the work before agents arrive</h2>
+          <p class="mt-2 max-w-2xl text-sm text-surface-600 dark:text-surface-300">
+            Confirm the site, responsible agent, schedule and explicit work items. Planning freezes
+            this scope while still allowing discoveries in the field.
+          </p>
+        </div>
+        <p-tag
+          [value]="mission().priority"
+          [severity]="mission().priority === 'urgent' ? 'danger' : 'secondary'"
+        />
+      </div>
+
+      <div class="mt-6 grid gap-4 sm:grid-cols-2">
+        <label class="grid gap-2 text-sm font-medium">
+          Site
+          <p-select
+            [options]="[...siteOptions()]"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            [ngModel]="site()"
+            placeholder="Select a site"
+            (onChange)="site.set($event.value)"
+          />
+        </label>
+        <label class="grid gap-2 text-sm font-medium">
+          Responsible agent
+          <p-select
+            [options]="[...memberOptions()]"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            [ngModel]="responsible()"
+            placeholder="Assign a responsible agent"
+            (onChange)="responsible.set($event.value)"
+          />
+        </label>
+        <label class="grid gap-2 text-sm font-medium sm:col-span-2">
+          Participants
+          <p-multiselect
+            [options]="[...memberOptions()]"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            [ngModel]="participants()"
+            placeholder="Add field participants"
+            (onChange)="participants.set($event.value)"
+          />
+        </label>
+        <label class="grid gap-2 text-sm font-medium">
+          Planned start
+          <input
+            type="datetime-local"
+            class="rounded-md border border-surface-300 bg-transparent px-3 py-2.5 dark:border-surface-700"
+            [value]="plannedStartAt()"
+            (input)="plannedStartAt.set($any($event.target).value)"
+          />
+        </label>
+        <label class="grid gap-2 text-sm font-medium">
+          Due
+          <input
+            type="datetime-local"
+            class="rounded-md border border-surface-300 bg-transparent px-3 py-2.5 dark:border-surface-700"
+            [value]="dueAt()"
+            (input)="dueAt.set($any($event.target).value)"
+          />
+        </label>
+        <label class="grid gap-2 text-sm font-medium">
+          Priority
+          <p-select
+            [options]="[...priorityOptions]"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="priority()"
+            (onChange)="priority.set($event.value)"
+          />
+        </label>
+        <div class="flex items-end">
+          <p-button
+            label="Save planning details"
+            icon="pi pi-save"
+            severity="secondary"
+            [outlined]="true"
+            [loading]="saving()"
+            [disabled]="!site() || !responsible() || !plannedStartAt() || !dueAt()"
+            (onClick)="savePlanningDetails()"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-950"
+    >
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <h2 class="font-semibold">Work items</h2>
+          <p class="mt-1 text-sm text-surface-500">{{ workItems().length }} explicit task(s)</p>
+        </div>
+        <p-button
+          label="Add work item"
+          icon="pi pi-plus"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="workItemDrawerVisible.set(true)"
+        />
+      </div>
+      <div class="mt-4 grid gap-3">
+        @for (item of workItems(); track item.id) {
+          <article
+            class="flex items-center justify-between gap-4 rounded-lg border border-surface-200 p-4 dark:border-surface-800"
+          >
+            <div class="min-w-0">
+              <p class="truncate font-medium capitalize">{{ item.action.replace('_', ' ') }}</p>
+              <p class="mt-1 truncate text-sm text-surface-500">
+                {{ item.target || 'Site-level work' }}
+              </p>
+            </div>
+            <p-tag
+              [value]="item.assignee ? 'Assigned' : 'Unassigned'"
+              [severity]="item.assignee ? 'info' : 'warn'"
+            />
+          </article>
+        } @empty {
+          <p-message severity="warn"
+            >Add explicit work items before planning this mission.</p-message
+          >
+        }
+      </div>
+    </div>
+  </div>
+
+  <aside
+    class="h-fit rounded-xl border border-surface-200 bg-surface-0 p-5 xl:sticky xl:top-4 dark:border-surface-800 dark:bg-surface-950"
+  >
+    <p class="text-xs font-semibold tracking-wide text-surface-500 uppercase">Ready to plan?</p>
+    <ul class="mt-4 grid gap-3 text-sm">
+      <li class="flex gap-2">
+        <i class="pi pi-check-circle mt-0.5 text-green-600"></i>One site per mission
+      </li>
+      <li class="flex gap-2">
+        <i class="pi pi-check-circle mt-0.5 text-green-600"></i>Responsible and participants
+      </li>
+      <li class="flex gap-2">
+        <i class="pi pi-check-circle mt-0.5 text-green-600"></i>Assignable work scope
+      </li>
+    </ul>
+    <p-button
+      class="mt-5 block"
+      styleClass="w-full"
+      label="Plan mission"
+      icon="pi pi-calendar"
+      [loading]="saving()"
+      [disabled]="
+        mission().status !== 'draft' ||
+        !mission().site ||
+        !mission().responsible ||
+        !mission().plannedStartAt ||
+        !mission().dueAt
+      "
+      (onClick)="planMission.emit()"
+    />
+  </aside>
+</section>
+
+<p-drawer
+  [(visible)]="workItemDrawerVisible"
+  position="right"
+  [style]="{ width: 'min(100vw, 32rem)' }"
+  header="Add work item"
+>
+  <div class="flex h-full flex-col gap-5">
+    <label class="grid gap-2 text-sm font-medium">
+      Action
+      <select
+        class="rounded-md border border-surface-300 bg-transparent px-3 py-2.5 dark:border-surface-700"
+        [value]="workItemAction()"
+        (change)="workItemAction.set($any($event.target).value)"
+      >
+        <option value="site_setup">Site setup</option>
+        <option value="inventory">Inventory</option>
+        <option value="inspection">Inspection</option>
+      </select>
+    </label>
+    <label class="grid gap-2 text-sm font-medium">
+      Target resource
+      <p-select
+        [options]="[...targetOptions()]"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        placeholder="Optional site, facility or equipment target"
+        (onChange)="workItemTarget.set($event.value)"
+      />
+    </label>
+    <label class="grid gap-2 text-sm font-medium">
+      Assignee
+      <p-select
+        [options]="[...memberOptions()]"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        placeholder="Assign this work item"
+        (onChange)="workItemAssignee.set($event.value)"
+      />
+    </label>
+    <p-button
+      class="mt-auto"
+      styleClass="w-full"
+      label="Add to prepared scope"
+      icon="pi pi-plus"
+      [loading]="saving()"
+      (onClick)="addWorkItem()"
+    />
+  </div>
+</p-drawer>

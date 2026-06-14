@@ -130,7 +130,7 @@
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} inspections"
         [stripedRows]="true"
-        [pt]="tablePt"
+        [pt]="tablePt()"
       >
         <ng-template pTemplate="header">
           <tr>
@@ -308,17 +308,23 @@
         </ng-template>
 
         <ng-template pTemplate="emptymessage">
-          <tr>
+          <tr class="bg-transparent! [&>td]:border-b-0!">
             <td colspan="7">
-              <div class="flex flex-col items-center gap-3 py-16">
-                <i class="pi pi-search text-6xl text-surface-400"></i>
-                <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
-                  No inspections found
-                </h3>
-                <span class="text-sm text-surface-500">
-                  Try adjusting your filters or create a new inspection to get started.
-                </span>
-              </div>
+              <app-empty-state
+                icon="pi-clipboard"
+                title="No inspections found"
+                description="Adjust your search or filters, or record an inspection for this facility."
+              >
+                @if (canManageInspections()) {
+                  <p-button
+                    label="New inspection"
+                    icon="pi pi-plus"
+                    severity="primary"
+                    size="small"
+                    (onClick)="add.emit()"
+                  />
+                }
+              </app-empty-state>
             </td>
           </tr>
         </ng-template>

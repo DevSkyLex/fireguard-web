@@ -25,6 +25,9 @@ export const ORGANIZATION_PERMISSION = {
   MISSIONS_READ: 'organization.missions.read',
   /** Write access to mission entities during preparation phase. */
   MISSIONS_WRITE: 'organization.missions.write',
+  MISSIONS_PLAN: 'organization.missions.plan',
+  MISSIONS_EXECUTE: 'organization.missions.execute',
+  MISSIONS_REVIEW: 'organization.missions.review',
   /** Permission required to trigger mission publication. */
   MISSIONS_PUBLISH: 'organization.missions.publish',
   LEGAL_PROFILE_WRITE: 'organization.legal_profile.write',

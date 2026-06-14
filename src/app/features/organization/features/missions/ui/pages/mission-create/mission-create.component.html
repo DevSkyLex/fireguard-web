@@ -1,0 +1,115 @@
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-6 pb-8">
+  <header>
+    <p class="text-xs font-semibold tracking-wide text-surface-500 uppercase">Prepare</p>
+    <h1 class="mt-1 text-2xl font-semibold">Create a field mission</h1>
+    <p class="mt-2 text-sm text-surface-600 dark:text-surface-300">
+      Choose the operational objective first. The workspace will then guide scope preparation and
+      assignment.
+    </p>
+  </header>
+
+  <section class="grid gap-3 md:grid-cols-3" aria-label="Mission type">
+    @for (missionType of missionTypes; track missionType.value) {
+      <button
+        type="button"
+        class="rounded-xl border p-5 text-left transition-colors motion-reduce:transition-none"
+        [class.border-primary]="type() === missionType.value"
+        [class.bg-primary-50]="type() === missionType.value"
+        [class.dark:bg-primary-950]="type() === missionType.value"
+        [class.border-surface-200]="type() !== missionType.value"
+        [class.dark:border-surface-800]="type() !== missionType.value"
+        (click)="type.set(missionType.value)"
+      >
+        <i [class]="missionType.icon + ' text-xl text-primary'"></i>
+        <strong class="mt-4 block">{{ missionType.label }}</strong>
+        <span class="mt-2 block text-sm text-surface-500">{{ missionType.description }}</span>
+      </button>
+    }
+  </section>
+
+  <section
+    class="grid gap-5 rounded-xl border border-surface-200 bg-surface-0 p-5 md:grid-cols-2 dark:border-surface-800 dark:bg-surface-950"
+  >
+    <label class="grid gap-2 text-sm font-medium md:col-span-2">
+      Mission name
+      <input
+        pInputText
+        [value]="name()"
+        (input)="name.set($any($event.target).value)"
+        placeholder="e.g. Q3 warehouse inspection"
+      />
+    </label>
+    <label class="grid gap-2 text-sm font-medium">
+      Site
+      <p-select
+        [options]="[...siteOptions()]"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        placeholder="Select a site"
+        (onChange)="site.set($event.value)"
+      />
+    </label>
+    <label class="grid gap-2 text-sm font-medium">
+      Responsible agent
+      <p-select
+        [options]="[...memberOptions()]"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        placeholder="Assign an agent"
+        (onChange)="responsible.set($event.value)"
+      />
+    </label>
+    <label class="grid gap-2 text-sm font-medium md:col-span-2">
+      Participants
+      <p-multiselect
+        [options]="[...memberOptions()]"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        placeholder="Add field participants"
+        (onChange)="participants.set($event.value)"
+      />
+    </label>
+    <label class="grid gap-2 text-sm font-medium">
+      Planned start
+      <input
+        type="datetime-local"
+        class="rounded-md border border-surface-300 bg-transparent px-3 py-2.5 dark:border-surface-700"
+        (input)="plannedStartAt.set($any($event.target).value)"
+      />
+    </label>
+    <label class="grid gap-2 text-sm font-medium">
+      Due
+      <input
+        type="datetime-local"
+        class="rounded-md border border-surface-300 bg-transparent px-3 py-2.5 dark:border-surface-700"
+        (input)="dueAt.set($any($event.target).value)"
+      />
+    </label>
+    <label class="grid gap-2 text-sm font-medium">
+      Priority
+      <p-select
+        [options]="priorityOptions"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="priority()"
+        (onChange)="priority.set($event.value)"
+      />
+    </label>
+  </section>
+
+  <footer
+    class="sticky bottom-0 flex justify-end border-t border-surface-200 bg-surface-0/95 py-4 backdrop-blur dark:border-surface-800 dark:bg-surface-950/95"
+  >
+    <p-button
+      label="Create draft mission"
+      icon="pi pi-arrow-right"
+      iconPos="right"
+      [loading]="creating()"
+      [disabled]="!name().trim() || !site() || !responsible() || !plannedStartAt() || !dueAt()"
+      (onClick)="create()"
+    />
+  </footer>
+</div>

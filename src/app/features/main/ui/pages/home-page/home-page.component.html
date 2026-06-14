@@ -9,4 +9,54 @@
       Manage your organizations and single sign-on settings.
     </p>
   </section>
+
+  <section class="flex flex-col gap-4 p-8" aria-labelledby="home-quick-access">
+    <h2 id="home-quick-access" class="text-sm font-semibold text-surface-700 dark:text-surface-300">
+      Quick access
+    </h2>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <a
+        routerLink="/organizations"
+        class="group flex items-start gap-4 rounded-lg border border-surface-200 bg-surface-0 p-4 transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-800 dark:bg-surface-900"
+      >
+        <span
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300"
+        >
+          <i class="pi pi-building" aria-hidden="true"></i>
+        </span>
+        <span class="flex min-w-0 flex-col gap-1">
+          <span class="font-semibold text-surface-900 dark:text-surface-100">Organizations</span>
+          <span class="text-sm text-surface-600 dark:text-surface-400">
+            Browse your organizations and open their facilities, equipment and inspections.
+          </span>
+        </span>
+        <i
+          class="pi pi-arrow-right mt-1 ml-auto text-surface-400 transition-transform group-hover:translate-x-0.5"
+          aria-hidden="true"
+        ></i>
+      </a>
+
+      <a
+        routerLink="/account"
+        class="group flex items-start gap-4 rounded-lg border border-surface-200 bg-surface-0 p-4 transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-800 dark:bg-surface-900"
+      >
+        <span
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300"
+        >
+          <i class="pi pi-user" aria-hidden="true"></i>
+        </span>
+        <span class="flex min-w-0 flex-col gap-1">
+          <span class="font-semibold text-surface-900 dark:text-surface-100">Your account</span>
+          <span class="text-sm text-surface-600 dark:text-surface-400">
+            Update your profile, review sessions and security, and tune notifications.
+          </span>
+        </span>
+        <i
+          class="pi pi-arrow-right mt-1 ml-auto text-surface-400 transition-transform group-hover:translate-x-0.5"
+          aria-hidden="true"
+        ></i>
+      </a>
+    </div>
+  </section>
 </div>

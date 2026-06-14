@@ -5,8 +5,10 @@ import {
   Injectable,
   PLATFORM_ID,
   signal,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { mediaQuery } from '@signality/core';
 import { isThemeMode, type ThemeMode } from '@core/ports/theme';
 import { CookieService } from '@core/services/cookie';
 
@@ -94,6 +96,25 @@ export class ThemeService {
    * @type {WritableSignal<ThemeMode>}
    */
   public readonly theme: WritableSignal<ThemeMode> = signal<ThemeMode>(this.getInitialTheme());
+
+  /**
+   * Property prefersDark
+   * @readonly
+   *
+   * @description
+   * Reactive signal reflecting the OS-level `prefers-color-scheme: dark`
+   * media query. Updates live when the user switches their system theme,
+   * which keeps the `'system'` mode in sync without requiring a reload.
+   * SSR-safe: resolves to `false` (light) on the server.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  private readonly prefersDark: Signal<boolean> = mediaQuery('(prefers-color-scheme: dark)', {
+    initialValue: false,
+  });
   //#endregion
 
   //#region Constructor
@@ -239,7 +260,8 @@ export class ThemeService {
    *
    * @description
    * Resolves 'system' theme to actual 'light' or 'dark' based on
-   * the user's system preference (prefers-color-scheme).
+   * the user's system preference, read from the reactive
+   * `prefersDark` signal so live OS theme switches are reflected.
    *
    * @access private
    * @since 1.0.0
@@ -250,17 +272,7 @@ export class ThemeService {
    */
   private resolveTheme(mode: ThemeMode): 'light' | 'dark' {
     if (mode === 'system') {
-      if (!isPlatformBrowser(this.platformId)) {
-        return 'light';
-      }
-
-      const mediaQuery: MediaQueryList | undefined = this.document.defaultView?.matchMedia(
-        '(prefers-color-scheme: dark)',
-      );
-
-      const prefersDark: boolean = mediaQuery?.matches ?? false;
-
-      return prefersDark ? 'dark' : 'light';
+      return this.prefersDark() ? 'dark' : 'light';
     }
     return mode;
   }

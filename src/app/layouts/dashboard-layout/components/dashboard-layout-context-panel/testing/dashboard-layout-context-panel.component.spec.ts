@@ -147,4 +147,3 @@ describe('DashboardLayoutContextPanel', () => {
     expect(fixture.componentInstance.activeComponent()).toBeNull();
   });
 });
-

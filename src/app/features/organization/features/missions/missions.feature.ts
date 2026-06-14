@@ -4,25 +4,37 @@ import {
   provideAppInitializer,
   type EnvironmentProviders,
 } from '@angular/core';
-import { MissionPwaUpdateService } from './services';
+import {
+  MissionOfflineLifecycleService,
+  MissionPrefetchService,
+  MissionPwaUpdateService,
+  MissionSyncCoordinatorService,
+} from './services';
 
 /**
  * Function provideMissionsFeature
+ * @function provideMissionsFeature
  *
  * @description
- * Registers mission-scoped bootstrap providers.
+ * Registers mission-scoped bootstrap providers, started once at app startup:
  *
- * Currently this initializer starts the PWA update workflow dedicated to
- * field missions. The workflow is initialized once at app startup and keeps
- * mission offline outbox integrity by preventing reload prompts while local
- * unsynchronized operations exist.
- *
- * @returns {EnvironmentProviders} Feature-level providers for mission startup.
+ * - `MissionPwaUpdateService` — keeps mission offline outbox integrity by
+ *   preventing reload prompts while local unsynchronized operations exist,
+ * - `MissionPrefetchService` — warms locally persisted mission workspaces,
+ * - `MissionSyncCoordinatorService` — replays the outbox when connectivity or
+ *   page visibility is regained.
  *
  * @since 1.0.0
+ *
+ * @return {EnvironmentProviders} Feature-level providers for mission startup.
  */
 export function provideMissionsFeature(): EnvironmentProviders {
   return makeEnvironmentProviders([
-    provideAppInitializer(() => inject(MissionPwaUpdateService).start()),
+    provideAppInitializer(() => {
+      inject(MissionOfflineLifecycleService).start();
+      inject(MissionPwaUpdateService).start();
+      inject(MissionPrefetchService).start();
+      inject(MissionSyncCoordinatorService).start();
+    }),
   ]);
 }

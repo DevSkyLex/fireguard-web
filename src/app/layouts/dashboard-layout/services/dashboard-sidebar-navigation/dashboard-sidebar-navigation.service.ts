@@ -1,9 +1,4 @@
-import {
-  computed,
-  inject,
-  Injectable,
-  type Signal,
-} from '@angular/core';
+import { computed, inject, Injectable, type Signal } from '@angular/core';
 import type { MenuItem } from 'primeng/api';
 import { NAVIGATION_SLOT } from '@layouts/dashboard-layout/slots/navigation';
 import type { NavigationContribution } from '@layouts/dashboard-layout/slots/navigation';
@@ -42,19 +37,16 @@ export class DashboardSidebarNavigationService {
    */
   private readonly contributions: NavigationContribution[] = (
     inject(NAVIGATION_SLOT, { optional: true }) ?? []
-  ).toSorted(
-    (a: NavigationContribution, b: NavigationContribution): number =>
-      a.order - b.order,
-  );
+  ).toSorted((a: NavigationContribution, b: NavigationContribution): number => a.order - b.order);
 
   /**
    * Property menuItems
    * @readonly
    *
    * @description
-    * Sidebar menu items.
-    * Aggregates all contributions, resolves their reactive sections and
-    * drops `null` values.
+   * Sidebar menu items.
+   * Aggregates all contributions, resolves their reactive sections and
+   * drops `null` values.
    *
    * @access public
    * @since 3.0.0
@@ -84,8 +76,7 @@ export class DashboardSidebarNavigationService {
   public readonly primaryItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] =>
     this.contributions
       .filter(
-        (contribution: NavigationContribution): boolean =>
-          contribution.includeInPrimary !== false,
+        (contribution: NavigationContribution): boolean => contribution.includeInPrimary !== false,
       )
       .map((contribution: NavigationContribution): MenuItem | null => contribution.section())
       .filter((item: MenuItem | null): item is MenuItem => item !== null),
@@ -95,4 +86,3 @@ export class DashboardSidebarNavigationService {
 
   //#endregion
 }
-

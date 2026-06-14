@@ -307,4 +307,3 @@ describe('DashboardLayout', () => {
     expect(document.body.style.userSelect).toBe('');
   });
 });
-

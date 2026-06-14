@@ -38,4 +38,26 @@ export const FireguardTheme: Preset = definePreset(Aura, {
       950: '{orange.950}',
     },
   },
+  components: {
+    progressspinner: {
+      colorScheme: {
+        light: {
+          root: {
+            colorOne: '{primary.500}',
+            colorTwo: '{primary.400}',
+            colorThree: '{primary.600}',
+            colorFour: '{primary.500}',
+          },
+        },
+        dark: {
+          root: {
+            colorOne: '{primary.400}',
+            colorTwo: '{primary.300}',
+            colorThree: '{primary.500}',
+            colorFour: '{primary.400}',
+          },
+        },
+      },
+    },
+  },
 });

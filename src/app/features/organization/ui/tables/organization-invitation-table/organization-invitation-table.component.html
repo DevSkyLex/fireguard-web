@@ -45,10 +45,16 @@
         </tr>
       }
     </ng-template>
-    <ng-template pTemplate="emptymessage"
-      ><tr>
-        <td colspan="4" class="py-12 text-center text-surface-500">No invitations.</td>
-      </tr></ng-template
-    >
+    <ng-template pTemplate="emptymessage">
+      <tr class="bg-transparent! [&>td]:border-b-0!">
+        <td colspan="4">
+          <app-empty-state
+            icon="pi-envelope"
+            title="No pending invitations"
+            description="Invitations you send will appear here until they are accepted."
+          />
+        </td>
+      </tr>
+    </ng-template>
   </p-table>
 </p-card>

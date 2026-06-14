@@ -111,7 +111,7 @@
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} equipments"
         [stripedRows]="true"
-        [pt]="tablePt"
+        [pt]="tablePt()"
       >
         <ng-template pTemplate="header">
           <tr>
@@ -285,17 +285,23 @@
         </ng-template>
 
         <ng-template pTemplate="emptymessage">
-          <tr>
+          <tr class="bg-transparent! [&>td]:border-b-0!">
             <td [attr.colspan]="canManageEquipment() ? 8 : 7">
-              <div class="flex flex-col items-center gap-3 py-16">
-                <i class="pi pi-box text-6xl text-surface-400"></i>
-                <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
-                  No equipments found
-                </h3>
-                <span class="text-sm text-surface-500">
-                  Try adjusting your filters or create a new equipment to get started.
-                </span>
-              </div>
+              <app-empty-state
+                icon="pi-box"
+                title="No equipment found"
+                description="Adjust your search or filters, or register equipment for this facility."
+              >
+                @if (canManageEquipment()) {
+                  <p-button
+                    label="New equipment"
+                    icon="pi pi-plus"
+                    severity="primary"
+                    size="small"
+                    (onClick)="add.emit()"
+                  />
+                }
+              </app-empty-state>
             </td>
           </tr>
         </ng-template>

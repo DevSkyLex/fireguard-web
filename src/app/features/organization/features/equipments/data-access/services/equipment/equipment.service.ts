@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import type { Observable } from 'rxjs';
-import type { HydraCollection, OptionOutput } from '@core/models/api';
+import { EMPTY, expand, reduce, type Observable } from 'rxjs';
+import type { HydraCollection, HydraItem, OptionOutput } from '@core/models/api';
 import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
   EquipmentOutput,
@@ -129,6 +129,27 @@ export class EquipmentService extends HydraApiService {
   }
 
   /**
+   * Lists every equipment item by consuming the server-paginated collection.
+   */
+  public listAll(
+    organizationId: string,
+    options?: RequestOptions,
+  ): Observable<readonly EquipmentOutput[]> {
+    const pageSize = 100;
+    return this.list(organizationId, { ...options, page: 1, itemsPerPage: pageSize }).pipe(
+      expand((collection, pageIndex) =>
+        (pageIndex + 1) * pageSize < collection.totalItems
+          ? this.list(organizationId, { ...options, page: pageIndex + 2, itemsPerPage: pageSize })
+          : EMPTY,
+      ),
+      reduce(
+        (items, collection) => [...items, ...collection.member],
+        [] as readonly EquipmentOutput[],
+      ),
+    );
+  }
+
+  /**
    * Method listByFacility
    * @method listByFacility
    *
@@ -155,6 +176,21 @@ export class EquipmentService extends HydraApiService {
     );
   }
 
+  /**
+   * Method listStatuses
+   * @method listStatuses
+   *
+   * @description
+   * Executes the list statuses operation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - organization Id value.
+   * @param {RequestOptions} [options] - options value.
+   *
+   * @return {Observable<HydraCollection<OptionOutput>>} Result of the list statuses operation.
+   */
   public listStatuses(
     organizationId: string,
     options?: RequestOptions,
@@ -165,6 +201,21 @@ export class EquipmentService extends HydraApiService {
     );
   }
 
+  /**
+   * Method listTypes
+   * @method listTypes
+   *
+   * @description
+   * Executes the list types operation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - organization Id value.
+   * @param {RequestOptions} [options] - options value.
+   *
+   * @return {Observable<HydraCollection<OptionOutput>>} Result of the list types operation.
+   */
   public listTypes(
     organizationId: string,
     options?: RequestOptions,
@@ -216,6 +267,80 @@ export class EquipmentService extends HydraApiService {
       this.equipmentPath(organizationId),
       input,
     );
+  }
+
+  /**
+   * Method createForMission
+   * @method createForMission
+   *
+   * @description
+   * Executes the create for mission operation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - organization Id value.
+   * @param {string} missionId - mission Id value.
+   * @param {CreateEquipmentInput} input - input value.
+   *
+   * @return {Observable<EquipmentOutput>} Result of the create for mission operation.
+   */
+  public createForMission(
+    organizationId: string,
+    missionId: string,
+    input: CreateEquipmentInput,
+  ): Observable<EquipmentOutput> {
+    const payload: CreateEquipmentInput = {
+      ...input,
+      organization: `/api/organizations/${organizationId}`,
+      mission: `/api/missions/${missionId}`,
+    };
+    if (input.clientId) {
+      return this.put<CreateEquipmentInput, EquipmentOutput>(
+        `/api/equipment/${input.clientId}`,
+        payload,
+        { headers: { 'If-None-Match': '*' } },
+      );
+    }
+
+    return this.post<CreateEquipmentInput, EquipmentOutput>('/api/equipment', payload);
+  }
+
+  /**
+   * Method uploadEvidence
+   * @method uploadEvidence
+   *
+   * @description
+   * Executes the upload evidence operation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} equipmentId - equipment Id value.
+   * @param {Blob} file - file value.
+   * @param {string} fileName - file Name value.
+   * @param {string} [missionId] - Mission authorizing the field evidence upload.
+   * @param {string} [clientId] - Stable client UUID used to replay uploads idempotently.
+   *
+   * @return {Observable<HydraItem>} Result of the upload evidence operation.
+   */
+  public uploadEvidence(
+    equipmentId: string,
+    file: Blob,
+    fileName: string,
+    missionId?: string,
+    clientId?: string,
+  ): Observable<HydraItem> {
+    const body: FormData = new FormData();
+    body.set('equipment', `/api/equipment/${equipmentId}`);
+    body.set('file', file, fileName);
+    if (missionId) body.set('mission', `/api/missions/${missionId}`);
+    if (clientId) body.set('clientId', clientId);
+
+    return this.http.post<HydraItem>(this.buildUrl('/api/media'), body, {
+      withCredentials: true,
+      headers: { Accept: 'application/ld+json' },
+    });
   }
 
   /**
@@ -405,6 +530,22 @@ export class EquipmentService extends HydraApiService {
     );
   }
 
+  /**
+   * Method listMaintenanceLogs
+   * @method listMaintenanceLogs
+   *
+   * @description
+   * Executes the list maintenance logs operation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - organization Id value.
+   * @param {string} equipmentId - equipment Id value.
+   * @param {RequestOptions} [options] - options value.
+   *
+   * @return {Observable<HydraCollection<EquipmentMaintenanceLogOutput>>} Result of the list maintenance logs operation.
+   */
   public listMaintenanceLogs(
     organizationId: string,
     equipmentId: string,
@@ -416,6 +557,22 @@ export class EquipmentService extends HydraApiService {
     );
   }
 
+  /**
+   * Method listTagCatalog
+   * @method listTagCatalog
+   *
+   * @description
+   * Executes the list tag catalog operation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - organization Id value.
+   * @param {string} [search] - search value.
+   * @param {RequestOptions} [options] - options value.
+   *
+   * @return {Observable<HydraCollection<EquipmentTagOutput>>} Result of the list tag catalog operation.
+   */
   public listTagCatalog(
     organizationId: string,
     search?: string,

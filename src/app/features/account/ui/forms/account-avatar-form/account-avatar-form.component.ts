@@ -7,6 +7,7 @@ import {
   type OutputEmitterRef,
 } from '@angular/core';
 import { AvatarModule } from 'primeng/avatar';
+import type { ButtonProps } from 'primeng/button';
 import { FileUploadModule, type FileUpload } from 'primeng/fileupload';
 import { MessageModule } from 'primeng/message';
 import type { AvatarUploadEvent } from './models';
@@ -141,6 +142,26 @@ export class AccountAvatarForm {
    * @type {string}
    */
   protected readonly acceptedAvatarTypes: string = 'image/jpeg,image/png,image/webp,image/gif';
+
+  /**
+   * Property chooseButtonProps
+   * @readonly
+   *
+   * @description
+   * Renders the basic-mode upload trigger as a quiet secondary button so
+   * the rarely-used avatar change never competes with the form's primary
+   * actions.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {ButtonProps}
+   */
+  protected readonly chooseButtonProps: ButtonProps = {
+    severity: 'secondary',
+    outlined: true,
+    size: 'small',
+  };
   //#endregion
 
   //#region Methods

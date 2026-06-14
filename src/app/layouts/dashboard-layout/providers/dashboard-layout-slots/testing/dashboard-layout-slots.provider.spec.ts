@@ -2,8 +2,8 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { MenuItem } from 'primeng/api';
 import { ASIDE_SLOT } from '../../../slots/aside';
-import { TOPBAR_SLOT } from '../../../slots/topbar';
 import { NAVIGATION_SLOT } from '../../../slots/navigation';
+import { TOPBAR_SLOT } from '../../../slots/topbar';
 import {
   provideDashboardLayoutSlots,
   type DashboardLayoutAsideSlotFeature,
@@ -56,9 +56,7 @@ describe('provideDashboardLayoutSlots', () => {
       ],
     });
 
-    expect(TestBed.inject(NAVIGATION_SLOT).map((item) => item.id)).toEqual([
-      'test-navigation',
-    ]);
+    expect(TestBed.inject(NAVIGATION_SLOT).map((item) => item.id)).toEqual(['test-navigation']);
     expect(TestBed.inject(TOPBAR_SLOT).map((item) => item.id)).toEqual(['test-topbar']);
     expect(TestBed.inject(ASIDE_SLOT).map((item) => item.id)).toEqual(['test-aside']);
   });

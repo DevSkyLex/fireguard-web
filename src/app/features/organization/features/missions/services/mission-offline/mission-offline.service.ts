@@ -1,249 +1,381 @@
-import { isPlatformBrowser } from '@angular/common';
-import { inject, Injectable, PLATFORM_ID, signal, type WritableSignal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Events } from '@ngrx/signals/events';
-import { authStoreEvents } from '@features/auth/state';
-import type { MissionSnapshot } from '@features/organization/features/missions/models';
-
-/**
- * Type MissionOutboxType
- *
- * @description
- * Supported operation types queued in the mission offline outbox.
- */
-export type MissionOutboxType =
-  | 'facility.create'
-  | 'equipment.create'
-  | 'inspection.create'
-  | 'media.create';
-
-/**
- * Interface MissionOutboxOperation
- *
- * @description
- * Single queued operation persisted locally and replayed when connectivity
- * returns.
- */
-export interface MissionOutboxOperation {
-  readonly id: string;
-  readonly missionId: string;
-  readonly type: MissionOutboxType;
-  readonly payload: Readonly<Record<string, unknown>>;
-  readonly createdAt: string;
-}
+import { inject, Injectable, type Signal } from '@angular/core';
+import type {
+  MissionChangeOutput,
+  MissionIssueOutput,
+  MissionOutboxOperation,
+  MissionOutboxPayloadMap,
+  MissionOutboxQueueEntry,
+  MissionOutboxType,
+  MissionOutput,
+  MissionWorkItemOutput,
+} from '@features/organization/features/missions/models';
+import { MissionDatabaseService } from './mission-database.service';
+import { MissionOutboxStore } from './mission-outbox.store';
+import { MissionWorkspaceRepository } from './mission-workspace.repository';
+import type { MissionScopedRecord } from './models';
+import type { MissionWorkspaceSnapshot } from './models';
 
 /**
  * Service MissionOfflineService
  * @class MissionOfflineService
  *
  * @description
- * Browser-only persistence service for mission offline workflows.
+ * Façade over the mission offline persistence layer. Delegates to the focused
+ * units that own each responsibility — {@link MissionDatabaseService} for
+ * IndexedDB infrastructure, {@link MissionOutboxStore} for the replay outbox
+ * and {@link MissionWorkspaceRepository} for workspace persistence — while
+ * keeping a single stable entry point for mission pages and stores. Cross-cutting
+ * purges that span both workspace and outbox stores are orchestrated here.
  *
- * Responsibilities:
- * - persist mission snapshots in IndexedDB,
- * - queue create/upload operations in an outbox,
- * - expose pending outbox status for UI and update flows,
- * - clear local mission data on logout to avoid cross-user leakage.
- *
- * @since 1.0.0
+ * @version 2.0.0
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
 export class MissionOfflineService {
-  private readonly browser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly events: Events = inject(Events);
-  private readonly unsynced: WritableSignal<boolean> = signal(false);
-  public readonly hasUnsyncedChanges = this.unsynced.asReadonly();
+  //#region Properties
+  /**
+   * Property database
+   * @readonly
+   *
+   * @description
+   * IndexedDB infrastructure (connection, primitives, owner binding).
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {MissionDatabaseService}
+   */
+  private readonly database: MissionDatabaseService = inject(MissionDatabaseService);
 
-  public constructor() {
-    this.events
-      .on(authStoreEvents.logoutSucceeded)
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => void this.clearAll());
-    if (this.browser) void this.refreshOutboxState();
+  /**
+   * Property outbox
+   * @readonly
+   *
+   * @description
+   * Outbox store owning queued operations and the pending-sync state.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {MissionOutboxStore}
+   */
+  private readonly outbox: MissionOutboxStore = inject(MissionOutboxStore);
+
+  /**
+   * Property workspace
+   * @readonly
+   *
+   * @description
+   * Repository persisting normalized mission workspaces.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {MissionWorkspaceRepository}
+   */
+  private readonly workspace: MissionWorkspaceRepository = inject(MissionWorkspaceRepository);
+
+  /**
+   * Property hasUnsyncedChanges
+   * @readonly
+   *
+   * @description
+   * Whether unsynchronized field operations are queued locally.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  public readonly hasUnsyncedChanges: Signal<boolean> = this.outbox.hasUnsyncedChanges;
+  //#endregion
+
+  //#region Workspace
+  /**
+   * Method saveWorkspace
+   * @method saveWorkspace
+   *
+   * @description
+   * Persists a normalized mission workspace locally.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {MissionOutput} mission - mission value.
+   * @param {readonly MissionWorkItemOutput[]} workItems - work Items value.
+   * @param {readonly MissionChangeOutput[]} changes - changes value.
+   * @param {readonly MissionIssueOutput[]} issues - issues value.
+   * @param {readonly unknown[]} [resources] - resources value.
+   * @param {{ readonly replace?: boolean }} [options] - options value.
+   *
+   * @return {Promise<void>} Result of the save workspace operation.
+   */
+  public async saveWorkspace(
+    mission: MissionOutput,
+    workItems: readonly MissionWorkItemOutput[],
+    changes: readonly MissionChangeOutput[],
+    issues: readonly MissionIssueOutput[],
+    resources: readonly unknown[] = [],
+    options: { readonly replace?: boolean } = {},
+  ): Promise<void> {
+    if (options.replace === undefined && (await this.outbox.listOutbox(mission.id)).length > 0) {
+      return;
+    }
+    await this.workspace.saveWorkspace(mission, workItems, changes, issues, resources, options);
   }
 
   /**
-   * Method saveSnapshot
+   * Method getWorkspace
+   * @method getWorkspace
    *
    * @description
-   * Persists a mission snapshot as the latest local recoverable state.
+   * Reads a locally persisted mission workspace.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} missionId - mission Id value.
+   *
+   * @return {Promise<{
+   * mission: MissionOutput;
+   * workItems: readonly MissionWorkItemOutput[];
+   * changes: readonly MissionChangeOutput[];
+   * issues: readonly MissionIssueOutput[];
+   * } | null>} Result of the get workspace operation.
    */
-  public async saveSnapshot(snapshot: MissionSnapshot): Promise<void> {
-    await this.put('snapshots', snapshot.mission.id, snapshot);
+  public getWorkspace(missionId: string): Promise<MissionWorkspaceSnapshot | null> {
+    return this.workspace.getWorkspace(missionId);
   }
 
   /**
-   * Method getSnapshot
+   * Method listMissions
+   * @method listMissions
    *
    * @description
-   * Reads the latest local snapshot for a mission.
+   * Lists locally persisted missions belonging to one organization.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - Organization identifier.
+   *
+   * @return {Promise<readonly MissionOutput[]>} Locally persisted missions.
    */
-  public async getSnapshot(missionId: string): Promise<MissionSnapshot | null> {
-    return this.get<MissionSnapshot>('snapshots', missionId);
+  public listMissions(organizationId: string): Promise<readonly MissionOutput[]> {
+    return this.workspace.listMissions(organizationId);
   }
 
+  /**
+   * Method organizationIdForMission
+   * @method organizationIdForMission
+   *
+   * @description
+   * Resolves the organization owning a locally persisted mission.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} missionId - Mission identifier.
+   *
+   * @return {Promise<string | null>} Owning organization identifier when available.
+   */
+  public organizationIdForMission(missionId: string): Promise<string | null> {
+    return this.workspace.organizationIdForMission(missionId);
+  }
+  //#endregion
+
+  //#region Outbox
   /**
    * Method queue
+   * @method queue
    *
    * @description
    * Queues an operation for replay and marks unsynced state as true.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} missionId - Mission identifier.
+   * @param {MissionOutboxType} type - Operation type.
+   * @param {MissionOutboxPayloadMap[Type]} payload - Operation payload.
+   *
+   * @return {Promise<void>} A promise resolving once the operation is queued.
    */
-  public async queue(
+  public queue<Type extends MissionOutboxType>(
     missionId: string,
-    type: MissionOutboxType,
-    payload: Readonly<Record<string, unknown>>,
+    type: Type,
+    payload: MissionOutboxPayloadMap[Type],
   ): Promise<void> {
-    const operation: MissionOutboxOperation = {
-      id: crypto.randomUUID(),
-      missionId,
-      type,
-      payload: { ...payload, clientId: crypto.randomUUID() },
-      createdAt: new Date().toISOString(),
-    };
-    await this.put('outbox', operation.id, operation);
-    this.unsynced.set(true);
+    return this.outbox.queue(missionId, type, payload);
+  }
+
+  /**
+   * Atomically queues every operation belonging to one field intention.
+   */
+  public queueMany(
+    missionId: string,
+    entries: readonly MissionOutboxQueueEntry[],
+  ): Promise<readonly string[]> {
+    return this.outbox.queueMany(missionId, entries);
   }
 
   /**
    * Method listOutbox
+   * @method listOutbox
    *
    * @description
    * Lists queued operations for one mission.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} missionId - Mission identifier.
+   *
+   * @return {Promise<readonly MissionOutboxOperation[]>} A promise resolving with the queued operations.
    */
-  public async listOutbox(missionId: string): Promise<readonly MissionOutboxOperation[]> {
-    if (!this.browser) return [];
-    const database: IDBDatabase = await this.open();
-    return new Promise((resolve, reject) => {
-      const request: IDBRequest<MissionOutboxOperation[]> = database
-        .transaction('outbox', 'readonly')
-        .objectStore('outbox')
-        .getAll();
-      request.addEventListener('success', (): void =>
-        resolve(request.result.filter((operation) => operation.missionId === missionId)),
-      );
-      request.addEventListener('error', (): void => reject(request.error));
-    });
+  public listOutbox(missionId: string): Promise<readonly MissionOutboxOperation[]> {
+    return this.outbox.listOutbox(missionId);
+  }
+
+  /**
+   * Method listMissionIdsWithOutbox
+   * @method listMissionIdsWithOutbox
+   *
+   * @description
+   * Lists the distinct mission identifiers that still have queued operations.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @return {Promise<readonly string[]>} Result of the list mission ids with outbox operation.
+   */
+  public listMissionIdsWithOutbox(): Promise<readonly string[]> {
+    return this.outbox.listMissionIdsWithOutbox();
   }
 
   /**
    * Method removeOutbox
+   * @method removeOutbox
    *
    * @description
    * Removes one queued operation and recomputes unsynced state.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} id - Outbox operation identifier.
+   *
+   * @return {Promise<void>} A promise resolving once the operation is removed.
    */
-  public async removeOutbox(id: string): Promise<void> {
-    await this.remove('outbox', id);
-    await this.refreshOutboxState();
+  public removeOutbox(id: string): Promise<void> {
+    return this.outbox.removeOutbox(id);
   }
 
   /**
-   * Method clearMission
+   * Method markOutboxConflict
+   * @method markOutboxConflict
    *
    * @description
-   * Clears local snapshot and outbox entries for one mission.
+   * Marks one queued operation as a conflict.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} id - id value.
+   * @param {string} error - error value.
+   *
+   * @return {Promise<void>} Result of the mark outbox conflict operation.
+   */
+  public markOutboxConflict(id: string, error: string): Promise<void> {
+    return this.outbox.markOutboxConflict(id, error);
+  }
+
+  /**
+   * Marks one permanently rejected operation as failed.
+   */
+  public markOutboxFailed(id: string, error: string): Promise<void> {
+    return this.outbox.markOutboxFailed(id, error);
+  }
+
+  /**
+   * Method retryOutbox
+   * @method retryOutbox
+   *
+   * @description
+   * Resets one conflicted operation back to a pending state for replay.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} id - id value.
+   *
+   * @return {Promise<void>} Result of the retry outbox operation.
+   */
+  public retryOutbox(id: string): Promise<void> {
+    return this.outbox.retryOutbox(id);
+  }
+  //#endregion
+
+  //#region Purge
+  /**
+   * Method clearMission
+   * @method clearMission
+   *
+   * @description
+   * Clears local snapshot and outbox entries for one mission, then recomputes
+   * the pending-sync state.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} missionId - Mission identifier.
+   *
+   * @return {Promise<void>} A promise resolving once local mission data is cleared.
    */
   public async clearMission(missionId: string): Promise<void> {
-    await this.remove('snapshots', missionId);
-    const operations: readonly MissionOutboxOperation[] = await this.listOutbox(missionId);
-    await Promise.all(operations.map((operation) => this.remove('outbox', operation.id)));
-    await this.refreshOutboxState();
+    await this.database.ensureOwnerBound();
+    const missionIri = `/api/missions/${missionId}`;
+    await Promise.all([
+      this.database.remove('missions', missionId),
+      this.database.removeWhere<MissionWorkItemOutput>(
+        'workItems',
+        (item) => item.mission === missionIri,
+      ),
+      this.database.removeWhere<MissionChangeOutput>(
+        'changes',
+        (change) => change.mission === missionIri,
+      ),
+      this.database.removeWhere<MissionScopedRecord>(
+        'resources',
+        (resource) => resource.missionId === missionId,
+      ),
+      this.database.removeWhere<MissionScopedRecord>(
+        'media',
+        (media) => media.missionId === missionId,
+      ),
+      this.database.removeWhere<MissionOutboxOperation>(
+        'outbox',
+        (operation) => operation.missionId === missionId,
+      ),
+    ]);
+    await this.outbox.refresh();
   }
 
   /**
    * Method clearAll
+   * @method clearAll
    *
    * @description
-   * Clears all mission offline stores. Used notably on logout.
+   * Clears all mission offline stores and recomputes the pending-sync state.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @return {Promise<void>} A promise resolving once every store is cleared.
    */
   public async clearAll(): Promise<void> {
-    if (!this.browser) return;
-    const database: IDBDatabase = await this.open();
-    await Promise.all(
-      ['snapshots', 'outbox'].map(
-        (storeName) =>
-          new Promise<void>((resolve, reject) => {
-            const request: IDBRequest<undefined> = database
-              .transaction(storeName, 'readwrite')
-              .objectStore(storeName)
-              .clear();
-            request.addEventListener('success', (): void => resolve());
-            request.addEventListener('error', (): void => reject(request.error));
-          }),
-      ),
-    );
-    this.unsynced.set(false);
+    await this.database.clearAll();
+    await this.outbox.refresh();
   }
-
-  /**
-   * Method refreshOutboxState
-   *
-   * @description
-   * Recomputes whether any queued operations remain in outbox.
-   */
-  private async refreshOutboxState(): Promise<void> {
-    if (!this.browser) return;
-    const database: IDBDatabase = await this.open();
-    const count: number = await new Promise((resolve, reject) => {
-      const request: IDBRequest<number> = database
-        .transaction('outbox', 'readonly')
-        .objectStore('outbox')
-        .count();
-      request.addEventListener('success', (): void => resolve(request.result));
-      request.addEventListener('error', (): void => reject(request.error));
-    });
-    this.unsynced.set(count > 0);
-  }
-
-  private async put(storeName: string, key: string, value: unknown): Promise<void> {
-    if (!this.browser) return;
-    const database: IDBDatabase = await this.open();
-    await new Promise<void>((resolve, reject) => {
-      const request: IDBRequest<IDBValidKey> = database
-        .transaction(storeName, 'readwrite')
-        .objectStore(storeName)
-        .put(value, key);
-      request.addEventListener('success', (): void => resolve());
-      request.addEventListener('error', (): void => reject(request.error));
-    });
-  }
-
-  private async get<T>(storeName: string, key: string): Promise<T | null> {
-    if (!this.browser) return null;
-    const database: IDBDatabase = await this.open();
-    return new Promise((resolve, reject) => {
-      const request: IDBRequest<T | undefined> = database
-        .transaction(storeName, 'readonly')
-        .objectStore(storeName)
-        .get(key);
-      request.addEventListener('success', (): void => resolve(request.result ?? null));
-      request.addEventListener('error', (): void => reject(request.error));
-    });
-  }
-
-  private async remove(storeName: string, key: string): Promise<void> {
-    if (!this.browser) return;
-    const database: IDBDatabase = await this.open();
-    await new Promise<void>((resolve, reject) => {
-      const request: IDBRequest<undefined> = database
-        .transaction(storeName, 'readwrite')
-        .objectStore(storeName)
-        .delete(key);
-      request.addEventListener('success', (): void => resolve());
-      request.addEventListener('error', (): void => reject(request.error));
-    });
-  }
-
-  private open(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-      const request: IDBOpenDBRequest = indexedDB.open('fireguard-field-missions', 1);
-      request.addEventListener('upgradeneeded', (): void => {
-        const database: IDBDatabase = request.result;
-        if (!database.objectStoreNames.contains('snapshots'))
-          database.createObjectStore('snapshots');
-        if (!database.objectStoreNames.contains('outbox')) database.createObjectStore('outbox');
-      });
-      request.addEventListener('success', (): void => resolve(request.result));
-      request.addEventListener('error', (): void => reject(request.error));
-    });
-  }
+  //#endregion
 }

@@ -21,6 +21,17 @@ export interface EquipmentAttachmentOutput extends HydraItem {
   readonly id: string;
 
   /**
+   * Property revision
+   * @readonly
+   *
+   * @description
+   * Persisted revision used for conditional requests.
+   *
+   * @type {number}
+   */
+  readonly revision: number;
+
+  /**
    * Property equipmentId
    * @readonly
    *

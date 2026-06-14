@@ -77,7 +77,7 @@
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} facilities"
         [stripedRows]="true"
-        [pt]="tablePt"
+        [pt]="tablePt()"
       >
         <ng-template pTemplate="header">
           <tr>
@@ -269,17 +269,23 @@
         </ng-template>
 
         <ng-template pTemplate="emptymessage">
-          <tr>
+          <tr class="bg-transparent! [&>td]:border-b-0!">
             <td [attr.colspan]="canManageFacilities() ? 8 : 7">
-              <div class="flex flex-col items-center gap-3 py-16">
-                <i class="pi pi-sitemap text-6xl text-surface-400"></i>
-                <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-100">
-                  No facilities yet
-                </h3>
-                <span class="text-sm text-surface-500">
-                  Create a new facility to get started.
-                </span>
-              </div>
+              <app-empty-state
+                icon="pi-sitemap"
+                title="No facilities yet"
+                description="Facilities are the sites and buildings your inspections cover."
+              >
+                @if (canManageFacilities()) {
+                  <p-button
+                    label="New facility"
+                    icon="pi pi-plus"
+                    severity="primary"
+                    size="small"
+                    (onClick)="add.emit()"
+                  />
+                }
+              </app-empty-state>
             </td>
           </tr>
         </ng-template>

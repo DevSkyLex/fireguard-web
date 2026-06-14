@@ -28,8 +28,7 @@ export class PageTitleStrategy extends TitleStrategy {
    *
    * @type {TitleService}
    */
-  private readonly titleService: TitleService =
-    inject<TitleService>(TitleService);
+  private readonly titleService: TitleService = inject<TitleService>(TitleService);
   //#endregion
 
   //#region Methods

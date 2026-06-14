@@ -69,6 +69,7 @@ describe('EquipmentService', () => {
     '@id': `/api/organizations/${orgId}/equipment/${equipmentId}/attachments/attach-uuid-1`,
     '@type': 'EquipmentAttachment',
     id: 'attach-uuid-1',
+    revision: 1,
     equipmentId,
     fileName: 'datasheet.pdf',
     mimeType: 'application/pdf',

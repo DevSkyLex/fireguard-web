@@ -56,7 +56,7 @@
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} checklists"
         [stripedRows]="true"
-        [pt]="tablePt"
+        [pt]="tablePt()"
         (onLazyLoad)="onLazyLoad($event)"
       >
         <ng-template pTemplate="header">
@@ -115,15 +115,23 @@
           }
         </ng-template>
         <ng-template pTemplate="emptymessage">
-          <tr>
+          <tr class="bg-transparent! [&>td]:border-b-0!">
             <td colspan="6">
-              <div class="flex flex-col items-center gap-3 py-16">
-                <i class="pi pi-list-check text-6xl text-surface-400"></i>
-                <h3 class="text-lg font-semibold">No checklists found</h3>
-                <span class="text-sm text-surface-500"
-                  >Adjust the status filter or create the first checklist.</span
-                >
-              </div>
+              <app-empty-state
+                icon="pi-list-check"
+                title="No checklists found"
+                description="Checklists are the reusable inspection templates your teams run on site."
+              >
+                @if (canManage()) {
+                  <p-button
+                    label="New checklist"
+                    icon="pi pi-plus"
+                    severity="primary"
+                    size="small"
+                    (onClick)="add.emit()"
+                  />
+                }
+              </app-empty-state>
             </td>
           </tr>
         </ng-template>

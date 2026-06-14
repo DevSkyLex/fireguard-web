@@ -89,7 +89,7 @@ describe('FacilityEquipmentTable', () => {
 
   it('should render an empty message when there are no equipments', () => {
     const fixture = createComponent({ equipments: [], total: 0, empty: true });
-    expect(fixture.nativeElement.textContent).toContain('No equipments found');
+    expect(fixture.nativeElement.textContent).toContain('No equipment found');
   });
 
   it('should show skeleton placeholders while loading', () => {

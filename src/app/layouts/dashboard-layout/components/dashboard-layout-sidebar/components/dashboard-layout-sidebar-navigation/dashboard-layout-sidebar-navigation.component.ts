@@ -47,13 +47,7 @@ import {
  */
 @Component({
   selector: 'app-dashboard-layout-sidebar-navigation',
-  imports: [
-    BadgeModule,
-    RippleModule,
-    RouterLink,
-    RouterLinkActive,
-    TooltipModule,
-  ],
+  imports: [BadgeModule, RippleModule, RouterLink, RouterLinkActive, TooltipModule],
   templateUrl: './dashboard-layout-sidebar-navigation.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

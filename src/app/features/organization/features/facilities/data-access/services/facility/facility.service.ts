@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { EMPTY, expand, reduce, type Observable } from 'rxjs';
 import type { HydraCollection, OptionOutput } from '@core/models/api';
 import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
@@ -136,6 +136,31 @@ export class FacilityService extends HydraApiService {
   }
 
   /**
+   * Lists every facility by consuming the server-paginated collection.
+   */
+  public listAll(
+    organizationId: string,
+    options?: FacilityListOptions,
+  ): Observable<readonly FacilityOutput[]> {
+    const pageSize = 100;
+    return this.list(organizationId, { ...options, page: 1, itemsPerPage: pageSize }).pipe(
+      expand((collection, pageIndex) =>
+        (pageIndex + 1) * pageSize < collection.totalItems
+          ? this.list(organizationId, {
+              ...options,
+              page: pageIndex + 2,
+              itemsPerPage: pageSize,
+            })
+          : EMPTY,
+      ),
+      reduce(
+        (items, collection) => [...items, ...collection.member],
+        [] as readonly FacilityOutput[],
+      ),
+    );
+  }
+
+  /**
    * Method listChildren
    * @method listChildren
    *
@@ -245,6 +270,43 @@ export class FacilityService extends HydraApiService {
       `${FacilityService.BASE_PATH}/${organizationId}/facilities`,
       input,
     );
+  }
+
+  /**
+   * Method createForMission
+   * @method createForMission
+   *
+   * @description
+   * Executes the create for mission operation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - organization Id value.
+   * @param {string} missionId - mission Id value.
+   * @param {CreateFacilityInput} input - input value.
+   *
+   * @return {Observable<FacilityOutput>} Result of the create for mission operation.
+   */
+  public createForMission(
+    organizationId: string,
+    missionId: string,
+    input: CreateFacilityInput,
+  ): Observable<FacilityOutput> {
+    const payload: CreateFacilityInput = {
+      ...input,
+      organization: `/api/organizations/${organizationId}`,
+      mission: `/api/missions/${missionId}`,
+    };
+    if (input.clientId) {
+      return this.put<CreateFacilityInput, FacilityOutput>(
+        `/api/facilities/${input.clientId}`,
+        payload,
+        { headers: { 'If-None-Match': '*' } },
+      );
+    }
+
+    return this.post<CreateFacilityInput, FacilityOutput>('/api/facilities', payload);
   }
 
   /**

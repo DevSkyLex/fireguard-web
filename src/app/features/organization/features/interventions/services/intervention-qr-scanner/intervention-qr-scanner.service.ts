@@ -2,11 +2,11 @@ import { Injectable } from '@angular/core';
 import type { BarcodeDetectorConstructor } from './models';
 
 /**
- * Service MissionQrScannerService
- * @class MissionQrScannerService
+ * Service InterventionQrScannerService
+ * @class InterventionQrScannerService
  *
  * @description
- * Browser QR code decoding service used by mission equipment entry.
+ * Browser QR code decoding service used by intervention equipment entry.
  *
  * Wraps the experimental `BarcodeDetector` API so UI components only deal
  * with a simple "decode this photo" contract and can degrade gracefully when
@@ -16,7 +16,7 @@ import type { BarcodeDetectorConstructor } from './models';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
-export class MissionQrScannerService {
+export class InterventionQrScannerService {
   //#region Methods
   /**
    * Method isSupported

@@ -1,4 +1,4 @@
 /**
- * Supported mission work item statuses.
+ * Supported intervention work item statuses.
  */
-export type MissionWorkItemStatus = 'planned' | 'in_progress' | 'completed' | 'skipped';
+export type InterventionWorkItemStatus = 'planned' | 'in_progress' | 'completed' | 'skipped';

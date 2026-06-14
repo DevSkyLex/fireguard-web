@@ -1,14 +1,14 @@
 import type { HydraItem } from '@core/models/api';
-import type { MissionIssueSeverity } from './mission-issue-severity.type';
+import type { InterventionIssueSeverity } from './intervention-issue-severity.type';
 
 /**
- * Interface MissionIssueOutput
- * @interface MissionIssueOutput
+ * Interface InterventionIssueOutput
+ * @interface InterventionIssueOutput
  *
  * @description
- * Mission validation issue returned by mission readiness checks.
+ * Intervention validation issue returned by intervention readiness checks.
  */
-export interface MissionIssueOutput extends HydraItem {
+export interface InterventionIssueOutput extends HydraItem {
   //#region Properties
   /**
    * Property severity
@@ -17,9 +17,9 @@ export interface MissionIssueOutput extends HydraItem {
    * @description
    * Severity level of the issue.
    *
-   * @type {MissionIssueSeverity}
+   * @type {InterventionIssueSeverity}
    */
-  readonly severity: MissionIssueSeverity;
+  readonly severity: InterventionIssueSeverity;
 
   /**
    * Property resource

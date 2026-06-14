@@ -1,9 +1,9 @@
-import type { MissionOutput } from '@features/organization/features/missions/models';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
 
 /**
- * State of the field agent mission list.
+ * State of the field agent intervention list.
  */
-export interface MyMissionsState {
-  readonly missions: readonly MissionOutput[];
+export interface MyInterventionsState {
+  readonly interventions: readonly InterventionOutput[];
   readonly loading: boolean;
 }

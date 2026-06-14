@@ -5,36 +5,36 @@ import {
   type EnvironmentProviders,
 } from '@angular/core';
 import {
-  MissionOfflineLifecycleService,
-  MissionPrefetchService,
-  MissionPwaUpdateService,
-  MissionSyncCoordinatorService,
+  InterventionOfflineLifecycleService,
+  InterventionPrefetchService,
+  InterventionPwaUpdateService,
+  InterventionSyncCoordinatorService,
 } from './services';
 
 /**
- * Function provideMissionsFeature
- * @function provideMissionsFeature
+ * Function provideInterventionsFeature
+ * @function provideInterventionsFeature
  *
  * @description
- * Registers mission-scoped bootstrap providers, started once at app startup:
+ * Registers intervention-scoped bootstrap providers, started once at app startup:
  *
- * - `MissionPwaUpdateService` — keeps mission offline outbox integrity by
+ * - `InterventionPwaUpdateService` — keeps intervention offline outbox integrity by
  *   preventing reload prompts while local unsynchronized operations exist,
- * - `MissionPrefetchService` — warms locally persisted mission workspaces,
- * - `MissionSyncCoordinatorService` — replays the outbox when connectivity or
+ * - `InterventionPrefetchService` — warms locally persisted intervention workspaces,
+ * - `InterventionSyncCoordinatorService` — replays the outbox when connectivity or
  *   page visibility is regained.
  *
  * @since 1.0.0
  *
- * @return {EnvironmentProviders} Feature-level providers for mission startup.
+ * @return {EnvironmentProviders} Feature-level providers for intervention startup.
  */
-export function provideMissionsFeature(): EnvironmentProviders {
+export function provideInterventionsFeature(): EnvironmentProviders {
   return makeEnvironmentProviders([
     provideAppInitializer(() => {
-      inject(MissionOfflineLifecycleService).start();
-      inject(MissionPwaUpdateService).start();
-      inject(MissionPrefetchService).start();
-      inject(MissionSyncCoordinatorService).start();
+      inject(InterventionOfflineLifecycleService).start();
+      inject(InterventionPwaUpdateService).start();
+      inject(InterventionPrefetchService).start();
+      inject(InterventionSyncCoordinatorService).start();
     }),
   ]);
 }

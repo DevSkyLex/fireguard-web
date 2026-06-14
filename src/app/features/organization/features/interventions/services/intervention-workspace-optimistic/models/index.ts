@@ -1,1 +1,1 @@
-export type { MissionWorkItemOptimisticResult } from './mission-work-item-optimistic-result.interface';
+export type { InterventionWorkItemOptimisticResult } from './intervention-work-item-optimistic-result.interface';

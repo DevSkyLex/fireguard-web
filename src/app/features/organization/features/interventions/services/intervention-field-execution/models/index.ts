@@ -1,2 +1,2 @@
-export type { MissionDiscoveryResourcePlan } from './mission-discovery-resource-plan.type';
-export type { MissionFieldDiscovery } from './mission-field-discovery.interface';
+export type { InterventionDiscoveryResourcePlan } from './intervention-discovery-resource-plan.type';
+export type { InterventionFieldDiscovery } from './intervention-field-discovery.interface';

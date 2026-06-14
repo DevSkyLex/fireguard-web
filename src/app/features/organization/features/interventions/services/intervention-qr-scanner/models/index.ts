@@ -1,5 +1,5 @@
 /**
- * Mission QR scanner model exports.
+ * Intervention QR scanner model exports.
  */
 export type {
   BarcodeDetectorConstructor,

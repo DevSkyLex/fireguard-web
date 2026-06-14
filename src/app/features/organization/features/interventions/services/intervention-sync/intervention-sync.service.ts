@@ -3,9 +3,9 @@ import { firstValueFrom } from 'rxjs';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
-import { MissionService } from '@features/organization/features/missions/data-access';
-import type { MissionOutboxOperation } from '@features/organization/features/missions/models';
-import { MissionOfflineService } from '../mission-offline';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
+import type { InterventionOutboxOperation } from '@features/organization/features/interventions/models';
+import { InterventionOfflineService } from '../intervention-offline';
 import type { SyncProblemResponse } from './models';
 
 /**
@@ -52,13 +52,13 @@ const PERMANENT_FAILURE_STATUSES: ReadonlySet<number> = new Set([400, 403, 409, 
 const CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE = '/problems/client-resource-already-exists';
 
 /**
- * Service MissionSyncService
- * @class MissionSyncService
+ * Service InterventionSyncService
+ * @class InterventionSyncService
  *
  * @description
- * Outbox replay service for mission offline workflows.
+ * Outbox replay service for intervention offline workflows.
  *
- * Replays queued mission operations against the API in their original field
+ * Replays queued intervention operations against the API in their original field
  * entry order, dequeuing operations the server already applied (idempotent
  * `409 Conflict` responses) and stopping on any other failure so the outbox
  * stays consistent.
@@ -67,21 +67,21 @@ const CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE = '/problems/client-resource-a
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
-export class MissionSyncService {
+export class InterventionSyncService {
   //#region Properties
   /**
    * Property service
    * @readonly
    *
    * @description
-   * Mission data-access service used to replay queued operations.
+   * Intervention data-access service used to replay queued operations.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {MissionService}
+   * @type {InterventionService}
    */
-  private readonly service: MissionService = inject(MissionService);
+  private readonly service: InterventionService = inject(InterventionService);
 
   /**
    * Property facilities
@@ -135,12 +135,12 @@ export class MissionSyncService {
    * @access private
    * @since 1.0.0
    *
-   * @type {MissionOfflineService}
+   * @type {InterventionOfflineService}
    */
-  private readonly offline: MissionOfflineService = inject(MissionOfflineService);
+  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
 
   /**
-   * Active replay promises keyed by mission to prevent concurrent duplicate replays.
+   * Active replay promises keyed by intervention to prevent concurrent duplicate replays.
    */
   private readonly activeReplays: Map<string, Promise<number>> = new Map();
   //#endregion
@@ -151,33 +151,33 @@ export class MissionSyncService {
    * @method replayOutbox
    *
    * @description
-   * Replays every queued operation of a mission sequentially, preserving
+   * Replays every queued operation of a intervention sequentially, preserving
    * field entry order, and removes each replayed operation from the outbox.
    *
    * @access public
    * @since 1.0.0
    *
    * @param {string} organizationId - Active organization identifier.
-   * @param {string} missionId - Mission identifier.
+   * @param {string} interventionId - Intervention identifier.
    *
    * @return {Promise<number>} A promise resolving with the number of replayed operations.
    */
-  public async replayOutbox(organizationId: string, missionId: string): Promise<number> {
-    const activeReplay = this.activeReplays.get(missionId);
+  public async replayOutbox(organizationId: string, interventionId: string): Promise<number> {
+    const activeReplay = this.activeReplays.get(interventionId);
     if (activeReplay) return activeReplay;
 
-    const replay = this.replayMissionOutbox(organizationId, missionId).finally(() => {
-      if (this.activeReplays.get(missionId) === replay) this.activeReplays.delete(missionId);
+    const replay = this.replayInterventionOutbox(organizationId, interventionId).finally(() => {
+      if (this.activeReplays.get(interventionId) === replay) this.activeReplays.delete(interventionId);
     });
-    this.activeReplays.set(missionId, replay);
+    this.activeReplays.set(interventionId, replay);
     return replay;
   }
 
   /**
-   * Replays a mission outbox after mission-level serialization has been acquired.
+   * Replays a intervention outbox after intervention-level serialization has been acquired.
    */
-  private async replayMissionOutbox(organizationId: string, missionId: string): Promise<number> {
-    const operations = await this.offline.listOutbox(missionId);
+  private async replayInterventionOutbox(organizationId: string, interventionId: string): Promise<number> {
+    const operations = await this.offline.listOutbox(interventionId);
     return this.replayOperations(organizationId, operations, 0, 0, new Set<string>());
   }
 
@@ -192,7 +192,7 @@ export class MissionSyncService {
    * @since 1.0.0
    *
    * @param {string} organizationId - organization Id value.
-   * @param {readonly MissionOutboxOperation[]} operations - operations value.
+   * @param {readonly InterventionOutboxOperation[]} operations - operations value.
    * @param {number} index - index value.
    * @param {number} replayed - replayed value.
    * @param {Set<string>} blockedResources - Resources whose create operation is in conflict.
@@ -201,7 +201,7 @@ export class MissionSyncService {
    */
   private async replayOperations(
     organizationId: string,
-    operations: readonly MissionOutboxOperation[],
+    operations: readonly InterventionOutboxOperation[],
     index: number,
     replayed: number,
     blockedResources: Set<string>,
@@ -298,25 +298,25 @@ export class MissionSyncService {
    * @since 1.0.0
    *
    * @param {string} organizationId - Active organization identifier.
-   * @param {MissionOutboxOperation} operation - Queued operation to replay.
+   * @param {InterventionOutboxOperation} operation - Queued operation to replay.
    *
    * @return {Promise<void>} A promise resolving once the operation is replayed.
    */
-  private async replay(organizationId: string, operation: MissionOutboxOperation): Promise<void> {
+  private async replay(organizationId: string, operation: InterventionOutboxOperation): Promise<void> {
     switch (operation.type) {
       case 'facility.create':
         await firstValueFrom(
-          this.facilities.createForMission(organizationId, operation.missionId, operation.payload),
+          this.facilities.createForIntervention(organizationId, operation.interventionId, operation.payload),
         );
         break;
       case 'equipment.create':
         await firstValueFrom(
-          this.equipment.createForMission(organizationId, operation.missionId, operation.payload),
+          this.equipment.createForIntervention(organizationId, operation.interventionId, operation.payload),
         );
         break;
       case 'inspection.create':
         await firstValueFrom(
-          this.inspections.createForMission(organizationId, operation.missionId, operation.payload),
+          this.inspections.createForIntervention(organizationId, operation.interventionId, operation.payload),
         );
         break;
       case 'media.create': {
@@ -335,18 +335,18 @@ export class MissionSyncService {
             equipmentId,
             file,
             fileName,
-            operation.missionId,
+            operation.interventionId,
             operation.payload.clientId,
           ),
         );
         break;
       }
-      case 'mission.update': {
+      case 'intervention.update': {
         const revision = operation.payload['revision'];
         const { revision: _revision, clientId: _clientId, ...input } = operation.payload;
         await firstValueFrom(
           this.service.update(
-            operation.missionId,
+            operation.interventionId,
             input,
             typeof revision === 'number' ? revision : undefined,
           ),
@@ -381,7 +381,7 @@ export class MissionSyncService {
       case 'change.update': {
         const changeId = operation.payload['changeId'];
         const revision = operation.payload['revision'];
-        if (typeof changeId !== 'string') throw new Error('Invalid mission change operation');
+        if (typeof changeId !== 'string') throw new Error('Invalid intervention change operation');
         const {
           changeId: _changeId,
           revision: _revision,
@@ -410,11 +410,11 @@ export class MissionSyncService {
    * @access private
    * @since 1.0.0
    *
-   * @param {MissionOutboxOperation} operation - operation value.
+   * @param {InterventionOutboxOperation} operation - operation value.
    *
    * @return {boolean} Result of the is create operation.
    */
-  private isCreate(operation: MissionOutboxOperation): boolean {
+  private isCreate(operation: InterventionOutboxOperation): boolean {
     return (
       operation.type === 'facility.create' ||
       operation.type === 'equipment.create' ||
@@ -455,7 +455,7 @@ export class MissionSyncService {
   /**
    * Resolves the canonical resource created by an outbox operation.
    */
-  private createdResource(operation: MissionOutboxOperation): string | null {
+  private createdResource(operation: InterventionOutboxOperation): string | null {
     const clientId = operation.payload['clientId'];
     if (typeof clientId !== 'string') return null;
 
@@ -466,9 +466,9 @@ export class MissionSyncService {
         : operation.type === 'inspection.create'
           ? `/api/inspections/${clientId}`
           : operation.type === 'work-item.create'
-            ? `/api/mission-work-items/${clientId}`
+            ? `/api/intervention-work-items/${clientId}`
             : operation.type === 'change.create'
-              ? `/api/mission-changes/${clientId}`
+              ? `/api/intervention-changes/${clientId}`
               : null;
   }
 
@@ -476,7 +476,7 @@ export class MissionSyncService {
    * Checks whether an operation references a resource whose creation is in conflict.
    */
   private dependsOnBlockedResource(
-    operation: MissionOutboxOperation,
+    operation: InterventionOutboxOperation,
     blockedResources: ReadonlySet<string>,
   ): boolean {
     if (blockedResources.size === 0) return false;

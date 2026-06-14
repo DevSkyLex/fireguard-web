@@ -1,1 +1,1 @@
-export type { MissionPlanningOptionsState } from './mission-planning-options-state.interface';
+export type { InterventionPlanningOptionsState } from './intervention-planning-options-state.interface';

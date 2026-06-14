@@ -61,11 +61,11 @@ export interface InspectorOutput {
  */
 export interface InspectionOutput extends HydraItem {
   /**
-   * Optional mission IRI when inspection belongs to a mission.
+   * Optional intervention IRI when inspection belongs to a intervention.
    */
-  readonly mission?: string | null;
+  readonly intervention?: string | null;
   /**
-   * Record lifecycle state supporting draft/publish mission workflows.
+   * Record lifecycle state supporting draft/publish intervention workflows.
    */
   readonly recordStatus?: 'draft' | 'published';
   /**

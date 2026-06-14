@@ -1,4 +1,4 @@
 /**
- * Missions data-access public exports.
+ * Interventions data-access public exports.
  */
-export { MissionService } from './services/mission/mission.service';
+export { InterventionService } from './services/intervention/intervention.service';

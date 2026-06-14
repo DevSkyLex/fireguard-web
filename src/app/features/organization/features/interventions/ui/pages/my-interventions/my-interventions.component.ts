@@ -7,23 +7,23 @@ import { ScrollerModule } from 'primeng/scroller';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { ConnectivityService } from '@core/services/connectivity';
-import type { MissionOutput } from '@features/organization/features/missions/models';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import {
-  MyMissionsStore,
-  type MyMissionsStoreType,
-} from '@features/organization/features/missions/state/my-missions';
+  MyInterventionsStore,
+  type MyInterventionsStoreType,
+} from '@features/organization/features/interventions/state/my-interventions';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
- * Component MyMissionsPage.
+ * Component MyInterventionsPage.
  *
- * Signal-first field mission list.
+ * Signal-first field intervention list.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-my-missions-page',
+  selector: 'app-my-interventions-page',
   imports: [
     ButtonModule,
     MessageModule,
@@ -32,12 +32,12 @@ import { ActiveOrganizationStore } from '@features/organization/state';
     SkeletonModule,
     TagModule,
   ],
-  providers: [MyMissionsStore],
-  templateUrl: './my-missions.component.html',
+  providers: [MyInterventionsStore],
+  templateUrl: './my-interventions.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MyMissionsPage {
-  protected readonly store: MyMissionsStoreType = inject(MyMissionsStore);
+export class MyInterventionsPage {
+  protected readonly store: MyInterventionsStoreType = inject(MyInterventionsStore);
 
   private readonly organization: ActiveOrganizationStore = inject(ActiveOrganizationStore);
 
@@ -54,10 +54,10 @@ export class MyMissionsPage {
     );
   }
 
-  protected openMission(mission: MissionOutput): void {
+  protected openIntervention(intervention: InterventionOutput): void {
     const organizationId = this.organization.selectedOrganization()?.id;
     if (organizationId) {
-      void this.router.navigate(['/organizations', organizationId, 'missions', mission.id]);
+      void this.router.navigate(['/organizations', organizationId, 'interventions', intervention.id]);
     }
   }
 }

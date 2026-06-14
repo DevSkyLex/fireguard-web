@@ -5,48 +5,48 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, forkJoin, from, map, of, pipe, switchMap, tap } from 'rxjs';
 import { OrganizationMemberService } from '@features/organization/data-access';
-import { MissionService } from '@features/organization/features/missions/data-access';
-import type { MissionOutput } from '@features/organization/features/missions/models';
-import { MissionOfflineService } from '@features/organization/features/missions/services';
-import type { MyMissionsLoadRequest, MyMissionsState } from './models';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import { InterventionOfflineService } from '@features/organization/features/interventions/services';
+import type { MyInterventionsLoadRequest, MyInterventionsState } from './models';
 
-const INITIAL_STATE: MyMissionsState = {
-  missions: [],
+const INITIAL_STATE: MyInterventionsState = {
+  interventions: [],
   loading: false,
 };
 
 /**
- * Store MyMissionsStore.
+ * Store MyInterventionsStore.
  *
- * Signal-first state for the field agent mission list.
+ * Signal-first state for the field agent intervention list.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export const MyMissionsStore = signalStore(
-  withState<MyMissionsState>(INITIAL_STATE),
+export const MyInterventionsStore = signalStore(
+  withState<MyInterventionsState>(INITIAL_STATE),
   withComputed((store) => ({
-    activeMissions: computed<readonly MissionOutput[]>(() =>
+    activeInterventions: computed<readonly InterventionOutput[]>(() =>
       store
-        .missions()
-        .filter((mission) =>
-          ['planned', 'in_progress', 'changes_requested'].includes(mission.status),
+        .interventions()
+        .filter((intervention) =>
+          ['planned', 'in_progress', 'changes_requested'].includes(intervention.status),
         ),
     ),
   })),
   withMethods(
     (
       store,
-      service = inject(MissionService),
+      service = inject(InterventionService),
       members = inject(OrganizationMemberService),
-      offline = inject(MissionOfflineService),
+      offline = inject(InterventionOfflineService),
     ) => ({
-      load: rxMethod<MyMissionsLoadRequest>(
+      load: rxMethod<MyInterventionsLoadRequest>(
         pipe(
-          tap(() => patchState(store, { missions: [], loading: true })),
+          tap(() => patchState(store, { interventions: [], loading: true })),
           switchMap(({ organizationId, online }) => {
-            if (!organizationId) return of([] as readonly MissionOutput[]);
-            if (!online) return from(offline.listMissions(organizationId));
+            if (!organizationId) return of([] as readonly InterventionOutput[]);
+            if (!online) return from(offline.listInterventions(organizationId));
 
             return members.getCurrentProfile(organizationId).pipe(
               switchMap((profile) => {
@@ -58,19 +58,19 @@ export const MyMissionsStore = signalStore(
               }),
               map(({ responsible, participant }) => [
                 ...new Map(
-                  [...responsible, ...participant].map((mission) => [mission.id, mission]),
+                  [...responsible, ...participant].map((intervention) => [intervention.id, intervention]),
                 ).values(),
               ]),
               catchError((error: unknown) =>
                 error instanceof HttpErrorResponse && error.status !== 0
-                  ? of([] as readonly MissionOutput[])
-                  : from(offline.listMissions(organizationId)),
+                  ? of([] as readonly InterventionOutput[])
+                  : from(offline.listInterventions(organizationId)),
               ),
             );
           }),
           tapResponse({
-            next: (missions) => patchState(store, { missions, loading: false }),
-            error: () => patchState(store, { missions: [], loading: false }),
+            next: (interventions) => patchState(store, { interventions, loading: false }),
+            error: () => patchState(store, { interventions: [], loading: false }),
           }),
         ),
       ),
@@ -78,4 +78,4 @@ export const MyMissionsStore = signalStore(
   ),
 );
 
-export type MyMissionsStoreType = InstanceType<typeof MyMissionsStore>;
+export type MyInterventionsStoreType = InstanceType<typeof MyInterventionsStore>;

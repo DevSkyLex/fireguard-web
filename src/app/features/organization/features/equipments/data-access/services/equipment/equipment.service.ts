@@ -270,30 +270,30 @@ export class EquipmentService extends HydraApiService {
   }
 
   /**
-   * Method createForMission
-   * @method createForMission
+   * Method createForIntervention
+   * @method createForIntervention
    *
    * @description
-   * Executes the create for mission operation.
+   * Executes the create for intervention operation.
    *
    * @access public
    * @since 1.0.0
    *
    * @param {string} organizationId - organization Id value.
-   * @param {string} missionId - mission Id value.
+   * @param {string} interventionId - intervention Id value.
    * @param {CreateEquipmentInput} input - input value.
    *
-   * @return {Observable<EquipmentOutput>} Result of the create for mission operation.
+   * @return {Observable<EquipmentOutput>} Result of the create for intervention operation.
    */
-  public createForMission(
+  public createForIntervention(
     organizationId: string,
-    missionId: string,
+    interventionId: string,
     input: CreateEquipmentInput,
   ): Observable<EquipmentOutput> {
     const payload: CreateEquipmentInput = {
       ...input,
       organization: `/api/organizations/${organizationId}`,
-      mission: `/api/missions/${missionId}`,
+      intervention: `/api/interventions/${interventionId}`,
     };
     if (input.clientId) {
       return this.put<CreateEquipmentInput, EquipmentOutput>(
@@ -319,7 +319,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} equipmentId - equipment Id value.
    * @param {Blob} file - file value.
    * @param {string} fileName - file Name value.
-   * @param {string} [missionId] - Mission authorizing the field evidence upload.
+   * @param {string} [interventionId] - Intervention authorizing the field evidence upload.
    * @param {string} [clientId] - Stable client UUID used to replay uploads idempotently.
    *
    * @return {Observable<HydraItem>} Result of the upload evidence operation.
@@ -328,13 +328,13 @@ export class EquipmentService extends HydraApiService {
     equipmentId: string,
     file: Blob,
     fileName: string,
-    missionId?: string,
+    interventionId?: string,
     clientId?: string,
   ): Observable<HydraItem> {
     const body: FormData = new FormData();
     body.set('equipment', `/api/equipment/${equipmentId}`);
     body.set('file', file, fileName);
-    if (missionId) body.set('mission', `/api/missions/${missionId}`);
+    if (interventionId) body.set('intervention', `/api/interventions/${interventionId}`);
     if (clientId) body.set('clientId', clientId);
 
     return this.http.post<HydraItem>(this.buildUrl('/api/media'), body, {

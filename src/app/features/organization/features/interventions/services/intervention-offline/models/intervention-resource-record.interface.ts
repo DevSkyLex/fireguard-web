@@ -1,8 +1,8 @@
 /**
- * Persisted mission resource or issue.
+ * Persisted intervention resource or issue.
  */
-export interface MissionResourceRecord {
-  readonly missionId: string;
+export interface InterventionResourceRecord {
+  readonly interventionId: string;
   readonly kind: string;
   readonly value: unknown;
 }

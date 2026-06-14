@@ -1,30 +1,30 @@
 import { inject, Injectable } from '@angular/core';
 import type {
-  MissionChangeOutput,
-  MissionIssueOutput,
-  MissionOutput,
-  MissionWorkItemOutput,
-} from '@features/organization/features/missions/models';
-import { MissionDatabaseService } from './mission-database.service';
+  InterventionChangeOutput,
+  InterventionIssueOutput,
+  InterventionOutput,
+  InterventionWorkItemOutput,
+} from '@features/organization/features/interventions/models';
+import { InterventionDatabaseService } from './intervention-database.service';
 import type {
-  MissionResourceRecord,
-  MissionScopedRecord,
-  MissionWorkspaceSnapshot,
+  InterventionResourceRecord,
+  InterventionScopedRecord,
+  InterventionWorkspaceSnapshot,
 } from './models';
 
 /**
- * Service MissionWorkspaceRepository
- * @class MissionWorkspaceRepository
+ * Service InterventionWorkspaceRepository
+ * @class InterventionWorkspaceRepository
  *
  * @description
- * Persists and reads normalized mission workspaces (mission, work items,
- * changes and issues) on top of {@link MissionDatabaseService}.
+ * Persists and reads normalized intervention workspaces (intervention, work items,
+ * changes and issues) on top of {@link InterventionDatabaseService}.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
-export class MissionWorkspaceRepository {
+export class InterventionWorkspaceRepository {
   //#region Properties
   /**
    * Property database
@@ -36,9 +36,9 @@ export class MissionWorkspaceRepository {
    * @access private
    * @since 1.0.0
    *
-   * @type {MissionDatabaseService}
+   * @type {InterventionDatabaseService}
    */
-  private readonly database: MissionDatabaseService = inject(MissionDatabaseService);
+  private readonly database: InterventionDatabaseService = inject(InterventionDatabaseService);
   //#endregion
 
   //#region Methods
@@ -47,48 +47,48 @@ export class MissionWorkspaceRepository {
    * @method saveWorkspace
    *
    * @description
-   * Persists a normalized mission workspace locally.
+   * Persists a normalized intervention workspace locally.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {MissionOutput} mission - mission value.
-   * @param {readonly MissionWorkItemOutput[]} workItems - work Items value.
-   * @param {readonly MissionChangeOutput[]} changes - changes value.
-   * @param {readonly MissionIssueOutput[]} issues - issues value.
+   * @param {InterventionOutput} intervention - intervention value.
+   * @param {readonly InterventionWorkItemOutput[]} workItems - work Items value.
+   * @param {readonly InterventionChangeOutput[]} changes - changes value.
+   * @param {readonly InterventionIssueOutput[]} issues - issues value.
    * @param {readonly unknown[]} [resources] - resources value.
    * @param {{ readonly replace?: boolean }} [options] - options value.
    *
    * @return {Promise<void>} Result of the save workspace operation.
    */
   public async saveWorkspace(
-    mission: MissionOutput,
-    workItems: readonly MissionWorkItemOutput[],
-    changes: readonly MissionChangeOutput[],
-    issues: readonly MissionIssueOutput[],
+    intervention: InterventionOutput,
+    workItems: readonly InterventionWorkItemOutput[],
+    changes: readonly InterventionChangeOutput[],
+    issues: readonly InterventionIssueOutput[],
     resources: readonly unknown[] = [],
     options: { readonly replace?: boolean } = {},
   ): Promise<void> {
     await this.database.ensureOwnerBound();
-    const missionIri = `/api/missions/${mission.id}`;
+    const interventionIri = `/api/interventions/${intervention.id}`;
     if (options.replace !== false) {
       await Promise.all([
-        this.database.removeWhere<MissionWorkItemOutput>(
+        this.database.removeWhere<InterventionWorkItemOutput>(
           'workItems',
-          (item) => item.mission === missionIri,
+          (item) => item.intervention === interventionIri,
         ),
-        this.database.removeWhere<MissionChangeOutput>(
+        this.database.removeWhere<InterventionChangeOutput>(
           'changes',
-          (change) => change.mission === missionIri,
+          (change) => change.intervention === interventionIri,
         ),
-        this.database.removeWhere<MissionScopedRecord>(
+        this.database.removeWhere<InterventionScopedRecord>(
           'resources',
-          (resource) => resource.missionId === mission.id,
+          (resource) => resource.interventionId === intervention.id,
         ),
       ]);
     }
     await Promise.all([
-      this.database.putMany('missions', [{ key: mission.id, value: mission }]),
+      this.database.putMany('interventions', [{ key: intervention.id, value: intervention }]),
       this.database.putMany(
         'workItems',
         workItems.map((item) => ({
@@ -105,16 +105,16 @@ export class MissionWorkspaceRepository {
       ),
       this.database.putMany('resources', [
         ...issues.map((issue, index) => ({
-          key: `${mission.id}:issue:${index}`,
-          value: { missionId: mission.id, kind: 'issue', value: issue },
+          key: `${intervention.id}:issue:${index}`,
+          value: { interventionId: intervention.id, kind: 'issue', value: issue },
         })),
         ...resources.map((resource: unknown, index) => ({
-          key: `${mission.id}:resource:${index}`,
-          value: { missionId: mission.id, kind: 'resource', value: resource },
+          key: `${intervention.id}:resource:${index}`,
+          value: { interventionId: intervention.id, kind: 'resource', value: resource },
         })),
       ]),
     ]);
-    await this.database.put('metadata', `prefetchedAt:${mission.id}`, new Date().toISOString());
+    await this.database.put('metadata', `prefetchedAt:${intervention.id}`, new Date().toISOString());
   }
 
   /**
@@ -122,81 +122,81 @@ export class MissionWorkspaceRepository {
    * @method getWorkspace
    *
    * @description
-   * Reads a locally persisted mission workspace.
+   * Reads a locally persisted intervention workspace.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - mission Id value.
+   * @param {string} interventionId - intervention Id value.
    *
    * @return {Promise<{
-   * mission: MissionOutput;
-   * workItems: readonly MissionWorkItemOutput[];
-   * changes: readonly MissionChangeOutput[];
-   * issues: readonly MissionIssueOutput[];
+   * intervention: InterventionOutput;
+   * workItems: readonly InterventionWorkItemOutput[];
+   * changes: readonly InterventionChangeOutput[];
+   * issues: readonly InterventionIssueOutput[];
    * } | null>} Result of the get workspace operation.
    */
-  public async getWorkspace(missionId: string): Promise<MissionWorkspaceSnapshot | null> {
+  public async getWorkspace(interventionId: string): Promise<InterventionWorkspaceSnapshot | null> {
     await this.database.ensureOwnerBound();
-    const mission = await this.database.get<MissionOutput>('missions', missionId);
-    if (!mission) return null;
-    const missionIri = `/api/missions/${missionId}`;
+    const intervention = await this.database.get<InterventionOutput>('interventions', interventionId);
+    if (!intervention) return null;
+    const interventionIri = `/api/interventions/${interventionId}`;
     const [workItems, changes, resources] = await Promise.all([
-      this.database.getAll<MissionWorkItemOutput>('workItems'),
-      this.database.getAll<MissionChangeOutput>('changes'),
-      this.database.getAll<MissionResourceRecord>('resources'),
+      this.database.getAll<InterventionWorkItemOutput>('workItems'),
+      this.database.getAll<InterventionChangeOutput>('changes'),
+      this.database.getAll<InterventionResourceRecord>('resources'),
     ]);
 
     return {
-      mission,
-      workItems: workItems.filter((item) => item.mission === missionIri),
-      changes: changes.filter((change) => change.mission === missionIri),
+      intervention,
+      workItems: workItems.filter((item) => item.intervention === interventionIri),
+      changes: changes.filter((change) => change.intervention === interventionIri),
       issues: resources
-        .filter((resource) => resource.missionId === missionId && resource.kind === 'issue')
-        .map((resource) => resource.value as MissionIssueOutput),
+        .filter((resource) => resource.interventionId === interventionId && resource.kind === 'issue')
+        .map((resource) => resource.value as InterventionIssueOutput),
     };
   }
 
   /**
-   * Method listMissions
-   * @method listMissions
+   * Method listInterventions
+   * @method listInterventions
    *
    * @description
-   * Lists locally persisted missions belonging to one organization.
+   * Lists locally persisted interventions belonging to one organization.
    *
    * @access public
    * @since 1.0.0
    *
    * @param {string} organizationId - Organization identifier.
    *
-   * @return {Promise<readonly MissionOutput[]>} Locally persisted missions.
+   * @return {Promise<readonly InterventionOutput[]>} Locally persisted interventions.
    */
-  public async listMissions(organizationId: string): Promise<readonly MissionOutput[]> {
+  public async listInterventions(organizationId: string): Promise<readonly InterventionOutput[]> {
     await this.database.ensureOwnerBound();
     const organization = `/api/organizations/${organizationId}`;
-    const missions = await this.database.getAll<MissionOutput>('missions');
+    const interventions = await this.database.getAll<InterventionOutput>('interventions');
 
-    return missions.filter((mission) => mission.organization === organization);
+    return interventions.filter((intervention) => intervention.organization === organization);
   }
 
   /**
-   * Method organizationIdForMission
-   * @method organizationIdForMission
+   * Method organizationIdForIntervention
+   * @method organizationIdForIntervention
    *
    * @description
-   * Resolves the organization owning a locally persisted mission.
+   * Resolves the organization owning a locally persisted intervention.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - Mission identifier.
+   * @param {string} interventionId - Intervention identifier.
    *
    * @return {Promise<string | null>} Owning organization identifier when available.
    */
-  public async organizationIdForMission(missionId: string): Promise<string | null> {
+  public async organizationIdForIntervention(interventionId: string): Promise<string | null> {
     await this.database.ensureOwnerBound();
-    const mission = await this.database.get<MissionOutput>('missions', missionId);
-    const match = mission?.organization.match(/^\/api\/organizations\/([^/?#]+)$/);
+    const intervention = await this.database.get<InterventionOutput>('interventions', interventionId);
+    const match = intervention?.organization.match(/^\/api\/organizations\/([^/?#]+)$/);
 
     return match?.[1] ?? null;
   }

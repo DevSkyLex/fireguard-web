@@ -1,37 +1,37 @@
 import { inject, Injectable, type Signal } from '@angular/core';
 import type {
-  MissionChangeOutput,
-  MissionIssueOutput,
-  MissionOutboxOperation,
-  MissionOutboxPayloadMap,
-  MissionOutboxQueueEntry,
-  MissionOutboxType,
-  MissionOutput,
-  MissionWorkItemOutput,
-} from '@features/organization/features/missions/models';
-import { MissionDatabaseService } from './mission-database.service';
-import { MissionOutboxStore } from './mission-outbox.store';
-import { MissionWorkspaceRepository } from './mission-workspace.repository';
-import type { MissionScopedRecord } from './models';
-import type { MissionWorkspaceSnapshot } from './models';
+  InterventionChangeOutput,
+  InterventionIssueOutput,
+  InterventionOutboxOperation,
+  InterventionOutboxPayloadMap,
+  InterventionOutboxQueueEntry,
+  InterventionOutboxType,
+  InterventionOutput,
+  InterventionWorkItemOutput,
+} from '@features/organization/features/interventions/models';
+import { InterventionDatabaseService } from './intervention-database.service';
+import { InterventionOutboxStore } from './intervention-outbox.store';
+import { InterventionWorkspaceRepository } from './intervention-workspace.repository';
+import type { InterventionScopedRecord } from './models';
+import type { InterventionWorkspaceSnapshot } from './models';
 
 /**
- * Service MissionOfflineService
- * @class MissionOfflineService
+ * Service InterventionOfflineService
+ * @class InterventionOfflineService
  *
  * @description
- * Façade over the mission offline persistence layer. Delegates to the focused
- * units that own each responsibility — {@link MissionDatabaseService} for
- * IndexedDB infrastructure, {@link MissionOutboxStore} for the replay outbox
- * and {@link MissionWorkspaceRepository} for workspace persistence — while
- * keeping a single stable entry point for mission pages and stores. Cross-cutting
+ * Façade over the intervention offline persistence layer. Delegates to the focused
+ * units that own each responsibility — {@link InterventionDatabaseService} for
+ * IndexedDB infrastructure, {@link InterventionOutboxStore} for the replay outbox
+ * and {@link InterventionWorkspaceRepository} for workspace persistence — while
+ * keeping a single stable entry point for intervention pages and stores. Cross-cutting
  * purges that span both workspace and outbox stores are orchestrated here.
  *
  * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
-export class MissionOfflineService {
+export class InterventionOfflineService {
   //#region Properties
   /**
    * Property database
@@ -43,9 +43,9 @@ export class MissionOfflineService {
    * @access private
    * @since 2.0.0
    *
-   * @type {MissionDatabaseService}
+   * @type {InterventionDatabaseService}
    */
-  private readonly database: MissionDatabaseService = inject(MissionDatabaseService);
+  private readonly database: InterventionDatabaseService = inject(InterventionDatabaseService);
 
   /**
    * Property outbox
@@ -57,23 +57,23 @@ export class MissionOfflineService {
    * @access private
    * @since 2.0.0
    *
-   * @type {MissionOutboxStore}
+   * @type {InterventionOutboxStore}
    */
-  private readonly outbox: MissionOutboxStore = inject(MissionOutboxStore);
+  private readonly outbox: InterventionOutboxStore = inject(InterventionOutboxStore);
 
   /**
    * Property workspace
    * @readonly
    *
    * @description
-   * Repository persisting normalized mission workspaces.
+   * Repository persisting normalized intervention workspaces.
    *
    * @access private
    * @since 2.0.0
    *
-   * @type {MissionWorkspaceRepository}
+   * @type {InterventionWorkspaceRepository}
    */
-  private readonly workspace: MissionWorkspaceRepository = inject(MissionWorkspaceRepository);
+  private readonly workspace: InterventionWorkspaceRepository = inject(InterventionWorkspaceRepository);
 
   /**
    * Property hasUnsyncedChanges
@@ -96,32 +96,32 @@ export class MissionOfflineService {
    * @method saveWorkspace
    *
    * @description
-   * Persists a normalized mission workspace locally.
+   * Persists a normalized intervention workspace locally.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {MissionOutput} mission - mission value.
-   * @param {readonly MissionWorkItemOutput[]} workItems - work Items value.
-   * @param {readonly MissionChangeOutput[]} changes - changes value.
-   * @param {readonly MissionIssueOutput[]} issues - issues value.
+   * @param {InterventionOutput} intervention - intervention value.
+   * @param {readonly InterventionWorkItemOutput[]} workItems - work Items value.
+   * @param {readonly InterventionChangeOutput[]} changes - changes value.
+   * @param {readonly InterventionIssueOutput[]} issues - issues value.
    * @param {readonly unknown[]} [resources] - resources value.
    * @param {{ readonly replace?: boolean }} [options] - options value.
    *
    * @return {Promise<void>} Result of the save workspace operation.
    */
   public async saveWorkspace(
-    mission: MissionOutput,
-    workItems: readonly MissionWorkItemOutput[],
-    changes: readonly MissionChangeOutput[],
-    issues: readonly MissionIssueOutput[],
+    intervention: InterventionOutput,
+    workItems: readonly InterventionWorkItemOutput[],
+    changes: readonly InterventionChangeOutput[],
+    issues: readonly InterventionIssueOutput[],
     resources: readonly unknown[] = [],
     options: { readonly replace?: boolean } = {},
   ): Promise<void> {
-    if (options.replace === undefined && (await this.outbox.listOutbox(mission.id)).length > 0) {
+    if (options.replace === undefined && (await this.outbox.listOutbox(intervention.id)).length > 0) {
       return;
     }
-    await this.workspace.saveWorkspace(mission, workItems, changes, issues, resources, options);
+    await this.workspace.saveWorkspace(intervention, workItems, changes, issues, resources, options);
   }
 
   /**
@@ -129,58 +129,58 @@ export class MissionOfflineService {
    * @method getWorkspace
    *
    * @description
-   * Reads a locally persisted mission workspace.
+   * Reads a locally persisted intervention workspace.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - mission Id value.
+   * @param {string} interventionId - intervention Id value.
    *
    * @return {Promise<{
-   * mission: MissionOutput;
-   * workItems: readonly MissionWorkItemOutput[];
-   * changes: readonly MissionChangeOutput[];
-   * issues: readonly MissionIssueOutput[];
+   * intervention: InterventionOutput;
+   * workItems: readonly InterventionWorkItemOutput[];
+   * changes: readonly InterventionChangeOutput[];
+   * issues: readonly InterventionIssueOutput[];
    * } | null>} Result of the get workspace operation.
    */
-  public getWorkspace(missionId: string): Promise<MissionWorkspaceSnapshot | null> {
-    return this.workspace.getWorkspace(missionId);
+  public getWorkspace(interventionId: string): Promise<InterventionWorkspaceSnapshot | null> {
+    return this.workspace.getWorkspace(interventionId);
   }
 
   /**
-   * Method listMissions
-   * @method listMissions
+   * Method listInterventions
+   * @method listInterventions
    *
    * @description
-   * Lists locally persisted missions belonging to one organization.
+   * Lists locally persisted interventions belonging to one organization.
    *
    * @access public
    * @since 1.0.0
    *
    * @param {string} organizationId - Organization identifier.
    *
-   * @return {Promise<readonly MissionOutput[]>} Locally persisted missions.
+   * @return {Promise<readonly InterventionOutput[]>} Locally persisted interventions.
    */
-  public listMissions(organizationId: string): Promise<readonly MissionOutput[]> {
-    return this.workspace.listMissions(organizationId);
+  public listInterventions(organizationId: string): Promise<readonly InterventionOutput[]> {
+    return this.workspace.listInterventions(organizationId);
   }
 
   /**
-   * Method organizationIdForMission
-   * @method organizationIdForMission
+   * Method organizationIdForIntervention
+   * @method organizationIdForIntervention
    *
    * @description
-   * Resolves the organization owning a locally persisted mission.
+   * Resolves the organization owning a locally persisted intervention.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - Mission identifier.
+   * @param {string} interventionId - Intervention identifier.
    *
    * @return {Promise<string | null>} Owning organization identifier when available.
    */
-  public organizationIdForMission(missionId: string): Promise<string | null> {
-    return this.workspace.organizationIdForMission(missionId);
+  public organizationIdForIntervention(interventionId: string): Promise<string | null> {
+    return this.workspace.organizationIdForIntervention(interventionId);
   }
   //#endregion
 
@@ -195,28 +195,28 @@ export class MissionOfflineService {
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - Mission identifier.
-   * @param {MissionOutboxType} type - Operation type.
-   * @param {MissionOutboxPayloadMap[Type]} payload - Operation payload.
+   * @param {string} interventionId - Intervention identifier.
+   * @param {InterventionOutboxType} type - Operation type.
+   * @param {InterventionOutboxPayloadMap[Type]} payload - Operation payload.
    *
    * @return {Promise<void>} A promise resolving once the operation is queued.
    */
-  public queue<Type extends MissionOutboxType>(
-    missionId: string,
+  public queue<Type extends InterventionOutboxType>(
+    interventionId: string,
     type: Type,
-    payload: MissionOutboxPayloadMap[Type],
+    payload: InterventionOutboxPayloadMap[Type],
   ): Promise<void> {
-    return this.outbox.queue(missionId, type, payload);
+    return this.outbox.queue(interventionId, type, payload);
   }
 
   /**
    * Atomically queues every operation belonging to one field intention.
    */
   public queueMany(
-    missionId: string,
-    entries: readonly MissionOutboxQueueEntry[],
+    interventionId: string,
+    entries: readonly InterventionOutboxQueueEntry[],
   ): Promise<readonly string[]> {
-    return this.outbox.queueMany(missionId, entries);
+    return this.outbox.queueMany(interventionId, entries);
   }
 
   /**
@@ -224,33 +224,33 @@ export class MissionOfflineService {
    * @method listOutbox
    *
    * @description
-   * Lists queued operations for one mission.
+   * Lists queued operations for one intervention.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - Mission identifier.
+   * @param {string} interventionId - Intervention identifier.
    *
-   * @return {Promise<readonly MissionOutboxOperation[]>} A promise resolving with the queued operations.
+   * @return {Promise<readonly InterventionOutboxOperation[]>} A promise resolving with the queued operations.
    */
-  public listOutbox(missionId: string): Promise<readonly MissionOutboxOperation[]> {
-    return this.outbox.listOutbox(missionId);
+  public listOutbox(interventionId: string): Promise<readonly InterventionOutboxOperation[]> {
+    return this.outbox.listOutbox(interventionId);
   }
 
   /**
-   * Method listMissionIdsWithOutbox
-   * @method listMissionIdsWithOutbox
+   * Method listInterventionIdsWithOutbox
+   * @method listInterventionIdsWithOutbox
    *
    * @description
-   * Lists the distinct mission identifiers that still have queued operations.
+   * Lists the distinct intervention identifiers that still have queued operations.
    *
    * @access public
    * @since 1.0.0
    *
-   * @return {Promise<readonly string[]>} Result of the list mission ids with outbox operation.
+   * @return {Promise<readonly string[]>} Result of the list intervention ids with outbox operation.
    */
-  public listMissionIdsWithOutbox(): Promise<readonly string[]> {
-    return this.outbox.listMissionIdsWithOutbox();
+  public listInterventionIdsWithOutbox(): Promise<readonly string[]> {
+    return this.outbox.listInterventionIdsWithOutbox();
   }
 
   /**
@@ -318,44 +318,44 @@ export class MissionOfflineService {
 
   //#region Purge
   /**
-   * Method clearMission
-   * @method clearMission
+   * Method clearIntervention
+   * @method clearIntervention
    *
    * @description
-   * Clears local snapshot and outbox entries for one mission, then recomputes
+   * Clears local snapshot and outbox entries for one intervention, then recomputes
    * the pending-sync state.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - Mission identifier.
+   * @param {string} interventionId - Intervention identifier.
    *
-   * @return {Promise<void>} A promise resolving once local mission data is cleared.
+   * @return {Promise<void>} A promise resolving once local intervention data is cleared.
    */
-  public async clearMission(missionId: string): Promise<void> {
+  public async clearIntervention(interventionId: string): Promise<void> {
     await this.database.ensureOwnerBound();
-    const missionIri = `/api/missions/${missionId}`;
+    const interventionIri = `/api/interventions/${interventionId}`;
     await Promise.all([
-      this.database.remove('missions', missionId),
-      this.database.removeWhere<MissionWorkItemOutput>(
+      this.database.remove('interventions', interventionId),
+      this.database.removeWhere<InterventionWorkItemOutput>(
         'workItems',
-        (item) => item.mission === missionIri,
+        (item) => item.intervention === interventionIri,
       ),
-      this.database.removeWhere<MissionChangeOutput>(
+      this.database.removeWhere<InterventionChangeOutput>(
         'changes',
-        (change) => change.mission === missionIri,
+        (change) => change.intervention === interventionIri,
       ),
-      this.database.removeWhere<MissionScopedRecord>(
+      this.database.removeWhere<InterventionScopedRecord>(
         'resources',
-        (resource) => resource.missionId === missionId,
+        (resource) => resource.interventionId === interventionId,
       ),
-      this.database.removeWhere<MissionScopedRecord>(
+      this.database.removeWhere<InterventionScopedRecord>(
         'media',
-        (media) => media.missionId === missionId,
+        (media) => media.interventionId === interventionId,
       ),
-      this.database.removeWhere<MissionOutboxOperation>(
+      this.database.removeWhere<InterventionOutboxOperation>(
         'outbox',
-        (operation) => operation.missionId === missionId,
+        (operation) => operation.interventionId === interventionId,
       ),
     ]);
     await this.outbox.refresh();
@@ -366,7 +366,7 @@ export class MissionOfflineService {
    * @method clearAll
    *
    * @description
-   * Clears all mission offline stores and recomputes the pending-sync state.
+   * Clears all intervention offline stores and recomputes the pending-sync state.
    *
    * @access public
    * @since 1.0.0

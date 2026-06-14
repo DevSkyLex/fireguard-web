@@ -1,14 +1,14 @@
 /**
- * Command loading missions for an organization.
+ * Command loading interventions for an organization.
  */
-export interface MissionListLoadCommand {
+export interface InterventionListLoadCommand {
   readonly organizationId: string;
 }
 
 /**
- * Command creating a mission from the manager list.
+ * Command creating a intervention from the manager list.
  */
-export interface MissionCreateCommand {
+export interface InterventionCreateCommand {
   readonly organizationId: string;
   readonly name: string;
 }

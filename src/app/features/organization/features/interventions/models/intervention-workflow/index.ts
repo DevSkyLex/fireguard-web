@@ -1,8 +1,8 @@
-export type { MissionDiscoveryRequest } from './mission-discovery-request.interface';
-export type { MissionDiscoveryResult } from './mission-discovery-result.interface';
-export type { MissionPhase } from './mission-phase.type';
-export type { MissionPhotoAttachment } from './mission-photo-attachment.interface';
-export type { MissionPlanningDetails } from './mission-planning-details.interface';
-export type { MissionTransitionRequest } from './mission-transition-request.interface';
-export type { MissionWorkItemStatusChange } from './mission-work-item-status-change.interface';
+export type { InterventionDiscoveryRequest } from './intervention-discovery-request.interface';
+export type { InterventionDiscoveryResult } from './intervention-discovery-result.interface';
+export type { InterventionPhase } from './intervention-phase.type';
+export type { InterventionPhotoAttachment } from './intervention-photo-attachment.interface';
+export type { InterventionPlanningDetails } from './intervention-planning-details.interface';
+export type { InterventionTransitionRequest } from './intervention-transition-request.interface';
+export type { InterventionWorkItemStatusChange } from './intervention-work-item-status-change.interface';
 export type { SelectOption } from './select-option.interface';

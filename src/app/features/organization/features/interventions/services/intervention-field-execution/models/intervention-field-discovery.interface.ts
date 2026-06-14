@@ -1,11 +1,11 @@
 import type { InspectionResult } from '@features/organization/features/inspections/models';
-import type { MissionWorkItemAction } from '@features/organization/features/missions/models';
+import type { InterventionWorkItemAction } from '@features/organization/features/interventions/models';
 
 /**
- * Canonical resource discovered while executing a mission.
+ * Canonical resource discovered while executing a intervention.
  */
-export interface MissionFieldDiscovery {
-  readonly action: MissionWorkItemAction;
+export interface InterventionFieldDiscovery {
+  readonly action: InterventionWorkItemAction;
   readonly target: string;
   readonly result: InspectionResult;
 }

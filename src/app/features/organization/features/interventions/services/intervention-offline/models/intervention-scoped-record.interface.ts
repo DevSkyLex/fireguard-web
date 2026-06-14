@@ -1,6 +1,6 @@
 /**
- * Minimal shape of a locally persisted record scoped to a mission.
+ * Minimal shape of a locally persisted record scoped to a intervention.
  */
-export interface MissionScopedRecord {
-  readonly missionId?: string;
+export interface InterventionScopedRecord {
+  readonly interventionId?: string;
 }

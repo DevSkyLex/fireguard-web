@@ -1,4 +1,4 @@
 /**
- * Mission QR scanner service exports.
+ * Intervention QR scanner service exports.
  */
-export { MissionQrScannerService } from './mission-qr-scanner.service';
+export { InterventionQrScannerService } from './intervention-qr-scanner.service';

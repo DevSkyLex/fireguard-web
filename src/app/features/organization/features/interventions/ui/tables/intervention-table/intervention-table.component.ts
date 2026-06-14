@@ -14,21 +14,21 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule, type TablePassThroughOptions } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import type { MissionOutput } from '@features/organization/features/missions/models';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { EmptyState } from '@shared/components';
 
 /**
- * Constant MISSION_NAME_MAX_LENGTH
- * @const MISSION_NAME_MAX_LENGTH
+ * Constant INTERVENTION_NAME_MAX_LENGTH
+ * @const INTERVENTION_NAME_MAX_LENGTH
  *
  * @description
- * Maximum length accepted for a mission name.
+ * Maximum length accepted for a intervention name.
  *
  * @since 1.0.0
  *
  * @type {number}
  */
-const MISSION_NAME_MAX_LENGTH = 160;
+const INTERVENTION_NAME_MAX_LENGTH = 160;
 
 /**
  * Constant SKELETON_ROW_COUNT
@@ -44,11 +44,11 @@ const MISSION_NAME_MAX_LENGTH = 160;
 const SKELETON_ROW_COUNT = 5;
 
 /**
- * Component MissionTable
- * @class MissionTable
+ * Component InterventionTable
+ * @class InterventionTable
  *
  * @description
- * Presentational mission table used by the mission list route page.
+ * Presentational intervention table used by the intervention list route page.
  * Owns only local form and table UI state while delegating loading,
  * navigation and creation orchestration to the parent page through outputs.
  *
@@ -57,7 +57,7 @@ const SKELETON_ROW_COUNT = 5;
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-mission-table',
+  selector: 'app-intervention-table',
   imports: [
     ButtonModule,
     CardModule,
@@ -69,32 +69,32 @@ const SKELETON_ROW_COUNT = 5;
     TableModule,
     TagModule,
   ],
-  templateUrl: './mission-table.component.html',
+  templateUrl: './intervention-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MissionTable {
+export class InterventionTable {
   //#region Inputs
   /**
-   * Input missions
+   * Input interventions
    * @readonly
    *
    * @description
-   * Mission rows currently displayed.
+   * Intervention rows currently displayed.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<readonly MissionOutput[]>}
+   * @type {InputSignal<readonly InterventionOutput[]>}
    */
-  public readonly missions: InputSignal<readonly MissionOutput[]> =
-    input.required<readonly MissionOutput[]>();
+  public readonly interventions: InputSignal<readonly InterventionOutput[]> =
+    input.required<readonly InterventionOutput[]>();
 
   /**
    * Input total
    * @readonly
    *
    * @description
-   * Total number of missions for the active organization.
+   * Total number of interventions for the active organization.
    *
    * @access public
    * @since 1.0.0
@@ -108,7 +108,7 @@ export class MissionTable {
    * @readonly
    *
    * @description
-   * Whether the mission list is currently loading.
+   * Whether the intervention list is currently loading.
    *
    * @access public
    * @since 1.0.0
@@ -122,7 +122,7 @@ export class MissionTable {
    * @readonly
    *
    * @description
-   * Whether mission creation is currently in-flight.
+   * Whether intervention creation is currently in-flight.
    *
    * @access public
    * @since 1.0.0
@@ -136,7 +136,7 @@ export class MissionTable {
    * @readonly
    *
    * @description
-   * Whether the active organization has no missions.
+   * Whether the active organization has no interventions.
    *
    * @access public
    * @since 1.0.0
@@ -166,21 +166,21 @@ export class MissionTable {
    * @readonly
    *
    * @description
-   * Emits a mission selected for detail navigation.
+   * Emits a intervention selected for detail navigation.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {OutputEmitterRef<MissionOutput>}
+   * @type {OutputEmitterRef<InterventionOutput>}
    */
-  public readonly view: OutputEmitterRef<MissionOutput> = output<MissionOutput>();
+  public readonly view: OutputEmitterRef<InterventionOutput> = output<InterventionOutput>();
 
   /**
    * Output create
    * @readonly
    *
    * @description
-   * Emits the mission name requested by the creation form.
+   * Emits the intervention name requested by the creation form.
    *
    * @access public
    * @since 1.0.0
@@ -247,7 +247,7 @@ export class MissionTable {
    * @readonly
    *
    * @description
-   * Mission name control used by the create form.
+   * Intervention name control used by the create form.
    *
    * @access protected
    * @since 1.0.0
@@ -256,7 +256,7 @@ export class MissionTable {
    */
   protected readonly nameControl: FormControl<string> = new FormControl<string>('', {
     nonNullable: true,
-    validators: [Validators.required, Validators.maxLength(MISSION_NAME_MAX_LENGTH)],
+    validators: [Validators.required, Validators.maxLength(INTERVENTION_NAME_MAX_LENGTH)],
   });
 
   /**
@@ -280,7 +280,7 @@ export class MissionTable {
    * @method onCreate
    *
    * @description
-   * Emits a create request when the mission name is valid and no creation is
+   * Emits a create request when the intervention name is valid and no creation is
    * already in-flight.
    *
    * @access protected

@@ -1,23 +1,23 @@
 import type { HydraItem } from '@core/models/api';
-import type { MissionPriority } from './mission-priority.type';
-import type { MissionStatus } from './mission-status.type';
-import type { MissionType } from './mission-type.type';
+import type { InterventionPriority } from './intervention-priority.type';
+import type { InterventionStatus } from './intervention-status.type';
+import type { InterventionType } from './intervention-type.type';
 
 /**
- * Interface MissionOutput
- * @interface MissionOutput
+ * Interface InterventionOutput
+ * @interface InterventionOutput
  *
  * @description
- * Mission resource returned by the API.
+ * Intervention resource returned by the API.
  */
-export interface MissionOutput extends HydraItem {
+export interface InterventionOutput extends HydraItem {
   //#region Properties
   /**
    * Property id
    * @readonly
    *
    * @description
-   * Unique identifier of the mission.
+   * Unique identifier of the intervention.
    *
    * @type {string}
    */
@@ -28,7 +28,7 @@ export interface MissionOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * IRI of the organization owning the mission.
+   * IRI of the organization owning the intervention.
    *
    * @type {string}
    */
@@ -39,18 +39,18 @@ export interface MissionOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Mission workflow type. Only site setup missions are supported today.
+   * Intervention workflow type. Only site setup interventions are supported today.
    *
    * @type {'site_setup'}
    */
-  readonly type: MissionType;
+  readonly type: InterventionType;
 
   /**
    * Property name
    * @readonly
    *
    * @description
-   * Human-readable mission name.
+   * Human-readable intervention name.
    *
    * @type {string}
    */
@@ -61,11 +61,11 @@ export interface MissionOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Current workflow status of the mission.
+   * Current workflow status of the intervention.
    *
-   * @type {MissionStatus}
+   * @type {InterventionStatus}
    */
-  readonly status: MissionStatus;
+  readonly status: InterventionStatus;
 
   /**
    * Property referencePack
@@ -118,9 +118,9 @@ export interface MissionOutput extends HydraItem {
    * @description
    * Provides the priority value.
    *
-   * @type {MissionPriority}
+   * @type {InterventionPriority}
    */
-  readonly priority: MissionPriority;
+  readonly priority: InterventionPriority;
 
   /**
    * Property plannedStartAt
@@ -160,7 +160,7 @@ export interface MissionOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Monotonic mission revision used for publication consistency.
+   * Monotonic intervention revision used for publication consistency.
    *
    * @type {number}
    */
@@ -171,7 +171,7 @@ export interface MissionOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Number of facilities attached to the mission.
+   * Number of facilities attached to the intervention.
    *
    * @type {number}
    */
@@ -182,7 +182,7 @@ export interface MissionOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Number of equipment items attached to the mission.
+   * Number of equipment items attached to the intervention.
    *
    * @type {number}
    */
@@ -193,7 +193,7 @@ export interface MissionOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Number of inspections recorded for the mission.
+   * Number of inspections recorded for the intervention.
    *
    * @type {number}
    */

@@ -1,5 +1,5 @@
 /**
- * Label/value option displayed by mission workflow controls.
+ * Label/value option displayed by intervention workflow controls.
  */
 export interface SelectOption<T extends string = string> {
   readonly label: string;

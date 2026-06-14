@@ -1,1 +1,1 @@
-export { MissionTable } from './mission-table.component';
+export { InterventionTable } from './intervention-table.component';

@@ -1,19 +1,19 @@
-import type { MissionService } from '@features/organization/features/missions/data-access';
+import type { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
-  CreateMissionWorkItemInput,
-  MissionWorkItemStatusChange,
-} from '@features/organization/features/missions/models';
+  CreateInterventionWorkItemInput,
+  InterventionWorkItemStatusChange,
+} from '@features/organization/features/interventions/models';
 
-export interface MissionDetailsUpdateCommand {
-  readonly missionId: string;
-  readonly input: Parameters<MissionService['update']>[1];
+export interface InterventionDetailsUpdateCommand {
+  readonly interventionId: string;
+  readonly input: Parameters<InterventionService['update']>[1];
 }
 
-export interface MissionWorkItemCreateCommand {
-  readonly missionId: string;
-  readonly input: CreateMissionWorkItemInput;
+export interface InterventionWorkItemCreateCommand {
+  readonly interventionId: string;
+  readonly input: CreateInterventionWorkItemInput;
 }
 
-export interface MissionWorkItemStatusCommand extends MissionWorkItemStatusChange {
-  readonly missionId: string;
+export interface InterventionWorkItemStatusCommand extends InterventionWorkItemStatusChange {
+  readonly interventionId: string;
 }

@@ -10,21 +10,21 @@ import {
 } from '@angular/core';
 import { pageVisibility } from '@signality/core';
 import { ConnectivityService } from '@core/services/connectivity';
-import { MissionOfflineService } from '../mission-offline';
-import { MissionSyncService } from '../mission-sync';
+import { InterventionOfflineService } from '../intervention-offline';
+import { InterventionSyncService } from '../intervention-sync';
 
 /**
- * Service MissionSyncCoordinatorService
- * @class MissionSyncCoordinatorService
+ * Service InterventionSyncCoordinatorService
+ * @class InterventionSyncCoordinatorService
  *
  * @description
- * Provides mission sync coordinator operations.
+ * Provides intervention sync coordinator operations.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
-export class MissionSyncCoordinatorService {
+export class InterventionSyncCoordinatorService {
   /**
    * Property syncingState
    * @readonly
@@ -71,9 +71,9 @@ export class MissionSyncCoordinatorService {
    * @access private
    * @since 1.0.0
    *
-   * @type {MissionOfflineService}
+   * @type {InterventionOfflineService}
    */
-  private readonly offline: MissionOfflineService = inject(MissionOfflineService);
+  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
 
   /**
    * Property sync
@@ -85,9 +85,9 @@ export class MissionSyncCoordinatorService {
    * @access private
    * @since 1.0.0
    *
-   * @type {MissionSyncService}
+   * @type {InterventionSyncService}
    */
-  private readonly sync: MissionSyncService = inject(MissionSyncService);
+  private readonly sync: InterventionSyncService = inject(InterventionSyncService);
 
   /**
    * Property injector
@@ -195,16 +195,16 @@ export class MissionSyncCoordinatorService {
     this.syncingState.set(true);
     this.problemState.set(null);
     try {
-      const missionIds = await this.offline.listMissionIdsWithOutbox();
-      await missionIds.reduce(
-        (previous, missionId) =>
+      const interventionIds = await this.offline.listInterventionIdsWithOutbox();
+      await interventionIds.reduce(
+        (previous, interventionId) =>
           previous.then(async (): Promise<void> => {
-            const organizationId = await this.offline.organizationIdForMission(missionId);
+            const organizationId = await this.offline.organizationIdForIntervention(interventionId);
             if (!organizationId) return;
             try {
-              await this.sync.replayOutbox(organizationId, missionId);
+              await this.sync.replayOutbox(organizationId, interventionId);
             } catch {
-              this.problemState.set('A temporary synchronization error interrupted this mission.');
+              this.problemState.set('A temporary synchronization error interrupted this intervention.');
             }
           }),
         Promise.resolve(),
@@ -219,9 +219,9 @@ export class MissionSyncCoordinatorService {
    * Retries operations that require explicit user resolution.
    */
   public async retryBlocked(): Promise<void> {
-    const missionIds = await this.offline.listMissionIdsWithOutbox();
+    const interventionIds = await this.offline.listInterventionIdsWithOutbox();
     const operations = (
-      await Promise.all(missionIds.map((missionId) => this.offline.listOutbox(missionId)))
+      await Promise.all(interventionIds.map((interventionId) => this.offline.listOutbox(interventionId)))
     ).flat();
     await Promise.all(
       operations
@@ -232,12 +232,12 @@ export class MissionSyncCoordinatorService {
   }
 
   /**
-   * Refreshes the blocked-operation summary exposed to mission UI.
+   * Refreshes the blocked-operation summary exposed to intervention UI.
    */
   public async refreshStatus(): Promise<void> {
-    const missionIds = await this.offline.listMissionIdsWithOutbox();
+    const interventionIds = await this.offline.listInterventionIdsWithOutbox();
     const operations = (
-      await Promise.all(missionIds.map((missionId) => this.offline.listOutbox(missionId)))
+      await Promise.all(interventionIds.map((interventionId) => this.offline.listOutbox(interventionId)))
     ).flat();
     const blocked = operations.filter(
       (operation) => operation.status === 'conflict' || operation.status === 'failed',

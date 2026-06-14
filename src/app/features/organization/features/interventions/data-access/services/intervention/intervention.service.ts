@@ -3,18 +3,18 @@ import { EMPTY, expand, of, reduce, switchMap, takeWhile, timer, type Observable
 import type { HydraCollection, HydraItem, PaginationOptions } from '@core/models/api';
 import { HydraApiService } from '@core/services/hydra-api';
 import type {
-  CreateMissionChangeInput,
-  CreateMissionWorkItemInput,
-  MissionChangeOutput,
-  MissionIssueOutput,
-  MissionOutput,
-  MissionStatus,
-  MissionTypeOutput,
-  MissionWorkItemOutput,
+  CreateInterventionChangeInput,
+  CreateInterventionWorkItemInput,
+  InterventionChangeOutput,
+  InterventionIssueOutput,
+  InterventionOutput,
+  InterventionStatus,
+  InterventionTypeOutput,
+  InterventionWorkItemOutput,
   PublicationOutput,
-  UpdateMissionChangeInput,
-  UpdateMissionWorkItemInput,
-} from '@features/organization/features/missions/models';
+  UpdateInterventionChangeInput,
+  UpdateInterventionWorkItemInput,
+} from '@features/organization/features/interventions/models';
 
 /**
  * Constant PUBLICATION_POLL_INTERVAL_MS
@@ -57,19 +57,19 @@ const isPublicationRunning = (publication: PublicationOutput): boolean =>
   publication.status === 'pending' || publication.status === 'processing';
 
 /**
- * Service MissionService
- * @class MissionService
+ * Service InterventionService
+ * @class InterventionService
  * @extends {HydraApiService}
  *
  * @description
- * Owns the canonical mission workflow resources. Facility, Equipment,
+ * Owns the canonical intervention workflow resources. Facility, Equipment,
  * Inspection and Media operations remain in their owning feature services.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
-export class MissionService extends HydraApiService {
+export class InterventionService extends HydraApiService {
   /**
    * Method list
    * @method list
@@ -91,7 +91,7 @@ export class MissionService extends HydraApiService {
    * dueAtBefore?: string;
    * }} [options] - options value.
    *
-   * @return {Observable<HydraCollection<MissionOutput>>} Result of the list operation.
+   * @return {Observable<HydraCollection<InterventionOutput>>} Result of the list operation.
    */
   public list(
     organizationId: string,
@@ -104,14 +104,14 @@ export class MissionService extends HydraApiService {
       dueAtAfter?: string;
       dueAtBefore?: string;
     },
-  ): Observable<HydraCollection<MissionOutput>> {
+  ): Observable<HydraCollection<InterventionOutput>> {
     const params: Record<string, string> = { organization: `/api/organizations/${organizationId}` };
     for (const [key, value] of Object.entries(options ?? {})) {
       if (key === 'page' || key === 'itemsPerPage') continue;
       if (value) params[key] = value;
     }
 
-    return this.getCollection<MissionOutput>('/api/missions', {
+    return this.getCollection<InterventionOutput>('/api/interventions', {
       page: options?.page,
       itemsPerPage: options?.itemsPerPage,
       params,
@@ -139,7 +139,7 @@ export class MissionService extends HydraApiService {
    * dueAtBefore?: string;
    * }} [options] - options value.
    *
-   * @return {Observable<readonly MissionOutput[]>} Result of the list all operation.
+   * @return {Observable<readonly InterventionOutput[]>} Result of the list all operation.
    */
   public listAll(
     organizationId: string,
@@ -152,7 +152,7 @@ export class MissionService extends HydraApiService {
       dueAtAfter?: string;
       dueAtBefore?: string;
     },
-  ): Observable<readonly MissionOutput[]> {
+  ): Observable<readonly InterventionOutput[]> {
     return this.collectPages((page) =>
       this.list(organizationId, { ...options, page, itemsPerPage: WORKSPACE_PAGE_SIZE }),
     );
@@ -168,12 +168,12 @@ export class MissionService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - mission Id value.
+   * @param {string} interventionId - intervention Id value.
    *
-   * @return {Observable<MissionOutput>} Result of the get operation.
+   * @return {Observable<InterventionOutput>} Result of the get operation.
    */
-  public get(missionId: string): Observable<MissionOutput> {
-    return this.getOne<MissionOutput>(`/api/missions/${missionId}`);
+  public get(interventionId: string): Observable<InterventionOutput> {
+    return this.getOne<InterventionOutput>(`/api/interventions/${interventionId}`);
   }
 
   /**
@@ -186,10 +186,10 @@ export class MissionService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @return {Observable<HydraCollection<MissionTypeOutput>>} Result of the list types operation.
+   * @return {Observable<HydraCollection<InterventionTypeOutput>>} Result of the list types operation.
    */
-  public listTypes(): Observable<HydraCollection<MissionTypeOutput>> {
-    return this.getCollection<MissionTypeOutput>('/api/mission-types');
+  public listTypes(): Observable<HydraCollection<InterventionTypeOutput>> {
+    return this.getCollection<InterventionTypeOutput>('/api/intervention-types');
   }
 
   /**
@@ -205,33 +205,33 @@ export class MissionService extends HydraApiService {
    * @param {string} organizationId - organization Id value.
    * @param {string} name - name value.
    * @param {Partial<{
-   * type: MissionOutput['type'];
+   * type: InterventionOutput['type'];
    * site: string;
    * responsible: string;
    * participants: readonly string[];
-   * priority: MissionOutput['priority'];
+   * priority: InterventionOutput['priority'];
    * plannedStartAt: string;
    * dueAt: string;
    * referencePack: string;
    * }>} [options] - options value.
    *
-   * @return {Observable<MissionOutput>} Result of the create operation.
+   * @return {Observable<InterventionOutput>} Result of the create operation.
    */
   public create(
     organizationId: string,
     name: string,
     options?: Partial<{
-      type: MissionOutput['type'];
+      type: InterventionOutput['type'];
       site: string;
       responsible: string;
       participants: readonly string[];
-      priority: MissionOutput['priority'];
+      priority: InterventionOutput['priority'];
       plannedStartAt: string;
       dueAt: string;
       referencePack: string;
     }>,
-  ): Observable<MissionOutput> {
-    return this.post<Record<string, unknown>, MissionOutput>('/api/missions', {
+  ): Observable<InterventionOutput> {
+    return this.post<Record<string, unknown>, InterventionOutput>('/api/interventions', {
       organization: `/api/organizations/${organizationId}`,
       type: options?.type ?? 'site_setup',
       name,
@@ -255,14 +255,14 @@ export class MissionService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - mission Id value.
+   * @param {string} interventionId - intervention Id value.
    * @param {Partial<{
    * name: string;
-   * status: MissionStatus;
+   * status: InterventionStatus;
    * site: string | null;
    * responsible: string | null;
    * participants: readonly string[];
-   * priority: MissionOutput['priority'];
+   * priority: InterventionOutput['priority'];
    * plannedStartAt: string | null;
    * dueAt: string | null;
    * referencePack: string;
@@ -270,25 +270,25 @@ export class MissionService extends HydraApiService {
    * }>} input - input value.
    * @param {number} [revision] - revision value.
    *
-   * @return {Observable<MissionOutput>} Result of the update operation.
+   * @return {Observable<InterventionOutput>} Result of the update operation.
    */
   public update(
-    missionId: string,
+    interventionId: string,
     input: Partial<{
       name: string;
-      status: MissionStatus;
+      status: InterventionStatus;
       site: string | null;
       responsible: string | null;
       participants: readonly string[];
-      priority: MissionOutput['priority'];
+      priority: InterventionOutput['priority'];
       plannedStartAt: string | null;
       dueAt: string | null;
       referencePack: string;
       reviewNote: string | null;
     }>,
     revision?: number,
-  ): Observable<MissionOutput> {
-    return this.patch<typeof input, MissionOutput>(`/api/missions/${missionId}`, input, {
+  ): Observable<InterventionOutput> {
+    return this.patch<typeof input, InterventionOutput>(`/api/interventions/${interventionId}`, input, {
       headers: revision === undefined ? undefined : { 'If-Match': `"revision-${revision}"` },
     });
   }
@@ -303,7 +303,7 @@ export class MissionService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - mission Id value.
+   * @param {string} interventionId - intervention Id value.
    * @param {PaginationOptions & {
    * assignee?: string;
    * source?: string;
@@ -311,24 +311,24 @@ export class MissionService extends HydraApiService {
    * status?: string;
    * }} [options] - options value.
    *
-   * @return {Observable<HydraCollection<MissionWorkItemOutput>>} Result of the list work items operation.
+   * @return {Observable<HydraCollection<InterventionWorkItemOutput>>} Result of the list work items operation.
    */
   public listWorkItems(
-    missionId: string,
+    interventionId: string,
     options?: PaginationOptions & {
       assignee?: string;
       source?: string;
       action?: string;
       status?: string;
     },
-  ): Observable<HydraCollection<MissionWorkItemOutput>> {
-    const params: Record<string, string> = { mission: `/api/missions/${missionId}` };
+  ): Observable<HydraCollection<InterventionWorkItemOutput>> {
+    const params: Record<string, string> = { intervention: `/api/interventions/${interventionId}` };
     if (options?.assignee) params['assignee'] = options.assignee;
     if (options?.source) params['source'] = options.source;
     if (options?.action) params['action'] = options.action;
     if (options?.status) params['status'] = options.status;
 
-    return this.getCollection<MissionWorkItemOutput>('/api/mission-work-items', {
+    return this.getCollection<InterventionWorkItemOutput>('/api/intervention-work-items', {
       page: options?.page,
       itemsPerPage: options?.itemsPerPage,
       params,
@@ -345,7 +345,7 @@ export class MissionService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - mission Id value.
+   * @param {string} interventionId - intervention Id value.
    * @param {Omit<PaginationOptions, 'page' | 'itemsPerPage'> & {
    * assignee?: string;
    * source?: string;
@@ -353,19 +353,19 @@ export class MissionService extends HydraApiService {
    * status?: string;
    * }} [options] - options value.
    *
-   * @return {Observable<readonly MissionWorkItemOutput[]>} Result of the list all work items operation.
+   * @return {Observable<readonly InterventionWorkItemOutput[]>} Result of the list all work items operation.
    */
   public listAllWorkItems(
-    missionId: string,
+    interventionId: string,
     options?: Omit<PaginationOptions, 'page' | 'itemsPerPage'> & {
       assignee?: string;
       source?: string;
       action?: string;
       status?: string;
     },
-  ): Observable<readonly MissionWorkItemOutput[]> {
+  ): Observable<readonly InterventionWorkItemOutput[]> {
     return this.collectPages((page) =>
-      this.listWorkItems(missionId, { ...options, page, itemsPerPage: WORKSPACE_PAGE_SIZE }),
+      this.listWorkItems(interventionId, { ...options, page, itemsPerPage: WORKSPACE_PAGE_SIZE }),
     );
   }
 
@@ -379,22 +379,22 @@ export class MissionService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @param {CreateMissionWorkItemInput} input - input value.
+   * @param {CreateInterventionWorkItemInput} input - input value.
    *
-   * @return {Observable<MissionWorkItemOutput>} Result of the create work item operation.
+   * @return {Observable<InterventionWorkItemOutput>} Result of the create work item operation.
    */
-  public createWorkItem(input: CreateMissionWorkItemInput): Observable<MissionWorkItemOutput> {
+  public createWorkItem(input: CreateInterventionWorkItemInput): Observable<InterventionWorkItemOutput> {
     if (input.clientId) {
       const { clientId, ...body } = input;
-      return this.put<typeof body, MissionWorkItemOutput>(
-        `/api/mission-work-items/${clientId}`,
+      return this.put<typeof body, InterventionWorkItemOutput>(
+        `/api/intervention-work-items/${clientId}`,
         body,
         { headers: { 'If-None-Match': '*' } },
       );
     }
 
-    return this.post<CreateMissionWorkItemInput, MissionWorkItemOutput>(
-      '/api/mission-work-items',
+    return this.post<CreateInterventionWorkItemInput, InterventionWorkItemOutput>(
+      '/api/intervention-work-items',
       input,
     );
   }
@@ -410,18 +410,18 @@ export class MissionService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {string} workItemId - work Item Id value.
-   * @param {UpdateMissionWorkItemInput} input - input value.
+   * @param {UpdateInterventionWorkItemInput} input - input value.
    * @param {number} [revision] - revision value.
    *
-   * @return {Observable<MissionWorkItemOutput>} Result of the update work item operation.
+   * @return {Observable<InterventionWorkItemOutput>} Result of the update work item operation.
    */
   public updateWorkItem(
     workItemId: string,
-    input: UpdateMissionWorkItemInput,
+    input: UpdateInterventionWorkItemInput,
     revision?: number,
-  ): Observable<MissionWorkItemOutput> {
-    return this.patch<UpdateMissionWorkItemInput, MissionWorkItemOutput>(
-      `/api/mission-work-items/${workItemId}`,
+  ): Observable<InterventionWorkItemOutput> {
+    return this.patch<UpdateInterventionWorkItemInput, InterventionWorkItemOutput>(
+      `/api/intervention-work-items/${workItemId}`,
       input,
       { headers: revision === undefined ? undefined : { 'If-Match': `"revision-${revision}"` } },
     );
@@ -443,7 +443,7 @@ export class MissionService extends HydraApiService {
    * @return {Observable<void>} Result of the remove work item operation.
    */
   public removeWorkItem(workItemId: string, revision: number): Observable<void> {
-    return this.delete(`/api/mission-work-items/${workItemId}`, {
+    return this.delete(`/api/intervention-work-items/${workItemId}`, {
       headers: { 'If-Match': `"revision-${revision}"` },
     });
   }
@@ -458,21 +458,21 @@ export class MissionService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - mission Id value.
+   * @param {string} interventionId - intervention Id value.
    * @param {PaginationOptions & { resource?: string; status?: string }} [options] - options value.
    *
-   * @return {Observable<HydraCollection<MissionChangeOutput>>} Result of the list changes operation.
+   * @return {Observable<HydraCollection<InterventionChangeOutput>>} Result of the list changes operation.
    */
   public listChanges(
-    missionId: string,
+    interventionId: string,
 
     options?: PaginationOptions & { resource?: string; status?: string },
-  ): Observable<HydraCollection<MissionChangeOutput>> {
-    const params: Record<string, string> = { mission: `/api/missions/${missionId}` };
+  ): Observable<HydraCollection<InterventionChangeOutput>> {
+    const params: Record<string, string> = { intervention: `/api/interventions/${interventionId}` };
     if (options?.resource) params['resource'] = options.resource;
     if (options?.status) params['status'] = options.status;
 
-    return this.getCollection<MissionChangeOutput>('/api/mission-changes', {
+    return this.getCollection<InterventionChangeOutput>('/api/intervention-changes', {
       page: options?.page,
       itemsPerPage: options?.itemsPerPage,
       params,
@@ -489,23 +489,23 @@ export class MissionService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - mission Id value.
+   * @param {string} interventionId - intervention Id value.
    * @param {Omit<PaginationOptions, 'page' | 'itemsPerPage'> & {
    * resource?: string;
    * status?: string;
    * }} [options] - options value.
    *
-   * @return {Observable<readonly MissionChangeOutput[]>} Result of the list all changes operation.
+   * @return {Observable<readonly InterventionChangeOutput[]>} Result of the list all changes operation.
    */
   public listAllChanges(
-    missionId: string,
+    interventionId: string,
     options?: Omit<PaginationOptions, 'page' | 'itemsPerPage'> & {
       resource?: string;
       status?: string;
     },
-  ): Observable<readonly MissionChangeOutput[]> {
+  ): Observable<readonly InterventionChangeOutput[]> {
     return this.collectPages((page) =>
-      this.listChanges(missionId, { ...options, page, itemsPerPage: WORKSPACE_PAGE_SIZE }),
+      this.listChanges(interventionId, { ...options, page, itemsPerPage: WORKSPACE_PAGE_SIZE }),
     );
   }
 
@@ -519,19 +519,19 @@ export class MissionService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @param {CreateMissionChangeInput} input - input value.
+   * @param {CreateInterventionChangeInput} input - input value.
    *
-   * @return {Observable<MissionChangeOutput>} Result of the create change operation.
+   * @return {Observable<InterventionChangeOutput>} Result of the create change operation.
    */
-  public createChange(input: CreateMissionChangeInput): Observable<MissionChangeOutput> {
+  public createChange(input: CreateInterventionChangeInput): Observable<InterventionChangeOutput> {
     if (input.clientId) {
       const { clientId, ...body } = input;
-      return this.put<typeof body, MissionChangeOutput>(`/api/mission-changes/${clientId}`, body, {
+      return this.put<typeof body, InterventionChangeOutput>(`/api/intervention-changes/${clientId}`, body, {
         headers: { 'If-None-Match': '*' },
       });
     }
 
-    return this.post<CreateMissionChangeInput, MissionChangeOutput>('/api/mission-changes', input);
+    return this.post<CreateInterventionChangeInput, InterventionChangeOutput>('/api/intervention-changes', input);
   }
 
   /**
@@ -545,18 +545,18 @@ export class MissionService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {string} changeId - change Id value.
-   * @param {UpdateMissionChangeInput} input - input value.
+   * @param {UpdateInterventionChangeInput} input - input value.
    * @param {number} [revision] - revision value.
    *
-   * @return {Observable<MissionChangeOutput>} Result of the update change operation.
+   * @return {Observable<InterventionChangeOutput>} Result of the update change operation.
    */
   public updateChange(
     changeId: string,
-    input: UpdateMissionChangeInput,
+    input: UpdateInterventionChangeInput,
     revision?: number,
-  ): Observable<MissionChangeOutput> {
-    return this.patch<UpdateMissionChangeInput, MissionChangeOutput>(
-      `/api/mission-changes/${changeId}`,
+  ): Observable<InterventionChangeOutput> {
+    return this.patch<UpdateInterventionChangeInput, InterventionChangeOutput>(
+      `/api/intervention-changes/${changeId}`,
       input,
       { headers: revision === undefined ? undefined : { 'If-Match': `"revision-${revision}"` } },
     );
@@ -572,12 +572,12 @@ export class MissionService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - mission Id value.
+   * @param {string} interventionId - intervention Id value.
    *
-   * @return {Observable<HydraCollection<MissionIssueOutput>>} Result of the list issues operation.
+   * @return {Observable<HydraCollection<InterventionIssueOutput>>} Result of the list issues operation.
    */
-  public listIssues(missionId: string): Observable<HydraCollection<MissionIssueOutput>> {
-    return this.getCollection<MissionIssueOutput>(`/api/missions/${missionId}/issues`);
+  public listIssues(interventionId: string): Observable<HydraCollection<InterventionIssueOutput>> {
+    return this.getCollection<InterventionIssueOutput>(`/api/interventions/${interventionId}/issues`);
   }
 
   /**
@@ -590,14 +590,14 @@ export class MissionService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @param {MissionOutput} mission - mission value.
+   * @param {InterventionOutput} intervention - intervention value.
    *
    * @return {Observable<PublicationOutput>} Result of the publish operation.
    */
-  public publish(mission: MissionOutput): Observable<PublicationOutput> {
-    return this.post<{ mission: string; missionRevision: number }, PublicationOutput>(
+  public publish(intervention: InterventionOutput): Observable<PublicationOutput> {
+    return this.post<{ intervention: string; interventionRevision: number }, PublicationOutput>(
       '/api/publications',
-      { mission: `/api/missions/${mission.id}`, missionRevision: mission.revision },
+      { intervention: `/api/interventions/${intervention.id}`, interventionRevision: intervention.revision },
     );
   }
 

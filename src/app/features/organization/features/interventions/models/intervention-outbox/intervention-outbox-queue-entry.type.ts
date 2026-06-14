@@ -1,12 +1,12 @@
-import type { MissionOutboxPayloadMap } from './mission-outbox-payload-map.interface';
-import type { MissionOutboxType } from './mission-outbox-type.type';
+import type { InterventionOutboxPayloadMap } from './intervention-outbox-payload-map.interface';
+import type { InterventionOutboxType } from './intervention-outbox-type.type';
 
 /**
- * Entry queued as part of one durable mission field intention.
+ * Entry queued as part of one durable intervention field intention.
  */
-export type MissionOutboxQueueEntry = {
-  [Type in MissionOutboxType]: {
+export type InterventionOutboxQueueEntry = {
+  [Type in InterventionOutboxType]: {
     readonly type: Type;
-    readonly payload: MissionOutboxPayloadMap[Type];
+    readonly payload: InterventionOutboxPayloadMap[Type];
   };
-}[MissionOutboxType];
+}[InterventionOutboxType];

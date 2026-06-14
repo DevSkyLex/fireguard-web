@@ -1,2 +1,2 @@
-export type { MyMissionsLoadRequest } from './my-missions-load-request.interface';
-export type { MyMissionsState } from './my-missions-state.interface';
+export type { MyInterventionsLoadRequest } from './my-interventions-load-request.interface';
+export type { MyInterventionsState } from './my-interventions-state.interface';

@@ -3,18 +3,18 @@ import { eventGroup } from '@ngrx/signals/events';
 import type { StoreFailureEventPayload } from '@core/state/request-state';
 
 /**
- * Constant missionStoreEvents
- * @const missionStoreEvents
+ * Constant interventionStoreEvents
+ * @const interventionStoreEvents
  *
  * @description
- * Component-scoped mission store events dispatched when mission list or
+ * Component-scoped intervention store events dispatched when intervention list or
  * creation operations fail.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export const missionStoreEvents = eventGroup({
-  source: 'Mission Store',
+export const interventionStoreEvents = eventGroup({
+  source: 'Intervention Store',
   events: {
     listFailed: type<StoreFailureEventPayload>(),
     createFailed: type<StoreFailureEventPayload>(),

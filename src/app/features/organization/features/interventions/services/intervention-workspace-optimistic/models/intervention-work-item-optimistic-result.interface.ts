@@ -1,12 +1,12 @@
 import type {
-  MissionOutput,
-  MissionWorkItemOutput,
-} from '@features/organization/features/missions/models';
+  InterventionOutput,
+  InterventionWorkItemOutput,
+} from '@features/organization/features/interventions/models';
 
 /**
  * Optimistic workspace state produced by a work-item mutation.
  */
-export interface MissionWorkItemOptimisticResult {
-  readonly mission: MissionOutput | null;
-  readonly workItem: MissionWorkItemOutput;
+export interface InterventionWorkItemOptimisticResult {
+  readonly intervention: InterventionOutput | null;
+  readonly workItem: InterventionWorkItemOutput;
 }

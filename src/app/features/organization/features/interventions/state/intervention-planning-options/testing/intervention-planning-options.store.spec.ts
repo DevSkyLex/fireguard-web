@@ -3,10 +3,10 @@ import { of } from 'rxjs';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
-import { MissionPlanningOptionsStore } from '../mission-planning-options.store';
+import { InterventionPlanningOptionsStore } from '../intervention-planning-options.store';
 
-describe('MissionPlanningOptionsStore', () => {
-  let store: InstanceType<typeof MissionPlanningOptionsStore>;
+describe('InterventionPlanningOptionsStore', () => {
+  let store: InstanceType<typeof InterventionPlanningOptionsStore>;
   let facilities: { list: ReturnType<typeof vi.fn> };
   let equipment: { list: ReturnType<typeof vi.fn> };
   let members: { list: ReturnType<typeof vi.fn> };
@@ -33,16 +33,16 @@ describe('MissionPlanningOptionsStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        MissionPlanningOptionsStore,
+        InterventionPlanningOptionsStore,
         { provide: FacilityService, useValue: facilities },
         { provide: EquipmentService, useValue: equipment },
         { provide: OrganizationMemberService, useValue: members },
       ],
     });
-    store = TestBed.inject(MissionPlanningOptionsStore);
+    store = TestBed.inject(InterventionPlanningOptionsStore);
   });
 
-  it('loads only sites and members for mission creation', async () => {
+  it('loads only sites and members for intervention creation', async () => {
     store.loadCreationOptions('org-1');
 
     await vi.waitFor(() => expect(store.loading()).toBe(false));
@@ -58,7 +58,7 @@ describe('MissionPlanningOptionsStore', () => {
     expect(store.sites()).toEqual([{ label: 'Site A', value: '/api/facilities/site-1' }]);
   });
 
-  it('loads target resources only for the mission workspace', async () => {
+  it('loads target resources only for the intervention workspace', async () => {
     store.loadWorkspaceOptions('org-1');
 
     await vi.waitFor(() => expect(store.loading()).toBe(false));

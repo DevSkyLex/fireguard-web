@@ -1,38 +1,38 @@
 import { Injectable } from '@angular/core';
 import type {
-  CreateMissionWorkItemInput,
-  MissionOutput,
-  MissionTransitionRequest,
-  MissionWorkItemOutput,
-  MissionWorkItemStatusChange,
-} from '@features/organization/features/missions/models';
-import type { MissionWorkItemOptimisticResult } from './models';
+  CreateInterventionWorkItemInput,
+  InterventionOutput,
+  InterventionTransitionRequest,
+  InterventionWorkItemOutput,
+  InterventionWorkItemStatusChange,
+} from '@features/organization/features/interventions/models';
+import type { InterventionWorkItemOptimisticResult } from './models';
 
 /**
- * Builds optimistic mission representations used while field changes are offline.
+ * Builds optimistic intervention representations used while field changes are offline.
  */
 @Injectable({ providedIn: 'root' })
-export class MissionWorkspaceOptimisticService {
-  public transition(mission: MissionOutput, request: MissionTransitionRequest): MissionOutput {
+export class InterventionWorkspaceOptimisticService {
+  public transition(intervention: InterventionOutput, request: InterventionTransitionRequest): InterventionOutput {
     return {
-      ...mission,
+      ...intervention,
       status: request.status,
-      reviewNote: request.reviewNote ?? mission.reviewNote,
-      revision: mission.revision + 1,
+      reviewNote: request.reviewNote ?? intervention.reviewNote,
+      revision: intervention.revision + 1,
       updatedAt: new Date().toISOString(),
     };
   }
 
   public createWorkItem(
-    input: CreateMissionWorkItemInput,
+    input: CreateInterventionWorkItemInput,
     clientId: string,
-  ): MissionWorkItemOutput {
+  ): InterventionWorkItemOutput {
     const now = new Date().toISOString();
     return {
-      '@id': `/api/mission-work-items/${clientId}`,
-      '@type': 'MissionWorkItem',
+      '@id': `/api/intervention-work-items/${clientId}`,
+      '@type': 'InterventionWorkItem',
       id: clientId,
-      mission: input.mission,
+      intervention: input.intervention,
       action: input.action,
       target: input.target ?? null,
       resultResource: input.resultResource ?? null,
@@ -47,56 +47,56 @@ export class MissionWorkspaceOptimisticService {
     };
   }
 
-  public addWorkItem(mission: MissionOutput): MissionOutput;
-  public addWorkItem(mission: null): null;
-  public addWorkItem(mission: MissionOutput | null): MissionOutput | null;
-  public addWorkItem(mission: MissionOutput | null): MissionOutput | null {
-    if (!mission) return null;
+  public addWorkItem(intervention: InterventionOutput): InterventionOutput;
+  public addWorkItem(intervention: null): null;
+  public addWorkItem(intervention: InterventionOutput | null): InterventionOutput | null;
+  public addWorkItem(intervention: InterventionOutput | null): InterventionOutput | null {
+    if (!intervention) return null;
     return {
-      ...mission,
-      revision: mission.revision + 1,
-      workItemsCount: mission.workItemsCount + 1,
+      ...intervention,
+      revision: intervention.revision + 1,
+      workItemsCount: intervention.workItemsCount + 1,
       updatedAt: new Date().toISOString(),
     };
   }
 
   public updateWorkItem(
-    mission: MissionOutput | null,
-    item: MissionWorkItemOutput,
-    request: MissionWorkItemStatusChange,
-  ): MissionWorkItemOptimisticResult {
+    intervention: InterventionOutput | null,
+    item: InterventionWorkItemOutput,
+    request: InterventionWorkItemStatusChange,
+  ): InterventionWorkItemOptimisticResult {
     const skipReason =
       request.status === 'skipped' ? (request.skipReason ?? item.skipReason ?? null) : null;
-    const workItem: MissionWorkItemOutput = {
+    const workItem: InterventionWorkItemOutput = {
       ...item,
       status: request.status,
       skipReason,
       revision: item.revision + 1,
       updatedAt: new Date().toISOString(),
     };
-    if (!mission) return { mission: null, workItem };
+    if (!intervention) return { intervention: null, workItem };
     const wasResolved = item.status === 'completed' || item.status === 'skipped';
     const isResolved = request.status === 'completed' || request.status === 'skipped';
     return {
       workItem,
-      mission: {
-        ...mission,
+      intervention: {
+        ...intervention,
         status:
-          mission.status === 'planned' && request.status !== 'planned'
+          intervention.status === 'planned' && request.status !== 'planned'
             ? 'in_progress'
-            : mission.status,
-        revision: mission.revision + 1,
+            : intervention.status,
+        revision: intervention.revision + 1,
         completedWorkItemsCount:
-          mission.completedWorkItemsCount + Number(isResolved) - Number(wasResolved),
+          intervention.completedWorkItemsCount + Number(isResolved) - Number(wasResolved),
         updatedAt: workItem.updatedAt,
       },
     };
   }
 
-  public touch(mission: MissionOutput): MissionOutput {
+  public touch(intervention: InterventionOutput): InterventionOutput {
     return {
-      ...mission,
-      revision: mission.revision + 1,
+      ...intervention,
+      revision: intervention.revision + 1,
       updatedAt: new Date().toISOString(),
     };
   }

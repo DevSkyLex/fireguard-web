@@ -1,9 +1,9 @@
-import type { SelectOption } from '@features/organization/features/missions/models';
+import type { SelectOption } from '@features/organization/features/interventions/models';
 
 /**
- * State consumed by mission planning controls.
+ * State consumed by intervention planning controls.
  */
-export interface MissionPlanningOptionsState {
+export interface InterventionPlanningOptionsState {
   readonly sites: readonly SelectOption[];
   readonly targets: readonly SelectOption[];
   readonly members: readonly SelectOption[];

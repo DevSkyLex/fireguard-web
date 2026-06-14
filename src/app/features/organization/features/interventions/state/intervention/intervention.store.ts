@@ -13,75 +13,75 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
 } from '@core/state/request-state';
-import { MissionService } from '@features/organization/features/missions/data-access';
-import type { MissionOutput } from '@features/organization/features/missions/models';
-import { missionStoreEvents } from './events';
-import type { MissionCreateCommand, MissionListLoadCommand, MissionState } from './models';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import { interventionStoreEvents } from './events';
+import type { InterventionCreateCommand, InterventionListLoadCommand, InterventionState } from './models';
 
 //#region Initial State
 /**
- * Constant INITIAL_MISSION_STATE
- * @const INITIAL_MISSION_STATE
+ * Constant INITIAL_INTERVENTION_STATE
+ * @const INITIAL_INTERVENTION_STATE
  *
  * @description
- * Initial state for the component-scoped MissionStore.
+ * Initial state for the component-scoped InterventionStore.
  *
  * @since 1.0.0
  *
- * @type {MissionState}
+ * @type {InterventionState}
  */
-const INITIAL_MISSION_STATE: MissionState = {
-  totalMissions: 0,
+const INITIAL_INTERVENTION_STATE: InterventionState = {
+  totalInterventions: 0,
   listCallState: idleCallState(),
-  createCallState: idleCallState<MissionOutput>(),
+  createCallState: idleCallState<InterventionOutput>(),
 } as const;
 //#endregion
 
 /**
- * Store MissionStore
- * @const MissionStore
+ * Store InterventionStore
+ * @const InterventionStore
  *
  * @description
- * Component-scoped NgRx SignalStore for mission list and creation workflows.
- * The store owns request state and normalized mission entities; route pages
+ * Component-scoped NgRx SignalStore for intervention list and creation workflows.
+ * The store owns request state and normalized intervention entities; route pages
  * remain responsible for navigation and UI composition.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export const MissionStore = signalStore(
-  withEntities({ entity: type<MissionOutput>(), collection: 'mission' }),
-  withState<MissionState>(INITIAL_MISSION_STATE),
+export const InterventionStore = signalStore(
+  withEntities({ entity: type<InterventionOutput>(), collection: 'intervention' }),
+  withState<InterventionState>(INITIAL_INTERVENTION_STATE),
   withComputed((store) => ({
-    /** All cached missions for the active organization. */
-    missionList: computed<ReadonlyArray<MissionOutput>>(() => store.missionEntities()),
+    /** All cached interventions for the active organization. */
+    interventionList: computed<ReadonlyArray<InterventionOutput>>(() => store.interventionEntities()),
 
-    /** True while the mission list is loading. */
-    isLoadingMissions: computed<boolean>(() => store.listCallState().status === 'pending'),
+    /** True while the intervention list is loading. */
+    isLoadingInterventions: computed<boolean>(() => store.listCallState().status === 'pending'),
 
-    /** True while mission creation is in-flight. */
+    /** True while intervention creation is in-flight. */
     isCreating: computed<boolean>(() => store.createCallState().status === 'pending'),
 
-    /** Last mission created by the store, if any. */
-    createdMission: computed<MissionOutput | null>(() => store.createCallState().data),
+    /** Last intervention created by the store, if any. */
+    createdIntervention: computed<InterventionOutput | null>(() => store.createCallState().data),
 
-    /** True when there are no missions and the list is not loading. */
+    /** True when there are no interventions and the list is not loading. */
     isEmpty: computed<boolean>(
-      () => store.missionIds().length === 0 && store.listCallState().status !== 'pending',
+      () => store.interventionIds().length === 0 && store.listCallState().status !== 'pending',
     ),
   })),
   withMethods(
     (
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
-      missionService = inject<MissionService>(MissionService),
+      interventionService = inject<InterventionService>(InterventionService),
     ) => ({
       /**
        * Method load
        * @method load
        *
        * @description
-       * Loads missions for the active organization.
+       * Loads interventions for the active organization.
        *
        * @access public
        * @since 1.0.0
@@ -89,18 +89,18 @@ export const MissionStore = signalStore(
        * @type {RxMethod<{ organizationId: string }>}
        */
 
-      load: rxMethod<MissionListLoadCommand>(
+      load: rxMethod<InterventionListLoadCommand>(
         pipe(
           tap(() => patchState(store, { listCallState: pendingCallState() })),
           switchMap(({ organizationId }) =>
-            missionService.list(organizationId).pipe(
+            interventionService.list(organizationId).pipe(
               tapResponse({
                 next: (response) => {
                   patchState(
                     store,
-                    setAllEntities([...response.member], { collection: 'mission' }),
+                    setAllEntities([...response.member], { collection: 'intervention' }),
                     {
-                      totalMissions: response.totalItems,
+                      totalInterventions: response.totalItems,
                       listCallState: successCallState(null),
                     },
                   );
@@ -109,8 +109,8 @@ export const MissionStore = signalStore(
                   const storeError = toStoreError(error);
                   patchState(store, { listCallState: errorCallState(storeError) });
                   dispatcher.dispatch(
-                    missionStoreEvents.listFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to load missions'),
+                    interventionStoreEvents.listFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load interventions'),
                     ),
                   );
                 },
@@ -125,7 +125,7 @@ export const MissionStore = signalStore(
        * @method create
        *
        * @description
-       * Creates a mission and stores it in the local entity collection.
+       * Creates a intervention and stores it in the local entity collection.
        * Uses `exhaustMap` to avoid duplicate submissions.
        *
        * @access public
@@ -134,24 +134,24 @@ export const MissionStore = signalStore(
        * @type {RxMethod<{ organizationId: string; name: string }>}
        */
 
-      create: rxMethod<MissionCreateCommand>(
+      create: rxMethod<InterventionCreateCommand>(
         pipe(
-          tap(() => patchState(store, { createCallState: pendingCallState<MissionOutput>() })),
+          tap(() => patchState(store, { createCallState: pendingCallState<InterventionOutput>() })),
           exhaustMap(({ organizationId, name }) =>
-            missionService.create(organizationId, name).pipe(
+            interventionService.create(organizationId, name).pipe(
               tapResponse({
-                next: (mission) => {
-                  patchState(store, addEntity(mission, { collection: 'mission' }), {
-                    totalMissions: store.totalMissions() + 1,
-                    createCallState: successCallState(mission),
+                next: (intervention) => {
+                  patchState(store, addEntity(intervention, { collection: 'intervention' }), {
+                    totalInterventions: store.totalInterventions() + 1,
+                    createCallState: successCallState(intervention),
                   });
                 },
                 error: (error: unknown) => {
                   const storeError = toStoreError(error);
                   patchState(store, { createCallState: errorCallState(storeError) });
                   dispatcher.dispatch(
-                    missionStoreEvents.createFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to create mission'),
+                    interventionStoreEvents.createFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to create intervention'),
                     ),
                   );
                 },
@@ -162,28 +162,28 @@ export const MissionStore = signalStore(
       ),
 
       /**
-       * Method clearCreatedMission
-       * @method clearCreatedMission
+       * Method clearCreatedIntervention
+       * @method clearCreatedIntervention
        *
        * @description
-       * Clears the last created mission navigation handoff.
+       * Clears the last created intervention navigation handoff.
        *
        * @access public
        * @since 1.0.0
        *
        * @return {void}
        */
-      clearCreatedMission(): void {
-        patchState(store, { createCallState: idleCallState<MissionOutput>() });
+      clearCreatedIntervention(): void {
+        patchState(store, { createCallState: idleCallState<InterventionOutput>() });
       },
     }),
   ),
 );
 
 /**
- * Type MissionStoreType
+ * Type InterventionStoreType
  *
  * @description
- * Defines the supported mission store type values.
+ * Defines the supported intervention store type values.
  */
-export type MissionStoreType = InstanceType<typeof MissionStore>;
+export type InterventionStoreType = InstanceType<typeof InterventionStore>;

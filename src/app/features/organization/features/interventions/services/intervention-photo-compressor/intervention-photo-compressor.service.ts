@@ -28,11 +28,11 @@ const PHOTO_MAX_DIMENSION = 1_600;
 const PHOTO_JPEG_QUALITY = 0.82;
 
 /**
- * Service MissionPhotoCompressorService
- * @class MissionPhotoCompressorService
+ * Service InterventionPhotoCompressorService
+ * @class InterventionPhotoCompressorService
  *
  * @description
- * Browser-only image compression service for mission evidence photos.
+ * Browser-only image compression service for intervention evidence photos.
  *
  * Downscales and re-encodes captured photos to JPEG so offline storage and
  * uploads stay lightweight on field connections.
@@ -41,7 +41,7 @@ const PHOTO_JPEG_QUALITY = 0.82;
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
-export class MissionPhotoCompressorService {
+export class InterventionPhotoCompressorService {
   //#region Properties
   /**
    * Property browser

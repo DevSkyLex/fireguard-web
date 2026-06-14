@@ -1,29 +1,29 @@
 import { inject, Injectable } from '@angular/core';
 import { ConnectivityService } from '@core/services/connectivity';
 import type {
-  CreateMissionWorkItemInput,
-  MissionDiscoveryRequest,
-  MissionDiscoveryResult,
-  MissionOutboxQueueEntry,
-} from '@features/organization/features/missions/models';
-import { MissionFieldExecutionService } from '../mission-field-execution';
-import { MissionOfflineService } from '../mission-offline';
-import { MissionSyncService } from '../mission-sync';
-import { MissionSyncCoordinatorService } from '../mission-sync-coordinator';
+  CreateInterventionWorkItemInput,
+  InterventionDiscoveryRequest,
+  InterventionDiscoveryResult,
+  InterventionOutboxQueueEntry,
+} from '@features/organization/features/interventions/models';
+import { InterventionFieldExecutionService } from '../intervention-field-execution';
+import { InterventionOfflineService } from '../intervention-offline';
+import { InterventionSyncService } from '../intervention-sync';
+import { InterventionSyncCoordinatorService } from '../intervention-sync-coordinator';
 
 /**
- * Coordinates creation of discovered resources and their mission work items.
+ * Coordinates creation of discovered resources and their intervention work items.
  */
 @Injectable({ providedIn: 'root' })
-export class MissionDiscoveryService {
-  private readonly fieldExecution: MissionFieldExecutionService = inject(
-    MissionFieldExecutionService,
+export class InterventionDiscoveryService {
+  private readonly fieldExecution: InterventionFieldExecutionService = inject(
+    InterventionFieldExecutionService,
   );
   private readonly connectivity: ConnectivityService = inject(ConnectivityService);
-  private readonly offline: MissionOfflineService = inject(MissionOfflineService);
-  private readonly sync: MissionSyncService = inject(MissionSyncService);
-  private readonly syncCoordinator: MissionSyncCoordinatorService = inject(
-    MissionSyncCoordinatorService,
+  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
+  private readonly sync: InterventionSyncService = inject(InterventionSyncService);
+  private readonly syncCoordinator: InterventionSyncCoordinatorService = inject(
+    InterventionSyncCoordinatorService,
   );
 
   /**
@@ -31,38 +31,38 @@ export class MissionDiscoveryService {
    */
   public async create(
     organizationId: string,
-    missionId: string,
-    request: MissionDiscoveryRequest & { readonly target: string },
-  ): Promise<MissionDiscoveryResult> {
+    interventionId: string,
+    request: InterventionDiscoveryRequest & { readonly target: string },
+  ): Promise<InterventionDiscoveryResult> {
     const resourceClientId = crypto.randomUUID();
     const workItemClientId = crypto.randomUUID();
     const resource = this.fieldExecution.prepareDiscoveryResource(
       organizationId,
-      missionId,
+      interventionId,
       request,
       resourceClientId,
     );
-    const workItem: CreateMissionWorkItemInput = {
+    const workItem: CreateInterventionWorkItemInput = {
       clientId: workItemClientId,
-      mission: `/api/missions/${missionId}`,
+      intervention: `/api/interventions/${interventionId}`,
       action: request.action,
       target: resource.targetResource,
       resultResource: resource.resultResource,
       source: 'discovered',
       required: false,
     };
-    const operations: readonly MissionOutboxQueueEntry[] = [
+    const operations: readonly InterventionOutboxQueueEntry[] = [
       resource,
       { type: 'work-item.create', payload: workItem },
     ];
-    const operationIds = await this.offline.queueMany(missionId, operations);
+    const operationIds = await this.offline.queueMany(interventionId, operations);
 
     if (this.connectivity.isOffline()) return { queued: true, workItem };
 
     try {
-      await this.sync.replayOutbox(organizationId, missionId);
+      await this.sync.replayOutbox(organizationId, interventionId);
       await this.syncCoordinator.refreshStatus();
-      const pending = await this.offline.listOutbox(missionId);
+      const pending = await this.offline.listOutbox(interventionId);
       const queued = pending.some((operation) => operationIds.includes(operation.id));
       return { queued, workItem };
     } catch {

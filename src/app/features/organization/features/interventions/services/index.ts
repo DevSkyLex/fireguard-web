@@ -1,21 +1,21 @@
 /**
- * Missions service public exports.
+ * Interventions service public exports.
  */
 export {
-  MissionOfflineService,
-  MissionDatabaseService,
-  MissionOutboxStore,
-  MissionWorkspaceRepository,
-} from './mission-offline';
+  InterventionOfflineService,
+  InterventionDatabaseService,
+  InterventionOutboxStore,
+  InterventionWorkspaceRepository,
+} from './intervention-offline';
 export {
-  MissionFieldExecutionService,
-  type MissionDiscoveryResourcePlan,
-  type MissionFieldDiscovery,
-} from './mission-field-execution';
-export { MissionOfflineLifecycleService } from './mission-offline-lifecycle';
-export { MissionPhotoCompressorService } from './mission-photo-compressor';
-export { MissionPwaUpdateService } from './mission-pwa-update';
-export { MissionPrefetchService } from './mission-prefetch';
-export { MissionQrScannerService } from './mission-qr-scanner';
-export { MissionSyncService } from './mission-sync';
-export { MissionSyncCoordinatorService } from './mission-sync-coordinator';
+  InterventionFieldExecutionService,
+  type InterventionDiscoveryResourcePlan,
+  type InterventionFieldDiscovery,
+} from './intervention-field-execution';
+export { InterventionOfflineLifecycleService } from './intervention-offline-lifecycle';
+export { InterventionPhotoCompressorService } from './intervention-photo-compressor';
+export { InterventionPwaUpdateService } from './intervention-pwa-update';
+export { InterventionPrefetchService } from './intervention-prefetch';
+export { InterventionQrScannerService } from './intervention-qr-scanner';
+export { InterventionSyncService } from './intervention-sync';
+export { InterventionSyncCoordinatorService } from './intervention-sync-coordinator';

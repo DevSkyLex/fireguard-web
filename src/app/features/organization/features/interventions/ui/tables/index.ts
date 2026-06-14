@@ -1,1 +1,1 @@
-export { MissionTable } from './mission-table';
+export { InterventionTable } from './intervention-table';

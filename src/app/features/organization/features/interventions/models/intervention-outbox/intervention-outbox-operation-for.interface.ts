@@ -1,14 +1,14 @@
-import type { MissionOutboxPayloadMap } from './mission-outbox-payload-map.interface';
-import type { MissionOutboxType } from './mission-outbox-type.type';
+import type { InterventionOutboxPayloadMap } from './intervention-outbox-payload-map.interface';
+import type { InterventionOutboxType } from './intervention-outbox-type.type';
 
 /**
  * Single queued operation with a payload discriminated by its operation type.
  */
-export interface MissionOutboxOperationFor<Type extends MissionOutboxType> {
+export interface InterventionOutboxOperationFor<Type extends InterventionOutboxType> {
   readonly id: string;
-  readonly missionId: string;
+  readonly interventionId: string;
   readonly type: Type;
-  readonly payload: MissionOutboxPayloadMap[Type];
+  readonly payload: InterventionOutboxPayloadMap[Type];
   readonly createdAt: string;
   readonly status?: 'pending' | 'conflict' | 'failed';
   readonly error?: string | null;

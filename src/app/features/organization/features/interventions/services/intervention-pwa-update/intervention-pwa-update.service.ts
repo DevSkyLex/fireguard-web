@@ -2,24 +2,24 @@ import { effect, Injectable, inject, signal, type WritableSignal } from '@angula
 import { SwUpdate } from '@angular/service-worker';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { filter } from 'rxjs';
-import { MissionOfflineService } from '@features/organization/features/missions/services';
+import { InterventionOfflineService } from '@features/organization/features/interventions/services';
 
 /**
- * Service MissionPwaUpdateService
- * @class MissionPwaUpdateService
+ * Service InterventionPwaUpdateService
+ * @class InterventionPwaUpdateService
  *
  * @description
- * Coordinates service-worker update prompts with mission offline safety.
+ * Coordinates service-worker update prompts with intervention offline safety.
  *
  * The service listens to Angular service-worker version events and only
- * proposes reload when mission outbox is clean. If unsynchronized field
+ * proposes reload when intervention outbox is clean. If unsynchronized field
  * operations exist, the update is deferred and users receive a warning.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
-export class MissionPwaUpdateService {
+export class InterventionPwaUpdateService {
   //#region Properties
   /**
    * Property updates
@@ -68,14 +68,14 @@ export class MissionPwaUpdateService {
    * @readonly
    *
    * @description
-   * Mission offline service exposing the unsynced outbox state.
+   * Intervention offline service exposing the unsynced outbox state.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {MissionOfflineService}
+   * @type {InterventionOfflineService}
    */
-  private readonly offline: MissionOfflineService = inject(MissionOfflineService);
+  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
 
   /**
    * Property updateReady
@@ -111,7 +111,7 @@ export class MissionPwaUpdateService {
    * @constructor
    *
    * @description
-   * Reproposes a deferred update as soon as the mission outbox becomes clean.
+   * Reproposes a deferred update as soon as the intervention outbox becomes clean.
    *
    * @access public
    * @since 1.0.0
@@ -133,7 +133,7 @@ export class MissionPwaUpdateService {
    * @description
    * Starts service-worker update monitoring.
    *
-   * On `VERSION_READY`, prompts reload only when the mission offline outbox
+   * On `VERSION_READY`, prompts reload only when the intervention offline outbox
    * has no pending operations; otherwise warns the user and defers the
    * update until field changes are synchronized.
    *

@@ -1,4 +1,4 @@
 /**
- * Supported mission workflow types.
+ * Supported intervention workflow types.
  */
-export type MissionType = 'site_setup' | 'inventory' | 'inspection_campaign';
+export type InterventionType = 'site_setup' | 'inventory' | 'inspection_campaign';

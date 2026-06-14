@@ -4,44 +4,44 @@ import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/por
 import type { IndexedEntry } from './models';
 
 /**
- * Constant MISSION_DATABASE_NAME
- * @const MISSION_DATABASE_NAME
+ * Constant INTERVENTION_DATABASE_NAME
+ * @const INTERVENTION_DATABASE_NAME
  *
  * @description
- * IndexedDB database name owning every mission offline object store.
+ * IndexedDB database name owning every intervention offline object store.
  *
  * @since 1.1.0
  *
  * @type {string}
  */
-const MISSION_DATABASE_NAME = 'fireguard-field-missions';
+const INTERVENTION_DATABASE_NAME = 'fireguard-field-interventions';
 
 /**
- * Constant MISSION_DATABASE_VERSION
- * @const MISSION_DATABASE_VERSION
+ * Constant INTERVENTION_DATABASE_VERSION
+ * @const INTERVENTION_DATABASE_VERSION
  *
  * @description
- * Schema version of the mission offline database.
+ * Schema version of the intervention offline database.
  *
  * @since 1.1.0
  *
  * @type {number}
  */
-const MISSION_DATABASE_VERSION = 4;
+const INTERVENTION_DATABASE_VERSION = 4;
 
 /**
- * Constant MISSION_STORE_NAMES
- * @const MISSION_STORE_NAMES
+ * Constant INTERVENTION_STORE_NAMES
+ * @const INTERVENTION_STORE_NAMES
  *
  * @description
- * Every object store cleared when local mission data is purged.
+ * Every object store cleared when local intervention data is purged.
  *
  * @since 1.1.0
  *
  * @type {readonly string[]}
  */
-const MISSION_STORE_NAMES = [
-  'missions',
+const INTERVENTION_STORE_NAMES = [
+  'interventions',
   'workItems',
   'changes',
   'resources',
@@ -51,13 +51,13 @@ const MISSION_STORE_NAMES = [
 ] as const;
 
 /**
- * Service MissionDatabaseService
- * @class MissionDatabaseService
+ * Service InterventionDatabaseService
+ * @class InterventionDatabaseService
  *
  * @description
- * Low-level IndexedDB infrastructure for mission offline workflows. Owns the
+ * Low-level IndexedDB infrastructure for intervention offline workflows. Owns the
  * database connection and schema, generic typed CRUD primitives and the
- * per-user owner binding that prevents local mission data from leaking across
+ * per-user owner binding that prevents local intervention data from leaking across
  * authenticated users. Domain persistence (workspace, outbox) is layered on
  * top of this service.
  *
@@ -65,7 +65,7 @@ const MISSION_STORE_NAMES = [
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
-export class MissionDatabaseService {
+export class InterventionDatabaseService {
   //#region Properties
   /**
    * Property browser
@@ -124,7 +124,7 @@ export class MissionDatabaseService {
 
   //#region Owner binding
   /**
-   * Clears the owner binding and all locally persisted mission data.
+   * Clears the owner binding and all locally persisted intervention data.
    */
   public resetOwnerData(): Promise<void> {
     this.ownerUserId = null;
@@ -137,7 +137,7 @@ export class MissionDatabaseService {
    * @method ensureOwnerBound
    *
    * @description
-   * Ensures locally persisted mission data never crosses authenticated
+   * Ensures locally persisted intervention data never crosses authenticated
    * users. Binding work is chained on a serialized promise so concurrent
    * calls await the same operation.
    *
@@ -440,7 +440,7 @@ export class MissionDatabaseService {
    * @method clearAll
    *
    * @description
-   * Clears every mission offline object store. Used notably on logout.
+   * Clears every intervention offline object store. Used notably on logout.
    *
    * @access public
    * @since 1.0.0
@@ -451,8 +451,8 @@ export class MissionDatabaseService {
     if (!this.browser) return;
     const database = await this.open();
     await new Promise<void>((resolve, reject) => {
-      const transaction = database.transaction(MISSION_STORE_NAMES, 'readwrite');
-      for (const storeName of MISSION_STORE_NAMES) {
+      const transaction = database.transaction(INTERVENTION_STORE_NAMES, 'readwrite');
+      for (const storeName of INTERVENTION_STORE_NAMES) {
         transaction.objectStore(storeName).clear();
       }
       transaction.addEventListener('complete', () => resolve());
@@ -468,8 +468,8 @@ export class MissionDatabaseService {
    * @method open
    *
    * @description
-   * Opens (and upgrades when needed) the mission IndexedDB database with its
-   * normalized mission stores, outbox and metadata.
+   * Opens (and upgrades when needed) the intervention IndexedDB database with its
+   * normalized intervention stores, outbox and metadata.
    *
    * @access private
    * @since 1.0.0
@@ -478,12 +478,12 @@ export class MissionDatabaseService {
    */
   private open(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(MISSION_DATABASE_NAME, MISSION_DATABASE_VERSION);
+      const request = indexedDB.open(INTERVENTION_DATABASE_NAME, INTERVENTION_DATABASE_VERSION);
       request.addEventListener('upgradeneeded', () => {
         const database = request.result;
         if (database.objectStoreNames.contains('snapshots'))
           database.deleteObjectStore('snapshots');
-        if (!database.objectStoreNames.contains('missions')) database.createObjectStore('missions');
+        if (!database.objectStoreNames.contains('interventions')) database.createObjectStore('interventions');
         if (!database.objectStoreNames.contains('workItems'))
           database.createObjectStore('workItems');
         if (!database.objectStoreNames.contains('changes')) database.createObjectStore('changes');

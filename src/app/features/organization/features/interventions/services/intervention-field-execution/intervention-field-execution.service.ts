@@ -3,15 +3,15 @@ import { ConnectivityService } from '@core/services/connectivity';
 import type { CreateEquipmentInput } from '@features/organization/features/equipments/models';
 import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
 import type { CreateInspectionInput } from '@features/organization/features/inspections/models';
-import { MissionOfflineService } from '../mission-offline';
-import { MissionPhotoCompressorService } from '../mission-photo-compressor';
-import { MissionQrScannerService } from '../mission-qr-scanner';
-import { MissionSyncCoordinatorService } from '../mission-sync-coordinator';
-import type { MissionDiscoveryResourcePlan, MissionFieldDiscovery } from './models';
+import { InterventionOfflineService } from '../intervention-offline';
+import { InterventionPhotoCompressorService } from '../intervention-photo-compressor';
+import { InterventionQrScannerService } from '../intervention-qr-scanner';
+import { InterventionSyncCoordinatorService } from '../intervention-sync-coordinator';
+import type { InterventionDiscoveryResourcePlan, InterventionFieldDiscovery } from './models';
 
 /**
- * Service MissionFieldExecutionService
- * @class MissionFieldExecutionService
+ * Service InterventionFieldExecutionService
+ * @class InterventionFieldExecutionService
  *
  * @description
  * Coordinates field-only resource creation, QR scanning and evidence upload
@@ -21,15 +21,15 @@ import type { MissionDiscoveryResourcePlan, MissionFieldDiscovery } from './mode
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
-export class MissionFieldExecutionService {
+export class InterventionFieldExecutionService {
   private readonly connectivity: ConnectivityService = inject(ConnectivityService);
-  private readonly offline: MissionOfflineService = inject(MissionOfflineService);
-  private readonly scanner: MissionQrScannerService = inject(MissionQrScannerService);
-  private readonly photoCompressor: MissionPhotoCompressorService = inject(
-    MissionPhotoCompressorService,
+  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
+  private readonly scanner: InterventionQrScannerService = inject(InterventionQrScannerService);
+  private readonly photoCompressor: InterventionPhotoCompressorService = inject(
+    InterventionPhotoCompressorService,
   );
-  private readonly syncCoordinator: MissionSyncCoordinatorService = inject(
-    MissionSyncCoordinatorService,
+  private readonly syncCoordinator: InterventionSyncCoordinatorService = inject(
+    InterventionSyncCoordinatorService,
   );
 
   /**
@@ -43,26 +43,26 @@ export class MissionFieldExecutionService {
    * @since 1.0.0
    *
    * @param {string} organizationId - Active organization identifier.
-   * @param {string} missionId - Active mission identifier.
-   * @param {MissionFieldDiscovery} discovery - Field discovery.
+   * @param {string} interventionId - Active intervention identifier.
+   * @param {InterventionFieldDiscovery} discovery - Field discovery.
    * @param {string} clientId - Stable client-generated resource identifier.
    *
-   * @return {MissionDiscoveryResourcePlan} Prepared resource operation and canonical references.
+   * @return {InterventionDiscoveryResourcePlan} Prepared resource operation and canonical references.
    */
   public prepareDiscoveryResource(
     organizationId: string,
-    missionId: string,
-    discovery: MissionFieldDiscovery,
+    interventionId: string,
+    discovery: InterventionFieldDiscovery,
     clientId: string,
-  ): MissionDiscoveryResourcePlan {
-    const mission = `/api/missions/${missionId}`;
+  ): InterventionDiscoveryResourcePlan {
+    const intervention = `/api/interventions/${interventionId}`;
     const organization = `/api/organizations/${organizationId}`;
 
     if (discovery.action === 'site_setup') {
       const payload: CreateFacilityInput = {
         clientId,
         organization,
-        mission,
+        intervention,
         type: 'area',
         name: discovery.target,
       };
@@ -77,7 +77,7 @@ export class MissionFieldExecutionService {
       const payload: CreateEquipmentInput = {
         clientId,
         organization,
-        mission,
+        intervention,
         type: discovery.target,
       };
       return {
@@ -91,7 +91,7 @@ export class MissionFieldExecutionService {
     const payload: CreateInspectionInput = {
       clientId,
       organization,
-      mission,
+      intervention,
       equipmentId,
       result: discovery.result,
       performedAt: new Date().toISOString(),
@@ -134,23 +134,23 @@ export class MissionFieldExecutionService {
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - Active mission identifier.
+   * @param {string} interventionId - Active intervention identifier.
    * @param {string} equipmentId - Equipment identifier.
    * @param {File} source - Source evidence photo.
    *
    * @return {Promise<boolean>} Whether the photo was queued for synchronization.
    */
-  public async attachPhoto(missionId: string, equipmentId: string, source: File): Promise<boolean> {
+  public async attachPhoto(interventionId: string, equipmentId: string, source: File): Promise<boolean> {
     const file = await this.photoCompressor.compress(source);
     const clientId = crypto.randomUUID();
-    await this.offline.queue(missionId, 'media.create', {
+    await this.offline.queue(interventionId, 'media.create', {
       clientId,
       equipmentId,
       file,
       fileName: file.name,
     });
     if (!this.connectivity.isOffline()) await this.syncCoordinator.syncAll();
-    const operations = await this.offline.listOutbox(missionId);
+    const operations = await this.offline.listOutbox(interventionId);
     return operations.some(
       (operation) =>
         operation.type === 'media.create' && operation.payload['clientId'] === clientId,

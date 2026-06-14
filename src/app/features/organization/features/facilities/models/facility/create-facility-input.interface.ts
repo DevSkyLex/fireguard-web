@@ -19,11 +19,11 @@ export type CreateFacilityInput = Pick<FacilityWritableFields, 'type' | 'name'> 
      */
     readonly clientId?: string;
     /**
-     * Optional organization IRI override for mission orchestrations.
+     * Optional organization IRI override for intervention orchestrations.
      */
     readonly organization?: string;
     /**
-     * Optional mission IRI used to attach created facilities to one mission.
+     * Optional intervention IRI used to attach created facilities to one intervention.
      */
-    readonly mission?: string;
+    readonly intervention?: string;
   };

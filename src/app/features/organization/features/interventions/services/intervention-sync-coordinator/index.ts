@@ -1,1 +1,1 @@
-export { MissionSyncCoordinatorService } from './mission-sync-coordinator.service';
+export { InterventionSyncCoordinatorService } from './intervention-sync-coordinator.service';

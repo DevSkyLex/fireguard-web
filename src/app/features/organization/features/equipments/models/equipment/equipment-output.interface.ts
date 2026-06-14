@@ -19,11 +19,11 @@ export type EquipmentStatus = 'in_stock' | 'operational' | 'decommissioned' | 'u
  */
 export interface EquipmentOutput extends HydraItem {
   /**
-   * Optional mission IRI when equipment belongs to a mission-scoped workflow.
+   * Optional intervention IRI when equipment belongs to a intervention-scoped workflow.
    */
-  readonly mission?: string | null;
+  readonly intervention?: string | null;
   /**
-   * Record lifecycle state used by draft/publish mission workflows.
+   * Record lifecycle state used by draft/publish intervention workflows.
    */
   readonly recordStatus?: 'draft' | 'published';
   /**

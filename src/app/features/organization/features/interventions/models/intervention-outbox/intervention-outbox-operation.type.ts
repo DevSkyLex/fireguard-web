@@ -1,9 +1,9 @@
-import type { MissionOutboxOperationFor } from './mission-outbox-operation-for.interface';
-import type { MissionOutboxType } from './mission-outbox-type.type';
+import type { InterventionOutboxOperationFor } from './intervention-outbox-operation-for.interface';
+import type { InterventionOutboxType } from './intervention-outbox-type.type';
 
 /**
- * Discriminated union of every queued mission operation.
+ * Discriminated union of every queued intervention operation.
  */
-export type MissionOutboxOperation = {
-  [Type in MissionOutboxType]: MissionOutboxOperationFor<Type>;
-}[MissionOutboxType];
+export type InterventionOutboxOperation = {
+  [Type in InterventionOutboxType]: InterventionOutboxOperationFor<Type>;
+}[InterventionOutboxType];

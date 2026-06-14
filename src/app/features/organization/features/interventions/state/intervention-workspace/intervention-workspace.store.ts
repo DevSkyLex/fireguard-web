@@ -4,19 +4,19 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, forkJoin, from, map, pipe, switchMap, tap, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/services/connectivity';
-import { MissionService } from '@features/organization/features/missions/data-access';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
-  CreateMissionWorkItemInput,
-  MissionTransitionRequest,
-  MissionWorkItemOutput,
-} from '@features/organization/features/missions/models';
-import { MissionOfflineService } from '@features/organization/features/missions/services';
-import { MissionWorkspaceOptimisticService } from '@features/organization/features/missions/services/mission-workspace-optimistic';
+  CreateInterventionWorkItemInput,
+  InterventionTransitionRequest,
+  InterventionWorkItemOutput,
+} from '@features/organization/features/interventions/models';
+import { InterventionOfflineService } from '@features/organization/features/interventions/services';
+import { InterventionWorkspaceOptimisticService } from '@features/organization/features/interventions/services/intervention-workspace-optimistic';
 import type {
-  MissionDetailsUpdateCommand,
-  MissionWorkItemCreateCommand,
-  MissionWorkItemStatusCommand,
-  MissionWorkspaceState,
+  InterventionDetailsUpdateCommand,
+  InterventionWorkItemCreateCommand,
+  InterventionWorkItemStatusCommand,
+  InterventionWorkspaceState,
 } from './models';
 
 /**
@@ -28,10 +28,10 @@ import type {
  *
  * @since 1.0.0
  *
- * @type {MissionWorkspaceState}
+ * @type {InterventionWorkspaceState}
  */
-const INITIAL_STATE: MissionWorkspaceState = {
-  mission: null,
+const INITIAL_STATE: InterventionWorkspaceState = {
+  intervention: null,
   workItems: [],
   changes: [],
   issues: [],
@@ -49,37 +49,37 @@ const INITIAL_STATE: MissionWorkspaceState = {
  *
  * @since 1.0.0
  *
- * @param {readonly MissionWorkItemOutput[]} items - items value.
+ * @param {readonly InterventionWorkItemOutput[]} items - items value.
  * @param {string} workItemId - work Item Id value.
- * @param {MissionWorkItemOutput} replacement - replacement value.
+ * @param {InterventionWorkItemOutput} replacement - replacement value.
  *
- * @return {readonly MissionWorkItemOutput[]} Result of the replace work item operation.
+ * @return {readonly InterventionWorkItemOutput[]} Result of the replace work item operation.
  */
 function replaceWorkItem(
-  items: readonly MissionWorkItemOutput[],
+  items: readonly InterventionWorkItemOutput[],
   workItemId: string,
-  replacement: MissionWorkItemOutput,
-): readonly MissionWorkItemOutput[] {
+  replacement: InterventionWorkItemOutput,
+): readonly InterventionWorkItemOutput[] {
   const index = items.findIndex((item) => item.id === workItemId);
   if (index < 0) return items;
-  const updated: MissionWorkItemOutput[] = [...items];
+  const updated: InterventionWorkItemOutput[] = [...items];
   updated[index] = replacement;
   return updated;
 }
 
 /**
- * Constant MissionWorkspaceStore
- * @const MissionWorkspaceStore
+ * Constant InterventionWorkspaceStore
+ * @const InterventionWorkspaceStore
  *
  * @description
- * Provides the mission workspace store value.
+ * Provides the intervention workspace store value.
  *
  * @since 1.0.0
  *
  * @type {SignalStore}
  */
-export const MissionWorkspaceStore = signalStore(
-  withState<MissionWorkspaceState>(INITIAL_STATE),
+export const InterventionWorkspaceStore = signalStore(
+  withState<InterventionWorkspaceState>(INITIAL_STATE),
   withComputed((store) => ({
     progress: computed<number>(() => {
       const total = store.workItems().length;
@@ -92,32 +92,32 @@ export const MissionWorkspaceStore = signalStore(
     blockerCount: computed<number>(
       () => store.issues().filter((issue) => issue.severity === 'blocker').length,
     ),
-    nextWorkItem: computed<MissionWorkItemOutput | null>(
+    nextWorkItem: computed<InterventionWorkItemOutput | null>(
       () =>
         store.workItems().find((item) => item.status === 'in_progress') ??
         store.workItems().find((item) => item.status === 'planned') ??
         null,
     ),
-    skippedItems: computed<readonly MissionWorkItemOutput[]>(() =>
+    skippedItems: computed<readonly InterventionWorkItemOutput[]>(() =>
       store.workItems().filter((item) => item.status === 'skipped'),
     ),
-    discoveredItems: computed<readonly MissionWorkItemOutput[]>(() =>
+    discoveredItems: computed<readonly InterventionWorkItemOutput[]>(() =>
       store.workItems().filter((item) => item.source === 'discovered'),
     ),
   })),
   withMethods(
     (
       store,
-      service = inject(MissionService),
-      offline = inject(MissionOfflineService),
+      service = inject(InterventionService),
+      offline = inject(InterventionOfflineService),
       connectivity = inject(ConnectivityService),
-      optimistic = inject(MissionWorkspaceOptimisticService),
+      optimistic = inject(InterventionWorkspaceOptimisticService),
     ) => {
       const load = rxMethod<string>(
         pipe(
           tap(() =>
             patchState(store, {
-              mission: null,
+              intervention: null,
               workItems: [],
               changes: [],
               issues: [],
@@ -125,20 +125,20 @@ export const MissionWorkspaceStore = signalStore(
               error: null,
             }),
           ),
-          switchMap((missionId) =>
+          switchMap((interventionId) =>
             forkJoin({
-              mission: service.get(missionId),
-              workItems: service.listAllWorkItems(missionId),
-              changes: service.listAllChanges(missionId),
-              issues: service.listIssues(missionId),
+              intervention: service.get(interventionId),
+              workItems: service.listAllWorkItems(interventionId),
+              changes: service.listAllChanges(interventionId),
+              issues: service.listIssues(interventionId),
             }).pipe(
               catchError((error: unknown) =>
                 connectivity.isNetworkFailure(error)
-                  ? from(offline.getWorkspace(missionId)).pipe(
+                  ? from(offline.getWorkspace(interventionId)).pipe(
                       map((workspace) => {
-                        if (!workspace) throw new Error('Mission unavailable offline');
+                        if (!workspace) throw new Error('Intervention unavailable offline');
                         return {
-                          mission: workspace.mission,
+                          intervention: workspace.intervention,
                           workItems: workspace.workItems,
                           changes: workspace.changes,
                           issues: { member: workspace.issues },
@@ -148,24 +148,24 @@ export const MissionWorkspaceStore = signalStore(
                   : throwError(() => error),
               ),
               tapResponse({
-                next: ({ mission, workItems, changes, issues }) => {
+                next: ({ intervention, workItems, changes, issues }) => {
                   patchState(store, {
-                    mission,
+                    intervention,
                     workItems,
                     changes,
                     issues: issues.member,
                     loading: false,
                   });
-                  void offline.saveWorkspace(mission, workItems, changes, issues.member);
+                  void offline.saveWorkspace(intervention, workItems, changes, issues.member);
                 },
                 error: () =>
                   patchState(store, {
-                    mission: null,
+                    intervention: null,
                     workItems: [],
                     changes: [],
                     issues: [],
                     loading: false,
-                    error: 'The mission workspace could not be loaded.',
+                    error: 'The intervention workspace could not be loaded.',
                   }),
               }),
             ),
@@ -176,32 +176,32 @@ export const MissionWorkspaceStore = signalStore(
       return {
         load,
 
-        transition: rxMethod<MissionTransitionRequest>(
+        transition: rxMethod<InterventionTransitionRequest>(
           pipe(
             tap(() => patchState(store, { saving: true, error: null })),
-            switchMap(({ missionId, status, reviewNote }) => {
-              const mission = store.mission();
-              if (connectivity.isOffline() && mission) {
+            switchMap(({ interventionId, status, reviewNote }) => {
+              const intervention = store.intervention();
+              if (connectivity.isOffline() && intervention) {
                 return from(
-                  offline.queue(missionId, 'mission.update', {
+                  offline.queue(interventionId, 'intervention.update', {
                     status,
                     reviewNote,
-                    revision: mission.revision,
+                    revision: intervention.revision,
                   }),
                 ).pipe(
                   tap(() => {
-                    const updatedMission = optimistic.transition(mission, {
-                      missionId,
+                    const updatedIntervention = optimistic.transition(intervention, {
+                      interventionId,
                       status,
                       reviewNote,
                     });
                     patchState(store, {
-                      mission: updatedMission,
+                      intervention: updatedIntervention,
                       saving: false,
                     });
                     void offline
                       .saveWorkspace(
-                        updatedMission,
+                        updatedIntervention,
                         store.workItems(),
                         store.changes(),
                         store.issues(),
@@ -215,31 +215,31 @@ export const MissionWorkspaceStore = signalStore(
                 );
               }
 
-              return service.update(missionId, { status, reviewNote }, mission?.revision).pipe(
+              return service.update(interventionId, { status, reviewNote }, intervention?.revision).pipe(
                 tapResponse({
-                  next: (updatedMission) =>
-                    patchState(store, { mission: updatedMission, saving: false }),
+                  next: (updatedIntervention) =>
+                    patchState(store, { intervention: updatedIntervention, saving: false }),
                   error: () =>
                     patchState(store, {
                       saving: false,
-                      error: 'The mission status could not be updated.',
+                      error: 'The intervention status could not be updated.',
                     }),
                 }),
               );
             }),
           ),
         ),
-        updateDetails: rxMethod<MissionDetailsUpdateCommand>(
+        updateDetails: rxMethod<InterventionDetailsUpdateCommand>(
           pipe(
             tap(() => patchState(store, { saving: true, error: null })),
-            switchMap(({ missionId, input }) =>
-              service.update(missionId, input, store.mission()?.revision).pipe(
+            switchMap(({ interventionId, input }) =>
+              service.update(interventionId, input, store.intervention()?.revision).pipe(
                 tapResponse({
-                  next: (mission) => patchState(store, { mission, saving: false }),
+                  next: (intervention) => patchState(store, { intervention, saving: false }),
                   error: () =>
                     patchState(store, {
                       saving: false,
-                      error: 'Mission planning details could not be saved.',
+                      error: 'Intervention planning details could not be saved.',
                     }),
                 }),
               ),
@@ -247,32 +247,32 @@ export const MissionWorkspaceStore = signalStore(
           ),
         ),
 
-        createWorkItem: rxMethod<MissionWorkItemCreateCommand>(
+        createWorkItem: rxMethod<InterventionWorkItemCreateCommand>(
           pipe(
             tap(() => patchState(store, { saving: true, error: null })),
-            switchMap(({ missionId, input }) => {
+            switchMap(({ interventionId, input }) => {
               if (connectivity.isOffline()) {
                 const clientId = input.clientId ?? crypto.randomUUID();
                 const localWorkItem = optimistic.createWorkItem(input, clientId);
-                const mission = store.mission();
+                const intervention = store.intervention();
                 return from(
-                  offline.queue(missionId, 'work-item.create', { ...input, clientId }),
+                  offline.queue(interventionId, 'work-item.create', { ...input, clientId }),
                 ).pipe(
                   tap(() => {
-                    const workItems: readonly MissionWorkItemOutput[] = [
+                    const workItems: readonly InterventionWorkItemOutput[] = [
                       ...store.workItems(),
                       localWorkItem,
                     ];
-                    const updatedMission = optimistic.addWorkItem(mission);
+                    const updatedIntervention = optimistic.addWorkItem(intervention);
                     patchState(store, {
-                      mission: updatedMission,
+                      intervention: updatedIntervention,
                       workItems,
                       saving: false,
                     });
-                    if (updatedMission) {
+                    if (updatedIntervention) {
                       void offline
                         .saveWorkspace(
-                          updatedMission,
+                          updatedIntervention,
                           workItems,
                           store.changes(),
                           store.issues(),
@@ -291,7 +291,7 @@ export const MissionWorkspaceStore = signalStore(
                 tapResponse({
                   next: () => {
                     patchState(store, { saving: false });
-                    load(missionId);
+                    load(interventionId);
                   },
                   error: () =>
                     patchState(store, {
@@ -303,16 +303,16 @@ export const MissionWorkspaceStore = signalStore(
             }),
           ),
         ),
-        setWorkItemStatus: rxMethod<MissionWorkItemStatusCommand>(
+        setWorkItemStatus: rxMethod<InterventionWorkItemStatusCommand>(
           pipe(
             tap(() => patchState(store, { saving: true, error: null })),
-            switchMap(({ missionId, workItemId, status, skipReason }) => {
+            switchMap(({ interventionId, workItemId, status, skipReason }) => {
               const item = store.workItems().find((current) => current.id === workItemId);
               const normalizedSkipReason: string | null =
                 status === 'skipped' ? (skipReason ?? item?.skipReason ?? null) : null;
               if (connectivity.isOffline() && item) {
                 return from(
-                  offline.queue(missionId, 'work-item.update', {
+                  offline.queue(interventionId, 'work-item.update', {
                     workItemId,
                     status,
                     skipReason: normalizedSkipReason,
@@ -320,23 +320,23 @@ export const MissionWorkspaceStore = signalStore(
                   }),
                 ).pipe(
                   tap(() => {
-                    const result = optimistic.updateWorkItem(store.mission(), item, {
+                    const result = optimistic.updateWorkItem(store.intervention(), item, {
                       workItemId,
                       status,
                       skipReason: normalizedSkipReason ?? undefined,
                     });
                     const updatedItem = result.workItem;
                     const workItems = replaceWorkItem(store.workItems(), workItemId, updatedItem);
-                    const updatedMission = result.mission;
+                    const updatedIntervention = result.intervention;
                     patchState(store, {
-                      mission: updatedMission,
+                      intervention: updatedIntervention,
                       workItems,
                       saving: false,
                     });
-                    if (updatedMission) {
+                    if (updatedIntervention) {
                       void offline
                         .saveWorkspace(
-                          updatedMission,
+                          updatedIntervention,
                           workItems,
                           store.changes(),
                           store.issues(),
@@ -361,7 +361,7 @@ export const MissionWorkspaceStore = signalStore(
                   tapResponse({
                     next: () => {
                       patchState(store, { saving: false });
-                      load(missionId);
+                      load(interventionId);
                     },
                     error: () =>
                       patchState(store, {
@@ -375,11 +375,11 @@ export const MissionWorkspaceStore = signalStore(
         ),
 
         /**
-         * Method touchOfflineMission
-         * @method touchOfflineMission
+         * Method touchOfflineIntervention
+         * @method touchOfflineIntervention
          *
          * @description
-         * Mirrors the server-side mission revision increment caused by a
+         * Mirrors the server-side intervention revision increment caused by a
          * queued resource or media mutation.
          *
          * @access public
@@ -387,13 +387,13 @@ export const MissionWorkspaceStore = signalStore(
          *
          * @return {Promise<void>} Resolves after the local workspace is persisted.
          */
-        async touchOfflineMission(): Promise<void> {
-          const mission = store.mission();
-          if (!mission) return;
-          const updatedMission = optimistic.touch(mission);
-          patchState(store, { mission: updatedMission });
+        async touchOfflineIntervention(): Promise<void> {
+          const intervention = store.intervention();
+          if (!intervention) return;
+          const updatedIntervention = optimistic.touch(intervention);
+          patchState(store, { intervention: updatedIntervention });
           await offline.saveWorkspace(
-            updatedMission,
+            updatedIntervention,
             store.workItems(),
             store.changes(),
             store.issues(),
@@ -405,17 +405,17 @@ export const MissionWorkspaceStore = signalStore(
         /**
          * Adds a discovery already persisted as an atomic outbox intention.
          */
-        async recordQueuedDiscovery(input: CreateMissionWorkItemInput): Promise<void> {
-          const mission = store.mission();
+        async recordQueuedDiscovery(input: CreateInterventionWorkItemInput): Promise<void> {
+          const intervention = store.intervention();
           const clientId = input.clientId;
-          if (!mission || !clientId) return;
+          if (!intervention || !clientId) return;
 
           const workItem = optimistic.createWorkItem(input, clientId);
-          const workItems: readonly MissionWorkItemOutput[] = [...store.workItems(), workItem];
-          const updatedMission = optimistic.addWorkItem(optimistic.touch(mission));
-          patchState(store, { mission: updatedMission, workItems });
+          const workItems: readonly InterventionWorkItemOutput[] = [...store.workItems(), workItem];
+          const updatedIntervention = optimistic.addWorkItem(optimistic.touch(intervention));
+          patchState(store, { intervention: updatedIntervention, workItems });
           await offline.saveWorkspace(
-            updatedMission,
+            updatedIntervention,
             workItems,
             store.changes(),
             store.issues(),
@@ -445,9 +445,9 @@ export const MissionWorkspaceStore = signalStore(
 );
 
 /**
- * Type MissionWorkspaceStoreType
+ * Type InterventionWorkspaceStoreType
  *
  * @description
- * Defines the supported mission workspace store type values.
+ * Defines the supported intervention workspace store type values.
  */
-export type MissionWorkspaceStoreType = InstanceType<typeof MissionWorkspaceStore>;
+export type InterventionWorkspaceStoreType = InstanceType<typeof InterventionWorkspaceStore>;

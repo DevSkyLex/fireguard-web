@@ -1,4 +1,4 @@
 /**
- * Mission sync service exports.
+ * Intervention sync service exports.
  */
-export { MissionSyncService } from './mission-sync.service';
+export { InterventionSyncService } from './intervention-sync.service';

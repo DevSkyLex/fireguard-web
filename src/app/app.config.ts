@@ -22,7 +22,7 @@ import { provideAccountFeature } from '@features/account';
 import { authInterceptor, provideAuthFeature, unauthorizedInterceptor } from '@features/auth';
 import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
 import { provideMaintenanceMode } from '@features/maintenance/state';
-import { provideMissionsFeature } from '@features/organization/features/missions';
+import { provideInterventionsFeature } from '@features/organization/features/interventions';
 
 /**
  * Configuration appConfig
@@ -79,8 +79,8 @@ export const appConfig: ApplicationConfig = {
       enabled: environment.production,
       registrationStrategy: 'registerWhenStable:30000',
     }),
-    /** Mission feature bootstrap (PWA update guard + offline safety). */
-    provideMissionsFeature(),
+    /** Intervention feature bootstrap (PWA update guard + offline safety). */
+    provideInterventionsFeature(),
     provideEnv(environment),
     provideMaintenanceMode(),
     provideAuthFeature(),

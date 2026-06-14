@@ -25,11 +25,11 @@ export type FacilityStatus = 'active' | 'archived';
  */
 export interface FacilityOutput extends HydraItem {
   /**
-   * Optional mission IRI when this facility is mission-scoped.
+   * Optional intervention IRI when this facility is intervention-scoped.
    */
-  readonly mission?: string | null;
+  readonly intervention?: string | null;
   /**
-   * Record lifecycle state supporting draft/publish mission workflows.
+   * Record lifecycle state supporting draft/publish intervention workflows.
    */
   readonly recordStatus?: 'draft' | 'published';
   /**

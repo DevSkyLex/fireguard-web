@@ -1,14 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { ConnectivityService } from '@core/services/connectivity';
-import type { MissionOutboxOperation } from '@features/organization/features/missions/models';
-import { MissionFieldExecutionService } from '../../mission-field-execution';
-import { MissionOfflineService } from '../../mission-offline';
-import { MissionSyncService } from '../../mission-sync';
-import { MissionSyncCoordinatorService } from '../../mission-sync-coordinator';
-import { MissionDiscoveryService } from '../mission-discovery.service';
+import type { InterventionOutboxOperation } from '@features/organization/features/interventions/models';
+import { InterventionFieldExecutionService } from '../../intervention-field-execution';
+import { InterventionOfflineService } from '../../intervention-offline';
+import { InterventionSyncService } from '../../intervention-sync';
+import { InterventionSyncCoordinatorService } from '../../intervention-sync-coordinator';
+import { InterventionDiscoveryService } from '../intervention-discovery.service';
 
-describe('MissionDiscoveryService', () => {
-  let service: MissionDiscoveryService;
+describe('InterventionDiscoveryService', () => {
+  let service: InterventionDiscoveryService;
   let offline: {
     queueMany: ReturnType<typeof vi.fn>;
     listOutbox: ReturnType<typeof vi.fn>;
@@ -28,16 +28,16 @@ describe('MissionDiscoveryService', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        MissionDiscoveryService,
+        InterventionDiscoveryService,
         {
-          provide: MissionFieldExecutionService,
+          provide: InterventionFieldExecutionService,
           useValue: {
             prepareDiscoveryResource: vi.fn().mockReturnValue({
               type: 'equipment.create',
               payload: {
                 clientId: 'equipment-client-id',
                 organization: '/api/organizations/org-1',
-                mission: '/api/missions/mission-1',
+                intervention: '/api/interventions/intervention-1',
                 type: 'fire_extinguisher',
               },
               targetResource: '/api/equipment/equipment-client-id',
@@ -45,17 +45,17 @@ describe('MissionDiscoveryService', () => {
           },
         },
         { provide: ConnectivityService, useValue: connectivity },
-        { provide: MissionOfflineService, useValue: offline },
-        { provide: MissionSyncService, useValue: sync },
-        { provide: MissionSyncCoordinatorService, useValue: syncCoordinator },
+        { provide: InterventionOfflineService, useValue: offline },
+        { provide: InterventionSyncService, useValue: sync },
+        { provide: InterventionSyncCoordinatorService, useValue: syncCoordinator },
       ],
     });
 
-    service = TestBed.inject(MissionDiscoveryService);
+    service = TestBed.inject(InterventionDiscoveryService);
   });
 
   it('atomically persists the resource and discovered work item before replaying them', async () => {
-    const result = await service.create('org-1', 'mission-1', {
+    const result = await service.create('org-1', 'intervention-1', {
       action: 'inventory',
       target: 'fire_extinguisher',
       result: 'pass',
@@ -63,7 +63,7 @@ describe('MissionDiscoveryService', () => {
 
     expect(offline.queueMany).toHaveBeenCalledOnce();
     expect(offline.queueMany).toHaveBeenCalledWith(
-      'mission-1',
+      'intervention-1',
       expect.arrayContaining([
         expect.objectContaining({ type: 'equipment.create' }),
         expect.objectContaining({
@@ -75,7 +75,7 @@ describe('MissionDiscoveryService', () => {
         }),
       ]),
     );
-    expect(sync.replayOutbox).toHaveBeenCalledWith('org-1', 'mission-1');
+    expect(sync.replayOutbox).toHaveBeenCalledWith('org-1', 'intervention-1');
     expect(syncCoordinator.refreshStatus).toHaveBeenCalledOnce();
     expect(result.queued).toBe(false);
   });
@@ -83,7 +83,7 @@ describe('MissionDiscoveryService', () => {
   it('keeps the stable durable intention queued when replay fails', async () => {
     sync.replayOutbox.mockRejectedValue(new Error('Network failure'));
 
-    const result = await service.create('org-1', 'mission-1', {
+    const result = await service.create('org-1', 'intervention-1', {
       action: 'inventory',
       target: 'fire_extinguisher',
       result: 'pass',
@@ -94,9 +94,9 @@ describe('MissionDiscoveryService', () => {
   });
 
   it('reports a discovery as queued while one of its operations remains pending', async () => {
-    offline.listOutbox.mockResolvedValue([{ id: 'work-item-operation' } as MissionOutboxOperation]);
+    offline.listOutbox.mockResolvedValue([{ id: 'work-item-operation' } as InterventionOutboxOperation]);
 
-    const result = await service.create('org-1', 'mission-1', {
+    const result = await service.create('org-1', 'intervention-1', {
       action: 'inventory',
       target: 'fire_extinguisher',
       result: 'pass',

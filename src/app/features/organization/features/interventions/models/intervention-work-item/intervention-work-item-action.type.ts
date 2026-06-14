@@ -1,4 +1,4 @@
 /**
- * Supported mission work item actions.
+ * Supported intervention work item actions.
  */
-export type MissionWorkItemAction = 'site_setup' | 'inventory' | 'inspection';
+export type InterventionWorkItemAction = 'site_setup' | 'inventory' | 'inspection';

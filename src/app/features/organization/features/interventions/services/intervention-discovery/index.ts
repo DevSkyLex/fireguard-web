@@ -1,1 +1,1 @@
-export { MissionDiscoveryService } from './mission-discovery.service';
+export { InterventionDiscoveryService } from './intervention-discovery.service';

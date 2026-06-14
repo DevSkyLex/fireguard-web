@@ -2,72 +2,72 @@ import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/models/api';
-import { MissionService } from '@features/organization/features/missions/data-access';
-import type { MissionOutput } from '@features/organization/features/missions/models';
-import { MissionStore } from '../mission.store';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import { InterventionStore } from '../intervention.store';
 
-const mission = { id: 'mission-1', name: 'Site visit' } as MissionOutput;
-const collection: HydraCollection<MissionOutput> = {
-  '@id': '/api/missions',
+const intervention = { id: 'intervention-1', name: 'Site visit' } as InterventionOutput;
+const collection: HydraCollection<InterventionOutput> = {
+  '@id': '/api/interventions',
   '@type': 'Collection',
   totalItems: 1,
-  member: [mission],
+  member: [intervention],
 };
 
-describe('MissionStore', () => {
-  let store: InstanceType<typeof MissionStore>;
-  let mockMissionService: {
+describe('InterventionStore', () => {
+  let store: InstanceType<typeof InterventionStore>;
+  let mockInterventionService: {
     list: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
   };
   let dispatch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    mockMissionService = {
+    mockInterventionService = {
       list: vi.fn().mockReturnValue(of(collection)),
-      create: vi.fn().mockReturnValue(of(mission)),
+      create: vi.fn().mockReturnValue(of(intervention)),
     };
     dispatch = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
-        MissionStore,
+        InterventionStore,
         { provide: Dispatcher, useValue: { dispatch } },
-        { provide: MissionService, useValue: mockMissionService },
+        { provide: InterventionService, useValue: mockInterventionService },
       ],
     });
 
-    store = TestBed.inject(MissionStore);
+    store = TestBed.inject(InterventionStore);
   });
 
-  it('should load missions for an organization', () => {
+  it('should load interventions for an organization', () => {
     store.load({ organizationId: 'org-1' });
 
-    expect(mockMissionService.list).toHaveBeenCalledWith('org-1');
-    expect(store.missionList()).toEqual([mission]);
-    expect(store.totalMissions()).toBe(1);
-    expect(store.isLoadingMissions()).toBe(false);
+    expect(mockInterventionService.list).toHaveBeenCalledWith('org-1');
+    expect(store.interventionList()).toEqual([intervention]);
+    expect(store.totalInterventions()).toBe(1);
+    expect(store.isLoadingInterventions()).toBe(false);
     expect(store.isEmpty()).toBe(false);
   });
 
-  it('should create a mission and expose it for navigation handoff', () => {
+  it('should create a intervention and expose it for navigation handoff', () => {
     store.create({ organizationId: 'org-1', name: 'Site visit' });
 
-    expect(mockMissionService.create).toHaveBeenCalledWith('org-1', 'Site visit');
-    expect(store.createdMission()).toEqual(mission);
-    expect(store.missionList()).toEqual([mission]);
-    expect(store.totalMissions()).toBe(1);
+    expect(mockInterventionService.create).toHaveBeenCalledWith('org-1', 'Site visit');
+    expect(store.createdIntervention()).toEqual(intervention);
+    expect(store.interventionList()).toEqual([intervention]);
+    expect(store.totalInterventions()).toBe(1);
   });
 
-  it('should clear the created mission handoff', () => {
+  it('should clear the created intervention handoff', () => {
     store.create({ organizationId: 'org-1', name: 'Site visit' });
-    store.clearCreatedMission();
+    store.clearCreatedIntervention();
 
-    expect(store.createdMission()).toBeNull();
+    expect(store.createdIntervention()).toBeNull();
   });
 
   it('should dispatch a failure event when loading fails', () => {
-    mockMissionService.list.mockReturnValue(throwError(() => new Error('network')));
+    mockInterventionService.list.mockReturnValue(throwError(() => new Error('network')));
 
     store.load({ organizationId: 'org-1' });
 
@@ -76,12 +76,12 @@ describe('MissionStore', () => {
   });
 
   it('should dispatch a failure event when creation fails', () => {
-    mockMissionService.create.mockReturnValue(throwError(() => new Error('network')));
+    mockInterventionService.create.mockReturnValue(throwError(() => new Error('network')));
 
     store.create({ organizationId: 'org-1', name: 'Site visit' });
 
     expect(store.createCallState().status).toBe('error');
-    expect(store.createdMission()).toBeNull();
+    expect(store.createdIntervention()).toBeNull();
     expect(dispatch).toHaveBeenCalledTimes(1);
   });
 });

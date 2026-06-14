@@ -1,14 +1,14 @@
 import type { HydraItem } from '@core/models/api';
-import type { MissionChangeStatus } from './mission-change-status.type';
+import type { InterventionChangeStatus } from './intervention-change-status.type';
 
 /**
- * Interface MissionChangeOutput
- * @interface MissionChangeOutput
+ * Interface InterventionChangeOutput
+ * @interface InterventionChangeOutput
  *
  * @description
- * Defines the mission change output contract.
+ * Defines the intervention change output contract.
  */
-export interface MissionChangeOutput extends HydraItem {
+export interface InterventionChangeOutput extends HydraItem {
   /**
    * Property id
    * @readonly
@@ -21,15 +21,15 @@ export interface MissionChangeOutput extends HydraItem {
   readonly id: string;
 
   /**
-   * Property mission
+   * Property intervention
    * @readonly
    *
    * @description
-   * Provides the mission value.
+   * Provides the intervention value.
    *
    * @type {string}
    */
-  readonly mission: string;
+  readonly intervention: string;
 
   /**
    * Property workItem
@@ -71,9 +71,9 @@ export interface MissionChangeOutput extends HydraItem {
    * @description
    * Provides the status value.
    *
-   * @type {MissionChangeStatus}
+   * @type {InterventionChangeStatus}
    */
-  readonly status: MissionChangeStatus;
+  readonly status: InterventionChangeStatus;
 
   /**
    * Property revision

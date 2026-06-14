@@ -1,7 +1,7 @@
 /**
  * Evidence photo selected for an equipment item.
  */
-export interface MissionPhotoAttachment {
+export interface InterventionPhotoAttachment {
   readonly equipmentId: string;
   readonly file: File;
 }

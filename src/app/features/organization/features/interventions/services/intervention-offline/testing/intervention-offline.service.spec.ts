@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import type { MissionOutput } from '@features/organization/features/missions/models';
-import { MissionDatabaseService } from '../mission-database.service';
-import { MissionOfflineService } from '../mission-offline.service';
-import { MissionOutboxStore } from '../mission-outbox.store';
-import { MissionWorkspaceRepository } from '../mission-workspace.repository';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import { InterventionDatabaseService } from '../intervention-database.service';
+import { InterventionOfflineService } from '../intervention-offline.service';
+import { InterventionOutboxStore } from '../intervention-outbox.store';
+import { InterventionWorkspaceRepository } from '../intervention-workspace.repository';
 
-describe('MissionOfflineService', () => {
+describe('InterventionOfflineService', () => {
   it('does not replace a workspace snapshot while local operations are pending', async () => {
     const outbox = {
       hasUnsyncedChanges: () => true,
@@ -16,21 +16,21 @@ describe('MissionOfflineService', () => {
     };
     TestBed.configureTestingModule({
       providers: [
-        MissionOfflineService,
-        { provide: MissionDatabaseService, useValue: {} },
-        { provide: MissionOutboxStore, useValue: outbox },
-        { provide: MissionWorkspaceRepository, useValue: workspace },
+        InterventionOfflineService,
+        { provide: InterventionDatabaseService, useValue: {} },
+        { provide: InterventionOutboxStore, useValue: outbox },
+        { provide: InterventionWorkspaceRepository, useValue: workspace },
       ],
     });
 
-    await TestBed.inject(MissionOfflineService).saveWorkspace(
-      { id: 'mission-1' } as MissionOutput,
+    await TestBed.inject(InterventionOfflineService).saveWorkspace(
+      { id: 'intervention-1' } as InterventionOutput,
       [],
       [],
       [],
     );
 
-    expect(outbox.listOutbox).toHaveBeenCalledWith('mission-1');
+    expect(outbox.listOutbox).toHaveBeenCalledWith('intervention-1');
     expect(workspace.saveWorkspace).not.toHaveBeenCalled();
   });
 
@@ -44,15 +44,15 @@ describe('MissionOfflineService', () => {
     };
     TestBed.configureTestingModule({
       providers: [
-        MissionOfflineService,
-        { provide: MissionDatabaseService, useValue: {} },
-        { provide: MissionOutboxStore, useValue: outbox },
-        { provide: MissionWorkspaceRepository, useValue: workspace },
+        InterventionOfflineService,
+        { provide: InterventionDatabaseService, useValue: {} },
+        { provide: InterventionOutboxStore, useValue: outbox },
+        { provide: InterventionWorkspaceRepository, useValue: workspace },
       ],
     });
 
-    await TestBed.inject(MissionOfflineService).saveWorkspace(
-      { id: 'mission-1' } as MissionOutput,
+    await TestBed.inject(InterventionOfflineService).saveWorkspace(
+      { id: 'intervention-1' } as InterventionOutput,
       [],
       [],
       [],

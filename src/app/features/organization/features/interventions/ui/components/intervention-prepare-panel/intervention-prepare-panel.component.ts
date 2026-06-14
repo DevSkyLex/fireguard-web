@@ -17,27 +17,27 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import type {
-  CreateMissionWorkItemInput,
-  MissionOutput,
-  MissionPlanningDetails,
-  MissionPriority,
-  MissionWorkItemAction,
-  MissionWorkItemOutput,
+  CreateInterventionWorkItemInput,
+  InterventionOutput,
+  InterventionPlanningDetails,
+  InterventionPriority,
+  InterventionWorkItemAction,
+  InterventionWorkItemOutput,
   SelectOption,
-} from '@features/organization/features/missions/models';
+} from '@features/organization/features/interventions/models';
 
 /**
- * Component MissionPreparePanel
- * @class MissionPreparePanel
+ * Component InterventionPreparePanel
+ * @class InterventionPreparePanel
  *
  * @description
- * Renders the mission prepare workflow panel.
+ * Renders the intervention prepare workflow panel.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-mission-prepare-panel',
+  selector: 'app-intervention-prepare-panel',
   imports: [
     ButtonModule,
     DrawerModule,
@@ -47,23 +47,23 @@ import type {
     SelectModule,
     TagModule,
   ],
-  templateUrl: './mission-prepare-panel.component.html',
+  templateUrl: './intervention-prepare-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MissionPreparePanel {
+export class InterventionPreparePanel {
   /**
-   * Property mission
+   * Property intervention
    * @readonly
    *
    * @description
-   * Provides the mission value.
+   * Provides the intervention value.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<MissionOutput>}
+   * @type {InputSignal<InterventionOutput>}
    */
-  public readonly mission: InputSignal<MissionOutput> = input.required<MissionOutput>();
+  public readonly intervention: InputSignal<InterventionOutput> = input.required<InterventionOutput>();
 
   /**
    * Property workItems
@@ -75,10 +75,10 @@ export class MissionPreparePanel {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<readonly MissionWorkItemOutput[]>}
+   * @type {InputSignal<readonly InterventionWorkItemOutput[]>}
    */
-  public readonly workItems: InputSignal<readonly MissionWorkItemOutput[]> =
-    input.required<readonly MissionWorkItemOutput[]>();
+  public readonly workItems: InputSignal<readonly InterventionWorkItemOutput[]> =
+    input.required<readonly InterventionWorkItemOutput[]>();
 
   /**
    * Property saving
@@ -200,18 +200,18 @@ export class MissionPreparePanel {
     input.required<readonly SelectOption[]>();
 
   /**
-   * Property planMission
+   * Property planIntervention
    * @readonly
    *
    * @description
-   * Provides the plan mission value.
+   * Provides the plan intervention value.
    *
    * @access public
    * @since 1.0.0
    *
    * @type {OutputEmitterRef<void>}
    */
-  public readonly planMission: OutputEmitterRef<void> = output<void>();
+  public readonly planIntervention: OutputEmitterRef<void> = output<void>();
 
   /**
    * Property saveDetails
@@ -225,8 +225,8 @@ export class MissionPreparePanel {
    *
    * @type {typeof saveDetails}
    */
-  public readonly saveDetails: OutputEmitterRef<MissionPlanningDetails> =
-    output<MissionPlanningDetails>();
+  public readonly saveDetails: OutputEmitterRef<InterventionPlanningDetails> =
+    output<InterventionPlanningDetails>();
 
   /**
    * Property createWorkItem
@@ -238,10 +238,10 @@ export class MissionPreparePanel {
    * @access public
    * @since 1.0.0
    *
-   * @type {OutputEmitterRef<CreateMissionWorkItemInput>}
+   * @type {OutputEmitterRef<CreateInterventionWorkItemInput>}
    */
-  public readonly createWorkItem: OutputEmitterRef<CreateMissionWorkItemInput> =
-    output<CreateMissionWorkItemInput>();
+  public readonly createWorkItem: OutputEmitterRef<CreateInterventionWorkItemInput> =
+    output<CreateInterventionWorkItemInput>();
 
   /**
    * Property workItemDrawerVisible
@@ -269,7 +269,7 @@ export class MissionPreparePanel {
    *
    * @type {WritableSignal<string>}
    */
-  protected readonly site: WritableSignal<string> = linkedSignal(() => this.mission().site ?? '');
+  protected readonly site: WritableSignal<string> = linkedSignal(() => this.intervention().site ?? '');
 
   /**
    * Property responsible
@@ -284,7 +284,7 @@ export class MissionPreparePanel {
    * @type {WritableSignal<string>}
    */
   protected readonly responsible: WritableSignal<string> = linkedSignal(
-    () => this.mission().responsible ?? '',
+    () => this.intervention().responsible ?? '',
   );
 
   /**
@@ -301,7 +301,7 @@ export class MissionPreparePanel {
    */
   protected readonly participants: WritableSignal<readonly string[]> = linkedSignal<
     readonly string[]
-  >(() => this.mission().participants);
+  >(() => this.intervention().participants);
 
   /**
    * Property priority
@@ -313,10 +313,10 @@ export class MissionPreparePanel {
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<MissionPriority>}
+   * @type {WritableSignal<InterventionPriority>}
    */
-  protected readonly priority: WritableSignal<MissionPriority> = linkedSignal<MissionPriority>(
-    () => this.mission().priority,
+  protected readonly priority: WritableSignal<InterventionPriority> = linkedSignal<InterventionPriority>(
+    () => this.intervention().priority,
   );
 
   /**
@@ -332,7 +332,7 @@ export class MissionPreparePanel {
    * @type {WritableSignal<string>}
    */
   protected readonly plannedStartAt: WritableSignal<string> = linkedSignal(
-    () => this.mission().plannedStartAt?.slice(0, 16) ?? '',
+    () => this.intervention().plannedStartAt?.slice(0, 16) ?? '',
   );
 
   /**
@@ -348,7 +348,7 @@ export class MissionPreparePanel {
    * @type {WritableSignal<string>}
    */
   protected readonly dueAt: WritableSignal<string> = linkedSignal(
-    () => this.mission().dueAt?.slice(0, 16) ?? '',
+    () => this.intervention().dueAt?.slice(0, 16) ?? '',
   );
 
   /**
@@ -361,10 +361,10 @@ export class MissionPreparePanel {
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<MissionWorkItemAction>}
+   * @type {WritableSignal<InterventionWorkItemAction>}
    */
-  protected readonly workItemAction: WritableSignal<MissionWorkItemAction> =
-    signal<MissionWorkItemAction>('inventory');
+  protected readonly workItemAction: WritableSignal<InterventionWorkItemAction> =
+    signal<InterventionWorkItemAction>('inventory');
 
   /**
    * Property workItemTarget
@@ -401,7 +401,7 @@ export class MissionPreparePanel {
    * @description
    * Provides the value value.
    *
-   * @type {MissionPriority}
+   * @type {InterventionPriority}
    */
 
   /**
@@ -424,9 +424,9 @@ export class MissionPreparePanel {
    * @access protected
    * @since 1.0.0
    *
-   * @type {readonly { label: string; value: MissionPriority }[]}
+   * @type {readonly { label: string; value: InterventionPriority }[]}
    */
-  protected readonly priorityOptions: readonly { label: string; value: MissionPriority }[] = [
+  protected readonly priorityOptions: readonly { label: string; value: InterventionPriority }[] = [
     { label: 'Low', value: 'low' },
     { label: 'Normal', value: 'normal' },
     { label: 'High', value: 'high' },
@@ -472,7 +472,7 @@ export class MissionPreparePanel {
    */
   protected addWorkItem(): void {
     this.createWorkItem.emit({
-      mission: `/api/missions/${this.mission().id}`,
+      intervention: `/api/interventions/${this.intervention().id}`,
       action: this.workItemAction(),
       target: this.workItemTarget().trim() || null,
       assignee: this.workItemAssignee() || null,

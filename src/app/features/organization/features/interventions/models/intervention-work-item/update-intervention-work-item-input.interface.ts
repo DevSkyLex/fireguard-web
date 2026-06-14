@@ -1,11 +1,11 @@
-import type { MissionWorkItemStatus } from './mission-work-item-status.type';
+import type { InterventionWorkItemStatus } from './intervention-work-item-status.type';
 
 /**
- * Input used to update a mission work item.
+ * Input used to update a intervention work item.
  */
-export interface UpdateMissionWorkItemInput {
+export interface UpdateInterventionWorkItemInput {
   readonly resultResource?: string | null;
   readonly assignee?: string | null;
-  readonly status?: MissionWorkItemStatus;
+  readonly status?: InterventionWorkItemStatus;
   readonly skipReason?: string | null;
 }

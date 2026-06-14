@@ -19,26 +19,26 @@ import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import type { InspectionResult } from '@features/organization/features/inspections/models';
 import type {
-  MissionDiscoveryRequest,
-  MissionOutput,
-  MissionPhotoAttachment,
-  MissionWorkItemAction,
-  MissionWorkItemOutput,
-  MissionWorkItemStatusChange,
-} from '@features/organization/features/missions/models';
+  InterventionDiscoveryRequest,
+  InterventionOutput,
+  InterventionPhotoAttachment,
+  InterventionWorkItemAction,
+  InterventionWorkItemOutput,
+  InterventionWorkItemStatusChange,
+} from '@features/organization/features/interventions/models';
 
 /**
- * Component MissionExecutePanel
- * @class MissionExecutePanel
+ * Component InterventionExecutePanel
+ * @class InterventionExecutePanel
  *
  * @description
- * Renders the mission execute workflow panel.
+ * Renders the intervention execute workflow panel.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-mission-execute-panel',
+  selector: 'app-intervention-execute-panel',
   imports: [
     ButtonModule,
     DrawerModule,
@@ -48,23 +48,23 @@ import type {
     SelectModule,
     TagModule,
   ],
-  templateUrl: './mission-execute-panel.component.html',
+  templateUrl: './intervention-execute-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MissionExecutePanel {
+export class InterventionExecutePanel {
   /**
-   * Property mission
+   * Property intervention
    * @readonly
    *
    * @description
-   * Provides the mission value.
+   * Provides the intervention value.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<MissionOutput>}
+   * @type {InputSignal<InterventionOutput>}
    */
-  public readonly mission: InputSignal<MissionOutput> = input.required<MissionOutput>();
+  public readonly intervention: InputSignal<InterventionOutput> = input.required<InterventionOutput>();
 
   /**
    * Property workItems
@@ -76,10 +76,10 @@ export class MissionExecutePanel {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<readonly MissionWorkItemOutput[]>}
+   * @type {InputSignal<readonly InterventionWorkItemOutput[]>}
    */
-  public readonly workItems: InputSignal<readonly MissionWorkItemOutput[]> =
-    input.required<readonly MissionWorkItemOutput[]>();
+  public readonly workItems: InputSignal<readonly InterventionWorkItemOutput[]> =
+    input.required<readonly InterventionWorkItemOutput[]>();
 
   /**
    * Property nextWorkItem
@@ -91,10 +91,10 @@ export class MissionExecutePanel {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<MissionWorkItemOutput | null>}
+   * @type {InputSignal<InterventionWorkItemOutput | null>}
    */
-  public readonly nextWorkItem: InputSignal<MissionWorkItemOutput | null> =
-    input<MissionWorkItemOutput | null>(null);
+  public readonly nextWorkItem: InputSignal<InterventionWorkItemOutput | null> =
+    input<InterventionWorkItemOutput | null>(null);
 
   /**
    * Property progress
@@ -178,8 +178,8 @@ export class MissionExecutePanel {
    *
    * @type {typeof updateWorkItem}
    */
-  public readonly updateWorkItem: OutputEmitterRef<MissionWorkItemStatusChange> =
-    output<MissionWorkItemStatusChange>();
+  public readonly updateWorkItem: OutputEmitterRef<InterventionWorkItemStatusChange> =
+    output<InterventionWorkItemStatusChange>();
 
   /**
    * Property createDiscovery
@@ -193,8 +193,8 @@ export class MissionExecutePanel {
    *
    * @type {typeof createDiscovery}
    */
-  public readonly createDiscovery: OutputEmitterRef<MissionDiscoveryRequest> =
-    output<MissionDiscoveryRequest>();
+  public readonly createDiscovery: OutputEmitterRef<InterventionDiscoveryRequest> =
+    output<InterventionDiscoveryRequest>();
 
   /**
    * Property scanPhoto
@@ -242,22 +242,22 @@ export class MissionExecutePanel {
    *
    * @type {OutputEmitterRef<{ equipmentId: string; file: File }>}
    */
-  public readonly attachPhoto: OutputEmitterRef<MissionPhotoAttachment> =
-    output<MissionPhotoAttachment>();
+  public readonly attachPhoto: OutputEmitterRef<InterventionPhotoAttachment> =
+    output<InterventionPhotoAttachment>();
 
   /**
-   * Property submitMission
+   * Property submitIntervention
    * @readonly
    *
    * @description
-   * Provides the submit mission value.
+   * Provides the submit intervention value.
    *
    * @access public
    * @since 1.0.0
    *
    * @type {OutputEmitterRef<void>}
    */
-  public readonly submitMission: OutputEmitterRef<void> = output<void>();
+  public readonly submitIntervention: OutputEmitterRef<void> = output<void>();
 
   /**
    * Property scrollerItems
@@ -269,9 +269,9 @@ export class MissionExecutePanel {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<readonly MissionWorkItemOutput[]>}
+   * @type {Signal<readonly InterventionWorkItemOutput[]>}
    */
-  protected readonly scrollerItems: Signal<MissionWorkItemOutput[]> = computed(() => [
+  protected readonly scrollerItems: Signal<InterventionWorkItemOutput[]> = computed(() => [
     ...this.workItems(),
   ]);
 
@@ -313,10 +313,10 @@ export class MissionExecutePanel {
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<MissionWorkItemOutput | null>}
+   * @type {WritableSignal<InterventionWorkItemOutput | null>}
    */
-  protected readonly selectedWorkItem: WritableSignal<MissionWorkItemOutput | null> =
-    signal<MissionWorkItemOutput | null>(null);
+  protected readonly selectedWorkItem: WritableSignal<InterventionWorkItemOutput | null> =
+    signal<InterventionWorkItemOutput | null>(null);
 
   /**
    * Property skipReason
@@ -342,10 +342,10 @@ export class MissionExecutePanel {
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<MissionWorkItemAction>}
+   * @type {WritableSignal<InterventionWorkItemAction>}
    */
-  protected readonly discoveryAction: WritableSignal<MissionWorkItemAction> =
-    signal<MissionWorkItemAction>('inventory');
+  protected readonly discoveryAction: WritableSignal<InterventionWorkItemAction> =
+    signal<InterventionWorkItemAction>('inventory');
 
   /**
    * Property discoveryTarget
@@ -397,7 +397,7 @@ export class MissionExecutePanel {
    * @description
    * Provides the value value.
    *
-   * @type {MissionWorkItemAction}
+   * @type {InterventionWorkItemAction}
    */
 
   /**
@@ -420,9 +420,9 @@ export class MissionExecutePanel {
    * @access protected
    * @since 1.0.0
    *
-   * @type {readonly { label: string; value: MissionWorkItemAction }[]}
+   * @type {readonly { label: string; value: InterventionWorkItemAction }[]}
    */
-  protected readonly actionOptions: readonly { label: string; value: MissionWorkItemAction }[] = [
+  protected readonly actionOptions: readonly { label: string; value: InterventionWorkItemAction }[] = [
     { label: 'Site setup', value: 'site_setup' },
     { label: 'Inventory', value: 'inventory' },
     { label: 'Inspection', value: 'inspection' },
@@ -454,11 +454,11 @@ export class MissionExecutePanel {
    * @access protected
    * @since 1.0.0
    *
-   * @param {MissionWorkItemOutput} item - item value.
+   * @param {InterventionWorkItemOutput} item - item value.
    *
    * @return {void} Result of the open skip operation.
    */
-  protected openSkip(item: MissionWorkItemOutput): void {
+  protected openSkip(item: InterventionWorkItemOutput): void {
     this.selectedWorkItem.set(item);
     this.skipReason.set('');
     this.skipDrawerVisible.set(true);
@@ -539,12 +539,12 @@ export class MissionExecutePanel {
    * @access protected
    * @since 1.0.0
    *
-   * @param {MissionWorkItemOutput} item - item value.
+   * @param {InterventionWorkItemOutput} item - item value.
    * @param {HTMLInputElement} fileInput - file Input value.
    *
    * @return {void} Result of the open photo capture operation.
    */
-  protected openPhotoCapture(item: MissionWorkItemOutput, fileInput: HTMLInputElement): void {
+  protected openPhotoCapture(item: InterventionWorkItemOutput, fileInput: HTMLInputElement): void {
     const equipmentId = this.equipmentId(item.target);
     if (!equipmentId) return;
     this.photoEquipmentId.set(equipmentId);

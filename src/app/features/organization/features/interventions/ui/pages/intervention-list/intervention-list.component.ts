@@ -1,33 +1,33 @@
 import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import type { MissionOutput } from '@features/organization/features/missions/models';
-import { MissionStore } from '@features/organization/features/missions/state';
-import { MissionTable } from '@features/organization/features/missions/ui/tables';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import { InterventionStore } from '@features/organization/features/interventions/state';
+import { InterventionTable } from '@features/organization/features/interventions/ui/tables';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
- * Component MissionListPage
- * @class MissionListPage
+ * Component InterventionListPage
+ * @class InterventionListPage
  *
  * @description
- * Route entry page for mission listing and mission creation.
+ * Route entry page for intervention listing and intervention creation.
  *
  * The page reacts to the active organization context, loads available
- * missions, and navigates into the mission workflow when creation succeeds.
+ * interventions, and navigates into the intervention workflow when creation succeeds.
  *
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-mission-list-page',
-  imports: [ButtonModule, MissionTable],
-  providers: [MissionStore],
-  templateUrl: './mission-list.component.html',
+  selector: 'app-intervention-list-page',
+  imports: [ButtonModule, InterventionTable],
+  providers: [InterventionStore],
+  templateUrl: './intervention-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MissionListPage {
+export class InterventionListPage {
   //#region Properties
   /**
    * Property organization
@@ -48,7 +48,7 @@ export class MissionListPage {
    * @readonly
    *
    * @description
-   * Angular Router used to navigate to mission detail pages.
+   * Angular Router used to navigate to intervention detail pages.
    *
    * @access private
    * @since 1.0.0
@@ -62,12 +62,12 @@ export class MissionListPage {
    * @readonly
    *
    * @description
-   * Component-scoped mission store powering the list and creation flows.
+   * Component-scoped intervention store powering the list and creation flows.
    *
    * @access protected
    * @since 1.0.0
    */
-  protected readonly store = inject(MissionStore);
+  protected readonly store = inject(InterventionStore);
   //#endregion
 
   //#region Constructor
@@ -90,15 +90,15 @@ export class MissionListPage {
     });
 
     effect(() => {
-      const mission = this.store.createdMission();
+      const intervention = this.store.createdIntervention();
       const organizationId = this.organizationId();
 
-      if (!mission || !organizationId) {
+      if (!intervention || !organizationId) {
         return;
       }
 
-      untracked(() => this.store.clearCreatedMission());
-      void this.router.navigate(['/organizations', organizationId, 'missions', mission.id]);
+      untracked(() => this.store.clearCreatedIntervention());
+      void this.router.navigate(['/organizations', organizationId, 'interventions', intervention.id]);
     });
   }
   //#endregion
@@ -109,12 +109,12 @@ export class MissionListPage {
    * @method onCreate
    *
    * @description
-   * Creates a mission with the given name under the active organization.
+   * Creates a intervention with the given name under the active organization.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @param {string} name - Mission name submitted by the table form.
+   * @param {string} name - Intervention name submitted by the table form.
    *
    * @return {void}
    */
@@ -126,21 +126,21 @@ export class MissionListPage {
   }
 
   /**
-   * Method createGuidedMission
-   * @method createGuidedMission
+   * Method createGuidedIntervention
+   * @method createGuidedIntervention
    *
    * @description
-   * Executes the create guided mission operation.
+   * Executes the create guided intervention operation.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @return {void} Result of the create guided mission operation.
+   * @return {void} Result of the create guided intervention operation.
    */
-  protected createGuidedMission(): void {
+  protected createGuidedIntervention(): void {
     const organizationId = this.organizationId();
     if (organizationId) {
-      void this.router.navigate(['/organizations', organizationId, 'missions', 'new']);
+      void this.router.navigate(['/organizations', organizationId, 'interventions', 'new']);
     }
   }
 
@@ -149,7 +149,7 @@ export class MissionListPage {
    * @method onRefresh
    *
    * @description
-   * Reloads the mission list for the active organization.
+   * Reloads the intervention list for the active organization.
    *
    * @access protected
    * @since 1.0.0
@@ -168,19 +168,19 @@ export class MissionListPage {
    * @method onView
    *
    * @description
-   * Navigates to the detail page of the selected mission.
+   * Navigates to the detail page of the selected intervention.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @param {MissionOutput} mission - Mission selected in the table.
+   * @param {InterventionOutput} intervention - Intervention selected in the table.
    *
    * @return {void}
    */
-  protected onView(mission: MissionOutput): void {
+  protected onView(intervention: InterventionOutput): void {
     const organizationId = this.organizationId();
     if (organizationId) {
-      void this.router.navigate(['/organizations', organizationId, 'missions', mission.id]);
+      void this.router.navigate(['/organizations', organizationId, 'interventions', intervention.id]);
     }
   }
 

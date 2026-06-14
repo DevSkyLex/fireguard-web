@@ -4,28 +4,28 @@ import { Events } from '@ngrx/signals/events';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
 import { authStoreEvents } from '@features/auth/state';
 import type {
-  MissionOutboxOperation,
-  MissionOutboxOperationFor,
-  MissionOutboxPayloadMap,
-  MissionOutboxQueueEntry,
-  MissionOutboxType,
-} from '@features/organization/features/missions/models';
-import { MissionDatabaseService } from './mission-database.service';
+  InterventionOutboxOperation,
+  InterventionOutboxOperationFor,
+  InterventionOutboxPayloadMap,
+  InterventionOutboxQueueEntry,
+  InterventionOutboxType,
+} from '@features/organization/features/interventions/models';
+import { InterventionDatabaseService } from './intervention-database.service';
 
 /**
- * Service MissionOutboxStore
- * @class MissionOutboxStore
+ * Service InterventionOutboxStore
+ * @class InterventionOutboxStore
  *
  * @description
- * Owns the mission offline outbox: queues create/update operations for replay,
+ * Owns the intervention offline outbox: queues create/update operations for replay,
  * exposes pending-status for UI and update flows, and lets the sync service
- * dequeue or mark operations. Persists onto {@link MissionDatabaseService}.
+ * dequeue or mark operations. Persists onto {@link InterventionDatabaseService}.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
-export class MissionOutboxStore {
+export class InterventionOutboxStore {
   //#region Properties
   /**
    * Property database
@@ -37,9 +37,9 @@ export class MissionOutboxStore {
    * @access private
    * @since 1.0.0
    *
-   * @type {MissionDatabaseService}
+   * @type {InterventionDatabaseService}
    */
-  private readonly database: MissionDatabaseService = inject(MissionDatabaseService);
+  private readonly database: InterventionDatabaseService = inject(InterventionDatabaseService);
 
   /**
    * Property events
@@ -157,25 +157,25 @@ export class MissionOutboxStore {
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - Mission identifier.
-   * @param {MissionOutboxType} type - Operation type.
-   * @param {MissionOutboxPayloadMap[Type]} payload - Operation payload.
+   * @param {string} interventionId - Intervention identifier.
+   * @param {InterventionOutboxType} type - Operation type.
+   * @param {InterventionOutboxPayloadMap[Type]} payload - Operation payload.
    *
    * @return {Promise<void>} A promise resolving once the operation is queued.
    */
-  public async queue<Type extends MissionOutboxType>(
-    missionId: string,
+  public async queue<Type extends InterventionOutboxType>(
+    interventionId: string,
     type: Type,
-    payload: MissionOutboxPayloadMap[Type],
+    payload: InterventionOutboxPayloadMap[Type],
   ): Promise<void> {
     await this.database.ensureOwnerBound();
     const clientId: string =
       typeof payload['clientId'] === 'string' ? payload['clientId'] : crypto.randomUUID();
     const queuedAt = Math.max(Date.now(), this.lastQueuedAt + 1);
     this.lastQueuedAt = queuedAt;
-    const operation: MissionOutboxOperationFor<Type> = {
+    const operation: InterventionOutboxOperationFor<Type> = {
       id: crypto.randomUUID(),
-      missionId,
+      interventionId,
       type,
       payload: { ...payload, clientId },
       createdAt: new Date(queuedAt).toISOString(),
@@ -190,11 +190,11 @@ export class MissionOutboxStore {
    * Atomically queues every operation belonging to one field intention.
    */
   public async queueMany(
-    missionId: string,
-    entries: readonly MissionOutboxQueueEntry[],
+    interventionId: string,
+    entries: readonly InterventionOutboxQueueEntry[],
   ): Promise<readonly string[]> {
     await this.database.ensureOwnerBound();
-    const operations = entries.map((entry): MissionOutboxOperation => {
+    const operations = entries.map((entry): InterventionOutboxOperation => {
       const clientId =
         typeof entry.payload['clientId'] === 'string'
           ? entry.payload['clientId']
@@ -203,13 +203,13 @@ export class MissionOutboxStore {
       this.lastQueuedAt = queuedAt;
       return {
         id: crypto.randomUUID(),
-        missionId,
+        interventionId,
         type: entry.type,
         payload: { ...entry.payload, clientId },
         createdAt: new Date(queuedAt).toISOString(),
         status: 'pending',
         error: null,
-      } as MissionOutboxOperation;
+      } as InterventionOutboxOperation;
     });
 
     await this.database.putTransaction({
@@ -224,21 +224,21 @@ export class MissionOutboxStore {
    * @method listOutbox
    *
    * @description
-   * Lists queued operations for one mission, preserving field entry order.
+   * Lists queued operations for one intervention, preserving field entry order.
    *
    * @access public
    * @since 1.0.0
    *
-   * @param {string} missionId - Mission identifier.
+   * @param {string} interventionId - Intervention identifier.
    *
-   * @return {Promise<readonly MissionOutboxOperation[]>} A promise resolving with the queued operations.
+   * @return {Promise<readonly InterventionOutboxOperation[]>} A promise resolving with the queued operations.
    */
-  public async listOutbox(missionId: string): Promise<readonly MissionOutboxOperation[]> {
+  public async listOutbox(interventionId: string): Promise<readonly InterventionOutboxOperation[]> {
     if (!this.database.browser) return [];
     await this.database.ensureOwnerBound();
-    const operations = await this.database.getAll<MissionOutboxOperation>('outbox');
+    const operations = await this.database.getAll<InterventionOutboxOperation>('outbox');
     return operations
-      .filter((operation) => operation.missionId === missionId)
+      .filter((operation) => operation.interventionId === interventionId)
       .toSorted(
         (left, right) =>
           left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id),
@@ -246,22 +246,22 @@ export class MissionOutboxStore {
   }
 
   /**
-   * Method listMissionIdsWithOutbox
-   * @method listMissionIdsWithOutbox
+   * Method listInterventionIdsWithOutbox
+   * @method listInterventionIdsWithOutbox
    *
    * @description
-   * Lists the distinct mission identifiers that still have queued operations.
+   * Lists the distinct intervention identifiers that still have queued operations.
    *
    * @access public
    * @since 1.0.0
    *
-   * @return {Promise<readonly string[]>} Result of the list mission ids with outbox operation.
+   * @return {Promise<readonly string[]>} Result of the list intervention ids with outbox operation.
    */
-  public async listMissionIdsWithOutbox(): Promise<readonly string[]> {
+  public async listInterventionIdsWithOutbox(): Promise<readonly string[]> {
     if (!this.database.browser) return [];
     await this.database.ensureOwnerBound();
-    const operations = await this.database.getAll<MissionOutboxOperation>('outbox');
-    return [...new Set(operations.map((operation) => operation.missionId))];
+    const operations = await this.database.getAll<InterventionOutboxOperation>('outbox');
+    return [...new Set(operations.map((operation) => operation.interventionId))];
   }
 
   /**
@@ -301,7 +301,7 @@ export class MissionOutboxStore {
    */
   public async markOutboxConflict(id: string, error: string): Promise<void> {
     await this.database.ensureOwnerBound();
-    const operation = await this.database.get<MissionOutboxOperation>('outbox', id);
+    const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
     if (!operation) return;
     await this.database.put('outbox', id, { ...operation, status: 'conflict', error });
     this.unsynced.set(true);
@@ -312,7 +312,7 @@ export class MissionOutboxStore {
    */
   public async markOutboxFailed(id: string, error: string): Promise<void> {
     await this.database.ensureOwnerBound();
-    const operation = await this.database.get<MissionOutboxOperation>('outbox', id);
+    const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
     if (!operation) return;
     await this.database.put('outbox', id, { ...operation, status: 'failed', error });
     this.unsynced.set(true);
@@ -334,7 +334,7 @@ export class MissionOutboxStore {
    */
   public async retryOutbox(id: string): Promise<void> {
     await this.database.ensureOwnerBound();
-    const operation = await this.database.get<MissionOutboxOperation>('outbox', id);
+    const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
     if (!operation) return;
     await this.database.put('outbox', id, { ...operation, status: 'pending', error: null });
   }

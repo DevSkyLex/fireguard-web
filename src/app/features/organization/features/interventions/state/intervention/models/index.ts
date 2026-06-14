@@ -1,5 +1,5 @@
-export type { MissionState } from './state.interface';
+export type { InterventionState } from './state.interface';
 export type {
-  MissionCreateCommand,
-  MissionListLoadCommand,
-} from './mission-store-command.interface';
+  InterventionCreateCommand,
+  InterventionListLoadCommand,
+} from './intervention-store-command.interface';

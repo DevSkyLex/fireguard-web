@@ -1,10 +1,10 @@
-import type { MissionStatus } from '../mission/mission-status.type';
+import type { InterventionStatus } from '../intervention/intervention-status.type';
 
 /**
- * Mission status transition requested by the workspace.
+ * Intervention status transition requested by the workspace.
  */
-export interface MissionTransitionRequest {
-  readonly missionId: string;
-  readonly status: MissionStatus;
+export interface InterventionTransitionRequest {
+  readonly interventionId: string;
+  readonly status: InterventionStatus;
   readonly reviewNote?: string;
 }

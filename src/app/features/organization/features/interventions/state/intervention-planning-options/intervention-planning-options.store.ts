@@ -6,10 +6,10 @@ import { forkJoin, of, pipe, switchMap, tap } from 'rxjs';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
-import type { SelectOption } from '@features/organization/features/missions/models';
-import type { MissionPlanningOptionsState } from './models';
+import type { SelectOption } from '@features/organization/features/interventions/models';
+import type { InterventionPlanningOptionsState } from './models';
 
-const INITIAL_STATE: MissionPlanningOptionsState = {
+const INITIAL_STATE: InterventionPlanningOptionsState = {
   sites: [],
   targets: [],
   members: [],
@@ -19,10 +19,10 @@ const INITIAL_STATE: MissionPlanningOptionsState = {
 const PLANNING_OPTION_PAGE_SIZE = 100;
 
 /**
- * Loads and maps the organization resources used by mission planning forms.
+ * Loads and maps the organization resources used by intervention planning forms.
  */
-export const MissionPlanningOptionsStore = signalStore(
-  withState<MissionPlanningOptionsState>(INITIAL_STATE),
+export const InterventionPlanningOptionsStore = signalStore(
+  withState<InterventionPlanningOptionsState>(INITIAL_STATE),
   withMethods(
     (
       store,
@@ -133,4 +133,4 @@ export const MissionPlanningOptionsStore = signalStore(
   ),
 );
 
-export type MissionPlanningOptionsStoreType = InstanceType<typeof MissionPlanningOptionsStore>;
+export type InterventionPlanningOptionsStoreType = InstanceType<typeof InterventionPlanningOptionsStore>;

@@ -2,14 +2,14 @@ import { DestroyRef, ErrorHandler, inject, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Events } from '@ngrx/signals/events';
 import { authStoreEvents } from '@features/auth/state';
-import { MissionDatabaseService } from '../mission-offline';
+import { InterventionDatabaseService } from '../intervention-offline';
 
 /**
- * Coordinates authentication lifecycle events with mission offline storage.
+ * Coordinates authentication lifecycle events with intervention offline storage.
  */
 @Injectable({ providedIn: 'root' })
-export class MissionOfflineLifecycleService {
-  private readonly database: MissionDatabaseService = inject(MissionDatabaseService);
+export class InterventionOfflineLifecycleService {
+  private readonly database: InterventionDatabaseService = inject(InterventionDatabaseService);
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
   private readonly errorHandler: ErrorHandler = inject(ErrorHandler);
   private readonly events: Events = inject(Events);

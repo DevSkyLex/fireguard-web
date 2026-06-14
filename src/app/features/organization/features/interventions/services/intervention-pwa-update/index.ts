@@ -1,4 +1,4 @@
 /**
- * Mission PWA update service exports.
+ * Intervention PWA update service exports.
  */
-export { MissionPwaUpdateService } from './mission-pwa-update.service';
+export { InterventionPwaUpdateService } from './intervention-pwa-update.service';

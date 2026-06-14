@@ -19,77 +19,77 @@ import { TagModule } from 'primeng/tag';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ConnectivityService } from '@core/services/connectivity';
 import type {
-  CreateMissionWorkItemInput,
-  MissionDiscoveryRequest,
-  MissionPhase,
-  MissionPhotoAttachment,
-  MissionPlanningDetails,
-  MissionWorkItemStatusChange,
-} from '@features/organization/features/missions/models';
+  CreateInterventionWorkItemInput,
+  InterventionDiscoveryRequest,
+  InterventionPhase,
+  InterventionPhotoAttachment,
+  InterventionPlanningDetails,
+  InterventionWorkItemStatusChange,
+} from '@features/organization/features/interventions/models';
 import {
-  MissionOfflineService,
-  MissionFieldExecutionService,
-  MissionSyncCoordinatorService,
-} from '@features/organization/features/missions/services';
-import { MissionDiscoveryService } from '@features/organization/features/missions/services/mission-discovery';
-import { MissionPublicationService } from '@features/organization/features/missions/services/mission-publication';
+  InterventionOfflineService,
+  InterventionFieldExecutionService,
+  InterventionSyncCoordinatorService,
+} from '@features/organization/features/interventions/services';
+import { InterventionDiscoveryService } from '@features/organization/features/interventions/services/intervention-discovery';
+import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
 import {
-  MissionPlanningOptionsStore,
-  type MissionPlanningOptionsStoreType,
-} from '@features/organization/features/missions/state/mission-planning-options';
+  InterventionPlanningOptionsStore,
+  type InterventionPlanningOptionsStoreType,
+} from '@features/organization/features/interventions/state/intervention-planning-options';
 import {
-  MissionWorkspaceStore,
-  type MissionWorkspaceStoreType,
-} from '@features/organization/features/missions/state/mission-workspace';
+  InterventionWorkspaceStore,
+  type InterventionWorkspaceStoreType,
+} from '@features/organization/features/interventions/state/intervention-workspace';
 import {
   ActiveOrganizationStore,
   OrganizationMemberAccessStore,
 } from '@features/organization/state';
-import { MissionExecutePanel } from '../../components/mission-execute-panel/mission-execute-panel.component';
-import { MissionPreparePanel } from '../../components/mission-prepare-panel/mission-prepare-panel.component';
-import { MissionReviewPanel } from '../../components/mission-review-panel/mission-review-panel.component';
+import { InterventionExecutePanel } from '../../components/intervention-execute-panel/intervention-execute-panel.component';
+import { InterventionPreparePanel } from '../../components/intervention-prepare-panel/intervention-prepare-panel.component';
+import { InterventionReviewPanel } from '../../components/intervention-review-panel/intervention-review-panel.component';
 
 /**
- * Component MissionDetailPage
- * @class MissionDetailPage
+ * Component InterventionDetailPage
+ * @class InterventionDetailPage
  *
  * @description
- * Orchestrates the mission detail page.
+ * Orchestrates the intervention detail page.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-mission-detail-page',
+  selector: 'app-intervention-detail-page',
   imports: [
     ButtonModule,
     MessageModule,
-    MissionExecutePanel,
-    MissionPreparePanel,
-    MissionReviewPanel,
+    InterventionExecutePanel,
+    InterventionPreparePanel,
+    InterventionReviewPanel,
     ProgressBarModule,
     SkeletonModule,
     TagModule,
     ToolbarModule,
   ],
-  providers: [MissionPlanningOptionsStore, MissionWorkspaceStore],
-  templateUrl: './mission-detail.component.html',
+  providers: [InterventionPlanningOptionsStore, InterventionWorkspaceStore],
+  templateUrl: './intervention-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MissionDetailPage {
+export class InterventionDetailPage {
   /**
-   * Property missionId
+   * Property interventionId
    * @readonly
    *
    * @description
-   * Provides the mission id value.
+   * Provides the intervention id value.
    *
    * @access public
    * @since 1.0.0
    *
    * @type {InputSignal<string>}
    */
-  public readonly missionId: InputSignal<string> = input.required<string>();
+  public readonly interventionId: InputSignal<string> = input.required<string>();
 
   /**
    * Property store
@@ -101,12 +101,12 @@ export class MissionDetailPage {
    * @access protected
    * @since 1.0.0
    *
-   * @type {MissionWorkspaceStore}
+   * @type {InterventionWorkspaceStore}
    */
-  protected readonly store: MissionWorkspaceStoreType = inject(MissionWorkspaceStore);
+  protected readonly store: InterventionWorkspaceStoreType = inject(InterventionWorkspaceStore);
 
-  protected readonly planningOptions: MissionPlanningOptionsStoreType = inject(
-    MissionPlanningOptionsStore,
+  protected readonly planningOptions: InterventionPlanningOptionsStoreType = inject(
+    InterventionPlanningOptionsStore,
   );
 
   /**
@@ -119,9 +119,9 @@ export class MissionDetailPage {
    * @access protected
    * @since 1.0.0
    *
-   * @type {MissionOfflineService}
+   * @type {InterventionOfflineService}
    */
-  protected readonly offline: MissionOfflineService = inject(MissionOfflineService);
+  protected readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
 
   /**
    * Property sync
@@ -133,9 +133,9 @@ export class MissionDetailPage {
    * @access protected
    * @since 1.0.0
    *
-   * @type {MissionSyncCoordinatorService}
+   * @type {InterventionSyncCoordinatorService}
    */
-  protected readonly sync: MissionSyncCoordinatorService = inject(MissionSyncCoordinatorService);
+  protected readonly sync: InterventionSyncCoordinatorService = inject(InterventionSyncCoordinatorService);
 
   /**
    * Property connectivity
@@ -161,10 +161,10 @@ export class MissionDetailPage {
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<MissionPhase>}
+   * @type {WritableSignal<InterventionPhase>}
    */
-  protected readonly activePhase: WritableSignal<MissionPhase> = linkedSignal<MissionPhase>(() =>
-    this.phaseForStatus(this.store.mission()?.status),
+  protected readonly activePhase: WritableSignal<InterventionPhase> = linkedSignal<InterventionPhase>(() =>
+    this.phaseForStatus(this.store.intervention()?.status),
   );
 
   /**
@@ -356,26 +356,26 @@ export class MissionDetailPage {
    * @type {Signal<boolean>}
    */
   protected readonly canSubmit: Signal<boolean> = computed(() => {
-    const mission = this.store.mission();
+    const intervention = this.store.intervention();
     const organizationId = this.organization.selectedOrganization()?.id;
     const memberId = this.memberAccess.profile()?.id;
     return (
-      !!mission &&
+      !!intervention &&
       !!organizationId &&
       !!memberId &&
-      mission.responsible === `/api/organizations/${organizationId}/members/${memberId}`
+      intervention.responsible === `/api/organizations/${organizationId}/members/${memberId}`
     );
   });
 
   /**
    * Coordinates discovered resource and work-item creation.
    */
-  private readonly discovery: MissionDiscoveryService = inject(MissionDiscoveryService);
+  private readonly discovery: InterventionDiscoveryService = inject(InterventionDiscoveryService);
 
   /**
-   * Coordinates asynchronous mission publication.
+   * Coordinates asynchronous intervention publication.
    */
-  private readonly publication: MissionPublicationService = inject(MissionPublicationService);
+  private readonly publication: InterventionPublicationService = inject(InterventionPublicationService);
 
   /**
    * Property fieldExecution
@@ -387,10 +387,10 @@ export class MissionDetailPage {
    * @access private
    * @since 1.0.0
    *
-   * @type {MissionFieldExecutionService}
+   * @type {InterventionFieldExecutionService}
    */
-  private readonly fieldExecution: MissionFieldExecutionService = inject(
-    MissionFieldExecutionService,
+  private readonly fieldExecution: InterventionFieldExecutionService = inject(
+    InterventionFieldExecutionService,
   );
 
   /**
@@ -435,7 +435,7 @@ export class MissionDetailPage {
    */
   public constructor() {
     effect(() => {
-      this.store.load(this.missionId());
+      this.store.load(this.interventionId());
     });
     effect(() => {
       this.planningOptions.loadWorkspaceOptions(
@@ -454,28 +454,28 @@ export class MissionDetailPage {
    * @access protected
    * @since 1.0.0
    *
-   * @param {MissionPhase} phase - phase value.
+   * @param {InterventionPhase} phase - phase value.
    *
    * @return {void} Result of the select phase operation.
    */
-  protected selectPhase(phase: MissionPhase): void {
+  protected selectPhase(phase: InterventionPhase): void {
     this.activePhase.set(phase);
   }
 
   /**
-   * Method planMission
-   * @method planMission
+   * Method planIntervention
+   * @method planIntervention
    *
    * @description
-   * Executes the plan mission operation.
+   * Executes the plan intervention operation.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @return {void} Result of the plan mission operation.
+   * @return {void} Result of the plan intervention operation.
    */
-  protected planMission(): void {
-    this.store.transition({ missionId: this.missionId(), status: 'planned' });
+  protected planIntervention(): void {
+    this.store.transition({ interventionId: this.interventionId(), status: 'planned' });
   }
 
   /**
@@ -492,15 +492,15 @@ export class MissionDetailPage {
    * site: string;
    * responsible: string;
    * participants: readonly string[];
-   * priority: MissionPriority;
+   * priority: InterventionPriority;
    * plannedStartAt: string;
    * dueAt: string;
    * }} planningDetails - planning Details value.
    *
    * @return {void} Result of the save details operation.
    */
-  protected saveDetails(planningDetails: MissionPlanningDetails): void {
-    this.store.updateDetails({ missionId: this.missionId(), input: planningDetails });
+  protected saveDetails(planningDetails: InterventionPlanningDetails): void {
+    this.store.updateDetails({ interventionId: this.interventionId(), input: planningDetails });
   }
 
   /**
@@ -513,12 +513,12 @@ export class MissionDetailPage {
    * @access protected
    * @since 1.0.0
    *
-   * @param {CreateMissionWorkItemInput} workItemInput - work Item Input value.
+   * @param {CreateInterventionWorkItemInput} workItemInput - work Item Input value.
    *
    * @return {void} Result of the create work item operation.
    */
-  protected createWorkItem(workItemInput: CreateMissionWorkItemInput): void {
-    this.store.createWorkItem({ missionId: this.missionId(), input: workItemInput });
+  protected createWorkItem(workItemInput: CreateInterventionWorkItemInput): void {
+    this.store.createWorkItem({ interventionId: this.interventionId(), input: workItemInput });
   }
 
   /**
@@ -532,13 +532,13 @@ export class MissionDetailPage {
    * @since 1.0.0
    *
    * @param {{
-   * action: CreateMissionWorkItemInput['action'];
+   * action: CreateInterventionWorkItemInput['action'];
    * target: string | null;
    * }} event - event value.
    *
    * @return {void} Result of the create discovery operation.
    */
-  protected async createDiscovery(event: MissionDiscoveryRequest): Promise<void> {
+  protected async createDiscovery(event: InterventionDiscoveryRequest): Promise<void> {
     this.fieldMessage.set(null);
     const organizationId = this.organization.selectedOrganization()?.id;
     const target = event.target?.trim();
@@ -546,14 +546,14 @@ export class MissionDetailPage {
 
     this.fieldActionBusy.set(true);
     try {
-      const discovery = await this.discovery.create(organizationId, this.missionId(), {
+      const discovery = await this.discovery.create(organizationId, this.interventionId(), {
         ...event,
         target,
       });
       if (discovery.queued) {
         await this.store.recordQueuedDiscovery(discovery.workItem);
-      } else this.store.load(this.missionId());
-      this.fieldMessage.set('Discovery saved as a mission draft resource.');
+      } else this.store.load(this.interventionId());
+      this.fieldMessage.set('Discovery saved as a intervention draft resource.');
     } catch {
       this.fieldMessage.set('The discovered resource could not be saved.');
     } finally {
@@ -614,17 +614,17 @@ export class MissionDetailPage {
    *
    * @return {Promise<void>} Result of the attach photo operation.
    */
-  protected async attachPhoto(event: MissionPhotoAttachment): Promise<void> {
+  protected async attachPhoto(event: InterventionPhotoAttachment): Promise<void> {
     this.fieldActionBusy.set(true);
     this.fieldMessage.set(null);
     try {
       const queued = await this.fieldExecution.attachPhoto(
-        this.missionId(),
+        this.interventionId(),
         event.equipmentId,
         event.file,
       );
       if (queued) {
-        await this.store.touchOfflineMission();
+        await this.store.touchOfflineIntervention();
         this.fieldMessage.set('Photo compressed and queued for synchronization.');
         return;
       }
@@ -637,19 +637,19 @@ export class MissionDetailPage {
   }
 
   /**
-   * Method submitMission
-   * @method submitMission
+   * Method submitIntervention
+   * @method submitIntervention
    *
    * @description
-   * Executes the submit mission operation.
+   * Executes the submit intervention operation.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @return {void} Result of the submit mission operation.
+   * @return {void} Result of the submit intervention operation.
    */
-  protected submitMission(): void {
-    this.store.transition({ missionId: this.missionId(), status: 'submitted' });
+  protected submitIntervention(): void {
+    this.store.transition({ interventionId: this.interventionId(), status: 'submitted' });
   }
 
   /**
@@ -668,7 +668,7 @@ export class MissionDetailPage {
    */
   protected requestChanges(reviewNote: string): void {
     this.store.transition({
-      missionId: this.missionId(),
+      interventionId: this.interventionId(),
       status: 'changes_requested',
       reviewNote,
     });
@@ -692,40 +692,40 @@ export class MissionDetailPage {
    *
    * @return {void} Result of the update work item operation.
    */
-  protected updateWorkItem(event: MissionWorkItemStatusChange): void {
-    this.store.setWorkItemStatus({ missionId: this.missionId(), ...event });
+  protected updateWorkItem(event: InterventionWorkItemStatusChange): void {
+    this.store.setWorkItemStatus({ interventionId: this.interventionId(), ...event });
   }
 
   /**
-   * Method publishMission
-   * @method publishMission
+   * Method publishIntervention
+   * @method publishIntervention
    *
    * @description
-   * Executes the publish mission operation.
+   * Executes the publish intervention operation.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @return {Promise<void>} Result of the publish mission operation.
+   * @return {Promise<void>} Result of the publish intervention operation.
    */
-  protected async publishMission(): Promise<void> {
-    const mission = this.store.mission();
-    if (!mission || !this.online()) {
-      this.publicationMessage.set('Connect to the network before publishing this mission.');
+  protected async publishIntervention(): Promise<void> {
+    const intervention = this.store.intervention();
+    if (!intervention || !this.online()) {
+      this.publicationMessage.set('Connect to the network before publishing this intervention.');
       return;
     }
     this.publishing.set(true);
     this.publicationMessage.set(null);
     try {
-      const completed = await this.publication.publish(mission);
+      const completed = await this.publication.publish(intervention);
       if (completed.status === 'failed') {
         this.publicationMessage.set(
           completed.error ?? 'Publication failed without applying partial changes.',
         );
         return;
       }
-      this.publicationMessage.set('Mission published successfully.');
-      this.store.load(this.missionId());
+      this.publicationMessage.set('Intervention published successfully.');
+      this.store.load(this.interventionId());
     } catch {
       this.publicationMessage.set('The publication request could not be completed.');
     } finally {
@@ -750,9 +750,9 @@ export class MissionDetailPage {
   }
 
   /**
-   * Resolves the default workspace phase for a mission status.
+   * Resolves the default workspace phase for a intervention status.
    */
-  private phaseForStatus(status: string | undefined): MissionPhase {
+  private phaseForStatus(status: string | undefined): InterventionPhase {
     if (status === 'in_progress' || status === 'changes_requested') return 'execute';
     if (status === 'submitted' || status === 'published') return 'review';
     return 'prepare';

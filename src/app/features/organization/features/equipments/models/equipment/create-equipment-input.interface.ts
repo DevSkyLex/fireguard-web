@@ -20,15 +20,15 @@ export type CreateEquipmentInput = Pick<EquipmentEditableFields, 'type'> &
      */
     readonly clientId?: string;
     /**
-     * Optional mission-aware payload override. Usually populated server-side
-     * by route context but kept explicit for mission workflows.
+     * Optional intervention-aware payload override. Usually populated server-side
+     * by route context but kept explicit for intervention workflows.
      */
     readonly organization?: string;
     /**
-     * Optional mission IRI binding used when equipment is created inside a
-     * field mission flow.
+     * Optional intervention IRI binding used when equipment is created inside a
+     * field intervention flow.
      */
-    readonly mission?: string;
+    readonly intervention?: string;
     /**
      * Optional facility IRI allowing direct assignment at creation time.
      */

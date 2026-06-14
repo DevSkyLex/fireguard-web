@@ -11,42 +11,42 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { TagModule } from 'primeng/tag';
 import type {
-  MissionChangeOutput,
-  MissionIssueOutput,
-  MissionOutput,
-  MissionWorkItemOutput,
-} from '@features/organization/features/missions/models';
+  InterventionChangeOutput,
+  InterventionIssueOutput,
+  InterventionOutput,
+  InterventionWorkItemOutput,
+} from '@features/organization/features/interventions/models';
 
 /**
- * Component MissionReviewPanel
- * @class MissionReviewPanel
+ * Component InterventionReviewPanel
+ * @class InterventionReviewPanel
  *
  * @description
- * Renders the mission review workflow panel.
+ * Renders the intervention review workflow panel.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-mission-review-panel',
+  selector: 'app-intervention-review-panel',
   imports: [ButtonModule, JsonPipe, MessageModule, TagModule],
-  templateUrl: './mission-review-panel.component.html',
+  templateUrl: './intervention-review-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MissionReviewPanel {
+export class InterventionReviewPanel {
   /**
-   * Property mission
+   * Property intervention
    * @readonly
    *
    * @description
-   * Provides the mission value.
+   * Provides the intervention value.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<MissionOutput>}
+   * @type {InputSignal<InterventionOutput>}
    */
-  public readonly mission: InputSignal<MissionOutput> = input.required<MissionOutput>();
+  public readonly intervention: InputSignal<InterventionOutput> = input.required<InterventionOutput>();
 
   /**
    * Property issues
@@ -58,10 +58,10 @@ export class MissionReviewPanel {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<readonly MissionIssueOutput[]>}
+   * @type {InputSignal<readonly InterventionIssueOutput[]>}
    */
-  public readonly issues: InputSignal<readonly MissionIssueOutput[]> =
-    input.required<readonly MissionIssueOutput[]>();
+  public readonly issues: InputSignal<readonly InterventionIssueOutput[]> =
+    input.required<readonly InterventionIssueOutput[]>();
 
   /**
    * Property changes
@@ -73,10 +73,10 @@ export class MissionReviewPanel {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<readonly MissionChangeOutput[]>}
+   * @type {InputSignal<readonly InterventionChangeOutput[]>}
    */
-  public readonly changes: InputSignal<readonly MissionChangeOutput[]> =
-    input.required<readonly MissionChangeOutput[]>();
+  public readonly changes: InputSignal<readonly InterventionChangeOutput[]> =
+    input.required<readonly InterventionChangeOutput[]>();
 
   /**
    * Property skippedItems
@@ -88,10 +88,10 @@ export class MissionReviewPanel {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<readonly MissionWorkItemOutput[]>}
+   * @type {InputSignal<readonly InterventionWorkItemOutput[]>}
    */
-  public readonly skippedItems: InputSignal<readonly MissionWorkItemOutput[]> =
-    input.required<readonly MissionWorkItemOutput[]>();
+  public readonly skippedItems: InputSignal<readonly InterventionWorkItemOutput[]> =
+    input.required<readonly InterventionWorkItemOutput[]>();
 
   /**
    * Property discoveredItems
@@ -103,10 +103,10 @@ export class MissionReviewPanel {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<readonly MissionWorkItemOutput[]>}
+   * @type {InputSignal<readonly InterventionWorkItemOutput[]>}
    */
-  public readonly discoveredItems: InputSignal<readonly MissionWorkItemOutput[]> =
-    input.required<readonly MissionWorkItemOutput[]>();
+  public readonly discoveredItems: InputSignal<readonly InterventionWorkItemOutput[]> =
+    input.required<readonly InterventionWorkItemOutput[]>();
 
   /**
    * Property saving
@@ -165,18 +165,18 @@ export class MissionReviewPanel {
   public readonly requestChanges: OutputEmitterRef<string> = output<string>();
 
   /**
-   * Property publishMission
+   * Property publishIntervention
    * @readonly
    *
    * @description
-   * Provides the publish mission value.
+   * Provides the publish intervention value.
    *
    * @access public
    * @since 1.0.0
    *
    * @type {OutputEmitterRef<void>}
    */
-  public readonly publishMission: OutputEmitterRef<void> = output<void>();
+  public readonly publishIntervention: OutputEmitterRef<void> = output<void>();
 
   /**
    * Method requestCorrection

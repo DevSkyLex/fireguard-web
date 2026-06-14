@@ -1,39 +1,39 @@
 import type { CallState } from '@core/state/request-state';
-import type { MissionOutput } from '@features/organization/features/missions/models';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
 
 /**
- * Interface MissionState
- * @interface MissionState
+ * Interface InterventionState
+ * @interface InterventionState
  *
  * @description
- * Component-scoped state for mission list and creation workflows. Mission
+ * Component-scoped state for intervention list and creation workflows. Intervention
  * entities are managed by the `withEntities` feature; this interface tracks
  * auxiliary request state and server totals.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export interface MissionState {
+export interface InterventionState {
   //#region Properties
   /**
-   * Property totalMissions
+   * Property totalInterventions
    * @readonly
    *
    * @description
-   * Server-reported number of missions for the active organization.
+   * Server-reported number of interventions for the active organization.
    *
    * @since 1.0.0
    *
    * @type {number}
    */
-  readonly totalMissions: number;
+  readonly totalInterventions: number;
 
   /**
    * Property listCallState
    * @readonly
    *
    * @description
-   * Loading / success / error state for mission listing.
+   * Loading / success / error state for intervention listing.
    *
    * @since 1.0.0
    *
@@ -46,13 +46,13 @@ export interface MissionState {
    * @readonly
    *
    * @description
-   * Loading / success / error state for mission creation.
-   * Carries the created mission on success so route pages can navigate.
+   * Loading / success / error state for intervention creation.
+   * Carries the created intervention on success so route pages can navigate.
    *
    * @since 1.0.0
    *
-   * @type {CallState<MissionOutput>}
+   * @type {CallState<InterventionOutput>}
    */
-  readonly createCallState: CallState<MissionOutput>;
+  readonly createCallState: CallState<InterventionOutput>;
   //#endregion
 }

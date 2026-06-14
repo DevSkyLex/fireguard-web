@@ -1,1 +1,1 @@
-export { MissionPrefetchService } from './mission-prefetch.service';
+export { InterventionPrefetchService } from './intervention-prefetch.service';

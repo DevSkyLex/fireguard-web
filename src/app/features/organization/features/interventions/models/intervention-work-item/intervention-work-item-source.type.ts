@@ -1,4 +1,4 @@
 /**
- * Supported mission work item sources.
+ * Supported intervention work item sources.
  */
-export type MissionWorkItemSource = 'planned' | 'discovered';
+export type InterventionWorkItemSource = 'planned' | 'discovered';

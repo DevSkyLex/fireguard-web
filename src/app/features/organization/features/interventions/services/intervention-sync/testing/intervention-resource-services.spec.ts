@@ -6,7 +6,7 @@ import { EquipmentService } from '@features/organization/features/equipments/dat
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 
-describe('mission resource owner services', () => {
+describe('intervention resource owner services', () => {
   let httpMock: HttpTestingController;
   let facilities: FacilityService;
   let equipment: EquipmentService;
@@ -34,20 +34,20 @@ describe('mission resource owner services', () => {
 
   it('uses conditional canonical PUTs for offline resource creation', () => {
     facilities
-      .createForMission('org-1', 'mission-1', {
+      .createForIntervention('org-1', 'intervention-1', {
         clientId: 'facility-1',
         type: 'building',
         name: 'Building A',
       })
       .subscribe();
     equipment
-      .createForMission('org-1', 'mission-1', {
+      .createForIntervention('org-1', 'intervention-1', {
         clientId: 'equipment-1',
         type: 'fire_extinguisher',
       })
       .subscribe();
     inspections
-      .createForMission('org-1', 'mission-1', {
+      .createForIntervention('org-1', 'intervention-1', {
         clientId: 'inspection-1',
         equipmentId: 'equipment-1',
         result: 'pass',
@@ -67,7 +67,7 @@ describe('mission resource owner services', () => {
       expect(request.request.headers.get('If-None-Match')).toBe('*');
       expect(request.request.body).toMatchObject({
         organization: '/api/organizations/org-1',
-        mission: '/api/missions/mission-1',
+        intervention: '/api/interventions/intervention-1',
       });
       request.flush({});
     }

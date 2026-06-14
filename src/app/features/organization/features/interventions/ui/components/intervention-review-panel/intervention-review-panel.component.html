@@ -5,7 +5,7 @@
     }
     @if (!online()) {
       <p-message severity="warn" [closable]="false">
-        Connect to the network before publishing this mission.
+        Connect to the network before publishing this intervention.
       </p-message>
     }
 
@@ -95,15 +95,15 @@
         severity="secondary"
         [outlined]="true"
         [loading]="saving()"
-        [disabled]="mission().status !== 'submitted'"
+        [disabled]="intervention().status !== 'submitted'"
         (onClick)="requestCorrection()"
       />
       <p-button
-        label="Publish mission"
+        label="Publish intervention"
         icon="pi pi-check-circle"
         [loading]="saving()"
-        [disabled]="!online() || mission().status !== 'submitted' || mission().blockersCount > 0"
-        (onClick)="publishMission.emit()"
+        [disabled]="!online() || intervention().status !== 'submitted' || intervention().blockersCount > 0"
+        (onClick)="publishIntervention.emit()"
       />
     </div>
   </aside>

@@ -1,16 +1,16 @@
 import type { HydraItem } from '@core/models/api';
-import type { MissionWorkItemAction } from './mission-work-item-action.type';
-import type { MissionWorkItemSource } from './mission-work-item-source.type';
-import type { MissionWorkItemStatus } from './mission-work-item-status.type';
+import type { InterventionWorkItemAction } from './intervention-work-item-action.type';
+import type { InterventionWorkItemSource } from './intervention-work-item-source.type';
+import type { InterventionWorkItemStatus } from './intervention-work-item-status.type';
 
 /**
- * Interface MissionWorkItemOutput
- * @interface MissionWorkItemOutput
+ * Interface InterventionWorkItemOutput
+ * @interface InterventionWorkItemOutput
  *
  * @description
- * Defines the mission work item output contract.
+ * Defines the intervention work item output contract.
  */
-export interface MissionWorkItemOutput extends HydraItem {
+export interface InterventionWorkItemOutput extends HydraItem {
   /**
    * Property id
    * @readonly
@@ -23,15 +23,15 @@ export interface MissionWorkItemOutput extends HydraItem {
   readonly id: string;
 
   /**
-   * Property mission
+   * Property intervention
    * @readonly
    *
    * @description
-   * Provides the mission value.
+   * Provides the intervention value.
    *
    * @type {string}
    */
-  readonly mission: string;
+  readonly intervention: string;
 
   /**
    * Property action
@@ -40,9 +40,9 @@ export interface MissionWorkItemOutput extends HydraItem {
    * @description
    * Provides the action value.
    *
-   * @type {MissionWorkItemAction}
+   * @type {InterventionWorkItemAction}
    */
-  readonly action: MissionWorkItemAction;
+  readonly action: InterventionWorkItemAction;
 
   /**
    * Property target
@@ -84,9 +84,9 @@ export interface MissionWorkItemOutput extends HydraItem {
    * @description
    * Provides the source value.
    *
-   * @type {MissionWorkItemSource}
+   * @type {InterventionWorkItemSource}
    */
-  readonly source: MissionWorkItemSource;
+  readonly source: InterventionWorkItemSource;
 
   /**
    * Property status
@@ -95,9 +95,9 @@ export interface MissionWorkItemOutput extends HydraItem {
    * @description
    * Provides the status value.
    *
-   * @type {MissionWorkItemStatus}
+   * @type {InterventionWorkItemStatus}
    */
-  readonly status: MissionWorkItemStatus;
+  readonly status: InterventionWorkItemStatus;
 
   /**
    * Property required

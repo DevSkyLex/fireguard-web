@@ -1,13 +1,13 @@
-import type { MissionPriority } from '../mission/mission-priority.type';
+import type { InterventionPriority } from '../intervention/intervention-priority.type';
 
 /**
  * Editable planning details submitted by the prepare workflow.
  */
-export interface MissionPlanningDetails {
+export interface InterventionPlanningDetails {
   readonly site: string;
   readonly responsible: string;
   readonly participants: readonly string[];
-  readonly priority: MissionPriority;
+  readonly priority: InterventionPriority;
   readonly plannedStartAt: string;
   readonly dueAt: string;
 }

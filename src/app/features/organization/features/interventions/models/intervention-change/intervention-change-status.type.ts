@@ -1,4 +1,4 @@
 /**
- * Supported proposed mission change statuses.
+ * Supported proposed intervention change statuses.
  */
-export type MissionChangeStatus = 'proposed' | 'rejected' | 'applied';
+export type InterventionChangeStatus = 'proposed' | 'rejected' | 'applied';

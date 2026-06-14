@@ -1,14 +1,14 @@
 import type { HydraItem } from '@core/models/api';
-import type { MissionWorkItemAction } from '../mission-work-item/mission-work-item-action.type';
+import type { InterventionWorkItemAction } from '../intervention-work-item/intervention-work-item-action.type';
 
 /**
- * Interface MissionTypeOutput
- * @interface MissionTypeOutput
+ * Interface InterventionTypeOutput
+ * @interface InterventionTypeOutput
  *
  * @description
- * Defines the mission type output contract.
+ * Defines the intervention type output contract.
  */
-export interface MissionTypeOutput extends HydraItem {
+export interface InterventionTypeOutput extends HydraItem {
   /**
    * Property id
    * @readonly
@@ -49,7 +49,7 @@ export interface MissionTypeOutput extends HydraItem {
    * @description
    * Provides the actions value.
    *
-   * @type {readonly MissionWorkItemAction[]}
+   * @type {readonly InterventionWorkItemAction[]}
    */
-  readonly actions: readonly MissionWorkItemAction[];
+  readonly actions: readonly InterventionWorkItemAction[];
 }

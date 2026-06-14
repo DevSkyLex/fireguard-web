@@ -1,32 +1,32 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { MissionService } from '@features/organization/features/missions/data-access';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
-  MissionChangeOutput,
-  MissionIssueOutput,
-  MissionOutput,
-  MissionWorkItemOutput,
-} from '@features/organization/features/missions/models';
-import { MissionOfflineService } from '@features/organization/features/missions/services';
-import { MissionWorkspaceStore } from '../mission-workspace.store';
+  InterventionChangeOutput,
+  InterventionIssueOutput,
+  InterventionOutput,
+  InterventionWorkItemOutput,
+} from '@features/organization/features/interventions/models';
+import { InterventionOfflineService } from '@features/organization/features/interventions/services';
+import { InterventionWorkspaceStore } from '../intervention-workspace.store';
 
-const mission = {
-  '@id': '/api/missions/mission-1',
-  '@type': 'Mission',
-  id: 'mission-1',
+const intervention = {
+  '@id': '/api/interventions/intervention-1',
+  '@type': 'Intervention',
+  id: 'intervention-1',
   status: 'planned',
   revision: 3,
   workItemsCount: 1,
   completedWorkItemsCount: 0,
   updatedAt: '2026-06-12T08:00:00.000Z',
-} as MissionOutput;
+} as InterventionOutput;
 
 const workItem = {
-  '@id': '/api/mission-work-items/work-item-1',
-  '@type': 'MissionWorkItem',
+  '@id': '/api/intervention-work-items/work-item-1',
+  '@type': 'InterventionWorkItem',
   id: 'work-item-1',
-  mission: '/api/missions/mission-1',
+  intervention: '/api/interventions/intervention-1',
   action: 'inventory',
   target: '/api/equipment/equipment-1',
   resultResource: null,
@@ -38,10 +38,10 @@ const workItem = {
   revision: 1,
   createdAt: '2026-06-12T08:00:00.000Z',
   updatedAt: '2026-06-12T08:00:00.000Z',
-} as MissionWorkItemOutput;
+} as InterventionWorkItemOutput;
 
-describe('MissionWorkspaceStore offline field work', () => {
-  let store: InstanceType<typeof MissionWorkspaceStore>;
+describe('InterventionWorkspaceStore offline field work', () => {
+  let store: InstanceType<typeof InterventionWorkspaceStore>;
   let mockService: {
     get: ReturnType<typeof vi.fn>;
     listAllWorkItems: ReturnType<typeof vi.fn>;
@@ -60,15 +60,15 @@ describe('MissionWorkspaceStore offline field work', () => {
   beforeEach(() => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
     mockService = {
-      get: vi.fn().mockReturnValue(of(mission)),
+      get: vi.fn().mockReturnValue(of(intervention)),
       listAllWorkItems: vi.fn().mockReturnValue(of([workItem])),
-      listAllChanges: vi.fn().mockReturnValue(of([] as readonly MissionChangeOutput[])),
+      listAllChanges: vi.fn().mockReturnValue(of([] as readonly InterventionChangeOutput[])),
       listIssues: vi.fn().mockReturnValue(
         of({
-          '@id': '/api/missions/mission-1/issues',
+          '@id': '/api/interventions/intervention-1/issues',
           '@type': 'Collection',
           totalItems: 0,
-          member: [] as readonly MissionIssueOutput[],
+          member: [] as readonly InterventionIssueOutput[],
         }),
       ),
       update: vi.fn(),
@@ -83,47 +83,47 @@ describe('MissionWorkspaceStore offline field work', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        MissionWorkspaceStore,
-        { provide: MissionService, useValue: mockService },
-        { provide: MissionOfflineService, useValue: mockOffline },
+        InterventionWorkspaceStore,
+        { provide: InterventionService, useValue: mockService },
+        { provide: InterventionOfflineService, useValue: mockOffline },
       ],
     });
 
-    store = TestBed.inject(MissionWorkspaceStore);
-    store.load('mission-1');
+    store = TestBed.inject(InterventionWorkspaceStore);
+    store.load('intervention-1');
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('starts the mission and persists the optimistic revision when field work begins offline', async () => {
+  it('starts the intervention and persists the optimistic revision when field work begins offline', async () => {
     store.setWorkItemStatus({
-      missionId: mission.id,
+      interventionId: intervention.id,
       workItemId: workItem.id,
       status: 'in_progress',
     });
 
     await vi.waitFor(() => expect(store.saving()).toBe(false));
 
-    expect(mockOffline.queue).toHaveBeenCalledWith(mission.id, 'work-item.update', {
+    expect(mockOffline.queue).toHaveBeenCalledWith(intervention.id, 'work-item.update', {
       workItemId: workItem.id,
       status: 'in_progress',
       skipReason: null,
       revision: 1,
     });
-    expect(store.mission()?.status).toBe('in_progress');
-    expect(store.mission()?.revision).toBe(4);
+    expect(store.intervention()?.status).toBe('in_progress');
+    expect(store.intervention()?.revision).toBe(4);
     expect(store.workItems()[0]?.revision).toBe(2);
     expect(mockOffline.saveWorkspace).toHaveBeenCalled();
   });
 
   it('creates and persists a discovered work item with its stable client UUID offline', async () => {
     store.createWorkItem({
-      missionId: mission.id,
+      interventionId: intervention.id,
       input: {
         clientId: 'discovery-client-id',
-        mission: mission['@id'],
+        intervention: intervention['@id'],
         action: 'inventory',
         target: '/api/equipment/equipment-2',
         source: 'discovered',
@@ -133,9 +133,9 @@ describe('MissionWorkspaceStore offline field work', () => {
 
     await vi.waitFor(() => expect(store.saving()).toBe(false));
 
-    expect(mockOffline.queue).toHaveBeenCalledWith(mission.id, 'work-item.create', {
+    expect(mockOffline.queue).toHaveBeenCalledWith(intervention.id, 'work-item.create', {
       clientId: 'discovery-client-id',
-      mission: mission['@id'],
+      intervention: intervention['@id'],
       action: 'inventory',
       target: '/api/equipment/equipment-2',
       source: 'discovered',
@@ -146,15 +146,15 @@ describe('MissionWorkspaceStore offline field work', () => {
       source: 'discovered',
       target: '/api/equipment/equipment-2',
     });
-    expect(store.mission()?.revision).toBe(4);
-    expect(store.mission()?.workItemsCount).toBe(2);
+    expect(store.intervention()?.revision).toBe(4);
+    expect(store.intervention()?.workItemsCount).toBe(2);
     expect(mockOffline.saveWorkspace).toHaveBeenCalled();
   });
 
-  it('mirrors mission revision changes caused by queued resources', async () => {
-    await store.touchOfflineMission();
+  it('mirrors intervention revision changes caused by queued resources', async () => {
+    await store.touchOfflineIntervention();
 
-    expect(store.mission()?.revision).toBe(4);
+    expect(store.intervention()?.revision).toBe(4);
     expect(mockOffline.saveWorkspace).toHaveBeenCalledWith(
       expect.objectContaining({ revision: 4 }),
       expect.anything(),
@@ -168,7 +168,7 @@ describe('MissionWorkspaceStore offline field work', () => {
   it('records an already queued discovery without queuing its work item twice', async () => {
     await store.recordQueuedDiscovery({
       clientId: 'discovery-client-id',
-      mission: mission['@id'],
+      intervention: intervention['@id'],
       action: 'inventory',
       target: '/api/equipment/equipment-2',
       source: 'discovered',
@@ -180,24 +180,24 @@ describe('MissionWorkspaceStore offline field work', () => {
       id: 'discovery-client-id',
       target: '/api/equipment/equipment-2',
     });
-    expect(store.mission()?.revision).toBe(5);
-    expect(store.mission()?.workItemsCount).toBe(2);
+    expect(store.intervention()?.revision).toBe(5);
+    expect(store.intervention()?.workItemsCount).toBe(2);
   });
 
-  it('does not expose cached mission data after an authorization failure', async () => {
+  it('does not expose cached intervention data after an authorization failure', async () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
     window.dispatchEvent(new Event('online'));
     mockService.get.mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 403, statusText: 'Forbidden' })),
     );
 
-    store.load('mission-1');
+    store.load('intervention-1');
 
     await vi.waitFor(() => expect(store.loading()).toBe(false));
 
     expect(mockOffline.getWorkspace).not.toHaveBeenCalled();
-    expect(store.error()).toBe('The mission workspace could not be loaded.');
-    expect(store.mission()).toBeNull();
+    expect(store.error()).toBe('The intervention workspace could not be loaded.');
+    expect(store.intervention()).toBeNull();
     expect(store.workItems()).toEqual([]);
     expect(store.changes()).toEqual([]);
     expect(store.issues()).toEqual([]);
@@ -205,24 +205,24 @@ describe('MissionWorkspaceStore offline field work', () => {
 
   it('reverses offline completion progress and clears stale skip reasons', async () => {
     store.setWorkItemStatus({
-      missionId: mission.id,
+      interventionId: intervention.id,
       workItemId: workItem.id,
       status: 'skipped',
       skipReason: 'No access',
     });
     await vi.waitFor(() => expect(store.saving()).toBe(false));
 
-    expect(store.mission()?.completedWorkItemsCount).toBe(1);
+    expect(store.intervention()?.completedWorkItemsCount).toBe(1);
     expect(store.workItems()[0]?.skipReason).toBe('No access');
 
     store.setWorkItemStatus({
-      missionId: mission.id,
+      interventionId: intervention.id,
       workItemId: workItem.id,
       status: 'in_progress',
     });
     await vi.waitFor(() => expect(store.saving()).toBe(false));
 
-    expect(store.mission()?.completedWorkItemsCount).toBe(0);
+    expect(store.intervention()?.completedWorkItemsCount).toBe(0);
     expect(store.workItems()[0]?.skipReason).toBeNull();
   });
 });

@@ -1,19 +1,19 @@
 import type {
-  MissionOutboxPayloadMap,
-  MissionOutboxType,
-} from '@features/organization/features/missions/models';
+  InterventionOutboxPayloadMap,
+  InterventionOutboxType,
+} from '@features/organization/features/interventions/models';
 
 /**
  * Prepared canonical resource creation for a field discovery.
  */
-export type MissionDiscoveryResourcePlan = {
+export type InterventionDiscoveryResourcePlan = {
   [Type in Extract<
-    MissionOutboxType,
+    InterventionOutboxType,
     'facility.create' | 'equipment.create' | 'inspection.create'
   >]: {
     readonly type: Type;
-    readonly payload: MissionOutboxPayloadMap[Type];
+    readonly payload: InterventionOutboxPayloadMap[Type];
     readonly targetResource: string;
     readonly resultResource?: string;
   };
-}[Extract<MissionOutboxType, 'facility.create' | 'equipment.create' | 'inspection.create'>];
+}[Extract<InterventionOutboxType, 'facility.create' | 'equipment.create' | 'inspection.create'>];

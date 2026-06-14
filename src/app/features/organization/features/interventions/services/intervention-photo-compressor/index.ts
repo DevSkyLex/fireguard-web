@@ -1,4 +1,4 @@
 /**
- * Mission photo compressor service exports.
+ * Intervention photo compressor service exports.
  */
-export { MissionPhotoCompressorService } from './mission-photo-compressor.service';
+export { InterventionPhotoCompressorService } from './intervention-photo-compressor.service';

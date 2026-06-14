@@ -3,11 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { SwUpdate, type VersionEvent } from '@angular/service-worker';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Subject } from 'rxjs';
-import { MissionOfflineService } from '../../mission-offline';
-import { MissionPwaUpdateService } from '../mission-pwa-update.service';
+import { InterventionOfflineService } from '../../intervention-offline';
+import { InterventionPwaUpdateService } from '../intervention-pwa-update.service';
 
-describe('MissionPwaUpdateService', () => {
-  let service: MissionPwaUpdateService;
+describe('InterventionPwaUpdateService', () => {
+  let service: InterventionPwaUpdateService;
   let versionUpdates: Subject<VersionEvent>;
   let messages: { add: ReturnType<typeof vi.fn> };
   let confirmation: { confirm: ReturnType<typeof vi.fn> };
@@ -19,7 +19,7 @@ describe('MissionPwaUpdateService', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        MissionPwaUpdateService,
+        InterventionPwaUpdateService,
         {
           provide: SwUpdate,
           useValue: {
@@ -31,13 +31,13 @@ describe('MissionPwaUpdateService', () => {
         { provide: ConfirmationService, useValue: confirmation },
         { provide: MessageService, useValue: messages },
         {
-          provide: MissionOfflineService,
+          provide: InterventionOfflineService,
           useValue: { hasUnsyncedChanges: signal(true) },
         },
       ],
     });
 
-    service = TestBed.inject(MissionPwaUpdateService);
+    service = TestBed.inject(InterventionPwaUpdateService);
   });
 
   it('should register update monitoring only once', () => {

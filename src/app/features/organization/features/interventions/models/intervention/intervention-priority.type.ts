@@ -1,4 +1,4 @@
 /**
- * Supported mission priority values.
+ * Supported intervention priority values.
  */
-export type MissionPriority = 'low' | 'normal' | 'high' | 'urgent';
+export type InterventionPriority = 'low' | 'normal' | 'high' | 'urgent';

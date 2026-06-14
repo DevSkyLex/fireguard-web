@@ -1,13 +1,13 @@
 /**
- * Mission offline service exports.
+ * Intervention offline service exports.
  */
-export { MissionOfflineService } from './mission-offline.service';
-export { MissionDatabaseService } from './mission-database.service';
-export { MissionOutboxStore } from './mission-outbox.store';
-export { MissionWorkspaceRepository } from './mission-workspace.repository';
+export { InterventionOfflineService } from './intervention-offline.service';
+export { InterventionDatabaseService } from './intervention-database.service';
+export { InterventionOutboxStore } from './intervention-outbox.store';
+export { InterventionWorkspaceRepository } from './intervention-workspace.repository';
 export type {
   IndexedEntry,
-  MissionResourceRecord,
-  MissionScopedRecord,
-  MissionWorkspaceSnapshot,
+  InterventionResourceRecord,
+  InterventionScopedRecord,
+  InterventionWorkspaceSnapshot,
 } from './models';

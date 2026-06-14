@@ -1,4 +1,4 @@
 /**
- * Supported mission issue severity values.
+ * Supported intervention issue severity values.
  */
-export type MissionIssueSeverity = 'blocker' | 'warning' | 'recommendation';
+export type InterventionIssueSeverity = 'blocker' | 'warning' | 'recommendation';

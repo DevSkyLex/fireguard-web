@@ -1,1 +1,1 @@
-export { MissionWorkspaceOptimisticService } from './mission-workspace-optimistic.service';
+export { InterventionWorkspaceOptimisticService } from './intervention-workspace-optimistic.service';

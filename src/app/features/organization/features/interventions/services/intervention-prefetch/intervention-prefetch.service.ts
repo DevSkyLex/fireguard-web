@@ -2,23 +2,23 @@ import { effect, inject, Injectable, Injector } from '@angular/core';
 import { catchError, EMPTY, forkJoin, from, map, type Observable, switchMap } from 'rxjs';
 import { ConnectivityService } from '@core/services/connectivity';
 import { OrganizationMemberService } from '@features/organization/data-access';
-import { MissionService } from '@features/organization/features/missions/data-access';
-import type { MissionOutput } from '@features/organization/features/missions/models';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { MissionOfflineService } from '../mission-offline';
+import { InterventionOfflineService } from '../intervention-offline';
 
 /**
- * Service MissionPrefetchService
- * @class MissionPrefetchService
+ * Service InterventionPrefetchService
+ * @class InterventionPrefetchService
  *
  * @description
- * Provides mission prefetch operations.
+ * Provides intervention prefetch operations.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
-export class MissionPrefetchService {
+export class InterventionPrefetchService {
   /**
    * Property organization
    * @readonly
@@ -57,9 +57,9 @@ export class MissionPrefetchService {
    * @access private
    * @since 1.0.0
    *
-   * @type {MissionService}
+   * @type {InterventionService}
    */
-  private readonly service: MissionService = inject(MissionService);
+  private readonly service: InterventionService = inject(InterventionService);
 
   /**
    * Property offline
@@ -71,9 +71,9 @@ export class MissionPrefetchService {
    * @access private
    * @since 1.0.0
    *
-   * @type {MissionOfflineService}
+   * @type {InterventionOfflineService}
    */
-  private readonly offline: MissionOfflineService = inject(MissionOfflineService);
+  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
 
   /**
    * Property members
@@ -144,13 +144,13 @@ export class MissionPrefetchService {
                 responsible: `/api/organizations/${organizationId}/members/${profile.id}`,
               }),
             ),
-            switchMap((missions) =>
+            switchMap((interventions) =>
               forkJoin(
-                missions
+                interventions
                   .filter((item) =>
                     ['planned', 'in_progress', 'changes_requested'].includes(item.status),
                   )
-                  .map((mission) => this.prefetch(organizationId, mission)),
+                  .map((intervention) => this.prefetch(organizationId, intervention)),
               ),
             ),
             catchError(() => EMPTY),
@@ -173,19 +173,19 @@ export class MissionPrefetchService {
    * @since 1.0.0
    *
    * @param {string} organizationId - Organization owning the prefetch request.
-   * @param {MissionOutput} mission - mission value.
+   * @param {InterventionOutput} intervention - intervention value.
    *
    * @return {Observable<void>} Result of the prefetch operation.
    */
-  private prefetch(organizationId: string, mission: MissionOutput): Observable<void> {
+  private prefetch(organizationId: string, intervention: InterventionOutput): Observable<void> {
     return forkJoin({
-      workItems: this.service.listAllWorkItems(mission.id),
-      changes: this.service.listAllChanges(mission.id),
-      issues: this.service.listIssues(mission.id),
+      workItems: this.service.listAllWorkItems(intervention.id),
+      changes: this.service.listAllChanges(intervention.id),
+      issues: this.service.listIssues(intervention.id),
     }).pipe(
       switchMap(({ workItems, changes, issues }) => {
         if (this.organization.selectedOrganization()?.id !== organizationId) return EMPTY;
-        return from(this.offline.saveWorkspace(mission, workItems, changes, issues.member));
+        return from(this.offline.saveWorkspace(intervention, workItems, changes, issues.member));
       }),
       map(() => undefined),
     );

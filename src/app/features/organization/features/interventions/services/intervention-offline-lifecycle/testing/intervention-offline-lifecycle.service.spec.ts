@@ -2,10 +2,10 @@ import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Events } from '@ngrx/signals/events';
 import { Subject } from 'rxjs';
-import { MissionDatabaseService } from '../../mission-offline';
-import { MissionOfflineLifecycleService } from '../mission-offline-lifecycle.service';
+import { InterventionDatabaseService } from '../../intervention-offline';
+import { InterventionOfflineLifecycleService } from '../intervention-offline-lifecycle.service';
 
-describe('MissionOfflineLifecycleService', () => {
+describe('InterventionOfflineLifecycleService', () => {
   let logoutSucceeded: Subject<void>;
   let database: { resetOwnerData: ReturnType<typeof vi.fn> };
   let errorHandler: { handleError: ReturnType<typeof vi.fn> };
@@ -17,16 +17,16 @@ describe('MissionOfflineLifecycleService', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        MissionOfflineLifecycleService,
-        { provide: MissionDatabaseService, useValue: database },
+        InterventionOfflineLifecycleService,
+        { provide: InterventionDatabaseService, useValue: database },
         { provide: ErrorHandler, useValue: errorHandler },
         { provide: Events, useValue: { on: vi.fn().mockReturnValue(logoutSucceeded) } },
       ],
     });
   });
 
-  it('purges mission data on logout', async () => {
-    TestBed.inject(MissionOfflineLifecycleService).start();
+  it('purges intervention data on logout', async () => {
+    TestBed.inject(InterventionOfflineLifecycleService).start();
 
     logoutSucceeded.next();
     await vi.waitFor(() => expect(database.resetOwnerData).toHaveBeenCalledOnce());
@@ -35,7 +35,7 @@ describe('MissionOfflineLifecycleService', () => {
   it('reports a failed logout purge through Angular error handling', async () => {
     const error = new Error('IndexedDB purge failed');
     database.resetOwnerData.mockRejectedValue(error);
-    TestBed.inject(MissionOfflineLifecycleService).start();
+    TestBed.inject(InterventionOfflineLifecycleService).start();
 
     logoutSucceeded.next();
     await vi.waitFor(() => expect(errorHandler.handleError).toHaveBeenCalledWith(error));

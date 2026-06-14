@@ -1,7 +1,7 @@
 /**
- * Workflow status of a mission from creation to publication.
+ * Workflow status of a intervention from creation to publication.
  */
-export type MissionStatus =
+export type InterventionStatus =
   | 'draft'
   | 'planned'
   | 'in_progress'

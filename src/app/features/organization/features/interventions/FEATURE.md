@@ -1,45 +1,45 @@
-# Missions Feature
+# Interventions Feature
 
 ## Purpose
 
-Owns organization-scoped field mission workflows.
+Owns organization-scoped field intervention workflows.
 
 This subfeature is responsible for:
 
-- mission listing and creation,
-- mission detail orchestration,
-- mission publication and issue checks,
-- mission offline persistence and outbox replay.
+- intervention listing and creation,
+- intervention detail orchestration,
+- intervention publication and issue checks,
+- intervention offline persistence and outbox replay.
 
 ## Entry Points
 
-- Routes: `missions.routes.ts`
+- Routes: `interventions.routes.ts`
 - Public API: `index.ts`
-- Feature providers: `missions.feature.ts`
+- Feature providers: `interventions.feature.ts`
 
 ## Routes
 
-- `/organizations/:organizationId/missions`
-- `/organizations/:organizationId/missions/:missionId`
+- `/organizations/:organizationId/interventions`
+- `/organizations/:organizationId/interventions/:interventionId`
 
 ## State and Data Access
 
 Stores:
 
-- `MissionStore` — root-scoped; mission list and creation (normalized entities + request state).
-- `MissionWorkspaceStore` — component-scoped (provided in `MissionDetailPage`); the active mission workspace (mission, work items, changes, issues) with online/offline mutations.
+- `InterventionStore` — root-scoped; intervention list and creation (normalized entities + request state).
+- `InterventionWorkspaceStore` — component-scoped (provided in `InterventionDetailPage`); the active intervention workspace (intervention, work items, changes, issues) with online/offline mutations.
 
 Primary services:
 
-- `MissionService`
-- `MissionOfflineService` — thin façade + cross-cutting purges. Delegates to:
-  - `MissionDatabaseService` — IndexedDB connection/schema, CRUD primitives, owner binding.
-  - `MissionOutboxStore` — replay outbox + `hasUnsyncedChanges` signal.
-  - `MissionWorkspaceRepository` — normalized workspace persistence.
-- `MissionSyncService` — outbox replay.
-- `MissionSyncCoordinatorService` — replays the outbox when connectivity/visibility is regained.
-- `MissionPwaUpdateService`
-- `MissionPrefetchService`
+- `InterventionService`
+- `InterventionOfflineService` — thin façade + cross-cutting purges. Delegates to:
+  - `InterventionDatabaseService` — IndexedDB connection/schema, CRUD primitives, owner binding.
+  - `InterventionOutboxStore` — replay outbox + `hasUnsyncedChanges` signal.
+  - `InterventionWorkspaceRepository` — normalized workspace persistence.
+- `InterventionSyncService` — outbox replay.
+- `InterventionSyncCoordinatorService` — replays the outbox when connectivity/visibility is regained.
+- `InterventionPwaUpdateService`
+- `InterventionPrefetchService`
 
 Connectivity decisions across the feature read the shared
 `ConnectivityService` (`core`), not `navigator.onLine` directly.
@@ -47,15 +47,15 @@ Connectivity decisions across the feature read the shared
 Architecture note:
 
 - `state/` hosts NgRx SignalStore slices only.
-- `services/` hosts mission utility services, one folder per service.
+- `services/` hosts intervention utility services, one folder per service.
 
 Main provider:
 
-- `provideMissionsFeature`
+- `provideInterventionsFeature`
 
 ## Invariants
 
-- Mission workflows remain organization-scoped.
+- Intervention workflows remain organization-scoped.
 - Offline outbox replay belongs to this subfeature, not `core`.
-- Mission pages orchestrate mission services and mission stores.
-- Mission route pages live under `ui/pages/`.
+- Intervention pages orchestrate intervention services and intervention stores.
+- Intervention route pages live under `ui/pages/`.

@@ -1,4 +1,4 @@
 /**
- * Supported phases of the mission workspace.
+ * Supported phases of the intervention workspace.
  */
-export type MissionPhase = 'prepare' | 'execute' | 'review';
+export type InterventionPhase = 'prepare' | 'execute' | 'review';

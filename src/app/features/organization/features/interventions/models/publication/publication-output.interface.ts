@@ -6,7 +6,7 @@ import type { PublicationStatus } from './publication-status.type';
  * @interface PublicationOutput
  *
  * @description
- * Publication resource tracking mission publication execution.
+ * Publication resource tracking intervention publication execution.
  */
 export interface PublicationOutput extends HydraItem {
   //#region Properties
@@ -22,26 +22,26 @@ export interface PublicationOutput extends HydraItem {
   readonly id: string;
 
   /**
-   * Property mission
+   * Property intervention
    * @readonly
    *
    * @description
-   * IRI of the published mission.
+   * IRI of the published intervention.
    *
    * @type {string}
    */
-  readonly mission: string;
+  readonly intervention: string;
 
   /**
-   * Property missionRevision
+   * Property interventionRevision
    * @readonly
    *
    * @description
-   * Mission revision targeted by this publication.
+   * Intervention revision targeted by this publication.
    *
    * @type {number}
    */
-  readonly missionRevision: number;
+  readonly interventionRevision: number;
 
   /**
    * Property status

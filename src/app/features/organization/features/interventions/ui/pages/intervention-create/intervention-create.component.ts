@@ -12,38 +12,38 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectModule } from 'primeng/select';
-import { MissionService } from '@features/organization/features/missions/data-access';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
-  MissionPriority,
-  MissionType,
+  InterventionPriority,
+  InterventionType,
   SelectOption,
-} from '@features/organization/features/missions/models';
+} from '@features/organization/features/interventions/models';
 import {
-  MissionPlanningOptionsStore,
-  type MissionPlanningOptionsStoreType,
-} from '@features/organization/features/missions/state/mission-planning-options';
+  InterventionPlanningOptionsStore,
+  type InterventionPlanningOptionsStoreType,
+} from '@features/organization/features/interventions/state/intervention-planning-options';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
- * Component MissionCreatePage
- * @class MissionCreatePage
+ * Component InterventionCreatePage
+ * @class InterventionCreatePage
  *
  * @description
- * Orchestrates the mission create page.
+ * Orchestrates the intervention create page.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-mission-create-page',
+  selector: 'app-intervention-create-page',
   imports: [ButtonModule, FormsModule, InputTextModule, MultiSelectModule, SelectModule],
-  providers: [MissionPlanningOptionsStore],
-  templateUrl: './mission-create.component.html',
+  providers: [InterventionPlanningOptionsStore],
+  templateUrl: './intervention-create.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MissionCreatePage {
-  protected readonly planningOptions: MissionPlanningOptionsStoreType = inject(
-    MissionPlanningOptionsStore,
+export class InterventionCreatePage {
+  protected readonly planningOptions: InterventionPlanningOptionsStoreType = inject(
+    InterventionPlanningOptionsStore,
   );
 
   /**
@@ -70,9 +70,9 @@ export class MissionCreatePage {
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<MissionType>}
+   * @type {WritableSignal<InterventionType>}
    */
-  protected readonly type: WritableSignal<MissionType> = signal<MissionType>('site_setup');
+  protected readonly type: WritableSignal<InterventionType> = signal<InterventionType>('site_setup');
 
   /**
    * Property site
@@ -128,9 +128,9 @@ export class MissionCreatePage {
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<MissionPriority>}
+   * @type {WritableSignal<InterventionPriority>}
    */
-  protected readonly priority: WritableSignal<MissionPriority> = signal<MissionPriority>('normal');
+  protected readonly priority: WritableSignal<InterventionPriority> = signal<InterventionPriority>('normal');
 
   /**
    * Property plannedStartAt
@@ -254,7 +254,7 @@ export class MissionCreatePage {
    *
    * @type {typeof priorityOptions}
    */
-  protected readonly priorityOptions: SelectOption<MissionPriority>[] = [
+  protected readonly priorityOptions: SelectOption<InterventionPriority>[] = [
     { label: 'Low', value: 'low' },
     { label: 'Normal', value: 'normal' },
     { label: 'High', value: 'high' },
@@ -262,24 +262,24 @@ export class MissionCreatePage {
   ];
 
   /**
-   * Property missionTypes
+   * Property interventionTypes
    * @readonly
    *
    * @description
-   * Provides the mission types value.
+   * Provides the intervention types value.
    *
    * @access protected
    * @since 1.0.0
    *
    * @type {readonly {
-   * value: MissionType;
+   * value: InterventionType;
    * label: string;
    * description: string;
    * icon: string;
    * }[]}
    */
-  protected readonly missionTypes: readonly {
-    value: MissionType;
+  protected readonly interventionTypes: readonly {
+    value: InterventionType;
     label: string;
     description: string;
     icon: string;
@@ -319,18 +319,18 @@ export class MissionCreatePage {
   private readonly organization: ActiveOrganizationStore = inject(ActiveOrganizationStore);
 
   /**
-   * Property missions
+   * Property interventions
    * @readonly
    *
    * @description
-   * Provides the missions value.
+   * Provides the interventions value.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {MissionService}
+   * @type {InterventionService}
    */
-  private readonly missions: MissionService = inject(MissionService);
+  private readonly interventions: InterventionService = inject(InterventionService);
 
   /**
    * Property router
@@ -380,7 +380,7 @@ export class MissionCreatePage {
     const organizationId = this.organization.selectedOrganization()?.id;
     if (!organizationId || !this.name().trim()) return;
     this.creating.set(true);
-    this.missions
+    this.interventions
       .create(organizationId, this.name().trim(), {
         type: this.type(),
         site: this.site(),
@@ -391,8 +391,8 @@ export class MissionCreatePage {
         dueAt: new Date(this.dueAt()).toISOString(),
       })
       .subscribe({
-        next: (mission) =>
-          void this.router.navigate(['/organizations', organizationId, 'missions', mission.id]),
+        next: (intervention) =>
+          void this.router.navigate(['/organizations', organizationId, 'interventions', intervention.id]),
         error: () => this.creating.set(false),
       });
   }

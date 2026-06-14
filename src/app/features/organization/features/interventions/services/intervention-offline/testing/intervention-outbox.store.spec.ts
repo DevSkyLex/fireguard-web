@@ -3,10 +3,10 @@ import { TestBed } from '@angular/core/testing';
 import { Events } from '@ngrx/signals/events';
 import { EMPTY } from 'rxjs';
 import { USER_IDENTITY_PORT } from '@features/account/ports';
-import { MissionDatabaseService } from '../mission-database.service';
-import { MissionOutboxStore } from '../mission-outbox.store';
+import { InterventionDatabaseService } from '../intervention-database.service';
+import { InterventionOutboxStore } from '../intervention-outbox.store';
 
-describe('MissionOutboxStore', () => {
+describe('InterventionOutboxStore', () => {
   it('persists a grouped field intention in one IndexedDB transaction', async () => {
     const database = {
       browser: false,
@@ -15,14 +15,14 @@ describe('MissionOutboxStore', () => {
     };
     TestBed.configureTestingModule({
       providers: [
-        MissionOutboxStore,
-        { provide: MissionDatabaseService, useValue: database },
+        InterventionOutboxStore,
+        { provide: InterventionDatabaseService, useValue: database },
         { provide: Events, useValue: { on: vi.fn().mockReturnValue(EMPTY) } },
         { provide: USER_IDENTITY_PORT, useValue: { profile: signal(null) } },
       ],
     });
 
-    const operationIds = await TestBed.inject(MissionOutboxStore).queueMany('mission-1', [
+    const operationIds = await TestBed.inject(InterventionOutboxStore).queueMany('intervention-1', [
       {
         type: 'equipment.create',
         payload: { clientId: 'equipment-1', type: 'fire_extinguisher' },
@@ -31,7 +31,7 @@ describe('MissionOutboxStore', () => {
         type: 'work-item.create',
         payload: {
           clientId: 'work-item-1',
-          mission: '/api/missions/mission-1',
+          intervention: '/api/interventions/intervention-1',
           action: 'inventory',
           target: '/api/equipment/equipment-1',
           source: 'discovered',

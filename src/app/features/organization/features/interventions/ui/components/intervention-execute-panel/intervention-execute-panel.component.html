@@ -86,7 +86,7 @@
           {{ progress() }}% complete · {{ workItems().length }} task(s)
         </p>
       </div>
-      <p-tag [value]="mission().status.replace('_', ' ')" severity="info" />
+      <p-tag [value]="intervention().status.replace('_', ' ')" severity="info" />
     </div>
 
     <p-scroller [items]="scrollerItems()" [itemSize]="84" scrollHeight="min(54vh, 36rem)">
@@ -148,7 +148,7 @@
       {{
         canSubmit()
           ? 'Submit once every work item is resolved.'
-          : 'Only the responsible agent can submit the mission.'
+          : 'Only the responsible agent can submit the intervention.'
       }}
     </p>
     <p-button
@@ -156,7 +156,7 @@
       icon="pi pi-send"
       [loading]="saving()"
       [disabled]="!canSubmit() || progress() < 100"
-      (onClick)="submitMission.emit()"
+      (onClick)="submitIntervention.emit()"
     />
   </div>
 </section>

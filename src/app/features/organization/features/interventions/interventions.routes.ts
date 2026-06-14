@@ -1,76 +1,76 @@
 import type { Routes } from '@angular/router';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import type { MissionCreatePage } from './ui/pages/mission-create/mission-create.component';
-import type { MissionDetailPage } from './ui/pages/mission-detail/mission-detail.component';
-import type { MissionListPage } from './ui/pages/mission-list/mission-list.component';
-import type { MyMissionsPage } from './ui/pages/my-missions/my-missions.component';
+import type { InterventionCreatePage } from './ui/pages/intervention-create/intervention-create.component';
+import type { InterventionDetailPage } from './ui/pages/intervention-detail/intervention-detail.component';
+import type { InterventionListPage } from './ui/pages/intervention-list/intervention-list.component';
+import type { MyInterventionsPage } from './ui/pages/my-interventions/my-interventions.component';
 
 /**
- * Constant MISSION_ROUTES
- * @const MISSION_ROUTES
+ * Constant INTERVENTION_ROUTES
+ * @const INTERVENTION_ROUTES
  *
  * @description
- * Route tree for organization-scoped mission workflows.
+ * Route tree for organization-scoped intervention workflows.
  *
- * - `/organizations/:organizationId/missions` exposes the mission list page
- *   used to start or resume field missions.
- * - `/organizations/:organizationId/missions/:missionId` exposes the mission
+ * - `/organizations/:organizationId/interventions` exposes the intervention list page
+ *   used to start or resume field interventions.
+ * - `/organizations/:organizationId/interventions/:interventionId` exposes the intervention
  *   detail page that orchestrates facilities, equipment and inspections for
- *   one mission.
+ *   one intervention.
  *
- * Access is protected by organization permission guards so mission pages are
- * available only when the active member can read mission data.
+ * Access is protected by organization permission guards so intervention pages are
+ * available only when the active member can read intervention data.
  *
  * @since 1.0.0
  *
  * @type {Routes}
  */
-export const MISSION_ROUTES: Routes = [
+export const INTERVENTION_ROUTES: Routes = [
   {
     path: 'my',
     canActivate: [
-      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.MISSIONS_READ] }),
+      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ] }),
     ],
-    loadComponent: (): Promise<typeof MyMissionsPage> =>
-      import('./ui/pages/my-missions/my-missions.component').then(
-        (module) => module.MyMissionsPage,
+    loadComponent: (): Promise<typeof MyInterventionsPage> =>
+      import('./ui/pages/my-interventions/my-interventions.component').then(
+        (module) => module.MyInterventionsPage,
       ),
-    title: 'My missions',
+    title: 'My interventions',
   },
   {
     path: 'new',
     canActivate: [
-      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.MISSIONS_PLAN] }),
+      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN] }),
     ],
-    loadComponent: (): Promise<typeof MissionCreatePage> =>
-      import('./ui/pages/mission-create/mission-create.component').then(
-        (module) => module.MissionCreatePage,
+    loadComponent: (): Promise<typeof InterventionCreatePage> =>
+      import('./ui/pages/intervention-create/intervention-create.component').then(
+        (module) => module.InterventionCreatePage,
       ),
-    title: 'New mission',
+    title: 'New intervention',
   },
   {
-    path: ':missionId',
+    path: ':interventionId',
     canActivate: [
-      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.MISSIONS_READ] }),
+      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ] }),
     ],
-    loadComponent: (): Promise<typeof MissionDetailPage> =>
-      import('./ui/pages/mission-detail/mission-detail.component').then(
-        (module) => module.MissionDetailPage,
+    loadComponent: (): Promise<typeof InterventionDetailPage> =>
+      import('./ui/pages/intervention-detail/intervention-detail.component').then(
+        (module) => module.InterventionDetailPage,
       ),
-    title: 'Mission',
+    title: 'Intervention',
   },
   {
     path: '',
     pathMatch: 'full',
     canActivate: [
-      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.MISSIONS_READ] }),
+      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ] }),
     ],
-    loadComponent: (): Promise<typeof MissionListPage> =>
-      import('./ui/pages/mission-list/mission-list.component').then(
-        (module) => module.MissionListPage,
+    loadComponent: (): Promise<typeof InterventionListPage> =>
+      import('./ui/pages/intervention-list/intervention-list.component').then(
+        (module) => module.InterventionListPage,
       ),
-    title: 'Missions',
+    title: 'Interventions',
     data: { breadcrumb: false, preload: true },
   },
 ];

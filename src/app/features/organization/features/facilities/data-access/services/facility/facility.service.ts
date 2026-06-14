@@ -273,30 +273,30 @@ export class FacilityService extends HydraApiService {
   }
 
   /**
-   * Method createForMission
-   * @method createForMission
+   * Method createForIntervention
+   * @method createForIntervention
    *
    * @description
-   * Executes the create for mission operation.
+   * Executes the create for intervention operation.
    *
    * @access public
    * @since 1.0.0
    *
    * @param {string} organizationId - organization Id value.
-   * @param {string} missionId - mission Id value.
+   * @param {string} interventionId - intervention Id value.
    * @param {CreateFacilityInput} input - input value.
    *
-   * @return {Observable<FacilityOutput>} Result of the create for mission operation.
+   * @return {Observable<FacilityOutput>} Result of the create for intervention operation.
    */
-  public createForMission(
+  public createForIntervention(
     organizationId: string,
-    missionId: string,
+    interventionId: string,
     input: CreateFacilityInput,
   ): Observable<FacilityOutput> {
     const payload: CreateFacilityInput = {
       ...input,
       organization: `/api/organizations/${organizationId}`,
-      mission: `/api/missions/${missionId}`,
+      intervention: `/api/interventions/${interventionId}`,
     };
     if (input.clientId) {
       return this.put<CreateFacilityInput, FacilityOutput>(

@@ -110,20 +110,20 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
   },
   {
-    id: 'my-missions',
-    label: 'My missions',
+    id: 'my-interventions',
+    label: 'My interventions',
     icon: 'pi pi-briefcase',
-    path: 'missions/my',
-    permissions: [ORGANIZATION_PERMISSION.MISSIONS_READ],
+    path: 'interventions/my',
+    permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ],
   },
 
-  /** Mission workspace entry for field preparation and publication flows. */
+  /** Intervention workspace entry for field preparation and publication flows. */
   {
-    id: 'missions',
-    label: 'Missions',
+    id: 'interventions',
+    label: 'Interventions',
     icon: 'pi pi-compass',
-    path: 'missions',
-    permissions: [ORGANIZATION_PERMISSION.MISSIONS_READ],
+    path: 'interventions',
+    permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ],
   },
   {
     id: 'facilities',

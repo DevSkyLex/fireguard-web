@@ -21,15 +21,15 @@ export const ORGANIZATION_PERMISSION = {
   EQUIPMENT_WRITE: 'organization.equipment.write',
   INSPECTION_READ: 'organization.inspection.read',
   INSPECTION_WRITE: 'organization.inspection.write',
-  /** Read access to mission pages and mission-linked resources. */
-  MISSIONS_READ: 'organization.missions.read',
-  /** Write access to mission entities during preparation phase. */
-  MISSIONS_WRITE: 'organization.missions.write',
-  MISSIONS_PLAN: 'organization.missions.plan',
-  MISSIONS_EXECUTE: 'organization.missions.execute',
-  MISSIONS_REVIEW: 'organization.missions.review',
-  /** Permission required to trigger mission publication. */
-  MISSIONS_PUBLISH: 'organization.missions.publish',
+  /** Read access to intervention pages and intervention-linked resources. */
+  INTERVENTIONS_READ: 'organization.interventions.read',
+  /** Write access to intervention entities during preparation phase. */
+  INTERVENTIONS_WRITE: 'organization.interventions.write',
+  INTERVENTIONS_PLAN: 'organization.interventions.plan',
+  INTERVENTIONS_EXECUTE: 'organization.interventions.execute',
+  INTERVENTIONS_REVIEW: 'organization.interventions.review',
+  /** Permission required to trigger intervention publication. */
+  INTERVENTIONS_PUBLISH: 'organization.interventions.publish',
   LEGAL_PROFILE_WRITE: 'organization.legal_profile.write',
   ALL: 'organization.*',
 } as const;

@@ -1,0 +1,16 @@
+<div id="intervention-list" class="flex h-full flex-col gap-6">
+  <div class="flex justify-end">
+    <p-button label="Create guided intervention" icon="pi pi-plus" (onClick)="createGuidedIntervention()" />
+  </div>
+  <app-intervention-table
+    class="flex min-h-0 flex-1 flex-col"
+    [interventions]="store.interventionList()"
+    [total]="store.totalInterventions()"
+    [loading]="store.isLoadingInterventions()"
+    [creating]="store.isCreating()"
+    [empty]="store.isEmpty()"
+    (create)="onCreate($event)"
+    (refresh)="onRefresh()"
+    (view)="onView($event)"
+  />
+</div>

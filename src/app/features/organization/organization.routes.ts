@@ -39,19 +39,19 @@ export const ORGANIZATION_ROUTES: Routes = [
     },
     children: [
       /**
-       * Mission workspace entrypoint.
+       * Intervention workspace entrypoint.
        *
-       * The mission subfeature remains fully lazy-loaded and owns its own
+       * The intervention subfeature remains fully lazy-loaded and owns its own
        * permission gates and page orchestration.
        */
       {
-        path: 'missions',
+        path: 'interventions',
         data: {
-          breadcrumb: 'Missions',
+          breadcrumb: 'Interventions',
           preload: true,
         },
         loadChildren: () =>
-          import('./features/missions/missions.routes').then((m) => m.MISSION_ROUTES),
+          import('./features/interventions/interventions.routes').then((m) => m.INTERVENTION_ROUTES),
       },
       {
         path: 'facilities',

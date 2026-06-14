@@ -1,0 +1,110 @@
+<section class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
+  <div class="flex flex-col gap-5">
+    @if (publicationMessage(); as message) {
+      <p-message severity="info" [closable]="false">{{ message }}</p-message>
+    }
+    @if (!online()) {
+      <p-message severity="warn" [closable]="false">
+        Connect to the network before publishing this intervention.
+      </p-message>
+    }
+
+    @if (issues().length > 0) {
+      <div
+        class="rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-950"
+      >
+        <h2 class="font-semibold">Validation findings</h2>
+        <div class="mt-4 grid gap-3">
+          @for (issue of issues(); track issue.resource + issue.message) {
+            <p-message
+              [severity]="
+                issue.severity === 'blocker'
+                  ? 'error'
+                  : issue.severity === 'warning'
+                    ? 'warn'
+                    : 'info'
+              "
+            >
+              {{ issue.message }}
+            </p-message>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="grid gap-4 md:grid-cols-3">
+      <article
+        class="rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-950"
+      >
+        <p class="text-xs font-medium text-surface-500 uppercase">Skipped</p>
+        <p class="mt-2 text-3xl font-semibold tabular-nums">{{ skippedItems().length }}</p>
+        <p class="mt-2 text-sm text-surface-500">Reasons requiring manager review</p>
+      </article>
+      <article
+        class="rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-950"
+      >
+        <p class="text-xs font-medium text-surface-500 uppercase">Discoveries</p>
+        <p class="mt-2 text-3xl font-semibold tabular-nums">{{ discoveredItems().length }}</p>
+        <p class="mt-2 text-sm text-surface-500">Unplanned field work added by agents</p>
+      </article>
+      <article
+        class="rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-950"
+      >
+        <p class="text-xs font-medium text-surface-500 uppercase">Proposed changes</p>
+        <p class="mt-2 text-3xl font-semibold tabular-nums">{{ changes().length }}</p>
+        <p class="mt-2 text-sm text-surface-500">Updates applied atomically on publication</p>
+      </article>
+    </div>
+
+    <div
+      class="rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-950"
+    >
+      <h2 class="font-semibold">Proposed changes</h2>
+      <div class="mt-4 grid gap-3">
+        @for (change of changes(); track change.id) {
+          <article
+            class="flex items-start justify-between gap-4 rounded-lg border border-surface-200 p-4 dark:border-surface-800"
+          >
+            <div class="min-w-0">
+              <p class="truncate font-medium">{{ change.resource }}</p>
+              <p class="mt-1 text-sm text-surface-500">{{ change.patch | json }}</p>
+            </div>
+            <p-tag
+              [value]="change.status"
+              [severity]="change.status === 'rejected' ? 'danger' : 'info'"
+            />
+          </article>
+        } @empty {
+          <p class="text-sm text-surface-500">No proposed changes.</p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <aside
+    class="h-fit rounded-xl border border-surface-200 bg-surface-0 p-5 xl:sticky xl:top-4 dark:border-surface-800 dark:bg-surface-950"
+  >
+    <p class="text-xs font-semibold tracking-wide text-surface-500 uppercase">Review decision</p>
+    <p class="mt-3 text-sm text-surface-600 dark:text-surface-300">
+      Publication is atomic. A failed publication leaves all operational records unchanged.
+    </p>
+    <div class="mt-5 grid gap-2">
+      <p-button
+        label="Request changes"
+        icon="pi pi-replay"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="saving()"
+        [disabled]="intervention().status !== 'submitted'"
+        (onClick)="requestCorrection()"
+      />
+      <p-button
+        label="Publish intervention"
+        icon="pi pi-check-circle"
+        [loading]="saving()"
+        [disabled]="!online() || intervention().status !== 'submitted' || intervention().blockersCount > 0"
+        (onClick)="publishIntervention.emit()"
+      />
+    </div>
+  </aside>
+</section>

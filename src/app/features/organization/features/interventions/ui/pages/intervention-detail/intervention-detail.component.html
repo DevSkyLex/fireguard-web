@@ -31,7 +31,7 @@
         </div>
       </ng-template>
       <ng-template #end>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2" aria-live="polite">
           @if (offline.hasUnsyncedChanges()) {
             <p-tag value="Pending sync" icon="pi pi-cloud-upload" severity="warn" />
             <p-button
@@ -87,70 +87,50 @@
     </div>
 
     <div class="grid min-h-0 flex-1 gap-5 lg:grid-cols-[13rem_minmax(0,1fr)]">
-      <nav class="flex gap-2 overflow-x-auto lg:flex-col" aria-label="Intervention phases">
-        <button
-          type="button"
-          class="flex min-w-40 items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors motion-reduce:transition-none"
-          [class.border-primary]="activePhase() === 'prepare'"
-          [class.bg-primary-50]="activePhase() === 'prepare'"
-          [class.dark:bg-primary-950]="activePhase() === 'prepare'"
-          [class.border-surface-200]="activePhase() !== 'prepare'"
-          [class.dark:border-surface-800]="activePhase() !== 'prepare'"
-          [attr.aria-pressed]="activePhase() === 'prepare'"
-          (click)="selectPhase('prepare')"
-        >
-          <span
-            class="flex size-7 items-center justify-center rounded-full bg-surface-100 text-xs font-semibold dark:bg-surface-800"
-            >1</span
+      <nav
+        class="flex gap-2 overflow-x-auto lg:flex-col"
+        role="tablist"
+        aria-label="Intervention phases"
+        aria-orientation="vertical"
+      >
+        @for (phase of phaseTabs; track phase.id) {
+          <button
+            type="button"
+            role="tab"
+            [id]="'phase-tab-' + phase.id"
+            class="flex min-w-40 items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors motion-reduce:transition-none"
+            [class.border-primary]="activePhase() === phase.id"
+            [class.bg-primary-50]="activePhase() === phase.id"
+            [class.dark:bg-primary-950]="activePhase() === phase.id"
+            [class.border-surface-200]="activePhase() !== phase.id"
+            [class.dark:border-surface-800]="activePhase() !== phase.id"
+            [attr.aria-selected]="activePhase() === phase.id"
+            [attr.tabindex]="activePhase() === phase.id ? 0 : -1"
+            aria-controls="phase-panel"
+            (click)="selectPhase(phase.id)"
+            (keydown)="onPhaseKeydown($event, phase.id)"
           >
-          <span
-            ><strong class="block text-sm">Prepare</strong
-            ><small class="text-surface-500">Scope and assign</small></span
-          >
-        </button>
-        <button
-          type="button"
-          class="flex min-w-40 items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors motion-reduce:transition-none"
-          [class.border-primary]="activePhase() === 'execute'"
-          [class.bg-primary-50]="activePhase() === 'execute'"
-          [class.dark:bg-primary-950]="activePhase() === 'execute'"
-          [class.border-surface-200]="activePhase() !== 'execute'"
-          [class.dark:border-surface-800]="activePhase() !== 'execute'"
-          [attr.aria-pressed]="activePhase() === 'execute'"
-          (click)="selectPhase('execute')"
-        >
-          <span
-            class="flex size-7 items-center justify-center rounded-full bg-surface-100 text-xs font-semibold dark:bg-surface-800"
-            >2</span
-          >
-          <span
-            ><strong class="block text-sm">Execute</strong
-            ><small class="text-surface-500">Field work</small></span
-          >
-        </button>
-        <button
-          type="button"
-          class="flex min-w-40 items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors motion-reduce:transition-none"
-          [class.border-primary]="activePhase() === 'review'"
-          [class.bg-primary-50]="activePhase() === 'review'"
-          [class.dark:bg-primary-950]="activePhase() === 'review'"
-          [class.border-surface-200]="activePhase() !== 'review'"
-          [class.dark:border-surface-800]="activePhase() !== 'review'"
-          [attr.aria-pressed]="activePhase() === 'review'"
-          (click)="selectPhase('review')"
-        >
-          <span
-            class="flex size-7 items-center justify-center rounded-full bg-surface-100 text-xs font-semibold dark:bg-surface-800"
-            >3</span
-          >
-          <span
-            ><strong class="block text-sm">Review</strong
-            ><small class="text-surface-500">{{ store.blockerCount() }} blocker(s)</small></span
-          >
-        </button>
+            <span
+              class="flex size-7 items-center justify-center rounded-full bg-surface-100 text-xs font-semibold dark:bg-surface-800"
+              >{{ phase.step }}</span
+            >
+            <span
+              ><strong class="block text-sm">{{ phase.label }}</strong
+              ><small class="text-surface-500">{{
+                phase.id === 'review' ? store.blockerCount() + ' blocker(s)' : phase.hint
+              }}</small></span
+            >
+          </button>
+        }
       </nav>
 
-      <main class="min-h-0">
+      <main
+        class="min-h-0"
+        role="tabpanel"
+        id="phase-panel"
+        tabindex="0"
+        [attr.aria-labelledby]="'phase-tab-' + activePhase()"
+      >
         @switch (activePhase()) {
           @case ('prepare') {
             <app-intervention-prepare-panel

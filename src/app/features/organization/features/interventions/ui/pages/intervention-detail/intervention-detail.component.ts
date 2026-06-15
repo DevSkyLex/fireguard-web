@@ -536,6 +536,61 @@ export class InterventionDetailPage {
   }
 
   /**
+   * Property phaseTabs
+   * @readonly
+   *
+   * @description
+   * Ordered tab descriptors backing the phase tablist.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {readonly { id: InterventionPhase; label: string; hint: string; step: number }[]}
+   */
+  protected readonly phaseTabs: readonly {
+    id: InterventionPhase;
+    label: string;
+    hint: string;
+    step: number;
+  }[] = [
+    { id: 'prepare', label: 'Prepare', hint: 'Scope and assign', step: 1 },
+    { id: 'execute', label: 'Execute', hint: 'Field work', step: 2 },
+    { id: 'review', label: 'Review', hint: '', step: 3 },
+  ];
+
+  /**
+   * Method onPhaseKeydown
+   * @method onPhaseKeydown
+   *
+   * @description
+   * Implements the ARIA tablist keyboard pattern (arrow keys, Home/End) to move
+   * the active phase and focus, for the phase navigation.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {KeyboardEvent} event - keyboard event value.
+   * @param {InterventionPhase} phase - currently focused phase value.
+   *
+   * @return {void} Result of the on phase keydown operation.
+   */
+  protected onPhaseKeydown(event: KeyboardEvent, phase: InterventionPhase): void {
+    const current = this.phaseTabs.findIndex((tab) => tab.id === phase);
+    const last = this.phaseTabs.length - 1;
+    let nextIndex: number | null = null;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (current + 1) % (last + 1);
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp')
+      nextIndex = (current - 1 + last + 1) % (last + 1);
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = last;
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const next = this.phaseTabs[nextIndex].id;
+    this.selectPhase(next);
+    document.getElementById(`phase-tab-${next}`)?.focus();
+  }
+
+  /**
    * Method planIntervention
    * @method planIntervention
    *

@@ -1,5 +1,9 @@
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { type ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import {
+  type ApplicationConfig,
+  provideBrowserGlobalErrorListeners,
+  provideZonelessChangeDetection,
+} from '@angular/core';
 import {
   provideClientHydration,
   withEventReplay,
@@ -47,6 +51,7 @@ import { provideInterventionsFeature } from '@features/organization/features/int
  */
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideZonelessChangeDetection(),
     provideBrowserGlobalErrorListeners(),
     provideRouter(
       APP_ROUTES,

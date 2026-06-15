@@ -13,5 +13,4 @@ export interface InterventionCreateFormValues {
   readonly priority: InterventionPriority;
   readonly plannedStartAt: Date | null;
   readonly dueAt: Date | null;
-  readonly referencePack: string;
 }

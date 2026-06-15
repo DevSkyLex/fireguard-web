@@ -6,7 +6,6 @@ import { forkJoin, of, pipe, switchMap, tap } from 'rxjs';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
   MemberSelectOption,
   SelectOption,
@@ -18,7 +17,6 @@ const INITIAL_STATE: InterventionPlanningOptionsState = {
   sites: [],
   targets: [],
   members: [],
-  referencePacks: [],
   loading: false,
 };
 
@@ -67,7 +65,6 @@ export const InterventionPlanningOptionsStore = signalStore(
       facilities = inject(FacilityService),
       equipment = inject(EquipmentService),
       members = inject(OrganizationMemberService),
-      interventions = inject(InterventionService),
     ) => ({
       loadCreationOptions: rxMethod<string | null>(
         pipe(
@@ -76,7 +73,6 @@ export const InterventionPlanningOptionsStore = signalStore(
               sites: [],
               targets: [],
               members: [],
-              referencePacks: [],
               loading: true,
             }),
           ),
@@ -93,7 +89,6 @@ export const InterventionPlanningOptionsStore = signalStore(
                 page: 1,
                 itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
               }),
-              referencePacks: interventions.listReferencePacks(),
             });
           }),
           tapResponse({
@@ -111,10 +106,6 @@ export const InterventionPlanningOptionsStore = signalStore(
                 members: result.members.member.map((member) =>
                   memberOption(member, result.organizationId),
                 ),
-                referencePacks: result.referencePacks.member.map((pack) => ({
-                  label: pack.name,
-                  value: `/api/reference-packs/${pack.id}`,
-                })),
                 loading: false,
               });
             },
@@ -123,7 +114,6 @@ export const InterventionPlanningOptionsStore = signalStore(
                 sites: [],
                 targets: [],
                 members: [],
-                referencePacks: [],
                 loading: false,
               }),
           }),
@@ -190,6 +180,15 @@ export const InterventionPlanningOptionsStore = signalStore(
   ),
 );
 
+/**
+ * Type InterventionPlanningOptionsStoreType
+ * @type InterventionPlanningOptionsStoreType
+ *
+ * @description
+ * Injectable instance type exposed by {@link InterventionPlanningOptionsStore}.
+ *
+ * @since 1.0.0
+ */
 export type InterventionPlanningOptionsStoreType = InstanceType<
   typeof InterventionPlanningOptionsStore
 >;

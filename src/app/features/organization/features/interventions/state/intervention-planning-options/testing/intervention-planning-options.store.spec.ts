@@ -11,7 +11,7 @@ describe('InterventionPlanningOptionsStore', () => {
   let facilities: { list: ReturnType<typeof vi.fn> };
   let equipment: { list: ReturnType<typeof vi.fn> };
   let members: { list: ReturnType<typeof vi.fn> };
-  let interventions: { listReferencePacks: ReturnType<typeof vi.fn> };
+  let interventions: Record<string, never>;
 
   beforeEach(() => {
     facilities = {
@@ -45,13 +45,7 @@ describe('InterventionPlanningOptionsStore', () => {
         }),
       ),
     };
-    interventions = {
-      listReferencePacks: vi
-        .fn()
-        .mockReturnValue(
-          of({ member: [{ id: 'fr-erp-ert-v1', name: 'France ERP / ERT' }], totalItems: 1 }),
-        ),
-    };
+    interventions = {};
 
     TestBed.configureTestingModule({
       providers: [
@@ -77,12 +71,8 @@ describe('InterventionPlanningOptionsStore', () => {
       itemsPerPage: 100,
     });
     expect(equipment.list).not.toHaveBeenCalled();
-    expect(interventions.listReferencePacks).toHaveBeenCalledOnce();
     expect(store.targets()).toEqual([]);
     expect(store.sites()).toEqual([{ label: 'Site A', value: '/api/facilities/site-1' }]);
-    expect(store.referencePacks()).toEqual([
-      { label: 'France ERP / ERT', value: '/api/reference-packs/fr-erp-ert-v1' },
-    ]);
     expect(store.members()).toEqual([
       {
         label: 'Agent Alpha',

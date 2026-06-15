@@ -68,17 +68,6 @@ export interface InterventionOutput extends HydraItem {
   readonly status: InterventionStatus;
 
   /**
-   * Property referencePack
-   * @readonly
-   *
-   * @description
-   * IRI of the regulatory reference pack used for readiness checks.
-   *
-   * @type {string}
-   */
-  readonly referencePack: string;
-
-  /**
    * Property site
    * @readonly
    *

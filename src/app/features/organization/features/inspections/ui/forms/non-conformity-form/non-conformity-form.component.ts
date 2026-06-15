@@ -8,17 +8,21 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormControl,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validators,
+  type FormGroup,
+} from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
-import type {
-  AddNonConformityInput,
-  NonConformitySeverity,
-} from '@features/organization/features/inspections/models';
+import type { NonConformitySeverity } from '@features/organization/features/inspections/models';
+import type { NonConformityFormData, NonConformityFormValues } from './models';
 
 /**
  * Form used to add a non-conformity to an inspection.
@@ -41,7 +45,7 @@ export class NonConformityForm {
   /** Whether non-conformity submission is pending. */
   public readonly loading: InputSignal<boolean> = input(false);
   /** Emits valid non-conformity creation values. */
-  public readonly submitted: OutputEmitterRef<AddNonConformityInput> = output();
+  public readonly submitted: OutputEmitterRef<NonConformityFormValues> = output();
   /** Non-nullable builder preserving strict form value types. */
   private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
   /** Supported non-conformity severity options. */
@@ -52,12 +56,13 @@ export class NonConformityForm {
     { label: 'Critical', value: 'critical' },
   ];
   /** Strictly typed non-conformity form. */
-  protected readonly form = this.formBuilder.group({
-    description: this.formBuilder.control('', [Validators.required, Validators.minLength(3)]),
-    severity: this.formBuilder.control<NonConformitySeverity>('medium', [Validators.required]),
-    dueAt: this.formBuilder.control<Date | null>(null),
-    notes: this.formBuilder.control(''),
-  });
+  protected readonly form: FormGroup<NonConformityFormData> =
+    this.formBuilder.group<NonConformityFormData>({
+      description: this.formBuilder.control('', [Validators.required, Validators.minLength(3)]),
+      severity: this.formBuilder.control<NonConformitySeverity>('medium', [Validators.required]),
+      dueAt: new FormControl<Date | null>(null),
+      notes: this.formBuilder.control(''),
+    });
 
   /** Synchronizes the form disabled state with submission. */
   public constructor() {
@@ -73,13 +78,7 @@ export class NonConformityForm {
       this.form.markAllAsTouched();
       return;
     }
-    const values = this.form.getRawValue();
-    this.submitted.emit({
-      description: values.description,
-      severity: values.severity,
-      dueAt: values.dueAt?.toISOString() ?? null,
-      notes: values.notes || null,
-    });
+    this.submitted.emit(this.form.getRawValue());
     this.form.reset({ description: '', severity: 'medium', dueAt: null, notes: '' });
   }
 }

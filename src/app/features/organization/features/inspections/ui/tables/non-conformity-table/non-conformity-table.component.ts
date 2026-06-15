@@ -17,8 +17,10 @@ import type {
   NonConformityOutput,
   NonConformityStatus,
 } from '@features/organization/features/inspections/models';
-import type { AddNonConformityInput } from '@features/organization/features/inspections/models';
-import { NonConformityForm } from '@features/organization/features/inspections/ui/forms';
+import {
+  NonConformityForm,
+  type NonConformityFormValues,
+} from '@features/organization/features/inspections/ui/forms';
 
 /** Describes a requested non-conformity status transition. */
 export interface NonConformityStatusChange {
@@ -57,7 +59,7 @@ export class NonConformityTable {
   /** Whether the active member can add non-conformities. */
   public readonly canAdd: InputSignal<boolean> = input(false);
   /** Emits valid non-conformity creation values. */
-  public readonly add: OutputEmitterRef<AddNonConformityInput> = output();
+  public readonly add: OutputEmitterRef<NonConformityFormValues> = output();
   /** Emits a requested non-conformity status transition. */
   public readonly statusChange: OutputEmitterRef<NonConformityStatusChange> = output();
   /** Emits a non-conformity selected for detail display. */

@@ -4,10 +4,14 @@ import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { forkJoin, of, pipe, switchMap, tap } from 'rxjs';
 import { OrganizationMemberService } from '@features/organization/data-access';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
-import type { SelectOption } from '@features/organization/features/interventions/models';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
+import type {
+  MemberSelectOption,
+  SelectOption,
+} from '@features/organization/features/interventions/models';
+import type { OrganizationMemberOutput } from '@features/organization/models';
 import type { InterventionPlanningOptionsState } from './models';
 
 const INITIAL_STATE: InterventionPlanningOptionsState = {
@@ -19,6 +23,38 @@ const INITIAL_STATE: InterventionPlanningOptionsState = {
 };
 
 const PLANNING_OPTION_PAGE_SIZE = 100;
+
+function memberOption(
+  member: OrganizationMemberOutput,
+  organizationId: string,
+): MemberSelectOption {
+  const displayName: string =
+    member.displayName?.trim() ||
+    [member.firstName, member.lastName].filter(Boolean).join(' ').trim() ||
+    member.userId;
+  const initials: string =
+    [member.firstName, member.lastName]
+      .filter(Boolean)
+      .map((part) => part?.charAt(0))
+      .join('')
+      .toUpperCase() ||
+    displayName
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase() ||
+    '?';
+
+  return {
+    label: displayName,
+    value: `/api/organizations/${organizationId}/members/${member.id}`,
+    displayName,
+    roleLabel: member.roleNames?.join(', ') || 'No assigned role',
+    avatarUrl: member.avatarUrl ?? null,
+    initials,
+  };
+}
 
 /**
  * Loads and maps the organization resources used by intervention planning forms.
@@ -72,10 +108,9 @@ export const InterventionPlanningOptionsStore = signalStore(
               }));
               patchState(store, {
                 sites,
-                members: result.members.member.map((member) => ({
-                  label: member.userId,
-                  value: `/api/organizations/${result.organizationId}/members/${member.id}`,
-                })),
+                members: result.members.member.map((member) =>
+                  memberOption(member, result.organizationId),
+                ),
                 referencePacks: result.referencePacks.member.map((pack) => ({
                   label: pack.name,
                   value: `/api/reference-packs/${pack.id}`,
@@ -141,10 +176,9 @@ export const InterventionPlanningOptionsStore = signalStore(
                     value: `/api/equipment/${item.id}`,
                   })),
                 ],
-                members: result.members.member.map((member) => ({
-                  label: member.userId,
-                  value: `/api/organizations/${result.organizationId}/members/${member.id}`,
-                })),
+                members: result.members.member.map((member) =>
+                  memberOption(member, result.organizationId),
+                ),
                 loading: false,
               });
             },
@@ -156,4 +190,6 @@ export const InterventionPlanningOptionsStore = signalStore(
   ),
 );
 
-export type InterventionPlanningOptionsStoreType = InstanceType<typeof InterventionPlanningOptionsStore>;
+export type InterventionPlanningOptionsStoreType = InstanceType<
+  typeof InterventionPlanningOptionsStore
+>;

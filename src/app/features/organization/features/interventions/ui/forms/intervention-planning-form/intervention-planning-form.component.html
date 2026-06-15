@@ -1,0 +1,103 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="mt-6 grid gap-4 sm:grid-cols-2">
+  <label class="grid gap-2 text-sm font-medium">
+    Site
+    <p-select
+      formControlName="site"
+      [options]="[...siteOptions()]"
+      optionLabel="label"
+      optionValue="value"
+      [filter]="true"
+      placeholder="Select a site"
+    />
+  </label>
+  <label class="grid gap-2 text-sm font-medium">
+    Responsible agent
+    <p-select
+      formControlName="responsible"
+      [options]="[...memberOptions()]"
+      optionLabel="label"
+      optionValue="value"
+      [filter]="true"
+      filterBy="label,roleLabel"
+      [showClear]="true"
+      placeholder="Assign a responsible agent"
+    >
+      <ng-template #item let-option>
+        <app-intervention-member-option [option]="option" />
+      </ng-template>
+      <ng-template #selectedItem let-option>
+        @if (option) {
+          <app-intervention-member-option [option]="option" [compact]="true" />
+        }
+      </ng-template>
+    </p-select>
+  </label>
+  <label class="grid gap-2 text-sm font-medium sm:col-span-2">
+    Participants
+    <p-multiselect
+      formControlName="participants"
+      [options]="[...memberOptions()]"
+      optionLabel="label"
+      optionValue="value"
+      [filter]="true"
+      filterBy="label,roleLabel"
+      display="chip"
+      placeholder="Add field participants"
+    >
+      <ng-template #item let-option>
+        <app-intervention-member-option [option]="option" />
+      </ng-template>
+    </p-multiselect>
+  </label>
+  <label class="grid gap-2 text-sm font-medium">
+    Planned start
+    <p-datepicker
+      formControlName="plannedStartAt"
+      [showTime]="true"
+      hourFormat="24"
+      [showIcon]="true"
+      [showClear]="true"
+      [showButtonBar]="true"
+      appendTo="body"
+      dateFormat="yy-mm-dd"
+      placeholder="Select start date and time"
+      class="w-full"
+    />
+  </label>
+  <label class="grid gap-2 text-sm font-medium">
+    Due
+    <p-datepicker
+      formControlName="dueAt"
+      [showTime]="true"
+      hourFormat="24"
+      [showIcon]="true"
+      [showClear]="true"
+      [showButtonBar]="true"
+      [minDate]="form.controls.plannedStartAt.value ?? undefined"
+      appendTo="body"
+      dateFormat="yy-mm-dd"
+      placeholder="Select due date and time"
+      class="w-full"
+    />
+  </label>
+  <label class="grid gap-2 text-sm font-medium">
+    Priority
+    <p-select
+      formControlName="priority"
+      [options]="[...priorityOptions]"
+      optionLabel="label"
+      optionValue="value"
+    />
+  </label>
+  <div class="flex items-end">
+    <p-button
+      label="Save planning details"
+      type="submit"
+      icon="pi pi-save"
+      severity="secondary"
+      [outlined]="true"
+      [loading]="loading()"
+      [disabled]="form.invalid || disabled() || loading()"
+    />
+  </div>
+</form>

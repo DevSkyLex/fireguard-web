@@ -218,7 +218,7 @@ export class InspectionCreatePage {
     const input: CreateInspectionInput = {
       equipmentId: values.equipmentId,
       result: values.result,
-      performedAt: values.performedAt,
+      performedAt: values.performedAt?.toISOString() ?? new Date().toISOString(),
       inspectorType: values.inspectorType,
       inspectorName: values.inspectorName,
       ...(values.facilityId ? { facilityId: values.facilityId } : {}),

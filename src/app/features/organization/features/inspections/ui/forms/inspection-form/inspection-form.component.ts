@@ -9,6 +9,7 @@ import {
   type OutputEmitterRef,
 } from '@angular/core';
 import {
+  FormControl,
   NonNullableFormBuilder,
   ReactiveFormsModule,
   Validators,
@@ -186,9 +187,7 @@ export class InspectionForm {
     this.formBuilder.group<InspectionFormData>({
       equipmentId: this.formBuilder.control<string>('', [Validators.required]),
       result: this.formBuilder.control<InspectionResult>('pass', [Validators.required]),
-      performedAt: this.formBuilder.control<string>(new Date().toISOString().slice(0, 16), [
-        Validators.required,
-      ]),
+      performedAt: new FormControl<Date | null>(new Date(), [Validators.required]),
       inspectorType: this.formBuilder.control<InspectorType>('user', [Validators.required]),
       inspectorName: this.formBuilder.control<string>('', [
         Validators.required,
@@ -244,7 +243,7 @@ export class InspectionForm {
         {
           equipmentId: inspection.equipmentId,
           result: inspection.result,
-          performedAt: inspection.performedAt.slice(0, 16),
+          performedAt: new Date(inspection.performedAt),
           inspectorType: 'external',
           inspectorName: inspection.inspector?.displayName ?? 'Inspector',
           facilityId: inspection.facilityId ?? '',

@@ -1,0 +1,54 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex h-full flex-col gap-5">
+  <label class="grid gap-2 text-sm font-medium">
+    Action
+    <p-select
+      formControlName="action"
+      [options]="[...actionOptions]"
+      optionLabel="label"
+      optionValue="value"
+    />
+  </label>
+  <label class="grid gap-2 text-sm font-medium">
+    Target resource
+    <p-select
+      formControlName="target"
+      [options]="[...targetOptions()]"
+      optionLabel="label"
+      optionValue="value"
+      [filter]="true"
+      [showClear]="true"
+      placeholder="Optional site, facility or equipment target"
+    />
+  </label>
+  <label class="grid gap-2 text-sm font-medium">
+    Assignee
+    <p-select
+      formControlName="assignee"
+      [options]="[...memberOptions()]"
+      optionLabel="label"
+      optionValue="value"
+      [filter]="true"
+      filterBy="label,roleLabel"
+      [showClear]="true"
+      placeholder="Assign this work item"
+    >
+      <ng-template #item let-option>
+        <app-intervention-member-option [option]="option" />
+      </ng-template>
+      <ng-template #selectedItem let-option>
+        @if (option) {
+          <app-intervention-member-option [option]="option" [compact]="true" />
+        }
+      </ng-template>
+    </p-select>
+  </label>
+  <p-button
+    class="mt-auto"
+    styleClass="w-full"
+    label="Add to prepared scope"
+    type="submit"
+    icon="pi pi-plus"
+    [loading]="loading()"
+    [disabled]="disabled() || loading()"
+  />
+</form>

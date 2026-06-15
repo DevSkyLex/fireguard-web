@@ -15,7 +15,7 @@ import type {
 export interface InspectionFormValues {
   readonly equipmentId: string;
   readonly result: InspectionResult;
-  readonly performedAt: string;
+  readonly performedAt: Date | null;
   readonly inspectorType: InspectorType;
   readonly inspectorName: string;
   readonly facilityId: string;

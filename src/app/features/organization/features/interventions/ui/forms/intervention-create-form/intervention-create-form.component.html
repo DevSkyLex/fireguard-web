@@ -1,0 +1,142 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-6">
+  <section aria-label="Intervention type">
+    <app-radio-card-group formControlName="type" [options]="interventionTypes" />
+  </section>
+
+  <section
+    class="grid gap-5 rounded-xl border border-surface-200 bg-surface-0 p-5 md:grid-cols-2 dark:border-surface-800 dark:bg-surface-950"
+  >
+    <p class="text-sm text-surface-500 md:col-span-2">
+      Only a name is required to start a draft. Site, assignment and schedule can be completed now
+      or later in the Prepare step.
+    </p>
+    <label class="grid gap-2 text-sm font-medium md:col-span-2">
+      Intervention name
+      <input
+        pInputText
+        formControlName="name"
+        placeholder="e.g. Q3 warehouse inspection"
+        class="w-full"
+      />
+    </label>
+    <label class="grid gap-2 text-sm font-medium">
+      Site
+      <p-select
+        formControlName="site"
+        [options]="[...siteOptions()]"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        [loading]="optionsLoading()"
+        [showClear]="true"
+        placeholder="Select a site"
+      />
+    </label>
+    <label class="grid gap-2 text-sm font-medium">
+      Responsible agent
+      <p-select
+        formControlName="responsible"
+        [options]="[...memberOptions()]"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        filterBy="label,roleLabel"
+        [loading]="optionsLoading()"
+        [showClear]="true"
+        placeholder="Assign an agent"
+      >
+        <ng-template #item let-option>
+          <app-intervention-member-option [option]="option" />
+        </ng-template>
+        <ng-template #selectedItem let-option>
+          @if (option) {
+            <app-intervention-member-option [option]="option" [compact]="true" />
+          }
+        </ng-template>
+      </p-select>
+    </label>
+    <label class="grid gap-2 text-sm font-medium md:col-span-2">
+      Participants
+      <p-multiselect
+        formControlName="participants"
+        [options]="[...memberOptions()]"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        filterBy="label,roleLabel"
+        [loading]="optionsLoading()"
+        display="chip"
+        placeholder="Add field participants"
+      >
+        <ng-template #item let-option>
+          <app-intervention-member-option [option]="option" />
+        </ng-template>
+      </p-multiselect>
+    </label>
+    <label class="grid gap-2 text-sm font-medium">
+      Planned start
+      <p-datepicker
+        formControlName="plannedStartAt"
+        [showTime]="true"
+        hourFormat="24"
+        [showIcon]="true"
+        [showClear]="true"
+        [showButtonBar]="true"
+        appendTo="body"
+        dateFormat="yy-mm-dd"
+        placeholder="Select start date and time"
+        class="w-full"
+      />
+    </label>
+    <label class="grid gap-2 text-sm font-medium">
+      Due
+      <p-datepicker
+        formControlName="dueAt"
+        [showTime]="true"
+        hourFormat="24"
+        [showIcon]="true"
+        [showClear]="true"
+        [showButtonBar]="true"
+        [minDate]="form.controls.plannedStartAt.value ?? undefined"
+        appendTo="body"
+        dateFormat="yy-mm-dd"
+        placeholder="Select due date and time"
+        class="w-full"
+      />
+    </label>
+    <label class="grid gap-2 text-sm font-medium">
+      Priority
+      <p-select
+        formControlName="priority"
+        [options]="[...priorityOptions]"
+        optionLabel="label"
+        optionValue="value"
+      />
+    </label>
+    <label class="grid gap-2 text-sm font-medium md:col-span-2">
+      Reference pack
+      <p-select
+        formControlName="referencePack"
+        [options]="[...referencePackOptions()]"
+        optionLabel="label"
+        optionValue="value"
+        [loading]="optionsLoading()"
+        [showClear]="true"
+        placeholder="Default reference pack"
+      />
+    </label>
+  </section>
+
+  <footer
+    class="sticky bottom-0 flex justify-end border-t border-surface-200 bg-surface-0/95 py-4 backdrop-blur dark:border-surface-800 dark:bg-surface-950/95"
+  >
+    <p-button
+      label="Create draft intervention"
+      type="submit"
+      icon="pi pi-arrow-right"
+      iconPos="right"
+      [loading]="loading()"
+      [disabled]="form.invalid || loading()"
+    />
+  </footer>
+</form>

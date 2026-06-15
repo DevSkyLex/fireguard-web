@@ -1,0 +1,21 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex h-full flex-col gap-4">
+  <p class="text-sm text-surface-600 dark:text-surface-300">
+    Explain why this work cannot be completed. The manager will review this reason before
+    publication.
+  </p>
+  <textarea
+    pTextarea
+    formControlName="reason"
+    class="min-h-32 w-full"
+    placeholder="Required reason"
+  ></textarea>
+  <p-button
+    class="mt-auto"
+    styleClass="w-full"
+    label="Confirm skip"
+    type="submit"
+    icon="pi pi-forward"
+    [loading]="loading()"
+    [disabled]="form.invalid || disabled() || loading()"
+  />
+</form>

@@ -1,6 +1,7 @@
 /**
  * Interventions model public exports.
  */
+export { toApiDateTime } from './api-date-time.util';
 export type { InterventionIssueOutput } from './intervention/intervention-issue-output.interface';
 export type { InterventionIssueSeverity } from './intervention/intervention-issue-severity.type';
 export type { InterventionOutput } from './intervention/intervention-output.interface';
@@ -34,5 +35,6 @@ export type {
   InterventionPlanningDetails,
   InterventionTransitionRequest,
   InterventionWorkItemStatusChange,
+  MemberSelectOption,
   SelectOption,
 } from './intervention-workflow';

@@ -118,6 +118,10 @@ export class RadioCard {
     string | null | undefined
   >(null);
 
+  public readonly icon: InputSignal<string | null | undefined> = input<string | null | undefined>(
+    null,
+  );
+
   /**
    * Input disabled
    * @readonly

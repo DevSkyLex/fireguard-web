@@ -15,7 +15,6 @@ import { TabsModule } from 'primeng/tabs';
 import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
-  AddNonConformityInput,
   InspectionOutput,
   NonConformityOutput,
 } from '@features/organization/features/inspections/models';
@@ -27,6 +26,7 @@ import {
   InspectionDetailHeader,
   InspectionInformationPanel,
 } from '@features/organization/features/inspections/ui/components';
+import type { NonConformityFormValues } from '@features/organization/features/inspections/ui/forms';
 import {
   NonConformityTable,
   type NonConformityStatusChange,
@@ -150,9 +150,18 @@ export class InspectionDetailPage {
   }
 
   /** Adds a non-conformity to the active inspection. */
-  protected addNonConformity(input: AddNonConformityInput): void {
+  protected addNonConformity(values: NonConformityFormValues): void {
     this.run((organizationId, inspectionId) =>
-      this.store.addNonConformity({ organizationId, inspectionId, input }),
+      this.store.addNonConformity({
+        organizationId,
+        inspectionId,
+        input: {
+          description: values.description,
+          severity: values.severity,
+          dueAt: values.dueAt?.toISOString() ?? null,
+          notes: values.notes || null,
+        },
+      }),
     );
   }
 

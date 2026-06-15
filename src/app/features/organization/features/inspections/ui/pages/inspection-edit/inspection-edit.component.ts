@@ -94,7 +94,7 @@ export class InspectionEditPage {
     const input: UpdateInspectionInput = {
       equipmentId: values.equipmentId,
       result: values.result,
-      performedAt: values.performedAt,
+      performedAt: values.performedAt?.toISOString(),
       facilityId: values.facilityId || null,
       checklistId: values.checklistId || null,
       notes: values.notes || null,

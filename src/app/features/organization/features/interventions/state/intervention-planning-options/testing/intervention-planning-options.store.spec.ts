@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { OrganizationMemberService } from '@features/organization/data-access';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
 import { InterventionPlanningOptionsStore } from '../intervention-planning-options.store';
 
 describe('InterventionPlanningOptionsStore', () => {
@@ -28,9 +28,22 @@ describe('InterventionPlanningOptionsStore', () => {
       ),
     };
     members = {
-      list: vi
-        .fn()
-        .mockReturnValue(of({ member: [{ id: 'member-1', userId: 'Agent A' }], totalItems: 1 })),
+      list: vi.fn().mockReturnValue(
+        of({
+          member: [
+            {
+              id: 'member-1',
+              userId: 'user-1',
+              firstName: 'Agent',
+              lastName: 'Alpha',
+              displayName: 'Agent Alpha',
+              avatarUrl: 'https://api.test/avatar/agent-alpha',
+              roleNames: ['Field inspector'],
+            },
+          ],
+          totalItems: 1,
+        }),
+      ),
     };
     interventions = {
       listReferencePacks: vi
@@ -69,6 +82,16 @@ describe('InterventionPlanningOptionsStore', () => {
     expect(store.sites()).toEqual([{ label: 'Site A', value: '/api/facilities/site-1' }]);
     expect(store.referencePacks()).toEqual([
       { label: 'France ERP / ERT', value: '/api/reference-packs/fr-erp-ert-v1' },
+    ]);
+    expect(store.members()).toEqual([
+      {
+        label: 'Agent Alpha',
+        value: '/api/organizations/org-1/members/member-1',
+        displayName: 'Agent Alpha',
+        roleLabel: 'Field inspector',
+        avatarUrl: 'https://api.test/avatar/agent-alpha',
+        initials: 'AA',
+      },
     ]);
   });
 

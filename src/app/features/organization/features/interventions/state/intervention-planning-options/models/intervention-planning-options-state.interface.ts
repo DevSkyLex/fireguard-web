@@ -1,4 +1,7 @@
-import type { SelectOption } from '@features/organization/features/interventions/models';
+import type {
+  MemberSelectOption,
+  SelectOption,
+} from '@features/organization/features/interventions/models';
 
 /**
  * State consumed by intervention planning controls.
@@ -6,7 +9,7 @@ import type { SelectOption } from '@features/organization/features/interventions
 export interface InterventionPlanningOptionsState {
   readonly sites: readonly SelectOption[];
   readonly targets: readonly SelectOption[];
-  readonly members: readonly SelectOption[];
+  readonly members: readonly MemberSelectOption[];
   readonly referencePacks: readonly SelectOption[];
   readonly loading: boolean;
 }

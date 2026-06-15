@@ -1,0 +1,25 @@
+<div class="flex max-w-full min-w-0 items-center gap-2.5" [class.h-5]="compact()">
+  <p-avatar
+    [image]="option().avatarUrl ?? undefined"
+    [label]="option().avatarUrl ? undefined : option().initials"
+    [styleClass]="compact() ? 'size-5! text-[0.625rem]!' : ''"
+    shape="circle"
+    class="shrink-0 bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+  />
+  @if (compact()) {
+    <span
+      class="min-w-0 truncate text-sm leading-5 font-medium text-surface-900 dark:text-surface-100"
+    >
+      {{ option().displayName }}
+    </span>
+  } @else {
+    <span class="flex min-w-0 flex-col">
+      <span class="truncate font-medium text-surface-900 dark:text-surface-100">
+        {{ option().displayName }}
+      </span>
+      <span class="truncate text-xs font-normal text-surface-500 dark:text-surface-400">
+        {{ option().roleLabel }}
+      </span>
+    </span>
+  }
+</div>

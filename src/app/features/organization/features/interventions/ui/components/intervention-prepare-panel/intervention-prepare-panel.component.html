@@ -20,83 +20,14 @@
         />
       </div>
 
-      <div class="mt-6 grid gap-4 sm:grid-cols-2">
-        <label class="grid gap-2 text-sm font-medium">
-          Site
-          <p-select
-            [options]="[...siteOptions()]"
-            optionLabel="label"
-            optionValue="value"
-            [filter]="true"
-            [ngModel]="site()"
-            placeholder="Select a site"
-            (onChange)="site.set($event.value)"
-          />
-        </label>
-        <label class="grid gap-2 text-sm font-medium">
-          Responsible agent
-          <p-select
-            [options]="[...memberOptions()]"
-            optionLabel="label"
-            optionValue="value"
-            [filter]="true"
-            [ngModel]="responsible()"
-            placeholder="Assign a responsible agent"
-            (onChange)="responsible.set($event.value)"
-          />
-        </label>
-        <label class="grid gap-2 text-sm font-medium sm:col-span-2">
-          Participants
-          <p-multiselect
-            [options]="[...memberOptions()]"
-            optionLabel="label"
-            optionValue="value"
-            [filter]="true"
-            [ngModel]="participants()"
-            placeholder="Add field participants"
-            (onChange)="participants.set($event.value)"
-          />
-        </label>
-        <label class="grid gap-2 text-sm font-medium">
-          Planned start
-          <input
-            type="datetime-local"
-            class="rounded-md border border-surface-300 bg-transparent px-3 py-2.5 dark:border-surface-700"
-            [value]="plannedStartAt()"
-            (input)="plannedStartAt.set($any($event.target).value)"
-          />
-        </label>
-        <label class="grid gap-2 text-sm font-medium">
-          Due
-          <input
-            type="datetime-local"
-            class="rounded-md border border-surface-300 bg-transparent px-3 py-2.5 dark:border-surface-700"
-            [value]="dueAt()"
-            (input)="dueAt.set($any($event.target).value)"
-          />
-        </label>
-        <label class="grid gap-2 text-sm font-medium">
-          Priority
-          <p-select
-            [options]="[...priorityOptions]"
-            optionLabel="label"
-            optionValue="value"
-            [ngModel]="priority()"
-            (onChange)="priority.set($event.value)"
-          />
-        </label>
-        <div class="flex items-end">
-          <p-button
-            label="Save planning details"
-            icon="pi pi-save"
-            severity="secondary"
-            [outlined]="true"
-            [loading]="saving()"
-            [disabled]="!canPlan() || !site() || !responsible() || !plannedStartAt() || !dueAt()"
-            (onClick)="savePlanningDetails()"
-          />
-        </div>
-      </div>
+      <app-intervention-planning-form
+        [intervention]="intervention()"
+        [siteOptions]="siteOptions()"
+        [memberOptions]="memberOptions()"
+        [loading]="saving()"
+        [disabled]="!canPlan()"
+        (submitted)="savePlanningDetails($event)"
+      />
     </div>
 
     <div
@@ -181,49 +112,11 @@
   [style]="{ width: 'min(100vw, 32rem)' }"
   header="Add work item"
 >
-  <div class="flex h-full flex-col gap-5">
-    <label class="grid gap-2 text-sm font-medium">
-      Action
-      <select
-        class="rounded-md border border-surface-300 bg-transparent px-3 py-2.5 dark:border-surface-700"
-        [value]="workItemAction()"
-        (change)="workItemAction.set($any($event.target).value)"
-      >
-        <option value="site_setup">Site setup</option>
-        <option value="inventory">Inventory</option>
-        <option value="inspection">Inspection</option>
-      </select>
-    </label>
-    <label class="grid gap-2 text-sm font-medium">
-      Target resource
-      <p-select
-        [options]="[...targetOptions()]"
-        optionLabel="label"
-        optionValue="value"
-        [filter]="true"
-        placeholder="Optional site, facility or equipment target"
-        (onChange)="workItemTarget.set($event.value)"
-      />
-    </label>
-    <label class="grid gap-2 text-sm font-medium">
-      Assignee
-      <p-select
-        [options]="[...memberOptions()]"
-        optionLabel="label"
-        optionValue="value"
-        [filter]="true"
-        placeholder="Assign this work item"
-        (onChange)="workItemAssignee.set($event.value)"
-      />
-    </label>
-    <p-button
-      class="mt-auto"
-      styleClass="w-full"
-      label="Add to prepared scope"
-      icon="pi pi-plus"
-      [loading]="saving()"
-      [disabled]="!canPlan()"
-      (onClick)="addWorkItem()"
-    />
-  </div>
+  <app-intervention-work-item-form
+    [targetOptions]="targetOptions()"
+    [memberOptions]="memberOptions()"
+    [loading]="saving()"
+    [disabled]="!canPlan()"
+    (submitted)="addWorkItem($event)"
+  />
 </p-drawer>

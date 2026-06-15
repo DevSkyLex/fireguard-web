@@ -1,0 +1,55 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex h-full flex-col gap-5">
+  <p class="text-sm text-surface-600 dark:text-surface-300">
+    Record work that was not part of the prepared scope. It will be highlighted during review.
+  </p>
+  <label class="grid gap-2 text-sm font-medium">
+    Action
+    <p-select
+      formControlName="action"
+      [options]="[...actionOptions]"
+      optionLabel="label"
+      optionValue="value"
+    />
+  </label>
+  <label class="grid gap-2 text-sm font-medium">
+    {{
+      form.controls.action.value === 'site_setup'
+        ? 'Facility name'
+        : form.controls.action.value === 'inventory'
+          ? 'Equipment type'
+          : 'Equipment resource'
+    }}
+    <input
+      pInputText
+      formControlName="target"
+      class="w-full"
+      [placeholder]="
+        form.controls.action.value === 'site_setup'
+          ? 'Example: Electrical room'
+          : form.controls.action.value === 'inventory'
+            ? 'Example: fire_extinguisher'
+            : '/api/equipment/...'
+      "
+    />
+  </label>
+  @if (form.controls.action.value === 'inspection') {
+    <label class="grid gap-2 text-sm font-medium">
+      Initial result
+      <p-select
+        formControlName="result"
+        [options]="[...resultOptions]"
+        optionLabel="label"
+        optionValue="value"
+      />
+    </label>
+  }
+  <p-button
+    class="mt-auto"
+    styleClass="w-full"
+    label="Add discovery"
+    type="submit"
+    icon="pi pi-plus"
+    [loading]="loading()"
+    [disabled]="form.invalid || disabled() || loading()"
+  />
+</form>

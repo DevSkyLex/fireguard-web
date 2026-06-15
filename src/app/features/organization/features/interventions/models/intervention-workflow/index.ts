@@ -5,4 +5,5 @@ export type { InterventionPhotoAttachment } from './intervention-photo-attachmen
 export type { InterventionPlanningDetails } from './intervention-planning-details.interface';
 export type { InterventionTransitionRequest } from './intervention-transition-request.interface';
 export type { InterventionWorkItemStatusChange } from './intervention-work-item-status-change.interface';
+export type { MemberSelectOption } from './member-select-option.interface';
 export type { SelectOption } from './select-option.interface';

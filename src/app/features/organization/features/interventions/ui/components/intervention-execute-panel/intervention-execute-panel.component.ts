@@ -10,22 +10,24 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
 import { MessageModule } from 'primeng/message';
 import { ScrollerModule } from 'primeng/scroller';
-import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
-import type { InspectionResult } from '@features/organization/features/inspections/models';
 import type {
   InterventionDiscoveryRequest,
   InterventionOutput,
   InterventionPhotoAttachment,
-  InterventionWorkItemAction,
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
 } from '@features/organization/features/interventions/models';
+import {
+  InterventionDiscoveryForm,
+  InterventionSkipForm,
+  type InterventionDiscoveryFormValues,
+  type InterventionSkipFormValues,
+} from '@features/organization/features/interventions/ui/forms';
 
 /**
  * Component InterventionExecutePanel
@@ -42,10 +44,10 @@ import type {
   imports: [
     ButtonModule,
     DrawerModule,
-    FormsModule,
+    InterventionDiscoveryForm,
+    InterventionSkipForm,
     MessageModule,
     ScrollerModule,
-    SelectModule,
     TagModule,
   ],
   templateUrl: './intervention-execute-panel.component.html',
@@ -64,7 +66,8 @@ export class InterventionExecutePanel {
    *
    * @type {InputSignal<InterventionOutput>}
    */
-  public readonly intervention: InputSignal<InterventionOutput> = input.required<InterventionOutput>();
+  public readonly intervention: InputSignal<InterventionOutput> =
+    input.required<InterventionOutput>();
 
   /**
    * Property workItems
@@ -333,64 +336,6 @@ export class InterventionExecutePanel {
     signal<InterventionWorkItemOutput | null>(null);
 
   /**
-   * Property skipReason
-   * @readonly
-   *
-   * @description
-   * Provides the skip reason value.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {WritableSignal<string>}
-   */
-  protected readonly skipReason: WritableSignal<string> = signal('');
-
-  /**
-   * Property discoveryAction
-   * @readonly
-   *
-   * @description
-   * Provides the discovery action value.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {WritableSignal<InterventionWorkItemAction>}
-   */
-  protected readonly discoveryAction: WritableSignal<InterventionWorkItemAction> =
-    signal<InterventionWorkItemAction>('inventory');
-
-  /**
-   * Property discoveryTarget
-   * @readonly
-   *
-   * @description
-   * Provides the discovery target value.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {WritableSignal<string>}
-   */
-  protected readonly discoveryTarget: WritableSignal<string> = signal('');
-
-  /**
-   * Property discoveryResult
-   * @readonly
-   *
-   * @description
-   * Initial inspection result used when a field inspection is discovered.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {WritableSignal<InspectionResult>}
-   */
-  protected readonly discoveryResult: WritableSignal<InspectionResult> =
-    signal<InspectionResult>('pass');
-
-  /**
    * Property photoEquipmentId
    * @readonly
    *
@@ -403,60 +348,6 @@ export class InterventionExecutePanel {
    * @type {WritableSignal<string | null>}
    */
   protected readonly photoEquipmentId: WritableSignal<string | null> = signal<string | null>(null);
-
-  /**
-   * Property value
-   * @readonly
-   *
-   * @description
-   * Provides the value value.
-   *
-   * @type {InterventionWorkItemAction}
-   */
-
-  /**
-   * Property label
-   * @readonly
-   *
-   * @description
-   * Provides the label value.
-   *
-   * @type {string}
-   */
-
-  /**
-   * Property actionOptions
-   * @readonly
-   *
-   * @description
-   * Provides the action options value.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {readonly { label: string; value: InterventionWorkItemAction }[]}
-   */
-  protected readonly actionOptions: readonly { label: string; value: InterventionWorkItemAction }[] = [
-    { label: 'Site setup', value: 'site_setup' },
-    { label: 'Inventory', value: 'inventory' },
-    { label: 'Inspection', value: 'inspection' },
-  ];
-
-  /**
-   * Property resultOptions
-   * @readonly
-   *
-   * @description
-   * Available initial inspection results.
-   *
-   * @access protected
-   * @since 1.0.0
-   */
-  protected readonly resultOptions: readonly { label: string; value: InspectionResult }[] = [
-    { label: 'Pass', value: 'pass' },
-    { label: 'Partial', value: 'partial' },
-    { label: 'Fail', value: 'fail' },
-  ];
 
   /**
    * Method openSkip
@@ -474,7 +365,6 @@ export class InterventionExecutePanel {
    */
   protected openSkip(item: InterventionWorkItemOutput): void {
     this.selectedWorkItem.set(item);
-    this.skipReason.set('');
     this.skipDrawerVisible.set(true);
   }
 
@@ -490,9 +380,9 @@ export class InterventionExecutePanel {
    *
    * @return {void} Result of the confirm skip operation.
    */
-  protected confirmSkip(): void {
+  protected confirmSkip(values: InterventionSkipFormValues): void {
     const item = this.selectedWorkItem();
-    const reason = this.skipReason().trim();
+    const reason = values.reason.trim();
     if (!item || !reason) return;
     this.updateWorkItem.emit({ workItemId: item.id, status: 'skipped', skipReason: reason });
     this.skipDrawerVisible.set(false);
@@ -510,16 +400,13 @@ export class InterventionExecutePanel {
    *
    * @return {void} Result of the confirm discovery operation.
    */
-  protected confirmDiscovery(): void {
+  protected confirmDiscovery(values: InterventionDiscoveryFormValues): void {
     this.createDiscovery.emit({
-      action: this.discoveryAction(),
-      target: this.discoveryTarget().trim() || null,
-      result: this.discoveryResult(),
+      action: values.action,
+      target: values.target.trim() || null,
+      result: values.result,
     });
     this.discoveryDrawerVisible.set(false);
-    this.discoveryAction.set('inventory');
-    this.discoveryTarget.set('');
-    this.discoveryResult.set('pass');
   }
 
   /**

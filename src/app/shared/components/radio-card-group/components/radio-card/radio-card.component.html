@@ -1,21 +1,43 @@
 <label
   [for]="inputId()"
-  class="flex items-start gap-3 rounded-lg border-2 p-3 transition-colors select-none"
+  class="relative flex items-start gap-3 overflow-hidden rounded-lg border p-3 transition-colors select-none"
   [class.cursor-pointer]="!disabled()"
   [class.cursor-not-allowed]="disabled()"
   [class.opacity-50]="disabled()"
   [class]="
     selectedValue() === value()
-      ? 'border-primary bg-primary-50/40'
-      : 'border-surface-200 dark:border-surface-800'
+      ? 'border-primary bg-primary-50/20 dark:border-primary-700 dark:bg-primary-950/10'
+      : 'border-surface-200 dark:border-surface-800 dark:bg-surface-950'
   "
 >
-  <div class="flex w-full flex-row items-start justify-between gap-2">
+  @if (icon(); as icon) {
+    <i
+      [class]="icon + ' pointer-events-none absolute top-1/2 -right-8 -translate-y-1/2 text-9xl'"
+      [class.text-primary-100/75]="selectedValue() === value()"
+      [class.dark:text-primary-950]="selectedValue() === value()"
+      [class.text-surface-100/75]="selectedValue() !== value()"
+      [class.dark:text-surface-900]="selectedValue() !== value()"
+      aria-hidden="true"
+    ></i>
+  }
+
+  <div class="relative z-10 flex w-full flex-row items-start justify-between gap-2">
     <div class="flex min-w-0 flex-col gap-1 pt-0.5">
-      <span class="text-sm leading-tight font-medium">{{ label() }}</span>
+      @if (icon(); as icon) {
+        <i
+          [class]="icon + ' mb-1 text-xl text-primary dark:text-primary-300'"
+          aria-hidden="true"
+        ></i>
+      }
+
+      <span class="text-base leading-tight font-medium text-surface-900 dark:text-surface-100">
+        {{ label() }}
+      </span>
 
       @if (description(); as description) {
-        <span class="text-xs leading-tight text-surface-500">{{ description }}</span>
+        <span class="text-sm leading-normal text-surface-500 dark:text-surface-400">
+          {{ description }}
+        </span>
       }
     </div>
 

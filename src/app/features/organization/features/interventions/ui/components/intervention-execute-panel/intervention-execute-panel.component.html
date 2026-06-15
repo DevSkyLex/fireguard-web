@@ -169,26 +169,11 @@
   [style]="{ height: 'min(28rem, 80dvh)' }"
   header="Skip work item"
 >
-  <div class="flex h-full flex-col gap-4">
-    <p class="text-sm text-surface-600 dark:text-surface-300">
-      Explain why this work cannot be completed. The manager will review this reason before
-      publication.
-    </p>
-    <textarea
-      class="min-h-32 w-full rounded-md border border-surface-300 bg-surface-0 p-3 outline-none focus:border-primary dark:border-surface-700 dark:bg-surface-950"
-      [value]="skipReason()"
-      (input)="skipReason.set($any($event.target).value)"
-      placeholder="Required reason"
-    ></textarea>
-    <p-button
-      class="mt-auto"
-      styleClass="w-full"
-      label="Confirm skip"
-      icon="pi pi-forward"
-      [disabled]="!canExecute() || !skipReason().trim()"
-      (onClick)="confirmSkip()"
-    />
-  </div>
+  <app-intervention-skip-form
+    [loading]="saving()"
+    [disabled]="!canExecute()"
+    (submitted)="confirmSkip($event)"
+  />
 </p-drawer>
 
 <p-drawer
@@ -197,62 +182,9 @@
   [style]="{ height: 'min(30rem, 90dvh)' }"
   header="Add field discovery"
 >
-  <div class="flex h-full flex-col gap-5">
-    <p class="text-sm text-surface-600 dark:text-surface-300">
-      Record work that was not part of the prepared scope. It will be highlighted during review.
-    </p>
-    <label class="grid gap-2 text-sm font-medium">
-      Action
-      <p-select
-        [options]="[...actionOptions]"
-        optionLabel="label"
-        optionValue="value"
-        [ngModel]="discoveryAction()"
-        (onChange)="discoveryAction.set($event.value)"
-      />
-    </label>
-    <label class="grid gap-2 text-sm font-medium">
-      {{
-        discoveryAction() === 'site_setup'
-          ? 'Facility name'
-          : discoveryAction() === 'inventory'
-            ? 'Equipment type'
-            : 'Equipment resource'
-      }}
-      <input
-        type="text"
-        class="rounded-md border border-surface-300 bg-transparent px-3 py-2.5 outline-none focus:border-primary dark:border-surface-700"
-        [value]="discoveryTarget()"
-        [placeholder]="
-          discoveryAction() === 'site_setup'
-            ? 'Example: Electrical room'
-            : discoveryAction() === 'inventory'
-              ? 'Example: fire_extinguisher'
-              : '/api/equipment/...'
-        "
-        (input)="discoveryTarget.set($any($event.target).value)"
-      />
-    </label>
-    @if (discoveryAction() === 'inspection') {
-      <label class="grid gap-2 text-sm font-medium">
-        Initial result
-        <p-select
-          [options]="[...resultOptions]"
-          optionLabel="label"
-          optionValue="value"
-          [ngModel]="discoveryResult()"
-          (onChange)="discoveryResult.set($event.value)"
-        />
-      </label>
-    }
-    <p-button
-      class="mt-auto"
-      styleClass="w-full"
-      label="Add discovery"
-      icon="pi pi-plus"
-      [loading]="saving()"
-      [disabled]="!canExecute() || !discoveryTarget().trim()"
-      (onClick)="confirmDiscovery()"
-    />
-  </div>
+  <app-intervention-discovery-form
+    [loading]="saving()"
+    [disabled]="!canExecute()"
+    (submitted)="confirmDiscovery($event)"
+  />
 </p-drawer>

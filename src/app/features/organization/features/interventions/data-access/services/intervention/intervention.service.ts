@@ -12,6 +12,7 @@ import type {
   InterventionTypeOutput,
   InterventionWorkItemOutput,
   PublicationOutput,
+  ReferencePackOutput,
   UpdateInterventionChangeInput,
   UpdateInterventionWorkItemInput,
 } from '@features/organization/features/interventions/models';
@@ -116,6 +117,22 @@ export class InterventionService extends HydraApiService {
       itemsPerPage: options?.itemsPerPage,
       params,
     });
+  }
+
+  /**
+   * Method listReferencePacks
+   * @method listReferencePacks
+   *
+   * @description
+   * Lists the regulatory reference packs an intervention can be bound to.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @return {Observable<HydraCollection<ReferencePackOutput>>} Result of the list reference packs operation.
+   */
+  public listReferencePacks(): Observable<HydraCollection<ReferencePackOutput>> {
+    return this.getCollection<ReferencePackOutput>('/api/reference-packs');
   }
 
   /**
@@ -235,7 +252,7 @@ export class InterventionService extends HydraApiService {
       organization: `/api/organizations/${organizationId}`,
       type: options?.type ?? 'site_setup',
       name,
-      referencePack: options?.referencePack ?? '/api/reference-packs/fr-erp-ert-v1',
+      ...(options?.referencePack ? { referencePack: options.referencePack } : {}),
       ...(options?.site ? { site: options.site } : {}),
       ...(options?.responsible ? { responsible: options.responsible } : {}),
       participants: options?.participants ?? [],

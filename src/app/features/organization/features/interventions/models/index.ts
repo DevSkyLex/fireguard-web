@@ -25,6 +25,7 @@ export type { InterventionOutboxQueueEntry } from './intervention-outbox/interve
 export type { InterventionOutboxType } from './intervention-outbox/intervention-outbox-type.type';
 export type { PublicationOutput } from './publication/publication-output.interface';
 export type { PublicationStatus } from './publication/publication-status.type';
+export type { ReferencePackOutput } from './reference-pack/reference-pack-output.interface';
 export type {
   InterventionDiscoveryRequest,
   InterventionDiscoveryResult,

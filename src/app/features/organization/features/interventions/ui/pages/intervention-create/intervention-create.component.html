@@ -98,6 +98,18 @@
         (onChange)="priority.set($event.value)"
       />
     </label>
+    <label class="grid gap-2 text-sm font-medium md:col-span-2">
+      Reference pack
+      <p-select
+        [options]="[...referencePackOptions()]"
+        optionLabel="label"
+        optionValue="value"
+        [showClear]="true"
+        placeholder="Default reference pack"
+        (onChange)="referencePack.set($event.value ?? '')"
+        (onClear)="referencePack.set('')"
+      />
+    </label>
   </section>
 
   <footer

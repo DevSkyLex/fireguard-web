@@ -95,14 +95,19 @@
         severity="secondary"
         [outlined]="true"
         [loading]="saving()"
-        [disabled]="intervention().status !== 'submitted'"
+        [disabled]="!canReview() || intervention().status !== 'submitted'"
         (onClick)="requestCorrection()"
       />
       <p-button
         label="Publish intervention"
         icon="pi pi-check-circle"
         [loading]="saving()"
-        [disabled]="!online() || intervention().status !== 'submitted' || intervention().blockersCount > 0"
+        [disabled]="
+          !canPublish() ||
+          !online() ||
+          intervention().status !== 'submitted' ||
+          intervention().blockersCount > 0
+        "
         (onClick)="publishIntervention.emit()"
       />
     </div>

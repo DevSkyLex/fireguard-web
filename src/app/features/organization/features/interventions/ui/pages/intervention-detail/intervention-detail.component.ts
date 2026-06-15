@@ -41,6 +41,8 @@ import {
   InterventionWorkspaceStore,
   type InterventionWorkspaceStoreType,
 } from '@features/organization/features/interventions/state/intervention-workspace';
+import { OrganizationPermissionService } from '@features/organization/access';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ActiveOrganizationStore,
   OrganizationMemberAccessStore,
@@ -366,6 +368,77 @@ export class InterventionDetailPage {
       intervention.responsible === `/api/organizations/${organizationId}/members/${memberId}`
     );
   });
+
+  /**
+   * Property canPlan
+   * @readonly
+   *
+   * @description
+   * Whether the current user can prepare and plan interventions.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canPlan: Signal<boolean> = computed(() =>
+    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
+  );
+
+  /**
+   * Property canExecute
+   * @readonly
+   *
+   * @description
+   * Whether the current user can perform field execution work.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canExecute: Signal<boolean> = computed(() =>
+    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE),
+  );
+
+  /**
+   * Property canReview
+   * @readonly
+   *
+   * @description
+   * Whether the current user can review submitted interventions.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReview: Signal<boolean> = computed(() =>
+    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_REVIEW),
+  );
+
+  /**
+   * Property canPublish
+   * @readonly
+   *
+   * @description
+   * Whether the current user can publish interventions.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canPublish: Signal<boolean> = computed(() =>
+    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PUBLISH),
+  );
+
+  /**
+   * Resolves the current member's organization permissions.
+   */
+  private readonly permissionService: OrganizationPermissionService = inject(
+    OrganizationPermissionService,
+  );
 
   /**
    * Coordinates discovered resource and work-item creation.

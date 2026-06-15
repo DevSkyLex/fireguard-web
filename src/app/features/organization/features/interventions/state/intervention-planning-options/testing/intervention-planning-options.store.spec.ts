@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { OrganizationMemberService } from '@features/organization/data-access';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { InterventionPlanningOptionsStore } from '../intervention-planning-options.store';
@@ -10,6 +11,7 @@ describe('InterventionPlanningOptionsStore', () => {
   let facilities: { list: ReturnType<typeof vi.fn> };
   let equipment: { list: ReturnType<typeof vi.fn> };
   let members: { list: ReturnType<typeof vi.fn> };
+  let interventions: { listReferencePacks: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     facilities = {
@@ -30,6 +32,13 @@ describe('InterventionPlanningOptionsStore', () => {
         .fn()
         .mockReturnValue(of({ member: [{ id: 'member-1', userId: 'Agent A' }], totalItems: 1 })),
     };
+    interventions = {
+      listReferencePacks: vi
+        .fn()
+        .mockReturnValue(
+          of({ member: [{ id: 'fr-erp-ert-v1', name: 'France ERP / ERT' }], totalItems: 1 }),
+        ),
+    };
 
     TestBed.configureTestingModule({
       providers: [
@@ -37,6 +46,7 @@ describe('InterventionPlanningOptionsStore', () => {
         { provide: FacilityService, useValue: facilities },
         { provide: EquipmentService, useValue: equipment },
         { provide: OrganizationMemberService, useValue: members },
+        { provide: InterventionService, useValue: interventions },
       ],
     });
     store = TestBed.inject(InterventionPlanningOptionsStore);
@@ -54,8 +64,12 @@ describe('InterventionPlanningOptionsStore', () => {
       itemsPerPage: 100,
     });
     expect(equipment.list).not.toHaveBeenCalled();
+    expect(interventions.listReferencePacks).toHaveBeenCalledOnce();
     expect(store.targets()).toEqual([]);
     expect(store.sites()).toEqual([{ label: 'Site A', value: '/api/facilities/site-1' }]);
+    expect(store.referencePacks()).toEqual([
+      { label: 'France ERP / ERT', value: '/api/reference-packs/fr-erp-ert-v1' },
+    ]);
   });
 
   it('loads target resources only for the intervention workspace', async () => {

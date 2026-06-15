@@ -161,6 +161,20 @@ export class InterventionCreatePage {
   protected readonly dueAt: WritableSignal<string> = signal('');
 
   /**
+   * Property referencePack
+   * @readonly
+   *
+   * @description
+   * Selected reference pack IRI. Empty lets the server apply the default.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<string>}
+   */
+  protected readonly referencePack: WritableSignal<string> = signal('');
+
+  /**
    * Property creating
    * @readonly
    *
@@ -241,6 +255,20 @@ export class InterventionCreatePage {
    * @type {WritableSignal<readonly { label: string; value: string }[]>}
    */
   protected readonly memberOptions = this.planningOptions.members;
+
+  /**
+   * Property referencePackOptions
+   * @readonly
+   *
+   * @description
+   * Available regulatory reference packs.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<readonly { label: string; value: string }[]>}
+   */
+  protected readonly referencePackOptions = this.planningOptions.referencePacks;
 
   /**
    * Property priorityOptions
@@ -389,6 +417,7 @@ export class InterventionCreatePage {
         priority: this.priority(),
         plannedStartAt: new Date(this.plannedStartAt()).toISOString(),
         dueAt: new Date(this.dueAt()).toISOString(),
+        ...(this.referencePack() ? { referencePack: this.referencePack() } : {}),
       })
       .subscribe({
         next: (intervention) =>

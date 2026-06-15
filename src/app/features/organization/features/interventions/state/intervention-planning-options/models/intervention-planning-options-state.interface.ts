@@ -7,5 +7,6 @@ export interface InterventionPlanningOptionsState {
   readonly sites: readonly SelectOption[];
   readonly targets: readonly SelectOption[];
   readonly members: readonly SelectOption[];
+  readonly referencePacks: readonly SelectOption[];
   readonly loading: boolean;
 }

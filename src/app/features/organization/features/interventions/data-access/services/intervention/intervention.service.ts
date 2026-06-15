@@ -12,7 +12,6 @@ import type {
   InterventionTypeOutput,
   InterventionWorkItemOutput,
   PublicationOutput,
-  ReferencePackOutput,
   UpdateInterventionChangeInput,
   UpdateInterventionWorkItemInput,
 } from '@features/organization/features/interventions/models';
@@ -120,22 +119,6 @@ export class InterventionService extends HydraApiService {
   }
 
   /**
-   * Method listReferencePacks
-   * @method listReferencePacks
-   *
-   * @description
-   * Lists the regulatory reference packs an intervention can be bound to.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @return {Observable<HydraCollection<ReferencePackOutput>>} Result of the list reference packs operation.
-   */
-  public listReferencePacks(): Observable<HydraCollection<ReferencePackOutput>> {
-    return this.getCollection<ReferencePackOutput>('/api/reference-packs');
-  }
-
-  /**
    * Method listAll
    * @method listAll
    *
@@ -229,7 +212,6 @@ export class InterventionService extends HydraApiService {
    * priority: InterventionOutput['priority'];
    * plannedStartAt: string;
    * dueAt: string;
-   * referencePack: string;
    * }>} [options] - options value.
    *
    * @return {Observable<InterventionOutput>} Result of the create operation.
@@ -245,14 +227,12 @@ export class InterventionService extends HydraApiService {
       priority: InterventionOutput['priority'];
       plannedStartAt: string;
       dueAt: string;
-      referencePack: string;
     }>,
   ): Observable<InterventionOutput> {
     return this.post<Record<string, unknown>, InterventionOutput>('/api/interventions', {
       organization: `/api/organizations/${organizationId}`,
       type: options?.type ?? 'site_setup',
       name,
-      ...(options?.referencePack ? { referencePack: options.referencePack } : {}),
       ...(options?.site ? { site: options.site } : {}),
       ...(options?.responsible ? { responsible: options.responsible } : {}),
       participants: options?.participants ?? [],
@@ -282,7 +262,6 @@ export class InterventionService extends HydraApiService {
    * priority: InterventionOutput['priority'];
    * plannedStartAt: string | null;
    * dueAt: string | null;
-   * referencePack: string;
    * reviewNote: string | null;
    * }>} input - input value.
    * @param {number} [revision] - revision value.
@@ -300,7 +279,6 @@ export class InterventionService extends HydraApiService {
       priority: InterventionOutput['priority'];
       plannedStartAt: string | null;
       dueAt: string | null;
-      referencePack: string;
       reviewNote: string | null;
     }>,
     revision?: number,

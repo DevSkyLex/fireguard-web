@@ -30,7 +30,17 @@ import { RadioCardGroup, type RadioCardOption } from '@shared/components';
 import { InterventionMemberOption } from '../../components/intervention-member-option/intervention-member-option.component';
 import type { InterventionCreateFormData, InterventionCreateFormValues } from './models';
 
-/** Presentational form used to create an intervention draft. */
+/**
+ * Component InterventionCreateForm
+ * @class InterventionCreateForm
+ *
+ * @description
+ * Presentational form used to create an intervention draft.
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
 @Component({
   selector: 'app-intervention-create-form',
   imports: [
@@ -47,22 +57,26 @@ import type { InterventionCreateFormData, InterventionCreateFormValues } from '.
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionCreateForm {
+  /** Input loading. @readonly @description Indicates whether draft creation is running. @access public @since 1.0.0 @type {InputSignal<boolean>} */
   public readonly loading: InputSignal<boolean> = input(false);
+  /** Input optionsLoading. @readonly @description Indicates whether selector options are loading. @access public @since 1.0.0 @type {InputSignal<boolean>} */
   public readonly optionsLoading: InputSignal<boolean> = input(false);
+  /** Input siteOptions. @readonly @description Available intervention sites. @access public @since 1.0.0 @type {InputSignal<readonly SelectOption[]>} */
   public readonly siteOptions: InputSignal<readonly SelectOption[]> = input<
     readonly SelectOption[]
   >([]);
+  /** Input memberOptions. @readonly @description Available organization members. @access public @since 1.0.0 @type {InputSignal<readonly MemberSelectOption[]>} */
   public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> = input<
     readonly MemberSelectOption[]
   >([]);
-  public readonly referencePackOptions: InputSignal<readonly SelectOption[]> = input<
-    readonly SelectOption[]
-  >([]);
+  /** Output submitted. @readonly @description Emits validated draft values. @access public @since 1.0.0 @type {OutputEmitterRef<InterventionCreateFormValues>} */
   public readonly submitted: OutputEmitterRef<InterventionCreateFormValues> =
     output<InterventionCreateFormValues>();
 
+  /** Property formBuilder. @readonly @description Builds the typed reactive form. @access private @since 1.0.0 @type {NonNullableFormBuilder} */
   private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
 
+  /** Property form. @readonly @description Stores intervention draft controls. @access protected @since 1.0.0 @type {FormGroup<InterventionCreateFormData>} */
   protected readonly form: FormGroup<InterventionCreateFormData> =
     this.formBuilder.group<InterventionCreateFormData>({
       name: this.formBuilder.control('', [
@@ -77,9 +91,9 @@ export class InterventionCreateForm {
       priority: this.formBuilder.control<InterventionPriority>('normal', [Validators.required]),
       plannedStartAt: new FormControl<Date | null>(null),
       dueAt: new FormControl<Date | null>(null),
-      referencePack: this.formBuilder.control(''),
     });
 
+  /** Property priorityOptions. @readonly @description Available intervention priorities. @access protected @since 1.0.0 @type {readonly SelectOption<InterventionPriority>[]} */
   protected readonly priorityOptions: readonly SelectOption<InterventionPriority>[] = [
     { label: 'Low', value: 'low' },
     { label: 'Normal', value: 'normal' },
@@ -87,6 +101,7 @@ export class InterventionCreateForm {
     { label: 'Urgent', value: 'urgent' },
   ];
 
+  /** Property interventionTypes. @readonly @description Available intervention type radio cards. @access protected @since 1.0.0 @type {RadioCardOption[]} */
   protected readonly interventionTypes: RadioCardOption[] = [
     {
       value: 'site_setup',
@@ -108,6 +123,7 @@ export class InterventionCreateForm {
     },
   ];
 
+  /** @constructor @description Synchronizes the form disabled state with the loading input. */
   public constructor() {
     effect(() => {
       if (this.loading()) {
@@ -118,6 +134,7 @@ export class InterventionCreateForm {
     });
   }
 
+  /** Method onSubmit. @method onSubmit @description Validates and emits intervention draft values. @access protected @since 1.0.0 @returns {void} */
   protected onSubmit(): void {
     if (this.form.invalid || this.loading()) {
       this.form.markAllAsTouched();

@@ -137,6 +137,34 @@ export class InterventionReviewPanel {
   public readonly online: InputSignal<boolean> = input(true);
 
   /**
+   * Property canReview
+   * @readonly
+   *
+   * @description
+   * Whether the current user may request changes on the intervention.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canReview: InputSignal<boolean> = input(false);
+
+  /**
+   * Property canPublish
+   * @readonly
+   *
+   * @description
+   * Whether the current user may publish the intervention.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canPublish: InputSignal<boolean> = input(false);
+
+  /**
    * Property publicationMessage
    * @readonly
    *

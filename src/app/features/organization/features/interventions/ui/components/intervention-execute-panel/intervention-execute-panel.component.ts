@@ -139,6 +139,20 @@ export class InterventionExecutePanel {
   public readonly canSubmit: InputSignal<boolean> = input(false);
 
   /**
+   * Property canExecute
+   * @readonly
+   *
+   * @description
+   * Whether the current user may perform field execution actions.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canExecute: InputSignal<boolean> = input(false);
+
+  /**
    * Property scanSupported
    * @readonly
    *

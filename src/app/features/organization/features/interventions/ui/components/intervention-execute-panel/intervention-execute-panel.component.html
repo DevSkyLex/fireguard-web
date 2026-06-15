@@ -40,6 +40,7 @@
           [label]="next.status === 'in_progress' ? 'Complete' : 'Start work'"
           [icon]="next.status === 'in_progress' ? 'pi pi-check' : 'pi pi-play'"
           [loading]="saving()"
+          [disabled]="!canExecute()"
           (onClick)="
             updateWorkItem.emit({
               workItemId: next.id,
@@ -61,7 +62,7 @@
       icon="pi pi-qrcode"
       severity="secondary"
       [outlined]="true"
-      [disabled]="saving() || !scanSupported()"
+      [disabled]="saving() || !canExecute() || !scanSupported()"
       (onClick)="scanInput.click()"
     />
     <p-button
@@ -71,7 +72,7 @@
       icon="pi pi-plus"
       severity="secondary"
       [outlined]="true"
-      [disabled]="saving()"
+      [disabled]="saving() || !canExecute()"
       (onClick)="discoveryDrawerVisible.set(true)"
     />
   </div>
@@ -121,7 +122,7 @@
                 icon="pi pi-camera"
                 severity="secondary"
                 [text]="true"
-                [disabled]="saving()"
+                [disabled]="saving() || !canExecute()"
                 ariaLabel="Add evidence photo"
                 (onClick)="openPhotoCapture(item, photoInput)"
               />
@@ -131,6 +132,7 @@
                 icon="pi pi-forward"
                 severity="secondary"
                 [text]="true"
+                [disabled]="!canExecute()"
                 ariaLabel="Skip work item"
                 (onClick)="openSkip(item)"
               />
@@ -155,7 +157,7 @@
       label="Submit for review"
       icon="pi pi-send"
       [loading]="saving()"
-      [disabled]="!canSubmit() || progress() < 100"
+      [disabled]="!canExecute() || !canSubmit() || progress() < 100"
       (onClick)="submitIntervention.emit()"
     />
   </div>
@@ -183,7 +185,7 @@
       styleClass="w-full"
       label="Confirm skip"
       icon="pi pi-forward"
-      [disabled]="!skipReason().trim()"
+      [disabled]="!canExecute() || !skipReason().trim()"
       (onClick)="confirmSkip()"
     />
   </div>
@@ -249,7 +251,7 @@
       label="Add discovery"
       icon="pi pi-plus"
       [loading]="saving()"
-      [disabled]="!discoveryTarget().trim()"
+      [disabled]="!canExecute() || !discoveryTarget().trim()"
       (onClick)="confirmDiscovery()"
     />
   </div>

@@ -95,6 +95,20 @@ export class InterventionPreparePanel {
   public readonly saving: InputSignal<boolean> = input(false);
 
   /**
+   * Property canPlan
+   * @readonly
+   *
+   * @description
+   * Whether the current user may edit planning and prepare scope.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canPlan: InputSignal<boolean> = input(false);
+
+  /**
    * Property value
    * @readonly
    *

@@ -92,7 +92,7 @@
             severity="secondary"
             [outlined]="true"
             [loading]="saving()"
-            [disabled]="!site() || !responsible() || !plannedStartAt() || !dueAt()"
+            [disabled]="!canPlan() || !site() || !responsible() || !plannedStartAt() || !dueAt()"
             (onClick)="savePlanningDetails()"
           />
         </div>
@@ -112,6 +112,7 @@
           icon="pi pi-plus"
           severity="secondary"
           [outlined]="true"
+          [disabled]="!canPlan()"
           (onClick)="workItemDrawerVisible.set(true)"
         />
       </div>
@@ -162,6 +163,7 @@
       icon="pi pi-calendar"
       [loading]="saving()"
       [disabled]="
+        !canPlan() ||
         intervention().status !== 'draft' ||
         !intervention().site ||
         !intervention().responsible ||
@@ -220,6 +222,7 @@
       label="Add to prepared scope"
       icon="pi pi-plus"
       [loading]="saving()"
+      [disabled]="!canPlan()"
       (onClick)="addWorkItem()"
     />
   </div>

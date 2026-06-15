@@ -411,12 +411,14 @@ export class InterventionCreatePage {
     this.interventions
       .create(organizationId, this.name().trim(), {
         type: this.type(),
-        site: this.site(),
-        responsible: this.responsible(),
-        participants: this.participants(),
         priority: this.priority(),
-        plannedStartAt: new Date(this.plannedStartAt()).toISOString(),
-        dueAt: new Date(this.dueAt()).toISOString(),
+        participants: this.participants(),
+        ...(this.site() ? { site: this.site() } : {}),
+        ...(this.responsible() ? { responsible: this.responsible() } : {}),
+        ...(this.plannedStartAt()
+          ? { plannedStartAt: new Date(this.plannedStartAt()).toISOString() }
+          : {}),
+        ...(this.dueAt() ? { dueAt: new Date(this.dueAt()).toISOString() } : {}),
         ...(this.referencePack() ? { referencePack: this.referencePack() } : {}),
       })
       .subscribe({

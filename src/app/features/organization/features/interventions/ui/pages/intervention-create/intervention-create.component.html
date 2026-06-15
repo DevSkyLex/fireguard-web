@@ -30,6 +30,10 @@
   <section
     class="grid gap-5 rounded-xl border border-surface-200 bg-surface-0 p-5 md:grid-cols-2 dark:border-surface-800 dark:bg-surface-950"
   >
+    <p class="text-sm text-surface-500 md:col-span-2">
+      Only a name is required to start a draft. Site, assignment and schedule can be completed now or
+      later in the Prepare step.
+    </p>
     <label class="grid gap-2 text-sm font-medium md:col-span-2">
       Intervention name
       <input
@@ -120,7 +124,7 @@
       icon="pi pi-arrow-right"
       iconPos="right"
       [loading]="creating()"
-      [disabled]="!name().trim() || !site() || !responsible() || !plannedStartAt() || !dueAt()"
+      [disabled]="!name().trim()"
       (onClick)="create()"
     />
   </footer>

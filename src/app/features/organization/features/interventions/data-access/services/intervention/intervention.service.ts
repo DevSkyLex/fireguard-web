@@ -305,9 +305,13 @@ export class InterventionService extends HydraApiService {
     }>,
     revision?: number,
   ): Observable<InterventionOutput> {
-    return this.patch<typeof input, InterventionOutput>(`/api/interventions/${interventionId}`, input, {
-      headers: revision === undefined ? undefined : { 'If-Match': `"revision-${revision}"` },
-    });
+    return this.patch<typeof input, InterventionOutput>(
+      `/api/interventions/${interventionId}`,
+      input,
+      {
+        headers: revision === undefined ? undefined : { 'If-Match': `"revision-${revision}"` },
+      },
+    );
   }
 
   /**
@@ -400,7 +404,9 @@ export class InterventionService extends HydraApiService {
    *
    * @return {Observable<InterventionWorkItemOutput>} Result of the create work item operation.
    */
-  public createWorkItem(input: CreateInterventionWorkItemInput): Observable<InterventionWorkItemOutput> {
+  public createWorkItem(
+    input: CreateInterventionWorkItemInput,
+  ): Observable<InterventionWorkItemOutput> {
     if (input.clientId) {
       const { clientId, ...body } = input;
       return this.put<typeof body, InterventionWorkItemOutput>(
@@ -543,12 +549,19 @@ export class InterventionService extends HydraApiService {
   public createChange(input: CreateInterventionChangeInput): Observable<InterventionChangeOutput> {
     if (input.clientId) {
       const { clientId, ...body } = input;
-      return this.put<typeof body, InterventionChangeOutput>(`/api/intervention-changes/${clientId}`, body, {
-        headers: { 'If-None-Match': '*' },
-      });
+      return this.put<typeof body, InterventionChangeOutput>(
+        `/api/intervention-changes/${clientId}`,
+        body,
+        {
+          headers: { 'If-None-Match': '*' },
+        },
+      );
     }
 
-    return this.post<CreateInterventionChangeInput, InterventionChangeOutput>('/api/intervention-changes', input);
+    return this.post<CreateInterventionChangeInput, InterventionChangeOutput>(
+      '/api/intervention-changes',
+      input,
+    );
   }
 
   /**
@@ -594,7 +607,9 @@ export class InterventionService extends HydraApiService {
    * @return {Observable<HydraCollection<InterventionIssueOutput>>} Result of the list issues operation.
    */
   public listIssues(interventionId: string): Observable<HydraCollection<InterventionIssueOutput>> {
-    return this.getCollection<InterventionIssueOutput>(`/api/interventions/${interventionId}/issues`);
+    return this.getCollection<InterventionIssueOutput>(
+      `/api/interventions/${interventionId}/issues`,
+    );
   }
 
   /**
@@ -614,7 +629,10 @@ export class InterventionService extends HydraApiService {
   public publish(intervention: InterventionOutput): Observable<PublicationOutput> {
     return this.post<{ intervention: string; interventionRevision: number }, PublicationOutput>(
       '/api/publications',
-      { intervention: `/api/interventions/${intervention.id}`, interventionRevision: intervention.revision },
+      {
+        intervention: `/api/interventions/${intervention.id}`,
+        interventionRevision: intervention.revision,
+      },
     );
   }
 

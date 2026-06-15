@@ -51,7 +51,9 @@ export const ORGANIZATION_ROUTES: Routes = [
           preload: true,
         },
         loadChildren: () =>
-          import('./features/interventions/interventions.routes').then((m) => m.INTERVENTION_ROUTES),
+          import('./features/interventions/interventions.routes').then(
+            (m) => m.INTERVENTION_ROUTES,
+          ),
       },
       {
         path: 'facilities',

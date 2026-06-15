@@ -18,6 +18,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ConnectivityService } from '@core/services/connectivity';
+import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   CreateInterventionWorkItemInput,
   InterventionDiscoveryRequest,
@@ -41,7 +42,6 @@ import {
   InterventionWorkspaceStore,
   type InterventionWorkspaceStoreType,
 } from '@features/organization/features/interventions/state/intervention-workspace';
-import { OrganizationPermissionService } from '@features/organization/access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ActiveOrganizationStore,
@@ -137,7 +137,9 @@ export class InterventionDetailPage {
    *
    * @type {InterventionSyncCoordinatorService}
    */
-  protected readonly sync: InterventionSyncCoordinatorService = inject(InterventionSyncCoordinatorService);
+  protected readonly sync: InterventionSyncCoordinatorService = inject(
+    InterventionSyncCoordinatorService,
+  );
 
   /**
    * Property connectivity
@@ -165,9 +167,8 @@ export class InterventionDetailPage {
    *
    * @type {WritableSignal<InterventionPhase>}
    */
-  protected readonly activePhase: WritableSignal<InterventionPhase> = linkedSignal<InterventionPhase>(() =>
-    this.phaseForStatus(this.store.intervention()?.status),
-  );
+  protected readonly activePhase: WritableSignal<InterventionPhase> =
+    linkedSignal<InterventionPhase>(() => this.phaseForStatus(this.store.intervention()?.status));
 
   /**
    * Property publishing
@@ -448,7 +449,9 @@ export class InterventionDetailPage {
   /**
    * Coordinates asynchronous intervention publication.
    */
-  private readonly publication: InterventionPublicationService = inject(InterventionPublicationService);
+  private readonly publication: InterventionPublicationService = inject(
+    InterventionPublicationService,
+  );
 
   /**
    * Property fieldExecution
@@ -578,7 +581,8 @@ export class InterventionDetailPage {
     const current = this.phaseTabs.findIndex((tab) => tab.id === phase);
     const last = this.phaseTabs.length - 1;
     let nextIndex: number | null = null;
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (current + 1) % (last + 1);
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown')
+      nextIndex = (current + 1) % (last + 1);
     else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp')
       nextIndex = (current - 1 + last + 1) % (last + 1);
     else if (event.key === 'Home') nextIndex = 0;

@@ -483,7 +483,8 @@ export class InterventionDatabaseService {
         const database = request.result;
         if (database.objectStoreNames.contains('snapshots'))
           database.deleteObjectStore('snapshots');
-        if (!database.objectStoreNames.contains('interventions')) database.createObjectStore('interventions');
+        if (!database.objectStoreNames.contains('interventions'))
+          database.createObjectStore('interventions');
         if (!database.objectStoreNames.contains('workItems'))
           database.createObjectStore('workItems');
         if (!database.objectStoreNames.contains('changes')) database.createObjectStore('changes');

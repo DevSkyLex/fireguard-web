@@ -94,7 +94,9 @@ describe('InterventionDiscoveryService', () => {
   });
 
   it('reports a discovery as queued while one of its operations remains pending', async () => {
-    offline.listOutbox.mockResolvedValue([{ id: 'work-item-operation' } as InterventionOutboxOperation]);
+    offline.listOutbox.mockResolvedValue([
+      { id: 'work-item-operation' } as InterventionOutboxOperation,
+    ]);
 
     const result = await service.create('org-1', 'intervention-1', {
       action: 'inventory',

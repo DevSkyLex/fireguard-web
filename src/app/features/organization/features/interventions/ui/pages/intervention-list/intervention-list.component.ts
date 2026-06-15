@@ -98,7 +98,12 @@ export class InterventionListPage {
       }
 
       untracked(() => this.store.clearCreatedIntervention());
-      void this.router.navigate(['/organizations', organizationId, 'interventions', intervention.id]);
+      void this.router.navigate([
+        '/organizations',
+        organizationId,
+        'interventions',
+        intervention.id,
+      ]);
     });
   }
   //#endregion
@@ -180,7 +185,12 @@ export class InterventionListPage {
   protected onView(intervention: InterventionOutput): void {
     const organizationId = this.organizationId();
     if (organizationId) {
-      void this.router.navigate(['/organizations', organizationId, 'interventions', intervention.id]);
+      void this.router.navigate([
+        '/organizations',
+        organizationId,
+        'interventions',
+        intervention.id,
+      ]);
     }
   }
 

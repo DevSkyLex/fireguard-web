@@ -167,7 +167,8 @@ export class InterventionSyncService {
     if (activeReplay) return activeReplay;
 
     const replay = this.replayInterventionOutbox(organizationId, interventionId).finally(() => {
-      if (this.activeReplays.get(interventionId) === replay) this.activeReplays.delete(interventionId);
+      if (this.activeReplays.get(interventionId) === replay)
+        this.activeReplays.delete(interventionId);
     });
     this.activeReplays.set(interventionId, replay);
     return replay;
@@ -176,7 +177,10 @@ export class InterventionSyncService {
   /**
    * Replays a intervention outbox after intervention-level serialization has been acquired.
    */
-  private async replayInterventionOutbox(organizationId: string, interventionId: string): Promise<number> {
+  private async replayInterventionOutbox(
+    organizationId: string,
+    interventionId: string,
+  ): Promise<number> {
     const operations = await this.offline.listOutbox(interventionId);
     return this.replayOperations(organizationId, operations, 0, 0, new Set<string>());
   }
@@ -302,21 +306,36 @@ export class InterventionSyncService {
    *
    * @return {Promise<void>} A promise resolving once the operation is replayed.
    */
-  private async replay(organizationId: string, operation: InterventionOutboxOperation): Promise<void> {
+  private async replay(
+    organizationId: string,
+    operation: InterventionOutboxOperation,
+  ): Promise<void> {
     switch (operation.type) {
       case 'facility.create':
         await firstValueFrom(
-          this.facilities.createForIntervention(organizationId, operation.interventionId, operation.payload),
+          this.facilities.createForIntervention(
+            organizationId,
+            operation.interventionId,
+            operation.payload,
+          ),
         );
         break;
       case 'equipment.create':
         await firstValueFrom(
-          this.equipment.createForIntervention(organizationId, operation.interventionId, operation.payload),
+          this.equipment.createForIntervention(
+            organizationId,
+            operation.interventionId,
+            operation.payload,
+          ),
         );
         break;
       case 'inspection.create':
         await firstValueFrom(
-          this.inspections.createForIntervention(organizationId, operation.interventionId, operation.payload),
+          this.inspections.createForIntervention(
+            organizationId,
+            operation.interventionId,
+            operation.payload,
+          ),
         );
         break;
       case 'media.create': {

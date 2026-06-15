@@ -73,7 +73,9 @@ export class InterventionOfflineService {
    *
    * @type {InterventionWorkspaceRepository}
    */
-  private readonly workspace: InterventionWorkspaceRepository = inject(InterventionWorkspaceRepository);
+  private readonly workspace: InterventionWorkspaceRepository = inject(
+    InterventionWorkspaceRepository,
+  );
 
   /**
    * Property hasUnsyncedChanges
@@ -118,10 +120,20 @@ export class InterventionOfflineService {
     resources: readonly unknown[] = [],
     options: { readonly replace?: boolean } = {},
   ): Promise<void> {
-    if (options.replace === undefined && (await this.outbox.listOutbox(intervention.id)).length > 0) {
+    if (
+      options.replace === undefined &&
+      (await this.outbox.listOutbox(intervention.id)).length > 0
+    ) {
       return;
     }
-    await this.workspace.saveWorkspace(intervention, workItems, changes, issues, resources, options);
+    await this.workspace.saveWorkspace(
+      intervention,
+      workItems,
+      changes,
+      issues,
+      resources,
+      options,
+    );
   }
 
   /**

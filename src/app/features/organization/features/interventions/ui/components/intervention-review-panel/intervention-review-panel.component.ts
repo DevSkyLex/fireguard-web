@@ -46,7 +46,8 @@ export class InterventionReviewPanel {
    *
    * @type {InputSignal<InterventionOutput>}
    */
-  public readonly intervention: InputSignal<InterventionOutput> = input.required<InterventionOutput>();
+  public readonly intervention: InputSignal<InterventionOutput> =
+    input.required<InterventionOutput>();
 
   /**
    * Property issues

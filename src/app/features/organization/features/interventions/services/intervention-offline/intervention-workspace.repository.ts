@@ -114,7 +114,11 @@ export class InterventionWorkspaceRepository {
         })),
       ]),
     ]);
-    await this.database.put('metadata', `prefetchedAt:${intervention.id}`, new Date().toISOString());
+    await this.database.put(
+      'metadata',
+      `prefetchedAt:${intervention.id}`,
+      new Date().toISOString(),
+    );
   }
 
   /**
@@ -138,7 +142,10 @@ export class InterventionWorkspaceRepository {
    */
   public async getWorkspace(interventionId: string): Promise<InterventionWorkspaceSnapshot | null> {
     await this.database.ensureOwnerBound();
-    const intervention = await this.database.get<InterventionOutput>('interventions', interventionId);
+    const intervention = await this.database.get<InterventionOutput>(
+      'interventions',
+      interventionId,
+    );
     if (!intervention) return null;
     const interventionIri = `/api/interventions/${interventionId}`;
     const [workItems, changes, resources] = await Promise.all([
@@ -152,7 +159,9 @@ export class InterventionWorkspaceRepository {
       workItems: workItems.filter((item) => item.intervention === interventionIri),
       changes: changes.filter((change) => change.intervention === interventionIri),
       issues: resources
-        .filter((resource) => resource.interventionId === interventionId && resource.kind === 'issue')
+        .filter(
+          (resource) => resource.interventionId === interventionId && resource.kind === 'issue',
+        )
         .map((resource) => resource.value as InterventionIssueOutput),
     };
   }
@@ -195,7 +204,10 @@ export class InterventionWorkspaceRepository {
    */
   public async organizationIdForIntervention(interventionId: string): Promise<string | null> {
     await this.database.ensureOwnerBound();
-    const intervention = await this.database.get<InterventionOutput>('interventions', interventionId);
+    const intervention = await this.database.get<InterventionOutput>(
+      'interventions',
+      interventionId,
+    );
     const match = intervention?.organization.match(/^\/api\/organizations\/([^/?#]+)$/);
 
     return match?.[1] ?? null;

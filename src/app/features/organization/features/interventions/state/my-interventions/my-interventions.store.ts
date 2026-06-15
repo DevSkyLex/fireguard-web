@@ -58,7 +58,10 @@ export const MyInterventionsStore = signalStore(
               }),
               map(({ responsible, participant }) => [
                 ...new Map(
-                  [...responsible, ...participant].map((intervention) => [intervention.id, intervention]),
+                  [...responsible, ...participant].map((intervention) => [
+                    intervention.id,
+                    intervention,
+                  ]),
                 ).values(),
               ]),
               catchError((error: unknown) =>

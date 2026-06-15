@@ -204,7 +204,9 @@ export class InterventionSyncCoordinatorService {
             try {
               await this.sync.replayOutbox(organizationId, interventionId);
             } catch {
-              this.problemState.set('A temporary synchronization error interrupted this intervention.');
+              this.problemState.set(
+                'A temporary synchronization error interrupted this intervention.',
+              );
             }
           }),
         Promise.resolve(),
@@ -221,7 +223,9 @@ export class InterventionSyncCoordinatorService {
   public async retryBlocked(): Promise<void> {
     const interventionIds = await this.offline.listInterventionIdsWithOutbox();
     const operations = (
-      await Promise.all(interventionIds.map((interventionId) => this.offline.listOutbox(interventionId)))
+      await Promise.all(
+        interventionIds.map((interventionId) => this.offline.listOutbox(interventionId)),
+      )
     ).flat();
     await Promise.all(
       operations
@@ -237,7 +241,9 @@ export class InterventionSyncCoordinatorService {
   public async refreshStatus(): Promise<void> {
     const interventionIds = await this.offline.listInterventionIdsWithOutbox();
     const operations = (
-      await Promise.all(interventionIds.map((interventionId) => this.offline.listOutbox(interventionId)))
+      await Promise.all(
+        interventionIds.map((interventionId) => this.offline.listOutbox(interventionId)),
+      )
     ).flat();
     const blocked = operations.filter(
       (operation) => operation.status === 'conflict' || operation.status === 'failed',

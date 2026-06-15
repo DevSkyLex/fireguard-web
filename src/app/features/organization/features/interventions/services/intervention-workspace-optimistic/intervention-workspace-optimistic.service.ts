@@ -13,7 +13,10 @@ import type { InterventionWorkItemOptimisticResult } from './models';
  */
 @Injectable({ providedIn: 'root' })
 export class InterventionWorkspaceOptimisticService {
-  public transition(intervention: InterventionOutput, request: InterventionTransitionRequest): InterventionOutput {
+  public transition(
+    intervention: InterventionOutput,
+    request: InterventionTransitionRequest,
+  ): InterventionOutput {
     return {
       ...intervention,
       status: request.status,

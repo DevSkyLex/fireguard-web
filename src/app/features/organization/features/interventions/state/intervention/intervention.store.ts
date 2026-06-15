@@ -16,7 +16,11 @@ import {
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { interventionStoreEvents } from './events';
-import type { InterventionCreateCommand, InterventionListLoadCommand, InterventionState } from './models';
+import type {
+  InterventionCreateCommand,
+  InterventionListLoadCommand,
+  InterventionState,
+} from './models';
 
 //#region Initial State
 /**
@@ -54,7 +58,9 @@ export const InterventionStore = signalStore(
   withState<InterventionState>(INITIAL_INTERVENTION_STATE),
   withComputed((store) => ({
     /** All cached interventions for the active organization. */
-    interventionList: computed<ReadonlyArray<InterventionOutput>>(() => store.interventionEntities()),
+    interventionList: computed<ReadonlyArray<InterventionOutput>>(() =>
+      store.interventionEntities(),
+    ),
 
     /** True while the intervention list is loading. */
     isLoadingInterventions: computed<boolean>(() => store.listCallState().status === 'pending'),

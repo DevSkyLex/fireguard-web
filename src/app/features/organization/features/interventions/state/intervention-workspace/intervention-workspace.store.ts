@@ -215,17 +215,19 @@ export const InterventionWorkspaceStore = signalStore(
                 );
               }
 
-              return service.update(interventionId, { status, reviewNote }, intervention?.revision).pipe(
-                tapResponse({
-                  next: (updatedIntervention) =>
-                    patchState(store, { intervention: updatedIntervention, saving: false }),
-                  error: () =>
-                    patchState(store, {
-                      saving: false,
-                      error: 'The intervention status could not be updated.',
-                    }),
-                }),
-              );
+              return service
+                .update(interventionId, { status, reviewNote }, intervention?.revision)
+                .pipe(
+                  tapResponse({
+                    next: (updatedIntervention) =>
+                      patchState(store, { intervention: updatedIntervention, saving: false }),
+                    error: () =>
+                      patchState(store, {
+                        saving: false,
+                        error: 'The intervention status could not be updated.',
+                      }),
+                  }),
+                );
             }),
           ),
         ),

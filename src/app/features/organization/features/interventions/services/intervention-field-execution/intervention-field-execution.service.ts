@@ -140,7 +140,11 @@ export class InterventionFieldExecutionService {
    *
    * @return {Promise<boolean>} Whether the photo was queued for synchronization.
    */
-  public async attachPhoto(interventionId: string, equipmentId: string, source: File): Promise<boolean> {
+  public async attachPhoto(
+    interventionId: string,
+    equipmentId: string,
+    source: File,
+  ): Promise<boolean> {
     const file = await this.photoCompressor.compress(source);
     const clientId = crypto.randomUUID();
     await this.offline.queue(interventionId, 'media.create', {

@@ -200,7 +200,10 @@ describe('InterventionSyncService', () => {
     const replayed = await service.replayOutbox('org-1', 'intervention-1');
 
     expect(replayed).toBe(1);
-    expect(mockOffline.markOutboxConflict).toHaveBeenCalledWith('op-1', 'The intervention changed.');
+    expect(mockOffline.markOutboxConflict).toHaveBeenCalledWith(
+      'op-1',
+      'The intervention changed.',
+    );
     expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-2');
     expect(mockEquipment.createForIntervention).toHaveBeenCalled();
   });
@@ -240,7 +243,10 @@ describe('InterventionSyncService', () => {
     const replayed = await service.replayOutbox('org-1', 'intervention-1');
 
     expect(replayed).toBe(0);
-    expect(mockOffline.markOutboxConflict).toHaveBeenCalledWith('op-1', 'The intervention changed.');
+    expect(mockOffline.markOutboxConflict).toHaveBeenCalledWith(
+      'op-1',
+      'The intervention changed.',
+    );
     expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
   });
 
@@ -266,7 +272,10 @@ describe('InterventionSyncService', () => {
     const replayed = await service.replayOutbox('org-1', 'intervention-1');
 
     expect(replayed).toBe(0);
-    expect(mockOffline.markOutboxConflict).toHaveBeenCalledWith('op-1', 'The intervention changed.');
+    expect(mockOffline.markOutboxConflict).toHaveBeenCalledWith(
+      'op-1',
+      'The intervention changed.',
+    );
     expect(mockInterventionService.createWorkItem).not.toHaveBeenCalled();
     expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
   });

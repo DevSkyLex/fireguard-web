@@ -57,7 +57,12 @@ export class MyInterventionsPage {
   protected openIntervention(intervention: InterventionOutput): void {
     const organizationId = this.organization.selectedOrganization()?.id;
     if (organizationId) {
-      void this.router.navigate(['/organizations', organizationId, 'interventions', intervention.id]);
+      void this.router.navigate([
+        '/organizations',
+        organizationId,
+        'interventions',
+        intervention.id,
+      ]);
     }
   }
 }

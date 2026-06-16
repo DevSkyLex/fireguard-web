@@ -37,14 +37,19 @@ import { ActiveOrganizationStore } from '@features/organization/state';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyInterventionsPage {
+  /** Property store. @readonly @description Provides field intervention state. @access protected @since 1.0.0 @type {MyInterventionsStoreType} */
   protected readonly store: MyInterventionsStoreType = inject(MyInterventionsStore);
 
+  /** Property organization. @readonly @description Provides the active organization. @access private @since 1.0.0 @type {ActiveOrganizationStore} */
   private readonly organization: ActiveOrganizationStore = inject(ActiveOrganizationStore);
 
+  /** Property connectivity. @readonly @description Provides the current connectivity state. @access private @since 1.0.0 @type {ConnectivityService} */
   private readonly connectivity: ConnectivityService = inject(ConnectivityService);
 
+  /** Property router. @readonly @description Provides application navigation. @access private @since 1.0.0 @type {Router} */
   private readonly router: Router = inject(Router);
 
+  /** @constructor @description Loads assigned interventions when organization or connectivity changes. */
   public constructor() {
     effect(() =>
       this.store.load({
@@ -54,6 +59,7 @@ export class MyInterventionsPage {
     );
   }
 
+  /** Method openIntervention. @method openIntervention @description Opens an assigned intervention. @access protected @since 1.0.0 @param {InterventionOutput} intervention - Intervention to open. @returns {void} */
   protected openIntervention(intervention: InterventionOutput): void {
     const organizationId = this.organization.selectedOrganization()?.id;
     if (organizationId) {

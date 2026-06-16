@@ -27,7 +27,17 @@ import {
   type InterventionWorkItemFormValues,
 } from '@features/organization/features/interventions/ui/forms';
 
-/** Renders and orchestrates the intervention preparation phase. */
+/**
+ * Component InterventionPreparePanel
+ * @class InterventionPreparePanel
+ *
+ * @description
+ * Renders and orchestrates the intervention preparation phase.
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
 @Component({
   selector: 'app-intervention-prepare-panel',
   imports: [
@@ -42,22 +52,41 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionPreparePanel {
+  /** Input intervention. @readonly @access public @since 1.0.0 @type {InputSignal<InterventionOutput>} */
   public readonly intervention: InputSignal<InterventionOutput> = input.required();
+  /** Input workItems. @readonly @access public @since 1.0.0 @type {InputSignal<readonly InterventionWorkItemOutput[]>} */
   public readonly workItems: InputSignal<readonly InterventionWorkItemOutput[]> = input.required();
+  /** Input saving. @readonly @access public @since 1.0.0 @type {InputSignal<boolean>} */
   public readonly saving: InputSignal<boolean> = input(false);
+  /** Input canPlan. @readonly @access public @since 1.0.0 @type {InputSignal<boolean>} */
   public readonly canPlan: InputSignal<boolean> = input(false);
+  /** Input siteOptions. @readonly @access public @since 1.0.0 @type {InputSignal<readonly SelectOption[]>} */
   public readonly siteOptions: InputSignal<readonly SelectOption[]> = input.required();
+  /** Input memberOptions. @readonly @access public @since 1.0.0 @type {InputSignal<readonly MemberSelectOption[]>} */
   public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> = input.required();
+  /** Input targetOptions. @readonly @access public @since 1.0.0 @type {InputSignal<readonly SelectOption[]>} */
   public readonly targetOptions: InputSignal<readonly SelectOption[]> = input.required();
 
+  /** Output planIntervention. @readonly @access public @since 1.0.0 @type {OutputEmitterRef<void>} */
   public readonly planIntervention: OutputEmitterRef<void> = output<void>();
+  /** Output saveDetails. @readonly @access public @since 1.0.0 @type {OutputEmitterRef<InterventionPlanningDetails>} */
   public readonly saveDetails: OutputEmitterRef<InterventionPlanningDetails> =
     output<InterventionPlanningDetails>();
+  /** Output createWorkItem. @readonly @access public @since 1.0.0 @type {OutputEmitterRef<CreateInterventionWorkItemInput>} */
   public readonly createWorkItem: OutputEmitterRef<CreateInterventionWorkItemInput> =
     output<CreateInterventionWorkItemInput>();
 
+  /** Property workItemDrawerVisible. @readonly @access protected @since 1.0.0 @type {WritableSignal<boolean>} */
   protected readonly workItemDrawerVisible = signal(false);
 
+  /**
+   * Method savePlanningDetails
+   * @method savePlanningDetails
+   * @access protected
+   * @since 1.0.0
+   * @param {InterventionPlanningFormValues} values - Planning form values.
+   * @returns {void}
+   */
   protected savePlanningDetails(values: InterventionPlanningFormValues): void {
     this.saveDetails.emit({
       site: values.site,
@@ -69,6 +98,14 @@ export class InterventionPreparePanel {
     });
   }
 
+  /**
+   * Method addWorkItem
+   * @method addWorkItem
+   * @access protected
+   * @since 1.0.0
+   * @param {InterventionWorkItemFormValues} values - Work item form values.
+   * @returns {void}
+   */
   protected addWorkItem(values: InterventionWorkItemFormValues): void {
     this.createWorkItem.emit({
       intervention: `/api/interventions/${this.intervention().id}`,

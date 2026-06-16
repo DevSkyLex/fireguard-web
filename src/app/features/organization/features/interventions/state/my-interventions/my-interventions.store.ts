@@ -81,4 +81,13 @@ export const MyInterventionsStore = signalStore(
   ),
 );
 
+/**
+ * Type MyInterventionsStoreType
+ * @type MyInterventionsStoreType
+ *
+ * @description
+ * Injectable instance type exposed by {@link MyInterventionsStore}.
+ *
+ * @since 1.0.0
+ */
 export type MyInterventionsStoreType = InstanceType<typeof MyInterventionsStore>;

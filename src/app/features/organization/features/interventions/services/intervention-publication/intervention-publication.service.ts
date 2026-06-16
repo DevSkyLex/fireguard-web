@@ -11,6 +11,7 @@ import type {
  */
 @Injectable({ providedIn: 'root' })
 export class InterventionPublicationService {
+  /** Property interventions. @readonly @description Provides intervention publication API operations. @access private @since 1.0.0 @type {InterventionService} */
   private readonly interventions: InterventionService = inject(InterventionService);
 
   /**

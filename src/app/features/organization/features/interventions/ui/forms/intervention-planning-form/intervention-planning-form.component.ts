@@ -28,7 +28,17 @@ import type {
 import { InterventionMemberOption } from '../../components/intervention-member-option/intervention-member-option.component';
 import type { InterventionPlanningFormData, InterventionPlanningFormValues } from './models';
 
-/** Presentational form used to edit intervention planning details. */
+/**
+ * Component InterventionPlanningForm
+ * @class InterventionPlanningForm
+ *
+ * @description
+ * Presentational form used to edit intervention planning details.
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
 @Component({
   selector: 'app-intervention-planning-form',
   imports: [
@@ -43,20 +53,28 @@ import type { InterventionPlanningFormData, InterventionPlanningFormValues } fro
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionPlanningForm {
+  /** Input intervention. @readonly @description Intervention used to initialize planning controls. @access public @since 1.0.0 @type {InputSignal<InterventionOutput>} */
   public readonly intervention: InputSignal<InterventionOutput> = input.required();
+  /** Input siteOptions. @readonly @description Available intervention sites. @access public @since 1.0.0 @type {InputSignal<readonly SelectOption[]>} */
   public readonly siteOptions: InputSignal<readonly SelectOption[]> = input<
     readonly SelectOption[]
   >([]);
+  /** Input memberOptions. @readonly @description Available organization members. @access public @since 1.0.0 @type {InputSignal<readonly MemberSelectOption[]>} */
   public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> = input<
     readonly MemberSelectOption[]
   >([]);
+  /** Input loading. @readonly @description Indicates whether submission is running. @access public @since 1.0.0 @type {InputSignal<boolean>} */
   public readonly loading: InputSignal<boolean> = input(false);
+  /** Input disabled. @readonly @description Indicates whether planning is disabled. @access public @since 1.0.0 @type {InputSignal<boolean>} */
   public readonly disabled: InputSignal<boolean> = input(false);
+  /** Output submitted. @readonly @description Emits validated planning values. @access public @since 1.0.0 @type {OutputEmitterRef<InterventionPlanningFormValues>} */
   public readonly submitted: OutputEmitterRef<InterventionPlanningFormValues> =
     output<InterventionPlanningFormValues>();
 
+  /** Property formBuilder. @readonly @description Builds the typed reactive form. @access private @since 1.0.0 @type {NonNullableFormBuilder} */
   private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
 
+  /** Property form. @readonly @description Stores intervention planning controls. @access protected @since 1.0.0 @type {FormGroup<InterventionPlanningFormData>} */
   protected readonly form: FormGroup<InterventionPlanningFormData> =
     this.formBuilder.group<InterventionPlanningFormData>({
       site: this.formBuilder.control('', [Validators.required]),
@@ -67,6 +85,7 @@ export class InterventionPlanningForm {
       dueAt: new FormControl<Date | null>(null, [Validators.required]),
     });
 
+  /** Property priorityOptions. @readonly @description Available intervention priorities. @access protected @since 1.0.0 @type {readonly SelectOption<InterventionPriority>[]} */
   protected readonly priorityOptions: readonly SelectOption<InterventionPriority>[] = [
     { label: 'Low', value: 'low' },
     { label: 'Normal', value: 'normal' },
@@ -74,6 +93,7 @@ export class InterventionPlanningForm {
     { label: 'Urgent', value: 'urgent' },
   ];
 
+  /** @constructor @description Synchronizes planning values and the disabled state with component inputs. */
   public constructor() {
     effect(() => {
       const intervention = this.intervention();
@@ -99,6 +119,7 @@ export class InterventionPlanningForm {
     });
   }
 
+  /** Method onSubmit. @method onSubmit @description Validates and emits planning values. @access protected @since 1.0.0 @returns {void} */
   protected onSubmit(): void {
     if (this.form.invalid || this.loading() || this.disabled()) {
       this.form.markAllAsTouched();
@@ -107,6 +128,7 @@ export class InterventionPlanningForm {
     this.submitted.emit(this.form.getRawValue());
   }
 
+  /** Method toDate. @method toDate @description Converts an API date-time value to a valid Date. @access private @since 1.0.0 @param {string | null} value - API date-time value. @returns {Date | null} */
   private toDate(value: string | null): Date | null {
     if (!value) return null;
     const date = new Date(value);

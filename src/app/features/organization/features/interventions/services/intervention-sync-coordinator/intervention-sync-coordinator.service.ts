@@ -39,8 +39,10 @@ export class InterventionSyncCoordinatorService {
    */
   private readonly syncingState: WritableSignal<boolean> = signal(false);
 
+  /** Property blockedOperationsState. @readonly @description Stores the number of blocked operations. @access private @since 1.0.0 @type {WritableSignal<number>} */
   private readonly blockedOperationsState: WritableSignal<number> = signal(0);
 
+  /** Property problemState. @readonly @description Stores the latest synchronization problem. @access private @since 1.0.0 @type {WritableSignal<string | null>} */
   private readonly problemState: WritableSignal<string | null> = signal(null);
 
   /**
@@ -57,8 +59,10 @@ export class InterventionSyncCoordinatorService {
    */
   public readonly syncing: Signal<boolean> = this.syncingState.asReadonly();
 
+  /** Property blockedOperations. @readonly @description Exposes the number of blocked operations. @access public @since 1.0.0 @type {Signal<number>} */
   public readonly blockedOperations: Signal<number> = this.blockedOperationsState.asReadonly();
 
+  /** Property problem. @readonly @description Exposes the latest synchronization problem. @access public @since 1.0.0 @type {Signal<string | null>} */
   public readonly problem: Signal<string | null> = this.problemState.asReadonly();
 
   /**

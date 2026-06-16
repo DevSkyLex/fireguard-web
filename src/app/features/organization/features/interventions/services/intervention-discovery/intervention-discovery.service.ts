@@ -16,12 +16,17 @@ import { InterventionSyncCoordinatorService } from '../intervention-sync-coordin
  */
 @Injectable({ providedIn: 'root' })
 export class InterventionDiscoveryService {
+  /** Property fieldExecution. @readonly @description Prepares field discovery resources. @access private @since 1.0.0 @type {InterventionFieldExecutionService} */
   private readonly fieldExecution: InterventionFieldExecutionService = inject(
     InterventionFieldExecutionService,
   );
+  /** Property connectivity. @readonly @description Provides the current connectivity state. @access private @since 1.0.0 @type {ConnectivityService} */
   private readonly connectivity: ConnectivityService = inject(ConnectivityService);
+  /** Property offline. @readonly @description Persists offline intervention changes. @access private @since 1.0.0 @type {InterventionOfflineService} */
   private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
+  /** Property sync. @readonly @description Synchronizes intervention resources. @access private @since 1.0.0 @type {InterventionSyncService} */
   private readonly sync: InterventionSyncService = inject(InterventionSyncService);
+  /** Property syncCoordinator. @readonly @description Coordinates background synchronization. @access private @since 1.0.0 @type {InterventionSyncCoordinatorService} */
   private readonly syncCoordinator: InterventionSyncCoordinatorService = inject(
     InterventionSyncCoordinatorService,
   );

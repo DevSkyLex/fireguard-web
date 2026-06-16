@@ -22,12 +22,17 @@ import type { InterventionDiscoveryResourcePlan, InterventionFieldDiscovery } fr
  */
 @Injectable({ providedIn: 'root' })
 export class InterventionFieldExecutionService {
+  /** Property connectivity. @readonly @description Provides the current connectivity state. @access private @since 1.0.0 @type {ConnectivityService} */
   private readonly connectivity: ConnectivityService = inject(ConnectivityService);
+  /** Property offline. @readonly @description Persists offline intervention changes. @access private @since 1.0.0 @type {InterventionOfflineService} */
   private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
+  /** Property scanner. @readonly @description Provides QR scanning operations. @access private @since 1.0.0 @type {InterventionQrScannerService} */
   private readonly scanner: InterventionQrScannerService = inject(InterventionQrScannerService);
+  /** Property photoCompressor. @readonly @description Compresses field photos before persistence. @access private @since 1.0.0 @type {InterventionPhotoCompressorService} */
   private readonly photoCompressor: InterventionPhotoCompressorService = inject(
     InterventionPhotoCompressorService,
   );
+  /** Property syncCoordinator. @readonly @description Coordinates background synchronization. @access private @since 1.0.0 @type {InterventionSyncCoordinatorService} */
   private readonly syncCoordinator: InterventionSyncCoordinatorService = inject(
     InterventionSyncCoordinatorService,
   );
@@ -177,6 +182,7 @@ export class InterventionFieldExecutionService {
     return this.scanner.isSupported();
   }
 
+  /** Method resourceId. @method resourceId @description Extracts a resource identifier from an IRI. @access private @since 1.0.0 @param {string} value - Resource value. @param {string} resource - Resource segment. @returns {string} */
   private resourceId(value: string, resource: string): string {
     const match = value.match(new RegExp(`^/api/${resource}/([^/?#]+)$`));
     if (!match?.[1]) throw new Error(`Invalid ${resource} resource`);

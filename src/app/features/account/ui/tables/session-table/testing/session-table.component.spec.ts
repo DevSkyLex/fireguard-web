@@ -112,6 +112,6 @@ describe('SessionTable', () => {
     fixture.detectChanges();
     TestBed.flushEffects();
 
-    expect(spy).toHaveBeenCalledWith({ page: 1, itemsPerPage: 10 });
+    expect(spy).toHaveBeenCalledWith({ page: 1, itemsPerPage: 12 });
   });
 });

@@ -33,23 +33,11 @@
         No organization navigation available.
       </div>
     } @else {
-      <ul class="flex flex-col py-5">
-        @for (
-          section of navigationItems();
-          track section.id ?? section.label;
-          let isFirst = $first
-        ) {
-          @if (!isFirst) {
-            <li
-              role="separator"
-              data-testid="sidebar-section-divider"
-              class="my-5 border-t border-surface-200 dark:border-surface-800"
-            ></li>
-          }
-
+      <ul class="flex flex-col gap-4 py-5">
+        @for (section of navigationItems(); track section.id ?? section.label) {
           <li class="px-3">
             <p
-              class="px-2 pt-1 pb-1.5 text-[10px] font-medium tracking-widest text-surface-400 uppercase dark:text-surface-500"
+              class="px-2 pt-1 pb-1.5 text-[11px] font-semibold text-surface-500 dark:text-surface-400"
             >
               {{ section.label }}
             </p>

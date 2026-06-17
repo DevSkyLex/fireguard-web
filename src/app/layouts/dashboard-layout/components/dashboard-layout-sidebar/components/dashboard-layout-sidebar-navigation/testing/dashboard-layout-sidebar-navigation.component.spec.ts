@@ -60,7 +60,7 @@ describe('DashboardLayoutSidebarNavigation', () => {
         DashboardSidebarNavigationService,
         DashboardSidebarService,
         provideDashboardLayoutSlots({
-          navigation: [withMainNavigation(), withOrganizationNavigation()],
+          navigation: [withMainNavigation(), ...withOrganizationNavigation()],
         }),
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
@@ -85,10 +85,12 @@ describe('DashboardLayoutSidebarNavigation', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
     fixture.detectChanges();
 
+    // Home + Overview + Assets + Compliance sections are visible for the
+    // granted permissions, so three dividers separate the four sections.
     expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(7);
     expect(
       fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
-    ).toBe(1);
+    ).toBe(3);
     expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
   });
 
@@ -98,8 +100,8 @@ describe('DashboardLayoutSidebarNavigation', () => {
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    const organization = component.menuItems().find((group) => group.label === 'Organization');
-    const facilities = organization?.items?.find((item) => item.label === 'Facilities');
+    const assets = component.menuItems().find((group) => group.label === 'Assets');
+    const facilities = assets?.items?.find((item) => item.label === 'Facilities');
 
     expect(facilities?.routerLink).toBe('/organizations/org-1/facilities');
   });

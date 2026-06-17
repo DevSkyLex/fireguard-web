@@ -351,7 +351,7 @@ export class FacilityTable implements OnInit {
    *
    * @type {number}
    */
-  protected readonly rows: number = 30;
+  protected readonly rows: number = 12;
 
   /**
    * Property skeletonItems

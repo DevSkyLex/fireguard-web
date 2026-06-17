@@ -38,7 +38,7 @@ export const APP_ROUTES: Routes = [
       provideMainFeature(),
       provideOrganizationFeature(),
       provideDashboardLayoutSlots({
-        navigation: [withMainNavigation(), withOrganizationNavigation()],
+        navigation: [withMainNavigation(), ...withOrganizationNavigation()],
         topbar: [
           withOrganizationSwitcher(),
           withThemeSwitcher(),

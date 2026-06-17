@@ -1,6 +1,6 @@
 ---
 description: Run the FireGuard quality gate (format, lint, targeted tests, build) and report results
-argument-hint: "[optional test glob, e.g. src/app/features/auth/**]"
+argument-hint: '[optional test glob, e.g. src/app/features/auth/**]'
 allowed-tools: Bash(npm run *), Bash(npx ng test:*), Bash(npx oxfmt:*), Bash(npx oxlint:*)
 ---
 

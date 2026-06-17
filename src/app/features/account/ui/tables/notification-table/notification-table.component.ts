@@ -232,7 +232,7 @@ export class NotificationTable {
    *
    * @type {number}
    */
-  protected readonly rows: number = 10;
+  protected readonly rows: number = 12;
 
   /**
    * Property rowsPerPageOptions
@@ -246,7 +246,7 @@ export class NotificationTable {
    *
    * @type {number[]}
    */
-  protected readonly rowsPerPageOptions: number[] = [10, 20, 50];
+  protected readonly rowsPerPageOptions: number[] = [12, 24, 48];
 
   /**
    * Property skeletonItems

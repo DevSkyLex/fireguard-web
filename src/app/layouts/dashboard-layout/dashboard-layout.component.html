@@ -4,7 +4,8 @@
 >
   <!-- Primary sidebar: full-height on the left, integrates with header line -->
   <aside
-    class="hidden shrink-0 overflow-y-auto border-r border-surface-200 bg-surface-0 transition-[width] duration-200 ease-in-out lg:flex dark:border-surface-800 dark:bg-surface-950"
+    class="hidden shrink-0 overflow-y-auto border-surface-200 bg-surface-0 transition-[width] duration-200 ease-in-out lg:flex dark:border-surface-800 dark:bg-surface-950"
+    [class.border-r]="!hasActiveContextPanel()"
     [style.width.px]="primaryIconOnly() ? 64 : 250"
   >
     <app-dashboard-layout-sidebar

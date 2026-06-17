@@ -48,5 +48,5 @@ export class EquipmentAttachmentTable {
   /** Emits an attachment selected for removal. */
   public readonly remove: OutputEmitterRef<EquipmentAttachmentOutput> = output();
   /** Placeholder rows displayed while loading. */
-  protected readonly skeletonItems = Array(4);
+  protected readonly skeletonItems = Array(5);
 }

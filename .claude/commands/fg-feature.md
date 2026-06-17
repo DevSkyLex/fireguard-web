@@ -1,6 +1,6 @@
 ---
 description: Scaffold a new FireGuard feature or subfeature following the canonical ARCHITECTURE.md templates
-argument-hint: "<feature-name> [parent-feature for a nested subfeature]"
+argument-hint: '<feature-name> [parent-feature for a nested subfeature]'
 ---
 
 Scaffold the feature described by: **$ARGUMENTS**

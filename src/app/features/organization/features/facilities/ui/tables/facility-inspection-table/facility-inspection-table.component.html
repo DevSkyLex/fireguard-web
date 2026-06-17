@@ -91,7 +91,6 @@
       <p-table
         [value]="loading() ? skeletonItems : empty() ? [] : [...inspections()]"
         dataKey="id"
-        [loading]="loading()"
         [paginator]="true"
         [rows]="rows"
         [first]="firstPage()"

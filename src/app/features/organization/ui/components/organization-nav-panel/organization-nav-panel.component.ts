@@ -9,11 +9,7 @@ import {
   type OrganizationContextPort,
   type OrganizationMemberAccessPort,
 } from '@features/organization';
-import {
-  hasOrganizationNavigationAccess,
-  ORGANIZATION_NAVIGATION_ITEMS,
-  type OrganizationNavigationItem,
-} from '@features/organization/navigation';
+import { buildOrganizationNavigationSections } from '@features/organization/navigation';
 
 /**
  * Component OrganizationSecondarySidebar
@@ -22,8 +18,8 @@ import {
  * @description
  * Organization-owned navigation panel rendered in the dashboard secondary
  * sidebar slot when an organization is active. Displays organization-scoped
- * navigation items (Dashboard, Facilities, Equipments, Inspections) filtered
- * by the current member's permissions.
+ * navigation items grouped into sections (Overview, Field work, Assets,
+ * Compliance, Administration) filtered by the current member's permissions.
  *
  * This component is feature-owned, manages its own state, and is registered
  * as a slot contribution by `provideOrganization()`. Its design is
@@ -112,28 +108,7 @@ export class OrganizationNavPanel {
     );
     const prefix: string = `/organizations/${organization.id}`;
 
-    const visibleItems: MenuItem[] = ORGANIZATION_NAVIGATION_ITEMS.filter(
-      (item: OrganizationNavigationItem): boolean =>
-        hasOrganizationNavigationAccess(item, grantedPermissions),
-    ).map(
-      (item: OrganizationNavigationItem): MenuItem => ({
-        id: item.id,
-        label: item.label,
-        icon: item.icon,
-        routerLink: item.path.length > 0 ? `${prefix}/${item.path}` : prefix,
-      }),
-    );
-
-    if (visibleItems.length === 0) return [];
-
-    return [
-      {
-        id: 'organization',
-        label: 'Organization',
-        expanded: true,
-        items: visibleItems,
-      },
-    ];
+    return buildOrganizationNavigationSections(prefix, grantedPermissions);
   });
 
   /**

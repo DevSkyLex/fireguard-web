@@ -1,6 +1,6 @@
 ---
 description: Review the current changes against FireGuard's architecture documents
-argument-hint: "[optional path or feature to focus on]"
+argument-hint: '[optional path or feature to focus on]'
 allowed-tools: Bash(git diff:*), Bash(git status), Read, Grep, Glob
 ---
 

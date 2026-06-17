@@ -1,6 +1,6 @@
 ---
 description: Create or modify an NgRx SignalStore slice following FireGuard's store patterns
-argument-hint: "<slice name and what it manages> [target feature]"
+argument-hint: '<slice name and what it manages> [target feature]'
 ---
 
 Work on the SignalStore slice described by: **$ARGUMENTS**

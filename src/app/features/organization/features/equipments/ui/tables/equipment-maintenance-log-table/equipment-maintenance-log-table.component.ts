@@ -21,5 +21,5 @@ export class EquipmentMaintenanceLogTable {
   /** Whether maintenance log entries are loading. */
   public readonly loading: InputSignal<boolean> = input(false);
   /** Placeholder rows displayed while loading. */
-  protected readonly skeletonItems = Array(4);
+  protected readonly skeletonItems = Array(5);
 }

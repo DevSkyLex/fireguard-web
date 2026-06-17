@@ -65,7 +65,7 @@ export class NonConformityTable {
   /** Emits a non-conformity selected for detail display. */
   public readonly view: OutputEmitterRef<NonConformityOutput> = output();
   /** Placeholder rows displayed while loading. */
-  protected readonly skeletonItems = Array(4);
+  protected readonly skeletonItems = Array(5);
   /** Supported non-conformity status options. */
   protected readonly statusOptions: { label: string; value: NonConformityStatus }[] = [
     { label: 'Open', value: 'open' },

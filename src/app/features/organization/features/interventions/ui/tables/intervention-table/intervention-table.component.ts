@@ -31,19 +31,6 @@ import { InterventionTag } from '../../components/intervention-tag';
 const INTERVENTION_NAME_MAX_LENGTH = 160;
 
 /**
- * Constant SKELETON_ROW_COUNT
- * @const SKELETON_ROW_COUNT
- *
- * @description
- * Number of placeholder rows rendered while the list is loading.
- *
- * @since 1.0.0
- *
- * @type {number}
- */
-const SKELETON_ROW_COUNT = 5;
-
-/**
  * Component InterventionTable
  * @class InterventionTable
  *
@@ -271,7 +258,7 @@ export class InterventionTable {
    *
    * @type {undefined[]}
    */
-  protected readonly skeletonItems: undefined[] = Array(SKELETON_ROW_COUNT);
+  protected readonly skeletonItems: undefined[] = Array(5);
   //#endregion
 
   //#region Methods

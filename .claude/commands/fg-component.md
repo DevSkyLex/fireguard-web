@@ -1,6 +1,6 @@
 ---
 description: Create a FireGuard PrimeNG + Tailwind component (standalone, signals, OnPush) in the right layer
-argument-hint: "<component description> [target feature/path]"
+argument-hint: '<component description> [target feature/path]'
 ---
 
 Build the component described by: **$ARGUMENTS**

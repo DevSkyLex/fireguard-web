@@ -46,7 +46,6 @@
       <p-table
         [value]="loading() ? skeletonItems : empty() ? [] : [...checklists()]"
         dataKey="id"
-        [loading]="loading()"
         [lazy]="true"
         [paginator]="true"
         [rows]="rows"

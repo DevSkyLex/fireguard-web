@@ -61,7 +61,7 @@ describe('DashboardLayoutSidebar', () => {
         DashboardSidebarService,
         provideRouter([]),
         provideDashboardLayoutSlots({
-          navigation: [withMainNavigation(), withOrganizationNavigation()],
+          navigation: [withMainNavigation(), ...withOrganizationNavigation()],
         }),
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
@@ -86,15 +86,18 @@ describe('DashboardLayoutSidebar', () => {
 
     expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(7);
     expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
+    // Home + Overview + Assets + Compliance sections → three dividers.
     expect(
       fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
-    ).toBe(1);
+    ).toBe(3);
 
     const textContent = fixture.nativeElement.textContent;
     expect(textContent).toContain('Fireguard');
     expect(textContent).toContain('Home');
     expect(textContent).toContain('Organizations');
-    expect(textContent).toContain('Organization');
+    expect(textContent).toContain('Overview');
+    expect(textContent).toContain('Assets');
+    expect(textContent).toContain('Compliance');
     expect(textContent).toContain('Dashboard');
     expect(textContent).toContain('Facilities');
     expect(textContent).toContain('Equipments');
@@ -145,10 +148,8 @@ describe('DashboardLayoutSidebar', () => {
       }[];
     };
 
-    const organizationPanel = navigation
-      .menuItems()
-      .find((group) => group.label === 'Organization');
-    const dashboard = organizationPanel?.items?.find((item) => item.label === 'Dashboard');
+    const overviewPanel = navigation.menuItems().find((group) => group.label === 'Overview');
+    const dashboard = overviewPanel?.items?.find((item) => item.label === 'Dashboard');
 
     expect(dashboard?.routerLink).toBe('/organizations/org-1');
   });
@@ -164,7 +165,7 @@ describe('DashboardLayoutSidebar', () => {
 
     const labels = navigation.menuItems().map((group) => group.label);
 
-    expect(labels).toEqual(['Home', 'Organization']);
+    expect(labels).toEqual(['Home', 'Overview', 'Assets', 'Compliance']);
   });
 
   it('should not render collapsed flyout ui', () => {

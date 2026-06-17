@@ -134,8 +134,8 @@ describe('OrganizationNavPanel', () => {
       navigationItems: () => readonly MenuItem[];
     };
 
-    const section = component.navigationItems()[0];
-    const facilities = section?.items?.find((i: MenuItem) => i.label === 'Facilities');
+    const items = component.navigationItems().flatMap((section) => section.items ?? []);
+    const facilities = items.find((i: MenuItem) => i.label === 'Facilities');
     expect(facilities?.routerLink).toBe('/organizations/org-1/facilities');
   });
 });

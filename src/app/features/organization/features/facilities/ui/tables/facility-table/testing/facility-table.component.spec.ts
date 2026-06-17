@@ -85,7 +85,7 @@ describe('FacilityTable', () => {
     expect(fixture.nativeElement.textContent).toContain('No facilities yet');
   });
 
-  // Rendering 30 skeleton rows occasionally exceeds the default 5s
+  // Rendering the skeleton rows occasionally exceeds the default 5s
   // timeout on loaded machines, hence the explicit allowance.
   it('should show skeleton placeholders while loading', { timeout: 15_000 }, () => {
     const fixture = createComponent({ loading: true });

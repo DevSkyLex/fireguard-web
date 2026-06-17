@@ -1,0 +1,25 @@
+<p-dialog
+  header="Create a field intervention"
+  [visible]="visible()"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [draggable]="false"
+  [dismissableMask]="!loading()"
+  [closable]="!loading()"
+  [style]="{ width: '64rem' }"
+  [breakpoints]="{ '1199px': '92vw' }"
+  styleClass="max-h-[92vh]"
+>
+  <p class="mb-6 text-sm text-surface-600 dark:text-surface-300">
+    Choose the operational objective first. The workspace will then guide scope preparation and
+    assignment.
+  </p>
+
+  <app-intervention-create-form
+    [loading]="loading()"
+    [optionsLoading]="optionsLoading()"
+    [siteOptions]="siteOptions()"
+    [memberOptions]="memberOptions()"
+    (submitted)="submitted.emit($event)"
+  />
+</p-dialog>

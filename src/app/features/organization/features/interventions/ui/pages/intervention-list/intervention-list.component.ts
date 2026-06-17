@@ -9,7 +9,6 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DialogModule } from 'primeng/dialog';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionListOptions,
@@ -23,10 +22,8 @@ import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
 } from '@features/organization/features/interventions/state/intervention-planning-options';
-import {
-  InterventionCreateForm,
-  type InterventionCreateFormValues,
-} from '@features/organization/features/interventions/ui/forms';
+import { InterventionCreateDialog } from '@features/organization/features/interventions/ui/dialogs';
+import type { InterventionCreateFormValues } from '@features/organization/features/interventions/ui/forms';
 import { InterventionTable } from '@features/organization/features/interventions/ui/tables';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
@@ -46,7 +43,7 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-intervention-list-page',
-  imports: [DialogModule, InterventionCreateForm, InterventionTable],
+  imports: [InterventionCreateDialog, InterventionTable],
   providers: [InterventionStore, InterventionPlanningOptionsStore],
   templateUrl: './intervention-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

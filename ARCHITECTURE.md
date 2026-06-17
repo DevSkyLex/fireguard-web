@@ -478,6 +478,7 @@ features/<feature>/
     components/           # optional
     dataviews/            # optional
     forms/                # optional
+    dialogs/              # optional
   state/
     index.ts              # optional public API
     <slice>/
@@ -514,15 +515,16 @@ A feature may contain:
 
 Notes:
 
-- `ui/` is the default home for `pages/`, `components/`, `dataviews/`, and `forms/`; do not spread presentation folders beside `data-access/` and `state/`,
+- `ui/` is the default home for `pages/`, `components/`, `dataviews/`, `forms/`, and `dialogs/`; do not spread presentation folders beside `data-access/` and `state/`,
 - `data-access/` root should stay small: keep the public barrel at the root, put injectable API classes under `data-access/services/`, and reserve `data-access/adapters/` for pure transformations,
-- `ui/` is the target structure; legacy flat `pages/`, `components/`, `dataviews/`, and `forms/` folders may remain only under the transition rules in section 15,
+- `ui/` is the target structure; legacy flat `pages/`, `components/`, `dataviews/`, `forms/`, and `dialogs/` folders may remain only under the transition rules in section 15,
 - if a feature owns guards, resolvers, or feature-scoped interceptors, they live under `http/`; do not place them at the feature root,
 - keep empty concern folders absent; the template defines ownership boundaries, not mandatory boilerplate,
 - create `ports/` only when a feature publishes behavioral contracts consumed by layouts or approved sibling features; do not create `ports/` for contracts consumed only within the feature,
 - inside `ports/`, use one folder per published contract and split the interface from the token (`<port-name>.interface.ts` and `<port-name>.token.ts`),
 - create `providers/` when a feature exposes bootstrap helpers or feature-owned providers; each provider is responsible for binding the feature's ports to their concrete adapters,
 - create `ui/dataviews/` only for substantial list, grid, table, or browsing UIs,
+- create `ui/dialogs/` only for modal/overlay surfaces (creation dialogs, confirmations, pickers) that host their own content; keep heavy form logic in a `ui/forms/` component the dialog composes,
 - create `features/` only when both URL structure and ownership are nested,
 - keep feature internals colocated instead of centralizing them in `core`.
 
@@ -549,6 +551,7 @@ features/<parent>/features/<child>/
     components/           # optional
     dataviews/            # optional
     forms/                # optional
+    dialogs/              # optional
   state/
     index.ts              # optional public API
     <slice>/
@@ -819,6 +822,57 @@ Structure rules:
 - use `utils/` only for pure helpers private to the form group,
 - keep these nested folders private by default; external consumers import through the concern-level `ui/forms` barrel, not through deep implementation paths,
 - if a form-local helper or type becomes broadly reusable across the feature, promote it to the appropriate feature-level concern instead of importing it through another form's private folder.
+
+### 9.4.1 `ui/dialogs/`
+
+`ui/dialogs/` contains presentational modal and overlay surfaces for the owning feature: creation dialogs, confirmation prompts, pickers, and other dismissable surfaces that host their own content.
+
+The structure below is the default convention for any dialog folder in the app.
+
+Recommended local structure for a dialog folder:
+
+```text
+ui/dialogs/
+  <dialog-name>/
+    index.ts
+    <dialog-name>.component.ts
+    <dialog-name>.component.html
+    <dialog-name>.component.css          # optional
+    components/                          # optional nested subcomponents
+      <child-component>/
+        index.ts
+        <child-component>.component.ts
+        <child-component>.component.html
+    models/                             # optional local view models and UI-facing types
+      index.ts                          # optional
+      <name>.type.ts
+    options/                            # optional static select, step, or action option sets
+      index.ts                          # optional
+      <name>.constants.ts
+    utils/                              # optional pure helpers local to the dialog group
+      index.ts                          # optional
+      <name>.utils.ts
+    testing/                            # optional test-only fixtures and helpers
+```
+
+They may:
+
+- own the modal shell (visibility, size, dismiss behavior),
+- compose a `ui/forms/` form or other feature components as their body,
+- forward open/close state through `visible` input and `visibleChange` output, and emit domain events (`submitted`, `confirmed`, `cancelled`) for the parent to act on.
+
+They must not:
+
+- inject feature stores or call data-access services,
+- own navigation, submission, or option-loading orchestration — that stays with the parent page,
+- embed heavy form logic inline; keep it in a `ui/forms/` component the dialog composes.
+
+Structure rules:
+
+- start with the smallest useful shape; create `components/`, `models/`, `options/`, `utils/`, or `testing/` only when the dialog area actually needs them,
+- keep the dialog presentational: the parent page provides data through inputs and reacts to outputs,
+- keep these nested folders private by default; external consumers import through the concern-level `ui/dialogs` barrel, not through deep implementation paths,
+- if a dialog-local helper or type becomes broadly reusable across the feature, promote it to the appropriate feature-level concern instead of importing it through another dialog's private folder.
 
 ### 9.5 `data-access/`
 
@@ -1593,6 +1647,7 @@ Standard public API surfaces include:
 - `features/<feature>/http/interceptors/index.ts` when a feature intentionally exposes feature-scoped interceptors,
 - `features/<feature>/ui/components/index.ts` for feature widgets consumed outside their own local folder,
 - `features/<feature>/ui/forms/index.ts` when forms are reused across multiple pages inside the feature,
+- `features/<feature>/ui/dialogs/index.ts` when dialogs are opened from more than one page inside the feature,
 - `features/<feature>/data-access/index.ts` for services intentionally consumed outside their own local area,
 - `features/<feature>/models/index.ts` for feature contracts and reusable feature types intentionally consumed outside one local model slice,
 - `features/<feature>/state/index.ts` when stores or event groups are intentionally consumed outside their own state slice,
@@ -1761,7 +1816,7 @@ However:
 
 Even if surrounding code is still legacy, any new file should be placed according to the target structure unless that would create disproportionate churn.
 
-For UI code, the target structure means `ui/pages`, `ui/components`, `ui/dataviews`, and `ui/forms`.
+For UI code, the target structure means `ui/pages`, `ui/components`, `ui/dataviews`, `ui/forms`, and `ui/dialogs`.
 
 For feature routing concerns, the target structure means `http/guards`, `http/resolvers`, and `http/interceptors`.
 

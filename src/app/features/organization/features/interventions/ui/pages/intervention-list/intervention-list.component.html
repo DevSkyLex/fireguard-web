@@ -13,28 +13,12 @@
   />
 </div>
 
-<p-dialog
-  header="Create a field intervention"
+<app-intervention-create-dialog
   [visible]="createDialogVisible()"
   (visibleChange)="createDialogVisible.set($event)"
-  [modal]="true"
-  [draggable]="false"
-  [dismissableMask]="!creating()"
-  [closable]="!creating()"
-  [style]="{ width: '52rem' }"
-  [breakpoints]="{ '960px': '90vw' }"
-  styleClass="max-h-[90vh]"
->
-  <p class="mb-6 text-sm text-surface-600 dark:text-surface-300">
-    Choose the operational objective first. The workspace will then guide scope preparation and
-    assignment.
-  </p>
-
-  <app-intervention-create-form
-    [loading]="creating()"
-    [optionsLoading]="planningOptions.loading()"
-    [siteOptions]="planningOptions.sites()"
-    [memberOptions]="planningOptions.members()"
-    (submitted)="create($event)"
-  />
-</p-dialog>
+  [loading]="creating()"
+  [optionsLoading]="planningOptions.loading()"
+  [siteOptions]="planningOptions.sites()"
+  [memberOptions]="planningOptions.members()"
+  (submitted)="create($event)"
+/>

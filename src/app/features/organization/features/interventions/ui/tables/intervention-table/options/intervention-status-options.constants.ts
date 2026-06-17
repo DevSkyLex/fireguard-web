@@ -2,8 +2,8 @@ import {
   type InterventionStatus,
   resolveInterventionTag,
 } from '@features/organization/features/interventions/models';
-import type { InterventionStatusOption } from '../models';
 import { TagDescriptor } from '@shared/components/tag/models/tag-descriptor.interface';
+import type { InterventionStatusOption } from '../models';
 
 /**
  * Constant INTERVENTION_STATUS_FILTER_VALUES

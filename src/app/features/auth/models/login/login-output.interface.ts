@@ -1,27 +1,15 @@
 import type { HydraItem } from '@core/models/api';
 
 /**
- * Constant TOKEN_TYPE
- *
- * @description
- * OAuth2 Bearer token type constant.
- *
- * @since 1.0.0
- *
- * @type {'Bearer'}
- */
-export const TOKEN_TYPE: 'Bearer' = 'Bearer' as const;
-
-/**
  * Type TokenType
  * @type TokenType
  *
  * @description
- * Type alias for the Bearer token type literal.
+ * Type alias for the Bearer token type literal (always 'Bearer' per OAuth2).
  *
  * @since 1.0.0
  */
-export type TokenType = typeof TOKEN_TYPE;
+export type TokenType = 'Bearer';
 
 /**
  * Type MfaMethod

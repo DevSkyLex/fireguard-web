@@ -14,7 +14,8 @@ import { AccountNotificationsPanel } from '../../components/account-notification
 import { AccountProfilePanel } from '../../components/account-profile-panel/account-profile-panel.component';
 import { AccountSessionsPanel } from '../../components/account-sessions-panel/account-sessions-panel.component';
 import { AccountTrustedDevicesPanel } from '../../components/account-trusted-devices-panel/account-trusted-devices-panel.component';
-import { ACCOUNT_TABS, type AccountNavItem, type AccountTab } from './models';
+import { ACCOUNT_TABS } from './constants';
+import { type AccountNavItem, type AccountTab } from './models';
 
 /**
  * Page AccountPage

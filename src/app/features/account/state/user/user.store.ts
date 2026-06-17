@@ -5,7 +5,6 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { filter, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
-import { pickAvatarUrl } from '@core/models/api';
 import {
   idleCallState,
   pendingCallState,
@@ -16,6 +15,7 @@ import {
   type CallState,
   type StoreError,
 } from '@core/state/request-state';
+import { pickAvatarUrl } from '@core/utils';
 import { UserProfileService } from '@features/account/data-access';
 import type { UserProfileOutput } from '@features/account/models';
 import { userStoreEvents } from './events';

@@ -4,7 +4,6 @@ import { type Observable, catchError, map, throwError } from 'rxjs';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type { EnvironmentConfig } from '@core/config/environment/environment-config.interface';
 import {
-  isApiError,
   type ApiError,
   type ApiRequestOptions,
   type ConstraintViolation,
@@ -12,6 +11,7 @@ import {
   type HydraItem,
   type RequestOptions,
 } from '@core/models/api';
+import { isApiError } from '@core/utils';
 
 export type { ApiRequestOptions, PaginationOptions, RequestOptions } from '@core/models/api';
 

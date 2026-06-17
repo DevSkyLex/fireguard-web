@@ -906,13 +906,20 @@ Feature-owned contracts and reusable feature types belong to the owning feature.
 
 `models/` is the feature contract catalog. It does not own store state interfaces.
 
-**A model is a type-only declaration.** It describes the *shape* of data and is fully erased at compile time: `interface`, `type` alias, and literal-union enum. A file that emits runtime code is not a model and does not belong in `models/`:
+**A model is a type-only declaration.** It describes the _shape_ of data and is fully erased at compile time: `interface`, `type` alias, and literal-union enum. A file that emits runtime code is not a model and does not belong in `models/`:
 
 - pure functions (mappers, formatters, type guards, resolvers) belong in `utils/`,
 - fixed runtime values (defaults, limits, named keys, lookup maps) belong in `constants/`,
 - UI option sets for selects, menus, and filters belong in `options/`.
 
-Those three sibling folders, and the rule for how high each unit sits, are defined in section 9.9. The one sanctioned exception is a **presentation registry**, where a descriptor interface, its lookup maps, and its resolver stay together in one concept folder for cohesion (see "Enum presentation registry" below).
+Those three sibling folders, and the rule for how high each unit sits, are defined in section 9.9.
+
+Two cohesion exceptions are sanctioned — and only these two — because in both the type is _inseparable_ from a runtime value (it is derived from it or meaningless without it):
+
+1. **Presentation registry**: a descriptor interface, its lookup maps, and its resolver stay together in one `<concept>-tag/` folder (see "Enum presentation registry" below).
+2. **Const-enum catalog**: a value catalog declared `as const` whose literal-union type is derived from it via `typeof` (for example `ORGANIZATION_PERMISSION` and its derived `OrganizationPermissionName`). The const _is_ the enum and the type is mechanically derived, so the const and its derived type live together in `models/` and are exported as one unit (see "Const-enum catalogs" below).
+
+Everything else that emits runtime code — including type guards, which are fully separable from the interface they narrow — leaves `models/`.
 
 Default structure rules:
 
@@ -927,10 +934,10 @@ Default structure rules:
 
 One declaration per file. The file name states the concept, and the suffix states the kind. Because `models/` is type-only, it carries only the two type-level suffixes:
 
-| Suffix           | Kind                                              | Example                                  |
-| ---------------- | ------------------------------------------------- | ---------------------------------------- |
-| `.interface.ts`  | an `interface` (API contract or view model shape) | `intervention-output.interface.ts`       |
-| `.type.ts`       | a `type` alias, including domain literal unions   | `intervention-status.type.ts`            |
+| Suffix          | Kind                                              | Example                            |
+| --------------- | ------------------------------------------------- | ---------------------------------- |
+| `.interface.ts` | an `interface` (API contract or view model shape) | `intervention-output.interface.ts` |
+| `.type.ts`      | a `type` alias, including domain literal unions   | `intervention-status.type.ts`      |
 
 Runtime-bearing files belong in the sibling folders, **not** in `models/`: pure functions go to `utils/` (`.utils.ts`) and static `const` data to `constants/` (`.constants.ts`). The one exception is a presentation-registry concept folder (`<concept>-tag/`), where the resolver — keeping the singular `.util.ts` suffix because it stays in `models/` (for example `intervention-tag.util.ts`) — and its descriptor maps stay co-located with the descriptor interface so the registry reads as one unit.
 
@@ -1028,6 +1035,28 @@ Rendering style is owned by small presentational components in `ui/components/`,
 To add or change a value, edit only the descriptor map in `<concept>-tag.util.ts`; every consumer follows. A new enum family gets a new map plus an entry in the `*TagKind` union. Re-export the descriptor interface, the kind type, and the resolver through the feature `models/index.ts`.
 
 Do not centralize feature enum registries under `core/` or `shared/`. An enum registry knows business values, so it is feature-owned. Only a genuinely cross-feature enum (consumed unchanged by several features) is shared, and then through that owning feature's public API, not by copying the map.
+
+#### Const-enum catalogs
+
+Some enumerations are backed by a runtime value catalog rather than a hand-written union — the **const-enum** pattern: a `const … as const` object (or array) is the source of truth, and the literal-union type is _derived_ from it with `typeof`. The permission catalogs are the canonical case:
+
+```typescript
+// models/role/organization-permission-name.model.ts
+export const ORGANIZATION_PERMISSION = {
+  ROLES_READ: 'roles.read',
+  // …
+} as const;
+
+export type OrganizationPermissionName =
+  (typeof ORGANIZATION_PERMISSION)[keyof typeof ORGANIZATION_PERMISSION];
+
+export const ORGANIZATION_PERMISSION_NAMES: ReadonlyArray<OrganizationPermissionName> =
+  Object.values(ORGANIZATION_PERMISSION);
+```
+
+Because the type is computed from the value, the two cannot be separated cleanly, and consumers almost always use the const (`ORGANIZATION_PERMISSION.ROLES_READ`) and the type (`OrganizationPermissionName`) together. So the whole catalog — const, derived type, and the derived name list — stays in one file in `models/` and is exported as a single unit through the feature `models/index.ts` barrel. This is the **only** case where a `const` lives in `models/`.
+
+Distinguish it from a hand-written union with a parallel runtime list: when the `type` is written by hand and a separate `const` array merely _enumerates_ its members (the two are independent), they are **not** a const-enum — the union stays in `models/` and the array moves to `constants/` (section 9.9).
 
 Do not centralize feature model catalogs under `core/models`.
 
@@ -1435,13 +1464,13 @@ Providers must not be moved to `core` just because they are called from the app 
 
 ### 9.9 `utils/`, `constants/`, and `options/` (non-model unit folders)
 
-`models/` is type-only (section 9.6). Everything that emits runtime code lives in one of three sibling unit folders, chosen by what the unit *is*, then placed at the right height by usage locality (section 3.8). The same three folder names already appear locally inside a component, dataview, or form group (sections 9.2–9.4); this section makes them the standard at every scope.
+`models/` is type-only (section 9.6). Everything that emits runtime code lives in one of three sibling unit folders, chosen by what the unit _is_, then placed at the right height by usage locality (section 3.8). The same three folder names already appear locally inside a component, dataview, or form group (sections 9.2–9.4); this section makes them the standard at every scope.
 
-| Folder        | Owns                                                                 | File suffix      | Examples                                              |
-| ------------- | ------------------------------------------------------------------- | ---------------- | ---------------------------------------------------- |
-| `utils/`      | pure, stateless functions over models and primitives                | `.utils.ts`      | `api-date-time.utils.ts`, `map-facility.utils.ts`    |
-| `constants/`  | fixed runtime values: defaults, limits, named keys, lookup maps      | `.constants.ts`  | `pagination-defaults.constants.ts`                   |
-| `options/`    | UI option sets for `p-select`, menus, and filters                    | `.constants.ts`  | `facility-type-options.constants.ts`                 |
+| Folder       | Owns                                                            | File suffix     | Examples                                          |
+| ------------ | --------------------------------------------------------------- | --------------- | ------------------------------------------------- |
+| `utils/`     | pure, stateless functions over models and primitives            | `.utils.ts`     | `api-date-time.utils.ts`, `map-facility.utils.ts` |
+| `constants/` | fixed runtime values: defaults, limits, named keys, lookup maps | `.constants.ts` | `pagination-defaults.constants.ts`                |
+| `options/`   | UI option sets for `p-select`, menus, and filters               | `.constants.ts` | `facility-type-options.constants.ts`              |
 
 The file inside a `utils/` folder takes the plural `.utils.ts` suffix, matching the folder name. A pure helper that stays co-located in a `models/` registry concept folder keeps the singular `.util.ts` (for example `intervention-tag.util.ts`); the suffix follows where the file lives.
 
@@ -1451,7 +1480,7 @@ Shared rules:
 - `utils/` functions are pure: no Angular DI, no HTTP, no store access, no side effects — anything that needs DI is a service (`data-access/`) or a store helper (`state/`),
 - `constants/` holds data, not behavior; if a constant needs a function to be useful, the function lives in `utils/`,
 - `options/` is for presentation-layer choice lists; it never holds transport defaults (those are `constants/`),
-- none of these folders holds a `type` or `interface` declaration — those are models and belong in `models/` (a util may *import* the types it operates on).
+- none of these folders holds a `type` or `interface` declaration — those are models and belong in `models/` (a util may _import_ the types it operates on).
 
 Placement (apply section 3.8):
 
@@ -1899,12 +1928,12 @@ The retired `Operation<TData, TError>` type and its `createIdleOperation` / `cre
 
 The four states:
 
-| State     | Meaning                                                     | Factory                                |
-| --------- | ----------------------------------------------------------- | -------------------------------------- |
-| `idle`    | Nothing triggered yet.                                      | `idleCallState()`                      |
-| `pending` | In-flight; may carry previous cached data.                  | `pendingCallState(previous?)`          |
-| `success` | Completed successfully with typed payload.                  | `successCallState(data)`               |
-| `error`   | Failed; normalized error attached, may carry previous data. | `errorCallState(error, previous?)`     |
+| State     | Meaning                                                     | Factory                            |
+| --------- | ----------------------------------------------------------- | ---------------------------------- |
+| `idle`    | Nothing triggered yet.                                      | `idleCallState()`                  |
+| `pending` | In-flight; may carry previous cached data.                  | `pendingCallState(previous?)`      |
+| `success` | Completed successfully with typed payload.                  | `successCallState(data)`           |
+| `error`   | Failed; normalized error attached, may carry previous data. | `errorCallState(error, previous?)` |
 
 Error normalization is always done with `toStoreError(unknown)` which:
 

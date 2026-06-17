@@ -1,7 +1,6 @@
 /**
  * Interventions model public exports.
  */
-export { toApiDateTime } from './api-date-time.util';
 export type { InterventionTagDescriptor } from './intervention-tag/intervention-tag-descriptor.interface';
 export type { InterventionTagKind } from './intervention-tag/intervention-tag-kind.type';
 export type { InterventionTagSeverity } from './intervention-tag/intervention-tag-severity.type';

@@ -19,7 +19,6 @@ import type {
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
-import { toApiDateTime } from '@features/organization/features/interventions/models';
 import { InterventionTag } from '@features/organization/features/interventions/ui/components/intervention-tag';
 import {
   InterventionPlanningForm,
@@ -27,6 +26,7 @@ import {
   type InterventionPlanningFormValues,
   type InterventionWorkItemFormValues,
 } from '@features/organization/features/interventions/ui/forms';
+import { toApiDateTime } from '@features/organization/features/interventions/utils';
 import { Card } from '@shared/components';
 
 /**

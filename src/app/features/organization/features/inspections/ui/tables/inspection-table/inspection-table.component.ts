@@ -32,8 +32,8 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
-import { pickAvatarUrl } from '@core/models/api';
 import type { RequestOptions } from '@core/services/hydra-api';
+import { pickAvatarUrl } from '@core/utils';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   InspectionOutput,

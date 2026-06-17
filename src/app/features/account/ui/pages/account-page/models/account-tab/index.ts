@@ -1,1 +1,1 @@
-export { ACCOUNT_TABS, type AccountTab } from './account-tab.model';
+export type { AccountTab } from './account-tab.type';

@@ -10,7 +10,6 @@
 
 export type { LoginInput } from './login/login-input.interface';
 export type { LoginOutput, TokenType, MfaMethod } from './login/login-output.interface';
-export { TOKEN_TYPE } from './login/login-output.interface';
 export type { LogoutOutput } from './logout/logout-output.interface';
 export type { MfaResendInput } from './mfa/mfa-resend-input.interface';
 export type { MfaVerifyInput } from './mfa/mfa-verify-input.interface';

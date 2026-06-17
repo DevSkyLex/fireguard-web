@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
-import { toApiDateTime } from '@features/organization/features/interventions/models';
 import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
@@ -10,6 +9,7 @@ import {
   InterventionCreateForm,
   type InterventionCreateFormValues,
 } from '@features/organization/features/interventions/ui/forms';
+import { toApiDateTime } from '@features/organization/features/interventions/utils';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**

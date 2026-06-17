@@ -1,4 +1,4 @@
-import { isApiError } from '@core/models/api';
+import { isApiError } from '@core/utils';
 
 /**
  * Interface StoreError

@@ -150,12 +150,16 @@ export class ChecklistTable {
     const first = event.first ?? 0;
     const rows = event.rows ?? this.rows;
     const page = Math.floor(first / rows) + 1;
+    const sortField = Array.isArray(event.sortField) ? event.sortField[0] : event.sortField;
     this.first.set(first);
     this.lastEvent.set(event);
     this.load.emit({
       page,
       itemsPerPage: rows,
       ...(this.statusControl.value ? { status: this.statusControl.value } : {}),
+      ...(sortField && event.sortOrder
+        ? { order: { [sortField]: event.sortOrder === 1 ? 'asc' : 'desc' } }
+        : {}),
     });
     if (this.initialized) this.pageChange.emit(page);
     this.initialized = true;

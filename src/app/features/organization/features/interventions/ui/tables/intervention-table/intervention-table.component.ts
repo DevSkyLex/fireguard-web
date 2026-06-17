@@ -2,33 +2,38 @@ import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
+  numberAttribute,
+  OnInit,
   output,
+  signal,
   type InputSignal,
+  type InputSignalWithTransform,
   type OutputEmitterRef,
+  type Signal,
+  type WritableSignal,
 } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MenuItem, PrimeIcons } from 'primeng/api';
+import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
-import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TableModule, type TablePassThroughOptions } from 'primeng/table';
-import type { InterventionOutput } from '@features/organization/features/interventions/models';
-import { EmptyState } from '@shared/components';
+import { SplitButtonModule } from 'primeng/splitbutton';
+import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
+import {
+  type InterventionListOptions,
+  type InterventionOutput,
+  type InterventionStatus,
+  type InterventionType,
+} from '@features/organization/features/interventions/models';
+import { EmptyState, Tag } from '@shared/components';
 import { InterventionTag } from '../../components/intervention-tag';
-
-/**
- * Constant INTERVENTION_NAME_MAX_LENGTH
- * @const INTERVENTION_NAME_MAX_LENGTH
- *
- * @description
- * Maximum length accepted for a intervention name.
- *
- * @since 1.0.0
- *
- * @type {number}
- */
-const INTERVENTION_NAME_MAX_LENGTH = 160;
+import type { InterventionStatusOption } from './models';
+import { INTERVENTION_STATUS_OPTIONS } from './options';
+import { getInterventionTypeIcon } from './utils';
 
 /**
  * Component InterventionTable
@@ -46,20 +51,23 @@ const INTERVENTION_NAME_MAX_LENGTH = 160;
 @Component({
   selector: 'app-intervention-table',
   imports: [
+    AvatarModule,
     ButtonModule,
     CardModule,
     DatePipe,
     EmptyState,
-    InputTextModule,
     InterventionTag,
     ReactiveFormsModule,
+    SelectModule,
     SkeletonModule,
+    SplitButtonModule,
     TableModule,
+    Tag,
   ],
   templateUrl: './intervention-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InterventionTable {
+export class InterventionTable implements OnInit {
   //#region Inputs
   /**
    * Input interventions
@@ -105,20 +113,6 @@ export class InterventionTable {
   public readonly loading: InputSignal<boolean> = input.required<boolean>();
 
   /**
-   * Input creating
-   * @readonly
-   *
-   * @description
-   * Whether intervention creation is currently in-flight.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<boolean>}
-   */
-  public readonly creating: InputSignal<boolean> = input.required<boolean>();
-
-  /**
    * Input empty
    * @readonly
    *
@@ -131,22 +125,54 @@ export class InterventionTable {
    * @type {InputSignal<boolean>}
    */
   public readonly empty: InputSignal<boolean> = input.required<boolean>();
+
+  /**
+   * Input initialPage
+   * @readonly
+   *
+   * @description
+   * One-based page restored from the parent route query parameter.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignalWithTransform<number, unknown>}
+   */
+  public readonly initialPage: InputSignalWithTransform<number, unknown> = input<number, unknown>(
+    1,
+    { transform: (value: unknown): number => Math.max(1, numberAttribute(value, 1)) },
+  );
   //#endregion
 
   //#region Outputs
   /**
-   * Output refresh
+   * Output load
    * @readonly
    *
    * @description
-   * Requests a list refresh from the parent page.
+   * Emits normalized lazy-load request options for the parent store.
    *
    * @access public
-   * @since 1.0.0
+   * @since 1.1.0
    *
-   * @type {OutputEmitterRef<void>}
+   * @type {OutputEmitterRef<InterventionListOptions>}
    */
-  public readonly refresh: OutputEmitterRef<void> = output<void>();
+  public readonly load: OutputEmitterRef<InterventionListOptions> =
+    output<InterventionListOptions>();
+
+  /**
+   * Output pageChange
+   * @readonly
+   *
+   * @description
+   * Emits the one-based page selected by the user.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly pageChange: OutputEmitterRef<number> = output<number>();
 
   /**
    * Output view
@@ -163,18 +189,19 @@ export class InterventionTable {
   public readonly view: OutputEmitterRef<InterventionOutput> = output<InterventionOutput>();
 
   /**
-   * Output create
+   * Output createRequested
    * @readonly
    *
    * @description
-   * Emits the intervention name requested by the creation form.
+   * Emits when the user asks to create an intervention, so the parent page can
+   * open the guided creation dialog.
    *
    * @access public
-   * @since 1.0.0
+   * @since 1.2.0
    *
-   * @type {OutputEmitterRef<string>}
+   * @type {OutputEmitterRef<void>}
    */
-  public readonly create: OutputEmitterRef<string> = output<string>();
+  public readonly createRequested: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
@@ -212,39 +239,114 @@ export class InterventionTable {
    *
    * @type {TablePassThroughOptions}
    */
-  protected readonly tablePt: TablePassThroughOptions = {
-    root: {
-      class: 'flex min-h-0 flex-1 flex-col',
-    },
-    tableContainer: {
-      class: 'flex-1 min-h-0 rounded-b-xl overflow-hidden',
-    },
-    table: {
-      class: 'text-sm',
-    },
-    tbody: {
-      // No paginator closes this table: the last row would otherwise
-      // stack its own border on top of the card border.
-      class: '[&>tr:last-child>td]:border-b-0!',
-    },
-  };
+  protected readonly tablePt: Signal<TablePassThroughOptions> = computed(
+    (): TablePassThroughOptions => ({
+      root: {
+        class: 'flex min-h-0 flex-1 flex-col',
+      },
+      tableContainer: {
+        class: 'flex-1 min-h-0 rounded-b-xl overflow-hidden',
+      },
+      table: {
+        class: 'text-sm',
+      },
+      header: {
+        class: 'border-0 p-0 bg-surface-0 dark:bg-surface-900',
+      },
+      pcPaginator: {
+        root: {
+          class:
+            'mt-auto rounded-t-none rounded-b-2xl bg-surface-0 dark:bg-surface-900 justify-end' +
+            (this.total() === 0 ? ' hidden' : ''),
+        },
+      },
+    }),
+  );
 
   /**
-   * Property nameControl
+   * Property rows
    * @readonly
    *
    * @description
-   * Intervention name control used by the create form.
+   * Default number of intervention rows per page.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    *
-   * @type {FormControl<string>}
+   * @type {number}
    */
-  protected readonly nameControl: FormControl<string> = new FormControl<string>('', {
-    nonNullable: true,
-    validators: [Validators.required, Validators.maxLength(INTERVENTION_NAME_MAX_LENGTH)],
-  });
+  protected readonly rows: number = 12;
+
+  /**
+   * Property firstPage
+   * @readonly
+   *
+   * @description
+   * Zero-based row offset consumed by PrimeNG for the current page.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<number>}
+   */
+  protected readonly firstPage: WritableSignal<number> = signal<number>(0);
+
+  /**
+   * Property initialized
+   *
+   * @description
+   * Tracks whether PrimeNG has emitted the initial lazy-load event.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {boolean}
+   */
+  private initialized: boolean = false;
+
+  /**
+   * Property lastEvent
+   * @readonly
+   *
+   * @description
+   * Last lazy-load event, replayed (with its sort) when the filter changes.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<TableLazyLoadEvent | null>}
+   */
+  private readonly lastEvent: WritableSignal<TableLazyLoadEvent | null> =
+    signal<TableLazyLoadEvent | null>(null);
+
+  /**
+   * Property statusControl
+   * @readonly
+   *
+   * @description
+   * Workflow status filter forwarded as the `status` query parameter.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {FormControl<InterventionStatus | null>}
+   */
+  protected readonly statusControl: FormControl<InterventionStatus | null> =
+    new FormControl<InterventionStatus | null>(null);
+
+  /**
+   * Property statusOptions
+   * @readonly
+   *
+   * @description
+   * Status filter options resolved from the intervention tag registry.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {InterventionStatusOption[]}
+   */
+  protected readonly statusOptions: InterventionStatusOption[] = INTERVENTION_STATUS_OPTIONS;
 
   /**
    * Property skeletonItems
@@ -258,29 +360,124 @@ export class InterventionTable {
    *
    * @type {undefined[]}
    */
-  protected readonly skeletonItems: undefined[] = Array(5);
+  protected readonly skeletonItems: undefined[] = Array(this.rows);
+
+  /**
+   * Property toolbarActions
+   * @readonly
+   *
+   * @description
+   * Split-button menu actions surfaced next to the create action: refresh and
+   * filter reset, mirroring the other organization tables.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<MenuItem[]>}
+   */
+  protected readonly toolbarActions: Signal<MenuItem[]> = computed((): MenuItem[] => [
+    {
+      label: 'Refresh',
+      icon: PrimeIcons.REFRESH,
+      command: (): void => this.onRefresh(),
+    },
+    {
+      label: 'Clear filters',
+      icon: PrimeIcons.FILTER_SLASH,
+      command: (): void => this.onClearFilters(),
+    },
+  ]);
+  //#endregion
+
+  //#region Lifecycle
+  /**
+   * Lifecycle hook ngOnInit
+   *
+   * @description
+   * Converts the restored one-based page input into PrimeNG's zero-based
+   * starting row offset.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @returns {void}
+   */
+  public ngOnInit(): void {
+    this.firstPage.set((this.initialPage() - 1) * this.rows);
+  }
   //#endregion
 
   //#region Methods
   /**
-   * Method onCreate
-   * @method onCreate
+   * Method onLazyLoad
+   * @method onLazyLoad
    *
    * @description
-   * Emits a create request when the intervention name is valid and no creation is
-   * already in-flight.
+   * Handles PrimeNG lazy-load events and emits normalized request options.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {TableLazyLoadEvent} event - PrimeNG lazy-load event.
+   *
+   * @returns {void}
+   */
+  public onLazyLoad(event: TableLazyLoadEvent): void {
+    const first: number = event.first ?? 0;
+    const rowsPerPage: number = event.rows ?? this.rows;
+    const page: number = Math.floor(first / rowsPerPage) + 1;
+    const sortField: string | null | undefined = Array.isArray(event.sortField)
+      ? event.sortField[0]
+      : event.sortField;
+
+    this.firstPage.set(first);
+    this.lastEvent.set(event);
+
+    this.load.emit({
+      page,
+      itemsPerPage: rowsPerPage,
+      ...(this.statusControl.value ? { status: this.statusControl.value } : {}),
+      ...(sortField && event.sortOrder
+        ? { order: { [sortField]: event.sortOrder === 1 ? 'asc' : 'desc' } }
+        : {}),
+    });
+
+    if (this.initialized) {
+      this.pageChange.emit(page);
+    }
+    this.initialized = true;
+  }
+
+  /**
+   * Method onStatusChange
+   * @method onStatusChange
+   *
+   * @description
+   * Reloads the first page when the status filter changes.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    *
    * @return {void}
    */
-  protected onCreate(): void {
-    if (this.nameControl.invalid || this.creating()) {
-      return;
-    }
+  protected onStatusChange(): void {
+    this.reload();
+  }
 
-    this.create.emit(this.nameControl.value.trim());
+  /**
+   * Method onCreateRequested
+   * @method onCreateRequested
+   *
+   * @description
+   * Emits a create request so the parent page opens the guided creation dialog.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @return {void}
+   */
+  protected onCreateRequested(): void {
+    this.createRequested.emit();
   }
 
   /**
@@ -288,7 +485,7 @@ export class InterventionTable {
    * @method onRefresh
    *
    * @description
-   * Emits a refresh request to the parent page.
+   * Reloads the current page with the latest page size.
    *
    * @access protected
    * @since 1.0.0
@@ -296,7 +493,62 @@ export class InterventionTable {
    * @return {void}
    */
   protected onRefresh(): void {
-    this.refresh.emit();
+    this.reload();
+  }
+
+  /**
+   * Method onClearFilters
+   * @method onClearFilters
+   *
+   * @description
+   * Clears the status filter and reloads the first page.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @return {void}
+   */
+  protected onClearFilters(): void {
+    this.statusControl.setValue(null, { emitEvent: false });
+    this.reload();
+  }
+
+  /**
+   * Method getTypeIcon
+   * @method getTypeIcon
+   *
+   * @description
+   * Resolves the PrimeIcon class matching an intervention objective type.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {InterventionType} type - Intervention objective type.
+   *
+   * @return {string} PrimeIcon class string.
+   */
+  protected getTypeIcon(type: InterventionType): string {
+    return getInterventionTypeIcon(type);
+  }
+
+  /**
+   * Method reload
+   * @method reload
+   *
+   * @description
+   * Replays the last lazy-load event on the first page, preserving the active
+   * sort and status filter.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @return {void}
+   */
+  private reload(): void {
+    const event: TableLazyLoadEvent = this.lastEvent() ?? { first: 0, rows: this.rows };
+
+    this.firstPage.set(0);
+    this.onLazyLoad({ ...event, first: 0, rows: event.rows ?? this.rows });
   }
   //#endregion
 }

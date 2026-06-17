@@ -43,7 +43,7 @@ describe('InterventionStore', () => {
   it('should load interventions for an organization', () => {
     store.load({ organizationId: 'org-1' });
 
-    expect(mockInterventionService.list).toHaveBeenCalledWith('org-1');
+    expect(mockInterventionService.list).toHaveBeenCalledWith('org-1', undefined);
     expect(store.interventionList()).toEqual([intervention]);
     expect(store.totalInterventions()).toBe(1);
     expect(store.isLoadingInterventions()).toBe(false);

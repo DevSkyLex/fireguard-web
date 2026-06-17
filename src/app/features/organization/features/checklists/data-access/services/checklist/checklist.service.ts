@@ -51,13 +51,18 @@ export class ChecklistService extends HydraApiService {
     const params: NonNullable<RequestOptions['params']> = {};
 
     if (options?.status) params['status'] = options.status;
+    if (options?.order) {
+      for (const [field, direction] of Object.entries(options.order)) {
+        params[`order[${field}]`] = direction;
+      }
+    }
 
     return this.getCollection<ChecklistOutput>(
       `${ChecklistService.BASE_PATH}/${organizationId}/checklists`,
       {
         page: options?.page,
         itemsPerPage: options?.itemsPerPage,
-        params,
+        params: params,
       },
     );
   }

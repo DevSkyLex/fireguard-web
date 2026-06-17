@@ -103,7 +103,7 @@
         <ng-template pTemplate="header">
           <tr>
             @if (canManageEquipment()) {
-              <th class="w-12">
+              <th class="w-16 pl-5">
                 <p-tableHeaderCheckbox />
               </th>
             }
@@ -141,11 +141,37 @@
           </tr>
         </ng-template>
 
+        <ng-template pTemplate="loadingbody">
+          @for (_ of skeletonItems; track $index) {
+            <tr>
+              @if (canManageEquipment()) {
+                <td class="pl-5"><p-skeleton shape="square" size="1.25rem" /></td>
+              }
+              <td>
+                <div class="flex items-center gap-3">
+                  <p-skeleton shape="square" size="2.25rem" />
+                  <div class="flex flex-col gap-1.5">
+                    <p-skeleton width="12rem" height="0.875rem" />
+                    <p-skeleton width="8rem" height="0.75rem" />
+                  </div>
+                </div>
+              </td>
+              <td><p-skeleton width="6rem" height="0.875rem" /></td>
+              <td><p-skeleton width="8rem" height="0.875rem" /></td>
+              <td><p-skeleton width="7rem" height="1.75rem" borderRadius="999px" /></td>
+              <td><p-skeleton width="6rem" height="0.875rem" /></td>
+              @if (canManageEquipment()) {
+                <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
+              }
+            </tr>
+          }
+        </ng-template>
+
         <ng-template pTemplate="body" let-equipment>
           @if (loading()) {
             <tr>
               @if (canManageEquipment()) {
-                <td><p-skeleton shape="square" size="1.25rem" /></td>
+                <td class="pl-5"><p-skeleton shape="square" size="1.25rem" /></td>
               }
               <td>
                 <div class="flex items-center gap-3">
@@ -167,7 +193,7 @@
           } @else {
             <tr>
               @if (canManageEquipment()) {
-                <td>
+                <td class="pl-5">
                   <p-tableCheckbox [value]="equipment" />
                 </td>
               }

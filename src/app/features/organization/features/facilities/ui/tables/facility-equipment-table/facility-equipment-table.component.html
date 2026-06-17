@@ -101,7 +101,7 @@
         <ng-template pTemplate="header">
           <tr>
             @if (canManageEquipment()) {
-              <th class="w-12">
+              <th class="w-16 pl-5">
                 <p-tableHeaderCheckbox />
               </th>
             }
@@ -148,7 +148,9 @@
           @for (_ of skeletonItems; track $index) {
             <tr>
               @if (canManageEquipment()) {
-                <td><p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" /></td>
+                <td class="pl-5">
+                  <p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" />
+                </td>
               }
               <td>
                 <div class="flex items-center gap-3">
@@ -173,7 +175,9 @@
           @if (loading()) {
             <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
               @if (canManageEquipment()) {
-                <td><p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" /></td>
+                <td class="pl-5">
+                  <p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" />
+                </td>
               }
               <td>
                 <div class="flex items-center gap-3">
@@ -194,7 +198,7 @@
           } @else {
             <tr>
               @if (canManageEquipment()) {
-                <td>
+                <td class="pl-5">
                   <p-tableCheckbox [value]="equipment" />
                 </td>
               }

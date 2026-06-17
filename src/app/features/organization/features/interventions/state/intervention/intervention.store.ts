@@ -123,8 +123,8 @@ export const InterventionStore = signalStore(
       load: rxMethod<InterventionListLoadCommand>(
         pipe(
           tap(() => patchState(store, { listCallState: pendingCallState() })),
-          switchMap(({ organizationId }) =>
-            interventionService.list(organizationId).pipe(
+          switchMap(({ organizationId, options }) =>
+            interventionService.list(organizationId, options).pipe(
               tapResponse({
                 next: (response) => {
                   patchState(

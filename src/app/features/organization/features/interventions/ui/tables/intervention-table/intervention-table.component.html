@@ -11,67 +11,124 @@
           </p>
         </div>
 
-        <form class="flex w-full flex-col gap-2 sm:flex-row lg:w-auto" (ngSubmit)="onCreate()">
-          <input
-            pInputText
-            type="text"
-            pSize="small"
-            placeholder="Intervention name"
-            [formControl]="nameControl"
-            class="min-w-0 flex-1 lg:w-80"
-          />
-          <p-button
-            type="submit"
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
+          <p-select
+            [options]="statusOptions"
+            [formControl]="statusControl"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="All statuses"
+            size="small"
+            [showClear]="true"
+            (onChange)="onStatusChange()"
+            (onClear)="onStatusChange()"
+            class="w-full sm:w-52"
+          >
+            <ng-template pTemplate="selectedItem" let-option>
+              <app-tag [descriptor]="option" variant="inline" />
+            </ng-template>
+            <ng-template pTemplate="item" let-option>
+              <app-tag [descriptor]="option" variant="inline" />
+            </ng-template>
+          </p-select>
+
+          <p-splitbutton
             label="New intervention"
             icon="pi pi-plus"
+            severity="primary"
             size="small"
-            [loading]="creating()"
-            [disabled]="nameControl.invalid || creating()"
+            [model]="toolbarActions()"
+            class="w-full sm:w-auto"
+            (onClick)="onCreateRequested()"
           />
-          <p-button
-            type="button"
-            icon="pi pi-refresh"
-            severity="secondary"
-            size="small"
-            [outlined]="true"
-            [disabled]="loading()"
-            ariaLabel="Refresh interventions"
-            (onClick)="onRefresh()"
-          />
-        </form>
+        </div>
       </div>
     </ng-template>
 
     <ng-template pTemplate="content">
       <p-table
         [value]="loading() ? skeletonItems : empty() ? [] : [...interventions()]"
+        [paginator]="true"
+        [rows]="rows"
+        [first]="firstPage()"
+        [totalRecords]="total()"
+        [lazy]="true"
+        (onLazyLoad)="onLazyLoad($event)"
+        [rowsPerPageOptions]="[12, 24, 48]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} interventions"
         [stripedRows]="true"
-        [pt]="tablePt"
+        [pt]="tablePt()"
       >
         <ng-template pTemplate="header">
           <tr>
-            <th class="min-w-72">Intervention</th>
-            <th class="min-w-32">Status</th>
+            <th pSortableColumn="name" class="min-w-72">
+              <div class="flex items-center gap-2">
+                <span>Intervention</span><p-sortIcon field="name" />
+              </div>
+            </th>
+            <th pSortableColumn="priority" class="min-w-32">
+              <div class="flex items-center gap-2">
+                <span>Priority</span><p-sortIcon field="priority" />
+              </div>
+            </th>
+            <th pSortableColumn="status" class="min-w-32">
+              <div class="flex items-center gap-2">
+                <span>Status</span><p-sortIcon field="status" />
+              </div>
+            </th>
             <th class="min-w-28 text-right">Facilities</th>
             <th class="min-w-28 text-right">Equipment</th>
             <th class="min-w-28 text-right">Inspections</th>
             <th class="min-w-32 text-right">Blockers</th>
-            <th class="min-w-36 text-right">Updated</th>
+            <th pSortableColumn="updatedAt" class="min-w-36">
+              <div class="flex items-center justify-end gap-2">
+                <span>Updated</span><p-sortIcon field="updatedAt" />
+              </div>
+            </th>
             <th class="w-20">
               <span class="sr-only">Actions</span>
             </th>
           </tr>
         </ng-template>
 
+        <ng-template pTemplate="loadingbody">
+          @for (_ of skeletonItems; track $index) {
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <p-skeleton shape="square" size="2.25rem" />
+                  <div class="flex flex-col gap-1.5">
+                    <p-skeleton width="14rem" height="0.875rem" />
+                    <p-skeleton width="9rem" height="0.75rem" />
+                  </div>
+                </div>
+              </td>
+              <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
+              <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
+              <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
+              <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
+              <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
+              <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
+              <td><p-skeleton width="6rem" height="0.875rem" class="ml-auto" /></td>
+              <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
+            </tr>
+          }
+        </ng-template>
+
         <ng-template pTemplate="body" let-intervention>
           @if (loading()) {
             <tr>
               <td>
-                <div class="flex flex-col gap-1.5">
-                  <p-skeleton width="14rem" height="0.875rem" />
-                  <p-skeleton width="9rem" height="0.75rem" />
+                <div class="flex items-center gap-3">
+                  <p-skeleton shape="square" size="2.25rem" />
+                  <div class="flex flex-col gap-1.5">
+                    <p-skeleton width="14rem" height="0.875rem" />
+                    <p-skeleton width="9rem" height="0.75rem" />
+                  </div>
                 </div>
               </td>
+              <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
               <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
               <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
               <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
@@ -81,23 +138,32 @@
               <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
             </tr>
           } @else {
-            <tr>
+            <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
               <td>
-                <div class="flex min-w-0 flex-col gap-1">
-                  <button
-                    type="button"
-                    class="w-fit max-w-full cursor-pointer truncate text-left font-medium text-surface-900 transition-colors hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400"
-                    (click)="view.emit(intervention)"
-                  >
-                    {{ intervention.name }}
-                  </button>
-                  <div class="flex items-center gap-2">
-                    <app-intervention-tag kind="priority" [value]="intervention.priority" />
+                <div class="flex min-w-0 items-center gap-3">
+                  <p-avatar
+                    [icon]="getTypeIcon(intervention.type)"
+                    shape="square"
+                    size="normal"
+                    class="rounded-md bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                  />
+
+                  <div class="flex min-w-0 flex-col gap-1">
+                    <button
+                      type="button"
+                      class="w-fit max-w-full cursor-pointer truncate text-left font-medium text-surface-900 transition-colors hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400"
+                      (click)="view.emit(intervention)"
+                    >
+                      {{ intervention.name }}
+                    </button>
                     <span class="truncate text-xs text-surface-500 dark:text-surface-400">
                       Revision {{ intervention.revision }}
                     </span>
                   </div>
                 </div>
+              </td>
+              <td>
+                <app-intervention-tag kind="priority" [value]="intervention.priority" />
               </td>
               <td>
                 <app-intervention-tag kind="status" [value]="intervention.status" />
@@ -129,7 +195,7 @@
 
         <ng-template pTemplate="emptymessage">
           <tr class="bg-transparent! [&>td]:border-b-0!">
-            <td colspan="8">
+            <td colspan="9">
               <app-empty-state
                 icon="pi-compass"
                 title="No interventions yet"

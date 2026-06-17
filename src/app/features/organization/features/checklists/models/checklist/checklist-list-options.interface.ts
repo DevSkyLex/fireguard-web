@@ -19,4 +19,11 @@ export type ChecklistStatusFilter = ChecklistStatus;
 export type ChecklistListOptions = PaginationOptions & {
   /** @type {ChecklistStatusFilter} */
   readonly status?: ChecklistStatusFilter;
+
+  /**
+   * Column sort directions keyed by field name, forwarded as `order[field]`.
+   *
+   * @type {Readonly<Record<string, 'asc' | 'desc'>>}
+   */
+  readonly order?: Readonly<Record<string, 'asc' | 'desc'>>;
 };

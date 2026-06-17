@@ -17,7 +17,14 @@ const PRIORITY: Record<InterventionPriority, InterventionTagDescriptor> = {
   urgent: { label: 'Urgent', severity: 'danger', icon: 'pi pi-angle-double-up' },
 };
 
-/** Workflow status descriptors (draft → published). */
+/**
+ * Workflow status descriptors (draft → published).
+ *
+ * Colour code: red (`danger`) only for the destructive end state (abandoned),
+ * green (`success`) for the positive outcome (published), grey
+ * (`secondary`) for neutral states, and informational blue/amber for the
+ * in-between workflow steps.
+ */
 const STATUS: Record<InterventionStatus, InterventionTagDescriptor> = {
   draft: { label: 'Draft', severity: 'secondary', icon: 'pi pi-pencil' },
   planned: { label: 'Planned', severity: 'info', icon: 'pi pi-calendar' },
@@ -25,7 +32,7 @@ const STATUS: Record<InterventionStatus, InterventionTagDescriptor> = {
   submitted: { label: 'Submitted', severity: 'info', icon: 'pi pi-send' },
   changes_requested: { label: 'Changes requested', severity: 'warn', icon: 'pi pi-reply' },
   published: { label: 'Published', severity: 'success', icon: 'pi pi-check-circle' },
-  abandoned: { label: 'Abandoned', severity: 'contrast', icon: 'pi pi-ban' },
+  abandoned: { label: 'Abandoned', severity: 'danger', icon: 'pi pi-ban' },
 };
 
 /** Intervention objective descriptors. */

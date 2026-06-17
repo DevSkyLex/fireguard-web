@@ -1,11 +1,32 @@
-import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
-import { Router } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  numberAttribute,
+  signal,
+  type InputSignalWithTransform,
+  type WritableSignal,
+} from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DialogModule } from 'primeng/dialog';
+import { InterventionService } from '@features/organization/features/interventions/data-access';
+import type {
+  InterventionListOptions,
+  InterventionOutput,
+} from '@features/organization/features/interventions/models';
 import {
   InterventionStore,
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
+import {
+  InterventionPlanningOptionsStore,
+  type InterventionPlanningOptionsStoreType,
+} from '@features/organization/features/interventions/state/intervention-planning-options';
+import {
+  InterventionCreateForm,
+  type InterventionCreateFormValues,
+} from '@features/organization/features/interventions/ui/forms';
 import { InterventionTable } from '@features/organization/features/interventions/ui/tables';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
@@ -25,8 +46,8 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-intervention-list-page',
-  imports: [ButtonModule, InterventionTable],
-  providers: [InterventionStore],
+  imports: [DialogModule, InterventionCreateForm, InterventionTable],
+  providers: [InterventionStore, InterventionPlanningOptionsStore],
   templateUrl: './intervention-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -62,6 +83,38 @@ export class InterventionListPage {
   private readonly router: Router = inject<Router>(Router);
 
   /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Current activated route, used to update the `?page=` query param while
+   * preserving other query params.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {ActivatedRoute}
+   */
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
+
+  /**
+   * Input page
+   * @readonly
+   *
+   * @description
+   * Current page number bound from the `?page=` query param via
+   * `withComponentInputBinding`, forwarded to the table as `initialPage`.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignalWithTransform<number, unknown>}
+   */
+  public readonly page: InputSignalWithTransform<number, unknown> = input<number, unknown>(1, {
+    transform: (value: unknown): number => Math.max(1, numberAttribute(value, 1)),
+  });
+
+  /**
    * Property store
    * @readonly
    *
@@ -73,104 +126,170 @@ export class InterventionListPage {
    */
   protected readonly store: InterventionStoreType =
     inject<InterventionStoreType>(InterventionStore);
-  //#endregion
 
-  //#region Constructor
   /**
-   * Constructor
-   * @constructor
+   * Property planningOptions
+   * @readonly
    *
    * @description
-   * Initializes the class dependencies and reactive behavior.
+   * Component-scoped store providing site and member selector options for the
+   * guided creation dialog. Loaded lazily when the dialog is opened.
    *
-   * @access public
-   * @since 1.0.0
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {InterventionPlanningOptionsStoreType}
    */
-  public constructor() {
-    effect(() => {
-      const organizationId = this.organizationId();
-      if (organizationId) {
-        this.store.load({ organizationId });
-      }
-    });
+  protected readonly planningOptions: InterventionPlanningOptionsStoreType =
+    inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
 
-    effect(() => {
-      const intervention = this.store.createdIntervention();
-      const organizationId = this.organizationId();
+  /**
+   * Property createDialogVisible
+   * @readonly
+   *
+   * @description
+   * Whether the guided creation dialog is currently open.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly createDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-      if (!intervention || !organizationId) {
-        return;
-      }
+  /**
+   * Property creating
+   * @readonly
+   *
+   * @description
+   * Whether a guided creation request is in flight; disables the dialog form.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly creating: WritableSignal<boolean> = signal<boolean>(false);
 
-      untracked(() => this.store.clearCreatedIntervention());
-      void this.router.navigate([
-        '/organizations',
-        organizationId,
-        'interventions',
-        intervention.id,
-      ]);
-    });
-  }
+  /**
+   * Property interventions
+   * @readonly
+   *
+   * @description
+   * Intervention data-access service used to submit the guided creation request.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @type {InterventionService}
+   */
+  private readonly interventions: InterventionService =
+    inject<InterventionService>(InterventionService);
   //#endregion
 
   //#region Methods
   /**
-   * Method onCreate
-   * @method onCreate
+   * Method openCreateDialog
+   * @method openCreateDialog
    *
    * @description
-   * Creates a intervention with the given name under the active organization.
+   * Opens the guided creation dialog and lazily loads the site and member
+   * selector options for the active organization.
    *
    * @access protected
-   * @since 1.0.0
-   *
-   * @param {string} name - Intervention name submitted by the table form.
+   * @since 1.2.0
    *
    * @return {void}
    */
-  protected onCreate(name: string): void {
+  protected openCreateDialog(): void {
+    this.planningOptions.loadCreationOptions(this.organizationId() ?? null);
+    this.createDialogVisible.set(true);
+  }
+
+  /**
+   * Method create
+   * @method create
+   *
+   * @description
+   * Submits the validated guided draft values to the API and navigates into the
+   * newly created intervention workspace on success.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {InterventionCreateFormValues} values - Validated draft values emitted
+   *   by {@link InterventionCreateForm}.
+   *
+   * @return {void}
+   */
+  protected create(values: InterventionCreateFormValues): void {
+    const organizationId = this.organizationId();
+    if (!organizationId) return;
+
+    this.creating.set(true);
+    this.interventions
+      .create(organizationId, values.name.trim(), {
+        type: values.type,
+        priority: values.priority,
+        participants: values.participants,
+        ...(values.site ? { site: values.site } : {}),
+        ...(values.responsible ? { responsible: values.responsible } : {}),
+        ...(values.plannedStartAt ? { plannedStartAt: values.plannedStartAt } : {}),
+        ...(values.dueAt ? { dueAt: values.dueAt } : {}),
+      })
+      .subscribe({
+        next: (intervention) =>
+          void this.router.navigate([
+            '/organizations',
+            organizationId,
+            'interventions',
+            intervention.id,
+          ]),
+        error: () => this.creating.set(false),
+      });
+  }
+
+  /**
+   * Method onLoad
+   * @method onLoad
+   *
+   * @description
+   * Forwards the table lazy-load params to the store for the active organization.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {InterventionListOptions} options - Pagination, filter and sort params emitted by the table.
+   *
+   * @return {void}
+   */
+  protected onLoad(options: InterventionListOptions): void {
     const organizationId = this.organizationId();
     if (organizationId) {
-      this.store.create({ organizationId, name });
+      this.store.load({ organizationId, options });
     }
   }
 
   /**
-   * Method createGuidedIntervention
-   * @method createGuidedIntervention
+   * Method onPageChange
+   * @method onPageChange
    *
    * @description
-   * Executes the create guided intervention operation.
+   * Updates the `?page=` query param when the user changes page, omitting page 1.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    *
-   * @return {void} Result of the create guided intervention operation.
-   */
-  protected createGuidedIntervention(): void {
-    const organizationId = this.organizationId();
-    if (organizationId) {
-      void this.router.navigate(['/organizations', organizationId, 'interventions', 'new']);
-    }
-  }
-
-  /**
-   * Method onRefresh
-   * @method onRefresh
-   *
-   * @description
-   * Reloads the intervention list for the active organization.
-   *
-   * @access protected
-   * @since 1.0.0
+   * @param {number} page - One-based page number selected in the table.
    *
    * @return {void}
    */
-  protected onRefresh(): void {
-    const organizationId = this.organizationId();
-    if (organizationId) {
-      this.store.load({ organizationId });
-    }
+  protected onPageChange(page: number): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: page > 1 ? page : null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   /**

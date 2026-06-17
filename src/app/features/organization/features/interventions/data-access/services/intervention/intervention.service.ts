@@ -105,12 +105,18 @@ export class InterventionService extends HydraApiService {
       site?: string;
       dueAtAfter?: string;
       dueAtBefore?: string;
+      order?: Readonly<Record<string, 'asc' | 'desc'>>;
     },
   ): Observable<HydraCollection<InterventionOutput>> {
     const params: Record<string, string> = { organization: `/api/organizations/${organizationId}` };
     for (const [key, value] of Object.entries(options ?? {})) {
-      if (key === 'page' || key === 'itemsPerPage') continue;
-      if (value) params[key] = value;
+      if (key === 'page' || key === 'itemsPerPage' || key === 'order') continue;
+      if (value) params[key] = value as string;
+    }
+    if (options?.order) {
+      for (const [field, direction] of Object.entries(options.order)) {
+        params[`order[${field}]`] = direction;
+      }
     }
 
     return this.getCollection<InterventionOutput>('/api/interventions', {

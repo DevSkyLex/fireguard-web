@@ -60,13 +60,41 @@
       >
         <ng-template pTemplate="header">
           <tr>
-            <th>Name</th>
-            <th>Version</th>
-            <th>Status</th>
+            <th pSortableColumn="name">
+              <div class="flex items-center gap-2">
+                <span>Name</span><p-sortIcon field="name" />
+              </div>
+            </th>
+            <th pSortableColumn="version">
+              <div class="flex items-center gap-2">
+                <span>Version</span><p-sortIcon field="version" />
+              </div>
+            </th>
+            <th pSortableColumn="status">
+              <div class="flex items-center gap-2">
+                <span>Status</span><p-sortIcon field="status" />
+              </div>
+            </th>
             <th>Lines</th>
-            <th>Updated</th>
+            <th pSortableColumn="updatedAt">
+              <div class="flex items-center gap-2">
+                <span>Updated</span><p-sortIcon field="updatedAt" />
+              </div>
+            </th>
             <th class="w-20"><span class="sr-only">Actions</span></th>
           </tr>
+        </ng-template>
+        <ng-template pTemplate="loadingbody">
+          @for (_ of skeletonItems; track $index) {
+            <tr>
+              <td><p-skeleton width="12rem" /></td>
+              <td><p-skeleton width="3rem" /></td>
+              <td><p-skeleton width="6rem" height="1.75rem" borderRadius="999px" /></td>
+              <td><p-skeleton width="3rem" /></td>
+              <td><p-skeleton width="8rem" /></td>
+              <td><p-skeleton shape="circle" size="2rem" /></td>
+            </tr>
+          }
         </ng-template>
         <ng-template pTemplate="body" let-checklist>
           @if (loading()) {

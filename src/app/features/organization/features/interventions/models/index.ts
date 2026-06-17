@@ -7,6 +7,7 @@ export type { InterventionTagSeverity } from './intervention-tag/intervention-ta
 export { resolveInterventionTag } from './intervention-tag/intervention-tag.util';
 export type { InterventionIssueOutput } from './intervention/intervention-issue-output.interface';
 export type { InterventionIssueSeverity } from './intervention/intervention-issue-severity.type';
+export type { InterventionListOptions } from './intervention/intervention-list-options.interface';
 export type { InterventionOutput } from './intervention/intervention-output.interface';
 export type { InterventionPriority } from './intervention/intervention-priority.type';
 export type { InterventionStatus } from './intervention/intervention-status.type';

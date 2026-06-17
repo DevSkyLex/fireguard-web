@@ -8,6 +8,6 @@ export interface InterventionPlanningDetails {
   readonly responsible: string;
   readonly participants: readonly string[];
   readonly priority: InterventionPriority;
-  readonly plannedStartAt: string;
-  readonly dueAt: string;
+  readonly plannedStartAt: Date | null;
+  readonly dueAt: Date | null;
 }

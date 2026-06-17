@@ -55,28 +55,128 @@ import type { InterventionPlanningFormData, InterventionPlanningFormValues } fro
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionPlanningForm {
-  /** Input intervention. @readonly @description Intervention used to initialize planning controls. @access public @since 1.0.0 @type {InputSignal<InterventionOutput>} */
-  public readonly intervention: InputSignal<InterventionOutput> = input.required();
-  /** Input siteOptions. @readonly @description Available intervention sites. @access public @since 1.0.0 @type {InputSignal<readonly SelectOption[]>} */
+  //#region Inputs
+  /**
+   * Property intervention
+   * @readonly
+   *
+   * @description
+   * Intervention used to seed the planning form initial values on load
+   * and when the upstream data changes.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<InterventionOutput>}
+   */
+  public readonly intervention: InputSignal<InterventionOutput> = input.required<InterventionOutput>();
+
+  /**
+   * Property siteOptions
+   * @readonly
+   *
+   * @description
+   * Available intervention site options for the site selector.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<readonly SelectOption[]>}
+   */
   public readonly siteOptions: InputSignal<readonly SelectOption[]> = input<
     readonly SelectOption[]
   >([]);
-  /** Input memberOptions. @readonly @description Available organization members. @access public @since 1.0.0 @type {InputSignal<readonly MemberSelectOption[]>} */
+
+  /**
+   * Property memberOptions
+   * @readonly
+   *
+   * @description
+   * Available organization member options for the responsible and
+   * participants selectors.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<readonly MemberSelectOption[]>}
+   */
   public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> = input<
     readonly MemberSelectOption[]
   >([]);
-  /** Input loading. @readonly @description Indicates whether submission is running. @access public @since 1.0.0 @type {InputSignal<boolean>} */
-  public readonly loading: InputSignal<boolean> = input(false);
-  /** Input disabled. @readonly @description Indicates whether planning is disabled. @access public @since 1.0.0 @type {InputSignal<boolean>} */
-  public readonly disabled: InputSignal<boolean> = input(false);
-  /** Output submitted. @readonly @description Emits validated planning values. @access public @since 1.0.0 @type {OutputEmitterRef<InterventionPlanningFormValues>} */
+
+  /**
+   * Property loading
+   * @readonly
+   *
+   * @description
+   * Whether a planning save is in flight; disables all form controls.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property disabled
+   * @readonly
+   *
+   * @description
+   * Whether planning editing is forbidden (e.g. insufficient permissions).
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly disabled: InputSignal<boolean> = input<boolean>(false);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property submitted
+   * @readonly
+   *
+   * @description
+   * Emits validated planning values when the form is submitted successfully.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<InterventionPlanningFormValues>}
+   */
   public readonly submitted: OutputEmitterRef<InterventionPlanningFormValues> =
     output<InterventionPlanningFormValues>();
+  //#endregion
 
-  /** Property formBuilder. @readonly @description Builds the typed reactive form. @access private @since 1.0.0 @type {NonNullableFormBuilder} */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  //#region Properties
+  /**
+   * Property formBuilder
+   * @readonly
+   *
+   * @description
+   * Builds the typed reactive form controls.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {NonNullableFormBuilder}
+   */
+  private readonly formBuilder: NonNullableFormBuilder = inject<NonNullableFormBuilder>(NonNullableFormBuilder);
 
-  /** Property form. @readonly @description Stores intervention planning controls. @access protected @since 1.0.0 @type {FormGroup<InterventionPlanningFormData>} */
+  /**
+   * Property form
+   * @readonly
+   *
+   * @description
+   * Reactive form group holding all intervention planning controls.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FormGroup<InterventionPlanningFormData>}
+   */
   protected readonly form: FormGroup<InterventionPlanningFormData> =
     this.formBuilder.group<InterventionPlanningFormData>({
       site: this.formBuilder.control('', [Validators.required]),
@@ -87,7 +187,18 @@ export class InterventionPlanningForm {
       dueAt: new FormControl<Date | null>(null, [Validators.required]),
     });
 
-  /** Property priorityOptions. @readonly @description Available intervention priorities. @access protected @since 1.0.0 @type {readonly SelectOption<InterventionPriority>[]} */
+  /**
+   * Property priorityOptions
+   * @readonly
+   *
+   * @description
+   * Static list of available intervention priorities for the priority select.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {readonly SelectOption<InterventionPriority>[]}
+   */
   protected readonly priorityOptions: readonly SelectOption<InterventionPriority>[] = [
     { label: 'Low', value: 'low' },
     { label: 'Normal', value: 'normal' },
@@ -95,7 +206,20 @@ export class InterventionPlanningForm {
     { label: 'Urgent', value: 'urgent' },
   ];
 
-  /** @constructor @description Synchronizes planning values and the disabled state with component inputs. */
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Resets the form reactively when the intervention input changes, and
+   * synchronizes the disabled state with the {@link loading} and
+   * {@link disabled} inputs.
+   *
+   * @since 1.0.0
+   */
   public constructor() {
     effect(() => {
       const intervention = this.intervention();
@@ -121,7 +245,23 @@ export class InterventionPlanningForm {
     });
   }
 
-  /** Method onSubmit. @method onSubmit @description Validates and emits planning values. @access protected @since 1.0.0 @returns {void} */
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method onSubmit
+   * @method onSubmit
+   *
+   * @description
+   * Validates the form and emits planning values via {@link submitted}.
+   * Marks all controls as touched to surface validation errors when
+   * the form is invalid.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
   protected onSubmit(): void {
     if (this.form.invalid || this.loading() || this.disabled()) {
       this.form.markAllAsTouched();
@@ -130,10 +270,25 @@ export class InterventionPlanningForm {
     this.submitted.emit(this.form.getRawValue());
   }
 
-  /** Method toDate. @method toDate @description Converts an API date-time value to a valid Date. @access private @since 1.0.0 @param {string | null} value - API date-time value. @returns {Date | null} */
+  /**
+   * Method toDate
+   * @method toDate
+   *
+   * @description
+   * Converts an API ISO date-time string to a `Date` instance for the
+   * PrimeNG date-picker. Returns `null` for empty or invalid values.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {string | null} value - API ISO date-time string.
+   *
+   * @returns {Date | null} Parsed date, or `null` when invalid.
+   */
   private toDate(value: string | null): Date | null {
     if (!value) return null;
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
   }
+  //#endregion
 }

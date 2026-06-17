@@ -59,26 +59,113 @@ import type { InterventionCreateFormData, InterventionCreateFormValues } from '.
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionCreateForm {
-  /** Input loading. @readonly @description Indicates whether draft creation is running. @access public @since 1.0.0 @type {InputSignal<boolean>} */
-  public readonly loading: InputSignal<boolean> = input(false);
-  /** Input optionsLoading. @readonly @description Indicates whether selector options are loading. @access public @since 1.0.0 @type {InputSignal<boolean>} */
-  public readonly optionsLoading: InputSignal<boolean> = input(false);
-  /** Input siteOptions. @readonly @description Available intervention sites. @access public @since 1.0.0 @type {InputSignal<readonly SelectOption[]>} */
+  //#region Inputs
+  /**
+   * Property loading
+   * @readonly
+   *
+   * @description
+   * Whether draft creation is in flight; disables all form controls.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property optionsLoading
+   * @readonly
+   *
+   * @description
+   * Whether planning options (sites, members) are still loading.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly optionsLoading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property siteOptions
+   * @readonly
+   *
+   * @description
+   * Available intervention site options for the site selector.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<readonly SelectOption[]>}
+   */
   public readonly siteOptions: InputSignal<readonly SelectOption[]> = input<
     readonly SelectOption[]
   >([]);
-  /** Input memberOptions. @readonly @description Available organization members. @access public @since 1.0.0 @type {InputSignal<readonly MemberSelectOption[]>} */
+
+  /**
+   * Property memberOptions
+   * @readonly
+   *
+   * @description
+   * Available organization member options for the participants and
+   * responsible selectors.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<readonly MemberSelectOption[]>}
+   */
   public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> = input<
     readonly MemberSelectOption[]
   >([]);
-  /** Output submitted. @readonly @description Emits validated draft values. @access public @since 1.0.0 @type {OutputEmitterRef<InterventionCreateFormValues>} */
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property submitted
+   * @readonly
+   *
+   * @description
+   * Emits validated draft values when the form is submitted successfully.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<InterventionCreateFormValues>}
+   */
   public readonly submitted: OutputEmitterRef<InterventionCreateFormValues> =
     output<InterventionCreateFormValues>();
+  //#endregion
 
-  /** Property formBuilder. @readonly @description Builds the typed reactive form. @access private @since 1.0.0 @type {NonNullableFormBuilder} */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  //#region Properties
+  /**
+   * Property formBuilder
+   * @readonly
+   *
+   * @description
+   * Builds the typed reactive form controls.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {NonNullableFormBuilder}
+   */
+  private readonly formBuilder: NonNullableFormBuilder = inject<NonNullableFormBuilder>(NonNullableFormBuilder);
 
-  /** Property form. @readonly @description Stores intervention draft controls. @access protected @since 1.0.0 @type {FormGroup<InterventionCreateFormData>} */
+  /**
+   * Property form
+   * @readonly
+   *
+   * @description
+   * Reactive form group holding all intervention draft controls.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FormGroup<InterventionCreateFormData>}
+   */
   protected readonly form: FormGroup<InterventionCreateFormData> =
     this.formBuilder.group<InterventionCreateFormData>({
       name: this.formBuilder.control('', [
@@ -95,7 +182,18 @@ export class InterventionCreateForm {
       dueAt: new FormControl<Date | null>(null),
     });
 
-  /** Property priorityOptions. @readonly @description Available intervention priorities. @access protected @since 1.0.0 @type {readonly SelectOption<InterventionPriority>[]} */
+  /**
+   * Property priorityOptions
+   * @readonly
+   *
+   * @description
+   * Static list of available intervention priorities for the priority select.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {readonly SelectOption<InterventionPriority>[]}
+   */
   protected readonly priorityOptions: readonly SelectOption<InterventionPriority>[] = [
     { label: 'Low', value: 'low' },
     { label: 'Normal', value: 'normal' },
@@ -103,7 +201,19 @@ export class InterventionCreateForm {
     { label: 'Urgent', value: 'urgent' },
   ];
 
-  /** Property interventionTypes. @readonly @description Available intervention type radio cards. @access protected @since 1.0.0 @type {RadioCardOption[]} */
+  /**
+   * Property interventionTypes
+   * @readonly
+   *
+   * @description
+   * Static list of intervention type radio card options rendered by
+   * {@link RadioCardGroup}.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {RadioCardOption[]}
+   */
   protected readonly interventionTypes: RadioCardOption[] = [
     {
       value: 'site_setup',
@@ -125,7 +235,19 @@ export class InterventionCreateForm {
     },
   ];
 
-  /** @constructor @description Synchronizes the form disabled state with the loading input. */
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Synchronizes the form disabled state with the {@link loading} input
+   * so controls are locked while a creation request is in flight.
+   *
+   * @since 1.0.0
+   */
   public constructor() {
     effect(() => {
       if (this.loading()) {
@@ -136,7 +258,23 @@ export class InterventionCreateForm {
     });
   }
 
-  /** Method onSubmit. @method onSubmit @description Validates and emits intervention draft values. @access protected @since 1.0.0 @returns {void} */
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method onSubmit
+   * @method onSubmit
+   *
+   * @description
+   * Validates the form and emits the raw values via {@link submitted}
+   * when all controls are valid. Marks all controls as touched to
+   * surface validation errors when the form is invalid.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
   protected onSubmit(): void {
     if (this.form.invalid || this.loading()) {
       this.form.markAllAsTouched();
@@ -144,4 +282,5 @@ export class InterventionCreateForm {
     }
     this.submitted.emit(this.form.getRawValue());
   }
+  //#endregion
 }

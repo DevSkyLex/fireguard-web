@@ -39,7 +39,7 @@ export class InterventionOutboxStore {
    *
    * @type {InterventionDatabaseService}
    */
-  private readonly database: InterventionDatabaseService = inject(InterventionDatabaseService);
+  private readonly database: InterventionDatabaseService = inject<InterventionDatabaseService>(InterventionDatabaseService);
 
   /**
    * Property events
@@ -53,7 +53,7 @@ export class InterventionOutboxStore {
    *
    * @type {Events}
    */
-  private readonly events: Events = inject(Events);
+  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Property identity
@@ -81,7 +81,7 @@ export class InterventionOutboxStore {
    *
    * @type {WritableSignal<boolean>}
    */
-  private readonly unsynced: WritableSignal<boolean> = signal(false);
+  private readonly unsynced: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property lastQueuedAt

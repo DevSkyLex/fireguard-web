@@ -20,8 +20,36 @@ const INITIAL_STATE: InterventionPlanningOptionsState = {
   loading: false,
 };
 
+/**
+ * Constant PLANNING_OPTION_PAGE_SIZE
+ * @const PLANNING_OPTION_PAGE_SIZE
+ *
+ * @description
+ * Maximum number of items fetched per resource type when loading planning
+ * options. Keeps API responses bounded while covering typical organization sizes.
+ *
+ * @since 1.0.0
+ *
+ * @type {number}
+ */
 const PLANNING_OPTION_PAGE_SIZE = 100;
 
+/**
+ * Function memberOption
+ * @function memberOption
+ *
+ * @description
+ * Maps a raw organization member to a {@link MemberSelectOption} for
+ * use in planning and participant selectors. Derives display name and
+ * initials from available member properties.
+ *
+ * @since 1.0.0
+ *
+ * @param {OrganizationMemberOutput} member - Raw organization member.
+ * @param {string} organizationId - Organization owning the member.
+ *
+ * @returns {MemberSelectOption} Mapped selector option.
+ */
 function memberOption(
   member: OrganizationMemberOutput,
   organizationId: string,
@@ -55,17 +83,42 @@ function memberOption(
 }
 
 /**
- * Loads and maps the organization resources used by intervention planning forms.
+ * Store InterventionPlanningOptionsStore
+ * @const InterventionPlanningOptionsStore
+ *
+ * @description
+ * Component-scoped NgRx SignalStore that loads and maps organization
+ * resources (sites, equipment, members) into the selector options used
+ * by intervention planning and workspace forms. Two load methods cover
+ * the creation flow (sites + members) and the workspace flow (sites +
+ * targets + members).
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const InterventionPlanningOptionsStore = signalStore(
   withState<InterventionPlanningOptionsState>(INITIAL_STATE),
   withMethods(
     (
       store,
-      facilities = inject(FacilityService),
-      equipment = inject(EquipmentService),
-      members = inject(OrganizationMemberService),
+      facilities = inject<FacilityService>(FacilityService),
+      equipment = inject<EquipmentService>(EquipmentService),
+      members = inject<OrganizationMemberService>(OrganizationMemberService),
     ) => ({
+      /**
+       * Method loadCreationOptions
+       * @method loadCreationOptions
+       *
+       * @description
+       * Loads site and member options for the intervention creation form.
+       * Resets all options and the loading flag before fetching.
+       *
+       * @access public
+       * @since 1.0.0
+       *
+       * @type {RxMethod<string | null>}
+       */
       loadCreationOptions: rxMethod<string | null>(
         pipe(
           tap(() =>
@@ -119,6 +172,19 @@ export const InterventionPlanningOptionsStore = signalStore(
           }),
         ),
       ),
+      /**
+       * Method loadWorkspaceOptions
+       * @method loadWorkspaceOptions
+       *
+       * @description
+       * Loads site, target (facilities + equipment) and member options for
+       * the intervention workspace forms. Resets all options before fetching.
+       *
+       * @access public
+       * @since 1.0.0
+       *
+       * @type {RxMethod<string | null>}
+       */
       loadWorkspaceOptions: rxMethod<string | null>(
         pipe(
           tap(() => patchState(store, { sites: [], targets: [], members: [], loading: true })),

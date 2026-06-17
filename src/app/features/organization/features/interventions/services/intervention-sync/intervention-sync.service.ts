@@ -81,7 +81,7 @@ export class InterventionSyncService {
    *
    * @type {InterventionService}
    */
-  private readonly service: InterventionService = inject(InterventionService);
+  private readonly service: InterventionService = inject<InterventionService>(InterventionService);
 
   /**
    * Property facilities
@@ -95,7 +95,7 @@ export class InterventionSyncService {
    *
    * @type {FacilityService}
    */
-  private readonly facilities: FacilityService = inject(FacilityService);
+  private readonly facilities: FacilityService = inject<FacilityService>(FacilityService);
 
   /**
    * Property equipment
@@ -109,7 +109,7 @@ export class InterventionSyncService {
    *
    * @type {EquipmentService}
    */
-  private readonly equipment: EquipmentService = inject(EquipmentService);
+  private readonly equipment: EquipmentService = inject<EquipmentService>(EquipmentService);
 
   /**
    * Property inspections
@@ -123,7 +123,7 @@ export class InterventionSyncService {
    *
    * @type {InspectionService}
    */
-  private readonly inspections: InspectionService = inject(InspectionService);
+  private readonly inspections: InspectionService = inject<InspectionService>(InspectionService);
 
   /**
    * Property offline
@@ -137,7 +137,7 @@ export class InterventionSyncService {
    *
    * @type {InterventionOfflineService}
    */
-  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
+  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(InterventionOfflineService);
 
   /**
    * Active replay promises keyed by intervention to prevent concurrent duplicate replays.

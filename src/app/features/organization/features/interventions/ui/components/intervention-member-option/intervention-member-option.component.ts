@@ -46,5 +46,5 @@ export class InterventionMemberOption {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly compact: InputSignal<boolean> = input(false);
+  public readonly compact: InputSignal<boolean> = input<boolean>(false);
 }

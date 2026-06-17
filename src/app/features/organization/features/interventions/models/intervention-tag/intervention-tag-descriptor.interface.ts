@@ -8,10 +8,27 @@ import type { InterventionTagSeverity } from './intervention-tag-severity.type';
  * appears — table/panel badge or form select option.
  */
 export interface InterventionTagDescriptor {
-  /** Human-readable label. */
+  /**
+   * Human-readable label.
+   *
+   * @since 1.0.0
+   * @type {string}
+   */
   readonly label: string;
-  /** PrimeNG severity colour. */
+
+  /**
+   * PrimeNG severity colour.
+   *
+   * @since 1.0.0
+   * @type {InterventionTagSeverity}
+   */
   readonly severity: InterventionTagSeverity;
-  /** PrimeIcons class, e.g. `pi pi-angle-up`. */
+
+  /**
+   * PrimeIcons class, e.g. `pi pi-angle-up`.
+   *
+   * @since 1.0.0
+   * @type {string}
+   */
   readonly icon: string;
 }

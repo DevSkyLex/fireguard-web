@@ -56,9 +56,14 @@ import { InterventionTag } from '../../components/intervention-tag';
  * @class InterventionDetailPage
  *
  * @description
- * Orchestrates the intervention detail page.
+ * Orchestrates the full intervention workspace. Hosts the three-step
+ * {@link InterventionPreparePanel}, {@link InterventionExecutePanel} and
+ * {@link InterventionReviewPanel} panels, coordinates online/offline field
+ * actions (QR scanning, photo upload, discovery creation) and delegates
+ * publication to {@link InterventionPublicationService}.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -106,8 +111,21 @@ export class InterventionDetailPage {
    *
    * @type {InterventionWorkspaceStore}
    */
-  protected readonly store: InterventionWorkspaceStoreType = inject(InterventionWorkspaceStore);
+  protected readonly store: InterventionWorkspaceStoreType = inject<InterventionWorkspaceStoreType>(InterventionWorkspaceStore);
 
+  /**
+   * Property planningOptions
+   * @readonly
+   *
+   * @description
+   * Component-scoped store providing site, member and target selector options
+   * for the preparation and discovery forms.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {InterventionPlanningOptionsStoreType}
+   */
   protected readonly planningOptions: InterventionPlanningOptionsStoreType = inject(
     InterventionPlanningOptionsStore,
   );
@@ -124,7 +142,7 @@ export class InterventionDetailPage {
    *
    * @type {InterventionOfflineService}
    */
-  protected readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
+  protected readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(InterventionOfflineService);
 
   /**
    * Property sync
@@ -154,7 +172,7 @@ export class InterventionDetailPage {
    *
    * @type {ConnectivityService}
    */
-  protected readonly connectivity: ConnectivityService = inject(ConnectivityService);
+  protected readonly connectivity: ConnectivityService = inject<ConnectivityService>(ConnectivityService);
 
   /**
    * Property activeStep
@@ -187,7 +205,7 @@ export class InterventionDetailPage {
    *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly publishing = signal(false);
+  protected readonly publishing: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property online
@@ -233,7 +251,7 @@ export class InterventionDetailPage {
    *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly fieldActionBusy: WritableSignal<boolean> = signal(false);
+  protected readonly fieldActionBusy: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property fieldMessage
@@ -250,104 +268,45 @@ export class InterventionDetailPage {
   protected readonly fieldMessage: WritableSignal<string | null> = signal<string | null>(null);
 
   /**
-   * Property value
-   * @readonly
-   *
-   * @description
-   * Provides the value value.
-   *
-   * @type {string}
-   */
-
-  /**
-   * Property label
-   * @readonly
-   *
-   * @description
-   * Provides the label value.
-   *
-   * @type {string}
-   */
-
-  /**
    * Property siteOptions
    * @readonly
    *
    * @description
-   * Provides the site options value.
+   * Available site selector options forwarded to the preparation form.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<readonly { label: string; value: string }[]>}
+   * @type {Signal<readonly SelectOption[]>}
    */
   protected readonly siteOptions = this.planningOptions.sites;
-
-  /**
-   * Property value
-   * @readonly
-   *
-   * @description
-   * Provides the value value.
-   *
-   * @type {string}
-   */
-
-  /**
-   * Property label
-   * @readonly
-   *
-   * @description
-   * Provides the label value.
-   *
-   * @type {string}
-   */
 
   /**
    * Property memberOptions
    * @readonly
    *
    * @description
-   * Provides the member options value.
+   * Available member selector options forwarded to the preparation form.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<readonly { label: string; value: string }[]>}
+   * @type {Signal<readonly MemberSelectOption[]>}
    */
   protected readonly memberOptions = this.planningOptions.members;
-
-  /**
-   * Property value
-   * @readonly
-   *
-   * @description
-   * Provides the value value.
-   *
-   * @type {string}
-   */
-
-  /**
-   * Property label
-   * @readonly
-   *
-   * @description
-   * Provides the label value.
-   *
-   * @type {string}
-   */
 
   /**
    * Property targetOptions
    * @readonly
    *
    * @description
-   * Provides the target options value.
+   * Available target selector options (facilities and equipment) forwarded
+   * to the work-item and discovery forms.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<readonly { label: string; value: string }[]>}
+   * @type {Signal<readonly SelectOption[]>}
    */
   protected readonly targetOptions = this.planningOptions.targets;
 
@@ -363,7 +322,7 @@ export class InterventionDetailPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canSubmit: Signal<boolean> = computed(() => {
+  protected readonly canSubmit: Signal<boolean> = computed<boolean>(() => {
     const intervention = this.store.intervention();
     const organizationId = this.organization.selectedOrganization()?.id;
     const memberId = this.memberAccess.profile()?.id;
@@ -387,7 +346,7 @@ export class InterventionDetailPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canPlan: Signal<boolean> = computed(() =>
+  protected readonly canPlan: Signal<boolean> = computed<boolean>(() =>
     this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
 
@@ -403,7 +362,7 @@ export class InterventionDetailPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canExecute: Signal<boolean> = computed(() =>
+  protected readonly canExecute: Signal<boolean> = computed<boolean>(() =>
     this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE),
   );
 
@@ -419,7 +378,7 @@ export class InterventionDetailPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canReview: Signal<boolean> = computed(() =>
+  protected readonly canReview: Signal<boolean> = computed<boolean>(() =>
     this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_REVIEW),
   );
 
@@ -435,24 +394,54 @@ export class InterventionDetailPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canPublish: Signal<boolean> = computed(() =>
+  protected readonly canPublish: Signal<boolean> = computed<boolean>(() =>
     this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PUBLISH),
   );
 
   /**
-   * Resolves the current member's organization permissions.
+   * Property permissionService
+   * @readonly
+   *
+   * @description
+   * Resolves the current member's organization permissions used to derive
+   * the `canPlan`, `canExecute`, `canReview` and `canPublish` signals.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {OrganizationPermissionService}
    */
   private readonly permissionService: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
   /**
-   * Coordinates discovered resource and work-item creation.
+   * Property discovery
+   * @readonly
+   *
+   * @description
+   * Coordinates creation of discovered resources and their associated
+   * work items, handling both online and offline paths.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionDiscoveryService}
    */
-  private readonly discovery: InterventionDiscoveryService = inject(InterventionDiscoveryService);
+  private readonly discovery: InterventionDiscoveryService = inject<InterventionDiscoveryService>(InterventionDiscoveryService);
 
   /**
-   * Coordinates asynchronous intervention publication.
+   * Property publication
+   * @readonly
+   *
+   * @description
+   * Coordinates asynchronous intervention publication and polls for the
+   * terminal publication result.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionPublicationService}
    */
   private readonly publication: InterventionPublicationService = inject(
     InterventionPublicationService,
@@ -486,7 +475,7 @@ export class InterventionDetailPage {
    *
    * @type {ActiveOrganizationStore}
    */
-  private readonly organization: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+  private readonly organization: ActiveOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property memberAccess
@@ -813,8 +802,20 @@ export class InterventionDetailPage {
   }
 
   /**
-   * Resolves the default workspace step (1: Prepare, 2: Execute, 3: Review) for
-   * a intervention status, used to seed the stepper's active value.
+   * Method stepForStatus
+   * @method stepForStatus
+   *
+   * @description
+   * Maps an intervention status to its default stepper index (1: Prepare,
+   * 2: Execute, 3: Review), used to seed the {@link activeStep} signal on
+   * initial load and on status changes.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {string | undefined} status - Current intervention status.
+   *
+   * @returns {number} Default stepper index for the status.
    */
   private stepForStatus(status: string | undefined): number {
     if (status === 'in_progress' || status === 'changes_requested') return 2;

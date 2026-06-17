@@ -24,7 +24,8 @@ import type {
  * @const INITIAL_STATE
  *
  * @description
- * Provides the initial state value.
+ * Empty starting state for the component-scoped InterventionWorkspaceStore.
+ * All collections are empty, flags default to false, and no error is set.
  *
  * @since 1.0.0
  *
@@ -45,15 +46,17 @@ const INITIAL_STATE: InterventionWorkspaceState = {
  * @function replaceWorkItem
  *
  * @description
- * Executes the replace work item operation.
+ * Returns a new array with the work item identified by `workItemId`
+ * replaced by `replacement`. Returns the original array unchanged if no
+ * matching item is found, preserving referential stability.
  *
  * @since 1.0.0
  *
- * @param {readonly InterventionWorkItemOutput[]} items - items value.
- * @param {string} workItemId - work Item Id value.
- * @param {InterventionWorkItemOutput} replacement - replacement value.
+ * @param {readonly InterventionWorkItemOutput[]} items - Current work-item list.
+ * @param {string} workItemId - Id of the item to replace.
+ * @param {InterventionWorkItemOutput} replacement - New item value to splice in.
  *
- * @return {readonly InterventionWorkItemOutput[]} Result of the replace work item operation.
+ * @return {readonly InterventionWorkItemOutput[]} Updated immutable list.
  */
 function replaceWorkItem(
   items: readonly InterventionWorkItemOutput[],
@@ -68,15 +71,18 @@ function replaceWorkItem(
 }
 
 /**
- * Constant InterventionWorkspaceStore
+ * Store InterventionWorkspaceStore
  * @const InterventionWorkspaceStore
  *
  * @description
- * Provides the intervention workspace store value.
+ * Component-scoped NgRx SignalStore owning the full intervention workspace:
+ * intervention details, work items, change log and quality issues.
+ * Coordinates online/offline reads and optimistic writes for every field
+ * action (transitions, detail updates, work-item creation and status changes).
  *
  * @since 1.0.0
  *
- * @type {SignalStore}
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const InterventionWorkspaceStore = signalStore(
   withState<InterventionWorkspaceState>(INITIAL_STATE),
@@ -108,10 +114,10 @@ export const InterventionWorkspaceStore = signalStore(
   withMethods(
     (
       store,
-      service = inject(InterventionService),
-      offline = inject(InterventionOfflineService),
-      connectivity = inject(ConnectivityService),
-      optimistic = inject(InterventionWorkspaceOptimisticService),
+      service = inject<InterventionService>(InterventionService),
+      offline = inject<InterventionOfflineService>(InterventionOfflineService),
+      connectivity = inject<ConnectivityService>(ConnectivityService),
+      optimistic = inject<InterventionWorkspaceOptimisticService>(InterventionWorkspaceOptimisticService),
     ) => {
       const load = rxMethod<string>(
         pipe(
@@ -405,7 +411,21 @@ export const InterventionWorkspaceStore = signalStore(
         },
 
         /**
-         * Adds a discovery already persisted as an atomic outbox intention.
+         * Method recordQueuedDiscovery
+         * @method recordQueuedDiscovery
+         *
+         * @description
+         * Appends a discovered work item that has already been persisted as an
+         * atomic outbox intention. Updates the store optimistically and
+         * persists the updated workspace to the offline cache without
+         * overwriting existing operations.
+         *
+         * @access public
+         * @since 1.0.0
+         *
+         * @param {CreateInterventionWorkItemInput} input - Work-item input carrying the client-generated id.
+         *
+         * @return {Promise<void>} Resolves after the local workspace is persisted.
          */
         async recordQueuedDiscovery(input: CreateInterventionWorkItemInput): Promise<void> {
           const intervention = store.intervention();
@@ -431,12 +451,13 @@ export const InterventionWorkspaceStore = signalStore(
          * @method clearError
          *
          * @description
-         * Executes the clear error operation.
+         * Resets the store error to null. Typically called when the user
+         * dismisses an error banner or retries a failed operation.
          *
          * @access public
          * @since 1.0.0
          *
-         * @return {void} Result of the clear error operation.
+         * @return {void}
          */
         clearError(): void {
           patchState(store, { error: null });

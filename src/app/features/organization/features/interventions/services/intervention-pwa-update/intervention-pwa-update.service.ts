@@ -33,7 +33,7 @@ export class InterventionPwaUpdateService {
    *
    * @type {SwUpdate}
    */
-  private readonly updates: SwUpdate = inject(SwUpdate);
+  private readonly updates: SwUpdate = inject<SwUpdate>(SwUpdate);
 
   /**
    * Property confirmation
@@ -47,7 +47,7 @@ export class InterventionPwaUpdateService {
    *
    * @type {ConfirmationService}
    */
-  private readonly confirmation: ConfirmationService = inject(ConfirmationService);
+  private readonly confirmation: ConfirmationService = inject<ConfirmationService>(ConfirmationService);
 
   /**
    * Property messages
@@ -61,7 +61,7 @@ export class InterventionPwaUpdateService {
    *
    * @type {MessageService}
    */
-  private readonly messages: MessageService = inject(MessageService);
+  private readonly messages: MessageService = inject<MessageService>(MessageService);
 
   /**
    * Property offline
@@ -75,7 +75,7 @@ export class InterventionPwaUpdateService {
    *
    * @type {InterventionOfflineService}
    */
-  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
+  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(InterventionOfflineService);
 
   /**
    * Property updateReady
@@ -89,7 +89,7 @@ export class InterventionPwaUpdateService {
    *
    * @type {WritableSignal<boolean>}
    */
-  private readonly updateReady: WritableSignal<boolean> = signal(false);
+  private readonly updateReady: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property started

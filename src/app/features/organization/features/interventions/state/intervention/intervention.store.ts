@@ -57,21 +57,46 @@ export const InterventionStore = signalStore(
   withEntities({ entity: type<InterventionOutput>(), collection: 'intervention' }),
   withState<InterventionState>(INITIAL_INTERVENTION_STATE),
   withComputed((store) => ({
-    /** All cached interventions for the active organization. */
+    /**
+     * Computed interventionList.
+     *
+     * @description
+     * All cached interventions for the active organization.
+     */
     interventionList: computed<ReadonlyArray<InterventionOutput>>(() =>
       store.interventionEntities(),
     ),
 
-    /** True while the intervention list is loading. */
+    /**
+     * Computed isLoadingInterventions.
+     *
+     * @description
+     * True while the intervention list is loading.
+     */
     isLoadingInterventions: computed<boolean>(() => store.listCallState().status === 'pending'),
 
-    /** True while intervention creation is in-flight. */
+    /**
+     * Computed isCreating.
+     *
+     * @description
+     * True while intervention creation is in-flight.
+     */
     isCreating: computed<boolean>(() => store.createCallState().status === 'pending'),
 
-    /** Last intervention created by the store, if any. */
+    /**
+     * Computed createdIntervention.
+     *
+     * @description
+     * Last intervention created by the store, if any.
+     */
     createdIntervention: computed<InterventionOutput | null>(() => store.createCallState().data),
 
-    /** True when there are no interventions and the list is not loading. */
+    /**
+     * Computed isEmpty.
+     *
+     * @description
+     * True when there are no interventions and the list is not loading.
+     */
     isEmpty: computed<boolean>(
       () => store.interventionIds().length === 0 && store.listCallState().status !== 'pending',
     ),

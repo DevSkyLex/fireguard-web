@@ -12,27 +12,119 @@ import { InterventionSyncService } from '../intervention-sync';
 import { InterventionSyncCoordinatorService } from '../intervention-sync-coordinator';
 
 /**
- * Coordinates creation of discovered resources and their intervention work items.
+ * Service InterventionDiscoveryService
+ * @class InterventionDiscoveryService
+ *
+ * @description
+ * Coordinates creation of discovered field resources and their associated
+ * intervention work items. Atomically queues the canonical resource operation
+ * and the work-item creation into the offline outbox, then immediately replays
+ * both when connectivity is available.
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
 export class InterventionDiscoveryService {
-  /** Property fieldExecution. @readonly @description Prepares field discovery resources. @access private @since 1.0.0 @type {InterventionFieldExecutionService} */
+  //#region Properties
+  /**
+   * Property fieldExecution
+   * @readonly
+   *
+   * @description
+   * Prepares the canonical resource operation (facility, equipment or
+   * inspection) for a field discovery request.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionFieldExecutionService}
+   */
   private readonly fieldExecution: InterventionFieldExecutionService = inject(
     InterventionFieldExecutionService,
   );
-  /** Property connectivity. @readonly @description Provides the current connectivity state. @access private @since 1.0.0 @type {ConnectivityService} */
-  private readonly connectivity: ConnectivityService = inject(ConnectivityService);
-  /** Property offline. @readonly @description Persists offline intervention changes. @access private @since 1.0.0 @type {InterventionOfflineService} */
-  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
-  /** Property sync. @readonly @description Synchronizes intervention resources. @access private @since 1.0.0 @type {InterventionSyncService} */
-  private readonly sync: InterventionSyncService = inject(InterventionSyncService);
-  /** Property syncCoordinator. @readonly @description Coordinates background synchronization. @access private @since 1.0.0 @type {InterventionSyncCoordinatorService} */
+
+  /**
+   * Property connectivity
+   * @readonly
+   *
+   * @description
+   * Shared connectivity source of truth used to decide whether to replay
+   * the outbox immediately after queuing.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ConnectivityService}
+   */
+  private readonly connectivity: ConnectivityService = inject<ConnectivityService>(ConnectivityService);
+
+  /**
+   * Property offline
+   * @readonly
+   *
+   * @description
+   * Offline persistence service that owns the operation outbox.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionOfflineService}
+   */
+  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(InterventionOfflineService);
+
+  /**
+   * Property sync
+   * @readonly
+   *
+   * @description
+   * Outbox replay service used to synchronize queued operations when online.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionSyncService}
+   */
+  private readonly sync: InterventionSyncService = inject<InterventionSyncService>(InterventionSyncService);
+
+  /**
+   * Property syncCoordinator
+   * @readonly
+   *
+   * @description
+   * Coordinator used to refresh the global sync status after replay.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionSyncCoordinatorService}
+   */
   private readonly syncCoordinator: InterventionSyncCoordinatorService = inject(
     InterventionSyncCoordinatorService,
   );
+  //#endregion
+
+  //#region Methods
 
   /**
-   * Creates or queues the canonical resource and its discovered work item.
+   * Method create
+   * @method create
+   *
+   * @description
+   * Atomically queues the canonical resource operation and the associated
+   * work item, then immediately replays the outbox when online. Returns a
+   * result indicating whether the operations are still queued or were
+   * applied server-side.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - Active organization identifier.
+   * @param {string} interventionId - Active intervention identifier.
+   * @param {InterventionDiscoveryRequest & { readonly target: string }} request - Field discovery request with a non-null target.
+   *
+   * @returns {Promise<InterventionDiscoveryResult>} Whether the discovery was queued or applied.
    */
   public async create(
     organizationId: string,
@@ -76,7 +168,19 @@ export class InterventionDiscoveryService {
   }
 
   /**
-   * Normalizes a scanned equipment value to its canonical IRI when possible.
+   * Method normalizeScannedTarget
+   * @method normalizeScannedTarget
+   *
+   * @description
+   * Normalizes a scanned QR value to its canonical equipment IRI when
+   * possible. Handles bare UUIDs, relative IRIs and full URLs.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} value - Raw scanned QR value.
+   *
+   * @returns {string} Canonical IRI when recognized, or the original value.
    */
   public normalizeScannedTarget(value: string): string {
     const trimmed = value.trim();
@@ -90,4 +194,5 @@ export class InterventionDiscoveryService {
     }
     return trimmed;
   }
+  //#endregion
 }

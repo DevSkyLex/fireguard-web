@@ -116,7 +116,7 @@ export class InterventionExecutePanel {
    *
    * @type {InputSignal<number>}
    */
-  public readonly progress: InputSignal<number> = input(0);
+  public readonly progress: InputSignal<number> = input<number>(0);
 
   /**
    * Property saving
@@ -130,7 +130,7 @@ export class InterventionExecutePanel {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly saving: InputSignal<boolean> = input(false);
+  public readonly saving: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property canSubmit
@@ -144,7 +144,7 @@ export class InterventionExecutePanel {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly canSubmit: InputSignal<boolean> = input(false);
+  public readonly canSubmit: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property canExecute
@@ -158,7 +158,7 @@ export class InterventionExecutePanel {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly canExecute: InputSignal<boolean> = input(false);
+  public readonly canExecute: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property scanSupported
@@ -172,7 +172,7 @@ export class InterventionExecutePanel {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly scanSupported: InputSignal<boolean> = input(false);
+  public readonly scanSupported: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property fieldMessage
@@ -233,26 +233,6 @@ export class InterventionExecutePanel {
   public readonly scanPhoto: OutputEmitterRef<File> = output<File>();
 
   /**
-   * Property file
-   * @readonly
-   *
-   * @description
-   * Provides the file value.
-   *
-   * @type {File}
-   */
-
-  /**
-   * Property equipmentId
-   * @readonly
-   *
-   * @description
-   * Provides the equipment id value.
-   *
-   * @type {string}
-   */
-
-  /**
    * Property attachPhoto
    * @readonly
    *
@@ -293,7 +273,7 @@ export class InterventionExecutePanel {
    *
    * @type {Signal<readonly InterventionWorkItemOutput[]>}
    */
-  protected readonly scrollerItems: Signal<InterventionWorkItemOutput[]> = computed(() => [
+  protected readonly scrollerItems: Signal<InterventionWorkItemOutput[]> = computed<InterventionWorkItemOutput[]>(() => [
     ...this.workItems(),
   ]);
 
@@ -309,7 +289,7 @@ export class InterventionExecutePanel {
    *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly skipDrawerVisible: WritableSignal<boolean> = signal(false);
+  protected readonly skipDrawerVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property discoveryDrawerVisible
@@ -323,7 +303,7 @@ export class InterventionExecutePanel {
    *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly discoveryDrawerVisible: WritableSignal<boolean> = signal(false);
+  protected readonly discoveryDrawerVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property selectedWorkItem

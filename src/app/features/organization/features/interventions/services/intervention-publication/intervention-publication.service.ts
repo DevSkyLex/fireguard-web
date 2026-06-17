@@ -7,18 +7,55 @@ import type {
 } from '@features/organization/features/interventions/models';
 
 /**
- * Coordinates asynchronous intervention publication and polling.
+ * Service InterventionPublicationService
+ * @class InterventionPublicationService
+ *
+ * @description
+ * Coordinates asynchronous intervention publication. Submits a publication
+ * request and polls the API until a terminal result (`completed` or `failed`)
+ * is available, exposing a single `publish` method to callers.
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
 export class InterventionPublicationService {
-  /** Property interventions. @readonly @description Provides intervention publication API operations. @access private @since 1.0.0 @type {InterventionService} */
-  private readonly interventions: InterventionService = inject(InterventionService);
-
+  //#region Properties
   /**
-   * Creates a publication and waits for its terminal representation.
+   * Property interventions
+   * @readonly
+   *
+   * @description
+   * Intervention data-access service used to create and poll publications.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionService}
+   */
+  private readonly interventions: InterventionService = inject<InterventionService>(InterventionService);
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method publish
+   * @method publish
+   *
+   * @description
+   * Creates a publication for the given intervention and polls the API
+   * until a terminal status is reached.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {InterventionOutput} intervention - Intervention to publish.
+   *
+   * @returns {Promise<PublicationOutput>} Terminal publication result.
    */
   public async publish(intervention: InterventionOutput): Promise<PublicationOutput> {
     const publication = await lastValueFrom(this.interventions.publish(intervention));
     return lastValueFrom(this.interventions.pollPublication(publication));
   }
+  //#endregion
 }

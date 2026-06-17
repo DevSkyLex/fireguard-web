@@ -31,10 +31,10 @@ import {
 export function provideInterventionsFeature(): EnvironmentProviders {
   return makeEnvironmentProviders([
     provideAppInitializer(() => {
-      inject(InterventionOfflineLifecycleService).start();
-      inject(InterventionPwaUpdateService).start();
-      inject(InterventionPrefetchService).start();
-      inject(InterventionSyncCoordinatorService).start();
+      inject<InterventionOfflineLifecycleService>(InterventionOfflineLifecycleService).start();
+      inject<InterventionPwaUpdateService>(InterventionPwaUpdateService).start();
+      inject<InterventionPrefetchService>(InterventionPrefetchService).start();
+      inject<InterventionSyncCoordinatorService>(InterventionSyncCoordinatorService).start();
     }),
   ]);
 }

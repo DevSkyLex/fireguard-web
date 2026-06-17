@@ -29,6 +29,8 @@ import type {
  */
 const PUBLICATION_POLL_INTERVAL_MS = 1_000;
 
+const toSecondsUtc = (date: Date): string => `${date.toISOString().slice(0, 19)}Z`;
+
 /**
  * Constant WORKSPACE_PAGE_SIZE
  * @const WORKSPACE_PAGE_SIZE
@@ -210,8 +212,8 @@ export class InterventionService extends HydraApiService {
    * responsible: string;
    * participants: readonly string[];
    * priority: InterventionOutput['priority'];
-   * plannedStartAt: string;
-   * dueAt: string;
+   * plannedStartAt: Date;
+   * dueAt: Date;
    * }>} [options] - options value.
    *
    * @return {Observable<InterventionOutput>} Result of the create operation.
@@ -225,8 +227,8 @@ export class InterventionService extends HydraApiService {
       responsible: string;
       participants: readonly string[];
       priority: InterventionOutput['priority'];
-      plannedStartAt: string;
-      dueAt: string;
+      plannedStartAt: Date;
+      dueAt: Date;
     }>,
   ): Observable<InterventionOutput> {
     return this.post<Record<string, unknown>, InterventionOutput>('/api/interventions', {
@@ -237,8 +239,8 @@ export class InterventionService extends HydraApiService {
       ...(options?.responsible ? { responsible: options.responsible } : {}),
       participants: options?.participants ?? [],
       priority: options?.priority ?? 'normal',
-      ...(options?.plannedStartAt ? { plannedStartAt: options.plannedStartAt } : {}),
-      ...(options?.dueAt ? { dueAt: options.dueAt } : {}),
+      ...(options?.plannedStartAt ? { plannedStartAt: toSecondsUtc(options.plannedStartAt) } : {}),
+      ...(options?.dueAt ? { dueAt: toSecondsUtc(options.dueAt) } : {}),
     });
   }
 
@@ -260,8 +262,8 @@ export class InterventionService extends HydraApiService {
    * responsible: string | null;
    * participants: readonly string[];
    * priority: InterventionOutput['priority'];
-   * plannedStartAt: string | null;
-   * dueAt: string | null;
+   * plannedStartAt: Date | null;
+   * dueAt: Date | null;
    * reviewNote: string | null;
    * }>} input - input value.
    * @param {number} [revision] - revision value.
@@ -277,15 +279,19 @@ export class InterventionService extends HydraApiService {
       responsible: string | null;
       participants: readonly string[];
       priority: InterventionOutput['priority'];
-      plannedStartAt: string | null;
-      dueAt: string | null;
+      plannedStartAt: Date | null;
+      dueAt: Date | null;
       reviewNote: string | null;
     }>,
     revision?: number,
   ): Observable<InterventionOutput> {
-    return this.patch<typeof input, InterventionOutput>(
+    const body: Record<string, unknown> = { ...input };
+    if ('plannedStartAt' in input) body['plannedStartAt'] = input.plannedStartAt ? toSecondsUtc(input.plannedStartAt) : null;
+    if ('dueAt' in input) body['dueAt'] = input.dueAt ? toSecondsUtc(input.dueAt) : null;
+
+    return this.patch<Record<string, unknown>, InterventionOutput>(
       `/api/interventions/${interventionId}`,
-      input,
+      body,
       {
         headers: revision === undefined ? undefined : { 'If-Match': `"revision-${revision}"` },
       },

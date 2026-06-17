@@ -12,9 +12,13 @@ import { InterventionOfflineService } from '../intervention-offline';
  * @class InterventionPrefetchService
  *
  * @description
- * Provides intervention prefetch operations.
+ * Proactively downloads and stores intervention workspaces for offline
+ * use. When online, fetches all active interventions assigned to the
+ * current member and persists them (work items, changes, issues) via
+ * {@link InterventionOfflineService}.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
@@ -31,7 +35,7 @@ export class InterventionPrefetchService {
    *
    * @type {ActiveOrganizationStore}
    */
-  private readonly organization: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+  private readonly organization: ActiveOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property connectivity
@@ -45,69 +49,72 @@ export class InterventionPrefetchService {
    *
    * @type {ConnectivityService}
    */
-  private readonly connectivity: ConnectivityService = inject(ConnectivityService);
+  private readonly connectivity: ConnectivityService = inject<ConnectivityService>(ConnectivityService);
 
   /**
    * Property service
    * @readonly
    *
    * @description
-   * Provides the service value.
+   * Intervention data-access service used to list and fetch workspace data.
    *
    * @access private
    * @since 1.0.0
    *
    * @type {InterventionService}
    */
-  private readonly service: InterventionService = inject(InterventionService);
+  private readonly service: InterventionService = inject<InterventionService>(InterventionService);
 
   /**
    * Property offline
    * @readonly
    *
    * @description
-   * Provides the offline value.
+   * Offline persistence service used to store prefetched workspaces locally.
    *
    * @access private
    * @since 1.0.0
    *
    * @type {InterventionOfflineService}
    */
-  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
+  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(InterventionOfflineService);
 
   /**
    * Property members
    * @readonly
    *
    * @description
-   * Provides the members value.
+   * Member data-access service used to resolve the current user's profile
+   * before filtering assigned interventions.
    *
    * @access private
    * @since 1.0.0
    *
    * @type {OrganizationMemberService}
    */
-  private readonly members: OrganizationMemberService = inject(OrganizationMemberService);
+  private readonly members: OrganizationMemberService = inject<OrganizationMemberService>(OrganizationMemberService);
 
   /**
    * Property injector
    * @readonly
    *
    * @description
-   * Provides the injector value.
+   * Owning injector used to create the prefetch effect lazily from
+   * within `start()`, outside of the constructor injection context.
    *
    * @access private
    * @since 1.0.0
    *
    * @type {Injector}
    */
-  private readonly injector: Injector = inject(Injector);
+  private readonly injector: Injector = inject<Injector>(Injector);
 
   /**
    * Property started
    *
    * @description
-   * Provides the started value.
+   * Whether prefetch monitoring has already been registered; prevents
+   * double-registration when `start()` is called more than once.
    *
    * @access private
    * @since 1.0.0
@@ -121,12 +128,14 @@ export class InterventionPrefetchService {
    * @method start
    *
    * @description
-   * Executes the start operation.
+   * Registers the prefetch effect once. A reactive effect triggers a
+   * workspace download whenever the active organization changes and the
+   * application is online. Subsequent calls are no-ops.
    *
    * @access public
    * @since 1.0.0
    *
-   * @return {void} Result of the start operation.
+   * @returns {void}
    */
   public start(): void {
     if (this.started) return;
@@ -167,15 +176,17 @@ export class InterventionPrefetchService {
    * @method prefetch
    *
    * @description
-   * Executes the prefetch operation.
+   * Downloads and persists the workspace for a single intervention:
+   * work items, changes and issues. Aborts if the active organization
+   * changes before the download completes.
    *
    * @access private
    * @since 1.0.0
    *
-   * @param {string} organizationId - Organization owning the prefetch request.
-   * @param {InterventionOutput} intervention - intervention value.
+   * @param {string} organizationId - Organization owning the intervention.
+   * @param {InterventionOutput} intervention - Intervention to prefetch.
    *
-   * @return {Observable<void>} Result of the prefetch operation.
+   * @returns {Observable<void>} Completes once the workspace is persisted.
    */
   private prefetch(organizationId: string, intervention: InterventionOutput): Observable<void> {
     return forkJoin({

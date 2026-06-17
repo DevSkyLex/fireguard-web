@@ -21,7 +21,22 @@ import type { InterventionWorkItemOptimisticResult } from './models';
  */
 @Injectable({ providedIn: 'root' })
 export class InterventionWorkspaceOptimisticService {
-  /** Method transition. @method transition @description Applies an optimistic intervention transition. @access public @since 1.0.0 @param {InterventionOutput} intervention - Current intervention. @param {InterventionTransitionRequest} request - Requested transition. @returns {InterventionOutput} */
+  /**
+   * Method transition
+   * @method transition
+   *
+   * @description
+   * Applies an optimistic intervention transition, incrementing the revision
+   * and updating the status and reviewNote without waiting for a server round-trip.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {InterventionOutput} intervention - Current intervention.
+   * @param {InterventionTransitionRequest} request - Requested transition.
+   *
+   * @returns {InterventionOutput} Updated intervention with the new status applied.
+   */
   public transition(
     intervention: InterventionOutput,
     request: InterventionTransitionRequest,
@@ -35,7 +50,22 @@ export class InterventionWorkspaceOptimisticService {
     };
   }
 
-  /** Method createWorkItem. @method createWorkItem @description Builds an optimistic work item. @access public @since 1.0.0 @param {CreateInterventionWorkItemInput} input - Work item input. @param {string} clientId - Client-generated identifier. @returns {InterventionWorkItemOutput} */
+  /**
+   * Method createWorkItem
+   * @method createWorkItem
+   *
+   * @description
+   * Builds an optimistic work item from the creation input, using the
+   * provided client-generated id so offline and online records can be matched.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {CreateInterventionWorkItemInput} input - Work item input.
+   * @param {string} clientId - Client-generated identifier.
+   *
+   * @returns {InterventionWorkItemOutput} Synthesized work item ready for local state.
+   */
   public createWorkItem(
     input: CreateInterventionWorkItemInput,
     clientId: string,
@@ -60,13 +90,54 @@ export class InterventionWorkspaceOptimisticService {
     };
   }
 
-  /** Method addWorkItem. @method addWorkItem @description Increments optimistic intervention work item counters. @access public @since 1.0.0 @param {InterventionOutput | null} intervention - Current intervention. @returns {InterventionOutput | null} */
+  /**
+   * Method addWorkItem
+   * @method addWorkItem
+   *
+   * @description
+   * Increments the intervention's `workItemsCount` and revision optimistically.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {InterventionOutput} intervention - Current intervention.
+   *
+   * @returns {InterventionOutput} Updated intervention.
+   */
   public addWorkItem(intervention: InterventionOutput): InterventionOutput;
-  /** Method addWorkItem. @method addWorkItem @description Preserves a null intervention value. @access public @since 1.0.0 @param {null} intervention - Null intervention. @returns {null} */
+
+  /**
+   * Method addWorkItem
+   * @method addWorkItem
+   *
+   * @description
+   * Preserves a null intervention value (no-op overload).
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {null} intervention - Null intervention.
+   *
+   * @returns {null}
+   */
   public addWorkItem(intervention: null): null;
-  /** Method addWorkItem. @method addWorkItem @description Increments counters when an intervention is available. @access public @since 1.0.0 @param {InterventionOutput | null} intervention - Current intervention. @returns {InterventionOutput | null} */
+
+  /**
+   * Method addWorkItem
+   * @method addWorkItem
+   *
+   * @description
+   * Increments counters when an intervention is available; passes null through.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {InterventionOutput | null} intervention - Current intervention or null.
+   *
+   * @returns {InterventionOutput | null}
+   */
   public addWorkItem(intervention: InterventionOutput | null): InterventionOutput | null;
-  /** Method addWorkItem. @method addWorkItem @description Implements optimistic work item counter updates. @access public @since 1.0.0 @param {InterventionOutput | null} intervention - Current intervention. @returns {InterventionOutput | null} */
+
   public addWorkItem(intervention: InterventionOutput | null): InterventionOutput | null {
     if (!intervention) return null;
     return {
@@ -77,7 +148,23 @@ export class InterventionWorkspaceOptimisticService {
     };
   }
 
-  /** Method updateWorkItem. @method updateWorkItem @description Applies an optimistic work item status change. @access public @since 1.0.0 @param {InterventionOutput | null} intervention - Current intervention. @param {InterventionWorkItemOutput} item - Work item to update. @param {InterventionWorkItemStatusChange} request - Requested status change. @returns {InterventionWorkItemOptimisticResult} */
+  /**
+   * Method updateWorkItem
+   * @method updateWorkItem
+   *
+   * @description
+   * Applies an optimistic work item status change, recomputes the parent
+   * intervention's `completedWorkItemsCount` and status when applicable.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {InterventionOutput | null} intervention - Current intervention.
+   * @param {InterventionWorkItemOutput} item - Work item to update.
+   * @param {InterventionWorkItemStatusChange} request - Requested status change.
+   *
+   * @returns {InterventionWorkItemOptimisticResult} Updated work item and intervention pair.
+   */
   public updateWorkItem(
     intervention: InterventionOutput | null,
     item: InterventionWorkItemOutput,
@@ -111,7 +198,21 @@ export class InterventionWorkspaceOptimisticService {
     };
   }
 
-  /** Method touch. @method touch @description Increments the intervention revision and update date. @access public @since 1.0.0 @param {InterventionOutput} intervention - Intervention to touch. @returns {InterventionOutput} */
+  /**
+   * Method touch
+   * @method touch
+   *
+   * @description
+   * Increments the intervention revision and refreshes `updatedAt` to reflect
+   * a local mutation without changing any business fields.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {InterventionOutput} intervention - Intervention to touch.
+   *
+   * @returns {InterventionOutput} Updated intervention with bumped revision.
+   */
   public touch(intervention: InterventionOutput): InterventionOutput {
     return {
       ...intervention,

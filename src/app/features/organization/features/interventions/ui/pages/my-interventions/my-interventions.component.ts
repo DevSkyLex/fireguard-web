@@ -15,11 +15,16 @@ import { ActiveOrganizationStore } from '@features/organization/state';
 import { EmptyState } from '@shared/components';
 
 /**
- * Component MyInterventionsPage.
+ * Component MyInterventionsPage
+ * @class MyInterventionsPage
  *
- * Signal-first field intervention list.
+ * @description
+ * Signal-first field intervention list for the authenticated agent.
+ * Reacts to organization and connectivity changes to load active
+ * interventions from the API or the local offline cache.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -37,19 +42,77 @@ import { EmptyState } from '@shared/components';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyInterventionsPage {
-  /** Property store. @readonly @description Provides field intervention state. @access protected @since 1.0.0 @type {MyInterventionsStoreType} */
-  protected readonly store: MyInterventionsStoreType = inject(MyInterventionsStore);
+  //#region Properties
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * Component-scoped store providing the field intervention list and
+   * its loading state.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {MyInterventionsStoreType}
+   */
+  protected readonly store: MyInterventionsStoreType = inject<MyInterventionsStoreType>(MyInterventionsStore);
 
-  /** Property organization. @readonly @description Provides the active organization. @access private @since 1.0.0 @type {ActiveOrganizationStore} */
-  private readonly organization: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+  /**
+   * Property organization
+   * @readonly
+   *
+   * @description
+   * Store exposing the active organization context.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ActiveOrganizationStore}
+   */
+  private readonly organization: ActiveOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
-  /** Property connectivity. @readonly @description Provides the current connectivity state. @access private @since 1.0.0 @type {ConnectivityService} */
-  private readonly connectivity: ConnectivityService = inject(ConnectivityService);
+  /**
+   * Property connectivity
+   * @readonly
+   *
+   * @description
+   * Shared connectivity source of truth used to switch between API and
+   * offline cache when loading the intervention list.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ConnectivityService}
+   */
+  private readonly connectivity: ConnectivityService = inject<ConnectivityService>(ConnectivityService);
 
-  /** Property router. @readonly @description Provides application navigation. @access private @since 1.0.0 @type {Router} */
-  private readonly router: Router = inject(Router);
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Angular Router used to navigate into an intervention workspace.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Router}
+   */
+  private readonly router: Router = inject<Router>(Router);
+  //#endregion
 
-  /** @constructor @description Loads assigned interventions when organization or connectivity changes. */
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Loads assigned interventions reactively whenever the active
+   * organization or the connectivity status changes.
+   *
+   * @since 1.0.0
+   */
   public constructor() {
     effect(() =>
       this.store.load({
@@ -58,8 +121,23 @@ export class MyInterventionsPage {
       }),
     );
   }
+  //#endregion
 
-  /** Method openIntervention. @method openIntervention @description Opens an assigned intervention. @access protected @since 1.0.0 @param {InterventionOutput} intervention - Intervention to open. @returns {void} */
+  //#region Methods
+  /**
+   * Method openIntervention
+   * @method openIntervention
+   *
+   * @description
+   * Navigates to the workspace of the selected intervention.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {InterventionOutput} intervention - Intervention to open.
+   *
+   * @returns {void}
+   */
   protected openIntervention(intervention: InterventionOutput): void {
     const organizationId = this.organization.selectedOrganization()?.id;
     if (organizationId) {
@@ -71,4 +149,5 @@ export class MyInterventionsPage {
       ]);
     }
   }
+  //#endregion
 }

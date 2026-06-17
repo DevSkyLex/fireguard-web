@@ -22,18 +22,77 @@ import type { InterventionDiscoveryResourcePlan, InterventionFieldDiscovery } fr
  */
 @Injectable({ providedIn: 'root' })
 export class InterventionFieldExecutionService {
-  /** Property connectivity. @readonly @description Provides the current connectivity state. @access private @since 1.0.0 @type {ConnectivityService} */
-  private readonly connectivity: ConnectivityService = inject(ConnectivityService);
-  /** Property offline. @readonly @description Persists offline intervention changes. @access private @since 1.0.0 @type {InterventionOfflineService} */
-  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
-  /** Property scanner. @readonly @description Provides QR scanning operations. @access private @since 1.0.0 @type {InterventionQrScannerService} */
-  private readonly scanner: InterventionQrScannerService = inject(InterventionQrScannerService);
-  /** Property photoCompressor. @readonly @description Compresses field photos before persistence. @access private @since 1.0.0 @type {InterventionPhotoCompressorService} */
-  private readonly photoCompressor: InterventionPhotoCompressorService = inject(
+  /**
+   * Property connectivity
+   * @readonly
+   *
+   * @description
+   * Provides the current connectivity state.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ConnectivityService}
+   */
+  private readonly connectivity: ConnectivityService = inject<ConnectivityService>(ConnectivityService);
+
+  /**
+   * Property offline
+   * @readonly
+   *
+   * @description
+   * Persists offline intervention changes.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionOfflineService}
+   */
+  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(InterventionOfflineService);
+
+  /**
+   * Property scanner
+   * @readonly
+   *
+   * @description
+   * Provides QR scanning operations.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionQrScannerService}
+   */
+  private readonly scanner: InterventionQrScannerService = inject<InterventionQrScannerService>(InterventionQrScannerService);
+
+  /**
+   * Property photoCompressor
+   * @readonly
+   *
+   * @description
+   * Compresses field photos before persistence.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionPhotoCompressorService}
+   */
+  private readonly photoCompressor: InterventionPhotoCompressorService = inject<InterventionPhotoCompressorService>(
     InterventionPhotoCompressorService,
   );
-  /** Property syncCoordinator. @readonly @description Coordinates background synchronization. @access private @since 1.0.0 @type {InterventionSyncCoordinatorService} */
-  private readonly syncCoordinator: InterventionSyncCoordinatorService = inject(
+
+  /**
+   * Property syncCoordinator
+   * @readonly
+   *
+   * @description
+   * Coordinates background synchronization.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionSyncCoordinatorService}
+   */
+  private readonly syncCoordinator: InterventionSyncCoordinatorService = inject<InterventionSyncCoordinatorService>(
     InterventionSyncCoordinatorService,
   );
 
@@ -182,7 +241,21 @@ export class InterventionFieldExecutionService {
     return this.scanner.isSupported();
   }
 
-  /** Method resourceId. @method resourceId @description Extracts a resource identifier from an IRI. @access private @since 1.0.0 @param {string} value - Resource value. @param {string} resource - Resource segment. @returns {string} */
+  /**
+   * Method resourceId
+   * @method resourceId
+   *
+   * @description
+   * Extracts a resource identifier from an IRI.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {string} value - Full IRI string.
+   * @param {string} resource - Resource path segment (e.g. `equipment`).
+   *
+   * @returns {string} Bare identifier extracted from the IRI.
+   */
   private resourceId(value: string, resource: string): string {
     const match = value.match(new RegExp(`^/api/${resource}/([^/?#]+)$`));
     if (!match?.[1]) throw new Error(`Invalid ${resource} resource`);

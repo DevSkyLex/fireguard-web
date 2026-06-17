@@ -18,9 +18,14 @@ import { InterventionSyncService } from '../intervention-sync';
  * @class InterventionSyncCoordinatorService
  *
  * @description
- * Provides intervention sync coordinator operations.
+ * Orchestrates background replay of the intervention offline outbox.
+ * Triggers outbox replay whenever the application is both online and
+ * visible, exposes syncing progress and blocked-operation counts to
+ * UI components, and provides imperative `syncAll` and `retryBlocked`
+ * entry points for user-initiated synchronization.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
@@ -37,13 +42,38 @@ export class InterventionSyncCoordinatorService {
    *
    * @type {WritableSignal<boolean>}
    */
-  private readonly syncingState: WritableSignal<boolean> = signal(false);
+  private readonly syncingState: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Property blockedOperationsState. @readonly @description Stores the number of blocked operations. @access private @since 1.0.0 @type {WritableSignal<number>} */
-  private readonly blockedOperationsState: WritableSignal<number> = signal(0);
+  /**
+   * Property blockedOperationsState
+   * @readonly
+   *
+   * @description
+   * Mutable backing signal for the count of conflicted or failed outbox
+   * operations. Updated after each replay cycle via {@link refreshStatus}.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<number>}
+   */
+  private readonly blockedOperationsState: WritableSignal<number> = signal<number>(0);
 
-  /** Property problemState. @readonly @description Stores the latest synchronization problem. @access private @since 1.0.0 @type {WritableSignal<string | null>} */
-  private readonly problemState: WritableSignal<string | null> = signal(null);
+  /**
+   * Property problemState
+   * @readonly
+   *
+   * @description
+   * Mutable backing signal for the most recent synchronization error
+   * message. Set to the first blocked operation's error string, or null
+   * when all operations are clear.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<string | null>}
+   */
+  private readonly problemState: WritableSignal<string | null> = signal<string | null>(null);
 
   /**
    * Property syncing
@@ -59,10 +89,34 @@ export class InterventionSyncCoordinatorService {
    */
   public readonly syncing: Signal<boolean> = this.syncingState.asReadonly();
 
-  /** Property blockedOperations. @readonly @description Exposes the number of blocked operations. @access public @since 1.0.0 @type {Signal<number>} */
+  /**
+   * Property blockedOperations
+   * @readonly
+   *
+   * @description
+   * Read-only count of outbox operations in a conflicted or failed state.
+   * Consumed by UI components to show sync-error badges.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {Signal<number>}
+   */
   public readonly blockedOperations: Signal<number> = this.blockedOperationsState.asReadonly();
 
-  /** Property problem. @readonly @description Exposes the latest synchronization problem. @access public @since 1.0.0 @type {Signal<string | null>} */
+  /**
+   * Property problem
+   * @readonly
+   *
+   * @description
+   * Read-only error message from the most recent blocked outbox operation,
+   * or null when the outbox is clear. Surfaced in sync-error banners.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {Signal<string | null>}
+   */
   public readonly problem: Signal<string | null> = this.problemState.asReadonly();
 
   /**
@@ -70,28 +124,30 @@ export class InterventionSyncCoordinatorService {
    * @readonly
    *
    * @description
-   * Provides the offline value.
+   * Offline persistence service used to enumerate pending outbox entries
+   * and look up the organization context for each queued intervention.
    *
    * @access private
    * @since 1.0.0
    *
    * @type {InterventionOfflineService}
    */
-  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
+  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(InterventionOfflineService);
 
   /**
    * Property sync
    * @readonly
    *
    * @description
-   * Provides the sync value.
+   * Low-level replay service that processes individual outbox operations
+   * and forwards them to the API.
    *
    * @access private
    * @since 1.0.0
    *
    * @type {InterventionSyncService}
    */
-  private readonly sync: InterventionSyncService = inject(InterventionSyncService);
+  private readonly sync: InterventionSyncService = inject<InterventionSyncService>(InterventionSyncService);
 
   /**
    * Property injector
@@ -106,7 +162,7 @@ export class InterventionSyncCoordinatorService {
    *
    * @type {Injector}
    */
-  private readonly injector: Injector = inject(Injector);
+  private readonly injector: Injector = inject<Injector>(Injector);
 
   /**
    * Property connectivity
@@ -121,7 +177,7 @@ export class InterventionSyncCoordinatorService {
    *
    * @type {ConnectivityService}
    */
-  private readonly connectivity: ConnectivityService = inject(ConnectivityService);
+  private readonly connectivity: ConnectivityService = inject<ConnectivityService>(ConnectivityService);
 
   /**
    * Property visibility
@@ -142,7 +198,8 @@ export class InterventionSyncCoordinatorService {
    * Property started
    *
    * @description
-   * Provides the started value.
+   * Guards against double-registration: once `start()` has wired the
+   * reactive effect, subsequent calls become no-ops.
    *
    * @access private
    * @since 1.0.0
@@ -185,12 +242,15 @@ export class InterventionSyncCoordinatorService {
    * @method syncAll
    *
    * @description
-   * Executes the sync all operation.
+   * Replays all pending outbox operations for every intervention that has
+   * queued changes, in sequence. Guards against concurrent calls and
+   * offline state. Sets {@link syncing} for the duration and updates
+   * {@link blockedOperations} and {@link problem} on completion.
    *
    * @access public
    * @since 1.0.0
    *
-   * @return {Promise<void>} Result of the sync all operation.
+   * @returns {Promise<void>} Resolves once every intervention outbox has been replayed.
    */
   public async syncAll(): Promise<void> {
     if (this.connectivity.isOffline() || this.syncing()) {
@@ -222,7 +282,17 @@ export class InterventionSyncCoordinatorService {
   }
 
   /**
-   * Retries operations that require explicit user resolution.
+   * Method retryBlocked
+   * @method retryBlocked
+   *
+   * @description
+   * Resets all conflicted or permanently-failed outbox operations back to
+   * pending so they can be replayed on the next `syncAll` call.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @returns {Promise<void>} Resolves once blocked operations are reset and replayed.
    */
   public async retryBlocked(): Promise<void> {
     const interventionIds = await this.offline.listInterventionIdsWithOutbox();
@@ -240,7 +310,18 @@ export class InterventionSyncCoordinatorService {
   }
 
   /**
-   * Refreshes the blocked-operation summary exposed to intervention UI.
+   * Method refreshStatus
+   * @method refreshStatus
+   *
+   * @description
+   * Recomputes and exposes the count of blocked (conflicted or failed)
+   * outbox operations and the most recent error message. Called after
+   * each replay cycle and by the discovery service.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @returns {Promise<void>} Resolves once the status signals are updated.
    */
   public async refreshStatus(): Promise<void> {
     const interventionIds = await this.offline.listInterventionIdsWithOutbox();

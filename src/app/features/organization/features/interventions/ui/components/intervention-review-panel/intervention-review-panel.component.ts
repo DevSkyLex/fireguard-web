@@ -122,7 +122,7 @@ export class InterventionReviewPanel {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly saving: InputSignal<boolean> = input(false);
+  public readonly saving: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property online
@@ -136,7 +136,7 @@ export class InterventionReviewPanel {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly online: InputSignal<boolean> = input(true);
+  public readonly online: InputSignal<boolean> = input<boolean>(true);
 
   /**
    * Property canReview
@@ -150,7 +150,7 @@ export class InterventionReviewPanel {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly canReview: InputSignal<boolean> = input(false);
+  public readonly canReview: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property canPublish
@@ -164,7 +164,7 @@ export class InterventionReviewPanel {
    *
    * @type {InputSignal<boolean>}
    */
-  public readonly canPublish: InputSignal<boolean> = input(false);
+  public readonly canPublish: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property publicationMessage

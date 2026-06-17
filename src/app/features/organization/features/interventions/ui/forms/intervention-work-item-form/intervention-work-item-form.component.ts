@@ -44,26 +44,112 @@ import type { InterventionWorkItemFormData, InterventionWorkItemFormValues } fro
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionWorkItemForm {
-  /** Input targetOptions. @readonly @description Available work item targets. @access public @since 1.0.0 @type {InputSignal<readonly SelectOption[]>} */
+  //#region Inputs
+  /**
+   * Property targetOptions
+   * @readonly
+   *
+   * @description
+   * Available target options (facilities and equipment) for the target selector.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<readonly SelectOption[]>}
+   */
   public readonly targetOptions: InputSignal<readonly SelectOption[]> = input<
     readonly SelectOption[]
   >([]);
-  /** Input memberOptions. @readonly @description Available assignees. @access public @since 1.0.0 @type {InputSignal<readonly MemberSelectOption[]>} */
+
+  /**
+   * Property memberOptions
+   * @readonly
+   *
+   * @description
+   * Available member options for the assignee selector.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<readonly MemberSelectOption[]>}
+   */
   public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> = input<
     readonly MemberSelectOption[]
   >([]);
-  /** Input loading. @readonly @description Indicates whether submission is running. @access public @since 1.0.0 @type {InputSignal<boolean>} */
-  public readonly loading: InputSignal<boolean> = input(false);
-  /** Input disabled. @readonly @description Indicates whether the form is disabled. @access public @since 1.0.0 @type {InputSignal<boolean>} */
-  public readonly disabled: InputSignal<boolean> = input(false);
-  /** Output submitted. @readonly @description Emits validated work item values. @access public @since 1.0.0 @type {OutputEmitterRef<InterventionWorkItemFormValues>} */
+
+  /**
+   * Property loading
+   * @readonly
+   *
+   * @description
+   * Whether a work-item creation is in flight; disables all form controls.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property disabled
+   * @readonly
+   *
+   * @description
+   * Whether work-item creation is forbidden (e.g. insufficient permissions).
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly disabled: InputSignal<boolean> = input<boolean>(false);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property submitted
+   * @readonly
+   *
+   * @description
+   * Emits validated work item values when the form is submitted successfully.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<InterventionWorkItemFormValues>}
+   */
   public readonly submitted: OutputEmitterRef<InterventionWorkItemFormValues> =
     output<InterventionWorkItemFormValues>();
+  //#endregion
 
-  /** Property formBuilder. @readonly @description Builds the typed reactive form. @access private @since 1.0.0 @type {NonNullableFormBuilder} */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  //#region Properties
+  /**
+   * Property formBuilder
+   * @readonly
+   *
+   * @description
+   * Builds the typed reactive form controls.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {NonNullableFormBuilder}
+   */
+  private readonly formBuilder: NonNullableFormBuilder = inject<NonNullableFormBuilder>(NonNullableFormBuilder);
 
-  /** Property form. @readonly @description Stores work item controls. @access protected @since 1.0.0 @type {FormGroup<InterventionWorkItemFormData>} */
+  /**
+   * Property form
+   * @readonly
+   *
+   * @description
+   * Reactive form group holding all work item controls.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FormGroup<InterventionWorkItemFormData>}
+   */
   protected readonly form: FormGroup<InterventionWorkItemFormData> =
     this.formBuilder.group<InterventionWorkItemFormData>({
       action: this.formBuilder.control<InterventionWorkItemAction>('inventory'),
@@ -71,14 +157,37 @@ export class InterventionWorkItemForm {
       assignee: this.formBuilder.control(''),
     });
 
-  /** Property actionOptions. @readonly @description Available intervention actions. @access protected @since 1.0.0 @type {readonly SelectOption<InterventionWorkItemAction>[]} */
+  /**
+   * Property actionOptions
+   * @readonly
+   *
+   * @description
+   * Static list of available work item actions for the action selector.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {readonly SelectOption<InterventionWorkItemAction>[]}
+   */
   protected readonly actionOptions: readonly SelectOption<InterventionWorkItemAction>[] = [
     { label: 'Site setup', value: 'site_setup' },
     { label: 'Inventory', value: 'inventory' },
     { label: 'Inspection', value: 'inspection' },
   ];
 
-  /** @constructor @description Synchronizes the form disabled state with component inputs. */
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Synchronizes the form disabled state with the {@link loading} and
+   * {@link disabled} inputs.
+   *
+   * @since 1.0.0
+   */
   public constructor() {
     effect(() => {
       if (this.loading() || this.disabled()) {
@@ -89,10 +198,26 @@ export class InterventionWorkItemForm {
     });
   }
 
-  /** Method onSubmit. @method onSubmit @description Validates, emits and resets the work item form. @access protected @since 1.0.0 @returns {void} */
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method onSubmit
+   * @method onSubmit
+   *
+   * @description
+   * Validates the form, emits the work item values via {@link submitted} and
+   * resets the form to its default state for immediate re-use.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
   protected onSubmit(): void {
     if (this.form.invalid || this.loading() || this.disabled()) return;
     this.submitted.emit(this.form.getRawValue());
     this.form.reset({ action: 'inventory', target: '', assignee: '' });
   }
+  //#endregion
 }

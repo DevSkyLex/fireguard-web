@@ -43,18 +43,81 @@ import type { InterventionDiscoveryFormData, InterventionDiscoveryFormValues } f
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionDiscoveryForm {
-  /** Input loading. @readonly @description Indicates whether submission is running. @access public @since 1.0.0 @type {InputSignal<boolean>} */
-  public readonly loading: InputSignal<boolean> = input(false);
-  /** Input disabled. @readonly @description Indicates whether the form is disabled. @access public @since 1.0.0 @type {InputSignal<boolean>} */
-  public readonly disabled: InputSignal<boolean> = input(false);
-  /** Output submitted. @readonly @description Emits validated discovery values. @access public @since 1.0.0 @type {OutputEmitterRef<InterventionDiscoveryFormValues>} */
+  //#region Inputs
+  /**
+   * Property loading
+   * @readonly
+   *
+   * @description
+   * Whether a discovery submission is in flight; disables all form controls.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property disabled
+   * @readonly
+   *
+   * @description
+   * Whether discovery entry is forbidden for the current user or context.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly disabled: InputSignal<boolean> = input<boolean>(false);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property submitted
+   * @readonly
+   *
+   * @description
+   * Emits validated, normalized discovery values when the form is
+   * submitted successfully.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<InterventionDiscoveryFormValues>}
+   */
   public readonly submitted: OutputEmitterRef<InterventionDiscoveryFormValues> =
     output<InterventionDiscoveryFormValues>();
+  //#endregion
 
-  /** Property formBuilder. @readonly @description Builds the typed reactive form. @access private @since 1.0.0 @type {NonNullableFormBuilder} */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  //#region Properties
+  /**
+   * Property formBuilder
+   * @readonly
+   *
+   * @description
+   * Builds the typed reactive form controls.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {NonNullableFormBuilder}
+   */
+  private readonly formBuilder: NonNullableFormBuilder = inject<NonNullableFormBuilder>(NonNullableFormBuilder);
 
-  /** Property form. @readonly @description Stores discovery controls. @access protected @since 1.0.0 @type {FormGroup<InterventionDiscoveryFormData>} */
+  /**
+   * Property form
+   * @readonly
+   *
+   * @description
+   * Reactive form group holding all field discovery controls.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FormGroup<InterventionDiscoveryFormData>}
+   */
   protected readonly form: FormGroup<InterventionDiscoveryFormData> =
     this.formBuilder.group<InterventionDiscoveryFormData>({
       action: this.formBuilder.control<InterventionWorkItemAction>('inventory'),
@@ -62,21 +125,55 @@ export class InterventionDiscoveryForm {
       result: this.formBuilder.control<InspectionResult>('pass'),
     });
 
-  /** Property actionOptions. @readonly @description Available discovery actions. @access protected @since 1.0.0 @type {readonly SelectOption<InterventionWorkItemAction>[]} */
+  /**
+   * Property actionOptions
+   * @readonly
+   *
+   * @description
+   * Static list of available discovery actions for the action selector.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {readonly SelectOption<InterventionWorkItemAction>[]}
+   */
   protected readonly actionOptions: readonly SelectOption<InterventionWorkItemAction>[] = [
     { label: 'Site setup', value: 'site_setup' },
     { label: 'Inventory', value: 'inventory' },
     { label: 'Inspection', value: 'inspection' },
   ];
 
-  /** Property resultOptions. @readonly @description Available inspection results. @access protected @since 1.0.0 @type {readonly SelectOption<InspectionResult>[]} */
+  /**
+   * Property resultOptions
+   * @readonly
+   *
+   * @description
+   * Static list of available inspection result options for the result selector.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {readonly SelectOption<InspectionResult>[]}
+   */
   protected readonly resultOptions: readonly SelectOption<InspectionResult>[] = [
     { label: 'Pass', value: 'pass' },
     { label: 'Partial', value: 'partial' },
     { label: 'Fail', value: 'fail' },
   ];
 
-  /** @constructor @description Synchronizes the form disabled state with component inputs. */
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Synchronizes the form disabled state with the {@link loading} and
+   * {@link disabled} inputs.
+   *
+   * @since 1.0.0
+   */
   public constructor() {
     effect(() => {
       if (this.loading() || this.disabled()) {
@@ -87,7 +184,23 @@ export class InterventionDiscoveryForm {
     });
   }
 
-  /** Method onSubmit. @method onSubmit @description Validates, normalizes, emits and resets discovery values. @access protected @since 1.0.0 @returns {void} */
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method onSubmit
+   * @method onSubmit
+   *
+   * @description
+   * Validates the form, normalizes the target value, emits the discovery
+   * payload via {@link submitted} and resets the form for re-use. Marks
+   * all controls as touched to surface validation errors when invalid.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
   protected onSubmit(): void {
     if (this.form.invalid || this.loading() || this.disabled()) {
       this.form.markAllAsTouched();
@@ -99,4 +212,5 @@ export class InterventionDiscoveryForm {
     });
     this.form.reset({ action: 'inventory', target: '', result: 'pass' });
   }
+  //#endregion
 }

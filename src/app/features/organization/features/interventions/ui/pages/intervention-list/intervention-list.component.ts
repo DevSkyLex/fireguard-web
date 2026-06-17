@@ -2,7 +2,10 @@ import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
-import { InterventionStore } from '@features/organization/features/interventions/state';
+import {
+  InterventionStore,
+  type InterventionStoreType,
+} from '@features/organization/features/interventions/state';
 import { InterventionTable } from '@features/organization/features/interventions/ui/tables';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
@@ -41,7 +44,7 @@ export class InterventionListPage {
    *
    * @type {ActiveOrganizationStore}
    */
-  private readonly organization: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+  private readonly organization: ActiveOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property router
@@ -55,7 +58,7 @@ export class InterventionListPage {
    *
    * @type {Router}
    */
-  private readonly router: Router = inject(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property store
@@ -67,7 +70,7 @@ export class InterventionListPage {
    * @access protected
    * @since 1.0.0
    */
-  protected readonly store = inject(InterventionStore);
+  protected readonly store: InterventionStoreType = inject<InterventionStoreType>(InterventionStore);
   //#endregion
 
   //#region Constructor

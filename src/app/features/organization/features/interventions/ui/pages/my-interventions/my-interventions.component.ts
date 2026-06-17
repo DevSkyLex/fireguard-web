@@ -1,18 +1,18 @@
 import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { ScrollerModule } from 'primeng/scroller';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TagModule } from 'primeng/tag';
 import { ConnectivityService } from '@core/services/connectivity';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import {
   MyInterventionsStore,
   type MyInterventionsStoreType,
 } from '@features/organization/features/interventions/state/my-interventions';
+import { InterventionTag } from '@features/organization/features/interventions/ui/components/intervention-tag';
 import { ActiveOrganizationStore } from '@features/organization/state';
+import { EmptyState } from '@shared/components';
 
 /**
  * Component MyInterventionsPage.
@@ -26,11 +26,11 @@ import { ActiveOrganizationStore } from '@features/organization/state';
   selector: 'app-my-interventions-page',
   imports: [
     ButtonModule,
-    MessageModule,
+    EmptyState,
+    InterventionTag,
     ProgressBarModule,
     ScrollerModule,
     SkeletonModule,
-    TagModule,
   ],
   providers: [MyInterventionsStore],
   templateUrl: './my-interventions.component.html',

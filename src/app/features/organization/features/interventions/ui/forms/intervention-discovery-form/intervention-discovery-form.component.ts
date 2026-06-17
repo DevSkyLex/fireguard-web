@@ -22,6 +22,7 @@ import type {
   InterventionWorkItemAction,
   SelectOption,
 } from '@features/organization/features/interventions/models';
+import { InterventionOption } from '../../components/intervention-option';
 import type { InterventionDiscoveryFormData, InterventionDiscoveryFormValues } from './models';
 
 /**
@@ -37,7 +38,7 @@ import type { InterventionDiscoveryFormData, InterventionDiscoveryFormValues } f
  */
 @Component({
   selector: 'app-intervention-discovery-form',
-  imports: [ButtonModule, InputTextModule, ReactiveFormsModule, SelectModule],
+  imports: [ButtonModule, InputTextModule, InterventionOption, ReactiveFormsModule, SelectModule],
   templateUrl: './intervention-discovery-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

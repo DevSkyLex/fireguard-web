@@ -15,14 +15,13 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SkeletonModule } from 'primeng/skeleton';
+import { StepperModule } from 'primeng/stepper';
 import { TagModule } from 'primeng/tag';
-import { ToolbarModule } from 'primeng/toolbar';
 import { ConnectivityService } from '@core/services/connectivity';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   CreateInterventionWorkItemInput,
   InterventionDiscoveryRequest,
-  InterventionPhase,
   InterventionPhotoAttachment,
   InterventionPlanningDetails,
   InterventionWorkItemStatusChange,
@@ -50,6 +49,7 @@ import {
 import { InterventionExecutePanel } from '../../components/intervention-execute-panel/intervention-execute-panel.component';
 import { InterventionPreparePanel } from '../../components/intervention-prepare-panel/intervention-prepare-panel.component';
 import { InterventionReviewPanel } from '../../components/intervention-review-panel/intervention-review-panel.component';
+import { InterventionTag } from '../../components/intervention-tag';
 
 /**
  * Component InterventionDetailPage
@@ -69,10 +69,11 @@ import { InterventionReviewPanel } from '../../components/intervention-review-pa
     InterventionExecutePanel,
     InterventionPreparePanel,
     InterventionReviewPanel,
+    InterventionTag,
     ProgressBarModule,
     SkeletonModule,
+    StepperModule,
     TagModule,
-    ToolbarModule,
   ],
   providers: [InterventionPlanningOptionsStore, InterventionWorkspaceStore],
   templateUrl: './intervention-detail.component.html',
@@ -156,19 +157,23 @@ export class InterventionDetailPage {
   protected readonly connectivity: ConnectivityService = inject(ConnectivityService);
 
   /**
-   * Property activePhase
+   * Property activeStep
    * @readonly
    *
    * @description
-   * Provides the active phase value.
+   * Active workflow step bound to the PrimeNG stepper `value`. Seeded from the
+   * intervention status (Prepare → 1, Execute → 2, Review → 3) and writable so
+   * the user can navigate freely between phases, while re-deriving whenever the
+   * status changes underneath.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<InterventionPhase>}
+   * @type {WritableSignal<number>}
    */
-  protected readonly activePhase: WritableSignal<InterventionPhase> =
-    linkedSignal<InterventionPhase>(() => this.phaseForStatus(this.store.intervention()?.status));
+  protected readonly activeStep: WritableSignal<number> = linkedSignal<number>(() =>
+    this.stepForStatus(this.store.intervention()?.status),
+  );
 
   /**
    * Property publishing
@@ -521,80 +526,6 @@ export class InterventionDetailPage {
   }
 
   /**
-   * Method selectPhase
-   * @method selectPhase
-   *
-   * @description
-   * Executes the select phase operation.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {InterventionPhase} phase - phase value.
-   *
-   * @return {void} Result of the select phase operation.
-   */
-  protected selectPhase(phase: InterventionPhase): void {
-    this.activePhase.set(phase);
-  }
-
-  /**
-   * Property phaseTabs
-   * @readonly
-   *
-   * @description
-   * Ordered tab descriptors backing the phase tablist.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {readonly { id: InterventionPhase; label: string; hint: string; step: number }[]}
-   */
-  protected readonly phaseTabs: readonly {
-    id: InterventionPhase;
-    label: string;
-    hint: string;
-    step: number;
-  }[] = [
-    { id: 'prepare', label: 'Prepare', hint: 'Scope and assign', step: 1 },
-    { id: 'execute', label: 'Execute', hint: 'Field work', step: 2 },
-    { id: 'review', label: 'Review', hint: '', step: 3 },
-  ];
-
-  /**
-   * Method onPhaseKeydown
-   * @method onPhaseKeydown
-   *
-   * @description
-   * Implements the ARIA tablist keyboard pattern (arrow keys, Home/End) to move
-   * the active phase and focus, for the phase navigation.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {KeyboardEvent} event - keyboard event value.
-   * @param {InterventionPhase} phase - currently focused phase value.
-   *
-   * @return {void} Result of the on phase keydown operation.
-   */
-  protected onPhaseKeydown(event: KeyboardEvent, phase: InterventionPhase): void {
-    const current = this.phaseTabs.findIndex((tab) => tab.id === phase);
-    const last = this.phaseTabs.length - 1;
-    let nextIndex: number | null = null;
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown')
-      nextIndex = (current + 1) % (last + 1);
-    else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp')
-      nextIndex = (current - 1 + last + 1) % (last + 1);
-    else if (event.key === 'Home') nextIndex = 0;
-    else if (event.key === 'End') nextIndex = last;
-    if (nextIndex === null) return;
-    event.preventDefault();
-    const next = this.phaseTabs[nextIndex].id;
-    this.selectPhase(next);
-    document.getElementById(`phase-tab-${next}`)?.focus();
-  }
-
-  /**
    * Method planIntervention
    * @method planIntervention
    *
@@ -882,11 +813,12 @@ export class InterventionDetailPage {
   }
 
   /**
-   * Resolves the default workspace phase for a intervention status.
+   * Resolves the default workspace step (1: Prepare, 2: Execute, 3: Review) for
+   * a intervention status, used to seed the stepper's active value.
    */
-  private phaseForStatus(status: string | undefined): InterventionPhase {
-    if (status === 'in_progress' || status === 'changes_requested') return 'execute';
-    if (status === 'submitted' || status === 'published') return 'review';
-    return 'prepare';
+  private stepForStatus(status: string | undefined): number {
+    if (status === 'in_progress' || status === 'changes_requested') return 2;
+    if (status === 'submitted' || status === 'published') return 3;
+    return 1;
   }
 }

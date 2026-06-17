@@ -143,6 +143,22 @@ Examples:
 - `OrganizationSwitcher` belongs to `features/organization/ui/components` because it depends on organization context.
 - `TrendCard` and `MetricCard` belong to `shared/components` because they have no domain dependency — their inputs are plain scalars and generic types with no coupling to any feature model.
 
+### 3.8 Usage locality decides placement
+
+Every model, type, util, constant, and option set lives at the **lowest layer that covers all of its consumers**. Proximity to the consumer is the default; height in the architecture is earned only by shared usage.
+
+The rule has two directions:
+
+- **Start local.** A unit used by a single component lives inside that component's folder, not at the feature level. Do not pre-emptively hoist something to `features/<feature>/models` (or `utils`, `constants`, `options`) "in case" another consumer appears.
+- **Lift only when shared, and only as far as needed.** When a second consumer appears, move the unit up to the lowest scope that contains both consumers — to the feature's own `models/` · `utils/` · `constants/` · `options/` when several components of one feature use it, to `shared/` when several features use it and it is domain-agnostic, to the owning feature's public API when several features use it and it is domain-bearing, and to `core/` only when it is app-wide infrastructure.
+
+Two hard constraints keep this honest:
+
+- **Never reach down.** Code outside a component must not import from that component's private `models/`, `utils/`, `constants/`, or `options/` folder. If an outside consumer needs it, lift it first; deep cross-imports are forbidden (see section 11.4).
+- **A shared registry is not copied.** A domain-bearing unit consumed by another feature is re-exported through its owner's public API, never duplicated into the consumer.
+
+This generalizes sections 3.6 and 3.7: just as provider scope and rendering location do not grant ownership, neither does convenience. The set of consumers — and nothing else — determines how high a unit sits.
+
 ## 4. Layer Model
 
 The frontend is organized into five top-level responsibilities under `src/app`.
@@ -465,9 +481,15 @@ features/<feature>/
   state/
     index.ts              # optional public API
     <slice>/
-  models/
+  models/                 # type-only: interfaces, type aliases, literal-union enums
     index.ts              # optional public API
     <concept>/
+  utils/                  # optional — pure functions shared across the feature
+    index.ts
+  constants/              # optional — fixed runtime values shared across the feature
+    index.ts
+  options/                # optional — UI option sets shared across the feature
+    index.ts
   providers/              # optional
   features/               # optional nested features
   index.ts                # optional public API
@@ -485,7 +507,8 @@ A feature may contain:
 - `ports/` for behavioral contracts intentionally published to layouts or approved sibling features,
 - `ui/` for pages and feature-owned presentation code,
 - `state/` for stores and store-local state types,
-- `models/` for feature contracts and reusable feature types,
+- `models/` for feature contracts and reusable feature types (type-only),
+- `utils/`, `constants/`, and `options/` for pure functions, fixed runtime values, and UI option sets shared across the feature (section 9.9), created only when a unit outgrows a single component (section 3.8),
 - feature-owned providers, responsible for binding the feature's ports to their concrete adapters,
 - nested `features/` only when the child is a real ownership boundary.
 
@@ -529,9 +552,12 @@ features/<parent>/features/<child>/
   state/
     index.ts              # optional public API
     <slice>/
-  models/
+  models/                 # type-only: interfaces, type aliases, literal-union enums
     index.ts              # optional public API
     <concept>/
+  utils/                  # optional — pure functions shared across the child feature
+  constants/              # optional — fixed runtime values shared across the child feature
+  options/                # optional — UI option sets shared across the child feature
   providers/              # optional
   features/               # optional deeper nesting
   index.ts                # optional public API
@@ -570,12 +596,14 @@ shared/
   directives/
   validators/
   pipes/                  # optional
-  utils/                  # optional
+  models/                 # optional — generic, domain-agnostic type-only declarations
+  utils/                  # optional — generic pure functions
+  constants/              # optional — generic fixed runtime values
 ```
 
 Target rule:
 
-`shared` is for generic reuse with no business ownership.
+`shared` is for generic reuse with no business ownership. The same unit-folder taxonomy applies as in a feature (`models/` is type-only; `utils/`, `constants/`, `options/` hold runtime code — section 9.9), restricted to domain-agnostic units: anything that names a business concept does not belong in `shared`.
 
 External consumers import shared UI through concern-level public APIs such as `@shared/components`, not through implementation files.
 
@@ -878,6 +906,14 @@ Feature-owned contracts and reusable feature types belong to the owning feature.
 
 `models/` is the feature contract catalog. It does not own store state interfaces.
 
+**A model is a type-only declaration.** It describes the *shape* of data and is fully erased at compile time: `interface`, `type` alias, and literal-union enum. A file that emits runtime code is not a model and does not belong in `models/`:
+
+- pure functions (mappers, formatters, type guards, resolvers) belong in `utils/`,
+- fixed runtime values (defaults, limits, named keys, lookup maps) belong in `constants/`,
+- UI option sets for selects, menus, and filters belong in `options/`.
+
+Those three sibling folders, and the rule for how high each unit sits, are defined in section 9.9. The one sanctioned exception is a **presentation registry**, where a descriptor interface, its lookup maps, and its resolver stay together in one concept folder for cohesion (see "Enum presentation registry" below).
+
 Default structure rules:
 
 - `models/` is concept-first: the root of `models/` should contain only `index.ts` and concept folders,
@@ -886,6 +922,24 @@ Default structure rules:
 - do not repeat the feature name when the parent path already makes ownership obvious,
 - add a domain prefix only when the folder name would otherwise be too generic or collision-prone in workspace-wide search, such as `organization-audit/`, `facility-type/`, `checklist-item/`, `equipment-attachment/`, or `equipment-tag/`,
 - technical sub-buckets such as `api/`, `view-models/`, `filters/`, or `queries/` are allowed only inside a large concept slice when that slice has grown too broad.
+
+#### File naming inside `models/`
+
+One declaration per file. The file name states the concept, and the suffix states the kind. Because `models/` is type-only, it carries only the two type-level suffixes:
+
+| Suffix           | Kind                                              | Example                                  |
+| ---------------- | ------------------------------------------------- | ---------------------------------------- |
+| `.interface.ts`  | an `interface` (API contract or view model shape) | `intervention-output.interface.ts`       |
+| `.type.ts`       | a `type` alias, including domain literal unions   | `intervention-status.type.ts`            |
+
+Runtime-bearing files belong in the sibling folders, **not** in `models/`: pure functions go to `utils/` (`.utils.ts`) and static `const` data to `constants/` (`.constants.ts`). The one exception is a presentation-registry concept folder (`<concept>-tag/`), where the resolver — keeping the singular `.util.ts` suffix because it stays in `models/` (for example `intervention-tag.util.ts`) — and its descriptor maps stay co-located with the descriptor interface so the registry reads as one unit.
+
+Rules:
+
+- export object/resource shapes as `interface`, not `type`,
+- export domain enumerations as `type` literal unions, not `type`-with-`interface` hybrids,
+- keep the kind suffix on the file name so concept folders stay scannable,
+- a concept folder normally holds only type-only files (the output interface and its status/priority unions) plus a barrel re-export through the feature `models/index.ts`; a `.util.ts` or `.constants.ts` here signals a registry concept folder.
 
 Example:
 
@@ -901,12 +955,20 @@ models/
   dashboard/
     organization-dashboard-output.interface.ts
     organization-dashboard-query-options.interface.ts
+  intervention/
+    intervention-output.interface.ts
+    intervention-status.type.ts          # domain literal union (enum)
+    intervention-priority.type.ts
+  intervention-tag/                       # enum presentation registry
+    intervention-tag-descriptor.interface.ts
+    intervention-tag-kind.type.ts
+    intervention-tag.util.ts
   organization-audit/
     audit-event-list-options.interface.ts
     audit-event-output.interface.ts
 ```
 
-The `models/` folder contains three main kinds of types. Keep their ownership clear even when the folder is nested.
+The `models/` folder contains four main kinds of types. Keep their ownership clear even when the folder is nested.
 
 **API contracts**: types that directly mirror the backend JSON shape.
 
@@ -916,6 +978,15 @@ The `models/` folder contains three main kinds of types. Keep their ownership cl
 
 API contracts extend `HydraItem` when they represent a backend resource.
 API contracts are `readonly` and must not carry client-derived state.
+
+**Enums and domain literal unions**: the fixed value sets of a business concept (`status`, `priority`, `type`, `severity`, `result`, `action`).
+
+- model them as `type` string-literal unions, not TypeScript `enum`,
+- one union per `.type.ts` file, named after the concept (`InterventionStatus`, `InterventionPriority`),
+- the literal values must match the exact strings the backend sends (`'in_progress'`, not `'inProgress'`),
+- co-locate the union in the same concept folder as the output interface that uses it (`intervention/intervention-status.type.ts` next to `intervention/intervention-output.interface.ts`),
+- never hard-code a label, colour, or icon for an enum value inside a component; resolve presentation through the concept's tag registry (see below),
+- do not duplicate a backend enum as a frontend `enum` plus a union; the union is the single source of truth.
 
 **Feature view models**: types that exist only on the frontend.
 
@@ -927,6 +998,36 @@ API contracts are `readonly` and must not carry client-derived state.
 **List and filter option types**: pagination requests, filter parameters, and query builders.
 
 Store state interface types belong in `state/` next to the owning store or inside the owning state slice. They are not part of `models/`.
+
+#### Enum presentation registry
+
+How an enum value renders (its human label, its severity colour, its icon) is presentation data, not transport data. It does not belong in the API contract, scattered across components, or in a separate `presentation/` layer. It belongs to one registry living in the owning feature's `models/`, in a `<concept>-tag/` folder.
+
+A registry exposes:
+
+- a descriptor interface — `{ label; severity; icon }` (`<concept>-tag-descriptor.interface.ts`),
+- a discriminator union over every enum family it covers (`<concept>-tag-kind.type.ts`),
+- a pure resolver `resolve<Concept>Tag(kind, value)` returning the descriptor, with a graceful fallback for unknown values (`<concept>-tag.util.ts`),
+- optional severity-to-class helpers for icon colour.
+
+The registry is the single place that maps a raw enum value to how it looks. Components consume it; they never branch on enum values themselves.
+
+```text
+models/intervention-tag/
+  intervention-tag-descriptor.interface.ts   # { label; severity; icon }
+  intervention-tag-kind.type.ts              # 'priority' | 'status' | 'type' | ...
+  intervention-tag-severity.type.ts
+  intervention-tag.util.ts                   # resolveInterventionTag(kind, value)
+```
+
+Rendering style is owned by small presentational components in `ui/components/`, not by the registry — the registry returns data only:
+
+- a **badge** component for tables, panels, and detail views (a neutral pill where only the icon carries colour),
+- a **select-option** component for `p-select` items (bare icon + label, no pill).
+
+To add or change a value, edit only the descriptor map in `<concept>-tag.util.ts`; every consumer follows. A new enum family gets a new map plus an entry in the `*TagKind` union. Re-export the descriptor interface, the kind type, and the resolver through the feature `models/index.ts`.
+
+Do not centralize feature enum registries under `core/` or `shared/`. An enum registry knows business values, so it is feature-owned. Only a genuinely cross-feature enum (consumed unchanged by several features) is shared, and then through that owning feature's public API, not by copying the map.
 
 Do not centralize feature model catalogs under `core/models`.
 
@@ -1332,6 +1433,51 @@ Feature interceptors are rare. Use them only when the behavior is owned by one f
 
 Providers must not be moved to `core` just because they are called from the app shell.
 
+### 9.9 `utils/`, `constants/`, and `options/` (non-model unit folders)
+
+`models/` is type-only (section 9.6). Everything that emits runtime code lives in one of three sibling unit folders, chosen by what the unit *is*, then placed at the right height by usage locality (section 3.8). The same three folder names already appear locally inside a component, dataview, or form group (sections 9.2–9.4); this section makes them the standard at every scope.
+
+| Folder        | Owns                                                                 | File suffix      | Examples                                              |
+| ------------- | ------------------------------------------------------------------- | ---------------- | ---------------------------------------------------- |
+| `utils/`      | pure, stateless functions over models and primitives                | `.utils.ts`      | `api-date-time.utils.ts`, `map-facility.utils.ts`    |
+| `constants/`  | fixed runtime values: defaults, limits, named keys, lookup maps      | `.constants.ts`  | `pagination-defaults.constants.ts`                   |
+| `options/`    | UI option sets for `p-select`, menus, and filters                    | `.constants.ts`  | `facility-type-options.constants.ts`                 |
+
+The file inside a `utils/` folder takes the plural `.utils.ts` suffix, matching the folder name. A pure helper that stays co-located in a `models/` registry concept folder keeps the singular `.util.ts` (for example `intervention-tag.util.ts`); the suffix follows where the file lives.
+
+Shared rules:
+
+- **one declaration per file**, named after its purpose, with a barrel `index.ts` that is the only public entry point,
+- `utils/` functions are pure: no Angular DI, no HTTP, no store access, no side effects — anything that needs DI is a service (`data-access/`) or a store helper (`state/`),
+- `constants/` holds data, not behavior; if a constant needs a function to be useful, the function lives in `utils/`,
+- `options/` is for presentation-layer choice lists; it never holds transport defaults (those are `constants/`),
+- none of these folders holds a `type` or `interface` declaration — those are models and belong in `models/` (a util may *import* the types it operates on).
+
+Placement (apply section 3.8):
+
+- used by **one** component, dataview, or form → keep it in that group's local `utils/` · `constants/` · `options/` folder,
+- used by **several** units of one feature → lift to the feature-level `features/<feature>/utils` · `constants` · `options`,
+- used by **several** features and domain-agnostic → `shared/utils` · `shared/constants`,
+- **app-wide infrastructure** → `core/` (for example `core/state/request-state` utilities).
+
+Feature-level layout:
+
+```text
+features/<feature>/
+  models/        # type-only: interfaces, type aliases, literal-union enums
+  utils/         # pure functions
+    index.ts
+    api-date-time.utils.ts
+  constants/     # fixed runtime values and lookup maps
+    index.ts
+    pagination-defaults.constants.ts
+  options/       # UI option sets for selects, menus, filters
+    index.ts
+    facility-type-options.constants.ts
+```
+
+A unit stays where it is until a consumer in a higher scope actually appears; only then is it lifted, and only as far as the shared scope requires. Outside code never reaches into a unit's local folder — it imports the lifted unit through the public barrel (section 11.4).
+
 ## 10. Routing, SSR, and Hydration
 
 ### 10.1 Route ownership
@@ -1509,7 +1655,8 @@ The following patterns are approved for new work.
 - a core-owned contract is bound in the `core/` provider that owns the concrete implementation,
 - a shared component that needs infrastructure injects an owner-published contract, never a concrete `core/` service,
 - global HTTP concerns remain in `core/http/interceptors`,
-- a feature owns its own `data-access`, `state`, `models`, optional `http`, optional `ports`, and optional `providers` folders,
+- a feature owns its own `data-access`, `state`, `models`, optional `http`, optional `ports`, optional `providers`, and optional `utils` / `constants` / `options` folders,
+- a model stays type-only; pure functions live in `utils/`, fixed values in `constants/`, and UI option sets in `options/`, each placed at the lowest layer that covers all its consumers (sections 3.8 and 9.9),
 - async actions use `CallState` with `idleCallState` in initial state and `pendingCallState` / `successCallState` / `errorCallState` in methods,
 - stores use `rxMethod` with `tapResponse` for reactive data loading,
 - error normalization uses `toStoreError(err)` before calling `errorCallState`,
@@ -1543,7 +1690,11 @@ The following patterns must not be introduced in new code.
 - importing a feature implementation file instead of a documented feature or concern public API,
 - importing another feature's adapters as a reuse shortcut,
 - scattering the same dynamic key-probing logic (e.g. `point['count'] ?? point['total'] ?? 0`) across multiple stores without a shared adapter function,
-- placing adapter functions inside `computed` signals in a store.
+- placing adapter functions inside `computed` signals in a store,
+- placing runtime code in `models/` — a pure function belongs in `utils/`, a fixed value or lookup map in `constants/`, a select option set in `options/` (the only exception is a cohesive presentation registry, section 9.6),
+- declaring a `type` or `interface` in `utils/`, `constants/`, or `options/` instead of in `models/`,
+- hoisting a model, util, constant, or option to the feature (or `shared/`, or `core/`) before a second consumer exists, instead of keeping it local until usage requires lifting (section 3.8),
+- reaching into another component's private `models/`, `utils/`, `constants/`, or `options/` folder instead of lifting the shared unit first.
 
 ## 15. Transition Rules
 
@@ -1606,6 +1757,8 @@ Before merging a change, verify the following.
 - If the feature owns guards, resolvers, or feature-scoped interceptors, are they under `http/` instead of at feature root?
 - If the feature owns stores, are they organized into named `state/` slices instead of a flat `state/` root?
 - If the feature owns contracts or reusable feature types, are they organized into concept-first `models/` folders with prefixes only for overly generic names?
+- Is `models/` type-only, with pure functions in `utils/`, fixed values in `constants/`, and UI option sets in `options/` (registry exception aside)?
+- Is each model, util, constant, and option set placed at the lowest layer covering all its consumers, and kept local until a second consumer forces it up?
 - If the file is rendered in a layout, is its ownership still correct?
 - Does the page own orchestration instead of the dataview or child component?
 - If a resolver exists, is it truly route-critical and free of duplicate fetches?
@@ -1678,7 +1831,7 @@ Do not expand `TransferState` to every authenticated list. If the UI can tolerat
 - URL construction uses `buildUrl(path, id?)` and `buildParams(options?)`.
 - The base content type is `application/ld+json`. Do not override it unless the endpoint explicitly requires it (e.g., file uploads use `multipart/form-data`).
 
-### 17.4 API error contract
+### 17.5 API error contract
 
 The backend follows RFC 7807 Problem Details for error responses.
 
@@ -1700,22 +1853,22 @@ For validation failures (400 with constraint violations), use `isConstraintViola
 
 Never access `.status`, `.title`, or `.detail` on an `unknown` error without first calling a type guard.
 
-### 17.5 Error flow across layers
+### 17.6 Error flow across layers
 
 ```
 HttpClient error (HttpErrorResponse)
   → interceptors (unauthorized 401 → redirect)
   → service Observable propagates the error
   → store rxMethod catches in tapResponse.error
-  → createOperationErrorFromUnknown(err) normalizes to OperationError
-  → patchState updates operation to error state
-  → page's computed reads: operation.status === 'error'
+  → toStoreError(err) normalizes to StoreError
+  → patchState writes errorCallState(storeError) into the CallState field
+  → page's computed reads: isCallError(store.<call>CallState())
   → page decides UI reaction (toast, inline error, retry)
 ```
 
-No layer skips a step. A page must not read raw `HttpErrorResponse` from a service; it reads the normalized `OperationError` via a store signal.
+No layer skips a step. A page must not read raw `HttpErrorResponse` from a service; it reads the normalized `StoreError` through the store's `CallState` signal (see section 9.7).
 
-### 17.6 Hydra transport model
+### 17.7 Hydra transport model
 
 Collection responses from the API follow the Hydra/JSON-LD envelope:
 
@@ -1734,55 +1887,47 @@ Stores that need pagination must read `'hydra:view'` and `'hydra:totalItems'` fr
 
 ---
 
-## 18. Operation and Store Patterns Reference
+## 18. Store Patterns Reference
 
-This section codifies the exact patterns used in the codebase for both async operation state and NgRx SignalStore structure. These are not suggestions; they are the standards.
+This section codifies the exact patterns used in the codebase for async call state and NgRx SignalStore structure. These are not suggestions; they are the standards.
 
-### 18.1 Operation lifecycle
+The canonical async-state and store templates live in section 9.7. This section is a quick reference and adds the store-scoping, collection, event, and adapter decisions that 9.7 does not.
 
-Every async action (API call, multi-step workflow) must expose state through `Operation<TData, TError, TParams>`.
+### 18.1 Async call state
+
+The retired `Operation<TData, TError>` type and its `createIdleOperation` / `createLoadingOperation` / `createSuccessOperation` / `createErrorOperation` constructors must not appear in new code. Use `CallState` from `@core/state/request-state` (see section 9.7 for the full lifecycle).
 
 The four states:
 
-| State     | Meaning                                                     | Constructor                                  |
-| --------- | ----------------------------------------------------------- | -------------------------------------------- |
-| `idle`    | Nothing triggered yet.                                      | `createIdleOperation()`                      |
-| `loading` | In-flight; may carry previous cached data.                  | `createLoadingOperation(previousData?)`      |
-| `success` | Completed successfully with typed payload.                  | `createSuccessOperation(data)`               |
-| `error`   | Failed; normalized error attached, may carry previous data. | `createErrorOperation(error, previousData?)` |
+| State     | Meaning                                                     | Factory                                |
+| --------- | ----------------------------------------------------------- | -------------------------------------- |
+| `idle`    | Nothing triggered yet.                                      | `idleCallState()`                      |
+| `pending` | In-flight; may carry previous cached data.                  | `pendingCallState(previous?)`          |
+| `success` | Completed successfully with typed payload.                  | `successCallState(data)`               |
+| `error`   | Failed; normalized error attached, may carry previous data. | `errorCallState(error, previous?)`     |
 
-Error normalization is always done with `createOperationErrorFromUnknown(unknown)` which:
+Error normalization is always done with `toStoreError(unknown)` which:
 
 - detects `ApiError` (RFC 7807), wraps it preserving `status`, `type`, `title`, `detail`,
 - detects `ConstraintViolation` and wraps accordingly,
-- falls back to a generic `OperationError` for any other thrown value.
+- falls back to a generic `StoreError` for any other thrown value.
 
-Never pass a raw `HttpErrorResponse` or `unknown` to `createErrorOperation`: always normalize first.
+Never pass a raw `HttpErrorResponse` or `unknown` to `errorCallState`: always call `toStoreError(err)` first.
 
-`OperationError<TError>` shape:
-
-```typescript
-interface OperationError<TError = unknown> {
-  readonly error: TError; // the normalized error object
-  readonly message: string; // human-friendly message
-  readonly code?: string; // machine code (e.g. status code or type URI)
-  readonly retryable: boolean; // hint to the UI for showing a retry button
-  readonly timestamp: number; // epoch ms
-}
-```
+Read call state with the guards `isCallPending`, `isCallSuccess`, `isCallError`.
 
 ### 18.2 Canonical store template
 
 ```typescript
-// feature-state.interface.ts
+// feature-state.interface.ts (lives in state/<slice>/models/)
 export interface FeatureState {
-  createOperation: Operation<FeatureOutput>;
-  loadOperation: Operation<FeatureOutput[]>;
+  createCallState: CallState<FeatureOutput>;
+  listCallState: CallState<FeatureOutput[]>;
 }
 
 const INITIAL_STATE: FeatureState = {
-  createOperation: createIdleOperation(),
-  loadOperation: createIdleOperation(),
+  createCallState: idleCallState(),
+  listCallState: idleCallState(),
 };
 
 // feature.store.ts
@@ -1791,10 +1936,11 @@ export const FeatureStore = signalStore(
   withState<FeatureState>(INITIAL_STATE),
 
   withComputed((store) => ({
-    isLoading: computed(() => store.loadOperation().status === 'loading'),
-    items: computed(() =>
-      isOperationSuccess(store.loadOperation()) ? store.loadOperation().data : [],
-    ),
+    isLoading: computed(() => isCallPending(store.listCallState())),
+    items: computed(() => {
+      const state = store.listCallState();
+      return isCallSuccess(state) ? state.data : [];
+    }),
   })),
 
   withMethods((store, service = inject(FeatureService), dispatcher = inject(Dispatcher)) => ({
@@ -1802,7 +1948,7 @@ export const FeatureStore = signalStore(
       pipe(
         tap(() =>
           patchState(store, {
-            loadOperation: createLoadingOperation(store.loadOperation().data ?? []),
+            listCallState: pendingCallState(store.listCallState().data ?? []),
           }),
         ),
         switchMap((options) =>
@@ -1810,13 +1956,13 @@ export const FeatureStore = signalStore(
             tapResponse({
               next: (res) =>
                 patchState(store, {
-                  loadOperation: createSuccessOperation(res['hydra:member']),
+                  listCallState: successCallState(res['hydra:member']),
                 }),
               error: (err: unknown) =>
                 patchState(store, {
-                  loadOperation: createErrorOperation(
-                    createOperationErrorFromUnknown(err),
-                    store.loadOperation().data ?? [],
+                  listCallState: errorCallState(
+                    toStoreError(err),
+                    store.listCallState().data ?? [],
                   ),
                 }),
             }),
@@ -1833,6 +1979,8 @@ export const FeatureStore = signalStore(
   })),
 );
 ```
+
+For a store with exactly one query concern, prefer the `withQueryState` feature instead of a named `CallState` field (see section 9.7, Pattern 2).
 
 ### 18.3 Root-provided vs component-scoped stores
 
@@ -1866,7 +2014,7 @@ This generates:
 
 Update primitives: `setAllEntities`, `addEntity`, `addEntities`, `updateEntity`, `removeEntity`, `removeEntities`.
 
-Do not use `withEntities` for a single resource or a list that is always fully replaced at once and never needs `id`-based lookup. Use the standard `Operation<T[]>` pattern instead.
+Do not use `withEntities` for a single resource or a list that is always fully replaced at once and never needs `id`-based lookup. Use a standard `CallState<T[]>` field instead.
 
 ### 18.5 Event system
 
@@ -1940,6 +2088,8 @@ The target architecture is:
 - layouts as shells,
 - shared as generic primitives,
 - explicit ownership of state and API access,
+- type-only `models/` with runtime code split into `utils/`, `constants/`, and `options/`,
+- placement by usage locality — local first, lifted only when shared,
 - explicit SSR and hydration rules,
 - public APIs instead of deep imports.
 

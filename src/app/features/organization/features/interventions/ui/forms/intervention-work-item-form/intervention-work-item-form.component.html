@@ -1,14 +1,24 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex h-full flex-col gap-5">
-  <label class="grid gap-2 text-sm font-medium">
+  <label class="grid gap-1.5 text-sm font-medium">
     Action
     <p-select
       formControlName="action"
       [options]="[...actionOptions]"
       optionLabel="label"
       optionValue="value"
-    />
+    >
+      <ng-template #selectedItem let-option>
+        @if (option) {
+          <app-intervention-option kind="workItemAction" [value]="option.value" />
+        }
+      </ng-template>
+      <ng-template #item let-option>
+        <app-intervention-option kind="workItemAction" [value]="option.value" />
+      </ng-template>
+    </p-select>
   </label>
-  <label class="grid gap-2 text-sm font-medium">
+
+  <label class="grid gap-1.5 text-sm font-medium">
     Target resource
     <p-select
       formControlName="target"
@@ -19,8 +29,12 @@
       [showClear]="true"
       placeholder="Optional site, facility or equipment target"
     />
+    <small class="font-normal text-surface-500 dark:text-surface-400">
+      Leave empty for site-level work.
+    </small>
   </label>
-  <label class="grid gap-2 text-sm font-medium">
+
+  <label class="grid gap-1.5 text-sm font-medium">
     Assignee
     <p-select
       formControlName="assignee"
@@ -42,6 +56,7 @@
       </ng-template>
     </p-select>
   </label>
+
   <p-button
     class="mt-auto"
     styleClass="w-full"

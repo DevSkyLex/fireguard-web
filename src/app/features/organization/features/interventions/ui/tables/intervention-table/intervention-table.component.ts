@@ -13,9 +13,9 @@ import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule, type TablePassThroughOptions } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { EmptyState } from '@shared/components';
+import { InterventionTag } from '../../components/intervention-tag';
 
 /**
  * Constant INTERVENTION_NAME_MAX_LENGTH
@@ -64,10 +64,10 @@ const SKELETON_ROW_COUNT = 5;
     DatePipe,
     EmptyState,
     InputTextModule,
+    InterventionTag,
     ReactiveFormsModule,
     SkeletonModule,
     TableModule,
-    TagModule,
   ],
   templateUrl: './intervention-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

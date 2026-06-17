@@ -26,6 +26,7 @@ import type {
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import { InterventionMemberOption } from '../../components/intervention-member-option/intervention-member-option.component';
+import { InterventionOption } from '../../components/intervention-option';
 import type { InterventionPlanningFormData, InterventionPlanningFormValues } from './models';
 
 /**
@@ -45,6 +46,7 @@ import type { InterventionPlanningFormData, InterventionPlanningFormValues } fro
     ButtonModule,
     DatePickerModule,
     InterventionMemberOption,
+    InterventionOption,
     MultiSelectModule,
     ReactiveFormsModule,
     SelectModule,

@@ -17,6 +17,7 @@ import type {
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import { InterventionMemberOption } from '../../components/intervention-member-option/intervention-member-option.component';
+import { InterventionOption } from '../../components/intervention-option';
 import type { InterventionWorkItemFormData, InterventionWorkItemFormValues } from './models';
 
 /**
@@ -32,7 +33,13 @@ import type { InterventionWorkItemFormData, InterventionWorkItemFormValues } fro
  */
 @Component({
   selector: 'app-intervention-work-item-form',
-  imports: [ButtonModule, InterventionMemberOption, ReactiveFormsModule, SelectModule],
+  imports: [
+    ButtonModule,
+    InterventionMemberOption,
+    InterventionOption,
+    ReactiveFormsModule,
+    SelectModule,
+  ],
   templateUrl: './intervention-work-item-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

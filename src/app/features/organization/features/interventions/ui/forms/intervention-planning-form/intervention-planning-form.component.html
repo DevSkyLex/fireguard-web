@@ -1,6 +1,6 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="mt-6 grid gap-4 sm:grid-cols-2">
-  <label class="grid gap-2 text-sm font-medium">
-    Site
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="mt-6 grid gap-5 sm:grid-cols-2">
+  <label class="grid gap-1.5 text-sm font-medium">
+    <span>Site <span class="text-red-500" aria-hidden="true">*</span></span>
     <p-select
       formControlName="site"
       [options]="[...siteOptions()]"
@@ -8,10 +8,12 @@
       optionValue="value"
       [filter]="true"
       placeholder="Select a site"
+      [invalid]="form.controls.site.invalid && form.controls.site.touched"
     />
   </label>
-  <label class="grid gap-2 text-sm font-medium">
-    Responsible agent
+
+  <label class="grid gap-1.5 text-sm font-medium">
+    <span>Responsible agent <span class="text-red-500" aria-hidden="true">*</span></span>
     <p-select
       formControlName="responsible"
       [options]="[...memberOptions()]"
@@ -21,6 +23,7 @@
       filterBy="label,roleLabel"
       [showClear]="true"
       placeholder="Assign a responsible agent"
+      [invalid]="form.controls.responsible.invalid && form.controls.responsible.touched"
     >
       <ng-template #item let-option>
         <app-intervention-member-option [option]="option" />
@@ -32,7 +35,8 @@
       </ng-template>
     </p-select>
   </label>
-  <label class="grid gap-2 text-sm font-medium sm:col-span-2">
+
+  <label class="grid gap-1.5 text-sm font-medium sm:col-span-2">
     Participants
     <p-multiselect
       formControlName="participants"
@@ -49,8 +53,9 @@
       </ng-template>
     </p-multiselect>
   </label>
-  <label class="grid gap-2 text-sm font-medium">
-    Planned start
+
+  <label class="grid gap-1.5 text-sm font-medium">
+    <span>Planned start <span class="text-red-500" aria-hidden="true">*</span></span>
     <p-datepicker
       formControlName="plannedStartAt"
       [showTime]="true"
@@ -62,10 +67,12 @@
       dateFormat="yy-mm-dd"
       placeholder="Select start date and time"
       class="w-full"
+      [invalid]="form.controls.plannedStartAt.invalid && form.controls.plannedStartAt.touched"
     />
   </label>
-  <label class="grid gap-2 text-sm font-medium">
-    Due
+
+  <label class="grid gap-1.5 text-sm font-medium">
+    <span>Due <span class="text-red-500" aria-hidden="true">*</span></span>
     <p-datepicker
       formControlName="dueAt"
       [showTime]="true"
@@ -78,18 +85,30 @@
       dateFormat="yy-mm-dd"
       placeholder="Select due date and time"
       class="w-full"
+      [invalid]="form.controls.dueAt.invalid && form.controls.dueAt.touched"
     />
   </label>
-  <label class="grid gap-2 text-sm font-medium">
-    Priority
+
+  <label class="grid gap-1.5 text-sm font-medium">
+    <span>Priority <span class="text-red-500" aria-hidden="true">*</span></span>
     <p-select
       formControlName="priority"
       [options]="[...priorityOptions]"
       optionLabel="label"
       optionValue="value"
-    />
+    >
+      <ng-template #selectedItem let-option>
+        @if (option) {
+          <app-intervention-option kind="priority" [value]="option.value" />
+        }
+      </ng-template>
+      <ng-template #item let-option>
+        <app-intervention-option kind="priority" [value]="option.value" />
+      </ng-template>
+    </p-select>
   </label>
-  <div class="flex items-end">
+
+  <div class="flex items-end sm:justify-end">
     <p-button
       label="Save planning details"
       type="submit"

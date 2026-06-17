@@ -28,6 +28,7 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { RadioCardGroup, type RadioCardOption } from '@shared/components';
 import { InterventionMemberOption } from '../../components/intervention-member-option/intervention-member-option.component';
+import { InterventionOption } from '../../components/intervention-option';
 import type { InterventionCreateFormData, InterventionCreateFormValues } from './models';
 
 /**
@@ -48,6 +49,7 @@ import type { InterventionCreateFormData, InterventionCreateFormValues } from '.
     DatePickerModule,
     InputTextModule,
     InterventionMemberOption,
+    InterventionOption,
     MultiSelectModule,
     RadioCardGroup,
     ReactiveFormsModule,

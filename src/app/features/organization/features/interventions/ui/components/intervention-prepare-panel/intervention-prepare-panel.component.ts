@@ -20,12 +20,14 @@ import type {
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import { toApiDateTime } from '@features/organization/features/interventions/models';
+import { InterventionTag } from '@features/organization/features/interventions/ui/components/intervention-tag';
 import {
   InterventionPlanningForm,
   InterventionWorkItemForm,
   type InterventionPlanningFormValues,
   type InterventionWorkItemFormValues,
 } from '@features/organization/features/interventions/ui/forms';
+import { Card } from '@shared/components';
 
 /**
  * Component InterventionPreparePanel
@@ -42,8 +44,10 @@ import {
   selector: 'app-intervention-prepare-panel',
   imports: [
     ButtonModule,
+    Card,
     DrawerModule,
     InterventionPlanningForm,
+    InterventionTag,
     InterventionWorkItemForm,
     MessageModule,
     TagModule,

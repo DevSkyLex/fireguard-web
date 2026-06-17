@@ -1,123 +1,181 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-6">
-  <section aria-label="Intervention type">
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
+  <section class="flex flex-col gap-3" aria-labelledby="intervention-objective-heading">
+    <div>
+      <h2
+        id="intervention-objective-heading"
+        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+      >
+        Objective
+      </h2>
+      <p class="mt-0.5 text-sm text-surface-500 dark:text-surface-400">
+        Choose what this intervention prepares. It drives the field workflow.
+      </p>
+    </div>
     <app-radio-card-group formControlName="type" [options]="interventionTypes" />
   </section>
 
   <section
-    class="grid gap-5 rounded-xl border border-surface-200 bg-surface-0 p-5 md:grid-cols-2 dark:border-surface-800 dark:bg-surface-950"
+    class="flex flex-col gap-5 rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-950"
+    aria-labelledby="intervention-details-heading"
   >
-    <p class="text-sm text-surface-500 md:col-span-2">
-      Only a name is required to start a draft. Site, assignment and schedule can be completed now
-      or later in the Prepare step.
-    </p>
-    <label class="grid gap-2 text-sm font-medium md:col-span-2">
-      Intervention name
-      <input
-        pInputText
-        formControlName="name"
-        placeholder="e.g. Q3 warehouse inspection"
-        class="w-full"
-      />
-    </label>
-    <label class="grid gap-2 text-sm font-medium">
-      Site
-      <p-select
-        formControlName="site"
-        [options]="[...siteOptions()]"
-        optionLabel="label"
-        optionValue="value"
-        [filter]="true"
-        [loading]="optionsLoading()"
-        [showClear]="true"
-        placeholder="Select a site"
-      />
-    </label>
-    <label class="grid gap-2 text-sm font-medium">
-      Responsible agent
-      <p-select
-        formControlName="responsible"
-        [options]="[...memberOptions()]"
-        optionLabel="label"
-        optionValue="value"
-        [filter]="true"
-        filterBy="label,roleLabel"
-        [loading]="optionsLoading()"
-        [showClear]="true"
-        placeholder="Assign an agent"
+    <div>
+      <h2
+        id="intervention-details-heading"
+        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
       >
-        <ng-template #item let-option>
-          <app-intervention-member-option [option]="option" />
-        </ng-template>
-        <ng-template #selectedItem let-option>
-          @if (option) {
-            <app-intervention-member-option [option]="option" [compact]="true" />
-          }
-        </ng-template>
-      </p-select>
-    </label>
-    <label class="grid gap-2 text-sm font-medium md:col-span-2">
-      Participants
-      <p-multiselect
-        formControlName="participants"
-        [options]="[...memberOptions()]"
-        optionLabel="label"
-        optionValue="value"
-        [filter]="true"
-        filterBy="label,roleLabel"
-        [loading]="optionsLoading()"
-        display="chip"
-        placeholder="Add field participants"
-      >
-        <ng-template #item let-option>
-          <app-intervention-member-option [option]="option" />
-        </ng-template>
-      </p-multiselect>
-    </label>
-    <label class="grid gap-2 text-sm font-medium">
-      Planned start
-      <p-datepicker
-        formControlName="plannedStartAt"
-        [showTime]="true"
-        hourFormat="24"
-        [showIcon]="true"
-        [showClear]="true"
-        [showButtonBar]="true"
-        appendTo="body"
-        dateFormat="yy-mm-dd"
-        placeholder="Select start date and time"
-        class="w-full"
-      />
-    </label>
-    <label class="grid gap-2 text-sm font-medium">
-      Due
-      <p-datepicker
-        formControlName="dueAt"
-        [showTime]="true"
-        hourFormat="24"
-        [showIcon]="true"
-        [showClear]="true"
-        [showButtonBar]="true"
-        [minDate]="form.controls.plannedStartAt.value ?? undefined"
-        appendTo="body"
-        dateFormat="yy-mm-dd"
-        placeholder="Select due date and time"
-        class="w-full"
-      />
-    </label>
-    <label class="grid gap-2 text-sm font-medium">
-      Priority
-      <p-select
-        formControlName="priority"
-        [options]="[...priorityOptions]"
-        optionLabel="label"
-        optionValue="value"
-      />
-    </label>
+        Details
+      </h2>
+      <p class="mt-0.5 text-sm text-surface-500 dark:text-surface-400">
+        Only a name is required to start a draft — site, assignment and schedule can be completed
+        now or later in the Prepare step.
+      </p>
+    </div>
+
+    <div class="grid gap-5 md:grid-cols-2">
+      <label class="grid gap-1.5 text-sm font-medium md:col-span-2">
+        <span>Intervention name <span class="text-red-500" aria-hidden="true">*</span></span>
+        <input
+          pInputText
+          formControlName="name"
+          placeholder="e.g. Q3 warehouse inspection"
+          autocomplete="off"
+          class="w-full"
+          [invalid]="form.controls.name.invalid && form.controls.name.touched"
+          aria-describedby="intervention-name-error"
+        />
+        @if (form.controls.name.invalid && form.controls.name.touched) {
+          <small
+            id="intervention-name-error"
+            class="flex items-center gap-1 font-normal text-red-600 dark:text-red-400"
+          >
+            <i class="pi pi-exclamation-circle text-[0.7rem]" aria-hidden="true"></i>
+            @if (form.controls.name.hasError('required')) {
+              A name is required to start the draft.
+            } @else {
+              Use between 2 and 255 characters.
+            }
+          </small>
+        }
+      </label>
+
+      <label class="grid gap-1.5 text-sm font-medium">
+        Site
+        <p-select
+          formControlName="site"
+          [options]="[...siteOptions()]"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          [loading]="optionsLoading()"
+          [showClear]="true"
+          placeholder="Select a site"
+        />
+      </label>
+
+      <label class="grid gap-1.5 text-sm font-medium">
+        Responsible agent
+        <p-select
+          formControlName="responsible"
+          [options]="[...memberOptions()]"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          filterBy="label,roleLabel"
+          [loading]="optionsLoading()"
+          [showClear]="true"
+          placeholder="Assign an agent"
+        >
+          <ng-template #item let-option>
+            <app-intervention-member-option [option]="option" />
+          </ng-template>
+          <ng-template #selectedItem let-option>
+            @if (option) {
+              <app-intervention-member-option [option]="option" [compact]="true" />
+            }
+          </ng-template>
+        </p-select>
+      </label>
+
+      <label class="grid gap-1.5 text-sm font-medium md:col-span-2">
+        Participants
+        <p-multiselect
+          formControlName="participants"
+          [options]="[...memberOptions()]"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          filterBy="label,roleLabel"
+          [loading]="optionsLoading()"
+          display="chip"
+          placeholder="Add field participants"
+        >
+          <ng-template #item let-option>
+            <app-intervention-member-option [option]="option" />
+          </ng-template>
+        </p-multiselect>
+      </label>
+
+      <label class="grid gap-1.5 text-sm font-medium">
+        Planned start
+        <p-datepicker
+          formControlName="plannedStartAt"
+          [showTime]="true"
+          hourFormat="24"
+          [showIcon]="true"
+          [showClear]="true"
+          [showButtonBar]="true"
+          appendTo="body"
+          dateFormat="yy-mm-dd"
+          placeholder="Select start date and time"
+          class="w-full"
+        />
+      </label>
+
+      <label class="grid gap-1.5 text-sm font-medium">
+        Due
+        <p-datepicker
+          formControlName="dueAt"
+          [showTime]="true"
+          hourFormat="24"
+          [showIcon]="true"
+          [showClear]="true"
+          [showButtonBar]="true"
+          [minDate]="form.controls.plannedStartAt.value ?? undefined"
+          appendTo="body"
+          dateFormat="yy-mm-dd"
+          placeholder="Select due date and time"
+          class="w-full"
+        />
+      </label>
+
+      <label class="grid gap-1.5 text-sm font-medium md:col-span-2">
+        <span>Priority <span class="text-red-500" aria-hidden="true">*</span></span>
+        <p-select
+          formControlName="priority"
+          [options]="[...priorityOptions]"
+          optionLabel="label"
+          optionValue="value"
+        >
+          <ng-template #selectedItem let-option>
+            @if (option) {
+              <app-intervention-option kind="priority" [value]="option.value" />
+            }
+          </ng-template>
+          <ng-template #item let-option>
+            <app-intervention-option kind="priority" [value]="option.value" />
+          </ng-template>
+        </p-select>
+      </label>
+    </div>
   </section>
 
   <footer
-    class="sticky bottom-0 flex justify-end border-t border-surface-200 bg-surface-0/95 py-4 backdrop-blur dark:border-surface-800 dark:bg-surface-950/95"
+    class="sticky bottom-0 flex flex-col-reverse items-stretch gap-3 border-t border-surface-200 bg-surface-0/95 py-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between dark:border-surface-800 dark:bg-surface-950/95"
   >
+    <p class="flex items-center gap-1.5 text-sm text-surface-500 dark:text-surface-400">
+      <i class="pi pi-info-circle text-xs" aria-hidden="true"></i>
+      You can refine everything in the Prepare step.
+    </p>
     <p-button
       label="Create draft intervention"
       type="submit"

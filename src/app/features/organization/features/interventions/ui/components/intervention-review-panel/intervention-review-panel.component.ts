@@ -9,13 +9,14 @@ import {
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { TagModule } from 'primeng/tag';
 import type {
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
+import { Card } from '@shared/components';
+import { InterventionTag } from '../intervention-tag';
 
 /**
  * Component InterventionReviewPanel
@@ -29,7 +30,7 @@ import type {
  */
 @Component({
   selector: 'app-intervention-review-panel',
-  imports: [ButtonModule, JsonPipe, MessageModule, TagModule],
+  imports: [ButtonModule, Card, InterventionTag, JsonPipe, MessageModule],
   templateUrl: './intervention-review-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

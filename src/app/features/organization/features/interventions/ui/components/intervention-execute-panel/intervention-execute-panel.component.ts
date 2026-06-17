@@ -22,12 +22,14 @@ import type {
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
 } from '@features/organization/features/interventions/models';
+import { InterventionTag } from '@features/organization/features/interventions/ui/components/intervention-tag';
 import {
   InterventionDiscoveryForm,
   InterventionSkipForm,
   type InterventionDiscoveryFormValues,
   type InterventionSkipFormValues,
 } from '@features/organization/features/interventions/ui/forms';
+import { Card, EmptyState } from '@shared/components';
 
 /**
  * Component InterventionExecutePanel
@@ -43,9 +45,12 @@ import {
   selector: 'app-intervention-execute-panel',
   imports: [
     ButtonModule,
+    Card,
     DrawerModule,
+    EmptyState,
     InterventionDiscoveryForm,
     InterventionSkipForm,
+    InterventionTag,
     MessageModule,
     ScrollerModule,
     TagModule,

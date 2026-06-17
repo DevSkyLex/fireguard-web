@@ -83,7 +83,7 @@
           } @else {
             <tr>
               <td>
-                <div class="flex min-w-0 flex-col">
+                <div class="flex min-w-0 flex-col gap-1">
                   <button
                     type="button"
                     class="w-fit max-w-full cursor-pointer truncate text-left font-medium text-surface-900 transition-colors hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400"
@@ -91,16 +91,16 @@
                   >
                     {{ intervention.name }}
                   </button>
-                  <span class="truncate text-xs text-surface-500 dark:text-surface-400">
-                    Revision {{ intervention.revision }}
-                  </span>
+                  <div class="flex items-center gap-2">
+                    <app-intervention-tag kind="priority" [value]="intervention.priority" />
+                    <span class="truncate text-xs text-surface-500 dark:text-surface-400">
+                      Revision {{ intervention.revision }}
+                    </span>
+                  </div>
                 </div>
               </td>
               <td>
-                <p-tag
-                  [value]="intervention.status"
-                  [severity]="intervention.status === 'published' ? 'success' : 'secondary'"
-                />
+                <app-intervention-tag kind="status" [value]="intervention.status" />
               </td>
               <td class="text-right tabular-nums">{{ intervention.facilitiesCount }}</td>
               <td class="text-right tabular-nums">{{ intervention.equipmentCount }}</td>

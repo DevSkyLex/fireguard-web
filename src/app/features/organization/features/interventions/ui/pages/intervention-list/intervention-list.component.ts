@@ -22,7 +22,7 @@ import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
 } from '@features/organization/features/interventions/state/intervention-planning-options';
-import { InterventionCreateDialog } from '@features/organization/features/interventions/ui/dialogs';
+import { InterventionCreateDrawer } from '@features/organization/features/interventions/ui/drawers';
 import type { InterventionCreateFormValues } from '@features/organization/features/interventions/ui/forms';
 import { InterventionTable } from '@features/organization/features/interventions/ui/tables';
 import { ActiveOrganizationStore } from '@features/organization/state';
@@ -43,7 +43,7 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-intervention-list-page',
-  imports: [InterventionCreateDialog, InterventionTable],
+  imports: [InterventionCreateDrawer, InterventionTable],
   providers: [InterventionStore, InterventionPlanningOptionsStore],
   templateUrl: './intervention-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -130,7 +130,7 @@ export class InterventionListPage {
    *
    * @description
    * Component-scoped store providing site and member selector options for the
-   * guided creation dialog. Loaded lazily when the dialog is opened.
+   * guided creation drawer. Loaded lazily when the drawer is opened.
    *
    * @access protected
    * @since 1.2.0
@@ -141,25 +141,25 @@ export class InterventionListPage {
     inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
 
   /**
-   * Property createDialogVisible
+   * Property createDrawerVisible
    * @readonly
    *
    * @description
-   * Whether the guided creation dialog is currently open.
+   * Whether the guided creation drawer is currently open.
    *
    * @access protected
    * @since 1.2.0
    *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly createDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly createDrawerVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property creating
    * @readonly
    *
    * @description
-   * Whether a guided creation request is in flight; disables the dialog form.
+   * Whether a guided creation request is in flight; disables the drawer form.
    *
    * @access protected
    * @since 1.2.0
@@ -186,11 +186,11 @@ export class InterventionListPage {
 
   //#region Methods
   /**
-   * Method openCreateDialog
-   * @method openCreateDialog
+   * Method openCreateDrawer
+   * @method openCreateDrawer
    *
    * @description
-   * Opens the guided creation dialog and lazily loads the site and member
+   * Opens the guided creation drawer and lazily loads the site and member
    * selector options for the active organization.
    *
    * @access protected
@@ -198,9 +198,9 @@ export class InterventionListPage {
    *
    * @return {void}
    */
-  protected openCreateDialog(): void {
+  protected openCreateDrawer(): void {
     this.planningOptions.loadCreationOptions(this.organizationId() ?? null);
-    this.createDialogVisible.set(true);
+    this.createDrawerVisible.set(true);
   }
 
   /**

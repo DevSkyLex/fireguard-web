@@ -33,19 +33,30 @@
       }}
       <span class="text-red-500" aria-hidden="true">*</span>
     </span>
-    <input
-      pInputText
-      formControlName="target"
-      class="w-full"
-      [invalid]="form.controls.target.invalid && form.controls.target.touched"
-      [placeholder]="
-        form.controls.action.value === 'site_setup'
-          ? 'Example: Electrical room'
-          : form.controls.action.value === 'inventory'
-            ? 'Example: fire_extinguisher'
+    @if (form.controls.action.value === 'inventory') {
+      <p-select
+        formControlName="target"
+        [options]="[...equipmentTypeOptions()]"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        appendTo="body"
+        placeholder="Select an equipment type"
+        [invalid]="form.controls.target.invalid && form.controls.target.touched"
+      />
+    } @else {
+      <input
+        pInputText
+        formControlName="target"
+        class="w-full"
+        [invalid]="form.controls.target.invalid && form.controls.target.touched"
+        [placeholder]="
+          form.controls.action.value === 'site_setup'
+            ? 'Example: Electrical room'
             : '/api/equipment/...'
-      "
-    />
+        "
+      />
+    }
     @if (form.controls.target.invalid && form.controls.target.touched) {
       <small class="flex items-center gap-1 font-normal text-red-600 dark:text-red-400">
         <i class="pi pi-exclamation-circle text-[0.7rem]" aria-hidden="true"></i>

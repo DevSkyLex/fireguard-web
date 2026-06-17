@@ -314,6 +314,35 @@ export class InterventionSyncCoordinatorService {
   }
 
   /**
+   * Method discardBlocked
+   * @method discardBlocked
+   *
+   * @description
+   * Permanently removes all conflicted or failed outbox operations from the
+   * queue. Used when an operation can never succeed unchanged (for example a
+   * rejected payload) and the user chooses to drop it instead of retrying.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @returns {Promise<void>} Resolves once blocked operations are removed and status refreshed.
+   */
+  public async discardBlocked(): Promise<void> {
+    const interventionIds = await this.offline.listInterventionIdsWithOutbox();
+    const operations = (
+      await Promise.all(
+        interventionIds.map((interventionId) => this.offline.listOutbox(interventionId)),
+      )
+    ).flat();
+    await Promise.all(
+      operations
+        .filter((operation) => operation.status === 'conflict' || operation.status === 'failed')
+        .map((operation) => this.offline.removeOutbox(operation.id)),
+    );
+    await this.refreshStatus();
+  }
+
+  /**
    * Method refreshStatus
    * @method refreshStatus
    *
@@ -338,6 +367,6 @@ export class InterventionSyncCoordinatorService {
       (operation) => operation.status === 'conflict' || operation.status === 'failed',
     );
     this.blockedOperationsState.set(blocked.length);
-    if (blocked[0]?.error) this.problemState.set(blocked[0].error);
+    this.problemState.set(blocked[0]?.error ?? null);
   }
 }

@@ -89,14 +89,24 @@
             >{{ sync.blockedOperations() }} synchronization operation(s) require attention.
             {{ sync.problem() }}</span
           >
-          <p-button
-            label="Retry"
-            icon="pi pi-refresh"
-            severity="danger"
-            [outlined]="true"
-            [loading]="sync.syncing()"
-            (onClick)="sync.retryBlocked()"
-          />
+          <div class="flex flex-wrap items-center gap-2">
+            <p-button
+              label="Retry"
+              icon="pi pi-refresh"
+              severity="danger"
+              [outlined]="true"
+              [loading]="sync.syncing()"
+              (onClick)="sync.retryBlocked()"
+            />
+            <p-button
+              label="Discard"
+              icon="pi pi-trash"
+              severity="danger"
+              [text]="true"
+              [disabled]="sync.syncing()"
+              (onClick)="discardBlocked($event)"
+            />
+          </div>
         </div>
       </p-message>
     }
@@ -138,6 +148,7 @@
               [canExecute]="canExecute()"
               [scanSupported]="scanSupported()"
               [fieldMessage]="fieldMessage()"
+              [equipmentTypeOptions]="equipmentTypeOptions()"
               (createDiscovery)="createDiscovery($event)"
               (scanPhoto)="scanPhoto($event)"
               (attachPhoto)="attachPhoto($event)"

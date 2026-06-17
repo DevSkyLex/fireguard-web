@@ -185,6 +185,7 @@
   <app-intervention-discovery-form
     [loading]="saving()"
     [disabled]="!canExecute()"
+    [equipmentTypeOptions]="equipmentTypeOptions()"
     (submitted)="confirmDiscovery($event)"
   />
 </p-drawer>

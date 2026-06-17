@@ -8,14 +8,14 @@
     [initialPage]="page()"
     (load)="onLoad($event)"
     (pageChange)="onPageChange($event)"
-    (createRequested)="openCreateDialog()"
+    (createRequested)="openCreateDrawer()"
     (view)="onView($event)"
   />
 </div>
 
-<app-intervention-create-dialog
-  [visible]="createDialogVisible()"
-  (visibleChange)="createDialogVisible.set($event)"
+<app-intervention-create-drawer
+  [visible]="createDrawerVisible()"
+  (visibleChange)="createDrawerVisible.set($event)"
   [loading]="creating()"
   [optionsLoading]="planningOptions.loading()"
   [siteOptions]="planningOptions.sites()"

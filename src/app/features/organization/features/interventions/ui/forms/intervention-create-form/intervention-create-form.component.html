@@ -3,7 +3,7 @@
     <div>
       <h2
         id="intervention-objective-heading"
-        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+        class="text-lg font-semibold text-surface-900 dark:text-surface-100"
       >
         Objective
       </h2>
@@ -18,7 +18,7 @@
     <div>
       <h2
         id="intervention-details-heading"
-        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+        class="text-lg font-semibold text-surface-900 dark:text-surface-100"
       >
         Details
       </h2>
@@ -38,20 +38,15 @@
           autocomplete="off"
           class="w-full"
           [invalid]="form.controls.name.invalid && form.controls.name.touched"
-          aria-describedby="intervention-name-error"
         />
         @if (form.controls.name.invalid && form.controls.name.touched) {
-          <small
-            id="intervention-name-error"
-            class="flex items-center gap-1 font-normal text-red-600 dark:text-red-400"
-          >
-            <i class="pi pi-exclamation-circle text-[0.7rem]" aria-hidden="true"></i>
+          <p-message severity="error" variant="simple">
             @if (form.controls.name.hasError('required')) {
-              A name is required to start the draft.
+              <span>A name is required to start the draft.</span>
             } @else {
-              Use between 2 and 255 characters.
+              <span>Use between 2 and 255 characters.</span>
             }
-          </small>
+          </p-message>
         }
       </label>
 
@@ -63,6 +58,7 @@
           optionLabel="label"
           optionValue="value"
           appendTo="body"
+          [invalid]="form.controls.priority.invalid && form.controls.priority.touched"
         >
           <ng-template #selectedItem let-option>
             @if (option) {
@@ -73,6 +69,11 @@
             <app-intervention-option kind="priority" [value]="option.value" />
           </ng-template>
         </p-select>
+        @if (form.controls.priority.invalid && form.controls.priority.touched) {
+          <p-message severity="error" variant="simple">
+            <span>A priority is required.</span>
+          </p-message>
+        }
       </label>
 
       <label class="grid gap-1.5 text-sm font-medium">
@@ -170,13 +171,13 @@
     </div>
   </section>
 
-  <p-button
-    label="Create draft intervention"
-    type="submit"
-    icon="pi pi-arrow-right"
-    iconPos="right"
-    [fluid]="true"
-    [loading]="loading()"
-    [disabled]="form.invalid || loading()"
-  />
+  <div class="sticky bottom-0 -mb-2 bg-surface-0 pt-4 pb-2 dark:bg-surface-900">
+    <p-button
+      label="Create draft intervention"
+      type="submit"
+      [fluid]="true"
+      [loading]="loading()"
+      [disabled]="form.invalid || loading()"
+    />
+  </div>
 </form>

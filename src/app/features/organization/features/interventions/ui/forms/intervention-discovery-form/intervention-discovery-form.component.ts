@@ -71,6 +71,23 @@ export class InterventionDiscoveryForm {
    * @type {InputSignal<boolean>}
    */
   public readonly disabled: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property equipmentTypeOptions
+   * @readonly
+   *
+   * @description
+   * Valid equipment type choices (from the backend) offered when recording an
+   * `inventory` discovery, so the submitted value is always an accepted choice.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<readonly SelectOption[]>}
+   */
+  public readonly equipmentTypeOptions: InputSignal<readonly SelectOption[]> = input<
+    readonly SelectOption[]
+  >([]);
   //#endregion
 
   //#region Outputs

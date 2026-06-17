@@ -9,7 +9,7 @@ import { InterventionPlanningOptionsStore } from '../intervention-planning-optio
 describe('InterventionPlanningOptionsStore', () => {
   let store: InstanceType<typeof InterventionPlanningOptionsStore>;
   let facilities: { list: ReturnType<typeof vi.fn> };
-  let equipment: { list: ReturnType<typeof vi.fn> };
+  let equipment: { list: ReturnType<typeof vi.fn>; listTypes: ReturnType<typeof vi.fn> };
   let members: { list: ReturnType<typeof vi.fn> };
   let interventions: Record<string, never>;
 
@@ -23,6 +23,12 @@ describe('InterventionPlanningOptionsStore', () => {
       list: vi.fn().mockReturnValue(
         of({
           member: [{ id: 'equipment-1', type: 'extinguisher', serialNumber: 'SN-1' }],
+          totalItems: 1,
+        }),
+      ),
+      listTypes: vi.fn().mockReturnValue(
+        of({
+          member: [{ value: 'fire_extinguisher', label: 'Fire extinguisher' }],
           totalItems: 1,
         }),
       ),
@@ -71,7 +77,9 @@ describe('InterventionPlanningOptionsStore', () => {
       itemsPerPage: 100,
     });
     expect(equipment.list).not.toHaveBeenCalled();
+    expect(equipment.listTypes).not.toHaveBeenCalled();
     expect(store.targets()).toEqual([]);
+    expect(store.equipmentTypes()).toEqual([]);
     expect(store.sites()).toEqual([{ label: 'Site A', value: '/api/facilities/site-1' }]);
     expect(store.members()).toEqual([
       {
@@ -92,9 +100,13 @@ describe('InterventionPlanningOptionsStore', () => {
 
     expect(facilities.list).toHaveBeenCalledTimes(2);
     expect(equipment.list).toHaveBeenCalledOnce();
+    expect(equipment.listTypes).toHaveBeenCalledOnce();
     expect(store.targets()).toEqual([
       { label: 'Site A', value: '/api/facilities/site-1' },
       { label: 'extinguisher · SN-1', value: '/api/equipment/equipment-1' },
+    ]);
+    expect(store.equipmentTypes()).toEqual([
+      { label: 'Fire extinguisher', value: 'fire_extinguisher' },
     ]);
   });
 });

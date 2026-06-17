@@ -11,10 +11,10 @@ import type { InterventionTagKind } from './intervention-tag-kind.type';
 
 /** Priority descriptors (low → urgent). */
 const PRIORITY: Record<InterventionPriority, InterventionTagDescriptor> = {
-  low: { label: 'Low', severity: 'secondary', icon: 'pi pi-angle-down' },
-  normal: { label: 'Normal', severity: 'info', icon: 'pi pi-minus' },
-  high: { label: 'High', severity: 'warn', icon: 'pi pi-angle-up' },
-  urgent: { label: 'Urgent', severity: 'danger', icon: 'pi pi-angle-double-up' },
+  low: { label: 'Low', severity: 'secondary', icon: 'pi pi-flag-fill' },
+  normal: { label: 'Normal', severity: 'info', icon: 'pi pi-flag-fill' },
+  high: { label: 'High', severity: 'warn', icon: 'pi pi-flag-fill' },
+  urgent: { label: 'Urgent', severity: 'danger', icon: 'pi pi-flag-fill' },
 };
 
 /**

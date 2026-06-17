@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import type { InputSignal, OutputEmitterRef } from '@angular/core';
-import { DialogModule } from 'primeng/dialog';
+import { DrawerModule, type DrawerPassThroughOptions } from 'primeng/drawer';
 import type {
   MemberSelectOption,
   SelectOption,
@@ -11,34 +11,34 @@ import {
 } from '@features/organization/features/interventions/ui/forms';
 
 /**
- * Component InterventionCreateDialog
- * @class InterventionCreateDialog
+ * Component InterventionCreateDrawer
+ * @class InterventionCreateDrawer
  *
  * @description
- * Presentational dialog hosting the guided {@link InterventionCreateForm}. Owns
- * only the modal shell and forwards visibility, loading state and selector
- * options through inputs while emitting the validated draft values and
- * visibility changes through outputs. All orchestration (options loading,
- * submission, navigation) stays with the parent page.
+ * Presentational right-side drawer hosting the guided {@link InterventionCreateForm}.
+ * Owns only the drawer shell and forwards visibility, loading state and selector
+ * options through inputs while emitting the validated draft values and visibility
+ * changes through outputs. All orchestration (options loading, submission,
+ * navigation) stays with the parent page.
  *
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-intervention-create-dialog',
-  imports: [DialogModule, InterventionCreateForm],
-  templateUrl: './intervention-create-dialog.component.html',
+  selector: 'app-intervention-create-drawer',
+  imports: [DrawerModule, InterventionCreateForm],
+  templateUrl: './intervention-create-drawer.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InterventionCreateDialog {
+export class InterventionCreateDrawer {
   //#region Inputs
   /**
    * Input visible
    * @readonly
    *
    * @description
-   * Whether the dialog is currently open.
+   * Whether the drawer is currently open.
    *
    * @access public
    * @since 1.0.0
@@ -52,7 +52,7 @@ export class InterventionCreateDialog {
    * @readonly
    *
    * @description
-   * Whether a creation request is in flight; locks the form and the dialog.
+   * Whether a creation request is in flight; locks the form and the drawer.
    *
    * @access public
    * @since 1.0.0
@@ -115,7 +115,7 @@ export class InterventionCreateDialog {
    * @readonly
    *
    * @description
-   * Emits the new visibility state when the dialog is opened or dismissed.
+   * Emits the new visibility state when the drawer is opened or dismissed.
    *
    * @access public
    * @since 1.0.0
@@ -138,5 +138,24 @@ export class InterventionCreateDialog {
    */
   public readonly submitted: OutputEmitterRef<InterventionCreateFormValues> =
     output<InterventionCreateFormValues>();
+  //#endregion
+
+  //#region Properties
+  /**
+   * Property drawerPt
+   * @readonly
+   *
+   * @description
+   * PrimeNG drawer pass-through options sizing the panel responsively: full
+   * width on mobile, widening on larger viewports to give the guided form room.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {DrawerPassThroughOptions}
+   */
+  protected readonly drawerPt: DrawerPassThroughOptions = {
+    root: { class: '!w-full md:!w-[52rem] xl:!w-[60rem]' },
+  };
   //#endregion
 }

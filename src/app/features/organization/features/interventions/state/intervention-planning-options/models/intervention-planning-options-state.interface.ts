@@ -9,6 +9,7 @@ import type {
 export interface InterventionPlanningOptionsState {
   readonly sites: readonly SelectOption[];
   readonly targets: readonly SelectOption[];
+  readonly equipmentTypes: readonly SelectOption[];
   readonly members: readonly MemberSelectOption[];
   readonly loading: boolean;
 }

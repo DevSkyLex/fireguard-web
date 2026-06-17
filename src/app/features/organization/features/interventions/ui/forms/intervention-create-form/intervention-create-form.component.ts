@@ -18,6 +18,7 @@ import {
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectModule } from 'primeng/select';
 import type {
@@ -50,6 +51,7 @@ import type { InterventionCreateFormData, InterventionCreateFormValues } from '.
     InputTextModule,
     InterventionMemberOption,
     InterventionOption,
+    MessageModule,
     MultiSelectModule,
     RadioCardGroup,
     ReactiveFormsModule,

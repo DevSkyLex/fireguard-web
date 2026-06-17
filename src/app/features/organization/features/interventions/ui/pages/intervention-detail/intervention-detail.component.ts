@@ -11,6 +11,7 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { ProgressBarModule } from 'primeng/progressbar';
@@ -165,6 +166,21 @@ export class InterventionDetailPage {
   );
 
   /**
+   * Property confirmationService
+   * @readonly
+   *
+   * @description
+   * Confirmation service used to guard the destructive discard of blocked
+   * synchronization operations.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {ConfirmationService}
+   */
+  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+
+  /**
    * Property connectivity
    * @readonly
    *
@@ -314,6 +330,21 @@ export class InterventionDetailPage {
    * @type {Signal<readonly SelectOption[]>}
    */
   protected readonly targetOptions = this.planningOptions.targets;
+
+  /**
+   * Property equipmentTypeOptions
+   * @readonly
+   *
+   * @description
+   * Valid equipment type choices forwarded to the execute panel's discovery
+   * form so an `inventory` discovery always submits an accepted equipment type.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<readonly SelectOption[]>}
+   */
+  protected readonly equipmentTypeOptions = this.planningOptions.equipmentTypes;
 
   /**
    * Property canSubmit
@@ -694,6 +725,36 @@ export class InterventionDetailPage {
     } finally {
       this.fieldActionBusy.set(false);
     }
+  }
+
+  /**
+   * Method discardBlocked
+   * @method discardBlocked
+   *
+   * @description
+   * Confirms then permanently drops every blocked (conflicted or failed)
+   * synchronization operation. Used when a queued operation can never succeed
+   * unchanged — e.g. a payload the server rejects — so the user can clear the
+   * outbox and re-record the work correctly.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {Event} event - Click event used to anchor the confirmation popup.
+   *
+   * @return {void}
+   */
+  protected discardBlocked(event: Event): void {
+    this.confirmationService.confirm({
+      target: event.target as EventTarget,
+      header: 'Discard operations',
+      message:
+        'Permanently remove the synchronization operations that the server rejected? This cannot be undone — the discarded work will need to be re-recorded.',
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: { label: 'Discard', severity: 'danger' },
+      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      accept: (): void => void this.sync.discardBlocked(),
+    });
   }
 
   /**

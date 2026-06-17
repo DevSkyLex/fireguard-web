@@ -1,7 +1,6 @@
 import type { Routes } from '@angular/router';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import type { InterventionCreatePage } from './ui/pages/intervention-create/intervention-create.component';
 import type { InterventionDetailPage } from './ui/pages/intervention-detail/intervention-detail.component';
 import type { InterventionListPage } from './ui/pages/intervention-list/intervention-list.component';
 import type { MyInterventionsPage } from './ui/pages/my-interventions/my-interventions.component';
@@ -37,17 +36,6 @@ export const INTERVENTION_ROUTES: Routes = [
         (module) => module.MyInterventionsPage,
       ),
     title: 'My interventions',
-  },
-  {
-    path: 'new',
-    canActivate: [
-      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN] }),
-    ],
-    loadComponent: (): Promise<typeof InterventionCreatePage> =>
-      import('./ui/pages/intervention-create/intervention-create.component').then(
-        (module) => module.InterventionCreatePage,
-      ),
-    title: 'New intervention',
   },
   {
     path: ':interventionId',

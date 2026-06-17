@@ -21,6 +21,7 @@ import type {
   InterventionPhotoAttachment,
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
+  SelectOption,
 } from '@features/organization/features/interventions/models';
 import { InterventionTag } from '@features/organization/features/interventions/ui/components/intervention-tag';
 import {
@@ -187,6 +188,23 @@ export class InterventionExecutePanel {
    * @type {InputSignal<string | null>}
    */
   public readonly fieldMessage: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property equipmentTypeOptions
+   * @readonly
+   *
+   * @description
+   * Valid equipment type choices forwarded to the discovery form so an
+   * `inventory` discovery always submits an accepted equipment type.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<readonly SelectOption[]>}
+   */
+  public readonly equipmentTypeOptions: InputSignal<readonly SelectOption[]> = input<
+    readonly SelectOption[]
+  >([]);
 
   /**
    * Property updateWorkItem

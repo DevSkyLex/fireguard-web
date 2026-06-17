@@ -16,6 +16,7 @@ import type { InterventionPlanningOptionsState } from './models';
 const INITIAL_STATE: InterventionPlanningOptionsState = {
   sites: [],
   targets: [],
+  equipmentTypes: [],
   members: [],
   loading: false,
 };
@@ -125,6 +126,7 @@ export const InterventionPlanningOptionsStore = signalStore(
             patchState(store, {
               sites: [],
               targets: [],
+              equipmentTypes: [],
               members: [],
               loading: true,
             }),
@@ -166,6 +168,7 @@ export const InterventionPlanningOptionsStore = signalStore(
               patchState(store, {
                 sites: [],
                 targets: [],
+                equipmentTypes: [],
                 members: [],
                 loading: false,
               }),
@@ -187,7 +190,15 @@ export const InterventionPlanningOptionsStore = signalStore(
        */
       loadWorkspaceOptions: rxMethod<string | null>(
         pipe(
-          tap(() => patchState(store, { sites: [], targets: [], members: [], loading: true })),
+          tap(() =>
+            patchState(store, {
+              sites: [],
+              targets: [],
+              equipmentTypes: [],
+              members: [],
+              loading: true,
+            }),
+          ),
           switchMap((organizationId) => {
             if (!organizationId) return of(null);
             return forkJoin({
@@ -202,6 +213,10 @@ export const InterventionPlanningOptionsStore = signalStore(
                 itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
               }),
               equipment: equipment.list(organizationId, {
+                page: 1,
+                itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
+              }),
+              equipmentTypes: equipment.listTypes(organizationId, {
                 page: 1,
                 itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
               }),
@@ -232,13 +247,24 @@ export const InterventionPlanningOptionsStore = signalStore(
                     value: `/api/equipment/${item.id}`,
                   })),
                 ],
+                equipmentTypes: result.equipmentTypes.member.map((option) => ({
+                  label: option.label,
+                  value: option.value,
+                })),
                 members: result.members.member.map((member) =>
                   memberOption(member, result.organizationId),
                 ),
                 loading: false,
               });
             },
-            error: () => patchState(store, { sites: [], targets: [], members: [], loading: false }),
+            error: () =>
+              patchState(store, {
+                sites: [],
+                targets: [],
+                equipmentTypes: [],
+                members: [],
+                loading: false,
+              }),
           }),
         ),
       ),

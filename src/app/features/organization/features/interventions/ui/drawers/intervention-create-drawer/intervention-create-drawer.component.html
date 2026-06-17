@@ -1,0 +1,29 @@
+<p-drawer
+  header="Create a field intervention"
+  [visible]="visible()"
+  (visibleChange)="visibleChange.emit($event)"
+  [appendTo]="'body'"
+  [modal]="true"
+  [blockScroll]="true"
+  [dismissible]="!loading()"
+  [closeOnEscape]="!loading()"
+  position="right"
+  [pt]="drawerPt"
+>
+  <ng-template #content>
+    <div class="flex flex-col gap-6 pr-1">
+      <p class="text-sm text-surface-600 dark:text-surface-300">
+        Choose the operational objective first. The workspace will then guide scope preparation and
+        assignment.
+      </p>
+
+      <app-intervention-create-form
+        [loading]="loading()"
+        [optionsLoading]="optionsLoading()"
+        [siteOptions]="siteOptions()"
+        [memberOptions]="memberOptions()"
+        (submitted)="submitted.emit($event)"
+      />
+    </div>
+  </ng-template>
+</p-drawer>

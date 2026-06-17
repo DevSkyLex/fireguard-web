@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { ConnectivityService } from '@core/services/connectivity';
+import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
   CreateInterventionWorkItemInput,
   InterventionDiscoveryRequest,
@@ -7,7 +8,6 @@ import type {
   InterventionOutboxQueueEntry,
 } from '@features/organization/features/interventions/models';
 import { InterventionFieldExecutionService } from '../intervention-field-execution';
-import { InterventionOfflineService } from '../intervention-offline';
 import { InterventionSyncService } from '../intervention-sync';
 import { InterventionSyncCoordinatorService } from '../intervention-sync-coordinator';
 

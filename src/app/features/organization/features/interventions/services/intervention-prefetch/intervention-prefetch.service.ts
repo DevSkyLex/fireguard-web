@@ -1,11 +1,13 @@
-import { effect, inject, Injectable, Injector } from '@angular/core';
+import { effect, inject, Injectable, signal, type WritableSignal } from '@angular/core';
 import { catchError, EMPTY, forkJoin, from, map, type Observable, switchMap } from 'rxjs';
 import { ConnectivityService } from '@core/services/connectivity';
 import { OrganizationMemberService } from '@features/organization/data-access';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionOfflineService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { InterventionOfflineService } from '../intervention-offline';
 
 /**
  * Service InterventionPrefetchService
@@ -28,7 +30,8 @@ export class InterventionPrefetchService {
    * @readonly
    *
    * @description
-   * Provides the organization value.
+   * Active organization store whose selected organization drives which
+   * interventions are prefetched.
    *
    * @access private
    * @since 1.0.0
@@ -100,42 +103,69 @@ export class InterventionPrefetchService {
     inject<OrganizationMemberService>(OrganizationMemberService);
 
   /**
-   * Property injector
+   * Property started
    * @readonly
    *
    * @description
-   * Owning injector used to create the prefetch effect lazily from
-   * within `start()`, outside of the constructor injection context.
+   * Whether {@link start} has armed prefetching. The prefetch effect reads
+   * this signal and stays inert until it flips to `true`, so prefetch only
+   * begins once the feature has bootstrapped.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {Injector}
+   * @type {WritableSignal<boolean>}
    */
-  private readonly injector: Injector = inject<Injector>(Injector);
+  private readonly started: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
-   * Property started
+   * Constructor
+   * @constructor
    *
    * @description
-   * Whether prefetch monitoring has already been registered; prevents
-   * double-registration when `start()` is called more than once.
+   * Registers the prefetch effect. Once {@link start} arms it, a reactive
+   * effect downloads the current member's active-intervention workspaces
+   * whenever the active organization changes and the application is online.
    *
-   * @access private
+   * @access public
    * @since 1.0.0
-   *
-   * @type {boolean}
    */
-  private started: boolean = false;
+  public constructor() {
+    effect((onCleanup) => {
+      if (!this.started()) return;
+      const organizationId = this.organization.selectedOrganization()?.id;
+      if (!organizationId || this.connectivity.isOffline()) return;
+      const subscription = this.members
+        .getCurrentProfile(organizationId)
+        .pipe(
+          switchMap((profile) =>
+            this.service.listAll(organizationId, {
+              responsible: `/api/organizations/${organizationId}/members/${profile.id}`,
+            }),
+          ),
+          switchMap((interventions) =>
+            forkJoin(
+              interventions
+                .filter((item) =>
+                  ['planned', 'in_progress', 'changes_requested'].includes(item.status),
+                )
+                .map((intervention) => this.prefetch(organizationId, intervention)),
+            ),
+          ),
+          catchError(() => EMPTY),
+        )
+        .subscribe();
+      onCleanup(() => subscription.unsubscribe());
+    });
+  }
 
   /**
    * Method start
    * @method start
    *
    * @description
-   * Registers the prefetch effect once. A reactive effect triggers a
-   * workspace download whenever the active organization changes and the
-   * application is online. Subsequent calls are no-ops.
+   * Arms the prefetch effect. Idempotent: re-arming an already-started
+   * service is a no-op.
    *
    * @access public
    * @since 1.0.0
@@ -143,37 +173,7 @@ export class InterventionPrefetchService {
    * @returns {void}
    */
   public start(): void {
-    if (this.started) return;
-    this.started = true;
-
-    effect(
-      (onCleanup) => {
-        const organizationId = this.organization.selectedOrganization()?.id;
-        if (!organizationId || this.connectivity.isOffline()) return;
-        const subscription = this.members
-          .getCurrentProfile(organizationId)
-          .pipe(
-            switchMap((profile) =>
-              this.service.listAll(organizationId, {
-                responsible: `/api/organizations/${organizationId}/members/${profile.id}`,
-              }),
-            ),
-            switchMap((interventions) =>
-              forkJoin(
-                interventions
-                  .filter((item) =>
-                    ['planned', 'in_progress', 'changes_requested'].includes(item.status),
-                  )
-                  .map((intervention) => this.prefetch(organizationId, intervention)),
-              ),
-            ),
-            catchError(() => EMPTY),
-          )
-          .subscribe();
-        onCleanup(() => subscription.unsubscribe());
-      },
-      { injector: this.injector },
-    );
+    this.started.set(true);
   }
 
   /**

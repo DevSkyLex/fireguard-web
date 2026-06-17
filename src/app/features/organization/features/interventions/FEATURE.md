@@ -29,17 +29,28 @@ Stores:
 - `InterventionStore` — root-scoped; intervention list and creation (normalized entities + request state).
 - `InterventionWorkspaceStore` — component-scoped (provided in `InterventionDetailPage`); the active intervention workspace (intervention, work items, changes, issues) with online/offline mutations.
 
-Primary services:
+Data-access (transport boundary — `data-access/`):
 
-- `InterventionService`
-- `InterventionOfflineService` — thin façade + cross-cutting purges. Delegates to:
-  - `InterventionDatabaseService` — IndexedDB connection/schema, CRUD primitives, owner binding.
-  - `InterventionOutboxStore` — replay outbox + `hasUnsyncedChanges` signal.
+- `InterventionService` — HTTP API service (`HydraApiService`).
+- `InterventionOfflineService` — IndexedDB persistence façade + cross-cutting purges (public entry point). Delegates to its internal collaborators:
+  - `InterventionDatabaseService` — IndexedDB connection/schema, CRUD primitives, owner binding (also published for logout reset).
+  - `InterventionOutboxRepository` — replay outbox + `hasUnsyncedChanges` signal.
   - `InterventionWorkspaceRepository` — normalized workspace persistence.
-- `InterventionSyncService` — outbox replay.
+
+  The local persistence layer (database/outbox/workspace + façade) lives under
+  `data-access/services/intervention-offline/` because IndexedDB is local
+  transport; only the façade and `InterventionDatabaseService` are public.
+
+Behavior coordinators (`services/`):
+
+- `InterventionSyncService` — outbox replay engine.
 - `InterventionSyncCoordinatorService` — replays the outbox when connectivity/visibility is regained.
-- `InterventionPwaUpdateService`
-- `InterventionPrefetchService`
+- `InterventionPwaUpdateService` — defers service-worker updates until the outbox is clean.
+- `InterventionPrefetchService` — warms offline workspaces for the current member.
+- `InterventionOfflineLifecycleService` — clears local data on logout.
+
+These coordinators are armed once at app init via `provideInterventionsFeature`
+(`start()`), each gated by a `started` signal driving a constructor `effect`.
 
 Connectivity decisions across the feature read the shared
 `ConnectivityService` (`core`), not `navigator.onLine` directly.
@@ -47,7 +58,10 @@ Connectivity decisions across the feature read the shared
 Architecture note:
 
 - `state/` hosts NgRx SignalStore slices only.
-- `services/` hosts intervention utility services, one folder per service.
+- `data-access/` hosts the transport boundary: the HTTP service and the local
+  IndexedDB persistence layer (façade + database/outbox/workspace).
+- `services/` hosts intervention behavior coordinators (sync, prefetch, PWA
+  update, lifecycle), one folder per service.
 
 Main provider:
 
@@ -89,8 +103,9 @@ badge and the select option follow automatically.
   utilities for styling. **Never edit `src/styles.css`** — style with Tailwind
   classes / component `[pt]`; literal class strings only (Tailwind scans them).
 - **Architecture**: keep the `models/` (interfaces, types and the small pure
-  utils that operate on them) · `services/` · `state/` (SignalStore) · `ui/`
-  split. `ui/` holds `pages/`, `forms/`, `tables/`, `components/`; one folder per
+  utils that operate on them) · `data-access/` (HTTP + local IndexedDB
+  transport) · `services/` (behavior coordinators) · `state/` (SignalStore) ·
+  `ui/` split. `ui/` holds `pages/`, `forms/`, `tables/`, `components/`; one folder per
   unit with an `index.ts` barrel. **Shared types/data live in `models/`** —
   co-located in the unit's own `models/` folder, or in the feature-level
   `models/` when used across components. Do NOT invent sibling layers (e.g. a

@@ -2,7 +2,7 @@ import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Events } from '@ngrx/signals/events';
 import { Subject } from 'rxjs';
-import { InterventionDatabaseService } from '../../intervention-offline';
+import { InterventionDatabaseService } from '@features/organization/features/interventions/data-access';
 import { InterventionOfflineLifecycleService } from '../intervention-offline-lifecycle.service';
 
 describe('InterventionOfflineLifecycleService', () => {

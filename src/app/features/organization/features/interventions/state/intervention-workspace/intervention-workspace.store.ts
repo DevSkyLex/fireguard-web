@@ -4,13 +4,15 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, forkJoin, from, map, pipe, switchMap, tap, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/services/connectivity';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionOfflineService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import type {
   CreateInterventionWorkItemInput,
   InterventionTransitionRequest,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
-import { InterventionOfflineService } from '@features/organization/features/interventions/services';
 import { InterventionWorkspaceOptimisticService } from '@features/organization/features/interventions/services/intervention-workspace-optimistic';
 import type {
   InterventionDetailsUpdateCommand,

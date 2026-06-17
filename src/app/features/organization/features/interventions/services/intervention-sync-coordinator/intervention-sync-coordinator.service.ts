@@ -2,7 +2,6 @@ import {
   effect,
   inject,
   Injectable,
-  Injector,
   signal,
   untracked,
   type Signal,
@@ -10,7 +9,7 @@ import {
 } from '@angular/core';
 import { pageVisibility } from '@signality/core';
 import { ConnectivityService } from '@core/services/connectivity';
-import { InterventionOfflineService } from '../intervention-offline';
+import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import { InterventionSyncService } from '../intervention-sync';
 
 /**
@@ -35,7 +34,8 @@ export class InterventionSyncCoordinatorService {
    * @readonly
    *
    * @description
-   * Provides the syncing state value.
+   * Mutable backing signal flagged while an outbox replay cycle is in flight;
+   * surfaced read-only through {@link syncing}.
    *
    * @access private
    * @since 1.0.0
@@ -80,7 +80,8 @@ export class InterventionSyncCoordinatorService {
    * @readonly
    *
    * @description
-   * Provides the syncing value.
+   * Read-only flag indicating whether an outbox replay cycle is currently
+   * running. Consumed by UI to show a syncing indicator.
    *
    * @access public
    * @since 1.0.0
@@ -153,21 +154,6 @@ export class InterventionSyncCoordinatorService {
     inject<InterventionSyncService>(InterventionSyncService);
 
   /**
-   * Property injector
-   * @readonly
-   *
-   * @description
-   * Owning injector used to create the connectivity effect lazily from
-   * within `start()`, outside of the constructor injection context.
-   *
-   * @access private
-   * @since 1.1.0
-   *
-   * @type {Injector}
-   */
-  private readonly injector: Injector = inject<Injector>(Injector);
-
-  /**
    * Property connectivity
    * @readonly
    *
@@ -200,28 +186,50 @@ export class InterventionSyncCoordinatorService {
 
   /**
    * Property started
+   * @readonly
    *
    * @description
-   * Guards against double-registration: once `start()` has wired the
-   * reactive effect, subsequent calls become no-ops.
+   * Whether {@link start} has armed the connectivity watcher. The replay
+   * effect reads this signal and stays inert until it flips to `true`, so
+   * background replay only begins once the feature has bootstrapped.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {boolean}
+   * @type {WritableSignal<boolean>}
    */
-  private started: boolean = false;
+  private readonly started: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Registers the connectivity watcher. Once {@link start} arms it, a
+   * reactive effect replays the outbox whenever the application is both
+   * online and visible, covering the "connectivity regained" and "tab
+   * brought back to foreground" cases previously handled by manual
+   * `online` / `visibilitychange` listeners.
+   *
+   * @access public
+   * @since 1.0.0
+   */
+  public constructor() {
+    effect((): void => {
+      if (!this.started()) return;
+      if (this.connectivity.online() && this.visibility() === 'visible') {
+        untracked(() => void this.syncAll());
+      }
+    });
+  }
 
   /**
    * Method start
    * @method start
    *
    * @description
-   * Starts the connectivity watcher. A reactive effect replays the outbox
-   * whenever the application is both online and visible, covering the
-   * "connectivity regained" and "tab brought back to foreground" cases
-   * previously handled by manual `online` / `visibilitychange` listeners.
-   * Idempotent and a no-op on the server.
+   * Arms the connectivity watcher. Idempotent and a no-op on the server,
+   * where background replay must never run.
    *
    * @access public
    * @since 1.0.0
@@ -229,16 +237,8 @@ export class InterventionSyncCoordinatorService {
    * @return {void} Result of the start operation.
    */
   public start(): void {
-    if (this.started || typeof window === 'undefined') return;
-    this.started = true;
-    effect(
-      (): void => {
-        if (this.connectivity.online() && this.visibility() === 'visible') {
-          untracked(() => void this.syncAll());
-        }
-      },
-      { injector: this.injector },
-    );
+    if (typeof window === 'undefined') return;
+    this.started.set(true);
   }
 
   /**

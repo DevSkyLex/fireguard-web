@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ConnectivityService } from '@core/services/connectivity';
-import { InterventionOfflineService } from '../../intervention-offline';
+import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import { InterventionPhotoCompressorService } from '../../intervention-photo-compressor';
 import { InterventionQrScannerService } from '../../intervention-qr-scanner';
 import { InterventionSyncCoordinatorService } from '../../intervention-sync-coordinator';

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { InterventionDatabaseService } from '../intervention-database.service';
 import { InterventionOfflineService } from '../intervention-offline.service';
-import { InterventionOutboxStore } from '../intervention-outbox.store';
+import { InterventionOutboxRepository } from '../intervention-outbox.repository';
 import { InterventionWorkspaceRepository } from '../intervention-workspace.repository';
 
 describe('InterventionOfflineService', () => {
@@ -18,7 +18,7 @@ describe('InterventionOfflineService', () => {
       providers: [
         InterventionOfflineService,
         { provide: InterventionDatabaseService, useValue: {} },
-        { provide: InterventionOutboxStore, useValue: outbox },
+        { provide: InterventionOutboxRepository, useValue: outbox },
         { provide: InterventionWorkspaceRepository, useValue: workspace },
       ],
     });
@@ -46,7 +46,7 @@ describe('InterventionOfflineService', () => {
       providers: [
         InterventionOfflineService,
         { provide: InterventionDatabaseService, useValue: {} },
-        { provide: InterventionOutboxStore, useValue: outbox },
+        { provide: InterventionOutboxRepository, useValue: outbox },
         { provide: InterventionWorkspaceRepository, useValue: workspace },
       ],
     });

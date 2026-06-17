@@ -3,7 +3,7 @@ import { ConnectivityService } from '@core/services/connectivity';
 import type { CreateEquipmentInput } from '@features/organization/features/equipments/models';
 import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
 import type { CreateInspectionInput } from '@features/organization/features/inspections/models';
-import { InterventionOfflineService } from '../intervention-offline';
+import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import { InterventionPhotoCompressorService } from '../intervention-photo-compressor';
 import { InterventionQrScannerService } from '../intervention-qr-scanner';
 import { InterventionSyncCoordinatorService } from '../intervention-sync-coordinator';

@@ -5,9 +5,11 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, forkJoin, from, map, of, pipe, switchMap, tap } from 'rxjs';
 import { OrganizationMemberService } from '@features/organization/data-access';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionOfflineService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
-import { InterventionOfflineService } from '@features/organization/features/interventions/services';
 import type { MyInterventionsLoadRequest, MyInterventionsState } from './models';
 
 /**

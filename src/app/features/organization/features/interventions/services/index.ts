@@ -2,12 +2,6 @@
  * Interventions service public exports.
  */
 export {
-  InterventionOfflineService,
-  InterventionDatabaseService,
-  InterventionOutboxStore,
-  InterventionWorkspaceRepository,
-} from './intervention-offline';
-export {
   InterventionFieldExecutionService,
   type InterventionDiscoveryResourcePlan,
   type InterventionFieldDiscovery,

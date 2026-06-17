@@ -13,8 +13,8 @@ import type {
 import { InterventionDatabaseService } from './intervention-database.service';
 
 /**
- * Service InterventionOutboxStore
- * @class InterventionOutboxStore
+ * Repository InterventionOutboxRepository
+ * @class InterventionOutboxRepository
  *
  * @description
  * Owns the intervention offline outbox: queues create/update operations for replay,
@@ -25,7 +25,7 @@ import { InterventionDatabaseService } from './intervention-database.service';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
-export class InterventionOutboxStore {
+export class InterventionOutboxRepository {
   //#region Properties
   /**
    * Property database

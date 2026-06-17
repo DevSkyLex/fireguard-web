@@ -10,7 +10,7 @@ import type {
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
 import { InterventionDatabaseService } from './intervention-database.service';
-import { InterventionOutboxStore } from './intervention-outbox.store';
+import { InterventionOutboxRepository } from './intervention-outbox.repository';
 import { InterventionWorkspaceRepository } from './intervention-workspace.repository';
 import type { InterventionScopedRecord } from './models';
 import type { InterventionWorkspaceSnapshot } from './models';
@@ -22,7 +22,7 @@ import type { InterventionWorkspaceSnapshot } from './models';
  * @description
  * Façade over the intervention offline persistence layer. Delegates to the focused
  * units that own each responsibility — {@link InterventionDatabaseService} for
- * IndexedDB infrastructure, {@link InterventionOutboxStore} for the replay outbox
+ * IndexedDB infrastructure, {@link InterventionOutboxRepository} for the replay outbox
  * and {@link InterventionWorkspaceRepository} for workspace persistence — while
  * keeping a single stable entry point for intervention pages and stores. Cross-cutting
  * purges that span both workspace and outbox stores are orchestrated here.
@@ -54,15 +54,16 @@ export class InterventionOfflineService {
    * @readonly
    *
    * @description
-   * Outbox store owning queued operations and the pending-sync state.
+   * Outbox repository owning queued operations and the pending-sync state.
    *
    * @access private
    * @since 2.0.0
    *
-   * @type {InterventionOutboxStore}
+   * @type {InterventionOutboxRepository}
    */
-  private readonly outbox: InterventionOutboxStore =
-    inject<InterventionOutboxStore>(InterventionOutboxStore);
+  private readonly outbox: InterventionOutboxRepository = inject<InterventionOutboxRepository>(
+    InterventionOutboxRepository,
+  );
 
   /**
    * Property workspace

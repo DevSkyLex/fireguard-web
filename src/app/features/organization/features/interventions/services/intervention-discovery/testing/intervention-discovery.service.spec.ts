@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { ConnectivityService } from '@core/services/connectivity';
+import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type { InterventionOutboxOperation } from '@features/organization/features/interventions/models';
 import { InterventionFieldExecutionService } from '../../intervention-field-execution';
-import { InterventionOfflineService } from '../../intervention-offline';
 import { InterventionSyncService } from '../../intervention-sync';
 import { InterventionSyncCoordinatorService } from '../../intervention-sync-coordinator';
 import { InterventionDiscoveryService } from '../intervention-discovery.service';

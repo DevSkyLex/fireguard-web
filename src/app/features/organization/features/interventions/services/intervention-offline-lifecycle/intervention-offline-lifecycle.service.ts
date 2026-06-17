@@ -2,7 +2,7 @@ import { DestroyRef, ErrorHandler, inject, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Events } from '@ngrx/signals/events';
 import { authStoreEvents } from '@features/auth/state';
-import { InterventionDatabaseService } from '../intervention-offline';
+import { InterventionDatabaseService } from '@features/organization/features/interventions/data-access';
 
 /**
  * Service InterventionOfflineLifecycleService

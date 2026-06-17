@@ -2,7 +2,7 @@ import { effect, Injectable, inject, signal, type WritableSignal } from '@angula
 import { SwUpdate } from '@angular/service-worker';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { filter } from 'rxjs';
-import { InterventionOfflineService } from '@features/organization/features/interventions/services';
+import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 
 /**
  * Service InterventionPwaUpdateService

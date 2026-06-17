@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { SwUpdate, type VersionEvent } from '@angular/service-worker';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Subject } from 'rxjs';
-import { InterventionOfflineService } from '../../intervention-offline';
+import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import { InterventionPwaUpdateService } from '../intervention-pwa-update.service';
 
 describe('InterventionPwaUpdateService', () => {

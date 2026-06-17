@@ -4,13 +4,15 @@ import { EquipmentService } from '@features/organization/features/equipments/dat
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionOfflineService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import type {
   InterventionOutboxOperationFor,
   InterventionOutboxPayloadMap,
   InterventionOutboxType,
 } from '@features/organization/features/interventions/models';
-import { InterventionOfflineService } from '../../intervention-offline';
 import { InterventionSyncService } from '../intervention-sync.service';
 
 function operation<Type extends InterventionOutboxType>(

@@ -3,9 +3,11 @@ import { firstValueFrom } from 'rxjs';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionOfflineService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import type { InterventionOutboxOperation } from '@features/organization/features/interventions/models';
-import { InterventionOfflineService } from '../intervention-offline';
 import {
   CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE,
   HTTP_CONFLICT,

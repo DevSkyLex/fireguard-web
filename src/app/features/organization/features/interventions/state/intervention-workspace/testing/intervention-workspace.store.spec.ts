@@ -1,14 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionOfflineService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import type {
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
-import { InterventionOfflineService } from '@features/organization/features/interventions/services';
 import { InterventionWorkspaceStore } from '../intervention-workspace.store';
 
 const intervention = {

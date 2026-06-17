@@ -19,6 +19,7 @@ import { StepperModule } from 'primeng/stepper';
 import { TagModule } from 'primeng/tag';
 import { ConnectivityService } from '@core/services/connectivity';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
   CreateInterventionWorkItemInput,
   InterventionDiscoveryRequest,
@@ -27,7 +28,6 @@ import type {
   InterventionWorkItemStatusChange,
 } from '@features/organization/features/interventions/models';
 import {
-  InterventionOfflineService,
   InterventionFieldExecutionService,
   InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';

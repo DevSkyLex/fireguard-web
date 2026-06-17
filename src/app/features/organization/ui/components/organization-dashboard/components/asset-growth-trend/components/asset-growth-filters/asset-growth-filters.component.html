@@ -43,18 +43,12 @@
         class="w-full"
       >
         <ng-template #item let-option>
-          <span class="flex items-center gap-2">
-            <i [class]="option.icon" [style.color]="option.color"></i>
-            {{ option.label }}
-          </span>
+          <app-tag [descriptor]="option" variant="inline" />
         </ng-template>
         <ng-template #selectedItem>
           @let option = selectedEquipmentStatusOption();
           @if (option) {
-            <span class="flex items-center gap-2">
-              <i [class]="option.icon" [style.color]="option.color"></i>
-              {{ option.label }}
-            </span>
+            <app-tag [descriptor]="option" variant="inline" />
           }
         </ng-template>
       </p-select>

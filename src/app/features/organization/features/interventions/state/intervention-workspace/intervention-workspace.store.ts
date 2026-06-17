@@ -117,7 +117,9 @@ export const InterventionWorkspaceStore = signalStore(
       service = inject<InterventionService>(InterventionService),
       offline = inject<InterventionOfflineService>(InterventionOfflineService),
       connectivity = inject<ConnectivityService>(ConnectivityService),
-      optimistic = inject<InterventionWorkspaceOptimisticService>(InterventionWorkspaceOptimisticService),
+      optimistic = inject<InterventionWorkspaceOptimisticService>(
+        InterventionWorkspaceOptimisticService,
+      ),
     ) => {
       const load = rxMethod<string>(
         pipe(

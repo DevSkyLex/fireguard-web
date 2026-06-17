@@ -47,7 +47,8 @@ export class InterventionPwaUpdateService {
    *
    * @type {ConfirmationService}
    */
-  private readonly confirmation: ConfirmationService = inject<ConfirmationService>(ConfirmationService);
+  private readonly confirmation: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
 
   /**
    * Property messages
@@ -75,7 +76,9 @@ export class InterventionPwaUpdateService {
    *
    * @type {InterventionOfflineService}
    */
-  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(InterventionOfflineService);
+  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(
+    InterventionOfflineService,
+  );
 
   /**
    * Property updateReady

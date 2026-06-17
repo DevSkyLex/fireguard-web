@@ -286,7 +286,8 @@ export class InterventionService extends HydraApiService {
     revision?: number,
   ): Observable<InterventionOutput> {
     const body: Record<string, unknown> = { ...input };
-    if ('plannedStartAt' in input) body['plannedStartAt'] = input.plannedStartAt ? toSecondsUtc(input.plannedStartAt) : null;
+    if ('plannedStartAt' in input)
+      body['plannedStartAt'] = input.plannedStartAt ? toSecondsUtc(input.plannedStartAt) : null;
     if ('dueAt' in input) body['dueAt'] = input.dueAt ? toSecondsUtc(input.dueAt) : null;
 
     return this.patch<Record<string, unknown>, InterventionOutput>(

@@ -38,7 +38,9 @@ export class InterventionWorkspaceRepository {
    *
    * @type {InterventionDatabaseService}
    */
-  private readonly database: InterventionDatabaseService = inject<InterventionDatabaseService>(InterventionDatabaseService);
+  private readonly database: InterventionDatabaseService = inject<InterventionDatabaseService>(
+    InterventionDatabaseService,
+  );
   //#endregion
 
   //#region Methods

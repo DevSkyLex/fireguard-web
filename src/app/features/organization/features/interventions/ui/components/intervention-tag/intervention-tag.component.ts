@@ -7,22 +7,21 @@ import {
   type Signal,
 } from '@angular/core';
 import {
-  interventionSeverityIconClass,
   resolveInterventionTag,
   type InterventionTagDescriptor,
   type InterventionTagKind,
 } from '@features/organization/features/interventions/models';
+import { Tag } from '@shared/components';
 
 /**
  * Component InterventionTag
  * @class InterventionTag
  *
  * @description
- * Single source of truth for rendering an intervention status/enum value as the
- * organization table badge: a neutral pill whose icon and label carry the
- * severity colour. Resolves a shared label + severity + icon descriptor so the
- * same value looks identical in tables, panels and form selects, and never
- * relies on colour alone to convey meaning.
+ * Thin intervention-domain wrapper over the shared {@link Tag} component.
+ * Resolves a `kind`/`value` pair into a descriptor via the intervention
+ * registry and renders it as the neutral table/panel badge, so the value
+ * looks identical wherever it appears and never relies on colour alone.
  *
  * @example
  * ```html
@@ -35,6 +34,7 @@ import {
  */
 @Component({
   selector: 'app-intervention-tag',
+  imports: [Tag],
   templateUrl: './intervention-tag.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -77,33 +77,14 @@ export class InterventionTag {
    *
    * @description
    * Resolved presentation descriptor (label, severity, icon) for the
-   * current `kind`/`value` pair.
+   * current `kind`/`value` pair, forwarded to the shared {@link Tag}.
    *
    * @access protected
    * @since 1.0.0
    *
    * @type {Signal<InterventionTagDescriptor>}
    */
-  protected readonly descriptor: Signal<InterventionTagDescriptor> = computed<InterventionTagDescriptor>(() =>
-    resolveInterventionTag(this.kind(), this.value()),
-  );
-
-  /**
-   * Property iconClass
-   * @readonly
-   *
-   * @description
-   * Compiled Tailwind class string positioning the icon and applying the
-   * severity colour via {@link interventionSeverityIconClass}.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<string>}
-   */
-  protected readonly iconClass: Signal<string> = computed<string>(
-    () =>
-      `${this.descriptor().icon} inline-flex items-center text-[0.7rem] leading-none ${interventionSeverityIconClass(this.descriptor().severity)}`,
-  );
+  protected readonly descriptor: Signal<InterventionTagDescriptor> =
+    computed<InterventionTagDescriptor>(() => resolveInterventionTag(this.kind(), this.value()));
   //#endregion
 }

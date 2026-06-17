@@ -19,24 +19,28 @@ export const NON_CONFORMITY_STATUS_OPTIONS: readonly NonConformityStatusOption[]
     label: 'Open',
     value: 'open',
     icon: PrimeIcons.EXCLAMATION_CIRCLE,
+    severity: 'danger',
     color: '#ef4444',
   },
   {
     label: 'In Progress',
     value: 'in_progress',
     icon: PrimeIcons.SPINNER,
+    severity: 'warn',
     color: '#f97316',
   },
   {
     label: 'Done',
     value: 'done',
     icon: PrimeIcons.CHECK_CIRCLE,
+    severity: 'success',
     color: '#22c55e',
   },
   {
     label: 'Waived',
     value: 'waived',
     icon: PrimeIcons.MINUS_CIRCLE,
+    severity: 'secondary',
     color: '#94a3b8',
   },
 ];

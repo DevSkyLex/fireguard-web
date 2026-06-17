@@ -132,7 +132,9 @@ export class InterventionSyncCoordinatorService {
    *
    * @type {InterventionOfflineService}
    */
-  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(InterventionOfflineService);
+  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(
+    InterventionOfflineService,
+  );
 
   /**
    * Property sync
@@ -147,7 +149,8 @@ export class InterventionSyncCoordinatorService {
    *
    * @type {InterventionSyncService}
    */
-  private readonly sync: InterventionSyncService = inject<InterventionSyncService>(InterventionSyncService);
+  private readonly sync: InterventionSyncService =
+    inject<InterventionSyncService>(InterventionSyncService);
 
   /**
    * Property injector
@@ -177,7 +180,8 @@ export class InterventionSyncCoordinatorService {
    *
    * @type {ConnectivityService}
    */
-  private readonly connectivity: ConnectivityService = inject<ConnectivityService>(ConnectivityService);
+  private readonly connectivity: ConnectivityService =
+    inject<ConnectivityService>(ConnectivityService);
 
   /**
    * Property visibility

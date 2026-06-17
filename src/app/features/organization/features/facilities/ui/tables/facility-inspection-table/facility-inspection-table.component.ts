@@ -37,7 +37,7 @@ import type {
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState } from '@shared/components';
+import { EmptyState, Tag } from '@shared/components';
 import type { InspectionFilterOption } from './models';
 
 /**
@@ -67,6 +67,7 @@ import type { InspectionFilterOption } from './models';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
+    Tag,
   ],
   templateUrl: './facility-inspection-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -343,19 +344,19 @@ export class FacilityInspectionTable implements OnInit {
       label: 'Pass',
       value: 'pass',
       icon: PrimeIcons.CHECK_CIRCLE,
-      color: '#22c55e',
+      severity: 'success',
     },
     {
       label: 'Partial',
       value: 'partial',
       icon: PrimeIcons.EXCLAMATION_CIRCLE,
-      color: '#f59e0b',
+      severity: 'warn',
     },
     {
       label: 'Fail',
       value: 'fail',
       icon: PrimeIcons.TIMES_CIRCLE,
-      color: '#ef4444',
+      severity: 'danger',
     },
   ];
 
@@ -376,19 +377,19 @@ export class FacilityInspectionTable implements OnInit {
       label: 'Draft',
       value: 'draft',
       icon: PrimeIcons.FILE_EDIT,
-      color: '#3b82f6',
+      severity: 'info',
     },
     {
       label: 'Submitted',
       value: 'submitted',
       icon: PrimeIcons.SEND,
-      color: '#f59e0b',
+      severity: 'warn',
     },
     {
       label: 'Closed',
       value: 'closed',
       icon: PrimeIcons.LOCK,
-      color: '#64748b',
+      severity: 'secondary',
     },
   ];
 
@@ -835,7 +836,7 @@ export class FacilityInspectionTable implements OnInit {
         label: this.toDisplayLabel(result),
         value: result,
         icon: PrimeIcons.CIRCLE,
-        color: '#64748b',
+        severity: 'secondary',
       }
     );
   }
@@ -861,7 +862,7 @@ export class FacilityInspectionTable implements OnInit {
         label: this.toDisplayLabel(status),
         value: status,
         icon: PrimeIcons.CIRCLE,
-        color: '#64748b',
+        severity: 'secondary',
       }
     );
   }

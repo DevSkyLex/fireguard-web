@@ -45,7 +45,9 @@ export class InterventionOfflineService {
    *
    * @type {InterventionDatabaseService}
    */
-  private readonly database: InterventionDatabaseService = inject<InterventionDatabaseService>(InterventionDatabaseService);
+  private readonly database: InterventionDatabaseService = inject<InterventionDatabaseService>(
+    InterventionDatabaseService,
+  );
 
   /**
    * Property outbox
@@ -59,7 +61,8 @@ export class InterventionOfflineService {
    *
    * @type {InterventionOutboxStore}
    */
-  private readonly outbox: InterventionOutboxStore = inject<InterventionOutboxStore>(InterventionOutboxStore);
+  private readonly outbox: InterventionOutboxStore =
+    inject<InterventionOutboxStore>(InterventionOutboxStore);
 
   /**
    * Property workspace

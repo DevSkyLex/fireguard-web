@@ -111,7 +111,9 @@ export class InterventionDetailPage {
    *
    * @type {InterventionWorkspaceStore}
    */
-  protected readonly store: InterventionWorkspaceStoreType = inject<InterventionWorkspaceStoreType>(InterventionWorkspaceStore);
+  protected readonly store: InterventionWorkspaceStoreType = inject<InterventionWorkspaceStoreType>(
+    InterventionWorkspaceStore,
+  );
 
   /**
    * Property planningOptions
@@ -142,7 +144,9 @@ export class InterventionDetailPage {
    *
    * @type {InterventionOfflineService}
    */
-  protected readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(InterventionOfflineService);
+  protected readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(
+    InterventionOfflineService,
+  );
 
   /**
    * Property sync
@@ -172,7 +176,8 @@ export class InterventionDetailPage {
    *
    * @type {ConnectivityService}
    */
-  protected readonly connectivity: ConnectivityService = inject<ConnectivityService>(ConnectivityService);
+  protected readonly connectivity: ConnectivityService =
+    inject<ConnectivityService>(ConnectivityService);
 
   /**
    * Property activeStep
@@ -428,7 +433,9 @@ export class InterventionDetailPage {
    *
    * @type {InterventionDiscoveryService}
    */
-  private readonly discovery: InterventionDiscoveryService = inject<InterventionDiscoveryService>(InterventionDiscoveryService);
+  private readonly discovery: InterventionDiscoveryService = inject<InterventionDiscoveryService>(
+    InterventionDiscoveryService,
+  );
 
   /**
    * Property publication
@@ -475,7 +482,8 @@ export class InterventionDetailPage {
    *
    * @type {ActiveOrganizationStore}
    */
-  private readonly organization: ActiveOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+  private readonly organization: ActiveOrganizationStore =
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property memberAccess

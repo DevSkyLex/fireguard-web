@@ -23,6 +23,7 @@ import {
   INSPECTOR_TYPE_OPTIONS,
   NON_CONFORMITY_SEVERITY_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
+import { Tag } from '@shared/components';
 
 /**
  * Type InspectionQualityFiltersForm
@@ -54,7 +55,7 @@ type InspectionQualityFiltersForm = {
 @Component({
   selector: 'app-inspection-quality-filters',
   templateUrl: './inspection-quality-filters.component.html',
-  imports: [ReactiveFormsModule, SelectModule, TrendBaseFiltersForm],
+  imports: [ReactiveFormsModule, SelectModule, Tag, TrendBaseFiltersForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionQualityFilters {

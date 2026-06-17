@@ -18,18 +18,21 @@ export const INSPECTION_RESULT_OPTIONS: readonly InspectionResultOption[] = [
     label: 'Pass',
     value: 'pass',
     icon: PrimeIcons.CHECK_CIRCLE,
+    severity: 'success',
     color: '#22c55e',
   },
   {
     label: 'Fail',
     value: 'fail',
     icon: PrimeIcons.TIMES_CIRCLE,
+    severity: 'danger',
     color: '#ef4444',
   },
   {
     label: 'Partial',
     value: 'partial',
     icon: PrimeIcons.EXCLAMATION_CIRCLE,
+    severity: 'warn',
     color: '#f59e0b',
   },
 ];

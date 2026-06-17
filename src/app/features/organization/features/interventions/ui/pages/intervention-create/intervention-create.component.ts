@@ -53,9 +53,8 @@ export class InterventionCreatePage {
    *
    * @type {InterventionPlanningOptionsStoreType}
    */
-  protected readonly planningOptions: InterventionPlanningOptionsStoreType = inject<InterventionPlanningOptionsStoreType>(
-    InterventionPlanningOptionsStore,
-  );
+  protected readonly planningOptions: InterventionPlanningOptionsStoreType =
+    inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
 
   /**
    * Property creating
@@ -83,7 +82,8 @@ export class InterventionCreatePage {
    *
    * @type {ActiveOrganizationStore}
    */
-  private readonly organization: ActiveOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+  private readonly organization: ActiveOrganizationStore =
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property interventions
@@ -97,7 +97,8 @@ export class InterventionCreatePage {
    *
    * @type {InterventionService}
    */
-  private readonly interventions: InterventionService = inject<InterventionService>(InterventionService);
+  private readonly interventions: InterventionService =
+    inject<InterventionService>(InterventionService);
 
   /**
    * Property router

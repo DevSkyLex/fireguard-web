@@ -1,31 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-
-/**
- * Constant PHOTO_MAX_DIMENSION
- * @const PHOTO_MAX_DIMENSION
- *
- * @description
- * Longest edge in pixels allowed for uploaded evidence photos.
- *
- * @since 1.0.0
- *
- * @type {number}
- */
-const PHOTO_MAX_DIMENSION = 1_600;
-
-/**
- * Constant PHOTO_JPEG_QUALITY
- * @const PHOTO_JPEG_QUALITY
- *
- * @description
- * JPEG quality used when compressing evidence photos.
- *
- * @since 1.0.0
- *
- * @type {number}
- */
-const PHOTO_JPEG_QUALITY = 0.82;
+import { PHOTO_JPEG_QUALITY, PHOTO_MAX_DIMENSION } from './constants';
 
 /**
  * Service InterventionPhotoCompressorService

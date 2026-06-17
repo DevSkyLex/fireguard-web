@@ -1,25 +1,19 @@
+import type { TagDescriptor } from '@shared/components';
+
 /**
  * Interface InspectionFilterOption
  *
  * @description
- * Option rendered by facility inspection result and status filters.
+ * Option rendered by facility inspection result and status filters and their
+ * badges. Extends the shared {@link TagDescriptor} (`label`, `severity`,
+ * `icon`) so it can be forwarded directly to `<app-tag>`, and adds the API
+ * `value` sent to the inspection list filter.
  *
  * @template TValue Inspection filter value type.
  *
  * @since 1.0.0
  */
-export interface InspectionFilterOption<TValue extends string> {
-  /**
-   * Property label
-   * @readonly
-   *
-   * @description
-   * Human-readable label displayed in the filter dropdown.
-   *
-   * @type {string}
-   */
-  readonly label: string;
-
+export interface InspectionFilterOption<TValue extends string> extends TagDescriptor {
   /**
    * Property value
    * @readonly
@@ -30,27 +24,4 @@ export interface InspectionFilterOption<TValue extends string> {
    * @type {TValue}
    */
   readonly value: TValue;
-
-  /**
-   * Property icon
-   * @readonly
-   *
-   * @description
-   * PrimeIcons class used by the filter badge to visually identify the
-   * inspection result or workflow status.
-   *
-   * @type {string}
-   */
-  readonly icon: string;
-
-  /**
-   * Property color
-   * @readonly
-   *
-   * @description
-   * Hexadecimal color applied to the filter badge icon.
-   *
-   * @type {string}
-   */
-  readonly color: string;
 }

@@ -21,6 +21,7 @@ import {
   EQUIPMENT_TYPE_OPTIONS,
   FACILITY_TYPE_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
+import { Tag } from '@shared/components';
 
 /**
  * Type AssetGrowthFiltersForm
@@ -51,7 +52,7 @@ type AssetGrowthFiltersForm = {
 @Component({
   selector: 'app-asset-growth-filters',
   templateUrl: './asset-growth-filters.component.html',
-  imports: [ReactiveFormsModule, SelectModule, TrendBaseFiltersForm],
+  imports: [ReactiveFormsModule, SelectModule, Tag, TrendBaseFiltersForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AssetGrowthFilters {

@@ -34,7 +34,8 @@ export class InterventionFieldExecutionService {
    *
    * @type {ConnectivityService}
    */
-  private readonly connectivity: ConnectivityService = inject<ConnectivityService>(ConnectivityService);
+  private readonly connectivity: ConnectivityService =
+    inject<ConnectivityService>(ConnectivityService);
 
   /**
    * Property offline
@@ -48,7 +49,9 @@ export class InterventionFieldExecutionService {
    *
    * @type {InterventionOfflineService}
    */
-  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(InterventionOfflineService);
+  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(
+    InterventionOfflineService,
+  );
 
   /**
    * Property scanner
@@ -62,7 +65,9 @@ export class InterventionFieldExecutionService {
    *
    * @type {InterventionQrScannerService}
    */
-  private readonly scanner: InterventionQrScannerService = inject<InterventionQrScannerService>(InterventionQrScannerService);
+  private readonly scanner: InterventionQrScannerService = inject<InterventionQrScannerService>(
+    InterventionQrScannerService,
+  );
 
   /**
    * Property photoCompressor
@@ -76,9 +81,8 @@ export class InterventionFieldExecutionService {
    *
    * @type {InterventionPhotoCompressorService}
    */
-  private readonly photoCompressor: InterventionPhotoCompressorService = inject<InterventionPhotoCompressorService>(
-    InterventionPhotoCompressorService,
-  );
+  private readonly photoCompressor: InterventionPhotoCompressorService =
+    inject<InterventionPhotoCompressorService>(InterventionPhotoCompressorService);
 
   /**
    * Property syncCoordinator
@@ -92,9 +96,8 @@ export class InterventionFieldExecutionService {
    *
    * @type {InterventionSyncCoordinatorService}
    */
-  private readonly syncCoordinator: InterventionSyncCoordinatorService = inject<InterventionSyncCoordinatorService>(
-    InterventionSyncCoordinatorService,
-  );
+  private readonly syncCoordinator: InterventionSyncCoordinatorService =
+    inject<InterventionSyncCoordinatorService>(InterventionSyncCoordinatorService);
 
   /**
    * Method prepareDiscoveryResource

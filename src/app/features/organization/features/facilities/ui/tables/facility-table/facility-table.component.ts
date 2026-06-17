@@ -39,7 +39,7 @@ import type {
   FacilityType,
 } from '@features/organization/features/facilities/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState } from '@shared/components';
+import { EmptyState, Tag } from '@shared/components';
 import type { FacilityStatusOption, FacilityTypeIconMap } from './models';
 
 /**
@@ -72,6 +72,7 @@ import type { FacilityStatusOption, FacilityTypeIconMap } from './models';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
+    Tag,
   ],
   templateUrl: './facility-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -403,13 +404,13 @@ export class FacilityTable implements OnInit {
       label: 'Active',
       value: 'active',
       icon: PrimeIcons.CHECK_CIRCLE,
-      color: '#22c55e',
+      severity: 'success',
     },
     {
       label: 'Archived',
       value: 'archived',
       icon: PrimeIcons.BOX,
-      color: '#64748b',
+      severity: 'secondary',
     },
   ];
 
@@ -822,7 +823,7 @@ export class FacilityTable implements OnInit {
         label: this.toDisplayLabel(status),
         value: status,
         icon: PrimeIcons.CIRCLE,
-        color: '#64748b',
+        severity: 'secondary',
       }
     );
   }

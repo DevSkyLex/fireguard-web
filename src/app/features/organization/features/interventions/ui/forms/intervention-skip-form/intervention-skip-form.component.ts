@@ -96,7 +96,8 @@ export class InterventionSkipForm {
    *
    * @type {NonNullableFormBuilder}
    */
-  private readonly formBuilder: NonNullableFormBuilder = inject<NonNullableFormBuilder>(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
 
   /**
    * Property form

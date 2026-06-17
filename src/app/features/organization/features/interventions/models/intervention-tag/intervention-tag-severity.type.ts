@@ -1,11 +1,10 @@
+import type { TagSeverity } from '@shared/components';
+
 /**
  * Severity vocabulary shared by every intervention status/enum indicator.
- * Mirrors the PrimeNG `p-tag` severity contract.
+ *
+ * Aliases the app-wide {@link TagSeverity} so the intervention registry keeps
+ * a domain-named type while delegating the actual colour contract to the
+ * shared {@link Tag} component.
  */
-export type InterventionTagSeverity =
-  | 'success'
-  | 'secondary'
-  | 'info'
-  | 'warn'
-  | 'danger'
-  | 'contrast';
+export type InterventionTagSeverity = TagSeverity;

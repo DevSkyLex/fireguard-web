@@ -21,6 +21,7 @@ import {
   INSPECTION_STATUS_OPTIONS,
   INSPECTOR_TYPE_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
+import { Tag } from '@shared/components';
 
 /**
  * Type InspectionsFiltersForm
@@ -51,7 +52,7 @@ type InspectionsFiltersForm = {
 @Component({
   selector: 'app-inspections-filters',
   templateUrl: './inspections-filters.component.html',
-  imports: [ReactiveFormsModule, SelectModule, TrendBaseFiltersForm],
+  imports: [ReactiveFormsModule, SelectModule, Tag, TrendBaseFiltersForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionsFilters {

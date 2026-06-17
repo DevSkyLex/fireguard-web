@@ -1,25 +1,18 @@
 import type { EquipmentStatus } from '@features/organization/features/equipments/models';
+import type { TagDescriptor } from '@shared/components';
 
 /**
  * Interface EquipmentStatusOption
  *
  * @description
- * Option rendered by the facility equipment status filter.
+ * Option rendered by the facility equipment status filter and badge. Extends
+ * the shared {@link TagDescriptor} (`label`, `severity`, `icon`) so it can be
+ * forwarded directly to `<app-tag>`, and adds the API `value` forwarded to the
+ * equipment list filter.
  *
  * @since 1.0.0
  */
-export interface EquipmentStatusOption {
-  /**
-   * Property label
-   * @readonly
-   *
-   * @description
-   * Human-readable label displayed in the status dropdown.
-   *
-   * @type {string}
-   */
-  readonly label: string;
-
+export interface EquipmentStatusOption extends TagDescriptor {
   /**
    * Property value
    * @readonly
@@ -30,27 +23,4 @@ export interface EquipmentStatusOption {
    * @type {EquipmentStatus}
    */
   readonly value: EquipmentStatus;
-
-  /**
-   * Property icon
-   * @readonly
-   *
-   * @description
-   * PrimeIcons class used by the status badge to visually identify the
-   * equipment lifecycle state.
-   *
-   * @type {string}
-   */
-  readonly icon: string;
-
-  /**
-   * Property color
-   * @readonly
-   *
-   * @description
-   * Hexadecimal color applied to the status badge icon.
-   *
-   * @type {string}
-   */
-  readonly color: string;
 }

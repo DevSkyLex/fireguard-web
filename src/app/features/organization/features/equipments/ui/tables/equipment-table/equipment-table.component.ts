@@ -39,7 +39,7 @@ import type {
   EquipmentStatus,
 } from '@features/organization/features/equipments/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState } from '@shared/components';
+import { EmptyState, Tag } from '@shared/components';
 import type { EquipmentStatusOption } from './models';
 
 /**
@@ -73,6 +73,7 @@ import type { EquipmentStatusOption } from './models';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
+    Tag,
   ],
   templateUrl: './equipment-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -333,10 +334,25 @@ export class EquipmentTable implements OnInit {
    * @type {EquipmentStatusOption[]}
    */
   protected readonly statusOptions: EquipmentStatusOption[] = [
-    { label: 'In Stock', value: 'in_stock', icon: PrimeIcons.BOX, color: '#94a3b8' },
-    { label: 'Operational', value: 'operational', icon: PrimeIcons.CHECK_CIRCLE, color: '#22c55e' },
-    { label: 'Maintenance', value: 'under_maintenance', icon: PrimeIcons.WRENCH, color: '#f97316' },
-    { label: 'Decommissioned', value: 'decommissioned', icon: PrimeIcons.BAN, color: '#ef4444' },
+    { label: 'In Stock', value: 'in_stock', icon: PrimeIcons.BOX, severity: 'secondary' },
+    {
+      label: 'Operational',
+      value: 'operational',
+      icon: PrimeIcons.CHECK_CIRCLE,
+      severity: 'success',
+    },
+    {
+      label: 'Maintenance',
+      value: 'under_maintenance',
+      icon: PrimeIcons.WRENCH,
+      severity: 'warn',
+    },
+    {
+      label: 'Decommissioned',
+      value: 'decommissioned',
+      icon: PrimeIcons.BAN,
+      severity: 'danger',
+    },
   ];
 
   /**
@@ -785,7 +801,7 @@ export class EquipmentTable implements OnInit {
         label: this.toDisplayLabel(status),
         value: status,
         icon: PrimeIcons.CIRCLE,
-        color: '#64748b',
+        severity: 'secondary',
       }
     );
   }

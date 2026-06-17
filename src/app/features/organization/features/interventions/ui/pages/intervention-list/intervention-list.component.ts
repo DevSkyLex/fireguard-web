@@ -44,7 +44,8 @@ export class InterventionListPage {
    *
    * @type {ActiveOrganizationStore}
    */
-  private readonly organization: ActiveOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+  private readonly organization: ActiveOrganizationStore =
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property router
@@ -70,7 +71,8 @@ export class InterventionListPage {
    * @access protected
    * @since 1.0.0
    */
-  protected readonly store: InterventionStoreType = inject<InterventionStoreType>(InterventionStore);
+  protected readonly store: InterventionStoreType =
+    inject<InterventionStoreType>(InterventionStore);
   //#endregion
 
   //#region Constructor

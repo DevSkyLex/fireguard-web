@@ -35,7 +35,8 @@ export class InterventionPrefetchService {
    *
    * @type {ActiveOrganizationStore}
    */
-  private readonly organization: ActiveOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+  private readonly organization: ActiveOrganizationStore =
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property connectivity
@@ -49,7 +50,8 @@ export class InterventionPrefetchService {
    *
    * @type {ConnectivityService}
    */
-  private readonly connectivity: ConnectivityService = inject<ConnectivityService>(ConnectivityService);
+  private readonly connectivity: ConnectivityService =
+    inject<ConnectivityService>(ConnectivityService);
 
   /**
    * Property service
@@ -77,7 +79,9 @@ export class InterventionPrefetchService {
    *
    * @type {InterventionOfflineService}
    */
-  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(InterventionOfflineService);
+  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(
+    InterventionOfflineService,
+  );
 
   /**
    * Property members
@@ -92,7 +96,8 @@ export class InterventionPrefetchService {
    *
    * @type {OrganizationMemberService}
    */
-  private readonly members: OrganizationMemberService = inject<OrganizationMemberService>(OrganizationMemberService);
+  private readonly members: OrganizationMemberService =
+    inject<OrganizationMemberService>(OrganizationMemberService);
 
   /**
    * Property injector

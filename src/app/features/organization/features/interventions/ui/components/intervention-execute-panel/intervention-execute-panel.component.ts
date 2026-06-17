@@ -273,9 +273,9 @@ export class InterventionExecutePanel {
    *
    * @type {Signal<readonly InterventionWorkItemOutput[]>}
    */
-  protected readonly scrollerItems: Signal<InterventionWorkItemOutput[]> = computed<InterventionWorkItemOutput[]>(() => [
-    ...this.workItems(),
-  ]);
+  protected readonly scrollerItems: Signal<InterventionWorkItemOutput[]> = computed<
+    InterventionWorkItemOutput[]
+  >(() => [...this.workItems()]);
 
   /**
    * Property skipDrawerVisible

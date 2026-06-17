@@ -69,7 +69,8 @@ export class InterventionPreparePanel {
    *
    * @type {InputSignal<InterventionOutput>}
    */
-  public readonly intervention: InputSignal<InterventionOutput> = input.required<InterventionOutput>();
+  public readonly intervention: InputSignal<InterventionOutput> =
+    input.required<InterventionOutput>();
 
   /**
    * Property workItems
@@ -83,7 +84,8 @@ export class InterventionPreparePanel {
    *
    * @type {InputSignal<readonly InterventionWorkItemOutput[]>}
    */
-  public readonly workItems: InputSignal<readonly InterventionWorkItemOutput[]> = input.required<readonly InterventionWorkItemOutput[]>();
+  public readonly workItems: InputSignal<readonly InterventionWorkItemOutput[]> =
+    input.required<readonly InterventionWorkItemOutput[]>();
 
   /**
    * Property saving
@@ -125,7 +127,8 @@ export class InterventionPreparePanel {
    *
    * @type {InputSignal<readonly SelectOption[]>}
    */
-  public readonly siteOptions: InputSignal<readonly SelectOption[]> = input.required<readonly SelectOption[]>();
+  public readonly siteOptions: InputSignal<readonly SelectOption[]> =
+    input.required<readonly SelectOption[]>();
 
   /**
    * Property memberOptions
@@ -139,7 +142,8 @@ export class InterventionPreparePanel {
    *
    * @type {InputSignal<readonly MemberSelectOption[]>}
    */
-  public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> = input.required<readonly MemberSelectOption[]>();
+  public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> =
+    input.required<readonly MemberSelectOption[]>();
 
   /**
    * Property targetOptions
@@ -153,7 +157,8 @@ export class InterventionPreparePanel {
    *
    * @type {InputSignal<readonly SelectOption[]>}
    */
-  public readonly targetOptions: InputSignal<readonly SelectOption[]> = input.required<readonly SelectOption[]>();
+  public readonly targetOptions: InputSignal<readonly SelectOption[]> =
+    input.required<readonly SelectOption[]>();
   //#endregion
 
   //#region Outputs

@@ -6,50 +6,13 @@ import { InspectionService } from '@features/organization/features/inspections/d
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type { InterventionOutboxOperation } from '@features/organization/features/interventions/models';
 import { InterventionOfflineService } from '../intervention-offline';
+import {
+  CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE,
+  HTTP_CONFLICT,
+  HTTP_PRECONDITION_FAILED,
+  PERMANENT_FAILURE_STATUSES,
+} from './constants';
 import type { SyncProblemResponse } from './models';
-
-/**
- * Constant HTTP_CONFLICT
- * @const HTTP_CONFLICT
- *
- * @description
- * HTTP status returned when an offline replay hits an already-applied
- * operation.
- *
- * @since 1.0.0
- *
- * @type {number}
- */
-const HTTP_CONFLICT = 409;
-
-/**
- * Constant HTTP_PRECONDITION_FAILED
- * @const HTTP_PRECONDITION_FAILED
- *
- * @description
- * Provides the http precondition failed value.
- *
- * @since 1.0.0
- *
- * @type {number}
- */
-const HTTP_PRECONDITION_FAILED = 412;
-
-const PERMANENT_FAILURE_STATUSES: ReadonlySet<number> = new Set([400, 403, 409, 422]);
-
-/**
- * Constant CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE
- * @const CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE
- *
- * @description
- * Stable RFC 7807 problem type returned when an idempotent client resource
- * creation was already applied server-side.
- *
- * @since 1.0.0
- *
- * @type {string}
- */
-const CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE = '/problems/client-resource-already-exists';
 
 /**
  * Service InterventionSyncService
@@ -137,7 +100,9 @@ export class InterventionSyncService {
    *
    * @type {InterventionOfflineService}
    */
-  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(InterventionOfflineService);
+  private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(
+    InterventionOfflineService,
+  );
 
   /**
    * Active replay promises keyed by intervention to prevent concurrent duplicate replays.
@@ -362,11 +327,25 @@ export class InterventionSyncService {
       }
       case 'intervention.update': {
         const revision = operation.payload['revision'];
-        const { revision: _revision, clientId: _clientId, ...input } = operation.payload;
+        const {
+          revision: _revision,
+          clientId: _clientId,
+          plannedStartAt,
+          dueAt,
+          ...input
+        } = operation.payload;
         await firstValueFrom(
           this.service.update(
             operation.interventionId,
-            input,
+            {
+              ...input,
+              // Outbox payloads persist dates as ISO strings; rehydrate them
+              // to `Date` for the typed update contract.
+              ...(plannedStartAt !== undefined
+                ? { plannedStartAt: plannedStartAt ? new Date(plannedStartAt) : null }
+                : {}),
+              ...(dueAt !== undefined ? { dueAt: dueAt ? new Date(dueAt) : null } : {}),
+            },
             typeof revision === 'number' ? revision : undefined,
           ),
         );

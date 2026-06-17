@@ -28,7 +28,7 @@ import type {
   ChecklistOutput,
   ChecklistStatus,
 } from '@features/organization/features/checklists/models';
-import { EmptyState } from '@shared/components';
+import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
 
 /**
  * Paginated checklist table with status filtering and contextual actions.
@@ -46,6 +46,7 @@ import { EmptyState } from '@shared/components';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
+    Tag,
   ],
   templateUrl: './checklist-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -86,9 +87,9 @@ export class ChecklistTable {
   /** Active checklist status filter. */
   protected readonly statusControl = new FormControl<ChecklistStatus | null>(null);
   /** Supported checklist status filter options. */
-  protected readonly statusOptions = [
-    { label: 'Active', value: 'active' as const, icon: PrimeIcons.CHECK_CIRCLE, color: '#22c55e' },
-    { label: 'Archived', value: 'archived' as const, icon: PrimeIcons.BOX, color: '#64748b' },
+  protected readonly statusOptions: (TagDescriptor & { value: ChecklistStatus })[] = [
+    { label: 'Active', value: 'active', icon: PrimeIcons.CHECK_CIRCLE, severity: 'success' },
+    { label: 'Archived', value: 'archived', icon: PrimeIcons.BOX, severity: 'secondary' },
   ];
   /** PrimeNG pass-through configuration for the table card. */
   protected readonly cardPt: CardPassThroughOptions = {

@@ -1,10 +1,15 @@
+import type { TagDescriptor } from '@shared/components';
+
 /**
  * Interface InspectionFilterOption
  * @interface InspectionFilterOption
  *
  * @description
  * Visual configuration used to render inspection result/status badges and
- * their matching filter options with the same icon and color.
+ * their matching filter options with the same icon and severity colour.
+ * Extends the shared {@link TagDescriptor} (`label`, `severity`, `icon`) so it
+ * can be forwarded directly to `<app-tag>`, and adds the API enum `value`
+ * forwarded in list filters.
  *
  * @template TValue - API enum value represented by the option.
  *
@@ -12,19 +17,8 @@
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export interface InspectionFilterOption<TValue extends string = string> {
+export interface InspectionFilterOption<TValue extends string = string> extends TagDescriptor {
   //#region Properties
-  /**
-   * Property label
-   * @readonly
-   *
-   * @description
-   * Human-readable label displayed in the table and filters.
-   *
-   * @type {string}
-   */
-  readonly label: string;
-
   /**
    * Property value
    * @readonly
@@ -35,27 +29,5 @@ export interface InspectionFilterOption<TValue extends string = string> {
    * @type {TValue}
    */
   readonly value: TValue;
-
-  /**
-   * Property icon
-   * @readonly
-   *
-   * @description
-   * PrimeIcon class rendered next to the label.
-   *
-   * @type {string}
-   */
-  readonly icon: string;
-
-  /**
-   * Property color
-   * @readonly
-   *
-   * @description
-   * Accent color applied to the option icon.
-   *
-   * @type {string}
-   */
-  readonly color: string;
   //#endregion
 }

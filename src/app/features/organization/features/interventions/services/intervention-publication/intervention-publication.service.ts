@@ -34,7 +34,8 @@ export class InterventionPublicationService {
    *
    * @type {InterventionService}
    */
-  private readonly interventions: InterventionService = inject<InterventionService>(InterventionService);
+  private readonly interventions: InterventionService =
+    inject<InterventionService>(InterventionService);
   //#endregion
 
   //#region Methods

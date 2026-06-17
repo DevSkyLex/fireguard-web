@@ -19,6 +19,7 @@ import {
   EQUIPMENT_STATUS_OPTIONS,
   EQUIPMENT_TYPE_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
+import { Tag } from '@shared/components';
 
 /**
  * Type EquipmentCreatedFiltersForm
@@ -48,7 +49,7 @@ type EquipmentCreatedFiltersForm = {
 @Component({
   selector: 'app-equipment-created-filters',
   templateUrl: './equipment-created-filters.component.html',
-  imports: [ReactiveFormsModule, SelectModule, TrendBaseFiltersForm],
+  imports: [ReactiveFormsModule, SelectModule, Tag, TrendBaseFiltersForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EquipmentCreatedFilters {

@@ -1,54 +1,12 @@
 import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
+import {
+  INTERVENTION_DATABASE_NAME,
+  INTERVENTION_DATABASE_VERSION,
+  INTERVENTION_STORE_NAMES,
+} from './constants';
 import type { IndexedEntry } from './models';
-
-/**
- * Constant INTERVENTION_DATABASE_NAME
- * @const INTERVENTION_DATABASE_NAME
- *
- * @description
- * IndexedDB database name owning every intervention offline object store.
- *
- * @since 1.1.0
- *
- * @type {string}
- */
-const INTERVENTION_DATABASE_NAME = 'fireguard-field-interventions';
-
-/**
- * Constant INTERVENTION_DATABASE_VERSION
- * @const INTERVENTION_DATABASE_VERSION
- *
- * @description
- * Schema version of the intervention offline database.
- *
- * @since 1.1.0
- *
- * @type {number}
- */
-const INTERVENTION_DATABASE_VERSION = 4;
-
-/**
- * Constant INTERVENTION_STORE_NAMES
- * @const INTERVENTION_STORE_NAMES
- *
- * @description
- * Every object store cleared when local intervention data is purged.
- *
- * @since 1.1.0
- *
- * @type {readonly string[]}
- */
-const INTERVENTION_STORE_NAMES = [
-  'interventions',
-  'workItems',
-  'changes',
-  'resources',
-  'media',
-  'outbox',
-  'metadata',
-] as const;
 
 /**
  * Service InterventionDatabaseService

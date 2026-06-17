@@ -16,24 +16,28 @@ export const EQUIPMENT_STATUS_OPTIONS: readonly EquipmentStatusOption[] = [
     label: 'In Stock',
     value: 'in_stock',
     icon: PrimeIcons.BOX,
+    severity: 'secondary',
     color: '#94a3b8',
   },
   {
     label: 'Operational',
     value: 'operational',
     icon: PrimeIcons.CHECK_CIRCLE,
+    severity: 'success',
     color: '#22c55e',
   },
   {
     label: 'Under Maintenance',
     value: 'under_maintenance',
     icon: PrimeIcons.WRENCH,
+    severity: 'warn',
     color: '#f97316',
   },
   {
     label: 'Decommissioned',
     value: 'decommissioned',
     icon: PrimeIcons.BAN,
+    severity: 'danger',
     color: '#ef4444',
   },
 ];

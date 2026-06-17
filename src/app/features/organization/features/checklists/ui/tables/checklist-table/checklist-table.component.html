@@ -92,12 +92,9 @@
               </td>
               <td>{{ checklist.version }}</td>
               <td>
-                @let option = checklist.status === 'active' ? statusOptions[0] : statusOptions[1];
-                <span
-                  class="inline-flex h-7 items-center gap-1.5 rounded-full border border-surface-200 px-2.5 text-xs font-semibold dark:border-surface-700"
-                >
-                  <i [class]="option.icon" [style.color]="option.color"></i>{{ option.label }}
-                </span>
+                <app-tag
+                  [descriptor]="checklist.status === 'active' ? statusOptions[0] : statusOptions[1]"
+                />
               </td>
               <td>{{ checklist.items.length }}</td>
               <td>{{ checklist.updatedAt | date: 'medium' }}</td>

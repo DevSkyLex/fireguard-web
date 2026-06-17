@@ -4,10 +4,7 @@
 export type { InterventionTagDescriptor } from './intervention-tag/intervention-tag-descriptor.interface';
 export type { InterventionTagKind } from './intervention-tag/intervention-tag-kind.type';
 export type { InterventionTagSeverity } from './intervention-tag/intervention-tag-severity.type';
-export {
-  interventionSeverityIconClass,
-  resolveInterventionTag,
-} from './intervention-tag/intervention-tag.util';
+export { resolveInterventionTag } from './intervention-tag/intervention-tag.util';
 export type { InterventionIssueOutput } from './intervention/intervention-issue-output.interface';
 export type { InterventionIssueSeverity } from './intervention/intervention-issue-severity.type';
 export type { InterventionOutput } from './intervention/intervention-output.interface';

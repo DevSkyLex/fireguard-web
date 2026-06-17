@@ -41,7 +41,7 @@ import type {
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState } from '@shared/components';
+import { EmptyState, Tag } from '@shared/components';
 import type { InspectionFilterOption } from './models';
 
 /**
@@ -75,6 +75,7 @@ import type { InspectionFilterOption } from './models';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
+    Tag,
   ],
   templateUrl: './inspection-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -337,9 +338,14 @@ export class InspectionTable implements OnInit {
    * @type {InspectionFilterOption<InspectionResult>[]}
    */
   protected readonly resultOptions: InspectionFilterOption<InspectionResult>[] = [
-    { label: 'Pass', value: 'pass', icon: PrimeIcons.CHECK_CIRCLE, color: '#22c55e' },
-    { label: 'Partial', value: 'partial', icon: PrimeIcons.EXCLAMATION_CIRCLE, color: '#f59e0b' },
-    { label: 'Fail', value: 'fail', icon: PrimeIcons.TIMES_CIRCLE, color: '#ef4444' },
+    { label: 'Pass', value: 'pass', icon: PrimeIcons.CHECK_CIRCLE, severity: 'success' },
+    {
+      label: 'Partial',
+      value: 'partial',
+      icon: PrimeIcons.EXCLAMATION_CIRCLE,
+      severity: 'warn',
+    },
+    { label: 'Fail', value: 'fail', icon: PrimeIcons.TIMES_CIRCLE, severity: 'danger' },
   ];
 
   /**
@@ -355,9 +361,9 @@ export class InspectionTable implements OnInit {
    * @type {InspectionFilterOption<InspectionStatus>[]}
    */
   protected readonly statusOptions: InspectionFilterOption<InspectionStatus>[] = [
-    { label: 'Draft', value: 'draft', icon: PrimeIcons.FILE_EDIT, color: '#3b82f6' },
-    { label: 'Submitted', value: 'submitted', icon: PrimeIcons.SEND, color: '#f59e0b' },
-    { label: 'Closed', value: 'closed', icon: PrimeIcons.LOCK, color: '#64748b' },
+    { label: 'Draft', value: 'draft', icon: PrimeIcons.FILE_EDIT, severity: 'info' },
+    { label: 'Submitted', value: 'submitted', icon: PrimeIcons.SEND, severity: 'warn' },
+    { label: 'Closed', value: 'closed', icon: PrimeIcons.LOCK, severity: 'secondary' },
   ];
 
   /**
@@ -803,7 +809,7 @@ export class InspectionTable implements OnInit {
         label: this.toDisplayLabel(result),
         value: result,
         icon: PrimeIcons.CIRCLE,
-        color: '#64748b',
+        severity: 'secondary',
       }
     );
   }
@@ -829,7 +835,7 @@ export class InspectionTable implements OnInit {
         label: this.toDisplayLabel(status),
         value: status,
         icon: PrimeIcons.CIRCLE,
-        color: '#64748b',
+        severity: 'secondary',
       }
     );
   }

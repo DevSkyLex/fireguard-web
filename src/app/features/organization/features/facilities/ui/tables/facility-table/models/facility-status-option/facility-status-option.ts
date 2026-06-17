@@ -1,4 +1,5 @@
 import type { FacilityStatus } from '@features/organization/features/facilities/models';
+import type { TagDescriptor } from '@shared/components';
 
 /**
  * Interface FacilityStatusOption
@@ -6,25 +7,16 @@ import type { FacilityStatus } from '@features/organization/features/facilities/
  *
  * @description
  * Display metadata used to render facility status badges consistently in the
- * facility table and its filters.
+ * facility table and its filters. Extends the shared {@link TagDescriptor}
+ * (`label`, `severity`, `icon`) so it can be forwarded directly to
+ * `<app-tag>`, and adds the API `value` sent in list filters.
  *
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export interface FacilityStatusOption {
+export interface FacilityStatusOption extends TagDescriptor {
   //#region Properties
-  /**
-   * Property label
-   * @readonly
-   *
-   * @description
-   * Human-readable label shown in the UI.
-   *
-   * @type {string}
-   */
-  readonly label: string;
-
   /**
    * Property value
    * @readonly
@@ -35,27 +27,5 @@ export interface FacilityStatusOption {
    * @type {FacilityStatus}
    */
   readonly value: FacilityStatus;
-
-  /**
-   * Property icon
-   * @readonly
-   *
-   * @description
-   * PrimeIcon class displayed in the badge.
-   *
-   * @type {string}
-   */
-  readonly icon: string;
-
-  /**
-   * Property color
-   * @readonly
-   *
-   * @description
-   * Accent color applied to the status icon.
-   *
-   * @type {string}
-   */
-  readonly color: string;
   //#endregion
 }

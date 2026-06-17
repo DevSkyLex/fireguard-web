@@ -34,26 +34,12 @@
             class="w-full sm:w-48"
           >
             <ng-template pTemplate="item" let-option>
-              <div class="flex items-center gap-2">
-                <i
-                  [class]="option.icon + ' inline-flex items-center text-[0.7rem] leading-none'"
-                  [style.color]="option.color"
-                  aria-hidden="true"
-                ></i>
-                <span>{{ option.label }}</span>
-              </div>
+              <app-tag [descriptor]="option" variant="inline" />
             </ng-template>
 
             <ng-template pTemplate="selectedItem" let-option>
               @if (option) {
-                <div class="flex items-center gap-2">
-                  <i
-                    [class]="option.icon + ' inline-flex items-center text-[0.7rem] leading-none'"
-                    [style.color]="option.color"
-                    aria-hidden="true"
-                  ></i>
-                  <span>{{ option.label }}</span>
-                </div>
+                <app-tag [descriptor]="option" variant="inline" />
               }
             </ng-template>
           </p-select>
@@ -227,19 +213,7 @@
                 }
               </td>
               <td>
-                @let statusOption = getStatusOption(equipment.status);
-                <span
-                  class="inline-flex h-7 items-center gap-1.5 rounded-full border border-surface-200 bg-surface-0 px-2.5 text-xs leading-none font-semibold text-surface-900 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100"
-                >
-                  <i
-                    [class]="
-                      statusOption.icon + ' inline-flex items-center text-[0.7rem] leading-none'
-                    "
-                    [style.color]="statusOption.color"
-                    aria-hidden="true"
-                  ></i>
-                  <span class="leading-none">{{ statusOption.label }}</span>
-                </span>
+                <app-tag [descriptor]="getStatusOption(equipment.status)" />
               </td>
               <td class="text-right">
                 <span class="text-surface-500 dark:text-surface-400">

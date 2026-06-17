@@ -69,7 +69,8 @@ export class InterventionPlanningForm {
    *
    * @type {InputSignal<InterventionOutput>}
    */
-  public readonly intervention: InputSignal<InterventionOutput> = input.required<InterventionOutput>();
+  public readonly intervention: InputSignal<InterventionOutput> =
+    input.required<InterventionOutput>();
 
   /**
    * Property siteOptions
@@ -163,7 +164,8 @@ export class InterventionPlanningForm {
    *
    * @type {NonNullableFormBuilder}
    */
-  private readonly formBuilder: NonNullableFormBuilder = inject<NonNullableFormBuilder>(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
 
   /**
    * Property form

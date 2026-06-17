@@ -62,21 +62,22 @@ status is never conveyed by colour alone (icon + label always present).
 
 - `models/intervention-tag/` — the shared vocabulary (plain TS, no Angular),
   exported through the feature `models/` barrel:
-  - `intervention-tag-descriptor.interface.ts` — `InterventionTagDescriptor`
-    (`label`, `severity`, `icon`).
-  - `intervention-tag-severity.type.ts` / `intervention-tag-kind.type.ts`.
-  - `intervention-tag.util.ts` — per-enum descriptor registry,
-    `resolveInterventionTag(kind, value)` (graceful fallback for unknown values)
-    and `interventionSeverityIconClass(severity)` (the shared `text-*` icon
-    colour, with `dark:` variants).
+  - `intervention-tag-descriptor.interface.ts` — `InterventionTagDescriptor`,
+    a domain alias of the app-wide `TagDescriptor` (`label`, `severity`, `icon`).
+  - `intervention-tag-severity.type.ts` (alias of `TagSeverity`) /
+    `intervention-tag-kind.type.ts`.
+  - `intervention-tag.util.ts` — per-enum descriptor registry and
+    `resolveInterventionTag(kind, value)` (graceful fallback for unknown values).
+    The `severity → text-*` icon colour mapping now lives in the shared
+    `@shared/components` `Tag` (`tagSeverityIconClass`).
 - `ui/components/intervention-tag/` — `<app-intervention-tag kind value />`:
-  the **table/panel badge**. Neutral pill copied from the organization table
-  badges (`rounded-full border border-surface-200 bg-surface-0`, neutral label),
-  only the icon coloured by severity.
+  the **table/panel badge**. A thin wrapper that resolves the descriptor and
+  forwards it to the shared `<app-tag>` (neutral pill, icon-only colour).
 - `ui/components/intervention-option/` — `<app-intervention-option kind value />`:
-  the **`p-select` option content** (used in `#item` / `#selectedItem`). Bare
-  inline `icon + label` with no badge shell, matching the dashboard trend-card
-  filter selects. Never put `<app-intervention-tag>` inside a select.
+  the **`p-select` option content** (used in `#item` / `#selectedItem`). A thin
+  wrapper over `<app-tag variant="inline">` (bare icon + label, no badge shell),
+  matching the dashboard trend-card filter selects. Never put
+  `<app-intervention-tag>` inside a select.
 
 To add a new enum value: extend the relevant descriptor map only — both the
 badge and the select option follow automatically.

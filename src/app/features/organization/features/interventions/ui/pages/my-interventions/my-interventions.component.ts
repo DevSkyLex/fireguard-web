@@ -56,7 +56,8 @@ export class MyInterventionsPage {
    *
    * @type {MyInterventionsStoreType}
    */
-  protected readonly store: MyInterventionsStoreType = inject<MyInterventionsStoreType>(MyInterventionsStore);
+  protected readonly store: MyInterventionsStoreType =
+    inject<MyInterventionsStoreType>(MyInterventionsStore);
 
   /**
    * Property organization
@@ -70,7 +71,8 @@ export class MyInterventionsPage {
    *
    * @type {ActiveOrganizationStore}
    */
-  private readonly organization: ActiveOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+  private readonly organization: ActiveOrganizationStore =
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /**
    * Property connectivity
@@ -85,7 +87,8 @@ export class MyInterventionsPage {
    *
    * @type {ConnectivityService}
    */
-  private readonly connectivity: ConnectivityService = inject<ConnectivityService>(ConnectivityService);
+  private readonly connectivity: ConnectivityService =
+    inject<ConnectivityService>(ConnectivityService);
 
   /**
    * Property router

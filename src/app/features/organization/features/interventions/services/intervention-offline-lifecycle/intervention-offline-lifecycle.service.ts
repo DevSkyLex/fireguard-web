@@ -32,7 +32,9 @@ export class InterventionOfflineLifecycleService {
    *
    * @type {InterventionDatabaseService}
    */
-  private readonly database: InterventionDatabaseService = inject<InterventionDatabaseService>(InterventionDatabaseService);
+  private readonly database: InterventionDatabaseService = inject<InterventionDatabaseService>(
+    InterventionDatabaseService,
+  );
 
   /**
    * Property destroyRef

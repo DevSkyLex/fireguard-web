@@ -19,6 +19,7 @@ import {
   NON_CONFORMITY_SEVERITY_OPTIONS,
   NON_CONFORMITY_STATUS_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
+import { Tag } from '@shared/components';
 
 /**
  * Type NonConformitiesOpenedFiltersForm
@@ -48,7 +49,7 @@ type NonConformitiesOpenedFiltersForm = {
 @Component({
   selector: 'app-non-conformities-opened-filters',
   templateUrl: './non-conformities-opened-filters.component.html',
-  imports: [ReactiveFormsModule, SelectModule, TrendBaseFiltersForm],
+  imports: [ReactiveFormsModule, SelectModule, Tag, TrendBaseFiltersForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NonConformitiesOpenedFilters {

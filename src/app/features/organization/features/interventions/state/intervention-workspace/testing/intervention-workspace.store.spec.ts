@@ -52,6 +52,7 @@ describe('InterventionWorkspaceStore offline field work', () => {
     update: ReturnType<typeof vi.fn>;
     createWorkItem: ReturnType<typeof vi.fn>;
     updateWorkItem: ReturnType<typeof vi.fn>;
+    removeWorkItem: ReturnType<typeof vi.fn>;
   };
   let mockOffline: {
     getWorkspace: ReturnType<typeof vi.fn>;
@@ -76,6 +77,7 @@ describe('InterventionWorkspaceStore offline field work', () => {
       update: vi.fn(),
       createWorkItem: vi.fn(),
       updateWorkItem: vi.fn(),
+      removeWorkItem: vi.fn().mockReturnValue(of(undefined)),
     };
     mockOffline = {
       getWorkspace: vi.fn(),
@@ -221,6 +223,38 @@ describe('InterventionWorkspaceStore offline field work', () => {
     expect(store.workItems().at(-1)).toMatchObject({ id: 'work-item-2' });
     expect(store.intervention()?.workItemsCount).toBe(2);
     expect(store.intervention()?.revision).toBe(4);
+  });
+
+  it('deletes work items online, decrements counters and avoids a full reload', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    window.dispatchEvent(new Event('online'));
+    await vi.waitFor(() => expect(store.intervention()?.id).toBe('intervention-1'));
+
+    mockService.get.mockClear();
+    mockService.listAllWorkItems.mockClear();
+
+    store.deleteWorkItems({ interventionId: intervention.id, workItems: [workItem] });
+
+    await vi.waitFor(() => expect(store.saving()).toBe(false));
+
+    expect(mockService.removeWorkItem).toHaveBeenCalledWith('work-item-1', 1);
+    // No full workspace reload after a delete.
+    expect(mockService.get).not.toHaveBeenCalled();
+    expect(mockService.listAllWorkItems).not.toHaveBeenCalled();
+    expect(store.workItems()).toHaveLength(0);
+    expect(store.intervention()?.workItemsCount).toBe(0);
+    expect(store.intervention()?.revision).toBe(4);
+    expect(store.error()).toBeNull();
+  });
+
+  it('refuses to delete work items offline and surfaces a connectivity message', async () => {
+    store.deleteWorkItems({ interventionId: intervention.id, workItems: [workItem] });
+
+    await vi.waitFor(() => expect(store.saving()).toBe(false));
+
+    expect(mockService.removeWorkItem).not.toHaveBeenCalled();
+    expect(store.workItems()).toHaveLength(1);
+    expect(store.error()).toBe('Connect to the network to delete planned work items.');
   });
 
   it('does not expose cached intervention data after an authorization failure', async () => {

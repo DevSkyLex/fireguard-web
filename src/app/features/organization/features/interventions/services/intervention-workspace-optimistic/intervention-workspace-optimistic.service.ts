@@ -149,6 +149,43 @@ export class InterventionWorkspaceOptimisticService {
   }
 
   /**
+   * Method removeWorkItem
+   * @method removeWorkItem
+   *
+   * @description
+   * Mirrors the server-side counter recompute that follows deleting one or more
+   * work items: decrements `workItemsCount` by the number removed,
+   * `completedWorkItemsCount` by the number of removed items that were resolved
+   * (completed or skipped), and bumps the revision once per removed item to
+   * match the server's per-delete `touch()`.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {InterventionOutput | null} intervention - Current intervention or null.
+   * @param {readonly InterventionWorkItemOutput[]} removed - Work items being removed.
+   *
+   * @returns {InterventionOutput | null} Updated intervention, or null when none.
+   */
+  public removeWorkItem(
+    intervention: InterventionOutput | null,
+    removed: readonly InterventionWorkItemOutput[],
+  ): InterventionOutput | null {
+    if (!intervention || removed.length === 0) return intervention;
+    const resolvedRemoved: number = removed.filter(
+      (item: InterventionWorkItemOutput): boolean =>
+        item.status === 'completed' || item.status === 'skipped',
+    ).length;
+    return {
+      ...intervention,
+      revision: intervention.revision + removed.length,
+      workItemsCount: Math.max(0, intervention.workItemsCount - removed.length),
+      completedWorkItemsCount: Math.max(0, intervention.completedWorkItemsCount - resolvedRemoved),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  /**
    * Method updateWorkItem
    * @method updateWorkItem
    *

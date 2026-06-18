@@ -159,6 +159,22 @@ export class InterventionPreparePanel {
   public readonly canPlan: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property online
+   * @readonly
+   *
+   * @description
+   * Whether the workspace is currently connected. Deleting a planned work item
+   * is a connected action (the offline outbox does not replay deletions), so it
+   * gates the table's destructive affordances.
+   *
+   * @access public
+   * @since 2.2.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly online: InputSignal<boolean> = input<boolean>(true);
+
+  /**
    * Property siteOptions
    * @readonly
    *
@@ -251,6 +267,22 @@ export class InterventionPreparePanel {
    */
   public readonly createWorkItem: OutputEmitterRef<CreateInterventionWorkItemInput> =
     output<CreateInterventionWorkItemInput>();
+
+  /**
+   * Property deleteWorkItems
+   * @readonly
+   *
+   * @description
+   * Emits the work items the user asked to delete (a single row, or the bulk
+   * selection) so the parent page can confirm and perform the removal.
+   *
+   * @access public
+   * @since 2.2.0
+   *
+   * @type {OutputEmitterRef<readonly InterventionWorkItemOutput[]>}
+   */
+  public readonly deleteWorkItems: OutputEmitterRef<readonly InterventionWorkItemOutput[]> =
+    output<readonly InterventionWorkItemOutput[]>();
   //#endregion
 
   //#region Properties
@@ -532,6 +564,24 @@ export class InterventionPreparePanel {
    */
   protected readonly canAddWorkItem: Signal<boolean> = computed<boolean>(
     () => this.canPlan() && this.intervention().status === 'draft',
+  );
+
+  /**
+   * Property canDeleteWorkItem
+   * @readonly
+   *
+   * @description
+   * Whether prepared work items may be deleted: the user may add them and the
+   * workspace is online. Deletion is not queued offline, so the destructive
+   * affordances are hidden while disconnected to avoid a guaranteed failure.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canDeleteWorkItem: Signal<boolean> = computed<boolean>(
+    () => this.canAddWorkItem() && this.online(),
   );
   //#endregion
 

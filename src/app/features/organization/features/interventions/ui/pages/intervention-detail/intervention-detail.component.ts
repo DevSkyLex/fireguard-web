@@ -23,6 +23,7 @@ import type {
   InterventionDiscoveryRequest,
   InterventionPhotoAttachment,
   InterventionPlanningDetails,
+  InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
 } from '@features/organization/features/interventions/models';
 import {
@@ -602,6 +603,39 @@ export class InterventionDetailPage {
    */
   protected createWorkItem(workItemInput: CreateInterventionWorkItemInput): void {
     this.store.createWorkItem({ interventionId: this.interventionId(), input: workItemInput });
+  }
+
+  /**
+   * Method confirmDeleteWorkItems
+   * @method confirmDeleteWorkItems
+   *
+   * @description
+   * Confirms then deletes the requested prepared work items (a single row or the
+   * bulk selection), delegating the removal to the workspace store. The message
+   * adapts to the count so a single deletion reads naturally.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {readonly InterventionWorkItemOutput[]} workItems - Work items to delete.
+   *
+   * @return {void}
+   */
+  protected confirmDeleteWorkItems(workItems: readonly InterventionWorkItemOutput[]): void {
+    if (workItems.length === 0) return;
+
+    const isSingle: boolean = workItems.length === 1;
+    this.confirmationService.confirm({
+      header: isSingle ? 'Delete work item' : 'Delete work items',
+      message: isSingle
+        ? 'Remove this prepared work item? This cannot be undone.'
+        : `Remove these ${workItems.length} prepared work items? This cannot be undone.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: { label: 'Delete', severity: 'danger' },
+      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      accept: (): void =>
+        void this.store.deleteWorkItems({ interventionId: this.interventionId(), workItems }),
+    });
   }
 
   /**

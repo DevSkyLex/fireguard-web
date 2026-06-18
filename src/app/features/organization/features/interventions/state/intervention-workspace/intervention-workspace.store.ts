@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { catchError, forkJoin, from, map, pipe, switchMap, tap, throwError } from 'rxjs';
+import { catchError, EMPTY, forkJoin, from, map, pipe, switchMap, tap, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/services/connectivity';
 import {
   InterventionOfflineService,
@@ -17,6 +17,7 @@ import { InterventionWorkspaceOptimisticService } from '@features/organization/f
 import type {
   InterventionDetailsUpdateCommand,
   InterventionWorkItemCreateCommand,
+  InterventionWorkItemDeleteCommand,
   InterventionWorkItemStatusCommand,
   InterventionWorkspaceState,
 } from './models';
@@ -407,6 +408,71 @@ export const InterventionWorkspaceStore = signalStore(
                       }),
                   }),
                 );
+            }),
+          ),
+        ),
+
+        deleteWorkItems: rxMethod<InterventionWorkItemDeleteCommand>(
+          pipe(
+            tap(() => patchState(store, { saving: true, error: null })),
+            switchMap(({ workItems }) => {
+              if (workItems.length === 0) {
+                patchState(store, { saving: false });
+                return EMPTY;
+              }
+
+              // Deleting a planned work item is a connected, desk-time planning
+              // action; the offline outbox only replays creates and status
+              // changes, so surface a clear message instead of silently failing.
+              if (connectivity.isOffline()) {
+                patchState(store, {
+                  saving: false,
+                  error: 'Connect to the network to delete planned work items.',
+                });
+                return EMPTY;
+              }
+
+              return forkJoin(
+                workItems.map((item) => service.removeWorkItem(item.id, item.revision)),
+              ).pipe(
+                tapResponse({
+                  next: () => {
+                    // Drop the deleted items and mirror the server's counter
+                    // recompute locally so the rail and table stay in sync
+                    // without a full workspace reload and its loading flash.
+                    const removedIds = new Set(workItems.map((item) => item.id));
+                    const remaining: readonly InterventionWorkItemOutput[] = store
+                      .workItems()
+                      .filter((item) => !removedIds.has(item.id));
+                    const updatedIntervention = optimistic.removeWorkItem(
+                      store.intervention(),
+                      workItems,
+                    );
+                    patchState(store, {
+                      workItems: remaining,
+                      intervention: updatedIntervention,
+                      saving: false,
+                    });
+                    if (updatedIntervention) {
+                      void offline
+                        .saveWorkspace(
+                          updatedIntervention,
+                          remaining,
+                          store.changes(),
+                          store.issues(),
+                          [],
+                          { replace: false },
+                        )
+                        .catch(() => undefined);
+                    }
+                  },
+                  error: () =>
+                    patchState(store, {
+                      saving: false,
+                      error: 'The work item could not be deleted.',
+                    }),
+                }),
+              );
             }),
           ),
         ),

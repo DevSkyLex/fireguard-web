@@ -87,8 +87,10 @@
             [targetOptions]="targetOptions()"
             [saving]="store.saving()"
             [canPlan]="canPlan()"
+            [online]="online()"
             (saveDetails)="saveDetails($event)"
             (createWorkItem)="createWorkItem($event)"
+            (deleteWorkItems)="confirmDeleteWorkItems($event)"
             (planIntervention)="planIntervention()"
           />
         }

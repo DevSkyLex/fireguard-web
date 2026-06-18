@@ -3,23 +3,21 @@
 >
   @if (selectedOrganization(); as organization) {
     <section
-      class="flex h-16 shrink-0 items-center gap-2.5 border-b border-surface-200 px-5 dark:border-surface-800"
+      class="flex h-16 shrink-0 items-center gap-3 border-b border-surface-200 px-5 dark:border-surface-800"
     >
       <span
-        class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary-600 text-surface-0 dark:bg-primary-500"
+        class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-100 text-sm font-semibold text-primary-700 dark:bg-primary-950 dark:text-primary-300"
         aria-hidden="true"
       >
-        <i class="pi pi-building text-sm"></i>
+        {{ orgInitials(organization.name) }}
       </span>
 
       <div class="min-w-0 flex-1">
-        <p class="truncate text-[13px] font-semibold text-surface-950 dark:text-surface-50">
+        <p class="truncate text-sm font-semibold text-surface-950 dark:text-surface-50">
           {{ organization.name }}
         </p>
-        <p
-          class="truncate text-[10px] font-medium tracking-widest text-surface-400 uppercase dark:text-surface-500"
-        >
-          Organization
+        <p class="truncate text-xs text-surface-500 dark:text-surface-400">
+          {{ organization.memberCount }} {{ organization.memberCount === 1 ? 'member' : 'members' }}
         </p>
       </div>
     </section>

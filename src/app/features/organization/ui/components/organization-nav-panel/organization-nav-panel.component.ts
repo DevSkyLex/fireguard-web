@@ -10,6 +10,7 @@ import {
   type OrganizationMemberAccessPort,
 } from '@features/organization';
 import { buildOrganizationNavigationSections } from '@features/organization/navigation';
+import { getOrganizationInitials } from '@features/organization/utils';
 
 /**
  * Component OrganizationSecondarySidebar
@@ -25,7 +26,7 @@ import { buildOrganizationNavigationSections } from '@features/organization/navi
  * as a slot contribution by `provideOrganization()`. Its design is
  * intentionally independent from the primary sidebar.
  *
- * @version 1.0.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -151,6 +152,25 @@ export class OrganizationNavPanel {
   //#endregion
 
   //#region Methods
+  /**
+   * Method orgInitials
+   * @method orgInitials
+   *
+   * @description
+   * Derives the monogram initials shown in the panel header avatar from
+   * the active organization name.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {string} name - The organization name to derive the initials from.
+   *
+   * @returns {string} The derived initials, in uppercase.
+   */
+  protected orgInitials(name: string): string {
+    return getOrganizationInitials(name);
+  }
+
   /**
    * Method getRouterLinkActiveOptions
    * @method getRouterLinkActiveOptions

@@ -10,6 +10,7 @@ import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import type { OrganizationOutput } from '@features/organization/models';
+import { getOrganizationInitials } from '@features/organization/utils';
 
 /**
  * Component OrganizationSwitcherTrigger
@@ -152,12 +153,7 @@ export class OrganizationSwitcherTrigger {
    * @return {string} The derived initials, in uppercase.
    */
   protected orgInitials(name: string): string {
-    return name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((word) => word[0].toUpperCase())
-      .join('');
+    return getOrganizationInitials(name);
   }
 
   /**

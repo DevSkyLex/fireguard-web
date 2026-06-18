@@ -9,7 +9,6 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { ProgressBarModule } from 'primeng/progressbar';
 import { SPLASH_SCREEN_PORT, type SplashScreenPort } from '@core/ports/splash-screen';
 
 /**
@@ -40,14 +39,16 @@ const FADE_DURATION_MS: number = 300;
  * `@angular/animations` to drive the fade-out effect.
  * Visibility and boot phase are consumed through a neutral splash
  * port so the component stays decoupled from core implementations.
- * A stalled boot swaps the progress bar for a retry affordance.
+ * The brand badge sits inside a circular progress ring with a phase
+ * title and detail line; a stalled boot swaps the ring for a retry
+ * affordance.
  *
- * @version 1.2.0
+ * @version 1.3.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-splash-screen',
-  imports: [ButtonModule, ProgressBarModule],
+  imports: [ButtonModule],
   templateUrl: './splash-screen.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -113,14 +114,38 @@ export class SplashScreen {
    *
    * @type {Signal<string>}
    */
-  protected readonly statusMessage: Signal<string> = computed<string>(() => {
+  protected readonly statusTitle: Signal<string> = computed<string>(() => {
     switch (this.splashScreenPort.phase()) {
       case 'session':
-        return 'Restoring your session…';
+        return 'Restoring your session';
       case 'stalled':
-        return "Can't reach the server — check your connection.";
+        return "Can't reach the server";
       default:
-        return 'Loading…';
+        return 'Loading';
+    }
+  });
+
+  /**
+   * Property statusDetail
+   * @readonly
+   *
+   * @description
+   * Secondary, phase-appropriate line shown under the title to explain
+   * what is happening (or how to recover) without overloading the title.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly statusDetail: Signal<string> = computed<string>(() => {
+    switch (this.splashScreenPort.phase()) {
+      case 'session':
+        return 'Securing your workspace and syncing your latest data…';
+      case 'stalled':
+        return 'Check your connection, then try again.';
+      default:
+        return 'This will only take a moment…';
     }
   });
 

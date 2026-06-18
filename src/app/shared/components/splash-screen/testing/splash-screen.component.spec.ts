@@ -45,19 +45,19 @@ describe('SplashScreen', () => {
 
     expect(fixture.componentInstance['rendered']()).toBe(true);
     expect(fixture.componentInstance['hiding']()).toBe(false);
-    expect(fixture.nativeElement.querySelector('p-progressbar')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[data-testid="boot-spinner"]')).toBeTruthy();
   });
 
-  it('should surface a phase-appropriate boot status message', () => {
+  it('should surface a phase-appropriate boot status title', () => {
     const fixture = TestBed.createComponent(SplashScreen);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Restoring your session…');
+    expect(fixture.nativeElement.textContent).toContain('Restoring your session');
 
     phase.set('navigation');
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Loading…');
+    expect(fixture.nativeElement.textContent).toContain('Loading');
   });
 
   it('should offer a retry affordance when the boot has stalled', () => {
@@ -67,7 +67,7 @@ describe('SplashScreen', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain("Can't reach the server");
-    expect(fixture.nativeElement.querySelector('p-progressbar')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="boot-spinner"]')).toBeNull();
 
     const retryButton: HTMLButtonElement | null =
       fixture.nativeElement.querySelector('p-button button');

@@ -11,34 +11,66 @@
       aria-hidden="true"
     ></div>
 
-    <div class="relative flex flex-col items-center gap-9">
-      <!-- Brand lockup -->
-      <div class="flex flex-col items-center gap-6">
+    <div class="relative flex flex-col items-center gap-10">
+      <!-- Brand badge inside a circular progress ring -->
+      <div class="relative flex size-36 items-center justify-center">
+        <!-- Faint full track ring -->
         <svg
-          class="size-20 text-primary-500"
-          viewBox="0 0 24 24"
+          class="absolute inset-0 size-full text-primary-500/15"
+          viewBox="0 0 100 100"
           fill="none"
-          xmlns="http://www.w3.org/2000/svg"
           aria-hidden="true"
         >
-          <path
-            d="M5 4l7 7m0 0l7-7m-7 7l-7 9m7-9l7 9"
-            stroke="currentColor"
-            stroke-width="2.4"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
+          <circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="3" />
         </svg>
 
-        <div class="flex flex-col items-center gap-1.5">
-          <span
-            class="text-3xl font-bold tracking-tight text-surface-950 dark:text-surface-50"
+        @if (!stalled()) {
+          <!-- Thin progress arc rotating around the badge -->
+          <svg
+            data-testid="boot-spinner"
+            class="absolute inset-0 size-full origin-center animate-spin text-primary-500 [animation-duration:1.4s] motion-reduce:animate-none"
+            viewBox="0 0 100 100"
+            fill="none"
             aria-hidden="true"
           >
-            Fireguard
-          </span>
-          <p class="text-sm text-surface-500 dark:text-surface-400">{{ statusMessage() }}</p>
+            <circle
+              cx="50"
+              cy="50"
+              r="46"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-dasharray="80 289"
+            />
+          </svg>
+        }
+
+        <!-- Filled logo badge -->
+        <div
+          class="relative flex size-20 items-center justify-center rounded-full bg-primary-500 shadow-lg shadow-primary-500/30"
+          aria-hidden="true"
+        >
+          <svg
+            class="size-9 text-white"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 2 C12.6 8 16 11.4 22 12 C16 12.6 12.6 16 12 22 C11.4 16 8 12.6 2 12 C8 11.4 11.4 8 12 2 Z"
+            />
+          </svg>
         </div>
+      </div>
+
+      <!-- Phase title + detail -->
+      <div class="flex max-w-xs flex-col items-center gap-2 text-center">
+        <span class="text-2xl font-semibold tracking-tight text-surface-950 dark:text-surface-50">
+          {{ statusTitle() }}
+        </span>
+        <p class="text-sm leading-relaxed text-surface-500 dark:text-surface-400">
+          {{ statusDetail() }}
+        </p>
       </div>
 
       @if (stalled()) {
@@ -49,15 +81,6 @@
           size="small"
           severity="secondary"
           (onClick)="retry()"
-        />
-      } @else {
-        <!-- Indeterminate boot indicator -->
-        <p-progressBar
-          mode="indeterminate"
-          class="w-44"
-          [style]="{ height: '0.375rem' }"
-          [pt]="{ root: 'rounded-full overflow-hidden', value: 'rounded-full' }"
-          aria-hidden="true"
         />
       }
     </div>

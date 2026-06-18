@@ -159,6 +159,51 @@ describe('DashboardLayout', () => {
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-context-panel'))).toBeFalsy();
   });
 
+  it('should collapse the primary sidebar when the context panel opens', () => {
+    contributionIsActive.set(false);
+
+    const fixture = TestBed.createComponent(DashboardLayout);
+    const sidebarService = fixture.debugElement.injector.get(DashboardSidebarService);
+    fixture.detectChanges();
+    expect(sidebarService.primaryCollapsed()).toBe(false);
+
+    contributionIsActive.set(true);
+    fixture.detectChanges();
+
+    expect(sidebarService.primaryCollapsed()).toBe(true);
+  });
+
+  it('should let the user re-open the primary sidebar while the context panel stays open', () => {
+    contributionIsActive.set(true);
+
+    const fixture = TestBed.createComponent(DashboardLayout);
+    const sidebarService = fixture.debugElement.injector.get(DashboardSidebarService);
+    fixture.detectChanges();
+    expect(sidebarService.primaryCollapsed()).toBe(true);
+
+    sidebarService.setPrimaryCollapsed(false);
+    fixture.detectChanges();
+
+    expect(sidebarService.primaryCollapsed()).toBe(false);
+  });
+
+  it('should restore the primary sidebar state when the context panel closes', () => {
+    contributionIsActive.set(false);
+
+    const fixture = TestBed.createComponent(DashboardLayout);
+    const sidebarService = fixture.debugElement.injector.get(DashboardSidebarService);
+    fixture.detectChanges();
+
+    contributionIsActive.set(true);
+    fixture.detectChanges();
+    expect(sidebarService.primaryCollapsed()).toBe(true);
+
+    contributionIsActive.set(false);
+    fixture.detectChanges();
+
+    expect(sidebarService.primaryCollapsed()).toBe(false);
+  });
+
   it('should render an accessible desktop resize handle', () => {
     const fixture = TestBed.createComponent(DashboardLayout);
     fixture.detectChanges();

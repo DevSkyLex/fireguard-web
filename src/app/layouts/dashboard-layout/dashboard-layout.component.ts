@@ -1,5 +1,13 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, ChangeDetectionStrategy, computed, inject, type Signal } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  computed,
+  effect,
+  inject,
+  type Signal,
+  untracked,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
@@ -105,5 +113,49 @@ export class DashboardLayout {
     (): boolean => !this.isDesktopSidebar() || this.sidebarService.primaryCollapsed(),
   );
 
+  /**
+   * Tracks the previous context-panel active state so the effect reacts
+   * only to open/close transitions, not to every change detection pass.
+   */
+  private contextPanelWasActive: boolean = false;
+
+  /**
+   * Primary sidebar collapsed state captured right before the context
+   * panel auto-collapsed it, restored when the context panel closes.
+   */
+  private primaryCollapsedBeforeContext: boolean = false;
+
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Wires the primary sidebar to the context panel: opening the context
+   * navigation bar auto-collapses the primary sidebar to its icon-only
+   * form (the header toggle still lets the user re-open it), and closing
+   * the context panel restores the sidebar to its pre-context state.
+   *
+   * @access public
+   * @since 1.6.0
+   */
+  public constructor() {
+    effect((): void => {
+      const active: boolean = this.hasActiveContextPanel();
+      if (active === this.contextPanelWasActive) return;
+      this.contextPanelWasActive = active;
+
+      if (active) {
+        this.primaryCollapsedBeforeContext = untracked((): boolean =>
+          this.sidebarService.primaryCollapsed(),
+        );
+        this.sidebarService.setPrimaryCollapsed(true);
+      } else {
+        this.sidebarService.setPrimaryCollapsed(this.primaryCollapsedBeforeContext);
+      }
+    });
+  }
   //#endregion
 }

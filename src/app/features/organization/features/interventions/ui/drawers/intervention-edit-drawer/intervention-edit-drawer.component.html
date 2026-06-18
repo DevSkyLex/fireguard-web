@@ -1,0 +1,30 @@
+<p-drawer
+  header="Edit details"
+  [visible]="visible()"
+  (visibleChange)="visibleChange.emit($event)"
+  [appendTo]="'body'"
+  [modal]="true"
+  [blockScroll]="true"
+  [dismissible]="!loading()"
+  [closeOnEscape]="!loading()"
+  position="right"
+  [pt]="drawerPt"
+>
+  <ng-template #content>
+    <div class="flex flex-col gap-6 pr-1">
+      <p class="text-sm text-surface-600 dark:text-surface-300">
+        Update the site, responsible agent, participants, priority and schedule window for this
+        intervention.
+      </p>
+
+      <app-intervention-planning-form
+        [intervention]="intervention()"
+        [siteOptions]="siteOptions()"
+        [memberOptions]="memberOptions()"
+        [loading]="loading()"
+        [disabled]="disabled()"
+        (submitted)="submitted.emit($event)"
+      />
+    </div>
+  </ng-template>
+</p-drawer>

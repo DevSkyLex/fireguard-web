@@ -32,49 +32,11 @@ import {
   type MemberSelectOption,
   type SelectOption,
 } from '@features/organization/features/interventions/models';
-import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
+import { EmptyState, Tag } from '@shared/components';
 import { InterventionMemberOption } from '../../components/intervention-member-option/intervention-member-option.component';
 import { InterventionTag } from '../../components/intervention-tag';
-
-/**
- * Interface WorkItemRow
- * @interface WorkItemRow
- *
- * @description
- * Flattened view model for one work item row, exposing the resolved labels the
- * user actually sees (action, target, assignee) as plain fields so PrimeNG's
- * client-side sorting, global search and status filtering operate on them.
- */
-interface WorkItemRow {
-  /** Stable identity used as the table `dataKey` and selection key. */
-  readonly id: string;
-  /** Underlying work item, forwarded to the parent on delete. */
-  readonly workItem: InterventionWorkItemOutput;
-  /** Humanised action label (e.g. "Inventory"). */
-  readonly actionLabel: string;
-  /** Resolved target label, or null when nothing useful to show. */
-  readonly targetLabel: string | null;
-  /** Resolved assignee option, or null when unassigned. */
-  readonly assignee: MemberSelectOption | null;
-  /** Assignee display name, used for sorting and global search. */
-  readonly assigneeName: string;
-  /** Raw work item status, used for the badge, sort and status filter. */
-  readonly status: InterventionWorkItemStatus;
-}
-
-/**
- * Interface WorkItemStatusOption
- * @interface WorkItemStatusOption
- *
- * @description
- * Work item status filter option: the shared {@link TagDescriptor} extended with
- * the raw status value so the same descriptor drives the `<app-tag>` rendering
- * and the table filter.
- */
-interface WorkItemStatusOption extends TagDescriptor {
-  /** Raw work item status value. */
-  readonly value: InterventionWorkItemStatus;
-}
+import type { WorkItemRow, WorkItemStatusOption } from './models';
+import { WORK_ITEM_STATUS_OPTIONS } from './options';
 
 /**
  * Component InterventionWorkItemTable
@@ -351,12 +313,7 @@ export class InterventionWorkItemTable {
    *
    * @type {WorkItemStatusOption[]}
    */
-  protected readonly statusOptions: WorkItemStatusOption[] = (
-    ['planned', 'in_progress', 'completed', 'skipped'] as const
-  ).map((value: InterventionWorkItemStatus): WorkItemStatusOption => {
-    const descriptor: TagDescriptor = resolveInterventionTag('workItemStatus', value);
-    return { label: descriptor.label, severity: descriptor.severity, icon: descriptor.icon, value };
-  });
+  protected readonly statusOptions: WorkItemStatusOption[] = WORK_ITEM_STATUS_OPTIONS;
 
   /**
    * Property searchControl

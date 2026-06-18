@@ -14,7 +14,6 @@ import {
 import { AvatarModule } from 'primeng/avatar';
 import { AvatarGroupModule } from 'primeng/avatargroup';
 import { ButtonModule } from 'primeng/button';
-import { DrawerModule, type DrawerPassThroughOptions } from 'primeng/drawer';
 import { TooltipModule } from 'primeng/tooltip';
 import type {
   CreateInterventionWorkItemInput,
@@ -27,13 +26,15 @@ import type {
 import { InterventionMemberOption } from '@features/organization/features/interventions/ui/components/intervention-member-option/intervention-member-option.component';
 import { InterventionTag } from '@features/organization/features/interventions/ui/components/intervention-tag';
 import {
-  InterventionPlanningForm,
-  InterventionWorkItemForm,
-  type InterventionPlanningFormValues,
-  type InterventionWorkItemFormValues,
+  InterventionEditDrawer,
+  InterventionWorkItemDrawer,
+} from '@features/organization/features/interventions/ui/drawers';
+import type {
+  InterventionPlanningFormValues,
+  InterventionWorkItemFormValues,
 } from '@features/organization/features/interventions/ui/forms';
 import { InterventionWorkItemTable } from '@features/organization/features/interventions/ui/tables/intervention-work-item-table';
-import { Card } from '@shared/components';
+import { Card, MetricCard } from '@shared/components';
 
 /**
  * Interface PrepareReadinessCheck
@@ -87,12 +88,12 @@ const PARTICIPANT_AVATAR_LIMIT = 5;
     ButtonModule,
     Card,
     DatePipe,
-    DrawerModule,
+    InterventionEditDrawer,
     InterventionMemberOption,
-    InterventionPlanningForm,
     InterventionTag,
-    InterventionWorkItemForm,
+    InterventionWorkItemDrawer,
     InterventionWorkItemTable,
+    MetricCard,
     TooltipModule,
   ],
   templateUrl: './intervention-prepare-panel.component.html',
@@ -286,41 +287,6 @@ export class InterventionPreparePanel {
   //#endregion
 
   //#region Properties
-  /**
-   * Property drawerPt
-   * @readonly
-   *
-   * @description
-   * PrimeNG drawer pass-through sizing the add-work-item drawer: full width on
-   * mobile, compact on larger viewports.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {DrawerPassThroughOptions}
-   */
-  protected readonly drawerPt: DrawerPassThroughOptions = {
-    root: { class: '!w-full sm:!w-[34rem]' },
-  };
-
-  /**
-   * Property editDrawerPt
-   * @readonly
-   *
-   * @description
-   * PrimeNG drawer pass-through sizing the planning-details edit drawer to
-   * match the creation drawer: full width on mobile, widening on larger
-   * viewports to give the two-column form room.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {DrawerPassThroughOptions}
-   */
-  protected readonly editDrawerPt: DrawerPassThroughOptions = {
-    root: { class: '!w-full md:!w-[52rem] xl:!w-[60rem]' },
-  };
-
   /**
    * Property editDrawerVisible
    * @readonly

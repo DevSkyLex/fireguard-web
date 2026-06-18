@@ -1,120 +1,160 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="mt-6 grid gap-5 sm:grid-cols-2">
-  <label class="grid gap-1.5 text-sm font-medium">
-    <span>Site <span class="text-red-500" aria-hidden="true">*</span></span>
-    <p-select
-      formControlName="site"
-      [options]="[...siteOptions()]"
-      optionLabel="label"
-      optionValue="value"
-      [filter]="true"
-      placeholder="Select a site"
-      [invalid]="form.controls.site.invalid && form.controls.site.touched"
-    />
-  </label>
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
+  <section class="flex flex-col gap-5" aria-labelledby="intervention-planning-heading">
+    <div>
+      <h2
+        id="intervention-planning-heading"
+        class="text-lg font-semibold text-surface-900 dark:text-surface-100"
+      >
+        Details
+      </h2>
+      <p class="mt-0.5 text-sm text-surface-500 dark:text-surface-400">
+        Confirm the assignment, schedule and priority. These freeze the scope before agents reach
+        the field.
+      </p>
+    </div>
 
-  <label class="grid gap-1.5 text-sm font-medium">
-    <span>Responsible agent <span class="text-red-500" aria-hidden="true">*</span></span>
-    <p-select
-      formControlName="responsible"
-      [options]="[...memberOptions()]"
-      optionLabel="label"
-      optionValue="value"
-      [filter]="true"
-      filterBy="label,roleLabel"
-      [showClear]="true"
-      placeholder="Assign a responsible agent"
-      [invalid]="form.controls.responsible.invalid && form.controls.responsible.touched"
-    >
-      <ng-template #item let-option>
-        <app-intervention-member-option [option]="option" />
-      </ng-template>
-      <ng-template #selectedItem let-option>
-        @if (option) {
-          <app-intervention-member-option [option]="option" [compact]="true" />
+    <div class="grid gap-5 md:grid-cols-2">
+      <label class="grid gap-1.5 text-sm font-medium md:col-span-2">
+        <span>Priority <span class="text-red-500" aria-hidden="true">*</span></span>
+        <p-select
+          formControlName="priority"
+          [options]="[...priorityOptions]"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+        >
+          <ng-template #selectedItem let-option>
+            @if (option) {
+              <app-intervention-option kind="priority" [value]="option.value" />
+            }
+          </ng-template>
+          <ng-template #item let-option>
+            <app-intervention-option kind="priority" [value]="option.value" />
+          </ng-template>
+        </p-select>
+      </label>
+
+      <label class="grid gap-1.5 text-sm font-medium">
+        <span>Site <span class="text-red-500" aria-hidden="true">*</span></span>
+        <p-select
+          formControlName="site"
+          [options]="[...siteOptions()]"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          [showClear]="true"
+          placeholder="Select a site"
+          appendTo="body"
+          [invalid]="form.controls.site.invalid && form.controls.site.touched"
+        />
+        @if (form.controls.site.invalid && form.controls.site.touched) {
+          <p-message severity="error" variant="simple">
+            <span>A site is required.</span>
+          </p-message>
         }
-      </ng-template>
-    </p-select>
-  </label>
+      </label>
 
-  <label class="grid gap-1.5 text-sm font-medium sm:col-span-2">
-    Participants
-    <p-multiselect
-      formControlName="participants"
-      [options]="[...memberOptions()]"
-      optionLabel="label"
-      optionValue="value"
-      [filter]="true"
-      filterBy="label,roleLabel"
-      display="chip"
-      placeholder="Add field participants"
-    >
-      <ng-template #item let-option>
-        <app-intervention-member-option [option]="option" />
-      </ng-template>
-    </p-multiselect>
-  </label>
-
-  <label class="grid gap-1.5 text-sm font-medium">
-    <span>Planned start <span class="text-red-500" aria-hidden="true">*</span></span>
-    <p-datepicker
-      formControlName="plannedStartAt"
-      [showTime]="true"
-      hourFormat="24"
-      [showIcon]="true"
-      [showClear]="true"
-      [showButtonBar]="true"
-      appendTo="body"
-      dateFormat="yy-mm-dd"
-      placeholder="Select start date and time"
-      class="w-full"
-      [invalid]="form.controls.plannedStartAt.invalid && form.controls.plannedStartAt.touched"
-    />
-  </label>
-
-  <label class="grid gap-1.5 text-sm font-medium">
-    <span>Due <span class="text-red-500" aria-hidden="true">*</span></span>
-    <p-datepicker
-      formControlName="dueAt"
-      [showTime]="true"
-      hourFormat="24"
-      [showIcon]="true"
-      [showClear]="true"
-      [showButtonBar]="true"
-      [minDate]="form.controls.plannedStartAt.value ?? undefined"
-      appendTo="body"
-      dateFormat="yy-mm-dd"
-      placeholder="Select due date and time"
-      class="w-full"
-      [invalid]="form.controls.dueAt.invalid && form.controls.dueAt.touched"
-    />
-  </label>
-
-  <label class="grid gap-1.5 text-sm font-medium">
-    <span>Priority <span class="text-red-500" aria-hidden="true">*</span></span>
-    <p-select
-      formControlName="priority"
-      [options]="[...priorityOptions]"
-      optionLabel="label"
-      optionValue="value"
-    >
-      <ng-template #selectedItem let-option>
-        @if (option) {
-          <app-intervention-option kind="priority" [value]="option.value" />
+      <label class="grid gap-1.5 text-sm font-medium">
+        <span>Responsible agent <span class="text-red-500" aria-hidden="true">*</span></span>
+        <p-select
+          formControlName="responsible"
+          [options]="[...memberOptions()]"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          filterBy="label,roleLabel"
+          [showClear]="true"
+          placeholder="Assign a responsible agent"
+          appendTo="body"
+          [invalid]="form.controls.responsible.invalid && form.controls.responsible.touched"
+        >
+          <ng-template #item let-option>
+            <app-intervention-member-option [option]="option" />
+          </ng-template>
+          <ng-template #selectedItem let-option>
+            @if (option) {
+              <app-intervention-member-option [option]="option" [compact]="true" />
+            }
+          </ng-template>
+        </p-select>
+        @if (form.controls.responsible.invalid && form.controls.responsible.touched) {
+          <p-message severity="error" variant="simple">
+            <span>A responsible agent is required.</span>
+          </p-message>
         }
-      </ng-template>
-      <ng-template #item let-option>
-        <app-intervention-option kind="priority" [value]="option.value" />
-      </ng-template>
-    </p-select>
-  </label>
+      </label>
 
-  <div class="flex items-end sm:justify-end">
+      <label class="grid gap-1.5 text-sm font-medium md:col-span-2">
+        Participants
+        <p-multiselect
+          formControlName="participants"
+          [options]="[...memberOptions()]"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          filterBy="label,roleLabel"
+          display="chip"
+          placeholder="Add field participants"
+          appendTo="body"
+        >
+          <ng-template #item let-option>
+            <app-intervention-member-option [option]="option" />
+          </ng-template>
+        </p-multiselect>
+      </label>
+
+      <label class="grid gap-1.5 text-sm font-medium">
+        <span>Planned start <span class="text-red-500" aria-hidden="true">*</span></span>
+        <p-datepicker
+          formControlName="plannedStartAt"
+          [showTime]="true"
+          hourFormat="24"
+          [showIcon]="true"
+          [showClear]="true"
+          [showButtonBar]="true"
+          appendTo="body"
+          dateFormat="yy-mm-dd"
+          placeholder="Select start date and time"
+          class="w-full"
+          [invalid]="form.controls.plannedStartAt.invalid && form.controls.plannedStartAt.touched"
+        />
+        @if (form.controls.plannedStartAt.invalid && form.controls.plannedStartAt.touched) {
+          <p-message severity="error" variant="simple">
+            <span>A planned start is required.</span>
+          </p-message>
+        }
+      </label>
+
+      <label class="grid gap-1.5 text-sm font-medium">
+        <span>Due <span class="text-red-500" aria-hidden="true">*</span></span>
+        <p-datepicker
+          formControlName="dueAt"
+          [showTime]="true"
+          hourFormat="24"
+          [showIcon]="true"
+          [showClear]="true"
+          [showButtonBar]="true"
+          [minDate]="form.controls.plannedStartAt.value ?? undefined"
+          appendTo="body"
+          dateFormat="yy-mm-dd"
+          placeholder="Select due date and time"
+          class="w-full"
+          [invalid]="form.controls.dueAt.invalid && form.controls.dueAt.touched"
+        />
+        @if (form.controls.dueAt.invalid && form.controls.dueAt.touched) {
+          <p-message severity="error" variant="simple">
+            <span>A due date is required.</span>
+          </p-message>
+        }
+      </label>
+    </div>
+  </section>
+
+  <div class="sticky bottom-0 -mb-2 bg-surface-0 pt-4 pb-2 dark:bg-surface-900">
     <p-button
-      label="Save planning details"
+      label="Save details"
       type="submit"
-      icon="pi pi-save"
-      severity="secondary"
-      [outlined]="true"
+      [fluid]="true"
       [loading]="loading()"
       [disabled]="form.invalid || disabled() || loading()"
     />

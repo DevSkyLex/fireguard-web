@@ -237,8 +237,8 @@ export class InterventionPreparePanel {
    * @readonly
    *
    * @description
-   * Shared PrimeNG drawer pass-through sizing the edit and work-item drawers:
-   * full width on mobile, fixed on larger viewports.
+   * PrimeNG drawer pass-through sizing the add-work-item drawer: full width on
+   * mobile, compact on larger viewports.
    *
    * @access protected
    * @since 2.0.0
@@ -247,6 +247,24 @@ export class InterventionPreparePanel {
    */
   protected readonly drawerPt: DrawerPassThroughOptions = {
     root: { class: '!w-full sm:!w-[34rem]' },
+  };
+
+  /**
+   * Property editDrawerPt
+   * @readonly
+   *
+   * @description
+   * PrimeNG drawer pass-through sizing the planning-details edit drawer to
+   * match the creation drawer: full width on mobile, widening on larger
+   * viewports to give the two-column form room.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {DrawerPassThroughOptions}
+   */
+  protected readonly editDrawerPt: DrawerPassThroughOptions = {
+    root: { class: '!w-full md:!w-[52rem] xl:!w-[60rem]' },
   };
 
   /**
@@ -494,6 +512,59 @@ export class InterventionPreparePanel {
       required: true,
     });
     this.workItemDrawerVisible.set(false);
+  }
+
+  /**
+   * Method workItemAssignee
+   * @method workItemAssignee
+   *
+   * @description
+   * Resolves the member option assigned to a work item, or null when the item
+   * is unassigned, so the row can show who owns the task.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {InterventionWorkItemOutput} item - Work item to resolve.
+   *
+   * @returns {MemberSelectOption | null} Assigned member option, if any.
+   */
+  protected workItemAssignee(item: InterventionWorkItemOutput): MemberSelectOption | null {
+    if (!item.assignee) return null;
+
+    return (
+      this.memberOptions().find(
+        (option: MemberSelectOption): boolean => option.value === item.assignee,
+      ) ?? null
+    );
+  }
+
+  /**
+   * Method workItemTarget
+   * @method workItemTarget
+   *
+   * @description
+   * Resolves a human-readable target label for a work item: the matching
+   * target option label when known, the raw value when it is free text, and
+   * null for unresolved resource IRIs (which are not useful to the user).
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {InterventionWorkItemOutput} item - Work item to resolve.
+   *
+   * @returns {string | null} Display label, or null when nothing useful to show.
+   */
+  protected workItemTarget(item: InterventionWorkItemOutput): string | null {
+    const target: string | null = item.target;
+    if (!target) return null;
+
+    const option: SelectOption | undefined = this.targetOptions().find(
+      (candidate: SelectOption): boolean => candidate.value === target,
+    );
+    if (option) return option.label;
+
+    return target.startsWith('/api/') ? null : target;
   }
   //#endregion
 }

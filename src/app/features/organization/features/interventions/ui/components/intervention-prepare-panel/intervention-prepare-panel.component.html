@@ -66,20 +66,23 @@
                   >
                     {{ item.action.replace('_', ' ') }}
                   </p>
-                  <p class="truncate text-xs text-surface-500 dark:text-surface-400">
-                    {{ item.target || 'Site-level work' }}
-                  </p>
+                  @if (workItemTarget(item); as target) {
+                    <p class="truncate text-xs text-surface-500 dark:text-surface-400">
+                      {{ target }}
+                    </p>
+                  }
                 </div>
-                <span
-                  class="shrink-0 text-xs font-medium"
-                  [class]="
-                    item.assignee
-                      ? 'text-surface-600 dark:text-surface-300'
-                      : 'text-surface-400 dark:text-surface-500'
-                  "
-                >
-                  {{ item.assignee ? 'Assigned' : 'Unassigned' }}
-                </span>
+                @if (workItemAssignee(item); as assignee) {
+                  <app-intervention-member-option
+                    class="shrink-0"
+                    [option]="assignee"
+                    [compact]="true"
+                  />
+                } @else {
+                  <span class="shrink-0 text-xs font-medium text-surface-400 dark:text-surface-500">
+                    Unassigned
+                  </span>
+                }
               </li>
             }
           </ul>
@@ -289,15 +292,29 @@
   </aside>
 </div>
 
-<p-drawer [(visible)]="editDrawerVisible" position="right" header="Edit details" [pt]="drawerPt">
-  <app-intervention-planning-form
-    [intervention]="intervention()"
-    [siteOptions]="siteOptions()"
-    [memberOptions]="memberOptions()"
-    [loading]="saving()"
-    [disabled]="!canPlan()"
-    (submitted)="savePlanningDetails($event)"
-  />
+<p-drawer
+  [(visible)]="editDrawerVisible"
+  position="right"
+  header="Edit details"
+  [pt]="editDrawerPt"
+>
+  <ng-template #content>
+    <div class="flex flex-col gap-6 pr-1">
+      <p class="text-sm text-surface-600 dark:text-surface-300">
+        Update the site, responsible agent, participants, priority and schedule window for this
+        intervention.
+      </p>
+
+      <app-intervention-planning-form
+        [intervention]="intervention()"
+        [siteOptions]="siteOptions()"
+        [memberOptions]="memberOptions()"
+        [loading]="saving()"
+        [disabled]="!canPlan()"
+        (submitted)="savePlanningDetails($event)"
+      />
+    </div>
+  </ng-template>
 </p-drawer>
 
 <p-drawer

@@ -17,6 +17,7 @@ import {
 } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
+import { MessageModule } from 'primeng/message';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectModule } from 'primeng/select';
 import type {
@@ -47,6 +48,7 @@ import type { InterventionPlanningFormData, InterventionPlanningFormValues } fro
     DatePickerModule,
     InterventionMemberOption,
     InterventionOption,
+    MessageModule,
     MultiSelectModule,
     ReactiveFormsModule,
     SelectModule,

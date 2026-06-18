@@ -33,6 +33,10 @@ import {
 import { InterventionDiscoveryService } from '@features/organization/features/interventions/services/intervention-discovery';
 import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
 import {
+  ActiveInterventionStore,
+  type ActiveInterventionStoreType,
+} from '@features/organization/features/interventions/state';
+import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
 } from '@features/organization/features/interventions/state/intervention-planning-options';
@@ -109,6 +113,23 @@ export class InterventionDetailPage {
   protected readonly store: InterventionWorkspaceStoreType = inject<InterventionWorkspaceStoreType>(
     InterventionWorkspaceStore,
   );
+
+  /**
+   * Property activeIntervention
+   * @readonly
+   *
+   * @description
+   * Root-provided active intervention store kept in sync with the loaded
+   * intervention so the breadcrumb, page title and header banner resolved by
+   * {@link interventionTitleResolver} stay fresh across navigation.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ActiveInterventionStoreType}
+   */
+  private readonly activeIntervention: ActiveInterventionStoreType =
+    inject<ActiveInterventionStoreType>(ActiveInterventionStore);
 
   /**
    * Property planningOptions
@@ -543,6 +564,10 @@ export class InterventionDetailPage {
       this.planningOptions.loadWorkspaceOptions(
         this.organization.selectedOrganization()?.id ?? null,
       );
+    });
+    effect(() => {
+      const intervention = this.store.intervention();
+      if (intervention) this.activeIntervention.setIntervention(intervention);
     });
   }
 

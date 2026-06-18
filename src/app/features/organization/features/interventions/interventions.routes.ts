@@ -1,6 +1,7 @@
 import type { Routes } from '@angular/router';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { interventionTitleResolver } from './http/resolvers';
 import type { InterventionDetailPage } from './ui/pages/intervention-detail/intervention-detail.component';
 import type { InterventionListPage } from './ui/pages/intervention-list/intervention-list.component';
 import type { MyInterventionsPage } from './ui/pages/my-interventions/my-interventions.component';
@@ -46,7 +47,10 @@ export const INTERVENTION_ROUTES: Routes = [
       import('./ui/pages/intervention-detail/intervention-detail.component').then(
         (module) => module.InterventionDetailPage,
       ),
-    title: 'Intervention',
+    resolve: {
+      breadcrumb: interventionTitleResolver,
+    },
+    title: interventionTitleResolver,
   },
   {
     path: '',

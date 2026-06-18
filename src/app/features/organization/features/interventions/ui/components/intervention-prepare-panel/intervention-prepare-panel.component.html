@@ -59,110 +59,100 @@
       }
 
       <ng-template #content>
-        <div class="flex flex-col gap-6">
-          <dl class="grid grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2.5">
-            <dt class="text-sm text-surface-500 dark:text-surface-400">Status</dt>
-            <dd class="min-w-0">
-              <app-intervention-tag
-                kind="status"
-                [value]="intervention().status"
-                variant="inline"
-              />
-            </dd>
+        <dl class="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-x-3 gap-y-3.5 text-sm">
+          <dt class="text-surface-500 dark:text-surface-400">Status</dt>
+          <dd class="flex min-h-6 min-w-0 items-center">
+            <app-intervention-tag kind="status" [value]="intervention().status" variant="inline" />
+          </dd>
 
-            <dt class="text-sm text-surface-500 dark:text-surface-400">Priority</dt>
-            <dd class="min-w-0">
-              <app-intervention-tag
-                kind="priority"
-                [value]="intervention().priority"
-                variant="inline"
-              />
-            </dd>
+          <dt class="text-surface-500 dark:text-surface-400">Priority</dt>
+          <dd class="flex min-h-6 min-w-0 items-center">
+            <app-intervention-tag
+              kind="priority"
+              [value]="intervention().priority"
+              variant="inline"
+            />
+          </dd>
 
-            <dt class="text-sm text-surface-500 dark:text-surface-400">Responsible</dt>
-            <dd class="min-w-0">
-              @if (responsibleMember(); as member) {
-                <app-intervention-member-option [option]="member" [compact]="true" />
-              } @else {
-                <span class="text-sm text-surface-400 dark:text-surface-500">Unassigned</span>
-              }
-            </dd>
+          <dt class="text-surface-500 dark:text-surface-400">Responsible</dt>
+          <dd class="flex min-h-6 min-w-0 items-center">
+            @if (responsibleMember(); as member) {
+              <app-intervention-member-option [option]="member" [compact]="true" />
+            } @else {
+              <span class="text-surface-400 dark:text-surface-500">Unassigned</span>
+            }
+          </dd>
 
-            <dt class="self-start pt-1 text-sm text-surface-500 dark:text-surface-400">
-              Participants
-            </dt>
-            <dd class="flex min-w-0 flex-wrap items-center gap-2">
-              @if (participantMembers().length) {
-                <p-avatar-group>
-                  @for (member of visibleParticipants(); track member.value) {
-                    <p-avatar
-                      [image]="member.avatarUrl ?? undefined"
-                      [label]="member.avatarUrl ? undefined : member.initials"
-                      shape="circle"
-                      [pTooltip]="member.displayName"
-                      tooltipPosition="top"
-                    />
-                  }
-                  @if (participantOverflow(); as overflow) {
-                    <p-avatar
-                      [label]="'+' + overflow"
-                      shape="circle"
-                      [pTooltip]="participantOverflowNames()"
-                      tooltipPosition="top"
-                    />
-                  }
-                </p-avatar-group>
-              } @else {
-                <span class="text-sm text-surface-400 dark:text-surface-500">None</span>
-              }
-            </dd>
-
-            <dt class="text-sm text-surface-500 dark:text-surface-400">Site</dt>
-            <dd class="min-w-0">
-              @if (siteLabel(); as site) {
-                <span class="flex min-w-0 items-center gap-1.5 text-sm font-medium">
-                  <i class="pi pi-building shrink-0 text-surface-400" aria-hidden="true"></i>
-                  <span class="truncate">{{ site }}</span>
-                </span>
-              } @else {
-                <span class="text-sm text-surface-400 dark:text-surface-500">No site</span>
-              }
-            </dd>
-          </dl>
-
-          <div>
-            <h3
-              class="text-xs font-semibold tracking-wide text-surface-500 uppercase dark:text-surface-400"
-            >
-              Schedule
-            </h3>
-            <dl class="mt-2 grid grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2.5">
-              <dt class="text-sm text-surface-500 dark:text-surface-400">Start</dt>
-              <dd class="min-w-0 text-sm font-medium">
-                @if (intervention().plannedStartAt; as start) {
-                  <span class="flex items-center gap-1.5">
-                    <i class="pi pi-calendar shrink-0 text-surface-400" aria-hidden="true"></i>
-                    {{ start | date: 'MMM d, HH:mm' }}
-                  </span>
-                } @else {
-                  <span class="text-surface-400 dark:text-surface-500">Not set</span>
+          <dt class="text-surface-500 dark:text-surface-400">Participants</dt>
+          <dd class="flex min-h-6 min-w-0 items-center">
+            @if (participantMembers().length) {
+              <p-avatar-group>
+                @for (member of visibleParticipants(); track member.value) {
+                  <p-avatar
+                    [image]="member.avatarUrl ?? undefined"
+                    [label]="member.avatarUrl ? undefined : member.initials"
+                    shape="circle"
+                    [pt]="participantAvatarPt"
+                    [pTooltip]="member.displayName"
+                    tooltipPosition="top"
+                  />
                 }
-              </dd>
-
-              <dt class="text-sm text-surface-500 dark:text-surface-400">Due</dt>
-              <dd class="min-w-0 text-sm font-medium">
-                @if (intervention().dueAt; as due) {
-                  <span class="flex items-center gap-1.5">
-                    <i class="pi pi-calendar shrink-0 text-red-500/80" aria-hidden="true"></i>
-                    {{ due | date: 'MMM d, HH:mm' }}
-                  </span>
-                } @else {
-                  <span class="text-surface-400 dark:text-surface-500">Not set</span>
+                @if (participantOverflow(); as overflow) {
+                  <p-avatar
+                    [label]="'+' + overflow"
+                    shape="circle"
+                    [pt]="participantAvatarPt"
+                    [pTooltip]="participantOverflowNames()"
+                    tooltipPosition="top"
+                  />
                 }
-              </dd>
-            </dl>
-          </div>
-        </div>
+              </p-avatar-group>
+            } @else {
+              <span class="text-surface-400 dark:text-surface-500">None</span>
+            }
+          </dd>
+
+          <dt class="text-surface-500 dark:text-surface-400">Site</dt>
+          <dd class="flex min-h-6 min-w-0 items-center">
+            @if (siteLabel(); as site) {
+              <span class="flex min-w-0 items-center gap-1.5 font-medium">
+                <i class="pi pi-building shrink-0 text-sm text-surface-400" aria-hidden="true"></i>
+                <span class="truncate">{{ site }}</span>
+              </span>
+            } @else {
+              <span class="text-surface-400 dark:text-surface-500">No site</span>
+            }
+          </dd>
+
+          <div
+            class="col-span-2 my-1 border-t border-surface-200 dark:border-surface-800"
+            role="presentation"
+          ></div>
+
+          <dt class="text-surface-500 dark:text-surface-400">Start</dt>
+          <dd class="flex min-h-6 min-w-0 items-center font-medium">
+            @if (intervention().plannedStartAt; as start) {
+              <span class="flex items-center gap-1.5">
+                <i class="pi pi-calendar shrink-0 text-sm text-surface-400" aria-hidden="true"></i>
+                {{ start | date: 'MMM d, HH:mm' }}
+              </span>
+            } @else {
+              <span class="font-normal text-surface-400 dark:text-surface-500">Not set</span>
+            }
+          </dd>
+
+          <dt class="text-surface-500 dark:text-surface-400">Due</dt>
+          <dd class="flex min-h-6 min-w-0 items-center font-medium">
+            @if (intervention().dueAt; as due) {
+              <span class="flex items-center gap-1.5">
+                <i class="pi pi-calendar shrink-0 text-sm text-red-500/80" aria-hidden="true"></i>
+                {{ due | date: 'MMM d, HH:mm' }}
+              </span>
+            } @else {
+              <span class="font-normal text-surface-400 dark:text-surface-500">Not set</span>
+            }
+          </dd>
+        </dl>
       </ng-template>
 
       <ng-template #footer>

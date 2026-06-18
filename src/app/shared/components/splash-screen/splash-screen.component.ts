@@ -1,12 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   signal,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ButtonModule } from 'primeng/button';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { SPLASH_SCREEN_PORT, type SplashScreenPort } from '@core/ports/splash-screen';
 
 /**
@@ -28,19 +31,23 @@ const FADE_DURATION_MS: number = 300;
  * @description
  * Full-viewport overlay displayed during application boot
  * and lazy-loaded route transitions. Theme-aware via the
- * `data-theme` attribute already applied on `<html>`.
+ * `data-theme` attribute already applied on `<html>`: a clean
+ * white surface in light mode, a deep surface in dark mode,
+ * both fronted by the brand lockup and a slim indeterminate
+ * boot indicator.
  *
  * Uses a CSS opacity transition (Tailwind) instead of
  * `@angular/animations` to drive the fade-out effect.
- * Visibility is consumed through a neutral splash port so the
- * component stays decoupled from core implementations.
+ * Visibility and boot phase are consumed through a neutral splash
+ * port so the component stays decoupled from core implementations.
+ * A stalled boot swaps the progress bar for a retry affordance.
  *
- * @version 1.0.0
+ * @version 1.2.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-splash-screen',
-  imports: [ProgressSpinnerModule],
+  imports: [ButtonModule, ProgressBarModule],
   templateUrl: './splash-screen.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -92,6 +99,48 @@ export class SplashScreen {
    */
   protected readonly hiding: WritableSignal<boolean> = signal<boolean>(false);
 
+  /**
+   * Property statusMessage
+   * @readonly
+   *
+   * @description
+   * Phase-appropriate boot status surfaced under the wordmark. Derived
+   * from the splash port phase so the wording stays in the component
+   * while the lifecycle stays in core.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly statusMessage: Signal<string> = computed<string>(() => {
+    switch (this.splashScreenPort.phase()) {
+      case 'session':
+        return 'Restoring your session…';
+      case 'stalled':
+        return "Can't reach the server — check your connection.";
+      default:
+        return 'Loading…';
+    }
+  });
+
+  /**
+   * Property stalled
+   * @readonly
+   *
+   * @description
+   * True when the boot has stalled, so the template swaps the progress
+   * indicator for a retry affordance.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly stalled: Signal<boolean> = computed<boolean>(
+    () => this.splashScreenPort.phase() === 'stalled',
+  );
+
   //#endregion
 
   //#region Constructor
@@ -132,6 +181,24 @@ export class SplashScreen {
         fadeTimer = null;
       }, FADE_DURATION_MS);
     });
+  }
+  //#endregion
+
+  //#region Public Methods
+  /**
+   * Method retry
+   *
+   * @description
+   * Delegates a stalled-boot retry to the splash screen port, giving the
+   * user a way out of an otherwise indefinite wait.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @returns {void}
+   */
+  protected retry(): void {
+    this.splashScreenPort.retry();
   }
   //#endregion
 }

@@ -14,17 +14,32 @@
         }
       </div>
 
-      <p-iconfield class="w-full sm:w-64">
-        <p-inputicon class="pi pi-search" />
-        <input
-          pInputText
-          type="text"
-          pSize="small"
-          placeholder="Search field work..."
-          [formControl]="searchControl"
-          class="w-full"
-        />
-      </p-iconfield>
+      <div class="flex flex-wrap items-center gap-2">
+        <p-iconfield class="flex-1 sm:flex-none">
+          <p-inputicon class="pi pi-search" />
+          <input
+            pInputText
+            type="text"
+            pSize="small"
+            placeholder="Search field work..."
+            [formControl]="searchControl"
+            class="w-full sm:w-56"
+          />
+        </p-iconfield>
+
+        @if (canExecute()) {
+          <p-splitbutton
+            label="Add discovery"
+            icon="pi pi-plus"
+            severity="primary"
+            size="small"
+            [model]="fieldActions()"
+            [disabled]="saving()"
+            class="w-full sm:w-auto"
+            (onClick)="addDiscovery.emit()"
+          />
+        }
+      </div>
     </div>
   </ng-template>
 
@@ -128,7 +143,7 @@
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
-        <tr class="bg-transparent! [&>td]:border-b-0!">
+        <tr class="bg-transparent [&>td]:border-b-0">
           <td [attr.colspan]="5">
             <app-empty-state
               icon="pi-list-check"

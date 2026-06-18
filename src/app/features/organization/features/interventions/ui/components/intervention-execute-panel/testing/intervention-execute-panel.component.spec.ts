@@ -91,12 +91,4 @@ describe('InterventionExecutePanel', () => {
 
     expect(emitted).toEqual({ action: 'inspection', target: '/api/equipment/1', result: 'pass' });
   });
-
-  it('should make the secondary field actions full width only on small viewports', () => {
-    const component = createComponent();
-    const rootClass = (component.fieldActionButtonPt.root as { class: string }).class;
-
-    expect(rootClass).toContain('w-full');
-    expect(rootClass).toContain('sm:w-auto');
-  });
 });

@@ -1,19 +1,65 @@
 @if (rendered()) {
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-linear-to-br from-surface-900 via-surface-950 to-surface-900 transition-opacity duration-300 ease-out"
+    class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-surface-0 transition-opacity duration-300 ease-out dark:bg-surface-950"
     [class.opacity-0]="hiding()"
+    role="status"
+    aria-live="polite"
   >
-    <!-- Ambient glows -->
+    <!-- Ambient brand halo — subtle on white, a touch warmer in the dark -->
     <div
-      class="pointer-events-none absolute top-16 -right-24 h-72 w-72 rounded-full bg-primary-500/15 blur-3xl"
-    ></div>
-    <div
-      class="pointer-events-none absolute bottom-8 -left-16 h-56 w-56 rounded-full bg-primary-500/5 blur-3xl"
+      class="pointer-events-none absolute top-1/2 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-500/5 blur-3xl dark:bg-primary-500/10"
+      aria-hidden="true"
     ></div>
 
-    <div class="relative flex flex-col items-center gap-6">
-      <span class="text-3xl font-bold tracking-tight text-surface-0 uppercase"> Fireguard </span>
-      <p-progressSpinner strokeWidth="4" />
+    <div class="relative flex flex-col items-center gap-9">
+      <!-- Brand lockup -->
+      <div class="flex flex-col items-center gap-6">
+        <svg
+          class="size-20 text-primary-500"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <path
+            d="M5 4l7 7m0 0l7-7m-7 7l-7 9m7-9l7 9"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+
+        <div class="flex flex-col items-center gap-1.5">
+          <span
+            class="text-3xl font-bold tracking-tight text-surface-950 dark:text-surface-50"
+            aria-hidden="true"
+          >
+            Fireguard
+          </span>
+          <p class="text-sm text-surface-500 dark:text-surface-400">{{ statusMessage() }}</p>
+        </div>
+      </div>
+
+      @if (stalled()) {
+        <!-- Boot failed to settle — offer a way out -->
+        <p-button
+          label="Retry"
+          icon="pi pi-refresh"
+          size="small"
+          severity="secondary"
+          (onClick)="retry()"
+        />
+      } @else {
+        <!-- Indeterminate boot indicator -->
+        <p-progressBar
+          mode="indeterminate"
+          class="w-44"
+          [style]="{ height: '0.375rem' }"
+          [pt]="{ root: 'rounded-full overflow-hidden', value: 'rounded-full' }"
+          aria-hidden="true"
+        />
+      }
     </div>
   </div>
 }

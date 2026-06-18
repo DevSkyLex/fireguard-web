@@ -11,7 +11,7 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { AvatarModule } from 'primeng/avatar';
+import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
 import { AvatarGroupModule } from 'primeng/avatargroup';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -314,6 +314,27 @@ export class InterventionPreparePanel {
    * @type {WritableSignal<boolean>}
    */
   protected readonly workItemDrawerVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property participantAvatarPt
+   * @readonly
+   *
+   * @description
+   * PrimeNG avatar pass-through aligning the stacked participant avatars with
+   * the compact member-option avatar used by the Responsible row, so every
+   * identity in the Properties rail shares one 20px footprint.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {AvatarPassThroughOptions}
+   */
+  protected readonly participantAvatarPt: AvatarPassThroughOptions = {
+    root: {
+      class:
+        'size-5 text-[0.625rem] font-medium ring-2 ring-surface-0 bg-surface-100 text-surface-600 dark:ring-surface-950 dark:bg-surface-800 dark:text-surface-300',
+    },
+  };
 
   /**
    * Property siteLabel

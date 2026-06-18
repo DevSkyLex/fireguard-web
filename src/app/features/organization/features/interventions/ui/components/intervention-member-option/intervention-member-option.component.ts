@@ -74,7 +74,7 @@ export class InterventionMemberOption {
       root: {
         class:
           'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300' +
-          (this.compact() ? ' size-5! text-[0.625rem]!' : ''),
+          (this.compact() ? ' size-5 text-[0.625rem]' : ''),
       },
     }));
 }

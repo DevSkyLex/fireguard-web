@@ -1,4 +1,4 @@
-import { isPlatformBrowser } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   DestroyRef,
   inject,
@@ -18,6 +18,7 @@ import {
   Router,
 } from '@angular/router';
 import { filter } from 'rxjs';
+import type { SplashScreenPhase } from '@core/ports/splash-screen';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 
 /**
@@ -30,11 +31,14 @@ import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
  * - **Navigation**: visible during lazy-loaded route transitions
  *   that exceed the anti-flicker threshold.
  *
- * The service exposes a single `visible` signal consumed by the
- * `SplashScreen` component at the root level through the
- * `SPLASH_SCREEN_PORT` neutral contract.
+ * A boot that exceeds the stall threshold flips the phase to `stalled`
+ * so the splash can offer a retry instead of spinning indefinitely.
  *
- * @version 1.0.0
+ * The service exposes a `visible` signal, a semantic `phase` signal,
+ * and a `retry()` method, consumed by the `SplashScreen` component at
+ * the root level through the `SPLASH_SCREEN_PORT` neutral contract.
+ *
+ * @version 1.2.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable({ providedIn: 'root' })
@@ -45,6 +49,13 @@ export class SplashScreenService {
    * Navigation splash only appears if the transition takes longer.
    */
   private static readonly NAV_DELAY_MS: number = 150;
+
+  /**
+   * Stall threshold in milliseconds. If the app is still booting after
+   * this delay, the splash switches to its failure state so the user is
+   * offered a retry instead of an indefinite wait.
+   */
+  private static readonly STALL_DELAY_MS: number = 10_000;
 
   //#endregion
 
@@ -108,6 +119,21 @@ export class SplashScreenService {
    * @type {DestroyRef}
    */
   private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
+
+  /**
+   * Property document
+   * @readonly
+   *
+   * @description
+   * Document reference used to drive a browser reload when the user
+   * retries a stalled boot, kept SSR-safe through its defaultView.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @type {Document}
+   */
+  private readonly document: Document = inject<Document>(DOCUMENT);
   //#endregion
 
   //#region State
@@ -155,6 +181,21 @@ export class SplashScreenService {
   private readonly navigating: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property stalled
+   * @readonly
+   *
+   * @description
+   * True once the boot has exceeded the stall threshold without the
+   * auth session initializing. Drives the splash failure state.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  private readonly stalled: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
    * Property visible
    * @readonly
    *
@@ -171,6 +212,30 @@ export class SplashScreenService {
   public readonly visible: Signal<boolean> = computed<boolean>(
     () => this.booting() || this.initialNavigationPending() || this.navigating(),
   );
+
+  /**
+   * Property phase
+   * @readonly
+   *
+   * @description
+   * Semantic reason the splash is currently shown, consumed by the
+   * `SplashScreen` component to pick phase-appropriate messaging.
+   * Boot and the first navigation read as `session` (the auth session
+   * is restoring); a boot that exceeds the stall threshold reads as
+   * `stalled`; later lazy-route transitions read as `navigation`.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {Signal<SplashScreenPhase>}
+   */
+  public readonly phase: Signal<SplashScreenPhase> = computed<SplashScreenPhase>(() => {
+    const booting: boolean = this.booting() || this.initialNavigationPending();
+
+    if (booting && this.stalled()) return 'stalled';
+
+    return booting ? 'session' : 'navigation';
+  });
   //#endregion
 
   //#region Internal
@@ -188,17 +253,78 @@ export class SplashScreenService {
    * @type {ReturnType<typeof setTimeout> | null}
    */
   private navTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Property stallTimer
+   *
+   * @description
+   * One-shot handle for the boot stall watch. Fires once after
+   * `STALL_DELAY_MS` and flips `stalled` when the boot has not resolved.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @type {ReturnType<typeof setTimeout> | null}
+   */
+  private stallTimer: ReturnType<typeof setTimeout> | null = null;
   //#endregion
 
   //#region Constructor
   public constructor() {
     if (isPlatformBrowser(this.platformId)) {
       this.listenToRouter();
+      this.startStallWatch();
+    }
+  }
+  //#endregion
+
+  //#region Public Methods
+  /**
+   * Method retry
+   *
+   * @description
+   * Re-attempts a stalled boot by reloading the document, which re-runs
+   * the app initializer and auth session restoration. Clears the stalled
+   * flag first and is a no-op on the server.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @returns {void}
+   */
+  public retry(): void {
+    this.stalled.set(false);
+
+    if (isPlatformBrowser(this.platformId)) {
+      this.document.defaultView?.location.reload();
     }
   }
   //#endregion
 
   //#region Private Methods
+  /**
+   * Method startStallWatch
+   *
+   * @description
+   * Schedules the one-shot stall watch. When it fires, the boot is
+   * flagged as stalled only if the auth session has still not settled,
+   * so a slow-but-successful boot never shows the failure state.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @returns {void}
+   */
+  private startStallWatch(): void {
+    this.stallTimer = setTimeout(() => {
+      this.stallTimer = null;
+
+      if (this.booting() || this.initialNavigationPending()) {
+        this.stalled.set(true);
+      }
+    }, SplashScreenService.STALL_DELAY_MS);
+  }
+
   /**
    * Method listenToRouter
    *

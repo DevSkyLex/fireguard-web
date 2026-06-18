@@ -10,7 +10,7 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { ButtonModule, type ButtonPassThroughOptions } from 'primeng/button';
+import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import type {
   InterventionDiscoveryRequest,
@@ -29,7 +29,22 @@ import type {
   InterventionSkipFormValues,
 } from '@features/organization/features/interventions/ui/forms';
 import { InterventionFieldWorkTable } from '@features/organization/features/interventions/ui/tables/intervention-field-work-table';
-import { MetricCard } from '@shared/components';
+import { Card, MetricCard } from '@shared/components';
+
+/**
+ * Interface ExecuteSubmitCheck
+ * @interface ExecuteSubmitCheck
+ *
+ * @description
+ * One submit-readiness condition rendered in the execute rail checklist,
+ * mirroring the prepare and review panels' readiness lists.
+ */
+interface ExecuteSubmitCheck {
+  /** Human-readable condition label. */
+  readonly label: string;
+  /** Whether the condition is currently satisfied. */
+  readonly done: boolean;
+}
 
 /**
  * Component InterventionExecutePanel
@@ -45,6 +60,7 @@ import { MetricCard } from '@shared/components';
   selector: 'app-intervention-execute-panel',
   imports: [
     ButtonModule,
+    Card,
     InterventionDiscoveryDrawer,
     InterventionFieldWorkTable,
     InterventionSkipDrawer,
@@ -336,22 +352,42 @@ export class InterventionExecutePanel {
   );
 
   /**
-   * Property fieldActionButtonPt
+   * Property submitChecks
    * @readonly
    *
    * @description
-   * PrimeNG button pass-through options for the secondary field actions (scan,
-   * add discovery): full width inside the mobile two-column grid, shrinking to
-   * content width once the row switches to a flex layout on wider viewports.
+   * Submit-readiness conditions shown in the execute rail: every field work
+   * item resolved and the current user being the responsible agent. Mirrors the
+   * prepare ("Ready to plan") and review ("Ready to publish") rail checklists.
    *
    * @access protected
-   * @since 1.1.0
+   * @since 1.3.0
    *
-   * @type {ButtonPassThroughOptions}
+   * @type {Signal<readonly ExecuteSubmitCheck[]>}
    */
-  protected readonly fieldActionButtonPt: ButtonPassThroughOptions = {
-    root: { class: 'w-full sm:w-auto' },
-  };
+  protected readonly submitChecks: Signal<readonly ExecuteSubmitCheck[]> = computed<
+    readonly ExecuteSubmitCheck[]
+  >(() => [
+    { label: 'All field work resolved', done: this.progress() >= 100 },
+    { label: 'You are the responsible agent', done: this.canSubmit() },
+  ]);
+
+  /**
+   * Property readyToSubmitCount
+   * @readonly
+   *
+   * @description
+   * Number of satisfied {@link submitChecks}, surfaced as the rail's progress
+   * counter.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly readyToSubmitCount: Signal<number> = computed<number>(
+    () => this.submitChecks().filter((check: ExecuteSubmitCheck): boolean => check.done).length,
+  );
 
   /**
    * Property skipDrawerVisible

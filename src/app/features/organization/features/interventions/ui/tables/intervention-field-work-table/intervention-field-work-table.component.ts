@@ -11,11 +11,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MenuItem, PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { SplitButtonModule } from 'primeng/splitbutton';
 import { Table, TableModule, type TablePassThroughOptions } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
@@ -62,6 +64,7 @@ const EQUIPMENT_TARGET_PATTERN: RegExp = /^\/api\/equipment\/[^/?#]+$/;
     InputTextModule,
     InterventionTag,
     ReactiveFormsModule,
+    SplitButtonModule,
     TableModule,
     TagModule,
   ],
@@ -112,6 +115,21 @@ export class InterventionFieldWorkTable {
    * @type {InputSignal<boolean>}
    */
   public readonly saving: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input scanSupported
+   * @readonly
+   *
+   * @description
+   * Whether the device supports QR scanning; disables the "Scan QR" toolbar
+   * action when false.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly scanSupported: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -145,9 +163,60 @@ export class InterventionFieldWorkTable {
    */
   public readonly skip: OutputEmitterRef<InterventionWorkItemOutput> =
     output<InterventionWorkItemOutput>();
+
+  /**
+   * Output addDiscovery
+   * @readonly
+   *
+   * @description
+   * Requests the parent to open the field discovery drawer.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly addDiscovery: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Output scanQr
+   * @readonly
+   *
+   * @description
+   * Requests the parent to open the QR scan capture.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly scanQr: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
+  /**
+   * Property fieldActions
+   * @readonly
+   *
+   * @description
+   * Secondary field actions listed in the toolbar split-button dropdown next to
+   * the primary "Add discovery" action: scanning a QR code, disabled while a
+   * mutation is in flight or when the device has no scanning support.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<MenuItem[]>}
+   */
+  protected readonly fieldActions: Signal<MenuItem[]> = computed((): MenuItem[] => [
+    {
+      label: 'Scan QR',
+      icon: PrimeIcons.QRCODE,
+      disabled: this.saving() || !this.scanSupported(),
+      command: (): void => this.scanQr.emit(),
+    },
+  ]);
+
   /**
    * Property cardPt
    * @readonly

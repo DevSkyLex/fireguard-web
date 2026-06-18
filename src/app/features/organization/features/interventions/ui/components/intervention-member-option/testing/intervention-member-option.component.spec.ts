@@ -51,13 +51,13 @@ describe('InterventionMemberOption', () => {
     const rootClass = (component.avatarPt().root as { class: string }).class;
 
     expect(rootClass).toContain('bg-surface-100');
-    expect(rootClass).not.toContain('size-5!');
+    expect(rootClass).not.toContain('size-5');
   });
 
   it('should shrink the avatar through the passthrough in compact mode', () => {
     const component = createComponent(true);
     const rootClass = (component.avatarPt().root as { class: string }).class;
 
-    expect(rootClass).toContain('size-5!');
+    expect(rootClass).toContain('size-5');
   });
 });

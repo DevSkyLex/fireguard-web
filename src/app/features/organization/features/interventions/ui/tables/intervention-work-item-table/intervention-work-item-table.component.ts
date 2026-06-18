@@ -224,7 +224,7 @@ export class InterventionWorkItemTable {
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
       class:
-        'flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
+        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
     },
     body: { class: 'p-0 flex flex-col flex-1 min-h-0' },
   };
@@ -243,12 +243,12 @@ export class InterventionWorkItemTable {
    * @type {TablePassThroughOptions}
    */
   protected readonly tablePt: TablePassThroughOptions = {
-    root: { class: 'w-full' },
+    root: { class: 'flex min-h-0 w-full flex-1 flex-col' },
     table: { class: 'w-full text-sm' },
-    tableContainer: { class: 'overflow-hidden' },
+    tableContainer: { class: 'min-h-0 flex-1 overflow-auto' },
     pcPaginator: {
       root: {
-        class: 'justify-end rounded-b-xl bg-surface-0 dark:bg-surface-900',
+        class: 'mt-auto justify-end rounded-b-xl bg-surface-0 dark:bg-surface-900',
       },
     },
   };

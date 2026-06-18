@@ -186,6 +186,43 @@ describe('InterventionWorkspaceStore offline field work', () => {
     expect(store.intervention()?.workItemsCount).toBe(2);
   });
 
+  it('appends the created work item and bumps counters online without a full reload', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    window.dispatchEvent(new Event('online'));
+    await vi.waitFor(() => expect(store.intervention()?.id).toBe('intervention-1'));
+
+    const created = {
+      ...workItem,
+      id: 'work-item-2',
+      target: '/api/equipment/equipment-2',
+    } as InterventionWorkItemOutput;
+    mockService.createWorkItem.mockReturnValue(of(created));
+    mockService.get.mockClear();
+    mockService.listAllWorkItems.mockClear();
+
+    store.createWorkItem({
+      interventionId: intervention.id,
+      input: {
+        intervention: intervention['@id'],
+        action: 'inventory',
+        target: '/api/equipment/equipment-2',
+        source: 'planned',
+        required: true,
+      },
+    });
+
+    await vi.waitFor(() => expect(store.saving()).toBe(false));
+
+    expect(mockService.createWorkItem).toHaveBeenCalled();
+    // No full workspace reload: the intervention and work item lists are not refetched.
+    expect(mockService.get).not.toHaveBeenCalled();
+    expect(mockService.listAllWorkItems).not.toHaveBeenCalled();
+    expect(store.workItems()).toHaveLength(2);
+    expect(store.workItems().at(-1)).toMatchObject({ id: 'work-item-2' });
+    expect(store.intervention()?.workItemsCount).toBe(2);
+    expect(store.intervention()?.revision).toBe(4);
+  });
+
   it('does not expose cached intervention data after an authorization failure', async () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
     window.dispatchEvent(new Event('online'));

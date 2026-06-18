@@ -1,0 +1,54 @@
+<p-table
+  [value]="[...workItems()]"
+  [stripedRows]="true"
+  [paginator]="workItems().length > rows"
+  [rows]="rows"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="{first}–{last} of {totalRecords}"
+  [pt]="tablePt"
+>
+  <ng-template pTemplate="header">
+    <tr>
+      <th class="w-1/3 min-w-32">Action</th>
+      <th class="w-1/3 min-w-32">Target</th>
+      <th class="min-w-36">Assignee</th>
+      <th class="min-w-24">Status</th>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="body" let-item>
+    <tr>
+      <td>
+        <span
+          class="flex items-center gap-2 font-medium text-surface-900 capitalize dark:text-surface-100"
+        >
+          <i class="pi pi-check-square shrink-0 text-surface-400" aria-hidden="true"></i>
+          {{ item.action.replace('_', ' ') }}
+        </span>
+      </td>
+      <td>
+        @if (workItemTarget(item); as target) {
+          <span class="text-surface-700 dark:text-surface-300">{{ target }}</span>
+        } @else {
+          <span class="text-surface-400 dark:text-surface-500">—</span>
+        }
+      </td>
+      <td>
+        @if (workItemAssignee(item); as assignee) {
+          <app-intervention-member-option [option]="assignee" [compact]="true" />
+        } @else {
+          <span class="text-xs font-medium text-surface-400 dark:text-surface-500">Unassigned</span>
+        }
+      </td>
+      <td>
+        <app-intervention-tag kind="workItemStatus" [value]="item.status" />
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="4" class="p-4 text-sm text-surface-500 dark:text-surface-400">No work items.</td>
+    </tr>
+  </ng-template>
+</p-table>

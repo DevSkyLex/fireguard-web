@@ -301,9 +301,34 @@ export const InterventionWorkspaceStore = signalStore(
 
               return service.createWorkItem(input).pipe(
                 tapResponse({
-                  next: () => {
-                    patchState(store, { saving: false });
-                    load(interventionId);
+                  next: (created: InterventionWorkItemOutput) => {
+                    // Append the authoritative created item (its assignee/target
+                    // identities are already resolved by the API) and bump the
+                    // intervention counters the same way the server does on a
+                    // work item create. This avoids a full workspace reload and
+                    // its loading flash.
+                    const workItems: readonly InterventionWorkItemOutput[] = [
+                      ...store.workItems(),
+                      created,
+                    ];
+                    const updatedIntervention = optimistic.addWorkItem(store.intervention());
+                    patchState(store, {
+                      workItems,
+                      intervention: updatedIntervention,
+                      saving: false,
+                    });
+                    if (updatedIntervention) {
+                      void offline
+                        .saveWorkspace(
+                          updatedIntervention,
+                          workItems,
+                          store.changes(),
+                          store.issues(),
+                          [],
+                          { replace: false },
+                        )
+                        .catch(() => undefined);
+                    }
                   },
                   error: () =>
                     patchState(store, {

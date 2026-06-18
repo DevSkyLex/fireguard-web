@@ -11,8 +11,11 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { AvatarModule } from 'primeng/avatar';
+import { AvatarGroupModule } from 'primeng/avatargroup';
 import { ButtonModule } from 'primeng/button';
 import { DrawerModule, type DrawerPassThroughOptions } from 'primeng/drawer';
+import { TooltipModule } from 'primeng/tooltip';
 import type {
   CreateInterventionWorkItemInput,
   InterventionOutput,
@@ -29,6 +32,7 @@ import {
   type InterventionPlanningFormValues,
   type InterventionWorkItemFormValues,
 } from '@features/organization/features/interventions/ui/forms';
+import { InterventionWorkItemTable } from '@features/organization/features/interventions/ui/tables/intervention-work-item-table';
 import { Card } from '@shared/components';
 
 /**
@@ -44,6 +48,20 @@ interface PrepareReadinessCheck {
   /** Whether the condition is currently satisfied. */
   readonly done: boolean;
 }
+
+/**
+ * Constant PARTICIPANT_AVATAR_LIMIT
+ * @const PARTICIPANT_AVATAR_LIMIT
+ *
+ * @description
+ * Maximum number of participant avatars rendered in the stacked avatar group
+ * before the remainder collapses into a single "+N" overflow avatar.
+ *
+ * @since 2.1.0
+ *
+ * @type {number}
+ */
+const PARTICIPANT_AVATAR_LIMIT = 5;
 
 /**
  * Component InterventionPreparePanel
@@ -64,6 +82,8 @@ interface PrepareReadinessCheck {
 @Component({
   selector: 'app-intervention-prepare-panel',
   imports: [
+    AvatarModule,
+    AvatarGroupModule,
     ButtonModule,
     Card,
     DatePipe,
@@ -72,6 +92,8 @@ interface PrepareReadinessCheck {
     InterventionPlanningForm,
     InterventionTag,
     InterventionWorkItemForm,
+    InterventionWorkItemTable,
+    TooltipModule,
   ],
   templateUrl: './intervention-prepare-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -366,23 +388,58 @@ export class InterventionPreparePanel {
   });
 
   /**
-   * Property progressValue
+   * Property visibleParticipants
    * @readonly
    *
    * @description
-   * Completion percentage of the planned work items, used by the scope header.
+   * Participant members rendered as individual avatars, capped at
+   * {@link PARTICIPANT_AVATAR_LIMIT}.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 2.1.0
+   *
+   * @type {Signal<readonly MemberSelectOption[]>}
+   */
+  protected readonly visibleParticipants: Signal<readonly MemberSelectOption[]> = computed<
+    readonly MemberSelectOption[]
+  >(() => this.participantMembers().slice(0, PARTICIPANT_AVATAR_LIMIT));
+
+  /**
+   * Property participantOverflow
+   * @readonly
+   *
+   * @description
+   * Number of participants beyond {@link PARTICIPANT_AVATAR_LIMIT}, collapsed
+   * into a single "+N" overflow avatar. Zero when all participants fit.
+   *
+   * @access protected
+   * @since 2.1.0
    *
    * @type {Signal<number>}
    */
-  protected readonly progressValue: Signal<number> = computed<number>(() => {
-    const total: number = this.intervention().workItemsCount;
-    if (total <= 0) return 0;
+  protected readonly participantOverflow: Signal<number> = computed<number>(() =>
+    Math.max(0, this.participantMembers().length - PARTICIPANT_AVATAR_LIMIT),
+  );
 
-    return Math.round((this.intervention().completedWorkItemsCount / total) * 100);
-  });
+  /**
+   * Property participantOverflowNames
+   * @readonly
+   *
+   * @description
+   * Comma-separated names of the overflowed participants, surfaced as the
+   * overflow avatar tooltip so hidden members stay discoverable.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly participantOverflowNames: Signal<string> = computed<string>(() =>
+    this.participantMembers()
+      .slice(PARTICIPANT_AVATAR_LIMIT)
+      .map((member: MemberSelectOption): string => member.displayName)
+      .join(', '),
+  );
 
   /**
    * Property readinessChecks
@@ -457,6 +514,25 @@ export class InterventionPreparePanel {
       !!intervention.dueAt
     );
   });
+
+  /**
+   * Property canAddWorkItem
+   * @readonly
+   *
+   * @description
+   * Whether a (planned) work item may be added from this panel: the user may
+   * plan and the intervention is still a draft. Once preparation is confirmed
+   * the backend only accepts discovered work items (added during execution),
+   * so the add affordance is disabled here to prevent a guaranteed 409.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canAddWorkItem: Signal<boolean> = computed<boolean>(
+    () => this.canPlan() && this.intervention().status === 'draft',
+  );
   //#endregion
 
   //#region Methods
@@ -514,105 +590,5 @@ export class InterventionPreparePanel {
     this.workItemDrawerVisible.set(false);
   }
 
-  /**
-   * Method workItemAssignee
-   * @method workItemAssignee
-   *
-   * @description
-   * Resolves the member option assigned to a work item, or null when the item
-   * is unassigned, so the row can show who owns the task.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @param {InterventionWorkItemOutput} item - Work item to resolve.
-   *
-   * @returns {MemberSelectOption | null} Assigned member option, if any.
-   */
-  protected workItemAssignee(item: InterventionWorkItemOutput): MemberSelectOption | null {
-    // Prefer the identity embedded by the API: it always resolves, regardless of
-    // organization size, and does not depend on the member options being loaded.
-    const profile = item.assigneeProfile;
-    if (profile) {
-      return {
-        label: profile.displayName,
-        value: profile.member,
-        displayName: profile.displayName,
-        roleLabel: '',
-        avatarUrl: profile.avatarUrl,
-        initials: this.deriveInitials(profile.displayName),
-      };
-    }
-
-    if (!item.assignee) return null;
-
-    // Fallback for optimistic work items created offline, where the profile is
-    // not resolved yet but the member options are loaded in the workspace.
-    return (
-      this.memberOptions().find(
-        (option: MemberSelectOption): boolean => option.value === item.assignee,
-      ) ?? null
-    );
-  }
-
-  /**
-   * Method deriveInitials
-   * @method deriveInitials
-   *
-   * @description
-   * Derives up to two uppercase initials from a display name for the avatar
-   * fallback shown when the assignee has no avatar image.
-   *
-   * @access private
-   * @since 2.1.0
-   *
-   * @param {string} displayName - Assignee display name.
-   *
-   * @returns {string} Up to two uppercase initials, or '?' when none.
-   */
-  private deriveInitials(displayName: string): string {
-    return (
-      displayName
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part: string): string => part.charAt(0))
-        .join('')
-        .toUpperCase() || '?'
-    );
-  }
-
-  /**
-   * Method workItemTarget
-   * @method workItemTarget
-   *
-   * @description
-   * Resolves a human-readable target label for a work item: the matching
-   * target option label when known, the raw value when it is free text, and
-   * null for unresolved resource IRIs (which are not useful to the user).
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @param {InterventionWorkItemOutput} item - Work item to resolve.
-   *
-   * @returns {string | null} Display label, or null when nothing useful to show.
-   */
-  protected workItemTarget(item: InterventionWorkItemOutput): string | null {
-    // Prefer the summary embedded by the API: it always resolves, regardless of
-    // organization size, and does not depend on the target options being loaded.
-    if (item.targetSummary) return item.targetSummary.label;
-
-    const target: string | null = item.target;
-    if (!target) return null;
-
-    // Fallback for optimistic work items and free-text targets.
-    const option: SelectOption | undefined = this.targetOptions().find(
-      (candidate: SelectOption): boolean => candidate.value === target,
-    );
-    if (option) return option.label;
-
-    return target.startsWith('/api/') ? null : target;
-  }
   //#endregion
 }

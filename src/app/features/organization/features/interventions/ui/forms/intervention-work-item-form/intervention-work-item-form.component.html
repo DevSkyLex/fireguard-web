@@ -1,69 +1,93 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex h-full flex-col gap-5">
-  <label class="grid gap-1.5 text-sm font-medium">
-    Action
-    <p-select
-      formControlName="action"
-      [options]="[...actionOptions]"
-      optionLabel="label"
-      optionValue="value"
-    >
-      <ng-template #selectedItem let-option>
-        @if (option) {
-          <app-intervention-option kind="workItemAction" [value]="option.value" />
-        }
-      </ng-template>
-      <ng-template #item let-option>
-        <app-intervention-option kind="workItemAction" [value]="option.value" />
-      </ng-template>
-    </p-select>
-  </label>
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex h-full w-full flex-col gap-8">
+  <section class="flex flex-col gap-5" aria-labelledby="work-item-heading">
+    <div>
+      <h2
+        id="work-item-heading"
+        class="text-lg font-semibold text-surface-900 dark:text-surface-100"
+      >
+        Work item
+      </h2>
+      <p class="mt-0.5 text-sm text-surface-500 dark:text-surface-400">
+        Add a task to the prepared scope. Only an action is required — target and assignee can be
+        set now or later during execution.
+      </p>
+    </div>
 
-  <label class="grid gap-1.5 text-sm font-medium">
-    Target resource
-    <p-select
-      formControlName="target"
-      [options]="[...targetOptions()]"
-      optionLabel="label"
-      optionValue="value"
-      [filter]="true"
-      [showClear]="true"
-      placeholder="Optional site, facility or equipment target"
+    <div class="grid gap-5">
+      <label class="grid gap-1.5 text-sm font-medium">
+        <span>Action <span class="text-red-500" aria-hidden="true">*</span></span>
+        <p-select
+          formControlName="action"
+          [options]="[...actionOptions]"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+        >
+          <ng-template #selectedItem let-option>
+            @if (option) {
+              <app-intervention-option kind="workItemAction" [value]="option.value" />
+            }
+          </ng-template>
+          <ng-template #item let-option>
+            <app-intervention-option kind="workItemAction" [value]="option.value" />
+          </ng-template>
+        </p-select>
+      </label>
+
+      <label class="grid gap-1.5 text-sm font-medium">
+        Target resource
+        <p-select
+          formControlName="target"
+          [options]="[...targetOptions()]"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          [showClear]="true"
+          placeholder="Optional site, facility or equipment target"
+          appendTo="body"
+        />
+        <small class="font-normal text-surface-500 dark:text-surface-400">
+          Leave empty for site-level work.
+        </small>
+      </label>
+
+      <label class="grid gap-1.5 text-sm font-medium">
+        Assignee
+        <p-select
+          formControlName="assignee"
+          [options]="[...memberOptions()]"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          filterBy="label,roleLabel"
+          [showClear]="true"
+          placeholder="Assign this work item"
+          appendTo="body"
+        >
+          <ng-template #item let-option>
+            <app-intervention-member-option [option]="option" />
+          </ng-template>
+          <ng-template #selectedItem let-option>
+            @if (option) {
+              <app-intervention-member-option [option]="option" [compact]="true" />
+            }
+          </ng-template>
+        </p-select>
+        <small class="font-normal text-surface-500 dark:text-surface-400">
+          Unassigned items can be picked up by any field agent.
+        </small>
+      </label>
+    </div>
+  </section>
+
+  <div class="sticky bottom-0 -mb-2 bg-surface-0 pt-4 pb-2 dark:bg-surface-900">
+    <p-button
+      label="Add to prepared scope"
+      type="submit"
+      icon="pi pi-plus"
+      [fluid]="true"
+      [loading]="loading()"
+      [disabled]="form.invalid || disabled() || loading()"
     />
-    <small class="font-normal text-surface-500 dark:text-surface-400">
-      Leave empty for site-level work.
-    </small>
-  </label>
-
-  <label class="grid gap-1.5 text-sm font-medium">
-    Assignee
-    <p-select
-      formControlName="assignee"
-      [options]="[...memberOptions()]"
-      optionLabel="label"
-      optionValue="value"
-      [filter]="true"
-      filterBy="label,roleLabel"
-      [showClear]="true"
-      placeholder="Assign this work item"
-    >
-      <ng-template #item let-option>
-        <app-intervention-member-option [option]="option" />
-      </ng-template>
-      <ng-template #selectedItem let-option>
-        @if (option) {
-          <app-intervention-member-option [option]="option" [compact]="true" />
-        }
-      </ng-template>
-    </p-select>
-  </label>
-
-  <p-button
-    class="mt-auto"
-    styleClass="w-full"
-    label="Add to prepared scope"
-    type="submit"
-    icon="pi pi-plus"
-    [loading]="loading()"
-    [disabled]="disabled() || loading()"
-  />
+  </div>
 </form>

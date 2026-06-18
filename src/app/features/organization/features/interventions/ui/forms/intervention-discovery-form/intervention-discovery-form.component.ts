@@ -16,6 +16,7 @@ import {
 } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import type { InspectionResult } from '@features/organization/features/inspections/models';
 import type {
@@ -38,7 +39,14 @@ import type { InterventionDiscoveryFormData, InterventionDiscoveryFormValues } f
  */
 @Component({
   selector: 'app-intervention-discovery-form',
-  imports: [ButtonModule, InputTextModule, InterventionOption, ReactiveFormsModule, SelectModule],
+  imports: [
+    ButtonModule,
+    InputTextModule,
+    InterventionOption,
+    MessageModule,
+    ReactiveFormsModule,
+    SelectModule,
+  ],
   templateUrl: './intervention-discovery-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

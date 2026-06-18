@@ -17,7 +17,6 @@ type InterventionExecutePanelHarness = {
   openSkip(item: InterventionWorkItemOutput): void;
   confirmSkip(values: InterventionSkipFormValues): void;
   confirmDiscovery(values: InterventionDiscoveryFormValues): void;
-  isEquipmentTarget(target: string | null): boolean;
   readonly fieldActionButtonPt: ButtonPassThroughOptions;
   readonly updateWorkItem: {
     subscribe(listener: (value: InterventionWorkItemStatusChange) => void): { unsubscribe(): void };
@@ -52,14 +51,6 @@ describe('InterventionExecutePanel', () => {
     const component = createComponent();
 
     expect(component).toBeTruthy();
-  });
-
-  it('should recognise equipment targets by their IRI shape', () => {
-    const component = createComponent();
-
-    expect(component.isEquipmentTarget('/api/equipment/eq-1')).toBe(true);
-    expect(component.isEquipmentTarget('/api/facilities/f-1')).toBe(false);
-    expect(component.isEquipmentTarget(null)).toBe(false);
   });
 
   it('should emit a skip status change with a trimmed reason for the opened work item', () => {

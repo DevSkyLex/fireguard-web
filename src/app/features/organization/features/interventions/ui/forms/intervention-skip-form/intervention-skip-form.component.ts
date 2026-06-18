@@ -15,6 +15,7 @@ import {
   type FormGroup,
 } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { TextareaModule } from 'primeng/textarea';
 import type { InterventionSkipFormData, InterventionSkipFormValues } from './models';
 
@@ -31,7 +32,7 @@ import type { InterventionSkipFormData, InterventionSkipFormValues } from './mod
  */
 @Component({
   selector: 'app-intervention-skip-form',
-  imports: [ButtonModule, ReactiveFormsModule, TextareaModule],
+  imports: [ButtonModule, MessageModule, ReactiveFormsModule, TextareaModule],
   templateUrl: './intervention-skip-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

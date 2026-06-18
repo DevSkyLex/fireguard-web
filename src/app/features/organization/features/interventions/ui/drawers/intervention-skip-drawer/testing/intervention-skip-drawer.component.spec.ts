@@ -43,11 +43,11 @@ describe('InterventionSkipDrawer', () => {
     expect(component.disabled()).toBe(false);
   });
 
-  it('should size the bottom panel for the field context', () => {
+  it('should size the right panel responsively', () => {
     const component = createComponent();
     const rootClass = (component.drawerPt.root as { class: string }).class;
 
-    expect(rootClass).toContain('!h-[28rem]');
-    expect(rootClass).toContain('!max-h-[80dvh]');
+    expect(rootClass).toContain('!w-full');
+    expect(rootClass).toContain('sm:!w-[34rem]');
   });
 });

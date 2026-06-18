@@ -1,34 +1,48 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex h-full flex-col gap-4">
-  <p class="text-sm text-surface-600 dark:text-surface-300">
-    Explain why this work cannot be completed. The manager will review this reason before
-    publication.
-  </p>
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
+  <section class="flex flex-col gap-5" aria-labelledby="intervention-skip-heading">
+    <div>
+      <h2
+        id="intervention-skip-heading"
+        class="text-lg font-semibold text-surface-900 dark:text-surface-100"
+      >
+        Skip work item
+      </h2>
+      <p class="mt-0.5 text-sm text-surface-500 dark:text-surface-400">
+        Explain why this work cannot be completed. The manager will review this reason before
+        publication.
+      </p>
+    </div>
 
-  <label class="grid gap-1.5 text-sm font-medium">
-    <span>Reason <span class="text-red-500" aria-hidden="true">*</span></span>
-    <textarea
-      pTextarea
-      formControlName="reason"
-      class="min-h-32 w-full resize-y"
-      placeholder="e.g. Equipment inaccessible — locked plant room, no key on site."
-      [invalid]="form.controls.reason.invalid && form.controls.reason.touched"
-    ></textarea>
-    @if (form.controls.reason.invalid && form.controls.reason.touched) {
-      <small class="flex items-center gap-1 font-normal text-red-600 dark:text-red-400">
-        <i class="pi pi-exclamation-circle text-[0.7rem]" aria-hidden="true"></i>
-        A reason is required to skip this work.
-      </small>
-    }
-  </label>
+    <div class="grid gap-5">
+      <label class="grid gap-1.5 text-sm">
+        <span class="font-medium"
+          >Reason <span class="text-red-500" aria-hidden="true">*</span></span
+        >
+        <textarea
+          pTextarea
+          formControlName="reason"
+          class="min-h-32 w-full resize-y"
+          placeholder="e.g. Equipment inaccessible — locked plant room, no key on site."
+          [invalid]="form.controls.reason.invalid && form.controls.reason.touched"
+        ></textarea>
+        @if (form.controls.reason.invalid && form.controls.reason.touched) {
+          <p-message severity="error" variant="simple">
+            <span>A reason is required to skip this work.</span>
+          </p-message>
+        }
+      </label>
+    </div>
+  </section>
 
-  <p-button
-    class="mt-auto block"
-    [fluid]="true"
-    label="Confirm skip"
-    type="submit"
-    icon="pi pi-forward"
-    severity="secondary"
-    [loading]="loading()"
-    [disabled]="form.invalid || disabled() || loading()"
-  />
+  <div class="sticky bottom-0 -mb-2 bg-surface-0 pt-4 pb-2 dark:bg-surface-900">
+    <p-button
+      label="Confirm skip"
+      type="submit"
+      icon="pi pi-forward"
+      severity="secondary"
+      [fluid]="true"
+      [loading]="loading()"
+      [disabled]="form.invalid || disabled() || loading()"
+    />
+  </div>
 </form>

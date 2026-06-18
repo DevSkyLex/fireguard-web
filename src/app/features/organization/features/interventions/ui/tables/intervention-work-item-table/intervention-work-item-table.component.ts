@@ -214,19 +214,20 @@ export class InterventionWorkItemTable {
    *
    * @description
    * PrimeNG card pass-through classes matching the organization tables: a
-   * bordered, shadowless surface whose body lets the table fill the height.
+   * bordered, shadowless surface that sizes to its content so a sparse table
+   * never leaves an empty scroll body.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 2.1.0
    *
    * @type {CardPassThroughOptions}
    */
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
       class:
-        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
+        'flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
     },
-    body: { class: 'p-0 flex flex-col flex-1 min-h-0' },
+    body: { class: 'p-0' },
   };
 
   /**
@@ -234,8 +235,9 @@ export class InterventionWorkItemTable {
    * @readonly
    *
    * @description
-   * PrimeNG table pass-through classes: full width, rounded bottom and a
-   * right-aligned paginator consistent with the other organization tables.
+   * PrimeNG table pass-through classes: full width, horizontally scrollable on
+   * narrow viewports, rounded bottom and a right-aligned paginator consistent
+   * with the other organization tables.
    *
    * @access protected
    * @since 1.0.0
@@ -243,12 +245,12 @@ export class InterventionWorkItemTable {
    * @type {TablePassThroughOptions}
    */
   protected readonly tablePt: TablePassThroughOptions = {
-    root: { class: 'flex min-h-0 w-full flex-1 flex-col' },
+    root: { class: 'w-full' },
     table: { class: 'w-full text-sm' },
-    tableContainer: { class: 'min-h-0 flex-1 overflow-auto' },
+    tableContainer: { class: 'overflow-x-auto' },
     pcPaginator: {
       root: {
-        class: 'mt-auto justify-end rounded-b-xl bg-surface-0 dark:bg-surface-900',
+        class: 'justify-end rounded-b-xl bg-surface-0 dark:bg-surface-900',
       },
     },
   };

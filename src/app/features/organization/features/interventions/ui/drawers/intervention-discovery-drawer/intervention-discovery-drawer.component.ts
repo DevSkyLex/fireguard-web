@@ -129,8 +129,8 @@ export class InterventionDiscoveryDrawer {
    * @readonly
    *
    * @description
-   * PrimeNG drawer pass-through options sizing the bottom panel for the field
-   * context: a compact fixed height capped at the available viewport height.
+   * PrimeNG drawer pass-through options sizing the right panel responsively:
+   * full width on mobile, compact on larger viewports.
    *
    * @access protected
    * @since 1.0.0
@@ -138,7 +138,7 @@ export class InterventionDiscoveryDrawer {
    * @type {DrawerPassThroughOptions}
    */
   protected readonly drawerPt: DrawerPassThroughOptions = {
-    root: { class: '!h-[30rem] !max-h-[90dvh]' },
+    root: { class: '!w-full sm:!w-[34rem]' },
   };
   //#endregion
 }

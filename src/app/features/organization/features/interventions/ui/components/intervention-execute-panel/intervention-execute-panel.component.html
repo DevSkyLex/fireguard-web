@@ -1,4 +1,4 @@
-<section class="flex min-h-0 flex-1 flex-col gap-5">
+<section class="flex flex-col gap-5">
   <input
     #scanInput
     type="file"
@@ -52,6 +52,33 @@
     <p-message severity="success">All prepared work items are complete or skipped.</p-message>
   }
 
+  <section class="grid grid-cols-2 gap-4 xl:grid-cols-4">
+    <app-metric-card
+      title="Progress"
+      description="Field completion"
+      icon="pi pi-chart-pie"
+      [value]="progress() + '%'"
+    />
+    <app-metric-card
+      title="Completed"
+      description="Resolved tasks"
+      icon="pi pi-check-circle"
+      [value]="completedCount()"
+    />
+    <app-metric-card
+      title="Remaining"
+      description="Still to do"
+      icon="pi pi-clock"
+      [value]="remainingCount()"
+    />
+    <app-metric-card
+      title="Discovered"
+      description="Found on site"
+      icon="pi pi-search-plus"
+      [value]="discoveredCount()"
+    />
+  </section>
+
   <div class="grid grid-cols-2 gap-3 sm:flex">
     <p-button
       class="block"
@@ -75,73 +102,14 @@
     />
   </div>
 
-  <app-card
-    class="min-h-0 flex-1"
-    title="Field work"
-    [description]="progress() + '% complete · ' + workItems().length + ' task(s)'"
-  >
-    <ng-template #action>
-      <app-intervention-tag kind="status" [value]="intervention().status" />
-    </ng-template>
-    <ng-template #content>
-      @if (scrollerItems().length === 0) {
-        <app-empty-state
-          class="mt-2 block py-6"
-          icon="pi-list-check"
-          title="No field work yet"
-          description="Work items planned for this intervention, plus any field discoveries, will appear here."
-        />
-      } @else {
-        <p-scroller
-          class="mt-2 block"
-          [items]="scrollerItems()"
-          [itemSize]="84"
-          scrollHeight="min(54vh, 36rem)"
-        >
-          <ng-template pTemplate="item" let-item>
-            <article
-              class="mr-2 flex min-h-20 items-center justify-between gap-3 border-b border-surface-200 py-3 last:border-b-0 dark:border-surface-800"
-            >
-              <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                  <p class="truncate font-medium capitalize">{{ item.action.replace('_', ' ') }}</p>
-                  @if (item.source === 'discovered') {
-                    <p-tag value="Discovered" severity="warn" />
-                  }
-                </div>
-                <p class="mt-1 truncate text-sm text-surface-600 dark:text-surface-300">
-                  {{ item.target || 'Site-level work item' }}
-                </p>
-              </div>
-              <div class="flex shrink-0 items-center gap-2">
-                <app-intervention-tag kind="workItemStatus" [value]="item.status" />
-                @if (isEquipmentTarget(item.target)) {
-                  <p-button
-                    icon="pi pi-camera"
-                    severity="secondary"
-                    [text]="true"
-                    [disabled]="saving() || !canExecute()"
-                    ariaLabel="Add evidence photo"
-                    (onClick)="openPhotoCapture(item, photoInput)"
-                  />
-                }
-                @if (item.status !== 'completed' && item.status !== 'skipped') {
-                  <p-button
-                    icon="pi pi-forward"
-                    severity="secondary"
-                    [text]="true"
-                    [disabled]="!canExecute()"
-                    ariaLabel="Skip work item"
-                    (onClick)="openSkip(item)"
-                  />
-                }
-              </div>
-            </article>
-          </ng-template>
-        </p-scroller>
-      }
-    </ng-template>
-  </app-card>
+  <app-intervention-field-work-table
+    class="block"
+    [workItems]="workItems()"
+    [canExecute]="canExecute()"
+    [saving]="saving()"
+    (attachPhoto)="openPhotoCapture($event, photoInput)"
+    (skip)="openSkip($event)"
+  />
 
   <div
     class="sticky bottom-0 z-10 flex items-center justify-between gap-3 border-t border-surface-200 bg-surface-0/95 py-3 backdrop-blur dark:border-surface-800 dark:bg-surface-950/95"

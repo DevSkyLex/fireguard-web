@@ -110,6 +110,9 @@ describe('InterventionDetailPage', () => {
 
     expect(harness.phase()).toBe('prepare');
 
+    store.intervention.set({ status: 'planned' } as InterventionOutput);
+    expect(harness.phase()).toBe('execute');
+
     store.intervention.set({ status: 'in_progress' } as InterventionOutput);
     expect(harness.phase()).toBe('execute');
 

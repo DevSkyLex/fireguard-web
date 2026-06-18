@@ -12,8 +12,6 @@ import {
 } from '@angular/core';
 import { ButtonModule, type ButtonPassThroughOptions } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { ScrollerModule } from 'primeng/scroller';
-import { TagModule } from 'primeng/tag';
 import type {
   InterventionDiscoveryRequest,
   InterventionOutput,
@@ -22,7 +20,6 @@ import type {
   InterventionWorkItemStatusChange,
   SelectOption,
 } from '@features/organization/features/interventions/models';
-import { InterventionTag } from '@features/organization/features/interventions/ui/components/intervention-tag';
 import {
   InterventionDiscoveryDrawer,
   InterventionSkipDrawer,
@@ -31,7 +28,8 @@ import type {
   InterventionDiscoveryFormValues,
   InterventionSkipFormValues,
 } from '@features/organization/features/interventions/ui/forms';
-import { Card, EmptyState } from '@shared/components';
+import { InterventionFieldWorkTable } from '@features/organization/features/interventions/ui/tables/intervention-field-work-table';
+import { MetricCard } from '@shared/components';
 
 /**
  * Component InterventionExecutePanel
@@ -47,14 +45,11 @@ import { Card, EmptyState } from '@shared/components';
   selector: 'app-intervention-execute-panel',
   imports: [
     ButtonModule,
-    Card,
-    EmptyState,
     InterventionDiscoveryDrawer,
+    InterventionFieldWorkTable,
     InterventionSkipDrawer,
-    InterventionTag,
     MessageModule,
-    ScrollerModule,
-    TagModule,
+    MetricCard,
   ],
   templateUrl: './intervention-execute-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -280,20 +275,65 @@ export class InterventionExecutePanel {
   public readonly submitIntervention: OutputEmitterRef<void> = output<void>();
 
   /**
-   * Property scrollerItems
+   * Property completedCount
    * @readonly
    *
    * @description
-   * Provides the scroller items value.
+   * Number of work items resolved as `completed`, surfaced as an at-a-glance
+   * execution KPI mirroring the preparation panel's metric row.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.2.0
    *
-   * @type {Signal<readonly InterventionWorkItemOutput[]>}
+   * @type {Signal<number>}
    */
-  protected readonly scrollerItems: Signal<InterventionWorkItemOutput[]> = computed<
-    InterventionWorkItemOutput[]
-  >(() => [...this.workItems()]);
+  protected readonly completedCount: Signal<number> = computed<number>(
+    () =>
+      this.workItems().filter(
+        (item: InterventionWorkItemOutput): boolean => item.status === 'completed',
+      ).length,
+  );
+
+  /**
+   * Property remainingCount
+   * @readonly
+   *
+   * @description
+   * Number of work items still actionable in the field (neither `completed`
+   * nor `skipped`): the agent's outstanding workload.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly remainingCount: Signal<number> = computed<number>(
+    () =>
+      this.workItems().filter(
+        (item: InterventionWorkItemOutput): boolean =>
+          item.status !== 'completed' && item.status !== 'skipped',
+      ).length,
+  );
+
+  /**
+   * Property discoveredCount
+   * @readonly
+   *
+   * @description
+   * Number of work items added on site as field discoveries (unplanned work),
+   * distinct from the originally planned scope.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly discoveredCount: Signal<number> = computed<number>(
+    () =>
+      this.workItems().filter(
+        (item: InterventionWorkItemOutput): boolean => item.source === 'discovered',
+      ).length,
+  );
 
   /**
    * Property fieldActionButtonPt
@@ -494,24 +534,6 @@ export class InterventionExecutePanel {
     if (file && equipmentId) this.attachPhoto.emit({ equipmentId, file });
     this.photoEquipmentId.set(null);
     fileInput.value = '';
-  }
-
-  /**
-   * Method isEquipmentTarget
-   * @method isEquipmentTarget
-   *
-   * @description
-   * Executes the is equipment target operation.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {string | null} target - target value.
-   *
-   * @return {boolean} Result of the is equipment target operation.
-   */
-  protected isEquipmentTarget(target: string | null): boolean {
-    return this.equipmentId(target) !== null;
   }
 
   /**

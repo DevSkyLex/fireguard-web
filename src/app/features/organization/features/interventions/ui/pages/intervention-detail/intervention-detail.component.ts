@@ -14,7 +14,6 @@ import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TagModule } from 'primeng/tag';
 import { ConnectivityService } from '@core/services/connectivity';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
@@ -50,6 +49,7 @@ import {
   OrganizationMemberAccessStore,
 } from '@features/organization/state';
 import { InterventionExecutePanel } from '../../components/intervention-execute-panel/intervention-execute-panel.component';
+import { InterventionPhaseStepper } from '../../components/intervention-phase-stepper/intervention-phase-stepper.component';
 import { InterventionPreparePanel } from '../../components/intervention-prepare-panel/intervention-prepare-panel.component';
 import { InterventionReviewPanel } from '../../components/intervention-review-panel/intervention-review-panel.component';
 
@@ -74,10 +74,10 @@ import { InterventionReviewPanel } from '../../components/intervention-review-pa
     ButtonModule,
     MessageModule,
     InterventionExecutePanel,
+    InterventionPhaseStepper,
     InterventionPreparePanel,
     InterventionReviewPanel,
     SkeletonModule,
-    TagModule,
   ],
   providers: [InterventionPlanningOptionsStore, InterventionWorkspaceStore],
   templateUrl: './intervention-detail.component.html',
@@ -216,8 +216,9 @@ export class InterventionDetailPage {
    *
    * @description
    * Active workflow phase derived from the intervention status, selecting which
-   * workspace panel to render: `prepare` (draft, planned, abandoned), `execute`
-   * (in progress, changes requested) or `review` (submitted, published).
+   * workspace panel to render: `prepare` (draft, abandoned), `execute` (planned,
+   * in progress, changes requested) or `review` (submitted, published). A planned
+   * intervention opens the execute workspace so the field agent can begin work.
    *
    * @access protected
    * @since 2.0.0
@@ -927,8 +928,10 @@ export class InterventionDetailPage {
    *
    * @description
    * Maps an intervention status to the workspace phase whose panel should
-   * render: `execute` (in progress, changes requested), `review` (submitted,
-   * published) or `prepare` for every remaining draft-side status.
+   * render: `execute` (planned, in progress, changes requested), `review`
+   * (submitted, published) or `prepare` for every remaining draft-side status.
+   * `planned` routes to execute so a planned intervention exposes the
+   * "Start work" action that transitions it to `in_progress`.
    *
    * @access private
    * @since 2.0.0
@@ -938,7 +941,8 @@ export class InterventionDetailPage {
    * @returns {'prepare' | 'execute' | 'review'} Phase for the status.
    */
   private phaseForStatus(status: string | undefined): 'prepare' | 'execute' | 'review' {
-    if (status === 'in_progress' || status === 'changes_requested') return 'execute';
+    if (status === 'planned' || status === 'in_progress' || status === 'changes_requested')
+      return 'execute';
     if (status === 'submitted' || status === 'published') return 'review';
     return 'prepare';
   }

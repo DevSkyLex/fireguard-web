@@ -1,4 +1,4 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex h-full w-full flex-col gap-8">
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
   <section class="flex flex-col gap-5" aria-labelledby="work-item-heading">
     <div>
       <h2
@@ -14,8 +14,10 @@
     </div>
 
     <div class="grid gap-5">
-      <label class="grid gap-1.5 text-sm font-medium">
-        <span>Action <span class="text-red-500" aria-hidden="true">*</span></span>
+      <label class="grid gap-1.5 text-sm">
+        <span class="font-medium"
+          >Action <span class="text-red-500" aria-hidden="true">*</span></span
+        >
         <p-select
           formControlName="action"
           [options]="[...actionOptions]"
@@ -34,8 +36,8 @@
         </p-select>
       </label>
 
-      <label class="grid gap-1.5 text-sm font-medium">
-        Target resource
+      <label class="grid gap-1.5 text-sm">
+        <span class="font-medium">Target resource</span>
         <p-select
           formControlName="target"
           [options]="[...targetOptions()]"
@@ -46,13 +48,13 @@
           placeholder="Optional site, facility or equipment target"
           appendTo="body"
         />
-        <small class="font-normal text-surface-500 dark:text-surface-400">
+        <small class="text-surface-500 dark:text-surface-400">
           Leave empty for site-level work.
         </small>
       </label>
 
-      <label class="grid gap-1.5 text-sm font-medium">
-        Assignee
+      <label class="grid gap-1.5 text-sm">
+        <span class="font-medium">Assignee</span>
         <p-select
           formControlName="assignee"
           [options]="[...memberOptions()]"
@@ -73,7 +75,7 @@
             }
           </ng-template>
         </p-select>
-        <small class="font-normal text-surface-500 dark:text-surface-400">
+        <small class="text-surface-500 dark:text-surface-400">
           Unassigned items can be picked up by any field agent.
         </small>
       </label>

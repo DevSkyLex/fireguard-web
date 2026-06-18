@@ -14,8 +14,10 @@
     </div>
 
     <div class="grid gap-5 md:grid-cols-2">
-      <label class="grid gap-1.5 text-sm font-medium md:col-span-2">
-        <span>Priority <span class="text-red-500" aria-hidden="true">*</span></span>
+      <label class="grid gap-1.5 text-sm md:col-span-2">
+        <span class="font-medium"
+          >Priority <span class="text-red-500" aria-hidden="true">*</span></span
+        >
         <p-select
           formControlName="priority"
           [options]="[...priorityOptions]"
@@ -34,8 +36,8 @@
         </p-select>
       </label>
 
-      <label class="grid gap-1.5 text-sm font-medium">
-        <span>Site <span class="text-red-500" aria-hidden="true">*</span></span>
+      <label class="grid gap-1.5 text-sm">
+        <span class="font-medium">Site <span class="text-red-500" aria-hidden="true">*</span></span>
         <p-select
           formControlName="site"
           [options]="[...siteOptions()]"
@@ -54,8 +56,10 @@
         }
       </label>
 
-      <label class="grid gap-1.5 text-sm font-medium">
-        <span>Responsible agent <span class="text-red-500" aria-hidden="true">*</span></span>
+      <label class="grid gap-1.5 text-sm">
+        <span class="font-medium"
+          >Responsible agent <span class="text-red-500" aria-hidden="true">*</span></span
+        >
         <p-select
           formControlName="responsible"
           [options]="[...memberOptions()]"
@@ -84,8 +88,8 @@
         }
       </label>
 
-      <label class="grid gap-1.5 text-sm font-medium md:col-span-2">
-        Participants
+      <label class="grid gap-1.5 text-sm md:col-span-2">
+        <span class="font-medium">Participants</span>
         <p-multiselect
           formControlName="participants"
           [options]="[...memberOptions()]"
@@ -103,8 +107,10 @@
         </p-multiselect>
       </label>
 
-      <label class="grid gap-1.5 text-sm font-medium">
-        <span>Planned start <span class="text-red-500" aria-hidden="true">*</span></span>
+      <label class="grid gap-1.5 text-sm">
+        <span class="font-medium"
+          >Planned start <span class="text-red-500" aria-hidden="true">*</span></span
+        >
         <p-datepicker
           formControlName="plannedStartAt"
           [showTime]="true"
@@ -125,8 +131,8 @@
         }
       </label>
 
-      <label class="grid gap-1.5 text-sm font-medium">
-        <span>Due <span class="text-red-500" aria-hidden="true">*</span></span>
+      <label class="grid gap-1.5 text-sm">
+        <span class="font-medium">Due <span class="text-red-500" aria-hidden="true">*</span></span>
         <p-datepicker
           formControlName="dueAt"
           [showTime]="true"

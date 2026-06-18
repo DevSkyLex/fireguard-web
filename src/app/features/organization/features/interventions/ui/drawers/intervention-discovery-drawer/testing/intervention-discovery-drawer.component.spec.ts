@@ -46,11 +46,11 @@ describe('InterventionDiscoveryDrawer', () => {
     expect(component.equipmentTypeOptions()).toEqual([]);
   });
 
-  it('should size the bottom panel for the field context', () => {
+  it('should size the right panel responsively', () => {
     const component = createComponent();
     const rootClass = (component.drawerPt.root as { class: string }).class;
 
-    expect(rootClass).toContain('!h-[30rem]');
-    expect(rootClass).toContain('!max-h-[90dvh]');
+    expect(rootClass).toContain('!w-full');
+    expect(rootClass).toContain('sm:!w-[34rem]');
   });
 });

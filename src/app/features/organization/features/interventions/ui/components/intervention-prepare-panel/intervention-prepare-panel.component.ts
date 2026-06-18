@@ -530,12 +530,55 @@ export class InterventionPreparePanel {
    * @returns {MemberSelectOption | null} Assigned member option, if any.
    */
   protected workItemAssignee(item: InterventionWorkItemOutput): MemberSelectOption | null {
+    // Prefer the identity embedded by the API: it always resolves, regardless of
+    // organization size, and does not depend on the member options being loaded.
+    const profile = item.assigneeProfile;
+    if (profile) {
+      return {
+        label: profile.displayName,
+        value: profile.member,
+        displayName: profile.displayName,
+        roleLabel: '',
+        avatarUrl: profile.avatarUrl,
+        initials: this.deriveInitials(profile.displayName),
+      };
+    }
+
     if (!item.assignee) return null;
 
+    // Fallback for optimistic work items created offline, where the profile is
+    // not resolved yet but the member options are loaded in the workspace.
     return (
       this.memberOptions().find(
         (option: MemberSelectOption): boolean => option.value === item.assignee,
       ) ?? null
+    );
+  }
+
+  /**
+   * Method deriveInitials
+   * @method deriveInitials
+   *
+   * @description
+   * Derives up to two uppercase initials from a display name for the avatar
+   * fallback shown when the assignee has no avatar image.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @param {string} displayName - Assignee display name.
+   *
+   * @returns {string} Up to two uppercase initials, or '?' when none.
+   */
+  private deriveInitials(displayName: string): string {
+    return (
+      displayName
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part: string): string => part.charAt(0))
+        .join('')
+        .toUpperCase() || '?'
     );
   }
 
@@ -556,9 +599,14 @@ export class InterventionPreparePanel {
    * @returns {string | null} Display label, or null when nothing useful to show.
    */
   protected workItemTarget(item: InterventionWorkItemOutput): string | null {
+    // Prefer the summary embedded by the API: it always resolves, regardless of
+    // organization size, and does not depend on the target options being loaded.
+    if (item.targetSummary) return item.targetSummary.label;
+
     const target: string | null = item.target;
     if (!target) return null;
 
+    // Fallback for optimistic work items and free-text targets.
     const option: SelectOption | undefined = this.targetOptions().find(
       (candidate: SelectOption): boolean => candidate.value === target,
     );

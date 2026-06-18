@@ -14,8 +14,10 @@ export type { InterventionStatus } from './intervention/intervention-status.type
 export type { InterventionType } from './intervention/intervention-type.type';
 export type { CreateInterventionWorkItemInput } from './intervention-work-item/create-intervention-work-item-input.interface';
 export type { InterventionWorkItemAction } from './intervention-work-item/intervention-work-item-action.type';
+export type { InterventionWorkItemAssignee } from './intervention-work-item/intervention-work-item-assignee.interface';
 export type { InterventionWorkItemOutput } from './intervention-work-item/intervention-work-item-output.interface';
 export type { InterventionWorkItemSource } from './intervention-work-item/intervention-work-item-source.type';
+export type { InterventionWorkItemTarget } from './intervention-work-item/intervention-work-item-target.interface';
 export type { InterventionWorkItemStatus } from './intervention-work-item/intervention-work-item-status.type';
 export type { UpdateInterventionWorkItemInput } from './intervention-work-item/update-intervention-work-item-input.interface';
 export type { CreateInterventionChangeInput } from './intervention-change/create-intervention-change-input.interface';

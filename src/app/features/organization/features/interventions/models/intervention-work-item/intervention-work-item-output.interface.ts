@@ -1,7 +1,9 @@
 import type { HydraItem } from '@core/models/api';
 import type { InterventionWorkItemAction } from './intervention-work-item-action.type';
+import type { InterventionWorkItemAssignee } from './intervention-work-item-assignee.interface';
 import type { InterventionWorkItemSource } from './intervention-work-item-source.type';
 import type { InterventionWorkItemStatus } from './intervention-work-item-status.type';
+import type { InterventionWorkItemTarget } from './intervention-work-item-target.interface';
 
 /**
  * Interface InterventionWorkItemOutput
@@ -56,6 +58,18 @@ export interface InterventionWorkItemOutput extends HydraItem {
   readonly target: string | null;
 
   /**
+   * Property targetSummary
+   * @readonly
+   *
+   * @description
+   * Resolved target summary (kind + label) embedded by the API. Absent on
+   * optimistic work items, on free-text targets, and when unresolved.
+   *
+   * @type {InterventionWorkItemTarget | null | undefined}
+   */
+  readonly targetSummary?: InterventionWorkItemTarget | null;
+
+  /**
    * Property resultResource
    * @readonly
    *
@@ -76,6 +90,18 @@ export interface InterventionWorkItemOutput extends HydraItem {
    * @type {string | null}
    */
   readonly assignee: string | null;
+
+  /**
+   * Property assigneeProfile
+   * @readonly
+   *
+   * @description
+   * Resolved assignee identity (name + avatar) embedded by the API. Absent on
+   * optimistic work items created offline before the server response.
+   *
+   * @type {InterventionWorkItemAssignee | null | undefined}
+   */
+  readonly assigneeProfile?: InterventionWorkItemAssignee | null;
 
   /**
    * Property source

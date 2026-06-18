@@ -1,0 +1,20 @@
+<p-drawer
+  header="Skip work item"
+  [visible]="visible()"
+  (visibleChange)="visibleChange.emit($event)"
+  [appendTo]="'body'"
+  [modal]="true"
+  [blockScroll]="true"
+  [dismissible]="!loading()"
+  [closeOnEscape]="!loading()"
+  position="bottom"
+  [pt]="drawerPt"
+>
+  <ng-template #content>
+    <app-intervention-skip-form
+      [loading]="loading()"
+      [disabled]="disabled()"
+      (submitted)="submitted.emit($event)"
+    />
+  </ng-template>
+</p-drawer>

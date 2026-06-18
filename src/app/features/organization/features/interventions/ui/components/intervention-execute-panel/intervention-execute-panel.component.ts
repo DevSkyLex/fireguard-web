@@ -10,8 +10,7 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { ButtonModule } from 'primeng/button';
-import { DrawerModule } from 'primeng/drawer';
+import { ButtonModule, type ButtonPassThroughOptions } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { ScrollerModule } from 'primeng/scroller';
 import { TagModule } from 'primeng/tag';
@@ -25,10 +24,12 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { InterventionTag } from '@features/organization/features/interventions/ui/components/intervention-tag';
 import {
-  InterventionDiscoveryForm,
-  InterventionSkipForm,
-  type InterventionDiscoveryFormValues,
-  type InterventionSkipFormValues,
+  InterventionDiscoveryDrawer,
+  InterventionSkipDrawer,
+} from '@features/organization/features/interventions/ui/drawers';
+import type {
+  InterventionDiscoveryFormValues,
+  InterventionSkipFormValues,
 } from '@features/organization/features/interventions/ui/forms';
 import { Card, EmptyState } from '@shared/components';
 
@@ -47,10 +48,9 @@ import { Card, EmptyState } from '@shared/components';
   imports: [
     ButtonModule,
     Card,
-    DrawerModule,
     EmptyState,
-    InterventionDiscoveryForm,
-    InterventionSkipForm,
+    InterventionDiscoveryDrawer,
+    InterventionSkipDrawer,
     InterventionTag,
     MessageModule,
     ScrollerModule,
@@ -294,6 +294,24 @@ export class InterventionExecutePanel {
   protected readonly scrollerItems: Signal<InterventionWorkItemOutput[]> = computed<
     InterventionWorkItemOutput[]
   >(() => [...this.workItems()]);
+
+  /**
+   * Property fieldActionButtonPt
+   * @readonly
+   *
+   * @description
+   * PrimeNG button pass-through options for the secondary field actions (scan,
+   * add discovery): full width inside the mobile two-column grid, shrinking to
+   * content width once the row switches to a flex layout on wider viewports.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {ButtonPassThroughOptions}
+   */
+  protected readonly fieldActionButtonPt: ButtonPassThroughOptions = {
+    root: { class: 'w-full sm:w-auto' },
+  };
 
   /**
    * Property skipDrawerVisible

@@ -2,9 +2,9 @@
   <p-avatar
     [image]="option().avatarUrl ?? undefined"
     [label]="option().avatarUrl ? undefined : option().initials"
-    [styleClass]="compact() ? 'size-5! text-[0.625rem]!' : ''"
     shape="circle"
-    class="shrink-0 bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+    class="shrink-0"
+    [pt]="avatarPt()"
   />
   @if (compact()) {
     <span

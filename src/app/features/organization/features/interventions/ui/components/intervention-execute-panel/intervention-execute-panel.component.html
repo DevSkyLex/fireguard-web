@@ -55,7 +55,7 @@
   <div class="grid grid-cols-2 gap-3 sm:flex">
     <p-button
       class="block"
-      styleClass="w-full sm:w-auto"
+      [pt]="fieldActionButtonPt"
       label="Scan QR"
       icon="pi pi-qrcode"
       severity="secondary"
@@ -65,7 +65,7 @@
     />
     <p-button
       class="block"
-      styleClass="w-full sm:w-auto"
+      [pt]="fieldActionButtonPt"
       label="Add discovery"
       icon="pi pi-plus"
       severity="secondary"
@@ -163,29 +163,19 @@
   </div>
 </section>
 
-<p-drawer
-  [(visible)]="skipDrawerVisible"
-  position="bottom"
-  [style]="{ height: 'min(28rem, 80dvh)' }"
-  header="Skip work item"
->
-  <app-intervention-skip-form
-    [loading]="saving()"
-    [disabled]="!canExecute()"
-    (submitted)="confirmSkip($event)"
-  />
-</p-drawer>
+<app-intervention-skip-drawer
+  [visible]="skipDrawerVisible()"
+  (visibleChange)="skipDrawerVisible.set($event)"
+  [loading]="saving()"
+  [disabled]="!canExecute()"
+  (submitted)="confirmSkip($event)"
+/>
 
-<p-drawer
-  [(visible)]="discoveryDrawerVisible"
-  position="bottom"
-  [style]="{ height: 'min(30rem, 90dvh)' }"
-  header="Add field discovery"
->
-  <app-intervention-discovery-form
-    [loading]="saving()"
-    [disabled]="!canExecute()"
-    [equipmentTypeOptions]="equipmentTypeOptions()"
-    (submitted)="confirmDiscovery($event)"
-  />
-</p-drawer>
+<app-intervention-discovery-drawer
+  [visible]="discoveryDrawerVisible()"
+  (visibleChange)="discoveryDrawerVisible.set($event)"
+  [loading]="saving()"
+  [disabled]="!canExecute()"
+  [equipmentTypeOptions]="equipmentTypeOptions()"
+  (submitted)="confirmDiscovery($event)"
+/>

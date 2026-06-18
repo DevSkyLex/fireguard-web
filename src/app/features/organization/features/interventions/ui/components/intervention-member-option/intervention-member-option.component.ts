@@ -1,5 +1,12 @@
-import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
-import { AvatarModule } from 'primeng/avatar';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  type InputSignal,
+  type Signal,
+} from '@angular/core';
+import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
 import type { MemberSelectOption } from '@features/organization/features/interventions/models';
 
 /**
@@ -47,4 +54,27 @@ export class InterventionMemberOption {
    * @type {InputSignal<boolean>}
    */
   public readonly compact: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property avatarPt
+   * @readonly
+   *
+   * @description
+   * PrimeNG avatar pass-through options styling the avatar surface (neutral
+   * background and foreground) and shrinking it to the compact single-line
+   * footprint when {@link compact} is enabled.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<AvatarPassThroughOptions>}
+   */
+  protected readonly avatarPt: Signal<AvatarPassThroughOptions> =
+    computed<AvatarPassThroughOptions>(() => ({
+      root: {
+        class:
+          'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300' +
+          (this.compact() ? ' size-5! text-[0.625rem]!' : ''),
+      },
+    }));
 }

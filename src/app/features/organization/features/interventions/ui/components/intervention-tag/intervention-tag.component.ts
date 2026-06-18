@@ -11,7 +11,7 @@ import {
   type InterventionTagDescriptor,
   type InterventionTagKind,
 } from '@features/organization/features/interventions/models';
-import { Tag } from '@shared/components';
+import { Tag, type TagVariant } from '@shared/components';
 
 /**
  * Component InterventionTag
@@ -68,6 +68,22 @@ export class InterventionTag {
    * @type {InputSignal<string>}
    */
   public readonly value: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property variant
+   * @readonly
+   *
+   * @description
+   * Visual variant forwarded to the shared {@link Tag}: neutral pill (`badge`,
+   * default) for tables and detail headers, or bare inline content (`inline`)
+   * for dense surfaces such as the properties rail and select options.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<TagVariant>}
+   */
+  public readonly variant: InputSignal<TagVariant> = input<TagVariant>('badge');
   //#endregion
 
   //#region Properties

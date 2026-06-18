@@ -1,109 +1,310 @@
-<section class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
-  <div class="flex flex-col gap-5">
-    <app-card
-      title="Define the work before agents arrive"
-      description="Confirm the site, responsible agent, schedule and explicit work items. Planning freezes this scope while still allowing discoveries in the field."
-    >
-      <ng-template #action>
-        <app-intervention-tag kind="priority" [value]="intervention().priority" />
-      </ng-template>
-      <ng-template #content>
-        <app-intervention-planning-form
-          class="mt-2 block"
-          [intervention]="intervention()"
-          [siteOptions]="siteOptions()"
-          [memberOptions]="memberOptions()"
-          [loading]="saving()"
-          [disabled]="!canPlan()"
-          (submitted)="savePlanningDetails($event)"
-        />
-      </ng-template>
-    </app-card>
+<div class="grid h-full min-h-0 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_22rem]">
+  <!-- Main document -->
+  <div class="min-w-0 overflow-y-auto px-1 pb-12 xl:pr-10">
+    <div class="mx-auto max-w-3xl pt-1">
+      <div class="flex flex-wrap items-center gap-2.5">
+        <app-intervention-tag kind="status" [value]="intervention().status" variant="inline" />
+        <span class="h-3.5 w-px bg-surface-200 dark:bg-surface-700" aria-hidden="true"></span>
+        <app-intervention-tag kind="priority" [value]="intervention().priority" variant="inline" />
+      </div>
 
-    <app-card title="Work items" [description]="workItems().length + ' explicit task(s)'">
-      <ng-template #action>
-        <p-button
-          label="Add work item"
-          icon="pi pi-plus"
-          severity="secondary"
-          size="small"
-          [outlined]="true"
-          [disabled]="!canPlan()"
-          (onClick)="workItemDrawerVisible.set(true)"
-        />
-      </ng-template>
-      <ng-template #content>
+      <h1
+        class="mt-3 text-2xl font-semibold tracking-tight text-balance text-surface-950 dark:text-surface-0"
+      >
+        {{ intervention().name }}
+      </h1>
+
+      <div class="mt-3 space-y-3 text-sm leading-relaxed text-surface-600 dark:text-surface-300">
+        <p>
+          Define the work before agents arrive on site. Confirm the responsible agent, the schedule
+          window and the explicit work items.
+        </p>
+        <p>
+          Planning freezes this scope while still allowing discoveries in the field. Items added
+          here become assignable tasks during execution.
+        </p>
+      </div>
+
+      <section class="mt-8 rounded-xl border border-surface-200 dark:border-surface-800">
+        <div class="flex items-center gap-3 px-4 py-3">
+          <h2 class="shrink-0 text-sm font-semibold text-surface-900 dark:text-surface-100">
+            Work items
+          </h2>
+          <span
+            class="h-1.5 min-w-8 flex-1 overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
+            role="presentation"
+          >
+            <span
+              class="block h-full rounded-full bg-primary-500 transition-[width] duration-300 ease-out"
+              [style.width.%]="progressValue()"
+            ></span>
+          </span>
+          <span class="shrink-0 text-xs font-medium text-surface-500 tabular-nums">
+            {{ intervention().completedWorkItemsCount }} / {{ intervention().workItemsCount }}
+          </span>
+          <p-button
+            label="Add"
+            icon="pi pi-plus"
+            severity="secondary"
+            size="small"
+            [text]="true"
+            [disabled]="!canPlan()"
+            (onClick)="workItemDrawerVisible.set(true)"
+          />
+        </div>
+
         @if (workItems().length > 0) {
-          <ul class="divide-y divide-surface-200 dark:divide-surface-800">
+          <ul
+            class="divide-y divide-surface-200 border-t border-surface-200 dark:divide-surface-800 dark:border-surface-800"
+          >
             @for (item of workItems(); track item.id) {
-              <li class="flex items-center justify-between gap-4 py-3 first:pt-1 last:pb-1">
-                <div class="min-w-0">
-                  <p class="truncate font-medium capitalize">{{ item.action.replace('_', ' ') }}</p>
-                  <p class="mt-0.5 truncate text-sm text-surface-600 dark:text-surface-300">
+              <li class="flex items-center gap-3 px-4 py-3">
+                <i class="pi pi-check-square shrink-0 text-surface-400" aria-hidden="true"></i>
+                <div class="min-w-0 flex-1">
+                  <p
+                    class="truncate text-sm font-medium text-surface-900 capitalize dark:text-surface-100"
+                  >
+                    {{ item.action.replace('_', ' ') }}
+                  </p>
+                  <p class="truncate text-xs text-surface-500 dark:text-surface-400">
                     {{ item.target || 'Site-level work' }}
                   </p>
                 </div>
-                <p-tag
-                  [value]="item.assignee ? 'Assigned' : 'Unassigned'"
-                  [severity]="item.assignee ? 'info' : 'warn'"
-                />
+                <span
+                  class="shrink-0 text-xs font-medium"
+                  [class]="
+                    item.assignee
+                      ? 'text-surface-600 dark:text-surface-300'
+                      : 'text-surface-400 dark:text-surface-500'
+                  "
+                >
+                  {{ item.assignee ? 'Assigned' : 'Unassigned' }}
+                </span>
               </li>
             }
           </ul>
         } @else {
-          <p-message class="mt-2 block" severity="warn"
-            >Add explicit work items before planning this intervention.</p-message
+          <div
+            class="flex items-center gap-3 border-t border-surface-200 px-4 py-4 dark:border-surface-800"
           >
+            <span
+              class="grid size-9 shrink-0 place-items-center rounded-lg bg-surface-100 text-surface-400 dark:bg-surface-800 dark:text-surface-500"
+              aria-hidden="true"
+            >
+              <i class="pi pi-check-square"></i>
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-surface-700 dark:text-surface-200">
+                No work items yet
+              </p>
+              <p class="text-xs text-surface-500 dark:text-surface-400">
+                Add explicit tasks to make the scope assignable.
+              </p>
+            </div>
+            <p-button
+              label="New item"
+              severity="secondary"
+              size="small"
+              [outlined]="true"
+              [disabled]="!canPlan()"
+              (onClick)="workItemDrawerVisible.set(true)"
+            />
+          </div>
         }
-      </ng-template>
-    </app-card>
+      </section>
+
+      <div
+        class="mt-6 flex items-center gap-2.5 text-sm text-surface-500 dark:text-surface-400"
+        aria-label="Activity"
+      >
+        <span
+          class="grid size-7 shrink-0 place-items-center rounded-full bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400"
+          aria-hidden="true"
+        >
+          <i class="pi pi-flag text-xs"></i>
+        </span>
+        <span>Intervention created · {{ intervention().createdAt | date: 'medium' }}</span>
+      </div>
+    </div>
   </div>
 
-  <aside
-    class="h-fit rounded-xl border border-surface-200 bg-surface-50 p-5 xl:sticky xl:top-4 dark:border-surface-800 dark:bg-surface-900/40"
-  >
-    <h2 class="text-base font-semibold">Ready to plan?</h2>
-    <p class="mt-1 text-sm text-surface-600 dark:text-surface-300">
-      Three conditions freeze the scope for the field.
-    </p>
-    <ul class="mt-4 grid gap-3 text-sm text-surface-700 dark:text-surface-200">
-      <li class="flex gap-2">
-        <i class="pi pi-check-circle mt-0.5 shrink-0 text-green-600" aria-hidden="true"></i>One site
-        per intervention
-      </li>
-      <li class="flex gap-2">
-        <i class="pi pi-check-circle mt-0.5 shrink-0 text-green-600" aria-hidden="true"></i
-        >Responsible and participants
-      </li>
-      <li class="flex gap-2">
-        <i class="pi pi-check-circle mt-0.5 shrink-0 text-green-600" aria-hidden="true"></i
-        >Assignable work scope
-      </li>
-    </ul>
-    <p-button
-      class="mt-5 block"
-      styleClass="w-full"
-      label="Plan intervention"
-      icon="pi pi-calendar"
-      [loading]="saving()"
-      [disabled]="
-        !canPlan() ||
-        intervention().status !== 'draft' ||
-        !intervention().site ||
-        !intervention().responsible ||
-        !intervention().plannedStartAt ||
-        !intervention().dueAt
-      "
-      (onClick)="planIntervention.emit()"
-    />
+  <!-- Properties rail -->
+  <aside class="min-h-0 max-xl:mt-6">
+    <app-card title="Properties" class="block h-full">
+      @if (canPlan() && intervention().status === 'draft') {
+        <ng-template #action>
+          <p-button
+            icon="pi pi-pencil"
+            severity="secondary"
+            size="small"
+            [text]="true"
+            [rounded]="true"
+            ariaLabel="Edit details"
+            (onClick)="editDrawerVisible.set(true)"
+          />
+        </ng-template>
+      }
+
+      <ng-template #content>
+        <div class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
+          <dl class="grid grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2.5">
+            <dt class="text-sm text-surface-500 dark:text-surface-400">Status</dt>
+            <dd class="min-w-0">
+              <app-intervention-tag
+                kind="status"
+                [value]="intervention().status"
+                variant="inline"
+              />
+            </dd>
+
+            <dt class="text-sm text-surface-500 dark:text-surface-400">Priority</dt>
+            <dd class="min-w-0">
+              <app-intervention-tag
+                kind="priority"
+                [value]="intervention().priority"
+                variant="inline"
+              />
+            </dd>
+
+            <dt class="text-sm text-surface-500 dark:text-surface-400">Responsible</dt>
+            <dd class="min-w-0">
+              @if (responsibleMember(); as member) {
+                <app-intervention-member-option [option]="member" [compact]="true" />
+              } @else {
+                <span class="text-sm text-surface-400 dark:text-surface-500">Unassigned</span>
+              }
+            </dd>
+
+            <dt class="self-start pt-1 text-sm text-surface-500 dark:text-surface-400">
+              Participants
+            </dt>
+            <dd class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+              @for (member of participantMembers(); track member.value) {
+                <app-intervention-member-option [option]="member" [compact]="true" />
+              } @empty {
+                <span class="text-sm text-surface-400 dark:text-surface-500">None</span>
+              }
+              @if (canPlan() && intervention().status === 'draft') {
+                <p-button
+                  icon="pi pi-plus"
+                  severity="secondary"
+                  size="small"
+                  [text]="true"
+                  [rounded]="true"
+                  ariaLabel="Edit participants"
+                  (onClick)="editDrawerVisible.set(true)"
+                />
+              }
+            </dd>
+
+            <dt class="text-sm text-surface-500 dark:text-surface-400">Site</dt>
+            <dd class="min-w-0">
+              @if (siteLabel(); as site) {
+                <span class="flex min-w-0 items-center gap-1.5 text-sm font-medium">
+                  <i class="pi pi-building shrink-0 text-surface-400" aria-hidden="true"></i>
+                  <span class="truncate">{{ site }}</span>
+                </span>
+              } @else {
+                <span class="text-sm text-surface-400 dark:text-surface-500">No site</span>
+              }
+            </dd>
+          </dl>
+
+          <div>
+            <h3
+              class="text-xs font-semibold tracking-wide text-surface-500 uppercase dark:text-surface-400"
+            >
+              Schedule
+            </h3>
+            <dl class="mt-2 grid grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2.5">
+              <dt class="text-sm text-surface-500 dark:text-surface-400">Start</dt>
+              <dd class="min-w-0 text-sm font-medium">
+                @if (intervention().plannedStartAt; as start) {
+                  <span class="flex items-center gap-1.5">
+                    <i class="pi pi-calendar shrink-0 text-surface-400" aria-hidden="true"></i>
+                    {{ start | date: 'MMM d, HH:mm' }}
+                  </span>
+                } @else {
+                  <span class="text-surface-400 dark:text-surface-500">Not set</span>
+                }
+              </dd>
+
+              <dt class="text-sm text-surface-500 dark:text-surface-400">Due</dt>
+              <dd class="min-w-0 text-sm font-medium">
+                @if (intervention().dueAt; as due) {
+                  <span class="flex items-center gap-1.5">
+                    <i class="pi pi-calendar shrink-0 text-red-500/80" aria-hidden="true"></i>
+                    {{ due | date: 'MMM d, HH:mm' }}
+                  </span>
+                } @else {
+                  <span class="text-surface-400 dark:text-surface-500">Not set</span>
+                }
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </ng-template>
+
+      <ng-template #footer>
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-surface-900 dark:text-surface-50">Ready to plan</h3>
+          <span
+            class="rounded-md bg-surface-100 px-1.5 py-0.5 text-xs font-medium text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-300"
+          >
+            {{ readyCount() }} / 3
+          </span>
+        </div>
+
+        <ul class="mt-3 grid gap-2 text-sm">
+          @for (check of readinessChecks(); track check.label) {
+            <li class="flex items-center gap-2">
+              @if (check.done) {
+                <i
+                  class="pi pi-check-circle shrink-0 text-green-600 dark:text-green-400"
+                  aria-hidden="true"
+                ></i>
+                <span class="text-surface-700 dark:text-surface-200">{{ check.label }}</span>
+              } @else {
+                <i
+                  class="pi pi-exclamation-circle shrink-0 text-amber-500 dark:text-amber-400"
+                  aria-hidden="true"
+                ></i>
+                <span class="text-surface-500 dark:text-surface-400">{{ check.label }}</span>
+              }
+            </li>
+          }
+        </ul>
+
+        <p-button
+          class="mt-4 block"
+          label="Plan intervention"
+          icon="pi pi-calendar"
+          [fluid]="true"
+          [loading]="saving()"
+          [disabled]="!canSubmitPlan()"
+          (onClick)="planIntervention.emit()"
+        />
+      </ng-template>
+    </app-card>
   </aside>
-</section>
+</div>
+
+<p-drawer [(visible)]="editDrawerVisible" position="right" header="Edit details" [pt]="drawerPt">
+  <app-intervention-planning-form
+    [intervention]="intervention()"
+    [siteOptions]="siteOptions()"
+    [memberOptions]="memberOptions()"
+    [loading]="saving()"
+    [disabled]="!canPlan()"
+    (submitted)="savePlanningDetails($event)"
+  />
+</p-drawer>
 
 <p-drawer
   [(visible)]="workItemDrawerVisible"
   position="right"
-  [style]="{ width: 'min(100vw, 32rem)' }"
   header="Add work item"
+  [pt]="drawerPt"
 >
   <app-intervention-work-item-form
     [targetOptions]="targetOptions()"

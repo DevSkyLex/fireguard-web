@@ -5,7 +5,6 @@ import {
   effect,
   inject,
   input,
-  linkedSignal,
   signal,
   type InputSignal,
   type Signal,
@@ -14,9 +13,7 @@ import {
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { ProgressBarModule } from 'primeng/progressbar';
 import { SkeletonModule } from 'primeng/skeleton';
-import { StepperModule } from 'primeng/stepper';
 import { TagModule } from 'primeng/tag';
 import { ConnectivityService } from '@core/services/connectivity';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -50,7 +47,6 @@ import {
 import { InterventionExecutePanel } from '../../components/intervention-execute-panel/intervention-execute-panel.component';
 import { InterventionPreparePanel } from '../../components/intervention-prepare-panel/intervention-prepare-panel.component';
 import { InterventionReviewPanel } from '../../components/intervention-review-panel/intervention-review-panel.component';
-import { InterventionTag } from '../../components/intervention-tag';
 
 /**
  * Component InterventionDetailPage
@@ -75,10 +71,7 @@ import { InterventionTag } from '../../components/intervention-tag';
     InterventionExecutePanel,
     InterventionPreparePanel,
     InterventionReviewPanel,
-    InterventionTag,
-    ProgressBarModule,
     SkeletonModule,
-    StepperModule,
     TagModule,
   ],
   providers: [InterventionPlanningOptionsStore, InterventionWorkspaceStore],
@@ -196,23 +189,22 @@ export class InterventionDetailPage {
     inject<ConnectivityService>(ConnectivityService);
 
   /**
-   * Property activeStep
+   * Property phase
    * @readonly
    *
    * @description
-   * Active workflow step bound to the PrimeNG stepper `value`. Seeded from the
-   * intervention status (Prepare → 1, Execute → 2, Review → 3) and writable so
-   * the user can navigate freely between phases, while re-deriving whenever the
-   * status changes underneath.
+   * Active workflow phase derived from the intervention status, selecting which
+   * workspace panel to render: `prepare` (draft, planned, abandoned), `execute`
+   * (in progress, changes requested) or `review` (submitted, published).
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @type {WritableSignal<number>}
+   * @type {Signal<'prepare' | 'execute' | 'review'>}
    */
-  protected readonly activeStep: WritableSignal<number> = linkedSignal<number>(() =>
-    this.stepForStatus(this.store.intervention()?.status),
-  );
+  protected readonly phase: Signal<'prepare' | 'execute' | 'review'> = computed<
+    'prepare' | 'execute' | 'review'
+  >(() => this.phaseForStatus(this.store.intervention()?.status));
 
   /**
    * Property publishing
@@ -871,24 +863,24 @@ export class InterventionDetailPage {
   }
 
   /**
-   * Method stepForStatus
-   * @method stepForStatus
+   * Method phaseForStatus
+   * @method phaseForStatus
    *
    * @description
-   * Maps an intervention status to its default stepper index (1: Prepare,
-   * 2: Execute, 3: Review), used to seed the {@link activeStep} signal on
-   * initial load and on status changes.
+   * Maps an intervention status to the workspace phase whose panel should
+   * render: `execute` (in progress, changes requested), `review` (submitted,
+   * published) or `prepare` for every remaining draft-side status.
    *
    * @access private
-   * @since 1.0.0
+   * @since 2.0.0
    *
    * @param {string | undefined} status - Current intervention status.
    *
-   * @returns {number} Default stepper index for the status.
+   * @returns {'prepare' | 'execute' | 'review'} Phase for the status.
    */
-  private stepForStatus(status: string | undefined): number {
-    if (status === 'in_progress' || status === 'changes_requested') return 2;
-    if (status === 'submitted' || status === 'published') return 3;
-    return 1;
+  private phaseForStatus(status: string | undefined): 'prepare' | 'execute' | 'review' {
+    if (status === 'in_progress' || status === 'changes_requested') return 'execute';
+    if (status === 'submitted' || status === 'published') return 'review';
+    return 'prepare';
   }
 }

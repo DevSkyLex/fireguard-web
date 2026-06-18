@@ -1,17 +1,18 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   output,
   signal,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { DrawerModule } from 'primeng/drawer';
-import { MessageModule } from 'primeng/message';
-import { TagModule } from 'primeng/tag';
+import { DrawerModule, type DrawerPassThroughOptions } from 'primeng/drawer';
 import type {
   CreateInterventionWorkItemInput,
   InterventionOutput,
@@ -20,6 +21,7 @@ import type {
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
+import { InterventionMemberOption } from '@features/organization/features/interventions/ui/components/intervention-member-option/intervention-member-option.component';
 import { InterventionTag } from '@features/organization/features/interventions/ui/components/intervention-tag';
 import {
   InterventionPlanningForm,
@@ -30,13 +32,32 @@ import {
 import { Card } from '@shared/components';
 
 /**
+ * Interface PrepareReadinessCheck
+ * @interface PrepareReadinessCheck
+ *
+ * @description
+ * One planning-readiness condition rendered in the rail checklist.
+ */
+interface PrepareReadinessCheck {
+  /** Human-readable condition label. */
+  readonly label: string;
+  /** Whether the condition is currently satisfied. */
+  readonly done: boolean;
+}
+
+/**
  * Component InterventionPreparePanel
  * @class InterventionPreparePanel
  *
  * @description
- * Renders and orchestrates the intervention preparation phase.
+ * Renders the intervention preparation (draft) phase as a two-column workspace:
+ * a document-style main column (title, guidance, work items, activity) and a
+ * read-only properties rail (status, priority, people, site, schedule) ending
+ * in a planning-readiness checklist and the "Plan intervention" action. Editing
+ * is delegated to the planning and work-item forms hosted in side drawers; all
+ * persistence and navigation stay with the parent page through outputs.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -45,12 +66,12 @@ import { Card } from '@shared/components';
   imports: [
     ButtonModule,
     Card,
+    DatePipe,
     DrawerModule,
+    InterventionMemberOption,
     InterventionPlanningForm,
     InterventionTag,
     InterventionWorkItemForm,
-    MessageModule,
-    TagModule,
   ],
   templateUrl: './intervention-prepare-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,7 +83,7 @@ export class InterventionPreparePanel {
    * @readonly
    *
    * @description
-   * Intervention being prepared; used to seed planning form initial values.
+   * Intervention being prepared; drives the header, properties and readiness.
    *
    * @access public
    * @since 1.0.0
@@ -77,7 +98,7 @@ export class InterventionPreparePanel {
    * @readonly
    *
    * @description
-   * Planned work items listed in the scope panel.
+   * Planned work items listed in the scope section.
    *
    * @access public
    * @since 1.0.0
@@ -120,7 +141,8 @@ export class InterventionPreparePanel {
    * @readonly
    *
    * @description
-   * Available site selector options forwarded to {@link InterventionPlanningForm}.
+   * Available site selector options, used to resolve the site label and feed
+   * the planning form.
    *
    * @access public
    * @since 1.0.0
@@ -135,7 +157,8 @@ export class InterventionPreparePanel {
    * @readonly
    *
    * @description
-   * Available member selector options forwarded to planning and work-item forms.
+   * Available member selector options, used to resolve responsible/participant
+   * display and feed planning and work-item forms.
    *
    * @access public
    * @since 1.0.0
@@ -210,6 +233,37 @@ export class InterventionPreparePanel {
 
   //#region Properties
   /**
+   * Property drawerPt
+   * @readonly
+   *
+   * @description
+   * Shared PrimeNG drawer pass-through sizing the edit and work-item drawers:
+   * full width on mobile, fixed on larger viewports.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {DrawerPassThroughOptions}
+   */
+  protected readonly drawerPt: DrawerPassThroughOptions = {
+    root: { class: '!w-full sm:!w-[34rem]' },
+  };
+
+  /**
+   * Property editDrawerVisible
+   * @readonly
+   *
+   * @description
+   * Controls the visibility of the planning details edit drawer.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly editDrawerVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
    * Property workItemDrawerVisible
    * @readonly
    *
@@ -222,6 +276,169 @@ export class InterventionPreparePanel {
    * @type {WritableSignal<boolean>}
    */
   protected readonly workItemDrawerVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property siteLabel
+   * @readonly
+   *
+   * @description
+   * Resolved label of the intervention site, or null when none is set.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly siteLabel: Signal<string | null> = computed<string | null>(() => {
+    const site: string | null = this.intervention().site;
+    if (!site) return null;
+
+    return (
+      this.siteOptions().find((option: SelectOption): boolean => option.value === site)?.label ??
+      null
+    );
+  });
+
+  /**
+   * Property responsibleMember
+   * @readonly
+   *
+   * @description
+   * Resolved member option for the responsible agent, or null when unassigned.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<MemberSelectOption | null>}
+   */
+  protected readonly responsibleMember: Signal<MemberSelectOption | null> =
+    computed<MemberSelectOption | null>(() => {
+      const responsible: string | null = this.intervention().responsible;
+      if (!responsible) return null;
+
+      return (
+        this.memberOptions().find(
+          (option: MemberSelectOption): boolean => option.value === responsible,
+        ) ?? null
+      );
+    });
+
+  /**
+   * Property participantMembers
+   * @readonly
+   *
+   * @description
+   * Resolved member options for the intervention participants.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<readonly MemberSelectOption[]>}
+   */
+  protected readonly participantMembers: Signal<readonly MemberSelectOption[]> = computed<
+    readonly MemberSelectOption[]
+  >(() => {
+    const members: readonly MemberSelectOption[] = this.memberOptions();
+
+    return this.intervention()
+      .participants.map((iri: string): MemberSelectOption | undefined =>
+        members.find((option: MemberSelectOption): boolean => option.value === iri),
+      )
+      .filter((member: MemberSelectOption | undefined): member is MemberSelectOption => !!member);
+  });
+
+  /**
+   * Property progressValue
+   * @readonly
+   *
+   * @description
+   * Completion percentage of the planned work items, used by the scope header.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly progressValue: Signal<number> = computed<number>(() => {
+    const total: number = this.intervention().workItemsCount;
+    if (total <= 0) return 0;
+
+    return Math.round((this.intervention().completedWorkItemsCount / total) * 100);
+  });
+
+  /**
+   * Property readinessChecks
+   * @readonly
+   *
+   * @description
+   * The three planning-readiness conditions surfaced in the rail checklist.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<readonly PrepareReadinessCheck[]>}
+   */
+  protected readonly readinessChecks: Signal<readonly PrepareReadinessCheck[]> = computed<
+    readonly PrepareReadinessCheck[]
+  >(() => {
+    const intervention: InterventionOutput = this.intervention();
+
+    return [
+      {
+        label: 'Single site & responsible',
+        done: !!intervention.site && !!intervention.responsible,
+      },
+      {
+        label: 'Schedule window set',
+        done: !!intervention.plannedStartAt && !!intervention.dueAt,
+      },
+      { label: 'Add at least one work item', done: this.workItems().length > 0 },
+    ];
+  });
+
+  /**
+   * Property readyCount
+   * @readonly
+   *
+   * @description
+   * Number of satisfied readiness conditions, shown as the rail's `N / 3` badge.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly readyCount: Signal<number> = computed<number>(
+    () =>
+      this.readinessChecks().filter((check: PrepareReadinessCheck): boolean => check.done).length,
+  );
+
+  /**
+   * Property canSubmitPlan
+   * @readonly
+   *
+   * @description
+   * Whether planning can be confirmed: the user may plan, the intervention is
+   * still a draft, and the hard conditions (site, responsible, schedule) are met.
+   * Work items remain a soft recommendation.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canSubmitPlan: Signal<boolean> = computed<boolean>(() => {
+    const intervention: InterventionOutput = this.intervention();
+
+    return (
+      this.canPlan() &&
+      intervention.status === 'draft' &&
+      !!intervention.site &&
+      !!intervention.responsible &&
+      !!intervention.plannedStartAt &&
+      !!intervention.dueAt
+    );
+  });
   //#endregion
 
   //#region Methods
@@ -230,8 +447,8 @@ export class InterventionPreparePanel {
    * @method savePlanningDetails
    *
    * @description
-   * Maps {@link InterventionPlanningForm} values to a planning-details payload
-   * and emits them via the {@link saveDetails} output.
+   * Maps {@link InterventionPlanningForm} values to a planning-details payload,
+   * emits them via {@link saveDetails} and closes the edit drawer.
    *
    * @access protected
    * @since 1.0.0
@@ -249,6 +466,7 @@ export class InterventionPreparePanel {
       plannedStartAt: values.plannedStartAt,
       dueAt: values.dueAt,
     });
+    this.editDrawerVisible.set(false);
   }
 
   /**
@@ -257,7 +475,7 @@ export class InterventionPreparePanel {
    *
    * @description
    * Maps {@link InterventionWorkItemForm} values to a work-item input payload,
-   * emits it via the {@link createWorkItem} output, and closes the drawer.
+   * emits it via {@link createWorkItem} and closes the drawer.
    *
    * @access protected
    * @since 1.0.0

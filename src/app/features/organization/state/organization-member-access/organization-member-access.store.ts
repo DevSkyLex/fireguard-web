@@ -218,8 +218,7 @@ export const OrganizationMemberAccessStore = signalStore(
     return {
       onInit(): void {
         effect(() => {
-          const organizationId: string | null =
-            activeOrganizationStore.selectedOrganization()?.id ?? null;
+          const organizationId: string | null = activeOrganizationStore.selectedOrganizationId();
 
           if (!organizationId) {
             return;

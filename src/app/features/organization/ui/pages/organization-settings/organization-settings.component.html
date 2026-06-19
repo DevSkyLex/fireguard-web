@@ -1,0 +1,88 @@
+<div id="organization-settings" class="mx-auto flex w-full max-w-5xl flex-col py-1">
+  <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
+    <!-- Vertical settings navigation (sticky on large screens) -->
+    <nav class="lg:sticky lg:top-6" aria-label="Settings sections">
+      <p-menu
+        [model]="menuItems()"
+        [pt]="navMenuPt"
+        class="block w-full"
+        data-testid="organization-settings-nav"
+      />
+    </nav>
+
+    <!-- Active section content -->
+    <div class="flex min-w-0 flex-col gap-6">
+      <p-card [pt]="sectionCardPt">
+        <ng-template pTemplate="header">
+          <div class="flex flex-col border-b border-surface-200 px-6 py-4 dark:border-surface-800">
+            <h2
+              class="font-semibold text-surface-900 dark:text-surface-50"
+              data-testid="organization-settings-section-title"
+            >
+              {{ activeSection().label }}
+            </h2>
+            <p class="text-sm text-surface-500 dark:text-surface-400">
+              {{ activeSection().description }}
+            </p>
+          </div>
+        </ng-template>
+
+        @if (activeTab() !== 'danger' && store.saveError(); as error) {
+          <p-message severity="error" class="mb-4 block">
+            {{ error.message ?? 'The settings could not be saved.' }}
+          </p-message>
+        }
+
+        @switch (activeTab()) {
+          @case ('general') {
+            <app-organization-general-form
+              [organization]="activeOrganizationStore.selectedOrganization()"
+              [saving]="store.isSaving()"
+              [uploadingLogo]="store.isUploadingLogo()"
+              [logoHasError]="store.uploadLogoError() !== null"
+              (submitted)="save($event)"
+              (logoSelected)="uploadLogo($event)"
+            />
+          }
+          @case ('notifications') {
+            <app-organization-notifications-form
+              [organization]="activeOrganizationStore.selectedOrganization()"
+              [saving]="store.isSaving()"
+              (submitted)="save($event)"
+            />
+          }
+          @case ('regional') {
+            <app-organization-regional-form
+              [organization]="activeOrganizationStore.selectedOrganization()"
+              [saving]="store.isSaving()"
+              (submitted)="save($event)"
+            />
+          }
+          @case ('danger') {
+            @if (canDeleteOrganization()) {
+              @if (store.deleteError(); as error) {
+                <p-message severity="error" class="mb-4 block">
+                  {{ error.message ?? 'The organization could not be deleted.' }}
+                </p-message>
+              }
+
+              <app-organization-danger-zone
+                [organization]="activeOrganizationStore.selectedOrganization()"
+                [deleting]="store.isDeleting()"
+                (delete)="openDeleteDialog()"
+              />
+            }
+          }
+        }
+      </p-card>
+    </div>
+  </div>
+
+  <app-organization-delete-dialog
+    [(visible)]="deleteDialogVisible"
+    [organizationSlug]="activeOrganizationStore.selectedOrganization()?.slug ?? ''"
+    [organizationName]="activeOrganizationStore.selectedOrganization()?.name ?? ''"
+    [deleting]="store.isDeleting()"
+    (confirmed)="confirmDelete()"
+  />
+</div>

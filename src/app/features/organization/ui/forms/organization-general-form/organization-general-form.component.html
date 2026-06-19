@@ -1,0 +1,161 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-10">
+  <!-- Branding -->
+  <section class="flex flex-col">
+    <h3 class="mb-3 text-sm font-medium text-surface-500 dark:text-surface-400">Branding</h3>
+
+    <div class="divide-y divide-surface-100 dark:divide-surface-800/70">
+      <!-- Logo -->
+      <div
+        class="grid grid-cols-1 gap-x-8 gap-y-3 py-6 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
+      >
+        <div class="flex flex-col gap-0.5">
+          <span class="text-sm font-medium text-surface-800 dark:text-surface-100">Logo</span>
+          <span class="text-sm text-surface-500 dark:text-surface-400">
+            Shown in the organization switcher and headers.
+          </span>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="relative shrink-0">
+            <p-avatar
+              [image]="organization()?.logoUrl || undefined"
+              [label]="
+                organization()?.logoUrl ? undefined : (organization()?.name | slice: 0 : 1) || '?'
+              "
+              shape="square"
+              size="xlarge"
+              styleClass="overflow-hidden rounded-lg"
+            />
+            @if (uploadingLogo()) {
+              <span
+                class="absolute inset-0 flex items-center justify-center rounded-lg bg-surface-900/40"
+                aria-hidden="true"
+              >
+                <i class="pi pi-spinner pi-spin text-surface-0"></i>
+              </span>
+            }
+          </div>
+
+          <div class="flex min-w-0 flex-col items-start gap-1.5">
+            @if (logoHasError()) {
+              <p-message severity="error" class="w-full" [closable]="false">
+                We couldn't upload the logo. Please try again.
+              </p-message>
+            }
+            <p-fileupload
+              #logoUpload
+              mode="basic"
+              [accept]="acceptedLogoTypes"
+              [auto]="true"
+              [customUpload]="true"
+              [maxFileSize]="maxLogoSize"
+              [disabled]="uploadingLogo()"
+              chooseLabel="Change logo"
+              chooseIcon="pi pi-upload"
+              [chooseButtonProps]="chooseButtonProps"
+              (uploadHandler)="onLogoUpload($event, logoUpload)"
+            />
+            <p class="text-xs text-surface-500 dark:text-surface-400">
+              JPEG, PNG, WebP or GIF — 5 MB max.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Details -->
+  <section class="flex flex-col">
+    <h3 class="mb-3 text-sm font-medium text-surface-500 dark:text-surface-400">Details</h3>
+
+    <div class="divide-y divide-surface-100 dark:divide-surface-800/70">
+      <!-- Name -->
+      <div
+        class="grid grid-cols-1 gap-x-8 gap-y-2 py-6 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
+      >
+        <label for="organization-name" class="flex flex-col gap-0.5">
+          <span class="text-sm font-medium text-surface-800 dark:text-surface-100">Name</span>
+          <span class="text-sm text-surface-500 dark:text-surface-400">
+            The organization's display name.
+          </span>
+        </label>
+        <div class="flex flex-col gap-1.5">
+          <input pInputText id="organization-name" formControlName="name" maxlength="120" fluid />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <p-message severity="error" variant="simple" size="small"
+              >A name of 2 to 120 characters is required.</p-message
+            >
+          }
+        </div>
+      </div>
+
+      <!-- Slug -->
+      <div
+        class="grid grid-cols-1 gap-x-8 gap-y-2 py-6 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
+      >
+        <label for="organization-slug" class="flex flex-col gap-0.5">
+          <span class="text-sm font-medium text-surface-800 dark:text-surface-100">Slug</span>
+          <span class="text-sm text-surface-500 dark:text-surface-400">
+            Used in URLs and to confirm deletion.
+          </span>
+        </label>
+        <div class="flex flex-col gap-1.5">
+          <input pInputText id="organization-slug" formControlName="slug" maxlength="120" fluid />
+          @if (form.controls.slug.invalid && form.controls.slug.touched) {
+            <p-message severity="error" variant="simple" size="small"
+              >Use lowercase letters, numbers and single dashes (min. 3 characters).</p-message
+            >
+          }
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div
+        class="grid grid-cols-1 gap-x-8 gap-y-2 py-6 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
+      >
+        <label for="organization-description" class="flex flex-col gap-0.5">
+          <span class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            >Description</span
+          >
+          <span class="text-sm text-surface-500 dark:text-surface-400">
+            A short summary of the organization.
+          </span>
+        </label>
+        <textarea
+          pTextarea
+          id="organization-description"
+          formControlName="description"
+          rows="3"
+          maxlength="2000"
+          [autoResize]="true"
+          fluid
+        ></textarea>
+      </div>
+
+      <!-- Active status -->
+      <div
+        class="flex items-center justify-between gap-6 py-6 sm:grid sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
+      >
+        <label for="organization-active" class="flex flex-col gap-0.5">
+          <span class="text-sm font-medium text-surface-800 dark:text-surface-100">Active</span>
+          <span class="text-sm text-surface-500 dark:text-surface-400">
+            Inactive organizations are hidden and read-only.
+          </span>
+        </label>
+        <div class="sm:justify-self-start">
+          <p-toggleswitch inputId="organization-active" formControlName="isActive" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex justify-end">
+    <p-button
+      type="submit"
+      label="Save changes"
+      icon="pi pi-check"
+      [loading]="saving()"
+      [disabled]="form.invalid || saving()"
+    />
+  </div>
+</form>

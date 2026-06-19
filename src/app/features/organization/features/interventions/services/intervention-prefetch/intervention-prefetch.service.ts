@@ -133,7 +133,7 @@ export class InterventionPrefetchService {
   public constructor() {
     effect((onCleanup) => {
       if (!this.started()) return;
-      const organizationId = this.organization.selectedOrganization()?.id;
+      const organizationId = this.organization.selectedOrganizationId();
       if (!organizationId || this.connectivity.isOffline()) return;
       const subscription = this.members
         .getCurrentProfile(organizationId)

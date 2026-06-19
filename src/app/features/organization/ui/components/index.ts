@@ -9,3 +9,4 @@ export { OrganizationNavPanel } from './organization-nav-panel';
 export { OrganizationActiveMetric } from './organization-active-metric';
 export { OrganizationCountMetric } from './organization-count-metric';
 export { OrganizationMembersMetric } from './organization-members-metric';
+export { OrganizationDangerZone } from './organization-danger-zone';

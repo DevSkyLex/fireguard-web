@@ -77,6 +77,21 @@ export const ActiveOrganizationStore = signalStore(
 
   withComputed((store) => ({
     /**
+     * Property selectedOrganizationId
+     *
+     * @description
+     * Identity of the active organization, derived with value (string)
+     * equality. Effects that only depend on *which* organization is active —
+     * not on its mutable metadata such as name or logo — should track this
+     * instead of {@link selectedOrganization}, so refreshing the active
+     * organization object (e.g. after a logo upload) does not re-trigger
+     * organization-scoped reloads.
+     *
+     * @type {string | null}
+     */
+    selectedOrganizationId: computed<string | null>(() => store.selectedOrganization()?.id ?? null),
+
+    /**
      * Property isLoadingOrganization
      *
      * @description

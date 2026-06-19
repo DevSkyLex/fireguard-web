@@ -204,7 +204,7 @@ export class OnboardingStepper {
   protected readonly stepMeta: Record<OnboardingStepKey, OnboardingStepMeta> = {
     create_organization: {
       label: 'Create organization',
-      description: 'Legal information and company identity',
+      description: 'Company name and identity',
     },
     invite_members: {
       label: 'Team & technicians',

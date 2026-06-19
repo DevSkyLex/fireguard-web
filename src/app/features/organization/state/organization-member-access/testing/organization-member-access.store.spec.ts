@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NavigationEnd, Router } from '@angular/router';
 import { firstValueFrom, of, Subject, throwError } from 'rxjs';
@@ -23,6 +23,7 @@ const flushEffects = async (): Promise<void> => {
 
 describe('OrganizationMemberAccessStore', () => {
   const selectedOrganization = signal<{ id: string } | null>(null);
+  const selectedOrganizationId = computed<string | null>(() => selectedOrganization()?.id ?? null);
 
   const role: OrganizationRoleOutput = {
     '@id': '/api/organizations/org-1/roles/owner',
@@ -101,6 +102,7 @@ describe('OrganizationMemberAccessStore', () => {
           provide: ActiveOrganizationStore,
           useValue: {
             selectedOrganization,
+            selectedOrganizationId,
           },
         },
         {

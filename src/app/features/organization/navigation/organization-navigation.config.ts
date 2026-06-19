@@ -239,9 +239,9 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     id: 'settings',
     label: 'Settings',
     icon: 'pi pi-cog',
-    path: 'settings/legal',
+    path: 'settings',
     group: 'administration',
-    permissions: [ORGANIZATION_PERMISSION.LEGAL_PROFILE_WRITE],
+    permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
   },
 ];
 

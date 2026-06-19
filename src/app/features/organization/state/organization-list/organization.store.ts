@@ -1,14 +1,24 @@
-import { computed, inject } from '@angular/core';
+import { computed, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  type,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import {
   addEntity,
   removeEntities,
   removeEntity,
   setAllEntities,
+  updateEntity,
   withEntities,
 } from '@ngrx/signals/entities';
-import { Dispatcher } from '@ngrx/signals/events';
+import { Dispatcher, Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, forkJoin, map, pipe, switchMap, tap } from 'rxjs';
 import type { HydraCollection } from '@core/models/api';
@@ -25,6 +35,7 @@ import {
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput, CreateOrganizationInput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../active-organization/active-organization.store';
+import { organizationSettingsStoreEvents } from '../organization-settings/events';
 import { organizationStoreEvents } from './events';
 import type { OrganizationState } from './models';
 
@@ -509,9 +520,62 @@ export const OrganizationStore = signalStore(
         resetCreateOperation(): void {
           patchState(store, { createCallState: idleCallState() });
         },
+
+        /**
+         * Method applyOrganization
+         * @method applyOrganization
+         *
+         * @description
+         * Merges an updated organization (e.g. after a settings save or a logo
+         * upload) into the cached entity collection so list-driven surfaces —
+         * the switcher dropdown and the organizations list — reflect fresh data
+         * such as a renamed logo URL, instead of serving the stale cached image.
+         * No-op when the organization is not part of the loaded collection.
+         *
+         * @since 1.0.0
+         *
+         * @param {OrganizationOutput} organization - The updated organization.
+         * @returns {void} No return value.
+         */
+        applyOrganization(organization: OrganizationOutput): void {
+          if (!store.organizationEntityMap()[organization.id]) return;
+
+          patchState(
+            store,
+            updateEntity(
+              { id: organization.id, changes: organization },
+              { collection: 'organization' },
+            ),
+          );
+        },
       };
     },
   ),
+
+  withHooks((store) => {
+    const events: Events = inject(Events);
+    const destroyRef: DestroyRef = inject(DestroyRef);
+
+    return {
+      /**
+       * Hook onInit
+       *
+       * @description
+       * Keeps the cached collection in sync with settings-side mutations: when
+       * the {@link OrganizationSettingsStore} reports an updated organization
+       * (settings save or logo upload), merge it into the entities so the
+       * switcher dropdown and the organizations list reflect fresh data.
+       *
+       * @returns {void}
+       */
+      onInit(): void {
+        events
+          .on(organizationSettingsStoreEvents.organizationUpdated)
+          .pipe(takeUntilDestroyed(destroyRef))
+          .subscribe(({ payload }) => store.applyOrganization(payload));
+      },
+    };
+  }),
   //#endregion
 );
 

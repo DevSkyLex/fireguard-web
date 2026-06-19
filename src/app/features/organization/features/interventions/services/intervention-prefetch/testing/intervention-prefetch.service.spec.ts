@@ -24,7 +24,10 @@ describe('InterventionPrefetchService', () => {
         { provide: InterventionOfflineService, useValue: {} },
         {
           provide: ActiveOrganizationStore,
-          useValue: { selectedOrganization: () => ({ id: 'org-1' }) },
+          useValue: {
+            selectedOrganization: () => ({ id: 'org-1' }),
+            selectedOrganizationId: () => 'org-1',
+          },
         },
       ],
     });

@@ -10,7 +10,11 @@
   >
     @if (organization(); as org) {
       <span class="flex items-center gap-2">
-        <p-avatar [label]="orgInitials(org.name)" [pt]="avatarPt(org)" />
+        <p-avatar
+          [image]="org.logoUrl || undefined"
+          [label]="org.logoUrl ? undefined : orgInitials(org.name)"
+          [pt]="avatarPt(org)"
+        />
         <span class="max-w-32 truncate font-medium">{{ org.name }}</span>
 
         <div class="mx-auto">

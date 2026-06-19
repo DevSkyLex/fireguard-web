@@ -106,10 +106,14 @@
                 >
                   <div class="flex min-w-0 items-center gap-3">
                     <p-avatar
-                      [label]="organization.name.charAt(0).toUpperCase()"
+                      [image]="organization.logoUrl || undefined"
+                      [label]="
+                        organization.logoUrl ? undefined : organization.name.charAt(0).toUpperCase()
+                      "
                       shape="square"
                       size="normal"
-                      class="rounded-md bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                      styleClass="overflow-hidden rounded-md"
+                      class="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
                     />
                     <div class="flex min-w-0 flex-col">
                       <span class="truncate font-medium text-surface-900 dark:text-surface-100">
@@ -191,10 +195,14 @@
                 >
                   <div class="flex items-start justify-between">
                     <p-avatar
-                      [label]="organization.name.charAt(0).toUpperCase()"
+                      [image]="organization.logoUrl || undefined"
+                      [label]="
+                        organization.logoUrl ? undefined : organization.name.charAt(0).toUpperCase()
+                      "
                       shape="square"
                       size="large"
-                      class="rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300"
+                      styleClass="overflow-hidden rounded-lg"
+                      class="bg-primary-50 text-primary-600 dark:bg-primary-500/15 dark:text-primary-300"
                     />
                     <p-button
                       icon="pi pi-ellipsis-v"

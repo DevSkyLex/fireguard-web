@@ -114,7 +114,9 @@ export class OrganizationSwitcherList {
    */
   protected avatarPt(org: OrganizationOutput): AvatarPassThroughOptions {
     return {
-      root: { class: [this.orgColor(org.id), 'shrink-0 size-6 rounded text-white'] },
+      root: {
+        class: [this.orgColor(org.id), 'shrink-0 size-6 overflow-hidden rounded text-white'],
+      },
       label: { class: 'text-[11px] font-bold leading-none' },
     };
   }

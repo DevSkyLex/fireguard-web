@@ -1,4 +1,5 @@
 import type { HydraItem } from '@core/models/api';
+import type { OrganizationSettings } from '../organization-settings/organization-settings.interface';
 
 /**
  * Interface OrganizationOutput
@@ -23,8 +24,14 @@ export interface OrganizationOutput extends HydraItem {
   readonly status: string;
   /** @type {boolean} */
   readonly isActive: boolean;
+  /** @type {(string | null | undefined)} */
+  readonly description?: string | null;
+  /** @type {(string | null | undefined)} */
+  readonly logoUrl?: string | null;
   /** @type {number} */
   readonly memberCount: number;
+  /** @type {(OrganizationSettings | null | undefined)} */
+  readonly settings?: OrganizationSettings | null;
   /** @type {string} */
   readonly createdAt: string;
   /** @type {string} */

@@ -30,7 +30,10 @@ export const ORGANIZATION_PERMISSION = {
   INTERVENTIONS_REVIEW: 'organization.interventions.review',
   /** Permission required to trigger intervention publication. */
   INTERVENTIONS_PUBLISH: 'organization.interventions.publish',
-  LEGAL_PROFILE_WRITE: 'organization.legal_profile.write',
+  /** Permission required to manage organization settings (general, notifications, regional). */
+  SETTINGS_WRITE: 'organization.settings.write',
+  /** Permission required to permanently delete the organization. */
+  DELETE: 'organization.delete',
   ALL: 'organization.*',
 } as const;
 

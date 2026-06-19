@@ -7,11 +7,10 @@ import type { HydraCollection, HydraItem, ApiError } from '@core/models/api';
 import type {
   OrganizationOutput,
   CreateOrganizationInput,
+  UpdateOrganizationInput,
   OrganizationDashboardOutput,
   OrganizationDashboardTrendOutput,
   OrganizationInvitationOutput,
-  OrganizationCountryOutput,
-  OrganizationLegalTypeOutput,
   OrganizationPermissionOutput,
 } from '@features/organization/models';
 import { OrganizationService } from '../organization.service';
@@ -473,69 +472,60 @@ describe('OrganizationService', () => {
     });
   });
 
-  // ── listCountries ──────────────────────────────────────────────────────────
+  // ── update ───────────────────────────────────────────────────────────────────
 
-  describe('listCountries', () => {
-    it('should send GET request and return countries collection', () => {
-      const mockCountry: OrganizationCountryOutput = {
-        '@id': '/api/organizations/countries/FR',
-        '@type': 'Country',
-        code: 'FR',
-        name: 'France',
-        flagUrl: 'https://api.test.com/flags/FR.svg',
-      };
+  describe('update', () => {
+    const input: UpdateOrganizationInput = {
+      name: 'Renamed Org',
+      slug: 'renamed-org',
+      description: 'New description',
+      isActive: false,
+    };
 
-      service.listCountries().subscribe((response) => {
-        expect(response.member.length).toBe(1);
-        expect(response.member[0].code).toBe('FR');
+    it('should send PATCH request with merge-patch body and return updated organization', () => {
+      service.update('org-uuid-1', input).subscribe((org) => {
+        expect(org.name).toBe('Renamed Org');
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/countries`);
-      expect(req.request.method).toBe('GET');
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual(input);
       expect(req.request.withCredentials).toBe(true);
-      req.flush(mockCollection([mockCountry]));
+      expect(req.request.headers.get('Content-Type')).toBe('application/merge-patch+json');
+      req.flush({ ...mockOrg, name: 'Renamed Org', slug: 'renamed-org', isActive: false });
+    });
+
+    it('should propagate a slug conflict error', () => {
+      service.update('org-uuid-1', input).subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(409);
+        },
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1`);
+      req.flush({ status: 409, title: 'Conflict' }, { status: 409, statusText: 'Conflict' });
     });
   });
 
-  // ── listLegalTypes ─────────────────────────────────────────────────────────
+  // ── uploadLogo ─────────────────────────────────────────────────────────────
 
-  describe('listLegalTypes', () => {
-    it('should send GET request without countryCode filter', () => {
-      service.listLegalTypes().subscribe();
+  describe('uploadLogo', () => {
+    it('should send multipart POST request and return the updated organization', () => {
+      const logo = new Blob(['binary'], { type: 'image/png' });
 
-      const req = httpMock.expectOne((r) => r.url === `${baseUrl}/legal-types`);
-      expect(req.request.method).toBe('GET');
-      expect(req.request.params.has('countryCode')).toBe(false);
-      req.flush(mockCollection([]));
-    });
-
-    it('should send GET request with countryCode filter', () => {
-      service.listLegalTypes('FR').subscribe();
-
-      const req = httpMock.expectOne((r) => r.url === `${baseUrl}/legal-types`);
-      expect(req.request.params.get('countryCode')).toBe('FR');
-      req.flush(mockCollection([]));
-    });
-
-    it('should return legal types', () => {
-      const mockLegalType: OrganizationLegalTypeOutput = {
-        '@id': '/api/organizations/legal-types/sas',
-        '@type': 'LegalType',
-        value: 'sas',
-        label: 'Société par Actions Simplifiée',
-        countryCode: 'FR',
-        requirements: {
-          registrationNumber: { required: true, label: null, pattern: null, example: null },
-          vatNumber: { required: false, label: null, pattern: null, example: null },
-        },
-      };
-
-      service.listLegalTypes('FR').subscribe((response) => {
-        expect(response.member[0].value).toBe('sas');
+      service.uploadLogo('org-uuid-1', logo, 'logo.png').subscribe((org) => {
+        expect(org.logoUrl).toBe('https://api.test.com/api/organizations/org-uuid-1/logo.webp');
       });
 
-      const req = httpMock.expectOne((r) => r.url === `${baseUrl}/legal-types`);
-      req.flush(mockCollection([mockLegalType]));
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/logo`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body instanceof FormData).toBe(true);
+      expect((req.request.body as FormData).has('logo')).toBe(true);
+      expect(req.request.withCredentials).toBe(true);
+      req.flush({
+        ...mockOrg,
+        logoUrl: 'https://api.test.com/api/organizations/org-uuid-1/logo.webp',
+      });
     });
   });
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { type Observable, catchError } from 'rxjs';
 import type { HydraCollection, OptionOutput } from '@core/models/api';
 import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
 import type {
@@ -13,12 +13,9 @@ import type {
   OrganizationDashboardTrendOutput,
   OrganizationOutput,
   CreateOrganizationInput,
+  UpdateOrganizationInput,
   OrganizationInvitationOutput,
-  OrganizationCountryOutput,
-  OrganizationLegalTypeOutput,
-  OrganizationLegalProfileOutput,
   OrganizationPermissionOutput,
-  UpsertOrganizationLegalProfileInput,
 } from '@features/organization/models';
 
 /**
@@ -28,8 +25,8 @@ import type {
  *
  * @description
  * API service for organization management operations.
- * Handles CRUD, invitations, dashboard analytics, countries,
- * legal types, and permissions.
+ * Handles CRUD, general & branding settings, logo upload,
+ * invitations, dashboard analytics, and permissions.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -221,6 +218,66 @@ export class OrganizationService extends HydraApiService {
       OrganizationService.BASE_PATH,
       input,
     );
+  }
+
+  /**
+   * Method update
+   * @method update
+   *
+   * @description
+   * Partially updates the general & branding settings (name, slug,
+   * description, active status) of the given organization.
+   *
+   * @access public
+   * @since 1.3.0
+   *
+   * @param {string} id - The unique identifier of the organization.
+   * @param {UpdateOrganizationInput} input - The settings fields to update.
+   *
+   * @return {Observable<OrganizationOutput>} An observable emitting the updated organization.
+   */
+  public update(id: string, input: UpdateOrganizationInput): Observable<OrganizationOutput> {
+    return this.patch<UpdateOrganizationInput, OrganizationOutput>(
+      `${OrganizationService.BASE_PATH}/${id}`,
+      input,
+    );
+  }
+
+  /**
+   * Method uploadLogo
+   * @method uploadLogo
+   *
+   * @description
+   * Uploads a new logo image for the organization via a multipart request
+   * and returns the refreshed organization with the updated `logoUrl`.
+   *
+   * @access public
+   * @since 1.3.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {Blob} logo - The logo image binary to upload.
+   * @param {string} [fileName='logo'] - The file name sent with the upload.
+   *
+   * @return {Observable<OrganizationOutput>} An observable emitting the updated organization.
+   */
+  public uploadLogo(
+    organizationId: string,
+    logo: Blob,
+    fileName: string = 'logo',
+  ): Observable<OrganizationOutput> {
+    const body: FormData = new FormData();
+    body.set('logo', logo, fileName);
+
+    return this.http
+      .post<OrganizationOutput>(
+        this.buildUrl(`${OrganizationService.BASE_PATH}/${organizationId}/logo`),
+        body,
+        {
+          headers: this.defaultHeaders.delete('Content-Type'),
+          withCredentials: true,
+        },
+      )
+      .pipe(catchError(this.handleError));
   }
 
   /**
@@ -431,74 +488,6 @@ export class OrganizationService extends HydraApiService {
   }
 
   /**
-   * Method getLegalProfile
-   * @method getLegalProfile
-   *
-   * @description
-   * Retrieves the legal profile associated with the given organization.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {string} organizationId - The ID of the organization.
-   *
-   * @return {Observable<OrganizationLegalProfileOutput>} An observable emitting the organization legal profile.
-   */
-  public getLegalProfile(organizationId: string): Observable<OrganizationLegalProfileOutput> {
-    return this.getOne<OrganizationLegalProfileOutput>(
-      `${OrganizationService.BASE_PATH}/${organizationId}/legal-profile`,
-    );
-  }
-
-  /**
-   * Method upsertLegalProfile
-   * @method upsertLegalProfile
-   *
-   * @description
-   * Creates or updates the legal profile for the given organization.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {string} organizationId - The ID of the organization.
-   * @param {UpsertOrganizationLegalProfileInput} input - Legal profile payload to persist.
-   *
-   * @return {Observable<OrganizationLegalProfileOutput>} An observable emitting the saved legal profile.
-   */
-  public upsertLegalProfile(
-    organizationId: string,
-    input: UpsertOrganizationLegalProfileInput,
-  ): Observable<OrganizationLegalProfileOutput> {
-    return this.put<UpsertOrganizationLegalProfileInput, OrganizationLegalProfileOutput>(
-      `${OrganizationService.BASE_PATH}/${organizationId}/legal-profile`,
-      input,
-    );
-  }
-
-  /**
-   * Method listCountries
-   * @method listCountries
-   *
-   * @description
-   * Retrieves the list of supported countries for organization registration.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {RequestOptions} [options] - Optional pagination parameters.
-   *
-   * @return {Observable<HydraCollection<OrganizationCountryOutput>>} An observable emitting the countries collection.
-   */
-  public listCountries(
-    options?: RequestOptions,
-  ): Observable<HydraCollection<OrganizationCountryOutput>> {
-    return this.getCollection<OrganizationCountryOutput>(
-      `${OrganizationService.BASE_PATH}/countries`,
-      options,
-    );
-  }
-
-  /**
    * Method listStatuses
    * @method listStatuses
    *
@@ -536,39 +525,6 @@ export class OrganizationService extends HydraApiService {
     return this.getCollection<OptionOutput>(
       `${OrganizationService.BASE_PATH}/invitation-statuses`,
       options,
-    );
-  }
-
-  /**
-   * Method listLegalTypes
-   * @method listLegalTypes
-   *
-   * @description
-   * Retrieves the list of supported legal entity types,
-   * optionally filtered by country code.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {string} [countryCode] - Optional ISO country code to filter legal types.
-   * @param {RequestOptions} [options] - Optional pagination parameters.
-   *
-   * @return {Observable<HydraCollection<OrganizationLegalTypeOutput>>} An observable emitting the legal types collection.
-   */
-  public listLegalTypes(
-    countryCode?: string,
-    options?: RequestOptions,
-  ): Observable<HydraCollection<OrganizationLegalTypeOutput>> {
-    const mergedOptions: RequestOptions = {
-      ...options,
-      params: {
-        ...options?.params,
-        ...(countryCode ? { countryCode } : {}),
-      },
-    };
-    return this.getCollection<OrganizationLegalTypeOutput>(
-      `${OrganizationService.BASE_PATH}/legal-types`,
-      mergedOptions,
     );
   }
 

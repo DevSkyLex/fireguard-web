@@ -5,12 +5,20 @@
     <section
       class="flex h-16 shrink-0 items-center gap-3 border-b border-surface-200 px-5 dark:border-surface-800"
     >
-      <span
-        class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-100 text-sm font-semibold text-primary-700 dark:bg-primary-950 dark:text-primary-300"
-        aria-hidden="true"
-      >
-        {{ orgInitials(organization.name) }}
-      </span>
+      @if (organization.logoUrl; as logoUrl) {
+        <img
+          [src]="logoUrl"
+          [alt]="organization.name + ' logo'"
+          class="size-9 shrink-0 rounded-lg object-cover"
+        />
+      } @else {
+        <span
+          class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-100 text-sm font-semibold text-primary-700 dark:bg-primary-950 dark:text-primary-300"
+          aria-hidden="true"
+        >
+          {{ orgInitials(organization.name) }}
+        </span>
+      }
 
       <div class="min-w-0 flex-1">
         <p class="truncate text-sm font-semibold text-surface-950 dark:text-surface-50">

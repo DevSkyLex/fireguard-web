@@ -1,0 +1,68 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="!deleting()"
+  [closable]="!deleting()"
+  [style]="{ width: '32rem' }"
+  header="Delete organization"
+>
+  <div class="flex flex-col gap-4 pt-1">
+    <p-message
+      severity="error"
+      [closable]="false"
+      styleClass="w-full"
+      [pt]="{ text: 'whitespace-normal text-sm font-normal leading-relaxed' }"
+    >
+      This action is permanent. The organization
+      <span class="font-semibold">{{ organizationName() }}</span> and all of its data will be
+      deleted and cannot be recovered.
+    </p-message>
+
+    <div class="flex flex-col gap-2">
+      <label
+        for="organization-delete-confirm"
+        class="text-sm text-surface-600 dark:text-surface-300"
+      >
+        Type
+        <span class="font-semibold text-surface-900 dark:text-surface-50">{{
+          organizationSlug()
+        }}</span>
+        to confirm.
+      </label>
+      <input
+        pInputText
+        id="organization-delete-confirm"
+        autocomplete="off"
+        [placeholder]="organizationSlug()"
+        [disabled]="deleting()"
+        (input)="onTypedSlugInput($event)"
+      />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex w-full gap-3">
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        [outlined]="true"
+        class="flex-1"
+        styleClass="w-full justify-center"
+        [disabled]="deleting()"
+        (onClick)="cancel()"
+      />
+      <p-button
+        label="Delete organization"
+        icon="pi pi-trash"
+        severity="danger"
+        class="flex-1"
+        styleClass="w-full justify-center"
+        [loading]="deleting()"
+        [disabled]="!canConfirm() || deleting()"
+        (onClick)="confirm()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

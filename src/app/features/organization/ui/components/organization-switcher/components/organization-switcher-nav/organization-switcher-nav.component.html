@@ -2,7 +2,11 @@
   <div class="border-b border-surface-200 dark:border-surface-800">
     <!-- Current org identity -->
     <div class="flex items-center gap-2 px-3 pt-2.5 pb-1.5">
-      <p-avatar [label]="orgInitials(org.name)" [pt]="avatarPt(org)" />
+      <p-avatar
+        [image]="org.logoUrl || undefined"
+        [label]="org.logoUrl ? undefined : orgInitials(org.name)"
+        [pt]="avatarPt(org)"
+      />
       <div class="flex min-w-0 flex-col">
         <span
           class="truncate text-xs leading-tight font-semibold text-surface-900 dark:text-surface-100"

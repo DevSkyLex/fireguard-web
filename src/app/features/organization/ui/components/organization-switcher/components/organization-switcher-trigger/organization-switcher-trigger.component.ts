@@ -132,7 +132,9 @@ export class OrganizationSwitcherTrigger {
    */
   protected avatarPt(org: OrganizationOutput): AvatarPassThroughOptions {
     return {
-      root: { class: [this.orgColor(org.id), 'shrink-0 size-4 rounded text-white'] },
+      root: {
+        class: [this.orgColor(org.id), 'shrink-0 size-4 overflow-hidden rounded text-white'],
+      },
       label: { class: 'text-[9px] font-bold leading-none' },
     };
   }

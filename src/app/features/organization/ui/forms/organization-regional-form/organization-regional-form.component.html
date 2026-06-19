@@ -1,0 +1,185 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-10">
+  <!-- Locale -->
+  <section class="flex flex-col">
+    <h3 class="mb-3 text-sm font-medium text-surface-500 dark:text-surface-400">Locale</h3>
+
+    <div class="divide-y divide-surface-100 dark:divide-surface-800/70">
+      <!-- Timezone -->
+      <div
+        class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
+      >
+        <label for="regional-timezone" class="flex flex-col gap-0.5">
+          <span class="text-sm font-medium text-surface-800 dark:text-surface-100">Timezone</span>
+          <span class="text-sm text-surface-500 dark:text-surface-400">
+            Used for scheduling and timestamps.
+          </span>
+        </label>
+        <p-select
+          inputId="regional-timezone"
+          [options]="[...timezoneOptions]"
+          optionLabel="label"
+          optionValue="value"
+          formControlName="timezone"
+          [filter]="true"
+          filterBy="label,offset"
+          appendTo="body"
+          fluid
+        >
+          <ng-template let-opt pTemplate="selectedItem">
+            <span class="flex items-center gap-2">
+              <span>{{ opt.label }}</span>
+              @if (opt.offset) {
+                <span class="text-surface-400 dark:text-surface-500">{{ opt.offset }}</span>
+              }
+            </span>
+          </ng-template>
+          <ng-template let-opt pTemplate="item">
+            <span class="flex w-full items-center justify-between gap-3">
+              <span>{{ opt.label }}</span>
+              @if (opt.offset) {
+                <span
+                  class="rounded bg-surface-100 px-1.5 py-0.5 font-mono text-xs text-surface-500 dark:bg-surface-800 dark:text-surface-400"
+                  >{{ opt.offset }}</span
+                >
+              }
+            </span>
+          </ng-template>
+        </p-select>
+      </div>
+
+      <!-- Locale -->
+      <div
+        class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
+      >
+        <label for="regional-locale" class="flex flex-col gap-0.5">
+          <span class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            >Language &amp; locale</span
+          >
+          <span class="text-sm text-surface-500 dark:text-surface-400">
+            The display language for this organization.
+          </span>
+        </label>
+        <p-select
+          inputId="regional-locale"
+          [options]="[...localeOptions]"
+          optionLabel="label"
+          optionValue="value"
+          formControlName="locale"
+          appendTo="body"
+          fluid
+        >
+          <ng-template let-opt pTemplate="selectedItem">
+            <span class="flex items-center gap-2">
+              <img
+                [src]="opt.flag"
+                [alt]="opt.label"
+                width="20"
+                height="15"
+                class="h-3.5 w-5 shrink-0 rounded-xs object-cover ring-1 ring-surface-200 dark:ring-surface-700"
+              />
+              <span>{{ opt.label }}</span>
+            </span>
+          </ng-template>
+          <ng-template let-opt pTemplate="item">
+            <span class="flex items-center gap-2">
+              <img
+                [src]="opt.flag"
+                [alt]="opt.label"
+                width="20"
+                height="15"
+                class="h-3.5 w-5 shrink-0 rounded-xs object-cover ring-1 ring-surface-200 dark:ring-surface-700"
+              />
+              <span>{{ opt.label }}</span>
+            </span>
+          </ng-template>
+        </p-select>
+      </div>
+    </div>
+  </section>
+
+  <!-- Formats -->
+  <section class="flex flex-col">
+    <h3 class="mb-3 text-sm font-medium text-surface-500 dark:text-surface-400">Formats</h3>
+
+    <div class="divide-y divide-surface-100 dark:divide-surface-800/70">
+      <!-- Date format -->
+      <div
+        class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
+      >
+        <label for="regional-date-format" class="flex flex-col gap-0.5">
+          <span class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            >Date format</span
+          >
+          <span class="text-sm text-surface-500 dark:text-surface-400">
+            How dates are displayed across the app.
+          </span>
+        </label>
+        <p-select
+          inputId="regional-date-format"
+          [options]="[...dateFormatOptions]"
+          optionLabel="label"
+          optionValue="value"
+          formControlName="dateFormat"
+          appendTo="body"
+          fluid
+        />
+      </div>
+
+      <!-- First day of week -->
+      <div
+        class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
+      >
+        <label for="regional-first-day" class="flex flex-col gap-0.5">
+          <span class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            >First day of week</span
+          >
+          <span class="text-sm text-surface-500 dark:text-surface-400">
+            The first column in calendars.
+          </span>
+        </label>
+        <p-select
+          inputId="regional-first-day"
+          [options]="[...firstDayOptions]"
+          optionLabel="label"
+          optionValue="value"
+          formControlName="firstDayOfWeek"
+          appendTo="body"
+          fluid
+        />
+      </div>
+
+      <!-- Measurement system -->
+      <div
+        class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
+      >
+        <label for="regional-measurement" class="flex flex-col gap-0.5">
+          <span class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            >Measurement system</span
+          >
+          <span class="text-sm text-surface-500 dark:text-surface-400">
+            Units used for measurements.
+          </span>
+        </label>
+        <p-select
+          inputId="regional-measurement"
+          [options]="[...measurementSystemOptions]"
+          optionLabel="label"
+          optionValue="value"
+          formControlName="measurementSystem"
+          appendTo="body"
+          fluid
+        />
+      </div>
+    </div>
+  </section>
+
+  <div class="flex justify-end">
+    <p-button
+      type="submit"
+      label="Save changes"
+      icon="pi pi-check"
+      [loading]="saving()"
+      [disabled]="form.invalid || saving()"
+    />
+  </div>
+</form>

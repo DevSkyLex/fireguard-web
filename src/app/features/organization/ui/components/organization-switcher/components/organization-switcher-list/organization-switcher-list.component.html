@@ -15,7 +15,11 @@
           class="flex w-full items-center gap-2.5 px-3 py-1.5 text-left transition-colors hover:bg-surface-50 dark:hover:bg-surface-800"
           (click)="organizationChange.emit(org)"
         >
-          <p-avatar [label]="orgInitials(org.name)" [pt]="avatarPt(org)" />
+          <p-avatar
+            [image]="org.logoUrl || undefined"
+            [label]="org.logoUrl ? undefined : orgInitials(org.name)"
+            [pt]="avatarPt(org)"
+          />
           <span class="flex-1 truncate text-sm" [class.font-medium]="isActive">{{ org.name }}</span>
           @if (isActive) {
             <i class="pi pi-check shrink-0 text-[11px] text-primary"></i>

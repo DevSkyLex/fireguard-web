@@ -61,16 +61,11 @@ export type {
 } from './dashboard/organization-dashboard-trend-output.interface';
 export type { AuditEventListOptions } from './organization-audit/audit-event-list-options.interface';
 export type { AuditEventOutput } from './organization-audit/audit-event-output.interface';
-export type { OrganizationCountryOutput } from './legal/organization-country-output.interface';
-export type {
-  OrganizationLegalTypeOutput,
-  OrganizationLegalFieldRequirement,
-  OrganizationLegalProfileRequirements,
-} from './legal/organization-legal-type-output.interface';
 export type { OrganizationPermissionOutput } from './role/organization-permission-output.interface';
-export type {
-  OrganizationLegalFieldRequirementOutput,
-  OrganizationLegalProfileRequirementsOutput,
-  OrganizationLegalProfileOutput,
-} from './legal/organization-legal-profile-output.interface';
-export type { UpsertOrganizationLegalProfileInput } from './legal/upsert-organization-legal-profile-input.interface';
+export type { UpdateOrganizationInput } from './organization-entity/update-organization-input.interface';
+export type { OrganizationSettings } from './organization-settings/organization-settings.interface';
+export type { OrganizationNotificationSettings } from './organization-settings/organization-notification-settings.interface';
+export type { OrganizationRegionalSettings } from './organization-settings/organization-regional-settings.interface';
+export type { OrganizationDateFormat } from './organization-settings/organization-date-format.type';
+export type { OrganizationFirstDayOfWeek } from './organization-settings/organization-first-day-of-week.type';
+export type { OrganizationMeasurementSystem } from './organization-settings/organization-measurement-system.type';

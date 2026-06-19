@@ -7,7 +7,7 @@ Owns organization context and organization-scoped business workflows.
 This feature is responsible for:
 
 - organization list and active organization context,
-- organization member, invitation, role, legal profile, and audit data,
+- organization member, invitation, role, settings (general & branding), and audit data,
 - organization-scoped permission helpers derived from the active member access payload,
 - organization overview pages,
 - nested organization-scoped subfeatures such as facilities, equipments, and inspections,
@@ -30,11 +30,16 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId/inspections`
 - `/organizations/:organizationId/checklists`
 - `/organizations/:organizationId/team`
-- `/organizations/:organizationId/settings/legal`
+- `/organizations/:organizationId/settings` (tabbed: general & branding, notifications, regional & formats, danger zone; gated by `organization.settings.write`)
 - `/organizations/invitations/accept`
 
 The `:organizationId` parent route resolves organization context before child pages render.
 Organization navigation and routes are filtered by the active member permissions.
+
+The settings page's danger-zone tab (organization deletion) is additionally gated by the
+`organization.delete` permission. Notification and regional preferences are persisted via the
+settings `PATCH` but are not yet enforced (notification dispatch and app-wide date/locale
+formatting consume them in follow-up work).
 
 ## State and Data Access
 

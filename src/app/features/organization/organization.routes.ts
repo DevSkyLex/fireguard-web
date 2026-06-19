@@ -116,20 +116,20 @@ export const ORGANIZATION_ROUTES: Routes = [
         },
       },
       {
-        path: 'settings/legal',
+        path: 'settings',
         canActivate: [
           organizationPermissionGuard({
-            permissions: [ORGANIZATION_PERMISSION.LEGAL_PROFILE_WRITE],
+            permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
             redirectTo: ['/organizations'],
           }),
         ],
         loadComponent: () =>
-          import('./ui/pages/organization-legal-profile/organization-legal-profile.component').then(
-            (m) => m.OrganizationLegalProfilePage,
+          import('./ui/pages/organization-settings/organization-settings.component').then(
+            (m) => m.OrganizationSettingsPage,
           ),
-        title: 'Legal Profile',
+        title: 'Settings',
         data: {
-          breadcrumb: 'Legal Profile',
+          breadcrumb: 'Settings',
           preload: true,
         },
       },

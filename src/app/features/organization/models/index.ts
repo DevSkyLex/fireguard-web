@@ -63,6 +63,18 @@ export type { AuditEventListOptions } from './organization-audit/audit-event-lis
 export type { AuditEventOutput } from './organization-audit/audit-event-output.interface';
 export type { OrganizationPermissionOutput } from './role/organization-permission-output.interface';
 export type { UpdateOrganizationInput } from './organization-entity/update-organization-input.interface';
+export type { PlanLimits, PlanOutput } from './plan/plan-output.interface';
+export type { PlanQuotaOutput } from './plan/plan-quota-output.interface';
+export type { ChangeOrganizationPlanInput } from './plan/change-organization-plan-input.interface';
+export type {
+  OrganizationQuotaItemOutput,
+  OrganizationQuotaOutput,
+} from './plan/organization-quota-output.interface';
+export {
+  ORGANIZATION_QUOTA_RESOURCE,
+  ORGANIZATION_QUOTA_RESOURCES,
+} from './plan/organization-quota-resource.model';
+export type { OrganizationQuotaResource } from './plan/organization-quota-resource.model';
 export type { OrganizationSettings } from './organization-settings/organization-settings.interface';
 export type { OrganizationNotificationSettings } from './organization-settings/organization-notification-settings.interface';
 export type { OrganizationRegionalSettings } from './organization-settings/organization-regional-settings.interface';

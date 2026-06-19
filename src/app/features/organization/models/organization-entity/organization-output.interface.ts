@@ -32,6 +32,10 @@ export interface OrganizationOutput extends HydraItem {
   readonly memberCount: number;
   /** @type {(OrganizationSettings | null | undefined)} */
   readonly settings?: OrganizationSettings | null;
+  /** @type {(string | null | undefined)} */
+  readonly planId?: string | null;
+  /** @type {(string | null | undefined)} */
+  readonly planName?: string | null;
   /** @type {string} */
   readonly createdAt: string;
   /** @type {string} */

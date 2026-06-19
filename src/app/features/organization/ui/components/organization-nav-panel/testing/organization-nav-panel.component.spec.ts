@@ -7,6 +7,7 @@ import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
 } from '@features/organization/ports';
+import { OrganizationQuotaStore } from '@features/organization/state';
 import { installMatchMediaMock } from '@shared/testing/match-media.mock';
 import { OrganizationNavPanel } from '../organization-nav-panel.component';
 
@@ -55,6 +56,7 @@ describe('OrganizationNavPanel', () => {
       providers: [
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationContext },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
+        { provide: OrganizationQuotaStore, useValue: { items: signal([]) } },
         provideRouter([
           { path: '', component: DummyRouteComponent },
           { path: 'organizations/:organizationId', component: DummyRouteComponent },

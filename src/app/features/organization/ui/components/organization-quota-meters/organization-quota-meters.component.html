@@ -1,0 +1,40 @@
+@if (rows().length > 0) {
+  <div
+    class="flex shrink-0 flex-col gap-3 border-t border-surface-200 px-4 py-4 dark:border-surface-800"
+  >
+    <p
+      class="text-[0.7rem] font-semibold tracking-wide text-surface-400 uppercase dark:text-surface-500"
+    >
+      Usage
+    </p>
+
+    @for (row of rows(); track row.label) {
+      <div class="flex flex-col gap-1.5">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-surface-600 dark:text-surface-300">{{ row.label }}</span>
+          <span
+            class="tabular-nums"
+            [class.text-red-500]="row.atLimit"
+            [class.font-semibold]="row.atLimit"
+            [class.text-surface-500]="!row.atLimit"
+            [class.dark:text-surface-400]="!row.atLimit"
+          >
+            @if (row.limit === null) {
+              {{ row.used }} · &infin;
+            } @else {
+              {{ row.used }} / {{ row.limit }}
+            }
+          </span>
+        </div>
+
+        @if (row.limit !== null) {
+          <p-metergroup
+            [value]="row.meters"
+            [max]="row.max"
+            [pt]="{ labelList: { class: 'hidden' }, meters: { class: 'h-1.5' } }"
+          />
+        }
+      </div>
+    }
+  </div>
+}

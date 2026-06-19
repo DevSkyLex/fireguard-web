@@ -4,8 +4,15 @@
  *
  * @description
  * Identifies a section of the organization settings page: general & branding,
- * notification policy, regional & formatting, and the danger zone.
+ * subscription plan, resource usage, notification policy, regional & formatting,
+ * and the danger zone.
  *
  * @since 1.0.0
  */
-export type OrganizationSettingsTab = 'general' | 'notifications' | 'regional' | 'danger';
+export type OrganizationSettingsTab =
+  | 'general'
+  | 'subscription'
+  | 'usage'
+  | 'notifications'
+  | 'regional'
+  | 'danger';

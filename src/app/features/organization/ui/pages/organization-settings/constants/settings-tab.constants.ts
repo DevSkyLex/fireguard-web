@@ -21,6 +21,8 @@ export const DEFAULT_ORGANIZATION_SETTINGS_TAB: OrganizationSettingsTab = 'gener
  */
 export const ORGANIZATION_SETTINGS_TABS: ReadonlySet<string> = new Set<OrganizationSettingsTab>([
   'general',
+  'subscription',
+  'usage',
   'notifications',
   'regional',
   'danger',

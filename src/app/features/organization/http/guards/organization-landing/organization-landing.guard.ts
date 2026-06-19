@@ -61,29 +61,20 @@ export const organizationLandingGuard: CanActivateFn = (
     return router.createUrlTree(['/organizations']);
   }
 
+  const isAccessible = (item: OrganizationNavigationItem): boolean =>
+    permissionService.canAccessOrganization(organizationId, item.permissions, item.match ?? 'all');
+
   const dashboard: OrganizationNavigationItem | undefined = ORGANIZATION_NAVIGATION_ITEMS.find(
     (item: OrganizationNavigationItem): boolean => item.id === 'dashboard',
   );
 
-  if (
-    dashboard &&
-    permissionService.canAccessOrganization(
-      organizationId,
-      dashboard.permissions,
-      dashboard.match ?? 'all',
-    )
-  ) {
+  if (dashboard && isAccessible(dashboard)) {
     return true;
   }
 
   const destination: OrganizationNavigationItem | undefined = ORGANIZATION_NAVIGATION_ITEMS.find(
     (candidate: OrganizationNavigationItem): boolean =>
-      candidate.id !== 'dashboard' &&
-      permissionService.canAccessOrganization(
-        organizationId,
-        candidate.permissions,
-        candidate.match ?? 'all',
-      ),
+      candidate.id !== 'dashboard' && isAccessible(candidate),
   );
 
   return destination

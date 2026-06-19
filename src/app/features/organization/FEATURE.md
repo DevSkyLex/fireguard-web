@@ -8,6 +8,7 @@ This feature is responsible for:
 
 - organization list and active organization context,
 - organization member, invitation, role, settings (general & branding), and audit data,
+- organization subscription plan selection and plan-driven resource quotas (usage meters),
 - organization-scoped permission helpers derived from the active member access payload,
 - organization overview pages,
 - nested organization-scoped subfeatures such as facilities, equipments, and inspections,
@@ -30,11 +31,12 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId/inspections`
 - `/organizations/:organizationId/checklists`
 - `/organizations/:organizationId/team`
-- `/organizations/:organizationId/settings` (tabbed: general & branding, notifications, regional & formats, danger zone; gated by `organization.settings.write`)
+- `/organizations/:organizationId/settings` (tabbed via `?tab=`: general & branding, subscription, usage, notifications, regional & formats, danger zone; gated by `organization.settings.write`)
 - `/organizations/invitations/accept`
 
 The `:organizationId` parent route resolves organization context before child pages render.
-Organization navigation and routes are filtered by the active member permissions.
+Organization navigation and routes are filtered by the active member permissions. Subscription
+plans cap resource quantities (see Subscription quotas below); they do not gate routes.
 
 The settings page's danger-zone tab (organization deletion) is additionally gated by the
 `organization.delete` permission. Notification and regional preferences are persisted via the
@@ -49,15 +51,40 @@ Primary stores:
 - `OrganizationMemberAccessStore`
 - `OrganizationStore`
 - `OrganizationRoleListStore`
+- `OrganizationPlanStore` (scoped to the `OrganizationPlanSelector` in the settings Subscription tab; self-service plan change)
+- `OrganizationQuotaStore` (root-provided; active organization quota usage for the sidebar meters)
 - `AuditStore`
 
 Primary services:
 
-- `OrganizationService`
+- `OrganizationService` (includes `changePlan` and `getQuota`)
+- `PlanService`
 - `OrganizationInvitationService`
 - `OrganizationMemberService`
 - `OrganizationRoleService`
 - `AuditEventService`
+
+Access helpers (`access/`):
+
+- `OrganizationPermissionService` — checks the active member's effective permissions.
+
+## Subscription quotas
+
+A subscription plan caps the quantity of countable resources (`ORGANIZATION_QUOTA_RESOURCE`:
+members, facilities, equipment, inspections). A plan stores a `limits` map of resource → integer
+cap; a resource absent from the map is unlimited. Plans do **not** disable features — they only
+limit quantities.
+
+- Enforcement is **strict and backend-owned**: each create flow (member add/invite, facility,
+  equipment, inspection) asserts the quota before persisting and returns **HTTP 409** when the cap
+  is reached. There is no frontend route gating.
+- The `OrganizationQuotaMeters` widget renders PrimeNG `MeterGroup` bars (used / limit per resource)
+  in the organization context sidebar, driven by `OrganizationQuotaStore`.
+- Plan cards consume `PlanOutput.quotas`: a backend-built list of `{ resource, label, limit, summary }`
+  where `summary` is a ready-made sentence (e.g. "Up to 125 facilities" / "Unlimited inspections")
+  phrased server-side in `OrganizationQuotaResource::summarize`, so the UI never re-derives the wording.
+- Plan changes are self-service via `OrganizationPlanStore.changePlan`, which refreshes the active
+  organization and reloads the quota usage so the meters reflect the new limits immediately.
 
 Nested subfeatures under `features/organization/features/` own their own local routes, pages, and business flows while remaining under organization ownership.
 

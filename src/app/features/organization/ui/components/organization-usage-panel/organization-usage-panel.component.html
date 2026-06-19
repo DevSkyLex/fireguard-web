@@ -1,0 +1,51 @@
+@if (quotaStore.isLoadingQuota() && rows().length === 0) {
+  <!-- Loading -->
+  <div
+    class="flex items-center justify-center gap-3 rounded-lg border border-surface-200 p-10 text-surface-500 dark:border-surface-800 dark:text-surface-400"
+  >
+    <i class="pi pi-spin pi-spinner text-xl"></i>
+    <span>Loading usage…</span>
+  </div>
+} @else {
+  <div class="flex flex-col gap-5">
+    @for (row of rows(); track row.label) {
+      <div class="flex flex-col gap-2">
+        <div class="flex items-baseline justify-between gap-2">
+          <span class="text-sm font-medium text-surface-700 dark:text-surface-200">
+            {{ row.label }}
+          </span>
+          <span
+            class="text-sm tabular-nums"
+            [class.text-red-500]="row.atLimit"
+            [class.font-semibold]="row.atLimit"
+            [class.text-surface-500]="!row.atLimit"
+            [class.dark:text-surface-400]="!row.atLimit"
+          >
+            @if (row.limit === null) {
+              {{ row.used }} used · Unlimited
+            } @else {
+              {{ row.used }} / {{ row.limit }}
+              <span class="text-surface-400 dark:text-surface-500">({{ row.percent }}%)</span>
+            }
+          </span>
+        </div>
+
+        @if (row.limit !== null) {
+          <p-metergroup
+            [value]="row.meters"
+            [max]="row.max"
+            [pt]="{ labelList: { class: 'hidden' }, meters: { class: 'h-2' } }"
+          />
+        } @else {
+          <div class="h-2 rounded-full bg-surface-100 dark:bg-surface-800"></div>
+        }
+      </div>
+    } @empty {
+      <div
+        class="rounded-lg border border-surface-200 p-10 text-center text-sm text-surface-500 dark:border-surface-800 dark:text-surface-400"
+      >
+        Usage data is not available yet.
+      </div>
+    }
+  </div>
+}

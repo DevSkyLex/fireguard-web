@@ -96,4 +96,8 @@
       </ul>
     }
   </nav>
+
+  @if (selectedOrganization()) {
+    <app-organization-quota-meters />
+  }
 </div>

@@ -11,6 +11,7 @@ import {
 } from '@features/organization';
 import { buildOrganizationNavigationSections } from '@features/organization/navigation';
 import { getOrganizationInitials } from '@features/organization/utils';
+import { OrganizationQuotaMeters } from '../organization-quota-meters/organization-quota-meters.component';
 
 /**
  * Component OrganizationSecondarySidebar
@@ -32,7 +33,7 @@ import { getOrganizationInitials } from '@features/organization/utils';
  */
 @Component({
   selector: 'app-organization-nav-panel',
-  imports: [RippleModule, RouterLink, RouterLinkActive],
+  imports: [RippleModule, RouterLink, RouterLinkActive, OrganizationQuotaMeters],
   templateUrl: './organization-nav-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

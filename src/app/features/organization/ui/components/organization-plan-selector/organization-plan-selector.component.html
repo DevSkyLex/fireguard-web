@@ -1,0 +1,92 @@
+@if (store.changePlanError(); as changeError) {
+  <p-message severity="error" class="mb-4 block">{{ changeError.message }}</p-message>
+}
+
+@if (store.isLoadingPlans()) {
+  <!-- Loading -->
+  <div
+    class="flex items-center justify-center gap-3 rounded-lg border border-surface-200 p-10 text-surface-500 dark:border-surface-800 dark:text-surface-400"
+  >
+    <i class="pi pi-spin pi-spinner text-xl"></i>
+    <span>Loading plans…</span>
+  </div>
+} @else if (store.plansError()) {
+  <!-- Error -->
+  <div
+    class="flex flex-col items-center gap-4 rounded-lg border border-surface-200 p-10 text-center dark:border-surface-800"
+  >
+    <i class="pi pi-exclamation-triangle text-2xl text-surface-400"></i>
+    <p class="text-sm text-surface-500 dark:text-surface-400">We couldn't load the plans.</p>
+    <p-button label="Retry" icon="pi pi-refresh" severity="secondary" (onClick)="retryLoad()" />
+  </div>
+} @else {
+  <!-- Plans grid -->
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+    @for (plan of store.plans(); track plan.id) {
+      <article
+        class="flex flex-col gap-4 rounded-lg border bg-surface-0 p-5 transition-colors dark:bg-surface-900"
+        [class.border-primary]="isCurrentPlan(plan)"
+        [class.border-surface-200]="!isCurrentPlan(plan)"
+        [class.dark:border-surface-800]="!isCurrentPlan(plan)"
+      >
+        <!-- Card header -->
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex flex-col gap-1">
+            <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-50">
+              {{ plan.name }}
+            </h3>
+            @if (plan.description) {
+              <p class="text-sm text-surface-500 dark:text-surface-400">{{ plan.description }}</p>
+            }
+          </div>
+          @if (isCurrentPlan(plan)) {
+            <p-tag value="Current" severity="success" icon="pi pi-check" />
+          }
+        </div>
+
+        <!-- Quotas -->
+        <div class="flex flex-col gap-2.5 border-t border-surface-100 pt-4 dark:border-surface-800">
+          <p class="text-xs font-medium text-surface-500 dark:text-surface-400">
+            This plan includes
+          </p>
+          <ul class="flex flex-col gap-2">
+            @for (quota of plan.quotas; track quota.resource) {
+              <li class="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-200">
+                <i class="pi pi-check-circle mt-0.5 shrink-0 text-primary" aria-hidden="true"></i>
+                <span>{{ quota.summary }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+
+        <!-- Action -->
+        <div class="mt-auto pt-2">
+          @if (isCurrentPlan(plan)) {
+            <p-button
+              label="Current plan"
+              severity="secondary"
+              styleClass="w-full"
+              [disabled]="true"
+            />
+          } @else {
+            <p-button
+              label="Switch to this plan"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              styleClass="w-full"
+              [loading]="pendingPlanId() === plan.id && store.isChangingPlan()"
+              [disabled]="store.isChangingPlan()"
+              (onClick)="selectPlan(plan)"
+            />
+          }
+        </div>
+      </article>
+    } @empty {
+      <div
+        class="col-span-full rounded-lg border border-surface-200 p-10 text-center text-sm text-surface-500 dark:border-surface-800 dark:text-surface-400"
+      >
+        No plans are available.
+      </div>
+    }
+  </div>
+}

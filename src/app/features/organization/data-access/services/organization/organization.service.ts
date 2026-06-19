@@ -14,6 +14,8 @@ import type {
   OrganizationOutput,
   CreateOrganizationInput,
   UpdateOrganizationInput,
+  ChangeOrganizationPlanInput,
+  OrganizationQuotaOutput,
   OrganizationInvitationOutput,
   OrganizationPermissionOutput,
 } from '@features/organization/models';
@@ -240,6 +242,54 @@ export class OrganizationService extends HydraApiService {
     return this.patch<UpdateOrganizationInput, OrganizationOutput>(
       `${OrganizationService.BASE_PATH}/${id}`,
       input,
+    );
+  }
+
+  /**
+   * Method changePlan
+   * @method changePlan
+   *
+   * @description
+   * Assigns a subscription plan to the organization (self-service). Requires the
+   * `organization.settings.write` permission and returns the refreshed
+   * organization with its updated plan and unlocked features.
+   *
+   * @access public
+   * @since 1.4.0
+   *
+   * @param {string} organizationId - The unique identifier of the organization.
+   * @param {ChangeOrganizationPlanInput} input - The target plan identifier.
+   *
+   * @return {Observable<OrganizationOutput>} An observable emitting the updated organization.
+   */
+  public changePlan(
+    organizationId: string,
+    input: ChangeOrganizationPlanInput,
+  ): Observable<OrganizationOutput> {
+    return this.patch<ChangeOrganizationPlanInput, OrganizationOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/plan`,
+      input,
+    );
+  }
+
+  /**
+   * Method getQuota
+   * @method getQuota
+   *
+   * @description
+   * Retrieves the current usage and plan limit of each capped resource
+   * (members, facilities, equipment, inspections) for the organization.
+   *
+   * @access public
+   * @since 1.4.0
+   *
+   * @param {string} organizationId - The unique identifier of the organization.
+   *
+   * @return {Observable<OrganizationQuotaOutput>} An observable emitting the quota usage.
+   */
+  public getQuota(organizationId: string): Observable<OrganizationQuotaOutput> {
+    return this.getOne<OrganizationQuotaOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/quota`,
     );
   }
 

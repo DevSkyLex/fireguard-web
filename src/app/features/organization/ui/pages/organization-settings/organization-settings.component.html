@@ -27,7 +27,13 @@
           </div>
         </ng-template>
 
-        @if (activeTab() !== 'danger' && store.saveError(); as error) {
+        @if (
+          (activeTab() === 'general' ||
+            activeTab() === 'notifications' ||
+            activeTab() === 'regional') &&
+            store.saveError();
+          as error
+        ) {
           <p-message severity="error" class="mb-4 block">
             {{ error.message ?? 'The settings could not be saved.' }}
           </p-message>
@@ -43,6 +49,12 @@
               (submitted)="save($event)"
               (logoSelected)="uploadLogo($event)"
             />
+          }
+          @case ('subscription') {
+            <app-organization-plan-selector />
+          }
+          @case ('usage') {
+            <app-organization-usage-panel />
           }
           @case ('notifications') {
             <app-organization-notifications-form

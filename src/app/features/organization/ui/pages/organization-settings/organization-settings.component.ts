@@ -21,7 +21,11 @@ import {
   type UpdateOrganizationInput,
 } from '@features/organization/models';
 import { ActiveOrganizationStore, OrganizationSettingsStore } from '@features/organization/state';
-import { OrganizationDangerZone } from '@features/organization/ui/components';
+import {
+  OrganizationDangerZone,
+  OrganizationPlanSelector,
+  OrganizationUsagePanel,
+} from '@features/organization/ui/components';
 import {
   OrganizationGeneralForm,
   OrganizationNotificationsForm,
@@ -70,6 +74,8 @@ interface OrganizationSettingsNavItem {
     OrganizationNotificationsForm,
     OrganizationRegionalForm,
     OrganizationDangerZone,
+    OrganizationPlanSelector,
+    OrganizationUsagePanel,
     OrganizationDeleteDialog,
   ],
   providers: [OrganizationSettingsStore],
@@ -127,6 +133,18 @@ export class OrganizationSettingsPage {
         label: 'General',
         icon: 'pi pi-cog',
         description: 'Name, slug, description, logo and active status.',
+      },
+      {
+        id: 'subscription',
+        label: 'Subscription',
+        icon: 'pi pi-star',
+        description: 'Choose the plan that fits your organization.',
+      },
+      {
+        id: 'usage',
+        label: 'Usage',
+        icon: 'pi pi-gauge',
+        description: 'Resource consumption against your plan limits.',
       },
       {
         id: 'notifications',

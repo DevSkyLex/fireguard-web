@@ -107,12 +107,6 @@ export const InterventionWorkspaceStore = signalStore(
         store.workItems().find((item) => item.status === 'planned') ??
         null,
     ),
-    skippedItems: computed<readonly InterventionWorkItemOutput[]>(() =>
-      store.workItems().filter((item) => item.status === 'skipped'),
-    ),
-    discoveredItems: computed<readonly InterventionWorkItemOutput[]>(() =>
-      store.workItems().filter((item) => item.source === 'discovered'),
-    ),
   })),
   withMethods(
     (

@@ -8,7 +8,7 @@ import type { FacilityOutput } from '@features/organization/features/facilities/
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import type { FacilityFormValues } from '@features/organization/features/facilities/ui/forms';
 import type { OrganizationOutput } from '@features/organization/models';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 import { FacilityCreatePage } from '../facility-create.component';
 
 const MOCK_ORG: OrganizationOutput = {
@@ -36,6 +36,7 @@ describe('FacilityCreatePage', () => {
 
   const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
   const mockMessageService = { add: vi.fn() };
+  const mockQuotaStore = { reload: vi.fn() };
 
   beforeEach(() => {
     mockFacilityStore.facilities.set([]);
@@ -51,6 +52,7 @@ describe('FacilityCreatePage', () => {
         provideRouter([]),
         { provide: PLATFORM_ID, useValue: 'browser' },
         { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
+        { provide: OrganizationQuotaStore, useValue: mockQuotaStore },
         { provide: Events, useValue: mockEvents },
         { provide: MessageService, useValue: mockMessageService },
       ],
@@ -100,6 +102,7 @@ describe('FacilityCreatePage', () => {
         provideRouter([]),
         { provide: PLATFORM_ID, useValue: 'server' },
         { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
+        { provide: OrganizationQuotaStore, useValue: mockQuotaStore },
         { provide: Events, useValue: mockEvents },
         { provide: MessageService, useValue: mockMessageService },
       ],

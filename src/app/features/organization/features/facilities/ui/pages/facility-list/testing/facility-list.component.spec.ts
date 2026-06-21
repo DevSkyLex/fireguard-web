@@ -6,7 +6,7 @@ import { OrganizationPermissionService } from '@features/organization/access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import type { OrganizationOutput } from '@features/organization/models';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 import { FacilityListPage } from '../facility-list.component';
 
 const MOCK_ORG: OrganizationOutput = {
@@ -58,6 +58,10 @@ describe('FacilityListPage', () => {
     selectedOrganization: signal<OrganizationOutput | null>(MOCK_ORG),
   };
 
+  const mockQuotaStore = {
+    isAtLimit: vi.fn(() => false),
+  };
+
   beforeEach(() => {
     mockFacilityStore.rootFacilities.set([]);
     mockFacilityStore.totalRootFacilities.set(0);
@@ -71,6 +75,7 @@ describe('FacilityListPage', () => {
       providers: [
         provideRouter([]),
         { provide: ActiveOrganizationStore, useValue: mockActiveOrgStore },
+        { provide: OrganizationQuotaStore, useValue: mockQuotaStore },
         {
           provide: OrganizationPermissionService,
           useValue: { hasPermission: vi.fn(() => true) },

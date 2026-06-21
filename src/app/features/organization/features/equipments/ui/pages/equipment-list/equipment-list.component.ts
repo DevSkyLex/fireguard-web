@@ -1,13 +1,16 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   input,
   numberAttribute,
   type InputSignalWithTransform,
+  type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { RequestOptions } from '@core/services/hydra-api';
+import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import {
   EquipmentCommissionedMetric,
@@ -16,7 +19,8 @@ import {
   EquipmentMaintenanceMetric,
 } from '@features/organization/features/equipments/ui/components';
 import { EquipmentTable } from '@features/organization/features/equipments/ui/tables';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
+import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 
 /**
  * Component EquipmentListPage
@@ -107,6 +111,18 @@ export class EquipmentListPage {
    * @type {EquipmentStore}
    */
   protected readonly store: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
+
+  /** Root-provided quota store exposing whether the equipment limit is reached. */
+  private readonly quotaStore: OrganizationQuotaStore =
+    inject<OrganizationQuotaStore>(OrganizationQuotaStore);
+
+  /** Whether equipment creation is blocked by the current plan limit. */
+  protected readonly atEquipmentLimit: Signal<boolean> = computed<boolean>(() =>
+    this.quotaStore.isAtLimit(ORGANIZATION_QUOTA_RESOURCE.EQUIPMENT),
+  );
+
+  /** Tooltip explaining why equipment creation is disabled. */
+  protected readonly quotaLimitTooltip: string = QUOTA_LIMIT_REACHED_TOOLTIP;
 
   //#endregion
 

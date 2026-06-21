@@ -4,3 +4,4 @@ export { OrganizationMemberService } from './services/organization-member/organi
 export { OrganizationRoleService } from './services/organization-role/organization-role.service';
 export { AuditEventService } from './services/audit-event/audit-event.service';
 export { PlanService } from './services/plan/plan.service';
+export { BillingService } from './services/billing/billing.service';

@@ -27,8 +27,6 @@ describe('InterventionReviewPanel', () => {
     fixture.componentRef.setInput('intervention', {} as InterventionOutput);
     fixture.componentRef.setInput('issues', []);
     fixture.componentRef.setInput('changes', []);
-    fixture.componentRef.setInput('skippedItems', []);
-    fixture.componentRef.setInput('discoveredItems', []);
     fixture.detectChanges();
 
     return fixture.componentInstance as unknown as InterventionReviewPanelHarness;

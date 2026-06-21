@@ -34,7 +34,7 @@ import type {
   InterventionWorkItemFormValues,
 } from '@features/organization/features/interventions/ui/forms';
 import { InterventionWorkItemTable } from '@features/organization/features/interventions/ui/tables/intervention-work-item-table';
-import { Card, MetricCard } from '@shared/components';
+import { Card } from '@shared/components';
 
 /**
  * Interface PrepareReadinessCheck
@@ -93,7 +93,6 @@ const PARTICIPANT_AVATAR_LIMIT = 5;
     InterventionTag,
     InterventionWorkItemDrawer,
     InterventionWorkItemTable,
-    MetricCard,
     TooltipModule,
   ],
   templateUrl: './intervention-prepare-panel.component.html',

@@ -1,0 +1,45 @@
+@if (cancelScheduled()) {
+  <!-- Scheduled cancellation: offer to resume -->
+  <div
+    class="flex flex-col gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-amber-500/40 dark:bg-amber-500/10"
+  >
+    <div class="flex flex-col gap-0.5">
+      <p class="text-sm font-medium text-surface-900 dark:text-surface-100">Subscription ending</p>
+      <p class="text-sm text-surface-500 dark:text-surface-400">
+        @if (periodEndLabel(); as end) {
+          Your plan stays active until {{ end }}, then reverts to Free.
+        } @else {
+          Your plan will revert to Free at the end of the period.
+        }
+      </p>
+    </div>
+    <p-button
+      label="Resume subscription"
+      icon="pi pi-replay"
+      [loading]="resuming()"
+      [disabled]="disabled()"
+      (onClick)="resume.emit()"
+    />
+  </div>
+} @else {
+  <!-- Active: offer to cancel -->
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex flex-col gap-0.5">
+      <span class="text-sm font-medium text-surface-800 dark:text-surface-100">
+        Cancel subscription
+      </span>
+      <span class="text-sm text-surface-500 dark:text-surface-400">
+        Cancel at the end of the current period. You keep access until then; no data is deleted.
+      </span>
+    </div>
+    <p-button
+      label="Cancel subscription"
+      icon="pi pi-times"
+      severity="danger"
+      [outlined]="false"
+      [loading]="canceling()"
+      [disabled]="disabled()"
+      (onClick)="cancel.emit()"
+    />
+  </div>
+}

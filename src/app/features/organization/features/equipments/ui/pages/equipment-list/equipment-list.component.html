@@ -13,6 +13,8 @@
     [loading]="store.isLoadingEquipment()"
     [empty]="store.isEmpty()"
     [initialPage]="page()"
+    [createDisabled]="atEquipmentLimit()"
+    [createDisabledTooltip]="quotaLimitTooltip"
     (load)="onLoad($event)"
     (pageChange)="onPageChange($event)"
     (add)="onAdd()"

@@ -1,14 +1,17 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   input,
   numberAttribute,
   type InputSignalWithTransform,
+  type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import type { RequestOptions } from '@core/services/hydra-api';
+import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import {
@@ -18,7 +21,8 @@ import {
   FacilitySubSitesMetric,
 } from '@features/organization/features/facilities/ui/components';
 import { FacilityTable } from '@features/organization/features/facilities/ui/tables';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
+import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 
 /**
  * Component FacilityListPage
@@ -128,6 +132,29 @@ export class FacilityListPage {
    * @type {FacilityStore}
    */
   protected readonly store: FacilityStore = inject<FacilityStore>(FacilityStore);
+
+  /**
+   * Property quotaStore
+   * @readonly
+   *
+   * @description
+   * Root-provided quota store exposing whether the facilities limit is reached.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {OrganizationQuotaStore}
+   */
+  private readonly quotaStore: OrganizationQuotaStore =
+    inject<OrganizationQuotaStore>(OrganizationQuotaStore);
+
+  /** Whether facility creation is blocked by the current plan limit. */
+  protected readonly atFacilityLimit: Signal<boolean> = computed<boolean>(() =>
+    this.quotaStore.isAtLimit(ORGANIZATION_QUOTA_RESOURCE.FACILITIES),
+  );
+
+  /** Tooltip explaining why facility creation is disabled. */
+  protected readonly quotaLimitTooltip: string = QUOTA_LIMIT_REACHED_TOOLTIP;
 
   //#endregion
 

@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
   type Signal,
@@ -21,8 +22,16 @@ import type {
   OrganizationMemberOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationTeamStore } from '@features/organization/state';
+import {
+  ORGANIZATION_PERMISSION,
+  ORGANIZATION_QUOTA_RESOURCE,
+} from '@features/organization/models';
+import {
+  ActiveOrganizationStore,
+  OrganizationQuotaStore,
+  OrganizationTeamStore,
+} from '@features/organization/state';
+import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/components';
 import {
   OrganizationInvitationForm,
   OrganizationMemberForm,
@@ -37,6 +46,7 @@ import {
   OrganizationRoleTable,
   type OrganizationMemberRoleRemoval,
 } from '@features/organization/ui/tables';
+import { isQuotaExceededError } from '@features/organization/utils';
 
 /**
  * Page OrganizationTeamPage
@@ -60,6 +70,7 @@ import {
     OrganizationRoleAssignmentForm,
     OrganizationRoleForm,
     OrganizationRoleTable,
+    OrganizationQuotaUpgradeDialog,
     TabsModule,
   ],
   providers: [OrganizationTeamStore],
@@ -77,10 +88,30 @@ export class OrganizationTeamPage {
     OrganizationPermissionService,
   );
 
+  /** Root-provided quota store, reloaded after a member quota-exceeded failure. */
+  private readonly quotaStore: OrganizationQuotaStore = inject(OrganizationQuotaStore);
+
   /** Page-scoped team workflow store. */
   protected readonly store: OrganizationTeamStore = inject(OrganizationTeamStore);
   /** Role currently selected for editing. */
   protected readonly selectedRole: WritableSignal<OrganizationRoleOutput | null> = signal(null);
+
+  /** The capped resource governing member additions and invitations. */
+  protected readonly quotaResource = ORGANIZATION_QUOTA_RESOURCE.MEMBERS;
+  /** Whether the organization has reached its plan limit for members. */
+  protected readonly atMemberLimit: Signal<boolean> = computed<boolean>(() =>
+    this.quotaStore.isAtLimit(ORGANIZATION_QUOTA_RESOURCE.MEMBERS),
+  );
+  /** Visibility of the quota upgrade dialog shown on a 409 member failure. */
+  protected readonly quotaDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
+  /**
+   * Whether the current mutation error is an inline-displayable (non-quota)
+   * error. Quota (409) failures are surfaced through the upgrade dialog instead.
+   */
+  protected readonly hasInlineMutationError: Signal<boolean> = computed<boolean>(() => {
+    const error = this.store.mutationError();
+    return error !== null && !isQuotaExceededError(error);
+  });
   /** Whether the active member can view the member workflow. */
   protected readonly canViewMembers: Signal<boolean> = computed(() =>
     this.permissionService.hasAnyPermission([
@@ -124,6 +155,16 @@ export class OrganizationTeamPage {
   /** Initializes the team resources visible to the active member. */
   public constructor() {
     this.reload();
+
+    // Surface member quota (409) failures through the actionable upgrade dialog
+    // and resync the usage meters.
+    effect(() => {
+      const error = this.store.mutationError();
+      if (error !== null && isQuotaExceededError(error)) {
+        this.quotaStore.reload();
+        this.quotaDialogVisible.set(true);
+      }
+    });
   }
 
   /** Reloads only the team resources allowed by current permissions. */

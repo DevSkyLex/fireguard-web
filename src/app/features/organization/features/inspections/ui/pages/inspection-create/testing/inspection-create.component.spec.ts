@@ -8,7 +8,7 @@ import { ChecklistStore } from '@features/organization/features/checklists/state
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import { InspectionStore } from '@features/organization/features/inspections/state';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 import { InspectionCreatePage } from '../inspection-create.component';
 
 describe('InspectionCreatePage', () => {
@@ -40,6 +40,9 @@ describe('InspectionCreatePage', () => {
     const mockMessageService = {
       add: vi.fn(),
     };
+    const mockQuotaStore = {
+      reload: vi.fn(),
+    };
 
     TestBed.configureTestingModule({
       providers: [
@@ -48,6 +51,7 @@ describe('InspectionCreatePage', () => {
         { provide: ChecklistStore, useValue: mockChecklistStore },
         { provide: InspectionStore, useValue: mockInspectionStore },
         { provide: ActiveOrganizationStore, useValue: mockActiveOrganizationStore },
+        { provide: OrganizationQuotaStore, useValue: mockQuotaStore },
         { provide: PLATFORM_ID, useValue: 'browser' },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: {} },
@@ -107,6 +111,7 @@ describe('InspectionCreatePage', () => {
         { provide: ChecklistStore, useValue: mockChecklistStore },
         { provide: InspectionStore, useValue: mockInspectionStore },
         { provide: ActiveOrganizationStore, useValue: mockActiveOrganizationStore },
+        { provide: OrganizationQuotaStore, useValue: { reload: vi.fn() } },
         { provide: PLATFORM_ID, useValue: 'server' },
         { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
         { provide: ActivatedRoute, useValue: {} },

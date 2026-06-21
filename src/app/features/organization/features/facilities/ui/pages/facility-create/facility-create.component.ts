@@ -1,5 +1,13 @@
 import { isPlatformBrowser } from '@angular/common';
-import { ChangeDetectionStrategy, Component, effect, inject, PLATFORM_ID } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  PLATFORM_ID,
+  signal,
+  type WritableSignal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
@@ -13,7 +21,10 @@ import {
   FacilityForm,
   type FacilityFormValues,
 } from '@features/organization/features/facilities/ui/forms';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
+import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/components';
+import { isQuotaExceededError } from '@features/organization/utils';
 
 /**
  * Component FacilityCreatePage
@@ -30,7 +41,7 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-facility-create',
-  imports: [FacilityForm],
+  imports: [FacilityForm, OrganizationQuotaUpgradeDialog],
   providers: [FacilityStore],
   templateUrl: './facility-create.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -129,6 +140,28 @@ export class FacilityCreatePage {
    * @type {FacilityStore}
    */
   protected readonly store: FacilityStore = inject<FacilityStore>(FacilityStore);
+
+  /**
+   * Property quotaStore
+   * @readonly
+   *
+   * @description
+   * Root-provided quota store, reloaded after a quota-exceeded failure so the
+   * usage meters stay in sync.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {OrganizationQuotaStore}
+   */
+  private readonly quotaStore: OrganizationQuotaStore =
+    inject<OrganizationQuotaStore>(OrganizationQuotaStore);
+
+  /** The capped resource governing facility creation. */
+  protected readonly quotaResource = ORGANIZATION_QUOTA_RESOURCE.FACILITIES;
+
+  /** Visibility of the quota upgrade dialog shown on a 409 failure. */
+  protected readonly quotaDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
   //#endregion
 
   //#region Constructor
@@ -164,11 +197,18 @@ export class FacilityCreatePage {
       }
     });
 
-    // Error toast on create failure
+    // Error feedback on create failure: route quota (409) failures to the
+    // actionable upgrade dialog, everything else to a generic error toast.
     this.events
       .on(facilityStoreEvents.createFailed)
       .pipe(takeUntilDestroyed())
       .subscribe(({ payload }) => {
+        if (isQuotaExceededError(payload)) {
+          this.quotaStore.reload();
+          this.quotaDialogVisible.set(true);
+          return;
+        }
+
         this.messageService.add({
           severity: 'error',
           summary: 'Error',

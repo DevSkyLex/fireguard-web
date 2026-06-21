@@ -34,27 +34,6 @@
       </app-card>
     }
 
-    <section class="grid grid-cols-1 gap-5 sm:grid-cols-3">
-      <app-metric-card
-        title="Skipped"
-        description="Need manager review"
-        icon="pi pi-forward"
-        [value]="skippedItems().length"
-      />
-      <app-metric-card
-        title="Discoveries"
-        description="Unplanned field work"
-        icon="pi pi-search-plus"
-        [value]="discoveredItems().length"
-      />
-      <app-metric-card
-        title="Changes"
-        description="Applied on publication"
-        icon="pi pi-pencil"
-        [value]="changes().length"
-      />
-    </section>
-
     <app-card
       title="Proposed changes"
       description="Updates applied atomically when the intervention is published."

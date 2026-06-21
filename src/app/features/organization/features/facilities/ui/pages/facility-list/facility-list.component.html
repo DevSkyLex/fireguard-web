@@ -13,6 +13,8 @@
     [loading]="store.isLoadingRootFacilities()"
     [empty]="store.isRootEmpty()"
     [initialPage]="page()"
+    [createDisabled]="atFacilityLimit()"
+    [createDisabledTooltip]="quotaLimitTooltip"
     (load)="onLoad($event)"
     (pageChange)="onPageChange($event)"
     (view)="onView($event)"

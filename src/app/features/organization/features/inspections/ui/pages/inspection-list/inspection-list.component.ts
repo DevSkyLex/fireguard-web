@@ -1,14 +1,17 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   input,
   numberAttribute,
   type InputSignalWithTransform,
+  type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import type { RequestOptions } from '@core/services/hydra-api';
+import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { InspectionStore } from '@features/organization/features/inspections/state';
 import {
@@ -18,7 +21,8 @@ import {
   InspectionPassedMetric,
 } from '@features/organization/features/inspections/ui/components';
 import { InspectionTable } from '@features/organization/features/inspections/ui/tables';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
+import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 
 /**
  * Component InspectionListPage
@@ -111,6 +115,18 @@ export class InspectionListPage {
    * @type {InspectionStore}
    */
   protected readonly store: InspectionStore = inject<InspectionStore>(InspectionStore);
+
+  /** Root-provided quota store exposing whether the inspections limit is reached. */
+  private readonly quotaStore: OrganizationQuotaStore =
+    inject<OrganizationQuotaStore>(OrganizationQuotaStore);
+
+  /** Whether inspection creation is blocked by the current plan limit. */
+  protected readonly atInspectionLimit: Signal<boolean> = computed<boolean>(() =>
+    this.quotaStore.isAtLimit(ORGANIZATION_QUOTA_RESOURCE.INSPECTIONS),
+  );
+
+  /** Tooltip explaining why inspection creation is disabled. */
+  protected readonly quotaLimitTooltip: string = QUOTA_LIMIT_REACHED_TOOLTIP;
 
   //#endregion
 

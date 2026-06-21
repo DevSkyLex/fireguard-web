@@ -15,9 +15,8 @@ import type {
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
-  InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
-import { Card, MetricCard } from '@shared/components';
+import { Card } from '@shared/components';
 import { InterventionTag } from '../intervention-tag';
 
 /**
@@ -47,7 +46,7 @@ interface ReviewReadinessCheck {
  */
 @Component({
   selector: 'app-intervention-review-panel',
-  imports: [ButtonModule, Card, InterventionTag, JsonPipe, MessageModule, MetricCard],
+  imports: [ButtonModule, Card, InterventionTag, JsonPipe, MessageModule],
   templateUrl: './intervention-review-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -96,36 +95,6 @@ export class InterventionReviewPanel {
    */
   public readonly changes: InputSignal<readonly InterventionChangeOutput[]> =
     input.required<readonly InterventionChangeOutput[]>();
-
-  /**
-   * Property skippedItems
-   * @readonly
-   *
-   * @description
-   * Provides the skipped items value.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<readonly InterventionWorkItemOutput[]>}
-   */
-  public readonly skippedItems: InputSignal<readonly InterventionWorkItemOutput[]> =
-    input.required<readonly InterventionWorkItemOutput[]>();
-
-  /**
-   * Property discoveredItems
-   * @readonly
-   *
-   * @description
-   * Provides the discovered items value.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<readonly InterventionWorkItemOutput[]>}
-   */
-  public readonly discoveredItems: InputSignal<readonly InterventionWorkItemOutput[]> =
-    input.required<readonly InterventionWorkItemOutput[]>();
 
   /**
    * Property saving

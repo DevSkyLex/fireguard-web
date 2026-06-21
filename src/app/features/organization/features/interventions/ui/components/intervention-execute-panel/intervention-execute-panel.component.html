@@ -56,33 +56,6 @@
       <p-message severity="success">All prepared work items are complete or skipped.</p-message>
     }
 
-    <section class="grid grid-cols-2 gap-6 xl:grid-cols-4">
-      <app-metric-card
-        title="Progress"
-        description="Field completion"
-        icon="pi pi-chart-pie"
-        [value]="progress() + '%'"
-      />
-      <app-metric-card
-        title="Completed"
-        description="Resolved tasks"
-        icon="pi pi-check-circle"
-        [value]="completedCount()"
-      />
-      <app-metric-card
-        title="Remaining"
-        description="Still to do"
-        icon="pi pi-clock"
-        [value]="remainingCount()"
-      />
-      <app-metric-card
-        title="Discovered"
-        description="Found on site"
-        icon="pi pi-search-plus"
-        [value]="discoveredCount()"
-      />
-    </section>
-
     <app-intervention-field-work-table
       class="block"
       [workItems]="workItems()"

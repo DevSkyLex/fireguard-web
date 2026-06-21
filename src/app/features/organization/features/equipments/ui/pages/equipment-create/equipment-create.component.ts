@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  signal,
+  type WritableSignal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
@@ -12,7 +19,10 @@ import {
   EquipmentForm,
   type EquipmentFormValues,
 } from '@features/organization/features/equipments/ui/forms';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
+import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/components';
+import { isQuotaExceededError } from '@features/organization/utils';
 
 /**
  * Component EquipmentCreatePage
@@ -29,7 +39,7 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  */
 @Component({
   selector: 'app-equipment-create',
-  imports: [EquipmentForm],
+  imports: [EquipmentForm, OrganizationQuotaUpgradeDialog],
   providers: [EquipmentStore],
   templateUrl: './equipment-create.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -102,6 +112,28 @@ export class EquipmentCreatePage {
    * @type {EquipmentStore}
    */
   protected readonly store: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
+
+  /**
+   * Property quotaStore
+   * @readonly
+   *
+   * @description
+   * Root-provided quota store, reloaded after a quota-exceeded failure so the
+   * usage meters stay in sync.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {OrganizationQuotaStore}
+   */
+  private readonly quotaStore: OrganizationQuotaStore =
+    inject<OrganizationQuotaStore>(OrganizationQuotaStore);
+
+  /** The capped resource governing equipment creation. */
+  protected readonly quotaResource = ORGANIZATION_QUOTA_RESOURCE.EQUIPMENT;
+
+  /** Visibility of the quota upgrade dialog shown on a 409 failure. */
+  protected readonly quotaDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
   //#endregion
 
   //#region Constructor
@@ -130,11 +162,18 @@ export class EquipmentCreatePage {
       }
     });
 
-    // Error toast on create failure
+    // Error feedback on create failure: route quota (409) failures to the
+    // actionable upgrade dialog, everything else to a generic error toast.
     this.events
       .on(equipmentStoreEvents.createFailed)
       .pipe(takeUntilDestroyed())
       .subscribe(({ payload }) => {
+        if (isQuotaExceededError(payload)) {
+          this.quotaStore.reload();
+          this.quotaDialogVisible.set(true);
+          return;
+        }
+
         this.messageService.add({
           severity: 'error',
           summary: 'Error',

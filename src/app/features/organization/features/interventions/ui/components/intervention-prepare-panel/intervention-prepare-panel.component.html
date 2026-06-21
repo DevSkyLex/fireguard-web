@@ -1,33 +1,6 @@
 <div class="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
   <!-- Main document -->
   <div class="flex min-w-0 flex-col gap-6">
-    <section class="grid grid-cols-2 gap-6 xl:grid-cols-4">
-      <app-metric-card
-        title="Work items"
-        description="Planned tasks"
-        icon="pi pi-check-square"
-        [value]="workItems().length"
-      />
-      <app-metric-card
-        title="Participants"
-        description="Assigned agents"
-        icon="pi pi-users"
-        [value]="participantMembers().length"
-      />
-      <app-metric-card
-        title="Facilities"
-        description="In scope"
-        icon="pi pi-building"
-        [value]="intervention().facilitiesCount"
-      />
-      <app-metric-card
-        title="Equipment"
-        description="In scope"
-        icon="pi pi-box"
-        [value]="intervention().equipmentCount"
-      />
-    </section>
-
     <app-intervention-work-item-table
       class="block"
       [workItems]="workItems()"

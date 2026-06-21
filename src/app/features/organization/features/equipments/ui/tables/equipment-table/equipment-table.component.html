@@ -45,16 +45,22 @@
           </p-select>
 
           @if (canManageEquipment()) {
-            <p-splitbutton
-              label="New equipment"
-              icon="pi pi-plus"
-              severity="primary"
-              [model]="toolbarActions()"
-              size="small"
-              (onClick)="add.emit()"
-              [disabled]="loading()"
-              class="w-full sm:w-auto"
-            />
+            <span
+              class="inline-flex w-full sm:w-auto"
+              [pTooltip]="createDisabled() ? createDisabledTooltip() : ''"
+              tooltipPosition="bottom"
+            >
+              <p-splitbutton
+                label="New equipment"
+                icon="pi pi-plus"
+                severity="primary"
+                [model]="toolbarActions()"
+                size="small"
+                (onClick)="add.emit()"
+                [disabled]="loading() || createDisabled()"
+                class="w-full sm:w-auto"
+              />
+            </span>
           } @else {
             <p-button
               label="Refresh"
@@ -268,13 +274,20 @@
                 description="Adjust your search or filters, or register the assets you track."
               >
                 @if (canManageEquipment()) {
-                  <p-button
-                    label="New equipment"
-                    icon="pi pi-plus"
-                    severity="primary"
-                    size="small"
-                    (onClick)="add.emit()"
-                  />
+                  <span
+                    class="inline-flex"
+                    [pTooltip]="createDisabled() ? createDisabledTooltip() : ''"
+                    tooltipPosition="bottom"
+                  >
+                    <p-button
+                      label="New equipment"
+                      icon="pi pi-plus"
+                      severity="primary"
+                      size="small"
+                      [disabled]="createDisabled()"
+                      (onClick)="add.emit()"
+                    />
+                  </span>
                 }
               </app-empty-state>
             </td>

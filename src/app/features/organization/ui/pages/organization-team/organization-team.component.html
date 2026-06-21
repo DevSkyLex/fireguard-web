@@ -21,7 +21,7 @@
         </div>
       </p-message>
     }
-    @if (store.mutationError(); as error) {
+    @if (hasInlineMutationError() && store.mutationError(); as error) {
       <p-message severity="error" class="mb-4">{{
         error.message ?? 'The team operation could not be completed.'
       }}</p-message>
@@ -41,12 +41,19 @@
           <p-tabpanel value="members">
             <div class="flex flex-col gap-6 pt-4">
               @if (canManageMembers()) {
-                <p-card header="Add member"
-                  ><app-organization-member-form
+                <p-card header="Add member">
+                  @if (atMemberLimit()) {
+                    <p-message severity="warn" class="mb-4 block"
+                      >You've reached your plan's member limit. Upgrade your plan to add more
+                      members.</p-message
+                    >
+                  }
+                  <app-organization-member-form
                     [roles]="store.roles()"
                     [loading]="store.isMutating()"
                     (submitted)="addMember($event)"
-                /></p-card>
+                  />
+                </p-card>
               }
               @if (canManageRoles()) {
                 <p-card header="Assign role"
@@ -71,12 +78,19 @@
           <p-tabpanel value="invitations">
             <div class="flex flex-col gap-6 pt-4">
               @if (canManageMembers()) {
-                <p-card header="Invite member"
-                  ><app-organization-invitation-form
+                <p-card header="Invite member">
+                  @if (atMemberLimit()) {
+                    <p-message severity="warn" class="mb-4 block"
+                      >You've reached your plan's member limit. Upgrade your plan to invite more
+                      members.</p-message
+                    >
+                  }
+                  <app-organization-invitation-form
                     [roles]="store.roles()"
                     [loading]="store.isMutating()"
                     (submitted)="invite($event)"
-                /></p-card>
+                  />
+                </p-card>
               }
               <app-organization-invitation-table
                 [invitations]="store.invitations()"
@@ -113,4 +127,9 @@
       </p-tabpanels>
     </p-tabs>
   </section>
+
+  <app-organization-quota-upgrade-dialog
+    [(visible)]="quotaDialogVisible"
+    [resource]="quotaResource"
+  />
 </div>

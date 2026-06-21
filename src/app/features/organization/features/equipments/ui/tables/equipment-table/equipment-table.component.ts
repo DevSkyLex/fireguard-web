@@ -31,6 +31,7 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
+import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/services/hydra-api';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -73,6 +74,7 @@ import type { EquipmentStatusOption } from './models';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
+    TooltipModule,
     Tag,
   ],
   templateUrl: './equipment-table.component.html',
@@ -153,6 +155,35 @@ export class EquipmentTable implements OnInit {
     1,
     { transform: (value: unknown): number => Math.max(1, numberAttribute(value, 1)) },
   );
+
+  /**
+   * Input createDisabled
+   * @readonly
+   *
+   * @description
+   * Whether equipment creation is blocked because the organization has reached
+   * its plan limit for equipment. Disables the "New equipment" actions.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly createDisabled: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Input createDisabledTooltip
+   * @readonly
+   *
+   * @description
+   * Tooltip explaining why creation is blocked, shown when `createDisabled` is set.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly createDisabledTooltip: InputSignal<string> = input<string>('');
   //#endregion
 
   //#region Outputs

@@ -9,23 +9,55 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { MessageService } from 'primeng/api';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
+import { SelectButtonModule, type SelectButtonChangeEvent } from 'primeng/selectbutton';
 import { TagModule } from 'primeng/tag';
-import { type OrganizationOutput, type PlanOutput } from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationPlanStore } from '@features/organization/state';
+import {
+  type BillingInterval,
+  type OrganizationOutput,
+  type PlanOutput,
+  type PlanPricingOutput,
+  resolveSubscriptionStatusTag,
+} from '@features/organization/models';
+import {
+  ActiveOrganizationStore,
+  OrganizationBillingStore,
+  OrganizationPlanStore,
+  OrganizationQuotaStore,
+} from '@features/organization/state';
+import { BillingInvoiceTable } from '@features/organization/ui/tables';
+import { Tag, type TagDescriptor } from '@shared/components/tag';
+import { BillingCancelCard } from './components/billing-cancel-card/billing-cancel-card.component';
+
+/**
+ * Type IntervalOption
+ *
+ * @description
+ * One entry of the monthly/yearly billing-cadence toggle.
+ *
+ * @since 1.0.0
+ */
+interface IntervalOption {
+  readonly label: string;
+  readonly value: BillingInterval;
+}
 
 /**
  * Component OrganizationPlanSelector
  * @class OrganizationPlanSelector
  *
  * @description
- * Organization-owned subscription selector rendered inside the settings page's
- * "Subscription" tab. Lists the selectable plans with their per-resource quota
- * sentences, highlights the organization's current plan and lets an
- * administrator switch plan. Switching refreshes the active organization so the
- * plan badge and usage meters reflect the new limits.
+ * Organization subscription selector rendered in the settings "Subscription"
+ * tab. Lists the plans with their quota sentences and price for the selected
+ * cadence, shows the current subscription status, and drives the Stripe flow:
+ * paid plans open hosted Checkout, an active subscription is managed through the
+ * hosted Billing Portal, and the free plan uses the direct self-service change.
+ * On return from Stripe (`?checkout=success|cancel`) it surfaces a toast and
+ * refreshes the subscription and quota meters.
  *
  * @version 1.0.0
  *
@@ -33,8 +65,17 @@ import { ActiveOrganizationStore, OrganizationPlanStore } from '@features/organi
  */
 @Component({
   selector: 'app-organization-plan-selector',
-  imports: [ButtonModule, MessageModule, TagModule],
-  providers: [OrganizationPlanStore],
+  imports: [
+    ButtonModule,
+    MessageModule,
+    TagModule,
+    SelectButtonModule,
+    FormsModule,
+    Tag,
+    BillingInvoiceTable,
+    BillingCancelCard,
+  ],
+  providers: [OrganizationPlanStore, OrganizationBillingStore],
   templateUrl: './organization-plan-selector.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -43,10 +84,29 @@ export class OrganizationPlanSelector implements OnInit {
   /** Active organization context store. */
   protected readonly activeOrganizationStore: ActiveOrganizationStore =
     inject(ActiveOrganizationStore);
-  /** Section-scoped plan workflow store. */
+  /** Section-scoped plan catalog + free-plan change store. */
   protected readonly store: OrganizationPlanStore = inject(OrganizationPlanStore);
+  /** Section-scoped Stripe billing store (pricing, subscription, checkout, portal). */
+  protected readonly billingStore: OrganizationBillingStore = inject(OrganizationBillingStore);
+  /** Root quota store, refreshed after a plan change. */
+  private readonly quotaStore: OrganizationQuotaStore = inject(OrganizationQuotaStore);
   /** PrimeNG message service used for change feedback. */
   private readonly messageService: MessageService = inject(MessageService);
+  /** PrimeNG confirmation service used before canceling the subscription. */
+  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+  /** Active route used to read the checkout-return marker. */
+  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+  /** Router used to strip the checkout-return marker from the URL. */
+  private readonly router: Router = inject(Router);
+
+  /** Selected billing cadence for paid plans. */
+  protected readonly interval: WritableSignal<BillingInterval> = signal<BillingInterval>('month');
+
+  /** Options of the cadence toggle (mutable array required by p-selectButton). */
+  protected readonly intervalOptions: IntervalOption[] = [
+    { label: 'Monthly', value: 'month' },
+    { label: 'Yearly', value: 'year' },
+  ];
 
   /** Identifier of the plan currently being switched to, for per-card feedback. */
   protected readonly pendingPlanId: WritableSignal<string | null> = signal<string | null>(null);
@@ -54,6 +114,44 @@ export class OrganizationPlanSelector implements OnInit {
   /** Identifier of the organization's current plan. */
   protected readonly currentPlanId: Signal<string | null> = computed<string | null>(
     () => this.activeOrganizationStore.selectedOrganization()?.planId ?? null,
+  );
+
+  /** Display pricing indexed by plan key. */
+  protected readonly pricingByKey: Signal<ReadonlyMap<string, PlanPricingOutput>> = computed<
+    ReadonlyMap<string, PlanPricingOutput>
+  >(() => new Map(this.billingStore.pricing().map((pricing) => [pricing.planKey, pricing])));
+
+  /** Whether the organization has an access-granting subscription. */
+  protected readonly hasActiveSubscription: Signal<boolean> = computed<boolean>(
+    () => this.billingStore.subscription()?.active === true,
+  );
+
+  /** Resolved badge descriptor for the current subscription status. */
+  protected readonly statusDescriptor: Signal<TagDescriptor | null> =
+    computed<TagDescriptor | null>(() => {
+      const status = this.billingStore.subscription()?.status;
+      return status != null ? resolveSubscriptionStatusTag(status) : null;
+    });
+
+  /** Localized renewal date of the current billing period, when known. */
+  protected readonly periodEndLabel: Signal<string | null> = computed<string | null>(() => {
+    const iso = this.billingStore.subscription()?.currentPeriodEnd;
+    return iso ? new Date(iso).toLocaleDateString() : null;
+  });
+
+  /** Whether the subscription is set to cancel at the end of the period. */
+  protected readonly cancelScheduled: Signal<boolean> = computed<boolean>(
+    () => this.billingStore.subscription()?.cancelAtPeriodEnd === true,
+  );
+
+  /** Whether any plan-change/billing action is in flight. */
+  protected readonly isBusy: Signal<boolean> = computed<boolean>(
+    () =>
+      this.store.isChangingPlan() ||
+      this.billingStore.isStartingCheckout() ||
+      this.billingStore.isStartingPortal() ||
+      this.billingStore.isCanceling() ||
+      this.billingStore.isResuming(),
   );
   //#endregion
 
@@ -72,8 +170,28 @@ export class OrganizationPlanSelector implements OnInit {
     });
 
     effect(() => {
-      if (this.store.changePlanError() !== null) {
+      if (this.store.changePlanError() !== null || this.billingStore.billingError() !== null) {
         this.pendingPlanId.set(null);
+      }
+    });
+
+    effect(() => {
+      if (this.billingStore.cancelSucceeded()) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Cancellation scheduled',
+          detail: 'Your subscription will end at the close of the current billing period.',
+        });
+      }
+    });
+
+    effect(() => {
+      if (this.billingStore.resumeSucceeded()) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Subscription resumed',
+          detail: 'Your subscription will renew normally.',
+        });
       }
     });
   }
@@ -82,12 +200,38 @@ export class OrganizationPlanSelector implements OnInit {
    * Method ngOnInit
    *
    * @description
-   * Loads the selectable plans when the component is initialized.
+   * Loads the plan catalog, pricing and current subscription, then handles a
+   * return from Stripe Checkout signalled by the `checkout` query parameter.
    *
    * @returns {void}
    */
   public ngOnInit(): void {
     this.store.loadPlans();
+    this.billingStore.loadPricing();
+
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (organizationId !== undefined) {
+      this.billingStore.loadSubscription(organizationId);
+      this.billingStore.loadInvoices(organizationId);
+    }
+
+    this.handleCheckoutReturn();
+  }
+
+  /**
+   * Method onIntervalChange
+   *
+   * @description
+   * Updates the selected billing cadence.
+   *
+   * @param {SelectButtonChangeEvent} event - The toggle change event.
+   * @returns {void}
+   */
+  protected onIntervalChange(event: SelectButtonChangeEvent): void {
+    if (event.value === 'month' || event.value === 'year') {
+      this.interval.set(event.value);
+    }
   }
 
   /**
@@ -104,17 +248,67 @@ export class OrganizationPlanSelector implements OnInit {
   }
 
   /**
+   * Method isPaidPlan
+   *
+   * @description
+   * Returns whether the plan has configured Stripe pricing (i.e. requires a
+   * subscription through Checkout).
+   *
+   * @param {PlanOutput} plan - Plan to evaluate.
+   * @returns {boolean} `true` when the plan is payable.
+   */
+  protected isPaidPlan(plan: PlanOutput): boolean {
+    return this.pricingByKey().has(plan.key);
+  }
+
+  /**
+   * Method priceLabel
+   *
+   * @description
+   * Returns the formatted price of a plan for the selected cadence, or null for
+   * free plans / unconfigured amounts.
+   *
+   * @param {PlanOutput} plan - Plan to price.
+   * @returns {(string | null)} The formatted price, or null.
+   */
+  protected priceLabel(plan: PlanOutput): string | null {
+    const pricing: PlanPricingOutput | undefined = this.pricingByKey().get(plan.key);
+    if (pricing === undefined) {
+      return null;
+    }
+
+    const amount: number | null | undefined =
+      this.interval() === 'month' ? pricing.monthlyAmount : pricing.yearlyAmount;
+    if (amount === null || amount === undefined) {
+      return null;
+    }
+
+    const formatted: string = new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: pricing.currency,
+      maximumFractionDigits: 2,
+    }).format(amount / 100);
+
+    return `${formatted}${this.interval() === 'month' ? '/mo' : '/yr'}`;
+  }
+
+  /**
    * Method selectPlan
    *
    * @description
-   * Switches the organization to the provided plan, unless it is already the
-   * current plan or a change is in flight.
+   * Routes a plan selection to the right flow while enforcing the single
+   * subscription per organization rule. When a subscription is already active,
+   * every change — upgrade, downgrade or switch to free — goes through the hosted
+   * Billing Portal, which updates the existing subscription instead of opening a
+   * second Checkout. Hosted Checkout is reached only when no subscription exists
+   * yet (first paid subscription); the free plan with no subscription uses the
+   * direct self-service change.
    *
    * @param {PlanOutput} plan - Plan to switch to.
    * @returns {void}
    */
   protected selectPlan(plan: PlanOutput): void {
-    if (this.isCurrentPlan(plan) || this.store.isChangingPlan()) {
+    if (this.isCurrentPlan(plan) || this.isBusy()) {
       return;
     }
 
@@ -124,20 +318,155 @@ export class OrganizationPlanSelector implements OnInit {
       return;
     }
 
+    // An organization holds a single subscription: once one is active, any plan
+    // change is performed in the Billing Portal so Stripe updates that
+    // subscription rather than creating a second one.
+    if (this.hasActiveSubscription()) {
+      this.billingStore.startPortal(organization.id);
+      return;
+    }
+
+    // No subscription yet: paid plans open hosted Checkout to create the first.
+    if (this.isPaidPlan(plan)) {
+      this.pendingPlanId.set(plan.id);
+      this.billingStore.startCheckout({
+        organizationId: organization.id,
+        planKey: plan.key,
+        interval: this.interval(),
+      });
+      return;
+    }
+
+    // No subscription and a free plan: direct self-service change.
     this.pendingPlanId.set(plan.id);
     this.store.changePlan({ organizationId: organization.id, planId: plan.id });
+  }
+
+  /**
+   * Method manageBilling
+   *
+   * @description
+   * Opens the hosted Billing Portal to manage, change or cancel the subscription.
+   *
+   * @returns {void}
+   */
+  protected manageBilling(): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (organizationId !== undefined && !this.isBusy()) {
+      this.billingStore.startPortal(organizationId);
+    }
   }
 
   /**
    * Method retryLoad
    *
    * @description
-   * Retries loading the selectable plans after a load failure.
+   * Retries loading the plan catalog and pricing after a failure.
    *
    * @returns {void}
    */
   protected retryLoad(): void {
     this.store.loadPlans();
+    this.billingStore.loadPricing();
+  }
+
+  /**
+   * Method retryInvoices
+   *
+   * @description
+   * Retries loading the organization's invoices after a failure.
+   *
+   * @returns {void}
+   */
+  protected retryInvoices(): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (organizationId !== undefined) {
+      this.billingStore.loadInvoices(organizationId);
+    }
+  }
+
+  /**
+   * Method requestCancel
+   *
+   * @description
+   * Asks the user to confirm, then schedules cancellation of the subscription at
+   * the end of the current billing period.
+   *
+   * @returns {void}
+   */
+  protected requestCancel(): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (organizationId === undefined || this.isBusy()) {
+      return;
+    }
+
+    this.confirmationService.confirm({
+      header: 'Cancel subscription',
+      message:
+        'Cancel your subscription at the end of the current period? You keep access until then and no data is deleted.',
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: { label: 'Cancel subscription', severity: 'danger' },
+      rejectButtonProps: { label: 'Keep subscription', severity: 'secondary', outlined: true },
+      accept: () => this.billingStore.cancelSubscription(organizationId),
+    });
+  }
+
+  /**
+   * Method requestResume
+   *
+   * @description
+   * Clears a scheduled cancellation so the subscription renews normally.
+   *
+   * @returns {void}
+   */
+  protected requestResume(): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (organizationId !== undefined && !this.isBusy()) {
+      this.billingStore.resumeSubscription(organizationId);
+    }
+  }
+
+  /**
+   * Method handleCheckoutReturn
+   *
+   * @description
+   * Reads the `checkout` query parameter set on the Stripe return URL, surfaces
+   * the outcome as a toast, refreshes subscription + quota state, and strips the
+   * marker from the URL.
+   *
+   * @returns {void}
+   */
+  private handleCheckoutReturn(): void {
+    const outcome: string | null = this.route.snapshot.queryParamMap.get('checkout');
+    if (outcome === null) {
+      return;
+    }
+
+    if (outcome === 'success') {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Subscription updated',
+        detail: 'Your subscription is being activated — it may take a few seconds to appear.',
+      });
+      this.quotaStore.reload();
+    } else if (outcome === 'cancel') {
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Checkout canceled',
+        detail: 'No changes were made to your subscription.',
+      });
+    }
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { checkout: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
   //#endregion
 }

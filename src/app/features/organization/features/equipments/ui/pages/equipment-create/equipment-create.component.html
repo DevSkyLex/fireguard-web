@@ -7,4 +7,9 @@
       (cancelled)="handleCancel()"
     />
   </section>
+
+  <app-organization-quota-upgrade-dialog
+    [(visible)]="quotaDialogVisible"
+    [resource]="quotaResource"
+  />
 </div>

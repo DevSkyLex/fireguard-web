@@ -29,7 +29,7 @@ import type {
   InterventionSkipFormValues,
 } from '@features/organization/features/interventions/ui/forms';
 import { InterventionFieldWorkTable } from '@features/organization/features/interventions/ui/tables/intervention-field-work-table';
-import { Card, MetricCard } from '@shared/components';
+import { Card } from '@shared/components';
 
 /**
  * Interface ExecuteSubmitCheck
@@ -65,7 +65,6 @@ interface ExecuteSubmitCheck {
     InterventionFieldWorkTable,
     InterventionSkipDrawer,
     MessageModule,
-    MetricCard,
   ],
   templateUrl: './intervention-execute-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -289,67 +288,6 @@ export class InterventionExecutePanel {
    * @type {OutputEmitterRef<void>}
    */
   public readonly submitIntervention: OutputEmitterRef<void> = output<void>();
-
-  /**
-   * Property completedCount
-   * @readonly
-   *
-   * @description
-   * Number of work items resolved as `completed`, surfaced as an at-a-glance
-   * execution KPI mirroring the preparation panel's metric row.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<number>}
-   */
-  protected readonly completedCount: Signal<number> = computed<number>(
-    () =>
-      this.workItems().filter(
-        (item: InterventionWorkItemOutput): boolean => item.status === 'completed',
-      ).length,
-  );
-
-  /**
-   * Property remainingCount
-   * @readonly
-   *
-   * @description
-   * Number of work items still actionable in the field (neither `completed`
-   * nor `skipped`): the agent's outstanding workload.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<number>}
-   */
-  protected readonly remainingCount: Signal<number> = computed<number>(
-    () =>
-      this.workItems().filter(
-        (item: InterventionWorkItemOutput): boolean =>
-          item.status !== 'completed' && item.status !== 'skipped',
-      ).length,
-  );
-
-  /**
-   * Property discoveredCount
-   * @readonly
-   *
-   * @description
-   * Number of work items added on site as field discoveries (unplanned work),
-   * distinct from the originally planned scope.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<number>}
-   */
-  protected readonly discoveredCount: Signal<number> = computed<number>(
-    () =>
-      this.workItems().filter(
-        (item: InterventionWorkItemOutput): boolean => item.source === 'discovered',
-      ).length,
-  );
 
   /**
    * Property submitChecks

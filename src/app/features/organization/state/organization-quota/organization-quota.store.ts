@@ -19,10 +19,14 @@ import {
   toStoreError,
 } from '@core/state/request-state';
 import { OrganizationService } from '@features/organization/data-access';
-import type {
-  OrganizationQuotaItemOutput,
-  OrganizationQuotaOutput,
+import {
+  ORGANIZATION_QUOTA_RESOURCES,
+  type OrganizationQuotaItemOutput,
+  type OrganizationQuotaOutput,
+  type OrganizationQuotaResource,
+  type QuotaStatus,
 } from '@features/organization/models';
+import { resolveQuotaStatus } from '@features/organization/utils';
 import { ActiveOrganizationStore } from '../active-organization';
 import type { OrganizationQuotaState } from './models';
 
@@ -60,6 +64,40 @@ export const OrganizationQuotaStore = signalStore(
 
     /** Whether the quota payload is currently loading. */
     isLoadingQuota: computed<boolean>(() => store.quotaCallState().status === 'pending'),
+
+    /**
+     * Quota status (`ok` / `near` / `full`) per capped resource. Resources
+     * without quota data default to `ok` so consumers can index safely.
+     */
+    statusByResource: computed<Record<OrganizationQuotaResource, QuotaStatus>>(() => {
+      const state = store.quotaCallState();
+      const items: ReadonlyArray<OrganizationQuotaItemOutput> = isCallSuccess(state)
+        ? state.data.items
+        : [];
+
+      const statuses = {} as Record<OrganizationQuotaResource, QuotaStatus>;
+      for (const resource of ORGANIZATION_QUOTA_RESOURCES) {
+        statuses[resource] = 'ok';
+      }
+
+      for (const item of items) {
+        statuses[item.resource] = resolveQuotaStatus(item.used, item.limit);
+      }
+
+      return statuses;
+    }),
+  })),
+
+  withMethods((store) => ({
+    /**
+     * Method isAtLimit
+     *
+     * @description
+     * Returns whether the given capped resource has reached its plan limit.
+     */
+    isAtLimit(resource: OrganizationQuotaResource): boolean {
+      return store.statusByResource()[resource] === 'full';
+    },
   })),
 
   withMethods((store, organizationService = inject(OrganizationService)) => ({
@@ -98,6 +136,23 @@ export const OrganizationQuotaStore = signalStore(
      */
     clear(): void {
       patchState(store, INITIAL_STATE);
+    },
+  })),
+
+  withMethods((store) => ({
+    /**
+     * Method reload
+     *
+     * @description
+     * Re-fetches the quota usage for the organization currently in state, if
+     * any. Used to resync the meters after a quota-affecting action (e.g. a
+     * create rejected with HTTP 409).
+     */
+    reload(): void {
+      const organizationId: string | null = store.currentOrganizationId();
+      if (organizationId !== null) {
+        store.load(organizationId);
+      }
     },
   })),
 

@@ -47,7 +47,7 @@ export interface FacilityState {
   readonly listCallState: CallState;
 
   /**
-   * Property createOperation
+   * Property createCallState
    * @readonly
    *
    * @description
@@ -60,7 +60,7 @@ export interface FacilityState {
   readonly createCallState: CallState<FacilityOutput | null>;
 
   /**
-   * Property updateOperation
+   * Property updateCallState
    * @readonly
    *
    * @description
@@ -73,7 +73,7 @@ export interface FacilityState {
   readonly updateCallState: CallState<FacilityOutput | null>;
 
   /**
-   * Property archiveOperation
+   * Property archiveCallState
    * @readonly
    *
    * @description

@@ -55,7 +55,7 @@ type OrganizationDashboardComparisonDelta = {
  * ```typescript
  * @Component({ providers: [OrganizationDashboardStore] })
  * export class OrganizationDashboard {
- *   protected readonly store = inject(OrganizationDashboardStore);
+ *   protected readonly store = inject<OrganizationDashboardStore>(OrganizationDashboardStore);
  * }
  * ```
  *
@@ -234,7 +234,7 @@ export const DashboardStore = signalStore(
    *
    * @since 1.0.0
    */
-  withMethods((store, organizationService = inject(OrganizationService)) => ({
+  withMethods((store, organizationService = inject<OrganizationService>(OrganizationService)) => ({
     /**
      * Method load
      *
@@ -282,7 +282,7 @@ export const DashboardStore = signalStore(
    */
   withComputed((_store) => {
     const platformId = inject(PLATFORM_ID);
-    const activeOrganizationStore = inject(ActiveOrganizationStore);
+    const activeOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
     return {
       loadParams: computed<string | undefined>(() => {

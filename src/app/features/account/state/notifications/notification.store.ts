@@ -96,7 +96,7 @@ const INITIAL_NOTIFICATION_STATE: NotificationStoreState = {
  *
  * @example
  * ```typescript
- * const store = inject(NotificationStore);
+ * const store = inject<NotificationStore>(NotificationStore);
  *
  * // Load initial page
  * store.load();
@@ -232,7 +232,7 @@ export const NotificationStore = signalStore(
       notificationService = inject<NotificationService>(NotificationService),
       mercureService = inject<MercureService>(MercureService),
       platformId = inject<object>(PLATFORM_ID),
-      transferState = inject(TransferState),
+      transferState = inject<TransferState>(TransferState),
     ) => {
       let initializePromise: Promise<void> | null = null;
       let initializeTypesPromise: Promise<void> | null = null;

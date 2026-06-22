@@ -30,21 +30,21 @@ export const ACCOUNT_ROUTES: Routes = [
   {
     path: 'profile',
     redirectTo: (): ReturnType<Router['parseUrl']> =>
-      inject(Router).parseUrl('/account?tab=profile'),
+      inject<Router>(Router).parseUrl('/account?tab=profile'),
   },
   {
     path: 'sessions',
     redirectTo: (): ReturnType<Router['parseUrl']> =>
-      inject(Router).parseUrl('/account?tab=security'),
+      inject<Router>(Router).parseUrl('/account?tab=security'),
   },
   {
     path: 'trusted-devices',
     redirectTo: (): ReturnType<Router['parseUrl']> =>
-      inject(Router).parseUrl('/account?tab=security'),
+      inject<Router>(Router).parseUrl('/account?tab=security'),
   },
   {
     path: 'notifications',
     redirectTo: (): ReturnType<Router['parseUrl']> =>
-      inject(Router).parseUrl('/account?tab=notifications'),
+      inject<Router>(Router).parseUrl('/account?tab=notifications'),
   },
 ];

@@ -89,7 +89,7 @@ export class DashboardLayout {
   );
 
   protected readonly isDesktopSidebar: Signal<boolean> = toSignal(
-    inject(BreakpointObserver)
+    inject<BreakpointObserver>(BreakpointObserver)
       .observe('(min-width: 1280px)')
       .pipe(map((result) => result.matches)),
     { initialValue: false },

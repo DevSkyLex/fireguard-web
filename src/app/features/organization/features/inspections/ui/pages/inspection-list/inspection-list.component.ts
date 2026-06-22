@@ -91,7 +91,8 @@ export class InspectionListPage {
   /**
    * PrimeNG confirmation service used before cancelling a draft inspection.
    */
-  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
 
   /**
    * Property activeOrganizationStore

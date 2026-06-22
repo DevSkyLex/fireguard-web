@@ -68,7 +68,8 @@ export class OrganizationGeneralForm {
   public readonly logoSelected: OutputEmitterRef<File> = output<File>();
 
   /** Non-nullable builder preserving strict form value types. */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
 
   /** Strictly typed general settings form. */
   protected readonly form = this.formBuilder.group({

@@ -47,7 +47,8 @@ interface OrganizationUsageRow {
 export class OrganizationUsagePanel {
   //#region Properties
   /** Root-provided store exposing the active organization's quota usage. */
-  protected readonly quotaStore: OrganizationQuotaStore = inject(OrganizationQuotaStore);
+  protected readonly quotaStore: OrganizationQuotaStore =
+    inject<OrganizationQuotaStore>(OrganizationQuotaStore);
 
   /** Usage rows derived from the active organization's quota usage. */
   protected readonly rows: Signal<ReadonlyArray<OrganizationUsageRow>> = computed(() =>

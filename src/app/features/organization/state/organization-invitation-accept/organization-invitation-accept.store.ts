@@ -36,23 +36,28 @@ export const OrganizationInvitationAcceptStore = signalStore(
     /** Whether invitation acceptance is pending. */
     isAccepting: computed(() => store.acceptCallState().status === 'pending'),
   })),
-  withMethods((store, invitationService = inject(OrganizationInvitationService)) => ({
-    /** Accepts an organization invitation token. */
-    accept: rxMethod<string>(
-      pipe(
-        tap(() => patchState(store, { acceptCallState: pendingCallState() })),
-        exhaustMap((token) =>
-          invitationService.accept({ token }).pipe(
-            tapResponse({
-              next: (member) => patchState(store, { acceptCallState: successCallState(member) }),
-              error: (error: unknown) =>
-                patchState(store, { acceptCallState: errorCallState(toStoreError(error)) }),
-            }),
+  withMethods(
+    (
+      store,
+      invitationService = inject<OrganizationInvitationService>(OrganizationInvitationService),
+    ) => ({
+      /** Accepts an organization invitation token. */
+      accept: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { acceptCallState: pendingCallState() })),
+          exhaustMap((token) =>
+            invitationService.accept({ token }).pipe(
+              tapResponse({
+                next: (member) => patchState(store, { acceptCallState: successCallState(member) }),
+                error: (error: unknown) =>
+                  patchState(store, { acceptCallState: errorCallState(toStoreError(error)) }),
+              }),
+            ),
           ),
         ),
       ),
-    ),
-  })),
+    }),
+  ),
 );
 
 /**

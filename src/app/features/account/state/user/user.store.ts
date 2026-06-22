@@ -60,7 +60,7 @@ const INITIAL_USER_STATE: UserState = {
  *
  * @example
  * ```typescript
- * const userStore = inject(UserStore);
+ * const userStore = inject<UserStore>(UserStore);
  *
  * // Load user profile
  * userStore.load();
@@ -250,7 +250,7 @@ export const UserStore = signalStore(
       dispatcher = inject<Dispatcher>(Dispatcher),
       userProfileService = inject<UserProfileService>(UserProfileService),
       platformId = inject<object>(PLATFORM_ID),
-      transferState = inject(TransferState),
+      transferState = inject<TransferState>(TransferState),
     ) => ({
       //#region Reactive Methods
       /**

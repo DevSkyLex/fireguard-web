@@ -53,8 +53,10 @@ function findRouteParam(route: ActivatedRouteSnapshot, name: string): string | n
 export const organizationLandingGuard: CanActivateFn = (
   route: ActivatedRouteSnapshot,
 ): boolean | UrlTree => {
-  const router: Router = inject(Router);
-  const permissionService: OrganizationPermissionService = inject(OrganizationPermissionService);
+  const router: Router = inject<Router>(Router);
+  const permissionService: OrganizationPermissionService = inject<OrganizationPermissionService>(
+    OrganizationPermissionService,
+  );
   const organizationId: string | null = findRouteParam(route, 'organizationId');
 
   if (!organizationId) {

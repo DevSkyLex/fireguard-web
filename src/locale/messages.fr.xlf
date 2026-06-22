@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en-US" target-language="fr" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="auth.login.email.label" datatype="html">
+        <source>Email Address</source>
+        <target>Adresse e-mail</target>
+      </trans-unit>
+      <trans-unit id="auth.login.email.required" datatype="html">
+        <source>Email is required.</source>
+        <target>L'adresse e-mail est requise.</target>
+      </trans-unit>
+      <trans-unit id="auth.login.email.invalid" datatype="html">
+        <source>Please enter a valid email address.</source>
+        <target>Veuillez saisir une adresse e-mail valide.</target>
+      </trans-unit>
+      <trans-unit id="auth.login.password.label" datatype="html">
+        <source>Password</source>
+        <target>Mot de passe</target>
+      </trans-unit>
+      <trans-unit id="auth.login.password.required" datatype="html">
+        <source>Password is required.</source>
+        <target>Le mot de passe est requis.</target>
+      </trans-unit>
+      <trans-unit id="auth.login.rememberMe" datatype="html">
+        <source> Remember me </source>
+        <target> Se souvenir de moi </target>
+      </trans-unit>
+      <trans-unit id="auth.login.forgotPassword" datatype="html">
+        <source> Forgot password? </source>
+        <target> Mot de passe oublié ? </target>
+      </trans-unit>
+      <trans-unit id="auth.login.submit" datatype="html">
+        <source>Sign in</source>
+        <target>Se connecter</target>
+      </trans-unit>
+      <trans-unit id="auth.login.title" datatype="html">
+        <source> Welcome Back </source>
+        <target> Bon retour </target>
+      </trans-unit>
+      <trans-unit id="auth.login.subtitle" datatype="html">
+        <source> Please sign in to your account to continue. </source>
+        <target> Veuillez vous connecter à votre compte pour continuer. </target>
+      </trans-unit>
+      <trans-unit id="common.error" datatype="html">
+        <source>Error</source>
+        <target>Erreur</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

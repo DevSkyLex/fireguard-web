@@ -73,7 +73,7 @@ export const organizationResolver: ResolveFn<OrganizationOutput> = (
    */
   const activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
-  const organizationService: OrganizationService = inject(OrganizationService);
+  const organizationService: OrganizationService = inject<OrganizationService>(OrganizationService);
 
   /**
    * Constant router

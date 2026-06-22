@@ -106,204 +106,210 @@ export const OrganizationBillingStore = signalStore(
     ),
   })),
 
-  withMethods((store, billingService = inject(BillingService), documentRef = inject(DOCUMENT)) => ({
-    /**
-     * Method loadSubscription
-     * @method loadSubscription
-     *
-     * @description
-     * Loads the organization's current subscription state.
-     *
-     * @param {string} organizationId - The organization identifier.
-     */
-    loadSubscription: rxMethod<string>(
-      pipe(
-        tap(() =>
-          patchState(store, {
-            subscriptionCallState: pendingCallState(store.subscriptionCallState().data),
-          }),
-        ),
-        switchMap((organizationId: string) =>
-          billingService.getSubscription(organizationId).pipe(
-            tapResponse({
-              next: (subscription: OrganizationSubscriptionOutput) =>
-                patchState(store, { subscriptionCallState: successCallState(subscription) }),
-              error: (err: unknown) =>
-                patchState(store, {
-                  subscriptionCallState: errorCallState(toStoreError(err)),
-                }),
+  withMethods(
+    (
+      store,
+      billingService = inject<BillingService>(BillingService),
+      documentRef = inject(DOCUMENT),
+    ) => ({
+      /**
+       * Method loadSubscription
+       * @method loadSubscription
+       *
+       * @description
+       * Loads the organization's current subscription state.
+       *
+       * @param {string} organizationId - The organization identifier.
+       */
+      loadSubscription: rxMethod<string>(
+        pipe(
+          tap(() =>
+            patchState(store, {
+              subscriptionCallState: pendingCallState(store.subscriptionCallState().data),
             }),
+          ),
+          switchMap((organizationId: string) =>
+            billingService.getSubscription(organizationId).pipe(
+              tapResponse({
+                next: (subscription: OrganizationSubscriptionOutput) =>
+                  patchState(store, { subscriptionCallState: successCallState(subscription) }),
+                error: (err: unknown) =>
+                  patchState(store, {
+                    subscriptionCallState: errorCallState(toStoreError(err)),
+                  }),
+              }),
+            ),
           ),
         ),
       ),
-    ),
 
-    /**
-     * Method loadPricing
-     * @method loadPricing
-     *
-     * @description
-     * Loads the display pricing of every payable plan.
-     */
-    loadPricing: rxMethod<void>(
-      pipe(
-        tap(() => patchState(store, { pricingCallState: pendingCallState() })),
-        switchMap(() =>
-          billingService.getPricing().pipe(
-            tapResponse({
-              next: (collection: HydraCollection<PlanPricingOutput>) =>
-                patchState(store, { pricingCallState: successCallState(collection.member) }),
-              error: (err: unknown) =>
-                patchState(store, { pricingCallState: errorCallState(toStoreError(err)) }),
-            }),
+      /**
+       * Method loadPricing
+       * @method loadPricing
+       *
+       * @description
+       * Loads the display pricing of every payable plan.
+       */
+      loadPricing: rxMethod<void>(
+        pipe(
+          tap(() => patchState(store, { pricingCallState: pendingCallState() })),
+          switchMap(() =>
+            billingService.getPricing().pipe(
+              tapResponse({
+                next: (collection: HydraCollection<PlanPricingOutput>) =>
+                  patchState(store, { pricingCallState: successCallState(collection.member) }),
+                error: (err: unknown) =>
+                  patchState(store, { pricingCallState: errorCallState(toStoreError(err)) }),
+              }),
+            ),
           ),
         ),
       ),
-    ),
 
-    /**
-     * Method loadInvoices
-     * @method loadInvoices
-     *
-     * @description
-     * Loads the organization's recent billing invoices.
-     *
-     * @param {string} organizationId - The organization identifier.
-     */
-    loadInvoices: rxMethod<string>(
-      pipe(
-        tap(() =>
-          patchState(store, {
-            invoicesCallState: pendingCallState(store.invoicesCallState().data),
-          }),
-        ),
-        switchMap((organizationId: string) =>
-          billingService.getInvoices(organizationId).pipe(
-            tapResponse({
-              next: (collection: HydraCollection<InvoiceOutput>) =>
-                patchState(store, { invoicesCallState: successCallState(collection.member) }),
-              error: (err: unknown) =>
-                patchState(store, { invoicesCallState: errorCallState(toStoreError(err)) }),
+      /**
+       * Method loadInvoices
+       * @method loadInvoices
+       *
+       * @description
+       * Loads the organization's recent billing invoices.
+       *
+       * @param {string} organizationId - The organization identifier.
+       */
+      loadInvoices: rxMethod<string>(
+        pipe(
+          tap(() =>
+            patchState(store, {
+              invoicesCallState: pendingCallState(store.invoicesCallState().data),
             }),
+          ),
+          switchMap((organizationId: string) =>
+            billingService.getInvoices(organizationId).pipe(
+              tapResponse({
+                next: (collection: HydraCollection<InvoiceOutput>) =>
+                  patchState(store, { invoicesCallState: successCallState(collection.member) }),
+                error: (err: unknown) =>
+                  patchState(store, { invoicesCallState: errorCallState(toStoreError(err)) }),
+              }),
+            ),
           ),
         ),
       ),
-    ),
 
-    /**
-     * Method cancelSubscription
-     * @method cancelSubscription
-     *
-     * @description
-     * Schedules cancellation at period end and applies the refreshed subscription
-     * returned by the API.
-     *
-     * @param {string} organizationId - The organization identifier.
-     */
-    cancelSubscription: rxMethod<string>(
-      pipe(
-        tap(() => patchState(store, { cancelCallState: pendingCallState() })),
-        switchMap((organizationId: string) =>
-          billingService.cancelSubscription(organizationId).pipe(
-            tapResponse({
-              next: (subscription: OrganizationSubscriptionOutput) =>
-                patchState(store, {
-                  cancelCallState: successCallState(subscription),
-                  subscriptionCallState: successCallState(subscription),
-                }),
-              error: (err: unknown) =>
-                patchState(store, { cancelCallState: errorCallState(toStoreError(err)) }),
-            }),
+      /**
+       * Method cancelSubscription
+       * @method cancelSubscription
+       *
+       * @description
+       * Schedules cancellation at period end and applies the refreshed subscription
+       * returned by the API.
+       *
+       * @param {string} organizationId - The organization identifier.
+       */
+      cancelSubscription: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { cancelCallState: pendingCallState() })),
+          switchMap((organizationId: string) =>
+            billingService.cancelSubscription(organizationId).pipe(
+              tapResponse({
+                next: (subscription: OrganizationSubscriptionOutput) =>
+                  patchState(store, {
+                    cancelCallState: successCallState(subscription),
+                    subscriptionCallState: successCallState(subscription),
+                  }),
+                error: (err: unknown) =>
+                  patchState(store, { cancelCallState: errorCallState(toStoreError(err)) }),
+              }),
+            ),
           ),
         ),
       ),
-    ),
 
-    /**
-     * Method resumeSubscription
-     * @method resumeSubscription
-     *
-     * @description
-     * Clears a scheduled cancellation and applies the refreshed subscription
-     * returned by the API.
-     *
-     * @param {string} organizationId - The organization identifier.
-     */
-    resumeSubscription: rxMethod<string>(
-      pipe(
-        tap(() => patchState(store, { resumeCallState: pendingCallState() })),
-        switchMap((organizationId: string) =>
-          billingService.resumeSubscription(organizationId).pipe(
-            tapResponse({
-              next: (subscription: OrganizationSubscriptionOutput) =>
-                patchState(store, {
-                  resumeCallState: successCallState(subscription),
-                  subscriptionCallState: successCallState(subscription),
-                }),
-              error: (err: unknown) =>
-                patchState(store, { resumeCallState: errorCallState(toStoreError(err)) }),
-            }),
+      /**
+       * Method resumeSubscription
+       * @method resumeSubscription
+       *
+       * @description
+       * Clears a scheduled cancellation and applies the refreshed subscription
+       * returned by the API.
+       *
+       * @param {string} organizationId - The organization identifier.
+       */
+      resumeSubscription: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { resumeCallState: pendingCallState() })),
+          switchMap((organizationId: string) =>
+            billingService.resumeSubscription(organizationId).pipe(
+              tapResponse({
+                next: (subscription: OrganizationSubscriptionOutput) =>
+                  patchState(store, {
+                    resumeCallState: successCallState(subscription),
+                    subscriptionCallState: successCallState(subscription),
+                  }),
+                error: (err: unknown) =>
+                  patchState(store, { resumeCallState: errorCallState(toStoreError(err)) }),
+              }),
+            ),
           ),
         ),
       ),
-    ),
 
-    /**
-     * Method startCheckout
-     * @method startCheckout
-     *
-     * @description
-     * Starts a hosted Checkout session and, on success, redirects the browser
-     * to Stripe.
-     *
-     * @param {BillingCheckoutParams} params - Organization id, plan key and cadence.
-     */
-    startCheckout: rxMethod<BillingCheckoutParams>(
-      pipe(
-        tap(() => patchState(store, { checkoutCallState: pendingCallState() })),
-        switchMap(({ organizationId, planKey, interval }: BillingCheckoutParams) =>
-          billingService.createCheckoutSession(organizationId, { planKey, interval }).pipe(
-            tapResponse({
-              next: (session: CheckoutSessionOutput) => {
-                patchState(store, { checkoutCallState: successCallState(session) });
-                redirectToStripe(documentRef, session.url);
-              },
-              error: (err: unknown) =>
-                patchState(store, { checkoutCallState: errorCallState(toStoreError(err)) }),
-            }),
+      /**
+       * Method startCheckout
+       * @method startCheckout
+       *
+       * @description
+       * Starts a hosted Checkout session and, on success, redirects the browser
+       * to Stripe.
+       *
+       * @param {BillingCheckoutParams} params - Organization id, plan key and cadence.
+       */
+      startCheckout: rxMethod<BillingCheckoutParams>(
+        pipe(
+          tap(() => patchState(store, { checkoutCallState: pendingCallState() })),
+          switchMap(({ organizationId, planKey, interval }: BillingCheckoutParams) =>
+            billingService.createCheckoutSession(organizationId, { planKey, interval }).pipe(
+              tapResponse({
+                next: (session: CheckoutSessionOutput) => {
+                  patchState(store, { checkoutCallState: successCallState(session) });
+                  redirectToStripe(documentRef, session.url);
+                },
+                error: (err: unknown) =>
+                  patchState(store, { checkoutCallState: errorCallState(toStoreError(err)) }),
+              }),
+            ),
           ),
         ),
       ),
-    ),
 
-    /**
-     * Method startPortal
-     * @method startPortal
-     *
-     * @description
-     * Starts a hosted Billing Portal session and, on success, redirects the
-     * browser to Stripe.
-     *
-     * @param {string} organizationId - The organization identifier.
-     */
-    startPortal: rxMethod<string>(
-      pipe(
-        tap(() => patchState(store, { portalCallState: pendingCallState() })),
-        switchMap((organizationId: string) =>
-          billingService.createPortalSession(organizationId).pipe(
-            tapResponse({
-              next: (session: PortalSessionOutput) => {
-                patchState(store, { portalCallState: successCallState(session) });
-                redirectToStripe(documentRef, session.url);
-              },
-              error: (err: unknown) =>
-                patchState(store, { portalCallState: errorCallState(toStoreError(err)) }),
-            }),
+      /**
+       * Method startPortal
+       * @method startPortal
+       *
+       * @description
+       * Starts a hosted Billing Portal session and, on success, redirects the
+       * browser to Stripe.
+       *
+       * @param {string} organizationId - The organization identifier.
+       */
+      startPortal: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { portalCallState: pendingCallState() })),
+          switchMap((organizationId: string) =>
+            billingService.createPortalSession(organizationId).pipe(
+              tapResponse({
+                next: (session: PortalSessionOutput) => {
+                  patchState(store, { portalCallState: successCallState(session) });
+                  redirectToStripe(documentRef, session.url);
+                },
+                error: (err: unknown) =>
+                  patchState(store, { portalCallState: errorCallState(toStoreError(err)) }),
+              }),
+            ),
           ),
         ),
       ),
-    ),
-  })),
+    }),
+  ),
 );
 
 /**

@@ -42,7 +42,8 @@ export class OrganizationRoleForm {
   /** Emits cancellation of role editing. */
   public readonly cancelled: OutputEmitterRef<void> = output();
   /** Non-nullable builder preserving strict form value types. */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
   /** Strictly typed role form. */
   protected readonly form = this.formBuilder.group({
     name: this.formBuilder.control('', [Validators.required]),

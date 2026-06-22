@@ -64,9 +64,9 @@ export const OrganizationSettingsStore = signalStore(
   withMethods(
     (
       store,
-      organizationService = inject(OrganizationService),
-      activeOrganizationStore = inject(ActiveOrganizationStore),
-      dispatcher = inject(Dispatcher),
+      organizationService = inject<OrganizationService>(OrganizationService),
+      activeOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore),
+      dispatcher = inject<Dispatcher>(Dispatcher),
     ) => ({
       /**
        * Method save

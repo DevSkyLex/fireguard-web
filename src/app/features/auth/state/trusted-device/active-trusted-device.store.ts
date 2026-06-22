@@ -120,7 +120,7 @@ export const ActiveTrustedDeviceStore = signalStore(
     (
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
-      trustedDeviceService = inject(TrustedDeviceService),
+      trustedDeviceService = inject<TrustedDeviceService>(TrustedDeviceService),
     ) => ({
       //#region Reactive Methods
       /**

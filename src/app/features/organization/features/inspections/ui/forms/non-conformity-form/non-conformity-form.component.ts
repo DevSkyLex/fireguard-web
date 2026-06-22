@@ -47,7 +47,8 @@ export class NonConformityForm {
   /** Emits valid non-conformity creation values. */
   public readonly submitted: OutputEmitterRef<NonConformityFormValues> = output();
   /** Non-nullable builder preserving strict form value types. */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
   /** Supported non-conformity severity options. */
   protected readonly severityOptions: { label: string; value: NonConformitySeverity }[] = [
     { label: 'Low', value: 'low' },

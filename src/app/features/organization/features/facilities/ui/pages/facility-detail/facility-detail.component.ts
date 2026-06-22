@@ -228,7 +228,7 @@ export class FacilityDetailPage {
    * @type {FacilityOverviewStore}
    */
   protected readonly overviewStore: InstanceType<typeof FacilityOverviewStore> =
-    inject(FacilityOverviewStore);
+    inject<FacilityOverviewStore>(FacilityOverviewStore);
 
   /**
    * Property facility

@@ -99,7 +99,7 @@ const INITIAL_EQUIPMENT_STATE: EquipmentState = {
  * ```typescript
  * @Component({ providers: [EquipmentStore] })
  * export class EquipmentListPage {
- *   readonly store = inject(EquipmentStore);
+ *   readonly store = inject<EquipmentStore>(EquipmentStore);
  * }
  * ```
  *
@@ -467,7 +467,7 @@ export const EquipmentStore = signalStore(
          *
          * @description
          * Creates a new equipment via the API. Uses `exhaustMap` to prevent
-         * concurrent submissions. On success the `createOperation` transitions
+         * concurrent submissions. On success the `createCallState` transitions
          * to a success state carrying the newly created entity.
          *
          * @since 1.0.0

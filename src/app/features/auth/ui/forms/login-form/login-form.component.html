@@ -1,7 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
   <!-- Email Field -->
   <div class="flex flex-col gap-2">
-    <label for="email" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="email"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@auth.login.email.label"
       >Email Address</label
     >
     <p-iconfield>
@@ -18,10 +21,10 @@
     @if (form.controls.email.invalid && form.controls.email.touched) {
       <p-message severity="error" variant="simple">
         @if (form.controls.email.hasError('required')) {
-          <span>Email is required.</span>
+          <span i18n="@@auth.login.email.required">Email is required.</span>
         }
         @if (form.controls.email.hasError('email')) {
-          <span>Please enter a valid email address.</span>
+          <span i18n="@@auth.login.email.invalid">Please enter a valid email address.</span>
         }
       </p-message>
     }
@@ -29,7 +32,10 @@
 
   <!-- Password Field -->
   <div class="flex flex-col gap-2">
-    <label for="password" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="password"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@auth.login.password.label"
       >Password</label
     >
 
@@ -48,7 +54,7 @@
 
     @if (form.controls.password.invalid && form.controls.password.touched) {
       <p-message severity="error" variant="simple">
-        <span>Password is required.</span>
+        <span i18n="@@auth.login.password.required">Password is required.</span>
       </p-message>
     }
   </div>
@@ -60,6 +66,7 @@
       <label
         for="remember_me"
         class="cursor-pointer text-sm text-surface-700 dark:text-surface-300"
+        i18n="@@auth.login.rememberMe"
       >
         Remember me
       </label>
@@ -68,6 +75,7 @@
     <a
       routerLink="/auth/password-reset/forgot"
       class="text-sm font-medium text-primary hover:underline"
+      i18n="@@auth.login.forgotPassword"
     >
       Forgot password?
     </a>
@@ -76,6 +84,7 @@
   <!-- Submit Button -->
   <p-button
     label="Sign in"
+    i18n-label="@@auth.login.submit"
     type="submit"
     [loading]="loading()"
     [disabled]="form.invalid || loading()"

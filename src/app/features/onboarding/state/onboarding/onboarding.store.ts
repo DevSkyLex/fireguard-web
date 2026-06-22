@@ -82,7 +82,7 @@ const INITIAL_ONBOARDING_STATE: OnboardingStoreState = {
  *
  * @example
  * ```typescript
- * const store = inject(OnboardingStore);
+ * const store = inject<OnboardingStore>(OnboardingStore);
  *
  * // Load the onboarding record
  * store.load();
@@ -263,7 +263,7 @@ export const OnboardingStore = signalStore(
       dispatcher = inject<Dispatcher>(Dispatcher),
       onboardingService = inject<OnboardingService>(OnboardingService),
       platformId = inject<object>(PLATFORM_ID),
-      transferState = inject(TransferState),
+      transferState = inject<TransferState>(TransferState),
     ) => ({
       /**
        * Method initialize

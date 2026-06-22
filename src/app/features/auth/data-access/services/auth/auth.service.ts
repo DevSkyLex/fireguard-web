@@ -23,7 +23,7 @@ import type {
  *
  * @example
  * ```typescript
- * const authService = inject(AuthService);
+ * const authService = inject<AuthService>(AuthService);
  *
  * // Login
  * authService.login({ email: 'user@example.com', password: 'password' })

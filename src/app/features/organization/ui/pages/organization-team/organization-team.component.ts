@@ -79,20 +79,23 @@ import { isQuotaExceededError } from '@features/organization/utils';
 })
 export class OrganizationTeamPage {
   /** PrimeNG confirmation service for destructive team operations. */
-  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
   /** Active organization context store. */
   private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject(ActiveOrganizationStore);
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
   /** Organization permission evaluator. */
   private readonly permissionService: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
   /** Root-provided quota store, reloaded after a member quota-exceeded failure. */
-  private readonly quotaStore: OrganizationQuotaStore = inject(OrganizationQuotaStore);
+  private readonly quotaStore: OrganizationQuotaStore =
+    inject<OrganizationQuotaStore>(OrganizationQuotaStore);
 
   /** Page-scoped team workflow store. */
-  protected readonly store: OrganizationTeamStore = inject(OrganizationTeamStore);
+  protected readonly store: OrganizationTeamStore =
+    inject<OrganizationTeamStore>(OrganizationTeamStore);
   /** Role currently selected for editing. */
   protected readonly selectedRole: WritableSignal<OrganizationRoleOutput | null> = signal(null);
 

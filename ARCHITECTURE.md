@@ -264,10 +264,13 @@ If infrastructure in `core/` publishes behavior to external consumers, place the
 
 #### Current owner-local core contracts
 
-| Token                | Interface          | Concern                       | Bound by                | Consumers |
-| -------------------- | ------------------ | ----------------------------- | ----------------------- | --------- |
-| `THEME_PORT`         | `ThemePort`        | `core/services/theme`         | `provideTheme()`        | shared UI |
-| `SPLASH_SCREEN_PORT` | `SplashScreenPort` | `core/services/splash-screen` | `provideSplashScreen()` | shared UI |
+| Token                 | Interface           | Concern                       | Bound by                | Consumers                     |
+| --------------------- | ------------------- | ----------------------------- | ----------------------- | ----------------------------- |
+| `THEME_PORT`          | `ThemePort`         | `core/services/theme`         | `provideTheme()`        | shared UI                     |
+| `SPLASH_SCREEN_PORT`  | `SplashScreenPort`  | `core/services/splash-screen` | `provideSplashScreen()` | shared UI                     |
+| `BOOT_READINESS_PORT` | `BootReadinessPort` | `core/ports/boot-readiness`   | `provideAuthFeature()`  | `core/services/splash-screen` |
+
+`BOOT_READINESS_PORT` shows the inverse-implementation case: the contract is **core-owned** (core consumes it, so it must not import a feature), but the concrete `initialized` signal is owned by the bootstrap feature. The feature therefore binds the core-owned token (`features → core` is allowed), keeping `core → core` intact while letting the splash screen read boot readiness without importing `@features/auth`. When app-wide infrastructure must consume state a feature owns, define a core-owned port and let the feature implement it — never import the feature port into `core`.
 
 If a dependency direction feels awkward, the structure is probably wrong.
 
@@ -460,9 +463,20 @@ features/<feature>/
   <feature>.routes.ts
   data-access/
     index.ts              # optional public API
-    services/             # optional
+    services/             # optional — transport-facing API services (extend HydraApiService)
       <concern>/          # optional
     adapters/             # optional
+  services/               # optional — feature-owned behavioral services that are NOT transport
+    index.ts              # optional public API
+    <concern>/            # orchestration, device/browser APIs, offline, sync, publication
+  access/                 # optional — permission/access helper services derived from access state
+    index.ts              # optional public API
+    services/
+      <concern>/
+  setup/                  # optional — published cross-feature setup boundary (DTOs + service)
+    index.ts
+  navigation/             # optional — feature navigation config consumed by the shell
+    index.ts
   http/                   # optional
     guards/               # optional
     resolvers/            # optional
@@ -476,7 +490,8 @@ features/<feature>/
   ui/
     pages/                # optional
     components/           # optional
-    dataviews/            # optional
+    tables/               # optional — p-table grids for the feature's entity collections
+    dataviews/            # optional — p-dataview list/grid browsing surfaces
     forms/                # optional
     dialogs/              # optional
     drawers/              # optional
@@ -505,6 +520,10 @@ A feature may contain:
 
 - route configuration,
 - `data-access/` for transport-facing code, split into `services/` and optional `adapters/`,
+- `services/` for feature-owned **behavioral** services that are not transport, not stores, and not pure utilities — orchestration, device/browser APIs (camera, QR, compression), offline persistence, sync, and publication workflows (section 9.5.1),
+- `access/` for permission/access helper services derived from the feature's access state (section 9.5.2),
+- `setup/` for a published cross-feature setup boundary exposing stable DTOs and a service so approved consumers do not depend on internal subfeature contracts (section 9.5.3),
+- `navigation/` for feature-owned navigation configuration consumed by the shell (section 9.5.3),
 - `http/` for feature-owned guards, resolvers, and rare feature-scoped interceptors,
 - `ports/` for behavioral contracts intentionally published to layouts or approved sibling features,
 - `ui/` for pages and feature-owned presentation code,
@@ -516,7 +535,7 @@ A feature may contain:
 
 Notes:
 
-- `ui/` is the default home for `pages/`, `components/`, `dataviews/`, `forms/`, `dialogs/`, and `drawers/`; do not spread presentation folders beside `data-access/` and `state/`,
+- `ui/` is the default home for `pages/`, `components/`, `tables/`, `dataviews/`, `forms/`, `dialogs/`, and `drawers/`; do not spread presentation folders beside `data-access/` and `state/`,
 - `data-access/` root should stay small: keep the public barrel at the root, put injectable API classes under `data-access/services/`, and reserve `data-access/adapters/` for pure transformations,
 - `ui/` is the target structure; legacy flat `pages/`, `components/`, `dataviews/`, `forms/`, `dialogs/`, and `drawers/` folders may remain only under the transition rules in section 15,
 - if a feature owns guards, resolvers, or feature-scoped interceptors, they live under `http/`; do not place them at the feature root,
@@ -524,7 +543,7 @@ Notes:
 - create `ports/` only when a feature publishes behavioral contracts consumed by layouts or approved sibling features; do not create `ports/` for contracts consumed only within the feature,
 - inside `ports/`, use one folder per published contract and split the interface from the token (`<port-name>.interface.ts` and `<port-name>.token.ts`),
 - create `providers/` when a feature exposes bootstrap helpers or feature-owned providers; each provider is responsible for binding the feature's ports to their concrete adapters,
-- create `ui/dataviews/` only for substantial list, grid, table, or browsing UIs,
+- create `ui/tables/` for `p-table`-based tabular grids of the feature's entity collections (columns, rows, row menus, sorting, pagination) and `ui/dataviews/` for `p-dataview`-based list/grid card browsing surfaces; both are presentational (section 9.3),
 - create `ui/dialogs/` only for modal/overlay surfaces (creation dialogs, confirmations, pickers) that host their own content; keep heavy form logic in a `ui/forms/` component the dialog composes,
 - create `ui/drawers/` for side-anchored overlay panels (creation/edit forms, contextual side panels) that host their own content; same composition rule — keep heavy form logic in a `ui/forms/` component the drawer composes,
 - create `features/` only when both URL structure and ownership are nested,
@@ -541,9 +560,12 @@ features/<parent>/features/<child>/
   <child>.routes.ts       # optional
   data-access/
     index.ts              # optional public API
-    services/             # optional
+    services/             # optional — transport-facing API services
       <concern>/          # optional
     adapters/             # optional
+  services/               # optional — feature-owned behavioral services (orchestration, device, offline, sync)
+    index.ts              # optional public API
+    <concern>/
   http/                   # optional
     guards/               # optional
     resolvers/            # optional
@@ -551,7 +573,8 @@ features/<parent>/features/<child>/
   ui/
     pages/                # optional
     components/           # optional
-    dataviews/            # optional
+    tables/               # optional — p-table grids
+    dataviews/            # optional — p-dataview browsing surfaces
     forms/                # optional
     dialogs/              # optional
     drawers/              # optional
@@ -717,13 +740,16 @@ Structure rules:
 - keep these nested folders private by default; external consumers import through the concern-level `ui/components` barrel, not through deep implementation paths,
 - if a nested helper becomes broadly reusable across the feature, promote it to the appropriate feature-level concern instead of importing it through another component's private folder.
 
-### 9.3 `ui/dataviews/`
+### 9.3 `ui/tables/` and `ui/dataviews/`
 
-`ui/dataviews/` contains presentational browsing UIs for lists, tables, grids, and collection views.
+`ui/tables/` and `ui/dataviews/` both render the feature's entity collections as presentational components: they receive collection state through `input()` signals and emit paging, sorting, filtering, selection, and action events through `output()`, and neither injects feature stores nor calls data-access services. They differ only by the PrimeNG primitive and the rendering shape:
 
-The structure below is the default convention for any dataview folder in the app.
+- `ui/tables/` — `p-table`-based **tabular grids**: columns, rows, row menus, inline sorting, and pagination. Use for data-dense administrative listings of one entity (the dominant collection surface in this codebase).
+- `ui/dataviews/` — `p-dataview`-based **list/grid browsing surfaces** with a layout toggle and card-style items. Use for scannable, presentation-oriented collection browsing.
 
-Recommended local structure for a dataview folder:
+Both follow the same local folder structure, responsibilities, and constraints. The structure below is the default convention for either folder in the app — substitute `tables/`/`<table-name>` for `dataviews/`/`<dataview-name>` as appropriate.
+
+Recommended local structure for a dataview (or table) folder:
 
 ```text
 ui/dataviews/
@@ -997,6 +1023,51 @@ export function getTrendPointValue(point: OrganizationDashboardTrendSeriesPoint)
 ```
 
 Do not scatter the same field-probing logic across every store's `computed` block.
+
+### 9.5.1 `services/` (feature behavioral services)
+
+`data-access/services/` is the transport boundary: every class there extends `HydraApiService` and returns transport types. Some feature-owned services are **not** transport — they orchestrate workflows, wrap device/browser APIs, or manage local persistence. These live in a feature-root `services/` folder, one concern per subfolder, with the same `<concern>/index.ts` barrel convention as `data-access/services/`.
+
+Use `services/` for a feature-owned service that is:
+
+- an **orchestration/workflow** service composing stores, ports, and other services (publication, sync coordination, optimistic update, prefetch, lifecycle),
+- a **device/browser API** wrapper (camera, QR/barcode scanner, image compression, PWA update),
+- an **offline/persistence** service (IndexedDB databases, repositories, outbox queues),
+
+and is therefore none of:
+
+- a transport API service (those extend `HydraApiService` in `data-access/services/`),
+- a store (those live in `state/`),
+- a pure, dependency-free function (those live in `utils/`).
+
+Rules:
+
+- a `services/` class may inject stores, ports, `data-access/` services, and other `services/`,
+- it must not build `HttpParams`/`HttpHeaders` or perform business-data HTTP directly — go through a `data-access/` service,
+- keep `data-access/services/` (transport) and `services/` (behavior) distinct; do not merge offline/sync/device services into the transport boundary.
+
+Example: `features/organization/features/interventions/services/` holds the offline-first orchestration (`intervention-sync`, `intervention-sync-coordinator`, `intervention-publication`, `intervention-prefetch`, `intervention-qr-scanner`, `intervention-photo-compressor`, `intervention-offline-lifecycle`, `intervention-workspace-optimistic`), while `data-access/services/intervention` and `data-access/services/intervention-offline` own the transport and IndexedDB boundaries.
+
+### 9.5.2 `access/` (permission/access helpers)
+
+A feature that owns an access/permission concern exposes ergonomic permission checks through an `access/services/<concern>/` helper service. The helper is a thin, read-only projection over the feature's access state (store), turning a raw granted-permission set into intent-revealing methods (`hasPermission`, `hasAnyPermission`, `hasAllPermissions`, `canAccess…`).
+
+Rules:
+
+- the helper reads the feature's own access store directly because it is owned and consumed inside the feature; external consumers go through the published port (for example `ORGANIZATION_MEMBER_ACCESS_PORT`) instead,
+- it stays read-only against the store and side-effect free apart from an explicit `reload()`,
+- it does not perform transport; the access payload is loaded by the owning store/guard.
+
+Example: `features/organization/access/services/organization-permission` and `features/account/access/services/user-permission`.
+
+### 9.5.3 `setup/` and `navigation/` (published boundary and shell config)
+
+Two further feature-root concerns are sanctioned when a feature must publish a narrow, stable surface to the rest of the app:
+
+- `setup/` — a **cross-feature setup boundary**: stable input DTOs plus a service that lets approved consumers (for example onboarding) create or configure the feature's primary resource without depending on internal subfeature contracts. It is a deliberate public surface, re-exported through the feature `index.ts`. Example: `features/organization/setup`.
+- `navigation/` — feature-owned **navigation configuration** consumed by the shell: the navigation groups, items, and their required permissions for the feature, kept beside the feature that owns the routes rather than in the layout. Example: `features/organization/navigation`.
+
+Create either folder only when the surface is genuinely published outside the owning area; otherwise keep navigation option sets in `options/` and one-off DTOs in `models/`.
 
 ### 9.6 `models/`
 
@@ -1690,10 +1761,12 @@ Standard public API surfaces include:
 - `features/<feature>/http/resolvers/index.ts` for resolvers intentionally consumed outside the local HTTP slice,
 - `features/<feature>/http/interceptors/index.ts` when a feature intentionally exposes feature-scoped interceptors,
 - `features/<feature>/ui/components/index.ts` for feature widgets consumed outside their own local folder,
+- `features/<feature>/ui/tables/index.ts` and `features/<feature>/ui/dataviews/index.ts` when a collection surface is consumed outside its own local folder,
 - `features/<feature>/ui/forms/index.ts` when forms are reused across multiple pages inside the feature,
 - `features/<feature>/ui/dialogs/index.ts` when dialogs are opened from more than one page inside the feature,
 - `features/<feature>/ui/drawers/index.ts` when drawers are opened from more than one page inside the feature,
-- `features/<feature>/data-access/index.ts` for services intentionally consumed outside their own local area,
+- `features/<feature>/data-access/index.ts` for transport services intentionally consumed outside their own local area,
+- `features/<feature>/services/index.ts` and `features/<feature>/access/index.ts` for behavioral and access-helper services consumed outside their own local area,
 - `features/<feature>/models/index.ts` for feature contracts and reusable feature types intentionally consumed outside one local model slice,
 - `features/<feature>/state/index.ts` when stores or event groups are intentionally consumed outside their own state slice,
 - `shared/components/index.ts` for shared UI primitives.
@@ -1861,7 +1934,7 @@ However:
 
 Even if surrounding code is still legacy, any new file should be placed according to the target structure unless that would create disproportionate churn.
 
-For UI code, the target structure means `ui/pages`, `ui/components`, `ui/dataviews`, `ui/forms`, `ui/dialogs`, and `ui/drawers`.
+For UI code, the target structure means `ui/pages`, `ui/components`, `ui/tables`, `ui/dataviews`, `ui/forms`, `ui/dialogs`, and `ui/drawers`.
 
 For feature routing concerns, the target structure means `http/guards`, `http/resolvers`, and `http/interceptors`.
 

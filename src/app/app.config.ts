@@ -1,6 +1,9 @@
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import {
   type ApplicationConfig,
+  inject,
+  LOCALE_ID,
+  provideAppInitializer,
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
@@ -12,10 +15,11 @@ import {
 import { provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { providePrimeNG } from 'primeng/config';
+import { PrimeNG, providePrimeNG } from 'primeng/config';
 import { APP_ROUTES } from '@app/app.routes';
 import { provideEnv } from '@core/config/environment/env.provider';
 import { ssrCookieForwardInterceptor } from '@core/http/interceptors/ssr-cookie-forward';
+import { PRIMENG_FR_TRANSLATION } from '@core/i18n';
 import { providePageTitleStrategy } from '@core/routing/strategies/page-title';
 import { SelectivePreloadingStrategy } from '@core/routing/strategies/selective-preloading/selective-preloading.strategy';
 import { provideSplashScreen } from '@core/services/splash-screen';
@@ -104,6 +108,16 @@ export const appConfig: ApplicationConfig = {
           },
         },
       },
+    }),
+    /**
+     * Applies the French PrimeNG component translation when the active locale
+     * resolves to French. Angular's `@angular/localize` handles application copy;
+     * PrimeNG's internal component strings are configured separately here.
+     */
+    provideAppInitializer((): void => {
+      if (inject(LOCALE_ID).startsWith('fr')) {
+        inject(PrimeNG).setTranslation(PRIMENG_FR_TRANSLATION);
+      }
     }),
     MessageService,
     ConfirmationService,

@@ -63,8 +63,8 @@ const INITIAL_CHECKLIST_STATE: ChecklistState = {
  * Entity state is managed by `withEntities<ChecklistOutput>({ collection:
  * 'checklist' })`, which provides O(1) lookups via `checklistEntityMap`
  * and keeps insertions/updates efficient via normalized storage.
- * Auxiliary state (`isLoading`, `totalChecklists`, `createOperation`,
- * `archiveOperation`) is held in `withState<ChecklistState>`.
+ * Auxiliary state (`listCallState`, `totalChecklists`, `createCallState`,
+ * `archiveCallState`) is held in `withState<ChecklistState>`.
  *
  * For reading the currently active/selected checklist use the root-level
  * {@link ActiveChecklistStore} instead.
@@ -73,7 +73,7 @@ const INITIAL_CHECKLIST_STATE: ChecklistState = {
  * ```typescript
  * @Component({ providers: [ChecklistStore] })
  * export class ChecklistListPage {
- *   readonly store = inject(ChecklistStore);
+ *   readonly store = inject<ChecklistStore>(ChecklistStore);
  * }
  * ```
  *
@@ -102,8 +102,8 @@ export const ChecklistStore = signalStore(
    * Feature withState
    *
    * @description
-   * Adds auxiliary state to the store: `createOperation`, `archiveOperation`,
-   * `totalChecklists`, and `isLoading`. Initialized from
+   * Adds auxiliary state to the store: `createCallState`, `archiveCallState`,
+   * `totalChecklists`, and `listCallState`. Initialized from
    * `INITIAL_CHECKLIST_STATE`. Entity state is handled separately by
    * `withEntities`.
    *
@@ -387,7 +387,7 @@ export const ChecklistStore = signalStore(
          *
          * @description
          * Creates a new checklist via the API. Uses `exhaustMap` to prevent
-         * concurrent submissions. On success the `createOperation` transitions
+         * concurrent submissions. On success the `createCallState` transitions
          * to a success state carrying the newly created entity.
          *
          * @since 1.0.0
@@ -431,7 +431,7 @@ export const ChecklistStore = signalStore(
          * Archives a checklist by organization ID and checklist ID. Uses
          * `exhaustMap` to prevent concurrent archive operations. On success:
          * updates the entity in the collection and transitions the
-         * `archiveOperation` to success.
+         * `archiveCallState` to success.
          *
          * @since 1.0.0
          *

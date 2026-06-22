@@ -171,7 +171,7 @@ export class FacilityCreatePage {
    *
    * @description
    * Subscribes to store events for error toasts and watches
-   * createOperation success for navigation.
+   * createCallState success for navigation.
    *
    * @since 1.0.0
    */

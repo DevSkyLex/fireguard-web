@@ -197,7 +197,7 @@ export class FacilityEditPage {
    *
    * @description
    * Subscribes to store events for error toasts and watches
-   * updateOperation success for navigation.
+   * updateCallState success for navigation.
    *
    * @since 1.0.0
    */

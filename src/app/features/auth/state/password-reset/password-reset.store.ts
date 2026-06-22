@@ -39,7 +39,7 @@ type PasswordResetConfirmPayload = Omit<PasswordResetVerifyInput, 'token'>;
  * @example
  * ```typescript
  * // In component
- * protected readonly passwordResetStore = inject(PasswordResetStore);
+ * protected readonly passwordResetStore = inject<PasswordResetStore>(PasswordResetStore);
  *
  * // Request password reset
  * this.passwordResetStore.request({ email: 'user@example.com' });
@@ -150,7 +150,7 @@ export const PasswordResetStore = signalStore(
     (
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
-      passwordResetService = inject(PasswordResetService),
+      passwordResetService = inject<PasswordResetService>(PasswordResetService),
     ) => ({
       /**
        * Method request

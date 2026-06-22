@@ -82,7 +82,7 @@ const INITIAL_INSPECTION_STATE: InspectionState = {
  * ```typescript
  * @Component({ providers: [InspectionStore] })
  * export class InspectionListPage {
- *   readonly store = inject(InspectionStore);
+ *   readonly store = inject<InspectionStore>(InspectionStore);
  * }
  * ```
  *

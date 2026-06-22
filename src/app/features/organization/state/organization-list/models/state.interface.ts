@@ -19,17 +19,17 @@ import type { OrganizationOutput } from '@features/organization/models';
 export interface OrganizationState {
   //#region Properties
   /**
-   * Property createOperation
+   * Property createCallState
    * @readonly
    *
    * @description
-   * Loading / success / error state for the create organization operation.
-   * Starts idle and transitions through loading → success | error when
+   * Call state for the create organization operation. Starts idle and
+   * transitions through pending → success | error when
    * {@link OrganizationStore#create} is called.
    *
    * @since 1.0.0
    *
-   * @type {Operation<OrganizationOutput | null, unknown>}
+   * @type {CallState<OrganizationOutput | null>}
    */
   readonly createCallState: CallState<OrganizationOutput | null>;
 
@@ -49,33 +49,33 @@ export interface OrganizationState {
   readonly totalOrganizations: number;
 
   /**
-   * Property isLoading
+   * Property listCallState
    * @readonly
    *
    * @description
-   * True while a list request is in-flight. Set to `true` at the start of
-   * every `load` / `loadOrganizations` call and back to `false` on both
-   * success and error.
+   * Call state for the organization list request. Transitions
+   * idle → pending → success | error on every `load` / `loadOrganizations`
+   * call.
    *
    * @since 2.0.0
    *
-   * @type {boolean}
+   * @type {CallState}
    */
   readonly listCallState: CallState;
 
   /**
-   * Property deleteOperation
+   * Property deleteCallState
    * @readonly
    *
    * @description
-   * Loading / success / error state for delete operations (single or bulk).
-   * Starts idle and transitions through loading → success | error when
+   * Call state for delete operations (single or bulk). Starts idle and
+   * transitions through pending → success | error when
    * {@link OrganizationStore#deleteOne} or {@link OrganizationStore#deleteMany}
    * is called. Error details are dispatched via store events.
    *
    * @since 3.0.0
    *
-   * @type {Operation<void>}
+   * @type {CallState}
    */
   readonly deleteCallState: CallState;
   //#endregion

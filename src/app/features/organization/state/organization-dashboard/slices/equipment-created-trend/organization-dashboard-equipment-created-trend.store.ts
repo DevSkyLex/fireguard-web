@@ -72,7 +72,7 @@ type PersistedEquipmentCreatedFilters = PersistedDashboardBaseFilters & {
  * ```typescript
  * @Component({ providers: [OrganizationDashboardEquipmentCreatedStore] })
  * export class OrganizationDashboardEquipmentCreatedTrend {
- *   protected readonly store = inject(OrganizationDashboardEquipmentCreatedStore);
+ *   protected readonly store = inject<OrganizationDashboardEquipmentCreatedStore>(OrganizationDashboardEquipmentCreatedStore);
  * }
  * ```
  *
@@ -116,198 +116,202 @@ function createEquipmentCreatedTrendStore() {
      *
      * @since 1.0.0
      */
-    withMethods((store, organizationService = inject(OrganizationService)) => ({
-      /**
-       * Method load
-       *
-       * @description
-       * NgRx `rxMethod` that fetches the equipment-created trend dataset
-       * whenever the params signal emits a new value.
-       * Undefined params are silently ignored via an `EMPTY` return.
-       *
-       * @since 1.0.0
-       */
-      load: rxMethod<OrganizationDashboardEquipmentTrendResourceParams | undefined>(
-        pipe(
-          switchMap((params) => {
-            if (!params) return EMPTY;
+    withMethods(
+      (store, organizationService = inject<OrganizationService>(OrganizationService)) => ({
+        /**
+         * Method load
+         *
+         * @description
+         * NgRx `rxMethod` that fetches the equipment-created trend dataset
+         * whenever the params signal emits a new value.
+         * Undefined params are silently ignored via an `EMPTY` return.
+         *
+         * @since 1.0.0
+         */
+        load: rxMethod<OrganizationDashboardEquipmentTrendResourceParams | undefined>(
+          pipe(
+            switchMap((params) => {
+              if (!params) return EMPTY;
 
-            patchState(store, setPendingQuery());
+              patchState(store, setPendingQuery());
 
-            return organizationService
-              .getDashboardEquipmentCreatedTrend(params.organizationId, {
-                granularity: params.granularity,
-                from: params.from,
-                to: params.to,
-                compare: params.compare,
-                equipmentType: params.equipmentType,
-                equipmentStatus: params.equipmentStatus,
-              })
-              .pipe(
-                tapResponse({
-                  next: (data) => patchState(store, setSuccessQuery(data)),
-                  error: (err) => patchState(store, setErrorQuery(toStoreError(err))),
-                }),
-              );
-          }),
+              return organizationService
+                .getDashboardEquipmentCreatedTrend(params.organizationId, {
+                  granularity: params.granularity,
+                  from: params.from,
+                  to: params.to,
+                  compare: params.compare,
+                  equipmentType: params.equipmentType,
+                  equipmentStatus: params.equipmentStatus,
+                })
+                .pipe(
+                  tapResponse({
+                    next: (data) => patchState(store, setSuccessQuery(data)),
+                    error: (err) => patchState(store, setErrorQuery(toStoreError(err))),
+                  }),
+                );
+            }),
+          ),
         ),
-      ),
 
-      /**
-       * Method setEquipmentType
-       *
-       * @description
-       * Updates the active equipment-type filter. Triggers a new fetch.
-       *
-       * @param {OrganizationDashboardEquipmentType | null} equipmentType - New equipment type, or null to clear.
-       * @returns {void}
-       * @since 1.0.0
-       */
-      setEquipmentType(equipmentType: OrganizationDashboardEquipmentType | null): void {
-        patchState(store, { selectedEquipmentType: equipmentType });
-      },
+        /**
+         * Method setEquipmentType
+         *
+         * @description
+         * Updates the active equipment-type filter. Triggers a new fetch.
+         *
+         * @param {OrganizationDashboardEquipmentType | null} equipmentType - New equipment type, or null to clear.
+         * @returns {void}
+         * @since 1.0.0
+         */
+        setEquipmentType(equipmentType: OrganizationDashboardEquipmentType | null): void {
+          patchState(store, { selectedEquipmentType: equipmentType });
+        },
 
-      /**
-       * Method setEquipmentStatus
-       *
-       * @description
-       * Updates the active equipment-status filter. Triggers a new fetch.
-       *
-       * @param {OrganizationDashboardEquipmentStatus | null} equipmentStatus - New status, or null to clear.
-       * @returns {void}
-       * @since 1.0.0
-       */
-      setEquipmentStatus(equipmentStatus: OrganizationDashboardEquipmentStatus | null): void {
-        patchState(store, { selectedEquipmentStatus: equipmentStatus });
-      },
+        /**
+         * Method setEquipmentStatus
+         *
+         * @description
+         * Updates the active equipment-status filter. Triggers a new fetch.
+         *
+         * @param {OrganizationDashboardEquipmentStatus | null} equipmentStatus - New status, or null to clear.
+         * @returns {void}
+         * @since 1.0.0
+         */
+        setEquipmentStatus(equipmentStatus: OrganizationDashboardEquipmentStatus | null): void {
+          patchState(store, { selectedEquipmentStatus: equipmentStatus });
+        },
 
-      /**
-       * Method setDraftDateRange
-       *
-       * @description
-       * Updates the draft date range edited inside the filter drawer.
-       *
-       * @param {Date[] | null} range - Draft range selected by the user.
-       * @returns {void}
-       */
-      setDraftDateRange(range: Date[] | null): void {
-        patchState(store, {
-          draftDateRange: normalizeDashboardDateRange(range, store.selectedGranularity()),
-        });
-      },
+        /**
+         * Method setDraftDateRange
+         *
+         * @description
+         * Updates the draft date range edited inside the filter drawer.
+         *
+         * @param {Date[] | null} range - Draft range selected by the user.
+         * @returns {void}
+         */
+        setDraftDateRange(range: Date[] | null): void {
+          patchState(store, {
+            draftDateRange: normalizeDashboardDateRange(range, store.selectedGranularity()),
+          });
+        },
 
-      /**
-       * Method setDraftCompareEnabled
-       *
-       * @description
-       * Updates the draft compare-mode toggle edited inside the filter drawer.
-       *
-       * @param {boolean} compareEnabled - Draft compare-mode value.
-       * @returns {void}
-       */
-      setDraftCompareEnabled(compareEnabled: boolean): void {
-        patchState(store, { draftCompareEnabled: compareEnabled });
-      },
+        /**
+         * Method setDraftCompareEnabled
+         *
+         * @description
+         * Updates the draft compare-mode toggle edited inside the filter drawer.
+         *
+         * @param {boolean} compareEnabled - Draft compare-mode value.
+         * @returns {void}
+         */
+        setDraftCompareEnabled(compareEnabled: boolean): void {
+          patchState(store, { draftCompareEnabled: compareEnabled });
+        },
 
-      /**
-       * Method setDraftEquipmentType
-       *
-       * @description
-       * Updates the draft equipment-type value edited inside the filter drawer.
-       *
-       * @param {OrganizationDashboardEquipmentType | null} equipmentType - Draft equipment type.
-       * @returns {void}
-       */
-      setDraftEquipmentType(equipmentType: OrganizationDashboardEquipmentType | null): void {
-        patchState(store, { draftEquipmentType: equipmentType });
-      },
+        /**
+         * Method setDraftEquipmentType
+         *
+         * @description
+         * Updates the draft equipment-type value edited inside the filter drawer.
+         *
+         * @param {OrganizationDashboardEquipmentType | null} equipmentType - Draft equipment type.
+         * @returns {void}
+         */
+        setDraftEquipmentType(equipmentType: OrganizationDashboardEquipmentType | null): void {
+          patchState(store, { draftEquipmentType: equipmentType });
+        },
 
-      /**
-       * Method setDraftEquipmentStatus
-       *
-       * @description
-       * Updates the draft equipment-status value edited inside the filter drawer.
-       *
-       * @param {OrganizationDashboardEquipmentStatus | null} equipmentStatus - Draft equipment status.
-       * @returns {void}
-       */
-      setDraftEquipmentStatus(equipmentStatus: OrganizationDashboardEquipmentStatus | null): void {
-        patchState(store, { draftEquipmentStatus: equipmentStatus });
-      },
+        /**
+         * Method setDraftEquipmentStatus
+         *
+         * @description
+         * Updates the draft equipment-status value edited inside the filter drawer.
+         *
+         * @param {OrganizationDashboardEquipmentStatus | null} equipmentStatus - Draft equipment status.
+         * @returns {void}
+         */
+        setDraftEquipmentStatus(
+          equipmentStatus: OrganizationDashboardEquipmentStatus | null,
+        ): void {
+          patchState(store, { draftEquipmentStatus: equipmentStatus });
+        },
 
-      /**
-       * Method openFilters
-       *
-       * @description
-       * Opens the filter drawer and seeds the draft values from the applied filters.
-       *
-       * @returns {void}
-       */
-      openFilters(): void {
-        patchState(store, {
-          isFilterDrawerVisible: true,
-          draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
-          draftCompareEnabled: store.compareEnabled(),
-          draftEquipmentType: store.selectedEquipmentType(),
-          draftEquipmentStatus: store.selectedEquipmentStatus(),
-        });
-      },
+        /**
+         * Method openFilters
+         *
+         * @description
+         * Opens the filter drawer and seeds the draft values from the applied filters.
+         *
+         * @returns {void}
+         */
+        openFilters(): void {
+          patchState(store, {
+            isFilterDrawerVisible: true,
+            draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+            draftCompareEnabled: store.compareEnabled(),
+            draftEquipmentType: store.selectedEquipmentType(),
+            draftEquipmentStatus: store.selectedEquipmentStatus(),
+          });
+        },
 
-      /**
-       * Method cancelDraftFilters
-       *
-       * @description
-       * Closes the filter drawer and restores the draft values from the applied filters.
-       *
-       * @returns {void}
-       */
-      cancelDraftFilters(): void {
-        patchState(store, {
-          isFilterDrawerVisible: false,
-          draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
-          draftCompareEnabled: store.compareEnabled(),
-          draftEquipmentType: store.selectedEquipmentType(),
-          draftEquipmentStatus: store.selectedEquipmentStatus(),
-        });
-      },
+        /**
+         * Method cancelDraftFilters
+         *
+         * @description
+         * Closes the filter drawer and restores the draft values from the applied filters.
+         *
+         * @returns {void}
+         */
+        cancelDraftFilters(): void {
+          patchState(store, {
+            isFilterDrawerVisible: false,
+            draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+            draftCompareEnabled: store.compareEnabled(),
+            draftEquipmentType: store.selectedEquipmentType(),
+            draftEquipmentStatus: store.selectedEquipmentStatus(),
+          });
+        },
 
-      /**
-       * Method resetDraftFilters
-       *
-       * @description
-       * Resets the drawer draft values back to their default state without applying them.
-       *
-       * @returns {void}
-       */
-      resetDraftFilters(): void {
-        const initialDraftState = getDashboardInitialFilterDraftState();
+        /**
+         * Method resetDraftFilters
+         *
+         * @description
+         * Resets the drawer draft values back to their default state without applying them.
+         *
+         * @returns {void}
+         */
+        resetDraftFilters(): void {
+          const initialDraftState = getDashboardInitialFilterDraftState();
 
-        patchState(store, {
-          draftDateRange: initialDraftState.draftDateRange,
-          draftCompareEnabled: initialDraftState.draftCompareEnabled,
-          draftEquipmentType: null,
-          draftEquipmentStatus: null,
-        });
-      },
+          patchState(store, {
+            draftDateRange: initialDraftState.draftDateRange,
+            draftCompareEnabled: initialDraftState.draftCompareEnabled,
+            draftEquipmentType: null,
+            draftEquipmentStatus: null,
+          });
+        },
 
-      /**
-       * Method applyDraftFilters
-       *
-       * @description
-       * Commits the current drawer draft values to the reactive filter state in one patch.
-       *
-       * @returns {void}
-       */
-      applyDraftFilters(): void {
-        patchState(store, {
-          isFilterDrawerVisible: false,
-          selectedDateRange: cloneDashboardDateRange(store.draftDateRange()),
-          compareEnabled: store.draftCompareEnabled(),
-          selectedEquipmentType: store.draftEquipmentType(),
-          selectedEquipmentStatus: store.draftEquipmentStatus(),
-        });
-      },
-    })),
+        /**
+         * Method applyDraftFilters
+         *
+         * @description
+         * Commits the current drawer draft values to the reactive filter state in one patch.
+         *
+         * @returns {void}
+         */
+        applyDraftFilters(): void {
+          patchState(store, {
+            isFilterDrawerVisible: false,
+            selectedDateRange: cloneDashboardDateRange(store.draftDateRange()),
+            compareEnabled: store.draftCompareEnabled(),
+            selectedEquipmentType: store.draftEquipmentType(),
+            selectedEquipmentStatus: store.draftEquipmentStatus(),
+          });
+        },
+      }),
+    ),
     //#endregion
 
     //#region Hooks
@@ -324,7 +328,8 @@ function createEquipmentCreatedTrendStore() {
      */
     withComputed((store) => {
       const platformId: object = inject(PLATFORM_ID);
-      const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+      const activeOrganizationStore: ActiveOrganizationStore =
+        inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
       return {
         loadParams: computed<OrganizationDashboardEquipmentTrendResourceParams | undefined>(() => {
@@ -358,7 +363,8 @@ function createEquipmentCreatedTrendStore() {
      */
     withHooks((store) => {
       const platformId: object = inject(PLATFORM_ID);
-      const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+      const activeOrganizationStore: ActiveOrganizationStore =
+        inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
       return {
         /**

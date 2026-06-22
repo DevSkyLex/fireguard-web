@@ -38,9 +38,9 @@ import { AssetGrowthChart, AssetGrowthFilters, AssetGrowthToolbar } from './comp
  * Standalone dashboard card that displays equipment and facilities
  * created over time as a combined grouped bar chart.
  *
- * Fetches both trend datasets in parallel via {@link rxResource} and
- * `forkJoin`, aligns them onto a shared time axis using
- * {@link alignDashboardTrendSeries}, and exposes four KPI tiles
+ * Delegates fetching of both trend datasets to its local
+ * {@link AssetGrowthTrendStore} (`rxMethod` + `forkJoin`), which aligns them
+ * onto a shared time axis, and exposes four KPI tiles
  * (Equipment Added, Facilities Added, Combined Growth, Equipment/Facility
  * ratio) above the chart.
  *

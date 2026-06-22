@@ -23,7 +23,7 @@ import type {
 export interface EquipmentState {
   //#region Equipment
   /**
-   * Property createOperation
+   * Property createCallState
    * @readonly
    *
    * @description
@@ -38,7 +38,7 @@ export interface EquipmentState {
   readonly createCallState: CallState<EquipmentOutput | null>;
 
   /**
-   * Property updateOperation
+   * Property updateCallState
    * @readonly
    *
    * @description

@@ -18,8 +18,8 @@ import {
   Router,
 } from '@angular/router';
 import { filter } from 'rxjs';
+import { BOOT_READINESS_PORT, type BootReadinessPort } from '@core/ports/boot-readiness';
 import type { SplashScreenPhase } from '@core/ports/splash-screen';
-import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 
 /**
  * Service SplashScreenService
@@ -76,19 +76,21 @@ export class SplashScreenService {
   private readonly router: Router = inject<Router>(Router);
 
   /**
-   * Property authSession
+   * Property bootReadiness
    * @readonly
    *
    * @description
-   * Auth session port consumed to derive the boot state from
-   * the auth initialization signal.
+   * Core-owned boot readiness port consumed to derive the boot state from
+   * the application initialization signal, without depending on the feature
+   * that owns session restoration.
    *
    * @access private
    * @since 1.0.0
    *
-   * @type {AuthSessionPort}
+   * @type {BootReadinessPort}
    */
-  private readonly authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION_PORT);
+  private readonly bootReadiness: BootReadinessPort =
+    inject<BootReadinessPort>(BOOT_READINESS_PORT);
 
   /**
    * Property platformId
@@ -151,7 +153,7 @@ export class SplashScreenService {
    * @type {Signal<boolean>}
    */
   private readonly booting: Signal<boolean> = computed<boolean>(
-    () => !this.authSession.initialized(),
+    () => !this.bootReadiness.initialized(),
   );
 
   /**

@@ -31,7 +31,7 @@ export interface ActiveChecklistState {
   readonly selectedChecklist: ChecklistOutput | null;
 
   /**
-   * Property getOperation
+   * Property getCallState
    * @readonly
    *
    * @description

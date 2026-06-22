@@ -324,4 +324,4 @@ export const FacilityOverviewStore = signalStore(
  * @description
  * Instance type of the {@link FacilityOverviewStore} signal store.
  */
-export type FacilityOverviewStoreType = InstanceType<typeof FacilityOverviewStore>;
+export type FacilityOverviewStore = InstanceType<typeof FacilityOverviewStore>;

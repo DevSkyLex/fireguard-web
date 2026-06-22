@@ -130,7 +130,8 @@ export class AccountProfileForm {
    *
    * @type {NonNullableFormBuilder}
    */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
 
   /**
    * Property form

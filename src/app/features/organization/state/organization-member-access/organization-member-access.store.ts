@@ -79,8 +79,8 @@ export const OrganizationMemberAccessStore = signalStore(
   withMethods(
     (
       store,
-      organizationMemberService = inject(OrganizationMemberService),
-      activeOrganizationStore = inject(ActiveOrganizationStore),
+      organizationMemberService = inject<OrganizationMemberService>(OrganizationMemberService),
+      activeOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore),
     ) => {
       const currentOrganizationId$: Observable<string | null> = toObservable(
         store.currentOrganizationId,
@@ -212,8 +212,9 @@ export const OrganizationMemberAccessStore = signalStore(
   ),
 
   withHooks((store) => {
-    const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
-    const router: Router = inject(Router);
+    const activeOrganizationStore: ActiveOrganizationStore =
+      inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+    const router: Router = inject<Router>(Router);
 
     return {
       onInit(): void {

@@ -80,7 +80,8 @@ export class FacilityInspectionTab {
 
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
-  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
 
   private readonly platformId: object = inject<object>(PLATFORM_ID);
 

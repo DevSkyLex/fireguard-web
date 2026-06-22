@@ -69,7 +69,7 @@ const INITIAL_TRUSTED_DEVICE_STATE: TrustedDeviceState = {
  * ```typescript
  * @Component({ providers: [TrustedDeviceStore] })
  * export class TrustedDevicePage {
- *   readonly store = inject(TrustedDeviceStore);
+ *   readonly store = inject<TrustedDeviceStore>(TrustedDeviceStore);
  * }
  * ```
  *
@@ -158,7 +158,7 @@ export const TrustedDeviceStore = signalStore(
     (
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
-      trustedDeviceService = inject(TrustedDeviceService),
+      trustedDeviceService = inject<TrustedDeviceService>(TrustedDeviceService),
     ) => {
       //#region Shared Reactive Pipelines
       /**

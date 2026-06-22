@@ -46,7 +46,8 @@ interface OrganizationQuotaMeterRow {
 export class OrganizationQuotaMeters {
   //#region Properties
   /** Root-provided store exposing the active organization's quota usage. */
-  private readonly quotaStore: OrganizationQuotaStore = inject(OrganizationQuotaStore);
+  private readonly quotaStore: OrganizationQuotaStore =
+    inject<OrganizationQuotaStore>(OrganizationQuotaStore);
 
   /** Meter rows derived from the active organization's quota usage. */
   protected readonly rows: Signal<ReadonlyArray<OrganizationQuotaMeterRow>> = computed(() =>

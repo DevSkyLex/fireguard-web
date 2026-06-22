@@ -45,7 +45,8 @@ export class OrganizationNotificationsForm {
   public readonly submitted: OutputEmitterRef<UpdateOrganizationInput> = output();
 
   /** Non-nullable builder preserving strict form value types. */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
 
   /** Strictly typed notification policy form. */
   protected readonly form = this.formBuilder.group({

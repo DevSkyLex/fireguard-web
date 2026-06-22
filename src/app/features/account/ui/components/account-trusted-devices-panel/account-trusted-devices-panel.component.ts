@@ -29,9 +29,10 @@ import { TrustedDeviceStore } from '@features/auth/state';
 })
 export class AccountTrustedDevicesPanel {
   /** PrimeNG confirmation service used before revocation. */
-  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
   /** Trusted device store exposed to the template. */
-  protected readonly store: TrustedDeviceStore = inject(TrustedDeviceStore);
+  protected readonly store: TrustedDeviceStore = inject<TrustedDeviceStore>(TrustedDeviceStore);
   /** Last table request replayed after a list-loading error. */
   private lastLoadOptions: RequestOptions = { page: 1, itemsPerPage: 10 };
 

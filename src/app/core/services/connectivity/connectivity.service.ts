@@ -19,7 +19,7 @@ import { online as createOnlineSignal } from '@signality/core';
  *
  * @example
  * ```typescript
- * const connectivity: ConnectivityService = inject(ConnectivityService);
+ * const connectivity: ConnectivityService = inject<ConnectivityService>(ConnectivityService);
  * if (connectivity.isOffline()) {
  *   // queue the operation locally
  * }

@@ -86,7 +86,8 @@ export class OrganizationRegionalForm {
   protected readonly measurementSystemOptions = ORGANIZATION_MEASUREMENT_SYSTEM_OPTIONS;
 
   /** Non-nullable builder preserving strict form value types. */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
 
   /** Strictly typed regional settings form. */
   protected readonly form = this.formBuilder.group({

@@ -87,7 +87,7 @@ function calculateExpiresAt(expiresIn: number): number {
  *
  * @example
  * ```typescript
- * const authStore = inject(AuthStore);
+ * const authStore = inject<AuthStore>(AuthStore);
  *
  * // Login
  * authStore.login({ email: 'user@example.com', password: 'password' });

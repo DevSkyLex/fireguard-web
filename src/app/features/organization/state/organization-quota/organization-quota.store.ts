@@ -100,7 +100,7 @@ export const OrganizationQuotaStore = signalStore(
     },
   })),
 
-  withMethods((store, organizationService = inject(OrganizationService)) => ({
+  withMethods((store, organizationService = inject<OrganizationService>(OrganizationService)) => ({
     /**
      * Method load
      *
@@ -157,7 +157,8 @@ export const OrganizationQuotaStore = signalStore(
   })),
 
   withHooks((store) => {
-    const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+    const activeOrganizationStore: ActiveOrganizationStore =
+      inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
     return {
       onInit(): void {

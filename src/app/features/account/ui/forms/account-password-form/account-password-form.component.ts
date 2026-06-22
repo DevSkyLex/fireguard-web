@@ -215,7 +215,8 @@ export class AccountPasswordForm {
    *
    * @type {NonNullableFormBuilder}
    */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
 
   /**
    * Property requestForm

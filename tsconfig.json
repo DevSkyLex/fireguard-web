@@ -19,8 +19,6 @@
       "@app/*": ["./src/app/*"],
       "@core": ["./src/app/core"],
       "@core/*": ["./src/app/core/*"],
-      "@ports": ["./src/app/ports"],
-      "@ports/*": ["./src/app/ports/*"],
       "@shared": ["./src/app/shared"],
       "@shared/*": ["./src/app/shared/*"],
       "@layouts": ["./src/app/layouts"],

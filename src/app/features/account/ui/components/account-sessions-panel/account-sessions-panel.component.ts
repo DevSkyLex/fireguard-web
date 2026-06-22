@@ -36,9 +36,10 @@ import { SessionStore } from '@features/auth/state';
 })
 export class AccountSessionsPanel {
   /** PrimeNG confirmation service used before revocation. */
-  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
   /** Account session store exposed to the template. */
-  protected readonly store: SessionStore = inject(SessionStore);
+  protected readonly store: SessionStore = inject<SessionStore>(SessionStore);
   /** Session selected for detail display. */
   protected readonly selectedSession: WritableSignal<SessionOutput | null> = signal(null);
   /** Last table request replayed after a list-loading error. */

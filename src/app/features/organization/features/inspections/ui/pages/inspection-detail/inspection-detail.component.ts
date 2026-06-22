@@ -59,23 +59,25 @@ import { ActiveOrganizationStore } from '@features/organization/state';
 })
 export class InspectionDetailPage {
   /** Router used by inspection detail actions. */
-  private readonly router: Router = inject(Router);
+  private readonly router: Router = inject<Router>(Router);
   /** Active route used to build relative inspection routes. */
-  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   /** PrimeNG confirmation service for destructive operations. */
-  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
   /** Active organization context store. */
   private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject(ActiveOrganizationStore);
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
   /** Active inspection context store populated by the route resolver. */
-  private readonly activeInspectionStore: ActiveInspectionStore = inject(ActiveInspectionStore);
+  private readonly activeInspectionStore: ActiveInspectionStore =
+    inject<ActiveInspectionStore>(ActiveInspectionStore);
   /** Organization permission evaluator. */
   private readonly permissionService: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
   /** Page-scoped inspection workflow store. */
-  protected readonly store: InspectionStore = inject(InspectionStore);
+  protected readonly store: InspectionStore = inject<InspectionStore>(InspectionStore);
   /** Inspection currently selected by the route context. */
   protected readonly inspection: Signal<InspectionOutput | null> = computed(() =>
     this.activeInspectionStore.selectedInspection(),

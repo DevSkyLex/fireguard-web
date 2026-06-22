@@ -39,7 +39,7 @@ export const OrganizationRoleListStore = signalStore(
     rolesLoading: computed(() => store.rolesCallState().status === 'pending'),
   })),
 
-  withMethods((store, roleService = inject(OrganizationRoleService)) => ({
+  withMethods((store, roleService = inject<OrganizationRoleService>(OrganizationRoleService)) => ({
     loadRoles: rxMethod<string>(
       pipe(
         tap(() => patchState(store, { rolesCallState: pendingCallState() })),

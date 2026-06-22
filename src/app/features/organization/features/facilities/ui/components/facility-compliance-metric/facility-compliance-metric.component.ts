@@ -36,6 +36,6 @@ export class FacilityComplianceMetric {
    * @type {FacilityOverviewStore}
    */
   protected readonly store: InstanceType<typeof FacilityOverviewStore> =
-    inject(FacilityOverviewStore);
+    inject<FacilityOverviewStore>(FacilityOverviewStore);
   //#endregion
 }

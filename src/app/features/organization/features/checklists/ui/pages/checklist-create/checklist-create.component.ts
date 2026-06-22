@@ -21,16 +21,16 @@ import { ActiveOrganizationStore } from '@features/organization/state';
 })
 export class ChecklistCreatePage {
   /** Router used after checklist creation or cancellation. */
-  private readonly router: Router = inject(Router);
+  private readonly router: Router = inject<Router>(Router);
   /** Active route used to build relative checklist routes. */
-  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   /** PrimeNG message service used for creation feedback. */
-  private readonly messageService: MessageService = inject(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
   /** Active organization context store. */
   private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject(ActiveOrganizationStore);
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
   /** Page-scoped checklist workflow store. */
-  protected readonly store: ChecklistStore = inject(ChecklistStore);
+  protected readonly store: ChecklistStore = inject<ChecklistStore>(ChecklistStore);
 
   /** Observes creation success and returns to the checklist list. */
   public constructor() {

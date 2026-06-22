@@ -31,7 +31,7 @@ export interface ActiveFacilityState {
   readonly selectedFacility: FacilityOutput | null;
 
   /**
-   * Property getOperation
+   * Property getCallState
    * @readonly
    *
    * @description

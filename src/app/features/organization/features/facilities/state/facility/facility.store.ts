@@ -117,7 +117,7 @@ const INITIAL_FACILITY_STATE: FacilityState = {
  * ```typescript
  * @Component({ providers: [FacilityStore] })
  * export class FacilityListPage {
- *   readonly store = inject(FacilityStore);
+ *   readonly store = inject<FacilityStore>(FacilityStore);
  * }
  * ```
  *
@@ -739,7 +739,7 @@ export const FacilityStore = signalStore(
          *
          * @description
          * Creates a new facility via the API. Uses `exhaustMap` to prevent
-         * concurrent submissions. On success the `createOperation` transitions
+         * concurrent submissions. On success the `createCallState` transitions
          * to a success state carrying the newly created entity.
          *
          * @since 1.0.0
@@ -829,7 +829,7 @@ export const FacilityStore = signalStore(
          * Archives a facility by organization ID and facility ID. Uses
          * `exhaustMap` to prevent concurrent archive operations. On success:
          * updates the entity in the collection and transitions the
-         * `archiveOperation` to success. If the archived facility is the
+         * `archiveCallState` to success. If the archived facility is the
          * currently active one, synchronises the {@link ActiveFacilityStore}.
          *
          * @since 1.0.0

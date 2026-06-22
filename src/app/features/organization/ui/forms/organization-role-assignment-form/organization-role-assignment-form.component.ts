@@ -36,7 +36,8 @@ export class OrganizationRoleAssignmentForm {
   /** Emits valid role assignment values. */
   public readonly submitted: OutputEmitterRef<OrganizationRoleAssignmentValues> = output();
   /** Non-nullable builder preserving strict form value types. */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
   /** Strictly typed role assignment form. */
   protected readonly form = this.formBuilder.group({
     memberId: this.formBuilder.control('', [Validators.required]),

@@ -29,7 +29,8 @@ export class EquipmentAttachmentForm {
   /** Emits valid attachment values. */
   public readonly submitted: OutputEmitterRef<AddAttachmentInput> = output();
   /** Non-nullable builder preserving strict form value types. */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
   /** Strictly typed attachment form. */
   protected readonly form = this.formBuilder.group({
     fileName: this.formBuilder.control('', [Validators.required]),

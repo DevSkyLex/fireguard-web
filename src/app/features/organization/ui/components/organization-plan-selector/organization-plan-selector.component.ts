@@ -83,21 +83,25 @@ export class OrganizationPlanSelector implements OnInit {
   //#region Properties
   /** Active organization context store. */
   protected readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject(ActiveOrganizationStore);
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
   /** Section-scoped plan catalog + free-plan change store. */
-  protected readonly store: OrganizationPlanStore = inject(OrganizationPlanStore);
+  protected readonly store: OrganizationPlanStore =
+    inject<OrganizationPlanStore>(OrganizationPlanStore);
   /** Section-scoped Stripe billing store (pricing, subscription, checkout, portal). */
-  protected readonly billingStore: OrganizationBillingStore = inject(OrganizationBillingStore);
+  protected readonly billingStore: OrganizationBillingStore =
+    inject<OrganizationBillingStore>(OrganizationBillingStore);
   /** Root quota store, refreshed after a plan change. */
-  private readonly quotaStore: OrganizationQuotaStore = inject(OrganizationQuotaStore);
+  private readonly quotaStore: OrganizationQuotaStore =
+    inject<OrganizationQuotaStore>(OrganizationQuotaStore);
   /** PrimeNG message service used for change feedback. */
-  private readonly messageService: MessageService = inject(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
   /** PrimeNG confirmation service used before canceling the subscription. */
-  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
   /** Active route used to read the checkout-return marker. */
-  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   /** Router used to strip the checkout-return marker from the URL. */
-  private readonly router: Router = inject(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /** Selected billing cadence for paid plans. */
   protected readonly interval: WritableSignal<BillingInterval> = signal<BillingInterval>('month');

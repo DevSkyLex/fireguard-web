@@ -31,19 +31,19 @@ export interface ActiveOrganizationState {
   readonly selectedOrganization: OrganizationOutput | null;
 
   /**
-   * Property getOperation
+   * Property getCallState
    * @readonly
    *
    * @description
-   * Loading / error state for fetching the selected organization.
+   * Call state for fetching the selected organization.
    *
-   * This operation is managed by the resolver and DashboardLayout, not by
+   * This call state is managed by the resolver and DashboardLayout, not by
    * the store itself, but it's included here for convenience since it's
    * tightly coupled to the selected organization.
    *
    * @since 1.0.0
    *
-   * @type {Operation<OrganizationOutput | null, unknown>}
+   * @type {CallState<OrganizationOutput | null>}
    */
   readonly getCallState: CallState<OrganizationOutput | null>;
   //#endregion

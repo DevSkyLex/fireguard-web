@@ -37,7 +37,8 @@ export class ForgotPasswordPage {
    *
    * @type {PasswordResetStore}
    */
-  protected readonly passwordResetStore: PasswordResetStore = inject(PasswordResetStore);
+  protected readonly passwordResetStore: PasswordResetStore =
+    inject<PasswordResetStore>(PasswordResetStore);
 
   /**
    * Property messageService

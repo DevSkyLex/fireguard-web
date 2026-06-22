@@ -63,7 +63,7 @@ export class AccountPage {
    *
    * @type {ActivatedRoute}
    */
-  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Property router
@@ -77,7 +77,7 @@ export class AccountPage {
    *
    * @type {Router}
    */
-  private readonly router: Router = inject(Router);
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property notificationStore
@@ -91,7 +91,8 @@ export class AccountPage {
    *
    * @type {NotificationStore}
    */
-  protected readonly notificationStore: NotificationStore = inject(NotificationStore);
+  protected readonly notificationStore: NotificationStore =
+    inject<NotificationStore>(NotificationStore);
 
   /**
    * Property userStore

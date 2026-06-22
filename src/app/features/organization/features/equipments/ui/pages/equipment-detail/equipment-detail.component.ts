@@ -66,25 +66,27 @@ import { ActiveOrganizationStore } from '@features/organization/state';
 })
 export class EquipmentDetailPage {
   /** Router used by equipment detail actions. */
-  private readonly router: Router = inject(Router);
+  private readonly router: Router = inject<Router>(Router);
   /** Active route used to build relative equipment routes. */
-  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   /** PrimeNG confirmation service for destructive operations. */
-  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
   /** Active organization context store. */
   private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject(ActiveOrganizationStore);
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
   /** Active equipment context store populated by the route resolver. */
-  private readonly activeEquipmentStore: ActiveEquipmentStore = inject(ActiveEquipmentStore);
+  private readonly activeEquipmentStore: ActiveEquipmentStore =
+    inject<ActiveEquipmentStore>(ActiveEquipmentStore);
   /** Organization permission evaluator. */
   private readonly permissionService: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
   /** Page-scoped equipment workflow store. */
-  protected readonly store: EquipmentStore = inject(EquipmentStore);
+  protected readonly store: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
   /** Page-scoped facility source used by the assignment panel. */
-  protected readonly facilityStore: FacilityStore = inject(FacilityStore);
+  protected readonly facilityStore: FacilityStore = inject<FacilityStore>(FacilityStore);
   /** Equipment currently selected by the route context. */
   protected readonly equipment: Signal<EquipmentOutput | null> = computed(() =>
     this.activeEquipmentStore.selectedEquipment(),

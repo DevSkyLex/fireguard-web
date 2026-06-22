@@ -19,7 +19,7 @@ import type { ChecklistOutput } from '@features/organization/features/checklists
 export interface ChecklistState {
   //#region Properties
   /**
-   * Property createOperation
+   * Property createCallState
    * @readonly
    *
    * @description
@@ -34,7 +34,7 @@ export interface ChecklistState {
   readonly createCallState: CallState<ChecklistOutput | null>;
 
   /**
-   * Property archiveOperation
+   * Property archiveCallState
    * @readonly
    *
    * @description

@@ -63,7 +63,7 @@ export class FacilityInspectionsOverview {
    * @type {FacilityOverviewStore}
    */
   protected readonly store: InstanceType<typeof FacilityOverviewStore> =
-    inject(FacilityOverviewStore);
+    inject<FacilityOverviewStore>(FacilityOverviewStore);
 
   /**
    * Property filter

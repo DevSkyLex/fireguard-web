@@ -66,7 +66,7 @@ const INITIAL_SESSION_STATE: SessionState = {
  * ```typescript
  * @Component({ providers: [SessionStore] })
  * export class SessionPage {
- *   readonly store = inject(SessionStore);
+ *   readonly store = inject<SessionStore>(SessionStore);
  * }
  * ```
  *

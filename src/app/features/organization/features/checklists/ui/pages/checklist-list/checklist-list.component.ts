@@ -37,21 +37,22 @@ export class ChecklistListPage {
   });
 
   /** Router used by checklist list actions. */
-  private readonly router: Router = inject(Router);
+  private readonly router: Router = inject<Router>(Router);
   /** Active route used to build relative checklist routes. */
-  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   /** PrimeNG confirmation service used before archival. */
-  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
   /** Organization permission evaluator. */
   private readonly permissionService: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
   /** Active organization context store. */
   private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject(ActiveOrganizationStore);
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /** Page-scoped checklist workflow store. */
-  protected readonly store: ChecklistStore = inject(ChecklistStore);
+  protected readonly store: ChecklistStore = inject<ChecklistStore>(ChecklistStore);
   /** Whether the active member can create and archive checklists. */
   protected readonly canManage: Signal<boolean> = computed(() =>
     this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_WRITE),

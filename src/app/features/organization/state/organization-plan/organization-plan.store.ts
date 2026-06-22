@@ -63,12 +63,14 @@ export const OrganizationPlanStore = signalStore(
   withMethods(
     (
       store,
-      organizationService = inject(OrganizationService),
-      planService = inject(PlanService),
-      activeOrganizationStore = inject(ActiveOrganizationStore),
-      organizationMemberAccessStore = inject(OrganizationMemberAccessStore),
-      organizationQuotaStore = inject(OrganizationQuotaStore),
-      dispatcher = inject(Dispatcher),
+      organizationService = inject<OrganizationService>(OrganizationService),
+      planService = inject<PlanService>(PlanService),
+      activeOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore),
+      organizationMemberAccessStore = inject<OrganizationMemberAccessStore>(
+        OrganizationMemberAccessStore,
+      ),
+      organizationQuotaStore = inject<OrganizationQuotaStore>(OrganizationQuotaStore),
+      dispatcher = inject<Dispatcher>(Dispatcher),
     ) => ({
       /**
        * Method loadPlans

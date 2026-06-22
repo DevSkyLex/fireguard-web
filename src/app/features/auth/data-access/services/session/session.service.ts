@@ -19,7 +19,7 @@ import type { SessionOutput } from '@features/auth/models';
  *
  * @example
  * ```typescript
- * const sessionService = inject(SessionService);
+ * const sessionService = inject<SessionService>(SessionService);
  *
  * // List sessions
  * sessionService.list().subscribe(response => {

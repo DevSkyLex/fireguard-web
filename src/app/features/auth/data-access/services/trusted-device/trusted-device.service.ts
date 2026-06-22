@@ -19,7 +19,7 @@ import type { TrustDeviceOutput, TrustedDeviceOutput } from '@features/auth/mode
  *
  * @example
  * ```typescript
- * const trustedDeviceService = inject(TrustedDeviceService);
+ * const trustedDeviceService = inject<TrustedDeviceService>(TrustedDeviceService);
  *
  * // Trust current device
  * trustedDeviceService.trustDevice().subscribe(response => {

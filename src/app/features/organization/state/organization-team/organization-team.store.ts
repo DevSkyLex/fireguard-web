@@ -99,10 +99,10 @@ export const OrganizationTeamStore = signalStore(
   withMethods(
     (
       store,
-      memberService = inject(OrganizationMemberService),
-      roleService = inject(OrganizationRoleService),
-      invitationService = inject(OrganizationInvitationService),
-      organizationService = inject(OrganizationService),
+      memberService = inject<OrganizationMemberService>(OrganizationMemberService),
+      roleService = inject<OrganizationRoleService>(OrganizationRoleService),
+      invitationService = inject<OrganizationInvitationService>(OrganizationInvitationService),
+      organizationService = inject<OrganizationService>(OrganizationService),
     ) => ({
       /** Loads the team resources permitted for the active member. */
       load: rxMethod<OrganizationTeamLoadOptions>(

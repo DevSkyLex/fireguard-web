@@ -59,7 +59,7 @@ import {
  * ```typescript
  * @Component({ providers: [OrganizationDashboardOverviewTrendStore] })
  * export class OrganizationDashboardOverviewTrend {
- *   protected readonly store = inject(OrganizationDashboardOverviewTrendStore);
+ *   protected readonly store = inject<OrganizationDashboardOverviewTrendStore>(OrganizationDashboardOverviewTrendStore);
  * }
  * ```
  *
@@ -97,152 +97,157 @@ function createOverviewTrendStore() {
      *
      * @since 1.0.0
      */
-    withMethods((store, organizationService = inject(OrganizationService)) => ({
-      /**
-       * Method load
-       *
-       * @description
-       * NgRx `rxMethod` that fetches three parallel trend datasets (inspections,
-       * NC opened, NC resolved) via `forkJoin` whenever the params signal emits.
-       * Undefined params are silently ignored via an `EMPTY` return.
-       *
-       * @since 1.0.0
-       */
-      load: rxMethod<OrganizationDashboardTrendResourceParams | undefined>(
-        pipe(
-          switchMap((params) => {
-            if (!params) return EMPTY;
+    withMethods(
+      (store, organizationService = inject<OrganizationService>(OrganizationService)) => ({
+        /**
+         * Method load
+         *
+         * @description
+         * NgRx `rxMethod` that fetches three parallel trend datasets (inspections,
+         * NC opened, NC resolved) via `forkJoin` whenever the params signal emits.
+         * Undefined params are silently ignored via an `EMPTY` return.
+         *
+         * @since 1.0.0
+         */
+        load: rxMethod<OrganizationDashboardTrendResourceParams | undefined>(
+          pipe(
+            switchMap((params) => {
+              if (!params) return EMPTY;
 
-            patchState(store, setPendingQuery());
+              patchState(store, setPendingQuery());
 
-            return forkJoin({
-              inspections: organizationService.getDashboardInspectionsTrend(params.organizationId, {
-                granularity: params.granularity,
-                from: params.from,
-                to: params.to,
-                compare: params.compare,
-              }),
-              ncOpened: organizationService.getDashboardNonConformitiesOpenedTrend(
-                params.organizationId,
-                {
-                  granularity: params.granularity,
-                  from: params.from,
-                  to: params.to,
-                  compare: params.compare,
-                },
-              ),
-              ncResolved: organizationService.getDashboardNonConformitiesResolvedTrend(
-                params.organizationId,
-                {
-                  granularity: params.granularity,
-                  from: params.from,
-                  to: params.to,
-                  compare: params.compare,
-                },
-              ),
-            }).pipe(
-              tapResponse({
-                next: (data) => patchState(store, setSuccessQuery(data)),
-                error: (err) => patchState(store, setErrorQuery(toStoreError(err))),
-              }),
-            );
-          }),
+              return forkJoin({
+                inspections: organizationService.getDashboardInspectionsTrend(
+                  params.organizationId,
+                  {
+                    granularity: params.granularity,
+                    from: params.from,
+                    to: params.to,
+                    compare: params.compare,
+                  },
+                ),
+                ncOpened: organizationService.getDashboardNonConformitiesOpenedTrend(
+                  params.organizationId,
+                  {
+                    granularity: params.granularity,
+                    from: params.from,
+                    to: params.to,
+                    compare: params.compare,
+                  },
+                ),
+                ncResolved: organizationService.getDashboardNonConformitiesResolvedTrend(
+                  params.organizationId,
+                  {
+                    granularity: params.granularity,
+                    from: params.from,
+                    to: params.to,
+                    compare: params.compare,
+                  },
+                ),
+              }).pipe(
+                tapResponse({
+                  next: (data) => patchState(store, setSuccessQuery(data)),
+                  error: (err) => patchState(store, setErrorQuery(toStoreError(err))),
+                }),
+              );
+            }),
+          ),
         ),
-      ),
 
-      /**
-       * Method setDraftDateRange
-       *
-       * @description
-       * Updates the draft date-range value edited inside the filter drawer.
-       *
-       * @param {Date[] | null} range - Draft range selected by the user.
-       * @returns {void}
-       */
-      setDraftDateRange(range: Date[] | null): void {
-        patchState(store, {
-          draftDateRange: normalizeDashboardDateRange(range, store.selectedGranularity()),
-        });
-      },
+        /**
+         * Method setDraftDateRange
+         *
+         * @description
+         * Updates the draft date-range value edited inside the filter drawer.
+         *
+         * @param {Date[] | null} range - Draft range selected by the user.
+         * @returns {void}
+         */
+        setDraftDateRange(range: Date[] | null): void {
+          patchState(store, {
+            draftDateRange: normalizeDashboardDateRange(range, store.selectedGranularity()),
+          });
+        },
 
-      /**
-       * Method setDraftCompareEnabled
-       *
-       * @description
-       * Updates the draft compare-mode toggle edited inside the filter drawer.
-       *
-       * @param {boolean} compareEnabled - Draft compare-mode value.
-       * @returns {void}
-       */
-      setDraftCompareEnabled(compareEnabled: boolean): void {
-        patchState(store, { draftCompareEnabled: compareEnabled });
-      },
+        /**
+         * Method setDraftCompareEnabled
+         *
+         * @description
+         * Updates the draft compare-mode toggle edited inside the filter drawer.
+         *
+         * @param {boolean} compareEnabled - Draft compare-mode value.
+         * @returns {void}
+         */
+        setDraftCompareEnabled(compareEnabled: boolean): void {
+          patchState(store, { draftCompareEnabled: compareEnabled });
+        },
 
-      /**
-       * Method openFilters
-       *
-       * @description
-       * Opens the filter drawer and seeds the draft values from the applied filters.
-       *
-       * @returns {void}
-       */
-      openFilters(): void {
-        patchState(store, {
-          isFilterDrawerVisible: true,
-          draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
-          draftCompareEnabled: store.compareEnabled(),
-        });
-      },
+        /**
+         * Method openFilters
+         *
+         * @description
+         * Opens the filter drawer and seeds the draft values from the applied filters.
+         *
+         * @returns {void}
+         */
+        openFilters(): void {
+          patchState(store, {
+            isFilterDrawerVisible: true,
+            draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+            draftCompareEnabled: store.compareEnabled(),
+          });
+        },
 
-      /**
-       * Method cancelDraftFilters
-       *
-       * @description
-       * Closes the filter drawer and restores the draft values from the applied filters.
-       *
-       * @returns {void}
-       */
-      cancelDraftFilters(): void {
-        patchState(store, {
-          isFilterDrawerVisible: false,
-          draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
-          draftCompareEnabled: store.compareEnabled(),
-        });
-      },
+        /**
+         * Method cancelDraftFilters
+         *
+         * @description
+         * Closes the filter drawer and restores the draft values from the applied filters.
+         *
+         * @returns {void}
+         */
+        cancelDraftFilters(): void {
+          patchState(store, {
+            isFilterDrawerVisible: false,
+            draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+            draftCompareEnabled: store.compareEnabled(),
+          });
+        },
 
-      /**
-       * Method resetDraftFilters
-       *
-       * @description
-       * Resets the drawer draft values back to their default state without applying them.
-       *
-       * @returns {void}
-       */
-      resetDraftFilters(): void {
-        const initialDraftState = getDashboardInitialFilterDraftState();
+        /**
+         * Method resetDraftFilters
+         *
+         * @description
+         * Resets the drawer draft values back to their default state without applying them.
+         *
+         * @returns {void}
+         */
+        resetDraftFilters(): void {
+          const initialDraftState = getDashboardInitialFilterDraftState();
 
-        patchState(store, {
-          draftDateRange: initialDraftState.draftDateRange,
-          draftCompareEnabled: initialDraftState.draftCompareEnabled,
-        });
-      },
+          patchState(store, {
+            draftDateRange: initialDraftState.draftDateRange,
+            draftCompareEnabled: initialDraftState.draftCompareEnabled,
+          });
+        },
 
-      /**
-       * Method applyDraftFilters
-       *
-       * @description
-       * Commits the current drawer draft values to the reactive filter state in one patch.
-       *
-       * @returns {void}
-       */
-      applyDraftFilters(): void {
-        patchState(store, {
-          isFilterDrawerVisible: false,
-          selectedDateRange: cloneDashboardDateRange(store.draftDateRange()),
-          compareEnabled: store.draftCompareEnabled(),
-        });
-      },
-    })),
+        /**
+         * Method applyDraftFilters
+         *
+         * @description
+         * Commits the current drawer draft values to the reactive filter state in one patch.
+         *
+         * @returns {void}
+         */
+        applyDraftFilters(): void {
+          patchState(store, {
+            isFilterDrawerVisible: false,
+            selectedDateRange: cloneDashboardDateRange(store.draftDateRange()),
+            compareEnabled: store.draftCompareEnabled(),
+          });
+        },
+      }),
+    ),
     //#endregion
 
     //#region Computed
@@ -281,7 +286,8 @@ function createOverviewTrendStore() {
      */
     withComputed((store) => {
       const platformId: object = inject(PLATFORM_ID);
-      const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+      const activeOrganizationStore: ActiveOrganizationStore =
+        inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
       return {
         loadParams: computed<OrganizationDashboardTrendResourceParams | undefined>(() => {
@@ -310,7 +316,8 @@ function createOverviewTrendStore() {
      */
     withHooks((store) => {
       const platformId: object = inject(PLATFORM_ID);
-      const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+      const activeOrganizationStore: ActiveOrganizationStore =
+        inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
       return {
         /**

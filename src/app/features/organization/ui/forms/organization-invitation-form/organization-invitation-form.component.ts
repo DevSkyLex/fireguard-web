@@ -34,7 +34,8 @@ export class OrganizationInvitationForm {
   /** Emits valid invitation values. */
   public readonly submitted: OutputEmitterRef<InviteOrganizationMemberInput> = output();
   /** Non-nullable builder preserving strict form value types. */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
   /** Strictly typed invitation form. */
   protected readonly form = this.formBuilder.group({
     email: this.formBuilder.control('', [Validators.required, Validators.email]),

@@ -60,7 +60,7 @@ export class FacilityInspectionDataview {
   private static readonly PREVIEW_LIMIT: number = 6;
 
   protected readonly store: InstanceType<typeof FacilityOverviewStore> =
-    inject(FacilityOverviewStore);
+    inject<FacilityOverviewStore>(FacilityOverviewStore);
 
   protected readonly filter: WritableSignal<InspectionOverviewFilter> =
     signal<InspectionOverviewFilter>('all');

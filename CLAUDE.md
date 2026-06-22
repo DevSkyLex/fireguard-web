@@ -30,7 +30,11 @@
    exceptions (presentation registry, const-enum catalog).
 7. **Placement = usage locality.** Keep code local to its single consumer; lift
    to feature → `shared/` → `core/` only when a real second consumer appears.
-   Never invent new sibling layers/folders.
+   Stick to the documented feature concerns (`ARCHITECTURE.md` §8.3:
+   `data-access/`, `services/`, `access/`, `setup/`, `navigation/`, `http/`,
+   `ports/`, `ui/{pages,components,tables,dataviews,forms,dialogs,drawers}`,
+   `state/`, `models/`, `utils/`, `constants/`, `options/`, `providers/`); do
+   not invent undocumented sibling layers/folders.
 
 ## Boundaries (hard rules)
 

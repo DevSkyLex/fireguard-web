@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en-US" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="auth.login.email.label" datatype="html">
+        <source>Email Address</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/login-form/login-form.component.html</context>
+          <context context-type="linenumber">8,11</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.login.email.required" datatype="html">
+        <source>Email is required.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/login-form/login-form.component.html</context>
+          <context context-type="linenumber">24,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.login.email.invalid" datatype="html">
+        <source>Please enter a valid email address.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/login-form/login-form.component.html</context>
+          <context context-type="linenumber">27,30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.login.password.label" datatype="html">
+        <source>Password</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/login-form/login-form.component.html</context>
+          <context context-type="linenumber">39,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.login.password.required" datatype="html">
+        <source>Password is required.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/login-form/login-form.component.html</context>
+          <context context-type="linenumber">57,62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.login.rememberMe" datatype="html">
+        <source> Remember me </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/login-form/login-form.component.html</context>
+          <context context-type="linenumber">71,75</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.login.forgotPassword" datatype="html">
+        <source> Forgot password? </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/login-form/login-form.component.html</context>
+          <context context-type="linenumber">80,84</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.login.submit" datatype="html">
+        <source>Sign in</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/login-form/login-form.component.html</context>
+          <context context-type="linenumber">87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.login.title" datatype="html">
+        <source> Welcome Back </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/login-page/login-page.component.html</context>
+          <context context-type="linenumber">7,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.login.subtitle" datatype="html">
+        <source> Please sign in to your account to continue. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/login-page/login-page.component.html</context>
+          <context context-type="linenumber">10,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="common.error" datatype="html">
+        <source>Error</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/login-page/login-page.component.ts</context>
+          <context context-type="linenumber">142</context>
+        </context-group>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

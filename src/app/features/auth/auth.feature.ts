@@ -7,6 +7,7 @@ import {
   provideAppInitializer,
   REQUEST,
 } from '@angular/core';
+import { BOOT_READINESS_PORT } from '@core/ports/boot-readiness';
 import { USER_PROFILE_PORT, type UserProfilePort } from '@features/account/ports';
 import { AUTH_LOGOUT_PORT, AUTH_SESSION_PORT } from '@features/auth/ports';
 import { AuthStore } from '@features/auth/state';
@@ -113,6 +114,15 @@ export function provideAuthFeature(): EnvironmentProviders {
         logout: (): void => {
           authStore.logout();
         },
+      }),
+      deps: [AuthStore],
+    },
+    {
+      // Core-owned boot readiness contract: auth resolves first-load readiness,
+      // so it provides the implementation core infrastructure consumes.
+      provide: BOOT_READINESS_PORT,
+      useFactory: (authStore: AuthStore) => ({
+        initialized: authStore.initialized,
       }),
       deps: [AuthStore],
     },

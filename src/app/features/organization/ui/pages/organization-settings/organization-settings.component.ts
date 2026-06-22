@@ -85,16 +85,17 @@ interface OrganizationSettingsNavItem {
 export class OrganizationSettingsPage {
   //#region Properties
   /** Active route used to read and update the selected settings section. */
-  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   /** Router used to persist the selected section in the URL. */
-  private readonly router: Router = inject(Router);
+  private readonly router: Router = inject<Router>(Router);
   /** PrimeNG message service used for save feedback. */
-  private readonly messageService: MessageService = inject(MessageService);
+  private readonly messageService: MessageService = inject<MessageService>(MessageService);
   /** Active organization context store. */
   protected readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject(ActiveOrganizationStore);
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
   /** Page-scoped settings workflow store. */
-  protected readonly store: OrganizationSettingsStore = inject(OrganizationSettingsStore);
+  protected readonly store: OrganizationSettingsStore =
+    inject<OrganizationSettingsStore>(OrganizationSettingsStore);
   /** Permission helper used to gate the danger-zone actions. */
   private readonly permissionService: OrganizationPermissionService = inject(
     OrganizationPermissionService,

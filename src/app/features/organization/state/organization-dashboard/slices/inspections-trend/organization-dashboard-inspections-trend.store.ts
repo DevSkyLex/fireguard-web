@@ -76,7 +76,7 @@ type PersistedInspectionsTrendFilters = PersistedDashboardBaseFilters & {
  * ```typescript
  * @Component({ providers: [OrganizationDashboardInspectionsTrendStore] })
  * export class OrganizationDashboardInspectionsTrend {
- *   protected readonly store = inject(OrganizationDashboardInspectionsTrendStore);
+ *   protected readonly store = inject<OrganizationDashboardInspectionsTrendStore>(OrganizationDashboardInspectionsTrendStore);
  * }
  * ```
  *
@@ -125,230 +125,232 @@ function createInspectionsTrendStore() {
      *
      * @since 1.0.0
      */
-    withMethods((store, organizationService = inject(OrganizationService)) => ({
-      /**
-       * Method load
-       *
-       * @description
-       * NgRx `rxMethod` that fetches the inspections trend dataset
-       * whenever the params signal emits a new value.
-       * Undefined params are silently ignored via an `EMPTY` return.
-       *
-       * @since 1.0.0
-       */
-      load: rxMethod<OrganizationDashboardInspectionTrendResourceParams | undefined>(
-        pipe(
-          switchMap((params) => {
-            if (!params) return EMPTY;
+    withMethods(
+      (store, organizationService = inject<OrganizationService>(OrganizationService)) => ({
+        /**
+         * Method load
+         *
+         * @description
+         * NgRx `rxMethod` that fetches the inspections trend dataset
+         * whenever the params signal emits a new value.
+         * Undefined params are silently ignored via an `EMPTY` return.
+         *
+         * @since 1.0.0
+         */
+        load: rxMethod<OrganizationDashboardInspectionTrendResourceParams | undefined>(
+          pipe(
+            switchMap((params) => {
+              if (!params) return EMPTY;
 
-            patchState(store, setPendingQuery());
+              patchState(store, setPendingQuery());
 
-            return organizationService
-              .getDashboardInspectionsTrend(params.organizationId, {
-                granularity: params.granularity,
-                from: params.from,
-                to: params.to,
-                compare: params.compare,
-                inspectionStatus: params.inspectionStatus,
-                inspectionResult: params.inspectionResult,
-                inspectorType: params.inspectorType,
-              })
-              .pipe(
-                tapResponse({
-                  next: (data) => patchState(store, setSuccessQuery(data)),
-                  error: (err) => patchState(store, setErrorQuery(toStoreError(err))),
-                }),
-              );
-          }),
+              return organizationService
+                .getDashboardInspectionsTrend(params.organizationId, {
+                  granularity: params.granularity,
+                  from: params.from,
+                  to: params.to,
+                  compare: params.compare,
+                  inspectionStatus: params.inspectionStatus,
+                  inspectionResult: params.inspectionResult,
+                  inspectorType: params.inspectorType,
+                })
+                .pipe(
+                  tapResponse({
+                    next: (data) => patchState(store, setSuccessQuery(data)),
+                    error: (err) => patchState(store, setErrorQuery(toStoreError(err))),
+                  }),
+                );
+            }),
+          ),
         ),
-      ),
 
-      /**
-       * Method setInspectionStatus
-       *
-       * @description
-       * Updates the active inspection-status filter. Triggers a new fetch.
-       *
-       * @param {InspectionStatus | null} inspectionStatus - New status, or null to clear.
-       * @returns {void}
-       * @since 1.0.0
-       */
-      setInspectionStatus(inspectionStatus: InspectionStatus | null): void {
-        patchState(store, { selectedInspectionStatus: inspectionStatus });
-      },
+        /**
+         * Method setInspectionStatus
+         *
+         * @description
+         * Updates the active inspection-status filter. Triggers a new fetch.
+         *
+         * @param {InspectionStatus | null} inspectionStatus - New status, or null to clear.
+         * @returns {void}
+         * @since 1.0.0
+         */
+        setInspectionStatus(inspectionStatus: InspectionStatus | null): void {
+          patchState(store, { selectedInspectionStatus: inspectionStatus });
+        },
 
-      /**
-       * Method setInspectionResult
-       *
-       * @description
-       * Updates the active inspection-result filter. Triggers a new fetch.
-       *
-       * @param {InspectionResult | null} inspectionResult - New result, or null to clear.
-       * @returns {void}
-       * @since 1.0.0
-       */
-      setInspectionResult(inspectionResult: InspectionResult | null): void {
-        patchState(store, { selectedInspectionResult: inspectionResult });
-      },
+        /**
+         * Method setInspectionResult
+         *
+         * @description
+         * Updates the active inspection-result filter. Triggers a new fetch.
+         *
+         * @param {InspectionResult | null} inspectionResult - New result, or null to clear.
+         * @returns {void}
+         * @since 1.0.0
+         */
+        setInspectionResult(inspectionResult: InspectionResult | null): void {
+          patchState(store, { selectedInspectionResult: inspectionResult });
+        },
 
-      /**
-       * Method setInspectorType
-       *
-       * @description
-       * Updates the active inspector-type filter. Triggers a new fetch.
-       *
-       * @param {InspectorType | null} inspectorType - New inspector type, or null to clear.
-       * @returns {void}
-       * @since 1.0.0
-       */
-      setInspectorType(inspectorType: InspectorType | null): void {
-        patchState(store, { selectedInspectorType: inspectorType });
-      },
+        /**
+         * Method setInspectorType
+         *
+         * @description
+         * Updates the active inspector-type filter. Triggers a new fetch.
+         *
+         * @param {InspectorType | null} inspectorType - New inspector type, or null to clear.
+         * @returns {void}
+         * @since 1.0.0
+         */
+        setInspectorType(inspectorType: InspectorType | null): void {
+          patchState(store, { selectedInspectorType: inspectorType });
+        },
 
-      /**
-       * Method setDraftDateRange
-       *
-       * @description
-       * Updates the draft date range edited inside the filter drawer.
-       *
-       * @param {Date[] | null} range - Draft range selected by the user.
-       * @returns {void}
-       */
-      setDraftDateRange(range: Date[] | null): void {
-        patchState(store, {
-          draftDateRange: normalizeDashboardDateRange(range, store.selectedGranularity()),
-        });
-      },
+        /**
+         * Method setDraftDateRange
+         *
+         * @description
+         * Updates the draft date range edited inside the filter drawer.
+         *
+         * @param {Date[] | null} range - Draft range selected by the user.
+         * @returns {void}
+         */
+        setDraftDateRange(range: Date[] | null): void {
+          patchState(store, {
+            draftDateRange: normalizeDashboardDateRange(range, store.selectedGranularity()),
+          });
+        },
 
-      /**
-       * Method setDraftCompareEnabled
-       *
-       * @description
-       * Updates the draft compare-mode toggle edited inside the filter drawer.
-       *
-       * @param {boolean} compareEnabled - Draft compare-mode value.
-       * @returns {void}
-       */
-      setDraftCompareEnabled(compareEnabled: boolean): void {
-        patchState(store, { draftCompareEnabled: compareEnabled });
-      },
+        /**
+         * Method setDraftCompareEnabled
+         *
+         * @description
+         * Updates the draft compare-mode toggle edited inside the filter drawer.
+         *
+         * @param {boolean} compareEnabled - Draft compare-mode value.
+         * @returns {void}
+         */
+        setDraftCompareEnabled(compareEnabled: boolean): void {
+          patchState(store, { draftCompareEnabled: compareEnabled });
+        },
 
-      /**
-       * Method setDraftInspectionStatus
-       *
-       * @description
-       * Updates the draft inspection-status value edited inside the filter drawer.
-       *
-       * @param {InspectionStatus | null} inspectionStatus - Draft inspection status.
-       * @returns {void}
-       */
-      setDraftInspectionStatus(inspectionStatus: InspectionStatus | null): void {
-        patchState(store, { draftInspectionStatus: inspectionStatus });
-      },
+        /**
+         * Method setDraftInspectionStatus
+         *
+         * @description
+         * Updates the draft inspection-status value edited inside the filter drawer.
+         *
+         * @param {InspectionStatus | null} inspectionStatus - Draft inspection status.
+         * @returns {void}
+         */
+        setDraftInspectionStatus(inspectionStatus: InspectionStatus | null): void {
+          patchState(store, { draftInspectionStatus: inspectionStatus });
+        },
 
-      /**
-       * Method setDraftInspectionResult
-       *
-       * @description
-       * Updates the draft inspection-result value edited inside the filter drawer.
-       *
-       * @param {InspectionResult | null} inspectionResult - Draft inspection result.
-       * @returns {void}
-       */
-      setDraftInspectionResult(inspectionResult: InspectionResult | null): void {
-        patchState(store, { draftInspectionResult: inspectionResult });
-      },
+        /**
+         * Method setDraftInspectionResult
+         *
+         * @description
+         * Updates the draft inspection-result value edited inside the filter drawer.
+         *
+         * @param {InspectionResult | null} inspectionResult - Draft inspection result.
+         * @returns {void}
+         */
+        setDraftInspectionResult(inspectionResult: InspectionResult | null): void {
+          patchState(store, { draftInspectionResult: inspectionResult });
+        },
 
-      /**
-       * Method setDraftInspectorType
-       *
-       * @description
-       * Updates the draft inspector-type value edited inside the filter drawer.
-       *
-       * @param {InspectorType | null} inspectorType - Draft inspector type.
-       * @returns {void}
-       */
-      setDraftInspectorType(inspectorType: InspectorType | null): void {
-        patchState(store, { draftInspectorType: inspectorType });
-      },
+        /**
+         * Method setDraftInspectorType
+         *
+         * @description
+         * Updates the draft inspector-type value edited inside the filter drawer.
+         *
+         * @param {InspectorType | null} inspectorType - Draft inspector type.
+         * @returns {void}
+         */
+        setDraftInspectorType(inspectorType: InspectorType | null): void {
+          patchState(store, { draftInspectorType: inspectorType });
+        },
 
-      /**
-       * Method openFilters
-       *
-       * @description
-       * Opens the filter drawer and seeds the draft values from the applied filters.
-       *
-       * @returns {void}
-       */
-      openFilters(): void {
-        patchState(store, {
-          isFilterDrawerVisible: true,
-          draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
-          draftCompareEnabled: store.compareEnabled(),
-          draftInspectionStatus: store.selectedInspectionStatus(),
-          draftInspectionResult: store.selectedInspectionResult(),
-          draftInspectorType: store.selectedInspectorType(),
-        });
-      },
+        /**
+         * Method openFilters
+         *
+         * @description
+         * Opens the filter drawer and seeds the draft values from the applied filters.
+         *
+         * @returns {void}
+         */
+        openFilters(): void {
+          patchState(store, {
+            isFilterDrawerVisible: true,
+            draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+            draftCompareEnabled: store.compareEnabled(),
+            draftInspectionStatus: store.selectedInspectionStatus(),
+            draftInspectionResult: store.selectedInspectionResult(),
+            draftInspectorType: store.selectedInspectorType(),
+          });
+        },
 
-      /**
-       * Method cancelDraftFilters
-       *
-       * @description
-       * Closes the filter drawer and restores the draft values from the applied filters.
-       *
-       * @returns {void}
-       */
-      cancelDraftFilters(): void {
-        patchState(store, {
-          isFilterDrawerVisible: false,
-          draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
-          draftCompareEnabled: store.compareEnabled(),
-          draftInspectionStatus: store.selectedInspectionStatus(),
-          draftInspectionResult: store.selectedInspectionResult(),
-          draftInspectorType: store.selectedInspectorType(),
-        });
-      },
+        /**
+         * Method cancelDraftFilters
+         *
+         * @description
+         * Closes the filter drawer and restores the draft values from the applied filters.
+         *
+         * @returns {void}
+         */
+        cancelDraftFilters(): void {
+          patchState(store, {
+            isFilterDrawerVisible: false,
+            draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+            draftCompareEnabled: store.compareEnabled(),
+            draftInspectionStatus: store.selectedInspectionStatus(),
+            draftInspectionResult: store.selectedInspectionResult(),
+            draftInspectorType: store.selectedInspectorType(),
+          });
+        },
 
-      /**
-       * Method resetDraftFilters
-       *
-       * @description
-       * Resets the drawer draft values back to their default state without applying them.
-       *
-       * @returns {void}
-       */
-      resetDraftFilters(): void {
-        const initialDraftState = getDashboardInitialFilterDraftState();
+        /**
+         * Method resetDraftFilters
+         *
+         * @description
+         * Resets the drawer draft values back to their default state without applying them.
+         *
+         * @returns {void}
+         */
+        resetDraftFilters(): void {
+          const initialDraftState = getDashboardInitialFilterDraftState();
 
-        patchState(store, {
-          draftDateRange: initialDraftState.draftDateRange,
-          draftCompareEnabled: initialDraftState.draftCompareEnabled,
-          draftInspectionStatus: null,
-          draftInspectionResult: null,
-          draftInspectorType: null,
-        });
-      },
+          patchState(store, {
+            draftDateRange: initialDraftState.draftDateRange,
+            draftCompareEnabled: initialDraftState.draftCompareEnabled,
+            draftInspectionStatus: null,
+            draftInspectionResult: null,
+            draftInspectorType: null,
+          });
+        },
 
-      /**
-       * Method applyDraftFilters
-       *
-       * @description
-       * Commits the current drawer draft values to the reactive filter state in one patch.
-       *
-       * @returns {void}
-       */
-      applyDraftFilters(): void {
-        patchState(store, {
-          isFilterDrawerVisible: false,
-          selectedDateRange: cloneDashboardDateRange(store.draftDateRange()),
-          compareEnabled: store.draftCompareEnabled(),
-          selectedInspectionStatus: store.draftInspectionStatus(),
-          selectedInspectionResult: store.draftInspectionResult(),
-          selectedInspectorType: store.draftInspectorType(),
-        });
-      },
-    })),
+        /**
+         * Method applyDraftFilters
+         *
+         * @description
+         * Commits the current drawer draft values to the reactive filter state in one patch.
+         *
+         * @returns {void}
+         */
+        applyDraftFilters(): void {
+          patchState(store, {
+            isFilterDrawerVisible: false,
+            selectedDateRange: cloneDashboardDateRange(store.draftDateRange()),
+            compareEnabled: store.draftCompareEnabled(),
+            selectedInspectionStatus: store.draftInspectionStatus(),
+            selectedInspectionResult: store.draftInspectionResult(),
+            selectedInspectorType: store.draftInspectorType(),
+          });
+        },
+      }),
+    ),
     //#endregion
 
     //#region Hooks
@@ -365,7 +367,8 @@ function createInspectionsTrendStore() {
      */
     withComputed((store) => {
       const platformId: object = inject(PLATFORM_ID);
-      const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+      const activeOrganizationStore: ActiveOrganizationStore =
+        inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
       return {
         loadParams: computed<OrganizationDashboardInspectionTrendResourceParams | undefined>(() => {
@@ -400,7 +403,8 @@ function createInspectionsTrendStore() {
      */
     withHooks((store) => {
       const platformId: object = inject(PLATFORM_ID);
-      const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+      const activeOrganizationStore: ActiveOrganizationStore =
+        inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
       return {
         /**

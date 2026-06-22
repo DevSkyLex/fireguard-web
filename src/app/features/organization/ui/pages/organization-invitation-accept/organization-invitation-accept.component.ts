@@ -17,9 +17,9 @@ import { OrganizationInvitationAcceptStore } from '@features/organization/state'
 })
 export class OrganizationInvitationAcceptPage {
   /** Active route containing the invitation token query parameter. */
-  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   /** Router used after invitation processing. */
-  private readonly router: Router = inject(Router);
+  private readonly router: Router = inject<Router>(Router);
   /** Page-scoped invitation acceptance store. */
   protected readonly store: OrganizationInvitationAcceptStore = inject(
     OrganizationInvitationAcceptStore,

@@ -74,8 +74,8 @@ const INITIAL_ORGANIZATION_STATE: OrganizationState = {
  * Entity state is managed by `withEntities<OrganizationOutput>({ collection:
  * 'organization' })`, which provides O(1) lookups via `organizationEntityMap`
  * and keeps insertions/deletions efficient via normalized storage.
- * Auxiliary state (`isLoading`, `isDeleting`, `totalOrganizations`,
- * `createOperation`) is held in `withState<OrganizationState>`.
+ * Auxiliary state (`listCallState`, `deleteCallState`, `totalOrganizations`,
+ * `createCallState`) is held in `withState<OrganizationState>`.
  *
  * For reading the currently active/selected organization use the root-level
  * {@link ActiveOrganizationStore} instead.
@@ -84,7 +84,7 @@ const INITIAL_ORGANIZATION_STATE: OrganizationState = {
  * ```typescript
  * @Component({ providers: [OrganizationStore] })
  * export class OrganizationTable {
- *   readonly store = inject(OrganizationStore);
+ *   readonly store = inject<OrganizationStore>(OrganizationStore);
  * }
  * ```
  *
@@ -113,8 +113,8 @@ export const OrganizationStore = signalStore(
    * Feature withState
    *
    * @description
-   * Adds auxiliary state to the store: `createOperation`, `totalOrganizations`,
-   * `isLoading`, and `isDeleting`. Initialized from
+   * Adds auxiliary state to the store: `createCallState`, `totalOrganizations`,
+   * `listCallState`, and `deleteCallState`. Initialized from
    * `INITIAL_ORGANIZATION_STATE`. Entity state is handled separately by
    * `withEntities`.
    *
@@ -374,7 +374,7 @@ export const OrganizationStore = signalStore(
          *
          * @description
          * Creates a new organization via the API. Uses `exhaustMap` to prevent
-         * concurrent submissions. On success the `createOperation` transitions
+         * concurrent submissions. On success the `createCallState` transitions
          * to a success state carrying the newly created entity.
          *
          * @since 1.0.0
@@ -553,8 +553,8 @@ export const OrganizationStore = signalStore(
   ),
 
   withHooks((store) => {
-    const events: Events = inject(Events);
-    const destroyRef: DestroyRef = inject(DestroyRef);
+    const events: Events = inject<Events>(Events);
+    const destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
 
     return {
       /**

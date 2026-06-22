@@ -193,7 +193,8 @@ export class InterventionDetailPage {
    *
    * @type {ConfirmationService}
    */
-  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
 
   /**
    * Property connectivity

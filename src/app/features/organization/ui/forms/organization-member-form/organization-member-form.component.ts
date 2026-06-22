@@ -34,7 +34,8 @@ export class OrganizationMemberForm {
   /** Emits valid member values. */
   public readonly submitted: OutputEmitterRef<AddOrganizationMemberInput> = output();
   /** Non-nullable builder preserving strict form value types. */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
   /** Strictly typed member form. */
   protected readonly form = this.formBuilder.group({
     userId: this.formBuilder.control('', [Validators.required]),

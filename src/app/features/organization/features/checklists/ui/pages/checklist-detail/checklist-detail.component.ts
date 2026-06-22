@@ -28,23 +28,25 @@ import { ActiveOrganizationStore } from '@features/organization/state';
 })
 export class ChecklistDetailPage {
   /** Router used by checklist detail actions. */
-  private readonly router: Router = inject(Router);
+  private readonly router: Router = inject<Router>(Router);
   /** Active route used to build relative checklist routes. */
-  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   /** PrimeNG confirmation service used before archival. */
-  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
   /** Organization permission evaluator. */
   private readonly permissionService: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
   /** Active organization context store. */
   private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject(ActiveOrganizationStore);
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
   /** Active checklist context store populated by the route resolver. */
-  private readonly activeChecklistStore: ActiveChecklistStore = inject(ActiveChecklistStore);
+  private readonly activeChecklistStore: ActiveChecklistStore =
+    inject<ActiveChecklistStore>(ActiveChecklistStore);
 
   /** Page-scoped checklist workflow store. */
-  protected readonly store: ChecklistStore = inject(ChecklistStore);
+  protected readonly store: ChecklistStore = inject<ChecklistStore>(ChecklistStore);
   /** Checklist currently selected by the route context. */
   protected readonly checklist: Signal<ChecklistOutput | null> = computed(() =>
     this.activeChecklistStore.selectedChecklist(),

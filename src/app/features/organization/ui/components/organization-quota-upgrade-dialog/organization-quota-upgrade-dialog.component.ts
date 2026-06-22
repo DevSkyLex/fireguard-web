@@ -43,7 +43,7 @@ export class OrganizationQuotaUpgradeDialog {
   //#region Properties
   /** Active organization context, used to build the subscription deep link. */
   private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject(ActiveOrganizationStore);
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
   /** Two-way dialog visibility. */
   public readonly visible: ModelSignal<boolean> = model<boolean>(false);

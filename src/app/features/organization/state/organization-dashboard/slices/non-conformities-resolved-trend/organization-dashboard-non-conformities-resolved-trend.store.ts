@@ -73,7 +73,7 @@ type PersistedNonConformitiesResolvedFilters = PersistedDashboardBaseFilters & {
  * ```typescript
  * @Component({ providers: [OrganizationDashboardNonConformitiesResolvedStore] })
  * export class OrganizationDashboardNonConformitiesResolvedTrend {
- *   protected readonly store = inject(OrganizationDashboardNonConformitiesResolvedStore);
+ *   protected readonly store = inject<OrganizationDashboardNonConformitiesResolvedStore>(OrganizationDashboardNonConformitiesResolvedStore);
  * }
  * ```
  *
@@ -117,198 +117,200 @@ function createNonConformitiesResolvedTrendStore() {
      *
      * @since 1.0.0
      */
-    withMethods((store, organizationService = inject(OrganizationService)) => ({
-      /**
-       * Method load
-       *
-       * @description
-       * NgRx `rxMethod` that fetches the non-conformities-resolved trend dataset
-       * whenever the params signal emits a new value.
-       * Undefined params are silently ignored via an `EMPTY` return.
-       *
-       * @since 1.0.0
-       */
-      load: rxMethod<OrganizationDashboardNonConformityTrendResourceParams | undefined>(
-        pipe(
-          switchMap((params) => {
-            if (!params) return EMPTY;
+    withMethods(
+      (store, organizationService = inject<OrganizationService>(OrganizationService)) => ({
+        /**
+         * Method load
+         *
+         * @description
+         * NgRx `rxMethod` that fetches the non-conformities-resolved trend dataset
+         * whenever the params signal emits a new value.
+         * Undefined params are silently ignored via an `EMPTY` return.
+         *
+         * @since 1.0.0
+         */
+        load: rxMethod<OrganizationDashboardNonConformityTrendResourceParams | undefined>(
+          pipe(
+            switchMap((params) => {
+              if (!params) return EMPTY;
 
-            patchState(store, setPendingQuery());
+              patchState(store, setPendingQuery());
 
-            return organizationService
-              .getDashboardNonConformitiesResolvedTrend(params.organizationId, {
-                granularity: params.granularity,
-                from: params.from,
-                to: params.to,
-                compare: params.compare,
-                nonConformityStatus: params.nonConformityStatus,
-                nonConformitySeverity: params.nonConformitySeverity,
-              })
-              .pipe(
-                tapResponse({
-                  next: (data) => patchState(store, setSuccessQuery(data)),
-                  error: (err) => patchState(store, setErrorQuery(toStoreError(err))),
-                }),
-              );
-          }),
+              return organizationService
+                .getDashboardNonConformitiesResolvedTrend(params.organizationId, {
+                  granularity: params.granularity,
+                  from: params.from,
+                  to: params.to,
+                  compare: params.compare,
+                  nonConformityStatus: params.nonConformityStatus,
+                  nonConformitySeverity: params.nonConformitySeverity,
+                })
+                .pipe(
+                  tapResponse({
+                    next: (data) => patchState(store, setSuccessQuery(data)),
+                    error: (err) => patchState(store, setErrorQuery(toStoreError(err))),
+                  }),
+                );
+            }),
+          ),
         ),
-      ),
 
-      /**
-       * Method setNonConformityStatus
-       *
-       * @description
-       * Updates the active NC-status filter. Triggers a new fetch.
-       *
-       * @param {NonConformityStatus | null} nonConformityStatus - New status, or null to clear.
-       * @returns {void}
-       * @since 1.0.0
-       */
-      setNonConformityStatus(nonConformityStatus: NonConformityStatus | null): void {
-        patchState(store, { selectedNonConformityStatus: nonConformityStatus });
-      },
+        /**
+         * Method setNonConformityStatus
+         *
+         * @description
+         * Updates the active NC-status filter. Triggers a new fetch.
+         *
+         * @param {NonConformityStatus | null} nonConformityStatus - New status, or null to clear.
+         * @returns {void}
+         * @since 1.0.0
+         */
+        setNonConformityStatus(nonConformityStatus: NonConformityStatus | null): void {
+          patchState(store, { selectedNonConformityStatus: nonConformityStatus });
+        },
 
-      /**
-       * Method setNonConformitySeverity
-       *
-       * @description
-       * Updates the active NC-severity filter. Triggers a new fetch.
-       *
-       * @param {NonConformitySeverity | null} nonConformitySeverity - New severity, or null to clear.
-       * @returns {void}
-       * @since 1.0.0
-       */
-      setNonConformitySeverity(nonConformitySeverity: NonConformitySeverity | null): void {
-        patchState(store, { selectedNonConformitySeverity: nonConformitySeverity });
-      },
+        /**
+         * Method setNonConformitySeverity
+         *
+         * @description
+         * Updates the active NC-severity filter. Triggers a new fetch.
+         *
+         * @param {NonConformitySeverity | null} nonConformitySeverity - New severity, or null to clear.
+         * @returns {void}
+         * @since 1.0.0
+         */
+        setNonConformitySeverity(nonConformitySeverity: NonConformitySeverity | null): void {
+          patchState(store, { selectedNonConformitySeverity: nonConformitySeverity });
+        },
 
-      /**
-       * Method setDraftDateRange
-       *
-       * @description
-       * Updates the draft date range edited inside the filter drawer.
-       *
-       * @param {Date[] | null} range - Draft range selected by the user.
-       * @returns {void}
-       */
-      setDraftDateRange(range: Date[] | null): void {
-        patchState(store, {
-          draftDateRange: normalizeDashboardDateRange(range, store.selectedGranularity()),
-        });
-      },
+        /**
+         * Method setDraftDateRange
+         *
+         * @description
+         * Updates the draft date range edited inside the filter drawer.
+         *
+         * @param {Date[] | null} range - Draft range selected by the user.
+         * @returns {void}
+         */
+        setDraftDateRange(range: Date[] | null): void {
+          patchState(store, {
+            draftDateRange: normalizeDashboardDateRange(range, store.selectedGranularity()),
+          });
+        },
 
-      /**
-       * Method setDraftCompareEnabled
-       *
-       * @description
-       * Updates the draft compare-mode toggle edited inside the filter drawer.
-       *
-       * @param {boolean} compareEnabled - Draft compare-mode value.
-       * @returns {void}
-       */
-      setDraftCompareEnabled(compareEnabled: boolean): void {
-        patchState(store, { draftCompareEnabled: compareEnabled });
-      },
+        /**
+         * Method setDraftCompareEnabled
+         *
+         * @description
+         * Updates the draft compare-mode toggle edited inside the filter drawer.
+         *
+         * @param {boolean} compareEnabled - Draft compare-mode value.
+         * @returns {void}
+         */
+        setDraftCompareEnabled(compareEnabled: boolean): void {
+          patchState(store, { draftCompareEnabled: compareEnabled });
+        },
 
-      /**
-       * Method setDraftNonConformityStatus
-       *
-       * @description
-       * Updates the draft NC-status value edited inside the filter drawer.
-       *
-       * @param {NonConformityStatus | null} nonConformityStatus - Draft non-conformity status.
-       * @returns {void}
-       */
-      setDraftNonConformityStatus(nonConformityStatus: NonConformityStatus | null): void {
-        patchState(store, { draftNonConformityStatus: nonConformityStatus });
-      },
+        /**
+         * Method setDraftNonConformityStatus
+         *
+         * @description
+         * Updates the draft NC-status value edited inside the filter drawer.
+         *
+         * @param {NonConformityStatus | null} nonConformityStatus - Draft non-conformity status.
+         * @returns {void}
+         */
+        setDraftNonConformityStatus(nonConformityStatus: NonConformityStatus | null): void {
+          patchState(store, { draftNonConformityStatus: nonConformityStatus });
+        },
 
-      /**
-       * Method setDraftNonConformitySeverity
-       *
-       * @description
-       * Updates the draft NC-severity value edited inside the filter drawer.
-       *
-       * @param {NonConformitySeverity | null} nonConformitySeverity - Draft non-conformity severity.
-       * @returns {void}
-       */
-      setDraftNonConformitySeverity(nonConformitySeverity: NonConformitySeverity | null): void {
-        patchState(store, { draftNonConformitySeverity: nonConformitySeverity });
-      },
+        /**
+         * Method setDraftNonConformitySeverity
+         *
+         * @description
+         * Updates the draft NC-severity value edited inside the filter drawer.
+         *
+         * @param {NonConformitySeverity | null} nonConformitySeverity - Draft non-conformity severity.
+         * @returns {void}
+         */
+        setDraftNonConformitySeverity(nonConformitySeverity: NonConformitySeverity | null): void {
+          patchState(store, { draftNonConformitySeverity: nonConformitySeverity });
+        },
 
-      /**
-       * Method openFilters
-       *
-       * @description
-       * Opens the filter drawer and seeds the draft values from the applied filters.
-       *
-       * @returns {void}
-       */
-      openFilters(): void {
-        patchState(store, {
-          isFilterDrawerVisible: true,
-          draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
-          draftCompareEnabled: store.compareEnabled(),
-          draftNonConformityStatus: store.selectedNonConformityStatus(),
-          draftNonConformitySeverity: store.selectedNonConformitySeverity(),
-        });
-      },
+        /**
+         * Method openFilters
+         *
+         * @description
+         * Opens the filter drawer and seeds the draft values from the applied filters.
+         *
+         * @returns {void}
+         */
+        openFilters(): void {
+          patchState(store, {
+            isFilterDrawerVisible: true,
+            draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+            draftCompareEnabled: store.compareEnabled(),
+            draftNonConformityStatus: store.selectedNonConformityStatus(),
+            draftNonConformitySeverity: store.selectedNonConformitySeverity(),
+          });
+        },
 
-      /**
-       * Method cancelDraftFilters
-       *
-       * @description
-       * Closes the filter drawer and restores the draft values from the applied filters.
-       *
-       * @returns {void}
-       */
-      cancelDraftFilters(): void {
-        patchState(store, {
-          isFilterDrawerVisible: false,
-          draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
-          draftCompareEnabled: store.compareEnabled(),
-          draftNonConformityStatus: store.selectedNonConformityStatus(),
-          draftNonConformitySeverity: store.selectedNonConformitySeverity(),
-        });
-      },
+        /**
+         * Method cancelDraftFilters
+         *
+         * @description
+         * Closes the filter drawer and restores the draft values from the applied filters.
+         *
+         * @returns {void}
+         */
+        cancelDraftFilters(): void {
+          patchState(store, {
+            isFilterDrawerVisible: false,
+            draftDateRange: cloneDashboardDateRange(store.selectedDateRange()),
+            draftCompareEnabled: store.compareEnabled(),
+            draftNonConformityStatus: store.selectedNonConformityStatus(),
+            draftNonConformitySeverity: store.selectedNonConformitySeverity(),
+          });
+        },
 
-      /**
-       * Method resetDraftFilters
-       *
-       * @description
-       * Resets the drawer draft values back to their default state without applying them.
-       *
-       * @returns {void}
-       */
-      resetDraftFilters(): void {
-        const initialDraftState = getDashboardInitialFilterDraftState();
+        /**
+         * Method resetDraftFilters
+         *
+         * @description
+         * Resets the drawer draft values back to their default state without applying them.
+         *
+         * @returns {void}
+         */
+        resetDraftFilters(): void {
+          const initialDraftState = getDashboardInitialFilterDraftState();
 
-        patchState(store, {
-          draftDateRange: initialDraftState.draftDateRange,
-          draftCompareEnabled: initialDraftState.draftCompareEnabled,
-          draftNonConformityStatus: null,
-          draftNonConformitySeverity: null,
-        });
-      },
+          patchState(store, {
+            draftDateRange: initialDraftState.draftDateRange,
+            draftCompareEnabled: initialDraftState.draftCompareEnabled,
+            draftNonConformityStatus: null,
+            draftNonConformitySeverity: null,
+          });
+        },
 
-      /**
-       * Method applyDraftFilters
-       *
-       * @description
-       * Commits the current drawer draft values to the reactive filter state in one patch.
-       *
-       * @returns {void}
-       */
-      applyDraftFilters(): void {
-        patchState(store, {
-          isFilterDrawerVisible: false,
-          selectedDateRange: cloneDashboardDateRange(store.draftDateRange()),
-          compareEnabled: store.draftCompareEnabled(),
-          selectedNonConformityStatus: store.draftNonConformityStatus(),
-          selectedNonConformitySeverity: store.draftNonConformitySeverity(),
-        });
-      },
-    })),
+        /**
+         * Method applyDraftFilters
+         *
+         * @description
+         * Commits the current drawer draft values to the reactive filter state in one patch.
+         *
+         * @returns {void}
+         */
+        applyDraftFilters(): void {
+          patchState(store, {
+            isFilterDrawerVisible: false,
+            selectedDateRange: cloneDashboardDateRange(store.draftDateRange()),
+            compareEnabled: store.draftCompareEnabled(),
+            selectedNonConformityStatus: store.draftNonConformityStatus(),
+            selectedNonConformitySeverity: store.draftNonConformitySeverity(),
+          });
+        },
+      }),
+    ),
     //#endregion
 
     //#region Hooks
@@ -325,7 +327,8 @@ function createNonConformitiesResolvedTrendStore() {
      */
     withComputed((store) => {
       const platformId: object = inject(PLATFORM_ID);
-      const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+      const activeOrganizationStore: ActiveOrganizationStore =
+        inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
       return {
         loadParams: computed<OrganizationDashboardNonConformityTrendResourceParams | undefined>(
@@ -361,7 +364,8 @@ function createNonConformitiesResolvedTrendStore() {
      */
     withHooks((store) => {
       const platformId: object = inject(PLATFORM_ID);
-      const activeOrganizationStore: ActiveOrganizationStore = inject(ActiveOrganizationStore);
+      const activeOrganizationStore: ActiveOrganizationStore =
+        inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
       return {
         /**

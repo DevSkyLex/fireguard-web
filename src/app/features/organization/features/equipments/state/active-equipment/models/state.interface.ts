@@ -31,19 +31,19 @@ export interface ActiveEquipmentState {
   readonly selectedEquipment: EquipmentOutput | null;
 
   /**
-   * Property getOperation
+   * Property getCallState
    * @readonly
    *
    * @description
-   * Loading / error state for fetching the selected equipment.
+   * Call state for fetching the selected equipment.
    *
-   * This operation is managed by the resolver and DashboardLayout, not by
+   * This call state is managed by the resolver and DashboardLayout, not by
    * the store itself, but it's included here for convenience since it's
    * tightly coupled to the selected equipment.
    *
    * @since 1.0.0
    *
-   * @type {Operation<EquipmentOutput | null, unknown>}
+   * @type {CallState<EquipmentOutput | null>}
    */
   readonly getCallState: CallState<EquipmentOutput | null>;
   //#endregion

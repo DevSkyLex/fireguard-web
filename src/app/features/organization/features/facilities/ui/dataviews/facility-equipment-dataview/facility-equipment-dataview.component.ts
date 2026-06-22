@@ -30,7 +30,7 @@ import { FacilityOverviewStore } from '@features/organization/features/facilitie
 export class FacilityEquipmentDataview {
   //#region Properties
   protected readonly store: InstanceType<typeof FacilityOverviewStore> =
-    inject(FacilityOverviewStore);
+    inject<FacilityOverviewStore>(FacilityOverviewStore);
 
   protected readonly equipment: Signal<ReadonlyArray<EquipmentOutput>> = computed<
     ReadonlyArray<EquipmentOutput>

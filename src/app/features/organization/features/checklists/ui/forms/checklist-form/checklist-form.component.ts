@@ -41,7 +41,8 @@ export class ChecklistForm {
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
 
   /** Non-nullable builder used to preserve strict form value types. */
-  private readonly formBuilder: NonNullableFormBuilder = inject(NonNullableFormBuilder);
+  private readonly formBuilder: NonNullableFormBuilder =
+    inject<NonNullableFormBuilder>(NonNullableFormBuilder);
 
   /** Strictly typed checklist creation form. */
   protected readonly form = this.formBuilder.group({

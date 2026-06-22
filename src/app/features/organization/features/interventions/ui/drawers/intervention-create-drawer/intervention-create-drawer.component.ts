@@ -107,6 +107,21 @@ export class InterventionCreateDrawer {
   public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> = input<
     readonly MemberSelectOption[]
   >([]);
+
+  /**
+   * Input initialPlannedStartAt
+   * @readonly
+   *
+   * @description
+   * Optional planned start date forwarded to the hosted form so opening the
+   * drawer from a calendar day pre-fills that day's schedule.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<Date | null>}
+   */
+  public readonly initialPlannedStartAt: InputSignal<Date | null> = input<Date | null>(null);
   //#endregion
 
   //#region Outputs

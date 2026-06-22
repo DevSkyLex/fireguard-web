@@ -19,7 +19,11 @@ This subfeature is responsible for:
 
 ## Routes
 
-- `/organizations/:organizationId/interventions`
+- `/organizations/:organizationId/interventions` — index page hosting the planner
+  table and the scheduling calendar as two views switched via `?view=list|calendar`.
+- `/organizations/:organizationId/interventions/my` — field-agent personal queue.
+- `/organizations/:organizationId/interventions/calendar` — convenience entry that
+  opens the index page on its calendar view (same `InterventionsPage`).
 - `/organizations/:organizationId/interventions/:interventionId`
 
 ## State and Data Access
@@ -28,6 +32,7 @@ Stores:
 
 - `InterventionStore` — root-scoped; intervention list and creation (normalized entities + request state).
 - `InterventionWorkspaceStore` — component-scoped (provided in `InterventionDetailPage`); the active intervention workspace (intervention, work items, changes, issues) with online/offline mutations.
+- `InterventionCalendarStore` — component-scoped (provided in `InterventionsPage`); every organization intervention plus the current member IRI driving the calendar view's All/Mine scope. Loaded lazily, only while the calendar view is active.
 
 Data-access (transport boundary — `data-access/`):
 
@@ -105,8 +110,8 @@ badge and the select option follow automatically.
 - **Architecture**: keep the `models/` (interfaces, types and the small pure
   utils that operate on them) · `data-access/` (HTTP + local IndexedDB
   transport) · `services/` (behavior coordinators) · `state/` (SignalStore) ·
-  `ui/` split. `ui/` holds `pages/`, `forms/`, `tables/`, `components/`; one folder per
-  unit with an `index.ts` barrel. **Shared types/data live in `models/`** —
+  `ui/` split. `ui/` holds `pages/`, `forms/`, `tables/`, `dataviews/`,
+  `drawers/`, `components/`; one folder per unit with an `index.ts` barrel. **Shared types/data live in `models/`** —
   co-located in the unit's own `models/` folder, or in the feature-level
   `models/` when used across components. Do NOT invent sibling layers (e.g. a
   `presentation/` folder). Presentational components stay dumb (inputs/outputs

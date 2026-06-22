@@ -17,6 +17,7 @@ type InterventionPreparePanelHarness = {
   readonly canSubmitPlan: () => boolean;
   readonly canAddWorkItem: () => boolean;
   readonly canDeleteWorkItem: () => boolean;
+  readonly planActionVisible: () => boolean;
   addWorkItem(values: InterventionWorkItemFormValues): void;
   readonly createWorkItem: {
     subscribe(listener: (value: CreateInterventionWorkItemInput) => void): { unsubscribe(): void };
@@ -109,6 +110,11 @@ describe('InterventionPreparePanel', () => {
 
     expect(component.canSubmitPlan()).toBe(false);
     expect(component.canAddWorkItem()).toBe(false);
+  });
+
+  it('should surface the plan action bar only for a draft the user may plan', () => {
+    expect(createComponent({ canPlan: true }).planActionVisible()).toBe(true);
+    expect(createComponent({ canPlan: false }).planActionVisible()).toBe(false);
   });
 
   it('should map and emit a planned work item from the form values', () => {

@@ -1,0 +1,70 @@
+<div class="flex h-full flex-col">
+  <div
+    class="grid shrink-0 grid-cols-7 border-b border-surface-200 bg-surface-50 dark:border-surface-800 dark:bg-surface-900/60"
+  >
+    @for (label of weekdayLabels(); track label) {
+      <div
+        class="px-2 py-2 text-center text-xs font-medium tracking-wide text-surface-500 dark:text-surface-400"
+      >
+        {{ label }}
+      </div>
+    }
+  </div>
+
+  <div class="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 overflow-y-auto">
+    @for (day of days(); track day.date.getTime()) {
+      <div
+        class="group flex min-h-20 flex-col gap-1 border-r border-b border-surface-100 p-1.5 sm:min-h-28 dark:border-surface-800/70 [&:nth-child(7n)]:border-r-0"
+        [class]="day.inMonth ? '' : 'bg-surface-50/70 dark:bg-surface-950/40'"
+      >
+        <div class="flex items-center justify-between">
+          <span
+            class="grid size-6 place-items-center rounded-full text-xs font-medium tabular-nums"
+            [class]="
+              day.isToday
+                ? 'bg-primary-500 text-white'
+                : day.inMonth
+                  ? 'text-surface-700 dark:text-surface-200'
+                  : 'text-surface-400 dark:text-surface-600'
+            "
+          >
+            {{ day.date.getDate() }}
+          </span>
+          <button
+            type="button"
+            class="grid size-5 cursor-pointer place-items-center rounded text-surface-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-surface-100 hover:text-surface-700 focus-visible:opacity-100 motion-reduce:transition-none max-sm:opacity-100 dark:hover:bg-surface-800 dark:hover:text-surface-200"
+            [attr.aria-label]="'Create on ' + (day.date | date: 'longDate')"
+            (click)="dayCreate.emit(day.date)"
+          >
+            <i class="pi pi-plus text-[0.65rem]" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          @for (event of visibleEvents(day); track event.id) {
+            <button
+              type="button"
+              class="w-full cursor-pointer rounded text-left transition-colors hover:bg-surface-100 motion-reduce:transition-none dark:hover:bg-surface-800"
+              [attr.aria-label]="'Open ' + event.title"
+              (click)="eventClick.emit(event)"
+            >
+              <ng-container
+                [ngTemplateOutlet]="eventTemplate()"
+                [ngTemplateOutletContext]="{ $implicit: event }"
+              />
+            </button>
+          }
+          @if (overflowCount(day) > 0) {
+            <button
+              type="button"
+              class="cursor-pointer px-1.5 text-left text-xs font-medium text-surface-500 hover:text-primary-600 dark:text-surface-400 dark:hover:text-primary-400"
+              (click)="daySelect.emit(day.date)"
+            >
+              +{{ overflowCount(day) }} more
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

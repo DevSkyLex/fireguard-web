@@ -74,9 +74,12 @@ const PARTICIPANT_AVATAR_LIMIT = 5;
  * read-only properties rail (status, priority, people, site, schedule) ending
  * in a planning-readiness checklist and the "Plan intervention" action. Editing
  * is delegated to the planning and work-item forms hosted in side drawers; all
- * persistence and navigation stay with the parent page through outputs.
+ * persistence and navigation stay with the parent page through outputs. The
+ * primary "Plan intervention" action is surfaced as a workspace action bar
+ * (a tinted action band on desktop, a thumb-zone bottom bar on field viewports)
+ * with the readiness checklist demoted to supporting detail in the rail.
  *
- * @version 2.0.0
+ * @version 2.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -568,6 +571,26 @@ export class InterventionPreparePanel {
    */
   protected readonly canDeleteWorkItem: Signal<boolean> = computed<boolean>(
     () => this.canAddWorkItem() && this.online(),
+  );
+
+  /**
+   * Property planActionVisible
+   * @readonly
+   *
+   * @description
+   * Whether the "Plan intervention" action bar is shown: the user may plan and
+   * the intervention is still a draft. Planning is only the next step from a
+   * draft, so the bar (and its disabled-while-incomplete CTA) is suppressed for
+   * read-only viewers and for non-draft prepare-phase statuses, avoiding a
+   * permanently dead control pinned to the field viewport.
+   *
+   * @access protected
+   * @since 2.3.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly planActionVisible: Signal<boolean> = computed<boolean>(
+    () => this.canPlan() && this.intervention().status === 'draft',
   );
   //#endregion
 

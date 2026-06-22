@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/cor
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { ProgressBarModule } from 'primeng/progressbar';
-import { ScrollerModule } from 'primeng/scroller';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ConnectivityService } from '@core/services/connectivity';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
@@ -29,14 +28,7 @@ import { EmptyState } from '@shared/components';
  */
 @Component({
   selector: 'app-my-interventions-page',
-  imports: [
-    ButtonModule,
-    EmptyState,
-    InterventionTag,
-    ProgressBarModule,
-    ScrollerModule,
-    SkeletonModule,
-  ],
+  imports: [ButtonModule, EmptyState, InterventionTag, ProgressBarModule, SkeletonModule],
   providers: [MyInterventionsStore],
   templateUrl: './my-interventions.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -151,6 +143,30 @@ export class MyInterventionsPage {
         intervention.id,
       ]);
     }
+  }
+
+  /**
+   * Method siteLabel
+   * @method siteLabel
+   *
+   * @description
+   * Human-readable site label for a card. The cached field list carries the site
+   * as a resource IRI rather than a resolved name, so an unresolved `/api/` value
+   * is treated as no label (the template then shows the offline fallback) instead
+   * of exposing a raw IRI to the field agent.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {InterventionOutput} intervention - Intervention to read the site from.
+   *
+   * @returns {string | null} Display label, or null when nothing useful to show.
+   */
+  protected siteLabel(intervention: InterventionOutput): string | null {
+    const site: string | null = intervention.site;
+    if (!site) return null;
+
+    return site.startsWith('/api/') ? null : site;
   }
   //#endregion
 }

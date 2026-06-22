@@ -35,7 +35,7 @@
           <div>
             <h2 class="text-xl font-semibold capitalize">{{ next.action.replace('_', ' ') }}</h2>
             <p class="mt-1 text-sm text-surface-600 dark:text-surface-300">
-              {{ next.target || 'Site-level work item' }}
+              {{ nextTargetLabel() || 'Site-level work item' }}
             </p>
           </div>
           <p-button

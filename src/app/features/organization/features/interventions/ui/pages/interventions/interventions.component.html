@@ -1,0 +1,71 @@
+<div id="interventions" class="flex h-full flex-col gap-4">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <span id="interventions-view-label" class="sr-only">View</span>
+    <p-selectbutton
+      [options]="viewOptions"
+      [allowEmpty]="false"
+      optionLabel="label"
+      optionValue="value"
+      size="small"
+      ariaLabelledBy="interventions-view-label"
+      pTooltip="Toggle list / calendar (V)"
+      tooltipPosition="bottom"
+      [ngModel]="view()"
+      [ngModelOptions]="{ standalone: true }"
+      (ngModelChange)="setView($event)"
+    >
+      <ng-template #item let-item>
+        <span class="flex items-center gap-2">
+          <i [class]="item.icon" aria-hidden="true"></i>
+          <span>{{ item.label }}</span>
+        </span>
+      </ng-template>
+    </p-selectbutton>
+
+    <p-button
+      label="New intervention"
+      icon="pi pi-plus"
+      severity="primary"
+      size="small"
+      (onClick)="openCreate()"
+    />
+  </div>
+
+  @if (view() === 'calendar') {
+    <app-intervention-calendar
+      class="flex min-h-0 flex-1 flex-col"
+      [interventions]="calendarStore.interventions()"
+      [loading]="calendarStore.loading()"
+      [currentMemberIri]="calendarStore.currentMemberIri()"
+      [showCreate]="false"
+      (selectIntervention)="onView($event)"
+      (selectDay)="openCreateOnDay($event)"
+    />
+  } @else {
+    <app-intervention-table
+      class="flex min-h-0 flex-1 flex-col"
+      [interventions]="store.interventionList()"
+      [total]="store.totalInterventions()"
+      [loading]="store.isLoadingInterventions()"
+      [empty]="store.isEmpty()"
+      [initialPage]="page()"
+      [showHeading]="false"
+      [showCreate]="false"
+      (load)="onLoad($event)"
+      (pageChange)="onPageChange($event)"
+      (createRequested)="openCreate()"
+      (view)="onView($event)"
+    />
+  }
+</div>
+
+<app-intervention-create-drawer
+  [visible]="createDrawerVisible()"
+  (visibleChange)="createDrawerVisible.set($event)"
+  [loading]="creating()"
+  [optionsLoading]="planningOptions.loading()"
+  [siteOptions]="planningOptions.sites()"
+  [memberOptions]="planningOptions.members()"
+  [initialPlannedStartAt]="initialPlannedStartAt()"
+  (submitted)="create($event)"
+/>

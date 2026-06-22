@@ -122,6 +122,22 @@ export class InterventionCreateForm {
   public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> = input<
     readonly MemberSelectOption[]
   >([]);
+
+  /**
+   * Property initialPlannedStartAt
+   * @readonly
+   *
+   * @description
+   * Optional planned start date to pre-fill (e.g. the day clicked in the
+   * calendar). Applied only while the planned-start control is untouched, so it
+   * seeds the field without clobbering a value the user has edited.
+   *
+   * @access public
+   * @since 1.3.0
+   *
+   * @type {InputSignal<Date | null>}
+   */
+  public readonly initialPlannedStartAt: InputSignal<Date | null> = input<Date | null>(null);
   //#endregion
 
   //#region Outputs
@@ -257,6 +273,13 @@ export class InterventionCreateForm {
         this.form.disable({ emitEvent: false });
       } else {
         this.form.enable({ emitEvent: false });
+      }
+    });
+
+    effect(() => {
+      const initial: Date | null = this.initialPlannedStartAt();
+      if (initial && this.form.controls.plannedStartAt.untouched) {
+        this.form.controls.plannedStartAt.setValue(initial);
       }
     });
   }

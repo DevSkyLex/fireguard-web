@@ -1,19 +1,8 @@
-<div class="flex h-full min-h-0 flex-col gap-6">
-  <header class="flex items-start gap-4 border-b border-surface-200 pb-5 dark:border-surface-800">
-    <span
-      class="grid size-11 shrink-0 place-items-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400"
-      aria-hidden="true"
-    >
-      <i class="pi pi-compass text-lg"></i>
-    </span>
-    <div class="min-w-0">
-      <h1 class="text-2xl font-semibold text-balance">My interventions</h1>
-      <p class="mt-1 max-w-2xl text-sm text-surface-600 dark:text-surface-300">
-        Planned interventions are prepared for offline use. Open one to continue from the next
-        recommended action.
-      </p>
-    </div>
-  </header>
+<div class="flex flex-col gap-6">
+  <p class="max-w-2xl text-sm text-surface-600 dark:text-surface-300">
+    Planned interventions are prepared for offline use. Open one to continue from the next
+    recommended action.
+  </p>
 
   @if (store.loading()) {
     <div class="grid gap-3">
@@ -31,64 +20,61 @@
       }
     </div>
   } @else if (store.activeInterventions().length > 0) {
-    <p-scroller
-      class="min-h-0 flex-1"
-      [items]="[...store.activeInterventions()]"
-      [itemSize]="140"
-      scrollHeight="100%"
-    >
-      <ng-template pTemplate="item" let-intervention>
-        <article
-          class="group mr-2 mb-3 rounded-xl border border-surface-200 bg-surface-0 p-4 transition-colors duration-200 hover:border-primary-300 motion-reduce:transition-none dark:border-surface-800 dark:bg-surface-950 dark:hover:border-primary-800"
-        >
-          <div class="flex items-start justify-between gap-4">
-            <div class="min-w-0">
-              <div class="flex flex-wrap items-center gap-2">
-                <h2 class="truncate font-semibold text-surface-900 dark:text-surface-100">
-                  {{ intervention.name }}
-                </h2>
-                <app-intervention-tag kind="status" [value]="intervention.status" />
-                @if (intervention.priority === 'urgent' || intervention.priority === 'high') {
-                  <app-intervention-tag kind="priority" [value]="intervention.priority" />
-                }
+    <ul class="grid gap-3">
+      @for (intervention of store.activeInterventions(); track intervention.id) {
+        <li>
+          <article
+            class="group rounded-xl border border-surface-200 bg-surface-0 p-4 transition-colors duration-200 hover:border-primary-300 motion-reduce:transition-none dark:border-surface-800 dark:bg-surface-950 dark:hover:border-primary-800"
+          >
+            <div class="flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h2 class="truncate font-semibold text-surface-900 dark:text-surface-100">
+                    {{ intervention.name }}
+                  </h2>
+                  <app-intervention-tag kind="status" [value]="intervention.status" />
+                  @if (intervention.priority === 'urgent' || intervention.priority === 'high') {
+                    <app-intervention-tag kind="priority" [value]="intervention.priority" />
+                  }
+                </div>
+                <p
+                  class="mt-1.5 flex items-center gap-1.5 truncate text-sm text-surface-600 dark:text-surface-300"
+                >
+                  <i class="pi pi-map-marker text-xs text-surface-400" aria-hidden="true"></i>
+                  {{ siteLabel(intervention) || 'Site not available locally' }}
+                </p>
               </div>
-              <p
-                class="mt-1.5 flex items-center gap-1.5 truncate text-sm text-surface-600 dark:text-surface-300"
-              >
-                <i class="pi pi-map-marker text-xs text-surface-400" aria-hidden="true"></i>
-                {{ intervention.site || 'Site not available locally' }}
-              </p>
+              <p-button
+                label="Open"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                (onClick)="openIntervention(intervention)"
+              />
             </div>
-            <p-button
-              label="Open"
-              icon="pi pi-arrow-right"
-              iconPos="right"
-              (onClick)="openIntervention(intervention)"
-            />
-          </div>
-          <div class="mt-4 flex items-center gap-3">
-            <p-progressbar
-              class="min-w-0 flex-1"
-              [value]="
-                intervention.workItemsCount
-                  ? (intervention.completedWorkItemsCount / intervention.workItemsCount) * 100
-                  : 0
-              "
-              [showValue]="false"
-            />
-            <span
-              class="shrink-0 text-sm font-medium text-surface-600 tabular-nums dark:text-surface-300"
-            >
-              {{ intervention.completedWorkItemsCount }}/{{ intervention.workItemsCount }}
-              <span class="text-surface-500">done</span>
-            </span>
-          </div>
-        </article>
-      </ng-template>
-    </p-scroller>
+            <div class="mt-4 flex items-center gap-3">
+              <p-progressbar
+                class="min-w-0 flex-1"
+                [value]="
+                  intervention.workItemsCount
+                    ? (intervention.completedWorkItemsCount / intervention.workItemsCount) * 100
+                    : 0
+                "
+                [showValue]="false"
+              />
+              <span
+                class="shrink-0 text-sm font-medium text-surface-600 tabular-nums dark:text-surface-300"
+              >
+                {{ intervention.completedWorkItemsCount }}/{{ intervention.workItemsCount }}
+                <span class="text-surface-500">done</span>
+              </span>
+            </div>
+          </article>
+        </li>
+      }
+    </ul>
   } @else {
     <div
-      class="grid flex-1 place-items-center rounded-xl border border-dashed border-surface-300 dark:border-surface-700"
+      class="grid place-items-center rounded-xl border border-dashed border-surface-300 p-10 dark:border-surface-700"
     >
       <app-empty-state
         icon="pi-inbox"

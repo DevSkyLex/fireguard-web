@@ -13,6 +13,7 @@ const intervention = { id: 'i-1', name: 'Spring audit', status: 'planned' } as I
 
 type MyInterventionsPageHarness = {
   openIntervention(intervention: InterventionOutput): void;
+  siteLabel(intervention: InterventionOutput): string | null;
 };
 
 describe('MyInterventionsPage', () => {
@@ -59,12 +60,24 @@ describe('MyInterventionsPage', () => {
     });
   });
 
-  it('should create and render the page heading', () => {
+  it('should create and render the intro and empty state', () => {
     const fixture = TestBed.createComponent(MyInterventionsPage);
     fixture.detectChanges();
 
     expect(fixture.componentInstance).toBeTruthy();
-    expect(fixture.nativeElement.textContent).toContain('My interventions');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Planned interventions are prepared for offline use',
+    );
+    expect(fixture.nativeElement.textContent).toContain('No interventions assigned');
+  });
+
+  it('should hide unresolved /api/ site IRIs from the card label', () => {
+    const fixture = TestBed.createComponent(MyInterventionsPage);
+    const harness = fixture.componentInstance as unknown as MyInterventionsPageHarness;
+
+    expect(harness.siteLabel({ ...intervention, site: '/api/facilities/abc' })).toBeNull();
+    expect(harness.siteLabel({ ...intervention, site: 'Warehouse A' })).toBe('Warehouse A');
+    expect(harness.siteLabel({ ...intervention, site: null })).toBeNull();
   });
 
   it('should navigate to the intervention workspace when an organization is active', () => {

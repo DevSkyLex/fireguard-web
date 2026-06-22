@@ -1,0 +1,45 @@
+<app-calendar
+  class="flex min-h-0 flex-1 flex-col"
+  [events]="events()"
+  [loading]="loading()"
+  [categoryGroups]="categoryGroups"
+  (eventClick)="onEventClick($event)"
+  (dayCreate)="selectDay.emit($event)"
+>
+  @if (showCreate()) {
+    <ng-template #actions>
+      <p-button
+        label="New intervention"
+        icon="pi pi-plus"
+        severity="primary"
+        size="small"
+        (onClick)="create.emit()"
+      />
+    </ng-template>
+  }
+
+  <!-- Compact chip for month / week cells -->
+  <ng-template #event let-event>
+    <span class="flex items-center gap-1.5 px-1.5 py-1 text-xs">
+      <i [class]="chipIconClass(event) + ' shrink-0 text-[0.6rem]'" aria-hidden="true"></i>
+      <span class="truncate text-surface-700 dark:text-surface-200">{{ event.title }}</span>
+    </span>
+  </ng-template>
+
+  <!-- Rich row for the agenda -->
+  <ng-template #eventDetail let-event>
+    <span class="flex w-full items-center justify-between gap-3">
+      <span class="min-w-0 truncate font-medium text-surface-900 dark:text-surface-100">
+        {{ event.title }}
+      </span>
+      <span class="flex shrink-0 items-center gap-1.5">
+        @if (
+          interventionOf(event).priority === 'urgent' || interventionOf(event).priority === 'high'
+        ) {
+          <app-intervention-tag kind="priority" [value]="interventionOf(event).priority" />
+        }
+        <app-intervention-tag kind="status" [value]="interventionOf(event).status" />
+      </span>
+    </span>
+  </ng-template>
+</app-calendar>

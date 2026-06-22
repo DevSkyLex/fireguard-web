@@ -1,0 +1,159 @@
+<div
+  class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+>
+  <div class="grid min-h-0 flex-1 lg:grid-cols-[15rem_minmax(0,1fr)]">
+    <!-- Configuration sidebar -->
+    @if (showSidebar()) {
+      <aside
+        class="border-surface-200 p-4 lg:block lg:min-h-0 lg:overflow-y-auto lg:border-r dark:border-surface-800"
+        [class.hidden]="!sidebarOpen()"
+        [class.border-b]="sidebarOpen()"
+      >
+        <app-calendar-sidebar
+          [focusedDate]="activeDate()"
+          [categoryGroups]="activeGroups()"
+          [weekStartsOn]="weekStartsOn()"
+          [today]="today"
+          (focusedDateChange)="focusDate($event)"
+          (categoryToggle)="toggleCategory($event)"
+        />
+      </aside>
+    }
+
+    <!-- Main pane: toolbar + view -->
+    <div class="flex min-h-0 min-w-0 flex-col">
+      <div
+        class="flex shrink-0 flex-col gap-3 border-b border-surface-200 p-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
+      >
+        <div class="flex items-center gap-1">
+          @if (showSidebar()) {
+            <p-button
+              icon="pi pi-sliders-h"
+              severity="secondary"
+              size="small"
+              [text]="true"
+              [rounded]="true"
+              class="lg:hidden"
+              ariaLabel="Toggle calendar configuration"
+              (onClick)="sidebarOpen.set(!sidebarOpen())"
+            />
+          }
+          <p-button
+            icon="pi pi-chevron-left"
+            severity="secondary"
+            size="small"
+            [text]="true"
+            [rounded]="true"
+            ariaLabel="Previous period"
+            (onClick)="previous()"
+          />
+          <h2
+            class="min-w-44 px-1 text-center text-base font-semibold text-surface-900 sm:text-left dark:text-surface-50"
+          >
+            {{ periodLabel() }}
+          </h2>
+          <p-button
+            icon="pi pi-chevron-right"
+            severity="secondary"
+            size="small"
+            [text]="true"
+            [rounded]="true"
+            ariaLabel="Next period"
+            (onClick)="next()"
+          />
+          <p-button
+            label="Today"
+            severity="secondary"
+            size="small"
+            [outlined]="true"
+            class="ml-1"
+            (onClick)="goToday()"
+          />
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          @if (viewOptions().length > 1) {
+            <p-selectButton
+              [options]="[...viewOptions()]"
+              [ngModel]="activeView()"
+              (ngModelChange)="setView($event)"
+              optionLabel="label"
+              optionValue="value"
+              [allowEmpty]="false"
+              size="small"
+              aria-label="Calendar view"
+            />
+          }
+          @if (actionsTemplate(); as actions) {
+            <ng-container [ngTemplateOutlet]="actions" />
+          }
+        </div>
+      </div>
+
+      <div class="min-h-0 flex-1">
+        @switch (activeView()) {
+          @case ('month') {
+            <app-calendar-month
+              class="block h-full"
+              [days]="monthDays()"
+              [weekdayLabels]="weekdayHeaders()"
+              [maxEventsPerDay]="maxEventsPerDay()"
+              [eventTemplate]="eventTemplate() ?? defaultEvent"
+              (eventClick)="eventClick.emit($event)"
+              (dayCreate)="dayCreate.emit($event)"
+              (daySelect)="openDay($event)"
+            />
+          }
+          @case ('week') {
+            <app-calendar-week
+              class="block h-full"
+              [weekDays]="weekDays()"
+              [hours]="weekHours()"
+              [eventTemplate]="eventTemplate() ?? defaultEvent"
+              (eventClick)="eventClick.emit($event)"
+              (dayCreate)="dayCreate.emit($event)"
+            />
+          }
+          @case ('agenda') {
+            <div class="h-full overflow-y-auto p-4">
+              @if (agendaDays().length > 0) {
+                <app-calendar-agenda
+                  [agendaDays]="agendaDays()"
+                  [today]="today"
+                  [eventTemplate]="eventDetailTemplate() ?? eventTemplate() ?? defaultDetail"
+                  (eventClick)="eventClick.emit($event)"
+                  (dayCreate)="dayCreate.emit($event)"
+                />
+              } @else {
+                <div class="grid place-items-center py-12">
+                  <app-empty-state
+                    icon="pi-calendar"
+                    title="Nothing scheduled this month"
+                    description="Events scheduled for this month will appear here."
+                  />
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Default templates -->
+<ng-template #defaultEvent let-event>
+  <span class="flex items-center gap-1.5 px-1.5 py-1 text-xs">
+    <span class="size-1.5 shrink-0 rounded-full" [class]="dotClass(event.tone)"></span>
+    <span class="truncate text-surface-700 dark:text-surface-200">{{ event.title }}</span>
+  </span>
+</ng-template>
+
+<ng-template #defaultDetail let-event>
+  <span class="flex items-center gap-2.5">
+    <span class="h-8 w-1 shrink-0 rounded-full" [class]="dotClass(event.tone)"></span>
+    <span class="truncate font-medium text-surface-900 dark:text-surface-100">{{
+      event.title
+    }}</span>
+  </span>
+</ng-template>

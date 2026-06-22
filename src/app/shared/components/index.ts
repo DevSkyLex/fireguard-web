@@ -7,7 +7,15 @@ export type { RadioCardOption } from './radio-card-group';
 export { SplashScreen } from './splash-screen';
 export { Tag } from './tag';
 export type { TagDescriptor, TagSeverity, TagVariant } from './tag';
-export { tagSeverityIconClass } from './tag';
+export { tagSeverityIconClass, tagSeverityDotClass } from './tag';
+export {
+  Calendar,
+  type CalendarEvent,
+  type CalendarView,
+  type CalendarCategory,
+  type CalendarCategoryGroup,
+  type CalendarConfig,
+} from './calendar';
 export { ThemeSwitcher, withThemeSwitcher } from './theme-switcher';
 export { TrendCard } from './trend-card';
 export type { MetricSummary } from './trend-card';

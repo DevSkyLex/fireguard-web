@@ -4,14 +4,18 @@
       <div
         class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 lg:flex-row lg:items-center lg:justify-between dark:border-surface-800"
       >
-        <div class="min-w-0">
-          <h2 class="font-semibold text-surface-950 dark:text-surface-0">Interventions</h2>
-          <p class="mt-1 text-sm text-surface-500 dark:text-surface-400">
-            Prepare field data, resolve blockers and publish when the intervention is ready.
-          </p>
-        </div>
+        @if (showHeading()) {
+          <div class="min-w-0">
+            <h2 class="font-semibold text-surface-950 dark:text-surface-0">Interventions</h2>
+            <p class="mt-1 text-sm text-surface-500 dark:text-surface-400">
+              Prepare field data, resolve blockers and publish when the intervention is ready.
+            </p>
+          </div>
+        }
 
-        <div class="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
+        <div
+          class="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto lg:justify-end"
+        >
           <p-select
             [options]="statusOptions"
             [formControl]="statusControl"
@@ -32,15 +36,27 @@
             </ng-template>
           </p-select>
 
-          <p-splitbutton
-            label="New intervention"
-            icon="pi pi-plus"
-            severity="primary"
-            size="small"
-            [model]="toolbarActions()"
-            class="w-full sm:w-auto"
-            (onClick)="onCreateRequested()"
-          />
+          @if (showCreate()) {
+            <p-splitbutton
+              label="New intervention"
+              icon="pi pi-plus"
+              severity="primary"
+              size="small"
+              [model]="toolbarActions()"
+              class="w-full sm:w-auto"
+              (onClick)="onCreateRequested()"
+            />
+          } @else {
+            <p-button
+              icon="pi pi-refresh"
+              severity="secondary"
+              size="small"
+              [text]="true"
+              [rounded]="true"
+              ariaLabel="Refresh interventions"
+              (onClick)="onRefresh()"
+            />
+          }
         </div>
       </div>
     </ng-template>
@@ -199,8 +215,16 @@
               <app-empty-state
                 icon="pi-compass"
                 title="No interventions yet"
-                description="Create a intervention when a site visit needs offline-ready facility, equipment and inspection preparation."
-              />
+                description="Create an intervention when a site visit needs offline-ready facility, equipment and inspection preparation."
+              >
+                <p-button
+                  label="New intervention"
+                  icon="pi pi-plus"
+                  severity="primary"
+                  size="small"
+                  (onClick)="onCreateRequested()"
+                />
+              </app-empty-state>
             </td>
           </tr>
         </ng-template>

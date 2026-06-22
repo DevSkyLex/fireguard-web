@@ -290,6 +290,32 @@ export class InterventionExecutePanel {
   public readonly submitIntervention: OutputEmitterRef<void> = output<void>();
 
   /**
+   * Property nextTargetLabel
+   * @readonly
+   *
+   * @description
+   * Human-readable target of the next recommended action. Mirrors the field work
+   * table's target resolution so the rail never exposes a raw resource IRI: the
+   * API-embedded summary label first, then a free-text target, and null for an
+   * unresolved resource IRI (rendered as site-level work by the template).
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly nextTargetLabel: Signal<string | null> = computed<string | null>(() => {
+    const item: InterventionWorkItemOutput | null = this.nextWorkItem();
+    if (!item) return null;
+    if (item.targetSummary) return item.targetSummary.label;
+
+    const target: string | null = item.target;
+    if (!target) return null;
+
+    return target.startsWith('/api/') ? null : target;
+  });
+
+  /**
    * Property submitChecks
    * @readonly
    *

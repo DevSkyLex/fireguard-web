@@ -1,0 +1,116 @@
+<div class="h-full overflow-auto">
+  <div class="min-w-[48rem]">
+    <!-- Sticky header zone: day headers + all-day row stay aligned with the
+         body because the single scroll container's scrollbar narrows them all. -->
+    <div class="sticky top-0 z-20 bg-surface-0 dark:bg-surface-900">
+      <!-- Day headers -->
+      <div
+        class="grid grid-cols-[3.5rem_repeat(7,1fr)] border-b border-surface-200 dark:border-surface-800"
+      >
+        <div class="border-r border-surface-100 dark:border-surface-800/70"></div>
+        @for (day of weekDays(); track day.date.getTime()) {
+          <div
+            class="group flex flex-col items-center gap-0.5 border-r border-surface-100 py-2 last:border-r-0 dark:border-surface-800/70"
+          >
+            <span
+              class="text-[0.7rem] font-medium tracking-wide text-surface-500 uppercase dark:text-surface-400"
+            >
+              {{ day.date | date: 'EEE' }}
+            </span>
+            <span
+              class="grid size-7 place-items-center rounded-full text-sm font-semibold tabular-nums"
+              [class]="
+                day.isToday ? 'bg-primary-500 text-white' : 'text-surface-800 dark:text-surface-100'
+              "
+            >
+              {{ day.date.getDate() }}
+            </span>
+            <button
+              type="button"
+              class="mt-0.5 grid size-5 cursor-pointer place-items-center rounded text-surface-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-surface-100 hover:text-surface-700 focus-visible:opacity-100 motion-reduce:transition-none max-sm:opacity-100 dark:hover:bg-surface-800 dark:hover:text-surface-200"
+              [attr.aria-label]="'Create on ' + (day.date | date: 'longDate')"
+              (click)="dayCreate.emit(day.date)"
+            >
+              <i class="pi pi-plus text-[0.65rem]" aria-hidden="true"></i>
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- All-day row -->
+      <div
+        class="grid grid-cols-[3.5rem_repeat(7,1fr)] border-b border-surface-200 dark:border-surface-800"
+      >
+        <div
+          class="flex items-center justify-end border-r border-surface-100 px-1.5 text-[0.65rem] text-surface-400 dark:border-surface-800/70"
+        >
+          all-day
+        </div>
+        @for (day of weekDays(); track day.date.getTime()) {
+          <div
+            class="flex min-h-9 flex-col gap-1 border-r border-surface-100 p-1 last:border-r-0 dark:border-surface-800/70"
+          >
+            @for (event of day.allDayEvents; track event.id) {
+              <button
+                type="button"
+                class="w-full cursor-pointer rounded text-left transition-colors hover:bg-surface-100 motion-reduce:transition-none dark:hover:bg-surface-800"
+                [attr.aria-label]="'Open ' + event.title"
+                (click)="eventClick.emit(event)"
+              >
+                <ng-container
+                  [ngTemplateOutlet]="eventTemplate()"
+                  [ngTemplateOutletContext]="{ $implicit: event }"
+                />
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Time grid body -->
+    <div class="grid grid-cols-[3.5rem_repeat(7,1fr)]">
+      <!-- Hour gutter -->
+      <div class="border-r border-surface-100 dark:border-surface-800/70">
+        @for (hour of hours(); track hour) {
+          <div class="relative h-14">
+            <span class="absolute -top-2 right-1.5 text-[0.65rem] text-surface-400 tabular-nums">
+              {{ hour }}:00
+            </span>
+          </div>
+        }
+      </div>
+
+      <!-- Day columns -->
+      @for (day of weekDays(); track day.date.getTime()) {
+        <div
+          class="relative cursor-pointer border-r border-surface-100 last:border-r-0 dark:border-surface-800/70"
+          [attr.aria-label]="'Create on ' + (day.date | date: 'longDate')"
+          (click)="dayCreate.emit(day.date)"
+        >
+          @for (hour of hours(); track hour) {
+            <div class="h-14 border-b border-surface-100 dark:border-surface-800/70"></div>
+          }
+
+          @for (timed of day.timedEvents; track timed.event.id) {
+            <button
+              type="button"
+              class="absolute z-10 cursor-pointer overflow-hidden rounded-md border border-surface-0 bg-surface-0 px-px text-left shadow-sm transition-shadow hover:shadow-md motion-reduce:transition-none dark:border-surface-900 dark:bg-surface-900"
+              [style.top.%]="timed.topPct"
+              [style.height.%]="timed.heightPct"
+              [style.left.%]="laneLeft(timed)"
+              [style.width.%]="laneWidth(timed)"
+              [attr.aria-label]="'Open ' + timed.event.title"
+              (click)="$event.stopPropagation(); eventClick.emit(timed.event)"
+            >
+              <ng-container
+                [ngTemplateOutlet]="eventTemplate()"
+                [ngTemplateOutletContext]="{ $implicit: timed.event }"
+              />
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

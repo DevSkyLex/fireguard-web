@@ -23,5 +23,6 @@ import { DashboardLayoutPageHeader } from '../dashboard-layout-page-header/dashb
   imports: [DashboardLayoutPageHeader],
   templateUrl: './dashboard-layout-content.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'flex min-h-full flex-col' },
 })
 export class DashboardLayoutContent {}

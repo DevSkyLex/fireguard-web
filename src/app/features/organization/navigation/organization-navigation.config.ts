@@ -180,7 +180,11 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ],
   },
 
-  /** Intervention workspace entry for field preparation and publication flows. */
+  /**
+   * Intervention workspace entry for field preparation and publication flows.
+   * Hosts both the planner table and the scheduling calendar through its own
+   * `?view=` switch, so the calendar no longer needs a separate destination.
+   */
   {
     id: 'interventions',
     label: 'Interventions',

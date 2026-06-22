@@ -1,175 +1,214 @@
-<div class="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-  <!-- Main document -->
-  <div class="flex min-w-0 flex-col gap-6">
-    <app-intervention-work-item-table
-      class="block"
-      [workItems]="workItems()"
-      [memberOptions]="memberOptions()"
-      [targetOptions]="targetOptions()"
-      [canManage]="canAddWorkItem()"
-      [canDelete]="canDeleteWorkItem()"
-      [saving]="saving()"
-      (add)="workItemDrawerVisible.set(true)"
-      (deleteWorkItems)="deleteWorkItems.emit($event)"
-    />
-  </div>
-
-  <!-- Properties rail -->
-  <aside class="min-w-0">
-    <app-card title="Properties" class="block h-full">
-      @if (canPlan() && intervention().status === 'draft') {
-        <ng-template #action>
-          <p-button
-            icon="pi pi-pencil"
-            severity="secondary"
-            size="small"
-            [text]="true"
-            [rounded]="true"
-            ariaLabel="Edit details"
-            (onClick)="editDrawerVisible.set(true)"
-          />
-        </ng-template>
-      }
-
-      <ng-template #content>
-        <dl class="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-x-3 gap-y-3.5 text-sm">
-          <dt class="text-surface-500 dark:text-surface-400">Status</dt>
-          <dd class="flex min-h-6 min-w-0 items-center">
-            <app-intervention-tag kind="status" [value]="intervention().status" variant="inline" />
-          </dd>
-
-          <dt class="text-surface-500 dark:text-surface-400">Priority</dt>
-          <dd class="flex min-h-6 min-w-0 items-center">
-            <app-intervention-tag
-              kind="priority"
-              [value]="intervention().priority"
-              variant="inline"
-            />
-          </dd>
-
-          <dt class="text-surface-500 dark:text-surface-400">Responsible</dt>
-          <dd class="flex min-h-6 min-w-0 items-center">
-            @if (responsibleMember(); as member) {
-              <app-intervention-member-option [option]="member" [compact]="true" />
-            } @else {
-              <span class="text-surface-400 dark:text-surface-500">Unassigned</span>
-            }
-          </dd>
-
-          <dt class="text-surface-500 dark:text-surface-400">Participants</dt>
-          <dd class="flex min-h-6 min-w-0 items-center">
-            @if (participantMembers().length) {
-              <p-avatar-group>
-                @for (member of visibleParticipants(); track member.value) {
-                  <p-avatar
-                    [image]="member.avatarUrl ?? undefined"
-                    [label]="member.avatarUrl ? undefined : member.initials"
-                    shape="circle"
-                    [pt]="participantAvatarPt"
-                    [pTooltip]="member.displayName"
-                    tooltipPosition="top"
-                  />
-                }
-                @if (participantOverflow(); as overflow) {
-                  <p-avatar
-                    [label]="'+' + overflow"
-                    shape="circle"
-                    [pt]="participantAvatarPt"
-                    [pTooltip]="participantOverflowNames()"
-                    tooltipPosition="top"
-                  />
-                }
-              </p-avatar-group>
-            } @else {
-              <span class="text-surface-400 dark:text-surface-500">None</span>
-            }
-          </dd>
-
-          <dt class="text-surface-500 dark:text-surface-400">Site</dt>
-          <dd class="flex min-h-6 min-w-0 items-center">
-            @if (siteLabel(); as site) {
-              <span class="flex min-w-0 items-center gap-1.5 font-medium">
-                <i class="pi pi-building shrink-0 text-sm text-surface-400" aria-hidden="true"></i>
-                <span class="truncate">{{ site }}</span>
-              </span>
-            } @else {
-              <span class="text-surface-400 dark:text-surface-500">No site</span>
-            }
-          </dd>
-
-          <div
-            class="col-span-2 my-1 border-t border-surface-200 dark:border-surface-800"
-            role="presentation"
-          ></div>
-
-          <dt class="text-surface-500 dark:text-surface-400">Start</dt>
-          <dd class="flex min-h-6 min-w-0 items-center font-medium">
-            @if (intervention().plannedStartAt; as start) {
-              <span class="flex items-center gap-1.5">
-                <i class="pi pi-calendar shrink-0 text-sm text-surface-400" aria-hidden="true"></i>
-                {{ start | date: 'MMM d, HH:mm' }}
-              </span>
-            } @else {
-              <span class="font-normal text-surface-400 dark:text-surface-500">Not set</span>
-            }
-          </dd>
-
-          <dt class="text-surface-500 dark:text-surface-400">Due</dt>
-          <dd class="flex min-h-6 min-w-0 items-center font-medium">
-            @if (intervention().dueAt; as due) {
-              <span class="flex items-center gap-1.5">
-                <i class="pi pi-calendar shrink-0 text-sm text-red-500/80" aria-hidden="true"></i>
-                {{ due | date: 'MMM d, HH:mm' }}
-              </span>
-            } @else {
-              <span class="font-normal text-surface-400 dark:text-surface-500">Not set</span>
-            }
-          </dd>
-        </dl>
-      </ng-template>
-
-      <ng-template #footer>
-        <div class="flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-surface-900 dark:text-surface-50">Ready to plan</h3>
+<div class="flex flex-col gap-6 lg:pb-0" [class.pb-24]="planActionVisible()">
+  @if (planActionVisible()) {
+    <!--
+      Plan action bar — the phase's destination. A borderless header row under the
+      stepper on desktop; a pinned thumb-zone bar on single-column/field viewports.
+      One canonical control: the readiness checklist in the rail stays as detail.
+    -->
+    <div
+      class="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-surface-200 bg-surface-0 px-4 py-3 lg:static lg:z-auto lg:rounded-xl lg:border-0 lg:bg-surface-100 lg:px-5 lg:py-3.5 dark:border-surface-800 dark:bg-surface-950 lg:dark:bg-surface-800/70"
+    >
+      <div class="flex min-w-0 items-center gap-3">
+        @if (canSubmitPlan()) {
           <span
-            class="rounded-md bg-surface-100 px-1.5 py-0.5 text-xs font-medium text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-300"
+            class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-600 dark:bg-green-500/15 dark:text-green-400"
           >
-            {{ readyCount() }} / 3
+            <i class="pi pi-check text-sm" aria-hidden="true"></i>
           </span>
-        </div>
+          <span class="truncate text-sm font-medium text-surface-900 dark:text-surface-50">
+            Ready to plan
+          </span>
+        } @else {
+          <span
+            class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400"
+          >
+            <i class="pi pi-exclamation-triangle text-sm" aria-hidden="true"></i>
+          </span>
+          <span class="truncate text-sm text-surface-600 dark:text-surface-300">
+            <span class="font-semibold text-surface-900 tabular-nums dark:text-surface-50"
+              >{{ readyCount() }} of 3</span
+            >
+            ready to plan
+          </span>
+        }
+      </div>
 
-        <ul class="mt-3 grid gap-2 text-sm">
-          @for (check of readinessChecks(); track check.label) {
-            <li class="flex items-center gap-2">
-              @if (check.done) {
-                <i
-                  class="pi pi-check-circle shrink-0 text-green-600 dark:text-green-400"
-                  aria-hidden="true"
-                ></i>
-                <span class="text-surface-700 dark:text-surface-200">{{ check.label }}</span>
+      <p-button
+        label="Plan intervention"
+        icon="pi pi-calendar"
+        [loading]="saving()"
+        [disabled]="!canSubmitPlan()"
+        (onClick)="planIntervention.emit()"
+      />
+    </div>
+  }
+
+  <div class="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <!-- Main document -->
+    <div class="flex min-w-0 flex-col gap-6">
+      <app-intervention-work-item-table
+        class="block"
+        [workItems]="workItems()"
+        [memberOptions]="memberOptions()"
+        [targetOptions]="targetOptions()"
+        [canManage]="canAddWorkItem()"
+        [canDelete]="canDeleteWorkItem()"
+        [saving]="saving()"
+        (add)="workItemDrawerVisible.set(true)"
+        (deleteWorkItems)="deleteWorkItems.emit($event)"
+      />
+    </div>
+
+    <!-- Properties rail -->
+    <aside class="min-w-0">
+      <app-card title="Properties" class="block h-full">
+        @if (canPlan() && intervention().status === 'draft') {
+          <ng-template #action>
+            <p-button
+              icon="pi pi-pencil"
+              severity="secondary"
+              size="small"
+              [text]="true"
+              [rounded]="true"
+              ariaLabel="Edit details"
+              (onClick)="editDrawerVisible.set(true)"
+            />
+          </ng-template>
+        }
+
+        <ng-template #content>
+          <dl class="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-x-3 gap-y-3.5 text-sm">
+            <dt class="text-surface-500 dark:text-surface-400">Status</dt>
+            <dd class="flex min-h-6 min-w-0 items-center">
+              <app-intervention-tag
+                kind="status"
+                [value]="intervention().status"
+                variant="inline"
+              />
+            </dd>
+
+            <dt class="text-surface-500 dark:text-surface-400">Priority</dt>
+            <dd class="flex min-h-6 min-w-0 items-center">
+              <app-intervention-tag
+                kind="priority"
+                [value]="intervention().priority"
+                variant="inline"
+              />
+            </dd>
+
+            <dt class="text-surface-500 dark:text-surface-400">Responsible</dt>
+            <dd class="flex min-h-6 min-w-0 items-center">
+              @if (responsibleMember(); as member) {
+                <app-intervention-member-option [option]="member" [compact]="true" />
               } @else {
-                <i
-                  class="pi pi-exclamation-circle shrink-0 text-amber-500 dark:text-amber-400"
-                  aria-hidden="true"
-                ></i>
-                <span class="text-surface-500 dark:text-surface-400">{{ check.label }}</span>
+                <span class="text-surface-400 dark:text-surface-500">Unassigned</span>
               }
-            </li>
-          }
-        </ul>
+            </dd>
 
-        <p-button
-          class="mt-4 block"
-          label="Plan intervention"
-          icon="pi pi-calendar"
-          [fluid]="true"
-          [loading]="saving()"
-          [disabled]="!canSubmitPlan()"
-          (onClick)="planIntervention.emit()"
-        />
-      </ng-template>
-    </app-card>
-  </aside>
+            <dt class="text-surface-500 dark:text-surface-400">Participants</dt>
+            <dd class="flex min-h-6 min-w-0 items-center">
+              @if (participantMembers().length) {
+                <p-avatar-group>
+                  @for (member of visibleParticipants(); track member.value) {
+                    <p-avatar
+                      [image]="member.avatarUrl ?? undefined"
+                      [label]="member.avatarUrl ? undefined : member.initials"
+                      shape="circle"
+                      [pt]="participantAvatarPt"
+                      [pTooltip]="member.displayName"
+                      tooltipPosition="top"
+                    />
+                  }
+                  @if (participantOverflow(); as overflow) {
+                    <p-avatar
+                      [label]="'+' + overflow"
+                      shape="circle"
+                      [pt]="participantAvatarPt"
+                      [pTooltip]="participantOverflowNames()"
+                      tooltipPosition="top"
+                    />
+                  }
+                </p-avatar-group>
+              } @else {
+                <span class="text-surface-400 dark:text-surface-500">None</span>
+              }
+            </dd>
+
+            <dt class="text-surface-500 dark:text-surface-400">Site</dt>
+            <dd class="flex min-h-6 min-w-0 items-center">
+              @if (siteLabel(); as site) {
+                <span class="flex min-w-0 items-center gap-1.5 font-medium">
+                  <i
+                    class="pi pi-building shrink-0 text-sm text-surface-400"
+                    aria-hidden="true"
+                  ></i>
+                  <span class="truncate">{{ site }}</span>
+                </span>
+              } @else {
+                <span class="text-surface-400 dark:text-surface-500">No site</span>
+              }
+            </dd>
+
+            <div
+              class="col-span-2 my-1 border-t border-surface-200 dark:border-surface-800"
+              role="presentation"
+            ></div>
+
+            <dt class="text-surface-500 dark:text-surface-400">Start</dt>
+            <dd class="flex min-h-6 min-w-0 items-center font-medium">
+              @if (intervention().plannedStartAt; as start) {
+                <span class="flex items-center gap-1.5">
+                  <i
+                    class="pi pi-calendar shrink-0 text-sm text-surface-400"
+                    aria-hidden="true"
+                  ></i>
+                  {{ start | date: 'MMM d, HH:mm' }}
+                </span>
+              } @else {
+                <span class="font-normal text-surface-400 dark:text-surface-500">Not set</span>
+              }
+            </dd>
+
+            <dt class="text-surface-500 dark:text-surface-400">Due</dt>
+            <dd class="flex min-h-6 min-w-0 items-center font-medium">
+              @if (intervention().dueAt; as due) {
+                <span class="flex items-center gap-1.5">
+                  <i class="pi pi-calendar shrink-0 text-sm text-red-500/80" aria-hidden="true"></i>
+                  {{ due | date: 'MMM d, HH:mm' }}
+                </span>
+              } @else {
+                <span class="font-normal text-surface-400 dark:text-surface-500">Not set</span>
+              }
+            </dd>
+          </dl>
+        </ng-template>
+
+        <ng-template #footer>
+          <h3 class="text-sm font-semibold text-surface-900 dark:text-surface-50">Ready to plan</h3>
+
+          <ul class="mt-3 grid gap-2 text-sm">
+            @for (check of readinessChecks(); track check.label) {
+              <li class="flex items-center gap-2">
+                @if (check.done) {
+                  <i
+                    class="pi pi-check-circle shrink-0 text-green-600 dark:text-green-400"
+                    aria-hidden="true"
+                  ></i>
+                  <span class="text-surface-700 dark:text-surface-200">{{ check.label }}</span>
+                } @else {
+                  <i
+                    class="pi pi-exclamation-circle shrink-0 text-amber-500 dark:text-amber-400"
+                    aria-hidden="true"
+                  ></i>
+                  <span class="text-surface-500 dark:text-surface-400">{{ check.label }}</span>
+                }
+              </li>
+            }
+          </ul>
+        </ng-template>
+      </app-card>
+    </aside>
+  </div>
 </div>
 
 <app-intervention-edit-drawer

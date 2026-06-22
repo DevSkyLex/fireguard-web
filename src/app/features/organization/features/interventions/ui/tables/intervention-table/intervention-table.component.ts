@@ -142,6 +142,37 @@ export class InterventionTable implements OnInit {
     1,
     { transform: (value: unknown): number => Math.max(1, numberAttribute(value, 1)) },
   );
+
+  /**
+   * Input showHeading
+   * @readonly
+   *
+   * @description
+   * Whether to render the card heading (title and description). Disabled when the
+   * parent page already provides the heading, to avoid a duplicated title.
+   *
+   * @access public
+   * @since 1.3.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly showHeading: InputSignal<boolean> = input<boolean>(true);
+
+  /**
+   * Input showCreate
+   * @readonly
+   *
+   * @description
+   * Whether to render the in-card creation action. Disabled when the parent page
+   * owns a single creation action shared across views; the toolbar then exposes
+   * only the refresh control, the status filter keeping its own clear affordance.
+   *
+   * @access public
+   * @since 1.3.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly showCreate: InputSignal<boolean> = input<boolean>(true);
   //#endregion
 
   //#region Outputs

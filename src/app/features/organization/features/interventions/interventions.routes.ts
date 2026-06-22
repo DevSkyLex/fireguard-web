@@ -3,7 +3,7 @@ import { organizationPermissionGuard } from '@features/organization/http/guards'
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { interventionTitleResolver } from './http/resolvers';
 import type { InterventionDetailPage } from './ui/pages/intervention-detail/intervention-detail.component';
-import type { InterventionListPage } from './ui/pages/intervention-list/intervention-list.component';
+import type { InterventionsPage } from './ui/pages/interventions/interventions.component';
 import type { MyInterventionsPage } from './ui/pages/my-interventions/my-interventions.component';
 
 /**
@@ -13,8 +13,11 @@ import type { MyInterventionsPage } from './ui/pages/my-interventions/my-interve
  * @description
  * Route tree for organization-scoped intervention workflows.
  *
- * - `/organizations/:organizationId/interventions` exposes the intervention list page
- *   used to start or resume field interventions.
+ * - `/organizations/:organizationId/interventions` exposes the interventions
+ *   index page, hosting the planner table and the scheduling calendar as two
+ *   interchangeable views (`?view=list|calendar`).
+ * - `/organizations/:organizationId/interventions/calendar` is a convenience
+ *   entry that opens the same index page on its calendar view.
  * - `/organizations/:organizationId/interventions/:interventionId` exposes the intervention
  *   detail page that orchestrates facilities, equipment and inspections for
  *   one intervention.
@@ -39,6 +42,18 @@ export const INTERVENTION_ROUTES: Routes = [
     title: 'My interventions',
   },
   {
+    path: 'calendar',
+    canActivate: [
+      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ] }),
+    ],
+    loadComponent: (): Promise<typeof InterventionsPage> =>
+      import('./ui/pages/interventions/interventions.component').then(
+        (module) => module.InterventionsPage,
+      ),
+    title: 'Calendar',
+    data: { view: 'calendar', breadcrumb: false },
+  },
+  {
     path: ':interventionId',
     canActivate: [
       organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ] }),
@@ -58,9 +73,9 @@ export const INTERVENTION_ROUTES: Routes = [
     canActivate: [
       organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ] }),
     ],
-    loadComponent: (): Promise<typeof InterventionListPage> =>
-      import('./ui/pages/intervention-list/intervention-list.component').then(
-        (module) => module.InterventionListPage,
+    loadComponent: (): Promise<typeof InterventionsPage> =>
+      import('./ui/pages/interventions/interventions.component').then(
+        (module) => module.InterventionsPage,
       ),
     title: 'Interventions',
     data: { breadcrumb: false, preload: true },

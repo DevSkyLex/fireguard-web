@@ -6,18 +6,23 @@
   >
     <div class="flex items-center gap-2">
       <i class="pi pi-wrench text-sm text-surface-500"></i>
-      <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">
+      <h2
+        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+        i18n="@@equipment.maint.title"
+      >
         Maintenance history
       </h2>
     </div>
-    <span class="text-xs text-surface-500">{{ logs().length }} event(s)</span>
+    <span class="text-xs text-surface-500" i18n="@@equipment.maint.eventCount"
+      >{{ logs().length }} event(s)</span
+    >
   </header>
   <p-table [value]="loading() ? skeletonItems : [...logs()]" dataKey="id" [stripedRows]="true">
     <ng-template pTemplate="header">
       <tr>
-        <th>Started</th>
-        <th>Completed</th>
-        <th>Status</th>
+        <th i18n="@@equipment.maint.colStarted">Started</th>
+        <th i18n="@@equipment.maint.colCompleted">Completed</th>
+        <th i18n="@@common.status">Status</th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-log>
@@ -30,12 +35,23 @@
       } @else {
         <tr>
           <td>{{ log.startedAt | date: 'medium' }}</td>
-          <td>{{ log.completedAt ? (log.completedAt | date: 'medium') : 'In progress' }}</td>
           <td>
-            <p-tag
-              [value]="log.completedAt ? 'Completed' : 'Active'"
-              [severity]="log.completedAt ? 'success' : 'warn'"
-            />
+            @if (log.completedAt) {
+              {{ log.completedAt | date: 'medium' }}
+            } @else {
+              <ng-container i18n="@@equipment.maint.inProgress">In progress</ng-container>
+            }
+          </td>
+          <td>
+            @if (log.completedAt) {
+              <p-tag
+                value="Completed"
+                i18n-value="@@equipment.maint.completed"
+                severity="success"
+              />
+            } @else {
+              <p-tag value="Active" i18n-value="@@equipment.maint.active" severity="warn" />
+            }
           </td>
         </tr>
       }
@@ -46,7 +62,9 @@
           <app-empty-state
             icon="pi-wrench"
             title="No maintenance history"
+            i18n-title="@@equipment.maint.emptyTitle"
             description="Lifecycle maintenance events will appear here."
+            i18n-description="@@equipment.maint.emptyDesc"
           />
         </td>
       </tr>

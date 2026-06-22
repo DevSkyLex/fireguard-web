@@ -190,19 +190,24 @@ export class AssetGrowthTrend {
    */
   protected readonly cardTitle: Signal<string> = computed<string>(() => {
     if (this.dashboardStore.canReadEquipment() && this.dashboardStore.canReadFacilities()) {
-      return 'Asset Growth Momentum';
+      return $localize`:@@org.trend.assetGrowth.titleBoth:Asset Growth Momentum`;
     }
 
     if (this.dashboardStore.canReadEquipment()) {
-      return 'Equipment Growth Momentum';
+      return $localize`:@@org.trend.assetGrowth.titleEquip:Equipment Growth Momentum`;
     }
 
     if (this.dashboardStore.canReadFacilities()) {
-      return 'Facility Growth Momentum';
+      return $localize`:@@org.trend.assetGrowth.titleFac:Facility Growth Momentum`;
     }
 
-    return 'Asset Growth Momentum';
+    return $localize`:@@org.trend.assetGrowth.titleBoth:Asset Growth Momentum`;
   });
+
+  /** Localized title for the asset-growth filter drawer. */
+  protected readonly filterDrawerTitle: Signal<string> = computed<string>(
+    () => $localize`:@@org.trend.assetGrowth.filterTitle:Asset Growth Filters`,
+  );
 
   /**
    * Property cardDescription
@@ -218,18 +223,18 @@ export class AssetGrowthTrend {
    */
   protected readonly cardDescription: Signal<string> = computed<string>(() => {
     if (this.dashboardStore.canReadEquipment() && this.dashboardStore.canReadFacilities()) {
-      return 'Equipment and facilities created over time';
+      return $localize`:@@org.trend.assetGrowth.descBoth:Equipment and facilities created over time`;
     }
 
     if (this.dashboardStore.canReadEquipment()) {
-      return 'Equipment created over time';
+      return $localize`:@@org.trend.assetGrowth.descEquip:Equipment created over time`;
     }
 
     if (this.dashboardStore.canReadFacilities()) {
-      return 'Facilities created over time';
+      return $localize`:@@org.trend.assetGrowth.descFac:Facilities created over time`;
     }
 
-    return 'Equipment and facilities created over time';
+    return $localize`:@@org.trend.assetGrowth.descBoth:Equipment and facilities created over time`;
   });
 
   /**
@@ -278,7 +283,7 @@ export class AssetGrowthTrend {
 
     if (canReadEquipment) {
       metrics.push({
-        label: 'Equipment Added',
+        label: $localize`:@@dash.metric.equipmentAdded:Equipment Added`,
         value: WHOLE_NUMBER_FMT.format(equipmentTotal),
         icon: 'pi pi-shield',
         comparison: buildDashboardComparison(
@@ -291,7 +296,7 @@ export class AssetGrowthTrend {
 
     if (canReadFacilities) {
       metrics.push({
-        label: 'Facilities Added',
+        label: $localize`:@@dash.metric.facilitiesAdded:Facilities Added`,
         value: WHOLE_NUMBER_FMT.format(facilityTotal),
         icon: 'pi pi-building',
         comparison: buildDashboardComparison(facilityTotal, previousFacilityTotal, compareEnabled),
@@ -301,7 +306,7 @@ export class AssetGrowthTrend {
     if (canReadEquipment && canReadFacilities) {
       metrics.push(
         {
-          label: 'Combined Growth',
+          label: $localize`:@@dash.metric.combinedGrowth:Combined Growth`,
           value: WHOLE_NUMBER_FMT.format(equipmentTotal + facilityTotal),
           icon: 'pi pi-arrow-up-right',
           comparison: buildDashboardComparison(
@@ -311,7 +316,7 @@ export class AssetGrowthTrend {
           ),
         },
         {
-          label: 'Equipment / Facility',
+          label: $localize`:@@dash.metric.equipPerFacility:Equipment / Facility`,
           value: `${DECIMAL_FMT.format(assetsPerFacility)}x`,
           icon: 'pi pi-percentage',
           comparison: null,
@@ -383,7 +388,7 @@ export class AssetGrowthTrend {
 
     if (canReadEquipment) {
       items.push({
-        label: 'View all equipment',
+        label: $localize`:@@dash.viewAll.equipment:View all equipment`,
         icon: PrimeIcons.SHIELD,
         routerLink: organizationId ? ['/organizations', organizationId, 'equipment'] : null,
       });
@@ -391,7 +396,7 @@ export class AssetGrowthTrend {
 
     if (canReadFacilities) {
       items.push({
-        label: 'View all facilities',
+        label: $localize`:@@dash.viewAll.facilities:View all facilities`,
         icon: PrimeIcons.BUILDING,
         routerLink: organizationId ? ['/organizations', organizationId, 'facilities'] : null,
       });

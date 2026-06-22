@@ -187,11 +187,11 @@ export class FacilityForm {
    * @type {{ label: string; value: FacilityType }[]}
    */
   protected readonly typeOptions: { label: string; value: FacilityType }[] = [
-    { label: 'Site', value: 'site' },
-    { label: 'Building', value: 'building' },
-    { label: 'Floor', value: 'floor' },
-    { label: 'Zone', value: 'zone' },
-    { label: 'Area', value: 'area' },
+    { label: $localize`:@@facilityType.site:Site`, value: 'site' },
+    { label: $localize`:@@facilityType.building:Building`, value: 'building' },
+    { label: $localize`:@@facilityType.floor:Floor`, value: 'floor' },
+    { label: $localize`:@@facilityType.zone:Zone`, value: 'zone' },
+    { label: $localize`:@@facilityType.area:Area`, value: 'area' },
   ];
 
   /**
@@ -209,7 +209,7 @@ export class FacilityForm {
    */
   protected get parentOptions(): { label: string; value: string }[] {
     return [
-      { label: 'None (root level)', value: '' },
+      { label: $localize`:@@facility.form.parentNone:None (root level)`, value: '' },
       ...this.parentFacilities().map((f: FacilityOutput) => ({
         label: `${f.name}${f.code ? ' (' + f.code + ')' : ''}`,
         value: f.id,
@@ -230,6 +230,23 @@ export class FacilityForm {
    */
   protected get isEditMode(): boolean {
     return this.facility() !== null;
+  }
+
+  /**
+   * Property submitLabel
+   *
+   * @description
+   * Localized submit button label, depending on create vs edit mode.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
+  protected get submitLabel(): string {
+    return this.isEditMode
+      ? $localize`:@@facility.form.save:Save Changes`
+      : $localize`:@@facility.form.create:Create Facility`;
   }
   //#endregion
 

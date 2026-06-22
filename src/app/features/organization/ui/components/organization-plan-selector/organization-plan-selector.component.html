@@ -16,13 +16,14 @@
       }
       <p class="text-sm text-surface-500 dark:text-surface-400">
         @if (cancelScheduled()) {
-          Cancels on {{ periodEndLabel() }}
+          <ng-container i18n="@@org.plan.cancelsOn">Cancels on {{ periodEndLabel() }}</ng-container>
         } @else if (periodEndLabel(); as end) {
-          Renews on {{ end }}
+          <ng-container i18n="@@org.plan.renewsOn">Renews on {{ end }}</ng-container>
         }
       </p>
     </div>
     <p-button
+      i18n-label="@@org.plan.manageBilling"
       label="Manage billing"
       icon="pi pi-credit-card"
       severity="secondary"
@@ -38,13 +39,21 @@
 <section class="mb-8">
   @if (billingStore.invoicesError()) {
     <!-- Error -->
-    <h3 class="mb-3 text-base font-medium text-surface-500 dark:text-surface-400">Invoices</h3>
+    <h3
+      i18n="@@org.plan.invoices"
+      class="mb-3 text-base font-medium text-surface-500 dark:text-surface-400"
+    >
+      Invoices
+    </h3>
     <div
       class="flex flex-col items-center gap-4 rounded-lg border border-surface-200 p-10 text-center dark:border-surface-800"
     >
       <i class="pi pi-exclamation-triangle text-2xl text-surface-400"></i>
-      <p class="text-sm text-surface-500 dark:text-surface-400">We couldn't load your invoices.</p>
+      <p i18n="@@org.plan.invoicesError" class="text-sm text-surface-500 dark:text-surface-400">
+        We couldn't load your invoices.
+      </p>
       <p-button
+        i18n-label="@@org.team.retry"
         label="Retry"
         icon="pi pi-refresh"
         severity="secondary"
@@ -62,7 +71,12 @@
 <!-- Plans -->
 <section class="mb-8">
   <div class="mb-3 flex items-center justify-between gap-3">
-    <h3 class="text-base font-medium text-surface-500 dark:text-surface-400">Plans</h3>
+    <h3
+      i18n="@@org.plan.plans"
+      class="text-base font-medium text-surface-500 dark:text-surface-400"
+    >
+      Plans
+    </h3>
     <!-- Cadence toggle -->
     <p-selectButton
       [options]="intervalOptions"
@@ -71,6 +85,7 @@
       optionLabel="label"
       optionValue="value"
       [allowEmpty]="false"
+      i18n-aria-label="@@org.plan.cadenceAria"
       aria-label="Billing cadence"
     />
   </div>
@@ -81,7 +96,7 @@
       class="flex items-center justify-center gap-3 rounded-lg border border-surface-200 p-10 text-surface-500 dark:border-surface-800 dark:text-surface-400"
     >
       <i class="pi pi-spin pi-spinner text-xl"></i>
-      <span>Loading plans…</span>
+      <span i18n="@@org.plan.loading">Loading plans…</span>
     </div>
   } @else if (store.plansError()) {
     <!-- Error -->
@@ -89,8 +104,16 @@
       class="flex flex-col items-center gap-4 rounded-lg border border-surface-200 p-10 text-center dark:border-surface-800"
     >
       <i class="pi pi-exclamation-triangle text-2xl text-surface-400"></i>
-      <p class="text-sm text-surface-500 dark:text-surface-400">We couldn't load the plans.</p>
-      <p-button label="Retry" icon="pi pi-refresh" severity="secondary" (onClick)="retryLoad()" />
+      <p i18n="@@org.plan.plansError" class="text-sm text-surface-500 dark:text-surface-400">
+        We couldn't load the plans.
+      </p>
+      <p-button
+        i18n-label="@@org.team.retry"
+        label="Retry"
+        icon="pi pi-refresh"
+        severity="secondary"
+        (onClick)="retryLoad()"
+      />
     </div>
   } @else {
     <!-- Plans grid -->
@@ -113,7 +136,12 @@
               }
             </div>
             @if (isCurrentPlan(plan)) {
-              <p-tag value="Current" severity="success" icon="pi pi-check" />
+              <p-tag
+                i18n-value="@@org.plan.current"
+                value="Current"
+                severity="success"
+                icon="pi pi-check"
+              />
             }
           </div>
 
@@ -124,7 +152,7 @@
             } @else if (isPaidPlan(plan)) {
               <span class="text-surface-400">—</span>
             } @else {
-              Free
+              <ng-container i18n="@@org.plan.free">Free</ng-container>
             }
           </p>
 
@@ -132,7 +160,10 @@
           <div
             class="flex flex-col gap-2.5 border-t border-surface-100 pt-4 dark:border-surface-800"
           >
-            <p class="text-xs font-medium text-surface-500 dark:text-surface-400">
+            <p
+              i18n="@@org.plan.includes"
+              class="text-xs font-medium text-surface-500 dark:text-surface-400"
+            >
               This plan includes
             </p>
             <ul class="flex flex-col gap-2">
@@ -149,6 +180,7 @@
           <div class="mt-auto pt-2">
             @if (isCurrentPlan(plan)) {
               <p-button
+                i18n-label="@@org.plan.currentPlan"
                 label="Current plan"
                 severity="secondary"
                 styleClass="w-full"
@@ -157,7 +189,7 @@
             } @else if (hasActiveSubscription()) {
               <!-- A subscription already exists: every change is a Portal switch -->
               <p-button
-                [label]="'Switch to ' + plan.name"
+                [label]="switchToLabel(plan.name)"
                 icon="pi pi-external-link"
                 iconPos="right"
                 severity="secondary"
@@ -168,6 +200,7 @@
               />
             } @else if (isPaidPlan(plan)) {
               <p-button
+                i18n-label="@@org.plan.subscribe"
                 label="Subscribe"
                 icon="pi pi-arrow-right"
                 iconPos="right"
@@ -178,6 +211,7 @@
               />
             } @else {
               <p-button
+                i18n-label="@@org.plan.switchToFree"
                 label="Switch to Free"
                 icon="pi pi-arrow-right"
                 iconPos="right"
@@ -193,7 +227,7 @@
         <div
           class="col-span-full rounded-lg border border-surface-200 p-10 text-center text-sm text-surface-500 dark:border-surface-800 dark:text-surface-400"
         >
-          No plans are available.
+          <ng-container i18n="@@org.plan.empty">No plans are available.</ng-container>
         </div>
       }
     </div>
@@ -203,7 +237,10 @@
 <!-- Cancel / resume subscription -->
 @if (hasActiveSubscription()) {
   <section>
-    <h3 class="mb-3 text-base font-medium text-surface-500 dark:text-surface-400">
+    <h3
+      i18n="@@org.plan.cancelSub"
+      class="mb-3 text-base font-medium text-surface-500 dark:text-surface-400"
+    >
       Cancel subscription
     </h3>
     <app-billing-cancel-card

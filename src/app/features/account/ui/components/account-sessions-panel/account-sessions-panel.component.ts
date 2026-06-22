@@ -60,11 +60,15 @@ export class AccountSessionsPanel {
   protected revoke(session: SessionOutput): void {
     if (session.isCurrent) return;
     this.confirmationService.confirm({
-      header: 'Revoke session',
-      message: `Revoke the session from ${session.browser || session.deviceType || 'this device'}?`,
+      header: $localize`:@@account.sessions.revokeHeader:Revoke session`,
+      message: $localize`:@@account.sessions.revokeConfirm:Revoke the session from ${session.browser || session.deviceType || 'this device'}:device:?`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Revoke', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: $localize`:@@common.revoke:Revoke`, severity: 'danger' },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () => {
         this.store.revoke(session.id);
         this.selectedSession.set(null);
@@ -75,11 +79,15 @@ export class AccountSessionsPanel {
   /** Confirms and revokes all other active sessions. */
   protected revokeAll(): void {
     this.confirmationService.confirm({
-      header: 'Revoke other sessions',
-      message: 'Revoke every active session except the current one?',
+      header: $localize`:@@account.sessions.revokeAllHeader:Revoke other sessions`,
+      message: $localize`:@@account.sessions.revokeAllConfirm:Revoke every active session except the current one?`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Revoke all', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: $localize`:@@common.revokeAll:Revoke all`, severity: 'danger' },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () => this.store.revokeAll(),
     });
   }

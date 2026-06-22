@@ -50,11 +50,15 @@ export class AccountTrustedDevicesPanel {
   /** Confirms and revokes one trusted device. */
   protected revoke(device: TrustedDeviceOutput): void {
     this.confirmationService.confirm({
-      header: 'Revoke trusted device',
-      message: `Revoke trusted device "${device.name}"?`,
+      header: $localize`:@@account.devices.revokeHeader:Revoke trusted device`,
+      message: $localize`:@@account.devices.revokeConfirm:Revoke trusted device "${device.name}:name:"?`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Revoke', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: $localize`:@@common.revoke:Revoke`, severity: 'danger' },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () => this.store.revokeDevice(device.id),
     });
   }
@@ -62,11 +66,15 @@ export class AccountTrustedDevicesPanel {
   /** Confirms and revokes all trusted devices. */
   protected revokeAll(): void {
     this.confirmationService.confirm({
-      header: 'Revoke all trusted devices',
-      message: 'All devices will require MFA verification again.',
+      header: $localize`:@@account.devices.revokeAllHeader:Revoke all trusted devices`,
+      message: $localize`:@@account.devices.revokeAllConfirm:All devices will require MFA verification again.`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Revoke all', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: $localize`:@@common.revokeAll:Revoke all`, severity: 'danger' },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () => this.store.revokeAllDevices(),
     });
   }

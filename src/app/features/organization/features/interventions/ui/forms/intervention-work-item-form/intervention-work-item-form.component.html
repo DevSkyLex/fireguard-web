@@ -3,11 +3,15 @@
     <div>
       <h2
         id="work-item-heading"
+        i18n="@@intervention.wif.title"
         class="text-lg font-semibold text-surface-900 dark:text-surface-100"
       >
         Work item
       </h2>
-      <p class="mt-0.5 text-sm text-surface-500 dark:text-surface-400">
+      <p
+        i18n="@@intervention.wif.hint"
+        class="mt-0.5 text-sm text-surface-500 dark:text-surface-400"
+      >
         Add a task to the prepared scope. Only an action is required — target and assignee can be
         set now or later during execution.
       </p>
@@ -15,7 +19,7 @@
 
     <div class="grid gap-5">
       <label class="grid gap-1.5 text-sm">
-        <span class="font-medium"
+        <span i18n="@@intervention.wif.action" class="font-medium"
           >Action <span class="text-red-500" aria-hidden="true">*</span></span
         >
         <p-select
@@ -37,7 +41,7 @@
       </label>
 
       <label class="grid gap-1.5 text-sm">
-        <span class="font-medium">Target resource</span>
+        <span i18n="@@intervention.wif.target" class="font-medium">Target resource</span>
         <p-select
           formControlName="target"
           [options]="[...targetOptions()]"
@@ -45,16 +49,17 @@
           optionValue="value"
           [filter]="true"
           [showClear]="true"
+          i18n-placeholder="@@intervention.wif.targetPlaceholder"
           placeholder="Optional site, facility or equipment target"
           appendTo="body"
         />
-        <small class="text-surface-500 dark:text-surface-400">
+        <small i18n="@@intervention.wif.targetHint" class="text-surface-500 dark:text-surface-400">
           Leave empty for site-level work.
         </small>
       </label>
 
       <label class="grid gap-1.5 text-sm">
-        <span class="font-medium">Assignee</span>
+        <span i18n="@@intervention.wif.assignee" class="font-medium">Assignee</span>
         <p-select
           formControlName="assignee"
           [options]="[...memberOptions()]"
@@ -63,6 +68,7 @@
           [filter]="true"
           filterBy="label,roleLabel"
           [showClear]="true"
+          i18n-placeholder="@@intervention.wif.assigneePlaceholder"
           placeholder="Assign this work item"
           appendTo="body"
         >
@@ -75,7 +81,10 @@
             }
           </ng-template>
         </p-select>
-        <small class="text-surface-500 dark:text-surface-400">
+        <small
+          i18n="@@intervention.wif.assigneeHint"
+          class="text-surface-500 dark:text-surface-400"
+        >
           Unassigned items can be picked up by any field agent.
         </small>
       </label>
@@ -84,6 +93,7 @@
 
   <div class="sticky bottom-0 -mb-2 bg-surface-0 pt-4 pb-2 dark:bg-surface-900">
     <p-button
+      i18n-label="@@intervention.wif.submit"
       label="Add to prepared scope"
       type="submit"
       icon="pi pi-plus"

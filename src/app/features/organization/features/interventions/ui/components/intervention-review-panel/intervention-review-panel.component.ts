@@ -81,6 +81,12 @@ export class InterventionReviewPanel {
   public readonly issues: InputSignal<readonly InterventionIssueOutput[]> =
     input.required<readonly InterventionIssueOutput[]>();
 
+  /** Localized validation-findings card subtitle with the issue count. */
+  protected readonly findingsDescription: Signal<string> = computed((): string => {
+    const count: number = this.issues().length;
+    return $localize`:@@intervention.review.findingsDesc:${count}:count: item(s) to resolve before publication`;
+  });
+
   /**
    * Property changes
    * @readonly
@@ -215,9 +221,18 @@ export class InterventionReviewPanel {
     const intervention: InterventionOutput = this.intervention();
 
     return [
-      { label: 'Submitted for review', done: intervention.status === 'submitted' },
-      { label: 'No blocking issues', done: (intervention.blockersCount ?? 0) === 0 },
-      { label: 'Connected to the network', done: this.online() },
+      {
+        label: $localize`:@@intervention.review.checkSubmitted:Submitted for review`,
+        done: intervention.status === 'submitted',
+      },
+      {
+        label: $localize`:@@intervention.review.checkNoIssues:No blocking issues`,
+        done: (intervention.blockersCount ?? 0) === 0,
+      },
+      {
+        label: $localize`:@@intervention.review.checkOnline:Connected to the network`,
+        done: this.online(),
+      },
     ];
   });
 

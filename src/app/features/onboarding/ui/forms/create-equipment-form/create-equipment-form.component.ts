@@ -92,18 +92,27 @@ export class CreateEquipmentForm {
    * @type {{ label: string; value: string }[]}
    */
   protected readonly equipmentTypes: { label: string; value: string }[] = [
-    { label: 'Fire extinguisher', value: 'fire_extinguisher' },
-    { label: 'Smoke detector', value: 'smoke_detector' },
-    { label: 'Heat detector', value: 'heat_detector' },
-    { label: 'Sprinkler', value: 'sprinkler' },
-    { label: 'Fire alarm panel', value: 'fire_alarm_panel' },
-    { label: 'Hydrant', value: 'hydrant' },
-    { label: 'Fire door', value: 'fire_door' },
-    { label: 'Emergency lighting', value: 'emergency_lighting' },
-    { label: 'Access control', value: 'access_control' },
-    { label: 'Camera', value: 'camera' },
-    { label: 'Gas detector', value: 'gas_detector' },
-    { label: 'Other', value: 'other' },
+    {
+      label: $localize`:@@equipmentType.fireExtinguisher:Fire extinguisher`,
+      value: 'fire_extinguisher',
+    },
+    { label: $localize`:@@equipmentType.smokeDetector:Smoke detector`, value: 'smoke_detector' },
+    { label: $localize`:@@equipmentType.heatDetector:Heat detector`, value: 'heat_detector' },
+    { label: $localize`:@@equipmentType.sprinkler:Sprinkler`, value: 'sprinkler' },
+    {
+      label: $localize`:@@equipmentType.fireAlarmPanel:Fire alarm panel`,
+      value: 'fire_alarm_panel',
+    },
+    { label: $localize`:@@equipmentType.hydrant:Hydrant`, value: 'hydrant' },
+    { label: $localize`:@@equipmentType.fireDoor:Fire door`, value: 'fire_door' },
+    {
+      label: $localize`:@@equipmentType.emergencyLighting:Emergency lighting`,
+      value: 'emergency_lighting',
+    },
+    { label: $localize`:@@equipmentType.accessControl:Access control`, value: 'access_control' },
+    { label: $localize`:@@equipmentType.camera:Camera`, value: 'camera' },
+    { label: $localize`:@@equipmentType.gasDetector:Gas detector`, value: 'gas_detector' },
+    { label: $localize`:@@equipmentType.other:Other`, value: 'other' },
   ];
 
   /**

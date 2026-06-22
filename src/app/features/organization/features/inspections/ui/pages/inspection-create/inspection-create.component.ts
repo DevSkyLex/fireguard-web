@@ -204,8 +204,8 @@ export class InspectionCreatePage {
       if (operation.status === 'success' && operation.data) {
         this.messageService.add({
           severity: 'success',
-          summary: 'Inspection created',
-          detail: 'The inspection has been created successfully.',
+          summary: $localize`:@@inspection.created.summary:Inspection created`,
+          detail: $localize`:@@inspection.created.detail:The inspection has been created successfully.`,
           life: 4000,
         });
         this.router.navigate(['..'], { relativeTo: this.route });
@@ -226,7 +226,7 @@ export class InspectionCreatePage {
 
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
+          summary: $localize`:@@common.error:Error`,
           detail: payload.message,
           life: 5000,
         });

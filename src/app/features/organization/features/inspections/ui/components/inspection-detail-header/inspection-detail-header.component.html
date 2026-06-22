@@ -5,7 +5,10 @@
     <p-avatar icon="pi pi-clipboard" shape="square" size="xlarge" />
     <div class="flex min-w-0 flex-col gap-1">
       <div class="flex flex-wrap items-center gap-2">
-        <h1 class="truncate text-2xl font-semibold text-surface-900 dark:text-surface-100">
+        <h1
+          i18n="@@inspection.header.title"
+          class="truncate text-2xl font-semibold text-surface-900 dark:text-surface-100"
+        >
           Inspection {{ inspection().performedAt | date: 'mediumDate' }}
         </h1>
         <p-tag
@@ -26,7 +29,7 @@
       <div class="flex flex-wrap items-center gap-3 text-sm text-surface-500 dark:text-surface-300">
         <span class="inline-flex items-center gap-1.5">
           <i class="pi pi-user text-xs"></i>
-          {{ inspection().inspector?.displayName || 'Unknown inspector' }}
+          {{ inspection().inspector?.displayName || unknownInspectorLabel }}
         </span>
         <span>{{ inspection().performedAt | date: 'medium' }}</span>
       </div>
@@ -36,6 +39,7 @@
     <div class="flex flex-wrap items-center gap-2">
       @if (inspection().status === 'draft') {
         <p-button
+          i18n-label="@@inspection.header.editDraft"
           label="Edit draft"
           icon="pi pi-pencil"
           severity="secondary"
@@ -44,6 +48,7 @@
           (onClick)="edit.emit()"
         />
         <p-button
+          i18n-label="@@inspection.header.submit"
           label="Submit"
           icon="pi pi-send"
           size="small"
@@ -51,6 +56,7 @@
           (onClick)="submitInspection.emit()"
         />
         <p-button
+          i18n-label="@@common.cancel"
           label="Cancel"
           icon="pi pi-times"
           severity="danger"
@@ -62,6 +68,7 @@
       }
       @if (inspection().status === 'submitted') {
         <p-button
+          i18n-label="@@inspection.header.close"
           label="Close inspection"
           icon="pi pi-lock"
           size="small"

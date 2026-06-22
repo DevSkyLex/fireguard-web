@@ -18,13 +18,13 @@ export const ERROR_ROUTES: Routes = [
     path: '404',
     loadComponent: () =>
       import('./ui/pages/not-found-page/not-found-page.component').then((m) => m.NotFoundPage),
-    title: 'Page not found',
+    title: $localize`:@@route.error.notFound:Page not found`,
   },
   {
     path: '403',
     loadComponent: () =>
       import('./ui/pages/forbidden-page/forbidden-page.component').then((m) => m.ForbiddenPage),
-    title: 'Access denied',
+    title: $localize`:@@route.error.forbidden:Access denied`,
   },
   {
     path: '500',
@@ -32,7 +32,7 @@ export const ERROR_ROUTES: Routes = [
       import('./ui/pages/server-error-page/server-error-page.component').then(
         (m) => m.ServerErrorPage,
       ),
-    title: 'Server error',
+    title: $localize`:@@route.error.serverError:Server error`,
   },
   {
     path: '**',

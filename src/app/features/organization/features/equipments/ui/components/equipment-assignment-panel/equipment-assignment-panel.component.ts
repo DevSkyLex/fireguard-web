@@ -45,6 +45,7 @@ export class EquipmentAssignmentPanel {
   /** Human-readable label of the currently assigned facility. */
   protected readonly currentFacilityLabel: Signal<string> = computed(
     () =>
-      this.options().find((option) => option.value === this.facilityId())?.label ?? 'Unassigned',
+      this.options().find((option) => option.value === this.facilityId())?.label ??
+      $localize`:@@equipment.unassigned:Unassigned`,
   );
 }

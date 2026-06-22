@@ -29,9 +29,13 @@
   <section class="flex min-h-0 flex-1 flex-col">
     <p-tabs [value]="activeTab()" [pt]="tabsPt" (valueChange)="activeTab.set(+$event!)">
       <p-tablist [pt]="tabListPt">
-        <p-tab [value]="0"><i class="pi pi-chart-line mr-2 text-sm"></i>Overview</p-tab>
+        <p-tab [value]="0"
+          ><i class="pi pi-chart-line mr-2 text-sm"></i
+          ><ng-container i18n="@@inspection.tab.overview">Overview</ng-container></p-tab
+        >
         <p-tab [value]="1"
-          ><i class="pi pi-exclamation-triangle mr-2 text-sm"></i>Non-conformities</p-tab
+          ><i class="pi pi-exclamation-triangle mr-2 text-sm"></i
+          ><ng-container i18n="@@inspection.tab.nc">Non-conformities</ng-container></p-tab
         >
       </p-tablist>
       <p-tabpanels [pt]="tabPanelsPt">
@@ -61,6 +65,7 @@
 </div>
 
 <p-dialog
+  i18n-header="@@inspection.ncDialog.header"
   header="Non-conformity details"
   [modal]="true"
   [visible]="selectedNonConformity() !== null"
@@ -70,20 +75,22 @@
   @if (selectedNonConformity(); as nonConformity) {
     <dl class="grid gap-4 sm:grid-cols-2">
       <div class="sm:col-span-2">
-        <dt class="text-xs text-surface-500">Description</dt>
+        <dt i18n="@@inspection.ncDialog.description" class="text-xs text-surface-500">
+          Description
+        </dt>
         <dd class="font-medium">{{ nonConformity.description }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-surface-500">Severity</dt>
+        <dt i18n="@@inspection.ncDialog.severity" class="text-xs text-surface-500">Severity</dt>
         <dd>{{ nonConformity.severity }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-surface-500">Status</dt>
+        <dt i18n="@@inspection.ncDialog.status" class="text-xs text-surface-500">Status</dt>
         <dd>{{ nonConformity.status }}</dd>
       </div>
       <div class="sm:col-span-2">
-        <dt class="text-xs text-surface-500">Notes</dt>
-        <dd class="whitespace-pre-line">{{ nonConformity.notes || 'No notes' }}</dd>
+        <dt i18n="@@inspection.ncDialog.notes" class="text-xs text-surface-500">Notes</dt>
+        <dd class="whitespace-pre-line">{{ nonConformity.notes || noNotesLabel }}</dd>
       </div>
     </dl>
   }

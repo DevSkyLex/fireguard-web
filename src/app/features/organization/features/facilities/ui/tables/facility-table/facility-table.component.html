@@ -7,7 +7,7 @@
         class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
       >
         <div class="flex items-center gap-2">
-          <h2 class="font-semibold">Facilities</h2>
+          <h2 i18n="@@facility.table.title" class="font-semibold">Facilities</h2>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -17,6 +17,7 @@
               pInputText
               type="text"
               pSize="small"
+              i18n-placeholder="@@facility.searchFacilities"
               placeholder="Search facilities..."
               [formControl]="searchControl"
               class="w-full"
@@ -30,6 +31,7 @@
               tooltipPosition="bottom"
             >
               <p-splitbutton
+                i18n-label="@@facility.newButton"
                 label="New facility"
                 icon="pi pi-plus"
                 severity="primary"
@@ -42,6 +44,7 @@
             </span>
           } @else {
             <p-button
+              i18n-label="@@common.refresh"
               label="Refresh"
               icon="pi pi-refresh"
               severity="secondary"
@@ -53,6 +56,7 @@
             />
 
             <p-button
+              i18n-label="@@common.clearFilters"
               label="Clear filters"
               icon="pi pi-filter-slash"
               severity="secondary"
@@ -81,6 +85,7 @@
         (onLazyLoad)="onLazyLoad($event)"
         [rowsPerPageOptions]="[12, 24, 48]"
         [showCurrentPageReport]="true"
+        i18n-currentPageReportTemplate="@@facility.table.pageReport"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} facilities"
         [stripedRows]="true"
         [pt]="tablePt()"
@@ -94,40 +99,40 @@
             }
             <th pSortableColumn="name" class="min-w-72">
               <div class="flex items-center gap-2">
-                <span>Facility</span>
+                <span i18n="@@facility.table.colFacility">Facility</span>
                 <p-sortIcon field="name" />
               </div>
             </th>
             <th class="min-w-32">
               <div class="flex items-center gap-2">
-                <span>Code</span>
+                <span i18n="@@facility.table.colCode">Code</span>
               </div>
             </th>
             <th pSortableColumn="type" class="min-w-36">
               <div class="flex items-center gap-2">
-                <span>Type</span>
+                <span i18n="@@facility.table.colType">Type</span>
                 <p-sortIcon field="type" />
               </div>
             </th>
             <th pSortableColumn="status" class="min-w-32">
               <div class="flex items-center gap-2">
-                <span>Status</span>
+                <span i18n="@@facility.table.colStatus">Status</span>
                 <p-sortIcon field="status" />
               </div>
             </th>
             <th class="min-w-36">
               <div class="flex items-center gap-2">
-                <span>Hierarchy</span>
+                <span i18n="@@facility.table.colHierarchy">Hierarchy</span>
               </div>
             </th>
             <th pSortableColumn="updatedAt" class="min-w-36">
               <div class="flex items-center gap-2">
-                <span>Updated</span>
+                <span i18n="@@facility.table.colUpdated">Updated</span>
                 <p-sortIcon field="updatedAt" />
               </div>
             </th>
             <th class="w-20">
-              <span class="sr-only">Actions</span>
+              <span i18n="@@facility.table.actions" class="sr-only">Actions</span>
             </th>
           </tr>
         </ng-template>
@@ -258,6 +263,7 @@
                   severity="secondary"
                   size="small"
                   [outlined]="true"
+                  i18n-ariaLabel="@@facility.table.rowActions"
                   ariaLabel="Facility actions"
                   (onClick)="onRowMenuToggle($event, facility)"
                 />
@@ -271,7 +277,9 @@
             <td [attr.colspan]="canManageFacilities() ? 8 : 7">
               <app-empty-state
                 icon="pi-sitemap"
+                i18n-title="@@facility.table.emptyTitle"
                 title="No facilities yet"
+                i18n-description="@@facility.table.emptyDesc"
                 description="Facilities are the sites and buildings your inspections cover."
               >
                 @if (canManageFacilities()) {
@@ -281,6 +289,7 @@
                     tooltipPosition="bottom"
                   >
                     <p-button
+                      i18n-label="@@facility.newButton"
                       label="New facility"
                       icon="pi pi-plus"
                       severity="primary"

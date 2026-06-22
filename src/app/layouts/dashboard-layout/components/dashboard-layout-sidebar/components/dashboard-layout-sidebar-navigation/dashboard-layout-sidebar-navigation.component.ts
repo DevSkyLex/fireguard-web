@@ -140,6 +140,25 @@ export class DashboardLayoutSidebarNavigation {
   });
 
   /**
+   * Property navAriaLabel
+   * @readonly
+   *
+   * @description
+   * Localized accessible label for the navigation landmark. Distinguishes
+   * the primary sidebar from the merged mobile-drawer navigation.
+   *
+   * @access protected
+   * @since 3.2.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly navAriaLabel: Signal<string> = computed<string>((): string =>
+    this.items()
+      ? $localize`:@@layout.nav.primaryAria:Primary navigation`
+      : $localize`:@@layout.nav.sidebarAria:Sidebar navigation`,
+  );
+
+  /**
    * Property exactMatchOptions
    * @readonly
    *

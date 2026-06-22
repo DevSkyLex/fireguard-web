@@ -210,7 +210,7 @@ export class InterventionFieldWorkTable {
    */
   protected readonly fieldActions: Signal<MenuItem[]> = computed((): MenuItem[] => [
     {
-      label: 'Scan QR',
+      label: $localize`:@@intervention.fwt.scanQr:Scan QR`,
       icon: PrimeIcons.QRCODE,
       disabled: this.saving() || !this.scanSupported(),
       command: (): void => this.scanQr.emit(),

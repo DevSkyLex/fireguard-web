@@ -11,16 +11,27 @@
           <span
             class="text-[10px] font-semibold tracking-widest text-surface-400 uppercase dark:text-surface-500"
           >
-            Equipment
+            <ng-container i18n="@@onboarding.equipment.eyebrow">Equipment</ng-container>
           </span>
           @if (!step().required) {
-            <p-tag value="Optional" severity="secondary" [rounded]="true" />
+            <p-tag
+              value="Optional"
+              i18n-value="@@common.optionalTag"
+              severity="secondary"
+              [rounded]="true"
+            />
           }
         </div>
-        <h2 class="text-xl font-semibold tracking-tight text-surface-900 dark:text-surface-0">
+        <h2
+          class="text-xl font-semibold tracking-tight text-surface-900 dark:text-surface-0"
+          i18n="@@onboarding.equipment.title"
+        >
           First equipment
         </h2>
-        <p class="mt-0.5 text-sm leading-relaxed text-surface-500 dark:text-surface-400">
+        <p
+          class="mt-0.5 text-sm leading-relaxed text-surface-500 dark:text-surface-400"
+          i18n="@@onboarding.equipment.subtitle"
+        >
           Register your first fire safety equipment (extinguisher, detector…).
         </p>
       </div>

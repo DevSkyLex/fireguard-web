@@ -2,9 +2,18 @@
   @if (store.listCallState().error; as error) {
     <p-message severity="error">
       <div class="flex flex-wrap items-center gap-3">
-        <span>{{ error.message ?? 'Active sessions could not be loaded.' }}</span>
+        <span>
+          @if (error.message; as message) {
+            {{ message }}
+          } @else {
+            <ng-container i18n="@@account.sessions.loadError"
+              >Active sessions could not be loaded.</ng-container
+            >
+          }
+        </span>
         <p-button
           label="Retry"
+          i18n-label="@@common.retry"
           icon="pi pi-refresh"
           severity="secondary"
           [text]="true"
@@ -14,14 +23,26 @@
     </p-message>
   }
   @if (store.revokeCallState().error; as error) {
-    <p-message severity="error">{{
-      error.message ?? 'The session could not be revoked.'
-    }}</p-message>
+    <p-message severity="error">
+      @if (error.message; as message) {
+        {{ message }}
+      } @else {
+        <ng-container i18n="@@account.sessions.revokeError"
+          >The session could not be revoked.</ng-container
+        >
+      }
+    </p-message>
   }
   @if (store.revokeAllCallState().error; as error) {
-    <p-message severity="error">{{
-      error.message ?? 'The other sessions could not be revoked.'
-    }}</p-message>
+    <p-message severity="error">
+      @if (error.message; as message) {
+        {{ message }}
+      } @else {
+        <ng-container i18n="@@account.sessions.revokeAllError"
+          >The other sessions could not be revoked.</ng-container
+        >
+      }
+    </p-message>
   }
 
   <app-session-table
@@ -40,6 +61,7 @@
 
 <p-dialog
   header="Session details"
+  i18n-header="@@account.sessions.dialogTitle"
   [modal]="true"
   [visible]="selectedSession() !== null"
   (visibleChange)="!$event && selectedSession.set(null)"
@@ -48,23 +70,33 @@
   @if (selectedSession(); as session) {
     <dl class="grid gap-4 md:grid-cols-2">
       <div>
-        <dt class="text-xs text-surface-500">Created</dt>
+        <dt class="text-xs text-surface-500" i18n="@@common.created">Created</dt>
         <dd>{{ session.createdAt }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-surface-500">Last activity</dt>
+        <dt class="text-xs text-surface-500" i18n="@@account.sessions.lastActivity">
+          Last activity
+        </dt>
         <dd>{{ session.lastActivityAt }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-surface-500">IP address</dt>
+        <dt class="text-xs text-surface-500" i18n="@@account.sessions.ipAddress">IP address</dt>
         <dd>{{ session.ipAddress }}</dd>
       </div>
       <div>
-        <dt class="text-xs text-surface-500">Current session</dt>
-        <dd>{{ session.isCurrent ? 'Yes' : 'No' }}</dd>
+        <dt class="text-xs text-surface-500" i18n="@@account.sessions.currentSession">
+          Current session
+        </dt>
+        <dd>
+          @if (session.isCurrent) {
+            <ng-container i18n="@@common.yes">Yes</ng-container>
+          } @else {
+            <ng-container i18n="@@common.no">No</ng-container>
+          }
+        </dd>
       </div>
       <div class="md:col-span-2">
-        <dt class="text-xs text-surface-500">User agent</dt>
+        <dt class="text-xs text-surface-500" i18n="@@account.sessions.userAgent">User agent</dt>
         <dd class="break-all">{{ session.userAgent }}</dd>
       </div>
     </dl>

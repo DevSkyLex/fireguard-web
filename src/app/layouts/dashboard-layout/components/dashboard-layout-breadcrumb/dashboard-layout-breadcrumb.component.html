@@ -3,6 +3,7 @@
   [model]="displayItems()"
   [pt]="breadcrumbPt"
   homeAriaLabel="Navigate to dashboard home"
+  i18n-homeAriaLabel="@@layout.breadcrumb.home"
   class="w-full min-w-0"
 >
   <ng-template #separator>
@@ -18,6 +19,7 @@
         size="small"
         styleClass="!p-1"
         ariaLabel="Show hidden breadcrumb items"
+        i18n-ariaLabel="@@layout.breadcrumb.showHidden"
         (onClick)="collapsedMenu.toggle($event)"
       />
     } @else if (item.routerLink) {

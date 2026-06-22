@@ -15,7 +15,11 @@
                 {{ i + 1 }}
               </span>
               <span class="text-sm font-medium text-surface-700 dark:text-surface-200">
-                {{ i === 0 ? 'First member' : 'Member ' + (i + 1) }}
+                @if (i === 0) {
+                  <ng-container i18n="@@onboarding.members.firstRow">First member</ng-container>
+                } @else {
+                  <ng-container i18n="@@onboarding.members.rowN">Member {{ i + 1 }}</ng-container>
+                }
               </span>
             </div>
             @if (rows.length > 1) {
@@ -33,7 +37,10 @@
 
           <!-- Email -->
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">
+            <label
+              class="text-sm font-medium text-surface-700 dark:text-surface-300"
+              i18n="@@onboarding.members.emailLabel"
+            >
               Email address
             </label>
             <p-iconfield>
@@ -44,16 +51,17 @@
                 formControlName="email"
                 fluid
                 placeholder="member@example.com"
+                i18n-placeholder="@@onboarding.members.emailPlaceholder"
               />
             </p-iconfield>
             @if (row.controls.email.invalid && row.controls.email.touched) {
               <p-message severity="error" variant="simple">
                 @if (row.controls.email.hasError('required')) {
-                  <span>Email is required.</span>
+                  <span i18n="@@onboarding.members.emailRequired">Email is required.</span>
                 } @else if (row.controls.email.hasError('email')) {
-                  <span>Invalid email address.</span>
+                  <span i18n="@@onboarding.members.emailInvalid">Invalid email address.</span>
                 } @else if (row.controls.email.hasError('maxlength')) {
-                  <span>255 characters max.</span>
+                  <span i18n="@@onboarding.members.emailMax">255 characters max.</span>
                 }
               </p-message>
             }
@@ -62,13 +70,16 @@
           <!-- Role cards -->
           @if (roleOptions().length > 0) {
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-medium text-surface-700 dark:text-surface-300">
+              <label
+                class="text-sm font-medium text-surface-700 dark:text-surface-300"
+                i18n="@@onboarding.members.roleLabel"
+              >
                 Role
               </label>
               <app-radio-card-group formControlName="roleId" [options]="roleOptions()" />
               @if (row.controls.roleId.invalid && row.controls.roleId.touched) {
                 <p-message severity="error" variant="simple">
-                  <span>Please select a role.</span>
+                  <span i18n="@@onboarding.members.roleRequired">Please select a role.</span>
                 </p-message>
               }
             </div>
@@ -86,7 +97,7 @@
         (click)="addRow()"
       >
         <i class="pi pi-plus text-xs"></i>
-        Add another member
+        <ng-container i18n="@@onboarding.members.addAnother">Add another member</ng-container>
       </button>
     }
   </div>
@@ -94,7 +105,7 @@
   <!-- Actions -->
   <div class="flex flex-col gap-3">
     <p-button
-      [label]="rows.length > 1 ? 'Send ' + rows.length + ' invitations' : 'Send invitation'"
+      [label]="submitLabel(rows.length)"
       type="submit"
       iconPos="right"
       [loading]="inviting() || executing()"
@@ -105,6 +116,7 @@
     <div class="flex gap-2">
       <p-button
         label="Continue without inviting"
+        i18n-label="@@onboarding.members.continue"
         type="button"
         severity="secondary"
         outlined
@@ -117,6 +129,7 @@
       @if (skippable()) {
         <p-button
           label="Skip"
+          i18n-label="@@common.skip"
           type="button"
           severity="secondary"
           outlined

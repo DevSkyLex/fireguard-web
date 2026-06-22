@@ -267,7 +267,7 @@ export class RunInspectionStep extends OnboardingStepBase {
         if (untracked(() => this.onboardingStore.activeStepIndex() === this.stepIndex())) {
           this.messageService.add({
             severity: 'error',
-            summary: 'Error',
+            summary: $localize`:@@common.error:Error`,
             detail: error.message,
             life: 5000,
           });

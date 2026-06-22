@@ -1,11 +1,9 @@
 <div class="flex min-h-full flex-col gap-3 py-5">
-  <nav
-    class="flex-1 overflow-x-clip overflow-y-auto"
-    [attr.aria-label]="items() ? 'Primary navigation' : 'Sidebar navigation'"
-  >
+  <nav class="flex-1 overflow-x-clip overflow-y-auto" [attr.aria-label]="navAriaLabel()">
     @if (menuItems().length === 0) {
       <div
         class="flex min-h-28 items-center justify-center rounded-md border border-dashed border-surface-200 bg-surface-50 px-4 text-center text-[13px] text-surface-500 transition-colors dark:border-surface-800 dark:bg-surface-900"
+        i18n="@@layout.nav.empty"
       >
         No navigation items available.
       </div>

@@ -163,7 +163,7 @@ export class InspectionsTrend {
         this.dashboardStore.queryData(),
         this.dashboardStore.compareEnabled(),
       ),
-      label: 'Inspections',
+      label: $localize`:@@dash.metric.inspections:Inspections`,
       icon: 'pi pi-clipboard',
     }),
   ]);
@@ -201,7 +201,7 @@ export class InspectionsTrend {
     const organizationId: string | null = organization ? organization.id : null;
     return [
       {
-        label: 'View all inspections',
+        label: $localize`:@@dash.viewAll.inspections:View all inspections`,
         icon: PrimeIcons.LIST,
         routerLink: organizationId ? ['/organizations', organizationId, 'inspections'] : null,
       },

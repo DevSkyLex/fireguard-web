@@ -1,7 +1,9 @@
 <p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
 
 <app-trend-card
+  i18n-title="@@org.trend.facCreated.title"
   title="Facilities Created"
+  i18n-description="@@org.trend.facCreated.desc"
   description="New facilities registered over time"
   [metrics]="summaryMetrics()"
   [loading]="isLoading()"
@@ -20,7 +22,9 @@
 </app-trend-card>
 
 <app-trend-filter-drawer
+  i18n-title="@@org.trend.facCreated.filterTitle"
   title="Facilities Created Filters"
+  i18n-description="@@org.trend.facCreated.filterDesc"
   description="Refine facility creation metrics by type, period, and comparison mode."
   [visible]="isFilterDrawerVisible()"
   [loading]="isLoading()"

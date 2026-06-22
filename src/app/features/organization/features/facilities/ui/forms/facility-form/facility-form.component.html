@@ -1,7 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
   <!-- Facility Type -->
   <div class="flex flex-col gap-2">
-    <label for="type" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="type"
+      i18n="@@facility.form.type"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
       >Type</label
     >
     <p-select
@@ -10,6 +13,7 @@
       [options]="typeOptions"
       optionLabel="label"
       optionValue="value"
+      i18n-placeholder="@@facility.form.typePlaceholder"
       placeholder="Select a facility type"
       class="w-full"
     />
@@ -17,7 +21,7 @@
     @if (form.controls.type.invalid && form.controls.type.touched) {
       <p-message severity="error" variant="simple">
         @if (form.controls.type.hasError('required')) {
-          <span>Facility type is required.</span>
+          <span i18n="@@facility.form.typeRequired">Facility type is required.</span>
         }
       </p-message>
     }
@@ -25,7 +29,10 @@
 
   <!-- Name -->
   <div class="flex flex-col gap-2">
-    <label for="name" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="name"
+      i18n="@@facility.form.name"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
       >Name</label
     >
     <p-iconfield>
@@ -35,6 +42,7 @@
         id="name"
         formControlName="name"
         class="w-full"
+        i18n-placeholder="@@facility.form.namePlaceholder"
         placeholder="Main Building"
       />
     </p-iconfield>
@@ -42,13 +50,13 @@
     @if (form.controls.name.invalid && form.controls.name.touched) {
       <p-message severity="error" variant="simple">
         @if (form.controls.name.hasError('required')) {
-          <span>Name is required.</span>
+          <span i18n="@@facility.form.nameRequired">Name is required.</span>
         }
         @if (form.controls.name.hasError('minlength')) {
-          <span>Name must be at least 2 characters.</span>
+          <span i18n="@@facility.form.nameMin">Name must be at least 2 characters.</span>
         }
         @if (form.controls.name.hasError('maxlength')) {
-          <span>Name must be less than 255 characters.</span>
+          <span i18n="@@facility.form.nameMax">Name must be less than 255 characters.</span>
         }
       </p-message>
     }
@@ -56,19 +64,34 @@
 
   <!-- Code -->
   <div class="flex flex-col gap-2">
-    <label for="code" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="code"
+      i18n="@@facility.form.code"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
       Code
       <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <p-iconfield>
       <p-inputicon class="pi pi-hashtag" />
-      <input pInputText id="code" formControlName="code" class="w-full" placeholder="BLD-001" />
+      <input
+        pInputText
+        id="code"
+        formControlName="code"
+        class="w-full"
+        i18n-placeholder="@@facility.form.codePlaceholder"
+        placeholder="BLD-001"
+      />
     </p-iconfield>
   </div>
 
   <!-- Address -->
   <div class="flex flex-col gap-2">
-    <label for="address" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="address"
+      i18n="@@facility.form.address"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
       Address
       <span class="font-normal text-surface-400">(optional)</span>
     </label>
@@ -79,6 +102,7 @@
         id="address"
         formControlName="address"
         class="w-full"
+        i18n-placeholder="@@facility.form.addressPlaceholder"
         placeholder="123 Main Street, City"
       />
     </p-iconfield>
@@ -91,7 +115,7 @@
         for="parentFacilityId"
         class="text-sm font-medium text-surface-700 dark:text-surface-300"
       >
-        Parent Facility
+        <ng-container i18n="@@facility.form.parent">Parent Facility</ng-container>
         <span class="font-normal text-surface-400">(optional)</span>
       </label>
       <p-select
@@ -100,8 +124,10 @@
         [options]="parentOptions"
         optionLabel="label"
         optionValue="value"
+        i18n-placeholder="@@facility.form.parentPlaceholder"
         placeholder="Select a parent facility"
         [filter]="true"
+        i18n-filterPlaceholder="@@facility.searchFacilities"
         filterPlaceholder="Search facilities..."
         class="w-full"
       />
@@ -111,6 +137,7 @@
   <!-- Actions -->
   <div class="flex items-center justify-end gap-3">
     <p-button
+      i18n-label="@@common.cancel"
       label="Cancel"
       severity="secondary"
       [outlined]="true"
@@ -118,7 +145,7 @@
       (onClick)="onCancel()"
     />
     <p-button
-      [label]="isEditMode ? 'Save Changes' : 'Create Facility'"
+      [label]="submitLabel"
       type="submit"
       icon="pi pi-check"
       [loading]="loading()"

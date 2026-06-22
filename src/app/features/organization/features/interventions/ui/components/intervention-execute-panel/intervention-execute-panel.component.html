@@ -27,6 +27,7 @@
         class="rounded-xl border border-primary-200 bg-primary-50 p-5 dark:border-primary-900 dark:bg-primary-950"
       >
         <p
+          i18n="@@intervention.exec.nextAction"
           class="flex items-center gap-2 text-sm font-medium text-primary-700 dark:text-primary-300"
         >
           <i class="pi pi-bolt" aria-hidden="true"></i>Next recommended action
@@ -35,11 +36,11 @@
           <div>
             <h2 class="text-xl font-semibold capitalize">{{ next.action.replace('_', ' ') }}</h2>
             <p class="mt-1 text-sm text-surface-600 dark:text-surface-300">
-              {{ nextTargetLabel() || 'Site-level work item' }}
+              {{ nextTargetLabel() || siteLevelLabel }}
             </p>
           </div>
           <p-button
-            [label]="next.status === 'in_progress' ? 'Complete' : 'Start work'"
+            [label]="next.status === 'in_progress' ? completeLabel : startWorkLabel"
             [icon]="next.status === 'in_progress' ? 'pi pi-check' : 'pi pi-play'"
             [loading]="saving()"
             [disabled]="!canExecute()"
@@ -53,7 +54,9 @@
         </div>
       </div>
     } @else {
-      <p-message severity="success">All prepared work items are complete or skipped.</p-message>
+      <p-message i18n="@@intervention.exec.allDone" severity="success"
+        >All prepared work items are complete or skipped.</p-message
+      >
     }
 
     <app-intervention-field-work-table
@@ -73,12 +76,17 @@
   <aside class="min-w-0">
     <app-card
       class="block h-full"
+      i18n-title="@@intervention.exec.submitTitle"
       title="Submit for review"
+      i18n-description="@@intervention.exec.submitDesc"
       description="Hand the intervention to a manager once every field work item is resolved."
     >
       <ng-template #content>
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-surface-900 dark:text-surface-50">
+          <h3
+            i18n="@@intervention.exec.readySubmit"
+            class="text-sm font-semibold text-surface-900 dark:text-surface-50"
+          >
             Ready to submit
           </h3>
           <span
@@ -112,6 +120,7 @@
       <ng-template #footer>
         <p-button
           class="block"
+          i18n-label="@@intervention.exec.submitTitle"
           label="Submit for review"
           icon="pi pi-send"
           [fluid]="true"

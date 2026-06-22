@@ -15,28 +15,28 @@ import type { NonConformitySeverityOption } from '@features/organization/ui/comp
  */
 export const NON_CONFORMITY_SEVERITY_OPTIONS: readonly NonConformitySeverityOption[] = [
   {
-    label: 'Low',
+    label: $localize`:@@ncSeverity.low:Low`,
     value: 'low',
     icon: PrimeIcons.ANGLE_DOWN,
     severity: 'success',
     color: '#22c55e',
   },
   {
-    label: 'Medium',
+    label: $localize`:@@ncSeverity.medium:Medium`,
     value: 'medium',
     icon: PrimeIcons.MINUS,
     severity: 'warn',
     color: '#eab308',
   },
   {
-    label: 'High',
+    label: $localize`:@@ncSeverity.high:High`,
     value: 'high',
     icon: PrimeIcons.ANGLE_UP,
     severity: 'warn',
     color: '#f97316',
   },
   {
-    label: 'Critical',
+    label: $localize`:@@ncSeverity.critical:Critical`,
     value: 'critical',
     icon: PrimeIcons.ANGLE_DOUBLE_UP,
     severity: 'danger',

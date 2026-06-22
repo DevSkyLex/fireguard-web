@@ -4,20 +4,29 @@
     <div class="mb-7">
       <p
         class="mb-1 font-mono text-[10px] font-semibold tracking-widest text-surface-400 uppercase dark:text-surface-500"
+        i18n="@@onboarding.stepper.eyebrow"
       >
         Setup
       </p>
 
-      <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-50">Onboarding steps</h2>
+      <h2
+        class="text-sm font-semibold text-surface-900 dark:text-surface-50"
+        i18n="@@onboarding.stepper.title"
+      >
+        Onboarding steps
+      </h2>
 
-      <p class="mt-1.5 text-xs leading-5 text-surface-500 dark:text-surface-400">
+      <p
+        class="mt-1.5 text-xs leading-5 text-surface-500 dark:text-surface-400"
+        i18n="@@onboarding.stepper.subtitle"
+      >
         Complete your profile to get started.
       </p>
     </div>
 
     <!-- Liste des étapes -->
     @if (onboardingStore.steps().length > 0) {
-      <nav aria-label="Onboarding steps">
+      <nav aria-label="Onboarding steps" i18n-aria-label="@@onboarding.stepper.navAria">
         @for (step of onboardingStore.steps(); track step.key; let i = $index; let last = $last) {
           <div class="flex gap-3">
             <!-- Indicateur + connecteur -->
@@ -87,6 +96,7 @@
       <div class="mt-6 border-t border-surface-200 pt-4 dark:border-surface-800">
         <p-button
           label="Previous step"
+          i18n-label="@@onboarding.stepper.previous"
           icon="pi pi-undo"
           severity="secondary"
           [text]="true"
@@ -105,7 +115,7 @@
     <!-- Bannière erreur bloquante -->
     @if (onboardingStore.isBlocked(); as isBlocked) {
       <p-message severity="error" [pt]="messagePt">
-        <span class="flex items-center gap-2">
+        <span class="flex items-center gap-2" i18n="@@onboarding.stepper.blocked">
           <i class="pi pi-exclamation-triangle text-lg"></i>
           Your onboarding is currently blocked. Please fix the issues and try again.
         </span>

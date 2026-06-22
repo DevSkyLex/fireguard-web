@@ -6,10 +6,10 @@
   >
     <ng-template pTemplate="header"
       ><tr>
-        <th>Email</th>
-        <th>Status</th>
-        <th>Expires</th>
-        <th class="w-20"><span class="sr-only">Actions</span></th>
+        <th i18n="@@org.invTable.email">Email</th>
+        <th i18n="@@org.invTable.status">Status</th>
+        <th i18n="@@org.invTable.expires">Expires</th>
+        <th class="w-20"><span i18n="@@org.invTable.actions" class="sr-only">Actions</span></th>
       </tr></ng-template
     >
     <ng-template pTemplate="body" let-invitation>
@@ -37,6 +37,7 @@
                 severity="danger"
                 [text]="true"
                 [rounded]="true"
+                i18n-ariaLabel="@@org.invTable.revokeAria"
                 ariaLabel="Revoke invitation"
                 (onClick)="revoke.emit(invitation)"
               />
@@ -50,7 +51,9 @@
         <td colspan="4">
           <app-empty-state
             icon="pi-envelope"
+            i18n-title="@@org.invTable.emptyTitle"
             title="No pending invitations"
+            i18n-description="@@org.invTable.emptyDesc"
             description="Invitations you send will appear here until they are accepted."
           />
         </td>

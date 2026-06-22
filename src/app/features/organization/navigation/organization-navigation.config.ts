@@ -165,7 +165,7 @@ export interface OrganizationNavigationItem {
 export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigationItem> = [
   {
     id: 'dashboard',
-    label: 'Dashboard',
+    label: $localize`:@@org.nav.dashboard:Dashboard`,
     icon: 'pi pi-chart-bar',
     path: '',
     group: 'overview',
@@ -173,7 +173,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
   },
   {
     id: 'my-interventions',
-    label: 'My interventions',
+    label: $localize`:@@route.myInterventions:My interventions`,
     icon: 'pi pi-briefcase',
     path: 'interventions/my',
     group: 'field-work',
@@ -187,7 +187,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
    */
   {
     id: 'interventions',
-    label: 'Interventions',
+    label: $localize`:@@route.interventions:Interventions`,
     icon: 'pi pi-compass',
     path: 'interventions',
     group: 'field-work',
@@ -195,7 +195,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
   },
   {
     id: 'facilities',
-    label: 'Facilities',
+    label: $localize`:@@route.facilities:Facilities`,
     icon: 'pi pi-map',
     path: 'facilities',
     group: 'assets',
@@ -203,7 +203,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
   },
   {
     id: 'equipments',
-    label: 'Equipments',
+    label: $localize`:@@route.equipments:Equipments`,
     icon: 'pi pi-box',
     path: 'equipments',
     group: 'assets',
@@ -211,7 +211,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
   },
   {
     id: 'inspections',
-    label: 'Inspections',
+    label: $localize`:@@route.inspections:Inspections`,
     icon: 'pi pi-clipboard',
     path: 'inspections',
     group: 'compliance',
@@ -219,7 +219,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
   },
   {
     id: 'checklists',
-    label: 'Checklists',
+    label: $localize`:@@org.nav.checklists:Checklists`,
     icon: 'pi pi-list-check',
     path: 'checklists',
     group: 'compliance',
@@ -227,7 +227,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
   },
   {
     id: 'team',
-    label: 'Team',
+    label: $localize`:@@route.team:Team`,
     icon: 'pi pi-users',
     path: 'team',
     group: 'administration',
@@ -241,7 +241,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
   },
   {
     id: 'settings',
-    label: 'Settings',
+    label: $localize`:@@route.settings:Settings`,
     icon: 'pi pi-cog',
     path: 'settings',
     group: 'administration',
@@ -260,11 +260,11 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
  * @since 1.1.0
  */
 export const ORGANIZATION_NAVIGATION_GROUPS: ReadonlyArray<OrganizationNavigationGroup> = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'field-work', label: 'Field work' },
-  { id: 'assets', label: 'Assets' },
-  { id: 'compliance', label: 'Compliance' },
-  { id: 'administration', label: 'Administration' },
+  { id: 'overview', label: $localize`:@@org.navGroup.overview:Overview` },
+  { id: 'field-work', label: $localize`:@@org.navGroup.fieldWork:Field work` },
+  { id: 'assets', label: $localize`:@@org.navGroup.assets:Assets` },
+  { id: 'compliance', label: $localize`:@@org.navGroup.compliance:Compliance` },
+  { id: 'administration', label: $localize`:@@org.navGroup.administration:Administration` },
 ];
 
 /**

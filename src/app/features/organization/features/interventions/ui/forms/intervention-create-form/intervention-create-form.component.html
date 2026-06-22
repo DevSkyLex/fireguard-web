@@ -3,11 +3,15 @@
     <div>
       <h2
         id="intervention-objective-heading"
+        i18n="@@intervention.cf.objective"
         class="text-lg font-semibold text-surface-900 dark:text-surface-100"
       >
         Objective
       </h2>
-      <p class="mt-0.5 text-sm text-surface-500 dark:text-surface-400">
+      <p
+        i18n="@@intervention.cf.objectiveHint"
+        class="mt-0.5 text-sm text-surface-500 dark:text-surface-400"
+      >
         Choose what this intervention prepares. It drives the field workflow.
       </p>
     </div>
@@ -18,11 +22,15 @@
     <div>
       <h2
         id="intervention-details-heading"
+        i18n="@@intervention.cf.details"
         class="text-lg font-semibold text-surface-900 dark:text-surface-100"
       >
         Details
       </h2>
-      <p class="mt-0.5 text-sm text-surface-500 dark:text-surface-400">
+      <p
+        i18n="@@intervention.cf.detailsHint"
+        class="mt-0.5 text-sm text-surface-500 dark:text-surface-400"
+      >
         Only a name is required to start a draft — site, assignment and schedule can be completed
         now or later in the Prepare step.
       </p>
@@ -30,12 +38,13 @@
 
     <div class="grid gap-5 md:grid-cols-2">
       <label class="grid gap-1.5 text-sm md:col-span-2">
-        <span class="font-medium"
+        <span i18n="@@intervention.cf.name" class="font-medium"
           >Intervention name <span class="text-red-500" aria-hidden="true">*</span></span
         >
         <input
           pInputText
           formControlName="name"
+          i18n-placeholder="@@intervention.cf.namePlaceholder"
           placeholder="e.g. Q3 warehouse inspection"
           autocomplete="off"
           class="w-full"
@@ -44,16 +53,18 @@
         @if (form.controls.name.invalid && form.controls.name.touched) {
           <p-message severity="error" variant="simple">
             @if (form.controls.name.hasError('required')) {
-              <span>A name is required to start the draft.</span>
+              <span i18n="@@intervention.cf.nameRequired"
+                >A name is required to start the draft.</span
+              >
             } @else {
-              <span>Use between 2 and 255 characters.</span>
+              <span i18n="@@intervention.cf.nameLength">Use between 2 and 255 characters.</span>
             }
           </p-message>
         }
       </label>
 
       <label class="grid gap-1.5 text-sm md:col-span-2">
-        <span class="font-medium"
+        <span i18n="@@intervention.cf.priority" class="font-medium"
           >Priority <span class="text-red-500" aria-hidden="true">*</span></span
         >
         <p-select
@@ -75,13 +86,13 @@
         </p-select>
         @if (form.controls.priority.invalid && form.controls.priority.touched) {
           <p-message severity="error" variant="simple">
-            <span>A priority is required.</span>
+            <span i18n="@@intervention.cf.priorityRequired">A priority is required.</span>
           </p-message>
         }
       </label>
 
       <label class="grid gap-1.5 text-sm">
-        <span class="font-medium">Site</span>
+        <span i18n="@@intervention.cf.site" class="font-medium">Site</span>
         <p-select
           formControlName="site"
           [options]="[...siteOptions()]"
@@ -90,13 +101,14 @@
           [filter]="true"
           [loading]="optionsLoading()"
           [showClear]="true"
+          i18n-placeholder="@@intervention.cf.sitePlaceholder"
           placeholder="Select a site"
           appendTo="body"
         />
       </label>
 
       <label class="grid gap-1.5 text-sm">
-        <span class="font-medium">Responsible agent</span>
+        <span i18n="@@intervention.cf.responsible" class="font-medium">Responsible agent</span>
         <p-select
           formControlName="responsible"
           [options]="[...memberOptions()]"
@@ -106,6 +118,7 @@
           filterBy="label,roleLabel"
           [loading]="optionsLoading()"
           [showClear]="true"
+          i18n-placeholder="@@intervention.cf.responsiblePlaceholder"
           placeholder="Assign an agent"
           appendTo="body"
         >
@@ -121,7 +134,7 @@
       </label>
 
       <label class="grid gap-1.5 text-sm md:col-span-2">
-        <span class="font-medium">Participants</span>
+        <span i18n="@@intervention.cf.participants" class="font-medium">Participants</span>
         <p-multiselect
           formControlName="participants"
           [options]="[...memberOptions()]"
@@ -131,6 +144,7 @@
           filterBy="label,roleLabel"
           [loading]="optionsLoading()"
           display="chip"
+          i18n-placeholder="@@intervention.cf.participantsPlaceholder"
           placeholder="Add field participants"
           appendTo="body"
         >
@@ -141,7 +155,7 @@
       </label>
 
       <label class="grid gap-1.5 text-sm">
-        <span class="font-medium">Planned start</span>
+        <span i18n="@@intervention.cf.plannedStart" class="font-medium">Planned start</span>
         <p-datepicker
           formControlName="plannedStartAt"
           [showTime]="true"
@@ -151,13 +165,14 @@
           [showButtonBar]="true"
           appendTo="body"
           dateFormat="yy-mm-dd"
+          i18n-placeholder="@@intervention.cf.startPlaceholder"
           placeholder="Select start date and time"
           class="w-full"
         />
       </label>
 
       <label class="grid gap-1.5 text-sm">
-        <span class="font-medium">Due</span>
+        <span i18n="@@intervention.cf.due" class="font-medium">Due</span>
         <p-datepicker
           formControlName="dueAt"
           [showTime]="true"
@@ -168,6 +183,7 @@
           [minDate]="form.controls.plannedStartAt.value ?? undefined"
           appendTo="body"
           dateFormat="yy-mm-dd"
+          i18n-placeholder="@@intervention.cf.duePlaceholder"
           placeholder="Select due date and time"
           class="w-full"
         />
@@ -177,6 +193,7 @@
 
   <div class="sticky bottom-0 -mb-2 bg-surface-0 pt-4 pb-2 dark:bg-surface-900">
     <p-button
+      i18n-label="@@intervention.cf.submit"
       label="Create draft intervention"
       type="submit"
       [fluid]="true"

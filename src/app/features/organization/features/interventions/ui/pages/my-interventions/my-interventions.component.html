@@ -1,5 +1,8 @@
 <div class="flex flex-col gap-6">
-  <p class="max-w-2xl text-sm text-surface-600 dark:text-surface-300">
+  <p
+    i18n="@@intervention.my.intro"
+    class="max-w-2xl text-sm text-surface-600 dark:text-surface-300"
+  >
     Planned interventions are prepared for offline use. Open one to continue from the next
     recommended action.
   </p>
@@ -41,10 +44,11 @@
                   class="mt-1.5 flex items-center gap-1.5 truncate text-sm text-surface-600 dark:text-surface-300"
                 >
                   <i class="pi pi-map-marker text-xs text-surface-400" aria-hidden="true"></i>
-                  {{ siteLabel(intervention) || 'Site not available locally' }}
+                  {{ siteLabel(intervention) || siteUnavailableLabel }}
                 </p>
               </div>
               <p-button
+                i18n-label="@@intervention.my.open"
                 label="Open"
                 icon="pi pi-arrow-right"
                 iconPos="right"
@@ -65,7 +69,7 @@
                 class="shrink-0 text-sm font-medium text-surface-600 tabular-nums dark:text-surface-300"
               >
                 {{ intervention.completedWorkItemsCount }}/{{ intervention.workItemsCount }}
-                <span class="text-surface-500">done</span>
+                <span i18n="@@intervention.my.done" class="text-surface-500">done</span>
               </span>
             </div>
           </article>
@@ -78,7 +82,9 @@
     >
       <app-empty-state
         icon="pi-inbox"
+        i18n-title="@@intervention.my.emptyTitle"
         title="No interventions assigned"
+        i18n-description="@@intervention.my.emptyDesc"
         description="Planned or in-progress interventions assigned to you will appear here, ready to continue offline."
       />
     </div>

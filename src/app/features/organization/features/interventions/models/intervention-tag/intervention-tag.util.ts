@@ -11,10 +11,26 @@ import type { InterventionTagKind } from './intervention-tag-kind.type';
 
 /** Priority descriptors (low → urgent). */
 const PRIORITY: Record<InterventionPriority, InterventionTagDescriptor> = {
-  low: { label: 'Low', severity: 'secondary', icon: 'pi pi-flag-fill' },
-  normal: { label: 'Normal', severity: 'info', icon: 'pi pi-flag-fill' },
-  high: { label: 'High', severity: 'warn', icon: 'pi pi-flag-fill' },
-  urgent: { label: 'Urgent', severity: 'danger', icon: 'pi pi-flag-fill' },
+  low: {
+    label: $localize`:@@interventionPriority.low:Low`,
+    severity: 'secondary',
+    icon: 'pi pi-flag-fill',
+  },
+  normal: {
+    label: $localize`:@@interventionPriority.normal:Normal`,
+    severity: 'info',
+    icon: 'pi pi-flag-fill',
+  },
+  high: {
+    label: $localize`:@@interventionPriority.high:High`,
+    severity: 'warn',
+    icon: 'pi pi-flag-fill',
+  },
+  urgent: {
+    label: $localize`:@@interventionPriority.urgent:Urgent`,
+    severity: 'danger',
+    icon: 'pi pi-flag-fill',
+  },
 };
 
 /**
@@ -26,56 +42,160 @@ const PRIORITY: Record<InterventionPriority, InterventionTagDescriptor> = {
  * in-between workflow steps.
  */
 const STATUS: Record<InterventionStatus, InterventionTagDescriptor> = {
-  draft: { label: 'Draft', severity: 'secondary', icon: 'pi pi-pencil' },
-  planned: { label: 'Planned', severity: 'info', icon: 'pi pi-calendar' },
-  in_progress: { label: 'In progress', severity: 'warn', icon: 'pi pi-hourglass' },
-  submitted: { label: 'Submitted', severity: 'info', icon: 'pi pi-send' },
-  changes_requested: { label: 'Changes requested', severity: 'warn', icon: 'pi pi-reply' },
-  published: { label: 'Published', severity: 'success', icon: 'pi pi-check-circle' },
-  abandoned: { label: 'Abandoned', severity: 'danger', icon: 'pi pi-ban' },
+  draft: {
+    label: $localize`:@@interventionStatus.draft:Draft`,
+    severity: 'secondary',
+    icon: 'pi pi-pencil',
+  },
+  planned: {
+    label: $localize`:@@interventionStatus.planned:Planned`,
+    severity: 'info',
+    icon: 'pi pi-calendar',
+  },
+  in_progress: {
+    label: $localize`:@@interventionStatus.inProgress:In progress`,
+    severity: 'warn',
+    icon: 'pi pi-hourglass',
+  },
+  submitted: {
+    label: $localize`:@@interventionStatus.submitted:Submitted`,
+    severity: 'info',
+    icon: 'pi pi-send',
+  },
+  changes_requested: {
+    label: $localize`:@@interventionStatus.changesRequested:Changes requested`,
+    severity: 'warn',
+    icon: 'pi pi-reply',
+  },
+  published: {
+    label: $localize`:@@interventionStatus.published:Published`,
+    severity: 'success',
+    icon: 'pi pi-check-circle',
+  },
+  abandoned: {
+    label: $localize`:@@interventionStatus.abandoned:Abandoned`,
+    severity: 'danger',
+    icon: 'pi pi-ban',
+  },
 };
 
 /** Intervention objective descriptors. */
 const TYPE: Record<InterventionType, InterventionTagDescriptor> = {
-  site_setup: { label: 'Site setup', severity: 'info', icon: 'pi pi-sitemap' },
-  inventory: { label: 'Inventory', severity: 'info', icon: 'pi pi-box' },
-  inspection_campaign: { label: 'Inspection campaign', severity: 'info', icon: 'pi pi-clipboard' },
+  site_setup: {
+    label: $localize`:@@intervention.action.siteSetup:Site setup`,
+    severity: 'info',
+    icon: 'pi pi-sitemap',
+  },
+  inventory: {
+    label: $localize`:@@intervention.action.inventory:Inventory`,
+    severity: 'info',
+    icon: 'pi pi-box',
+  },
+  inspection_campaign: {
+    label: $localize`:@@intervention.type.inspectionCampaign:Inspection campaign`,
+    severity: 'info',
+    icon: 'pi pi-clipboard',
+  },
 };
 
 /** Work item action descriptors. */
 const WORK_ITEM_ACTION: Record<InterventionWorkItemAction, InterventionTagDescriptor> = {
-  site_setup: { label: 'Site setup', severity: 'info', icon: 'pi pi-sitemap' },
-  inventory: { label: 'Inventory', severity: 'info', icon: 'pi pi-box' },
-  inspection: { label: 'Inspection', severity: 'info', icon: 'pi pi-verified' },
+  site_setup: {
+    label: $localize`:@@intervention.action.siteSetup:Site setup`,
+    severity: 'info',
+    icon: 'pi pi-sitemap',
+  },
+  inventory: {
+    label: $localize`:@@intervention.action.inventory:Inventory`,
+    severity: 'info',
+    icon: 'pi pi-box',
+  },
+  inspection: {
+    label: $localize`:@@intervention.action.inspection:Inspection`,
+    severity: 'info',
+    icon: 'pi pi-verified',
+  },
 };
 
 /** Work item status descriptors. */
 const WORK_ITEM_STATUS: Record<InterventionWorkItemStatus, InterventionTagDescriptor> = {
-  planned: { label: 'Planned', severity: 'info', icon: 'pi pi-calendar' },
-  in_progress: { label: 'In progress', severity: 'warn', icon: 'pi pi-hourglass' },
-  completed: { label: 'Completed', severity: 'success', icon: 'pi pi-check' },
-  skipped: { label: 'Skipped', severity: 'secondary', icon: 'pi pi-forward' },
+  planned: {
+    label: $localize`:@@workItemStatus.planned:Planned`,
+    severity: 'info',
+    icon: 'pi pi-calendar',
+  },
+  in_progress: {
+    label: $localize`:@@workItemStatus.inProgress:In progress`,
+    severity: 'warn',
+    icon: 'pi pi-hourglass',
+  },
+  completed: {
+    label: $localize`:@@workItemStatus.completed:Completed`,
+    severity: 'success',
+    icon: 'pi pi-check',
+  },
+  skipped: {
+    label: $localize`:@@workItemStatus.skipped:Skipped`,
+    severity: 'secondary',
+    icon: 'pi pi-forward',
+  },
 };
 
 /** Issue severity descriptors. */
 const ISSUE_SEVERITY: Record<InterventionIssueSeverity, InterventionTagDescriptor> = {
-  blocker: { label: 'Blocker', severity: 'danger', icon: 'pi pi-ban' },
-  warning: { label: 'Warning', severity: 'warn', icon: 'pi pi-exclamation-triangle' },
-  recommendation: { label: 'Recommendation', severity: 'info', icon: 'pi pi-info-circle' },
+  blocker: {
+    label: $localize`:@@issueSeverity.blocker:Blocker`,
+    severity: 'danger',
+    icon: 'pi pi-ban',
+  },
+  warning: {
+    label: $localize`:@@issueSeverity.warning:Warning`,
+    severity: 'warn',
+    icon: 'pi pi-exclamation-triangle',
+  },
+  recommendation: {
+    label: $localize`:@@issueSeverity.recommendation:Recommendation`,
+    severity: 'info',
+    icon: 'pi pi-info-circle',
+  },
 };
 
 /** Proposed change status descriptors. */
 const CHANGE_STATUS: Record<InterventionChangeStatus, InterventionTagDescriptor> = {
-  proposed: { label: 'Proposed', severity: 'info', icon: 'pi pi-clock' },
-  rejected: { label: 'Rejected', severity: 'danger', icon: 'pi pi-times' },
-  applied: { label: 'Applied', severity: 'success', icon: 'pi pi-check' },
+  proposed: {
+    label: $localize`:@@changeStatus.proposed:Proposed`,
+    severity: 'info',
+    icon: 'pi pi-clock',
+  },
+  rejected: {
+    label: $localize`:@@changeStatus.rejected:Rejected`,
+    severity: 'danger',
+    icon: 'pi pi-times',
+  },
+  applied: {
+    label: $localize`:@@changeStatus.applied:Applied`,
+    severity: 'success',
+    icon: 'pi pi-check',
+  },
 };
 
 /** Inspection result descriptors. */
 const INSPECTION_RESULT: Record<InspectionResult, InterventionTagDescriptor> = {
-  pass: { label: 'Pass', severity: 'success', icon: 'pi pi-check-circle' },
-  partial: { label: 'Partial', severity: 'warn', icon: 'pi pi-exclamation-circle' },
-  fail: { label: 'Fail', severity: 'danger', icon: 'pi pi-times-circle' },
+  pass: {
+    label: $localize`:@@inspectionResult.pass:Pass`,
+    severity: 'success',
+    icon: 'pi pi-check-circle',
+  },
+  partial: {
+    label: $localize`:@@inspectionResult.partial:Partial`,
+    severity: 'warn',
+    icon: 'pi pi-exclamation-circle',
+  },
+  fail: {
+    label: $localize`:@@inspectionResult.fail:Fail`,
+    severity: 'danger',
+    icon: 'pi pi-times-circle',
+  },
 };
 
 /** Registry indexed by tag kind. */

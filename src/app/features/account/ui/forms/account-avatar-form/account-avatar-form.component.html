@@ -1,16 +1,19 @@
 <section class="flex flex-col gap-4" data-testid="account-avatar-form">
   @if (hasError()) {
-    <p-message severity="error" class="w-full" [closable]="false">
+    <p-message severity="error" class="w-full" [closable]="false" i18n="@@account.avatar.error">
       We couldn't upload your picture. Please try again.
     </p-message>
   }
 
   <div class="grid grid-cols-1 gap-x-8 gap-y-3 lg:grid-cols-3">
     <div class="flex flex-col gap-1">
-      <span class="text-sm font-medium text-surface-900 dark:text-surface-100">
+      <span
+        class="text-sm font-medium text-surface-900 dark:text-surface-100"
+        i18n="@@account.avatar.title"
+      >
         Profile picture
       </span>
-      <p class="text-sm text-surface-500 dark:text-surface-400">
+      <p class="text-sm text-surface-500 dark:text-surface-400" i18n="@@account.avatar.subtitle">
         Shown next to your name across the app.
       </p>
     </div>
@@ -43,11 +46,12 @@
           [maxFileSize]="maxAvatarSize"
           [disabled]="uploading()"
           chooseLabel="Change picture"
+          i18n-chooseLabel="@@account.avatar.change"
           chooseIcon="pi pi-upload"
           [chooseButtonProps]="chooseButtonProps"
           (uploadHandler)="onAvatarUpload($event, avatarUpload)"
         />
-        <p class="text-xs text-surface-500 dark:text-surface-400">
+        <p class="text-xs text-surface-500 dark:text-surface-400" i18n="@@account.avatar.hint">
           JPEG, PNG, WebP or GIF — 5 MB max.
         </p>
       </div>

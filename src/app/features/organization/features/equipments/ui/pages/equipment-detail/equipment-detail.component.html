@@ -29,9 +29,18 @@
   <section class="flex min-h-0 flex-1 flex-col">
     <p-tabs [value]="activeTab()" [pt]="tabsPt" (valueChange)="activeTab.set(+$event!)">
       <p-tablist [pt]="tabListPt">
-        <p-tab [value]="0"><i class="pi pi-chart-line mr-2 text-sm"></i>Overview</p-tab>
-        <p-tab [value]="1"><i class="pi pi-paperclip mr-2 text-sm"></i>Attachments</p-tab>
-        <p-tab [value]="2"><i class="pi pi-wrench mr-2 text-sm"></i>Maintenance</p-tab>
+        <p-tab [value]="0"
+          ><i class="pi pi-chart-line mr-2 text-sm"></i
+          ><ng-container i18n="@@equipment.tab.overview">Overview</ng-container></p-tab
+        >
+        <p-tab [value]="1"
+          ><i class="pi pi-paperclip mr-2 text-sm"></i
+          ><ng-container i18n="@@equipment.tab.attachments">Attachments</ng-container></p-tab
+        >
+        <p-tab [value]="2"
+          ><i class="pi pi-wrench mr-2 text-sm"></i
+          ><ng-container i18n="@@equipment.tab.maintenance">Maintenance</ng-container></p-tab
+        >
       </p-tablist>
       <p-tabpanels [pt]="tabPanelsPt">
         <p-tabpanel [value]="0">

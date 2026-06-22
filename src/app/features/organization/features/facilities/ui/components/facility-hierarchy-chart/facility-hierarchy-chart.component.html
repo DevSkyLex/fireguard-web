@@ -61,7 +61,7 @@
                   class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                   (click)="onNavigate(facility)"
                 >
-                  <span>View</span>
+                  <span i18n="@@common.view">View</span>
                   <i class="pi pi-arrow-right text-[0.625rem]"></i>
                 </button>
               }
@@ -71,7 +71,10 @@
       </ng-template>
     </p-organization-chart>
   } @else {
-    <div class="flex items-center justify-center py-8 text-sm text-surface-500">
+    <div
+      i18n="@@facility.hierarchy.empty"
+      class="flex items-center justify-center py-8 text-sm text-surface-500"
+    >
       No hierarchy to display.
     </div>
   }

@@ -294,8 +294,12 @@ export class InterventionsPage {
    * @type {InterventionsViewOption[]}
    */
   protected readonly viewOptions: InterventionsViewOption[] = [
-    { label: 'List', value: 'list', icon: 'pi pi-table' },
-    { label: 'Calendar', value: 'calendar', icon: 'pi pi-calendar' },
+    { label: $localize`:@@intervention.view.list:List`, value: 'list', icon: 'pi pi-table' },
+    {
+      label: $localize`:@@intervention.view.calendar:Calendar`,
+      value: 'calendar',
+      icon: 'pi pi-calendar',
+    },
   ];
 
   /**

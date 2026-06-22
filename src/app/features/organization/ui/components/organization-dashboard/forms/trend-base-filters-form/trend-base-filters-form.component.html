@@ -1,6 +1,10 @@
 <div [formGroup]="form" class="grid gap-4">
   <div class="flex flex-col gap-2">
-    <label [for]="dateRangeId()" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      [for]="dateRangeId()"
+      i18n="@@org.trendFilter.dateRange"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
       Date range
     </label>
 
@@ -10,6 +14,7 @@
         selectionMode="range"
         formControlName="dateRange"
         [maxDate]="today"
+        i18n-placeholder="@@org.trendFilter.dateRangePlaceholder"
         placeholder="Select date range"
         [showClear]="true"
         [showTime]="true"
@@ -25,10 +30,16 @@
     class="flex items-center justify-between gap-3 rounded-border border border-surface-200 bg-surface-50 px-3 py-3 dark:border-surface-700 dark:bg-surface-900"
   >
     <div class="min-w-0">
-      <p class="text-sm font-medium text-surface-900 dark:text-surface-0">
+      <p
+        i18n="@@org.trendFilter.compare"
+        class="text-sm font-medium text-surface-900 dark:text-surface-0"
+      >
         Compare previous period
       </p>
-      <p class="text-xs text-surface-500 dark:text-surface-400">
+      <p
+        i18n="@@org.trendFilter.compareDesc"
+        class="text-xs text-surface-500 dark:text-surface-400"
+      >
         Overlay the previous period on the chart and summary metrics.
       </p>
     </div>
@@ -36,6 +47,7 @@
     <p-toggleswitch
       formControlName="compareEnabled"
       [inputId]="dateRangeId() + '-compare-enabled'"
+      i18n-ariaLabel="@@org.trendFilter.compareAria"
       ariaLabel="Compare previous period"
       class="shrink-0"
     />

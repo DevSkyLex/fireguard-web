@@ -25,10 +25,10 @@ export const QUOTA_NEAR_LIMIT_RATIO = 0.8;
  * @since 1.0.0
  */
 export const ORGANIZATION_QUOTA_RESOURCE_LABELS: Record<OrganizationQuotaResource, string> = {
-  members: 'Members',
-  facilities: 'Facilities',
-  equipment: 'Equipment',
-  inspections: 'Inspections',
+  members: $localize`:@@quotaResource.members:Members`,
+  facilities: $localize`:@@quotaResource.facilities:Facilities`,
+  equipment: $localize`:@@quotaResource.equipment:Equipment`,
+  inspections: $localize`:@@quotaResource.inspections:Inspections`,
 };
 
 /**
@@ -41,4 +41,4 @@ export const ORGANIZATION_QUOTA_RESOURCE_LABELS: Record<OrganizationQuotaResourc
  *
  * @since 1.0.0
  */
-export const QUOTA_LIMIT_REACHED_TOOLTIP = 'Plan limit reached — upgrade to add more';
+export const QUOTA_LIMIT_REACHED_TOOLTIP = $localize`:@@quota.limitTooltip:Plan limit reached — upgrade to add more`;

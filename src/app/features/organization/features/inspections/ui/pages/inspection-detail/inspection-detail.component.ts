@@ -89,6 +89,8 @@ export class InspectionDetailPage {
   /** Non-conformity selected for detail display. */
   protected readonly selectedNonConformity: WritableSignal<NonConformityOutput | null> =
     signal(null);
+  /** Localized placeholder shown when no notes are recorded. */
+  protected readonly noNotesLabel: string = $localize`:@@inspection.info.noNotes:No notes`;
   /** Whether the active inspection is loading. */
   protected readonly isLoading: Signal<boolean> = computed(() =>
     this.activeInspectionStore.isLoadingInspection(),
@@ -138,11 +140,18 @@ export class InspectionDetailPage {
   /** Confirms and cancels the active draft inspection. */
   protected cancel(): void {
     this.confirmationService.confirm({
-      header: 'Cancel inspection',
-      message: 'Cancel this draft inspection? This action cannot be undone.',
+      header: $localize`:@@inspection.cancel.header:Cancel inspection`,
+      message: $localize`:@@inspection.cancel.messageLong:Cancel this draft inspection? This action cannot be undone.`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Cancel inspection', severity: 'danger' },
-      rejectButtonProps: { label: 'Keep draft', severity: 'secondary', outlined: true },
+      acceptButtonProps: {
+        label: $localize`:@@inspection.cancel.accept:Cancel inspection`,
+        severity: 'danger',
+      },
+      rejectButtonProps: {
+        label: $localize`:@@inspection.cancel.reject:Keep draft`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () =>
         this.run((organizationId, inspectionId) => {
           this.store.cancel({ organizationId, inspectionId });

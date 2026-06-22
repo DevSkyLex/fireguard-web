@@ -365,21 +365,26 @@ export class EquipmentTable implements OnInit {
    * @type {EquipmentStatusOption[]}
    */
   protected readonly statusOptions: EquipmentStatusOption[] = [
-    { label: 'In Stock', value: 'in_stock', icon: PrimeIcons.BOX, severity: 'secondary' },
     {
-      label: 'Operational',
+      label: $localize`:@@equipmentStatus.inStock:In Stock`,
+      value: 'in_stock',
+      icon: PrimeIcons.BOX,
+      severity: 'secondary',
+    },
+    {
+      label: $localize`:@@equipmentStatus.operational:Operational`,
       value: 'operational',
       icon: PrimeIcons.CHECK_CIRCLE,
       severity: 'success',
     },
     {
-      label: 'Maintenance',
+      label: $localize`:@@equipmentStatus.maintenance:Maintenance`,
       value: 'under_maintenance',
       icon: PrimeIcons.WRENCH,
       severity: 'warn',
     },
     {
-      label: 'Decommissioned',
+      label: $localize`:@@equipmentStatus.decommissioned:Decommissioned`,
       value: 'decommissioned',
       icon: PrimeIcons.BAN,
       severity: 'danger',
@@ -447,19 +452,19 @@ export class EquipmentTable implements OnInit {
    */
   protected readonly toolbarActions: Signal<MenuItem[]> = computed((): MenuItem[] => [
     {
-      label: 'Refresh',
+      label: $localize`:@@common.refresh:Refresh`,
       icon: PrimeIcons.REFRESH,
       command: (): void => this.onRefresh(),
     },
     {
-      label: 'Clear filters',
+      label: $localize`:@@common.clearFilters:Clear filters`,
       icon: PrimeIcons.FILTER_SLASH,
       command: (): void => this.onClearFilters(),
     },
     ...(this.selectedEquipments().length > 0
       ? [
           {
-            label: 'Clear selection',
+            label: $localize`:@@common.clearSelection:Clear selection`,
             icon: PrimeIcons.TIMES,
             command: (): void => this.onClearSelection(),
           },
@@ -533,14 +538,14 @@ export class EquipmentTable implements OnInit {
 
     return [
       {
-        label: 'View',
+        label: $localize`:@@common.view:View`,
         icon: PrimeIcons.EYE,
         command: (): void => this.view.emit(equipment),
       },
       ...(this.canManageEquipment()
         ? [
             {
-              label: 'Edit',
+              label: $localize`:@@common.edit:Edit`,
               icon: PrimeIcons.PENCIL,
               command: (): void => this.edit.emit(equipment),
             },

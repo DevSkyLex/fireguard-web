@@ -28,7 +28,8 @@
             <button
               type="button"
               class="mt-0.5 grid size-5 cursor-pointer place-items-center rounded text-surface-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-surface-100 hover:text-surface-700 focus-visible:opacity-100 motion-reduce:transition-none max-sm:opacity-100 dark:hover:bg-surface-800 dark:hover:text-surface-200"
-              [attr.aria-label]="'Create on ' + (day.date | date: 'longDate')"
+              aria-label="Create on {{ day.date | date: 'longDate' }}"
+              i18n-aria-label="@@calendar.createOn"
               (click)="dayCreate.emit(day.date)"
             >
               <i class="pi pi-plus text-[0.65rem]" aria-hidden="true"></i>
@@ -43,6 +44,7 @@
       >
         <div
           class="flex items-center justify-end border-r border-surface-100 px-1.5 text-[0.65rem] text-surface-400 dark:border-surface-800/70"
+          i18n="@@calendar.allDay"
         >
           all-day
         </div>
@@ -54,7 +56,7 @@
               <button
                 type="button"
                 class="w-full cursor-pointer rounded text-left transition-colors hover:bg-surface-100 motion-reduce:transition-none dark:hover:bg-surface-800"
-                [attr.aria-label]="'Open ' + event.title"
+                [attr.aria-label]="openLabel(event.title)"
                 (click)="eventClick.emit(event)"
               >
                 <ng-container
@@ -100,7 +102,8 @@
               [style.height.%]="timed.heightPct"
               [style.left.%]="laneLeft(timed)"
               [style.width.%]="laneWidth(timed)"
-              [attr.aria-label]="'Open ' + timed.event.title"
+              aria-label="Open {{ timed.event.title }}"
+              i18n-aria-label="@@calendar.openEventTimed"
               (click)="$event.stopPropagation(); eventClick.emit(timed.event)"
             >
               <ng-container

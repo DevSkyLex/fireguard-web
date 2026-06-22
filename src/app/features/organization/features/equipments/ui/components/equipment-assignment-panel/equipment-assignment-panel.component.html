@@ -5,7 +5,10 @@
     class="flex items-center gap-2 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
   >
     <i class="pi pi-building text-sm text-surface-500"></i>
-    <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">
+    <h2
+      class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+      i18n="@@equipment.assign.title"
+    >
       Facility assignment
     </h2>
   </header>
@@ -19,7 +22,7 @@
         <i class="pi pi-map-marker text-sm text-surface-500"></i>
       </span>
       <div class="min-w-0">
-        <p class="text-xs text-surface-500">Current facility</p>
+        <p class="text-xs text-surface-500" i18n="@@equipment.assign.current">Current facility</p>
         <p class="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
           {{ currentFacilityLabel() }}
         </p>
@@ -33,12 +36,14 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Select a facility"
+          i18n-placeholder="@@equipment.assign.selectFacility"
           class="w-full"
         />
         <div class="flex justify-end gap-2">
           @if (facilityId()) {
             <p-button
               label="Unassign"
+              i18n-label="@@equipment.assign.unassign"
               icon="pi pi-link-slash"
               severity="secondary"
               [outlined]="true"
@@ -49,6 +54,7 @@
           }
           <p-button
             label="Assign"
+            i18n-label="@@equipment.assign.assign"
             icon="pi pi-link"
             size="small"
             [loading]="loading()"

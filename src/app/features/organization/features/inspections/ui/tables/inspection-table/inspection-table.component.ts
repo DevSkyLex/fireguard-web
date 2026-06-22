@@ -369,14 +369,24 @@ export class InspectionTable implements OnInit {
    * @type {InspectionFilterOption<InspectionResult>[]}
    */
   protected readonly resultOptions: InspectionFilterOption<InspectionResult>[] = [
-    { label: 'Pass', value: 'pass', icon: PrimeIcons.CHECK_CIRCLE, severity: 'success' },
     {
-      label: 'Partial',
+      label: $localize`:@@inspectionResult.pass:Pass`,
+      value: 'pass',
+      icon: PrimeIcons.CHECK_CIRCLE,
+      severity: 'success',
+    },
+    {
+      label: $localize`:@@inspectionResult.partial:Partial`,
       value: 'partial',
       icon: PrimeIcons.EXCLAMATION_CIRCLE,
       severity: 'warn',
     },
-    { label: 'Fail', value: 'fail', icon: PrimeIcons.TIMES_CIRCLE, severity: 'danger' },
+    {
+      label: $localize`:@@inspectionResult.fail:Fail`,
+      value: 'fail',
+      icon: PrimeIcons.TIMES_CIRCLE,
+      severity: 'danger',
+    },
   ];
 
   /**
@@ -392,9 +402,24 @@ export class InspectionTable implements OnInit {
    * @type {InspectionFilterOption<InspectionStatus>[]}
    */
   protected readonly statusOptions: InspectionFilterOption<InspectionStatus>[] = [
-    { label: 'Draft', value: 'draft', icon: PrimeIcons.FILE_EDIT, severity: 'info' },
-    { label: 'Submitted', value: 'submitted', icon: PrimeIcons.SEND, severity: 'warn' },
-    { label: 'Closed', value: 'closed', icon: PrimeIcons.LOCK, severity: 'secondary' },
+    {
+      label: $localize`:@@inspectionStatus.draft:Draft`,
+      value: 'draft',
+      icon: PrimeIcons.FILE_EDIT,
+      severity: 'info',
+    },
+    {
+      label: $localize`:@@inspectionStatus.submitted:Submitted`,
+      value: 'submitted',
+      icon: PrimeIcons.SEND,
+      severity: 'warn',
+    },
+    {
+      label: $localize`:@@inspectionStatus.closed:Closed`,
+      value: 'closed',
+      icon: PrimeIcons.LOCK,
+      severity: 'secondary',
+    },
   ];
 
   /**
@@ -457,12 +482,12 @@ export class InspectionTable implements OnInit {
    */
   protected readonly toolbarActions: Signal<MenuItem[]> = computed((): MenuItem[] => [
     {
-      label: 'Refresh',
+      label: $localize`:@@common.refresh:Refresh`,
       icon: PrimeIcons.REFRESH,
       command: (): void => this.onRefresh(),
     },
     {
-      label: 'Clear filters',
+      label: $localize`:@@common.clearFilters:Clear filters`,
       icon: PrimeIcons.FILTER_SLASH,
       command: (): void => this.onClearFilters(),
     },
@@ -534,19 +559,19 @@ export class InspectionTable implements OnInit {
 
     return [
       {
-        label: 'View',
+        label: $localize`:@@common.view:View`,
         icon: PrimeIcons.EYE,
         command: (): void => this.view.emit(inspection),
       },
       ...(this.canManageInspections() && inspection.status === 'draft'
         ? [
             {
-              label: 'Edit',
+              label: $localize`:@@common.edit:Edit`,
               icon: PrimeIcons.PENCIL,
               command: (): void => this.edit.emit(inspection),
             },
             {
-              label: 'Cancel',
+              label: $localize`:@@common.cancel:Cancel`,
               icon: PrimeIcons.TIMES_CIRCLE,
               styleClass: 'text-red-500',
               command: (): void => this.cancel.emit(inspection),
@@ -759,7 +784,7 @@ export class InspectionTable implements OnInit {
     return (
       [inspection.inspector?.firstName, inspection.inspector?.lastName].filter(Boolean).join(' ') ||
       inspection.inspector?.displayName ||
-      'Unknown inspector'
+      $localize`:@@inspection.unknownInspector:Unknown inspector`
     );
   }
 
@@ -777,7 +802,9 @@ export class InspectionTable implements OnInit {
    * @returns {string} Inspector type label or fallback text.
    */
   protected getInspectorTypeLabel(inspection: InspectionOutput): string {
-    return this.toDisplayLabel(inspection.inspector?.type) || 'Unknown';
+    return (
+      this.toDisplayLabel(inspection.inspector?.type) || $localize`:@@inspection.unknown:Unknown`
+    );
   }
 
   /**
@@ -885,7 +912,9 @@ export class InspectionTable implements OnInit {
    * @returns {string} Human-readable findings label.
    */
   protected getFindingsLabel(count: number): string {
-    return `${count} finding${count > 1 ? 's' : ''}`;
+    return count > 1
+      ? $localize`:@@inspection.findingsPlural:${count}:count: findings`
+      : $localize`:@@inspection.findingsOne:${count}:count: finding`;
   }
 
   /**

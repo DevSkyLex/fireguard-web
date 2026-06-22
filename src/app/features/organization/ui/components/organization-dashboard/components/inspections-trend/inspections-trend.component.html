@@ -1,7 +1,9 @@
 <p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
 
 <app-trend-card
+  i18n-title="@@org.trend.inspections.title"
   title="Inspections"
+  i18n-description="@@org.trend.inspections.desc"
   description="Total inspections over time"
   [metrics]="summaryMetrics()"
   [loading]="isLoading()"
@@ -20,7 +22,9 @@
 </app-trend-card>
 
 <app-trend-filter-drawer
+  i18n-title="@@org.trend.inspections.filterTitle"
   title="Inspections Filters"
+  i18n-description="@@org.trend.inspections.filterDesc"
   description="Refine inspection metrics by status, result, inspector type, period, and comparison mode."
   [visible]="isFilterDrawerVisible()"
   [loading]="isLoading()"

@@ -39,7 +39,7 @@ export const INTERVENTION_ROUTES: Routes = [
       import('./ui/pages/my-interventions/my-interventions.component').then(
         (module) => module.MyInterventionsPage,
       ),
-    title: 'My interventions',
+    title: $localize`:@@route.myInterventions:My interventions`,
   },
   {
     path: 'calendar',
@@ -50,7 +50,7 @@ export const INTERVENTION_ROUTES: Routes = [
       import('./ui/pages/interventions/interventions.component').then(
         (module) => module.InterventionsPage,
       ),
-    title: 'Calendar',
+    title: $localize`:@@route.calendar:Calendar`,
     data: { view: 'calendar', breadcrumb: false },
   },
   {
@@ -77,7 +77,7 @@ export const INTERVENTION_ROUTES: Routes = [
       import('./ui/pages/interventions/interventions.component').then(
         (module) => module.InterventionsPage,
       ),
-    title: 'Interventions',
+    title: $localize`:@@route.interventions:Interventions`,
     data: { breadcrumb: false, preload: true },
   },
 ];

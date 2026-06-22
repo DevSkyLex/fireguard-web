@@ -77,9 +77,21 @@ const PHASE_ORDER: readonly InterventionPhase[] = ['prepare', 'execute', 'review
  * @type {Record<InterventionPhase, { label: string; hint: string; icon: string }>}
  */
 const PHASE_META: Record<InterventionPhase, { label: string; hint: string; icon: string }> = {
-  prepare: { label: 'Prepare', hint: 'Plan scope & schedule', icon: 'pi pi-clipboard' },
-  execute: { label: 'Execute', hint: 'Field work on site', icon: 'pi pi-bolt' },
-  review: { label: 'Review', hint: 'Validate & publish', icon: 'pi pi-verified' },
+  prepare: {
+    label: $localize`:@@intervention.phase.prepare:Prepare`,
+    hint: $localize`:@@intervention.phase.prepareHint:Plan scope & schedule`,
+    icon: 'pi pi-clipboard',
+  },
+  execute: {
+    label: $localize`:@@intervention.phase.execute:Execute`,
+    hint: $localize`:@@intervention.phase.executeHint:Field work on site`,
+    icon: 'pi pi-bolt',
+  },
+  review: {
+    label: $localize`:@@intervention.phase.review:Review`,
+    hint: $localize`:@@intervention.phase.reviewHint:Validate & publish`,
+    icon: 'pi pi-verified',
+  },
 };
 
 /**

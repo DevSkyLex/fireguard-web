@@ -36,6 +36,19 @@ import type {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalendarWeek {
+  /**
+   * Builds the localized "Open <title>" accessibility label for an event.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {string} title - Event title.
+   * @returns {string} Localized aria-label.
+   */
+  protected openLabel(title: string): string {
+    return $localize`:@@calendar.openEvent:Open ${title}:title:`;
+  }
+
   //#region Inputs
   /**
    * Property weekDays

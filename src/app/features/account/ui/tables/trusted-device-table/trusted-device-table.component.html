@@ -7,8 +7,8 @@
         class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
       >
         <div class="flex flex-col">
-          <h2 class="font-semibold">Trusted devices</h2>
-          <p class="text-sm text-surface-500">
+          <h2 class="font-semibold" i18n="@@account.deviceTable.title">Trusted devices</h2>
+          <p class="text-sm text-surface-500" i18n="@@account.deviceTable.subtitle">
             Devices allowed to bypass repeated MFA verification.
           </p>
         </div>
@@ -16,6 +16,7 @@
         <div class="flex flex-wrap items-center gap-2">
           <p-button
             label="Refresh"
+            i18n-label="@@common.refresh"
             icon="pi pi-refresh"
             severity="secondary"
             size="small"
@@ -28,6 +29,7 @@
           @if (hasDevices()) {
             <p-button
               label="Revoke all"
+              i18n-label="@@account.deviceTable.revokeAll"
               icon="pi pi-shield"
               severity="danger"
               size="small"
@@ -54,16 +56,17 @@
         [rowsPerPageOptions]="rowsPerPageOptions"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} devices"
+        i18n-currentPageReportTemplate="@@account.deviceTable.pageReport"
         [stripedRows]="true"
         [pt]="tablePt()"
       >
         <ng-template pTemplate="header">
           <tr>
-            <th class="min-w-64">Device</th>
-            <th class="min-w-36">Created</th>
-            <th class="min-w-36">Last used</th>
-            <th class="min-w-36">Expires</th>
-            <th class="w-20"><span class="sr-only">Actions</span></th>
+            <th class="min-w-64" i18n="@@account.sessionTable.device">Device</th>
+            <th class="min-w-36" i18n="@@common.created">Created</th>
+            <th class="min-w-36" i18n="@@account.deviceTable.lastUsed">Last used</th>
+            <th class="min-w-36" i18n="@@account.deviceTable.expires">Expires</th>
+            <th class="w-20"><span class="sr-only" i18n="@@common.actions">Actions</span></th>
           </tr>
         </ng-template>
 
@@ -135,6 +138,7 @@
                   size="small"
                   [outlined]="true"
                   ariaLabel="Trusted device actions"
+                  i18n-ariaLabel="@@account.deviceTable.actions"
                   (onClick)="onActionMenuToggle($event, device)"
                 />
               </td>
@@ -148,7 +152,9 @@
               <app-empty-state
                 icon="pi-shield"
                 title="No trusted devices"
+                i18n-title="@@account.deviceTable.emptyTitle"
                 description="Devices you mark as trusted during sign-in will appear here."
+                i18n-description="@@account.deviceTable.emptyDesc"
               />
             </td>
           </tr>

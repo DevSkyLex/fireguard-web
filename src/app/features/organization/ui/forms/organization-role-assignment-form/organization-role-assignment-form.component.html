@@ -4,6 +4,7 @@
     optionLabel="userId"
     optionValue="id"
     formControlName="memberId"
+    i18n-placeholder="@@org.roleAssign.member"
     placeholder="Member"
     [filter]="true"
   />
@@ -12,11 +13,13 @@
     optionLabel="name"
     optionValue="id"
     formControlName="roleId"
+    i18n-placeholder="@@org.roleAssign.role"
     placeholder="Role"
     [filter]="true"
   />
   <p-button
     type="submit"
+    i18n-label="@@org.roleAssign.submit"
     label="Assign role"
     icon="pi pi-plus"
     [loading]="loading()"

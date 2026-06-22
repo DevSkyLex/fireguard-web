@@ -37,5 +37,7 @@ export class OrganizationDangerZone {
   public readonly deleting: InputSignal<boolean> = input<boolean>(false);
   /** Emits when the user requests organization deletion. */
   public readonly delete: OutputEmitterRef<void> = output();
+  /** Localized fallback used when the organization name is unavailable. */
+  protected readonly thisOrganizationLabel: string = $localize`:@@org.danger.thisOrg:this organization`;
   //#endregion
 }

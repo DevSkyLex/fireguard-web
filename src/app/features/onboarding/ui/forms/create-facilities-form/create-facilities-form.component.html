@@ -15,7 +15,13 @@
               {{ i + 1 }}
             </span>
             <span class="text-sm font-medium text-surface-700 dark:text-surface-200">
-              {{ i === 0 ? 'First facility' : 'Facility ' + (i + 1) }}
+              @if (i === 0) {
+                <ng-container i18n="@@onboarding.facilities.firstRow">First facility</ng-container>
+              } @else {
+                <ng-container i18n="@@onboarding.facilities.rowN"
+                  >Facility {{ i + 1 }}</ng-container
+                >
+              }
             </span>
           </div>
           @if (rows.length > 1) {
@@ -39,6 +45,7 @@
             <label
               [for]="'facilityType-' + i"
               class="text-sm font-medium text-surface-700 dark:text-surface-300"
+              i18n="@@onboarding.facility.typeLabel"
             >
               Facility type
             </label>
@@ -50,10 +57,11 @@
               optionValue="value"
               fluid
               placeholder="Select a type"
+              i18n-placeholder="@@onboarding.field.selectType"
             />
             @if (row.controls['type'].invalid && row.controls['type'].touched) {
               <p-message severity="error" variant="simple">
-                <span>Type is required.</span>
+                <span i18n="@@onboarding.field.typeRequired">Type is required.</span>
               </p-message>
             }
           </div>
@@ -63,6 +71,7 @@
             <label
               [for]="'facilityName-' + i"
               class="text-sm font-medium text-surface-700 dark:text-surface-300"
+              i18n="@@onboarding.facility.nameLabel"
             >
               Facility name
             </label>
@@ -72,14 +81,15 @@
               formControlName="name"
               fluid
               placeholder="Paris HQ"
+              i18n-placeholder="@@onboarding.facility.namePlaceholder"
             />
             @if (row.controls['name'].invalid && row.controls['name'].touched) {
               <p-message severity="error" variant="simple">
                 @if (row.controls['name'].hasError('required')) {
-                  <span>Name is required.</span>
+                  <span i18n="@@onboarding.field.nameRequired">Name is required.</span>
                 }
                 @if (row.controls['name'].hasError('minlength')) {
-                  <span>At least 2 characters.</span>
+                  <span i18n="@@onboarding.field.min2">At least 2 characters.</span>
                 }
               </p-message>
             }
@@ -91,6 +101,7 @@
           <label
             [for]="'facilityAddress-' + i"
             class="text-sm font-medium text-surface-700 dark:text-surface-300"
+            i18n="@@onboarding.facility.addressLabel"
           >
             Address
             <span class="font-normal text-surface-400">(optional)</span>
@@ -101,6 +112,7 @@
             formControlName="address"
             fluid
             placeholder="10 Rue de Rivoli, Paris"
+            i18n-placeholder="@@onboarding.facility.addressPlaceholder"
           />
         </div>
       </div>
@@ -116,13 +128,13 @@
       (click)="addRow()"
     >
       <i class="pi pi-plus text-xs"></i>
-      Add another facility
+      <ng-container i18n="@@onboarding.facilities.addAnother">Add another facility</ng-container>
     </button>
   }
 
   <!-- Submit -->
   <p-button
-    [label]="rowCount() === 1 ? 'Create facility' : 'Create ' + rowCount() + ' facilities'"
+    [label]="submitLabel()"
     type="submit"
     icon="pi pi-arrow-right"
     iconPos="right"

@@ -214,10 +214,10 @@ export class InterventionCreateForm {
    * @type {readonly SelectOption<InterventionPriority>[]}
    */
   protected readonly priorityOptions: readonly SelectOption<InterventionPriority>[] = [
-    { label: 'Low', value: 'low' },
-    { label: 'Normal', value: 'normal' },
-    { label: 'High', value: 'high' },
-    { label: 'Urgent', value: 'urgent' },
+    { label: $localize`:@@interventionPriority.low:Low`, value: 'low' },
+    { label: $localize`:@@interventionPriority.normal:Normal`, value: 'normal' },
+    { label: $localize`:@@interventionPriority.high:High`, value: 'high' },
+    { label: $localize`:@@interventionPriority.urgent:Urgent`, value: 'urgent' },
   ];
 
   /**
@@ -236,20 +236,20 @@ export class InterventionCreateForm {
   protected readonly interventionTypes: RadioCardOption[] = [
     {
       value: 'site_setup',
-      label: 'Site setup',
-      description: 'Declare or enrich a site and its hierarchy.',
+      label: $localize`:@@intervention.action.siteSetup:Site setup`,
+      description: $localize`:@@intervention.type.siteSetupDesc:Declare or enrich a site and its hierarchy.`,
       icon: 'pi pi-sitemap',
     },
     {
       value: 'inventory',
-      label: 'Inventory',
-      description: 'Verify and complete equipment inventory.',
+      label: $localize`:@@intervention.action.inventory:Inventory`,
+      description: $localize`:@@intervention.type.inventoryDesc:Verify and complete equipment inventory.`,
       icon: 'pi pi-box',
     },
     {
       value: 'inspection_campaign',
-      label: 'Inspection campaign',
-      description: 'Execute a prepared inspection campaign.',
+      label: $localize`:@@intervention.type.inspectionCampaign:Inspection campaign`,
+      description: $localize`:@@intervention.type.inspectionCampaignDesc:Execute a prepared inspection campaign.`,
       icon: 'pi pi-clipboard',
     },
   ];

@@ -6,7 +6,12 @@
   >
     <div class="flex items-center gap-2">
       <i class="pi pi-clipboard text-sm text-surface-500"></i>
-      <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Inspections</h2>
+      <h2
+        i18n="@@facility.inspectionsOverview.title"
+        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+      >
+        Inspections
+      </h2>
       <span class="text-xs text-surface-500">{{ store.inspections().length }}</span>
     </div>
 
@@ -37,7 +42,9 @@
       }
     </div>
   } @else if (visibleInspections().length === 0) {
-    <div class="p-6 text-sm text-surface-500">No inspection matches this filter.</div>
+    <div i18n="@@facility.inspections.empty" class="p-6 text-sm text-surface-500">
+      No inspection matches this filter.
+    </div>
   } @else {
     <div class="divide-y divide-surface-100 dark:divide-surface-800">
       @for (inspection of visibleInspections(); track inspection.id) {

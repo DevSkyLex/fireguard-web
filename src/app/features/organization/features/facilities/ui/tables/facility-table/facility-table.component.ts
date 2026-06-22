@@ -433,13 +433,13 @@ export class FacilityTable implements OnInit {
    */
   protected readonly statusOptions: FacilityStatusOption[] = [
     {
-      label: 'Active',
+      label: $localize`:@@status.active:Active`,
       value: 'active',
       icon: PrimeIcons.CHECK_CIRCLE,
       severity: 'success',
     },
     {
-      label: 'Archived',
+      label: $localize`:@@status.archived:Archived`,
       value: 'archived',
       icon: PrimeIcons.BOX,
       severity: 'secondary',
@@ -492,19 +492,19 @@ export class FacilityTable implements OnInit {
    */
   protected readonly toolbarActions: Signal<MenuItem[]> = computed((): MenuItem[] => [
     {
-      label: 'Refresh',
+      label: $localize`:@@common.refresh:Refresh`,
       icon: PrimeIcons.REFRESH,
       command: (): void => this.onRefresh(),
     },
     {
-      label: 'Clear filters',
+      label: $localize`:@@common.clearFilters:Clear filters`,
       icon: PrimeIcons.FILTER_SLASH,
       command: (): void => this.onClearFilters(),
     },
     ...(this.selectedFacilities().length > 0
       ? [
           {
-            label: 'Clear selection',
+            label: $localize`:@@common.clearSelection:Clear selection`,
             icon: PrimeIcons.TIMES,
             command: (): void => this.onClearSelection(),
           },
@@ -514,7 +514,7 @@ export class FacilityTable implements OnInit {
       ? [
           { separator: true },
           {
-            label: `Archive selected (${this.selectedFacilities().length})`,
+            label: $localize`:@@facility.archiveSelected:Archive selected (${this.selectedFacilities().length}:count:)`,
             icon: PrimeIcons.BOX,
             disabled: this.selectedFacilities().length === 0,
             styleClass: 'text-red-500',
@@ -590,26 +590,26 @@ export class FacilityTable implements OnInit {
 
     return [
       {
-        label: 'View',
+        label: $localize`:@@common.view:View`,
         icon: PrimeIcons.EYE,
         command: (): void => this.view.emit(facility),
       },
       ...(this.canManageFacilities()
         ? [
             {
-              label: 'Edit',
+              label: $localize`:@@common.edit:Edit`,
               icon: PrimeIcons.PENCIL,
               command: (): void => this.edit.emit(facility),
             },
             { separator: true },
             facility.status === 'archived'
               ? {
-                  label: 'Restore',
+                  label: $localize`:@@facility.restore:Restore`,
                   icon: PrimeIcons.REFRESH,
                   command: (): void => this.restore.emit(facility),
                 }
               : {
-                  label: 'Archive',
+                  label: $localize`:@@facility.archive:Archive`,
                   icon: PrimeIcons.BOX,
                   styleClass: 'text-red-500',
                   command: (): void => this.archive.emit(facility),
@@ -891,7 +891,9 @@ export class FacilityTable implements OnInit {
    * @returns {string} Children indicator label.
    */
   protected getChildrenLabel(facility: FacilityOutput): string {
-    return facility.hasChildren ? 'Has children' : 'Leaf';
+    return facility.hasChildren
+      ? $localize`:@@facility.hasChildren:Has children`
+      : $localize`:@@facility.leaf:Leaf`;
   }
 
   /**

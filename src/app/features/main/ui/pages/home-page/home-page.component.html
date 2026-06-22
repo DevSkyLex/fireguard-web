@@ -2,16 +2,20 @@
   <section
     class="flex flex-col border-b border-surface-200 bg-surface-50 p-8 dark:border-surface-800 dark:bg-surface-900"
   >
-    <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100">
+    <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-100" i18n="@@home.title">
       Welcome to FireGuard SSO
     </h1>
-    <p class="mt-2 text-sm text-surface-700 dark:text-surface-300">
+    <p class="mt-2 text-sm text-surface-700 dark:text-surface-300" i18n="@@home.subtitle">
       Manage your organizations and single sign-on settings.
     </p>
   </section>
 
   <section class="flex flex-col gap-4 p-8" aria-labelledby="home-quick-access">
-    <h2 id="home-quick-access" class="text-sm font-semibold text-surface-700 dark:text-surface-300">
+    <h2
+      id="home-quick-access"
+      class="text-sm font-semibold text-surface-700 dark:text-surface-300"
+      i18n="@@home.quickAccess"
+    >
       Quick access
     </h2>
 
@@ -26,8 +30,15 @@
           <i class="pi pi-building" aria-hidden="true"></i>
         </span>
         <span class="flex min-w-0 flex-col gap-1">
-          <span class="font-semibold text-surface-900 dark:text-surface-100">Organizations</span>
-          <span class="text-sm text-surface-600 dark:text-surface-400">
+          <span
+            class="font-semibold text-surface-900 dark:text-surface-100"
+            i18n="@@home.organizations.title"
+            >Organizations</span
+          >
+          <span
+            class="text-sm text-surface-600 dark:text-surface-400"
+            i18n="@@home.organizations.description"
+          >
             Browse your organizations and open their facilities, equipment and inspections.
           </span>
         </span>
@@ -47,8 +58,15 @@
           <i class="pi pi-user" aria-hidden="true"></i>
         </span>
         <span class="flex min-w-0 flex-col gap-1">
-          <span class="font-semibold text-surface-900 dark:text-surface-100">Your account</span>
-          <span class="text-sm text-surface-600 dark:text-surface-400">
+          <span
+            class="font-semibold text-surface-900 dark:text-surface-100"
+            i18n="@@home.account.title"
+            >Your account</span
+          >
+          <span
+            class="text-sm text-surface-600 dark:text-surface-400"
+            i18n="@@home.account.description"
+          >
             Update your profile, review sessions and security, and tune notifications.
           </span>
         </span>

@@ -1,7 +1,9 @@
 <p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
 
 <app-trend-card
+  i18n-title="@@org.trend.inspQuality.title"
   title="Inspection Quality"
+  i18n-description="@@org.trend.inspQuality.desc"
   description="Inspection throughput versus opened non-conformity pressure"
   [metrics]="summaryMetrics()"
   [loading]="isLoading()"
@@ -20,7 +22,9 @@
 </app-trend-card>
 
 <app-trend-filter-drawer
+  i18n-title="@@org.trend.inspQuality.filterTitle"
   title="Inspection Quality Filters"
+  i18n-description="@@org.trend.inspQuality.filterDesc"
   description="Refine inspection quality metrics by inspection scope, NC severity, period, and comparison mode."
   [visible]="isFilterDrawerVisible()"
   [loading]="isLoading()"

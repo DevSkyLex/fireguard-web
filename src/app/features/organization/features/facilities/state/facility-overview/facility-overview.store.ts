@@ -186,28 +186,28 @@ export const FacilityOverviewStore = signalStore(
 
       return [
         {
-          label: 'Commissioned',
+          label: $localize`:@@facility.equipmentBreakdown.commissioned:Commissioned`,
           count: byStatus.operational,
           total,
           ratio: total > 0 ? byStatus.operational / total : 0,
           colorClass: 'bg-green-600',
         },
         {
-          label: 'In stock',
+          label: $localize`:@@facility.equipmentBreakdown.inStock:In stock`,
           count: byStatus.in_stock,
           total,
           ratio: total > 0 ? byStatus.in_stock / total : 0,
           colorClass: 'bg-blue-600',
         },
         {
-          label: 'Under maintenance',
+          label: $localize`:@@facility.equipmentBreakdown.underMaintenance:Under maintenance`,
           count: byStatus.under_maintenance,
           total,
           ratio: total > 0 ? byStatus.under_maintenance / total : 0,
           colorClass: 'bg-amber-500',
         },
         {
-          label: 'Decommissioned',
+          label: $localize`:@@facility.equipmentBreakdown.decommissioned:Decommissioned`,
           count: byStatus.decommissioned,
           total,
           ratio: total > 0 ? byStatus.decommissioned / total : 0,
@@ -241,9 +241,10 @@ export const FacilityOverviewStore = signalStore(
     /**
      * Equipment KPI subtitle (e.g. "3 to monitor").
      */
-    equipmentDescription: computed<string>(
-      () => `${store.equipmentNeedingAttentionCount()} to monitor`,
-    ),
+    equipmentDescription: computed<string>(() => {
+      const count: number = store.equipmentNeedingAttentionCount();
+      return $localize`:@@facility.metric.equipments.desc:${count}:count: to monitor`;
+    }),
   })),
   withMethods((store) => {
     const inspectionService: InspectionService = inject<InspectionService>(InspectionService);

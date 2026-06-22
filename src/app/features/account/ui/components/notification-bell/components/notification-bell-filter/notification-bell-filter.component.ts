@@ -61,9 +61,9 @@ export class NotificationBellFilter {
    * @type {TypeOption[]}
    */
   protected readonly options: TypeOption[] = [
-    { label: 'All', value: null },
-    { label: 'System', value: { category: 'system' } },
-    { label: 'Security', value: { category: 'security' } },
+    { label: $localize`:@@account.bell.filterAll:All`, value: null },
+    { label: $localize`:@@account.bell.filterSystem:System`, value: { category: 'system' } },
+    { label: $localize`:@@account.menu.security:Security`, value: { category: 'security' } },
   ];
   //#endregion
 

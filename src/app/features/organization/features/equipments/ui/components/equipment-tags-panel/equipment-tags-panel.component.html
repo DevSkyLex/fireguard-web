@@ -6,7 +6,12 @@
   >
     <div class="flex items-center gap-2">
       <i class="pi pi-tags text-sm text-surface-500"></i>
-      <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Tags</h2>
+      <h2
+        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+        i18n="@@equipment.tags.title"
+      >
+        Tags
+      </h2>
     </div>
     <span class="text-xs text-surface-500">{{ tags().length }}</span>
   </header>
@@ -15,7 +20,9 @@
       @for (tag of tags(); track tag.id) {
         <p-chip [label]="tag.name" [removable]="canManage()" (onRemove)="remove.emit(tag)" />
       } @empty {
-        <span class="text-xs text-surface-500">No tags assigned.</span>
+        <span class="text-xs text-surface-500" i18n="@@equipment.tags.empty"
+          >No tags assigned.</span
+        >
       }
     </div>
     @if (canManage()) {
@@ -24,12 +31,14 @@
           pInputText
           [formControl]="control"
           placeholder="Tag name"
+          i18n-placeholder="@@equipment.tags.placeholder"
           class="flex-1"
           (keydown.enter)="submit()"
         />
         <p-button
           icon="pi pi-plus"
           ariaLabel="Add tag"
+          i18n-ariaLabel="@@equipment.tags.addAria"
           size="small"
           [loading]="loading()"
           [disabled]="control.invalid"

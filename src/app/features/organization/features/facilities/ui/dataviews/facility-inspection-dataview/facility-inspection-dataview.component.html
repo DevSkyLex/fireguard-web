@@ -4,7 +4,7 @@
       class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
     >
       <div class="flex items-center gap-2">
-        <h2 class="font-semibold">Inspections</h2>
+        <h2 i18n="@@facility.inspections.title" class="font-semibold">Inspections</h2>
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
@@ -37,7 +37,9 @@
           }
         </div>
       } @else if (items.length === 0) {
-        <div class="px-4 py-8 text-sm text-surface-500">No inspection matches this filter.</div>
+        <div i18n="@@facility.inspections.empty" class="px-4 py-8 text-sm text-surface-500">
+          No inspection matches this filter.
+        </div>
       } @else {
         <div class="divide-y divide-surface-100 dark:divide-surface-800">
           @for (item of items; track item.id) {

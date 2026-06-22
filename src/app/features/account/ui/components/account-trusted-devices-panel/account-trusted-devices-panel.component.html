@@ -2,9 +2,18 @@
   @if (store.listCallState().error; as error) {
     <p-message severity="error">
       <div class="flex flex-wrap items-center gap-3">
-        <span>{{ error.message ?? 'Trusted devices could not be loaded.' }}</span>
+        <span>
+          @if (error.message; as message) {
+            {{ message }}
+          } @else {
+            <ng-container i18n="@@account.devices.loadError"
+              >Trusted devices could not be loaded.</ng-container
+            >
+          }
+        </span>
         <p-button
           label="Retry"
+          i18n-label="@@common.retry"
           icon="pi pi-refresh"
           severity="secondary"
           [text]="true"
@@ -14,14 +23,26 @@
     </p-message>
   }
   @if (store.revokeCallState().error; as error) {
-    <p-message severity="error">{{
-      error.message ?? 'The trusted device could not be revoked.'
-    }}</p-message>
+    <p-message severity="error">
+      @if (error.message; as message) {
+        {{ message }}
+      } @else {
+        <ng-container i18n="@@account.devices.revokeError"
+          >The trusted device could not be revoked.</ng-container
+        >
+      }
+    </p-message>
   }
   @if (store.revokeAllCallState().error; as error) {
-    <p-message severity="error">{{
-      error.message ?? 'Trusted devices could not be revoked.'
-    }}</p-message>
+    <p-message severity="error">
+      @if (error.message; as message) {
+        {{ message }}
+      } @else {
+        <ng-container i18n="@@account.devices.revokeAllError"
+          >Trusted devices could not be revoked.</ng-container
+        >
+      }
+    </p-message>
   }
 
   <app-trusted-device-table

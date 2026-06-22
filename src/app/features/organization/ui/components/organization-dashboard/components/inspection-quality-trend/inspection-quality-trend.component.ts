@@ -192,7 +192,7 @@ export class InspectionQualityTrend {
       currentRates.length >= 2 ? currentRates[currentRates.length - 1] - currentRates[0] : 0;
     return [
       {
-        label: 'Inspections',
+        label: $localize`:@@dash.metric.inspections:Inspections`,
         value: WHOLE_NUMBER_FMT.format(inspectionTotal),
         icon: 'pi pi-clipboard',
         comparison: buildDashboardComparison(
@@ -202,19 +202,19 @@ export class InspectionQualityTrend {
         ),
       },
       {
-        label: 'Opened NC',
+        label: $localize`:@@dash.metric.openedNc:Opened NC`,
         value: WHOLE_NUMBER_FMT.format(ncOpenedTotal),
         icon: 'pi pi-exclamation-triangle',
         comparison: buildDashboardComparison(ncOpenedTotal, previousNcOpenedTotal, compareEnabled),
       },
       {
-        label: 'NC Rate',
+        label: $localize`:@@dash.metric.ncRate:NC Rate`,
         value: `${DECIMAL_FMT.format(ncRate)}%`,
         icon: 'pi pi-percentage',
         comparison: buildDashboardComparison(ncRate, previousNcRate, compareEnabled),
       },
       {
-        label: 'Rate Shift',
+        label: $localize`:@@dash.metric.rateShift:Rate Shift`,
         value: `${rateShift >= 0 ? '+' : ''}${DECIMAL_FMT.format(rateShift)}%`,
         icon: 'pi pi-chart-line',
         comparison: null,
@@ -255,7 +255,7 @@ export class InspectionQualityTrend {
     const organizationId: string | null = organization ? organization.id : null;
     return [
       {
-        label: 'View all inspections',
+        label: $localize`:@@dash.viewAll.inspections:View all inspections`,
         icon: PrimeIcons.LIST,
         routerLink: organizationId ? ['/organizations', organizationId, 'inspections'] : null,
       },

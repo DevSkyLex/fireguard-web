@@ -6,7 +6,12 @@
   <header
     class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
   >
-    <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Installations</h2>
+    <h2
+      i18n="@@facility.installations.title"
+      class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+    >
+      Installations
+    </h2>
     <span class="text-xs text-surface-500">{{ installationCount() }}</span>
   </header>
 
@@ -24,7 +29,9 @@
     </div>
 
     @if (directChildren().length === 0) {
-      <p class="px-1 text-xs text-surface-500">No child installation loaded.</p>
+      <p i18n="@@facility.installations.empty" class="px-1 text-xs text-surface-500">
+        No child installation loaded.
+      </p>
     } @else {
       <ul class="space-y-1 pl-3">
         @for (child of directChildren(); track child.id) {

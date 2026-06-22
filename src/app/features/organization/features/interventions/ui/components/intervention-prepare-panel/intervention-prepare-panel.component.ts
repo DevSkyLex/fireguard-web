@@ -481,14 +481,17 @@ export class InterventionPreparePanel {
 
     return [
       {
-        label: 'Single site & responsible',
+        label: $localize`:@@intervention.prepare.checkSite:Single site & responsible`,
         done: !!intervention.site && !!intervention.responsible,
       },
       {
-        label: 'Schedule window set',
+        label: $localize`:@@intervention.prepare.checkSchedule:Schedule window set`,
         done: !!intervention.plannedStartAt && !!intervention.dueAt,
       },
-      { label: 'Add at least one work item', done: this.workItems().length > 0 },
+      {
+        label: $localize`:@@intervention.prepare.checkWorkItem:Add at least one work item`,
+        done: this.workItems().length > 0,
+      },
     ];
   });
 

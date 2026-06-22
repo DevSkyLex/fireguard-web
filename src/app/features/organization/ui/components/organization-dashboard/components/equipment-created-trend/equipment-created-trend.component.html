@@ -1,7 +1,9 @@
 <p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
 
 <app-trend-card
+  i18n-title="@@org.trend.equipCreated.title"
   title="Equipment Created"
+  i18n-description="@@org.trend.equipCreated.desc"
   description="New equipment registered over time"
   [metrics]="summaryMetrics()"
   [loading]="isLoading()"
@@ -20,7 +22,9 @@
 </app-trend-card>
 
 <app-trend-filter-drawer
+  i18n-title="@@org.trend.equipCreated.filterTitle"
   title="Equipment Created Filters"
+  i18n-description="@@org.trend.equipCreated.filterDesc"
   description="Refine equipment creation metrics by type, status, period, and comparison mode."
   [visible]="isFilterDrawerVisible()"
   [loading]="isLoading()"

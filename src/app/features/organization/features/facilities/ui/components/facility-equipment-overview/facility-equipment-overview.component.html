@@ -6,9 +6,16 @@
   >
     <div class="flex items-center gap-2">
       <i class="pi pi-shield text-sm text-surface-500"></i>
-      <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Equipment status</h2>
+      <h2
+        i18n="@@facility.equipmentStatus.title"
+        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+      >
+        Equipment status
+      </h2>
     </div>
-    <span class="text-xs text-surface-500">{{ store.equipmentCount() }} assets</span>
+    <span i18n="@@facility.equipmentStatus.assets" class="text-xs text-surface-500"
+      >{{ store.equipmentCount() }} assets</span
+    >
   </header>
 
   @if (store.isLoadingEquipment()) {
@@ -18,7 +25,9 @@
       }
     </div>
   } @else if (store.equipmentCount() === 0) {
-    <div class="p-6 text-sm text-surface-500">No equipment assigned to this facility.</div>
+    <div i18n="@@facility.equipmentStatus.empty" class="p-6 text-sm text-surface-500">
+      No equipment assigned to this facility.
+    </div>
   } @else {
     <div class="space-y-3 p-4">
       @for (row of store.equipmentStatusRows(); track row.label) {

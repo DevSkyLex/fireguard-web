@@ -203,24 +203,24 @@ export class OnboardingStepper {
    */
   protected readonly stepMeta: Record<OnboardingStepKey, OnboardingStepMeta> = {
     create_organization: {
-      label: 'Create organization',
-      description: 'Company name and identity',
+      label: $localize`:@@onboarding.step.org.label:Create organization`,
+      description: $localize`:@@onboarding.step.org.desc:Company name and identity`,
     },
     invite_members: {
-      label: 'Team & technicians',
-      description: 'Invitations, access management and collaboration',
+      label: $localize`:@@onboarding.step.members.label:Team & technicians`,
+      description: $localize`:@@onboarding.step.members.desc:Invitations, access management and collaboration`,
     },
     create_first_facility: {
-      label: 'First facility',
-      description: 'Site, building or area to monitor',
+      label: $localize`:@@onboarding.step.facility.label:First facility`,
+      description: $localize`:@@onboarding.step.facility.desc:Site, building or area to monitor`,
     },
     create_first_equipment: {
-      label: 'First equipment',
-      description: 'Extinguisher, detector or other fire safety equipment',
+      label: $localize`:@@onboarding.step.equipment.label:First equipment`,
+      description: $localize`:@@onboarding.step.equipment.desc:Extinguisher, detector or other fire safety equipment`,
     },
     run_first_inspection: {
-      label: 'First inspection',
-      description: 'Initial equipment inspection',
+      label: $localize`:@@onboarding.step.inspection.label:First inspection`,
+      description: $localize`:@@onboarding.step.inspection.desc:Initial equipment inspection`,
     },
   };
 

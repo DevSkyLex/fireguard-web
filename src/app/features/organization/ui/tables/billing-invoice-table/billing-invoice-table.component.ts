@@ -241,15 +241,35 @@ export class BillingInvoiceTable {
   protected statusDescriptor(status: string): TagDescriptor {
     switch (status) {
       case 'paid':
-        return { label: 'Paid', severity: 'success', icon: 'pi pi-check-circle' };
+        return {
+          label: $localize`:@@invoiceStatus.paid:Paid`,
+          severity: 'success',
+          icon: 'pi pi-check-circle',
+        };
       case 'open':
-        return { label: 'Open', severity: 'warn', icon: 'pi pi-clock' };
+        return {
+          label: $localize`:@@invoiceStatus.open:Open`,
+          severity: 'warn',
+          icon: 'pi pi-clock',
+        };
       case 'draft':
-        return { label: 'Draft', severity: 'secondary', icon: 'pi pi-pencil' };
+        return {
+          label: $localize`:@@invoiceStatus.draft:Draft`,
+          severity: 'secondary',
+          icon: 'pi pi-pencil',
+        };
       case 'void':
-        return { label: 'Void', severity: 'danger', icon: 'pi pi-ban' };
+        return {
+          label: $localize`:@@invoiceStatus.void:Void`,
+          severity: 'danger',
+          icon: 'pi pi-ban',
+        };
       case 'uncollectible':
-        return { label: 'Uncollectible', severity: 'danger', icon: 'pi pi-times-circle' };
+        return {
+          label: $localize`:@@invoiceStatus.uncollectible:Uncollectible`,
+          severity: 'danger',
+          icon: 'pi pi-times-circle',
+        };
       default:
         return { label: status, severity: 'secondary', icon: 'pi pi-info-circle' };
     }

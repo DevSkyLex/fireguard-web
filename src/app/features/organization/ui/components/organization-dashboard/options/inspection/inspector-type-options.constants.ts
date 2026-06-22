@@ -13,11 +13,11 @@ import type { InspectorTypeOption } from '@features/organization/ui/components/o
  */
 export const INSPECTOR_TYPE_OPTIONS: readonly InspectorTypeOption[] = [
   {
-    label: 'User',
+    label: $localize`:@@dash.inspectorType.user:User`,
     value: 'user',
   },
   {
-    label: 'External',
+    label: $localize`:@@dash.inspectorType.external:External`,
     value: 'external',
   },
 ];

@@ -1,7 +1,12 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-10">
   <!-- Locale -->
   <section class="flex flex-col">
-    <h3 class="mb-3 text-base font-medium text-surface-500 dark:text-surface-400">Locale</h3>
+    <h3
+      i18n="@@org.regional.locale"
+      class="mb-3 text-base font-medium text-surface-500 dark:text-surface-400"
+    >
+      Locale
+    </h3>
 
     <div class="divide-y divide-surface-100 dark:divide-surface-800/70">
       <!-- Timezone -->
@@ -9,8 +14,15 @@
         class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
       >
         <label for="regional-timezone" class="flex flex-col gap-0.5">
-          <span class="text-sm font-medium text-surface-800 dark:text-surface-100">Timezone</span>
-          <span class="text-sm text-surface-500 dark:text-surface-400">
+          <span
+            i18n="@@org.regional.timezone"
+            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            >Timezone</span
+          >
+          <span
+            i18n="@@org.regional.timezoneDesc"
+            class="text-sm text-surface-500 dark:text-surface-400"
+          >
             Used for scheduling and timestamps.
           </span>
         </label>
@@ -52,10 +64,15 @@
         class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
       >
         <label for="regional-locale" class="flex flex-col gap-0.5">
-          <span class="text-sm font-medium text-surface-800 dark:text-surface-100"
+          <span
+            i18n="@@org.regional.language"
+            class="text-sm font-medium text-surface-800 dark:text-surface-100"
             >Language &amp; locale</span
           >
-          <span class="text-sm text-surface-500 dark:text-surface-400">
+          <span
+            i18n="@@org.regional.languageDesc"
+            class="text-sm text-surface-500 dark:text-surface-400"
+          >
             The display language for this organization.
           </span>
         </label>
@@ -99,7 +116,12 @@
 
   <!-- Formats -->
   <section class="flex flex-col">
-    <h3 class="mb-3 text-base font-medium text-surface-500 dark:text-surface-400">Formats</h3>
+    <h3
+      i18n="@@org.regional.formats"
+      class="mb-3 text-base font-medium text-surface-500 dark:text-surface-400"
+    >
+      Formats
+    </h3>
 
     <div class="divide-y divide-surface-100 dark:divide-surface-800/70">
       <!-- Date format -->
@@ -107,10 +129,15 @@
         class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
       >
         <label for="regional-date-format" class="flex flex-col gap-0.5">
-          <span class="text-sm font-medium text-surface-800 dark:text-surface-100"
+          <span
+            i18n="@@org.regional.dateFormat"
+            class="text-sm font-medium text-surface-800 dark:text-surface-100"
             >Date format</span
           >
-          <span class="text-sm text-surface-500 dark:text-surface-400">
+          <span
+            i18n="@@org.regional.dateFormatDesc"
+            class="text-sm text-surface-500 dark:text-surface-400"
+          >
             How dates are displayed across the app.
           </span>
         </label>
@@ -130,10 +157,15 @@
         class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
       >
         <label for="regional-first-day" class="flex flex-col gap-0.5">
-          <span class="text-sm font-medium text-surface-800 dark:text-surface-100"
+          <span
+            i18n="@@org.regional.firstDay"
+            class="text-sm font-medium text-surface-800 dark:text-surface-100"
             >First day of week</span
           >
-          <span class="text-sm text-surface-500 dark:text-surface-400">
+          <span
+            i18n="@@org.regional.firstDayDesc"
+            class="text-sm text-surface-500 dark:text-surface-400"
+          >
             The first column in calendars.
           </span>
         </label>
@@ -153,10 +185,15 @@
         class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
       >
         <label for="regional-measurement" class="flex flex-col gap-0.5">
-          <span class="text-sm font-medium text-surface-800 dark:text-surface-100"
+          <span
+            i18n="@@org.regional.measurement"
+            class="text-sm font-medium text-surface-800 dark:text-surface-100"
             >Measurement system</span
           >
-          <span class="text-sm text-surface-500 dark:text-surface-400">
+          <span
+            i18n="@@org.regional.measurementDesc"
+            class="text-sm text-surface-500 dark:text-surface-400"
+          >
             Units used for measurements.
           </span>
         </label>
@@ -176,6 +213,7 @@
   <div class="flex justify-end">
     <p-button
       type="submit"
+      i18n-label="@@org.saveChanges"
       label="Save changes"
       icon="pi pi-check"
       [loading]="saving()"

@@ -3,7 +3,7 @@
     <div
       class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
     >
-      <h2 class="font-semibold">Invoices</h2>
+      <h2 i18n="@@org.invoiceTable.title" class="font-semibold">Invoices</h2>
     </div>
   </ng-template>
 
@@ -15,17 +15,20 @@
       [rows]="rows"
       [rowsPerPageOptions]="rowsPerPageOptions"
       [showCurrentPageReport]="true"
+      i18n-currentPageReportTemplate="@@org.invoiceTable.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} invoices"
       [stripedRows]="true"
       [pt]="tablePt()"
     >
       <ng-template pTemplate="header">
         <tr>
-          <th class="min-w-64">Invoice</th>
-          <th class="min-w-36">Date</th>
-          <th class="min-w-32">Amount</th>
-          <th class="min-w-40">Status</th>
-          <th class="w-20"><span class="sr-only">Actions</span></th>
+          <th i18n="@@org.invoiceTable.colInvoice" class="min-w-64">Invoice</th>
+          <th i18n="@@org.invoiceTable.colDate" class="min-w-36">Date</th>
+          <th i18n="@@org.invoiceTable.colAmount" class="min-w-32">Amount</th>
+          <th i18n="@@org.invoiceTable.colStatus" class="min-w-40">Status</th>
+          <th class="w-20">
+            <span i18n="@@org.invoiceTable.actions" class="sr-only">Actions</span>
+          </th>
         </tr>
       </ng-template>
 
@@ -65,6 +68,7 @@
                   severity="secondary"
                   size="small"
                   [outlined]="true"
+                  i18n-ariaLabel="@@org.invoiceTable.downloadAria"
                   ariaLabel="Download invoice"
                   (onClick)="openInvoice(invoice)"
                 />
@@ -79,7 +83,9 @@
           <td colspan="5">
             <app-empty-state
               icon="pi-file"
+              i18n-title="@@org.invoiceTable.emptyTitle"
               title="No invoices yet"
+              i18n-description="@@org.invoiceTable.emptyDesc"
               description="Invoices will appear here once your organization is billed."
             />
           </td>

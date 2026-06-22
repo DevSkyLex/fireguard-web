@@ -2,16 +2,19 @@
   <section
     class="border-b border-surface-200 bg-surface-50 p-8 dark:border-surface-800 dark:bg-surface-900"
   >
-    <h1 class="text-2xl font-semibold">Team</h1>
-    <p class="text-sm text-surface-500">Manage members, invitations, roles and permissions.</p>
+    <h1 i18n="@@org.team.title" class="text-2xl font-semibold">Team</h1>
+    <p i18n="@@org.team.subtitle" class="text-sm text-surface-500">
+      Manage members, invitations, roles and permissions.
+    </p>
   </section>
 
   <section class="flex min-h-0 flex-1 flex-col px-6 py-6">
     @if (store.loadError(); as error) {
       <p-message severity="error" class="mb-4">
         <div class="flex flex-wrap items-center gap-3">
-          <span>{{ error.message ?? 'The team administration data could not be loaded.' }}</span>
+          <span>{{ error.message ?? loadErrorFallback }}</span>
           <p-button
+            i18n-label="@@org.team.retry"
             label="Retry"
             icon="pi pi-refresh"
             severity="secondary"
@@ -23,17 +26,17 @@
     }
     @if (hasInlineMutationError() && store.mutationError(); as error) {
       <p-message severity="error" class="mb-4">{{
-        error.message ?? 'The team operation could not be completed.'
+        error.message ?? mutationErrorFallback
       }}</p-message>
     }
     <p-tabs [value]="defaultTab()" [pt]="tabsPt">
       <p-tablist [pt]="tabListPt">
         @if (canViewMembers()) {
-          <p-tab value="members">Members</p-tab>
-          <p-tab value="invitations">Invitations</p-tab>
+          <p-tab value="members" i18n="@@org.team.tabMembers">Members</p-tab>
+          <p-tab value="invitations" i18n="@@org.team.tabInvitations">Invitations</p-tab>
         }
         @if (canViewRoles()) {
-          <p-tab value="roles">Roles</p-tab>
+          <p-tab value="roles" i18n="@@org.team.tabRoles">Roles</p-tab>
         }
       </p-tablist>
       <p-tabpanels [pt]="tabPanelsPt">
@@ -41,9 +44,9 @@
           <p-tabpanel value="members">
             <div class="flex flex-col gap-6 pt-4">
               @if (canManageMembers()) {
-                <p-card header="Add member">
+                <p-card i18n-header="@@org.team.addMember" header="Add member">
                   @if (atMemberLimit()) {
-                    <p-message severity="warn" class="mb-4 block"
+                    <p-message i18n="@@org.team.memberLimitAdd" severity="warn" class="mb-4 block"
                       >You've reached your plan's member limit. Upgrade your plan to add more
                       members.</p-message
                     >
@@ -56,7 +59,7 @@
                 </p-card>
               }
               @if (canManageRoles()) {
-                <p-card header="Assign role"
+                <p-card i18n-header="@@org.team.assignRole" header="Assign role"
                   ><app-organization-role-assignment-form
                     [members]="store.members()"
                     [roles]="store.roles()"
@@ -78,9 +81,12 @@
           <p-tabpanel value="invitations">
             <div class="flex flex-col gap-6 pt-4">
               @if (canManageMembers()) {
-                <p-card header="Invite member">
+                <p-card i18n-header="@@org.team.inviteMember" header="Invite member">
                   @if (atMemberLimit()) {
-                    <p-message severity="warn" class="mb-4 block"
+                    <p-message
+                      i18n="@@org.team.memberLimitInvite"
+                      severity="warn"
+                      class="mb-4 block"
                       >You've reached your plan's member limit. Upgrade your plan to invite more
                       members.</p-message
                     >
@@ -105,7 +111,7 @@
           <p-tabpanel value="roles">
             <div class="flex flex-col gap-6 pt-4">
               @if (canManageRoles()) {
-                <p-card [header]="selectedRole() ? 'Edit role' : 'Create role'"
+                <p-card [header]="roleCardHeader()"
                   ><app-organization-role-form
                     [role]="selectedRole()"
                     [permissions]="store.permissions()"

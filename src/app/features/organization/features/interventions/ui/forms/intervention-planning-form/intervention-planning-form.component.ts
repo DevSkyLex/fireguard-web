@@ -204,10 +204,10 @@ export class InterventionPlanningForm {
    * @type {readonly SelectOption<InterventionPriority>[]}
    */
   protected readonly priorityOptions: readonly SelectOption<InterventionPriority>[] = [
-    { label: 'Low', value: 'low' },
-    { label: 'Normal', value: 'normal' },
-    { label: 'High', value: 'high' },
-    { label: 'Urgent', value: 'urgent' },
+    { label: $localize`:@@interventionPriority.low:Low`, value: 'low' },
+    { label: $localize`:@@interventionPriority.normal:Normal`, value: 'normal' },
+    { label: $localize`:@@interventionPriority.high:High`, value: 'high' },
+    { label: $localize`:@@interventionPriority.urgent:Urgent`, value: 'urgent' },
   ];
 
   //#endregion

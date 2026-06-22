@@ -90,8 +90,8 @@ export const ORGANIZATION_FIRST_DAY_OPTIONS: ReadonlyArray<{
   label: string;
   value: OrganizationFirstDayOfWeek;
 }> = [
-  { label: 'Monday', value: 'monday' },
-  { label: 'Sunday', value: 'sunday' },
+  { label: $localize`:@@org.firstDay.monday:Monday`, value: 'monday' },
+  { label: $localize`:@@org.firstDay.sunday:Sunday`, value: 'sunday' },
 ];
 
 /**
@@ -106,6 +106,6 @@ export const ORGANIZATION_MEASUREMENT_SYSTEM_OPTIONS: ReadonlyArray<{
   label: string;
   value: OrganizationMeasurementSystem;
 }> = [
-  { label: 'Metric', value: 'metric' },
-  { label: 'Imperial', value: 'imperial' },
+  { label: $localize`:@@org.measurement.metric:Metric`, value: 'metric' },
+  { label: $localize`:@@org.measurement.imperial:Imperial`, value: 'imperial' },
 ];

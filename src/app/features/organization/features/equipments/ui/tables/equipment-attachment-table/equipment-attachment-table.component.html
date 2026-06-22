@@ -6,9 +6,16 @@
   >
     <div class="flex items-center gap-2">
       <i class="pi pi-paperclip text-sm text-surface-500"></i>
-      <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Attachments</h2>
+      <h2
+        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+        i18n="@@equipment.attach.title"
+      >
+        Attachments
+      </h2>
     </div>
-    <span class="text-xs text-surface-500">{{ attachments().length }} file(s)</span>
+    <span class="text-xs text-surface-500" i18n="@@equipment.attach.fileCount"
+      >{{ attachments().length }} file(s)</span
+    >
   </header>
 
   @if (canManage()) {
@@ -27,11 +34,11 @@
   >
     <ng-template pTemplate="header">
       <tr>
-        <th>File</th>
-        <th>Type</th>
-        <th>Size</th>
-        <th>Uploaded</th>
-        <th class="w-20"><span class="sr-only">Actions</span></th>
+        <th i18n="@@equipment.attach.colFile">File</th>
+        <th i18n="@@equipment.attach.colType">Type</th>
+        <th i18n="@@equipment.attach.colSize">Size</th>
+        <th i18n="@@equipment.attach.colUploaded">Uploaded</th>
+        <th class="w-20"><span class="sr-only" i18n="@@common.actions">Actions</span></th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-attachment>
@@ -74,6 +81,7 @@
                 [text]="true"
                 [rounded]="true"
                 ariaLabel="Delete attachment"
+                i18n-ariaLabel="@@equipment.attach.deleteAria"
                 (onClick)="remove.emit(attachment)"
               />
             }
@@ -87,7 +95,9 @@
           <app-empty-state
             icon="pi-paperclip"
             title="No attachments"
+            i18n-title="@@equipment.attach.emptyTitle"
             description="Files linked to this equipment will appear here."
+            i18n-description="@@equipment.attach.emptyDesc"
           />
         </td>
       </tr>

@@ -31,6 +31,19 @@ import type { CalendarDay, CalendarEvent, CalendarEventContext } from '../../mod
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalendarMonth {
+  /**
+   * Builds the localized "Open <title>" accessibility label for an event.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {string} title - Event title.
+   * @returns {string} Localized aria-label.
+   */
+  protected openLabel(title: string): string {
+    return $localize`:@@calendar.openEvent:Open ${title}:title:`;
+  }
+
   //#region Inputs
   /**
    * Property days

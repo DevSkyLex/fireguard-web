@@ -34,6 +34,9 @@ import { EmptyState } from '@shared/components';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyInterventionsPage {
+  /** Localized fallback shown when a site is not cached locally. */
+  protected readonly siteUnavailableLabel: string = $localize`:@@intervention.my.siteUnavailable:Site not available locally`;
+
   //#region Properties
   /**
    * Property store

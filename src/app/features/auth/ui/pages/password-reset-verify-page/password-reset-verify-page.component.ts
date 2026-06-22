@@ -136,7 +136,7 @@ export class PasswordResetVerifyPage {
       .subscribe(({ payload }) => {
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
+          summary: $localize`:@@common.error:Error`,
           detail: payload.message,
           life: 5000,
         });

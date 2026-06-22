@@ -350,7 +350,7 @@ export class SessionTable {
 
     return [
       {
-        label: 'View details',
+        label: $localize`:@@account.sessionTable.viewDetails:View details`,
         icon: PrimeIcons.EYE,
         command: (): void => this.details.emit(session),
       },
@@ -358,7 +358,7 @@ export class SessionTable {
         ? []
         : [
             {
-              label: 'Revoke',
+              label: $localize`:@@common.revoke:Revoke`,
               icon: PrimeIcons.TIMES_CIRCLE,
               styleClass: 'text-red-500',
               command: (): void => this.revoke.emit(session),

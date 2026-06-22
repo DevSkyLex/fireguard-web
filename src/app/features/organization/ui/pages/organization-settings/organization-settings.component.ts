@@ -83,6 +83,11 @@ interface OrganizationSettingsNavItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationSettingsPage {
+  /** Localized fallback for the save-error banner. */
+  protected readonly saveErrorFallback: string = $localize`:@@org.settings.saveError:The settings could not be saved.`;
+  /** Localized fallback for the delete-error banner. */
+  protected readonly deleteErrorFallback: string = $localize`:@@org.settings.deleteError:The organization could not be deleted.`;
+
   //#region Properties
   /** Active route used to read and update the selected settings section. */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
@@ -131,42 +136,42 @@ export class OrganizationSettingsPage {
     const items: OrganizationSettingsNavItem[] = [
       {
         id: 'general',
-        label: 'General',
+        label: $localize`:@@org.settings.general:General`,
         icon: 'pi pi-cog',
-        description: 'Name, slug, description, logo and active status.',
+        description: $localize`:@@org.settings.generalDesc:Name, slug, description, logo and active status.`,
       },
       {
         id: 'subscription',
-        label: 'Subscription',
+        label: $localize`:@@org.settings.subscription:Subscription`,
         icon: 'pi pi-star',
-        description: 'Choose the plan that fits your organization.',
+        description: $localize`:@@org.settings.subscriptionDesc:Choose the plan that fits your organization.`,
       },
       {
         id: 'usage',
-        label: 'Usage',
+        label: $localize`:@@org.settings.usage:Usage`,
         icon: 'pi pi-gauge',
-        description: 'Resource consumption against your plan limits.',
+        description: $localize`:@@org.settings.usageDesc:Resource consumption against your plan limits.`,
       },
       {
         id: 'notifications',
-        label: 'Notifications',
+        label: $localize`:@@org.settings.notifications:Notifications`,
         icon: 'pi pi-bell',
-        description: 'Delivery channels and event notifications.',
+        description: $localize`:@@org.settings.notificationsDesc:Delivery channels and event notifications.`,
       },
       {
         id: 'regional',
-        label: 'Regional & formats',
+        label: $localize`:@@org.settings.regional:Regional & formats`,
         icon: 'pi pi-globe',
-        description: 'Timezone, locale, date format and units.',
+        description: $localize`:@@org.settings.regionalDesc:Timezone, locale, date format and units.`,
       },
     ];
 
     if (this.canDeleteOrganization()) {
       items.push({
         id: 'danger',
-        label: 'Danger zone',
+        label: $localize`:@@org.settings.danger:Danger zone`,
         icon: 'pi pi-exclamation-triangle',
-        description: 'Irreversible actions for this organization.',
+        description: $localize`:@@org.settings.dangerDesc:Irreversible actions for this organization.`,
       });
     }
 
@@ -221,8 +226,8 @@ export class OrganizationSettingsPage {
       if (this.store.saveSucceeded()) {
         this.messageService.add({
           severity: 'success',
-          summary: 'Settings saved',
-          detail: 'The organization settings have been updated.',
+          summary: $localize`:@@org.settings.savedSummary:Settings saved`,
+          detail: $localize`:@@org.settings.savedDetail:The organization settings have been updated.`,
         });
       }
     });
@@ -231,8 +236,8 @@ export class OrganizationSettingsPage {
       if (this.store.uploadLogoSucceeded()) {
         this.messageService.add({
           severity: 'success',
-          summary: 'Logo updated',
-          detail: 'The organization logo has been updated.',
+          summary: $localize`:@@org.settings.logoSummary:Logo updated`,
+          detail: $localize`:@@org.settings.logoDetail:The organization logo has been updated.`,
         });
       }
     });
@@ -243,8 +248,8 @@ export class OrganizationSettingsPage {
         this.activeOrganizationStore.clear();
         this.messageService.add({
           severity: 'success',
-          summary: 'Organization deleted',
-          detail: 'The organization has been permanently deleted.',
+          summary: $localize`:@@org.settings.deletedSummary:Organization deleted`,
+          detail: $localize`:@@org.settings.deletedDetail:The organization has been permanently deleted.`,
         });
         void this.router.navigate(['/organizations']);
       }

@@ -22,7 +22,7 @@ export const EQUIPMENT_ROUTES: Routes = [
       import('./ui/pages/equipment-create/equipment-create.component').then(
         (m) => m.EquipmentCreatePage,
       ),
-    title: 'Create Equipment',
+    title: $localize`:@@route.equipment.create:Create Equipment`,
   },
   {
     path: ':equipmentId',
@@ -43,7 +43,7 @@ export const EQUIPMENT_ROUTES: Routes = [
           import('./ui/pages/equipment-edit/equipment-edit.component').then(
             (m) => m.EquipmentEditPage,
           ),
-        title: 'Edit Equipment',
+        title: $localize`:@@route.equipment.edit:Edit Equipment`,
       },
       {
         path: '',
@@ -64,7 +64,7 @@ export const EQUIPMENT_ROUTES: Routes = [
     ],
     loadComponent: () =>
       import('./ui/pages/equipment-list/equipment-list.component').then((m) => m.EquipmentListPage),
-    title: 'Equipments',
+    title: $localize`:@@route.equipments:Equipments`,
     data: {
       breadcrumb: false,
       preload: true,

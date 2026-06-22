@@ -187,7 +187,7 @@ export class InterventionCalendar {
   protected readonly categoryGroups: readonly CalendarCategoryGroup[] = [
     {
       id: 'status',
-      label: 'Status',
+      label: $localize`:@@common.status:Status`,
       categories: INTERVENTION_STATUSES.map((status: InterventionStatus) => {
         const descriptor = resolveInterventionTag('status', status);
         return {
@@ -200,10 +200,20 @@ export class InterventionCalendar {
     },
     {
       id: 'assignment',
-      label: 'Assignment',
+      label: $localize`:@@intervention.cal.assignment:Assignment`,
       categories: [
-        { id: 'assignment:mine', label: 'Assigned to me', tone: 'info', active: true },
-        { id: 'assignment:others', label: 'Others', tone: 'secondary', active: true },
+        {
+          id: 'assignment:mine',
+          label: $localize`:@@intervention.cal.mine:Assigned to me`,
+          tone: 'info',
+          active: true,
+        },
+        {
+          id: 'assignment:others',
+          label: $localize`:@@intervention.cal.others:Others`,
+          tone: 'secondary',
+          active: true,
+        },
       ],
     },
   ];

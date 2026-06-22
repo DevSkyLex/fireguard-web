@@ -170,11 +170,18 @@ export class EquipmentDetailPage {
   /** Confirms and permanently decommissions the active equipment. */
   protected decommission(): void {
     this.confirmationService.confirm({
-      header: 'Decommission equipment',
-      message: 'This equipment will be marked as permanently out of service.',
+      header: $localize`:@@equipment.decommissionConfirm.header:Decommission equipment`,
+      message: $localize`:@@equipment.decommissionConfirm.message:This equipment will be marked as permanently out of service.`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Decommission', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: {
+        label: $localize`:@@equipment.decommission:Decommission`,
+        severity: 'danger',
+      },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () =>
         this.run((organizationId, equipmentId) =>
           this.store.decommission({ organizationId, equipmentId }),
@@ -206,11 +213,15 @@ export class EquipmentDetailPage {
   /** Confirms and deletes an equipment attachment. */
   protected deleteAttachment(attachment: EquipmentAttachmentOutput): void {
     this.confirmationService.confirm({
-      header: 'Delete attachment',
-      message: `Delete "${attachment.label || attachment.fileName}"?`,
+      header: $localize`:@@equipment.deleteAttachment.header:Delete attachment`,
+      message: $localize`:@@equipment.deleteAttachment.message:Delete "${attachment.label || attachment.fileName}:name:"?`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Delete', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: $localize`:@@common.delete:Delete`, severity: 'danger' },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () =>
         this.run((organizationId, equipmentId) =>
           this.store.deleteAttachment({

@@ -3,18 +3,22 @@
     <div>
       <h2
         id="intervention-discovery-heading"
+        i18n="@@intervention.df.title"
         class="text-lg font-semibold text-surface-900 dark:text-surface-100"
       >
         Field discovery
       </h2>
-      <p class="mt-0.5 text-sm text-surface-500 dark:text-surface-400">
+      <p
+        i18n="@@intervention.df.hint"
+        class="mt-0.5 text-sm text-surface-500 dark:text-surface-400"
+      >
         Record work that was not part of the prepared scope. It will be highlighted during review.
       </p>
     </div>
 
     <div class="grid gap-5">
       <label class="grid gap-1.5 text-sm">
-        <span class="font-medium">Action</span>
+        <span i18n="@@intervention.df.action" class="font-medium">Action</span>
         <p-select
           formControlName="action"
           [options]="[...actionOptions]"
@@ -35,13 +39,7 @@
 
       <label class="grid gap-1.5 text-sm">
         <span class="font-medium">
-          {{
-            form.controls.action.value === 'site_setup'
-              ? 'Facility name'
-              : form.controls.action.value === 'inventory'
-                ? 'Equipment type'
-                : 'Equipment resource'
-          }}
+          {{ targetLabel() }}
           <span class="text-red-500" aria-hidden="true">*</span>
         </span>
         @if (form.controls.action.value === 'inventory') {
@@ -52,6 +50,7 @@
             optionValue="value"
             [filter]="true"
             appendTo="body"
+            i18n-placeholder="@@intervention.df.equipTypePlaceholder"
             placeholder="Select an equipment type"
             [invalid]="form.controls.target.invalid && form.controls.target.touched"
           />
@@ -61,23 +60,19 @@
             formControlName="target"
             class="w-full"
             [invalid]="form.controls.target.invalid && form.controls.target.touched"
-            [placeholder]="
-              form.controls.action.value === 'site_setup'
-                ? 'Example: Electrical room'
-                : 'Example: Extinguisher #A-12'
-            "
+            [placeholder]="targetInputPlaceholder()"
           />
         }
         @if (form.controls.target.invalid && form.controls.target.touched) {
           <p-message severity="error" variant="simple">
-            <span>Describe the discovered resource.</span>
+            <span i18n="@@intervention.df.targetRequired">Describe the discovered resource.</span>
           </p-message>
         }
       </label>
 
       @if (form.controls.action.value === 'inspection') {
         <label class="grid gap-1.5 text-sm">
-          <span class="font-medium">Initial result</span>
+          <span i18n="@@intervention.df.result" class="font-medium">Initial result</span>
           <p-select
             formControlName="result"
             [options]="[...resultOptions]"
@@ -101,6 +96,7 @@
 
   <div class="sticky bottom-0 -mb-2 bg-surface-0 pt-4 pb-2 dark:bg-surface-900">
     <p-button
+      i18n-label="@@intervention.df.submit"
       label="Add discovery"
       type="submit"
       icon="pi pi-plus"

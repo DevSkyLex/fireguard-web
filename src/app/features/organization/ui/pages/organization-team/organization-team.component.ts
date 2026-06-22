@@ -99,6 +99,25 @@ export class OrganizationTeamPage {
   /** Role currently selected for editing. */
   protected readonly selectedRole: WritableSignal<OrganizationRoleOutput | null> = signal(null);
 
+  /** Localized fallback for the load-error banner. */
+  protected readonly loadErrorFallback: string = $localize`:@@org.team.loadError:The team administration data could not be loaded.`;
+  /** Localized fallback for the mutation-error banner. */
+  protected readonly mutationErrorFallback: string = $localize`:@@org.team.mutationError:The team operation could not be completed.`;
+
+  /**
+   * Localized role-form card header, depending on edit vs create mode.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {string} Localized card header.
+   */
+  protected roleCardHeader(): string {
+    return this.selectedRole()
+      ? $localize`:@@org.team.editRoleCard:Edit role`
+      : $localize`:@@org.roleForm.create:Create role`;
+  }
+
   /** The capped resource governing member additions and invitations. */
   protected readonly quotaResource = ORGANIZATION_QUOTA_RESOURCE.MEMBERS;
   /** Whether the organization has reached its plan limit for members. */
@@ -193,11 +212,15 @@ export class OrganizationTeamPage {
   /** Confirms and removes a member from the active organization. */
   protected removeMember(member: OrganizationMemberOutput): void {
     this.confirmationService.confirm({
-      header: 'Remove member',
-      message: `Remove member ${member.userId} from this organization?`,
+      header: $localize`:@@org.team.removeMemberHeader:Remove member`,
+      message: $localize`:@@org.team.removeMemberMessage:Remove member ${member.userId}:user: from this organization?`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Remove', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: $localize`:@@org.team.remove:Remove`, severity: 'danger' },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () => {
         const organizationId = this.organizationId();
         if (organizationId) this.store.removeMember({ organizationId, memberId: member.id });
@@ -214,11 +237,15 @@ export class OrganizationTeamPage {
   /** Confirms and revokes an organization invitation. */
   protected revokeInvitation(invitation: OrganizationInvitationOutput): void {
     this.confirmationService.confirm({
-      header: 'Revoke invitation',
-      message: `Revoke the invitation sent to ${invitation.email}?`,
+      header: $localize`:@@org.team.revokeHeader:Revoke invitation`,
+      message: $localize`:@@org.team.revokeMessage:Revoke the invitation sent to ${invitation.email}:email:?`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Revoke', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: $localize`:@@org.team.revoke:Revoke`, severity: 'danger' },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () => {
         const organizationId = this.organizationId();
         if (organizationId)
@@ -255,11 +282,15 @@ export class OrganizationTeamPage {
   protected removeRole(role: OrganizationRoleOutput): void {
     if (role.isSystem) return;
     this.confirmationService.confirm({
-      header: 'Delete role',
-      message: `Delete role "${role.name}"?`,
+      header: $localize`:@@org.team.deleteRoleHeader:Delete role`,
+      message: $localize`:@@org.team.deleteRoleMessage:Delete role "${role.name}:role:"?`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Delete', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: $localize`:@@common.delete:Delete`, severity: 'danger' },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () => {
         const organizationId = this.organizationId();
         if (organizationId) this.store.removeRole({ organizationId, roleId: role.id });

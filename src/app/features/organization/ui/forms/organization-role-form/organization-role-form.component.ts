@@ -32,6 +32,13 @@ export class OrganizationRoleForm {
   /** Existing role when the form is editing. */
   public readonly role: InputSignal<OrganizationRoleOutput | null> =
     input<OrganizationRoleOutput | null>(null);
+
+  /** Localized submit label depending on create vs edit mode. */
+  protected get submitLabel(): string {
+    return this.role()
+      ? $localize`:@@org.roleForm.update:Update role`
+      : $localize`:@@org.roleForm.create:Create role`;
+  }
   /** Permissions available for role configuration. */
   public readonly permissions: InputSignal<readonly OrganizationPermissionOutput[]> =
     input.required();

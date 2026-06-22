@@ -88,8 +88,18 @@ export class ChecklistTable {
   protected readonly statusControl = new FormControl<ChecklistStatus | null>(null);
   /** Supported checklist status filter options. */
   protected readonly statusOptions: (TagDescriptor & { value: ChecklistStatus })[] = [
-    { label: 'Active', value: 'active', icon: PrimeIcons.CHECK_CIRCLE, severity: 'success' },
-    { label: 'Archived', value: 'archived', icon: PrimeIcons.BOX, severity: 'secondary' },
+    {
+      label: $localize`:@@status.active:Active`,
+      value: 'active',
+      icon: PrimeIcons.CHECK_CIRCLE,
+      severity: 'success',
+    },
+    {
+      label: $localize`:@@status.archived:Archived`,
+      value: 'archived',
+      icon: PrimeIcons.BOX,
+      severity: 'secondary',
+    },
   ];
   /** PrimeNG pass-through configuration for the table card. */
   protected readonly cardPt: CardPassThroughOptions = {
@@ -116,17 +126,35 @@ export class ChecklistTable {
   );
   /** Read-only toolbar actions. */
   protected readonly toolbarActions: Signal<MenuItem[]> = computed(() => [
-    { label: 'Refresh', icon: PrimeIcons.REFRESH, command: () => this.reload() },
-    { label: 'Clear filters', icon: PrimeIcons.FILTER_SLASH, command: () => this.clearFilters() },
+    {
+      label: $localize`:@@common.refresh:Refresh`,
+      icon: PrimeIcons.REFRESH,
+      command: () => this.reload(),
+    },
+    {
+      label: $localize`:@@common.clearFilters:Clear filters`,
+      icon: PrimeIcons.FILTER_SLASH,
+      command: () => this.clearFilters(),
+    },
   ]);
   /** Contextual actions for the selected checklist. */
   protected readonly actionMenuItems: Signal<MenuItem[]> = computed(() => {
     const checklist = this.selectedChecklist();
     if (!checklist) return [];
     return [
-      { label: 'View', icon: PrimeIcons.EYE, command: () => this.view.emit(checklist) },
+      {
+        label: $localize`:@@common.view:View`,
+        icon: PrimeIcons.EYE,
+        command: () => this.view.emit(checklist),
+      },
       ...(this.canManage() && checklist.status === 'active'
-        ? [{ label: 'Archive', icon: PrimeIcons.BOX, command: () => this.archive.emit(checklist) }]
+        ? [
+            {
+              label: $localize`:@@common.archive:Archive`,
+              icon: PrimeIcons.BOX,
+              command: () => this.archive.emit(checklist),
+            },
+          ]
         : []),
     ];
   });

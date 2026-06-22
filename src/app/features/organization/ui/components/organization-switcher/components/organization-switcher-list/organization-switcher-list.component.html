@@ -1,7 +1,10 @@
 <ul class="max-h-40 overflow-auto">
   @if (isLoading()) {
     <li>
-      <div class="px-3 py-2 text-sm text-surface-400 dark:text-surface-500">
+      <div
+        i18n="@@org.switcher.loading"
+        class="px-3 py-2 text-sm text-surface-400 dark:text-surface-500"
+      >
         Loading workspaces...
       </div>
     </li>
@@ -27,7 +30,12 @@
         </button>
       </li>
     } @empty {
-      <li class="px-3 py-2 text-sm text-surface-400 dark:text-surface-500">No workspaces found</li>
+      <li
+        i18n="@@org.switcher.empty"
+        class="px-3 py-2 text-sm text-surface-400 dark:text-surface-500"
+      >
+        No workspaces found
+      </li>
     }
   }
 </ul>

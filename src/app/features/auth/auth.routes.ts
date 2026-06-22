@@ -25,7 +25,7 @@ export const AUTH_ROUTES: Routes = [
     loadComponent: () =>
       import('./ui/pages/login-page/login-page.component').then((m) => m.LoginPage),
     canActivate: [guestGuard],
-    title: 'Sign In',
+    title: $localize`:@@route.auth.login:Sign In`,
   },
   {
     path: 'mfa-verify',
@@ -34,7 +34,7 @@ export const AUTH_ROUTES: Routes = [
         (m) => m.MfaVerificationPage,
       ),
     canActivate: [mfaGuard],
-    title: 'Verify Identity',
+    title: $localize`:@@route.auth.mfa:Verify Identity`,
   },
   {
     path: 'mfa',
@@ -55,7 +55,7 @@ export const AUTH_ROUTES: Routes = [
           import('./ui/pages/forgot-password-page/forgot-password-page.component').then(
             (m) => m.ForgotPasswordPage,
           ),
-        title: 'Forgot Password',
+        title: $localize`:@@route.auth.forgotPassword:Forgot Password`,
       },
       {
         path: 'verify',
@@ -64,7 +64,7 @@ export const AUTH_ROUTES: Routes = [
             (m) => m.PasswordResetVerifyPage,
           ),
         canActivate: [passwordResetVerifyGuard],
-        title: 'Verify Code',
+        title: $localize`:@@route.auth.verifyCode:Verify Code`,
       },
       {
         path: 'new',
@@ -73,7 +73,7 @@ export const AUTH_ROUTES: Routes = [
             (m) => m.NewPasswordPage,
           ),
         canActivate: [passwordResetNewGuard],
-        title: 'Set New Password',
+        title: $localize`:@@route.auth.newPassword:Set New Password`,
       },
     ],
   },

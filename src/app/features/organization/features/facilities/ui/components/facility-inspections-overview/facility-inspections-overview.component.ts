@@ -92,9 +92,9 @@ export class FacilityInspectionsOverview {
    * @type {ReadonlyArray<{ value: InspectionOverviewFilter; label: string }>}
    */
   protected readonly filters: ReadonlyArray<{ value: InspectionOverviewFilter; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'overdue', label: 'Overdue' },
-    { value: 'upcoming', label: 'Upcoming' },
+    { value: 'all', label: $localize`:@@facility.inspFilter.all:All` },
+    { value: 'overdue', label: $localize`:@@facility.inspFilter.overdue:Overdue` },
+    { value: 'upcoming', label: $localize`:@@facility.inspFilter.upcoming:Upcoming` },
   ];
 
   /**
@@ -148,11 +148,11 @@ export class FacilityInspectionsOverview {
   protected getStatusLabel(status: InspectionStatus): string {
     switch (status) {
       case 'draft':
-        return 'To plan';
+        return $localize`:@@facility.inspStatus.draft:To plan`;
       case 'submitted':
-        return 'In progress';
+        return $localize`:@@facility.inspStatus.submitted:In progress`;
       case 'closed':
-        return 'Closed';
+        return $localize`:@@facility.inspStatus.closed:Closed`;
       default:
         return status;
     }
@@ -167,11 +167,11 @@ export class FacilityInspectionsOverview {
   protected getResultLabel(result: InspectionResult): string {
     switch (result) {
       case 'pass':
-        return 'Pass';
+        return $localize`:@@inspectionResult.pass:Pass`;
       case 'fail':
-        return 'Fail';
+        return $localize`:@@inspectionResult.fail:Fail`;
       case 'partial':
-        return 'Partial';
+        return $localize`:@@inspectionResult.partial:Partial`;
       default:
         return result;
     }
@@ -203,7 +203,9 @@ export class FacilityInspectionsOverview {
    * @returns {string} Inspector display name or fallback text.
    */
   protected getInspectorDisplayName(inspection: InspectionOutput): string {
-    return inspection.inspector?.displayName || 'Unknown inspector';
+    return (
+      inspection.inspector?.displayName || $localize`:@@facility.unknownInspector:Unknown inspector`
+    );
   }
   //#endregion
 }

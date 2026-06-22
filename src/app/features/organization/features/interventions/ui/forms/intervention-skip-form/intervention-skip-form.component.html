@@ -3,11 +3,15 @@
     <div>
       <h2
         id="intervention-skip-heading"
+        i18n="@@intervention.sf.title"
         class="text-lg font-semibold text-surface-900 dark:text-surface-100"
       >
         Skip work item
       </h2>
-      <p class="mt-0.5 text-sm text-surface-500 dark:text-surface-400">
+      <p
+        i18n="@@intervention.sf.hint"
+        class="mt-0.5 text-sm text-surface-500 dark:text-surface-400"
+      >
         Explain why this work cannot be completed. The manager will review this reason before
         publication.
       </p>
@@ -15,19 +19,22 @@
 
     <div class="grid gap-5">
       <label class="grid gap-1.5 text-sm">
-        <span class="font-medium"
+        <span i18n="@@intervention.sf.reason" class="font-medium"
           >Reason <span class="text-red-500" aria-hidden="true">*</span></span
         >
         <textarea
           pTextarea
           formControlName="reason"
           class="min-h-32 w-full resize-y"
+          i18n-placeholder="@@intervention.sf.reasonPlaceholder"
           placeholder="e.g. Equipment inaccessible — locked plant room, no key on site."
           [invalid]="form.controls.reason.invalid && form.controls.reason.touched"
         ></textarea>
         @if (form.controls.reason.invalid && form.controls.reason.touched) {
           <p-message severity="error" variant="simple">
-            <span>A reason is required to skip this work.</span>
+            <span i18n="@@intervention.sf.reasonRequired"
+              >A reason is required to skip this work.</span
+            >
           </p-message>
         }
       </label>
@@ -36,6 +43,7 @@
 
   <div class="sticky bottom-0 -mb-2 bg-surface-0 pt-4 pb-2 dark:bg-surface-900">
     <p-button
+      i18n-label="@@intervention.sf.submit"
       label="Confirm skip"
       type="submit"
       icon="pi pi-forward"

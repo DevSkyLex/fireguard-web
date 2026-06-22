@@ -5,23 +5,26 @@
     class="flex items-center gap-2 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
   >
     <i class="pi pi-info-circle text-sm text-surface-500"></i>
-    <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">
+    <h2
+      i18n="@@inspection.info.title"
+      class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+    >
       Inspection information
     </h2>
   </header>
   <div class="grid gap-3 border-b border-surface-200 p-4 sm:grid-cols-3 dark:border-surface-800">
     <div class="rounded-md bg-surface-50 p-3 dark:bg-surface-900">
-      <p class="text-xs text-surface-500">Result</p>
+      <p i18n="@@inspection.info.result" class="text-xs text-surface-500">Result</p>
       <p-tag class="mt-2" [value]="inspection().result | titlecase" severity="info" />
     </div>
     <div class="rounded-md bg-surface-50 p-3 dark:bg-surface-900">
-      <p class="text-xs text-surface-500">Performed</p>
+      <p i18n="@@inspection.info.performed" class="text-xs text-surface-500">Performed</p>
       <p class="mt-2 text-sm font-medium text-surface-900 dark:text-surface-100">
         {{ inspection().performedAt | date: 'mediumDate' }}
       </p>
     </div>
     <div class="rounded-md bg-surface-50 p-3 dark:bg-surface-900">
-      <p class="text-xs text-surface-500">Non-conformities</p>
+      <p i18n="@@inspection.info.nc" class="text-xs text-surface-500">Non-conformities</p>
       <p class="mt-2 text-xl font-semibold text-surface-900 dark:text-surface-100">
         {{ inspection().nonConformitiesCount }}
       </p>
@@ -31,27 +34,27 @@
     class="grid divide-y divide-surface-100 px-4 py-2 sm:grid-cols-2 sm:divide-y-0 dark:divide-surface-800"
   >
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pr-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500">Equipment</dt>
+      <dt i18n="@@inspection.info.equipment" class="text-xs text-surface-500">Equipment</dt>
       <dd class="mt-1 font-mono text-xs break-all text-surface-900 dark:text-surface-100">
         {{ inspection().equipmentId }}
       </dd>
     </div>
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pl-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500">Facility</dt>
+      <dt i18n="@@inspection.info.facility" class="text-xs text-surface-500">Facility</dt>
       <dd class="mt-1 font-mono text-xs break-all text-surface-900 dark:text-surface-100">
-        {{ inspection().facilityId || 'None' }}
+        {{ inspection().facilityId || noneLabel }}
       </dd>
     </div>
     <div class="py-3 sm:pr-4">
-      <dt class="text-xs text-surface-500">Checklist</dt>
+      <dt i18n="@@inspection.info.checklist" class="text-xs text-surface-500">Checklist</dt>
       <dd class="mt-1 font-mono text-xs break-all text-surface-900 dark:text-surface-100">
-        {{ inspection().checklistId || 'None' }}
+        {{ inspection().checklistId || noneLabel }}
       </dd>
     </div>
     <div class="py-3 sm:pl-4">
-      <dt class="text-xs text-surface-500">Notes</dt>
+      <dt i18n="@@inspection.info.notes" class="text-xs text-surface-500">Notes</dt>
       <dd class="mt-1 text-sm whitespace-pre-line text-surface-900 dark:text-surface-100">
-        {{ inspection().notes || 'No notes' }}
+        {{ inspection().notes || noNotesLabel }}
       </dd>
     </div>
   </dl>

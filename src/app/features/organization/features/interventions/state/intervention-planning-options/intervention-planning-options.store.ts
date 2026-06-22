@@ -77,7 +77,7 @@ function memberOption(
     label: displayName,
     value: `/api/organizations/${organizationId}/members/${member.id}`,
     displayName,
-    roleLabel: member.roleNames?.join(', ') || 'No assigned role',
+    roleLabel: member.roleNames?.join(', ') || $localize`:@@intervention.noRole:No assigned role`,
     avatarUrl: member.avatarUrl ?? null,
     initials,
   };

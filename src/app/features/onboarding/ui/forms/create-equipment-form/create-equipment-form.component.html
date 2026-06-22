@@ -1,7 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-6">
   <!-- Equipment Type -->
   <div class="flex flex-col gap-2">
-    <label for="equipmentType" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="equipmentType"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@onboarding.equipment.typeLabel"
       >Equipment type</label
     >
     <p-select
@@ -12,15 +15,22 @@
       optionValue="value"
       fluid
       placeholder="Select a type"
+      i18n-placeholder="@@onboarding.field.selectType"
     />
     @if (form.controls.type.invalid && form.controls.type.touched) {
-      <p-message severity="error" variant="simple"><span>Type is required.</span></p-message>
+      <p-message severity="error" variant="simple"
+        ><span i18n="@@onboarding.field.typeRequired">Type is required.</span></p-message
+      >
     }
   </div>
 
   <!-- Brand -->
   <div class="flex flex-col gap-2">
-    <label for="equipmentBrand" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="equipmentBrand"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@onboarding.equipment.brandLabel"
+    >
       Brand <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <input
@@ -29,12 +39,17 @@
       formControlName="brand"
       fluid
       placeholder="Amerex, Tyco, Kidde…"
+      i18n-placeholder="@@onboarding.equipment.brandPlaceholder"
     />
   </div>
 
   <!-- Model -->
   <div class="flex flex-col gap-2">
-    <label for="equipmentModel" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="equipmentModel"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@onboarding.equipment.modelLabel"
+    >
       Model <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <input
@@ -43,13 +58,19 @@
       formControlName="model"
       fluid
       placeholder="ABC-2.5, EX-9000…"
+      i18n-placeholder="@@onboarding.equipment.modelPlaceholder"
     />
   </div>
 
   <!-- Serial Number -->
   <div class="flex flex-col gap-2">
-    <label for="serialNumber" class="text-sm font-medium text-surface-700 dark:text-surface-300">
-      Serial number <span class="font-normal text-surface-400">(optional)</span>
+    <label
+      for="serialNumber"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@onboarding.equipment.serialLabel"
+    >
+      Serial number
+      <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <input
       pInputText
@@ -57,12 +78,14 @@
       formControlName="serialNumber"
       fluid
       placeholder="SN-20241234"
+      i18n-placeholder="@@onboarding.equipment.serialPlaceholder"
     />
   </div>
 
   <!-- Submit -->
   <p-button
     label="Create equipment"
+    i18n-label="@@onboarding.equipment.submit"
     type="submit"
     icon="pi pi-arrow-right"
     iconPos="right"

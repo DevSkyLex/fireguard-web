@@ -88,6 +88,19 @@ import { ORGANIZATION_DATAVIEW_LAYOUT_OPTIONS } from './options';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDataview implements OnInit {
+  /**
+   * Builds the localized "Open <name>" accessibility label for an item.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {string} name - Organization name.
+   * @returns {string} Localized aria-label.
+   */
+  protected openLabel(name: string): string {
+    return $localize`:@@org.dataview.openAria:Open ${name}:name:`;
+  }
+
   //#region Inputs
   /**
    * Input organizations
@@ -348,7 +361,7 @@ export class OrganizationDataview implements OnInit {
    */
   protected readonly toolbarActions: Signal<MenuItem[]> = computed((): MenuItem[] => [
     {
-      label: 'Refresh',
+      label: $localize`:@@common.refresh:Refresh`,
       icon: PrimeIcons.REFRESH,
       command: (): void => this.onRefresh(),
     },
@@ -417,7 +430,7 @@ export class OrganizationDataview implements OnInit {
 
     return [
       {
-        label: 'View',
+        label: $localize`:@@common.view:View`,
         icon: PrimeIcons.EYE,
         command: (): void => this.view.emit(organization),
       },

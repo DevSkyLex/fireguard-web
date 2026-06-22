@@ -42,15 +42,15 @@
       <p-tablist [pt]="tabListPt">
         <p-tab [value]="0">
           <i class="pi pi-chart-line mr-2 text-sm"></i>
-          <span class="text-sm">Overview</span>
+          <span i18n="@@facility.tab.overview" class="text-sm">Overview</span>
         </p-tab>
         <p-tab [value]="1">
           <i class="pi pi-wrench mr-2 text-sm"></i>
-          <span class="text-sm">Equipments</span>
+          <span i18n="@@facility.tab.equipments" class="text-sm">Equipments</span>
         </p-tab>
         <p-tab [value]="2">
           <i class="pi pi-clipboard mr-2 text-sm"></i>
-          <span class="text-sm">Inspections</span>
+          <span i18n="@@facility.tab.inspections" class="text-sm">Inspections</span>
         </p-tab>
       </p-tablist>
 
@@ -92,6 +92,7 @@
 
 <!-- Move Dialog -->
 <p-dialog
+  i18n-header="@@facility.move.header"
   header="Move Facility"
   [visible]="showMoveDialog()"
   (visibleChange)="showMoveDialog.set($event)"
@@ -100,12 +101,16 @@
   [closable]="!isMoving()"
 >
   <div class="flex flex-col gap-6">
-    <p class="text-sm text-surface-600 dark:text-surface-400">
+    <p i18n="@@facility.move.description" class="text-sm text-surface-600 dark:text-surface-400">
       Select a new parent facility or choose "None" to move this facility to the root level.
     </p>
 
     <div class="flex flex-col gap-2">
-      <label for="moveParent" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+      <label
+        for="moveParent"
+        i18n="@@facility.move.parentLabel"
+        class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      >
         Parent Facility
       </label>
       <p-select
@@ -116,6 +121,7 @@
         [ngModel]="moveParentId()"
         (ngModelChange)="moveParentId.set($event)"
         [filter]="true"
+        i18n-filterPlaceholder="@@facility.searchFacilities"
         filterPlaceholder="Search facilities..."
         [disabled]="isMoving()"
         class="w-full"
@@ -126,6 +132,7 @@
   <ng-template #footer>
     <div class="flex items-center justify-end gap-3">
       <p-button
+        i18n-label="@@common.cancel"
         label="Cancel"
         severity="secondary"
         [outlined]="true"
@@ -133,6 +140,7 @@
         (onClick)="onMoveCancel()"
       />
       <p-button
+        i18n-label="@@facility.header.move"
         label="Move"
         icon="pi pi-arrow-right-arrow-left"
         [loading]="isMoving()"

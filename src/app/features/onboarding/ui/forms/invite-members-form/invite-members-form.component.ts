@@ -233,6 +233,25 @@ export class InviteMembersForm {
   protected get rows(): FormArray<FormGroup<InviteeRowData>> {
     return this.form.controls.rows;
   }
+
+  /**
+   * Method submitLabel
+   *
+   * @description
+   * Localized submit button label, pluralized on the invitee count.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {number} count - Number of invitee rows.
+   *
+   * @returns {string}
+   */
+  protected submitLabel(count: number): string {
+    return count > 1
+      ? $localize`:@@onboarding.members.sendMany:Send ${count}:count: invitations`
+      : $localize`:@@onboarding.members.sendOne:Send invitation`;
+  }
   //#endregion
 
   //#region Constructor

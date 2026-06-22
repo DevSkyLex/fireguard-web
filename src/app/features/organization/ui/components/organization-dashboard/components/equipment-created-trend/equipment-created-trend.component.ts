@@ -167,7 +167,7 @@ export class EquipmentCreatedTrend {
         this.dashboardStore.queryData(),
         this.dashboardStore.compareEnabled(),
       ),
-      label: 'Equipment Created',
+      label: $localize`:@@dash.metric.equipmentCreated:Equipment Created`,
       icon: 'pi pi-shield',
     }),
   ]);
@@ -205,7 +205,7 @@ export class EquipmentCreatedTrend {
     const organizationId: string | null = organization ? organization.id : null;
     return [
       {
-        label: 'View all equipment',
+        label: $localize`:@@dash.viewAll.equipment:View all equipment`,
         icon: PrimeIcons.LIST,
         routerLink: organizationId ? ['/organizations', organizationId, 'equipment'] : null,
       },

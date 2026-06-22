@@ -16,7 +16,7 @@ export const CHECKLIST_ROUTES: Routes = [
       import('./ui/pages/checklist-create/checklist-create.component').then(
         (m) => m.ChecklistCreatePage,
       ),
-    title: 'Create Checklist',
+    title: $localize`:@@route.checklist.create:Create Checklist`,
   },
   {
     path: ':checklistId',
@@ -41,7 +41,7 @@ export const CHECKLIST_ROUTES: Routes = [
     ],
     loadComponent: () =>
       import('./ui/pages/checklist-list/checklist-list.component').then((m) => m.ChecklistListPage),
-    title: 'Checklists',
+    title: $localize`:@@route.checklists:Checklists`,
     data: {
       breadcrumb: false,
       preload: true,

@@ -13,51 +13,51 @@ import type { EquipmentTypeOption } from '@features/organization/ui/components/o
  */
 export const EQUIPMENT_TYPE_OPTIONS: readonly EquipmentTypeOption[] = [
   {
-    label: 'Fire Extinguisher',
+    label: $localize`:@@dash.equipType.fireExtinguisher:Fire Extinguisher`,
     value: 'fire_extinguisher',
   },
   {
-    label: 'Smoke Detector',
+    label: $localize`:@@dash.equipType.smokeDetector:Smoke Detector`,
     value: 'smoke_detector',
   },
   {
-    label: 'Heat Detector',
+    label: $localize`:@@dash.equipType.heatDetector:Heat Detector`,
     value: 'heat_detector',
   },
   {
-    label: 'Sprinkler',
+    label: $localize`:@@dash.equipType.sprinkler:Sprinkler`,
     value: 'sprinkler',
   },
   {
-    label: 'Fire Alarm Panel',
+    label: $localize`:@@dash.equipType.fireAlarmPanel:Fire Alarm Panel`,
     value: 'fire_alarm_panel',
   },
   {
-    label: 'Hydrant',
+    label: $localize`:@@dash.equipType.hydrant:Hydrant`,
     value: 'hydrant',
   },
   {
-    label: 'Fire Door',
+    label: $localize`:@@dash.equipType.fireDoor:Fire Door`,
     value: 'fire_door',
   },
   {
-    label: 'Emergency Lighting',
+    label: $localize`:@@dash.equipType.emergencyLighting:Emergency Lighting`,
     value: 'emergency_lighting',
   },
   {
-    label: 'Access Control',
+    label: $localize`:@@dash.equipType.accessControl:Access Control`,
     value: 'access_control',
   },
   {
-    label: 'Camera',
+    label: $localize`:@@dash.equipType.camera:Camera`,
     value: 'camera',
   },
   {
-    label: 'Gas Detector',
+    label: $localize`:@@dash.equipType.gasDetector:Gas Detector`,
     value: 'gas_detector',
   },
   {
-    label: 'Other',
+    label: $localize`:@@dash.equipType.other:Other`,
     value: 'other',
   },
 ];

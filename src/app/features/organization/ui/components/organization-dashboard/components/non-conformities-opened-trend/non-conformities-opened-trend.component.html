@@ -1,7 +1,9 @@
 <p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
 
 <app-trend-card
+  i18n-title="@@org.trend.ncOpened.title"
   title="Non-Conformities Opened"
+  i18n-description="@@org.trend.ncOpened.desc"
   description="New non-conformities opened over time"
   [metrics]="summaryMetrics()"
   [loading]="isLoading()"
@@ -20,7 +22,9 @@
 </app-trend-card>
 
 <app-trend-filter-drawer
+  i18n-title="@@org.trend.ncOpened.filterTitle"
   title="Non-Conformities Opened Filters"
+  i18n-description="@@org.trend.ncOpened.filterDesc"
   description="Refine opened non-conformity metrics by status, severity, period, and comparison mode."
   [visible]="isFilterDrawerVisible()"
   [loading]="isLoading()"

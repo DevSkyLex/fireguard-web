@@ -2,10 +2,10 @@
   <p-table [value]="loading() ? skeletonItems : [...roles()]" dataKey="id" [stripedRows]="true">
     <ng-template pTemplate="header"
       ><tr>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Permissions</th>
-        <th class="w-28"><span class="sr-only">Actions</span></th>
+        <th i18n="@@org.roleTable.name">Name</th>
+        <th i18n="@@org.roleTable.description">Description</th>
+        <th i18n="@@org.roleTable.permissions">Permissions</th>
+        <th class="w-28"><span i18n="@@org.roleTable.actions" class="sr-only">Actions</span></th>
       </tr></ng-template
     >
     <ng-template pTemplate="body" let-role>
@@ -21,12 +21,12 @@
           <td class="font-medium">
             {{ role.name }}
             @if (role.isSystem) {
-              <span class="text-xs text-surface-500">(system)</span>
+              <span i18n="@@org.roleTable.system" class="text-xs text-surface-500">(system)</span>
             }
           </td>
-          <td>{{ role.description || 'No description' }}</td>
+          <td>{{ role.description || noDescriptionLabel }}</td>
           <td class="max-w-xl text-sm text-surface-500">
-            {{ role.permissions.join(', ') || 'No permissions' }}
+            {{ role.permissions.join(', ') || noPermissionsLabel }}
           </td>
           <td class="text-right">
             @if (canManage()) {
@@ -35,6 +35,7 @@
                 severity="secondary"
                 [text]="true"
                 [rounded]="true"
+                i18n-ariaLabel="@@org.roleTable.editAria"
                 ariaLabel="Edit role"
                 (onClick)="edit.emit(role)"
               />
@@ -44,6 +45,7 @@
                   severity="danger"
                   [text]="true"
                   [rounded]="true"
+                  i18n-ariaLabel="@@org.roleTable.deleteAria"
                   ariaLabel="Delete role"
                   (onClick)="remove.emit(role)"
                 />
@@ -58,7 +60,9 @@
         <td colspan="4">
           <app-empty-state
             icon="pi-id-card"
+            i18n-title="@@org.roleTable.emptyTitle"
             title="No roles yet"
+            i18n-description="@@org.roleTable.emptyDesc"
             description="Roles you create for this organization will appear here."
           />
         </td>

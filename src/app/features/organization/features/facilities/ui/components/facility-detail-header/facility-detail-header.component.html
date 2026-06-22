@@ -48,13 +48,16 @@
           <span class="font-mono">{{ facility.code }}</span>
         }
 
-        <span>Updated {{ facility.updatedAt | date: 'mediumDate' }}</span>
+        <span i18n="@@facility.header.updated"
+          >Updated {{ facility.updatedAt | date: 'mediumDate' }}</span
+        >
       </div>
     </div>
   </div>
 
   <div class="flex items-center gap-2">
     <p-button
+      i18n-label="@@facility.header.move"
       label="Move"
       icon="pi pi-arrow-right-arrow-left"
       severity="secondary"
@@ -63,6 +66,7 @@
       (onClick)="move.emit()"
     />
     <p-button
+      i18n-label="@@common.edit"
       label="Edit"
       icon="pi pi-pencil"
       severity="success"

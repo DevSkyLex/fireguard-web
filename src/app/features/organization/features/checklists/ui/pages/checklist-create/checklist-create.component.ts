@@ -38,8 +38,8 @@ export class ChecklistCreatePage {
       if (this.store.createCallState().status === 'success') {
         this.messageService.add({
           severity: 'success',
-          summary: 'Checklist created',
-          detail: 'The checklist is ready for inspections.',
+          summary: $localize`:@@checklist.createdToast:Checklist created`,
+          detail: $localize`:@@checklist.createdDetail:The checklist is ready for inspections.`,
         });
         this.router.navigate(['..'], { relativeTo: this.route });
       }

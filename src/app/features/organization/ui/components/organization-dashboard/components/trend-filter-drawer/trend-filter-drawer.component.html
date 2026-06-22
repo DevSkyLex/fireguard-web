@@ -32,7 +32,14 @@
         outlined
         fluid
       />
-      <p-button label="Apply" [loading]="loading()" (onClick)="onApply()" class="flex-1" fluid />
+      <p-button
+        i18n-label="@@org.trendFilter.apply"
+        label="Apply"
+        [loading]="loading()"
+        (onClick)="onApply()"
+        class="flex-1"
+        fluid
+      />
     </div>
   </ng-template>
 </p-drawer>

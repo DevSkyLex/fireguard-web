@@ -3,11 +3,15 @@
     <div>
       <h2
         id="intervention-planning-heading"
+        i18n="@@intervention.pf.details"
         class="text-lg font-semibold text-surface-900 dark:text-surface-100"
       >
         Details
       </h2>
-      <p class="mt-0.5 text-sm text-surface-500 dark:text-surface-400">
+      <p
+        i18n="@@intervention.pf.detailsHint"
+        class="mt-0.5 text-sm text-surface-500 dark:text-surface-400"
+      >
         Confirm the assignment, schedule and priority. These freeze the scope before agents reach
         the field.
       </p>
@@ -15,7 +19,7 @@
 
     <div class="grid gap-5 md:grid-cols-2">
       <label class="grid gap-1.5 text-sm md:col-span-2">
-        <span class="font-medium"
+        <span i18n="@@intervention.pf.priority" class="font-medium"
           >Priority <span class="text-red-500" aria-hidden="true">*</span></span
         >
         <p-select
@@ -37,7 +41,9 @@
       </label>
 
       <label class="grid gap-1.5 text-sm">
-        <span class="font-medium">Site <span class="text-red-500" aria-hidden="true">*</span></span>
+        <span i18n="@@intervention.pf.site" class="font-medium"
+          >Site <span class="text-red-500" aria-hidden="true">*</span></span
+        >
         <p-select
           formControlName="site"
           [options]="[...siteOptions()]"
@@ -45,19 +51,20 @@
           optionValue="value"
           [filter]="true"
           [showClear]="true"
+          i18n-placeholder="@@intervention.pf.sitePlaceholder"
           placeholder="Select a site"
           appendTo="body"
           [invalid]="form.controls.site.invalid && form.controls.site.touched"
         />
         @if (form.controls.site.invalid && form.controls.site.touched) {
           <p-message severity="error" variant="simple">
-            <span>A site is required.</span>
+            <span i18n="@@intervention.pf.siteRequired">A site is required.</span>
           </p-message>
         }
       </label>
 
       <label class="grid gap-1.5 text-sm">
-        <span class="font-medium"
+        <span i18n="@@intervention.pf.responsible" class="font-medium"
           >Responsible agent <span class="text-red-500" aria-hidden="true">*</span></span
         >
         <p-select
@@ -68,6 +75,7 @@
           [filter]="true"
           filterBy="label,roleLabel"
           [showClear]="true"
+          i18n-placeholder="@@intervention.pf.responsiblePlaceholder"
           placeholder="Assign a responsible agent"
           appendTo="body"
           [invalid]="form.controls.responsible.invalid && form.controls.responsible.touched"
@@ -83,13 +91,15 @@
         </p-select>
         @if (form.controls.responsible.invalid && form.controls.responsible.touched) {
           <p-message severity="error" variant="simple">
-            <span>A responsible agent is required.</span>
+            <span i18n="@@intervention.pf.responsibleRequired"
+              >A responsible agent is required.</span
+            >
           </p-message>
         }
       </label>
 
       <label class="grid gap-1.5 text-sm md:col-span-2">
-        <span class="font-medium">Participants</span>
+        <span i18n="@@intervention.pf.participants" class="font-medium">Participants</span>
         <p-multiselect
           formControlName="participants"
           [options]="[...memberOptions()]"
@@ -98,6 +108,7 @@
           [filter]="true"
           filterBy="label,roleLabel"
           display="chip"
+          i18n-placeholder="@@intervention.pf.participantsPlaceholder"
           placeholder="Add field participants"
           appendTo="body"
         >
@@ -108,7 +119,7 @@
       </label>
 
       <label class="grid gap-1.5 text-sm">
-        <span class="font-medium"
+        <span i18n="@@intervention.pf.plannedStart" class="font-medium"
           >Planned start <span class="text-red-500" aria-hidden="true">*</span></span
         >
         <p-datepicker
@@ -120,19 +131,22 @@
           [showButtonBar]="true"
           appendTo="body"
           dateFormat="yy-mm-dd"
+          i18n-placeholder="@@intervention.pf.startPlaceholder"
           placeholder="Select start date and time"
           class="w-full"
           [invalid]="form.controls.plannedStartAt.invalid && form.controls.plannedStartAt.touched"
         />
         @if (form.controls.plannedStartAt.invalid && form.controls.plannedStartAt.touched) {
           <p-message severity="error" variant="simple">
-            <span>A planned start is required.</span>
+            <span i18n="@@intervention.pf.startRequired">A planned start is required.</span>
           </p-message>
         }
       </label>
 
       <label class="grid gap-1.5 text-sm">
-        <span class="font-medium">Due <span class="text-red-500" aria-hidden="true">*</span></span>
+        <span i18n="@@intervention.pf.due" class="font-medium"
+          >Due <span class="text-red-500" aria-hidden="true">*</span></span
+        >
         <p-datepicker
           formControlName="dueAt"
           [showTime]="true"
@@ -143,13 +157,14 @@
           [minDate]="form.controls.plannedStartAt.value ?? undefined"
           appendTo="body"
           dateFormat="yy-mm-dd"
+          i18n-placeholder="@@intervention.pf.duePlaceholder"
           placeholder="Select due date and time"
           class="w-full"
           [invalid]="form.controls.dueAt.invalid && form.controls.dueAt.touched"
         />
         @if (form.controls.dueAt.invalid && form.controls.dueAt.touched) {
           <p-message severity="error" variant="simple">
-            <span>A due date is required.</span>
+            <span i18n="@@intervention.pf.dueRequired">A due date is required.</span>
           </p-message>
         }
       </label>
@@ -158,6 +173,7 @@
 
   <div class="sticky bottom-0 -mb-2 bg-surface-0 pt-4 pb-2 dark:bg-surface-900">
     <p-button
+      i18n-label="@@intervention.pf.submit"
       label="Save details"
       type="submit"
       [fluid]="true"

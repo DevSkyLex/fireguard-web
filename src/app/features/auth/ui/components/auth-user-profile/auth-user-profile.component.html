@@ -49,13 +49,21 @@
               class="truncate text-sm font-semibold text-surface-900 transition-colors dark:text-surface-100"
               data-testid="auth-user-profile-name"
             >
-              {{ userIdentityPort.displayName() ?? 'User' }}
+              @if (userIdentityPort.displayName(); as name) {
+                {{ name }}
+              } @else {
+                <ng-container i18n="@@common.user.defaultName">User</ng-container>
+              }
             </p>
             <p
               class="truncate text-xs text-surface-500 transition-colors dark:text-surface-400"
               data-testid="auth-user-profile-email"
             >
-              {{ userIdentityPort.profile()?.email ?? 'No email' }}
+              @if (userIdentityPort.profile()?.email; as email) {
+                {{ email }}
+              } @else {
+                <ng-container i18n="@@common.user.noEmail">No email</ng-container>
+              }
             </p>
           </div>
 
@@ -75,7 +83,9 @@
           data-testid="auth-user-profile-settings"
         >
           <i class="pi pi-cog text-base text-surface-500 dark:text-surface-400"></i>
-          <span class="flex-1 text-sm font-medium text-surface-700 dark:text-surface-300"
+          <span
+            class="flex-1 text-sm font-medium text-surface-700 dark:text-surface-300"
+            i18n="@@auth.userProfile.settings"
             >Settings</span
           >
         </a>
@@ -89,7 +99,11 @@
         >
           <i class="pi pi-sign-out text-base text-surface-500 dark:text-surface-400"></i>
           <span class="flex-1 text-left text-sm font-medium text-surface-700 dark:text-surface-300">
-            {{ authStore.isLoggingOut() ? 'Logging out...' : 'Logout' }}
+            @if (authStore.isLoggingOut()) {
+              <ng-container i18n="@@auth.userProfile.loggingOut">Logging out...</ng-container>
+            } @else {
+              <ng-container i18n="@@auth.userProfile.logout">Logout</ng-container>
+            }
           </span>
         </button>
       </div>

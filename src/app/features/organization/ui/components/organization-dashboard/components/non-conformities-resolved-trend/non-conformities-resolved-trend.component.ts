@@ -164,7 +164,7 @@ export class NonConformitiesResolvedTrend {
         this.dashboardStore.queryData(),
         this.dashboardStore.compareEnabled(),
       ),
-      label: 'Resolved NC',
+      label: $localize`:@@dash.metric.resolvedNc:Resolved NC`,
       icon: 'pi pi-check-circle',
     }),
   ]);
@@ -203,7 +203,7 @@ export class NonConformitiesResolvedTrend {
 
     return [
       {
-        label: 'View all non-conformities',
+        label: $localize`:@@dash.viewAll.nonConformities:View all non-conformities`,
         icon: PrimeIcons.LIST,
         routerLink: organizationId ? ['/organizations', organizationId, 'inspections'] : null,
       },

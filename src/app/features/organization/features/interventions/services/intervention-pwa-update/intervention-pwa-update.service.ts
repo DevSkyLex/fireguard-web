@@ -155,8 +155,8 @@ export class InterventionPwaUpdateService {
         if (this.offline.hasUnsyncedChanges()) {
           this.messages.add({
             severity: 'warn',
-            summary: 'Update waiting',
-            detail: 'Synchronize field changes before installing the new version.',
+            summary: $localize`:@@intervention.pwa.waitingSummary:Update waiting`,
+            detail: $localize`:@@intervention.pwa.waitingDetail:Synchronize field changes before installing the new version.`,
           });
         }
       });
@@ -177,8 +177,8 @@ export class InterventionPwaUpdateService {
   private promptUpdate(): void {
     this.updateReady.set(false);
     this.confirmation.confirm({
-      header: 'Application update',
-      message: 'A new version is ready. Reload now?',
+      header: $localize`:@@intervention.pwa.updateHeader:Application update`,
+      message: $localize`:@@intervention.pwa.updateMessage:A new version is ready. Reload now?`,
       accept: () => {
         void this.updates.activateUpdate().then(() => location.reload());
       },

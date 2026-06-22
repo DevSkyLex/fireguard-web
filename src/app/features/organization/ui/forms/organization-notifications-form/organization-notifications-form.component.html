@@ -1,15 +1,22 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-10">
   <!-- Delivery channels -->
   <section class="flex flex-col">
-    <h3 class="mb-3 text-base font-medium text-surface-500 dark:text-surface-400">
+    <h3
+      i18n="@@org.notif.channels"
+      class="mb-3 text-base font-medium text-surface-500 dark:text-surface-400"
+    >
       Delivery channels
     </h3>
 
     <div class="divide-y divide-surface-100 dark:divide-surface-800/70">
       <div class="flex items-center justify-between gap-6 py-4">
         <label for="notifications-email" class="flex cursor-pointer flex-col gap-0.5">
-          <span class="text-sm font-medium text-surface-800 dark:text-surface-100">Email</span>
-          <span class="text-sm text-surface-500 dark:text-surface-400">
+          <span
+            i18n="@@org.notif.email"
+            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            >Email</span
+          >
+          <span i18n="@@org.notif.emailDesc" class="text-sm text-surface-500 dark:text-surface-400">
             Send organization notifications by email.
           </span>
         </label>
@@ -18,8 +25,12 @@
 
       <div class="flex items-center justify-between gap-6 py-4">
         <label for="notifications-in-app" class="flex cursor-pointer flex-col gap-0.5">
-          <span class="text-sm font-medium text-surface-800 dark:text-surface-100">In-app</span>
-          <span class="text-sm text-surface-500 dark:text-surface-400">
+          <span
+            i18n="@@org.notif.inApp"
+            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            >In-app</span
+          >
+          <span i18n="@@org.notif.inAppDesc" class="text-sm text-surface-500 dark:text-surface-400">
             Show real-time notifications inside the application.
           </span>
         </label>
@@ -30,7 +41,10 @@
 
   <!-- Event notifications -->
   <section class="flex flex-col">
-    <h3 class="mb-3 text-base font-medium text-surface-500 dark:text-surface-400">
+    <h3
+      i18n="@@org.notif.when"
+      class="mb-3 text-base font-medium text-surface-500 dark:text-surface-400"
+    >
       Notify the organization when…
     </h3>
 
@@ -40,10 +54,16 @@
           for="notifications-intervention-published"
           class="flex cursor-pointer flex-col gap-0.5"
         >
-          <span class="text-sm font-medium text-surface-800 dark:text-surface-100">
+          <span
+            i18n="@@org.notif.intPublished"
+            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+          >
             An intervention is published
           </span>
-          <span class="text-sm text-surface-500 dark:text-surface-400">
+          <span
+            i18n="@@org.notif.intPublishedDesc"
+            class="text-sm text-surface-500 dark:text-surface-400"
+          >
             A field intervention is finalized and published to the team.
           </span>
         </label>
@@ -58,10 +78,16 @@
           for="notifications-intervention-assigned"
           class="flex cursor-pointer flex-col gap-0.5"
         >
-          <span class="text-sm font-medium text-surface-800 dark:text-surface-100">
+          <span
+            i18n="@@org.notif.intAssigned"
+            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+          >
             An intervention is assigned
           </span>
-          <span class="text-sm text-surface-500 dark:text-surface-400">
+          <span
+            i18n="@@org.notif.intAssignedDesc"
+            class="text-sm text-surface-500 dark:text-surface-400"
+          >
             An intervention is assigned to a responsible agent.
           </span>
         </label>
@@ -73,10 +99,16 @@
 
       <div class="flex items-center justify-between gap-6 py-4">
         <label for="notifications-inspection-due" class="flex cursor-pointer flex-col gap-0.5">
-          <span class="text-sm font-medium text-surface-800 dark:text-surface-100">
+          <span
+            i18n="@@org.notif.inspDue"
+            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+          >
             An inspection is due
           </span>
-          <span class="text-sm text-surface-500 dark:text-surface-400">
+          <span
+            i18n="@@org.notif.inspDueDesc"
+            class="text-sm text-surface-500 dark:text-surface-400"
+          >
             A scheduled inspection is approaching or overdue.
           </span>
         </label>
@@ -88,10 +120,16 @@
           for="notifications-non-conformity-opened"
           class="flex cursor-pointer flex-col gap-0.5"
         >
-          <span class="text-sm font-medium text-surface-800 dark:text-surface-100">
+          <span
+            i18n="@@org.notif.ncOpened"
+            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+          >
             A non-conformity is opened
           </span>
-          <span class="text-sm text-surface-500 dark:text-surface-400">
+          <span
+            i18n="@@org.notif.ncOpenedDesc"
+            class="text-sm text-surface-500 dark:text-surface-400"
+          >
             An inspection opens a new equipment non-conformity.
           </span>
         </label>
@@ -103,10 +141,16 @@
 
       <div class="flex items-center justify-between gap-6 py-4">
         <label for="notifications-member-invited" class="flex cursor-pointer flex-col gap-0.5">
-          <span class="text-sm font-medium text-surface-800 dark:text-surface-100">
+          <span
+            i18n="@@org.notif.memberInvited"
+            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+          >
             A member is invited
           </span>
-          <span class="text-sm text-surface-500 dark:text-surface-400">
+          <span
+            i18n="@@org.notif.memberInvitedDesc"
+            class="text-sm text-surface-500 dark:text-surface-400"
+          >
             A new member is invited to join the organization.
           </span>
         </label>
@@ -118,6 +162,7 @@
   <div class="flex justify-end">
     <p-button
       type="submit"
+      i18n-label="@@org.saveChanges"
       label="Save changes"
       icon="pi pi-check"
       [loading]="saving()"

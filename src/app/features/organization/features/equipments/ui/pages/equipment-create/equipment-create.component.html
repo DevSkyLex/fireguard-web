@@ -1,6 +1,11 @@
 <div id="equipment-create" class="flex flex-col">
   <section class="max-w-2xl p-8">
-    <h1 class="mb-6 text-2xl font-semibold text-surface-900 dark:text-surface-0">New Equipment</h1>
+    <h1
+      class="mb-6 text-2xl font-semibold text-surface-900 dark:text-surface-0"
+      i18n="@@equipment.create.title"
+    >
+      New Equipment
+    </h1>
     <app-equipment-form
       [loading]="store.isCreating()"
       (submitted)="handleSubmit($event)"

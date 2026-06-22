@@ -23,6 +23,10 @@ import { EmptyState } from '@shared/components';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationRoleTable {
+  /** Localized placeholder shown when a role has no description. */
+  protected readonly noDescriptionLabel: string = $localize`:@@org.roleTable.noDescription:No description`;
+  /** Localized placeholder shown when a role has no permissions. */
+  protected readonly noPermissionsLabel: string = $localize`:@@org.roleTable.noPermissions:No permissions`;
   /** Organization roles to display. */
   public readonly roles: InputSignal<readonly OrganizationRoleOutput[]> = input.required();
   /** Whether roles are loading. */

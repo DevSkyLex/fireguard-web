@@ -5,6 +5,7 @@
   [resizable]="false"
   [dismissableMask]="true"
   [style]="{ width: '30rem' }"
+  i18n-header="@@org.quota.header"
   header="Plan limit reached"
 >
   <div class="flex flex-col gap-4 pt-1">
@@ -14,15 +15,18 @@
       styleClass="w-full"
       [pt]="{ text: 'whitespace-normal text-sm font-normal leading-relaxed' }"
     >
-      You've reached your current plan's limit for
-      <span class="font-semibold">{{ resourceLabel() }}</span
-      >. Upgrade your plan to add more.
+      <ng-container i18n="@@org.quota.message"
+        >You've reached your current plan's limit for
+        <span class="font-semibold">{{ resourceLabel() }}</span
+        >. Upgrade your plan to add more.</ng-container
+      >
     </p-message>
   </div>
 
   <ng-template pTemplate="footer">
     <div class="flex w-full gap-3">
       <p-button
+        i18n-label="@@org.quota.notNow"
         label="Not now"
         severity="secondary"
         [outlined]="true"
@@ -32,6 +36,7 @@
       />
       @if (subscriptionLink(); as link) {
         <p-button
+          i18n-label="@@org.quota.viewPlans"
           label="View plans"
           icon="pi pi-arrow-right"
           iconPos="right"

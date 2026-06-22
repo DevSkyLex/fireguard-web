@@ -1,24 +1,40 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
   <div class="grid gap-6 md:grid-cols-2">
     <div class="flex flex-col gap-2">
-      <label for="checklist-name" class="text-sm font-medium">Name</label>
+      <label for="checklist-name" class="text-sm font-medium" i18n="@@checklist.form.nameLabel"
+        >Name</label
+      >
       <input
         pInputText
         id="checklist-name"
         formControlName="name"
         placeholder="Annual fire audit"
+        i18n-placeholder="@@checklist.form.namePlaceholder"
       />
       @if (form.controls.name.invalid && form.controls.name.touched) {
-        <p-message severity="error" variant="simple"
+        <p-message severity="error" variant="simple" i18n="@@checklist.form.nameError"
           >A name of at least 2 characters is required.</p-message
         >
       }
     </div>
     <div class="flex flex-col gap-2">
-      <label for="checklist-version" class="text-sm font-medium">Version</label>
-      <input pInputText id="checklist-version" formControlName="version" placeholder="1.0" />
+      <label
+        for="checklist-version"
+        class="text-sm font-medium"
+        i18n="@@checklist.form.versionLabel"
+        >Version</label
+      >
+      <input
+        pInputText
+        id="checklist-version"
+        formControlName="version"
+        placeholder="1.0"
+        i18n-placeholder="@@checklist.form.versionPlaceholder"
+      />
       @if (form.controls.version.invalid && form.controls.version.touched) {
-        <p-message severity="error" variant="simple">A version is required.</p-message>
+        <p-message severity="error" variant="simple" i18n="@@checklist.form.versionError"
+          >A version is required.</p-message
+        >
       }
     </div>
   </div>
@@ -26,12 +42,15 @@
   <section class="flex flex-col gap-4" formArrayName="items">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="font-semibold">Checklist lines</h2>
-        <p class="text-sm text-surface-500">Lines are immutable after the checklist is created.</p>
+        <h2 class="font-semibold" i18n="@@checklist.lines.title">Checklist lines</h2>
+        <p class="text-sm text-surface-500" i18n="@@checklist.form.linesHint">
+          Lines are immutable after the checklist is created.
+        </p>
       </div>
       <p-button
         type="button"
         label="Add line"
+        i18n-label="@@checklist.form.addLine"
         icon="pi pi-plus"
         severity="secondary"
         [outlined]="true"
@@ -52,19 +71,31 @@
         </span>
         <div class="grid gap-4">
           <div class="flex flex-col gap-2">
-            <label [for]="'line-label-' + index" class="text-sm font-medium">Label</label>
+            <label
+              [for]="'line-label-' + index"
+              class="text-sm font-medium"
+              i18n="@@checklist.form.lineLabel"
+              >Label</label
+            >
             <input
               pInputText
               [id]="'line-label-' + index"
               formControlName="label"
               placeholder="Verify emergency exit signage"
+              i18n-placeholder="@@checklist.form.linePlaceholder"
             />
             @if (item.controls.label.invalid && item.controls.label.touched) {
-              <p-message severity="error" variant="simple">The line label is required.</p-message>
+              <p-message severity="error" variant="simple" i18n="@@checklist.form.lineLabelError"
+                >The line label is required.</p-message
+              >
             }
           </div>
           <div class="flex flex-col gap-2">
-            <label [for]="'line-description-' + index" class="text-sm font-medium">
+            <label
+              [for]="'line-description-' + index"
+              class="text-sm font-medium"
+              i18n="@@checklist.form.descLabel"
+            >
               Description <span class="font-normal text-surface-400">(optional)</span>
             </label>
             <textarea
@@ -76,7 +107,7 @@
           </div>
           <label class="flex items-center gap-2 text-sm">
             <p-checkbox formControlName="required" [binary]="true" />
-            Required line
+            <ng-container i18n="@@checklist.form.requiredLine">Required line</ng-container>
           </label>
         </div>
         <p-button
@@ -86,6 +117,7 @@
           [text]="true"
           [rounded]="true"
           ariaLabel="Remove checklist line"
+          i18n-ariaLabel="@@checklist.form.removeLineAria"
           [disabled]="items.length === 1 || loading()"
           (onClick)="removeItem(index)"
         />
@@ -97,6 +129,7 @@
     <p-button
       type="button"
       label="Cancel"
+      i18n-label="@@common.cancel"
       severity="secondary"
       [outlined]="true"
       [disabled]="loading()"
@@ -105,6 +138,7 @@
     <p-button
       type="submit"
       label="Create checklist"
+      i18n-label="@@checklist.form.submit"
       icon="pi pi-check"
       [loading]="loading()"
       [disabled]="form.invalid || loading()"

@@ -245,7 +245,9 @@ export class InspectionForm {
           result: inspection.result,
           performedAt: new Date(inspection.performedAt),
           inspectorType: 'external',
-          inspectorName: inspection.inspector?.displayName ?? 'Inspector',
+          inspectorName:
+            inspection.inspector?.displayName ??
+            $localize`:@@inspection.form.inspectorDefault:Inspector`,
           facilityId: inspection.facilityId ?? '',
           checklistId: inspection.checklistId ?? '',
           notes: inspection.notes ?? '',
@@ -283,7 +285,7 @@ export class InspectionForm {
    */
   protected get facilityOptions(): { label: string; value: string }[] {
     return [
-      { label: 'None', value: '' },
+      { label: $localize`:@@inspection.info.none:None`, value: '' },
       ...this.facilities().map((f: FacilityOutput) => ({
         label: `${f.name}${f.code ? ' (' + f.code + ')' : ''}`,
         value: f.id,
@@ -301,7 +303,7 @@ export class InspectionForm {
    */
   protected get checklistOptions(): { label: string; value: string }[] {
     return [
-      { label: 'None', value: '' },
+      { label: $localize`:@@inspection.info.none:None`, value: '' },
       ...this.checklists().map((c: ChecklistOutput) => ({
         label: `${c.name} (v${c.version})`,
         value: c.id,

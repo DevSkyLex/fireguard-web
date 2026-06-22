@@ -93,11 +93,11 @@ export class CreateFacilityForm {
    * @type {{ label: string; value: SetupFacilityType }[]}
    */
   protected readonly facilityTypes: { label: string; value: SetupFacilityType }[] = [
-    { label: 'Site', value: 'site' },
-    { label: 'Building', value: 'building' },
-    { label: 'Floor', value: 'floor' },
-    { label: 'Zone', value: 'zone' },
-    { label: 'Area', value: 'area' },
+    { label: $localize`:@@facilityType.site:Site`, value: 'site' },
+    { label: $localize`:@@facilityType.building:Building`, value: 'building' },
+    { label: $localize`:@@facilityType.floor:Floor`, value: 'floor' },
+    { label: $localize`:@@facilityType.zone:Zone`, value: 'zone' },
+    { label: $localize`:@@facilityType.area:Area`, value: 'area' },
   ];
 
   /**

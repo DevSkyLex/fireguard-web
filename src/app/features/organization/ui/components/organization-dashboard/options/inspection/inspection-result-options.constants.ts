@@ -15,21 +15,21 @@ import type { InspectionResultOption } from '@features/organization/ui/component
  */
 export const INSPECTION_RESULT_OPTIONS: readonly InspectionResultOption[] = [
   {
-    label: 'Pass',
+    label: $localize`:@@inspectionResult.pass:Pass`,
     value: 'pass',
     icon: PrimeIcons.CHECK_CIRCLE,
     severity: 'success',
     color: '#22c55e',
   },
   {
-    label: 'Fail',
+    label: $localize`:@@inspectionResult.fail:Fail`,
     value: 'fail',
     icon: PrimeIcons.TIMES_CIRCLE,
     severity: 'danger',
     color: '#ef4444',
   },
   {
-    label: 'Partial',
+    label: $localize`:@@inspectionResult.partial:Partial`,
     value: 'partial',
     icon: PrimeIcons.EXCLAMATION_CIRCLE,
     severity: 'warn',

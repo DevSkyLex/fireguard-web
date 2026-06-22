@@ -165,7 +165,7 @@ export class NonConformitiesOpenedTrend {
         this.dashboardStore.queryData(),
         this.dashboardStore.compareEnabled(),
       ),
-      label: 'Opened NC',
+      label: $localize`:@@dash.metric.openedNc:Opened NC`,
       icon: 'pi pi-exclamation-triangle',
     }),
   ]);
@@ -203,7 +203,7 @@ export class NonConformitiesOpenedTrend {
 
     return [
       {
-        label: 'View all non-conformities',
+        label: $localize`:@@dash.viewAll.nonConformities:View all non-conformities`,
         icon: PrimeIcons.LIST,
         routerLink: organizationId ? ['/organizations', organizationId, 'inspections'] : null,
       },

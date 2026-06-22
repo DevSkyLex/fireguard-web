@@ -189,8 +189,8 @@ export class FacilityCreatePage {
       if (operation.status === 'success' && operation.data) {
         this.messageService.add({
           severity: 'success',
-          summary: 'Facility created',
-          detail: `"${operation.data.name}" has been created successfully.`,
+          summary: $localize`:@@facility.created.summary:Facility created`,
+          detail: $localize`:@@facility.created.detail:"${operation.data.name}:name:" has been created successfully.`,
           life: 4000,
         });
         this.router.navigate(['..', operation.data.id], { relativeTo: this.route });
@@ -211,7 +211,7 @@ export class FacilityCreatePage {
 
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
+          summary: $localize`:@@common.error:Error`,
           detail: payload.message,
           life: 5000,
         });

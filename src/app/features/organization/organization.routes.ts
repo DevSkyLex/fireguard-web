@@ -25,7 +25,7 @@ export const ORGANIZATION_ROUTES: Routes = [
       import('./ui/pages/organization-invitation-accept/organization-invitation-accept.component').then(
         (m) => m.OrganizationInvitationAcceptPage,
       ),
-    title: 'Accept Invitation',
+    title: $localize`:@@route.acceptInvitation:Accept Invitation`,
     data: {
       breadcrumb: false,
     },
@@ -109,7 +109,7 @@ export const ORGANIZATION_ROUTES: Routes = [
           import('./ui/pages/organization-team/organization-team.component').then(
             (m) => m.OrganizationTeamPage,
           ),
-        title: 'Team',
+        title: $localize`:@@route.team:Team`,
         data: {
           breadcrumb: 'Team',
           preload: true,
@@ -127,7 +127,7 @@ export const ORGANIZATION_ROUTES: Routes = [
           import('./ui/pages/organization-settings/organization-settings.component').then(
             (m) => m.OrganizationSettingsPage,
           ),
-        title: 'Settings',
+        title: $localize`:@@route.settings:Settings`,
         data: {
           breadcrumb: 'Settings',
           preload: true,
@@ -155,7 +155,7 @@ export const ORGANIZATION_ROUTES: Routes = [
       import('./ui/pages/organization-list/organization-list.component').then(
         (m) => m.OrganizationListPage,
       ),
-    title: 'Organizations',
+    title: $localize`:@@route.organizations:Organizations`,
     data: {
       breadcrumb: false,
       preload: true,

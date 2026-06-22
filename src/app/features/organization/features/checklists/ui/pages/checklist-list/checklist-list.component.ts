@@ -77,11 +77,15 @@ export class ChecklistListPage {
   /** Confirms and archives a checklist. */
   protected onArchive(checklist: ChecklistOutput): void {
     this.confirmationService.confirm({
-      header: 'Archive checklist',
-      message: `Archive "${checklist.name}"? It will no longer be available for new inspections.`,
+      header: $localize`:@@checklist.archiveHeader:Archive checklist`,
+      message: $localize`:@@checklist.archiveConfirmList:Archive "${checklist.name}:name:"? It will no longer be available for new inspections.`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Archive', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: $localize`:@@common.archive:Archive`, severity: 'danger' },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () => {
         const organizationId = this.activeOrganizationStore.selectedOrganization()?.id;
         if (organizationId) this.store.archive({ organizationId, checklistId: checklist.id });

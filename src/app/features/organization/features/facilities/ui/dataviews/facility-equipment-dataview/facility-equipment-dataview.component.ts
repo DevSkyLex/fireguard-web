@@ -67,10 +67,10 @@ export class FacilityEquipmentDataview {
   };
 
   private readonly statusLabels: Record<EquipmentStatus, string> = {
-    in_stock: 'In stock',
-    operational: 'Operational',
-    under_maintenance: 'Maintenance',
-    decommissioned: 'Decommissioned',
+    in_stock: $localize`:@@facility.equipDvStatus.inStock:In stock`,
+    operational: $localize`:@@equipmentStatus.operational:Operational`,
+    under_maintenance: $localize`:@@equipmentStatus.maintenance:Maintenance`,
+    decommissioned: $localize`:@@equipmentStatus.decommissioned:Decommissioned`,
   };
   //#endregion
 

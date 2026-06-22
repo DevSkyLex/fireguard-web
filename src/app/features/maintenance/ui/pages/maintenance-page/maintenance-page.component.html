@@ -10,16 +10,27 @@
   </div>
 
   <!-- Heading -->
-  <h1 class="mb-3 text-3xl font-bold tracking-tight text-surface-900 dark:text-surface-100">
+  <h1
+    class="mb-3 text-3xl font-bold tracking-tight text-surface-900 dark:text-surface-100"
+    i18n="@@maintenance.title"
+  >
     Under Maintenance
   </h1>
 
   <!-- Description -->
-  <p class="mb-8 max-w-sm text-sm text-surface-500 dark:text-surface-400">
+  <p
+    class="mb-8 max-w-sm text-sm text-surface-500 dark:text-surface-400"
+    i18n="@@maintenance.description"
+  >
     We're performing scheduled maintenance to improve your experience.<br />
     Please check back in a few moments.
   </p>
 
   <!-- Retry -->
-  <p-button label="Try again" icon="pi pi-refresh" (onClick)="refresh()" />
+  <p-button
+    label="Try again"
+    i18n-label="@@common.tryAgain"
+    icon="pi pi-refresh"
+    (onClick)="refresh()"
+  />
 </div>

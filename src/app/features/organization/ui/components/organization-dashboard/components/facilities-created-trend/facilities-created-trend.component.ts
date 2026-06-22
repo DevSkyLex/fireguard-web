@@ -163,7 +163,7 @@ export class FacilitiesCreatedTrend {
         this.dashboardStore.queryData(),
         this.dashboardStore.compareEnabled(),
       ),
-      label: 'Facilities Created',
+      label: $localize`:@@dash.metric.facilitiesCreated:Facilities Created`,
       icon: 'pi pi-building',
     }),
   ]);
@@ -201,7 +201,7 @@ export class FacilitiesCreatedTrend {
     const organizationId: string | null = organization ? organization.id : null;
     return [
       {
-        label: 'View all facilities',
+        label: $localize`:@@dash.viewAll.facilities:View all facilities`,
         icon: PrimeIcons.LIST,
         routerLink: organizationId ? ['/organizations', organizationId, 'facilities'] : null,
       },

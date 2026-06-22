@@ -1,7 +1,9 @@
 <p-menu #actionMenu [model]="menuItems()" [popup]="true" appendTo="body" />
 
 <app-trend-card
+  i18n-title="@@org.trend.overview.title"
   title="Operational Flow"
+  i18n-description="@@org.trend.overview.desc"
   description="Inspection throughput and non-conformity pressure over time"
   [metrics]="summaryMetrics()"
   [loading]="isLoading()"
@@ -20,7 +22,9 @@
 </app-trend-card>
 
 <app-trend-filter-drawer
+  i18n-title="@@org.trend.overview.filterTitle"
   title="Operational Flow Filters"
+  i18n-description="@@org.trend.overview.filterDesc"
   description="Refine the time window and comparison settings for the operational flow chart."
   [visible]="isFilterDrawerVisible()"
   [loading]="isLoading()"

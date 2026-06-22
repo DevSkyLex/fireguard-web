@@ -24,19 +24,29 @@
         <p class="truncate text-sm font-semibold text-surface-950 dark:text-surface-50">
           {{ organization.name }}
         </p>
-        <p class="truncate text-xs text-surface-500 dark:text-surface-400">
-          {{ organization.memberCount }} {{ organization.memberCount === 1 ? 'member' : 'members' }}
+        <p
+          i18n="@@org.nav.memberCount"
+          class="truncate text-xs text-surface-500 dark:text-surface-400"
+        >
+          {organization.memberCount, plural,
+            =1 {1 member}
+            other {{{ organization.memberCount }} members}
+          }
         </p>
       </div>
     </section>
   }
 
-  <nav class="min-h-0 flex-1 overflow-y-auto" aria-label="Organization navigation">
+  <nav
+    class="min-h-0 flex-1 overflow-y-auto"
+    i18n-aria-label="@@org.nav.aria"
+    aria-label="Organization navigation"
+  >
     @if (navigationItems().length === 0) {
       <div
         class="m-3 flex min-h-28 items-center justify-center rounded-md border border-dashed border-surface-200 bg-surface-50 px-4 text-center text-[13px] text-surface-500 transition-colors dark:border-surface-800 dark:bg-surface-900"
       >
-        No organization navigation available.
+        <ng-container i18n="@@org.nav.empty">No organization navigation available.</ng-container>
       </div>
     } @else {
       <ul class="flex flex-col gap-4 py-5">

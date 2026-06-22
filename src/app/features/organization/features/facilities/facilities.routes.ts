@@ -25,7 +25,7 @@ export const FACILITY_ROUTES: Routes = [
       import('./ui/pages/facility-create/facility-create.component').then(
         (m) => m.FacilityCreatePage,
       ),
-    title: 'Create Facility',
+    title: $localize`:@@route.facility.create:Create Facility`,
   },
   {
     path: ':facilityId',
@@ -46,7 +46,7 @@ export const FACILITY_ROUTES: Routes = [
           import('./ui/pages/facility-edit/facility-edit.component').then(
             (m) => m.FacilityEditPage,
           ),
-        title: 'Edit Facility',
+        title: $localize`:@@route.facility.edit:Edit Facility`,
       },
       {
         path: '',
@@ -69,7 +69,7 @@ export const FACILITY_ROUTES: Routes = [
     ],
     loadComponent: () =>
       import('./ui/pages/facility-list/facility-list.component').then((m) => m.FacilityListPage),
-    title: 'Facilities',
+    title: $localize`:@@route.facilities:Facilities`,
     data: {
       breadcrumb: false,
       preload: true,

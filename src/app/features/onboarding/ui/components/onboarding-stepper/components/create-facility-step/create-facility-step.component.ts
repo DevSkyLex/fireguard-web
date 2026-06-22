@@ -166,11 +166,14 @@ export class CreateFacilityStep extends OnboardingStepBase {
           const count: number = values.length;
           this.messageService.add({
             severity: 'success',
-            summary: count > 1 ? 'Facilities created' : 'Facility created',
+            summary:
+              count > 1
+                ? $localize`:@@onboarding.facility.createdManyTitle:Facilities created`
+                : $localize`:@@onboarding.facility.createdOneTitle:Facility created`,
             detail:
               count > 1
-                ? `${count} facilities have been created.`
-                : `${values[0].name} has been created.`,
+                ? $localize`:@@onboarding.facility.createdMany:${count}:count: facilities have been created.`
+                : $localize`:@@onboarding.facility.createdOne:${values[0].name}:name: has been created.`,
             life: 4000,
           });
           this.onboardingStore.executeStep({ stepKey: 'create_first_facility' });
@@ -178,10 +181,12 @@ export class CreateFacilityStep extends OnboardingStepBase {
         error: (error: unknown) => {
           this.isCreating.set(false);
           const message: string =
-            error instanceof Error ? error.message : 'Failed to create the facility.';
+            error instanceof Error
+              ? error.message
+              : $localize`:@@onboarding.facility.createError:Failed to create the facility.`;
           this.messageService.add({
             severity: 'error',
-            summary: 'Error',
+            summary: $localize`:@@common.error:Error`,
             detail: message,
             life: 5000,
           });

@@ -6,7 +6,12 @@
       class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
     >
       <div class="flex items-center gap-2">
-        <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Work items</h2>
+        <h2
+          i18n="@@intervention.wit.title"
+          class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+        >
+          Work items
+        </h2>
         @if (workItems().length > 0) {
           <span
             class="rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-300"
@@ -23,6 +28,7 @@
             pInputText
             type="text"
             pSize="small"
+            i18n-placeholder="@@intervention.wit.searchPlaceholder"
             placeholder="Search work items..."
             [formControl]="searchControl"
             class="w-full"
@@ -34,6 +40,7 @@
           [formControl]="statusControl"
           optionLabel="label"
           optionValue="value"
+          i18n-placeholder="@@common.status"
           placeholder="Status"
           size="small"
           [showClear]="true"
@@ -49,7 +56,7 @@
 
         @if (canDelete() && selectedRows().length > 0) {
           <p-button
-            [label]="'Delete (' + selectedRows().length + ')'"
+            [label]="deleteLabel()"
             icon="pi pi-trash"
             severity="danger"
             size="small"
@@ -62,6 +69,7 @@
         @if (canManage()) {
           @if (canDelete()) {
             <p-splitbutton
+              i18n-label="@@intervention.wit.addItem"
               label="Add item"
               icon="pi pi-plus"
               severity="primary"
@@ -73,6 +81,7 @@
             />
           } @else {
             <p-button
+              i18n-label="@@intervention.wit.addItem"
               label="Add item"
               icon="pi pi-plus"
               severity="primary"
@@ -99,6 +108,7 @@
       [rows]="rows"
       [rowsPerPageOptions]="rowsPerPageOptions"
       [showCurrentPageReport]="true"
+      i18n-currentPageReportTemplate="@@intervention.wit.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} work items"
       [globalFilterFields]="globalFilterFields"
       [pt]="tablePt"
@@ -112,27 +122,30 @@
           }
           <th pSortableColumn="actionLabel" class="w-1/3 min-w-32">
             <div class="flex items-center gap-2">
-              <span>Action</span><p-sortIcon field="actionLabel" />
+              <span i18n="@@intervention.wit.colAction">Action</span
+              ><p-sortIcon field="actionLabel" />
             </div>
           </th>
           <th pSortableColumn="targetLabel" class="w-1/3 min-w-32">
             <div class="flex items-center gap-2">
-              <span>Target</span><p-sortIcon field="targetLabel" />
+              <span i18n="@@intervention.wit.colTarget">Target</span
+              ><p-sortIcon field="targetLabel" />
             </div>
           </th>
           <th pSortableColumn="assigneeName" class="min-w-36">
             <div class="flex items-center gap-2">
-              <span>Assignee</span><p-sortIcon field="assigneeName" />
+              <span i18n="@@intervention.wit.colAssignee">Assignee</span
+              ><p-sortIcon field="assigneeName" />
             </div>
           </th>
           <th pSortableColumn="status" class="min-w-24">
             <div class="flex items-center gap-2">
-              <span>Status</span><p-sortIcon field="status" />
+              <span i18n="@@intervention.wit.colStatus">Status</span><p-sortIcon field="status" />
             </div>
           </th>
           @if (canDelete()) {
             <th class="w-16">
-              <span class="sr-only">Actions</span>
+              <span i18n="@@intervention.wit.srActions" class="sr-only">Actions</span>
             </th>
           }
         </tr>
@@ -164,7 +177,9 @@
             @if (row.assignee; as assignee) {
               <app-intervention-member-option [option]="assignee" [compact]="true" />
             } @else {
-              <span class="text-xs font-medium text-surface-400 dark:text-surface-500"
+              <span
+                i18n="@@intervention.prop.unassigned"
+                class="text-xs font-medium text-surface-400 dark:text-surface-500"
                 >Unassigned</span
               >
             }
@@ -179,6 +194,7 @@
                 severity="secondary"
                 size="small"
                 [outlined]="true"
+                i18n-ariaLabel="@@intervention.wit.rowActions"
                 ariaLabel="Work item actions"
                 [disabled]="saving()"
                 (onClick)="onActionMenuToggle($event, row)"
@@ -193,11 +209,14 @@
           <td [attr.colspan]="columnCount()">
             <app-empty-state
               icon="pi-check-square"
+              i18n-title="@@intervention.wit.emptyTitle"
               title="No work items yet"
+              i18n-description="@@intervention.wit.emptyDesc"
               description="Add explicit tasks to make the scope assignable."
             >
               @if (canManage()) {
                 <p-button
+                  i18n-label="@@intervention.wit.newItem"
                   label="New item"
                   icon="pi pi-plus"
                   severity="secondary"

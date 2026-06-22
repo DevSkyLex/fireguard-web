@@ -13,28 +13,28 @@ import type { EquipmentStatusOption } from '@features/organization/ui/components
  */
 export const EQUIPMENT_STATUS_OPTIONS: readonly EquipmentStatusOption[] = [
   {
-    label: 'In Stock',
+    label: $localize`:@@equipmentStatus.inStock:In Stock`,
     value: 'in_stock',
     icon: PrimeIcons.BOX,
     severity: 'secondary',
     color: '#94a3b8',
   },
   {
-    label: 'Operational',
+    label: $localize`:@@equipmentStatus.operational:Operational`,
     value: 'operational',
     icon: PrimeIcons.CHECK_CIRCLE,
     severity: 'success',
     color: '#22c55e',
   },
   {
-    label: 'Under Maintenance',
+    label: $localize`:@@dash.equipStatus.maintenance:Under Maintenance`,
     value: 'under_maintenance',
     icon: PrimeIcons.WRENCH,
     severity: 'warn',
     color: '#f97316',
   },
   {
-    label: 'Decommissioned',
+    label: $localize`:@@equipmentStatus.decommissioned:Decommissioned`,
     value: 'decommissioned',
     icon: PrimeIcons.BAN,
     severity: 'danger',

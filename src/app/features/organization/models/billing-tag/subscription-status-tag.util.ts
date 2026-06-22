@@ -13,14 +13,46 @@ import type { SubscriptionStatus } from '../billing/subscription-status.type';
  * @type {Readonly<Record<SubscriptionStatus, TagDescriptor>>}
  */
 const SUBSCRIPTION_STATUS_DESCRIPTORS: Readonly<Record<SubscriptionStatus, TagDescriptor>> = {
-  active: { label: 'Active', severity: 'success', icon: 'pi pi-check-circle' },
-  trialing: { label: 'Trial', severity: 'info', icon: 'pi pi-clock' },
-  past_due: { label: 'Past due', severity: 'warn', icon: 'pi pi-exclamation-triangle' },
-  incomplete: { label: 'Incomplete', severity: 'warn', icon: 'pi pi-hourglass' },
-  incomplete_expired: { label: 'Expired', severity: 'danger', icon: 'pi pi-times-circle' },
-  unpaid: { label: 'Unpaid', severity: 'danger', icon: 'pi pi-exclamation-circle' },
-  canceled: { label: 'Canceled', severity: 'secondary', icon: 'pi pi-ban' },
-  paused: { label: 'Paused', severity: 'secondary', icon: 'pi pi-pause-circle' },
+  active: {
+    label: $localize`:@@subStatus.active:Active`,
+    severity: 'success',
+    icon: 'pi pi-check-circle',
+  },
+  trialing: {
+    label: $localize`:@@subStatus.trialing:Trial`,
+    severity: 'info',
+    icon: 'pi pi-clock',
+  },
+  past_due: {
+    label: $localize`:@@subStatus.pastDue:Past due`,
+    severity: 'warn',
+    icon: 'pi pi-exclamation-triangle',
+  },
+  incomplete: {
+    label: $localize`:@@subStatus.incomplete:Incomplete`,
+    severity: 'warn',
+    icon: 'pi pi-hourglass',
+  },
+  incomplete_expired: {
+    label: $localize`:@@subStatus.expired:Expired`,
+    severity: 'danger',
+    icon: 'pi pi-times-circle',
+  },
+  unpaid: {
+    label: $localize`:@@subStatus.unpaid:Unpaid`,
+    severity: 'danger',
+    icon: 'pi pi-exclamation-circle',
+  },
+  canceled: {
+    label: $localize`:@@subStatus.canceled:Canceled`,
+    severity: 'secondary',
+    icon: 'pi pi-ban',
+  },
+  paused: {
+    label: $localize`:@@subStatus.paused:Paused`,
+    severity: 'secondary',
+    icon: 'pi pi-pause-circle',
+  },
 };
 
 /**
@@ -29,7 +61,7 @@ const SUBSCRIPTION_STATUS_DESCRIPTORS: Readonly<Record<SubscriptionStatus, TagDe
  * @type {TagDescriptor}
  */
 const UNKNOWN_STATUS_DESCRIPTOR: TagDescriptor = {
-  label: 'Unknown',
+  label: $localize`:@@subStatus.unknown:Unknown`,
   severity: 'secondary',
   icon: 'pi pi-question-circle',
 };

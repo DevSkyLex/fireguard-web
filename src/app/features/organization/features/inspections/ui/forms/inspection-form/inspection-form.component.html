@@ -1,7 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
   <!-- Equipment (required) -->
   <div class="flex flex-col gap-2">
-    <label for="equipmentId" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="equipmentId"
+      i18n="@@inspection.form.equipment"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
       >Equipment</label
     >
     <p-select
@@ -10,22 +13,27 @@
       [options]="equipmentOptions"
       optionLabel="label"
       optionValue="value"
+      i18n-placeholder="@@inspection.form.equipmentPlaceholder"
       placeholder="Select equipment"
       [filter]="true"
+      i18n-filterPlaceholder="@@inspection.form.searchEquipment"
       filterPlaceholder="Search equipment..."
       class="w-full"
     />
 
     @if (form.controls.equipmentId.invalid && form.controls.equipmentId.touched) {
       <p-message severity="error" variant="simple">
-        <span>Equipment is required.</span>
+        <span i18n="@@inspection.form.equipmentRequired">Equipment is required.</span>
       </p-message>
     }
   </div>
 
   <!-- Result (required) -->
   <div class="flex flex-col gap-2">
-    <label for="result" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="result"
+      i18n="@@inspection.form.result"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
       >Result</label
     >
     <p-select
@@ -34,20 +42,24 @@
       [options]="resultOptions"
       optionLabel="label"
       optionValue="value"
+      i18n-placeholder="@@inspection.form.resultPlaceholder"
       placeholder="Select result"
       class="w-full"
     />
 
     @if (form.controls.result.invalid && form.controls.result.touched) {
       <p-message severity="error" variant="simple">
-        <span>Result is required.</span>
+        <span i18n="@@inspection.form.resultRequired">Result is required.</span>
       </p-message>
     }
   </div>
 
   <!-- Performed At (required) -->
   <div class="flex flex-col gap-2">
-    <label for="performedAt" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="performedAt"
+      i18n="@@inspection.form.performedAt"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
       >Performed At</label
     >
     <p-datepicker
@@ -56,20 +68,24 @@
       [showTime]="true"
       [showIcon]="true"
       dateFormat="yy-mm-dd"
+      i18n-placeholder="@@inspection.form.performedAtPlaceholder"
       placeholder="Select date and time"
       class="w-full"
     />
 
     @if (form.controls.performedAt.invalid && form.controls.performedAt.touched) {
       <p-message severity="error" variant="simple">
-        <span>Performed date is required.</span>
+        <span i18n="@@inspection.form.performedAtRequired">Performed date is required.</span>
       </p-message>
     }
   </div>
 
   <!-- Inspector Type (required) -->
   <div class="flex flex-col gap-2">
-    <label for="inspectorType" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="inspectorType"
+      i18n="@@inspection.form.inspectorType"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
       >Inspector Type</label
     >
     <p-select
@@ -78,20 +94,24 @@
       [options]="inspectorTypeOptions"
       optionLabel="label"
       optionValue="value"
+      i18n-placeholder="@@inspection.form.inspectorTypePlaceholder"
       placeholder="Select inspector type"
       class="w-full"
     />
 
     @if (form.controls.inspectorType.invalid && form.controls.inspectorType.touched) {
       <p-message severity="error" variant="simple">
-        <span>Inspector type is required.</span>
+        <span i18n="@@inspection.form.inspectorTypeRequired">Inspector type is required.</span>
       </p-message>
     }
   </div>
 
   <!-- Inspector Name (required) -->
   <div class="flex flex-col gap-2">
-    <label for="inspectorName" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="inspectorName"
+      i18n="@@inspection.form.inspectorName"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
       >Inspector Name</label
     >
     <p-iconfield>
@@ -101,6 +121,7 @@
         id="inspectorName"
         formControlName="inspectorName"
         class="w-full"
+        i18n-placeholder="@@inspection.form.inspectorNamePlaceholder"
         placeholder="John Doe"
       />
     </p-iconfield>
@@ -108,13 +129,13 @@
     @if (form.controls.inspectorName.invalid && form.controls.inspectorName.touched) {
       <p-message severity="error" variant="simple">
         @if (form.controls.inspectorName.hasError('required')) {
-          <span>Inspector name is required.</span>
+          <span i18n="@@inspection.form.inspectorNameRequired">Inspector name is required.</span>
         }
         @if (form.controls.inspectorName.hasError('minlength')) {
-          <span>Name must be at least 2 characters.</span>
+          <span i18n="@@inspection.form.nameMin">Name must be at least 2 characters.</span>
         }
         @if (form.controls.inspectorName.hasError('maxlength')) {
-          <span>Name must be less than 255 characters.</span>
+          <span i18n="@@inspection.form.nameMax">Name must be less than 255 characters.</span>
         }
       </p-message>
     }
@@ -122,7 +143,11 @@
 
   <!-- Facility (optional) -->
   <div class="flex flex-col gap-2">
-    <label for="facilityId" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="facilityId"
+      i18n="@@inspection.form.facility"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
       Facility
       <span class="font-normal text-surface-400">(optional)</span>
     </label>
@@ -132,8 +157,10 @@
       [options]="facilityOptions"
       optionLabel="label"
       optionValue="value"
+      i18n-placeholder="@@inspection.form.facilityPlaceholder"
       placeholder="Select a facility"
       [filter]="true"
+      i18n-filterPlaceholder="@@facility.searchFacilities"
       filterPlaceholder="Search facilities..."
       class="w-full"
     />
@@ -141,7 +168,11 @@
 
   <!-- Checklist (optional) -->
   <div class="flex flex-col gap-2">
-    <label for="checklistId" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="checklistId"
+      i18n="@@inspection.form.checklist"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
       Checklist
       <span class="font-normal text-surface-400">(optional)</span>
     </label>
@@ -151,8 +182,10 @@
       [options]="checklistOptions"
       optionLabel="label"
       optionValue="value"
+      i18n-placeholder="@@inspection.form.checklistPlaceholder"
       placeholder="Select a checklist"
       [filter]="true"
+      i18n-filterPlaceholder="@@inspection.form.searchChecklists"
       filterPlaceholder="Search checklists..."
       class="w-full"
     />
@@ -160,7 +193,11 @@
 
   <!-- Notes (optional) -->
   <div class="flex flex-col gap-2">
-    <label for="notes" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="notes"
+      i18n="@@inspection.form.notes"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
       Notes
       <span class="font-normal text-surface-400">(optional)</span>
     </label>
@@ -169,6 +206,7 @@
       id="notes"
       formControlName="notes"
       class="w-full"
+      i18n-placeholder="@@inspection.form.notesPlaceholder"
       placeholder="Additional notes about this inspection..."
       rows="4"
     ></textarea>
@@ -176,7 +214,11 @@
 
   <!-- Signature (optional) -->
   <div class="flex flex-col gap-2">
-    <label for="signature" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="signature"
+      i18n="@@inspection.form.signature"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
       Signature
       <span class="font-normal text-surface-400">(optional)</span>
     </label>
@@ -187,6 +229,7 @@
         id="signature"
         formControlName="signature"
         class="w-full"
+        i18n-placeholder="@@inspection.form.signaturePlaceholder"
         placeholder="Inspector signature"
       />
     </p-iconfield>
@@ -195,6 +238,7 @@
   <!-- Actions -->
   <div class="flex items-center justify-end gap-3">
     <p-button
+      i18n-label="@@common.cancel"
       label="Cancel"
       severity="secondary"
       [outlined]="true"
@@ -202,6 +246,7 @@
       (onClick)="onCancel()"
     />
     <p-button
+      i18n-label="@@inspection.form.submit"
       label="Create Inspection"
       type="submit"
       icon="pi pi-check"

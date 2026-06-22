@@ -4,7 +4,7 @@
     class="flex items-center justify-center gap-3 rounded-lg border border-surface-200 p-10 text-surface-500 dark:border-surface-800 dark:text-surface-400"
   >
     <i class="pi pi-spin pi-spinner text-xl"></i>
-    <span>Loading usage…</span>
+    <span i18n="@@org.usage.loading">Loading usage…</span>
   </div>
 } @else {
   <div class="flex flex-col gap-5">
@@ -22,7 +22,9 @@
             [class.dark:text-surface-400]="!row.atLimit"
           >
             @if (row.limit === null) {
-              {{ row.used }} used · Unlimited
+              <ng-container i18n="@@org.usage.unlimited"
+                >{{ row.used }} used · Unlimited</ng-container
+              >
             } @else {
               {{ row.used }} / {{ row.limit }}
               <span class="text-surface-400 dark:text-surface-500">({{ row.percent }}%)</span>
@@ -44,7 +46,7 @@
       <div
         class="rounded-lg border border-surface-200 p-10 text-center text-sm text-surface-500 dark:border-surface-800 dark:text-surface-400"
       >
-        Usage data is not available yet.
+        <ng-container i18n="@@org.usage.empty">Usage data is not available yet.</ng-container>
       </div>
     }
   </div>

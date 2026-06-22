@@ -119,9 +119,9 @@ export class CreateInspectionForm {
    * @type {{ label: string; value: SetupInspectionResult }[]}
    */
   protected readonly resultOptions: { label: string; value: SetupInspectionResult }[] = [
-    { label: 'Pass', value: 'pass' },
-    { label: 'Fail', value: 'fail' },
-    { label: 'Partial', value: 'partial' },
+    { label: $localize`:@@inspectionResult.pass:Pass`, value: 'pass' },
+    { label: $localize`:@@inspectionResult.fail:Fail`, value: 'fail' },
+    { label: $localize`:@@inspectionResult.partial:Partial`, value: 'partial' },
   ];
 
   /**
@@ -137,8 +137,8 @@ export class CreateInspectionForm {
    * @type {{ label: string; value: SetupInspectorType }[]}
    */
   protected readonly inspectorTypeOptions: { label: string; value: SetupInspectorType }[] = [
-    { label: 'Internal technician', value: 'user' },
-    { label: 'External contractor', value: 'external' },
+    { label: $localize`:@@inspectorType.internal:Internal technician`, value: 'user' },
+    { label: $localize`:@@inspectorType.external:External contractor`, value: 'external' },
   ];
 
   /**

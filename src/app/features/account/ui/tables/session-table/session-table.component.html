@@ -7,13 +7,16 @@
         class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
       >
         <div class="flex flex-col">
-          <h2 class="font-semibold">Active sessions</h2>
-          <p class="text-sm text-surface-500">Review and revoke access to your account.</p>
+          <h2 class="font-semibold" i18n="@@account.sessionTable.title">Active sessions</h2>
+          <p class="text-sm text-surface-500" i18n="@@account.sessionTable.subtitle">
+            Review and revoke access to your account.
+          </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
           <p-button
             label="Refresh"
+            i18n-label="@@common.refresh"
             icon="pi pi-refresh"
             severity="secondary"
             size="small"
@@ -26,6 +29,7 @@
           @if (hasOtherSessions()) {
             <p-button
               label="Revoke all other sessions"
+              i18n-label="@@account.sessionTable.revokeAll"
               icon="pi pi-sign-out"
               severity="danger"
               size="small"
@@ -52,15 +56,16 @@
         [rowsPerPageOptions]="rowsPerPageOptions"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sessions"
+        i18n-currentPageReportTemplate="@@account.sessionTable.pageReport"
         [stripedRows]="true"
         [pt]="tablePt()"
       >
         <ng-template pTemplate="header">
           <tr>
-            <th class="min-w-64">Device</th>
-            <th class="min-w-32">IP address</th>
-            <th class="min-w-40">Last activity</th>
-            <th class="w-20"><span class="sr-only">Actions</span></th>
+            <th class="min-w-64" i18n="@@account.sessionTable.device">Device</th>
+            <th class="min-w-32" i18n="@@account.sessions.ipAddress">IP address</th>
+            <th class="min-w-40" i18n="@@account.sessionTable.lastActivity">Last activity</th>
+            <th class="w-20"><span class="sr-only" i18n="@@common.actions">Actions</span></th>
           </tr>
         </ng-template>
 
@@ -114,17 +119,30 @@
                     <span
                       class="flex items-center gap-2 truncate font-medium text-surface-900 dark:text-surface-100"
                     >
-                      {{ session.browser || 'Unknown browser' }}
+                      @if (session.browser) {
+                        {{ session.browser }}
+                      } @else {
+                        <ng-container i18n="@@account.sessionTable.unknownBrowser"
+                          >Unknown browser</ng-container
+                        >
+                      }
                       @if (session.isCurrent) {
                         <span
                           class="inline-flex h-5 items-center rounded-full border border-primary-200 bg-primary-50 px-2 text-[0.65rem] leading-none font-semibold text-primary-700 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300"
+                          i18n="@@account.sessionTable.current"
                         >
                           Current
                         </span>
                       }
                     </span>
                     <span class="truncate text-xs text-surface-500">
-                      {{ session.deviceType || 'Unknown device' }}
+                      @if (session.deviceType) {
+                        {{ session.deviceType }}
+                      } @else {
+                        <ng-container i18n="@@account.sessionTable.unknownDevice"
+                          >Unknown device</ng-container
+                        >
+                      }
                     </span>
                   </div>
                 </div>
@@ -144,6 +162,7 @@
                   size="small"
                   [outlined]="true"
                   ariaLabel="Session actions"
+                  i18n-ariaLabel="@@account.sessionTable.actions"
                   (onClick)="onActionMenuToggle($event, session)"
                 />
               </td>
@@ -157,7 +176,9 @@
               <app-empty-state
                 icon="pi-desktop"
                 title="No active sessions"
+                i18n-title="@@account.sessionTable.emptyTitle"
                 description="There are no other active sessions on your account."
+                i18n-description="@@account.sessionTable.emptyDesc"
               />
             </td>
           </tr>

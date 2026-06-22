@@ -108,9 +108,22 @@ export class OrganizationPlanSelector implements OnInit {
 
   /** Options of the cadence toggle (mutable array required by p-selectButton). */
   protected readonly intervalOptions: IntervalOption[] = [
-    { label: 'Monthly', value: 'month' },
-    { label: 'Yearly', value: 'year' },
+    { label: $localize`:@@org.plan.monthly:Monthly`, value: 'month' },
+    { label: $localize`:@@org.plan.yearly:Yearly`, value: 'year' },
   ];
+
+  /**
+   * Builds the localized "Switch to <plan>" button label.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {string} name - Plan name.
+   * @returns {string} Localized button label.
+   */
+  protected switchToLabel(name: string): string {
+    return $localize`:@@org.plan.switchTo:Switch to ${name}:name:`;
+  }
 
   /** Identifier of the plan currently being switched to, for per-card feedback. */
   protected readonly pendingPlanId: WritableSignal<string | null> = signal<string | null>(null);
@@ -167,8 +180,8 @@ export class OrganizationPlanSelector implements OnInit {
         this.pendingPlanId.set(null);
         this.messageService.add({
           severity: 'success',
-          summary: 'Plan updated',
-          detail: 'The organization subscription plan has been updated.',
+          summary: $localize`:@@org.plan.updatedSummary:Plan updated`,
+          detail: $localize`:@@org.plan.updatedDetail:The organization subscription plan has been updated.`,
         });
       }
     });
@@ -183,8 +196,8 @@ export class OrganizationPlanSelector implements OnInit {
       if (this.billingStore.cancelSucceeded()) {
         this.messageService.add({
           severity: 'success',
-          summary: 'Cancellation scheduled',
-          detail: 'Your subscription will end at the close of the current billing period.',
+          summary: $localize`:@@org.plan.cancelScheduledSummary:Cancellation scheduled`,
+          detail: $localize`:@@org.plan.cancelScheduledDetail:Your subscription will end at the close of the current billing period.`,
         });
       }
     });
@@ -193,8 +206,8 @@ export class OrganizationPlanSelector implements OnInit {
       if (this.billingStore.resumeSucceeded()) {
         this.messageService.add({
           severity: 'success',
-          summary: 'Subscription resumed',
-          detail: 'Your subscription will renew normally.',
+          summary: $localize`:@@org.plan.resumedSummary:Subscription resumed`,
+          detail: $localize`:@@org.plan.resumedDetail:Your subscription will renew normally.`,
         });
       }
     });
@@ -408,12 +421,18 @@ export class OrganizationPlanSelector implements OnInit {
     }
 
     this.confirmationService.confirm({
-      header: 'Cancel subscription',
-      message:
-        'Cancel your subscription at the end of the current period? You keep access until then and no data is deleted.',
+      header: $localize`:@@org.plan.cancelConfirmHeader:Cancel subscription`,
+      message: $localize`:@@org.plan.cancelConfirm:Cancel your subscription at the end of the current period? You keep access until then and no data is deleted.`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Cancel subscription', severity: 'danger' },
-      rejectButtonProps: { label: 'Keep subscription', severity: 'secondary', outlined: true },
+      acceptButtonProps: {
+        label: $localize`:@@org.plan.cancelConfirmAccept:Cancel subscription`,
+        severity: 'danger',
+      },
+      rejectButtonProps: {
+        label: $localize`:@@org.plan.keepSubscription:Keep subscription`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () => this.billingStore.cancelSubscription(organizationId),
     });
   }
@@ -453,15 +472,15 @@ export class OrganizationPlanSelector implements OnInit {
     if (outcome === 'success') {
       this.messageService.add({
         severity: 'success',
-        summary: 'Subscription updated',
-        detail: 'Your subscription is being activated — it may take a few seconds to appear.',
+        summary: $localize`:@@org.plan.checkoutSuccessSummary:Subscription updated`,
+        detail: $localize`:@@org.plan.checkoutSuccessDetail:Your subscription is being activated — it may take a few seconds to appear.`,
       });
       this.quotaStore.reload();
     } else if (outcome === 'cancel') {
       this.messageService.add({
         severity: 'info',
-        summary: 'Checkout canceled',
-        detail: 'No changes were made to your subscription.',
+        summary: $localize`:@@org.plan.checkoutCancelSummary:Checkout canceled`,
+        detail: $localize`:@@org.plan.checkoutCancelDetail:No changes were made to your subscription.`,
       });
     }
 

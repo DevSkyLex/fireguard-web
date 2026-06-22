@@ -336,7 +336,7 @@ export class TrustedDeviceTable {
 
     return [
       {
-        label: 'Revoke device',
+        label: $localize`:@@account.deviceTable.revokeDevice:Revoke device`,
         icon: PrimeIcons.TIMES_CIRCLE,
         styleClass: 'text-red-500',
         command: (): void => this.revoke.emit(device),

@@ -6,8 +6,16 @@
       >
         @if (showHeading()) {
           <div class="min-w-0">
-            <h2 class="font-semibold text-surface-950 dark:text-surface-0">Interventions</h2>
-            <p class="mt-1 text-sm text-surface-500 dark:text-surface-400">
+            <h2
+              i18n="@@intervention.table.title"
+              class="font-semibold text-surface-950 dark:text-surface-0"
+            >
+              Interventions
+            </h2>
+            <p
+              i18n="@@intervention.table.subtitle"
+              class="mt-1 text-sm text-surface-500 dark:text-surface-400"
+            >
               Prepare field data, resolve blockers and publish when the intervention is ready.
             </p>
           </div>
@@ -21,6 +29,7 @@
             [formControl]="statusControl"
             optionLabel="label"
             optionValue="value"
+            i18n-placeholder="@@intervention.table.allStatuses"
             placeholder="All statuses"
             size="small"
             [showClear]="true"
@@ -38,6 +47,7 @@
 
           @if (showCreate()) {
             <p-splitbutton
+              i18n-label="@@intervention.newButton"
               label="New intervention"
               icon="pi pi-plus"
               severity="primary"
@@ -53,6 +63,7 @@
               size="small"
               [text]="true"
               [rounded]="true"
+              i18n-ariaLabel="@@intervention.table.refreshAria"
               ariaLabel="Refresh interventions"
               (onClick)="onRefresh()"
             />
@@ -72,6 +83,7 @@
         (onLazyLoad)="onLazyLoad($event)"
         [rowsPerPageOptions]="[12, 24, 48]"
         [showCurrentPageReport]="true"
+        i18n-currentPageReportTemplate="@@intervention.table.pageReport"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} interventions"
         [stripedRows]="true"
         [pt]="tablePt()"
@@ -80,30 +92,38 @@
           <tr>
             <th pSortableColumn="name" class="min-w-72">
               <div class="flex items-center gap-2">
-                <span>Intervention</span><p-sortIcon field="name" />
+                <span i18n="@@intervention.table.colName">Intervention</span
+                ><p-sortIcon field="name" />
               </div>
             </th>
             <th pSortableColumn="priority" class="min-w-32">
               <div class="flex items-center gap-2">
-                <span>Priority</span><p-sortIcon field="priority" />
+                <span i18n="@@intervention.table.colPriority">Priority</span
+                ><p-sortIcon field="priority" />
               </div>
             </th>
             <th pSortableColumn="status" class="min-w-32">
               <div class="flex items-center gap-2">
-                <span>Status</span><p-sortIcon field="status" />
+                <span i18n="@@intervention.table.colStatus">Status</span
+                ><p-sortIcon field="status" />
               </div>
             </th>
-            <th class="min-w-28 text-right">Facilities</th>
-            <th class="min-w-28 text-right">Equipment</th>
-            <th class="min-w-28 text-right">Inspections</th>
-            <th class="min-w-32 text-right">Blockers</th>
+            <th i18n="@@intervention.table.colFacilities" class="min-w-28 text-right">
+              Facilities
+            </th>
+            <th i18n="@@intervention.table.colEquipment" class="min-w-28 text-right">Equipment</th>
+            <th i18n="@@intervention.table.colInspections" class="min-w-28 text-right">
+              Inspections
+            </th>
+            <th i18n="@@intervention.table.colBlockers" class="min-w-32 text-right">Blockers</th>
             <th pSortableColumn="updatedAt" class="min-w-36">
               <div class="flex items-center justify-end gap-2">
-                <span>Updated</span><p-sortIcon field="updatedAt" />
+                <span i18n="@@intervention.table.colUpdated">Updated</span
+                ><p-sortIcon field="updatedAt" />
               </div>
             </th>
             <th class="w-20">
-              <span class="sr-only">Actions</span>
+              <span i18n="@@intervention.table.srActions" class="sr-only">Actions</span>
             </th>
           </tr>
         </ng-template>
@@ -172,7 +192,10 @@
                     >
                       {{ intervention.name }}
                     </button>
-                    <span class="truncate text-xs text-surface-500 dark:text-surface-400">
+                    <span
+                      i18n="@@intervention.table.revision"
+                      class="truncate text-xs text-surface-500 dark:text-surface-400"
+                    >
                       Revision {{ intervention.revision }}
                     </span>
                   </div>
@@ -201,6 +224,7 @@
                   severity="secondary"
                   size="small"
                   [outlined]="true"
+                  i18n-ariaLabel="@@intervention.table.openAria"
                   ariaLabel="Open intervention"
                   (onClick)="view.emit(intervention)"
                 />
@@ -214,10 +238,13 @@
             <td colspan="9">
               <app-empty-state
                 icon="pi-compass"
+                i18n-title="@@intervention.table.emptyTitle"
                 title="No interventions yet"
+                i18n-description="@@intervention.table.emptyDesc"
                 description="Create an intervention when a site visit needs offline-ready facility, equipment and inspection preparation."
               >
                 <p-button
+                  i18n-label="@@intervention.newButton"
                   label="New intervention"
                   icon="pi pi-plus"
                   severity="primary"

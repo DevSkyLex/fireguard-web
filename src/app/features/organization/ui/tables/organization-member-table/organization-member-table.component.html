@@ -2,10 +2,10 @@
   <p-table [value]="loading() ? skeletonItems : [...members()]" dataKey="id" [stripedRows]="true">
     <ng-template pTemplate="header"
       ><tr>
-        <th>User</th>
-        <th>Roles</th>
-        <th>Joined</th>
-        <th class="w-20"><span class="sr-only">Actions</span></th>
+        <th i18n="@@org.memberTable.user">User</th>
+        <th i18n="@@org.memberTable.roles">Roles</th>
+        <th i18n="@@org.memberTable.joined">Joined</th>
+        <th class="w-20"><span i18n="@@org.memberTable.actions" class="sr-only">Actions</span></th>
       </tr></ng-template
     >
     <ng-template pTemplate="body" let-member>
@@ -28,7 +28,9 @@
                   (onRemove)="removeRole.emit({ member, roleId })"
                 />
               } @empty {
-                <span class="text-sm text-surface-500">No roles</span>
+                <span i18n="@@org.memberTable.noRoles" class="text-sm text-surface-500"
+                  >No roles</span
+                >
               }
             </div>
           </td>
@@ -40,6 +42,7 @@
                 severity="danger"
                 [text]="true"
                 [rounded]="true"
+                i18n-ariaLabel="@@org.memberTable.removeAria"
                 ariaLabel="Remove member"
                 (onClick)="remove.emit(member)"
               />
@@ -53,7 +56,9 @@
         <td colspan="4">
           <app-empty-state
             icon="pi-users"
+            i18n-title="@@org.memberTable.emptyTitle"
             title="No members yet"
+            i18n-description="@@org.memberTable.emptyDesc"
             description="People who join this organization will appear here."
           />
         </td>

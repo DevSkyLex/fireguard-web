@@ -8,6 +8,7 @@
       [text]="true"
       [rounded]="true"
       ariaLabel="Back to checklists"
+      i18n-ariaLabel="@@checklist.backAria"
       (onClick)="back.emit()"
     />
     <p-avatar icon="pi pi-list-check" shape="square" size="xlarge" />
@@ -22,14 +23,15 @@
         />
       </div>
       <div class="flex flex-wrap items-center gap-3 text-sm text-surface-500 dark:text-surface-300">
-        <span>Version {{ checklist().version }}</span>
-        <span>Updated {{ checklist().updatedAt | date: 'medium' }}</span>
+        <span i18n="@@checklist.versionLabel">Version {{ checklist().version }}</span>
+        <span i18n="@@common.updatedAt">Updated {{ checklist().updatedAt | date: 'medium' }}</span>
       </div>
     </div>
   </div>
   @if (canManage() && checklist().status === 'active') {
     <p-button
       label="Archive"
+      i18n-label="@@common.archive"
       icon="pi pi-box"
       severity="danger"
       [outlined]="true"

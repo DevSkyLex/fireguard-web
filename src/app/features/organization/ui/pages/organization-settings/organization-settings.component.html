@@ -1,7 +1,11 @@
 <div id="organization-settings" class="mx-auto flex w-full max-w-7xl flex-col py-1">
   <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
     <!-- Vertical settings navigation (sticky on large screens) -->
-    <nav class="lg:sticky lg:top-6" aria-label="Settings sections">
+    <nav
+      class="lg:sticky lg:top-6"
+      i18n-aria-label="@@org.settings.navAria"
+      aria-label="Settings sections"
+    >
       <p-menu
         [model]="menuItems()"
         [pt]="navMenuPt"
@@ -35,7 +39,7 @@
           as error
         ) {
           <p-message severity="error" class="mb-4 block">
-            {{ error.message ?? 'The settings could not be saved.' }}
+            {{ error.message ?? saveErrorFallback }}
           </p-message>
         }
 
@@ -74,7 +78,7 @@
             @if (canDeleteOrganization()) {
               @if (store.deleteError(); as error) {
                 <p-message severity="error" class="mb-4 block">
-                  {{ error.message ?? 'The organization could not be deleted.' }}
+                  {{ error.message ?? deleteErrorFallback }}
                 </p-message>
               }
 

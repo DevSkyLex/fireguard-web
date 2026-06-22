@@ -7,7 +7,7 @@
         class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
       >
         <div class="flex items-center gap-2">
-          <h2 class="font-semibold">Equipments</h2>
+          <h2 class="font-semibold" i18n="@@equipment.table.title">Equipments</h2>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -18,6 +18,7 @@
               type="text"
               pSize="small"
               placeholder="Search equipments..."
+              i18n-placeholder="@@equipment.table.searchPlaceholder"
               [formControl]="searchControl"
               class="w-full"
             />
@@ -29,6 +30,7 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Status"
+            i18n-placeholder="@@common.status"
             size="small"
             [showClear]="true"
             class="w-full sm:w-48"
@@ -52,6 +54,7 @@
             >
               <p-splitbutton
                 label="New equipment"
+                i18n-label="@@equipment.newButton"
                 icon="pi pi-plus"
                 severity="primary"
                 [model]="toolbarActions()"
@@ -64,6 +67,7 @@
           } @else {
             <p-button
               label="Refresh"
+              i18n-label="@@common.refresh"
               icon="pi pi-refresh"
               severity="secondary"
               size="small"
@@ -75,6 +79,7 @@
 
             <p-button
               label="Clear filters"
+              i18n-label="@@common.clearFilters"
               icon="pi pi-filter-slash"
               severity="secondary"
               size="small"
@@ -103,6 +108,7 @@
         [rowsPerPageOptions]="[12, 24, 48]"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} equipments"
+        i18n-currentPageReportTemplate="@@equipment.table.pageReport"
         [stripedRows]="true"
         [pt]="tablePt()"
       >
@@ -115,34 +121,34 @@
             }
             <th pSortableColumn="type" class="min-w-72">
               <div class="flex items-center gap-2">
-                <span>Equipment</span>
+                <span i18n="@@equipment.table.colEquipment">Equipment</span>
                 <p-sortIcon field="type" />
               </div>
             </th>
             <th class="min-w-36">
               <div class="flex items-center gap-2">
-                <span>Serial</span>
+                <span i18n="@@equipment.table.colSerial">Serial</span>
               </div>
             </th>
             <th class="min-w-44">
               <div class="flex items-center gap-2">
-                <span>Location</span>
+                <span i18n="@@equipment.table.colLocation">Location</span>
               </div>
             </th>
             <th pSortableColumn="status" class="min-w-40">
               <div class="flex items-center gap-2">
-                <span>Status</span>
+                <span i18n="@@common.status">Status</span>
                 <p-sortIcon field="status" />
               </div>
             </th>
             <th pSortableColumn="updatedAt" class="min-w-36">
               <div class="flex items-center gap-2">
-                <span>Updated</span>
+                <span i18n="@@common.updated">Updated</span>
                 <p-sortIcon field="updatedAt" />
               </div>
             </th>
             <th class="w-20">
-              <span class="sr-only">Actions</span>
+              <span class="sr-only" i18n="@@common.actions">Actions</span>
             </th>
           </tr>
         </ng-template>
@@ -258,6 +264,7 @@
                   size="small"
                   [outlined]="true"
                   ariaLabel="Equipment actions"
+                  i18n-ariaLabel="@@equipment.table.actions"
                   (onClick)="onActionMenuToggle($event, equipment)"
                 />
               </td>
@@ -271,7 +278,9 @@
               <app-empty-state
                 icon="pi-box"
                 title="No equipment found"
+                i18n-title="@@equipment.table.emptyTitle"
                 description="Adjust your search or filters, or register the assets you track."
+                i18n-description="@@equipment.table.emptyDesc"
               >
                 @if (canManageEquipment()) {
                   <span
@@ -281,6 +290,7 @@
                   >
                     <p-button
                       label="New equipment"
+                      i18n-label="@@equipment.newButton"
                       icon="pi pi-plus"
                       severity="primary"
                       size="small"

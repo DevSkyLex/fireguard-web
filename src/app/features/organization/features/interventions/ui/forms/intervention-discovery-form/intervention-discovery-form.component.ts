@@ -164,9 +164,9 @@ export class InterventionDiscoveryForm {
    * @type {readonly SelectOption<InterventionWorkItemAction>[]}
    */
   protected readonly actionOptions: readonly SelectOption<InterventionWorkItemAction>[] = [
-    { label: 'Site setup', value: 'site_setup' },
-    { label: 'Inventory', value: 'inventory' },
-    { label: 'Inspection', value: 'inspection' },
+    { label: $localize`:@@intervention.action.siteSetup:Site setup`, value: 'site_setup' },
+    { label: $localize`:@@intervention.action.inventory:Inventory`, value: 'inventory' },
+    { label: $localize`:@@intervention.action.inspection:Inspection`, value: 'inspection' },
   ];
 
   /**
@@ -182,10 +182,32 @@ export class InterventionDiscoveryForm {
    * @type {readonly SelectOption<InspectionResult>[]}
    */
   protected readonly resultOptions: readonly SelectOption<InspectionResult>[] = [
-    { label: 'Pass', value: 'pass' },
-    { label: 'Partial', value: 'partial' },
-    { label: 'Fail', value: 'fail' },
+    { label: $localize`:@@inspectionResult.pass:Pass`, value: 'pass' },
+    { label: $localize`:@@inspectionResult.partial:Partial`, value: 'partial' },
+    { label: $localize`:@@inspectionResult.fail:Fail`, value: 'fail' },
   ];
+
+  /** Localized label for the target field, varying with the selected action. */
+  protected get targetLabel(): () => string {
+    return (): string => {
+      switch (this.form.controls.action.value) {
+        case 'site_setup':
+          return $localize`:@@intervention.df.targetFacility:Facility name`;
+        case 'inventory':
+          return $localize`:@@intervention.df.targetEquipType:Equipment type`;
+        default:
+          return $localize`:@@intervention.df.targetEquipResource:Equipment resource`;
+      }
+    };
+  }
+
+  /** Localized placeholder for the free-text target input. */
+  protected get targetInputPlaceholder(): () => string {
+    return (): string =>
+      this.form.controls.action.value === 'site_setup'
+        ? $localize`:@@intervention.df.targetSitePlaceholder:Example: Electrical room`
+        : $localize`:@@intervention.df.targetEquipPlaceholder:Example: Extinguisher #A-12`;
+  }
 
   //#endregion
 

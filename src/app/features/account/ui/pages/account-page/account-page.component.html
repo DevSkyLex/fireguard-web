@@ -28,7 +28,11 @@
             class="truncate text-xl font-semibold text-surface-900 dark:text-surface-50"
             data-testid="account-page-display-name"
           >
-            {{ userStore.displayName() ?? 'Your account' }}
+            @if (userStore.displayName(); as name) {
+              {{ name }}
+            } @else {
+              <ng-container i18n="@@account.defaultName">Your account</ng-container>
+            }
           </h1>
           @if (userStore.profile()?.username; as username) {
             <span class="truncate text-base text-surface-500 dark:text-surface-400"
@@ -37,7 +41,9 @@
           }
         </div>
 
-        <p class="text-sm text-surface-500 dark:text-surface-400">Your personal account</p>
+        <p class="text-sm text-surface-500 dark:text-surface-400" i18n="@@account.page.subtitle">
+          Your personal account
+        </p>
 
         <div
           class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-surface-500 dark:text-surface-400"
@@ -49,13 +55,19 @@
             </span>
           }
           @if (userStore.profile()?.createdAt; as createdAt) {
-            <span class="inline-flex items-center gap-1.5">
+            <span class="inline-flex items-center gap-1.5" i18n="@@account.page.memberSince">
               <i class="pi pi-calendar text-xs" aria-hidden="true"></i>
               Member since {{ createdAt | date: 'MMMM yyyy' }}
             </span>
           }
           @if (userStore.profile()?.emailVerified) {
-            <p-tag severity="success" value="Verified" [rounded]="true" class="text-xs" />
+            <p-tag
+              severity="success"
+              value="Verified"
+              i18n-value="@@account.verified"
+              [rounded]="true"
+              class="text-xs"
+            />
           }
         </div>
       </div>
@@ -66,7 +78,11 @@
 
   <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
     <!-- GitHub-settings-style vertical navigation (sticky on large screens) -->
-    <nav class="lg:sticky lg:top-6" aria-label="Account sections">
+    <nav
+      class="lg:sticky lg:top-6"
+      aria-label="Account sections"
+      i18n-aria-label="@@account.page.navAria"
+    >
       <p-menu
         [model]="menuItems()"
         [pt]="navMenuPt"
@@ -88,9 +104,12 @@
                   class="font-semibold text-surface-900 dark:text-surface-50"
                   data-testid="account-page-section-title"
                 >
-                  Public profile
+                  <ng-container i18n="@@account.profile.title">Public profile</ng-container>
                 </h2>
-                <p class="text-sm text-surface-500 dark:text-surface-400">
+                <p
+                  class="text-sm text-surface-500 dark:text-surface-400"
+                  i18n="@@account.profile.subtitle"
+                >
                   Manage how your profile appears to other members.
                 </p>
               </div>

@@ -14,12 +14,15 @@ export const inspectionTitleResolver: ResolveFn<string> = (): MaybeAsync<string>
   const inspection: InspectionOutput | null = activeInspectionStore.selectedInspection();
 
   if (inspection) {
-    return `Inspection ${inspection.performedAt.slice(0, 10)}`;
+    return $localize`:@@inspection.titleResolver:Inspection ${inspection.performedAt.slice(0, 10)}:date:`;
   }
 
   const title$: Observable<string> = toObservable(activeInspectionStore.selectedInspection).pipe(
     filter((value: InspectionOutput | null): value is InspectionOutput => value !== null),
-    map((value: InspectionOutput): string => `Inspection ${value.performedAt.slice(0, 10)}`),
+    map(
+      (value: InspectionOutput): string =>
+        $localize`:@@inspection.titleResolver:Inspection ${value.performedAt.slice(0, 10)}:date:`,
+    ),
     first(),
   );
 

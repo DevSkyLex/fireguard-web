@@ -7,12 +7,17 @@
         class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
       >
         <div class="flex flex-col">
-          <h2 class="font-semibold">Notifications</h2>
+          <h2 class="font-semibold" i18n="@@common.notifications">Notifications</h2>
           <p class="text-sm text-surface-500">
             @if (loading()) {
-              Loading notifications…
+              <ng-container i18n="@@account.notifications.loading"
+                >Loading notifications…</ng-container
+              >
             } @else {
-              {{ total() }} notification{{ total() === 1 ? '' : 's' }} across your account.
+              <ng-container i18n="@@account.notifications.count">{total(), plural,
+                =1 {1 notification across your account.}
+                other {# notifications across your account.}
+              }</ng-container>
             }
           </p>
         </div>
@@ -22,12 +27,14 @@
             <p-tag
               severity="info"
               [rounded]="true"
-              [value]="unreadCount() + ' unread on this page'"
+              value="{{ unreadCount() }} unread on this page"
+              i18n-value="@@account.notifications.unreadOnPage"
             />
           }
 
           <p-button
             label="Refresh"
+            i18n-label="@@common.refresh"
             icon="pi pi-refresh"
             severity="secondary"
             size="small"
@@ -53,15 +60,16 @@
         [rowsPerPageOptions]="rowsPerPageOptions"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} notifications"
+        i18n-currentPageReportTemplate="@@account.notifications.pageReport"
         [stripedRows]="true"
         [pt]="tablePt()"
       >
         <ng-template pTemplate="header">
           <tr>
-            <th class="min-w-72">Notification</th>
-            <th class="min-w-28">Category</th>
-            <th class="min-w-40">Received</th>
-            <th class="w-20"><span class="sr-only">Actions</span></th>
+            <th class="min-w-72" i18n="@@account.notifications.colNotification">Notification</th>
+            <th class="min-w-28" i18n="@@account.notifications.colCategory">Category</th>
+            <th class="min-w-40" i18n="@@account.notifications.colReceived">Received</th>
+            <th class="w-20"><span class="sr-only" i18n="@@common.actions">Actions</span></th>
           </tr>
         </ng-template>
 
@@ -126,7 +134,9 @@
                         <span
                           class="h-2 w-2 shrink-0 rounded-full bg-primary"
                           title="Unread"
+                          i18n-title="@@account.notifications.unread"
                           aria-label="Unread"
+                          i18n-aria-label="@@account.notifications.unread"
                         ></span>
                       }
                     </span>
@@ -154,6 +164,7 @@
                     size="small"
                     [outlined]="true"
                     ariaLabel="Notification actions"
+                    i18n-ariaLabel="@@account.notifications.actions"
                     (onClick)="onActionMenuToggle($event, notification)"
                   />
                 }
@@ -168,7 +179,9 @@
               <app-empty-state
                 icon="pi-bell"
                 title="No notifications yet"
+                i18n-title="@@notifications.empty"
                 description="Account and organization activity will show up here."
+                i18n-description="@@account.notifications.emptyDesc"
               />
             </td>
           </tr>

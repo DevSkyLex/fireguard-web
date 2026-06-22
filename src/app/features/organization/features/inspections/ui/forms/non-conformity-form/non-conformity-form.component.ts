@@ -51,10 +51,10 @@ export class NonConformityForm {
     inject<NonNullableFormBuilder>(NonNullableFormBuilder);
   /** Supported non-conformity severity options. */
   protected readonly severityOptions: { label: string; value: NonConformitySeverity }[] = [
-    { label: 'Low', value: 'low' },
-    { label: 'Medium', value: 'medium' },
-    { label: 'High', value: 'high' },
-    { label: 'Critical', value: 'critical' },
+    { label: $localize`:@@ncSeverity.low:Low`, value: 'low' },
+    { label: $localize`:@@ncSeverity.medium:Medium`, value: 'medium' },
+    { label: $localize`:@@ncSeverity.high:High`, value: 'high' },
+    { label: $localize`:@@ncSeverity.critical:Critical`, value: 'critical' },
   ];
   /** Strictly typed non-conformity form. */
   protected readonly form: FormGroup<NonConformityFormData> =

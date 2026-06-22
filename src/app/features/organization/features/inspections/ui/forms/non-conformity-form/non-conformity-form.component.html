@@ -1,20 +1,23 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-4 lg:grid-cols-4">
   <div class="flex flex-col gap-2 lg:col-span-2">
-    <label for="nc-description" class="text-sm font-medium">Description</label>
+    <label for="nc-description" i18n="@@nc.form.description" class="text-sm font-medium"
+      >Description</label
+    >
     <input
       pInputText
       id="nc-description"
       formControlName="description"
+      i18n-placeholder="@@nc.form.descriptionPlaceholder"
       placeholder="Describe the finding"
     />
     @if (form.controls.description.invalid && form.controls.description.touched) {
-      <p-message severity="error" variant="simple"
+      <p-message i18n="@@nc.form.descriptionRequired" severity="error" variant="simple"
         >A description of at least 3 characters is required.</p-message
       >
     }
   </div>
   <div class="flex flex-col gap-2">
-    <label for="nc-severity" class="text-sm font-medium">Severity</label>
+    <label for="nc-severity" i18n="@@nc.form.severity" class="text-sm font-medium">Severity</label>
     <p-select
       id="nc-severity"
       [options]="severityOptions"
@@ -24,11 +27,11 @@
     />
   </div>
   <div class="flex flex-col gap-2">
-    <label for="nc-due" class="text-sm font-medium">Due date</label>
+    <label for="nc-due" i18n="@@nc.form.dueDate" class="text-sm font-medium">Due date</label>
     <p-datepicker id="nc-due" formControlName="dueAt" [showIcon]="true" dateFormat="yy-mm-dd" />
   </div>
   <div class="flex flex-col gap-2 lg:col-span-4">
-    <label for="nc-notes" class="text-sm font-medium"
+    <label for="nc-notes" i18n="@@nc.form.notes" class="text-sm font-medium"
       >Notes <span class="font-normal text-surface-400">(optional)</span></label
     >
     <textarea pTextarea id="nc-notes" formControlName="notes" rows="3"></textarea>
@@ -36,6 +39,7 @@
   <div class="flex justify-end lg:col-span-4">
     <p-button
       type="submit"
+      i18n-label="@@nc.form.submit"
       label="Add non-conformity"
       icon="pi pi-plus"
       [loading]="loading()"

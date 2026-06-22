@@ -15,21 +15,21 @@ import type { InspectionStatusOption } from '@features/organization/ui/component
  */
 export const INSPECTION_STATUS_OPTIONS: readonly InspectionStatusOption[] = [
   {
-    label: 'Draft',
+    label: $localize`:@@inspectionStatus.draft:Draft`,
     value: 'draft',
     icon: PrimeIcons.FILE_EDIT,
     severity: 'info',
     color: '#3b82f6',
   },
   {
-    label: 'Submitted',
+    label: $localize`:@@inspectionStatus.submitted:Submitted`,
     value: 'submitted',
     icon: PrimeIcons.SEND,
     severity: 'warn',
     color: '#f59e0b',
   },
   {
-    label: 'Closed',
+    label: $localize`:@@inspectionStatus.closed:Closed`,
     value: 'closed',
     icon: PrimeIcons.LOCK,
     severity: 'secondary',

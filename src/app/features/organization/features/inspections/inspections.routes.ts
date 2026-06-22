@@ -22,7 +22,7 @@ export const INSPECTION_ROUTES: Routes = [
       import('./ui/pages/inspection-create/inspection-create.component').then(
         (m) => m.InspectionCreatePage,
       ),
-    title: 'Create Inspection',
+    title: $localize`:@@route.inspection.create:Create Inspection`,
   },
   {
     path: ':inspectionId',
@@ -43,7 +43,7 @@ export const INSPECTION_ROUTES: Routes = [
           import('./ui/pages/inspection-edit/inspection-edit.component').then(
             (m) => m.InspectionEditPage,
           ),
-        title: 'Edit Inspection',
+        title: $localize`:@@route.inspection.edit:Edit Inspection`,
       },
       {
         path: '',
@@ -66,7 +66,7 @@ export const INSPECTION_ROUTES: Routes = [
       import('./ui/pages/inspection-list/inspection-list.component').then(
         (m) => m.InspectionListPage,
       ),
-    title: 'Inspections',
+    title: $localize`:@@route.inspections:Inspections`,
     data: {
       breadcrumb: false,
       preload: true,

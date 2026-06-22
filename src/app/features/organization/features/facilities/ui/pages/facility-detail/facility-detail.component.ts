@@ -342,7 +342,9 @@ export class FacilityDetailPage {
   >(() => {
     const currentId: string | undefined = this.facility()?.id;
     const facilities: readonly FacilityOutput[] = this.store.facilities();
-    const options: { label: string; value: string }[] = [{ label: 'None (root level)', value: '' }];
+    const options: { label: string; value: string }[] = [
+      { label: $localize`:@@facility.form.parentNone:None (root level)`, value: '' },
+    ];
     for (const f of facilities) {
       if (f.id !== currentId) {
         options.push({
@@ -398,8 +400,8 @@ export class FacilityDetailPage {
         this.showMoveDialog.set(false);
         this.messageService.add({
           severity: 'success',
-          summary: 'Facility moved',
-          detail: `"${operation.data.name}" has been moved successfully.`,
+          summary: $localize`:@@facility.moved.summary:Facility moved`,
+          detail: $localize`:@@facility.moved.detail:"${operation.data.name}:name:" has been moved successfully.`,
           life: 4000,
         });
       }
@@ -412,7 +414,7 @@ export class FacilityDetailPage {
       .subscribe(({ payload }) => {
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
+          summary: $localize`:@@common.error:Error`,
           detail: payload.message,
           life: 5000,
         });

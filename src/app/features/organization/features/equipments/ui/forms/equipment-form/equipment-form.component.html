@@ -1,7 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
   <!-- Equipment Type -->
   <div class="flex flex-col gap-2">
-    <label for="type" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="type"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@equipment.form.type"
       >Type</label
     >
     <p-iconfield>
@@ -12,19 +15,20 @@
         formControlName="type"
         class="w-full"
         placeholder="Fire Extinguisher"
+        i18n-placeholder="@@equipment.form.typePlaceholder"
       />
     </p-iconfield>
 
     @if (form.controls.type.invalid && form.controls.type.touched) {
       <p-message severity="error" variant="simple">
         @if (form.controls.type.hasError('required')) {
-          <span>Equipment type is required.</span>
+          <span i18n="@@equipment.form.typeRequired">Equipment type is required.</span>
         }
         @if (form.controls.type.hasError('minlength')) {
-          <span>Type must be at least 2 characters.</span>
+          <span i18n="@@equipment.form.typeMin">Type must be at least 2 characters.</span>
         }
         @if (form.controls.type.hasError('maxlength')) {
-          <span>Type must be less than 255 characters.</span>
+          <span i18n="@@equipment.form.typeMax">Type must be less than 255 characters.</span>
         }
       </p-message>
     }
@@ -32,43 +36,80 @@
 
   <!-- Sub-type -->
   <div class="flex flex-col gap-2">
-    <label for="subType" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="subType"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@equipment.form.subtype"
+    >
       Sub-type
       <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <p-iconfield>
       <p-inputicon class="pi pi-tag" />
-      <input pInputText id="subType" formControlName="subType" class="w-full" placeholder="CO2" />
+      <input
+        pInputText
+        id="subType"
+        formControlName="subType"
+        class="w-full"
+        placeholder="CO2"
+        i18n-placeholder="@@equipment.form.subtypePlaceholder"
+      />
     </p-iconfield>
   </div>
 
   <!-- Brand -->
   <div class="flex flex-col gap-2">
-    <label for="brand" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="brand"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@equipment.form.brand"
+    >
       Brand
       <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <p-iconfield>
       <p-inputicon class="pi pi-briefcase" />
-      <input pInputText id="brand" formControlName="brand" class="w-full" placeholder="Kidde" />
+      <input
+        pInputText
+        id="brand"
+        formControlName="brand"
+        class="w-full"
+        placeholder="Kidde"
+        i18n-placeholder="@@equipment.form.brandPlaceholder"
+      />
     </p-iconfield>
   </div>
 
   <!-- Model -->
   <div class="flex flex-col gap-2">
-    <label for="model" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="model"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@equipment.form.model"
+    >
       Model
       <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <p-iconfield>
       <p-inputicon class="pi pi-wrench" />
-      <input pInputText id="model" formControlName="model" class="w-full" placeholder="Pro 210" />
+      <input
+        pInputText
+        id="model"
+        formControlName="model"
+        class="w-full"
+        placeholder="Pro 210"
+        i18n-placeholder="@@equipment.form.modelPlaceholder"
+      />
     </p-iconfield>
   </div>
 
   <!-- Serial Number -->
   <div class="flex flex-col gap-2">
-    <label for="serialNumber" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="serialNumber"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@equipment.form.serial"
+    >
       Serial Number
       <span class="font-normal text-surface-400">(optional)</span>
     </label>
@@ -80,13 +121,18 @@
         formControlName="serialNumber"
         class="w-full"
         placeholder="SN-2024-001"
+        i18n-placeholder="@@equipment.form.serialPlaceholder"
       />
     </p-iconfield>
   </div>
 
   <!-- Location Label -->
   <div class="flex flex-col gap-2">
-    <label for="locationLabel" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="locationLabel"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@equipment.form.location"
+    >
       Location Label
       <span class="font-normal text-surface-400">(optional)</span>
     </label>
@@ -98,6 +144,7 @@
         formControlName="locationLabel"
         class="w-full"
         placeholder="Floor 2 — Near elevator"
+        i18n-placeholder="@@equipment.form.locationPlaceholder"
       />
     </p-iconfield>
   </div>
@@ -106,6 +153,7 @@
   <div class="flex items-center justify-end gap-3">
     <p-button
       label="Cancel"
+      i18n-label="@@common.cancel"
       severity="secondary"
       [outlined]="true"
       [disabled]="loading()"
@@ -113,6 +161,7 @@
     />
     <p-button
       label="Create Equipment"
+      i18n-label="@@equipment.form.submit"
       type="submit"
       icon="pi pi-check"
       [loading]="loading()"

@@ -127,11 +127,18 @@ export class FacilityInspectionTab {
     if (!organizationId || inspection.status !== 'draft') return;
 
     this.confirmationService.confirm({
-      header: 'Cancel inspection',
-      message: 'Cancel this draft inspection?',
+      header: $localize`:@@facility.cancelInspection.header:Cancel inspection`,
+      message: $localize`:@@facility.cancelInspection.message:Cancel this draft inspection?`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Cancel inspection', severity: 'danger' },
-      rejectButtonProps: { label: 'Keep draft', severity: 'secondary', outlined: true },
+      acceptButtonProps: {
+        label: $localize`:@@facility.cancelInspection.accept:Cancel inspection`,
+        severity: 'danger',
+      },
+      rejectButtonProps: {
+        label: $localize`:@@facility.cancelInspection.reject:Keep draft`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () => this.store.cancel({ organizationId, inspectionId: inspection.id }),
     });
   }

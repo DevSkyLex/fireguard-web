@@ -1,10 +1,7 @@
 <app-metric-card
+  i18n-title="@@facility.metric.nextInspection.title"
   title="Next inspection"
-  [description]="
-    store.nextInspectionAt()
-      ? 'Due ' + (store.nextInspectionAt() | date: 'mediumDate')
-      : 'No upcoming date'
-  "
+  [description]="description()"
   icon="pi pi-calendar"
   [value]="store.nextInspectionInDays() === null ? '—' : store.nextInspectionInDays() + ' d'"
   [loading]="store.isLoadingInspections()"

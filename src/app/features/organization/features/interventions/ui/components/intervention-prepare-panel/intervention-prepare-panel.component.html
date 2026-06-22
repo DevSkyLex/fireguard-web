@@ -15,7 +15,10 @@
           >
             <i class="pi pi-check text-sm" aria-hidden="true"></i>
           </span>
-          <span class="truncate text-sm font-medium text-surface-900 dark:text-surface-50">
+          <span
+            i18n="@@intervention.prepare.ready"
+            class="truncate text-sm font-medium text-surface-900 dark:text-surface-50"
+          >
             Ready to plan
           </span>
         } @else {
@@ -24,7 +27,10 @@
           >
             <i class="pi pi-exclamation-triangle text-sm" aria-hidden="true"></i>
           </span>
-          <span class="truncate text-sm text-surface-600 dark:text-surface-300">
+          <span
+            i18n="@@intervention.prepare.readyCount"
+            class="truncate text-sm text-surface-600 dark:text-surface-300"
+          >
             <span class="font-semibold text-surface-900 tabular-nums dark:text-surface-50"
               >{{ readyCount() }} of 3</span
             >
@@ -34,6 +40,7 @@
       </div>
 
       <p-button
+        i18n-label="@@intervention.prepare.plan"
         label="Plan intervention"
         icon="pi pi-calendar"
         [loading]="saving()"
@@ -61,7 +68,11 @@
 
     <!-- Properties rail -->
     <aside class="min-w-0">
-      <app-card title="Properties" class="block h-full">
+      <app-card
+        i18n-title="@@intervention.prepare.properties"
+        title="Properties"
+        class="block h-full"
+      >
         @if (canPlan() && intervention().status === 'draft') {
           <ng-template #action>
             <p-button
@@ -70,6 +81,7 @@
               size="small"
               [text]="true"
               [rounded]="true"
+              i18n-ariaLabel="@@intervention.prepare.editDetails"
               ariaLabel="Edit details"
               (onClick)="editDrawerVisible.set(true)"
             />
@@ -78,7 +90,9 @@
 
         <ng-template #content>
           <dl class="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-x-3 gap-y-3.5 text-sm">
-            <dt class="text-surface-500 dark:text-surface-400">Status</dt>
+            <dt i18n="@@intervention.prop.status" class="text-surface-500 dark:text-surface-400">
+              Status
+            </dt>
             <dd class="flex min-h-6 min-w-0 items-center">
               <app-intervention-tag
                 kind="status"
@@ -87,7 +101,9 @@
               />
             </dd>
 
-            <dt class="text-surface-500 dark:text-surface-400">Priority</dt>
+            <dt i18n="@@intervention.prop.priority" class="text-surface-500 dark:text-surface-400">
+              Priority
+            </dt>
             <dd class="flex min-h-6 min-w-0 items-center">
               <app-intervention-tag
                 kind="priority"
@@ -96,16 +112,30 @@
               />
             </dd>
 
-            <dt class="text-surface-500 dark:text-surface-400">Responsible</dt>
+            <dt
+              i18n="@@intervention.prop.responsible"
+              class="text-surface-500 dark:text-surface-400"
+            >
+              Responsible
+            </dt>
             <dd class="flex min-h-6 min-w-0 items-center">
               @if (responsibleMember(); as member) {
                 <app-intervention-member-option [option]="member" [compact]="true" />
               } @else {
-                <span class="text-surface-400 dark:text-surface-500">Unassigned</span>
+                <span
+                  i18n="@@intervention.prop.unassigned"
+                  class="text-surface-400 dark:text-surface-500"
+                  >Unassigned</span
+                >
               }
             </dd>
 
-            <dt class="text-surface-500 dark:text-surface-400">Participants</dt>
+            <dt
+              i18n="@@intervention.prop.participants"
+              class="text-surface-500 dark:text-surface-400"
+            >
+              Participants
+            </dt>
             <dd class="flex min-h-6 min-w-0 items-center">
               @if (participantMembers().length) {
                 <p-avatar-group>
@@ -130,11 +160,15 @@
                   }
                 </p-avatar-group>
               } @else {
-                <span class="text-surface-400 dark:text-surface-500">None</span>
+                <span i18n="@@intervention.prop.none" class="text-surface-400 dark:text-surface-500"
+                  >None</span
+                >
               }
             </dd>
 
-            <dt class="text-surface-500 dark:text-surface-400">Site</dt>
+            <dt i18n="@@intervention.prop.site" class="text-surface-500 dark:text-surface-400">
+              Site
+            </dt>
             <dd class="flex min-h-6 min-w-0 items-center">
               @if (siteLabel(); as site) {
                 <span class="flex min-w-0 items-center gap-1.5 font-medium">
@@ -145,7 +179,11 @@
                   <span class="truncate">{{ site }}</span>
                 </span>
               } @else {
-                <span class="text-surface-400 dark:text-surface-500">No site</span>
+                <span
+                  i18n="@@intervention.prop.noSite"
+                  class="text-surface-400 dark:text-surface-500"
+                  >No site</span
+                >
               }
             </dd>
 
@@ -154,7 +192,9 @@
               role="presentation"
             ></div>
 
-            <dt class="text-surface-500 dark:text-surface-400">Start</dt>
+            <dt i18n="@@intervention.prop.start" class="text-surface-500 dark:text-surface-400">
+              Start
+            </dt>
             <dd class="flex min-h-6 min-w-0 items-center font-medium">
               @if (intervention().plannedStartAt; as start) {
                 <span class="flex items-center gap-1.5">
@@ -165,11 +205,17 @@
                   {{ start | date: 'MMM d, HH:mm' }}
                 </span>
               } @else {
-                <span class="font-normal text-surface-400 dark:text-surface-500">Not set</span>
+                <span
+                  i18n="@@intervention.prop.notSet"
+                  class="font-normal text-surface-400 dark:text-surface-500"
+                  >Not set</span
+                >
               }
             </dd>
 
-            <dt class="text-surface-500 dark:text-surface-400">Due</dt>
+            <dt i18n="@@intervention.prop.due" class="text-surface-500 dark:text-surface-400">
+              Due
+            </dt>
             <dd class="flex min-h-6 min-w-0 items-center font-medium">
               @if (intervention().dueAt; as due) {
                 <span class="flex items-center gap-1.5">
@@ -177,14 +223,23 @@
                   {{ due | date: 'MMM d, HH:mm' }}
                 </span>
               } @else {
-                <span class="font-normal text-surface-400 dark:text-surface-500">Not set</span>
+                <span
+                  i18n="@@intervention.prop.notSet"
+                  class="font-normal text-surface-400 dark:text-surface-500"
+                  >Not set</span
+                >
               }
             </dd>
           </dl>
         </ng-template>
 
         <ng-template #footer>
-          <h3 class="text-sm font-semibold text-surface-900 dark:text-surface-50">Ready to plan</h3>
+          <h3
+            i18n="@@intervention.prepare.readyTitle"
+            class="text-sm font-semibold text-surface-900 dark:text-surface-50"
+          >
+            Ready to plan
+          </h3>
 
           <ul class="mt-3 grid gap-2 text-sm">
             @for (check of readinessChecks(); track check.label) {

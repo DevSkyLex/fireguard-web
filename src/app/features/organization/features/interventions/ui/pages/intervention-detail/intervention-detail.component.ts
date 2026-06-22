@@ -653,13 +653,19 @@ export class InterventionDetailPage {
 
     const isSingle: boolean = workItems.length === 1;
     this.confirmationService.confirm({
-      header: isSingle ? 'Delete work item' : 'Delete work items',
+      header: isSingle
+        ? $localize`:@@intervention.deleteWi.headerOne:Delete work item`
+        : $localize`:@@intervention.deleteWi.headerMany:Delete work items`,
       message: isSingle
-        ? 'Remove this prepared work item? This cannot be undone.'
-        : `Remove these ${workItems.length} prepared work items? This cannot be undone.`,
+        ? $localize`:@@intervention.deleteWi.messageOne:Remove this prepared work item? This cannot be undone.`
+        : $localize`:@@intervention.deleteWi.messageMany:Remove these ${workItems.length}:count: prepared work items? This cannot be undone.`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Delete', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: $localize`:@@common.delete:Delete`, severity: 'danger' },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: (): void =>
         void this.store.deleteWorkItems({ interventionId: this.interventionId(), workItems }),
     });
@@ -800,12 +806,18 @@ export class InterventionDetailPage {
   protected discardBlocked(event: Event): void {
     this.confirmationService.confirm({
       target: event.target as EventTarget,
-      header: 'Discard operations',
-      message:
-        'Permanently remove the synchronization operations that the server rejected? This cannot be undone — the discarded work will need to be re-recorded.',
+      header: $localize`:@@intervention.discard.header:Discard operations`,
+      message: $localize`:@@intervention.discard.message:Permanently remove the synchronization operations that the server rejected? This cannot be undone — the discarded work will need to be re-recorded.`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Discard', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: {
+        label: $localize`:@@intervention.detail.discard:Discard`,
+        severity: 'danger',
+      },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: (): void => void this.sync.discardBlocked(),
     });
   }
@@ -894,7 +906,8 @@ export class InterventionDetailPage {
       const completed = await this.publication.publish(intervention);
       if (completed.status === 'failed') {
         this.publicationMessage.set(
-          completed.error ?? 'Publication failed without applying partial changes.',
+          completed.error ??
+            $localize`:@@intervention.publishFailed:Publication failed without applying partial changes.`,
         );
         return;
       }

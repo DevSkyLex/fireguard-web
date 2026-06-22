@@ -18,6 +18,6 @@ export const ONBOARDING_ROUTES: Routes = [
       import('./ui/pages/onboarding-page/onboarding-page.component').then(
         (module) => module.OnboardingPage,
       ),
-    title: 'Organization Setup',
+    title: $localize`:@@route.onboarding:Organization Setup`,
   },
 ];

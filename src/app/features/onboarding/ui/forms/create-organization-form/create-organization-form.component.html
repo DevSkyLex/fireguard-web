@@ -1,7 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
   <!-- Organization Name Field -->
   <div class="flex flex-col gap-2">
-    <label for="organizationName" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="organizationName"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@onboarding.org.nameLabel"
       >Organization Name</label
     >
     <p-iconfield>
@@ -12,19 +15,20 @@
         formControlName="organizationName"
         fluid
         placeholder="Fireguard Paris"
+        i18n-placeholder="@@onboarding.org.namePlaceholder"
       />
     </p-iconfield>
 
     @if (form.controls.organizationName.invalid && form.controls.organizationName.touched) {
       <p-message severity="error" variant="simple">
         @if (form.controls.organizationName.hasError('required')) {
-          <span>Organization name is required.</span>
+          <span i18n="@@onboarding.org.nameRequired">Organization name is required.</span>
         }
         @if (form.controls.organizationName.hasError('minlength')) {
-          <span>Name must be at least 2 characters.</span>
+          <span i18n="@@onboarding.org.nameMin">Name must be at least 2 characters.</span>
         }
         @if (form.controls.organizationName.hasError('maxlength')) {
-          <span>Name must be less than 120 characters.</span>
+          <span i18n="@@onboarding.org.nameMax">Name must be less than 120 characters.</span>
         }
       </p-message>
     }
@@ -34,6 +38,7 @@
   <div class="flex flex-col gap-3">
     <p-button
       label="Create Organization"
+      i18n-label="@@onboarding.org.submit"
       type="submit"
       icon="pi pi-arrow-right"
       iconPos="right"

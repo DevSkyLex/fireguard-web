@@ -15,27 +15,27 @@ import type { FacilityTypeOption } from '@features/organization/ui/components/or
  */
 export const FACILITY_TYPE_OPTIONS: readonly FacilityTypeOption[] = [
   {
-    label: 'Site',
+    label: $localize`:@@facilityType.site:Site`,
     value: 'site',
     icon: PrimeIcons.MAP_MARKER,
   },
   {
-    label: 'Building',
+    label: $localize`:@@facilityType.building:Building`,
     value: 'building',
     icon: PrimeIcons.BUILDING,
   },
   {
-    label: 'Floor',
+    label: $localize`:@@facilityType.floor:Floor`,
     value: 'floor',
     icon: PrimeIcons.TH_LARGE,
   },
   {
-    label: 'Zone',
+    label: $localize`:@@facilityType.zone:Zone`,
     value: 'zone',
     icon: PrimeIcons.STOP,
   },
   {
-    label: 'Area',
+    label: $localize`:@@facilityType.area:Area`,
     value: 'area',
     icon: PrimeIcons.TABLE,
   },

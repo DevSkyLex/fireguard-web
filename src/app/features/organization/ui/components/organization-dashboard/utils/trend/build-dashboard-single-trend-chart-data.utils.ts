@@ -10,7 +10,7 @@ import type { DashboardSingleTrendViewModel } from '@features/organization/ui/co
  *
  * @type {string}
  */
-const DEFAULT_COMPARISON_LABEL: string = 'Previous Period';
+const DEFAULT_COMPARISON_LABEL: string = $localize`:@@dash.previousPeriod:Previous Period`;
 
 /**
  * Type BuildDashboardSingleTrendBarChartDataOptions

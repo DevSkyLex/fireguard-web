@@ -6,8 +6,10 @@
         class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
       >
         <div>
-          <h2 class="font-semibold">Checklists</h2>
-          <p class="text-xs text-surface-500">Reusable inspection templates</p>
+          <h2 class="font-semibold" i18n="@@checklist.table.title">Checklists</h2>
+          <p class="text-xs text-surface-500" i18n="@@checklist.table.subtitle">
+            Reusable inspection templates
+          </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <p-select
@@ -16,6 +18,7 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Status"
+            i18n-placeholder="@@common.status"
             size="small"
             [showClear]="true"
             class="w-full sm:w-40"
@@ -23,6 +26,7 @@
           @if (canManage()) {
             <p-splitbutton
               label="New checklist"
+              i18n-label="@@checklist.newButton"
               icon="pi pi-plus"
               size="small"
               [model]="toolbarActions()"
@@ -32,6 +36,7 @@
           } @else {
             <p-button
               label="Refresh"
+              i18n-label="@@common.refresh"
               icon="pi pi-refresh"
               size="small"
               severity="secondary"
@@ -54,6 +59,7 @@
         [rowsPerPageOptions]="[12, 24, 48]"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} checklists"
+        i18n-currentPageReportTemplate="@@checklist.table.pageReport"
         [stripedRows]="true"
         [pt]="tablePt()"
         (onLazyLoad)="onLazyLoad($event)"
@@ -62,26 +68,26 @@
           <tr>
             <th pSortableColumn="name">
               <div class="flex items-center gap-2">
-                <span>Name</span><p-sortIcon field="name" />
+                <span i18n="@@common.name">Name</span><p-sortIcon field="name" />
               </div>
             </th>
             <th pSortableColumn="version">
               <div class="flex items-center gap-2">
-                <span>Version</span><p-sortIcon field="version" />
+                <span i18n="@@common.version">Version</span><p-sortIcon field="version" />
               </div>
             </th>
             <th pSortableColumn="status">
               <div class="flex items-center gap-2">
-                <span>Status</span><p-sortIcon field="status" />
+                <span i18n="@@common.status">Status</span><p-sortIcon field="status" />
               </div>
             </th>
-            <th>Lines</th>
+            <th i18n="@@checklist.table.lines">Lines</th>
             <th pSortableColumn="updatedAt">
               <div class="flex items-center gap-2">
-                <span>Updated</span><p-sortIcon field="updatedAt" />
+                <span i18n="@@common.updated">Updated</span><p-sortIcon field="updatedAt" />
               </div>
             </th>
-            <th class="w-20"><span class="sr-only">Actions</span></th>
+            <th class="w-20"><span class="sr-only" i18n="@@common.actions">Actions</span></th>
           </tr>
         </ng-template>
         <ng-template pTemplate="loadingbody">
@@ -132,6 +138,7 @@
                   size="small"
                   [outlined]="true"
                   ariaLabel="Checklist actions"
+                  i18n-ariaLabel="@@checklist.table.actions"
                   (onClick)="toggleActions($event, checklist)"
                 />
               </td>
@@ -144,11 +151,14 @@
               <app-empty-state
                 icon="pi-list-check"
                 title="No checklists found"
+                i18n-title="@@checklist.table.emptyTitle"
                 description="Checklists are the reusable inspection templates your teams run on site."
+                i18n-description="@@checklist.table.emptyDesc"
               >
                 @if (canManage()) {
                   <p-button
                     label="New checklist"
+                    i18n-label="@@checklist.newButton"
                     icon="pi pi-plus"
                     severity="primary"
                     size="small"

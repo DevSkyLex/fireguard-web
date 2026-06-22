@@ -6,15 +6,21 @@ type ShowcaseMetric = {
 };
 
 const SHOWCASE_METRICS: readonly ShowcaseMetric[] = [
-  { label: 'Live alerts', value: '24/7' },
-  { label: 'Response workflows', value: 'Automated' },
-  { label: 'Compliance tracking', value: 'ISO-ready' },
+  { label: $localize`:@@splitLayout.metric.liveAlerts:Live alerts`, value: '24/7' },
+  {
+    label: $localize`:@@splitLayout.metric.responseWorkflows:Response workflows`,
+    value: $localize`:@@splitLayout.metric.automated:Automated`,
+  },
+  {
+    label: $localize`:@@splitLayout.metric.complianceTracking:Compliance tracking`,
+    value: $localize`:@@splitLayout.metric.isoReady:ISO-ready`,
+  },
 ];
 
 const SHOWCASE_HIGHLIGHTS: readonly string[] = [
-  'Unified safety command center',
-  'Role-based access and approvals',
-  'Audit-ready incident history',
+  $localize`:@@splitLayout.highlight.commandCenter:Unified safety command center`,
+  $localize`:@@splitLayout.highlight.rbac:Role-based access and approvals`,
+  $localize`:@@splitLayout.highlight.auditHistory:Audit-ready incident history`,
 ];
 
 @Component({

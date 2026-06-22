@@ -1,5 +1,6 @@
-import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { formatDate } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, LOCALE_ID } from '@angular/core';
+import type { Signal } from '@angular/core';
 import { FacilityOverviewStore } from '@features/organization/features/facilities/state';
 import { MetricCard } from '@shared/components';
 
@@ -18,7 +19,7 @@ import { MetricCard } from '@shared/components';
  */
 @Component({
   selector: 'app-facility-next-inspection-metric',
-  imports: [MetricCard, DatePipe],
+  imports: [MetricCard],
   templateUrl: './facility-next-inspection-metric.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -38,5 +39,28 @@ export class FacilityNextInspectionMetric {
    */
   protected readonly store: InstanceType<typeof FacilityOverviewStore> =
     inject<FacilityOverviewStore>(FacilityOverviewStore);
+
+  /** Active locale used to format the next-inspection date. */
+  private readonly locale: string = inject<string>(LOCALE_ID);
+
+  /**
+   * Property description
+   * @readonly
+   *
+   * @description
+   * Localized subtitle: the formatted due date when a next inspection exists,
+   * otherwise a placeholder for the absence of an upcoming date.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly description: Signal<string> = computed((): string => {
+    const next: string | null = this.store.nextInspectionAt();
+    if (!next) return $localize`:@@facility.metric.nextInspection.none:No upcoming date`;
+    const date: string = formatDate(next, 'mediumDate', this.locale);
+    return $localize`:@@facility.metric.nextInspection.due:Due ${date}:date:`;
+  });
   //#endregion
 }

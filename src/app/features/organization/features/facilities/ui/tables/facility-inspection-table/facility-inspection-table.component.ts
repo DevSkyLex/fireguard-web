@@ -341,19 +341,19 @@ export class FacilityInspectionTable implements OnInit {
    */
   protected readonly resultOptions: InspectionFilterOption<InspectionResult>[] = [
     {
-      label: 'Pass',
+      label: $localize`:@@inspectionResult.pass:Pass`,
       value: 'pass',
       icon: PrimeIcons.CHECK_CIRCLE,
       severity: 'success',
     },
     {
-      label: 'Partial',
+      label: $localize`:@@inspectionResult.partial:Partial`,
       value: 'partial',
       icon: PrimeIcons.EXCLAMATION_CIRCLE,
       severity: 'warn',
     },
     {
-      label: 'Fail',
+      label: $localize`:@@inspectionResult.fail:Fail`,
       value: 'fail',
       icon: PrimeIcons.TIMES_CIRCLE,
       severity: 'danger',
@@ -374,19 +374,19 @@ export class FacilityInspectionTable implements OnInit {
    */
   protected readonly statusOptions: InspectionFilterOption<InspectionStatus>[] = [
     {
-      label: 'Draft',
+      label: $localize`:@@inspectionStatus.draft:Draft`,
       value: 'draft',
       icon: PrimeIcons.FILE_EDIT,
       severity: 'info',
     },
     {
-      label: 'Submitted',
+      label: $localize`:@@inspectionStatus.submitted:Submitted`,
       value: 'submitted',
       icon: PrimeIcons.SEND,
       severity: 'warn',
     },
     {
-      label: 'Closed',
+      label: $localize`:@@inspectionStatus.closed:Closed`,
       value: 'closed',
       icon: PrimeIcons.LOCK,
       severity: 'secondary',
@@ -437,12 +437,12 @@ export class FacilityInspectionTable implements OnInit {
    */
   protected readonly toolbarActions: Signal<MenuItem[]> = computed((): MenuItem[] => [
     {
-      label: 'Refresh',
+      label: $localize`:@@common.refresh:Refresh`,
       icon: PrimeIcons.REFRESH,
       command: (): void => this.onRefresh(),
     },
     {
-      label: 'Clear filters',
+      label: $localize`:@@common.clearFilters:Clear filters`,
       icon: PrimeIcons.FILTER_SLASH,
       command: (): void => this.onClearFilters(),
     },
@@ -516,19 +516,19 @@ export class FacilityInspectionTable implements OnInit {
 
     return [
       {
-        label: 'View',
+        label: $localize`:@@common.view:View`,
         icon: PrimeIcons.EYE,
         command: (): void => this.view.emit(inspection),
       },
       ...(this.canManageInspections() && inspection.status === 'draft'
         ? [
             {
-              label: 'Edit',
+              label: $localize`:@@common.edit:Edit`,
               icon: PrimeIcons.PENCIL,
               command: (): void => this.edit.emit(inspection),
             },
             {
-              label: 'Cancel',
+              label: $localize`:@@common.cancel:Cancel`,
               icon: PrimeIcons.TIMES,
               styleClass: 'text-red-500',
               command: (): void => this.cancel.emit(inspection),
@@ -732,9 +732,11 @@ export class FacilityInspectionTable implements OnInit {
   protected getInspectorContextLabel(inspection: InspectionOutput): string {
     const inspectorType: string = this.toDisplayLabel(inspection.inspector?.type);
 
+    const resolvedType: string = inspectorType || $localize`:@@facility.unknown:Unknown`;
+
     return inspection.inspector?.organizationName
       ? `${inspectorType} - ${inspection.inspector.organizationName}`
-      : `${inspectorType || 'Unknown'} inspector`;
+      : $localize`:@@facility.inspectorContext:${resolvedType}:type: inspector`;
   }
 
   /**
@@ -754,7 +756,7 @@ export class FacilityInspectionTable implements OnInit {
     return (
       [inspection.inspector?.firstName, inspection.inspector?.lastName].filter(Boolean).join(' ') ||
       inspection.inspector?.displayName ||
-      'Unknown inspector'
+      $localize`:@@facility.unknownInspector:Unknown inspector`
     );
   }
 
@@ -772,7 +774,9 @@ export class FacilityInspectionTable implements OnInit {
    * @returns {string} Inspector type label or fallback text.
    */
   protected getInspectorTypeLabel(inspection: InspectionOutput): string {
-    return this.toDisplayLabel(inspection.inspector?.type) || 'Unknown';
+    return (
+      this.toDisplayLabel(inspection.inspector?.type) || $localize`:@@facility.unknown:Unknown`
+    );
   }
 
   /**
@@ -881,7 +885,9 @@ export class FacilityInspectionTable implements OnInit {
    * @returns {string} Human-readable findings label.
    */
   protected getFindingsLabel(count: number): string {
-    return `${count} finding${count > 1 ? 's' : ''}`;
+    return count > 1
+      ? $localize`:@@facility.findingsPlural:${count}:count: findings`
+      : $localize`:@@facility.findingsOne:${count}:count: finding`;
   }
 
   /**

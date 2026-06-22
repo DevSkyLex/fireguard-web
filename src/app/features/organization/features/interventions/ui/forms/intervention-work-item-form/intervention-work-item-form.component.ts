@@ -171,9 +171,9 @@ export class InterventionWorkItemForm {
    * @type {readonly SelectOption<InterventionWorkItemAction>[]}
    */
   protected readonly actionOptions: readonly SelectOption<InterventionWorkItemAction>[] = [
-    { label: 'Site setup', value: 'site_setup' },
-    { label: 'Inventory', value: 'inventory' },
-    { label: 'Inspection', value: 'inspection' },
+    { label: $localize`:@@intervention.action.siteSetup:Site setup`, value: 'site_setup' },
+    { label: $localize`:@@intervention.action.inventory:Inventory`, value: 'inventory' },
+    { label: $localize`:@@intervention.action.inspection:Inspection`, value: 'inspection' },
   ];
 
   //#endregion

@@ -395,7 +395,7 @@ export class NotificationTable {
 
     return [
       {
-        label: 'Mark as read',
+        label: $localize`:@@account.bell.markAsRead:Mark as read`,
         icon: PrimeIcons.CHECK,
         command: (): void => this.markAsRead.emit(notification),
       },

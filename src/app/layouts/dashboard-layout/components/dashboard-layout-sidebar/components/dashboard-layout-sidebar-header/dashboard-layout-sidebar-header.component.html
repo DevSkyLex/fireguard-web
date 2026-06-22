@@ -7,8 +7,10 @@
         type="button"
         class="flex size-9 items-center justify-center rounded-md text-primary-500 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-900"
         pTooltip="Expand sidebar"
+        i18n-pTooltip="@@layout.sidebar.expand"
         tooltipPosition="right"
         aria-label="Expand sidebar"
+        i18n-aria-label="@@layout.sidebar.expand"
         (click)="sidebarService.togglePrimaryCollapsed()"
       >
         <svg
@@ -64,8 +66,10 @@
         type="button"
         class="flex size-7 shrink-0 items-center justify-center rounded-md border border-surface-200 text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-800 dark:text-surface-400 dark:hover:bg-surface-900 dark:hover:text-surface-200"
         pTooltip="Collapse sidebar"
+        i18n-pTooltip="@@layout.sidebar.collapse"
         tooltipPosition="right"
         aria-label="Collapse sidebar"
+        i18n-aria-label="@@layout.sidebar.collapse"
         (click)="sidebarService.togglePrimaryCollapsed()"
       >
         <i class="pi pi-arrow-left text-[10px]"></i>

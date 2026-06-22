@@ -6,6 +6,7 @@
   [dismissableMask]="!deleting()"
   [closable]="!deleting()"
   [style]="{ width: '32rem' }"
+  i18n-header="@@org.danger.deleteButton"
   header="Delete organization"
 >
   <div class="flex flex-col gap-4 pt-1">
@@ -15,14 +16,17 @@
       styleClass="w-full"
       [pt]="{ text: 'whitespace-normal text-sm font-normal leading-relaxed' }"
     >
-      This action is permanent. The organization
-      <span class="font-semibold">{{ organizationName() }}</span> and all of its data will be
-      deleted and cannot be recovered.
+      <ng-container i18n="@@org.deleteDialog.message"
+        >This action is permanent. The organization
+        <span class="font-semibold">{{ organizationName() }}</span> and all of its data will be
+        deleted and cannot be recovered.</ng-container
+      >
     </p-message>
 
     <div class="flex flex-col gap-2">
       <label
         for="organization-delete-confirm"
+        i18n="@@org.deleteDialog.confirmLabel"
         class="text-sm text-surface-600 dark:text-surface-300"
       >
         Type
@@ -45,6 +49,7 @@
   <ng-template pTemplate="footer">
     <div class="flex w-full gap-3">
       <p-button
+        i18n-label="@@common.cancel"
         label="Cancel"
         severity="secondary"
         [outlined]="true"
@@ -54,6 +59,7 @@
         (onClick)="cancel()"
       />
       <p-button
+        i18n-label="@@org.danger.deleteButton"
         label="Delete organization"
         icon="pi pi-trash"
         severity="danger"

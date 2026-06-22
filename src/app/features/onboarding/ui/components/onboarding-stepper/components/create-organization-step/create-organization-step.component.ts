@@ -155,10 +155,12 @@ export class CreateOrganizationStep extends OnboardingStepBase {
         error: (error: unknown) => {
           this.isCreatingOrganization.set(false);
           const message: string =
-            error instanceof Error ? error.message : 'Failed to create organization.';
+            error instanceof Error
+              ? error.message
+              : $localize`:@@onboarding.org.createError:Failed to create organization.`;
           this.messageService.add({
             severity: 'error',
-            summary: 'Error',
+            summary: $localize`:@@common.error:Error`,
             detail: message,
             life: 5000,
           });

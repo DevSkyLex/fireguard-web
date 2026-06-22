@@ -1,7 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-6">
   <!-- Facility Type -->
   <div class="flex flex-col gap-2">
-    <label for="facilityType" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="facilityType"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@onboarding.facilitySingle.typeLabel"
       >Facility type</label
     >
     <p-select
@@ -12,25 +15,38 @@
       optionValue="value"
       fluid
       placeholder="Select a type"
+      i18n-placeholder="@@onboarding.field.selectType"
     />
     @if (form.controls.type.invalid && form.controls.type.touched) {
-      <p-message severity="error" variant="simple"><span>Type is required.</span></p-message>
+      <p-message severity="error" variant="simple"
+        ><span i18n="@@onboarding.field.typeRequired">Type is required.</span></p-message
+      >
     }
   </div>
 
   <!-- Name -->
   <div class="flex flex-col gap-2">
-    <label for="facilityName" class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    <label
+      for="facilityName"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@onboarding.facilitySingle.nameLabel"
       >Facility name</label
     >
-    <input pInputText id="facilityName" formControlName="name" fluid placeholder="Paris HQ" />
+    <input
+      pInputText
+      id="facilityName"
+      formControlName="name"
+      fluid
+      placeholder="Paris HQ"
+      i18n-placeholder="@@onboarding.facility.namePlaceholder"
+    />
     @if (form.controls.name.invalid && form.controls.name.touched) {
       <p-message severity="error" variant="simple">
         @if (form.controls.name.hasError('required')) {
-          <span>Name is required.</span>
+          <span i18n="@@onboarding.field.nameRequired">Name is required.</span>
         }
         @if (form.controls.name.hasError('minlength')) {
-          <span>At least 2 characters.</span>
+          <span i18n="@@onboarding.field.min2">At least 2 characters.</span>
         }
       </p-message>
     }
@@ -38,7 +54,11 @@
 
   <!-- Address -->
   <div class="flex flex-col gap-2">
-    <label for="facilityAddress" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+    <label
+      for="facilityAddress"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@onboarding.facilitySingle.addressLabel"
+    >
       Address <span class="font-normal text-surface-400">(optional)</span>
     </label>
     <input
@@ -47,12 +67,14 @@
       formControlName="address"
       fluid
       placeholder="10 Rue de Rivoli, Paris"
+      i18n-placeholder="@@onboarding.facility.addressPlaceholder"
     />
   </div>
 
   <!-- Submit -->
   <p-button
     label="Create facility"
+    i18n-label="@@onboarding.facility.submitOne"
     type="submit"
     icon="pi pi-arrow-right"
     iconPos="right"

@@ -15,4 +15,8 @@ import type { InspectionOutput } from '@features/organization/features/inspectio
 export class InspectionInformationPanel {
   /** Inspection metadata to display. */
   public readonly inspection: InputSignal<InspectionOutput> = input.required();
+  /** Localized placeholder for empty reference fields. */
+  protected readonly noneLabel: string = $localize`:@@inspection.info.none:None`;
+  /** Localized placeholder shown when no notes are recorded. */
+  protected readonly noNotesLabel: string = $localize`:@@inspection.info.noNotes:No notes`;
 }

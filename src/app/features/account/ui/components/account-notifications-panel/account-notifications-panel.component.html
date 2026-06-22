@@ -2,9 +2,12 @@
   @if (notificationStore.listError()) {
     <p-message severity="error">
       <div class="flex flex-wrap items-center gap-3">
-        <span>Failed to load notifications. Please try again later.</span>
+        <span i18n="@@account.notifications.loadError"
+          >Failed to load notifications. Please try again later.</span
+        >
         <p-button
           label="Retry"
+          i18n-label="@@common.retry"
           icon="pi pi-refresh"
           severity="secondary"
           [text]="true"

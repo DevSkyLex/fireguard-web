@@ -172,7 +172,7 @@ export class OverviewTrend {
     const previousNetPressure = previousOpenedTotal - previousResolvedTotal;
     return [
       {
-        label: 'Inspections',
+        label: $localize`:@@dash.metric.inspections:Inspections`,
         value: WHOLE_NUMBER_FMT.format(inspectionTotal),
         icon: 'pi pi-list-check',
         comparison: buildDashboardComparison(
@@ -182,19 +182,19 @@ export class OverviewTrend {
         ),
       },
       {
-        label: 'Opened NC',
+        label: $localize`:@@dash.metric.openedNc:Opened NC`,
         value: WHOLE_NUMBER_FMT.format(openedTotal),
         icon: 'pi pi-exclamation-triangle',
         comparison: buildDashboardComparison(openedTotal, previousOpenedTotal, compareEnabled),
       },
       {
-        label: 'Resolved NC',
+        label: $localize`:@@dash.metric.resolvedNc:Resolved NC`,
         value: WHOLE_NUMBER_FMT.format(resolvedTotal),
         icon: 'pi pi-check-circle',
         comparison: buildDashboardComparison(resolvedTotal, previousResolvedTotal, compareEnabled),
       },
       {
-        label: 'Net Pressure',
+        label: $localize`:@@dash.metric.netPressure:Net Pressure`,
         value: WHOLE_NUMBER_FMT.format(netPressureTotal),
         icon: 'pi pi-gauge',
         comparison: buildDashboardComparison(netPressureTotal, previousNetPressure, compareEnabled),
@@ -235,7 +235,7 @@ export class OverviewTrend {
     const organizationId: string | null = organization ? organization.id : null;
     return [
       {
-        label: 'View all inspections',
+        label: $localize`:@@dash.viewAll.inspections:View all inspections`,
         icon: PrimeIcons.LIST,
         routerLink: organizationId ? ['/organizations', organizationId, 'inspections'] : null,
       },

@@ -69,9 +69,9 @@ export class FacilityInspectionDataview {
     label: string;
     value: InspectionOverviewFilter;
   }> = [
-    { label: 'All', value: 'all' },
-    { label: 'Overdue', value: 'overdue' },
-    { label: 'Upcoming', value: 'upcoming' },
+    { label: $localize`:@@facility.inspFilter.all:All`, value: 'all' },
+    { label: $localize`:@@facility.inspFilter.overdue:Overdue`, value: 'overdue' },
+    { label: $localize`:@@facility.inspFilter.upcoming:Upcoming`, value: 'upcoming' },
   ];
 
   protected readonly inspections: Signal<ReadonlyArray<InspectionOutput>> = computed<
@@ -136,15 +136,15 @@ export class FacilityInspectionDataview {
   };
 
   private readonly statusLabels: Record<InspectionStatus, string> = {
-    draft: 'To plan',
-    submitted: 'In progress',
-    closed: 'Closed',
+    draft: $localize`:@@facility.inspStatus.draft:To plan`,
+    submitted: $localize`:@@facility.inspStatus.submitted:In progress`,
+    closed: $localize`:@@facility.inspStatus.closed:Closed`,
   };
 
   private readonly resultLabels: Record<InspectionResult, string> = {
-    pass: 'Pass',
-    fail: 'Fail',
-    partial: 'Partial',
+    pass: $localize`:@@inspectionResult.pass:Pass`,
+    fail: $localize`:@@inspectionResult.fail:Fail`,
+    partial: $localize`:@@inspectionResult.partial:Partial`,
   };
   //#endregion
 
@@ -166,7 +166,9 @@ export class FacilityInspectionDataview {
   }
 
   protected getInspectorDisplayName(inspection: InspectionOutput): string {
-    return inspection.inspector?.displayName || 'Unknown inspector';
+    return (
+      inspection.inspector?.displayName || $localize`:@@facility.unknownInspector:Unknown inspector`
+    );
   }
   //#endregion
 }

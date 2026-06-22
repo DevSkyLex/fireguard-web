@@ -24,15 +24,21 @@
       <div class="flex flex-wrap items-center gap-3 text-sm text-surface-500 dark:text-surface-300">
         <span class="inline-flex items-center gap-1.5">
           <i class="pi pi-hashtag text-xs"></i>
-          {{ equipment().serialNumber || 'No serial number' }}
+          @if (equipment().serialNumber; as serial) {
+            {{ serial }}
+          } @else {
+            <ng-container i18n="@@equipment.noSerial">No serial number</ng-container>
+          }
         </span>
         @if (equipment().facilityId) {
           <span class="inline-flex items-center gap-1.5">
             <i class="pi pi-building text-xs"></i>
-            Assigned
+            <ng-container i18n="@@equipment.assigned">Assigned</ng-container>
           </span>
         }
-        <span>Updated {{ equipment().updatedAt | date: 'mediumDate' }}</span>
+        <span i18n="@@equipment.updatedLabel"
+          >Updated {{ equipment().updatedAt | date: 'mediumDate' }}</span
+        >
       </div>
     </div>
   </div>
@@ -40,6 +46,7 @@
     <div class="flex flex-wrap items-center gap-2">
       <p-button
         label="Edit"
+        i18n-label="@@common.edit"
         icon="pi pi-pencil"
         severity="success"
         [outlined]="true"
@@ -49,6 +56,7 @@
       @if (equipment().status !== 'operational') {
         <p-button
           label="Commission"
+          i18n-label="@@equipment.commission"
           icon="pi pi-check"
           severity="success"
           size="small"
@@ -59,6 +67,7 @@
       @if (equipment().status === 'operational') {
         <p-button
           label="Maintenance"
+          i18n-label="@@equipment.maintenance"
           icon="pi pi-wrench"
           severity="warn"
           size="small"
@@ -69,6 +78,7 @@
       @if (equipment().status !== 'decommissioned') {
         <p-button
           label="Decommission"
+          i18n-label="@@equipment.decommission"
           icon="pi pi-ban"
           severity="danger"
           [outlined]="true"

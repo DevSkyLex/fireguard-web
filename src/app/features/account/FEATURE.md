@@ -29,10 +29,6 @@ This feature does not own authentication, session restoration, or auth transport
   (active sessions + trusted devices) and **Notifications**. The active section is driven
   by the `tab` query parameter (`?tab=profile|security|notifications`).
 
-The former per-section paths (`/account/profile`, `/account/sessions`,
-`/account/trusted-devices`, `/account/notifications`) are kept as backward-compatible
-redirects that deep-link into the matching tab.
-
 Account navigation is exposed through the **header user menu** (`AccountUserMenu`),
 not the sidebar.
 

@@ -1,14 +1,26 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-6">
   @if (hasSaveError()) {
-    <p-message severity="error" class="w-full" [closable]="false">
+    <p-message
+      severity="error"
+      class="w-full"
+      [closable]="false"
+      i18n="@@account.profileForm.saveError"
+    >
       We couldn't save your profile. Please try again.
     </p-message>
   }
 
   <div class="grid grid-cols-1 gap-x-8 gap-y-3 lg:grid-cols-3">
     <div class="flex flex-col gap-1">
-      <span class="text-sm font-medium text-surface-900 dark:text-surface-100">Name</span>
-      <p class="text-sm text-surface-500 dark:text-surface-400">
+      <span
+        class="text-sm font-medium text-surface-900 dark:text-surface-100"
+        i18n="@@account.profileForm.name"
+        >Name</span
+      >
+      <p
+        class="text-sm text-surface-500 dark:text-surface-400"
+        i18n="@@account.profileForm.nameHint"
+      >
         This is the name that will be visible to everyone.
       </p>
     </div>
@@ -17,6 +29,7 @@
         <label
           for="profile-first-name"
           class="text-sm font-medium text-surface-700 dark:text-surface-300"
+          i18n="@@account.profileForm.firstName"
         >
           First name
         </label>
@@ -27,6 +40,7 @@
             pInputText
             formControlName="firstName"
             placeholder="First name"
+            i18n-placeholder="@@account.profileForm.firstNamePh"
             maxlength="100"
             class="w-full"
           />
@@ -36,6 +50,7 @@
         <label
           for="profile-last-name"
           class="text-sm font-medium text-surface-700 dark:text-surface-300"
+          i18n="@@account.profileForm.lastName"
         >
           Last name
         </label>
@@ -44,6 +59,7 @@
           pInputText
           formControlName="lastName"
           placeholder="Last name"
+          i18n-placeholder="@@account.profileForm.lastNamePh"
           maxlength="100"
           class="w-full"
         />
@@ -53,8 +69,15 @@
 
   <div class="grid grid-cols-1 gap-x-8 gap-y-3 lg:grid-cols-3">
     <div class="flex flex-col gap-1">
-      <span class="text-sm font-medium text-surface-900 dark:text-surface-100">Sign-in</span>
-      <p class="text-sm text-surface-500 dark:text-surface-400">
+      <span
+        class="text-sm font-medium text-surface-900 dark:text-surface-100"
+        i18n="@@account.profileForm.signIn"
+        >Sign-in</span
+      >
+      <p
+        class="text-sm text-surface-500 dark:text-surface-400"
+        i18n="@@account.profileForm.signInHint"
+      >
         Your username and email are managed by your identity provider.
       </p>
     </div>
@@ -63,6 +86,7 @@
         <label
           for="profile-username"
           class="text-sm font-medium text-surface-700 dark:text-surface-300"
+          i18n="@@account.profileForm.username"
         >
           Username
         </label>
@@ -73,6 +97,7 @@
             pInputText
             [value]="profile()?.username ?? ''"
             placeholder="username"
+            i18n-placeholder="@@account.profileForm.usernamePlaceholder"
             readonly
             class="w-full"
           />
@@ -82,6 +107,7 @@
         <label
           for="profile-email"
           class="text-sm font-medium text-surface-700 dark:text-surface-300"
+          i18n="@@account.profileForm.emailAddress"
         >
           Email address
         </label>
@@ -98,7 +124,10 @@
           />
         </p-iconfield>
       </div>
-      <p class="text-xs text-surface-400 sm:col-span-2 dark:text-surface-500">
+      <p
+        class="text-xs text-surface-400 sm:col-span-2 dark:text-surface-500"
+        i18n="@@account.profileForm.readonlyHint"
+      >
         Your username and email address cannot be changed here.
       </p>
     </div>
@@ -108,6 +137,7 @@
     <p-button
       type="button"
       label="Reset"
+      i18n-label="@@common.reset"
       severity="secondary"
       [outlined]="true"
       [disabled]="saving()"
@@ -116,6 +146,7 @@
     <p-button
       type="submit"
       label="Save changes"
+      i18n-label="@@common.saveChanges"
       icon="pi pi-check"
       [loading]="saving()"
       [disabled]="form.invalid || form.pristine || saving()"

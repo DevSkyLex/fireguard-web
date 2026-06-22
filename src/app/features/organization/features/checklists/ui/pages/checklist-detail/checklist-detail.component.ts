@@ -65,11 +65,15 @@ export class ChecklistDetailPage {
     const checklist = this.checklist();
     if (!checklist) return;
     this.confirmationService.confirm({
-      header: 'Archive checklist',
-      message: `Archive "${checklist.name}"?`,
+      header: $localize`:@@checklist.archiveHeader:Archive checklist`,
+      message: $localize`:@@checklist.archiveConfirm:Archive "${checklist.name}:name:"?`,
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: 'Archive', severity: 'danger' },
-      rejectButtonProps: { label: 'Cancel', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: $localize`:@@common.archive:Archive`, severity: 'danger' },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
       accept: () => {
         const organizationId = this.activeOrganizationStore.selectedOrganization()?.id;
         if (organizationId) this.store.archive({ organizationId, checklistId: checklist.id });

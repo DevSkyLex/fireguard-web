@@ -1,6 +1,6 @@
 <div id="interventions" class="flex h-full flex-col gap-4">
   <div class="flex flex-wrap items-center justify-between gap-3">
-    <span id="interventions-view-label" class="sr-only">View</span>
+    <span id="interventions-view-label" i18n="@@intervention.view.label" class="sr-only">View</span>
     <p-selectbutton
       [options]="viewOptions"
       [allowEmpty]="false"
@@ -8,6 +8,7 @@
       optionValue="value"
       size="small"
       ariaLabelledBy="interventions-view-label"
+      i18n-pTooltip="@@intervention.view.tooltip"
       pTooltip="Toggle list / calendar (V)"
       tooltipPosition="bottom"
       [ngModel]="view()"
@@ -23,6 +24,7 @@
     </p-selectbutton>
 
     <p-button
+      i18n-label="@@intervention.newButton"
       label="New intervention"
       icon="pi pi-plus"
       severity="primary"

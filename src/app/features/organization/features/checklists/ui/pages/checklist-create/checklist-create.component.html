@@ -1,6 +1,11 @@
 <div id="checklist-create" class="flex flex-col">
   <section class="max-w-4xl p-8">
-    <h1 class="mb-6 text-2xl font-semibold text-surface-900 dark:text-surface-0">New Checklist</h1>
+    <h1
+      class="mb-6 text-2xl font-semibold text-surface-900 dark:text-surface-0"
+      i18n="@@checklist.create.title"
+    >
+      New Checklist
+    </h1>
     <app-checklist-form
       [loading]="store.isCreating()"
       (submitted)="submit($event)"

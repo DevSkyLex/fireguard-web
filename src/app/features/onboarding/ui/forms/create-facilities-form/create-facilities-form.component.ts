@@ -117,11 +117,11 @@ export class CreateFacilitiesForm {
    * @type {{ label: string; value: SetupFacilityType }[]}
    */
   protected readonly facilityTypes: { label: string; value: SetupFacilityType }[] = [
-    { label: 'Site', value: 'site' },
-    { label: 'Building', value: 'building' },
-    { label: 'Floor', value: 'floor' },
-    { label: 'Zone', value: 'zone' },
-    { label: 'Area', value: 'area' },
+    { label: $localize`:@@facilityType.site:Site`, value: 'site' },
+    { label: $localize`:@@facilityType.building:Building`, value: 'building' },
+    { label: $localize`:@@facilityType.floor:Floor`, value: 'floor' },
+    { label: $localize`:@@facilityType.zone:Zone`, value: 'zone' },
+    { label: $localize`:@@facilityType.area:Area`, value: 'area' },
   ];
 
   /**
@@ -166,6 +166,24 @@ export class CreateFacilitiesForm {
    */
   protected get rows(): FormArray<FormGroup<CreateFacilityFormData>> {
     return this.form.controls.rows;
+  }
+
+  /**
+   * Method submitLabel
+   *
+   * @description
+   * Localized submit button label, pluralized on the current row count.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {string}
+   */
+  protected submitLabel(): string {
+    const count: number = this.rowCount();
+    return count === 1
+      ? $localize`:@@onboarding.facilities.submitOne:Create facility`
+      : $localize`:@@onboarding.facilities.submitMany:Create ${count}:count: facilities`;
   }
   //#endregion
 

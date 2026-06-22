@@ -66,11 +66,13 @@ export class NonConformityTable {
   public readonly view: OutputEmitterRef<NonConformityOutput> = output();
   /** Placeholder rows displayed while loading. */
   protected readonly skeletonItems = Array(5);
+  /** Localized placeholder for empty due-date cells. */
+  protected readonly noneLabel: string = $localize`:@@inspection.info.none:None`;
   /** Supported non-conformity status options. */
   protected readonly statusOptions: { label: string; value: NonConformityStatus }[] = [
-    { label: 'Open', value: 'open' },
-    { label: 'In progress', value: 'in_progress' },
-    { label: 'Done', value: 'done' },
-    { label: 'Waived', value: 'waived' },
+    { label: $localize`:@@ncStatus.open:Open`, value: 'open' },
+    { label: $localize`:@@ncStatus.inProgress:In progress`, value: 'in_progress' },
+    { label: $localize`:@@ncStatus.done:Done`, value: 'done' },
+    { label: $localize`:@@ncStatus.waived:Waived`, value: 'waived' },
   ];
 }

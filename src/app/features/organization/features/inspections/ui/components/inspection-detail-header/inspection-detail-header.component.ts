@@ -36,4 +36,6 @@ export class InspectionDetailHeader {
   public readonly closeInspection: OutputEmitterRef<void> = output();
   /** Emits an inspection cancellation request. */
   public readonly cancelInspection: OutputEmitterRef<void> = output();
+  /** Localized fallback shown when the inspector identity is unavailable. */
+  protected readonly unknownInspectorLabel: string = $localize`:@@inspection.unknownInspector:Unknown inspector`;
 }

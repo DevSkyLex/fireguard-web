@@ -146,21 +146,21 @@ export class AccountPage {
   protected readonly navItems: ReadonlyArray<AccountNavItem> = [
     {
       id: 'profile',
-      label: 'Public profile',
+      label: $localize`:@@account.nav.profileLabel:Public profile`,
       icon: 'pi pi-user',
-      description: 'Manage how your profile appears to other members.',
+      description: $localize`:@@account.nav.profileDesc:Manage how your profile appears to other members.`,
     },
     {
       id: 'security',
-      label: 'Sessions & security',
+      label: $localize`:@@account.menu.sessionsSecurity:Sessions & security`,
       icon: 'pi pi-shield',
-      description: 'Review your active sessions and the devices you trust.',
+      description: $localize`:@@account.nav.securityDesc:Review your active sessions and the devices you trust.`,
     },
     {
       id: 'notifications',
-      label: 'Notifications',
+      label: $localize`:@@common.notifications:Notifications`,
       icon: 'pi pi-bell',
-      description: 'Account and organization activity in one place.',
+      description: $localize`:@@account.nav.notificationsDesc:Account and organization activity in one place.`,
     },
   ];
 

@@ -21,7 +21,8 @@
 </app-trend-card>
 
 <app-trend-filter-drawer
-  [title]="cardTitle() + ' Filters'"
+  [title]="filterDrawerTitle()"
+  i18n-description="@@org.trend.assetGrowth.filterDesc"
   description="Refine asset growth metrics by equipment, facility, period, and comparison mode."
   [visible]="isFilterDrawerVisible()"
   [loading]="isLoading()"

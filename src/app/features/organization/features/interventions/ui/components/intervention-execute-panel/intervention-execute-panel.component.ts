@@ -70,6 +70,13 @@ interface ExecuteSubmitCheck {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionExecutePanel {
+  /** Localized fallback label for a site-level (untargeted) work item. */
+  protected readonly siteLevelLabel: string = $localize`:@@intervention.exec.siteLevel:Site-level work item`;
+  /** Localized label for completing the in-progress work item. */
+  protected readonly completeLabel: string = $localize`:@@intervention.exec.complete:Complete`;
+  /** Localized label for starting the next work item. */
+  protected readonly startWorkLabel: string = $localize`:@@intervention.exec.startWork:Start work`;
+
   /**
    * Property intervention
    * @readonly
@@ -332,8 +339,14 @@ export class InterventionExecutePanel {
   protected readonly submitChecks: Signal<readonly ExecuteSubmitCheck[]> = computed<
     readonly ExecuteSubmitCheck[]
   >(() => [
-    { label: 'All field work resolved', done: this.progress() >= 100 },
-    { label: 'You are the responsible agent', done: this.canSubmit() },
+    {
+      label: $localize`:@@intervention.exec.checkResolved:All field work resolved`,
+      done: this.progress() >= 100,
+    },
+    {
+      label: $localize`:@@intervention.exec.checkResponsible:You are the responsible agent`,
+      done: this.canSubmit(),
+    },
   ]);
 
   /**

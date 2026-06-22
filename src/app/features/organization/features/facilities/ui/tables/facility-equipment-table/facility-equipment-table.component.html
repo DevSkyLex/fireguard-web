@@ -7,7 +7,7 @@
         class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
       >
         <div class="flex items-center gap-2">
-          <h2 class="font-semibold">Equipments</h2>
+          <h2 i18n="@@facility.equipTable.title" class="font-semibold">Equipments</h2>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -17,6 +17,7 @@
               pInputText
               type="text"
               pSize="small"
+              i18n-placeholder="@@equipment.table.searchPlaceholder"
               placeholder="Search equipments..."
               [formControl]="searchControl"
               class="w-full"
@@ -28,6 +29,7 @@
             [formControl]="statusControl"
             optionLabel="label"
             optionValue="value"
+            i18n-placeholder="@@common.status"
             placeholder="Status"
             size="small"
             [showClear]="true"
@@ -44,6 +46,7 @@
 
           @if (canManageEquipment()) {
             <p-splitbutton
+              i18n-label="@@equipment.newButton"
               label="New equipment"
               icon="pi pi-plus"
               severity="primary"
@@ -55,6 +58,7 @@
             />
           } @else {
             <p-button
+              i18n-label="@@common.refresh"
               label="Refresh"
               icon="pi pi-refresh"
               severity="secondary"
@@ -66,6 +70,7 @@
             />
 
             <p-button
+              i18n-label="@@common.clearFilters"
               label="Clear filters"
               icon="pi pi-filter-slash"
               severity="secondary"
@@ -94,6 +99,7 @@
         (onLazyLoad)="onLazyLoad($event)"
         [rowsPerPageOptions]="[12, 24, 48]"
         [showCurrentPageReport]="true"
+        i18n-currentPageReportTemplate="@@equipment.table.pageReport"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} equipments"
         [stripedRows]="true"
         [pt]="tablePt()"
@@ -107,39 +113,39 @@
             }
             <th pSortableColumn="type" class="min-w-64">
               <div class="flex items-center gap-2">
-                <span>Equipment</span>
+                <span i18n="@@equipment.table.colEquipment">Equipment</span>
                 <p-sortIcon field="type" />
               </div>
             </th>
             <th class="min-w-40">
               <div class="flex items-center gap-2">
-                <span>Reference</span>
+                <span i18n="@@facility.equipTable.colReference">Reference</span>
               </div>
             </th>
             <th class="min-w-36">
               <div class="flex items-center gap-2">
-                <span>Serial</span>
+                <span i18n="@@equipment.table.colSerial">Serial</span>
               </div>
             </th>
             <th pSortableColumn="status" class="min-w-36">
               <div class="flex items-center gap-2">
-                <span>Status</span>
+                <span i18n="@@facility.equipTable.colStatus">Status</span>
                 <p-sortIcon field="status" />
               </div>
             </th>
             <th class="min-w-40">
               <div class="flex items-center gap-2">
-                <span>Location</span>
+                <span i18n="@@equipment.table.colLocation">Location</span>
               </div>
             </th>
             <th pSortableColumn="installedAt" class="min-w-32">
               <div class="flex items-center gap-2">
-                <span>Installed</span>
+                <span i18n="@@facility.equipTable.colInstalled">Installed</span>
                 <p-sortIcon field="installedAt" />
               </div>
             </th>
             <th class="w-20">
-              <span class="sr-only">Actions</span>
+              <span i18n="@@facility.equipTable.srActions" class="sr-only">Actions</span>
             </th>
           </tr>
         </ng-template>
@@ -253,6 +259,7 @@
                   severity="secondary"
                   size="small"
                   [outlined]="true"
+                  i18n-ariaLabel="@@equipment.table.actions"
                   ariaLabel="Equipment actions"
                   (onClick)="onActionMenuToggle($event, equipment)"
                 />
@@ -266,11 +273,14 @@
             <td [attr.colspan]="canManageEquipment() ? 8 : 7">
               <app-empty-state
                 icon="pi-box"
+                i18n-title="@@equipment.table.emptyTitle"
                 title="No equipment found"
+                i18n-description="@@facility.equipTable.emptyDesc"
                 description="Adjust your search or filters, or register equipment for this facility."
               >
                 @if (canManageEquipment()) {
                   <p-button
+                    i18n-label="@@equipment.newButton"
                     label="New equipment"
                     icon="pi pi-plus"
                     severity="primary"

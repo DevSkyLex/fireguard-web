@@ -7,8 +7,8 @@
         </div>
 
         <div class="flex flex-col">
-          <h2 class="text-xl font-semibold">Activity</h2>
-          <p class="text-surface-600 dark:text-surface-400">
+          <h2 i18n="@@org.dash.activity" class="text-xl font-semibold">Activity</h2>
+          <p i18n="@@org.dash.activityDesc" class="text-surface-600 dark:text-surface-400">
             Overview of activity trends and key metrics for your organization.
           </p>
         </div>
@@ -19,7 +19,9 @@
           <div class="flex flex-row flex-wrap items-stretch gap-6">
             @if (canReadFacilities()) {
               <app-metric-card
+                i18n-title="@@org.dash.facilities"
                 title="Facilities"
+                i18n-description="@@org.dash.facilitiesDesc"
                 description="Registered sites"
                 icon="pi pi-building"
                 [value]="store.facilityCount()"
@@ -31,7 +33,9 @@
 
             @if (canReadMembers()) {
               <app-metric-card
+                i18n-title="@@org.dash.members"
                 title="Members"
+                i18n-description="@@org.dash.membersDesc"
                 description="Active members"
                 icon="pi pi-users"
                 [value]="store.memberCount()"
@@ -43,7 +47,9 @@
 
             @if (canReadEquipment()) {
               <app-metric-card
+                i18n-title="@@org.dash.equipment"
                 title="Equipment"
+                i18n-description="@@org.dash.equipmentDesc"
                 description="Tracked assets"
                 icon="pi pi-shield"
                 [value]="store.equipmentCount()"
@@ -55,7 +61,9 @@
 
             @if (canReadInspections()) {
               <app-metric-card
+                i18n-title="@@org.dash.inspections"
                 title="Inspections"
+                i18n-description="@@org.dash.inspectionsDesc"
                 description="Performed this period"
                 icon="pi pi-check-square"
                 [value]="store.inspectionCount()"
@@ -87,8 +95,8 @@
         </div>
 
         <div class="flex flex-col">
-          <h2 class="text-xl font-semibold">Resources</h2>
-          <p class="text-surface-600 dark:text-surface-400">
+          <h2 i18n="@@org.dash.resources" class="text-xl font-semibold">Resources</h2>
+          <p i18n="@@org.dash.resourcesDesc" class="text-surface-600 dark:text-surface-400">
             Overview of resource trends and key metrics for your organization.
           </p>
         </div>

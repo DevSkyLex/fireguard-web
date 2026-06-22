@@ -161,21 +161,21 @@ export class AccountUserMenu {
 
     return [
       {
-        label: 'Profile',
+        label: $localize`:@@account.menu.profile:Profile`,
         icon: 'pi pi-user',
         routerLink: '/account',
         queryParams: { tab: 'profile' },
         data: { testid: 'header-user-menu-profile-link' },
       },
       {
-        label: 'Security',
+        label: $localize`:@@account.menu.security:Security`,
         icon: 'pi pi-shield',
         routerLink: '/account',
         queryParams: { tab: 'security' },
         data: { testid: 'header-user-menu-security' },
       },
       {
-        label: 'Notifications',
+        label: $localize`:@@common.notifications:Notifications`,
         icon: 'pi pi-bell',
         routerLink: '/account',
         queryParams: { tab: 'notifications' },
@@ -184,7 +184,9 @@ export class AccountUserMenu {
       },
       { separator: true },
       {
-        label: this.authLogoutPort.isLoggingOut() ? 'Logging out...' : 'Logout',
+        label: this.authLogoutPort.isLoggingOut()
+          ? $localize`:@@auth.userProfile.loggingOut:Logging out...`
+          : $localize`:@@auth.userProfile.logout:Logout`,
         icon: 'pi pi-sign-out',
         disabled: this.authLogoutPort.isLoggingOut(),
         command: (): void => this.onLogout(),

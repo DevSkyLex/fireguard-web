@@ -6,9 +6,16 @@
   >
     <div class="flex items-center gap-2">
       <i class="pi pi-exclamation-triangle text-sm text-surface-500"></i>
-      <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Non-conformities</h2>
+      <h2
+        i18n="@@nc.table.title"
+        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+      >
+        Non-conformities
+      </h2>
     </div>
-    <span class="text-xs text-surface-500">{{ nonConformities().length }} finding(s)</span>
+    <span i18n="@@nc.table.count" class="text-xs text-surface-500"
+      >{{ nonConformities().length }} finding(s)</span
+    >
   </header>
 
   @if (canAdd()) {
@@ -27,11 +34,11 @@
   >
     <ng-template pTemplate="header">
       <tr>
-        <th>Description</th>
-        <th>Severity</th>
-        <th>Status</th>
-        <th>Due</th>
-        <th class="w-20"><span class="sr-only">Actions</span></th>
+        <th i18n="@@nc.table.colDescription">Description</th>
+        <th i18n="@@nc.table.colSeverity">Severity</th>
+        <th i18n="@@nc.table.colStatus">Status</th>
+        <th i18n="@@nc.table.colDue">Due</th>
+        <th class="w-20"><span i18n="@@nc.table.srActions" class="sr-only">Actions</span></th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-nonConformity>
@@ -81,7 +88,9 @@
               <p-tag [value]="nonConformity.status | titlecase" severity="secondary" />
             }
           </td>
-          <td>{{ nonConformity.dueAt ? (nonConformity.dueAt | date: 'mediumDate') : 'None' }}</td>
+          <td>
+            {{ nonConformity.dueAt ? (nonConformity.dueAt | date: 'mediumDate') : noneLabel }}
+          </td>
           <td class="text-right">
             <p-button
               icon="pi pi-eye"
@@ -89,6 +98,7 @@
               size="small"
               [text]="true"
               [rounded]="true"
+              i18n-ariaLabel="@@nc.table.viewAria"
               ariaLabel="View non-conformity"
               (onClick)="view.emit(nonConformity)"
             />
@@ -102,8 +112,13 @@
           <div class="flex flex-col items-center gap-3 py-16 text-center">
             <i class="pi pi-check-circle text-5xl text-green-400"></i>
             <div>
-              <p class="font-medium text-surface-900 dark:text-surface-100">No non-conformities</p>
-              <p class="text-sm text-surface-500">
+              <p
+                i18n="@@nc.table.emptyTitle"
+                class="font-medium text-surface-900 dark:text-surface-100"
+              >
+                No non-conformities
+              </p>
+              <p i18n="@@nc.table.emptyDesc" class="text-sm text-surface-500">
                 No findings have been reported for this inspection.
               </p>
             </div>

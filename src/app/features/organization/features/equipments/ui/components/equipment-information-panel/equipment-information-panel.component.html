@@ -5,7 +5,10 @@
     class="flex items-center gap-2 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
   >
     <i class="pi pi-info-circle text-sm text-surface-500"></i>
-    <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">
+    <h2
+      class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+      i18n="@@equipment.info.title"
+    >
       Equipment information
     </h2>
   </header>
@@ -13,57 +16,79 @@
     class="grid divide-y divide-surface-100 px-4 py-2 sm:grid-cols-2 sm:divide-y-0 dark:divide-surface-800"
   >
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pr-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500">Type</dt>
+      <dt class="text-xs text-surface-500" i18n="@@equipment.info.type">Type</dt>
       <dd class="mt-1 text-sm font-medium text-surface-900 dark:text-surface-100">
         {{ equipment().type | titlecase }}
       </dd>
     </div>
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pl-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500">Subtype</dt>
+      <dt class="text-xs text-surface-500" i18n="@@equipment.info.subtype">Subtype</dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
-        {{ (equipment().subType | titlecase) || 'Not specified' }}
+        @if (equipment().subType) {
+          {{ equipment().subType | titlecase }}
+        } @else {
+          <ng-container i18n="@@equipment.notSpecified">Not specified</ng-container>
+        }
       </dd>
     </div>
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pr-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500">Brand</dt>
+      <dt class="text-xs text-surface-500" i18n="@@equipment.info.brand">Brand</dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
-        {{ equipment().brand || 'Not specified' }}
+        @if (equipment().brand; as brand) {
+          {{ brand }}
+        } @else {
+          <ng-container i18n="@@equipment.notSpecified">Not specified</ng-container>
+        }
       </dd>
     </div>
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pl-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500">Model</dt>
+      <dt class="text-xs text-surface-500" i18n="@@equipment.info.model">Model</dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
-        {{ equipment().model || 'Not specified' }}
+        @if (equipment().model; as model) {
+          {{ model }}
+        } @else {
+          <ng-container i18n="@@equipment.notSpecified">Not specified</ng-container>
+        }
       </dd>
     </div>
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pr-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500">Serial number</dt>
+      <dt class="text-xs text-surface-500" i18n="@@equipment.info.serial">Serial number</dt>
       <dd class="mt-1 font-mono text-sm text-surface-900 dark:text-surface-100">
-        {{ equipment().serialNumber || 'Not specified' }}
+        @if (equipment().serialNumber; as serialNumber) {
+          {{ serialNumber }}
+        } @else {
+          <ng-container i18n="@@equipment.notSpecified">Not specified</ng-container>
+        }
       </dd>
     </div>
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pl-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500">Location</dt>
+      <dt class="text-xs text-surface-500" i18n="@@equipment.info.location">Location</dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
-        {{ equipment().locationLabel || 'Not specified' }}
+        @if (equipment().locationLabel; as locationLabel) {
+          {{ locationLabel }}
+        } @else {
+          <ng-container i18n="@@equipment.notSpecified">Not specified</ng-container>
+        }
       </dd>
     </div>
     <div class="py-3 sm:pr-4">
-      <dt class="text-xs text-surface-500">Installed</dt>
+      <dt class="text-xs text-surface-500" i18n="@@equipment.info.installed">Installed</dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
-        {{
-          equipment().installedAt ? (equipment().installedAt | date: 'mediumDate') : 'Not installed'
-        }}
+        @if (equipment().installedAt; as installedAt) {
+          {{ installedAt | date: 'mediumDate' }}
+        } @else {
+          <ng-container i18n="@@equipment.notInstalled">Not installed</ng-container>
+        }
       </dd>
     </div>
     <div class="py-3 sm:pl-4">
-      <dt class="text-xs text-surface-500">Commissioned</dt>
+      <dt class="text-xs text-surface-500" i18n="@@equipment.info.commissioned">Commissioned</dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
-        {{
-          equipment().commissionedAt
-            ? (equipment().commissionedAt | date: 'mediumDate')
-            : 'Not commissioned'
-        }}
+        @if (equipment().commissionedAt; as commissionedAt) {
+          {{ commissionedAt | date: 'mediumDate' }}
+        } @else {
+          <ng-container i18n="@@equipment.notCommissioned">Not commissioned</ng-container>
+        }
       </dd>
     </div>
   </dl>

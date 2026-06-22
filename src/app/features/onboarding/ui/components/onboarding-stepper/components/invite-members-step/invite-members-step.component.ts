@@ -275,11 +275,14 @@ export class InviteMembersStep extends OnboardingStepBase {
           const count: number = values.length;
           this.messageService.add({
             severity: 'success',
-            summary: count > 1 ? 'Invitations sent' : 'Invitation sent',
+            summary:
+              count > 1
+                ? $localize`:@@onboarding.members.sentManyTitle:Invitations sent`
+                : $localize`:@@onboarding.members.sentOneTitle:Invitation sent`,
             detail:
               count > 1
-                ? `${count} invitations have been sent.`
-                : `An invitation has been sent to ${values[0].email}.`,
+                ? $localize`:@@onboarding.members.sentMany:${count}:count: invitations have been sent.`
+                : $localize`:@@onboarding.members.sentOne:An invitation has been sent to ${values[0].email}:email:.`,
             life: 4000,
           });
           this.handleComplete();
@@ -287,10 +290,12 @@ export class InviteMembersStep extends OnboardingStepBase {
         error: (error: unknown) => {
           this.isInviting.set(false);
           const message: string =
-            error instanceof Error ? error.message : 'Failed to send the invitation(s).';
+            error instanceof Error
+              ? error.message
+              : $localize`:@@onboarding.members.sendError:Failed to send the invitation(s).`;
           this.messageService.add({
             severity: 'error',
-            summary: 'Error',
+            summary: $localize`:@@common.error:Error`,
             detail: message,
             life: 5000,
           });

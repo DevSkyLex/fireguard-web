@@ -27,10 +27,12 @@
         <p-button
           icon="pi pi-plus"
           label="Add"
+          i18n-label="@@common.add"
           severity="secondary"
           size="small"
           [text]="true"
-          [attr.aria-label]="'Create on ' + (day.date | date: 'longDate')"
+          aria-label="Create on {{ day.date | date: 'longDate' }}"
+          i18n-aria-label="@@calendar.createOn"
           (onClick)="dayCreate.emit(day.date)"
         />
       </div>
@@ -41,7 +43,7 @@
             <button
               type="button"
               class="flex w-full items-start gap-3 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-surface-100 motion-reduce:transition-none dark:hover:bg-surface-800/60"
-              [attr.aria-label]="'Open ' + event.title"
+              [attr.aria-label]="openLabel(event.title)"
               (click)="eventClick.emit(event)"
             >
               <!-- Time gutter (agenda-owned chrome) -->
@@ -50,7 +52,10 @@
                 aria-hidden="false"
               >
                 @if (isAllDay(event)) {
-                  <span class="text-[0.7rem] font-medium text-surface-400 dark:text-surface-500">
+                  <span
+                    class="text-[0.7rem] font-medium text-surface-400 dark:text-surface-500"
+                    i18n="@@calendar.allDay"
+                  >
                     all-day
                   </span>
                 } @else {

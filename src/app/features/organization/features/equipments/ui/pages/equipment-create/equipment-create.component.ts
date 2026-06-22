@@ -154,8 +154,8 @@ export class EquipmentCreatePage {
       if (operation.status === 'success' && operation.data) {
         this.messageService.add({
           severity: 'success',
-          summary: 'Equipment created',
-          detail: `Equipment "${operation.data.type}" has been created successfully.`,
+          summary: $localize`:@@equipment.created.summary:Equipment created`,
+          detail: $localize`:@@equipment.created.detail:Equipment "${operation.data.type}:type:" has been created successfully.`,
           life: 4000,
         });
         this.router.navigate(['..'], { relativeTo: this.route });
@@ -176,7 +176,7 @@ export class EquipmentCreatePage {
 
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
+          summary: $localize`:@@common.error:Error`,
           detail: payload.message,
           life: 5000,
         });

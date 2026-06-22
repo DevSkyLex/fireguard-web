@@ -391,6 +391,12 @@ export class InterventionWorkItemTable {
    */
   protected readonly selectedRows: WritableSignal<WorkItemRow[]> = signal<WorkItemRow[]>([]);
 
+  /** Localized delete-selected button label with the selection count. */
+  protected readonly deleteLabel: Signal<string> = computed((): string => {
+    const count: number = this.selectedRows().length;
+    return $localize`:@@intervention.wit.deleteSelected:Delete (${count}:count:)`;
+  });
+
   /**
    * Property columnCount
    * @readonly
@@ -433,7 +439,7 @@ export class InterventionWorkItemTable {
         command: (): void => this.onDeleteSelected(),
       },
       {
-        label: 'Clear selection',
+        label: $localize`:@@common.clearSelection:Clear selection`,
         icon: PrimeIcons.TIMES,
         disabled: count === 0,
         command: (): void => this.onClearSelection(),
@@ -503,7 +509,7 @@ export class InterventionWorkItemTable {
 
     return [
       {
-        label: 'Delete',
+        label: $localize`:@@common.delete:Delete`,
         icon: PrimeIcons.TRASH,
         command: (): void => this.deleteWorkItems.emit([workItem]),
       },

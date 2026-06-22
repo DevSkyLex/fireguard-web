@@ -6,17 +6,24 @@
   >
     <div class="flex items-center gap-2">
       <i class="pi pi-list-check text-sm text-surface-500"></i>
-      <h2 class="text-sm font-semibold text-surface-900 dark:text-surface-100">Checklist lines</h2>
+      <h2
+        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+        i18n="@@checklist.itemTable.title"
+      >
+        Checklist lines
+      </h2>
     </div>
-    <span class="text-xs text-surface-500">{{ items().length }} line(s)</span>
+    <span class="text-xs text-surface-500" i18n="@@checklist.lineCount"
+      >{{ items().length }} line(s)</span
+    >
   </header>
   <p-table class="min-h-0 flex-1" [value]="[...items()]" dataKey="id" [stripedRows]="true">
     <ng-template pTemplate="header">
       <tr>
-        <th class="w-24">Position</th>
-        <th>Line</th>
-        <th>Description</th>
-        <th class="w-32">Requirement</th>
+        <th class="w-24" i18n="@@checklist.col.position">Position</th>
+        <th i18n="@@checklist.col.line">Line</th>
+        <th i18n="@@common.description">Description</th>
+        <th class="w-32" i18n="@@checklist.col.requirement">Requirement</th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-item>
@@ -29,12 +36,19 @@
           </span>
         </td>
         <td class="font-medium text-surface-900 dark:text-surface-100">{{ item.label }}</td>
-        <td class="text-surface-500">{{ item.description || 'No description' }}</td>
+        <td class="text-surface-500">
+          @if (item.description) {
+            {{ item.description }}
+          } @else {
+            <ng-container i18n="@@checklist.noDescription">No description</ng-container>
+          }
+        </td>
         <td>
-          <p-tag
-            [value]="item.required ? 'Required' : 'Optional'"
-            [severity]="item.required ? 'warn' : 'secondary'"
-          />
+          @if (item.required) {
+            <p-tag value="Required" i18n-value="@@checklist.required" severity="warn" />
+          } @else {
+            <p-tag value="Optional" i18n-value="@@checklist.optional" severity="secondary" />
+          }
         </td>
       </tr>
     </ng-template>
@@ -44,7 +58,9 @@
           <app-empty-state
             icon="pi-list-check"
             title="This checklist has no lines"
+            i18n-title="@@checklist.itemTable.emptyTitle"
             description="Checklist items will appear here."
+            i18n-description="@@checklist.itemTable.emptyDesc"
           />
         </td>
       </tr>

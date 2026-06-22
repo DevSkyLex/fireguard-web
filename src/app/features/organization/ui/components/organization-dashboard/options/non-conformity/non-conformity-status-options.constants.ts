@@ -16,28 +16,28 @@ import type { NonConformityStatusOption } from '@features/organization/ui/compon
  */
 export const NON_CONFORMITY_STATUS_OPTIONS: readonly NonConformityStatusOption[] = [
   {
-    label: 'Open',
+    label: $localize`:@@dash.ncStatus.open:Open`,
     value: 'open',
     icon: PrimeIcons.EXCLAMATION_CIRCLE,
     severity: 'danger',
     color: '#ef4444',
   },
   {
-    label: 'In Progress',
+    label: $localize`:@@dash.ncStatus.inProgress:In Progress`,
     value: 'in_progress',
     icon: PrimeIcons.SPINNER,
     severity: 'warn',
     color: '#f97316',
   },
   {
-    label: 'Done',
+    label: $localize`:@@dash.ncStatus.done:Done`,
     value: 'done',
     icon: PrimeIcons.CHECK_CIRCLE,
     severity: 'success',
     color: '#22c55e',
   },
   {
-    label: 'Waived',
+    label: $localize`:@@dash.ncStatus.waived:Waived`,
     value: 'waived',
     icon: PrimeIcons.MINUS_CIRCLE,
     severity: 'secondary',

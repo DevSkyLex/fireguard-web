@@ -208,8 +208,8 @@ export class FacilityEditPage {
       if (operation.status === 'success' && operation.data) {
         this.messageService.add({
           severity: 'success',
-          summary: 'Facility updated',
-          detail: `"${operation.data.name}" has been updated successfully.`,
+          summary: $localize`:@@facility.updated.summary:Facility updated`,
+          detail: $localize`:@@facility.updated.detail:"${operation.data.name}:name:" has been updated successfully.`,
           life: 4000,
         });
         this.router.navigate(['..'], { relativeTo: this.route });
@@ -223,7 +223,7 @@ export class FacilityEditPage {
       .subscribe(({ payload }) => {
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
+          summary: $localize`:@@common.error:Error`,
           detail: payload.message,
           life: 5000,
         });

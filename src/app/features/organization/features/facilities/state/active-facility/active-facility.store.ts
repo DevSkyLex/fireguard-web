@@ -11,7 +11,7 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { activeFacilityStoreEvents } from './events';

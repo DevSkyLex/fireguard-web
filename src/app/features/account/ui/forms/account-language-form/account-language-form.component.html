@@ -1,0 +1,78 @@
+<section class="flex flex-col">
+  <h3
+    i18n="@@account.language.title"
+    class="mb-3 text-base font-medium text-surface-500 dark:text-surface-400"
+  >
+    Language
+  </h3>
+
+  <div class="divide-y divide-surface-100 dark:divide-surface-800/70">
+    <div class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-2">
+      <label for="account-language" class="flex flex-col gap-0.5">
+        <span
+          i18n="@@account.language.label"
+          class="text-sm font-medium text-surface-800 dark:text-surface-100"
+          >Display language</span
+        >
+        <span
+          i18n="@@account.language.subtitle"
+          class="text-sm text-surface-500 dark:text-surface-400"
+        >
+          Choose the language of the interface. The app reloads to apply your choice. By default it
+          follows your browser language.
+        </span>
+      </label>
+
+      <div class="flex flex-col gap-2">
+        <p-select
+          inputId="account-language"
+          [options]="options"
+          optionLabel="label"
+          optionValue="subPath"
+          [ngModel]="currentLocale()"
+          (onChange)="onSelect($event.value)"
+          appendTo="body"
+          fluid
+        >
+          <ng-template let-opt pTemplate="selectedItem">
+            <span class="flex items-center gap-2">
+              <img
+                [src]="opt.flag"
+                [alt]="opt.label"
+                width="20"
+                height="15"
+                class="h-3.5 w-5 shrink-0 rounded-xs object-cover ring-1 ring-surface-200 dark:ring-surface-700"
+              />
+              <span>{{ opt.label }}</span>
+            </span>
+          </ng-template>
+          <ng-template let-opt pTemplate="item">
+            <span class="flex items-center gap-2">
+              <img
+                [src]="opt.flag"
+                [alt]="opt.label"
+                width="20"
+                height="15"
+                class="h-3.5 w-5 shrink-0 rounded-xs object-cover ring-1 ring-surface-200 dark:ring-surface-700"
+              />
+              <span>{{ opt.label }}</span>
+            </span>
+          </ng-template>
+        </p-select>
+
+        <div>
+          <p-button
+            type="button"
+            severity="secondary"
+            [link]="true"
+            icon="pi pi-globe"
+            label="Use my browser language"
+            i18n-label="@@account.language.reset"
+            class="-ml-3"
+            (onClick)="browserDefaultRequested.emit()"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

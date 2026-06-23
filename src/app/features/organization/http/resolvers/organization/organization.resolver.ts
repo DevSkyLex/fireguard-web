@@ -7,7 +7,7 @@ import {
   Router,
 } from '@angular/router';
 import { catchError, map, of, switchMap, type Observable } from 'rxjs';
-import type { HydraCollection } from '@core/models/api';
+import type { HydraCollection } from '@core/api/models';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';

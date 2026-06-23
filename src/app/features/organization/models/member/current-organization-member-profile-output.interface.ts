@@ -1,4 +1,4 @@
-import type { HydraItem } from '@core/models/api';
+import type { HydraItem } from '@core/api/models';
 import type { OrganizationPermissionOutput } from '../role/organization-permission-output.interface';
 import type { OrganizationRoleOutput } from '../role/organization-role-output.interface';
 

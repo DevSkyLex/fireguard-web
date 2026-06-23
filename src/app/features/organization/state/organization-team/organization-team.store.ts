@@ -10,7 +10,7 @@ import {
   successCallState,
   toStoreError,
   type CallState,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import {
   OrganizationInvitationService,
   OrganizationMemberService,

@@ -1,6 +1,6 @@
 import { effect, inject, Injectable, signal, type WritableSignal } from '@angular/core';
 import { catchError, EMPTY, forkJoin, from, map, type Observable, switchMap } from 'rxjs';
-import { ConnectivityService } from '@core/services/connectivity';
+import { ConnectivityService } from '@core/connectivity';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import {
   InterventionOfflineService,

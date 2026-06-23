@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { type Observable, catchError } from 'rxjs';
-import type { HydraCollection, OptionOutput } from '@core/models/api';
-import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
+import { HydraApiService, type RequestOptions } from '@core/api';
+import type { HydraCollection, OptionOutput } from '@core/api/models';
 import type {
   OrganizationDashboardOutput,
   OrganizationDashboardQueryOptions,

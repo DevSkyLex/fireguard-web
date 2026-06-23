@@ -5,7 +5,7 @@ import {
   successCallState,
   type CallState,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import {
   ORGANIZATION_PERMISSION,
   type CurrentOrganizationMemberProfileOutput,

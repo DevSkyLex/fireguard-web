@@ -1,4 +1,4 @@
-import type { AvatarUrls, HydraItem } from '@core/models/api';
+import type { AvatarUrls, HydraItem } from '@core/api/models';
 
 /**
  * Interface UserProfileOutput

@@ -1,5 +1,5 @@
-import type { OptionOutput } from '@core/models/api';
-import type { CallState } from '@core/state/request-state';
+import type { OptionOutput } from '@core/api/models';
+import type { CallState } from '@core/request-state';
 import type { UserOutput } from '@features/account/models';
 
 export interface UsersState {

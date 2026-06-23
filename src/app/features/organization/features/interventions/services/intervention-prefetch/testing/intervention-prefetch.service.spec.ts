@@ -1,6 +1,6 @@
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ConnectivityService } from '@core/services/connectivity';
+import { ConnectivityService } from '@core/connectivity';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import {
   InterventionOfflineService,

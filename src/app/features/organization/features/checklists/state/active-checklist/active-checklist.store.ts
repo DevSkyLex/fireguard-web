@@ -11,7 +11,7 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { ChecklistService } from '@features/organization/features/checklists/data-access';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import { activeChecklistStoreEvents } from './events';

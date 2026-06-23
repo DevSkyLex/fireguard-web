@@ -19,7 +19,7 @@ import {
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { activeOrganizationStoreEvents } from './events';

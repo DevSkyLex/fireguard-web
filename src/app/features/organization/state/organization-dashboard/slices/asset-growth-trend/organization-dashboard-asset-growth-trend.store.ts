@@ -17,7 +17,7 @@ import {
   setSuccessQuery,
   setErrorQuery,
   toStoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access/services/organization-permission/organization-permission.service';
 import { OrganizationService } from '@features/organization/data-access';
 import {

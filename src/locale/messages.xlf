@@ -6,11 +6,11 @@
         <source>Account</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
-          <context context-type="linenumber">23</context>
+          <context context-type="linenumber">21</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
-          <context context-type="linenumber">25</context>
+          <context context-type="linenumber">23</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.notifications.loadError" datatype="html">
@@ -382,7 +382,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/pages/account-page/account-page.component.ts</context>
-          <context context-type="linenumber">161</context>
+          <context context-type="linenumber">169</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/tables/notification-table/notification-table.component.html</context>
@@ -494,6 +494,34 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/forms/account-avatar-form/account-avatar-form.component.html</context>
           <context context-type="linenumber">55,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.language.title" datatype="html">
+        <source> Language </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-language-form/account-language-form.component.html</context>
+          <context context-type="linenumber">6,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.language.label" datatype="html">
+        <source>Display language</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-language-form/account-language-form.component.html</context>
+          <context context-type="linenumber">17,20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.language.subtitle" datatype="html">
+        <source> Choose the language of the interface. The app reloads to apply your choice. By default it follows your browser language. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-language-form/account-language-form.component.html</context>
+          <context context-type="linenumber">23,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.language.reset" datatype="html">
+        <source>Use my browser language</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-language-form/account-language-form.component.html</context>
+          <context context-type="linenumber">70,71</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.passwordForm.title" datatype="html">
@@ -776,53 +804,53 @@
           <context context-type="linenumber">83,84</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="account.profile.title" datatype="html">
-        <source>Public profile</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/pages/account-page/account-page.component.html</context>
-          <context context-type="linenumber">107,108</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="account.profile.subtitle" datatype="html">
-        <source> Manage how your profile appears to other members. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/pages/account-page/account-page.component.html</context>
-          <context context-type="linenumber">113,115</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="account.nav.profileLabel" datatype="html">
         <source>Public profile</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/pages/account-page/account-page.component.ts</context>
-          <context context-type="linenumber">149</context>
+          <context context-type="linenumber">151</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.nav.profileDesc" datatype="html">
         <source>Manage how your profile appears to other members.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/pages/account-page/account-page.component.ts</context>
-          <context context-type="linenumber">151</context>
+          <context context-type="linenumber">153</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.nav.settingsLabel" datatype="html">
+        <source>Settings</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-page/account-page.component.ts</context>
+          <context context-type="linenumber">157</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.nav.settingsDesc" datatype="html">
+        <source>Language and display preferences.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-page/account-page.component.ts</context>
+          <context context-type="linenumber">159</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.menu.sessionsSecurity" datatype="html">
         <source>Sessions &amp; security</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/pages/account-page/account-page.component.ts</context>
-          <context context-type="linenumber">155</context>
+          <context context-type="linenumber">163</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.nav.securityDesc" datatype="html">
         <source>Review your active sessions and the devices you trust.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/pages/account-page/account-page.component.ts</context>
-          <context context-type="linenumber">157</context>
+          <context context-type="linenumber">165</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.nav.notificationsDesc" datatype="html">
         <source>Account and organization activity in one place.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/pages/account-page/account-page.component.ts</context>
-          <context context-type="linenumber">163</context>
+          <context context-type="linenumber">171</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.notifications.loading" datatype="html">

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { EMPTY, expand, of, reduce, switchMap, takeWhile, timer, type Observable } from 'rxjs';
-import type { HydraCollection, HydraItem, PaginationOptions } from '@core/models/api';
-import { HydraApiService } from '@core/services/hydra-api';
+import { HydraApiService } from '@core/api';
+import type { HydraCollection, HydraItem, PaginationOptions } from '@core/api/models';
 import type {
   CreateInterventionChangeInput,
   CreateInterventionWorkItemInput,

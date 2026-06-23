@@ -3,7 +3,7 @@ import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, EMPTY, forkJoin, from, map, pipe, switchMap, tap, throwError } from 'rxjs';
-import { ConnectivityService } from '@core/services/connectivity';
+import { ConnectivityService } from '@core/connectivity';
 import {
   InterventionOfflineService,
   InterventionService,

@@ -12,7 +12,7 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { TrustedDeviceService } from '@features/auth/data-access';
 import type { TrustDeviceOutput } from '@features/auth/models';
 import { activeTrustedDeviceStoreEvents } from './events';

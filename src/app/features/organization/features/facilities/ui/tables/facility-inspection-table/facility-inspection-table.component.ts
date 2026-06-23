@@ -28,8 +28,8 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
-import type { RequestOptions } from '@core/services/hydra-api';
-import { pickAvatarUrl } from '@core/utils';
+import type { RequestOptions } from '@core/api';
+import { pickAvatarUrl } from '@core/api/utils';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   InspectionOutput,

@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { type CanActivateFn, GuardResult, MaybeAsync, Router } from '@angular/router';
 import { map, catchError, of } from 'rxjs';
-import type { HydraCollection } from '@core/models/api';
+import type { HydraCollection } from '@core/api/models';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 

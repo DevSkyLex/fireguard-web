@@ -669,6 +669,14 @@
         <source>Manage how your profile appears to other members.</source>
         <target>Gérez la façon dont votre profil apparaît aux autres membres.</target>
       </trans-unit>
+      <trans-unit id="account.nav.settingsLabel" datatype="html">
+        <source>Settings</source>
+        <target>Paramètres</target>
+      </trans-unit>
+      <trans-unit id="account.nav.settingsDesc" datatype="html">
+        <source>Language and display preferences.</source>
+        <target>Langue et préférences d'affichage.</target>
+      </trans-unit>
       <trans-unit id="account.menu.sessionsSecurity" datatype="html">
         <source>Sessions &amp; security</source>
         <target>Sessions et sécurité</target>
@@ -5414,6 +5422,22 @@
       <trans-unit id="inspection.findingsOne" datatype="html">
         <source><x id="count" equiv-text="count"/> finding</source>
         <target><x id="count" equiv-text="count"/> constat</target>
+      </trans-unit>
+      <trans-unit id="account.language.title" datatype="html">
+        <source>Language</source>
+        <target>Langue</target>
+      </trans-unit>
+      <trans-unit id="account.language.subtitle" datatype="html">
+        <source> Choose the language of the interface. The app reloads to apply your choice. By default it follows your browser language. </source>
+        <target> Choisissez la langue de l’interface. L’application se recharge pour appliquer votre choix. Par défaut, elle suit la langue de votre navigateur. </target>
+      </trans-unit>
+      <trans-unit id="account.language.label" datatype="html">
+        <source> Display language </source>
+        <target> Langue d’affichage </target>
+      </trans-unit>
+      <trans-unit id="account.language.reset" datatype="html">
+        <source>Use my browser language</source>
+        <target>Utiliser la langue de mon navigateur</target>
       </trans-unit>
     </body>
   </file>

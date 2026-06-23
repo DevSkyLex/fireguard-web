@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ConnectivityService } from '@core/services/connectivity';
+import { ConnectivityService } from '@core/connectivity';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import { InterventionSyncService } from '../../intervention-sync';
 import { InterventionSyncCoordinatorService } from '../intervention-sync-coordinator.service';

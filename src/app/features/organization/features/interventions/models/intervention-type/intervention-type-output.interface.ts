@@ -1,4 +1,4 @@
-import type { HydraItem } from '@core/models/api';
+import type { HydraItem } from '@core/api/models';
 import type { InterventionWorkItemAction } from '../intervention-work-item/intervention-work-item-action.type';
 
 /**

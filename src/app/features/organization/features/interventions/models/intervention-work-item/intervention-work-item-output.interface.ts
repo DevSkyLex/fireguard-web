@@ -1,4 +1,4 @@
-import type { HydraItem } from '@core/models/api';
+import type { HydraItem } from '@core/api/models';
 import type { InterventionWorkItemAction } from './intervention-work-item-action.type';
 import type { InterventionWorkItemAssignee } from './intervention-work-item-assignee.interface';
 import type { InterventionWorkItemSource } from './intervention-work-item-source.type';

@@ -11,8 +11,8 @@ import {
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
-import type { HydraCollection, OptionOutput } from '@core/models/api';
-import type { PaginationOptions } from '@core/services/hydra-api';
+import type { PaginationOptions } from '@core/api';
+import type { HydraCollection, OptionOutput } from '@core/api/models';
 import {
   errorCallState,
   idleCallState,
@@ -21,7 +21,7 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { UserService } from '@features/account/data-access';
 import type { UpdateUserInput, UserInput, UserOutput } from '@features/account/models';
 import { usersStoreEvents } from './events';

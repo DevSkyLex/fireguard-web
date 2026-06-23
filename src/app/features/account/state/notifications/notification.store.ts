@@ -22,9 +22,9 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import type { HydraCollection } from '@core/models/api';
-import type { MercureSubscriptionOutput } from '@core/models/mercure';
-import { MercureService } from '@core/services/mercure';
+import type { HydraCollection } from '@core/api/models';
+import type { MercureSubscriptionOutput } from '@core/mercure';
+import { MercureService } from '@core/mercure';
 import {
   idleCallState,
   pendingCallState,
@@ -33,7 +33,7 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { NotificationService } from '@features/account/data-access';
 import type {
   NotificationFilter,

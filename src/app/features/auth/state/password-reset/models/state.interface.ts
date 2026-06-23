@@ -1,4 +1,4 @@
-import type { CallState } from '@core/state/request-state';
+import type { CallState } from '@core/request-state';
 import type {
   PasswordResetRequestOutput,
   PasswordResetResendOutput,

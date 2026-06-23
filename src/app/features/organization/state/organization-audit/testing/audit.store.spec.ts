@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of } from 'rxjs';
-import type { HydraCollection } from '@core/models/api';
+import type { HydraCollection } from '@core/api/models';
 import { AuditEventService } from '@features/organization/data-access';
 import type { AuditEventOutput } from '@features/organization/models';
 import { AuditStore } from '../audit.store';

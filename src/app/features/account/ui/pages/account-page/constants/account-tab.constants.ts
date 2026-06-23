@@ -13,6 +13,7 @@ import type { AccountTab } from '../models';
  */
 export const ACCOUNT_TABS: ReadonlySet<string> = new Set<AccountTab>([
   'profile',
+  'settings',
   'security',
   'notifications',
 ]);

@@ -2,7 +2,7 @@ import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of } from 'rxjs';
-import type { HydraCollection, OptionOutput } from '@core/models/api';
+import type { HydraCollection, OptionOutput } from '@core/api/models';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { ActiveFacilityStore } from '../../active-facility/active-facility.store';

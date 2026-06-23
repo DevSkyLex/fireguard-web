@@ -12,8 +12,8 @@ import {
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
-import type { HydraCollection } from '@core/models/api';
-import type { RequestOptions } from '@core/services/hydra-api';
+import type { RequestOptions } from '@core/api';
+import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
   idleCallState,
@@ -22,7 +22,7 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type {
   EquipmentOutput,

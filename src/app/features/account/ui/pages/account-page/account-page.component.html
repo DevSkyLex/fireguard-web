@@ -1,4 +1,4 @@
-<div id="account-page" class="mx-auto flex w-full max-w-6xl flex-col gap-8">
+<div id="account-page" class="mx-auto flex w-full max-w-7xl flex-col gap-8">
   <!-- GitHub-style account header -->
   <header
     class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
@@ -93,40 +93,39 @@
 
     <!-- Active section content -->
     <div class="flex min-w-0 flex-col gap-6">
-      @switch (activeTab()) {
-        @case ('profile') {
-          <p-card [pt]="sectionCardPt">
-            <ng-template pTemplate="header">
-              <div
-                class="flex flex-col border-b border-surface-200 px-6 py-4 dark:border-surface-800"
-              >
-                <h2
-                  class="font-semibold text-surface-900 dark:text-surface-50"
-                  data-testid="account-page-section-title"
-                >
-                  <ng-container i18n="@@account.profile.title">Public profile</ng-container>
-                </h2>
-                <p
-                  class="text-sm text-surface-500 dark:text-surface-400"
-                  i18n="@@account.profile.subtitle"
-                >
-                  Manage how your profile appears to other members.
-                </p>
-              </div>
-            </ng-template>
-            <app-account-profile-panel />
-          </p-card>
-        }
-        @case ('security') {
-          <div class="flex flex-col gap-6">
-            <app-account-sessions-panel />
-            <app-account-trusted-devices-panel />
+      <p-card [pt]="sectionCardPt">
+        <ng-template pTemplate="header">
+          <div class="flex flex-col border-b border-surface-200 px-6 py-4 dark:border-surface-800">
+            <h2
+              class="font-semibold text-surface-900 dark:text-surface-50"
+              data-testid="account-page-section-title"
+            >
+              {{ activeSection().label }}
+            </h2>
+            <p class="text-sm text-surface-500 dark:text-surface-400">
+              {{ activeSection().description }}
+            </p>
           </div>
+        </ng-template>
+
+        @switch (activeTab()) {
+          @case ('profile') {
+            <app-account-profile-panel />
+          }
+          @case ('settings') {
+            <app-account-settings-panel />
+          }
+          @case ('security') {
+            <div class="flex flex-col gap-8">
+              <app-account-sessions-panel />
+              <app-account-trusted-devices-panel />
+            </div>
+          }
+          @case ('notifications') {
+            <app-account-notifications-panel />
+          }
         }
-        @case ('notifications') {
-          <app-account-notifications-panel />
-        }
-      }
+      </p-card>
     </div>
   </div>
 </div>

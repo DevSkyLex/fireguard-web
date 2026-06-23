@@ -1,4 +1,4 @@
-import type { HydraItem } from '@core/models/api';
+import type { HydraItem } from '@core/api/models';
 import type { OnboardingStepHistoryEntry } from '../onboarding-step/onboarding-step-history-entry.interface';
 import type { OnboardingStepKey } from '../onboarding-step/onboarding-step-key.type';
 import type { OnboardingStepOutput } from '../onboarding-step/onboarding-step-output.interface';

@@ -39,7 +39,7 @@ import { SplitButtonModule } from 'primeng/splitbutton';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
-import type { RequestOptions } from '@core/services/hydra-api';
+import type { RequestOptions } from '@core/api';
 import type { OrganizationOutput } from '@features/organization/models';
 import { EmptyState } from '@shared/components';
 import { ORGANIZATION_DATAVIEW_LAYOUT_OPTIONS } from './options';

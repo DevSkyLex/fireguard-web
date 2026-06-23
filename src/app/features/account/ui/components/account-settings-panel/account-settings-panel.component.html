@@ -1,0 +1,5 @@
+<app-account-language-form
+  [currentLocale]="localePreference.current()"
+  (localeSelected)="changeLanguage($event)"
+  (browserDefaultRequested)="resetLanguage()"
+/>

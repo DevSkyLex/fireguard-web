@@ -4,7 +4,7 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
-import type { HydraCollection } from '@core/models/api';
+import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
   idleCallState,
@@ -13,7 +13,7 @@ import {
   StoreError,
   successCallState,
   toStoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { OrganizationService, PlanService } from '@features/organization/data-access';
 import type { OrganizationOutput, PlanOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../active-organization';

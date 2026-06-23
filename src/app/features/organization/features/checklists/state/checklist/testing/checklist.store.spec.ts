@@ -2,7 +2,7 @@ import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of } from 'rxjs';
-import type { HydraCollection } from '@core/models/api';
+import type { HydraCollection } from '@core/api/models';
 import { ChecklistService } from '@features/organization/features/checklists/data-access';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import { ActiveChecklistStore } from '../../active-checklist/active-checklist.store';

@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import type { RequestOptions } from '@core/services/hydra-api';
+import type { RequestOptions } from '@core/api';
 import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';

@@ -17,7 +17,7 @@ import {
   setSuccessQuery,
   setErrorQuery,
   toStoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { OrganizationService } from '@features/organization/data-access';
 import type { FacilityType } from '@features/organization/features/facilities/models';
 import type {

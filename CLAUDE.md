@@ -44,10 +44,10 @@
 - Use path aliases across boundaries: `@app`, `@core`, `@shared`, `@layouts`,
   `@features`, `@ports`, `@env`. Relative imports only inside one tight local
   area (one component folder, one state slice).
-- Feature API services extend `HydraApiService` (`@core/services/hydra-api`).
+- Feature API services extend `HydraApiService` (`@core/api`).
   Never build `HttpParams`/`HttpHeaders` manually outside it.
 - SignalStore: mutate with `patchState`, async via `rxMethod` + `tapResponse`,
-  expose request state from `@core/state/request-state`. No `rxResource` /
+  expose request state from `@core/request-state`. No `rxResource` /
   `httpResource` as the store standard.
 
 ## Quality gate — must pass before declaring a task done

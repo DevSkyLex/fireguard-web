@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { ConnectivityService } from '@core/services/connectivity';
+import { ConnectivityService } from '@core/connectivity';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
   CreateInterventionWorkItemInput,

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import type { RequestOptions } from '@core/services/hydra-api';
+import type { RequestOptions } from '@core/api';
 import type { NotificationOutput } from '@features/account/models';
 import { NotificationStore } from '@features/account/state';
 import { NotificationTable } from '../../tables';

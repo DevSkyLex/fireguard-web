@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import type { HydraCollection, HydraItem } from '@core/models/api';
+import type { HydraCollection, HydraItem } from '@core/api/models';
 import {
   OrganizationInvitationService,
   OrganizationMemberService,

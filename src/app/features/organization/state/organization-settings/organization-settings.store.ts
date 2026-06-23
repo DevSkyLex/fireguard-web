@@ -11,7 +11,7 @@ import {
   StoreError,
   successCallState,
   toStoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../active-organization';

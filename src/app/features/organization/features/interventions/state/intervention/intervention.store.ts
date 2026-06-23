@@ -12,7 +12,7 @@ import {
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { interventionStoreEvents } from './events';

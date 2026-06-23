@@ -14,7 +14,7 @@ import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
-import { ConnectivityService } from '@core/services/connectivity';
+import { ConnectivityService } from '@core/connectivity';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {

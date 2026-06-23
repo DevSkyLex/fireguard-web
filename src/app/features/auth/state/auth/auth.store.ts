@@ -12,7 +12,7 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { USER_PROFILE_PORT, type UserProfilePort } from '@features/account/ports';
 import { AuthService } from '@features/auth/data-access';
 import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@features/auth/models';

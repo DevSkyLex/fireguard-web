@@ -11,7 +11,7 @@ import {
   StoreError,
   successCallState,
   toStoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { OrganizationRoleService } from '@features/organization/data-access';
 import type { OrganizationRoleListState } from './models';
 

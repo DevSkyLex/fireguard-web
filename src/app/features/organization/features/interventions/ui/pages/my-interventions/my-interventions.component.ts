@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SkeletonModule } from 'primeng/skeleton';
-import { ConnectivityService } from '@core/services/connectivity';
+import { ConnectivityService } from '@core/connectivity';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import {
   MyInterventionsStore,

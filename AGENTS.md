@@ -56,7 +56,7 @@ These instructions are mandatory for AI agents working in this repository.
 - Use `patchState` for mutation. Do not assign store state directly.
 - Use `rxMethod` and `tapResponse` for store-level async flows.
 - Do not use Angular `rxResource` or `httpResource` as the store standard.
-- Every async action exposes explicit request state from `@core/state/request-state`.
+- Every async action exposes explicit request state from `@core/request-state`.
 - Use named `CallState` fields for stores with multiple async actions.
 - Use `withQueryState` only for stores with exactly one primary query concern.
 - Use `withEntities` for entity collections instead of maintaining duplicate manual arrays when entity helpers cover the use case.
@@ -64,7 +64,7 @@ These instructions are mandatory for AI agents working in this repository.
 
 ## API And Data Access
 
-- Feature API services extend `HydraApiService` from `@core/services/hydra-api`.
+- Feature API services extend `HydraApiService` from `@core/api`.
 - Do not build `HttpParams` or `HttpHeaders` manually outside `HydraApiService`; extend protected helpers when extra behavior is needed.
 - Services return transport types. Derive view models in stores, adapters, or UI layers according to ownership.
 - If multiple stores interpret the same loose API fields, centralize normalization in a pure feature-owned adapter.

@@ -11,6 +11,7 @@
     "test:ci": "ng test --watch=false",
     "i18n:extract": "ng extract-i18n --output-path src/locale --format xlf",
     "start:fr": "ng serve --configuration=fr",
+    "start:es": "ng serve --configuration=es",
     "lint": "oxlint -c .oxlintrc.json . --tsconfig tsconfig.json --ignore-path .gitignore",
     "lint:fix": "oxlint -c .oxlintrc.json . --tsconfig tsconfig.json --ignore-path .gitignore --fix",
     "format": "oxfmt -c .oxfmtrc.json .",

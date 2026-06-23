@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { ConnectivityService } from '@core/services/connectivity';
+import { ConnectivityService } from '@core/connectivity';
 import type { CreateEquipmentInput } from '@features/organization/features/equipments/models';
 import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
 import type { CreateInspectionInput } from '@features/organization/features/inspections/models';

@@ -1,5 +1,5 @@
 import type { Signal } from '@angular/core';
-import type { StoreError } from '@core/state/request-state';
+import type { StoreError } from '@core/request-state';
 import type { CurrentOrganizationMemberProfileOutput } from '@features/organization/models';
 
 /**

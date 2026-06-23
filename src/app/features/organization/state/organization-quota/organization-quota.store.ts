@@ -17,7 +17,7 @@ import {
   pendingCallState,
   successCallState,
   toStoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { OrganizationService } from '@features/organization/data-access';
 import {
   ORGANIZATION_QUOTA_RESOURCES,

@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import type { StoreError } from '@core/state/request-state';
+import type { StoreError } from '@core/request-state';
 import { ACCOUNT_PERMISSION } from '@features/account/models';
 import { UserStore } from '@features/account/state';
 import { UserPermissionService } from '../user-permission.service';

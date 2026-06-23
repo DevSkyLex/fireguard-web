@@ -1,4 +1,4 @@
-import type { HydraItem } from '@core/models/api';
+import type { HydraItem } from '@core/api/models';
 import type { InterventionIssueSeverity } from './intervention-issue-severity.type';
 
 /**

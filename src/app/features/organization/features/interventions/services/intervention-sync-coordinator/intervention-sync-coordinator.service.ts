@@ -8,7 +8,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { pageVisibility } from '@signality/core';
-import { ConnectivityService } from '@core/services/connectivity';
+import { ConnectivityService } from '@core/connectivity';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import { InterventionSyncService } from '../intervention-sync';
 

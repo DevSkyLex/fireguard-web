@@ -9,7 +9,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import type { RequestOptions } from '@core/services/hydra-api';
+import type { RequestOptions } from '@core/api';
 import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import {

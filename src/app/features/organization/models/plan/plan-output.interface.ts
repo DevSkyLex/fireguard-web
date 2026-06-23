@@ -1,4 +1,4 @@
-import type { HydraItem } from '@core/models/api';
+import type { HydraItem } from '@core/api/models';
 import type { OrganizationQuotaResource } from './organization-quota-resource.model';
 import type { PlanQuotaOutput } from './plan-quota-output.interface';
 

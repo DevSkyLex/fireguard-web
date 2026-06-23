@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
-import type { RequestOptions } from '@core/services/hydra-api';
+import type { RequestOptions } from '@core/api';
 import { FacilityInspectionTable } from '@features/organization/features/facilities/ui/tables';
 import type {
   InspectionListOptions,

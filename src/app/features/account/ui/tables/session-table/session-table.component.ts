@@ -20,7 +20,7 @@ import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
-import type { RequestOptions } from '@core/services/hydra-api';
+import type { RequestOptions } from '@core/api';
 import type { SessionOutput } from '@features/auth/models';
 import { EmptyState } from '@shared/components';
 

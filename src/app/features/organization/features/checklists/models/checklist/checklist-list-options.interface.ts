@@ -1,4 +1,4 @@
-import type { PaginationOptions } from '@core/models/api';
+import type { PaginationOptions } from '@core/api/models';
 import type { ChecklistStatus } from './checklist-output.interface';
 
 /**

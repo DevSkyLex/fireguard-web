@@ -5,7 +5,7 @@ import { removeAllEntities, setAllEntities, withEntities } from '@ngrx/signals/e
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
-import type { HydraCollection } from '@core/models/api';
+import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
   idleCallState,
@@ -14,7 +14,7 @@ import {
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { AuditEventService } from '@features/organization/data-access';
 import type { AuditEventListOptions, AuditEventOutput } from '@features/organization/models';
 import { auditStoreEvents } from './events';

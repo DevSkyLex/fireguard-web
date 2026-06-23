@@ -51,6 +51,10 @@
           "fr": {
             "translation": "src/locale/messages.fr.xlf",
             "subPath": "fr"
+          },
+          "es": {
+            "translation": "src/locale/messages.es.xlf",
+            "subPath": "es"
           }
         }
       },
@@ -105,6 +109,9 @@
             },
             "fr": {
               "localize": ["fr"]
+            },
+            "es": {
+              "localize": ["es"]
             }
           },
           "defaultConfiguration": "production"
@@ -120,6 +127,9 @@
             },
             "fr": {
               "buildTarget": "fireguard-web:build:development,fr"
+            },
+            "es": {
+              "buildTarget": "fireguard-web:build:development,es"
             }
           },
           "defaultConfiguration": "development"

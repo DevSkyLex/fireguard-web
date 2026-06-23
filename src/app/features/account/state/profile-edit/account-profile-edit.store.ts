@@ -10,7 +10,7 @@ import {
   successCallState,
   toStoreError,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { UserProfileService } from '@features/account/data-access';
 import type {
   UpdateCurrentUserProfileInput,

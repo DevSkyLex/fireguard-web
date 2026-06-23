@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { EMPTY, expand, reduce, type Observable } from 'rxjs';
-import type { HydraCollection, HydraItem, OptionOutput } from '@core/models/api';
-import { HydraApiService, type RequestOptions } from '@core/services/hydra-api';
+import { HydraApiService, type RequestOptions } from '@core/api';
+import type { HydraCollection, HydraItem, OptionOutput } from '@core/api/models';
 import type {
   EquipmentOutput,
   CreateEquipmentInput,

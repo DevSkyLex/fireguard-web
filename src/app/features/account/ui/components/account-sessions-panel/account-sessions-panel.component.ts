@@ -9,7 +9,7 @@ import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
-import type { RequestOptions } from '@core/services/hydra-api';
+import type { RequestOptions } from '@core/api';
 import { SessionTable } from '@features/account/ui/tables';
 import type { SessionOutput } from '@features/auth/models';
 import { SessionStore } from '@features/auth/state';

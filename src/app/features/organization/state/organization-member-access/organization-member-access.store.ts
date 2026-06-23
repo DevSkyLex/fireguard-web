@@ -20,7 +20,7 @@ import {
   toStoreError,
   type CallState,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import type { CurrentOrganizationMemberProfileOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../active-organization';

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { TitleStrategy, RouterStateSnapshot } from '@angular/router';
-import { TitleService } from '@core/services/title';
+import { TitleService } from '@core/title';
 
 /**
  * Strategy PageTitleStrategy

@@ -9,7 +9,7 @@ import {
   type InputSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import type { RequestOptions } from '@core/services/hydra-api';
+import type { RequestOptions } from '@core/api';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import { FacilityEquipmentTable } from '@features/organization/features/facilities/ui/tables';

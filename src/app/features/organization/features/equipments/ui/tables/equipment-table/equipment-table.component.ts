@@ -33,7 +33,7 @@ import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
-import type { RequestOptions } from '@core/services/hydra-api';
+import type { RequestOptions } from '@core/api';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   EquipmentOutput,

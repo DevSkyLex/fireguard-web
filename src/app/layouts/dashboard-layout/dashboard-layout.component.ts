@@ -13,7 +13,7 @@ import { RouterOutlet } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { Ripple } from 'primeng/ripple';
 import { map } from 'rxjs';
-import { BreadcrumbService } from '@core/services/breadcrumb';
+import { BreadcrumbService } from '@core/breadcrumb';
 import {
   DashboardLayoutHeader,
   DashboardLayoutSidebar,

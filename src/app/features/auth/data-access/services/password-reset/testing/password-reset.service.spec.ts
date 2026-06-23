@@ -2,8 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import type { ApiError } from '@core/api/models';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
-import type { ApiError } from '@core/models/api';
 import type {
   PasswordResetRequestInput,
   PasswordResetRequestOutput,

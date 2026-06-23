@@ -1,4 +1,4 @@
-import type { PaginationOptions, RequestOptions } from '@core/models/api';
+import type { PaginationOptions, RequestOptions } from '@core/api/models';
 import type { InspectionResult, InspectionStatus } from './inspection-output.interface';
 
 /**

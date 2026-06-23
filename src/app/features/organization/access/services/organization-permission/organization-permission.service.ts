@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, type Signal } from '@angular/core';
-import type { StoreError } from '@core/state/request-state';
+import type { StoreError } from '@core/request-state';
 import type { OrganizationPermissionName } from '@features/organization/models';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 

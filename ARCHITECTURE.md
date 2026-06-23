@@ -208,7 +208,7 @@ Contracts live beside the concern that owns the behavior.
 Preferred locations:
 
 - `features/<feature>/ports/` for business capabilities published outside the owning feature,
-- `core/ports/<port-name>/` when app-wide infrastructure publishes a contract to `shared`, `layouts`, or the app shell,
+- `core/<concern>/ports/<port-name>/` when an app-wide infrastructure concern publishes a contract to `shared`, `layouts`, or the app shell (for example `core/theme/ports/`), or `core/<port-name>/` when the contract is a pure port with no local concern service (for example `core/boot-readiness/`),
 - a top-level application contracts area only in the rare case where no stable owner exists.
 
 In this codebase, the default target is owner-local contracts. A top-level `src/app/ports/` folder is transitional compatibility only and must not be treated as the default architecture target.
@@ -234,7 +234,7 @@ Compatibility shims such as legacy `*.port.ts` files may exist temporarily durin
 
 #### Core-owned contracts
 
-If infrastructure in `core/` publishes behavior to external consumers, place the contract under `core/ports/<port-name>/` and bind it from the owning core provider.
+If infrastructure in `core/` publishes behavior to external consumers, place the contract beside its owning concern in `core/<concern>/ports/<port-name>/` (or `core/<port-name>/` for a pure port with no local concern service) and bind it from the owning core provider.
 
 #### Placement rule
 
@@ -264,11 +264,11 @@ If infrastructure in `core/` publishes behavior to external consumers, place the
 
 #### Current owner-local core contracts
 
-| Token                 | Interface           | Concern                       | Bound by                | Consumers                     |
-| --------------------- | ------------------- | ----------------------------- | ----------------------- | ----------------------------- |
-| `THEME_PORT`          | `ThemePort`         | `core/services/theme`         | `provideTheme()`        | shared UI                     |
-| `SPLASH_SCREEN_PORT`  | `SplashScreenPort`  | `core/services/splash-screen` | `provideSplashScreen()` | shared UI                     |
-| `BOOT_READINESS_PORT` | `BootReadinessPort` | `core/ports/boot-readiness`   | `provideAuthFeature()`  | `core/services/splash-screen` |
+| Token                 | Interface           | Concern               | Bound by                | Consumers            |
+| --------------------- | ------------------- | --------------------- | ----------------------- | -------------------- |
+| `THEME_PORT`          | `ThemePort`         | `core/theme`          | `provideTheme()`        | shared UI            |
+| `SPLASH_SCREEN_PORT`  | `SplashScreenPort`  | `core/splash-screen`  | `provideSplashScreen()` | shared UI            |
+| `BOOT_READINESS_PORT` | `BootReadinessPort` | `core/boot-readiness` | `provideAuthFeature()`  | `core/splash-screen` |
 
 `BOOT_READINESS_PORT` shows the inverse-implementation case: the contract is **core-owned** (core consumes it, so it must not import a feature), but the concrete `initialized` signal is owned by the bootstrap feature. The feature therefore binds the core-owned token (`features → core` is allowed), keeping `core → core` intact while letting the splash screen read boot readiness without importing `@features/auth`. When app-wide infrastructure must consume state a feature owns, define a core-owned port and let the feature implement it — never import the feature port into `core`.
 
@@ -367,25 +367,61 @@ The following templates define the default structure to create.
 
 ### 8.1 `core/` template
 
+`core` is organized **concern-first**: each infrastructure concern is a
+self-contained module (a `services/<name>/` folder per service — each with its
+own `testing/` — plus the concern's `provider`, `ports/`, `models/`, `utils/`,
+and barrel), mirroring the feature layout. `core/locale` and `core/theme` are
+the reference shapes. A small number of infrastructure **groupings** (`config/`,
+`http/`, `routing/`) remain because they own several sibling primitives rather
+than one concern.
+
+Every service lives in its own folder under the concern's `services/`, with its
+spec colocated in a `testing/` subfolder (same rule as a feature's
+`data-access/services/<concern>/` — section 9.5).
+
 ```text
 core/
+  # ── self-contained concern modules ──
+  api/                     # shared transport boundary
+    services/
+      hydra-api/
+        hydra-api.service.ts
+        testing/hydra-api.service.spec.ts
+    models/                # type-only transport contracts (Hydra*, ApiError, ConstraintViolation, AvatarUrls, …)
+    utils/                 # transport guards/helpers (isApiError, isConstraintViolation, pickAvatarUrl)
+    index.ts
+  theme/                   # appearance mode (dark/light/system)
+    services/theme/        # theme.service.ts + testing/
+    theme.provider.ts
+    ports/  models/  utils/  index.ts
+  primeng/                 # PrimeNG library setup
+    presets/               # design-token presets (FireguardTheme) + index.ts
+    index.ts
+  splash-screen/           # services/splash-screen/ + provider + ports/
+  breadcrumb/              # services/breadcrumb/ (service + testing/) + index.ts
+  connectivity/            # services/connectivity/
+  cookie/                  # services/cookie/ + models/ (cookie options)
+  mercure/                 # services/mercure/ + models/ (subscription output)
+  title/                   # services/title/
+  request-state/           # shared async store infra (state-slice taxonomy §9.7)
+    models/                # CallState/StoreError/QueryState types (type-only)
+    utils/                 # call-state factories+guards, toStoreError, query updaters
+    features/              # withQueryState signalStoreFeature
+  boot-readiness/          # pure core-owned port (no local service)
+  locale/                  # services/locale-preference/ + models/ + utils/ + constants/
+  # ── infrastructure groupings (own multiple sibling primitives) ──
   config/
     environment/
   http/
     interceptors/
-    errors/
+    errors/                # optional
     transfer-state/        # optional
-  models/
-    api/
-    mercure/
   routing/
-    guards/
-    resolvers/
+    guards/                # optional
+    resolvers/             # optional
     strategies/
-  services/
-  stores/
-    request-state/
-  themes/
+  README.md                # documents the core boundary (parity with features' FEATURE.md)
+  index.ts                 # optional — provideCore() aggregator for infrastructure providers
 ```
 
 Target rule:
@@ -412,9 +448,10 @@ Not allowed in `core`:
 
 Notes:
 
-- `core/models` is reserved for truly shared transport models such as Hydra and Mercure contracts.
-- `core/stores` is not a home for business stores. It is limited to shared store infrastructure such as async call state primitives (`CallState`, `withQueryState`, `toStoreError`).
-- do not create `core/providers` by default. A provider lives in `core` only when it is truly infrastructure-owned and not feature-owned.
+- each core concern owns its own `models/`, `utils/`, and (when published) `ports/` sub-folders — do not reintroduce flat type-first buckets (`core/services`, `core/ports`, `core/models`, `core/utils`, `core/state`, `core/themes`).
+- `core/api/models` holds the truly shared, app-wide transport models (Hydra envelope, RFC 7807 `ApiError`, `ConstraintViolation`); a concern-specific model (e.g. Mercure) lives in that concern's own `models/` (`core/mercure/models`).
+- `core/request-state` is not a home for business stores. It is limited to shared async store infrastructure such as call-state primitives (`CallState`, `withQueryState`, `toStoreError`).
+- a concern's provider lives inside the concern (`core/theme/theme.provider.ts`), not in a separate `core/providers`; an optional `core/index.ts` may expose a `provideCore()` that aggregates the infrastructure providers for the app shell.
 
 ### 8.2 `layouts/` template
 
@@ -978,11 +1015,11 @@ Structure rules:
 - keep `data-access/services/` and `data-access/adapters/` private by default; other folders import through `@features/<feature>/data-access`, not through implementation paths,
 - add extra internal buckets such as `testing/` only when the `data-access` concern genuinely owns reusable test helpers or fixtures.
 
-Do not add new feature CRUD services to `core/services/hydra-api`.
+Do not add new feature CRUD services to `core/api`.
 
 Target rule:
 
-Every feature API service must extend `HydraApiService` from `@core/services/hydra-api`.
+Every feature API service must extend `HydraApiService` from `@core/api`.
 
 `HydraApiService` provides:
 
@@ -1227,13 +1264,15 @@ Because the type is computed from the value, the two cannot be separated cleanly
 
 Distinguish it from a hand-written union with a parallel runtime list: when the `type` is written by hand and a separate `const` array merely _enumerates_ its members (the two are independent), they are **not** a const-enum — the union stays in `models/` and the array moves to `constants/` (section 9.9).
 
-Do not centralize feature model catalogs under `core/models`.
+Do not centralize feature model catalogs under `core/api/models`.
 
-`core/models` is reserved for truly shared transport types:
+`core/api/models` is reserved for truly shared, app-wide transport types:
 
 - Hydra envelope types (`HydraCollection`, `HydraItem`, `HydraView`),
-- Mercure subscription types,
-- `ApiError` (RFC 7807 problem details).
+- `ApiError` (RFC 7807 problem details) and `ConstraintViolation`.
+
+A transport model owned by a single core concern lives in that concern's own
+`models/` instead (for example Mercure subscription types in `core/mercure/models`).
 
 ### 9.7 `state/`
 
@@ -1350,7 +1389,7 @@ Internal-only stores may be imported directly from their slice only inside the o
 
 Every async action must expose explicit call state. The `Operation<TData, TError>` type is retired.
 
-**Import from `@core/state/request-state`:**
+**Import from `@core/request-state`:**
 
 ```typescript
 import {
@@ -1363,7 +1402,7 @@ import {
   type CallState,
   type StoreError,
   type StoreFailureEventPayload,
-} from '@core/state/request-state';
+} from '@core/request-state';
 ```
 
 Lifecycle:
@@ -1421,7 +1460,7 @@ import {
   setSuccessQuery,
   setErrorQuery,
   toStoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 
 export const TrendStore = signalStore(
   withQueryState<TrendResource>(), // provides: isQueryLoading, isQueryLoaded, queryData, queryError
@@ -1656,7 +1695,7 @@ Placement (apply section 3.8):
 - used by **one** component, dataview, or form → keep it in that group's local `utils/` · `constants/` · `options/` folder,
 - used by **several** units of one feature → lift to the feature-level `features/<feature>/utils` · `constants` · `options`,
 - used by **several** features and domain-agnostic → `shared/utils` · `shared/constants`,
-- **app-wide infrastructure** → `core/` (for example `core/state/request-state` utilities).
+- **app-wide infrastructure** → `core/` (for example `core/request-state` utilities).
 
 Feature-level layout:
 
@@ -1809,8 +1848,8 @@ Per-component `index.ts` files may exist for local organization, but cross-folde
 
 Anti-patterns:
 
-- putting feature business services under `@core/services/hydra-api`,
-- putting feature models under `@core/models`,
+- putting feature business services under `@core/api`,
+- putting feature models under `@core/api/models`,
 - putting domain-aware widgets under `@shared/components`,
 - importing a component implementation file such as `@features/<feature>/ui/components/<name>/<name>.component` from outside its own local folder,
 - importing another feature's `data-access/services/` folder as if it were a public API,
@@ -1871,8 +1910,8 @@ The following patterns are approved for new work.
 
 The following patterns must not be introduced in new code.
 
-- adding new feature CRUD services under `core/services/hydra-api`,
-- adding new feature model catalogs under `core/models`,
+- adding new feature CRUD services under `core/api`,
+- adding new feature model catalogs under `core/api/models`,
 - loading the same entity in both resolver and page initialization,
 - putting router synchronization or hidden reload logic inside a dataview,
 - using `providedIn: 'root'` as a substitute for deciding ownership correctly,
@@ -1908,9 +1947,7 @@ Use these transition rules.
 
 Existing code under:
 
-- `core/models`,
-- `core/services/hydra-api`,
-- `core/stores`,
+- the flat type-first core buckets (`core/services`, `core/ports`, `core/models`, `core/state`, `core/utils`, `core/themes`) that predate the concern-first core layout (section 8.1),
 - legacy flat feature `state/` folders with files directly at the concern root,
 - legacy flat feature `models/` folders with files directly at the concern root,
 - legacy feature-root `guards/`, `resolvers/`, or `interceptors/` folders that predate the `http/` grouping,
@@ -1992,7 +2029,7 @@ Browser / Node.js
               ├── ssr-cookie-forward  — forwards browser cookies on server-side requests
               ├── auth                — injects Bearer token on non-public endpoints
               └── unauthorized        — redirects on 401, clears session
-        └── HydraApiService (core/services/hydra-api/hydra-api.service.ts)
+        └── HydraApiService (core/api/hydra-api.service.ts)
               └── Feature API services (features/<feature>/data-access)
                     └── Feature stores (features/<feature>/state)
 ```
@@ -2097,7 +2134,7 @@ The canonical async-state and store templates live in section 9.7. This section 
 
 ### 18.1 Async call state
 
-The retired `Operation<TData, TError>` type and its `createIdleOperation` / `createLoadingOperation` / `createSuccessOperation` / `createErrorOperation` constructors must not appear in new code. Use `CallState` from `@core/state/request-state` (see section 9.7 for the full lifecycle).
+The retired `Operation<TData, TError>` type and its `createIdleOperation` / `createLoadingOperation` / `createSuccessOperation` / `createErrorOperation` constructors must not appear in new code. Use `CallState` from `@core/request-state` (see section 9.7 for the full lifecycle).
 
 The four states:
 

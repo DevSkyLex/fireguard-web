@@ -18,7 +18,7 @@ import type { MenuItem } from 'primeng/api';
 import { BreadcrumbModule, BreadcrumbPassThroughOptions } from 'primeng/breadcrumb';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
-import { BreadcrumbService } from '@core/services/breadcrumb';
+import { BreadcrumbService } from '@core/breadcrumb';
 
 /**
  * Component DashboardLayoutBreadcrumb

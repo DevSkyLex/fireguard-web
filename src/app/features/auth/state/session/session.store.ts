@@ -10,8 +10,8 @@ import {
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
-import type { HydraCollection } from '@core/models/api';
-import type { PaginationOptions } from '@core/services/hydra-api';
+import type { PaginationOptions } from '@core/api';
+import type { HydraCollection } from '@core/api/models';
 import {
   idleCallState,
   pendingCallState,
@@ -20,7 +20,7 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { SessionService } from '@features/auth/data-access';
 import type { SessionOutput } from '@features/auth/models';
 import { sessionStoreEvents } from './events';

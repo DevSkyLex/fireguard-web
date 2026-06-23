@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { ConnectivityService } from '@core/services/connectivity';
+import { ConnectivityService } from '@core/connectivity';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { MyInterventionsStore } from '@features/organization/features/interventions/state/my-interventions';
 import type { OrganizationOutput } from '@features/organization/models';

@@ -9,7 +9,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { SPLASH_SCREEN_PORT, type SplashScreenPort } from '@core/ports/splash-screen';
+import { SPLASH_SCREEN_PORT, type SplashScreenPort } from '@core/splash-screen';
 
 /**
  * Constant FADE_DURATION_MS

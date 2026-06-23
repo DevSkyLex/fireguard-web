@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import type { CallState } from '@core/state/request-state';
+import type { CallState } from '@core/request-state';
 import type { NotificationOutput } from '@features/account/models';
 import { NotificationStore } from '@features/account/state';
 import { AccountNotificationsPanel } from '../account-notifications-panel.component';

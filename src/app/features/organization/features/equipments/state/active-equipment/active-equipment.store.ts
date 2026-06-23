@@ -11,7 +11,7 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { activeEquipmentStoreEvents } from './events';

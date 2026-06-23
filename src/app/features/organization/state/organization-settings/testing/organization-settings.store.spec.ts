@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
-import type { ApiError } from '@core/models/api';
+import type { ApiError } from '@core/api/models';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../../active-organization';

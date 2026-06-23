@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of } from 'rxjs';
-import type { HydraCollection, OptionOutput } from '@core/models/api';
+import type { HydraCollection, OptionOutput } from '@core/api/models';
 import { UserService } from '@features/account/data-access';
 import type { UserOutput } from '@features/account/models';
 import { UsersStore } from '../users.store';

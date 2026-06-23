@@ -55,12 +55,27 @@ describe('AccountPage', () => {
     expect((component as unknown as { activeTab: () => string }).activeTab()).toBe('profile');
   });
 
-  it('should expose the three account sections in order for the vertical navigation', () => {
+  it('should expose the account sections in order for the vertical navigation', () => {
     const { component } = setup();
 
     const navItems = (component as unknown as { navItems: ReadonlyArray<{ id: string }> }).navItems;
 
-    expect(navItems.map((item) => item.id)).toEqual(['profile', 'security', 'notifications']);
+    expect(navItems.map((item) => item.id)).toEqual([
+      'profile',
+      'settings',
+      'security',
+      'notifications',
+    ]);
+  });
+
+  it('should resolve the active section entry for the section card header', () => {
+    const { component } = setup({ tab: 'settings' });
+
+    const activeSection = (
+      component as unknown as { activeSection: () => { id: string } }
+    ).activeSection();
+
+    expect(activeSection.id).toBe('settings');
   });
 
   it('should persist the selected tab in the tab query parameter', () => {

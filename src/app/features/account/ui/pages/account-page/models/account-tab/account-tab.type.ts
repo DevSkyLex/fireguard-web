@@ -6,4 +6,4 @@
  *
  * @since 1.0.0
  */
-export type AccountTab = 'profile' | 'security' | 'notifications';
+export type AccountTab = 'profile' | 'settings' | 'security' | 'notifications';

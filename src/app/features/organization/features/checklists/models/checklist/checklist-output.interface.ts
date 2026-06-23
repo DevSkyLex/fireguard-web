@@ -1,4 +1,4 @@
-import type { HydraItem } from '@core/models/api';
+import type { HydraItem } from '@core/api/models';
 import type { ChecklistItemOutput } from '../checklist-item/checklist-item-output.interface';
 
 /**

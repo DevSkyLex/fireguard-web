@@ -11,7 +11,7 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { activeInspectionStoreEvents } from './events';

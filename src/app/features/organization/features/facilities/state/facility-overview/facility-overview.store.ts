@@ -4,7 +4,7 @@ import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
-import type { HydraCollection } from '@core/models/api';
+import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
   idleCallState,
@@ -12,7 +12,7 @@ import {
   successCallState,
   toStoreError,
   type StoreError,
-} from '@core/state/request-state';
+} from '@core/request-state';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type {
   EquipmentOutput,

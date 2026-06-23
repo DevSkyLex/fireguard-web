@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
-import type { HydraCollection } from '@core/models/api';
+import type { HydraCollection } from '@core/api/models';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '../intervention.store';

@@ -1,4 +1,4 @@
-import type { StoreError } from '@core/state/request-state';
+import type { StoreError } from '@core/request-state';
 import {
   isQuotaExceededError,
   quotaUsageColor,

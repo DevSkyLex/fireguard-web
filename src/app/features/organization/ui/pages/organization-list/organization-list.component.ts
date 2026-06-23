@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import type { RequestOptions } from '@core/services/hydra-api';
+import type { RequestOptions } from '@core/api';
 import type { OrganizationOutput } from '@features/organization/models';
 import { OrganizationStore } from '@features/organization/state';
 import {

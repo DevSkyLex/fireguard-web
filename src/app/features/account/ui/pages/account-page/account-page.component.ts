@@ -13,6 +13,7 @@ import { NotificationStore, UserStore } from '@features/account/state';
 import { AccountNotificationsPanel } from '../../components/account-notifications-panel/account-notifications-panel.component';
 import { AccountProfilePanel } from '../../components/account-profile-panel/account-profile-panel.component';
 import { AccountSessionsPanel } from '../../components/account-sessions-panel/account-sessions-panel.component';
+import { AccountSettingsPanel } from '../../components/account-settings-panel/account-settings-panel.component';
 import { AccountTrustedDevicesPanel } from '../../components/account-trusted-devices-panel/account-trusted-devices-panel.component';
 import { ACCOUNT_TABS } from './constants';
 import { type AccountNavItem, type AccountTab } from './models';
@@ -42,6 +43,7 @@ import { type AccountNavItem, type AccountTab } from './models';
     MenuModule,
     TagModule,
     AccountProfilePanel,
+    AccountSettingsPanel,
     AccountSessionsPanel,
     AccountTrustedDevicesPanel,
     AccountNotificationsPanel,
@@ -151,6 +153,12 @@ export class AccountPage {
       description: $localize`:@@account.nav.profileDesc:Manage how your profile appears to other members.`,
     },
     {
+      id: 'settings',
+      label: $localize`:@@account.nav.settingsLabel:Settings`,
+      icon: 'pi pi-cog',
+      description: $localize`:@@account.nav.settingsDesc:Language and display preferences.`,
+    },
+    {
       id: 'security',
       label: $localize`:@@account.menu.sessionsSecurity:Sessions & security`,
       icon: 'pi pi-shield',
@@ -163,6 +171,23 @@ export class AccountPage {
       description: $localize`:@@account.nav.notificationsDesc:Account and organization activity in one place.`,
     },
   ];
+
+  /**
+   * Property activeSection
+   * @readonly
+   *
+   * @description
+   * Navigation entry matching the active tab, used to render the section card
+   * header (title and description) consistently across every section.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<AccountNavItem>}
+   */
+  protected readonly activeSection: Signal<AccountNavItem> = computed(
+    () => this.navItems.find((item) => item.id === this.activeTab()) ?? this.navItems[0],
+  );
 
   /**
    * Property headerAvatarPt

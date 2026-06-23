@@ -1,6 +1,6 @@
 import { type } from '@ngrx/signals';
 import { eventGroup } from '@ngrx/signals/events';
-import type { StoreFailureEventPayload } from '@core/state/request-state';
+import type { StoreFailureEventPayload } from '@core/request-state';
 
 export const inspectionStoreEvents = eventGroup({
   source: 'Inspection Store',

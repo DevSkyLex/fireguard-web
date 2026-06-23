@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/ports/theme';
+import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import { ThemeSwitcher } from '../theme-switcher.component';
 
 describe('ThemeSwitcher', () => {

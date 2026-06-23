@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
-import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/ports/theme';
+import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 
 /**
  * Component ThemeSwitcher

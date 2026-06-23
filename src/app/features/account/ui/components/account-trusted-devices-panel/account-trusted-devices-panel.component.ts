@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import type { RequestOptions } from '@core/services/hydra-api';
+import type { RequestOptions } from '@core/api';
 import { TrustedDeviceTable } from '@features/account/ui/tables';
 import type { TrustedDeviceOutput } from '@features/auth/models';
 import { TrustedDeviceStore } from '@features/auth/state';

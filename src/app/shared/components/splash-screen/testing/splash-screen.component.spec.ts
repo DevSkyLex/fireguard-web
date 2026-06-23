@@ -4,7 +4,7 @@ import {
   SPLASH_SCREEN_PORT,
   type SplashScreenPhase,
   type SplashScreenPort,
-} from '@core/ports/splash-screen';
+} from '@core/splash-screen';
 import { SplashScreen } from '../splash-screen.component';
 
 describe('SplashScreen', () => {

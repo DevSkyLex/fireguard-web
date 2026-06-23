@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { type Observable } from 'rxjs';
-import type { HydraCollection } from '@core/models/api';
-import { HydraApiService, type PaginationOptions } from '@core/services/hydra-api';
+import { HydraApiService, type PaginationOptions } from '@core/api';
+import type { HydraCollection } from '@core/api/models';
 import type { TrustDeviceOutput, TrustedDeviceOutput } from '@features/auth/models';
 
 /**

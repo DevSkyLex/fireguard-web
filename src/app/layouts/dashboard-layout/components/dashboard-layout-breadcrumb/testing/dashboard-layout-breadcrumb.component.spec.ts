@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { BreadcrumbService } from '@core/services/breadcrumb';
+import { BreadcrumbService } from '@core/breadcrumb';
 import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb.component';
 
 describe('DashboardLayoutBreadcrumb', () => {

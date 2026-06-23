@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { catchError, type Observable } from 'rxjs';
-import { HydraApiService } from '@core/services/hydra-api';
+import { HydraApiService } from '@core/api';
 import type {
   ConfirmPasswordChangeInput,
   ConfirmPasswordChangeOutput,

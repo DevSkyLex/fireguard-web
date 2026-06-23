@@ -1,6 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID, REQUEST } from '@angular/core';
-import type { CookieOptions } from '../../cookie-options.interface';
+import type { CookieOptions } from '../../models';
 
 /**
  * Service CookieService

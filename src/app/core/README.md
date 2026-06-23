@@ -63,4 +63,4 @@ Each concern is imported through its alias barrel — `@core/api`,
 `@core/request-state`, `@core/theme`, `@core/cookie`, `@core/config/environment`,
 etc. Import the concern barrel, never a deep implementation file.
 
-See `ARCHITECTURE.md` §3.2, §8.1, and §17 for the normative rules.
+See `ARCHITECTURE.md` §3.2, §8.1, and §16 for the normative rules.

@@ -2,11 +2,7 @@
 
 This document defines the target frontend architecture for `fireguard-web`.
 
-It is normative.
-
-- New code must follow this document.
-- Refactors must move legacy code toward this document.
-- Existing mismatches are transitional and must not be treated as precedent.
+It is normative: new code must follow this document, and refactors move code toward it.
 
 This file is intentionally opinionated. It defines ownership and dependency rules. It is not a catalog of every file that exists today.
 
@@ -26,13 +22,11 @@ This document does not govern:
 
 - visual design conventions,
 - backend architecture,
-- naming of backend business concepts,
-- one-off migration mechanics beyond the transition rules in this file.
+- naming of backend business concepts.
 
 ## 2. Reading Guide
 
 - Target rule: mandatory for new code.
-- Transitional rule: accepted only while migrating legacy areas.
 - Anti-pattern: must not be introduced in new code.
 
 ## 2.1 Feature Documentation
@@ -211,7 +205,7 @@ Preferred locations:
 - `core/<concern>/ports/<port-name>/` when an app-wide infrastructure concern publishes a contract to `shared`, `layouts`, or the app shell (for example `core/theme/ports/`), or `core/<port-name>/` when the contract is a pure port with no local concern service (for example `core/boot-readiness/`),
 - a top-level application contracts area only in the rare case where no stable owner exists.
 
-In this codebase, the default target is owner-local contracts. A top-level `src/app/ports/` folder is transitional compatibility only and must not be treated as the default architecture target.
+In this codebase, the default target is owner-local contracts.
 
 #### Feature-owned ports — `features/<feature>/ports/`
 
@@ -229,8 +223,6 @@ Naming convention:
 - `features/<feature>/ports/<port-name>/<port-name>.interface.ts`
 - `features/<feature>/ports/<port-name>/<port-name>.token.ts`
 - `features/<feature>/ports/<port-name>/index.ts`
-
-Compatibility shims such as legacy `*.port.ts` files may exist temporarily during migration, but they are not the target structure.
 
 #### Core-owned contracts
 
@@ -421,7 +413,6 @@ core/
     resolvers/             # optional
     strategies/
   README.md                # documents the core boundary (parity with features' FEATURE.md)
-  index.ts                 # optional — provideCore() aggregator for infrastructure providers
 ```
 
 Target rule:
@@ -448,10 +439,10 @@ Not allowed in `core`:
 
 Notes:
 
-- each core concern owns its own `models/`, `utils/`, and (when published) `ports/` sub-folders — do not reintroduce flat type-first buckets (`core/services`, `core/ports`, `core/models`, `core/utils`, `core/state`, `core/themes`).
+- each core concern owns its own `services/<name>/` (service + colocated `testing/`), `models/`, `utils/`, and (when published) `ports/` sub-folders — do not reintroduce flat type-first buckets (`core/services`, `core/ports`, `core/models`, `core/utils`, `core/state`, `core/themes`). The `services/` grouping is concern-local; it is not a top-level `core/services` bucket.
 - `core/api/models` holds the truly shared, app-wide transport models (Hydra envelope, RFC 7807 `ApiError`, `ConstraintViolation`); a concern-specific model (e.g. Mercure) lives in that concern's own `models/` (`core/mercure/models`).
 - `core/request-state` is not a home for business stores. It is limited to shared async store infrastructure such as call-state primitives (`CallState`, `withQueryState`, `toStoreError`).
-- a concern's provider lives inside the concern (`core/theme/theme.provider.ts`), not in a separate `core/providers`; an optional `core/index.ts` may expose a `provideCore()` that aggregates the infrastructure providers for the app shell.
+- a concern's provider lives inside the concern (`core/theme/theme.provider.ts`), not in a separate `core/providers`; each infrastructure provider is wired individually from `app.config.ts` (no `provideCore()` aggregator).
 
 ### 8.2 `layouts/` template
 
@@ -574,7 +565,7 @@ Notes:
 
 - `ui/` is the default home for `pages/`, `components/`, `tables/`, `dataviews/`, `forms/`, `dialogs/`, and `drawers/`; do not spread presentation folders beside `data-access/` and `state/`,
 - `data-access/` root should stay small: keep the public barrel at the root, put injectable API classes under `data-access/services/`, and reserve `data-access/adapters/` for pure transformations,
-- `ui/` is the target structure; legacy flat `pages/`, `components/`, `dataviews/`, `forms/`, `dialogs/`, and `drawers/` folders may remain only under the transition rules in section 15,
+- `ui/` is the home for `pages/`, `components/`, `tables/`, `dataviews/`, `forms/`, `dialogs/`, and `drawers/`; do not place these presentation folders at the feature root,
 - if a feature owns guards, resolvers, or feature-scoped interceptors, they live under `http/`; do not place them at the feature root,
 - keep empty concern folders absent; the template defines ownership boundaries, not mandatory boilerplate,
 - create `ports/` only when a feature publishes behavioral contracts consumed by layouts or approved sibling features; do not create `ports/` for contracts consumed only within the feature,
@@ -1808,6 +1799,7 @@ Standard public API surfaces include:
 - `features/<feature>/services/index.ts` and `features/<feature>/access/index.ts` for behavioral and access-helper services consumed outside their own local area,
 - `features/<feature>/models/index.ts` for feature contracts and reusable feature types intentionally consumed outside one local model slice,
 - `features/<feature>/state/index.ts` when stores or event groups are intentionally consumed outside their own state slice,
+- `core/<concern>/index.ts` for each app-wide infrastructure concern (`@core/api`, `@core/request-state`, `@core/theme`, `@core/cookie`, …); the concern barrel is the only entry point — outside code never imports a concern's `services/`, `models/`, `utils/`, `features/`, or `ports/` implementation files directly (the shared transport bucket `@core/api/models` and the guard bucket `@core/api/utils` are the sanctioned exceptions),
 - `shared/components/index.ts` for shared UI primitives.
 
 Internal-only folders do not require or deserve a public barrel by default:
@@ -1937,55 +1929,7 @@ The following patterns must not be introduced in new code.
 - hoisting a model, util, constant, or option to the feature (or `shared/`, or `core/`) before a second consumer exists, instead of keeping it local until usage requires lifting (section 3.8),
 - reaching into another component's private `models/`, `utils/`, `constants/`, or `options/` folder instead of lifting the shared unit first.
 
-## 15. Transition Rules
-
-The current codebase is not expected to align everywhere on day one.
-
-Use these transition rules.
-
-### 15.1 Legacy core business buckets
-
-Existing code under:
-
-- the flat type-first core buckets (`core/services`, `core/ports`, `core/models`, `core/state`, `core/utils`, `core/themes`) that predate the concern-first core layout (section 8.1),
-- legacy flat feature `state/` folders with files directly at the concern root,
-- legacy flat feature `models/` folders with files directly at the concern root,
-- legacy feature-root `guards/`, `resolvers/`, or `interceptors/` folders that predate the `http/` grouping,
-- legacy flat feature UI folders such as `features/<feature>/pages`, `features/<feature>/components`, `features/<feature>/dataviews`, and `features/<feature>/forms`
-
-may remain temporarily when it is part of legacy code.
-
-However:
-
-- do not add new files or new feature surface area to those legacy locations when the target location is clear,
-- do not treat legacy flat feature UI folders as precedent for new feature structure,
-- do not treat flat `state/` or `models/` roots as precedent for new feature structure,
-- do not treat feature-root `guards/`, `resolvers/`, or `interceptors/` as precedent for new feature structure,
-- when touching a feature substantially, move new files toward feature ownership,
-- when restructuring a feature UI substantially, migrate toward `ui/` instead of extending the legacy flat layout,
-- when restructuring feature routing concerns substantially, migrate toward `http/{guards,resolvers,interceptors}` instead of extending feature-root folders,
-- when restructuring feature state or contracts substantially, migrate toward named `state/` slices and concept-first `models/` folders instead of extending flat roots,
-- prefer migration by opportunity instead of large blind rewrites.
-
-### 15.2 New code follows target ownership immediately
-
-Even if surrounding code is still legacy, any new file should be placed according to the target structure unless that would create disproportionate churn.
-
-For UI code, the target structure means `ui/pages`, `ui/components`, `ui/tables`, `ui/dataviews`, `ui/forms`, `ui/dialogs`, and `ui/drawers`.
-
-For feature routing concerns, the target structure means `http/guards`, `http/resolvers`, and `http/interceptors`.
-
-For feature state and contracts, the target structure means named `state/` slices behind `state/index.ts` and concept-first `models/` folders behind `models/index.ts`.
-
-### 15.3 Exceptions require an explicit note
-
-If a change must violate this document temporarily, add a short note in the pull request or a local architecture note explaining:
-
-- why the exception exists,
-- how long it is expected to remain,
-- what migration path is intended.
-
-## 16. Review Checklist
+## 15. Review Checklist
 
 Before merging a change, verify the following.
 
@@ -2016,11 +1960,11 @@ Before merging a change, verify the following.
 - If a shared component needs infrastructure, does it inject a contract from the owning `core` concern instead of a concrete `core` service?
 - Are new behavioral contracts placed with the owning feature or core concern rather than in `core/tokens/` or a central dumping folder?
 
-## 17. HTTP Transport Architecture
+## 16. HTTP Transport Architecture
 
 This section documents the precise layering of HTTP concerns in the application and defines the contract each layer must fulfill.
 
-### 17.1 Layer overview
+### 16.1 Layer overview
 
 ```
 Browser / Node.js
@@ -2036,7 +1980,7 @@ Browser / Node.js
 
 Nothing outside of `core/http/interceptors` may modify request headers or intercept responses at the transport level.
 
-### 17.2 Interceptor responsibilities
+### 16.2 Interceptor responsibilities
 
 Each interceptor has a single responsibility.
 
@@ -2044,7 +1988,7 @@ Each interceptor has a single responsibility.
 - `auth`: injects the `Authorization: Bearer <token>` header on all requests whose URL does not match the public endpoints list. Does not perform refresh logic.
 - `unauthorized`: catches `401 Unauthorized` responses and triggers a session invalidation and redirect. Does not retry requests.
 
-### 17.3 HydraApiService contract
+### 16.3 HydraApiService contract
 
 `HydraApiService` is the only class that constructs HTTP calls for business data.
 
@@ -2055,7 +1999,7 @@ Rules:
 - Services return `Observable<T>`. They never subscribe internally, never `catch`, never transform to view models.
 - Errors propagate without interception to the store layer, which handles them via `tapResponse`.
 
-### 17.4 SSR fetch strategy
+### 16.4 SSR fetch strategy
 
 Authenticated SSR data must not be treated uniformly.
 
@@ -2070,7 +2014,7 @@ Do not expand `TransferState` to every authenticated list. If the UI can tolerat
 - URL construction uses `buildUrl(path, id?)` and `buildParams(options?)`.
 - The base content type is `application/ld+json`. Do not override it unless the endpoint explicitly requires it (e.g., file uploads use `multipart/form-data`).
 
-### 17.5 API error contract
+### 16.5 API error contract
 
 The backend follows RFC 7807 Problem Details for error responses.
 
@@ -2092,7 +2036,7 @@ For validation failures (400 with constraint violations), use `isConstraintViola
 
 Never access `.status`, `.title`, or `.detail` on an `unknown` error without first calling a type guard.
 
-### 17.6 Error flow across layers
+### 16.6 Error flow across layers
 
 ```
 HttpClient error (HttpErrorResponse)
@@ -2107,7 +2051,7 @@ HttpClient error (HttpErrorResponse)
 
 No layer skips a step. A page must not read raw `HttpErrorResponse` from a service; it reads the normalized `StoreError` through the store's `CallState` signal (see section 9.7).
 
-### 17.7 Hydra transport model
+### 16.7 Hydra transport model
 
 Collection responses from the API follow the Hydra/JSON-LD envelope:
 
@@ -2126,13 +2070,13 @@ Stores that need pagination must read `'hydra:view'` and `'hydra:totalItems'` fr
 
 ---
 
-## 18. Store Patterns Reference
+## 17. Store Patterns Reference
 
 This section codifies the exact patterns used in the codebase for async call state and NgRx SignalStore structure. These are not suggestions; they are the standards.
 
 The canonical async-state and store templates live in section 9.7. This section is a quick reference and adds the store-scoping, collection, event, and adapter decisions that 9.7 does not.
 
-### 18.1 Async call state
+### 17.1 Async call state
 
 The retired `Operation<TData, TError>` type and its `createIdleOperation` / `createLoadingOperation` / `createSuccessOperation` / `createErrorOperation` constructors must not appear in new code. Use `CallState` from `@core/request-state` (see section 9.7 for the full lifecycle).
 
@@ -2155,7 +2099,7 @@ Never pass a raw `HttpErrorResponse` or `unknown` to `errorCallState`: always ca
 
 Read call state with the guards `isCallPending`, `isCallSuccess`, `isCallError`.
 
-### 18.2 Canonical store template
+### 17.2 Canonical store template
 
 ```typescript
 // feature-state.interface.ts (lives in state/<slice>/models/)
@@ -2221,7 +2165,7 @@ export const FeatureStore = signalStore(
 
 For a store with exactly one query concern, prefer the `withQueryState` feature instead of a named `CallState` field (see section 9.7, Pattern 2).
 
-### 18.3 Root-provided vs component-scoped stores
+### 17.3 Root-provided vs component-scoped stores
 
 | Criterion                                         | Root-provided (`{ providedIn: 'root' }`) | Component-scoped (added to `providers:`) |
 | ------------------------------------------------- | ---------------------------------------- | ---------------------------------------- |
@@ -2233,7 +2177,7 @@ For a store with exactly one query concern, prefer the `withQueryState` feature 
 
 Do not use `{ providedIn: 'root' }` as a default for every store. Scoped stores are lower-risk and more predictable for route-specific data.
 
-### 18.4 Entity collections (withEntities)
+### 17.4 Entity collections (withEntities)
 
 Use `withEntities` when:
 
@@ -2255,7 +2199,7 @@ Update primitives: `setAllEntities`, `addEntity`, `addEntities`, `updateEntity`,
 
 Do not use `withEntities` for a single resource or a list that is always fully replaced at once and never needs `id`-based lookup. Use a standard `CallState<T[]>` field instead.
 
-### 18.5 Event system
+### 17.5 Event system
 
 Stores expose notable transitions as typed events using `eventGroup`.
 
@@ -2273,7 +2217,7 @@ A store must not both emit and listen to the same event group instance; that cre
 
 Store event files should live next to the owning store or inside the owning state slice, typically as `<concern>.events.ts`.
 
-### 18.6 Adapter pattern
+### 17.6 Adapter pattern
 
 Use a pure adapter function when the API response shape does not map 1:1 to what the store or component needs.
 
@@ -2318,7 +2262,7 @@ Adapters must not inject services, must not use `inject()`, and must not produce
 
 ---
 
-## 19. Summary
+## 18. Summary
 
 The target architecture is:
 

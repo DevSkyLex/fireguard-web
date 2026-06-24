@@ -6,11 +6,8 @@ import {
   effect,
   type Signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { Events } from '@ngrx/signals/events';
-import { MessageService } from 'primeng/api';
-import { PasswordResetStore, passwordResetStoreEvents } from '@features/auth/state';
+import { PasswordResetStore } from '@features/auth/state';
 import { NewPasswordForm, type NewPasswordFormValues } from '@features/auth/ui/forms';
 
 /**
@@ -46,34 +43,6 @@ export class NewPasswordPage {
    */
   private readonly passwordResetStore: PasswordResetStore =
     inject<PasswordResetStore>(PasswordResetStore);
-
-  /**
-   * Property messageService
-   * @readonly
-   *
-   * @description
-   * PrimeNG message service for displaying API errors.
-   *
-   * @access private
-   * @since 3.0.0
-   *
-   * @type {MessageService}
-   */
-  private readonly messageService: MessageService = inject<MessageService>(MessageService);
-
-  /**
-   * Property events
-   * @readonly
-   *
-   * @description
-   * NgRx events stream.
-   *
-   * @access private
-   * @since 3.0.0
-   *
-   * @type {Events}
-   */
-  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Property router
@@ -133,18 +102,6 @@ export class NewPasswordPage {
           .catch(() => undefined);
       }
     });
-
-    this.events
-      .on(passwordResetStoreEvents.confirmFailed)
-      .pipe(takeUntilDestroyed())
-      .subscribe(({ payload }) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: $localize`:@@common.error:Error`,
-          detail: payload.message,
-          life: 5000,
-        });
-      });
   }
   //#endregion
 

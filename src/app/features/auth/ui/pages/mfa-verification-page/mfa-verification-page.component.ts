@@ -6,11 +6,8 @@ import {
   computed,
   type Signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { Events } from '@ngrx/signals/events';
-import { MessageService } from 'primeng/api';
-import { AuthStore, authStoreEvents } from '@features/auth/state';
+import { AuthStore } from '@features/auth/state';
 import { ActiveTrustedDeviceStore } from '@features/auth/state';
 import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/auth/ui/forms';
 
@@ -94,35 +91,6 @@ export class MfaVerificationPage {
   private readonly router: Router = inject<Router>(Router);
 
   /**
-   * Property messageService
-   * @readonly
-   *
-   * @description
-   * PrimeNG message service for displaying API errors
-   * during MFA verification.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {MessageService}
-   */
-  private readonly messageService: MessageService = inject<MessageService>(MessageService);
-
-  /**
-   * Property events
-   * @readonly
-   *
-   * @description
-   * NgRx events stream for subscribing to AuthStore events
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Events}
-   */
-  private readonly events: Events = inject<Events>(Events);
-
-  /**
    * Computed showTrustDevice
    * @readonly
    *
@@ -187,32 +155,6 @@ export class MfaVerificationPage {
         this.router.navigate(['/']).catch(() => undefined);
       }
     });
-
-    // Show error messages for MFA verification failures
-    this.events
-      .on(authStoreEvents.mfaVerifyFailed)
-      .pipe(takeUntilDestroyed())
-      .subscribe(({ payload }) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: $localize`:@@common.error:Error`,
-          detail: payload.message,
-          life: 5000,
-        });
-      });
-
-    // Show error messages for MFA resend failures
-    this.events
-      .on(authStoreEvents.mfaResendFailed)
-      .pipe(takeUntilDestroyed())
-      .subscribe(({ payload }) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: $localize`:@@common.error:Error`,
-          detail: payload.message,
-          life: 5000,
-        });
-      });
   }
   //#endregion
 

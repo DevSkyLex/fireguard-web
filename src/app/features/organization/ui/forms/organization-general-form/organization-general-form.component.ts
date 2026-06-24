@@ -60,8 +60,6 @@ export class OrganizationGeneralForm {
   public readonly saving: InputSignal<boolean> = input<boolean>(false);
   /** Whether a logo upload is in progress. */
   public readonly uploadingLogo: InputSignal<boolean> = input<boolean>(false);
-  /** Whether the latest logo upload failed. */
-  public readonly logoHasError: InputSignal<boolean> = input<boolean>(false);
   /** Emits valid general settings values. */
   public readonly submitted: OutputEmitterRef<UpdateOrganizationInput> = output();
   /** Emits the logo file selected through the upload control. */

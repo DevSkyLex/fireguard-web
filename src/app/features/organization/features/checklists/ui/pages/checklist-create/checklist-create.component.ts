@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
 import type { CreateChecklistInput } from '@features/organization/features/checklists/models';
 import { ChecklistStore } from '@features/organization/features/checklists/state';
 import {
@@ -24,8 +23,6 @@ export class ChecklistCreatePage {
   private readonly router: Router = inject<Router>(Router);
   /** Active route used to build relative checklist routes. */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
-  /** PrimeNG message service used for creation feedback. */
-  private readonly messageService: MessageService = inject<MessageService>(MessageService);
   /** Active organization context store. */
   private readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
@@ -36,11 +33,6 @@ export class ChecklistCreatePage {
   public constructor() {
     effect(() => {
       if (this.store.createCallState().status === 'success') {
-        this.messageService.add({
-          severity: 'success',
-          summary: $localize`:@@checklist.createdToast:Checklist created`,
-          detail: $localize`:@@checklist.createdDetail:The checklist is ready for inspections.`,
-        });
         this.router.navigate(['..'], { relativeTo: this.route });
       }
     });

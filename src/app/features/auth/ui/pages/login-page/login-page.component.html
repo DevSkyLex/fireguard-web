@@ -15,4 +15,16 @@
   <section class="flex flex-col">
     <app-login-form [loading]="loading()" (submitted)="handleLogin($event)" />
   </section>
+
+  <!-- Sign-up link -->
+  <p class="text-center text-sm text-surface-600 dark:text-surface-400">
+    <span i18n="@@auth.login.noAccount">Don't have an account?</span>
+    <a
+      routerLink="/auth/register"
+      class="ml-1 font-medium text-primary hover:underline"
+      i18n="@@auth.login.createAccount"
+    >
+      Create one
+    </a>
+  </p>
 </div>

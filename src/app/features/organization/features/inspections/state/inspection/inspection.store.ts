@@ -17,6 +17,7 @@ import {
   idleCallState,
   pendingCallState,
   successCallState,
+  successFeedback,
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
@@ -32,6 +33,7 @@ import type {
   InspectionListOptions,
   NonConformityListOptions,
 } from '@features/organization/features/inspections/models';
+import { isQuotaExceededError } from '@features/organization/utils';
 import { ActiveInspectionStore } from '../active-inspection/active-inspection.store';
 import { inspectionStoreEvents } from './events';
 import type { InspectionState } from './models';
@@ -266,15 +268,24 @@ export const InspectionStore = signalStore(
                       totalInspections: store.totalInspections() + 1,
                       createCallState: successCallState(inspection),
                     });
+                    dispatcher.dispatch(
+                      inspectionStoreEvents.createSucceeded(
+                        successFeedback($localize`:@@inspection.toast.created:Inspection created`),
+                      ),
+                    );
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { createCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      inspectionStoreEvents.createFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to create inspection'),
-                      ),
-                    );
+                    // Quota (409) failures are surfaced by the page as an
+                    // actionable upgrade dialog, not as a generic error toast.
+                    if (!isQuotaExceededError(storeError)) {
+                      dispatcher.dispatch(
+                        inspectionStoreEvents.createFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to create inspection'),
+                        ),
+                      );
+                    }
                   },
                 }),
               ),

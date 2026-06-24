@@ -15,6 +15,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { APP_ROUTES } from '@app/app.routes';
 import { provideEnv } from '@core/config/environment/env.provider';
+import { provideFeedback } from '@core/feedback';
 import { ssrCookieForwardInterceptor } from '@core/http/interceptors/ssr-cookie-forward';
 import { FireguardTheme } from '@core/primeng';
 import { providePageTitleStrategy } from '@core/routing/strategies/page-title';
@@ -107,6 +108,7 @@ export const appConfig: ApplicationConfig = {
     }),
     MessageService,
     ConfirmationService,
+    provideFeedback(),
     providePageTitleStrategy(),
   ],
 };

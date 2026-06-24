@@ -1,4 +1,11 @@
-export type { CallStatus, CallState, StoreError, StoreFailureEventPayload } from './models';
+export type {
+  CallStatus,
+  CallState,
+  StoreError,
+  FeedbackSeverity,
+  FeedbackEventPayload,
+  StoreFailureEventPayload,
+} from './models';
 export {
   idleCallState,
   pendingCallState,
@@ -9,6 +16,11 @@ export {
   isCallError,
   toStoreError,
   toStoreFailureEventPayload,
+  successFeedback,
+  infoFeedback,
+  warnFeedback,
+  errorFeedback,
+  isFeedbackEventPayload,
   setPendingQuery,
   setSuccessQuery,
   setErrorQuery,

@@ -1,0 +1,171 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-6">
+  <!-- Name fields -->
+  <div class="flex flex-col gap-6 sm:flex-row sm:gap-4">
+    <div class="flex flex-1 flex-col gap-2">
+      <label
+        for="firstName"
+        class="text-sm font-medium text-surface-700 dark:text-surface-300"
+        i18n="@@auth.register.firstName.label"
+        >First name</label
+      >
+      <p-iconfield>
+        <p-inputicon class="pi pi-user" />
+        <input
+          pInputText
+          id="firstName"
+          formControlName="firstName"
+          class="w-full"
+          autocomplete="given-name"
+          placeholder="Jane"
+          i18n-placeholder="@@auth.register.firstName.placeholder"
+        />
+      </p-iconfield>
+
+      @if (form.controls.firstName.invalid && form.controls.firstName.touched) {
+        <p-message severity="error" variant="simple">
+          <span i18n="@@auth.register.firstName.required">First name is required.</span>
+        </p-message>
+      }
+    </div>
+
+    <div class="flex flex-1 flex-col gap-2">
+      <label
+        for="lastName"
+        class="text-sm font-medium text-surface-700 dark:text-surface-300"
+        i18n="@@auth.register.lastName.label"
+        >Last name</label
+      >
+      <p-iconfield>
+        <p-inputicon class="pi pi-user" />
+        <input
+          pInputText
+          id="lastName"
+          formControlName="lastName"
+          class="w-full"
+          autocomplete="family-name"
+          placeholder="Doe"
+          i18n-placeholder="@@auth.register.lastName.placeholder"
+        />
+      </p-iconfield>
+
+      @if (form.controls.lastName.invalid && form.controls.lastName.touched) {
+        <p-message severity="error" variant="simple">
+          <span i18n="@@auth.register.lastName.required">Last name is required.</span>
+        </p-message>
+      }
+    </div>
+  </div>
+
+  <!-- Email Field -->
+  <div class="flex flex-col gap-2">
+    <label
+      for="email"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@auth.register.email.label"
+      >Email address</label
+    >
+    <p-iconfield>
+      <p-inputicon class="pi pi-envelope" />
+      <input
+        pInputText
+        id="email"
+        formControlName="email"
+        class="w-full"
+        autocomplete="email"
+        placeholder="example@email.com"
+      />
+    </p-iconfield>
+
+    @if (form.controls.email.invalid && form.controls.email.touched) {
+      <p-message severity="error" variant="simple">
+        @if (form.controls.email.hasError('required')) {
+          <span i18n="@@auth.register.email.required">Email is required.</span>
+        }
+        @if (form.controls.email.hasError('email')) {
+          <span i18n="@@auth.register.email.invalid">Please enter a valid email address.</span>
+        }
+      </p-message>
+    }
+  </div>
+
+  <!-- Password Field -->
+  <div class="flex flex-col gap-2">
+    <label
+      for="password"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@auth.register.password.label"
+      >Password</label
+    >
+
+    <p-iconfield>
+      <p-inputicon class="pi pi-lock" />
+      <p-password
+        id="password"
+        formControlName="password"
+        [toggleMask]="true"
+        class="w-full"
+        inputStyleClass="w-full"
+        autocomplete="new-password"
+        placeholder="••••••••"
+      />
+    </p-iconfield>
+
+    @if (form.controls.password.invalid && form.controls.password.touched) {
+      <p-message severity="error" variant="simple">
+        @if (form.controls.password.hasError('required')) {
+          <span i18n="@@auth.register.password.required">Password is required.</span>
+        } @else {
+          <span i18n="@@auth.register.password.weak"
+            >Use at least 8 characters with upper- and lowercase letters, a digit, and a special
+            character.</span
+          >
+        }
+      </p-message>
+    }
+  </div>
+
+  <!-- Confirm Password Field -->
+  <div class="flex flex-col gap-2">
+    <label
+      for="confirmPassword"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      i18n="@@auth.register.confirmPassword.label"
+      >Confirm password</label
+    >
+
+    <p-iconfield>
+      <p-inputicon class="pi pi-lock" />
+      <p-password
+        id="confirmPassword"
+        formControlName="confirmPassword"
+        [feedback]="false"
+        [toggleMask]="true"
+        class="w-full"
+        inputStyleClass="w-full"
+        autocomplete="new-password"
+        placeholder="••••••••"
+      />
+    </p-iconfield>
+
+    @if (form.controls.confirmPassword.invalid && form.controls.confirmPassword.touched) {
+      <p-message severity="error" variant="simple">
+        <span i18n="@@auth.register.confirmPassword.required">Please confirm your password.</span>
+      </p-message>
+    }
+    @if (form.hasError(matchFieldsErrorKey) && form.controls.confirmPassword.touched) {
+      <p-message severity="error" variant="simple">
+        <span i18n="@@auth.register.password.mismatch">Passwords do not match.</span>
+      </p-message>
+    }
+  </div>
+
+  <!-- Submit Button -->
+  <p-button
+    label="Create account"
+    i18n-label="@@auth.register.submit"
+    type="submit"
+    [loading]="loading()"
+    [disabled]="form.invalid || loading()"
+    styleClass="w-full"
+  />
+</form>

@@ -31,25 +31,12 @@
           </div>
         </ng-template>
 
-        @if (
-          (activeTab() === 'general' ||
-            activeTab() === 'notifications' ||
-            activeTab() === 'regional') &&
-            store.saveError();
-          as error
-        ) {
-          <p-message severity="error" class="mb-4 block">
-            {{ error.message ?? saveErrorFallback }}
-          </p-message>
-        }
-
         @switch (activeTab()) {
           @case ('general') {
             <app-organization-general-form
               [organization]="activeOrganizationStore.selectedOrganization()"
               [saving]="store.isSaving()"
               [uploadingLogo]="store.isUploadingLogo()"
-              [logoHasError]="store.uploadLogoError() !== null"
               (submitted)="save($event)"
               (logoSelected)="uploadLogo($event)"
             />
@@ -76,12 +63,6 @@
           }
           @case ('danger') {
             @if (canDeleteOrganization()) {
-              @if (store.deleteError(); as error) {
-                <p-message severity="error" class="mb-4 block">
-                  {{ error.message ?? deleteErrorFallback }}
-                </p-message>
-              }
-
               <app-organization-danger-zone
                 [organization]="activeOrganizationStore.selectedOrganization()"
                 [deleting]="store.isDeleting()"

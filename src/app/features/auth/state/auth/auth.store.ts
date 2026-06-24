@@ -287,398 +287,427 @@ export const AuthStore = signalStore(
       authService = inject<AuthService>(AuthService),
       userProfilePort = inject<UserProfilePort>(USER_PROFILE_PORT),
       activeTrustedDeviceStore = inject<ActiveTrustedDeviceStore>(ActiveTrustedDeviceStore),
-    ) => ({
-      //#region Reactive Methods
+    ) => {
       /**
-       * Method login
+       * Function applySessionTokens
        *
        * @description
-       * Authenticates a user with email and password credentials.
-       * If MFA is enabled, sets the MFA state for verification.
+       * Applies an authenticated session to the store from a login-shaped
+       * response: stores the access token, clears any MFA state, and bootstraps
+       * the account-owned user profile. Shared by `login`, `mfaVerify`, and the
+       * registration auto-login (`applySession`).
        *
-       * @since 1.0.0
+       * @param {LoginOutput} response - The authenticated login response.
        *
-       * @param {LoginInput} credentials - User credentials.
+       * @returns {void}
        */
-      login: rxMethod<LoginInput>(
-        pipe(
-          tap(() => {
-            patchState(store, { loginCallState: pendingCallState() });
-          }),
-          exhaustMap((credentials) =>
-            authService.login(credentials).pipe(
-              tapResponse({
-                next: (response: LoginOutput) => {
-                  if (response.mfa_required) {
+      const applySessionTokens = (response: LoginOutput): void => {
+        patchState(store, {
+          accessToken: response.access_token,
+          expiresAt: calculateExpiresAt(response.expires_in),
+          mfaRequired: false,
+          mfaToken: null,
+          challengeToken: null,
+        });
+        // Bootstrap account-owned profile state after authentication completes.
+        userProfilePort.load();
+      };
+
+      return {
+        //#region Reactive Methods
+        /**
+         * Method login
+         *
+         * @description
+         * Authenticates a user with email and password credentials.
+         * If MFA is enabled, sets the MFA state for verification.
+         *
+         * @since 1.0.0
+         *
+         * @param {LoginInput} credentials - User credentials.
+         */
+        login: rxMethod<LoginInput>(
+          pipe(
+            tap(() => {
+              patchState(store, { loginCallState: pendingCallState() });
+            }),
+            exhaustMap((credentials) =>
+              authService.login(credentials).pipe(
+                tapResponse({
+                  next: (response: LoginOutput) => {
+                    if (response.mfa_required) {
+                      patchState(store, {
+                        mfaRequired: true,
+                        mfaToken: response.mfa_token ?? null,
+                        challengeToken: response.challenge_token ?? null,
+                        loginCallState: successCallState(response),
+                      });
+                    } else {
+                      patchState(store, { loginCallState: successCallState(response) });
+                      applySessionTokens(response);
+                    }
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { loginCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      authStoreEvents.loginFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to sign in'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method logout
+         *
+         * @description
+         * Terminates the current user session by revoking tokens.
+         *
+         * @since 1.0.0
+         */
+        logout: rxMethod<void>(
+          pipe(
+            tap(() => {
+              patchState(store, { logoutCallState: pendingCallState() });
+            }),
+            exhaustMap(() =>
+              authService.logout().pipe(
+                tapResponse({
+                  next: (response: LogoutOutput) => {
                     patchState(store, {
-                      mfaRequired: true,
-                      mfaToken: response.mfa_token ?? null,
-                      challengeToken: response.challenge_token ?? null,
-                      loginCallState: successCallState(response),
+                      ...INITIAL_AUTH_STATE,
+                      initialized: true,
+                      logoutCallState: successCallState(response),
                     });
-                  } else {
+                    activeTrustedDeviceStore.clear();
+                    // Clear user profile on logout
+                    userProfilePort.clear();
+                    dispatcher.dispatch(authStoreEvents.logoutSucceeded());
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, {
+                      ...INITIAL_AUTH_STATE,
+                      initialized: true,
+                      logoutCallState: errorCallState(storeError),
+                    });
+                    activeTrustedDeviceStore.clear();
+                    // Clear user profile even on logout error
+                    userProfilePort.clear();
+                    dispatcher.dispatch(
+                      authStoreEvents.logoutFailed(
+                        toStoreFailureEventPayload(storeError, 'Logout failed'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method refresh
+         *
+         * @description
+         * Refreshes the access token using the refresh token cookie.
+         *
+         * @since 1.0.0
+         */
+        refresh: rxMethod<void>(
+          pipe(
+            tap(() => {
+              patchState(store, { refreshCallState: pendingCallState() });
+            }),
+            switchMap(() =>
+              authService.refresh().pipe(
+                tapResponse({
+                  next: (response: LoginOutput) => {
                     patchState(store, {
                       accessToken: response.access_token,
                       expiresAt: calculateExpiresAt(response.expires_in),
-                      mfaRequired: false,
-                      mfaToken: null,
-                      challengeToken: null,
-                      loginCallState: successCallState(response),
+                      refreshCallState: successCallState(response),
                     });
-                    // Bootstrap account-owned profile state after authentication completes.
-                    userProfilePort.load();
-                  }
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { loginCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    authStoreEvents.loginFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to sign in'),
-                    ),
-                  );
-                },
-              }),
+                  },
+                  error: (error: unknown) => {
+                    patchState(store, {
+                      accessToken: null,
+                      expiresAt: null,
+                      refreshCallState: errorCallState(toStoreError(error)),
+                    });
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method logout
-       *
-       * @description
-       * Terminates the current user session by revoking tokens.
-       *
-       * @since 1.0.0
-       */
-      logout: rxMethod<void>(
-        pipe(
-          tap(() => {
-            patchState(store, { logoutCallState: pendingCallState() });
-          }),
-          exhaustMap(() =>
-            authService.logout().pipe(
-              tapResponse({
-                next: (response: LogoutOutput) => {
-                  patchState(store, {
-                    ...INITIAL_AUTH_STATE,
-                    initialized: true,
-                    logoutCallState: successCallState(response),
-                  });
-                  activeTrustedDeviceStore.clear();
-                  // Clear user profile on logout
-                  userProfilePort.clear();
-                  dispatcher.dispatch(authStoreEvents.logoutSucceeded());
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, {
-                    ...INITIAL_AUTH_STATE,
-                    initialized: true,
-                    logoutCallState: errorCallState(storeError),
-                  });
-                  activeTrustedDeviceStore.clear();
-                  // Clear user profile even on logout error
-                  userProfilePort.clear();
-                  dispatcher.dispatch(
-                    authStoreEvents.logoutFailed(
-                      toStoreFailureEventPayload(storeError, 'Logout failed'),
-                    ),
-                  );
-                },
-              }),
+        /**
+         * Method mfaVerify
+         *
+         * @description
+         * Verifies the MFA code to complete authentication.
+         * If a device trust is pending, automatically trusts the device after successful verification.
+         *
+         * @since 1.0.0
+         *
+         * @param {MfaVerifyInput} input - MFA verification input.
+         */
+        mfaVerify: rxMethod<MfaVerifyInput>(
+          pipe(
+            tap(() => {
+              patchState(store, { mfaVerifyCallState: pendingCallState() });
+            }),
+            exhaustMap((input) =>
+              authService.mfaVerify(input).pipe(
+                tapResponse({
+                  next: (response: LoginOutput) => {
+                    patchState(store, { mfaVerifyCallState: successCallState(response) });
+                    applySessionTokens(response);
+
+                    // Trust device if pending
+                    if (activeTrustedDeviceStore.pendingTrustDevice()) {
+                      activeTrustedDeviceStore.trustDevice();
+                    }
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { mfaVerifyCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      authStoreEvents.mfaVerifyFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to verify code'),
+                      ),
+                    );
+                  },
+                }),
+              ),
             ),
           ),
         ),
-      ),
 
-      /**
-       * Method refresh
-       *
-       * @description
-       * Refreshes the access token using the refresh token cookie.
-       *
-       * @since 1.0.0
-       */
-      refresh: rxMethod<void>(
-        pipe(
-          tap(() => {
-            patchState(store, { refreshCallState: pendingCallState() });
-          }),
-          switchMap(() =>
-            authService.refresh().pipe(
-              tapResponse({
-                next: (response: LoginOutput) => {
-                  patchState(store, {
-                    accessToken: response.access_token,
-                    expiresAt: calculateExpiresAt(response.expires_in),
-                    refreshCallState: successCallState(response),
-                  });
-                },
-                error: (error: unknown) => {
-                  patchState(store, {
-                    accessToken: null,
-                    expiresAt: null,
-                    refreshCallState: errorCallState(toStoreError(error)),
-                  });
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
+        /**
+         * Method mfaResend
+         *
+         * @description
+         * Resends the MFA verification code.
+         * Updates the pre-auth token and challenge token with new values.
+         *
+         * @since 1.0.0
+         */
+        mfaResend: rxMethod<void>(
+          pipe(
+            tap(() => {
+              patchState(store, { mfaResendCallState: pendingCallState() });
+            }),
+            switchMap(() => {
+              const preAuthToken: string | null = store.mfaToken();
 
-      /**
-       * Method mfaVerify
-       *
-       * @description
-       * Verifies the MFA code to complete authentication.
-       * If a device trust is pending, automatically trusts the device after successful verification.
-       *
-       * @since 1.0.0
-       *
-       * @param {MfaVerifyInput} input - MFA verification input.
-       */
-      mfaVerify: rxMethod<MfaVerifyInput>(
-        pipe(
-          tap(() => {
-            patchState(store, { mfaVerifyCallState: pendingCallState() });
-          }),
-          exhaustMap((input) =>
-            authService.mfaVerify(input).pipe(
-              tapResponse({
-                next: (response: LoginOutput) => {
-                  patchState(store, {
-                    accessToken: response.access_token,
-                    expiresAt: calculateExpiresAt(response.expires_in),
-                    mfaRequired: false,
-                    mfaToken: null,
-                    challengeToken: null,
-                    mfaVerifyCallState: successCallState(response),
-                  });
-                  // Bootstrap account-owned profile state after MFA authentication completes.
-                  userProfilePort.load();
+              if (!preAuthToken) {
+                const storeError: StoreError = toStoreError('No MFA token found');
+                patchState(store, { mfaResendCallState: errorCallState(storeError) });
+                dispatcher.dispatch(
+                  authStoreEvents.mfaResendFailed(
+                    toStoreFailureEventPayload(storeError, 'Failed to resend code'),
+                  ),
+                );
+                return EMPTY;
+              }
 
-                  // Trust device if pending
-                  if (activeTrustedDeviceStore.pendingTrustDevice()) {
-                    activeTrustedDeviceStore.trustDevice();
-                  }
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { mfaVerifyCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    authStoreEvents.mfaVerifyFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to verify code'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Method mfaResend
-       *
-       * @description
-       * Resends the MFA verification code.
-       * Updates the pre-auth token and challenge token with new values.
-       *
-       * @since 1.0.0
-       */
-      mfaResend: rxMethod<void>(
-        pipe(
-          tap(() => {
-            patchState(store, { mfaResendCallState: pendingCallState() });
-          }),
-          switchMap(() => {
-            const preAuthToken: string | null = store.mfaToken();
-
-            if (!preAuthToken) {
-              const storeError: StoreError = toStoreError('No MFA token found');
-              patchState(store, { mfaResendCallState: errorCallState(storeError) });
-              dispatcher.dispatch(
-                authStoreEvents.mfaResendFailed(
-                  toStoreFailureEventPayload(storeError, 'Failed to resend code'),
-                ),
+              return authService.mfaResend({ preAuthToken }).pipe(
+                tapResponse({
+                  next: (response: LoginOutput) => {
+                    patchState(store, {
+                      mfaToken: response.mfa_token ?? null,
+                      challengeToken: response.challenge_token ?? null,
+                      loginCallState: successCallState(response),
+                      mfaResendCallState: successCallState(response),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { mfaResendCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      authStoreEvents.mfaResendFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to resend code'),
+                      ),
+                    );
+                  },
+                }),
               );
-              return EMPTY;
-            }
-
-            return authService.mfaResend({ preAuthToken }).pipe(
-              tapResponse({
-                next: (response: LoginOutput) => {
-                  patchState(store, {
-                    mfaToken: response.mfa_token ?? null,
-                    challengeToken: response.challenge_token ?? null,
-                    loginCallState: successCallState(response),
-                    mfaResendCallState: successCallState(response),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { mfaResendCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    authStoreEvents.mfaResendFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to resend code'),
-                    ),
-                  );
-                },
-              }),
-            );
-          }),
+            }),
+          ),
         ),
-      ),
-      //#endregion
+        //#endregion
 
-      //#region Initialization Methods
-      /**
-       * Method initialize
-       *
-       * @description
-       * Initializes the auth state by attempting to refresh the session.
-       * If successful, also initializes the account-owned user profile.
-       * The access token is never serialized through TransferState, so the
-       * browser and SSR runtimes refresh independently.
-       * Returns a Promise that resolves when initialization is complete.
-       * Should be called once on app startup via APP_INITIALIZER.
-       *
-       * @since 1.0.0
-       *
-       * @returns {Promise<void>} Resolves when initialization is complete.
-       */
-      async initialize(): Promise<void> {
-        try {
-          const response: LoginOutput = await firstValueFrom(authService.refresh());
+        //#region Initialization Methods
+        /**
+         * Method initialize
+         *
+         * @description
+         * Initializes the auth state by attempting to refresh the session.
+         * If successful, also initializes the account-owned user profile.
+         * The access token is never serialized through TransferState, so the
+         * browser and SSR runtimes refresh independently.
+         * Returns a Promise that resolves when initialization is complete.
+         * Should be called once on app startup via APP_INITIALIZER.
+         *
+         * @since 1.0.0
+         *
+         * @returns {Promise<void>} Resolves when initialization is complete.
+         */
+        async initialize(): Promise<void> {
+          try {
+            const response: LoginOutput = await firstValueFrom(authService.refresh());
 
+            patchState(store, {
+              initialized: true,
+              accessToken: response.access_token,
+              expiresAt: calculateExpiresAt(response.expires_in),
+              refreshCallState: successCallState(response),
+            });
+
+            // Load user profile after successful refresh and wait for it during bootstrap.
+            await userProfilePort.initialize();
+          } catch {
+            patchState(store, {
+              initialized: true,
+              accessToken: null,
+              expiresAt: null,
+            });
+          }
+        },
+        //#endregion
+
+        //#region Synchronous Methods
+        /**
+         * Method setToken
+         *
+         * @description
+         * Manually sets the access token.
+         * Useful for restoring session from storage.
+         *
+         * @since 1.0.0
+         *
+         * @param {string} token - The access token.
+         * @param {number} expiresIn - Token lifetime in seconds.
+         */
+        setToken(token: string, expiresIn: number): void {
           patchState(store, {
-            initialized: true,
-            accessToken: response.access_token,
-            expiresAt: calculateExpiresAt(response.expires_in),
-            refreshCallState: successCallState(response),
+            accessToken: token,
+            expiresAt: calculateExpiresAt(expiresIn),
+            mfaRequired: false,
+            mfaToken: null,
+            challengeToken: null,
           });
+        },
 
-          // Load user profile after successful refresh and wait for it during bootstrap.
-          await userProfilePort.initialize();
-        } catch {
+        /**
+         * Method applySession
+         *
+         * @description
+         * Applies an authenticated session from a login-shaped response (access
+         * token + profile bootstrap). Used by flows that authenticate outside the
+         * password login path, such as the registration email-verification step.
+         *
+         * @since 1.0.0
+         *
+         * @param {LoginOutput} response - The authenticated login response.
+         *
+         * @returns {void}
+         */
+        applySession(response: LoginOutput): void {
+          applySessionTokens(response);
+        },
+
+        /**
+         * Method clearToken
+         *
+         * @description
+         * Clears the current access token.
+         * Useful for local logout without API call.
+         *
+         * @since 1.0.0
+         */
+        clearToken(): void {
+          activeTrustedDeviceStore.clear();
           patchState(store, {
-            initialized: true,
             accessToken: null,
             expiresAt: null,
           });
-        }
-      },
-      //#endregion
+        },
 
-      //#region Synchronous Methods
-      /**
-       * Method setToken
-       *
-       * @description
-       * Manually sets the access token.
-       * Useful for restoring session from storage.
-       *
-       * @since 1.0.0
-       *
-       * @param {string} token - The access token.
-       * @param {number} expiresIn - Token lifetime in seconds.
-       */
-      setToken(token: string, expiresIn: number): void {
-        patchState(store, {
-          accessToken: token,
-          expiresAt: calculateExpiresAt(expiresIn),
-          mfaRequired: false,
-          mfaToken: null,
-          challengeToken: null,
-        });
-      },
+        /**
+         * Method clearMfaState
+         *
+         * @description
+         * Clears the MFA pending state.
+         * Useful when user cancels MFA verification.
+         *
+         * @since 1.0.0
+         */
+        clearMfaState(): void {
+          activeTrustedDeviceStore.clear();
+          patchState(store, {
+            mfaRequired: false,
+            mfaToken: null,
+            challengeToken: null,
+          });
+        },
 
-      /**
-       * Method clearToken
-       *
-       * @description
-       * Clears the current access token.
-       * Useful for local logout without API call.
-       *
-       * @since 1.0.0
-       */
-      clearToken(): void {
-        activeTrustedDeviceStore.clear();
-        patchState(store, {
-          accessToken: null,
-          expiresAt: null,
-        });
-      },
+        /**
+         * Method resetOperations
+         *
+         * @description
+         * Resets all operation states to idle.
+         * Useful for clearing errors after user acknowledgment.
+         *
+         * @since 1.0.0
+         */
+        resetOperations(): void {
+          patchState(store, {
+            loginCallState: idleCallState(),
+            logoutCallState: idleCallState(),
+            refreshCallState: idleCallState(),
+            mfaVerifyCallState: idleCallState(),
+            mfaResendCallState: idleCallState(),
+          });
+        },
 
-      /**
-       * Method clearMfaState
-       *
-       * @description
-       * Clears the MFA pending state.
-       * Useful when user cancels MFA verification.
-       *
-       * @since 1.0.0
-       */
-      clearMfaState(): void {
-        activeTrustedDeviceStore.clear();
-        patchState(store, {
-          mfaRequired: false,
-          mfaToken: null,
-          challengeToken: null,
-        });
-      },
+        /**
+         * Method resetLoginOperation
+         *
+         * @description
+         * Resets the login call state to idle.
+         *
+         * @since 1.0.0
+         */
+        resetLoginOperation(): void {
+          patchState(store, {
+            loginCallState: idleCallState(),
+          });
+        },
 
-      /**
-       * Method resetOperations
-       *
-       * @description
-       * Resets all operation states to idle.
-       * Useful for clearing errors after user acknowledgment.
-       *
-       * @since 1.0.0
-       */
-      resetOperations(): void {
-        patchState(store, {
-          loginCallState: idleCallState(),
-          logoutCallState: idleCallState(),
-          refreshCallState: idleCallState(),
-          mfaVerifyCallState: idleCallState(),
-          mfaResendCallState: idleCallState(),
-        });
-      },
-
-      /**
-       * Method resetLoginOperation
-       *
-       * @description
-       * Resets the login call state to idle.
-       *
-       * @since 1.0.0
-       */
-      resetLoginOperation(): void {
-        patchState(store, {
-          loginCallState: idleCallState(),
-        });
-      },
-
-      /**
-       * Method resetMfaVerifyOperation
-       *
-       * @description
-       * Resets the MFA verify call state to idle.
-       *
-       * @since 1.0.0
-       */
-      resetMfaVerifyOperation(): void {
-        patchState(store, {
-          mfaVerifyCallState: idleCallState(),
-        });
-      },
-      //#endregion
-    }),
+        /**
+         * Method resetMfaVerifyOperation
+         *
+         * @description
+         * Resets the MFA verify call state to idle.
+         *
+         * @since 1.0.0
+         */
+        resetMfaVerifyOperation(): void {
+          patchState(store, {
+            mfaVerifyCallState: idleCallState(),
+          });
+        },
+        //#endregion
+      };
+    },
   ),
   //#endregion
 );

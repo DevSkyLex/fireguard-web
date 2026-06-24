@@ -162,6 +162,114 @@
         <source> Please sign in to your account to continue. </source>
         <target> Veuillez vous connecter à votre compte pour continuer. </target>
       </trans-unit>
+      <trans-unit id="auth.login.noAccount" datatype="html">
+        <source>Don&apos;t have an account?</source>
+        <target>Vous n'avez pas de compte ?</target>
+      </trans-unit>
+      <trans-unit id="auth.login.createAccount" datatype="html">
+        <source> Create one </source>
+        <target> Créez-en un </target>
+      </trans-unit>
+      <trans-unit id="route.auth.register" datatype="html">
+        <source>Create Account</source>
+        <target>Créer un compte</target>
+      </trans-unit>
+      <trans-unit id="route.auth.registerVerify" datatype="html">
+        <source>Verify Email</source>
+        <target>Vérifier l'e-mail</target>
+      </trans-unit>
+      <trans-unit id="auth.register.title" datatype="html">
+        <source> Create your account </source>
+        <target> Créer votre compte </target>
+      </trans-unit>
+      <trans-unit id="auth.register.subtitle" datatype="html">
+        <source> Start setting up your fire-safety workspace in a couple of minutes. </source>
+        <target> Commencez à configurer votre espace de sécurité incendie en quelques minutes. </target>
+      </trans-unit>
+      <trans-unit id="auth.register.firstName.label" datatype="html">
+        <source>First name</source>
+        <target>Prénom</target>
+      </trans-unit>
+      <trans-unit id="auth.register.firstName.placeholder" datatype="html">
+        <source>Jane</source>
+        <target>Jeanne</target>
+      </trans-unit>
+      <trans-unit id="auth.register.firstName.required" datatype="html">
+        <source>First name is required.</source>
+        <target>Le prénom est requis.</target>
+      </trans-unit>
+      <trans-unit id="auth.register.lastName.label" datatype="html">
+        <source>Last name</source>
+        <target>Nom</target>
+      </trans-unit>
+      <trans-unit id="auth.register.lastName.placeholder" datatype="html">
+        <source>Doe</source>
+        <target>Dupont</target>
+      </trans-unit>
+      <trans-unit id="auth.register.lastName.required" datatype="html">
+        <source>Last name is required.</source>
+        <target>Le nom est requis.</target>
+      </trans-unit>
+      <trans-unit id="auth.register.email.label" datatype="html">
+        <source>Email address</source>
+        <target>Adresse e-mail</target>
+      </trans-unit>
+      <trans-unit id="auth.register.email.required" datatype="html">
+        <source>Email is required.</source>
+        <target>L'e-mail est requis.</target>
+      </trans-unit>
+      <trans-unit id="auth.register.email.invalid" datatype="html">
+        <source>Please enter a valid email address.</source>
+        <target>Veuillez saisir une adresse e-mail valide.</target>
+      </trans-unit>
+      <trans-unit id="auth.register.password.label" datatype="html">
+        <source>Password</source>
+        <target>Mot de passe</target>
+      </trans-unit>
+      <trans-unit id="auth.register.password.required" datatype="html">
+        <source>Password is required.</source>
+        <target>Le mot de passe est requis.</target>
+      </trans-unit>
+      <trans-unit id="auth.register.password.weak" datatype="html">
+        <source>Use at least 8 characters with upper- and lowercase letters, a digit, and a special character.</source>
+        <target>Utilisez au moins 8 caractères avec des lettres majuscules et minuscules, un chiffre et un caractère spécial.</target>
+      </trans-unit>
+      <trans-unit id="auth.register.confirmPassword.label" datatype="html">
+        <source>Confirm password</source>
+        <target>Confirmer le mot de passe</target>
+      </trans-unit>
+      <trans-unit id="auth.register.confirmPassword.required" datatype="html">
+        <source>Please confirm your password.</source>
+        <target>Veuillez confirmer votre mot de passe.</target>
+      </trans-unit>
+      <trans-unit id="auth.register.password.mismatch" datatype="html">
+        <source>Passwords do not match.</source>
+        <target>Les mots de passe ne correspondent pas.</target>
+      </trans-unit>
+      <trans-unit id="auth.register.submit" datatype="html">
+        <source>Create account</source>
+        <target>Créer un compte</target>
+      </trans-unit>
+      <trans-unit id="auth.register.haveAccount" datatype="html">
+        <source>Already have an account?</source>
+        <target>Vous avez déjà un compte ?</target>
+      </trans-unit>
+      <trans-unit id="auth.register.signInLink" datatype="html">
+        <source> Sign in </source>
+        <target> Se connecter </target>
+      </trans-unit>
+      <trans-unit id="auth.registerVerify.title" datatype="html">
+        <source> Verify your email </source>
+        <target> Vérifiez votre e-mail </target>
+      </trans-unit>
+      <trans-unit id="auth.registerVerify.subtitleSent" datatype="html">
+        <source> Enter the verification code we sent to <x id="INTERPOLATION" equiv-text="{{ recipient }}"/> to activate your account. </source>
+        <target> Saisissez le code de vérification envoyé à <x id="INTERPOLATION" equiv-text="{{ recipient }}"/> pour activer votre compte. </target>
+      </trans-unit>
+      <trans-unit id="auth.registerVerify.subtitle" datatype="html">
+        <source> Enter the verification code we sent to your email to activate your account. </source>
+        <target> Saisissez le code de vérification envoyé à votre e-mail pour activer votre compte. </target>
+      </trans-unit>
       <trans-unit id="auth.mfa.title" datatype="html">
         <source> Multi-Factor Authentication </source>
         <target> Authentification multifacteur </target>
@@ -5562,6 +5670,62 @@
       <trans-unit id="onboarding.plan.subscribedDetail" datatype="html">
         <source>Your subscription is being activated — it may take a few seconds.</source>
         <target>Votre abonnement est en cours d'activation — cela peut prendre quelques secondes.</target>
+      </trans-unit>
+      <trans-unit id="toast.severity.success" datatype="html">
+        <source>Success</source>
+        <target>Succès</target>
+      </trans-unit>
+      <trans-unit id="toast.severity.warn" datatype="html">
+        <source>Warning</source>
+        <target>Avertissement</target>
+      </trans-unit>
+      <trans-unit id="toast.severity.error" datatype="html">
+        <source>Error</source>
+        <target>Erreur</target>
+      </trans-unit>
+      <trans-unit id="toast.severity.info" datatype="html">
+        <source>Information</source>
+        <target>Information</target>
+      </trans-unit>
+      <trans-unit id="toast.time.now" datatype="html">
+        <source>now</source>
+        <target>à l'instant</target>
+      </trans-unit>
+      <trans-unit id="facility.toast.created" datatype="html">
+        <source>Facility created</source>
+        <target>Établissement créé</target>
+      </trans-unit>
+      <trans-unit id="facility.toast.updated" datatype="html">
+        <source>Facility updated</source>
+        <target>Établissement mis à jour</target>
+      </trans-unit>
+      <trans-unit id="facility.toast.archived" datatype="html">
+        <source>Facility archived</source>
+        <target>Établissement archivé</target>
+      </trans-unit>
+      <trans-unit id="facility.toast.restored" datatype="html">
+        <source>Facility restored</source>
+        <target>Établissement restauré</target>
+      </trans-unit>
+      <trans-unit id="facility.toast.moved" datatype="html">
+        <source>Facility moved</source>
+        <target>Établissement déplacé</target>
+      </trans-unit>
+      <trans-unit id="equipment.toast.created" datatype="html">
+        <source>Equipment created</source>
+        <target>Équipement créé</target>
+      </trans-unit>
+      <trans-unit id="inspection.toast.created" datatype="html">
+        <source>Inspection created</source>
+        <target>Inspection créée</target>
+      </trans-unit>
+      <trans-unit id="checklist.toast.created" datatype="html">
+        <source>Checklist created</source>
+        <target>Checklist créée</target>
+      </trans-unit>
+      <trans-unit id="org.settings.logoError" datatype="html">
+        <source>The logo could not be uploaded.</source>
+        <target>Le logo n'a pas pu être téléchargé.</target>
       </trans-unit>
     </body>
   </file>

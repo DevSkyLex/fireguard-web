@@ -10,11 +10,8 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Events } from '@ngrx/signals/events';
-import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
@@ -29,7 +26,6 @@ import {
   ActiveFacilityStore,
   FacilityOverviewStore,
   FacilityStore,
-  facilityStoreEvents,
 } from '@features/organization/features/facilities/state';
 import {
   FacilityComplianceMetric,
@@ -118,36 +114,6 @@ export class FacilityDetailPage {
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
-
-  /**
-   * Property messageService
-   * @readonly
-   *
-   * @description
-   * PrimeNG toast service used to display success and error
-   * notifications after store operations.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {MessageService}
-   */
-  private readonly messageService: MessageService = inject<MessageService>(MessageService);
-
-  /**
-   * Property events
-   * @readonly
-   *
-   * @description
-   * NgRx Signals event bus used to subscribe to store-level
-   * failure events (e.g. move failed).
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Events}
-   */
-  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Property activeOrganizationStore
@@ -384,10 +350,10 @@ export class FacilityDetailPage {
    * @constructor
    *
    * @description
-   * Pre-loads all organization facilities (for the move-dialog parent
-   * picker), then sets up an effect to close the dialog and toast on
-   * successful move, and subscribes to the move-failed event for the
-   * error toast.
+   * Pre-loads all organization facilities (for the move-dialog parent picker),
+   * then sets up an effect to close the dialog on a successful move. The move
+   * success and error toasts are produced centrally from the store's feedback
+   * events.
    *
    * @access public
    * @since 1.0.0
@@ -398,27 +364,8 @@ export class FacilityDetailPage {
       const operation = this.store.moveCallState();
       if (operation.status === 'success' && operation.data) {
         this.showMoveDialog.set(false);
-        this.messageService.add({
-          severity: 'success',
-          summary: $localize`:@@facility.moved.summary:Facility moved`,
-          detail: $localize`:@@facility.moved.detail:"${operation.data.name}:name:" has been moved successfully.`,
-          life: 4000,
-        });
       }
     });
-
-    // Error toast on move failure
-    this.events
-      .on(facilityStoreEvents.moveFailed)
-      .pipe(takeUntilDestroyed())
-      .subscribe(({ payload }) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: $localize`:@@common.error:Error`,
-          detail: payload.message,
-          life: 5000,
-        });
-      });
 
     // Eagerly load the descendant tree once the facility is resolved
     // (browser-only — the hierarchy chart is secondary UI data).

@@ -19,6 +19,7 @@ import {
   idleCallState,
   pendingCallState,
   successCallState,
+  successFeedback,
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
@@ -32,6 +33,7 @@ import type {
   UpdateFacilityInput,
   MoveFacilityInput,
 } from '@features/organization/features/facilities/models';
+import { isQuotaExceededError } from '@features/organization/utils';
 import { ActiveFacilityStore } from '../active-facility/active-facility.store';
 import { facilityStoreEvents } from './events';
 import type { FacilityState } from './models';
@@ -759,15 +761,24 @@ export const FacilityStore = signalStore(
                       totalFacilities: store.totalFacilities() + 1,
                       createCallState: successCallState(facility),
                     });
+                    dispatcher.dispatch(
+                      facilityStoreEvents.createSucceeded(
+                        successFeedback($localize`:@@facility.toast.created:Facility created`),
+                      ),
+                    );
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { createCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      facilityStoreEvents.createFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to create facility'),
-                      ),
-                    );
+                    // Quota (409) failures are surfaced by the page as an
+                    // actionable upgrade dialog, not as a generic error toast.
+                    if (!isQuotaExceededError(storeError)) {
+                      dispatcher.dispatch(
+                        facilityStoreEvents.createFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to create facility'),
+                        ),
+                      );
+                    }
                   },
                 }),
               ),
@@ -805,6 +816,11 @@ export const FacilityStore = signalStore(
                       updateCallState: successCallState(facility),
                     });
                     activeFacilityStore.setFacility(facility);
+                    dispatcher.dispatch(
+                      facilityStoreEvents.updateSucceeded(
+                        successFeedback($localize`:@@facility.toast.updated:Facility updated`),
+                      ),
+                    );
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -852,6 +868,11 @@ export const FacilityStore = signalStore(
                     if (activeFacilityStore.selectedFacility()?.id === facility.id) {
                       activeFacilityStore.setFacility(facility);
                     }
+                    dispatcher.dispatch(
+                      facilityStoreEvents.archiveSucceeded(
+                        successFeedback($localize`:@@facility.toast.archived:Facility archived`),
+                      ),
+                    );
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -886,6 +907,11 @@ export const FacilityStore = signalStore(
                     if (activeFacilityStore.selectedFacility()?.id === facility.id) {
                       activeFacilityStore.setFacility(facility);
                     }
+                    dispatcher.dispatch(
+                      facilityStoreEvents.restoreSucceeded(
+                        successFeedback($localize`:@@facility.toast.restored:Facility restored`),
+                      ),
+                    );
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -928,6 +954,11 @@ export const FacilityStore = signalStore(
                       moveCallState: successCallState(facility),
                     });
                     activeFacilityStore.setFacility(facility);
+                    dispatcher.dispatch(
+                      facilityStoreEvents.moveSucceeded(
+                        successFeedback($localize`:@@facility.toast.moved:Facility moved`),
+                      ),
+                    );
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);

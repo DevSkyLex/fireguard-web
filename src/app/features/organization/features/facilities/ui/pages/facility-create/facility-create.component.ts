@@ -8,15 +8,9 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Events } from '@ngrx/signals/events';
-import { MessageService } from 'primeng/api';
 import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
-import {
-  FacilityStore,
-  facilityStoreEvents,
-} from '@features/organization/features/facilities/state';
+import { FacilityStore } from '@features/organization/features/facilities/state';
 import {
   FacilityForm,
   type FacilityFormValues,
@@ -77,36 +71,6 @@ export class FacilityCreatePage {
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
-
-  /**
-   * Property messageService
-   * @readonly
-   *
-   * @description
-   * PrimeNG toast service used to display success and error
-   * notifications after the create operation.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {MessageService}
-   */
-  private readonly messageService: MessageService = inject<MessageService>(MessageService);
-
-  /**
-   * Property events
-   * @readonly
-   *
-   * @description
-   * NgRx Signals event bus used to subscribe to
-   * {@link facilityStoreEvents.createFailed} for error toasts.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Events}
-   */
-  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Property activeOrganizationStore
@@ -170,8 +134,9 @@ export class FacilityCreatePage {
    * @constructor
    *
    * @description
-   * Subscribes to store events for error toasts and watches
-   * createCallState success for navigation.
+   * Loads parent options and watches the create outcome: navigates on success
+   * and routes quota (409) failures to the upgrade dialog. The success toast and
+   * generic error toast are produced centrally from the store's feedback events.
    *
    * @since 1.0.0
    */
@@ -183,39 +148,25 @@ export class FacilityCreatePage {
       this.store.ensureParentOptionsLoaded(organizationId);
     }
 
-    // Navigate to the new facility on successful creation
+    // React to the create outcome: navigate on success, open the actionable
+    // upgrade dialog on a quota (409) failure (which is not toasted centrally).
     effect(() => {
       const operation = this.store.createCallState();
+
       if (operation.status === 'success' && operation.data) {
-        this.messageService.add({
-          severity: 'success',
-          summary: $localize`:@@facility.created.summary:Facility created`,
-          detail: $localize`:@@facility.created.detail:"${operation.data.name}:name:" has been created successfully.`,
-          life: 4000,
-        });
         this.router.navigate(['..', operation.data.id], { relativeTo: this.route });
+        return;
+      }
+
+      if (
+        operation.status === 'error' &&
+        operation.error &&
+        isQuotaExceededError(operation.error)
+      ) {
+        this.quotaStore.reload();
+        this.quotaDialogVisible.set(true);
       }
     });
-
-    // Error feedback on create failure: route quota (409) failures to the
-    // actionable upgrade dialog, everything else to a generic error toast.
-    this.events
-      .on(facilityStoreEvents.createFailed)
-      .pipe(takeUntilDestroyed())
-      .subscribe(({ payload }) => {
-        if (isQuotaExceededError(payload)) {
-          this.quotaStore.reload();
-          this.quotaDialogVisible.set(true);
-          return;
-        }
-
-        this.messageService.add({
-          severity: 'error',
-          summary: $localize`:@@common.error:Error`,
-          detail: payload.message,
-          life: 5000,
-        });
-      });
   }
   //#endregion
 

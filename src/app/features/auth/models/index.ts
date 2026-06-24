@@ -22,5 +22,9 @@ export type { PasswordResetResendInput } from './password-reset/password-reset-r
 export type { PasswordResetResendOutput } from './password-reset/password-reset-resend-output.interface';
 export type { PasswordResetVerifyInput } from './password-reset/password-reset-verify-input.interface';
 export type { PasswordResetVerifyOutput } from './password-reset/password-reset-verify-output.interface';
+export type { RegisterInput } from './register/register-input.interface';
+export type { RegisterOutput } from './register/register-output.interface';
+export type { RegisterResendInput } from './register/register-resend-input.interface';
+export type { RegisterVerifyInput } from './register/register-verify-input.interface';
 export type { GrantType } from './session/grant-type.type';
 export type { TokenOutput } from './session/token-output.interface';

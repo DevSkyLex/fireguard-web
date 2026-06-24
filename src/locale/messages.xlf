@@ -1194,35 +1194,49 @@
         <source>Sign In</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
-          <context context-type="linenumber">28</context>
+          <context context-type="linenumber">29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.auth.register" datatype="html">
+        <source>Create Account</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
+          <context context-type="linenumber">36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.auth.registerVerify" datatype="html">
+        <source>Verify Email</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
+          <context context-type="linenumber">45</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.auth.mfa" datatype="html">
         <source>Verify Identity</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
-          <context context-type="linenumber">37</context>
+          <context context-type="linenumber">54</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.auth.forgotPassword" datatype="html">
         <source>Forgot Password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
-          <context context-type="linenumber">58</context>
+          <context context-type="linenumber">75</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.auth.verifyCode" datatype="html">
         <source>Verify Code</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
-          <context context-type="linenumber">67</context>
+          <context context-type="linenumber">84</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.auth.newPassword" datatype="html">
         <source>Set New Password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
-          <context context-type="linenumber">76</context>
+          <context context-type="linenumber">93</context>
         </context-group>
       </trans-unit>
       <trans-unit id="common.user.noEmail" datatype="html">
@@ -1416,6 +1430,118 @@
           <context context-type="linenumber">73</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="auth.register.firstName.label" datatype="html">
+        <source>First name</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">9,12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.firstName.placeholder" datatype="html">
+        <source>Jane</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.firstName.required" datatype="html">
+        <source>First name is required.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">26,29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.lastName.label" datatype="html">
+        <source>Last name</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">36,39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.lastName.placeholder" datatype="html">
+        <source>Doe</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">47</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.lastName.required" datatype="html">
+        <source>Last name is required.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">53,56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.email.label" datatype="html">
+        <source>Email address</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">65,68</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.email.required" datatype="html">
+        <source>Email is required.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">82,84</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.email.invalid" datatype="html">
+        <source>Please enter a valid email address.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">85,88</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.password.label" datatype="html">
+        <source>Password</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">97,101</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.password.required" datatype="html">
+        <source>Password is required.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">116,118</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.password.weak" datatype="html">
+        <source>Use at least 8 characters with upper- and lowercase letters, a digit, and a special character.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">119,123</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.confirmPassword.label" datatype="html">
+        <source>Confirm password</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">133,137</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.confirmPassword.required" datatype="html">
+        <source>Please confirm your password.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">152,155</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.password.mismatch" datatype="html">
+        <source>Passwords do not match.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">157,162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.submit" datatype="html">
+        <source>Create account</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.html</context>
+          <context context-type="linenumber">164,165</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="auth.forgotPassword.title" datatype="html">
         <source> Forgot Your Password? </source>
         <context-group purpose="location">
@@ -1465,6 +1591,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/pages/password-reset-verify-page/password-reset-verify-page.component.ts</context>
           <context context-type="linenumber">139</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/register-page/register-page.component.ts</context>
+          <context context-type="linenumber">125</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/register-verify-page/register-verify-page.component.ts</context>
+          <context context-type="linenumber">165</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-equipment-step/create-equipment-step.component.ts</context>
@@ -1529,6 +1663,20 @@
           <context context-type="linenumber">10,14</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="auth.login.noAccount" datatype="html">
+        <source>Don&apos;t have an account?</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/login-page/login-page.component.html</context>
+          <context context-type="linenumber">21,23</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.login.createAccount" datatype="html">
+        <source> Create one </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/login-page/login-page.component.html</context>
+          <context context-type="linenumber">27,31</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="auth.mfa.title" datatype="html">
         <source> Multi-Factor Authentication </source>
         <context-group purpose="location">
@@ -1569,6 +1717,55 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/pages/password-reset-verify-page/password-reset-verify-page.component.html</context>
           <context context-type="linenumber">13,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.title" datatype="html">
+        <source> Create your account </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/register-page/register-page.component.html</context>
+          <context context-type="linenumber">7,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.subtitle" datatype="html">
+        <source> Start setting up your fire-safety workspace in a couple of minutes. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/register-page/register-page.component.html</context>
+          <context context-type="linenumber">10,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.haveAccount" datatype="html">
+        <source>Already have an account?</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/register-page/register-page.component.html</context>
+          <context context-type="linenumber">21,23</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.register.signInLink" datatype="html">
+        <source> Sign in </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/register-page/register-page.component.html</context>
+          <context context-type="linenumber">27,31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.registerVerify.title" datatype="html">
+        <source> Verify your email </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/register-verify-page/register-verify-page.component.html</context>
+          <context context-type="linenumber">7,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.registerVerify.subtitleSent" datatype="html">
+        <source> Enter the verification code we sent to <x id="INTERPOLATION" equiv-text="{{ recipient }}"/> to activate your account. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/register-verify-page/register-verify-page.component.html</context>
+          <context context-type="linenumber">14,16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.registerVerify.subtitle" datatype="html">
+        <source> Enter the verification code we sent to your email to activate your account. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/pages/register-verify-page/register-verify-page.component.html</context>
+          <context context-type="linenumber">21,26</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.error.notFound" datatype="html">

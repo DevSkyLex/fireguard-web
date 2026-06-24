@@ -1,14 +1,16 @@
 import { type } from '@ngrx/signals';
 import { eventGroup } from '@ngrx/signals/events';
-import type { StoreFailureEventPayload } from '@core/request-state';
+import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/request-state';
 
 export const inspectionStoreEvents = eventGroup({
   source: 'Inspection Store',
   events: {
     /** Dispatched when fetching the inspection list fails. */
     listFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when creating an inspection fails. */
+    /** Dispatched when creating an inspection fails (non-quota errors only). */
     createFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when an inspection is created. */
+    createSucceeded: type<FeedbackEventPayload>(),
     /** Dispatched when updating an inspection fails. */
     updateFailed: type<StoreFailureEventPayload>(),
     /** Dispatched when cancelling an inspection fails. */

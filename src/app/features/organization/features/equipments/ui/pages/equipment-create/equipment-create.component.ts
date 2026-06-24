@@ -6,15 +6,9 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Events } from '@ngrx/signals/events';
-import { MessageService } from 'primeng/api';
 import type { CreateEquipmentInput } from '@features/organization/features/equipments/models';
-import {
-  EquipmentStore,
-  equipmentStoreEvents,
-} from '@features/organization/features/equipments/state';
+import { EquipmentStore } from '@features/organization/features/equipments/state';
 import {
   EquipmentForm,
   type EquipmentFormValues,
@@ -69,28 +63,6 @@ export class EquipmentCreatePage {
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
-   * Property messageService
-   * @readonly
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {MessageService}
-   */
-  private readonly messageService: MessageService = inject<MessageService>(MessageService);
-
-  /**
-   * Property events
-   * @readonly
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Events}
-   */
-  private readonly events: Events = inject<Events>(Events);
-
-  /**
    * Property activeOrganizationStore
    * @readonly
    *
@@ -142,45 +114,30 @@ export class EquipmentCreatePage {
    * @constructor
    *
    * @description
-   * Subscribes to store events for error toasts and watches
-   * createCallState success for navigation.
+   * Watches the create outcome: navigates on success and routes quota (409)
+   * failures to the upgrade dialog. The success and generic error toasts are
+   * produced centrally from the store's feedback events.
    *
    * @since 1.0.0
    */
   public constructor() {
-    // Navigate to the equipment list on successful creation
     effect(() => {
       const operation = this.store.createCallState();
+
       if (operation.status === 'success' && operation.data) {
-        this.messageService.add({
-          severity: 'success',
-          summary: $localize`:@@equipment.created.summary:Equipment created`,
-          detail: $localize`:@@equipment.created.detail:Equipment "${operation.data.type}:type:" has been created successfully.`,
-          life: 4000,
-        });
         this.router.navigate(['..'], { relativeTo: this.route });
+        return;
+      }
+
+      if (
+        operation.status === 'error' &&
+        operation.error &&
+        isQuotaExceededError(operation.error)
+      ) {
+        this.quotaStore.reload();
+        this.quotaDialogVisible.set(true);
       }
     });
-
-    // Error feedback on create failure: route quota (409) failures to the
-    // actionable upgrade dialog, everything else to a generic error toast.
-    this.events
-      .on(equipmentStoreEvents.createFailed)
-      .pipe(takeUntilDestroyed())
-      .subscribe(({ payload }) => {
-        if (isQuotaExceededError(payload)) {
-          this.quotaStore.reload();
-          this.quotaDialogVisible.set(true);
-          return;
-        }
-
-        this.messageService.add({
-          severity: 'error',
-          summary: $localize`:@@common.error:Error`,
-          detail: payload.message,
-          life: 5000,
-        });
-      });
   }
   //#endregion
 

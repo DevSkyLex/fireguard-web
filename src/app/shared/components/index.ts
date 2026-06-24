@@ -17,5 +17,6 @@ export {
   type CalendarConfig,
 } from './calendar';
 export { ThemeSwitcher, withThemeSwitcher } from './theme-switcher';
+export { Toast } from './toast';
 export { TrendCard } from './trend-card';
 export type { MetricSummary } from './trend-card';

@@ -7,6 +7,7 @@ Owns authentication and session lifecycle for the application.
 This feature is responsible for:
 
 - sign-in and MFA flows,
+- public self-service registration (account creation + email verification),
 - password reset workflows,
 - access token and refresh bootstrap,
 - auth guards and auth-related HTTP interceptors,
@@ -23,12 +24,14 @@ This feature does not own user profile presentation or notification UX. Those be
 ## Routes
 
 - `/auth/login`
+- `/auth/register`
+- `/auth/register/verify`
 - `/auth/mfa-verify`
 - `/auth/password-reset/forgot`
 - `/auth/password-reset/verify`
 - `/auth/password-reset/new`
 
-Route access is enforced by auth-owned guards such as `guestGuard`, `mfaGuard`, `passwordResetVerifyGuard`, and `passwordResetNewGuard`.
+Route access is enforced by auth-owned guards such as `guestGuard`, `mfaGuard`, `registerVerifyGuard`, `passwordResetVerifyGuard`, and `passwordResetNewGuard`.
 
 ## State and Data Access
 
@@ -39,6 +42,7 @@ Primary stores:
 - `TrustedDeviceStore`
 - `ActiveTrustedDeviceStore`
 - `PasswordResetStore`
+- `RegisterStore`
 
 Primary services:
 
@@ -46,6 +50,7 @@ Primary services:
 - `SessionService`
 - `TrustedDeviceService`
 - `PasswordResetService`
+- `RegistrationService`
 
 ## Published Contracts
 
@@ -73,3 +78,7 @@ It exposes the access token, initialization state, authenticated-session validit
 - Public auth routes must stay lazy-loaded under `/auth`.
 - Auth interceptors and guards belong to this feature, not to `core`.
 - Password reset and MFA are auth workflows even when rendered in separate pages.
+- Registration creates a `pending_verification` account; the email-verification
+  step (`/auth/register/verify`) activates it and auto-logs the user in by
+  applying the returned session to `AuthStore` (`applySession`), then routing to
+  `/onboarding`. Registration never creates an organization — onboarding owns that.

@@ -1,0 +1,28 @@
+<p-toast position="bottom-right">
+  <ng-template let-message #headless let-closeFn="closeFn">
+    <div
+      role="status"
+      aria-live="polite"
+      (click)="closeFn($event)"
+      class="flex w-full cursor-pointer items-start gap-3 rounded-lg border border-surface-200 bg-surface-0 px-4 py-3 shadow-lg transition-colors hover:border-surface-300 dark:border-surface-800 dark:bg-surface-900 dark:hover:border-surface-700"
+    >
+      <span class="sr-only">{{ severityLabel(message) }}:</span>
+      <i
+        aria-hidden="true"
+        class="mt-0.5 shrink-0 text-base leading-none"
+        [ngClass]="iconClass(message)"
+      ></i>
+      <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span class="text-sm font-semibold text-surface-950 dark:text-surface-50">
+          {{ message.summary }}
+        </span>
+        @if (message.detail) {
+          <span class="text-xs text-surface-500 dark:text-surface-400">{{ message.detail }}</span>
+        }
+      </div>
+      <time class="mt-0.5 shrink-0 text-xs font-medium text-surface-400 dark:text-surface-500">
+        {{ relativeLabel(message) }}
+      </time>
+    </div>
+  </ng-template>
+</p-toast>

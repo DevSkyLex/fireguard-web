@@ -1,6 +1,7 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  DestroyRef,
   inject,
   signal,
   type Signal,
@@ -69,6 +70,22 @@ export class CreateFacilityStep extends OnboardingStepBase {
    * @type {MessageService}
    */
   private readonly messageService: MessageService = inject<MessageService>(MessageService);
+
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Lifecycle handle passed to `takeUntilDestroyed` so the creation subscription,
+   * started from the submit handler (outside the injection context), unsubscribes
+   * when the step component is destroyed.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {DestroyRef}
+   */
+  private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
   //#endregion
 
   //#region State
@@ -159,7 +176,7 @@ export class CreateFacilityStep extends OnboardingStepBase {
           address: v.address ?? undefined,
         })),
       )
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.isCreating.set(false);

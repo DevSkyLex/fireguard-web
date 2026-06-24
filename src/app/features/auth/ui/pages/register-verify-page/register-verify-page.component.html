@@ -1,0 +1,36 @@
+<div id="register-verify-page" class="flex w-full flex-col gap-6">
+  <section class="flex flex-col">
+    <h2
+      class="mb-2 text-2xl font-semibold text-surface-900 dark:text-surface-100"
+      i18n="@@auth.registerVerify.title"
+    >
+      Verify your email
+    </h2>
+    @if (maskedRecipient(); as recipient) {
+      <p
+        class="text-sm text-surface-600 dark:text-surface-400"
+        i18n="@@auth.registerVerify.subtitleSent"
+      >
+        Enter the verification code we sent to {{ recipient }} to activate your account.
+      </p>
+    } @else {
+      <p
+        class="text-sm text-surface-600 dark:text-surface-400"
+        i18n="@@auth.registerVerify.subtitle"
+      >
+        Enter the verification code we sent to your email to activate your account.
+      </p>
+    }
+  </section>
+
+  <!-- OTP verification form -->
+  <section class="flex flex-col">
+    <app-otp-verification-form
+      [loading]="loading()"
+      [resendIn]="resendIn()"
+      (submitted)="handleVerify($event)"
+      (cancelled)="handleCancel()"
+      (resend)="handleResend()"
+    />
+  </section>
+</div>

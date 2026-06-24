@@ -10,7 +10,9 @@ import {
   pendingCallState,
   StoreError,
   successCallState,
+  successFeedback,
   toStoreError,
+  toStoreFailureEventPayload,
 } from '@core/request-state';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
@@ -90,9 +92,26 @@ export const OrganizationSettingsStore = signalStore(
                   dispatcher.dispatch(
                     organizationSettingsStoreEvents.organizationUpdated(organization),
                   );
+                  dispatcher.dispatch(
+                    organizationSettingsStoreEvents.saveSucceeded(
+                      successFeedback(
+                        $localize`:@@org.settings.savedDetail:The organization settings have been updated.`,
+                      ),
+                    ),
+                  );
                 },
-                error: (err: unknown) =>
-                  patchState(store, { saveCallState: errorCallState(toStoreError(err)) }),
+                error: (err: unknown) => {
+                  const storeError = toStoreError(err);
+                  patchState(store, { saveCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    organizationSettingsStoreEvents.saveFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        $localize`:@@org.settings.saveError:The settings could not be saved.`,
+                      ),
+                    ),
+                  );
+                },
               }),
             ),
           ),
@@ -121,9 +140,26 @@ export const OrganizationSettingsStore = signalStore(
                   dispatcher.dispatch(
                     organizationSettingsStoreEvents.organizationUpdated(organization),
                   );
+                  dispatcher.dispatch(
+                    organizationSettingsStoreEvents.logoUploadSucceeded(
+                      successFeedback(
+                        $localize`:@@org.settings.logoDetail:The organization logo has been updated.`,
+                      ),
+                    ),
+                  );
                 },
-                error: (err: unknown) =>
-                  patchState(store, { uploadLogoCallState: errorCallState(toStoreError(err)) }),
+                error: (err: unknown) => {
+                  const storeError = toStoreError(err);
+                  patchState(store, { uploadLogoCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    organizationSettingsStoreEvents.logoUploadFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        $localize`:@@org.settings.logoError:The logo could not be uploaded.`,
+                      ),
+                    ),
+                  );
+                },
               }),
             ),
           ),
@@ -147,9 +183,28 @@ export const OrganizationSettingsStore = signalStore(
             organizationService.remove(organizationId).pipe(
               map(() => undefined),
               tapResponse({
-                next: () => patchState(store, { deleteCallState: successCallState(undefined) }),
-                error: (err: unknown) =>
-                  patchState(store, { deleteCallState: errorCallState(toStoreError(err)) }),
+                next: () => {
+                  patchState(store, { deleteCallState: successCallState(undefined) });
+                  dispatcher.dispatch(
+                    organizationSettingsStoreEvents.deleteSucceeded(
+                      successFeedback(
+                        $localize`:@@org.settings.deletedDetail:The organization has been permanently deleted.`,
+                      ),
+                    ),
+                  );
+                },
+                error: (err: unknown) => {
+                  const storeError = toStoreError(err);
+                  patchState(store, { deleteCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    organizationSettingsStoreEvents.deleteFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        $localize`:@@org.settings.deleteError:The organization could not be deleted.`,
+                      ),
+                    ),
+                  );
+                },
               }),
             ),
           ),

@@ -1,6 +1,6 @@
 import { type } from '@ngrx/signals';
 import { eventGroup } from '@ngrx/signals/events';
-import type { StoreFailureEventPayload } from '@core/request-state';
+import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/request-state';
 
 /**
  * Constant equipmentStoreEvents
@@ -19,6 +19,7 @@ export const equipmentStoreEvents = eventGroup({
   events: {
     listFailed: type<StoreFailureEventPayload>(),
     createFailed: type<StoreFailureEventPayload>(),
+    createSucceeded: type<FeedbackEventPayload>(),
     updateFailed: type<StoreFailureEventPayload>(),
     assignToFacilityFailed: type<StoreFailureEventPayload>(),
     unassignFromFacilityFailed: type<StoreFailureEventPayload>(),

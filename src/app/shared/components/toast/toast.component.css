@@ -1,0 +1,105 @@
+/*
+ * Stacked-pile toast outlet.
+ *
+ * The PrimeNG toast container (`.p-toast`) is turned into a single-cell grid so
+ * every `p-toastitem` host overlaps in the same spot, anchored to the bottom.
+ * Each item is then offset and scaled by its depth from the front (newest)
+ * toast, producing a deck that piles up on top of itself. Enter/leave motion
+ * stays owned by PrimeNG on the inner `.p-toast-message`, so it never fights
+ * these resting transforms on the host.
+ *
+ * Position: bottom-right on desktop, re-centered to bottom-center on mobile.
+ */
+
+/* Container: fixed bottom-right, deck of overlapping items. */
+:host ::ng-deep .p-toast.p-toast-bottom-right {
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 20rem;
+  max-width: calc(100vw - 2rem);
+  margin: 0;
+  transform: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: visible;
+}
+
+:host ::ng-deep .p-toast.p-toast-bottom-right > p-toastitem {
+  grid-area: 1 / 1;
+  align-self: end;
+  justify-self: stretch;
+  transform-origin: bottom right;
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.3s ease;
+  will-change: transform, opacity;
+}
+
+/*
+ * Neutralize PrimeNG's severity styling on the message wrapper: in headless mode
+ * the only visible surface must be our own card, so the success/error/etc.
+ * background, border and shadow are stripped (severity is carried by the dot).
+ */
+:host ::ng-deep .p-toast .p-toast-message {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Collapsed deck: newest in front, older ones receding upward + scaled down. */
+:host ::ng-deep .p-toast-bottom-right > p-toastitem:nth-last-child(1) {
+  transform: translateY(0) scale(1);
+  z-index: 40;
+}
+:host ::ng-deep .p-toast-bottom-right > p-toastitem:nth-last-child(2) {
+  transform: translateY(-0.85rem) scale(0.95);
+  z-index: 30;
+}
+:host ::ng-deep .p-toast-bottom-right > p-toastitem:nth-last-child(3) {
+  transform: translateY(-1.65rem) scale(0.9);
+  z-index: 20;
+}
+:host ::ng-deep .p-toast-bottom-right > p-toastitem:nth-last-child(n + 4) {
+  transform: translateY(-2.3rem) scale(0.86);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Hover fans the deck out into a readable, full-size vertical column. */
+:host ::ng-deep .p-toast-bottom-right:hover > p-toastitem {
+  opacity: 1;
+  pointer-events: auto;
+}
+:host ::ng-deep .p-toast-bottom-right:hover > p-toastitem:nth-last-child(1) {
+  transform: translateY(0) scale(1);
+}
+:host ::ng-deep .p-toast-bottom-right:hover > p-toastitem:nth-last-child(2) {
+  transform: translateY(-4.75rem) scale(1);
+}
+:host ::ng-deep .p-toast-bottom-right:hover > p-toastitem:nth-last-child(3) {
+  transform: translateY(-9.5rem) scale(1);
+}
+:host ::ng-deep .p-toast-bottom-right:hover > p-toastitem:nth-last-child(n + 4) {
+  transform: translateY(-14.25rem) scale(1);
+}
+
+/* Mobile: re-center the deck at the bottom of the viewport. */
+@media (max-width: 640px) {
+  :host ::ng-deep .p-toast.p-toast-bottom-right {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  :host ::ng-deep .p-toast.p-toast-bottom-right > p-toastitem {
+    transform-origin: bottom center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host ::ng-deep .p-toast.p-toast-bottom-right > p-toastitem {
+    transition: none;
+  }
+}

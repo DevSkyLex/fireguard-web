@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   signal,
   type Signal,
@@ -74,6 +75,7 @@ export class SelectPlanStep extends OnboardingStepBase {
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   private readonly router: Router = inject<Router>(Router);
   private readonly documentRef: Document = inject<Document>(DOCUMENT);
+  private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
   //#endregion
 
   //#region State
@@ -239,7 +241,7 @@ export class SelectPlanStep extends OnboardingStepBase {
     this.pendingPlanKey.set(plan.key);
     this.billingService
       .createCheckoutSession(organizationId, { planKey: plan.key, interval: this.interval() })
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (session: CheckoutSessionOutput) => {
           this.documentRef.defaultView?.location.assign(session.url);
@@ -307,7 +309,7 @@ export class SelectPlanStep extends OnboardingStepBase {
       plans: this.planService.listAvailable(),
       pricing: this.billingService.getPricing(),
     })
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({
           plans,

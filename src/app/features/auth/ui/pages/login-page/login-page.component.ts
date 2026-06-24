@@ -6,11 +6,8 @@ import {
   computed,
   type Signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterModule } from '@angular/router';
-import { Events } from '@ngrx/signals/events';
-import { MessageService } from 'primeng/api';
-import { AuthStore, authStoreEvents } from '@features/auth/state';
+import { AuthStore } from '@features/auth/state';
 import { LoginForm, type LoginFormValues } from '@features/auth/ui/forms';
 
 /**
@@ -46,34 +43,6 @@ export class LoginPage {
    * @type {AuthStore}
    */
   protected readonly authStore: AuthStore = inject<AuthStore>(AuthStore);
-
-  /**
-   * Property messageService
-   * @readonly
-   *
-   * @description
-   * PrimeNG message service for displaying API errors.
-   *
-   * @access private
-   * @since 3.0.0
-   *
-   * @type {MessageService}
-   */
-  private readonly messageService: MessageService = inject<MessageService>(MessageService);
-
-  /**
-   * Property events
-   * @readonly
-   *
-   * @description
-   * NgRx events stream.
-   *
-   * @access private
-   * @since 3.0.0
-   *
-   * @type {Events}
-   */
-  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Property router
@@ -132,18 +101,6 @@ export class LoginPage {
         this.router.navigate(['/']).catch(() => undefined);
       }
     });
-
-    this.events
-      .on(authStoreEvents.loginFailed)
-      .pipe(takeUntilDestroyed())
-      .subscribe(({ payload }) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: $localize`:@@common.error:Error`,
-          detail: payload.message,
-          life: 5000,
-        });
-      });
   }
   //#endregion
 

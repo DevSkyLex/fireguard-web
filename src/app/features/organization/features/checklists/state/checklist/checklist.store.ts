@@ -12,6 +12,7 @@ import {
   idleCallState,
   pendingCallState,
   successCallState,
+  successFeedback,
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
@@ -407,6 +408,11 @@ export const ChecklistStore = signalStore(
                       createCallState: successCallState(checklist),
                       totalChecklists: store.totalChecklists() + 1,
                     });
+                    dispatcher.dispatch(
+                      checklistStoreEvents.createSucceeded(
+                        successFeedback($localize`:@@checklist.toast.created:Checklist created`),
+                      ),
+                    );
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);

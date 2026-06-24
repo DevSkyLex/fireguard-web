@@ -8,18 +8,12 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Events } from '@ngrx/signals/events';
-import { MessageService } from 'primeng/api';
 import { ChecklistStore } from '@features/organization/features/checklists/state';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import type { CreateInspectionInput } from '@features/organization/features/inspections/models';
-import {
-  InspectionStore,
-  inspectionStoreEvents,
-} from '@features/organization/features/inspections/state';
+import { InspectionStore } from '@features/organization/features/inspections/state';
 import {
   InspectionForm,
   type InspectionFormValues,
@@ -73,28 +67,6 @@ export class InspectionCreatePage {
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
-
-  /**
-   * Property messageService
-   * @readonly
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {MessageService}
-   */
-  private readonly messageService: MessageService = inject<MessageService>(MessageService);
-
-  /**
-   * Property events
-   * @readonly
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Events}
-   */
-  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Property activeOrganizationStore
@@ -198,39 +170,26 @@ export class InspectionCreatePage {
       this.checklistStore.ensureInspectionCreateOptionsLoaded(organizationId);
     }
 
-    // Navigate to the inspection list on successful creation
+    // React to the create outcome: navigate on success, open the upgrade dialog
+    // on a quota (409) failure. Success and generic error toasts are produced
+    // centrally from the store's feedback events.
     effect(() => {
       const operation = this.store.createCallState();
+
       if (operation.status === 'success' && operation.data) {
-        this.messageService.add({
-          severity: 'success',
-          summary: $localize`:@@inspection.created.summary:Inspection created`,
-          detail: $localize`:@@inspection.created.detail:The inspection has been created successfully.`,
-          life: 4000,
-        });
         this.router.navigate(['..'], { relativeTo: this.route });
+        return;
+      }
+
+      if (
+        operation.status === 'error' &&
+        operation.error &&
+        isQuotaExceededError(operation.error)
+      ) {
+        this.quotaStore.reload();
+        this.quotaDialogVisible.set(true);
       }
     });
-
-    // Error feedback on create failure: route quota (409) failures to the
-    // actionable upgrade dialog, everything else to a generic error toast.
-    this.events
-      .on(inspectionStoreEvents.createFailed)
-      .pipe(takeUntilDestroyed())
-      .subscribe(({ payload }) => {
-        if (isQuotaExceededError(payload)) {
-          this.quotaStore.reload();
-          this.quotaDialogVisible.set(true);
-          return;
-        }
-
-        this.messageService.add({
-          severity: 'error',
-          summary: $localize`:@@common.error:Error`,
-          detail: payload.message,
-          life: 5000,
-        });
-      });
   }
   //#endregion
 

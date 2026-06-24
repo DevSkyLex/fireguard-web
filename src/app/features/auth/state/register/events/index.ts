@@ -1,0 +1,1 @@
+export { registerStoreEvents } from './events';

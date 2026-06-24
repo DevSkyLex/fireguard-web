@@ -10,10 +10,9 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MessageService, type MenuItem } from 'primeng/api';
+import { type MenuItem } from 'primeng/api';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { MenuModule, type MenuPassThroughOptions } from 'primeng/menu';
-import { MessageModule } from 'primeng/message';
 import { map } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
@@ -69,7 +68,6 @@ interface OrganizationSettingsNavItem {
   imports: [
     CardModule,
     MenuModule,
-    MessageModule,
     OrganizationGeneralForm,
     OrganizationNotificationsForm,
     OrganizationRegionalForm,
@@ -83,18 +81,11 @@ interface OrganizationSettingsNavItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationSettingsPage {
-  /** Localized fallback for the save-error banner. */
-  protected readonly saveErrorFallback: string = $localize`:@@org.settings.saveError:The settings could not be saved.`;
-  /** Localized fallback for the delete-error banner. */
-  protected readonly deleteErrorFallback: string = $localize`:@@org.settings.deleteError:The organization could not be deleted.`;
-
   //#region Properties
   /** Active route used to read and update the selected settings section. */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   /** Router used to persist the selected section in the URL. */
   private readonly router: Router = inject<Router>(Router);
-  /** PrimeNG message service used for save feedback. */
-  private readonly messageService: MessageService = inject<MessageService>(MessageService);
   /** Active organization context store. */
   protected readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
@@ -220,37 +211,16 @@ export class OrganizationSettingsPage {
   //#endregion
 
   //#region Methods
-  /** Surfaces save and logo-upload outcomes as toasts. */
+  /**
+   * Reacts to a successful deletion by clearing the active organization context
+   * and navigating away. Save, logo-upload and deletion toasts (success and
+   * error) are produced centrally from the settings store's feedback events.
+   */
   public constructor() {
-    effect(() => {
-      if (this.store.saveSucceeded()) {
-        this.messageService.add({
-          severity: 'success',
-          summary: $localize`:@@org.settings.savedSummary:Settings saved`,
-          detail: $localize`:@@org.settings.savedDetail:The organization settings have been updated.`,
-        });
-      }
-    });
-
-    effect(() => {
-      if (this.store.uploadLogoSucceeded()) {
-        this.messageService.add({
-          severity: 'success',
-          summary: $localize`:@@org.settings.logoSummary:Logo updated`,
-          detail: $localize`:@@org.settings.logoDetail:The organization logo has been updated.`,
-        });
-      }
-    });
-
     effect(() => {
       if (this.store.deleteSucceeded()) {
         this.deleteDialogVisible.set(false);
         this.activeOrganizationStore.clear();
-        this.messageService.add({
-          severity: 'success',
-          summary: $localize`:@@org.settings.deletedSummary:Organization deleted`,
-          detail: $localize`:@@org.settings.deletedDetail:The organization has been permanently deleted.`,
-        });
         void this.router.navigate(['/organizations']);
       }
     });

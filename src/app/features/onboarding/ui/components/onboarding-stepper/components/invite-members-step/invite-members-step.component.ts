@@ -2,6 +2,7 @@ import {
   Component,
   ChangeDetectionStrategy,
   computed,
+  DestroyRef,
   effect,
   inject,
   signal,
@@ -71,6 +72,22 @@ export class InviteMembersStep extends OnboardingStepBase {
    * @type {MessageService}
    */
   private readonly messageService: MessageService = inject<MessageService>(MessageService);
+
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Lifecycle handle passed to `takeUntilDestroyed` so subscriptions started
+   * outside the injection context (the role-loading effect and the invite
+   * handler) unsubscribe when the step component is destroyed.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {DestroyRef}
+   */
+  private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
   //#endregion
 
   //#region State
@@ -222,7 +239,7 @@ export class InviteMembersStep extends OnboardingStepBase {
         this.rolesLoadingState.set(true);
         this.organizationSetupService
           .listRoles(organizationId)
-          .pipe(takeUntilDestroyed())
+          .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe({
             next: (roles) => {
               this.rolesState.set(roles);
@@ -268,7 +285,7 @@ export class InviteMembersStep extends OnboardingStepBase {
           roleIds: v.roleId ? [v.roleId] : undefined,
         })),
       )
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.isInviting.set(false);

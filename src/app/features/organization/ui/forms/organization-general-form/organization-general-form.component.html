@@ -47,16 +47,6 @@
           </div>
 
           <div class="flex min-w-0 flex-col items-start gap-1.5">
-            @if (logoHasError()) {
-              <p-message
-                i18n="@@org.general.logoError"
-                severity="error"
-                class="w-full"
-                [closable]="false"
-              >
-                We couldn't upload the logo. Please try again.
-              </p-message>
-            }
             <p-fileupload
               #logoUpload
               mode="basic"

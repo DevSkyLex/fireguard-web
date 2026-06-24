@@ -4,6 +4,7 @@ import {
   mfaGuard,
   passwordResetNewGuard,
   passwordResetVerifyGuard,
+  registerVerifyGuard,
 } from '@features/auth/http/guards';
 
 /**
@@ -26,6 +27,22 @@ export const AUTH_ROUTES: Routes = [
       import('./ui/pages/login-page/login-page.component').then((m) => m.LoginPage),
     canActivate: [guestGuard],
     title: $localize`:@@route.auth.login:Sign In`,
+  },
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./ui/pages/register-page/register-page.component').then((m) => m.RegisterPage),
+    canActivate: [guestGuard],
+    title: $localize`:@@route.auth.register:Create Account`,
+  },
+  {
+    path: 'register/verify',
+    loadComponent: () =>
+      import('./ui/pages/register-verify-page/register-verify-page.component').then(
+        (m) => m.RegisterVerifyPage,
+      ),
+    canActivate: [registerVerifyGuard],
+    title: $localize`:@@route.auth.registerVerify:Verify Email`,
   },
   {
     path: 'mfa-verify',

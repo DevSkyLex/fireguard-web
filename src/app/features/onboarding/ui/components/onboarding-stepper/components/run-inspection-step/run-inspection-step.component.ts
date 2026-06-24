@@ -2,6 +2,7 @@ import {
   Component,
   ChangeDetectionStrategy,
   computed,
+  DestroyRef,
   effect,
   inject,
   signal,
@@ -76,6 +77,22 @@ export class RunInspectionStep extends OnboardingStepBase {
    * @type {MessageService}
    */
   private readonly messageService: MessageService = inject<MessageService>(MessageService);
+
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Lifecycle handle passed to `takeUntilDestroyed` so subscriptions started
+   * outside the injection context (the equipment-loading effect and the submit
+   * handler) unsubscribe when the step component is destroyed.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {DestroyRef}
+   */
+  private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
   //#endregion
 
   //#region State
@@ -244,7 +261,7 @@ export class RunInspectionStep extends OnboardingStepBase {
         this.isLoadingEquipmentState.set(true);
         this.organizationSetupService
           .listEquipment(organizationId)
-          .pipe(takeUntilDestroyed())
+          .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe({
             next: (equipment) => {
               this.equipmentState.set(equipment);
@@ -306,7 +323,7 @@ export class RunInspectionStep extends OnboardingStepBase {
         inspectorType: values.inspectorType,
         inspectorName: values.inspectorName,
       })
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.isCreatingState.set(false);

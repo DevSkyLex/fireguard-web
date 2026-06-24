@@ -1,0 +1,30 @@
+<div id="register-page" class="flex w-full flex-col gap-7">
+  <section class="flex flex-col">
+    <h2
+      class="mb-2 text-2xl font-semibold text-surface-900 dark:text-surface-100"
+      i18n="@@auth.register.title"
+    >
+      Create your account
+    </h2>
+    <p class="text-sm text-surface-600 dark:text-surface-400" i18n="@@auth.register.subtitle">
+      Start setting up your fire-safety workspace in a couple of minutes.
+    </p>
+  </section>
+
+  <!-- Registration form -->
+  <section class="flex flex-col">
+    <app-register-form [loading]="loading()" (submitted)="handleRegister($event)" />
+  </section>
+
+  <!-- Sign-in link -->
+  <p class="text-center text-sm text-surface-600 dark:text-surface-400">
+    <span i18n="@@auth.register.haveAccount">Already have an account?</span>
+    <a
+      routerLink="/auth/login"
+      class="ml-1 font-medium text-primary hover:underline"
+      i18n="@@auth.register.signInLink"
+    >
+      Sign in
+    </a>
+  </p>
+</div>

@@ -1,5 +1,6 @@
 import { isApiError } from '@core/api/utils';
-import type { StoreError, StoreFailureEventPayload } from '../models';
+import type { FeedbackEventPayload, StoreError } from '../models';
+import { errorFeedback } from './feedback-payload.utils';
 
 /**
  * Function toStoreError
@@ -39,22 +40,22 @@ export function toStoreError(error: unknown): StoreError {
  * @function toStoreFailureEventPayload
  *
  * @description
- * Maps a `StoreError` to a serializable `StoreFailureEventPayload`
- * for dispatch as a NgRx store domain event.
+ * Maps a `StoreError` to a serializable, error-severity `FeedbackEventPayload`
+ * for dispatch as a NgRx store domain failure event. The payload is picked up
+ * by the app-wide feedback listener and rendered as an error toast.
  *
  * @param error The normalized `StoreError` to convert.
  * @param fallbackMessage Human-readable message to use when `error.message` is `null`.
  *
- * @return A `StoreFailureEventPayload` ready to dispatch.
+ * @return A `FeedbackEventPayload` (severity `error`) ready to dispatch.
  */
 export function toStoreFailureEventPayload(
   error: StoreError,
   fallbackMessage: string,
-): StoreFailureEventPayload {
-  return {
-    message: error.message ?? fallbackMessage,
+): FeedbackEventPayload {
+  return errorFeedback(error.message ?? fallbackMessage, {
     code: error.code ?? null,
     retryable: error.retryable ?? false,
     timestamp: error.timestamp ?? Date.now(),
-  };
+  });
 }

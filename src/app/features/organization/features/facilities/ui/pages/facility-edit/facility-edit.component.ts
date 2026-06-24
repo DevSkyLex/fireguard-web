@@ -6,10 +6,7 @@ import {
   inject,
   type Signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Events } from '@ngrx/signals/events';
-import { MessageService } from 'primeng/api';
 import { SkeletonModule } from 'primeng/skeleton';
 import type {
   FacilityOutput,
@@ -18,7 +15,6 @@ import type {
 import {
   ActiveFacilityStore,
   FacilityStore,
-  facilityStoreEvents,
 } from '@features/organization/features/facilities/state';
 import {
   FacilityForm,
@@ -78,36 +74,6 @@ export class FacilityEditPage {
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
-
-  /**
-   * Property messageService
-   * @readonly
-   *
-   * @description
-   * PrimeNG toast service used to display success and error
-   * notifications after the update operation.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {MessageService}
-   */
-  private readonly messageService: MessageService = inject<MessageService>(MessageService);
-
-  /**
-   * Property events
-   * @readonly
-   *
-   * @description
-   * NgRx Signals event bus used to subscribe to
-   * {@link facilityStoreEvents.updateFailed} for error toasts.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Events}
-   */
-  private readonly events: Events = inject<Events>(Events);
 
   /**
    * Property activeOrganizationStore
@@ -196,8 +162,9 @@ export class FacilityEditPage {
    * @constructor
    *
    * @description
-   * Subscribes to store events for error toasts and watches
-   * updateCallState success for navigation.
+   * Navigates back to the facility detail page on a successful update. The
+   * success and error toasts are produced centrally from the store's feedback
+   * events.
    *
    * @since 1.0.0
    */
@@ -206,28 +173,9 @@ export class FacilityEditPage {
     effect(() => {
       const operation = this.store.updateCallState();
       if (operation.status === 'success' && operation.data) {
-        this.messageService.add({
-          severity: 'success',
-          summary: $localize`:@@facility.updated.summary:Facility updated`,
-          detail: $localize`:@@facility.updated.detail:"${operation.data.name}:name:" has been updated successfully.`,
-          life: 4000,
-        });
         this.router.navigate(['..'], { relativeTo: this.route });
       }
     });
-
-    // Error toast on update failure
-    this.events
-      .on(facilityStoreEvents.updateFailed)
-      .pipe(takeUntilDestroyed())
-      .subscribe(({ payload }) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: $localize`:@@common.error:Error`,
-          detail: payload.message,
-          life: 5000,
-        });
-      });
   }
   //#endregion
 

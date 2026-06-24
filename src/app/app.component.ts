@@ -1,8 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ToastModule } from 'primeng/toast';
-import { SplashScreen } from '@shared/components';
+import { SplashScreen, Toast } from '@shared/components';
 
 /**
  * Component App
@@ -23,11 +22,11 @@ import { SplashScreen } from '@shared/components';
  */
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ConfirmDialogModule, ToastModule, SplashScreen],
+  imports: [RouterOutlet, ConfirmDialogModule, SplashScreen, Toast],
   template: `
     <app-splash-screen />
     <p-confirmdialog />
-    <p-toast position="top-right" />
+    <app-toast />
     <router-outlet />
   `,
 })

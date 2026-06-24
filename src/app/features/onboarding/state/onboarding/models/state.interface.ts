@@ -34,5 +34,11 @@ export interface OnboardingStoreState {
 
   /** Tracks the rollback mutation call state. */
   readonly rollbackCallState: CallState<OnboardingOutput>;
+
+  /** Tracks the dismiss-activation mutation call state. */
+  readonly dismissCallState: CallState<OnboardingOutput>;
+
+  /** Tracks the resume-activation mutation call state. */
+  readonly resumeCallState: CallState<OnboardingOutput>;
 }
 //#endregion

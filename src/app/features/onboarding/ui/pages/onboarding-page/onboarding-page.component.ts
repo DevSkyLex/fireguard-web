@@ -1,27 +1,27 @@
-import { Component, ChangeDetectionStrategy, inject, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { OnboardingStore, onboardingStoreEvents } from '@features/onboarding/state';
-import { OnboardingStepper } from '@features/onboarding/ui/components';
+import { OnboardingWizard } from '@features/onboarding/ui/components';
 
 /**
  * Component OnboardingPage
  * @class OnboardingPage
  *
  * @description
- * Root page for the onboarding wizard. Displays a vertical sidebar
- * with step progress and the main stepper content. Handles navigation
- * on completion and error toasts for failed operations.
+ * Route-entry orchestrator for the activation wizard. Bootstraps the onboarding
+ * record (SSR-aware) and surfaces error toasts for failed mutations. Onboarding
+ * is non-blocking, so the page never redirects on completion — the wizard renders
+ * a completion screen with an explicit "Go to dashboard" action instead.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-onboarding-page',
-  imports: [OnboardingStepper],
+  imports: [OnboardingWizard],
   templateUrl: './onboarding-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -32,8 +32,6 @@ export class OnboardingPage {
   private readonly messageService: MessageService = inject<MessageService>(MessageService);
 
   private readonly events: Events = inject<Events>(Events);
-
-  private readonly router: Router = inject<Router>(Router);
   //#endregion
 
   //#region Constructor
@@ -41,53 +39,32 @@ export class OnboardingPage {
    * @constructor
    *
    * @description
-   * Starts the onboarding flow, navigates to home on completion,
-   * and subscribes to error events for toast notifications.
+   * Bootstraps the onboarding flow and subscribes to mutation-failure events for
+   * toast notifications.
    */
   public constructor() {
     void this.onboardingStore.initialize({ reset: false });
 
-    effect(() => {
-      if (this.onboardingStore.isCompleted()) {
-        this.router.navigate(['/']).catch(() => undefined);
-      }
-    });
+    const failureEvents = [
+      onboardingStoreEvents.executeStepFailed,
+      onboardingStoreEvents.skipStepFailed,
+      onboardingStoreEvents.rollbackFailed,
+      onboardingStoreEvents.dismissFailed,
+    ];
 
-    this.events
-      .on(onboardingStoreEvents.executeStepFailed)
-      .pipe(takeUntilDestroyed())
-      .subscribe(({ payload }) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: $localize`:@@common.error:Error`,
-          detail: payload.message,
-          life: 5000,
+    for (const failureEvent of failureEvents) {
+      this.events
+        .on(failureEvent)
+        .pipe(takeUntilDestroyed())
+        .subscribe(({ payload }) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: $localize`:@@common.error:Error`,
+            detail: payload.message,
+            life: 5000,
+          });
         });
-      });
-
-    this.events
-      .on(onboardingStoreEvents.skipStepFailed)
-      .pipe(takeUntilDestroyed())
-      .subscribe(({ payload }) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: $localize`:@@common.error:Error`,
-          detail: payload.message,
-          life: 5000,
-        });
-      });
-
-    this.events
-      .on(onboardingStoreEvents.rollbackFailed)
-      .pipe(takeUntilDestroyed())
-      .subscribe(({ payload }) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: $localize`:@@common.error:Error`,
-          detail: payload.message,
-          life: 5000,
-        });
-      });
+    }
   }
   //#endregion
 

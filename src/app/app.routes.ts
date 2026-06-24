@@ -4,6 +4,7 @@ import { authGuard } from '@features/auth/http/guards';
 import { provideMainFeature, withMainNavigation } from '@features/main';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
 import { onboardingGuard } from '@features/onboarding/http/guards';
+import { withSetupChecklist } from '@features/onboarding/providers';
 import {
   provideOrganizationFeature,
   withOrganizationContext,
@@ -33,13 +34,14 @@ export const APP_ROUTES: Routes = [
   {
     path: '',
     component: DashboardLayout,
-    canActivate: [authGuard, onboardingGuard, maintenanceGuard],
+    canActivate: [authGuard, maintenanceGuard],
     providers: [
       provideMainFeature(),
       provideOrganizationFeature(),
       provideDashboardLayoutSlots({
         navigation: [withMainNavigation(), ...withOrganizationNavigation()],
         topbar: [
+          withSetupChecklist(),
           withOrganizationSwitcher(),
           withThemeSwitcher(),
           withNotificationBell(),
@@ -74,7 +76,7 @@ export const APP_ROUTES: Routes = [
     children: [
       {
         path: 'onboarding',
-        canActivate: [authGuard, maintenanceGuard],
+        canActivate: [authGuard, onboardingGuard, maintenanceGuard],
         loadChildren: () =>
           import('@features/onboarding/onboarding.routes').then((m) => m.ONBOARDING_ROUTES),
       },

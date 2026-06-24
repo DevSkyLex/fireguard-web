@@ -183,5 +183,29 @@ export interface OnboardingOutput extends HydraItem {
    * @type {string | null}
    */
   readonly updatedAt: string | null;
+
+  /**
+   * Property dismissed
+   * @readonly
+   *
+   * @description
+   * Whether the user voluntarily hid the non-blocking activation flow.
+   * Onboarding never blocks navigation; this flag lets the shell hide the
+   * setup checklist until the user resumes it.
+   *
+   * @type {boolean}
+   */
+  readonly dismissed: boolean;
+
+  /**
+   * Property dismissedAt
+   * @readonly
+   *
+   * @description
+   * Timestamp at which the activation flow was dismissed, or `null`.
+   *
+   * @type {string | null}
+   */
+  readonly dismissedAt: string | null;
   //#endregion
 }

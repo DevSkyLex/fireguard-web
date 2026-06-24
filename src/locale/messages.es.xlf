@@ -5448,6 +5448,130 @@
         <source>Use my browser language</source>
         <target>Usar el idioma de mi navegador</target>
       </trans-unit>
+      <trans-unit id="common.dismiss" datatype="html">
+        <source> Dismiss </source>
+        <target>Descartar</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.title" datatype="html">
+        <source> Let&apos;s set up your workspace </source>
+        <target>Configuremos tu espacio de trabajo</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.lead" datatype="html">
+        <source> A few quick steps to get your team, sites and first inspection ready. About 5 minutes — you can leave and pick up where you left off at any time. </source>
+        <target>Unos pasos rápidos para preparar tu equipo, tus sedes y tu primera inspección. Unos 5 minutos: puedes salir y retomar donde lo dejaste en cualquier momento.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.point1" datatype="html">
+        <source> Create your organization and invite your team </source>
+        <target>Crea tu organización e invita a tu equipo</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.point2" datatype="html">
+        <source> Add the facilities and equipment you monitor </source>
+        <target>Añade las instalaciones y equipos que supervisas</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.point3" datatype="html">
+        <source> Run your first inspection and you&apos;re live </source>
+        <target>Realiza tu primera inspección y estarás en marcha</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.start" datatype="html">
+        <source>Start setup</source>
+        <target>Comenzar configuración</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.skipAll" datatype="html">
+        <source>I&apos;ll explore on my own</source>
+        <target>Prefiero explorar por mi cuenta</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.stepCounter" datatype="html">
+        <source>Step <x id="INTERPOLATION" equiv-text="{{ store.activeStepIndex() + 1 }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.steps().length }}"/></source>
+        <target>Paso <x id="INTERPOLATION"/> de <x id="INTERPOLATION_1"/></target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.progressDone" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ store.progress().done }}"/> done</source>
+        <target><x id="INTERPOLATION"/> completados</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.blocked" datatype="html">
+        <source>Your setup is paused. Please resolve the issue and try again.</source>
+        <target>Tu configuración está en pausa. Resuelve el problema e inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.back" datatype="html">
+        <source>Back</source>
+        <target>Atrás</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.skip" datatype="html">
+        <source>Skip for now</source>
+        <target>Omitir por ahora</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.done.title" datatype="html">
+        <source> You&apos;re all set </source>
+        <target>Todo listo</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.done.subtitleNamed" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ orgName }}"/> is ready. Jump into your dashboard to keep going.</source>
+        <target><x id="INTERPOLATION"/> está listo. Entra en tu panel para continuar.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.done.subtitle" datatype="html">
+        <source> Your workspace is ready. Jump into your dashboard to keep going. </source>
+        <target>Tu espacio de trabajo está listo. Entra en tu panel para continuar.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.done.cta" datatype="html">
+        <source>Go to dashboard</source>
+        <target>Ir al panel</target>
+      </trans-unit>
+      <trans-unit id="onboarding.checklist.ariaOpen" datatype="html">
+        <source>Open setup checklist</source>
+        <target>Abrir lista de configuración</target>
+      </trans-unit>
+      <trans-unit id="onboarding.checklist.trigger" datatype="html">
+        <source>Finish setup</source>
+        <target>Terminar configuración</target>
+      </trans-unit>
+      <trans-unit id="onboarding.checklist.title" datatype="html">
+        <source> Finish setting up </source>
+        <target>Terminar la configuración</target>
+      </trans-unit>
+      <trans-unit id="onboarding.checklist.progress" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ store.progress().done }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.progress().total }}"/> done</source>
+        <target><x id="INTERPOLATION"/> de <x id="INTERPOLATION_1"/> completados</target>
+      </trans-unit>
+      <trans-unit id="onboarding.checklist.continue" datatype="html">
+        <source>Continue setup</source>
+        <target>Continuar configuración</target>
+      </trans-unit>
+      <trans-unit id="onboarding.checklist.hide" datatype="html">
+        <source>Hide for now</source>
+        <target>Ocultar por ahora</target>
+      </trans-unit>
+      <trans-unit id="onboarding.step.plan.label" datatype="html">
+        <source>Choose a plan</source>
+        <target>Elegir un plan</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.title" datatype="html">
+        <source> Choose a plan </source>
+        <target>Elige un plan</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.subtitle" datatype="html">
+        <source> Pick the plan that fits your team. You can change it any time — or stay on Free for now. </source>
+        <target>Elige el plan que se adapte a tu equipo. Podrás cambiarlo en cualquier momento, o seguir en el plan gratuito por ahora.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.loadError" datatype="html">
+        <source> We couldn&apos;t load the plans. </source>
+        <target>No pudimos cargar los planes.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.startFree" datatype="html">
+        <source>Start on Free</source>
+        <target>Empezar en gratis</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.checkoutError" datatype="html">
+        <source>We couldn&apos;t start the checkout. Please try again.</source>
+        <target>No pudimos iniciar el pago. Inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.subscribedSummary" datatype="html">
+        <source>Subscription started</source>
+        <target>Suscripción iniciada</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.subscribedDetail" datatype="html">
+        <source>Your subscription is being activated — it may take a few seconds.</source>
+        <target>Tu suscripción se está activando: puede tardar unos segundos.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

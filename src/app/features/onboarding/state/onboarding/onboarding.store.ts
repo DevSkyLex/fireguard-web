@@ -1,5 +1,4 @@
 import { isPlatformBrowser } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
@@ -40,8 +39,6 @@ interface ExecuteStepPayload {
   readonly stepKey: OnboardingStepKey;
 }
 
-const isBlockingState = (state: string): boolean => state === 'in_progress' || state === 'blocked';
-
 const ONBOARDING_TRANSFER_KEY = makeStateKey<OnboardingOutput | null>('organization-onboarding');
 
 //#region Initial State
@@ -64,6 +61,8 @@ const INITIAL_ONBOARDING_STATE: OnboardingStoreState = {
   executeStepCallState: idleCallState(),
   skipStepCallState: idleCallState(),
   rollbackCallState: idleCallState(),
+  dismissCallState: idleCallState(),
+  resumeCallState: idleCallState(),
 } as const;
 //#endregion
 
@@ -172,9 +171,31 @@ export const OnboardingStore = signalStore(
         store.executeStepCallState(),
         store.skipStepCallState(),
         store.rollbackCallState(),
+        store.dismissCallState(),
+        store.resumeCallState(),
       ];
       return callStates.some((cs) => cs.status === 'pending');
     }),
+
+    /**
+     * Computed isDismissing
+     *
+     * @description
+     * Returns `true` while a dismiss-activation request is in-flight.
+     *
+     * @returns {boolean}
+     */
+    isDismissing: computed<boolean>(() => store.dismissCallState().status === 'pending'),
+
+    /**
+     * Computed isResuming
+     *
+     * @description
+     * Returns `true` while a resume-activation request is in-flight.
+     *
+     * @returns {boolean}
+     */
+    isResuming: computed<boolean>(() => store.resumeCallState().status === 'pending'),
 
     /**
      * Computed loadError
@@ -252,6 +273,48 @@ export const OnboardingStore = signalStore(
       if (!nextStep) return onboarding.steps.length;
 
       return onboarding.steps.findIndex((s) => s.key === nextStep);
+    }),
+
+    /**
+     * Computed isDismissed
+     *
+     * @description
+     * `true` when the user has voluntarily hidden the non-blocking activation
+     * flow. The shell setup checklist stays hidden until the flow is resumed.
+     *
+     * @returns {boolean}
+     */
+    isDismissed: computed<boolean>(() => store.onboarding()?.dismissed ?? false),
+
+    /**
+     * Computed progress
+     *
+     * @description
+     * Activation progress as `{ done, total }`, where a step counts as done when
+     * it is `completed` or `skipped`. Drives the shell checklist "N of M" label.
+     *
+     * @returns {{ done: number; total: number }}
+     */
+    progress: computed<{ readonly done: number; readonly total: number }>(() => {
+      const steps: readonly OnboardingStepOutput[] = store.onboarding()?.steps ?? [];
+      const done = steps.filter((s) => s.status === 'completed' || s.status === 'skipped').length;
+      return { done, total: steps.length };
+    }),
+
+    /**
+     * Computed isActivationVisible
+     *
+     * @description
+     * `true` when the guided activation surfaces (shell checklist, resume hint)
+     * should be shown: an onboarding record exists, it is not completed, and it
+     * has not been dismissed.
+     *
+     * @returns {boolean}
+     */
+    isActivationVisible: computed<boolean>(() => {
+      const onboarding: OnboardingOutput | null = store.onboarding();
+      if (!onboarding) return false;
+      return onboarding.state !== 'completed' && !onboarding.dismissed;
     }),
   })),
   //#endregion
@@ -540,6 +603,87 @@ export const OnboardingStore = signalStore(
       ),
 
       /**
+       * Method dismiss
+       *
+       * @description
+       * Voluntarily hides the non-blocking activation flow (shell checklist).
+       * Progression is preserved server-side and can be resumed later. Uses
+       * `exhaustMap` to prevent duplicate submissions.
+       *
+       * @fires onboardingStoreEvents.dismissFailed  On API error.
+       *
+       * @since 3.0.0
+       *
+       * @author Valentin FORTIN <contact@valentin-fortin.pro>
+       */
+      dismiss: rxMethod<void>(
+        pipe(
+          tap(() => patchState(store, { dismissCallState: pendingCallState() })),
+          exhaustMap(() =>
+            onboardingService.dismiss().pipe(
+              tapResponse({
+                next: (response: OnboardingOutput) => {
+                  patchState(store, {
+                    onboarding: response,
+                    dismissCallState: successCallState(response),
+                  });
+                },
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { dismissCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    onboardingStoreEvents.dismissFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to dismiss onboarding'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Method resume
+       *
+       * @description
+       * Clears a previous dismissal so the activation flow and setup checklist
+       * become visible again. Uses `exhaustMap` to prevent duplicate submissions.
+       *
+       * @fires onboardingStoreEvents.resumeFailed  On API error.
+       *
+       * @since 3.0.0
+       *
+       * @author Valentin FORTIN <contact@valentin-fortin.pro>
+       */
+      resume: rxMethod<void>(
+        pipe(
+          tap(() => patchState(store, { resumeCallState: pendingCallState() })),
+          exhaustMap(() =>
+            onboardingService.resume().pipe(
+              tapResponse({
+                next: (response: OnboardingOutput) => {
+                  patchState(store, {
+                    onboarding: response,
+                    resumeCallState: successCallState(response),
+                  });
+                },
+                error: (error: unknown) => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { resumeCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    onboardingStoreEvents.resumeFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to resume onboarding'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
        * Method clear
        *
        * @description
@@ -571,28 +715,26 @@ export const OnboardingStore = signalStore(
       },
 
       /**
-       * Method checkBlocking
+       * Method ensureLoaded
        *
        * @description
-       * Returns an `Observable<boolean>` that emits `true` when an onboarding
-       * workflow is currently blocking navigation (`in_progress` or `blocked`).
+       * Returns an `Observable<OnboardingOutput | null>` resolving the current
+       * onboarding record. If the record is already in the store it is returned
+       * synchronously (via `of()`); otherwise the API is called once and the
+       * response is patched into the store as a side-effect so consumers (the
+       * wizard-access guard, the shell checklist) do not re-fetch it.
        *
-       * If the onboarding record is already present in the store the decision is
-       * made synchronously (via `of()`). Otherwise the API is called once and the
-       * response is patched into the store as a side-effect so that the onboarding
-       * page does not need to re-fetch it.
+       * Onboarding is non-blocking: any API error resolves to `null` so a failing
+       * endpoint never hard-locks navigation.
        *
-       * A network / API error is treated as "not blocking" so that a failing
-       * onboarding endpoint never hard-locks the application.
-       *
-       * @since 1.0.0
+       * @since 3.0.0
        *
        * @author Valentin FORTIN <contact@valentin-fortin.pro>
        */
-      checkBlocking(): Observable<boolean> {
+      ensureLoaded(): Observable<OnboardingOutput | null> {
         const current: OnboardingOutput | null = store.onboarding();
         if (current !== null) {
-          return of(isBlockingState(current.state));
+          return of(current);
         }
 
         return onboardingService.get().pipe(
@@ -602,15 +744,8 @@ export const OnboardingStore = signalStore(
               loadCallState: successCallState(response),
             }),
           ),
-          map((response: OnboardingOutput) => isBlockingState(response.state)),
-          catchError((error: unknown): Observable<boolean> => {
-            // 404 → aucun workflow d'onboarding pour cet utilisateur → non bloquant
-            if (error instanceof HttpErrorResponse && error.status === 404) {
-              return of(false);
-            }
-            // Toute autre erreur (réseau, 5xx) → fail-closed → rediriger vers /onboarding
-            return of(true);
-          }),
+          map((response: OnboardingOutput): OnboardingOutput | null => response),
+          catchError((): Observable<OnboardingOutput | null> => of(null)),
         );
       },
     }),

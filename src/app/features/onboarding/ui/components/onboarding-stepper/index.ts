@@ -1,1 +1,1 @@
-export { OnboardingStepper } from './onboarding-stepper.component';
+export { OnboardingWizard } from './onboarding-wizard.component';

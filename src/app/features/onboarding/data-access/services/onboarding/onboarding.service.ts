@@ -80,6 +80,34 @@ export class OnboardingService extends HydraApiService {
    * @type {string}
    */
   private static readonly START_ENDPOINT: string = 'start';
+
+  /**
+   * Property DISMISS_ENDPOINT
+   * @readonly
+   * @static
+   *
+   * @description
+   * Endpoint segment used to dismiss (hide) the non-blocking activation flow.
+   *
+   * @access private
+   * @since 3.0.0
+   * @type {string}
+   */
+  private static readonly DISMISS_ENDPOINT: string = 'dismiss';
+
+  /**
+   * Property RESUME_ENDPOINT
+   * @readonly
+   * @static
+   *
+   * @description
+   * Endpoint segment used to resume (re-show) a previously dismissed flow.
+   *
+   * @access private
+   * @since 3.0.0
+   * @type {string}
+   */
+  private static readonly RESUME_ENDPOINT: string = 'resume';
   //#endregion
 
   //#region Public Methods
@@ -181,6 +209,44 @@ export class OnboardingService extends HydraApiService {
   public rollback(): Observable<OnboardingOutput> {
     return this.postAction<OnboardingOutput>(
       `${OnboardingService.BASE_PATH}/${OnboardingService.ROLLBACK_ENDPOINT}`,
+    );
+  }
+
+  /**
+   * Method dismiss
+   * @method dismiss
+   *
+   * @description
+   * Voluntarily hides the non-blocking activation flow without completing it.
+   * Progression is preserved server-side and can be resumed later.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @return {Observable<OnboardingOutput>} An observable emitting the updated onboarding state after dismissal.
+   */
+  public dismiss(): Observable<OnboardingOutput> {
+    return this.postAction<OnboardingOutput>(
+      `${OnboardingService.BASE_PATH}/${OnboardingService.DISMISS_ENDPOINT}`,
+    );
+  }
+
+  /**
+   * Method resume
+   * @method resume
+   *
+   * @description
+   * Clears a previous dismissal so the activation flow and setup checklist
+   * become visible again.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @return {Observable<OnboardingOutput>} An observable emitting the updated onboarding state after resuming.
+   */
+  public resume(): Observable<OnboardingOutput> {
+    return this.postAction<OnboardingOutput>(
+      `${OnboardingService.BASE_PATH}/${OnboardingService.RESUME_ENDPOINT}`,
     );
   }
   //#endregion

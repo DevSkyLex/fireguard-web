@@ -1,0 +1,265 @@
+<div class="mx-auto w-full max-w-xl">
+  @switch (phase()) {
+    <!-- ─────────────────────────── Welcome ─────────────────────────── -->
+    @case ('welcome') {
+      <section
+        class="wizard-fade overflow-hidden rounded-2xl border border-surface-200 dark:border-surface-800"
+      >
+        <!-- Committed brand surface -->
+        <div class="bg-primary px-6 py-8 text-white sm:px-8 sm:py-10">
+          <span
+            class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25"
+          >
+            <i class="pi pi-shield text-2xl"></i>
+          </span>
+          <h1
+            class="mt-5 text-2xl font-semibold tracking-tight text-balance sm:text-3xl"
+            i18n="@@onboarding.wizard.welcome.title"
+          >
+            Let's set up your workspace
+          </h1>
+          <p
+            class="mt-2 max-w-md text-sm leading-relaxed text-white/85"
+            i18n="@@onboarding.wizard.welcome.lead"
+          >
+            A few quick steps to get your team, sites and first inspection ready. About 5 minutes —
+            you can leave and pick up where you left off at any time.
+          </p>
+        </div>
+
+        <!-- Journey preview + actions -->
+        <div class="bg-surface-0 px-6 py-6 sm:px-8 dark:bg-surface-950">
+          <ul class="flex flex-col gap-3">
+            <li class="flex items-start gap-3">
+              <i class="pi pi-building mt-0.5 text-primary"></i>
+              <span
+                class="text-sm text-surface-700 dark:text-surface-200"
+                i18n="@@onboarding.wizard.welcome.point1"
+              >
+                Create your organization and invite your team
+              </span>
+            </li>
+            <li class="flex items-start gap-3">
+              <i class="pi pi-map-marker mt-0.5 text-primary"></i>
+              <span
+                class="text-sm text-surface-700 dark:text-surface-200"
+                i18n="@@onboarding.wizard.welcome.point2"
+              >
+                Add the facilities and equipment you monitor
+              </span>
+            </li>
+            <li class="flex items-start gap-3">
+              <i class="pi pi-clipboard-check mt-0.5 text-primary"></i>
+              <span
+                class="text-sm text-surface-700 dark:text-surface-200"
+                i18n="@@onboarding.wizard.welcome.point3"
+              >
+                Run your first inspection and you're live
+              </span>
+            </li>
+          </ul>
+
+          <div class="mt-7 flex flex-col gap-2 sm:flex-row-reverse">
+            <p-button
+              styleClass="w-full sm:w-auto"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              label="Start setup"
+              i18n-label="@@onboarding.wizard.welcome.start"
+              (onClick)="startSetup()"
+            />
+            <p-button
+              styleClass="w-full sm:w-auto"
+              severity="secondary"
+              [text]="true"
+              label="I'll explore on my own"
+              i18n-label="@@onboarding.wizard.welcome.skipAll"
+              [disabled]="store.isDismissing()"
+              (onClick)="exploreOnMyOwn()"
+            />
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ─────────────────────────── Steps ─────────────────────────── -->
+    @case ('steps') {
+      <section class="wizard-fade">
+        <!-- Progress rail -->
+        <div class="mb-6">
+          <div class="mb-2 flex items-baseline justify-between">
+            <p class="text-sm font-medium text-surface-700 dark:text-surface-200">
+              <ng-container i18n="@@onboarding.wizard.stepCounter"
+                >Step {{ store.activeStepIndex() + 1 }} of {{ store.steps().length }}</ng-container
+              >
+            </p>
+            <p class="text-xs text-surface-500 dark:text-surface-400">
+              <ng-container i18n="@@onboarding.wizard.progressDone"
+                >{{ store.progress().done }} done</ng-container
+              >
+            </p>
+          </div>
+          <div class="flex gap-1.5" role="presentation">
+            @for (i of segments(); track i) {
+              <span
+                class="h-1.5 flex-1 rounded-full transition-colors duration-300"
+                [class]="
+                  i <= store.activeStepIndex() ? 'bg-primary' : 'bg-surface-200 dark:bg-surface-800'
+                "
+              ></span>
+            }
+          </div>
+        </div>
+
+        <!-- Blocked banner -->
+        @if (store.isBlocked()) {
+          <p-message severity="error" [pt]="messagePt">
+            <span class="flex items-center gap-2">
+              <i class="pi pi-exclamation-triangle"></i>
+              <span i18n="@@onboarding.wizard.blocked"
+                >Your setup is paused. Please resolve the issue and try again.</span
+              >
+            </span>
+          </p-message>
+        }
+
+        <!-- Inline step error + retry -->
+        @if (store.executeStepError(); as error) {
+          <p-message severity="error" [pt]="messagePt">
+            <span class="flex w-full items-center justify-between gap-3">
+              <span class="flex items-center gap-2">
+                <i class="pi pi-times-circle"></i>
+                <span>{{ error.message }}</span>
+              </span>
+              <button
+                type="button"
+                class="shrink-0 text-sm font-medium underline underline-offset-2 hover:no-underline"
+                (click)="dismissStepError()"
+                i18n="@@common.dismiss"
+              >
+                Dismiss
+              </button>
+            </span>
+          </p-message>
+        }
+
+        <!-- Active step body -->
+        @if (store.nextStep(); as key) {
+          <ng-container
+            *ngComponentOutlet="
+              getStepComponent(key);
+              inputs: {
+                step: currentStep(),
+                stepIndex: store.activeStepIndex(),
+                totalSteps: store.steps().length,
+              }
+            "
+          />
+        }
+
+        <!-- Footer: back / skip -->
+        <div class="mt-5 flex items-center justify-between">
+          @if (store.canRollback()) {
+            <p-button
+              severity="secondary"
+              [text]="true"
+              icon="pi pi-arrow-left"
+              label="Back"
+              i18n-label="@@onboarding.wizard.back"
+              size="small"
+              [loading]="store.isRollingBack()"
+              [disabled]="store.isBusy()"
+              (onClick)="handleBack()"
+            />
+          } @else {
+            <span></span>
+          }
+
+          @if (currentStep()?.skipAvailable) {
+            <p-button
+              severity="secondary"
+              [text]="true"
+              label="Skip for now"
+              i18n-label="@@onboarding.wizard.skip"
+              size="small"
+              [loading]="store.isSkippingStep()"
+              [disabled]="store.isBusy()"
+              (onClick)="handleSkip()"
+            />
+          }
+        </div>
+      </section>
+    }
+
+    <!-- ─────────────────────────── Completion ─────────────────────────── -->
+    @case ('completion') {
+      <section
+        class="wizard-fade overflow-hidden rounded-2xl border border-surface-200 bg-surface-0 px-6 py-10 text-center sm:px-10 dark:border-surface-800 dark:bg-surface-950"
+      >
+        <span
+          class="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-500/12 text-green-600 ring-1 ring-green-500/25 dark:text-green-400"
+        >
+          <i class="pi pi-check text-2xl"></i>
+        </span>
+        <h1
+          class="mt-5 text-2xl font-semibold tracking-tight text-balance text-surface-900 dark:text-surface-0"
+          i18n="@@onboarding.wizard.done.title"
+        >
+          You're all set
+        </h1>
+        @if (store.targetOrganizationName(); as orgName) {
+          <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">
+            <ng-container i18n="@@onboarding.wizard.done.subtitleNamed"
+              >{{ orgName }} is ready. Jump into your dashboard to keep going.</ng-container
+            >
+          </p>
+        } @else {
+          <p
+            class="mt-2 text-sm text-surface-500 dark:text-surface-400"
+            i18n="@@onboarding.wizard.done.subtitle"
+          >
+            Your workspace is ready. Jump into your dashboard to keep going.
+          </p>
+        }
+        <div class="mt-7">
+          <p-button
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            label="Go to dashboard"
+            i18n-label="@@onboarding.wizard.done.cta"
+            (onClick)="goToDashboard()"
+          />
+        </div>
+      </section>
+    }
+
+    <!-- ─────────────────────────── Loading ─────────────────────────── -->
+    @default {
+      <div class="flex flex-col gap-6" aria-hidden="true">
+        <div class="flex gap-1.5">
+          @for (i of [0, 1, 2, 3, 4]; track i) {
+            <span
+              class="h-1.5 flex-1 animate-pulse rounded-full bg-surface-200 dark:bg-surface-800"
+            ></span>
+          }
+        </div>
+        <div class="rounded-2xl border border-surface-200 p-6 dark:border-surface-800">
+          <div class="flex items-start gap-4">
+            <div
+              class="h-11 w-11 shrink-0 animate-pulse rounded-xl bg-surface-200 dark:bg-surface-800"
+            ></div>
+            <div class="flex-1 pt-1">
+              <div
+                class="mb-2 h-5 w-1/2 animate-pulse rounded bg-surface-200 dark:bg-surface-800"
+              ></div>
+              <div class="h-3 w-3/4 animate-pulse rounded bg-surface-100 dark:bg-surface-900"></div>
+            </div>
+          </div>
+          <div
+            class="mt-6 h-10 w-full animate-pulse rounded-lg bg-surface-100 dark:bg-surface-900"
+          ></div>
+        </div>
+      </div>
+    }
+  }
+</div>

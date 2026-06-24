@@ -5439,6 +5439,130 @@
         <source>Use my browser language</source>
         <target>Utiliser la langue de mon navigateur</target>
       </trans-unit>
+      <trans-unit id="common.dismiss" datatype="html">
+        <source> Dismiss </source>
+        <target>Ignorer</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.title" datatype="html">
+        <source> Let&apos;s set up your workspace </source>
+        <target>Configurons votre espace de travail</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.lead" datatype="html">
+        <source> A few quick steps to get your team, sites and first inspection ready. About 5 minutes — you can leave and pick up where you left off at any time. </source>
+        <target>Quelques étapes rapides pour préparer votre équipe, vos sites et votre première inspection. Environ 5 minutes — vous pouvez quitter et reprendre à tout moment.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.point1" datatype="html">
+        <source> Create your organization and invite your team </source>
+        <target>Créez votre organisation et invitez votre équipe</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.point2" datatype="html">
+        <source> Add the facilities and equipment you monitor </source>
+        <target>Ajoutez les sites et équipements que vous surveillez</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.point3" datatype="html">
+        <source> Run your first inspection and you&apos;re live </source>
+        <target>Réalisez votre première inspection et vous êtes opérationnel</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.start" datatype="html">
+        <source>Start setup</source>
+        <target>Commencer la configuration</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.welcome.skipAll" datatype="html">
+        <source>I&apos;ll explore on my own</source>
+        <target>Je préfère explorer par moi-même</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.stepCounter" datatype="html">
+        <source>Step <x id="INTERPOLATION" equiv-text="{{ store.activeStepIndex() + 1 }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.steps().length }}"/></source>
+        <target>Étape <x id="INTERPOLATION"/> sur <x id="INTERPOLATION_1"/></target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.progressDone" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ store.progress().done }}"/> done</source>
+        <target><x id="INTERPOLATION"/> terminées</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.blocked" datatype="html">
+        <source>Your setup is paused. Please resolve the issue and try again.</source>
+        <target>Votre configuration est en pause. Veuillez résoudre le problème et réessayer.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.back" datatype="html">
+        <source>Back</source>
+        <target>Retour</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.skip" datatype="html">
+        <source>Skip for now</source>
+        <target>Ignorer pour l'instant</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.done.title" datatype="html">
+        <source> You&apos;re all set </source>
+        <target>Tout est prêt</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.done.subtitleNamed" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ orgName }}"/> is ready. Jump into your dashboard to keep going.</source>
+        <target><x id="INTERPOLATION"/> est prêt. Accédez à votre tableau de bord pour continuer.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.done.subtitle" datatype="html">
+        <source> Your workspace is ready. Jump into your dashboard to keep going. </source>
+        <target>Votre espace de travail est prêt. Accédez à votre tableau de bord pour continuer.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.done.cta" datatype="html">
+        <source>Go to dashboard</source>
+        <target>Accéder au tableau de bord</target>
+      </trans-unit>
+      <trans-unit id="onboarding.checklist.ariaOpen" datatype="html">
+        <source>Open setup checklist</source>
+        <target>Ouvrir la liste de configuration</target>
+      </trans-unit>
+      <trans-unit id="onboarding.checklist.trigger" datatype="html">
+        <source>Finish setup</source>
+        <target>Terminer la configuration</target>
+      </trans-unit>
+      <trans-unit id="onboarding.checklist.title" datatype="html">
+        <source> Finish setting up </source>
+        <target>Terminer la configuration</target>
+      </trans-unit>
+      <trans-unit id="onboarding.checklist.progress" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ store.progress().done }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.progress().total }}"/> done</source>
+        <target><x id="INTERPOLATION"/> sur <x id="INTERPOLATION_1"/> terminées</target>
+      </trans-unit>
+      <trans-unit id="onboarding.checklist.continue" datatype="html">
+        <source>Continue setup</source>
+        <target>Continuer la configuration</target>
+      </trans-unit>
+      <trans-unit id="onboarding.checklist.hide" datatype="html">
+        <source>Hide for now</source>
+        <target>Masquer pour l'instant</target>
+      </trans-unit>
+      <trans-unit id="onboarding.step.plan.label" datatype="html">
+        <source>Choose a plan</source>
+        <target>Choisir une formule</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.title" datatype="html">
+        <source> Choose a plan </source>
+        <target>Choisissez une formule</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.subtitle" datatype="html">
+        <source> Pick the plan that fits your team. You can change it any time — or stay on Free for now. </source>
+        <target>Choisissez la formule adaptée à votre équipe. Vous pourrez en changer à tout moment — ou rester sur la formule gratuite pour l'instant.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.loadError" datatype="html">
+        <source> We couldn&apos;t load the plans. </source>
+        <target>Impossible de charger les formules.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.startFree" datatype="html">
+        <source>Start on Free</source>
+        <target>Commencer en gratuit</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.checkoutError" datatype="html">
+        <source>We couldn&apos;t start the checkout. Please try again.</source>
+        <target>Impossible de démarrer le paiement. Veuillez réessayer.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.subscribedSummary" datatype="html">
+        <source>Subscription started</source>
+        <target>Abonnement démarré</target>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.subscribedDetail" datatype="html">
+        <source>Your subscription is being activated — it may take a few seconds.</source>
+        <target>Votre abonnement est en cours d'activation — cela peut prendre quelques secondes.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MessageService } from 'primeng/api';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { OnboardingStore } from '@features/onboarding/state';
 import { CreateFacilitiesForm, type CreateFacilityFormValues } from '@features/onboarding/ui/forms';
@@ -31,7 +30,7 @@ import { OnboardingStepBase } from '../onboarding-step.base';
  */
 @Component({
   selector: 'app-create-facility-step',
-  imports: [CardModule, TagModule, CreateFacilitiesForm],
+  imports: [TagModule, CreateFacilitiesForm],
   templateUrl: './create-facility-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -112,29 +111,6 @@ export class CreateFacilityStep extends OnboardingStepBase {
    * @type {Signal<boolean>}
    */
   protected readonly isExecuting: Signal<boolean> = this.onboardingStore.isExecutingStep;
-  //#endregion
-
-  //#region PT
-  /**
-   * Property cardPt
-   * @readonly
-   *
-   * @description
-   * PrimeNG passthrough configuration for the card.
-   *
-   * @access protected
-   * @since 1.0.0
-   */
-  protected readonly cardPt: CardPassThroughOptions = {
-    root: {
-      class:
-        'overflow-hidden border border-surface-200 bg-surface-0 shadow-none dark:border-surface-800 dark:bg-surface-950',
-    },
-    header: { class: 'p-0' },
-    body: { class: 'p-0' },
-    content: { class: 'p-0' },
-    footer: { class: 'p-0' },
-  };
   //#endregion
 
   //#region Constructor

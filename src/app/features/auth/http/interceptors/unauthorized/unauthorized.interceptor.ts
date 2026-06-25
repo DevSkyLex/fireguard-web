@@ -49,9 +49,9 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (
         router.navigate(['/auth/login']);
       }
 
-      if (error.status === 403 && !isExcluded) {
-        router.navigate(['/error/403']);
-      }
+      // A 403 is intentionally not handled here: it does not block the page,
+      // so it propagates to the caller's error handling (CallState / toast)
+      // instead of triggering a full-page redirect.
 
       return throwError(() => error);
     }),

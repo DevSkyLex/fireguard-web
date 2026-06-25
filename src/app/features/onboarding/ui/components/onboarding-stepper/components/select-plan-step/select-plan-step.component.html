@@ -1,157 +1,141 @@
-<p-card [pt]="cardPt">
-  <ng-template #header>
-    <div class="flex items-start gap-4 px-6 pt-6 pb-5">
-      <div
-        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/15"
-      >
-        <i class="pi pi-star text-base text-primary"></i>
-      </div>
-      <div class="min-w-0 flex-1">
-        @if (!step().required) {
-          <p-tag
-            value="Optional"
-            i18n-value="@@common.optionalTag"
-            severity="secondary"
-            [rounded]="true"
-            styleClass="mb-1.5"
-          />
-        }
-        <h2
-          class="text-xl font-semibold tracking-tight text-balance text-surface-900 dark:text-surface-0"
-          i18n="@@onboarding.plan.title"
-        >
-          Choose a plan
-        </h2>
-        <p
-          class="mt-1 text-sm leading-relaxed text-surface-500 dark:text-surface-400"
-          i18n="@@onboarding.plan.subtitle"
-        >
-          Pick the plan that fits your team. You can change it any time — or stay on Free for now.
-        </p>
-      </div>
-    </div>
-  </ng-template>
+<div class="flex flex-col gap-6">
+  @if (!step().required) {
+    <p-tag
+      value="Optional"
+      i18n-value="@@common.optionalTag"
+      severity="secondary"
+      [rounded]="true"
+      styleClass="self-start"
+    />
+  }
 
-  <div class="px-6 py-6">
-    @if (isLoadingCatalog()) {
-      <!-- Loading -->
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        @for (i of [0, 1]; track i) {
-          <div class="h-56 animate-pulse rounded-xl bg-surface-100 dark:bg-surface-900"></div>
-        }
-      </div>
-    } @else if (catalogError()) {
-      <!-- Error -->
-      <div
-        class="flex flex-col items-center gap-4 rounded-xl border border-surface-200 p-10 text-center dark:border-surface-800"
-      >
-        <i class="pi pi-exclamation-triangle text-2xl text-surface-400"></i>
-        <p
-          class="text-sm text-surface-500 dark:text-surface-400"
-          i18n="@@onboarding.plan.loadError"
-        >
-          We couldn't load the plans.
-        </p>
-        <p-button
-          label="Retry"
-          i18n-label="@@org.team.retry"
-          icon="pi pi-refresh"
-          severity="secondary"
-          (onClick)="retryLoad()"
-        />
-      </div>
-    } @else {
-      <!-- Cadence toggle -->
-      <div class="mb-4 flex justify-end">
-        <p-selectButton
-          [options]="intervalOptions"
-          [ngModel]="interval()"
-          (onChange)="onIntervalChange($event)"
-          optionLabel="label"
-          optionValue="value"
-          [allowEmpty]="false"
-          size="small"
-          aria-label="Billing cadence"
-          i18n-aria-label="@@org.plan.cadenceAria"
-        />
-      </div>
-
-      <!-- Plans grid -->
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        @for (plan of plans(); track plan.id) {
-          <article
-            class="flex flex-col gap-4 rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-950"
-          >
-            <div class="flex flex-col gap-1">
-              <h3 class="text-base font-semibold text-surface-900 dark:text-surface-50">
-                {{ plan.name }}
-              </h3>
-              @if (plan.description) {
-                <p class="text-sm text-surface-500 dark:text-surface-400">{{ plan.description }}</p>
-              }
-            </div>
-
-            <p class="text-2xl font-semibold text-surface-900 dark:text-surface-50">
-              @if (priceLabel(plan); as price) {
-                {{ price }}
-              } @else {
-                <ng-container i18n="@@org.plan.free">Free</ng-container>
-              }
-            </p>
-
-            @if (plan.quotas.length > 0) {
-              <ul
-                class="flex flex-col gap-2 border-t border-surface-100 pt-4 dark:border-surface-800"
-              >
-                @for (quota of plan.quotas; track quota.resource) {
-                  <li class="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-200">
-                    <i
-                      class="pi pi-check-circle mt-0.5 shrink-0 text-primary"
-                      aria-hidden="true"
-                    ></i>
-                    <span>{{ quota.summary }}</span>
-                  </li>
-                }
-              </ul>
-            }
-
-            <div class="mt-auto pt-2">
-              @if (isPaidPlan(plan)) {
-                <p-button
-                  label="Subscribe"
-                  i18n-label="@@org.plan.subscribe"
-                  icon="pi pi-arrow-right"
-                  iconPos="right"
-                  styleClass="w-full"
-                  [loading]="pendingPlanKey() === plan.key"
-                  [disabled]="onboardingStore.isBusy() || pendingPlanKey() !== null"
-                  (onClick)="choosePlan(plan)"
-                />
-              } @else {
-                <p-button
-                  label="Start on Free"
-                  i18n-label="@@onboarding.plan.startFree"
-                  icon="pi pi-arrow-right"
-                  iconPos="right"
-                  severity="secondary"
-                  [outlined]="true"
-                  styleClass="w-full"
-                  [loading]="isExecuting()"
-                  [disabled]="onboardingStore.isBusy() || pendingPlanKey() !== null"
-                  (onClick)="choosePlan(plan)"
-                />
-              }
-            </div>
-          </article>
-        } @empty {
-          <div
-            class="col-span-full rounded-xl border border-surface-200 p-10 text-center text-sm text-surface-500 dark:border-surface-800 dark:text-surface-400"
-            i18n="@@org.plan.empty"
-          >
-            No plans are available.
-          </div>
-        }
-      </div>
-    }
+  <div class="flex flex-col gap-1.5">
+    <h2
+      class="text-2xl font-semibold tracking-tight text-balance text-surface-900 dark:text-surface-0"
+      i18n="@@onboarding.plan.title"
+    >
+      Choose a plan
+    </h2>
+    <p
+      class="text-sm leading-relaxed text-surface-500 dark:text-surface-400"
+      i18n="@@onboarding.plan.subtitle"
+    >
+      Pick the plan that fits your team. You can change it any time — or stay on Free for now.
+    </p>
   </div>
-</p-card>
+
+  @if (isLoadingCatalog()) {
+    <!-- Loading -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      @for (i of [0, 1]; track i) {
+        <div class="h-56 animate-pulse rounded-xl bg-surface-100 dark:bg-surface-900"></div>
+      }
+    </div>
+  } @else if (catalogError()) {
+    <!-- Error -->
+    <div
+      class="flex flex-col items-center gap-4 rounded-xl border border-surface-200 p-10 text-center dark:border-surface-800"
+    >
+      <i class="pi pi-exclamation-triangle text-2xl text-surface-400"></i>
+      <p class="text-sm text-surface-500 dark:text-surface-400" i18n="@@onboarding.plan.loadError">
+        We couldn't load the plans.
+      </p>
+      <p-button
+        label="Retry"
+        i18n-label="@@org.team.retry"
+        icon="pi pi-refresh"
+        severity="secondary"
+        (onClick)="retryLoad()"
+      />
+    </div>
+  } @else {
+    <!-- Cadence toggle -->
+    <div class="flex justify-end">
+      <p-selectButton
+        [options]="intervalOptions"
+        [ngModel]="interval()"
+        (onChange)="onIntervalChange($event)"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        size="small"
+        aria-label="Billing cadence"
+        i18n-aria-label="@@org.plan.cadenceAria"
+      />
+    </div>
+
+    <!-- Plans grid -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      @for (plan of plans(); track plan.id) {
+        <article
+          class="flex flex-col gap-4 rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-950"
+        >
+          <div class="flex flex-col gap-1">
+            <h3 class="text-base font-semibold text-surface-900 dark:text-surface-50">
+              {{ plan.name }}
+            </h3>
+            @if (plan.description) {
+              <p class="text-sm text-surface-500 dark:text-surface-400">{{ plan.description }}</p>
+            }
+          </div>
+
+          <p class="text-2xl font-semibold text-surface-900 dark:text-surface-50">
+            @if (priceLabel(plan); as price) {
+              {{ price }}
+            } @else {
+              <ng-container i18n="@@org.plan.free">Free</ng-container>
+            }
+          </p>
+
+          @if (plan.quotas.length > 0) {
+            <ul
+              class="flex flex-col gap-2 border-t border-surface-100 pt-4 dark:border-surface-800"
+            >
+              @for (quota of plan.quotas; track quota.resource) {
+                <li class="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-200">
+                  <i class="pi pi-check-circle mt-0.5 shrink-0 text-primary" aria-hidden="true"></i>
+                  <span>{{ quota.summary }}</span>
+                </li>
+              }
+            </ul>
+          }
+
+          <div class="mt-auto pt-2">
+            @if (isPaidPlan(plan)) {
+              <p-button
+                label="Subscribe"
+                i18n-label="@@org.plan.subscribe"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                styleClass="w-full"
+                [loading]="pendingPlanKey() === plan.key"
+                [disabled]="onboardingStore.isBusy() || pendingPlanKey() !== null"
+                (onClick)="choosePlan(plan)"
+              />
+            } @else {
+              <p-button
+                label="Start on Free"
+                i18n-label="@@onboarding.plan.startFree"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                severity="secondary"
+                [outlined]="true"
+                styleClass="w-full"
+                [loading]="isExecuting()"
+                [disabled]="onboardingStore.isBusy() || pendingPlanKey() !== null"
+                (onClick)="choosePlan(plan)"
+              />
+            }
+          </div>
+        </article>
+      } @empty {
+        <div
+          class="col-span-full rounded-xl border border-surface-200 p-10 text-center text-sm text-surface-500 dark:border-surface-800 dark:text-surface-400"
+          i18n="@@org.plan.empty"
+        >
+          No plans are available.
+        </div>
+      }
+    </div>
+  }
+</div>

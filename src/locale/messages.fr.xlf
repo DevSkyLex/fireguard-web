@@ -5591,6 +5591,50 @@
         <source>Your setup is paused. Please resolve the issue and try again.</source>
         <target>Votre configuration est en pause. Veuillez résoudre le problème et réessayer.</target>
       </trans-unit>
+      <trans-unit id="onboarding.wizard.finishLater" datatype="html">
+        <source>Finish later</source>
+        <target>Terminer plus tard</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.blocked.title" datatype="html">
+        <source>Setup is paused</source>
+        <target>Configuration en pause</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.blocked.fallback" datatype="html">
+        <source>Something stopped your setup from continuing.</source>
+        <target>Quelque chose a empêché la poursuite de votre configuration.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.blocked.progressSaved" datatype="html">
+        <source>Your progress is saved — you can try again or finish later without losing anything.</source>
+        <target>Votre progression est enregistrée — vous pouvez réessayer ou terminer plus tard sans rien perdre.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.blocked.retry" datatype="html">
+        <source>Try again</source>
+        <target>Réessayer</target>
+      </trans-unit>
+      <trans-unit id="onboarding.step.org.sublabel" datatype="html">
+        <source>Your structure</source>
+        <target>Votre structure</target>
+      </trans-unit>
+      <trans-unit id="onboarding.step.plan.sublabel" datatype="html">
+        <source>Your subscription</source>
+        <target>Choix du plan</target>
+      </trans-unit>
+      <trans-unit id="onboarding.step.members.sublabel" datatype="html">
+        <source>Your team</source>
+        <target>Votre équipe</target>
+      </trans-unit>
+      <trans-unit id="onboarding.step.facility.sublabel" datatype="html">
+        <source>Establishment</source>
+        <target>Établissement</target>
+      </trans-unit>
+      <trans-unit id="onboarding.step.equipment.sublabel" datatype="html">
+        <source>Fire equipment</source>
+        <target>Parc incendie</target>
+      </trans-unit>
+      <trans-unit id="onboarding.step.inspection.sublabel" datatype="html">
+        <source>First check</source>
+        <target>Première vérification</target>
+      </trans-unit>
       <trans-unit id="onboarding.wizard.back" datatype="html">
         <source>Back</source>
         <target>Retour</target>
@@ -5634,10 +5678,6 @@
       <trans-unit id="onboarding.checklist.continue" datatype="html">
         <source>Continue setup</source>
         <target>Continuer la configuration</target>
-      </trans-unit>
-      <trans-unit id="onboarding.checklist.hide" datatype="html">
-        <source>Hide for now</source>
-        <target>Masquer pour l'instant</target>
       </trans-unit>
       <trans-unit id="onboarding.step.plan.label" datatype="html">
         <source>Choose a plan</source>

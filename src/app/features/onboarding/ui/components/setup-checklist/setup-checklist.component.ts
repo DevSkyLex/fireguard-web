@@ -9,20 +9,9 @@ import {
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { Popover, PopoverModule, type PopoverPassThroughOptions } from 'primeng/popover';
-import type { OnboardingStepKey } from '@features/onboarding/models';
+import { ONBOARDING_STEP_PRESENTATION } from '@features/onboarding/constants';
+import type { OnboardingStepKey, OnboardingStepPresentation } from '@features/onboarding/models';
 import { OnboardingStore } from '@features/onboarding/state';
-
-/**
- * Interface SetupStepMeta
- *
- * @description
- * Localized presentation metadata (icon + label) for a single onboarding step
- * row in the checklist popover.
- */
-interface SetupStepMeta {
-  readonly icon: string;
-  readonly label: string;
-}
 
 /**
  * Component SetupChecklist
@@ -104,41 +93,17 @@ export class SetupChecklist {
    * @readonly
    *
    * @description
-   * Exhaustive map from every {@link OnboardingStepKey} to its checklist icon
-   * and localized label. A typed Record fails the build if a step key is added
-   * without a row definition.
+   * Shared, localized presentation metadata (icon + label + subtitle) for every
+   * onboarding step, reused from the feature-level registry so the checklist and
+   * the wizard rail render identical step copy.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {Record<OnboardingStepKey, SetupStepMeta>}
+   * @type {Record<OnboardingStepKey, OnboardingStepPresentation>}
    */
-  protected readonly stepMeta: Record<OnboardingStepKey, SetupStepMeta> = {
-    create_organization: {
-      icon: 'pi-building',
-      label: $localize`:@@onboarding.step.org.label:Create organization`,
-    },
-    select_plan: {
-      icon: 'pi-star',
-      label: $localize`:@@onboarding.step.plan.label:Choose a plan`,
-    },
-    invite_members: {
-      icon: 'pi-users',
-      label: $localize`:@@onboarding.step.members.label:Team & technicians`,
-    },
-    create_first_facility: {
-      icon: 'pi-map-marker',
-      label: $localize`:@@onboarding.step.facility.label:First facility`,
-    },
-    create_first_equipment: {
-      icon: 'pi-wrench',
-      label: $localize`:@@onboarding.step.equipment.label:First equipment`,
-    },
-    run_first_inspection: {
-      icon: 'pi-clipboard',
-      label: $localize`:@@onboarding.step.inspection.label:First inspection`,
-    },
-  };
+  protected readonly stepMeta: Record<OnboardingStepKey, OnboardingStepPresentation> =
+    ONBOARDING_STEP_PRESENTATION;
   //#endregion
 
   //#region Constructor
@@ -191,22 +156,6 @@ export class SetupChecklist {
   protected continueSetup(): void {
     this.popover().hide();
     this.router.navigate(['/onboarding']).catch(() => undefined);
-  }
-
-  /**
-   * Method hideForNow
-   *
-   * @description
-   * Dismisses the (non-blocking) activation flow and closes the popover.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected hideForNow(): void {
-    this.store.dismiss();
-    this.popover().hide();
   }
 
   /**

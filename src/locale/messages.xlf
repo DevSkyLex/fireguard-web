@@ -2294,6 +2294,83 @@
           <context context-type="linenumber">120,122</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="onboarding.wizard.finishLater" datatype="html">
+        <source>Finish later</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
+          <context context-type="linenumber">17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.blocked.title" datatype="html">
+        <source>Setup is paused</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
+          <context context-type="linenumber">138</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.blocked.fallback" datatype="html">
+        <source>Something stopped your setup from continuing.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
+          <context context-type="linenumber">146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.blocked.progressSaved" datatype="html">
+        <source>Your progress is saved — you can try again or finish later without losing anything.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
+          <context context-type="linenumber">151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.blocked.retry" datatype="html">
+        <source>Try again</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
+          <context context-type="linenumber">163</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.org.sublabel" datatype="html">
+        <source>Your structure</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.plan.sublabel" datatype="html">
+        <source>Your subscription</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.members.sublabel" datatype="html">
+        <source>Your team</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.facility.sublabel" datatype="html">
+        <source>Establishment</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.equipment.sublabel" datatype="html">
+        <source>Fire equipment</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.inspection.sublabel" datatype="html">
+        <source>First check</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">49</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="common.dismiss" datatype="html">
         <source> Dismiss </source>
         <context-group purpose="location">
@@ -2376,13 +2453,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.html</context>
           <context context-type="linenumber">78,79</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.checklist.hide" datatype="html">
-        <source>Hide for now</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.html</context>
-          <context context-type="linenumber">87,88</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.step.org.label" datatype="html">

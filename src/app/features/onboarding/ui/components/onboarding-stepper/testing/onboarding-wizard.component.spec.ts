@@ -7,12 +7,16 @@ import { OnboardingWizard } from '../onboarding-wizard.component';
 
 interface MockStore {
   isCompleted: WritableSignal<boolean>;
+  isBlocked: WritableSignal<boolean>;
+  isLoading: WritableSignal<boolean>;
+  blockedReason: WritableSignal<string | null>;
   onboarding: WritableSignal<OnboardingOutput | null>;
   steps: WritableSignal<readonly OnboardingStepOutput[]>;
   progress: WritableSignal<{ done: number; total: number }>;
   nextStep: WritableSignal<string | null>;
   isDismissing: WritableSignal<boolean>;
   dismiss: ReturnType<typeof vi.fn>;
+  load: ReturnType<typeof vi.fn>;
   skipStep: ReturnType<typeof vi.fn>;
 }
 
@@ -23,12 +27,16 @@ describe('OnboardingWizard', () => {
   const setup = () => {
     const store: MockStore = {
       isCompleted: signal(false),
+      isBlocked: signal(false),
+      isLoading: signal(false),
+      blockedReason: signal<string | null>(null),
       onboarding: signal<OnboardingOutput | null>(null),
       steps: signal<readonly OnboardingStepOutput[]>([]),
       progress: signal({ done: 0, total: 0 }),
       nextStep: signal<string | null>('create_organization'),
       isDismissing: signal(false),
       dismiss: vi.fn(),
+      load: vi.fn(),
       skipStep: vi.fn(),
     };
     const router = { navigate: vi.fn().mockResolvedValue(true) };
@@ -84,11 +92,17 @@ describe('OnboardingWizard', () => {
     expect(component['phase']()).toBe('completion');
   });
 
-  it('dismisses the flow and navigates home on "explore on my own"', () => {
+  it('dismisses the flow and navigates home on "finish later"', () => {
     const { component, store, router } = setup();
-    component['exploreOnMyOwn']();
+    component['finishLater']();
     expect(store.dismiss).toHaveBeenCalledTimes(1);
     expect(router.navigate).toHaveBeenCalledWith(['/']);
+  });
+
+  it('refreshes the onboarding record when retrying after a block', () => {
+    const { component, store } = setup();
+    component['retryAfterBlock']();
+    expect(store.load).toHaveBeenCalledTimes(1);
   });
 
   it('skips the current step by key', () => {

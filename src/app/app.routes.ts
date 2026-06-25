@@ -68,18 +68,19 @@ export const APP_ROUTES: Routes = [
         loadChildren: () =>
           import('@features/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
       },
+      {
+        path: 'onboarding',
+        canActivate: [onboardingGuard],
+        data: { breadcrumb: false, preload: true },
+        loadChildren: () =>
+          import('@features/onboarding/onboarding.routes').then((m) => m.ONBOARDING_ROUTES),
+      },
     ],
   },
   {
     path: '',
     component: FocusedLayout,
     children: [
-      {
-        path: 'onboarding',
-        canActivate: [authGuard, onboardingGuard, maintenanceGuard],
-        loadChildren: () =>
-          import('@features/onboarding/onboarding.routes').then((m) => m.ONBOARDING_ROUTES),
-      },
       {
         path: 'error',
         loadChildren: () => import('@features/error/error.routes').then((m) => m.ERROR_ROUTES),

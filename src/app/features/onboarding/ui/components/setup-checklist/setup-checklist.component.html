@@ -1,20 +1,25 @@
 @if (store.isActivationVisible()) {
   <!-- Trigger -->
-  <button
-    type="button"
-    class="inline-flex items-center gap-2 rounded-full border border-surface-200 bg-surface-0 py-1.5 pr-2 pl-3 text-sm font-medium text-surface-700 transition-colors hover:bg-surface-50 dark:border-surface-800 dark:bg-surface-950 dark:text-surface-200 dark:hover:bg-surface-900"
-    aria-label="Open setup checklist"
-    i18n-aria-label="@@onboarding.checklist.ariaOpen"
-    (click)="toggle($event)"
+  <p-button
+    severity="secondary"
+    [outlined]="true"
+    size="small"
+    ariaLabel="Open setup checklist"
+    i18n-ariaLabel="@@onboarding.checklist.ariaOpen"
+    (onClick)="toggle($event)"
   >
-    <i class="pi pi-flag-fill text-sm text-primary"></i>
-    <span class="hidden sm:inline" i18n="@@onboarding.checklist.trigger">Finish setup</span>
-    <span
-      class="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-white"
-    >
-      {{ store.progress().done }}/{{ store.progress().total }}
+    <span class="flex items-center gap-2">
+      <i class="pi pi-check-square text-sm text-primary"></i>
+      <span class="hidden font-medium sm:inline" i18n="@@onboarding.checklist.trigger"
+        >Finish setup</span
+      >
+      <span
+        class="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-white"
+      >
+        {{ store.progress().done }}/{{ store.progress().total }}
+      </span>
     </span>
-  </button>
+  </p-button>
 
   <!-- Checklist panel -->
   <p-popover #popover [pt]="popoverPt">
@@ -69,7 +74,7 @@
       </ul>
 
       <!-- Footer -->
-      <div class="flex flex-col gap-1.5 border-t border-surface-200 p-3 dark:border-surface-800">
+      <div class="border-t border-surface-200 p-3 dark:border-surface-800">
         <p-button
           styleClass="w-full"
           size="small"
@@ -78,16 +83,6 @@
           label="Continue setup"
           i18n-label="@@onboarding.checklist.continue"
           (onClick)="continueSetup()"
-        />
-        <p-button
-          styleClass="w-full"
-          size="small"
-          severity="secondary"
-          [text]="true"
-          label="Hide for now"
-          i18n-label="@@onboarding.checklist.hide"
-          [loading]="store.isDismissing()"
-          (onClick)="hideForNow()"
         />
       </div>
     </div>

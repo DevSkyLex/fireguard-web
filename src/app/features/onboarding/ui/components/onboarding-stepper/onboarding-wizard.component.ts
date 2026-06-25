@@ -40,14 +40,17 @@ type WizardPhase = 'loading' | 'welcome' | 'steps' | 'completion';
  * @class OnboardingWizard
  *
  * @description
- * Focused, single-column activation wizard. Renders one step at a time inside a
- * minimal shell — a slim progress rail, the active step body (delegated to a
- * dedicated step component), and a back / skip footer — bookended by a welcome
- * screen and a completion screen. Onboarding is non-blocking: the welcome screen
- * lets users leave via "explore on my own" (which dismisses the activation flow),
- * and every step can be skipped or resumed later.
+ * Single-column activation flow rendered as a native page inside the dashboard
+ * shell. The shell supplies the page chrome (topbar, navigation, and the
+ * route-driven page-header banner) and the persistent setup checklist; the
+ * wizard owns only a centered work surface that renders one step at a time —
+ * a slim "Step N of M" progress, the active step body (delegated to a dedicated
+ * step component), and a back / finish-later / skip footer — bookended by a
+ * welcome screen and a completion screen. Onboarding is non-blocking: a
+ * low-emphasis "Finish later" action dismisses the flow and returns to the
+ * dashboard from any phase, and every step can be skipped or resumed later.
  *
- * @version 2.0.0
+ * @version 3.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -55,7 +58,6 @@ type WizardPhase = 'loading' | 'welcome' | 'steps' | 'completion';
   selector: 'app-onboarding-wizard',
   imports: [NgComponentOutlet, MessageModule, ButtonModule],
   templateUrl: './onboarding-wizard.component.html',
-  styleUrl: './onboarding-wizard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingWizard {
@@ -136,7 +138,7 @@ export class OnboardingWizard {
    * @type {MessagePassThroughOptions}
    */
   protected readonly messagePt: MessagePassThroughOptions = {
-    root: { class: 'mb-5 w-full' },
+    root: { class: 'w-full' },
   };
 
   /**
@@ -212,20 +214,39 @@ export class OnboardingWizard {
   }
 
   /**
-   * Method exploreOnMyOwn
+   * Method finishLater
    *
    * @description
-   * Dismisses the (non-blocking) activation flow and returns to the dashboard.
-   * Progression is preserved server-side and can be resumed from the shell.
+   * Leaves the (non-blocking) activation flow and returns to the dashboard.
+   * Surfaced persistently in the wizard chrome so the user is never cornered:
+   * progression is preserved server-side and can be resumed from the shell
+   * setup checklist. Available from every phase, including a blocked step.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 2.1.0
    *
    * @returns {void}
    */
-  protected exploreOnMyOwn(): void {
+  protected finishLater(): void {
     this.store.dismiss();
     this.router.navigate(['/']).catch(() => undefined);
+  }
+
+  /**
+   * Method retryAfterBlock
+   *
+   * @description
+   * Re-fetches the onboarding record after the flow has been blocked, so a
+   * server-side block that has since cleared lets the user continue without a
+   * full page reload. Pairs with the concrete blocked banner.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected retryAfterBlock(): void {
+    this.store.load();
   }
 
   /**

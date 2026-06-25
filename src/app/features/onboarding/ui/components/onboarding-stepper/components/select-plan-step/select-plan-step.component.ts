@@ -14,7 +14,6 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { SelectButtonModule, type SelectButtonChangeEvent } from 'primeng/selectbutton';
 import { TagModule } from 'primeng/tag';
 import { forkJoin } from 'rxjs';
@@ -62,7 +61,7 @@ interface IntervalOption {
  */
 @Component({
   selector: 'app-select-plan-step',
-  imports: [CardModule, ButtonModule, TagModule, SelectButtonModule, FormsModule],
+  imports: [ButtonModule, TagModule, SelectButtonModule, FormsModule],
   templateUrl: './select-plan-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -115,17 +114,6 @@ export class SelectPlanStep extends OnboardingStepBase {
     ReadonlyMap<string, PlanPricingOutput>
   >(() => new Map(this.pricing().map((pricing) => [pricing.planKey, pricing])));
 
-  /** PrimeNG passthrough for the wrapping card. */
-  protected readonly cardPt: CardPassThroughOptions = {
-    root: {
-      class:
-        'overflow-hidden border border-surface-200 bg-surface-0 shadow-none dark:border-surface-800 dark:bg-surface-950',
-    },
-    header: { class: 'p-0' },
-    body: { class: 'p-0' },
-    content: { class: 'p-0' },
-    footer: { class: 'p-0' },
-  };
   //#endregion
 
   //#region Constructor

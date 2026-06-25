@@ -4,7 +4,7 @@ import {
   SplitLayoutHeader,
   SplitLayoutContent,
   SplitLayoutFooter,
-  SplitLayoutShowcase,
+  SplitLayoutShowcaseOutlet,
 } from '@layouts/split-layout/components';
 
 /**
@@ -31,7 +31,7 @@ import {
     SplitLayoutHeader,
     SplitLayoutContent,
     SplitLayoutFooter,
-    SplitLayoutShowcase,
+    SplitLayoutShowcaseOutlet,
   ],
   templateUrl: './split-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

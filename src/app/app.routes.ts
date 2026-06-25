@@ -1,5 +1,6 @@
 import type { Routes } from '@angular/router';
 import { withAccountProfile, withNotificationBell } from '@features/account';
+import { withAuthShowcase } from '@features/auth';
 import { authGuard } from '@features/auth/http/guards';
 import { provideMainFeature, withMainNavigation } from '@features/main';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
@@ -14,7 +15,7 @@ import {
 import { DashboardLayout, provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
 import { withThemeSwitcher } from '@shared/components';
 import { FocusedLayout } from './layouts/focused-layout';
-import { SplitLayout } from './layouts/split-layout';
+import { provideSplitLayoutSlots, SplitLayout } from './layouts/split-layout';
 
 /**
  * Constant APP_ROUTES
@@ -29,6 +30,11 @@ export const APP_ROUTES: Routes = [
   {
     path: 'auth',
     component: SplitLayout,
+    providers: [
+      provideSplitLayoutSlots({
+        showcase: [withAuthShowcase()]
+      })
+    ],
     loadChildren: () => import('@features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
   },
   {
@@ -39,7 +45,10 @@ export const APP_ROUTES: Routes = [
       provideMainFeature(),
       provideOrganizationFeature(),
       provideDashboardLayoutSlots({
-        navigation: [withMainNavigation(), ...withOrganizationNavigation()],
+        navigation: [
+          withMainNavigation(),
+          ...withOrganizationNavigation()
+        ],
         topbar: [
           withSetupChecklist(),
           withOrganizationSwitcher(),
@@ -47,7 +56,9 @@ export const APP_ROUTES: Routes = [
           withNotificationBell(),
           withAccountProfile(),
         ],
-        aside: [withOrganizationContext()],
+        aside: [
+          withOrganizationContext()
+        ],
       }),
     ],
     children: [

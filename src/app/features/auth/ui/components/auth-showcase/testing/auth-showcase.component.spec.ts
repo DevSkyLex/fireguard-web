@@ -1,15 +1,15 @@
 import { TestBed } from '@angular/core/testing';
-import { SplitLayoutShowcase } from '../split-layout-showcase.component';
+import { AuthShowcase } from '../auth-showcase.component';
 
-describe('SplitLayoutShowcase', () => {
+describe('AuthShowcase', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [SplitLayoutShowcase],
+      imports: [AuthShowcase],
     });
   });
 
   it('should render showcase branding and headline', () => {
-    const fixture = TestBed.createComponent(SplitLayoutShowcase);
+    const fixture = TestBed.createComponent(AuthShowcase);
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent as string;

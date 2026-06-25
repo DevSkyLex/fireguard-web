@@ -22,7 +22,7 @@ describe('SplitLayout', () => {
     const fixture = TestBed.createComponent(SplitLayout);
     fixture.detectChanges();
 
-    expect(fixture.debugElement.query(By.css('app-split-layout-showcase'))).not.toBeNull();
+    expect(fixture.debugElement.query(By.css('app-split-layout-showcase-outlet'))).not.toBeNull();
     expect(fixture.debugElement.query(By.css('app-split-layout-header'))).not.toBeNull();
     expect(fixture.debugElement.query(By.css('app-split-layout-content'))).not.toBeNull();
     expect(fixture.debugElement.query(By.css('app-split-layout-footer'))).not.toBeNull();

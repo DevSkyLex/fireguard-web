@@ -11010,70 +11010,70 @@
       <trans-unit id="splitLayout.headline" datatype="html">
         <source> The future of fire safety, reimagined. </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.html</context>
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.html</context>
           <context context-type="linenumber">23,26</context>
         </context-group>
       </trans-unit>
       <trans-unit id="splitLayout.subline" datatype="html">
         <source> Monitor, coordinate and secure every site from one control plane designed for incident readiness and operational clarity. </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.html</context>
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.html</context>
           <context context-type="linenumber">30,32</context>
         </context-group>
       </trans-unit>
       <trans-unit id="splitLayout.metric.liveAlerts" datatype="html">
         <source>Live alerts</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
           <context context-type="linenumber">9</context>
         </context-group>
       </trans-unit>
       <trans-unit id="splitLayout.metric.responseWorkflows" datatype="html">
         <source>Response workflows</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
           <context context-type="linenumber">11</context>
         </context-group>
       </trans-unit>
       <trans-unit id="splitLayout.metric.automated" datatype="html">
         <source>Automated</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
           <context context-type="linenumber">12</context>
         </context-group>
       </trans-unit>
       <trans-unit id="splitLayout.metric.complianceTracking" datatype="html">
         <source>Compliance tracking</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
           <context context-type="linenumber">15</context>
         </context-group>
       </trans-unit>
       <trans-unit id="splitLayout.metric.isoReady" datatype="html">
         <source>ISO-ready</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
           <context context-type="linenumber">16</context>
         </context-group>
       </trans-unit>
       <trans-unit id="splitLayout.highlight.commandCenter" datatype="html">
         <source>Unified safety command center</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
           <context context-type="linenumber">21</context>
         </context-group>
       </trans-unit>
       <trans-unit id="splitLayout.highlight.rbac" datatype="html">
         <source>Role-based access and approvals</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
           <context context-type="linenumber">22</context>
         </context-group>
       </trans-unit>
       <trans-unit id="splitLayout.highlight.auditHistory" datatype="html">
         <source>Audit-ready incident history</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
           <context context-type="linenumber">23</context>
         </context-group>
       </trans-unit>

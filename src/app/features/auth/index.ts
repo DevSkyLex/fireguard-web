@@ -10,4 +10,5 @@ export {
   passwordResetVerifyGuard,
 } from './http/guards';
 export { AuthUserProfile } from './ui/components';
+export { withAuthShowcase } from './providers';
 export { authStoreEvents } from './state';

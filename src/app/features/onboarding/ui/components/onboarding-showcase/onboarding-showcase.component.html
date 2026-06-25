@@ -1,0 +1,129 @@
+<div class="relative h-full">
+  <div class="sticky top-0 h-dvh">
+    <div
+      class="relative grid h-full overflow-hidden border border-surface-800/70 bg-linear-to-br from-surface-950 via-surface-900 to-surface-800 dark:border-surface-950 dark:from-black dark:via-surface-950 dark:to-surface-950"
+    >
+      <div
+        class="pointer-events-none absolute top-8 -right-20 h-64 w-64 rounded-full bg-primary-500/15 blur-3xl"
+      ></div>
+      <div
+        class="pointer-events-none absolute bottom-0 -left-12 h-52 w-52 rounded-full bg-primary-500/5 blur-3xl"
+      ></div>
+
+      <section class="relative flex h-full flex-col gap-8 p-10 2xl:p-14">
+        <header class="flex items-center justify-between gap-4">
+          <span class="text-2xl font-bold tracking-tight text-surface-0">Fireguard</span>
+        </header>
+
+        <div class="flex min-h-0 w-[26rem] max-w-full flex-1 flex-col gap-8 overflow-y-auto">
+          <div class="flex flex-col gap-5">
+            <div class="flex flex-col gap-3">
+              <h1
+                class="text-3xl leading-tight font-semibold text-balance text-surface-0"
+                i18n="@@onboarding.showcase.headline"
+              >
+                Let's get your workspace ready.
+              </h1>
+              <p
+                class="text-base leading-relaxed text-surface-300"
+                i18n="@@onboarding.showcase.subline"
+              >
+                A few guided steps to set up your organization, team and assets.
+              </p>
+            </div>
+
+            <!-- Overall progress -->
+            <div
+              class="h-1.5 w-full overflow-hidden rounded-full bg-surface-800/70"
+              role="presentation"
+            >
+              <div
+                class="h-full rounded-full bg-primary-500 motion-safe:transition-[width] motion-safe:duration-500"
+                [style.width.%]="progressPercent()"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Step timeline -->
+          <ol class="flex flex-col">
+            @for (step of steps(); track step.key; let last = $last) {
+              @let status = statusOf(step);
+              <li class="flex gap-4">
+                <!-- Badge + connector -->
+                <div class="flex flex-col items-center self-stretch">
+                  <span
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm motion-safe:transition-colors"
+                    [class]="
+                      status === 'done'
+                        ? 'border-primary-500/50 bg-primary-500 text-surface-0'
+                        : status === 'current'
+                          ? 'border-primary-500/40 bg-primary-500/15 text-primary'
+                          : 'border-surface-700/60 bg-surface-900/40 text-surface-500'
+                    "
+                  >
+                    @if (status === 'done') {
+                      <i class="pi pi-check text-xs" aria-hidden="true"></i>
+                    } @else {
+                      <i
+                        class="pi {{ presentation[step.key].icon }} text-xs"
+                        aria-hidden="true"
+                      ></i>
+                    }
+                  </span>
+                  @if (!last) {
+                    <span
+                      aria-hidden="true"
+                      class="my-1 w-px flex-1 rounded-full motion-safe:transition-colors"
+                      [class]="status === 'done' ? 'bg-primary-500/45' : 'bg-surface-700/40'"
+                    ></span>
+                  }
+                </div>
+
+                <!-- Label -->
+                <div class="flex min-w-0 flex-col" [class]="last ? 'pb-0' : 'pb-7'">
+                  <span
+                    class="truncate text-sm"
+                    [class]="
+                      status === 'current'
+                        ? 'font-semibold text-surface-0'
+                        : status === 'done'
+                          ? 'font-medium text-surface-300'
+                          : 'font-medium text-surface-400'
+                    "
+                  >
+                    {{ presentation[step.key].label }}
+                  </span>
+                  <span class="truncate text-xs text-surface-500">{{
+                    presentation[step.key].sublabel
+                  }}</span>
+                  <span class="sr-only">
+                    @switch (status) {
+                      @case ('done') {
+                        <ng-container i18n="@@onboarding.showcase.status.done"
+                          >Completed</ng-container
+                        >
+                      }
+                      @case ('current') {
+                        <ng-container i18n="@@onboarding.showcase.status.current"
+                          >In progress</ng-container
+                        >
+                      }
+                      @default {
+                        <ng-container i18n="@@onboarding.showcase.status.todo">To do</ng-container>
+                      }
+                    }
+                  </span>
+                </div>
+              </li>
+            }
+          </ol>
+        </div>
+
+        <footer class="flex items-center gap-2 text-sm text-surface-400">
+          <i class="pi pi-shield text-primary-400" aria-hidden="true"></i>
+          <span i18n="@@onboarding.showcase.footer">Your progress is saved as you go.</span>
+        </footer>
+      </section>
+    </div>
+  </div>
+</div>

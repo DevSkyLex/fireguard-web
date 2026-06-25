@@ -13,7 +13,12 @@ import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import type { MessagePassThroughOptions } from 'primeng/types/message';
-import type { OnboardingStepKey, OnboardingStepOutput } from '@features/onboarding/models';
+import { ONBOARDING_STEP_PRESENTATION } from '@features/onboarding/constants';
+import type {
+  OnboardingStepKey,
+  OnboardingStepOutput,
+  OnboardingStepPresentation,
+} from '@features/onboarding/models';
 import { OnboardingStore } from '@features/onboarding/state';
 import {
   CreateEquipmentStep,
@@ -21,7 +26,6 @@ import {
   CreateOrganizationStep,
   InviteMembersStep,
   type OnboardingStepBase,
-  RunInspectionStep,
   SelectPlanStep,
 } from './components';
 
@@ -40,17 +44,16 @@ type WizardPhase = 'loading' | 'welcome' | 'steps' | 'completion';
  * @class OnboardingWizard
  *
  * @description
- * Single-column activation flow rendered as a native page inside the dashboard
- * shell. The shell supplies the page chrome (topbar, navigation, and the
- * route-driven page-header banner) and the persistent setup checklist; the
- * wizard owns only a centered work surface that renders one step at a time —
- * a slim "Step N of M" progress, the active step body (delegated to a dedicated
- * step component), and a back / finish-later / skip footer — bookended by a
- * welcome screen and a completion screen. Onboarding is non-blocking: a
- * low-emphasis "Finish later" action dismisses the flow and returns to the
- * dashboard from any phase, and every step can be skipped or resumed later.
+ * Single-column activation flow rendered into the split-layout content column,
+ * styled like the auth pages. Step progress lives in the split-layout showcase
+ * panel (the left rail) on `xl+`; below `xl`, where the showcase is hidden, a
+ * compact in-content stepper takes over. The wizard renders one step at a time —
+ * a step heading, the active step body (delegated to a dedicated step component),
+ * and a back / skip footer — bookended by a welcome screen and a completion
+ * screen. Onboarding is **mandatory**: there is no "finish later" escape; the
+ * user reaches the dashboard only once the flow is `completed`.
  *
- * @version 3.0.0
+ * @version 4.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -122,7 +125,6 @@ export class OnboardingWizard {
     invite_members: InviteMembersStep,
     create_first_facility: CreateFacilityStep,
     create_first_equipment: CreateEquipmentStep,
-    run_first_inspection: RunInspectionStep,
   };
 
   /**
@@ -181,6 +183,25 @@ export class OnboardingWizard {
     });
 
   /**
+   * Property currentPresentation
+   * @readonly
+   *
+   * @description
+   * Localized icon/label/sublabel for the current step, used as the step heading
+   * in the content column. `null` when no step is pending.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @type {Signal<OnboardingStepPresentation | null>}
+   */
+  protected readonly currentPresentation: Signal<OnboardingStepPresentation | null> =
+    computed<OnboardingStepPresentation | null>(() => {
+      const key: OnboardingStepKey | null = this.store.nextStep();
+      return key ? ONBOARDING_STEP_PRESENTATION[key] : null;
+    });
+
+  /**
    * Property segments
    * @readonly
    *
@@ -214,25 +235,6 @@ export class OnboardingWizard {
   }
 
   /**
-   * Method finishLater
-   *
-   * @description
-   * Leaves the (non-blocking) activation flow and returns to the dashboard.
-   * Surfaced persistently in the wizard chrome so the user is never cornered:
-   * progression is preserved server-side and can be resumed from the shell
-   * setup checklist. Available from every phase, including a blocked step.
-   *
-   * @access protected
-   * @since 2.1.0
-   *
-   * @returns {void}
-   */
-  protected finishLater(): void {
-    this.store.dismiss();
-    this.router.navigate(['/']).catch(() => undefined);
-  }
-
-  /**
    * Method retryAfterBlock
    *
    * @description
@@ -253,15 +255,22 @@ export class OnboardingWizard {
    * Method goToDashboard
    *
    * @description
-   * Navigates to the dashboard from the completion screen.
+   * Leaves the completion screen for the freshly set-up organization. When the
+   * onboarding record exposes the created organization id, the user lands
+   * directly on that organization's dashboard (`/organizations/:id`), which
+   * activates the workspace through {@link organizationResolver} so the switcher
+   * is populated and the user sees what they just configured. Falls back to the
+   * app root when the id is unavailable.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 4.1.0
    *
    * @returns {void}
    */
   protected goToDashboard(): void {
-    this.router.navigate(['/']).catch(() => undefined);
+    const organizationId: string | null = this.store.targetOrganizationId();
+    const target: readonly string[] = organizationId ? ['/organizations', organizationId] : ['/'];
+    this.router.navigate(target).catch(() => undefined);
   }
 
   /**

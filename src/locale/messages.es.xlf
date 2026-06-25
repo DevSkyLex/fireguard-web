@@ -1116,18 +1116,6 @@
         <source>Failed to send the invitation(s).</source>
         <target>No se pudieron enviar las invitaciones.</target>
       </trans-unit>
-      <trans-unit id="onboarding.inspection.eyebrow" datatype="html">
-        <source>Inspections</source>
-        <target>Inspecciones</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.title" datatype="html">
-        <source> First inspection </source>
-        <target>Primera inspección</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.subtitle" datatype="html">
-        <source> Record the first fire safety equipment inspection. </source>
-        <target>Registra la primera inspección de un equipo de seguridad contra incendios.</target>
-      </trans-unit>
       <trans-unit id="onboarding.stepper.eyebrow" datatype="html">
         <source> Setup </source>
         <target>Configuración</target>
@@ -1179,14 +1167,6 @@
       <trans-unit id="onboarding.step.equipment.desc" datatype="html">
         <source>Extinguisher, detector or other fire safety equipment</source>
         <target>Extintor, detector u otro equipo de seguridad contra incendios</target>
-      </trans-unit>
-      <trans-unit id="onboarding.step.inspection.label" datatype="html">
-        <source>First inspection</source>
-        <target>Primera inspección</target>
-      </trans-unit>
-      <trans-unit id="onboarding.step.inspection.desc" datatype="html">
-        <source>Initial equipment inspection</source>
-        <target>Inspección inicial del equipo</target>
       </trans-unit>
       <trans-unit id="onboarding.equipment.typeLabel" datatype="html">
         <source>Equipment type</source>
@@ -1359,54 +1339,6 @@
       <trans-unit id="onboarding.facility.submitOne" datatype="html">
         <source>Create facility</source>
         <target>Crear instalación</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.equipmentLabel" datatype="html">
-        <source>Equipment</source>
-        <target>Equipo</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.selectEquipment" datatype="html">
-        <source>Select equipment</source>
-        <target>Selecciona un equipo</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.noEquipment" datatype="html">
-        <source>Create or refresh an equipment before running the first inspection.</source>
-        <target>Crea o actualiza un equipo antes de realizar la primera inspección.</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.equipmentRequired" datatype="html">
-        <source>Equipment is required.</source>
-        <target>El equipo es obligatorio.</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.resultLabel" datatype="html">
-        <source>Result</source>
-        <target>Resultado</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.resultRequired" datatype="html">
-        <source>Result is required.</source>
-        <target>El resultado es obligatorio.</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.dateLabel" datatype="html">
-        <source>Inspection date</source>
-        <target>Fecha de inspección</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.dateRequired" datatype="html">
-        <source>Date is required.</source>
-        <target>La fecha es obligatoria.</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.inspectorTypeLabel" datatype="html">
-        <source>Inspector type</source>
-        <target>Tipo de inspector</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.inspectorNameLabel" datatype="html">
-        <source>Inspector name</source>
-        <target>Nombre del inspector</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.inspectorNamePlaceholder" datatype="html">
-        <source>John Doe</source>
-        <target>Juan Pérez</target>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.submit" datatype="html">
-        <source>Save inspection</source>
-        <target>Guardar inspección</target>
       </trans-unit>
       <trans-unit id="inspectionResult.pass" datatype="html">
         <source>Pass</source>
@@ -5565,8 +5497,8 @@
         <target>Configuremos tu espacio de trabajo</target>
       </trans-unit>
       <trans-unit id="onboarding.wizard.welcome.lead" datatype="html">
-        <source> A few quick steps to get your team, sites and first inspection ready. About 5 minutes — you can leave and pick up where you left off at any time. </source>
-        <target>Unos pasos rápidos para preparar tu equipo, tus sedes y tu primera inspección. Unos 5 minutos: puedes salir y retomar donde lo dejaste en cualquier momento.</target>
+        <source> A few quick steps to get your team, sites and equipment ready. About 5 minutes — you can leave and pick up where you left off at any time. </source>
+        <target>Unos pasos rápidos para preparar tu equipo, tus sedes y tu equipamiento. Unos 5 minutos: puedes salir y retomar donde lo dejaste en cualquier momento.</target>
       </trans-unit>
       <trans-unit id="onboarding.wizard.welcome.point1" datatype="html">
         <source> Create your organization and invite your team </source>
@@ -5577,8 +5509,8 @@
         <target>Añade las instalaciones y equipos que supervisas</target>
       </trans-unit>
       <trans-unit id="onboarding.wizard.welcome.point3" datatype="html">
-        <source> Run your first inspection and you&apos;re live </source>
-        <target>Realiza tu primera inspección y estarás en marcha</target>
+        <source> Track inspections and stay compliant </source>
+        <target>Haz seguimiento de las inspecciones y mantén el cumplimiento</target>
       </trans-unit>
       <trans-unit id="onboarding.wizard.welcome.start" datatype="html">
         <source>Start setup</source>
@@ -5613,8 +5545,32 @@
         <target>Algo impidió que tu configuración continuara.</target>
       </trans-unit>
       <trans-unit id="onboarding.wizard.blocked.progressSaved" datatype="html">
-        <source>Your progress is saved — you can try again or finish later without losing anything.</source>
-        <target>Tu progreso está guardado: puedes reintentarlo o terminar más tarde sin perder nada.</target>
+        <source>Your progress is saved — you can try again without losing anything.</source>
+        <target>Tu progreso está guardado: puedes reintentarlo sin perder nada.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.headline" datatype="html">
+        <source> Let&apos;s get your workspace ready. </source>
+        <target>Preparemos tu espacio de trabajo.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.subline" datatype="html">
+        <source> A few guided steps to set up your organization, team and assets. </source>
+        <target>Unos pocos pasos guiados para configurar tu organización, tu equipo y tus activos.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.status.done" datatype="html">
+        <source>Completed</source>
+        <target>Completado</target>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.status.current" datatype="html">
+        <source>In progress</source>
+        <target>En curso</target>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.status.todo" datatype="html">
+        <source>To do</source>
+        <target>Por hacer</target>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.footer" datatype="html">
+        <source>Your progress is saved as you go.</source>
+        <target>Tu progreso se guarda a medida que avanzas.</target>
       </trans-unit>
       <trans-unit id="onboarding.wizard.blocked.retry" datatype="html">
         <source>Try again</source>
@@ -5639,10 +5595,6 @@
       <trans-unit id="onboarding.step.equipment.sublabel" datatype="html">
         <source>Fire equipment</source>
         <target>Equipos contra incendios</target>
-      </trans-unit>
-      <trans-unit id="onboarding.step.inspection.sublabel" datatype="html">
-        <source>First check</source>
-        <target>Primera inspección</target>
       </trans-unit>
       <trans-unit id="onboarding.wizard.back" datatype="html">
         <source>Back</source>

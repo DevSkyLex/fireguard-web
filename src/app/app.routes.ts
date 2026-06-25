@@ -4,8 +4,8 @@ import { withAuthShowcase } from '@features/auth';
 import { authGuard } from '@features/auth/http/guards';
 import { provideMainFeature, withMainNavigation } from '@features/main';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
-import { onboardingGuard } from '@features/onboarding/http/guards';
-import { withSetupChecklist } from '@features/onboarding/providers';
+import { onboardingGuard, onboardingRequiredGuard } from '@features/onboarding/http/guards';
+import { withOnboardingShowcase } from '@features/onboarding/providers';
 import {
   provideOrganizationFeature,
   withOrganizationContext,
@@ -32,33 +32,39 @@ export const APP_ROUTES: Routes = [
     component: SplitLayout,
     providers: [
       provideSplitLayoutSlots({
-        showcase: [withAuthShowcase()]
-      })
+        showcase: [withAuthShowcase()],
+      }),
     ],
     loadChildren: () => import('@features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
   },
   {
+    path: 'onboarding',
+    component: SplitLayout,
+    canActivate: [authGuard, maintenanceGuard, onboardingGuard],
+    providers: [
+      provideSplitLayoutSlots({
+        showcase: [withOnboardingShowcase()],
+      }),
+    ],
+    loadChildren: () =>
+      import('@features/onboarding/onboarding.routes').then((m) => m.ONBOARDING_ROUTES),
+  },
+  {
     path: '',
     component: DashboardLayout,
-    canActivate: [authGuard, maintenanceGuard],
+    canActivate: [authGuard, maintenanceGuard, onboardingRequiredGuard],
     providers: [
       provideMainFeature(),
       provideOrganizationFeature(),
       provideDashboardLayoutSlots({
-        navigation: [
-          withMainNavigation(),
-          ...withOrganizationNavigation()
-        ],
+        navigation: [withMainNavigation(), ...withOrganizationNavigation()],
         topbar: [
-          withSetupChecklist(),
           withOrganizationSwitcher(),
           withThemeSwitcher(),
           withNotificationBell(),
           withAccountProfile(),
         ],
-        aside: [
-          withOrganizationContext()
-        ],
+        aside: [withOrganizationContext()],
       }),
     ],
     children: [
@@ -78,13 +84,6 @@ export const APP_ROUTES: Routes = [
         data: { preload: true },
         loadChildren: () =>
           import('@features/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
-      },
-      {
-        path: 'onboarding',
-        canActivate: [onboardingGuard],
-        data: { breadcrumb: false, preload: true },
-        loadChildren: () =>
-          import('@features/onboarding/onboarding.routes').then((m) => m.ONBOARDING_ROUTES),
       },
     ],
   },

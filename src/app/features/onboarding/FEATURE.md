@@ -2,17 +2,16 @@
 
 ## Purpose
 
-Owns the organization **guided activation** flow — a non-blocking onboarding that
-helps a new user reach first value (organization → plan → team → facility →
-equipment → first inspection) without ever locking them out of the application.
+Owns the organization **guided activation** flow — a **mandatory** onboarding that
+a new user must complete (organization → plan → team → facility → equipment)
+before reaching the rest of the application.
 
 This feature is responsible for:
 
-- onboarding state retrieval and progression (start, execute, skip, rollback,
-  dismiss, resume),
-- the focused single-column activation wizard (`/onboarding`),
-- the persistent shell setup checklist contributed to the dashboard topbar,
-- the wizard-access guard.
+- onboarding state retrieval and progression (start, execute, skip, rollback),
+- the split-layout activation wizard (`/onboarding`),
+- the steps showcase contributed to the split layout left panel,
+- the wizard-access guard and the mandatory-onboarding gate.
 
 This feature does not own organization management after activation. Ongoing
 organization workflows belong to `features/organization`. It creates the
@@ -22,50 +21,59 @@ boundary, never through organization subfeature stores.
 ## Entry Points
 
 - Routes: `onboarding.routes.ts`
-- Public API: `index.ts` (state, models, data-access, guard, providers)
-- Shell contribution: `withSetupChecklist()` (dashboard topbar slot)
+- Public API: `index.ts` (state, models, data-access, guards, providers)
+- Layout contribution: `withOnboardingShowcase()` (split layout showcase slot)
 
 ## Routes
 
-- `/onboarding` — the optional, resumable activation wizard, rendered in the
-  `FocusedLayout`.
+- `/onboarding` — the mandatory activation wizard, a **top-level route** rendered
+  in the `SplitLayout` (the same shell as `/auth/*`), guarded by `authGuard`,
+  `maintenanceGuard`, and `onboardingGuard`.
 
 ## State and Data Access
 
 Primary store: `OnboardingStore` (root-provided).
 Primary service: `OnboardingService` (extends `HydraApiService`).
 
-The store exposes per-action `CallState`s plus activation-oriented computed
-signals: `isDismissed`, `progress` (`{ done, total }`), and `isActivationVisible`.
+The store exposes per-action `CallState`s plus progress-oriented computed signals
+(`steps`, `nextStep`, `activeStepIndex`, `completedSteps`, `progress`). It still
+carries `dismiss`/`resume`/`isDismissed`/`isActivationVisible` from the previous
+non-blocking design; these are no longer surfaced now that onboarding is
+mandatory.
 
 ## Cross-Feature Dependencies
 
 - Creates activation resources through `@features/organization/setup`.
 - The `select_plan` step proposes a subscription using the organization-owned,
   root-provided `PlanService` + `BillingService` (`@features/organization/data-access`)
-  and the billing/plan models — the org feature stores are route-scoped to the
-  dashboard, so the step talks to the services directly against the onboarding
-  target organization.
-- Contributes `SetupChecklist` to the dashboard topbar via the layout slot
-  contract (`DashboardLayoutTopbarSlotFeature`), type-only import.
+  and the billing/plan models — onboarding runs on its own top-level route
+  outside the dashboard's scoped `provideOrganizationFeature()`, so the step talks
+  to these root-provided services directly against the onboarding target
+  organization.
+- Contributes `OnboardingShowcase` to the split layout showcase slot via the
+  layout slot contract (`SplitLayoutShowcaseSlotFeature`), type-only import.
 
 ## Routing and SSR Notes
 
-- Onboarding is **non-blocking**: it is no longer part of the `DashboardLayout`
-  `canActivate`. `onboardingGuard` only guards the `/onboarding` wizard route,
-  redirecting to `/` when the flow is already `completed`.
+- Onboarding is **mandatory**: the application shell (`DashboardLayout` route)
+  adds `onboardingRequiredGuard` to its `canActivate`, redirecting any
+  non-completed (or missing) record to `/onboarding`. `onboardingGuard` keeps a
+  completed user from re-opening the wizard (redirects to `/`). Together they form
+  a mutual gate. Both delegate loading to `OnboardingStore.ensureLoaded()`, which
+  caches the record so the wizard page does not re-fetch on entry.
 - `OnboardingStore.initialize()` keeps the SSR/`TransferState` handoff for the
-  wizard; the shell checklist hydrates browser-only via `OnboardingStore.load()`.
+  wizard page.
 
 ## Invariants
 
-- Onboarding never blocks navigation. The backend session carries the state of
-  record (`in_progress` / `completed` / `blocked`) plus a `dismissed` flag; the
-  frontend reflects it but never hard-locks the app.
-- Because the backend auto-detects facility/equipment/inspection existence,
-  creating those resources anywhere (wizard, contextual empty state, normal flow)
-  advances the flow — the shell checklist reflects progress.
-- Activation surfaces (wizard welcome, shell checklist) honor `dismissed`; resume
-  is always available from the backend.
+- Onboarding blocks navigation: no dashboard/organization/account access until the
+  flow is `completed`. The backend session carries the state of record
+  (`in_progress` / `completed` / `blocked`); the frontend reflects it and gates on
+  it.
+- Because the backend auto-detects facility/equipment existence, creating those
+  resources anywhere advances the flow.
+- Progress is presented in two places that share the `ONBOARDING_STEP_PRESENTATION`
+  registry: the split-layout showcase rail (`xl+`) and a compact in-content
+  stepper (below `xl`).
 - The wizard page is the route-entry orchestrator; step bodies delegate creation
   to `@features/organization/setup` and confirm via the store.

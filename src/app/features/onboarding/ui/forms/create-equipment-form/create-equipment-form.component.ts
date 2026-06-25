@@ -19,6 +19,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import type { CreateEquipmentFormData, CreateEquipmentFormValues } from './models';
+import { EQUIPMENT_TYPE_OPTIONS } from './options';
 
 /**
  * Component CreateEquipmentForm
@@ -84,35 +85,16 @@ export class CreateEquipmentForm {
    * @readonly
    *
    * @description
-   * Available equipment type options.
+   * Available equipment type options, sourced from the shared onboarding option
+   * set (`EQUIPMENT_TYPE_OPTIONS`) so the catalog lives in a single place.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    *
-   * @type {{ label: string; value: string }[]}
+   * @type {{ readonly label: string; readonly value: string }[]}
    */
-  protected readonly equipmentTypes: { label: string; value: string }[] = [
-    {
-      label: $localize`:@@equipmentType.fireExtinguisher:Fire extinguisher`,
-      value: 'fire_extinguisher',
-    },
-    { label: $localize`:@@equipmentType.smokeDetector:Smoke detector`, value: 'smoke_detector' },
-    { label: $localize`:@@equipmentType.heatDetector:Heat detector`, value: 'heat_detector' },
-    { label: $localize`:@@equipmentType.sprinkler:Sprinkler`, value: 'sprinkler' },
-    {
-      label: $localize`:@@equipmentType.fireAlarmPanel:Fire alarm panel`,
-      value: 'fire_alarm_panel',
-    },
-    { label: $localize`:@@equipmentType.hydrant:Hydrant`, value: 'hydrant' },
-    { label: $localize`:@@equipmentType.fireDoor:Fire door`, value: 'fire_door' },
-    {
-      label: $localize`:@@equipmentType.emergencyLighting:Emergency lighting`,
-      value: 'emergency_lighting',
-    },
-    { label: $localize`:@@equipmentType.accessControl:Access control`, value: 'access_control' },
-    { label: $localize`:@@equipmentType.camera:Camera`, value: 'camera' },
-    { label: $localize`:@@equipmentType.gasDetector:Gas detector`, value: 'gas_detector' },
-    { label: $localize`:@@equipmentType.other:Other`, value: 'other' },
+  protected readonly equipmentTypes: { readonly label: string; readonly value: string }[] = [
+    ...EQUIPMENT_TYPE_OPTIONS,
   ];
 
   /**

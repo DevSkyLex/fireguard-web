@@ -2,11 +2,6 @@ export { CreateEquipmentForm, type CreateEquipmentFormValues } from './create-eq
 export { CreateFacilitiesForm } from './create-facilities-form';
 export { CreateFacilityForm, type CreateFacilityFormValues } from './create-facility-form';
 export {
-  CreateInspectionForm,
-  type EquipmentOption,
-  type CreateInspectionFormValues,
-} from './create-inspection-form';
-export {
   CreateOrganizationForm,
   type CreateOrganizationFormValues,
 } from './create-organization-form';

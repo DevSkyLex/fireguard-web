@@ -10,5 +10,4 @@ export type OnboardingStepKey =
   | 'select_plan'
   | 'invite_members'
   | 'create_first_facility'
-  | 'create_first_equipment'
-  | 'run_first_inspection';
+  | 'create_first_equipment';

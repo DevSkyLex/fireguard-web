@@ -2076,20 +2076,6 @@
           <context context-type="linenumber">295</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="onboarding.inspection.title" datatype="html">
-        <source> First inspection </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/run-inspection-step/run-inspection-step.component.html</context>
-          <context context-type="linenumber">23,26</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.subtitle" datatype="html">
-        <source> Record the first fire safety equipment inspection. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/run-inspection-step/run-inspection-step.component.html</context>
-          <context context-type="linenumber">29,32</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="onboarding.plan.title" datatype="html">
         <source> Choose a plan </source>
         <context-group purpose="location">
@@ -2232,7 +2218,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.welcome.lead" datatype="html">
-        <source> A few quick steps to get your team, sites and first inspection ready. About 5 minutes — you can leave and pick up where you left off at any time. </source>
+        <source> A few quick steps to get your team, sites and equipment ready. About 5 minutes — you can leave and pick up where you left off at any time. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
           <context context-type="linenumber">25,28</context>
@@ -2253,7 +2239,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.welcome.point3" datatype="html">
-        <source> Run your first inspection and you&apos;re live </source>
+        <source> Track inspections and stay compliant </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
           <context context-type="linenumber">57,59</context>
@@ -2316,10 +2302,52 @@
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.blocked.progressSaved" datatype="html">
-        <source>Your progress is saved — you can try again or finish later without losing anything.</source>
+        <source>Your progress is saved — you can try again without losing anything.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
           <context context-type="linenumber">151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.headline" datatype="html">
+        <source> Let&apos;s get your workspace ready. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
+          <context context-type="linenumber">25,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.subline" datatype="html">
+        <source> A few guided steps to set up your organization, team and assets. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
+          <context context-type="linenumber">31,34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.status.done" datatype="html">
+        <source>Completed</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
+          <context context-type="linenumber">76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.status.current" datatype="html">
+        <source>In progress</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
+          <context context-type="linenumber">79,80</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.status.todo" datatype="html">
+        <source>To do</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
+          <context context-type="linenumber">83</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.footer" datatype="html">
+        <source>Your progress is saved as you go.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
+          <context context-type="linenumber">94</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.blocked.retry" datatype="html">
@@ -2362,13 +2390,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
           <context context-type="linenumber">44</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.step.inspection.sublabel" datatype="html">
-        <source>First check</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
-          <context context-type="linenumber">49</context>
         </context-group>
       </trans-unit>
       <trans-unit id="common.dismiss" datatype="html">
@@ -2488,13 +2509,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.ts</context>
           <context context-type="linenumber">135</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.step.inspection.label" datatype="html">
-        <source>First inspection</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.ts</context>
-          <context context-type="linenumber">139</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.equipment.typeLabel" datatype="html">
@@ -2896,90 +2910,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-facility-form/create-facility-form.component.html</context>
           <context context-type="linenumber">76,77</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.equipmentLabel" datatype="html">
-        <source>Equipment</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">8,11</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.selectEquipment" datatype="html">
-        <source>Select equipment</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">17,18</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.noEquipment" datatype="html">
-        <source>Create or refresh an equipment before running the first inspection.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">23,27</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.equipmentRequired" datatype="html">
-        <source>Equipment is required.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">30,36</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.resultLabel" datatype="html">
-        <source>Result</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">42,45</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.resultRequired" datatype="html">
-        <source>Result is required.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">54,59</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.dateLabel" datatype="html">
-        <source>Inspection date</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">65,68</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.dateRequired" datatype="html">
-        <source>Date is required.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">78,83</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.inspectorTypeLabel" datatype="html">
-        <source>Inspector type</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">89,92</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.inspectorNameLabel" datatype="html">
-        <source>Inspector name</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">107,111</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.inspectorNamePlaceholder" datatype="html">
-        <source>John Doe</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">114,115</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.inspection.submit" datatype="html">
-        <source>Save inspection</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">131,132</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspectionResult.pass" datatype="html">

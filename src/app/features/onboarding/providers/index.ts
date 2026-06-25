@@ -1,1 +1,1 @@
-export { withSetupChecklist } from './setup-checklist';
+export { withOnboardingShowcase } from './showcase';

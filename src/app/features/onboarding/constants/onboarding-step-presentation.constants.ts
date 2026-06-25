@@ -41,9 +41,4 @@ export const ONBOARDING_STEP_PRESENTATION: Record<OnboardingStepKey, OnboardingS
     label: $localize`:@@onboarding.step.equipment.label:First equipment`,
     sublabel: $localize`:@@onboarding.step.equipment.sublabel:Fire equipment`,
   },
-  run_first_inspection: {
-    icon: 'pi-clipboard',
-    label: $localize`:@@onboarding.step.inspection.label:First inspection`,
-    sublabel: $localize`:@@onboarding.step.inspection.sublabel:First check`,
-  },
 };

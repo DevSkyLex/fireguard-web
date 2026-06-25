@@ -14,6 +14,7 @@ interface MockStore {
   steps: WritableSignal<readonly OnboardingStepOutput[]>;
   progress: WritableSignal<{ done: number; total: number }>;
   nextStep: WritableSignal<string | null>;
+  targetOrganizationId: WritableSignal<string | null>;
   isDismissing: WritableSignal<boolean>;
   dismiss: ReturnType<typeof vi.fn>;
   load: ReturnType<typeof vi.fn>;
@@ -34,6 +35,7 @@ describe('OnboardingWizard', () => {
       steps: signal<readonly OnboardingStepOutput[]>([]),
       progress: signal({ done: 0, total: 0 }),
       nextStep: signal<string | null>('create_organization'),
+      targetOrganizationId: signal<string | null>(null),
       isDismissing: signal(false),
       dismiss: vi.fn(),
       load: vi.fn(),
@@ -92,10 +94,16 @@ describe('OnboardingWizard', () => {
     expect(component['phase']()).toBe('completion');
   });
 
-  it('dismisses the flow and navigates home on "finish later"', () => {
+  it('navigates to the created organization from the completion screen', () => {
     const { component, store, router } = setup();
-    component['finishLater']();
-    expect(store.dismiss).toHaveBeenCalledTimes(1);
+    store.targetOrganizationId.set('org-123');
+    component['goToDashboard']();
+    expect(router.navigate).toHaveBeenCalledWith(['/organizations', 'org-123']);
+  });
+
+  it('falls back to the app root when no target organization is known', () => {
+    const { component, router } = setup();
+    component['goToDashboard']();
     expect(router.navigate).toHaveBeenCalledWith(['/']);
   });
 

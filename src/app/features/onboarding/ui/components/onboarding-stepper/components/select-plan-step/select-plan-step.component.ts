@@ -15,7 +15,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { SelectButtonModule, type SelectButtonChangeEvent } from 'primeng/selectbutton';
-import { TagModule } from 'primeng/tag';
 import { forkJoin } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { OnboardingStore } from '@features/onboarding/state';
@@ -61,7 +60,7 @@ interface IntervalOption {
  */
 @Component({
   selector: 'app-select-plan-step',
-  imports: [ButtonModule, TagModule, SelectButtonModule, FormsModule],
+  imports: [ButtonModule, SelectButtonModule, FormsModule],
   templateUrl: './select-plan-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

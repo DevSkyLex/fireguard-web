@@ -1,33 +1,8 @@
 <div class="flex flex-col gap-6">
-  @if (!step().required) {
-    <p-tag
-      value="Optional"
-      i18n-value="@@common.optionalTag"
-      severity="secondary"
-      [rounded]="true"
-      styleClass="self-start"
-    />
-  }
-
-  <div class="flex flex-col gap-1.5">
-    <h2
-      class="text-2xl font-semibold tracking-tight text-balance text-surface-900 dark:text-surface-0"
-      i18n="@@onboarding.plan.title"
-    >
-      Choose a plan
-    </h2>
-    <p
-      class="text-sm leading-relaxed text-surface-500 dark:text-surface-400"
-      i18n="@@onboarding.plan.subtitle"
-    >
-      Pick the plan that fits your team. You can change it any time — or stay on Free for now.
-    </p>
-  </div>
-
   @if (isLoadingCatalog()) {
     <!-- Loading -->
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      @for (i of [0, 1]; track i) {
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      @for (i of [0, 1, 2]; track i) {
         <div class="h-56 animate-pulse rounded-xl bg-surface-100 dark:bg-surface-900"></div>
       }
     </div>
@@ -64,8 +39,8 @@
       />
     </div>
 
-    <!-- Plans grid -->
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <!-- Plans grid: one row of plan cards -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       @for (plan of plans(); track plan.id) {
         <article
           class="flex flex-col gap-4 rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-950"

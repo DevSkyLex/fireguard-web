@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MessageService } from 'primeng/api';
-import { TagModule } from 'primeng/tag';
 import { OnboardingStore } from '@features/onboarding/state';
 import { CreateEquipmentForm, type CreateEquipmentFormValues } from '@features/onboarding/ui/forms';
 import { OrganizationSetupService } from '@features/organization/setup';
@@ -31,7 +30,7 @@ import { OnboardingStepBase } from '../onboarding-step.base';
  */
 @Component({
   selector: 'app-create-equipment-step',
-  imports: [TagModule, CreateEquipmentForm],
+  imports: [CreateEquipmentForm],
   templateUrl: './create-equipment-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

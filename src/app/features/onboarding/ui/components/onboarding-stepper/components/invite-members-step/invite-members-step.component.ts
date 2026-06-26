@@ -12,7 +12,6 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { MessageService } from 'primeng/api';
-import { TagModule } from 'primeng/tag';
 import { OnboardingStore } from '@features/onboarding/state';
 import { InviteMembersForm, type InviteMembersFormValues } from '@features/onboarding/ui/forms';
 import { OrganizationSetupService, type SetupOrganizationRole } from '@features/organization/setup';
@@ -32,7 +31,7 @@ import { OnboardingStepBase } from '../onboarding-step.base';
  */
 @Component({
   selector: 'app-invite-members-step',
-  imports: [TagModule, InviteMembersForm],
+  imports: [InviteMembersForm],
   templateUrl: './invite-members-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -114,17 +113,6 @@ export class InviteMembersStep extends OnboardingStepBase {
    * @type {Signal<boolean>}
    */
   protected readonly isExecuting: Signal<boolean> = this.onboardingStore.isExecutingStep;
-
-  /**
-   * Property isSkipping
-   * @readonly
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly isSkipping: Signal<boolean> = this.onboardingStore.isSkippingStep;
 
   /**
    * Property isBusy
@@ -310,22 +298,6 @@ export class InviteMembersStep extends OnboardingStepBase {
    */
   protected handleComplete(): void {
     this.onboardingStore.executeStep({ stepKey: 'invite_members' });
-  }
-
-  /**
-   * Method handleSkip
-   * @method handleSkip
-   *
-   * @description
-   * Skips the invite_members onboarding step.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected handleSkip(): void {
-    this.onboardingStore.skipStep('invite_members');
   }
   //#endregion
 }

@@ -109,17 +109,6 @@ export class InviteMembersForm {
   public readonly executing: InputSignal<boolean> = input<boolean>(false);
 
   /**
-   * Input skippable
-   * @readonly
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<boolean>}
-   */
-  public readonly skippable: InputSignal<boolean> = input<boolean>(false);
-
-  /**
    * Input busy
    * @readonly
    *
@@ -143,28 +132,6 @@ export class InviteMembersForm {
    */
   public readonly invited: OutputEmitterRef<InviteMembersFormValues> =
     output<InviteMembersFormValues>();
-
-  /**
-   * Output completed
-   * @readonly
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<void>}
-   */
-  public readonly completed: OutputEmitterRef<void> = output<void>();
-
-  /**
-   * Output skipped
-   * @readonly
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {OutputEmitterRef<void>}
-   */
-  public readonly skipped: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
@@ -363,38 +330,6 @@ export class InviteMembersForm {
     this.invited.emit(this.form.getRawValue().rows as InviteeRowValues[]);
     this.rows.clear();
     this.rows.push(this.buildRow());
-  }
-
-  /**
-   * Method onComplete
-   * @method onComplete
-   *
-   * @description
-   * Emits the completed event to mark the step as done.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected onComplete(): void {
-    this.completed.emit();
-  }
-
-  /**
-   * Method onSkip
-   * @method onSkip
-   *
-   * @description
-   * Emits the skipped event to skip this step.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected onSkip(): void {
-    this.skipped.emit();
   }
   //#endregion
 }

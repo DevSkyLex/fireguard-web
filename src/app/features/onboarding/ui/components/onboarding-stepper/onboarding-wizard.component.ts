@@ -12,6 +12,7 @@ import {
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
+import { TagModule } from 'primeng/tag';
 import type { MessagePassThroughOptions } from 'primeng/types/message';
 import { ONBOARDING_STEP_PRESENTATION } from '@features/onboarding/constants';
 import type {
@@ -59,7 +60,7 @@ type WizardPhase = 'loading' | 'welcome' | 'steps' | 'completion';
  */
 @Component({
   selector: 'app-onboarding-wizard',
-  imports: [NgComponentOutlet, MessageModule, ButtonModule],
+  imports: [NgComponentOutlet, MessageModule, ButtonModule, TagModule],
   templateUrl: './onboarding-wizard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -187,8 +188,8 @@ export class OnboardingWizard {
    * @readonly
    *
    * @description
-   * Localized icon/label/sublabel for the current step, used as the step heading
-   * in the content column. `null` when no step is pending.
+   * Localized icon/label/description for the current step, used as the single
+   * step heading in the content column. `null` when no step is pending.
    *
    * @access protected
    * @since 4.0.0
@@ -200,6 +201,24 @@ export class OnboardingWizard {
       const key: OnboardingStepKey | null = this.store.nextStep();
       return key ? ONBOARDING_STEP_PRESENTATION[key] : null;
     });
+
+  /**
+   * Property isCurrentStepOptional
+   * @readonly
+   *
+   * @description
+   * Whether the current pending step is skippable (`required === false`). Drives
+   * the "Optional" badge in the content heading, which the wizard now owns so the
+   * step bodies render only their form.
+   *
+   * @access protected
+   * @since 4.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isCurrentStepOptional: Signal<boolean> = computed<boolean>(
+    () => this.currentStep()?.required === false,
+  );
 
   /**
    * Property segments

@@ -44,6 +44,7 @@ export const APP_ROUTES: Routes = [
     providers: [
       provideSplitLayoutSlots({
         showcase: [withOnboardingShowcase()],
+        contentMaxWidth: 'max-w-4xl',
       }),
     ],
     loadChildren: () =>

@@ -10,7 +10,7 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span
-                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-white"
+                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-100 text-[11px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
               >
                 {{ i + 1 }}
               </span>
@@ -102,43 +102,14 @@
     }
   </div>
 
-  <!-- Actions -->
-  <div class="flex flex-col gap-3">
-    <p-button
-      [label]="submitLabel(rows.length)"
-      type="submit"
-      iconPos="right"
-      [loading]="inviting() || executing()"
-      [disabled]="form.invalid || busy()"
-      fluid
-    />
-
-    <div class="flex gap-2">
-      <p-button
-        label="Continue without inviting"
-        i18n-label="@@onboarding.members.continue"
-        type="button"
-        severity="secondary"
-        outlined
-        [disabled]="busy()"
-        fluid
-        (onClick)="onComplete()"
-        class="flex-1"
-      />
-
-      @if (skippable()) {
-        <p-button
-          label="Skip"
-          i18n-label="@@common.skip"
-          type="button"
-          severity="secondary"
-          outlined
-          [disabled]="busy()"
-          (onClick)="onSkip()"
-          fluid
-          class="flex-1"
-        />
-      }
-    </div>
-  </div>
+  <!-- Submit (skipping this optional step is handled by the wizard footer) -->
+  <p-button
+    [label]="submitLabel(rows.length)"
+    type="submit"
+    icon="pi pi-send"
+    iconPos="right"
+    [loading]="inviting() || executing()"
+    [disabled]="form.invalid || busy()"
+    fluid
+  />
 </form>

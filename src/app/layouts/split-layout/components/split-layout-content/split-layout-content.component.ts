@@ -1,13 +1,18 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { SPLIT_LAYOUT_CONTENT_MAX_WIDTH } from '../../slots/content';
 
 /**
  * Component SplitLayoutContent
  * @class SplitLayoutContent
  *
  * @description
- * Component for the auth layout content
+ * Centered content column of the split layout. Its max-width comes from the
+ * route-overridable {@link SPLIT_LAYOUT_CONTENT_MAX_WIDTH} token (default
+ * `max-w-3xl`), so a feature route can request a wider column through
+ * `provideSplitLayoutSlots({ contentMaxWidth: '…' })` without touching the
+ * shared layout.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -23,4 +28,21 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   templateUrl: './split-layout-content.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SplitLayoutContent {}
+export class SplitLayoutContent {
+  //#region Properties
+  /**
+   * Property maxWidthClass
+   * @readonly
+   *
+   * @description
+   * Tailwind max-width utility applied to the content column, resolved from the
+   * route-overridable {@link SPLIT_LAYOUT_CONTENT_MAX_WIDTH} token.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {string}
+   */
+  protected readonly maxWidthClass: string = inject<string>(SPLIT_LAYOUT_CONTENT_MAX_WIDTH);
+  //#endregion
+}

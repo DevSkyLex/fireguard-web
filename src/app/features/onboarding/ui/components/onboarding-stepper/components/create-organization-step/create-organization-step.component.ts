@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MessageService } from 'primeng/api';
-import { TagModule } from 'primeng/tag';
 import { OnboardingStore } from '@features/onboarding/state';
 import {
   CreateOrganizationForm,
@@ -33,7 +32,7 @@ import { OnboardingStepBase } from '../onboarding-step.base';
  */
 @Component({
   selector: 'app-create-organization-step',
-  imports: [TagModule, CreateOrganizationForm],
+  imports: [CreateOrganizationForm],
   templateUrl: './create-organization-step.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -4,9 +4,10 @@
  *
  * @description
  * Localized presentation metadata for a single onboarding step, shared by the
- * wizard's vertical rail and the shell setup checklist. Keeps the icon, short
- * title, and one-line subtitle for a {@link OnboardingStepKey} in one place so
- * both surfaces stay in sync.
+ * wizard's vertical rail, the wizard content heading, and the shell setup
+ * checklist. Keeps the icon, short title, compact rail subtitle, and the longer
+ * content-heading description for a {@link OnboardingStepKey} in one place so
+ * every surface stays in sync.
  */
 export interface OnboardingStepPresentation {
   //#region Properties
@@ -37,10 +38,25 @@ export interface OnboardingStepPresentation {
    * @readonly
    *
    * @description
-   * One-line subtitle giving the step extra context (e.g. "Your structure").
+   * Compact one-line subtitle used by the wizard rail and the shell checklist
+   * (e.g. "Your structure").
    *
    * @type {string}
    */
   readonly sublabel: string;
+
+  /**
+   * Property description
+   * @readonly
+   *
+   * @description
+   * Longer, action-oriented sentence rendered under the step title in the wizard
+   * content heading (e.g. "Set up the basic information for your fire safety
+   * company."). Richer than {@link OnboardingStepPresentation.sublabel}, which
+   * stays compact for the rail.
+   *
+   * @type {string}
+   */
+  readonly description: string;
   //#endregion
 }

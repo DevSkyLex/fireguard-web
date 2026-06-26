@@ -1,38 +1,8 @@
-<div class="flex flex-col gap-6">
-  @if (!step().required) {
-    <p-tag
-      value="Optional"
-      i18n-value="@@common.optionalTag"
-      severity="secondary"
-      [rounded]="true"
-      styleClass="self-start"
-    />
-  }
-
-  <div class="flex flex-col gap-1.5">
-    <h2
-      class="text-2xl font-semibold tracking-tight text-balance text-surface-900 dark:text-surface-0"
-      i18n="@@onboarding.members.title"
-    >
-      Team &amp; technicians
-    </h2>
-    <p
-      class="text-sm leading-relaxed text-surface-500 dark:text-surface-400"
-      i18n="@@onboarding.members.subtitle"
-    >
-      Invite your first team members to start collaborating.
-    </p>
-  </div>
-
-  <app-invite-members-form
-    [roles]="roles()"
-    [rolesLoading]="rolesLoading()"
-    [inviting]="isInviting()"
-    [executing]="isExecuting()"
-    [skippable]="step().skipAvailable"
-    [busy]="anyBusy()"
-    (invited)="handleInvite($event)"
-    (completed)="handleComplete()"
-    (skipped)="handleSkip()"
-  />
-</div>
+<app-invite-members-form
+  [roles]="roles()"
+  [rolesLoading]="rolesLoading()"
+  [inviting]="isInviting()"
+  [executing]="isExecuting()"
+  [busy]="anyBusy()"
+  (invited)="handleInvite($event)"
+/>

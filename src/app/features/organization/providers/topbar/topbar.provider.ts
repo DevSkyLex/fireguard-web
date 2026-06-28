@@ -1,4 +1,4 @@
-import { OrganizationSwitcher } from '@features/organization/ui/components/organization-switcher/organization-switcher.component';
+import { OrganizationSwitcher } from '@features/organization/ui/components/organization-switcher';
 import type { DashboardLayoutTopbarSlotFeature } from '@layouts/dashboard-layout';
 
 /**

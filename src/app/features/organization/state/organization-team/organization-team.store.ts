@@ -9,7 +9,6 @@ import {
   pendingCallState,
   successCallState,
   toStoreError,
-  type CallState,
 } from '@core/request-state';
 import {
   OrganizationInvitationService,
@@ -22,46 +21,9 @@ import type {
   AssignOrganizationRoleInput,
   CreateOrganizationRoleInput,
   InviteOrganizationMemberInput,
-  OrganizationInvitationOutput,
-  OrganizationMemberOutput,
-  OrganizationPermissionOutput,
-  OrganizationRoleOutput,
   UpdateOrganizationRoleInput,
 } from '@features/organization/models';
-
-/**
- * State owned by the organization team workflow.
- */
-interface OrganizationTeamState {
-  /** Members loaded for the active organization. */
-  readonly members: readonly OrganizationMemberOutput[];
-  /** Roles loaded for the active organization. */
-  readonly roles: readonly OrganizationRoleOutput[];
-  /** Pending invitations loaded for the active organization. */
-  readonly invitations: readonly OrganizationInvitationOutput[];
-  /** Permissions available for role configuration. */
-  readonly permissions: readonly OrganizationPermissionOutput[];
-  /** Request state for team resource loading. */
-  readonly loadCallState: CallState;
-  /** Request state shared by team mutations. */
-  readonly mutationCallState: CallState;
-}
-
-/**
- * Selects the team resources that must be loaded for the current member.
- */
-export interface OrganizationTeamLoadOptions {
-  /** Organization whose team resources must be loaded. */
-  readonly organizationId: string;
-  /** Whether members must be loaded. */
-  readonly includeMembers: boolean;
-  /** Whether roles must be loaded. */
-  readonly includeRoles: boolean;
-  /** Whether invitations must be loaded. */
-  readonly includeInvitations: boolean;
-  /** Whether permissions must be loaded. */
-  readonly includePermissions: boolean;
-}
+import type { OrganizationTeamLoadOptions, OrganizationTeamState } from './models';
 
 /**
  * Initial organization team workflow state.
@@ -128,8 +90,8 @@ export const OrganizationTeamStore = signalStore(
                       .pipe(map((response) => [...response.member]))
                   : of([]),
                 invitations: includeInvitations
-                  ? organizationService
-                      .listInvitations(organizationId, { itemsPerPage: 30 })
+                  ? invitationService
+                      .list(organizationId, { itemsPerPage: 30 })
                       .pipe(map((response) => [...response.member]))
                   : of([]),
                 permissions: includePermissions
@@ -219,7 +181,7 @@ export const OrganizationTeamStore = signalStore(
         pipe(
           tap(() => patchState(store, { mutationCallState: pendingCallState() })),
           exhaustMap(({ organizationId, invitationId }) =>
-            organizationService.revokeInvitation(organizationId, invitationId).pipe(
+            invitationService.revoke(organizationId, invitationId).pipe(
               tapResponse({
                 next: () =>
                   patchState(store, {

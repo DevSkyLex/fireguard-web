@@ -10,7 +10,6 @@ import type {
   UpdateOrganizationInput,
   OrganizationDashboardOutput,
   OrganizationDashboardTrendOutput,
-  OrganizationInvitationOutput,
   OrganizationPermissionOutput,
 } from '@features/organization/models';
 import { OrganizationService } from '../organization.service';
@@ -171,63 +170,6 @@ describe('OrganizationService', () => {
         { status: 422, title: 'Unprocessable Entity' },
         { status: 422, statusText: 'Unprocessable Entity' },
       );
-    });
-  });
-
-  // ── listInvitations ────────────────────────────────────────────────────────
-
-  describe('listInvitations', () => {
-    const mockInvitation: OrganizationInvitationOutput = {
-      '@id': '/api/organizations/org-uuid-1/invitations/inv-uuid-1',
-      '@type': 'Invitation',
-      id: 'inv-uuid-1',
-      organizationId: 'org-uuid-1',
-      email: 'invited@example.com',
-      status: 'pending',
-      invitedByUserId: 'user-uuid-1',
-      acceptedByUserId: null,
-      revokedByUserId: null,
-      expiresAt: '2026-04-01T00:00:00+00:00',
-      createdAt: '2026-03-01T00:00:00+00:00',
-      updatedAt: '2026-03-01T00:00:00+00:00',
-      roleIds: [],
-    };
-
-    it('should send GET request and return invitations collection', () => {
-      service.listInvitations('org-uuid-1').subscribe((response) => {
-        expect(response.member.length).toBe(1);
-        expect(response.member[0].email).toBe('invited@example.com');
-      });
-
-      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/invitations`);
-      expect(req.request.method).toBe('GET');
-      expect(req.request.withCredentials).toBe(true);
-      req.flush(mockCollection([mockInvitation]));
-    });
-  });
-
-  // ── revokeInvitation ───────────────────────────────────────────────────────
-
-  describe('revokeInvitation', () => {
-    it('should send POST action request to revoke invitation', () => {
-      const mockRevoked = {
-        '@id': '/api/organizations/org-uuid-1/invitations/inv-uuid-1',
-        '@type': 'Invitation',
-        id: 'inv-uuid-1',
-        organizationId: 'org-uuid-1',
-        email: 'invited@example.com',
-        status: 'revoked',
-      };
-
-      service.revokeInvitation('org-uuid-1', 'inv-uuid-1').subscribe((response) => {
-        expect(response.status).toBe('revoked');
-      });
-
-      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/invitations/inv-uuid-1/revoke`);
-      expect(req.request.method).toBe('POST');
-      expect(req.request.body).toBeNull();
-      expect(req.request.withCredentials).toBe(true);
-      req.flush(mockRevoked);
     });
   });
 

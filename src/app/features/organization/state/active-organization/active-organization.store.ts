@@ -1,6 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { type ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import {
   patchState,
   signalStore,
@@ -22,6 +22,7 @@ import {
 } from '@core/request-state';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
+import { routeTreeHasParam } from '@features/organization/utils';
 import { activeOrganizationStoreEvents } from './events';
 import type { ActiveOrganizationState } from './models';
 
@@ -43,13 +44,6 @@ const INITIAL_ACTIVE_ORGANIZATION_STATE: ActiveOrganizationState = {
   getCallState: idleCallState(),
 } as const;
 //#endregion
-
-function routeTreeHasParam(route: ActivatedRouteSnapshot, paramName: string): boolean {
-  return (
-    route.paramMap.has(paramName) ||
-    route.children.some((child: ActivatedRouteSnapshot) => routeTreeHasParam(child, paramName))
-  );
-}
 
 /**
  * Store ActiveOrganizationStore

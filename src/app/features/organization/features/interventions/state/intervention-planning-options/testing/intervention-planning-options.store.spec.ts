@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { Dispatcher } from '@ngrx/signals/events';
+import { of, throwError } from 'rxjs';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
@@ -12,8 +13,10 @@ describe('InterventionPlanningOptionsStore', () => {
   let equipment: { list: ReturnType<typeof vi.fn>; listTypes: ReturnType<typeof vi.fn> };
   let members: { list: ReturnType<typeof vi.fn> };
   let interventions: Record<string, never>;
+  let dispatch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    dispatch = vi.fn();
     facilities = {
       list: vi
         .fn()
@@ -56,6 +59,7 @@ describe('InterventionPlanningOptionsStore', () => {
     TestBed.configureTestingModule({
       providers: [
         InterventionPlanningOptionsStore,
+        { provide: Dispatcher, useValue: { dispatch } },
         { provide: FacilityService, useValue: facilities },
         { provide: EquipmentService, useValue: equipment },
         { provide: OrganizationMemberService, useValue: members },
@@ -108,5 +112,18 @@ describe('InterventionPlanningOptionsStore', () => {
     expect(store.equipmentTypes()).toEqual([
       { label: 'Fire extinguisher', value: 'fire_extinguisher' },
     ]);
+  });
+
+  it('surfaces an error and clears options when a planning load fails', async () => {
+    facilities.list.mockReturnValue(throwError(() => new Error('boom')));
+
+    store.loadCreationOptions('org-1');
+
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    expect(store.sites()).toEqual([]);
+    expect(store.members()).toEqual([]);
+    expect(store.loadError()).not.toBeNull();
+    expect(dispatch).toHaveBeenCalled();
   });
 });

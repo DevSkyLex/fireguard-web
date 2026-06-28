@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
-import { OrganizationInvitationAcceptStore } from '@features/organization/state';
+import { OrganizationInvitationAcceptStore } from '@features/organization/state/organization-invitation-accept';
 
 /**
  * Public page coordinating organization invitation acceptance.

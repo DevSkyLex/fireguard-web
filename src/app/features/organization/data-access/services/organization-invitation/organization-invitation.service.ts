@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService } from '@core/api';
+import { HydraApiService, type RequestOptions } from '@core/api';
+import type { HydraCollection } from '@core/api/models';
 import type {
   AcceptOrganizationInvitationInput,
   InviteOrganizationMemberInput,
@@ -72,6 +73,56 @@ export class OrganizationInvitationService extends HydraApiService {
     return this.post<InviteOrganizationMemberInput, OrganizationInvitationOutput>(
       `/api/organizations/${organizationId}/invitations`,
       input,
+    );
+  }
+
+  /**
+   * Method list
+   * @method list
+   *
+   * @description
+   * Retrieves a paginated list of pending and past invitations
+   * for the specified organization.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {RequestOptions} [options] - Optional pagination parameters.
+   *
+   * @return {Observable<HydraCollection<OrganizationInvitationOutput>>} An observable emitting the invitations collection.
+   */
+  public list(
+    organizationId: string,
+    options?: RequestOptions,
+  ): Observable<HydraCollection<OrganizationInvitationOutput>> {
+    return this.getCollection<OrganizationInvitationOutput>(
+      `/api/organizations/${organizationId}/invitations`,
+      options,
+    );
+  }
+
+  /**
+   * Method revoke
+   * @method revoke
+   *
+   * @description
+   * Revokes a pending invitation, preventing the invitee from joining.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} invitationId - The ID of the invitation to revoke.
+   *
+   * @return {Observable<OrganizationInvitationOutput>} An observable emitting the revoked invitation.
+   */
+  public revoke(
+    organizationId: string,
+    invitationId: string,
+  ): Observable<OrganizationInvitationOutput> {
+    return this.postAction<OrganizationInvitationOutput>(
+      `/api/organizations/${organizationId}/invitations/${invitationId}/revoke`,
     );
   }
   //#endregion

@@ -25,6 +25,10 @@ import {
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
 import {
+  InterventionBoardStore,
+  type InterventionBoardStoreType,
+} from '@features/organization/features/interventions/state/intervention-board';
+import {
   InterventionCalendarStore,
   type InterventionCalendarStoreType,
 } from '@features/organization/features/interventions/state/intervention-calendar';
@@ -32,7 +36,15 @@ import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
 } from '@features/organization/features/interventions/state/intervention-planning-options';
-import { InterventionCalendar } from '@features/organization/features/interventions/ui/components';
+import {
+  InterventionBoard,
+  InterventionCalendar,
+  InterventionInProgressMetric,
+  InterventionInReviewMetric,
+  InterventionPlannedMetric,
+  InterventionPublishedMetric,
+  type InterventionBoardAdvanceEvent,
+} from '@features/organization/features/interventions/ui/components';
 import { InterventionCreateDrawer } from '@features/organization/features/interventions/ui/drawers';
 import type { InterventionCreateFormValues } from '@features/organization/features/interventions/ui/forms';
 import { InterventionTable } from '@features/organization/features/interventions/ui/tables';
@@ -53,7 +65,7 @@ const DEFAULT_PLANNED_HOUR = 9;
  *
  * @since 2.0.0
  */
-export type InterventionsView = 'list' | 'calendar';
+export type InterventionsView = 'board' | 'list' | 'calendar';
 
 /**
  * Interface InterventionsViewOption
@@ -125,15 +137,26 @@ interface InterventionsViewOption {
   imports: [
     ButtonModule,
     FormsModule,
+    InterventionBoard,
     InterventionCalendar,
     InterventionCreateDrawer,
+    InterventionInProgressMetric,
+    InterventionInReviewMetric,
+    InterventionPlannedMetric,
+    InterventionPublishedMetric,
     InterventionTable,
     SelectButtonModule,
     TooltipModule,
   ],
-  providers: [InterventionStore, InterventionCalendarStore, InterventionPlanningOptionsStore],
+  providers: [
+    InterventionStore,
+    InterventionBoardStore,
+    InterventionCalendarStore,
+    InterventionPlanningOptionsStore,
+  ],
   templateUrl: './interventions.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
 export class InterventionsPage {
   //#region Properties
@@ -244,6 +267,23 @@ export class InterventionsPage {
     inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
 
   /**
+   * Property boardStore
+   * @readonly
+   *
+   * @description
+   * Component-scoped store powering the pipeline board view: a bounded page of
+   * cards per workflow lane plus optimistic status moves. Loaded lazily while
+   * the board view is active.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {InterventionBoardStoreType}
+   */
+  protected readonly boardStore: InterventionBoardStoreType =
+    inject<InterventionBoardStoreType>(InterventionBoardStore);
+
+  /**
    * Input view
    * @readonly
    *
@@ -260,8 +300,9 @@ export class InterventionsPage {
   public readonly view: InputSignalWithTransform<InterventionsView, unknown> = input<
     InterventionsView,
     unknown
-  >('list', {
-    transform: (value: unknown): InterventionsView => (value === 'calendar' ? 'calendar' : 'list'),
+  >('board', {
+    transform: (value: unknown): InterventionsView =>
+      value === 'calendar' ? 'calendar' : value === 'list' ? 'list' : 'board',
   });
 
   /**
@@ -294,6 +335,11 @@ export class InterventionsPage {
    * @type {InterventionsViewOption[]}
    */
   protected readonly viewOptions: InterventionsViewOption[] = [
+    {
+      label: $localize`:@@intervention.view.board:Pipeline`,
+      value: 'board',
+      icon: 'pi pi-objects-column',
+    },
     { label: $localize`:@@intervention.view.list:List`, value: 'list', icon: 'pi pi-table' },
     {
       label: $localize`:@@intervention.view.calendar:Calendar`,
@@ -356,12 +402,22 @@ export class InterventionsPage {
    * the active organization changes, so switching to the table never triggers
    * the load-all calendar query and vice versa.
    *
+   * The pipeline board is loaded on every view (not just the board view) because
+   * its per-lane server totals also back the metric strip rendered under the
+   * toolbar, which must stay populated on the list and calendar views too.
+   *
    * @since 2.0.0
    */
   public constructor() {
     effect(() => {
       if (this.view() !== 'calendar') return;
       this.calendarStore.load({
+        organizationId: this.organization.selectedOrganization()?.id ?? null,
+      });
+    });
+
+    effect(() => {
+      this.boardStore.load({
         organizationId: this.organization.selectedOrganization()?.id ?? null,
       });
     });
@@ -389,7 +445,7 @@ export class InterventionsPage {
     if (!organizationId) return;
 
     void this.router.navigate(['/organizations', organizationId, 'interventions'], {
-      queryParams: { view: view === 'calendar' ? 'calendar' : null, page: null },
+      queryParams: { view: view === 'board' ? null : view, page: null },
       queryParamsHandling: 'merge',
     });
   }
@@ -399,9 +455,10 @@ export class InterventionsPage {
    * @method onViewShortcut
    *
    * @description
-   * Toggles between the list and calendar views when the user presses `V`. The
-   * accelerator stands down while a modifier is held, the creation drawer is
-   * open, or focus sits in a text-entry surface, so it never hijacks typing.
+   * Cycles through the pipeline, list and calendar views when the user presses
+   * `V`. The accelerator stands down while a modifier is held, the creation
+   * drawer is open, or focus sits in a text-entry surface, so it never hijacks
+   * typing.
    *
    * @access protected
    * @since 2.1.0
@@ -416,7 +473,9 @@ export class InterventionsPage {
     if (this.createDrawerVisible() || this.isEditableTarget(event.target)) return;
 
     event.preventDefault();
-    this.setView(this.view() === 'calendar' ? 'list' : 'calendar');
+    const order: readonly InterventionsView[] = ['board', 'list', 'calendar'];
+    const next: InterventionsView = order[(order.indexOf(this.view()) + 1) % order.length];
+    this.setView(next);
   }
 
   /**
@@ -583,6 +642,24 @@ export class InterventionsPage {
         intervention.id,
       ]);
     }
+  }
+
+  /**
+   * Method onAdvance
+   * @method onAdvance
+   *
+   * @description
+   * Applies an optimistic workflow advance emitted by the pipeline board (drag
+   * or action menu) through the board store.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @param {InterventionBoardAdvanceEvent} event - Card and target status.
+   * @returns {void}
+   */
+  protected onAdvance(event: InterventionBoardAdvanceEvent): void {
+    this.boardStore.move(event);
   }
 
   /**

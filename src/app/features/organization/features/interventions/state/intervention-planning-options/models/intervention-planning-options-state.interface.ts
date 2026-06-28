@@ -1,3 +1,4 @@
+import type { CallState } from '@core/request-state';
 import type {
   MemberSelectOption,
   SelectOption,
@@ -11,5 +12,7 @@ export interface InterventionPlanningOptionsState {
   readonly targets: readonly SelectOption[];
   readonly equipmentTypes: readonly SelectOption[];
   readonly members: readonly MemberSelectOption[];
-  readonly loading: boolean;
+
+  /** Lifecycle of the planning-options load (pending / success / error). */
+  readonly loadCallState: CallState;
 }

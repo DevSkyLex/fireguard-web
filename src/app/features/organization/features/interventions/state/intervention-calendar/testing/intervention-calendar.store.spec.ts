@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
@@ -14,14 +15,17 @@ describe('InterventionCalendarStore', () => {
   let store: InstanceType<typeof InterventionCalendarStore>;
   let service: { listAll: ReturnType<typeof vi.fn> };
   let members: { getCurrentProfile: ReturnType<typeof vi.fn> };
+  let dispatch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     service = { listAll: vi.fn().mockReturnValue(of([planned, draft])) };
     members = { getCurrentProfile: vi.fn().mockReturnValue(of({ id: 'm1' })) };
+    dispatch = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
         InterventionCalendarStore,
+        { provide: Dispatcher, useValue: { dispatch } },
         { provide: InterventionService, useValue: service },
         { provide: OrganizationMemberService, useValue: members },
       ],
@@ -59,9 +63,11 @@ describe('InterventionCalendarStore', () => {
     expect(store.interventions().map((intervention) => intervention.id)).toEqual(['a', 'b']);
     expect(store.currentMemberIri()).toBeNull();
     expect(store.loading()).toBe(false);
+    expect(store.loadError()).toBeNull();
+    expect(dispatch).not.toHaveBeenCalled();
   });
 
-  it('should reset to an empty calendar when the list request fails', async () => {
+  it('should surface an error and reset the calendar when the list request fails', async () => {
     service.listAll.mockReturnValueOnce(throwError(() => new Error('boom')));
 
     store.load({ organizationId: 'org-1' });
@@ -69,5 +75,7 @@ describe('InterventionCalendarStore', () => {
 
     expect(store.interventions()).toEqual([]);
     expect(store.loading()).toBe(false);
+    expect(store.loadError()).not.toBeNull();
+    expect(dispatch).toHaveBeenCalled();
   });
 });

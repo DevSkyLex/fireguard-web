@@ -19,7 +19,8 @@ import {
   ORGANIZATION_PERMISSION,
   type UpdateOrganizationInput,
 } from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationSettingsStore } from '@features/organization/state';
+import { ActiveOrganizationStore } from '@features/organization/state';
+import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import {
   OrganizationDangerZone,
   OrganizationPlanSelector,

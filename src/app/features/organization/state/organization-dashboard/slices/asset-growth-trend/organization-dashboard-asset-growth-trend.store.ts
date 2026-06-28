@@ -18,7 +18,7 @@ import {
   setErrorQuery,
   toStoreError,
 } from '@core/request-state';
-import { OrganizationPermissionService } from '@features/organization/access/services/organization-permission/organization-permission.service';
+import { OrganizationPermissionService } from '@features/organization/access';
 import { OrganizationService } from '@features/organization/data-access';
 import {
   alignDashboardTrendSeries,

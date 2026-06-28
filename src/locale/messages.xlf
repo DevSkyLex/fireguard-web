@@ -245,15 +245,15 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">220</context>
+          <context context-type="linenumber">217</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">245</context>
+          <context context-type="linenumber">242</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">290</context>
+          <context context-type="linenumber">287</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.sessions.revokeAllHeader" datatype="html">
@@ -1239,6 +1239,76 @@
           <context context-type="linenumber">93</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="splitLayout.headline" datatype="html">
+        <source> The future of fire safety, reimagined. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.html</context>
+          <context context-type="linenumber">23,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="splitLayout.subline" datatype="html">
+        <source> Monitor, coordinate and secure every site from one control plane designed for incident readiness and operational clarity. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.html</context>
+          <context context-type="linenumber">30,32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="splitLayout.metric.liveAlerts" datatype="html">
+        <source>Live alerts</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
+          <context context-type="linenumber">18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="splitLayout.metric.responseWorkflows" datatype="html">
+        <source>Response workflows</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
+          <context context-type="linenumber">20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="splitLayout.metric.automated" datatype="html">
+        <source>Automated</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
+          <context context-type="linenumber">21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="splitLayout.metric.complianceTracking" datatype="html">
+        <source>Compliance tracking</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
+          <context context-type="linenumber">24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="splitLayout.metric.isoReady" datatype="html">
+        <source>ISO-ready</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
+          <context context-type="linenumber">25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="splitLayout.highlight.commandCenter" datatype="html">
+        <source>Unified safety command center</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
+          <context context-type="linenumber">30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="splitLayout.highlight.rbac" datatype="html">
+        <source>Role-based access and approvals</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="splitLayout.highlight.auditHistory" datatype="html">
+        <source>Audit-ready incident history</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="common.user.noEmail" datatype="html">
         <source>No email</source>
         <context-group purpose="location">
@@ -1566,89 +1636,6 @@
           <context context-type="linenumber">28,36</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="common.error" datatype="html">
-        <source>Error</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/pages/forgot-password-page/forgot-password-page.component.ts</context>
-          <context context-type="linenumber">116</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/pages/login-page/login-page.component.ts</context>
-          <context context-type="linenumber">142</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/pages/mfa-verification-page/mfa-verification-page.component.ts</context>
-          <context context-type="linenumber">198</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/pages/mfa-verification-page/mfa-verification-page.component.ts</context>
-          <context context-type="linenumber">211</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/pages/new-password-page/new-password-page.component.ts</context>
-          <context context-type="linenumber">143</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/pages/password-reset-verify-page/password-reset-verify-page.component.ts</context>
-          <context context-type="linenumber">139</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/pages/register-page/register-page.component.ts</context>
-          <context context-type="linenumber">125</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/pages/register-verify-page/register-verify-page.component.ts</context>
-          <context context-type="linenumber">165</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-equipment-step/create-equipment-step.component.ts</context>
-          <context context-type="linenumber">160</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-facility-step/create-facility-step.component.ts</context>
-          <context context-type="linenumber">189</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-organization-step/create-organization-step.component.ts</context>
-          <context context-type="linenumber">163</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/invite-members-step/invite-members-step.component.ts</context>
-          <context context-type="linenumber">298</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/run-inspection-step/run-inspection-step.component.ts</context>
-          <context context-type="linenumber">270</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.ts</context>
-          <context context-type="linenumber">251</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-page/onboarding-page.component.ts</context>
-          <context context-type="linenumber">62</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-create/equipment-create.component.ts</context>
-          <context context-type="linenumber">179</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-create/facility-create.component.ts</context>
-          <context context-type="linenumber">214</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail/facility-detail.component.ts</context>
-          <context context-type="linenumber">417</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-edit/facility-edit.component.ts</context>
-          <context context-type="linenumber">226</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-create/inspection-create.component.ts</context>
-          <context context-type="linenumber">229</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="auth.login.title" datatype="html">
         <source> Welcome Back </source>
         <context-group purpose="location">
@@ -1909,6 +1896,111 @@
           <context context-type="linenumber">31,32</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="onboarding.step.org.label" datatype="html">
+        <source>Create organization</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.org.sublabel" datatype="html">
+        <source>Your structure</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">23</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.org.subtitle" datatype="html">
+        <source>Set up the basic information for your fire safety company.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.plan.label" datatype="html">
+        <source>Choose a plan</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.plan.sublabel" datatype="html">
+        <source>Your subscription</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.plan.subtitle" datatype="html">
+        <source>Pick the plan that fits your team. You can change it any time — or stay on Free for now.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.members.label" datatype="html">
+        <source>Team &amp; technicians</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.members.sublabel" datatype="html">
+        <source>Your team</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.members.subtitle" datatype="html">
+        <source>Invite your first team members to start collaborating.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.facility.label" datatype="html">
+        <source>First facility</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.facility.sublabel" datatype="html">
+        <source>Establishment</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">41</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.facilities.subtitle" datatype="html">
+        <source>Add the locations to monitor. You can create up to 5 at once.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">42</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.equipment.label" datatype="html">
+        <source>First equipment</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.step.equipment.sublabel" datatype="html">
+        <source>Fire equipment</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">47</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.equipment.subtitle" datatype="html">
+        <source>Register your first fire safety equipment (extinguisher, detector…).</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
+          <context context-type="linenumber">48</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="route.onboarding" datatype="html">
         <source>Organization Setup</source>
         <context-group purpose="location">
@@ -1916,192 +2008,160 @@
           <context context-type="linenumber">21</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="common.optionalTag" datatype="html">
-        <source>Optional</source>
+      <trans-unit id="onboarding.showcase.headline" datatype="html">
+        <source> Let&apos;s get your workspace ready. </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-equipment-step/create-equipment-step.component.html</context>
-          <context context-type="linenumber">12,13</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-facility-step/create-facility-step.component.html</context>
-          <context context-type="linenumber">12,13</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-organization-step/create-organization-step.component.html</context>
-          <context context-type="linenumber">12,13</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/invite-members-step/invite-members-step.component.html</context>
-          <context context-type="linenumber">12,13</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/run-inspection-step/run-inspection-step.component.html</context>
-          <context context-type="linenumber">12,13</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">12,13</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
+          <context context-type="linenumber">25,27</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="onboarding.equipment.title" datatype="html">
-        <source> First equipment </source>
+      <trans-unit id="onboarding.showcase.subline" datatype="html">
+        <source> A few guided steps to set up your organization, team and assets. </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-equipment-step/create-equipment-step.component.html</context>
-          <context context-type="linenumber">23,26</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
+          <context context-type="linenumber">31,33</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="onboarding.equipment.subtitle" datatype="html">
-        <source> Register your first fire safety equipment (extinguisher, detector…). </source>
+      <trans-unit id="onboarding.showcase.status.done" datatype="html">
+        <source>Completed</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-equipment-step/create-equipment-step.component.html</context>
-          <context context-type="linenumber">29,32</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
+          <context context-type="linenumber">103,105</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="onboarding.facilities.title" datatype="html">
-        <source> Your facilities </source>
+      <trans-unit id="onboarding.showcase.status.current" datatype="html">
+        <source>In progress</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-facility-step/create-facility-step.component.html</context>
-          <context context-type="linenumber">23,26</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
+          <context context-type="linenumber">108,110</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="onboarding.facilities.subtitle" datatype="html">
-        <source> Add the locations to monitor. You can create up to 5 at once. </source>
+      <trans-unit id="onboarding.showcase.status.todo" datatype="html">
+        <source>To do</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-facility-step/create-facility-step.component.html</context>
-          <context context-type="linenumber">29,32</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
+          <context context-type="linenumber">112,114</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.footer" datatype="html">
+        <source>Your progress is saved as you go.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
+          <context context-type="linenumber">124,126</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="common.error" datatype="html">
+        <source>Error</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-equipment-step/create-equipment-step.component.ts</context>
+          <context context-type="linenumber">152</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-facility-step/create-facility-step.component.ts</context>
+          <context context-type="linenumber">181</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-organization-step/create-organization-step.component.ts</context>
+          <context context-type="linenumber">155</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/invite-members-step/invite-members-step.component.ts</context>
+          <context context-type="linenumber">279</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.ts</context>
+          <context context-type="linenumber">240</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.facility.createdManyTitle" datatype="html">
         <source>Facilities created</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-facility-step/create-facility-step.component.ts</context>
-          <context context-type="linenumber">171</context>
+          <context context-type="linenumber">163</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.facility.createdOneTitle" datatype="html">
         <source>Facility created</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-facility-step/create-facility-step.component.ts</context>
-          <context context-type="linenumber">172</context>
+          <context context-type="linenumber">164</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.facility.createdMany" datatype="html">
         <source><x id="count" equiv-text="count"/> facilities have been created.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-facility-step/create-facility-step.component.ts</context>
-          <context context-type="linenumber">175</context>
+          <context context-type="linenumber">167</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.facility.createdOne" datatype="html">
         <source><x id="name" equiv-text="values[0].name"/> has been created.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-facility-step/create-facility-step.component.ts</context>
-          <context context-type="linenumber">176</context>
+          <context context-type="linenumber">168</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.facility.createError" datatype="html">
         <source>Failed to create the facility.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-facility-step/create-facility-step.component.ts</context>
-          <context context-type="linenumber">186</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.org.title" datatype="html">
-        <source> Create your organization </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-organization-step/create-organization-step.component.html</context>
-          <context context-type="linenumber">23,26</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.org.subtitle" datatype="html">
-        <source> Set up the basic information for your fire safety company. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-organization-step/create-organization-step.component.html</context>
-          <context context-type="linenumber">29,32</context>
+          <context context-type="linenumber">178</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.org.createError" datatype="html">
         <source>Failed to create organization.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/create-organization-step/create-organization-step.component.ts</context>
-          <context context-type="linenumber">160</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.members.title" datatype="html">
-        <source> Team &amp; technicians </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/invite-members-step/invite-members-step.component.html</context>
-          <context context-type="linenumber">23,26</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.members.subtitle" datatype="html">
-        <source> Invite your first team members to start collaborating. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/invite-members-step/invite-members-step.component.html</context>
-          <context context-type="linenumber">29,32</context>
+          <context context-type="linenumber">152</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.members.sentManyTitle" datatype="html">
         <source>Invitations sent</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/invite-members-step/invite-members-step.component.ts</context>
-          <context context-type="linenumber">280</context>
+          <context context-type="linenumber">261</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.members.sentOneTitle" datatype="html">
         <source>Invitation sent</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/invite-members-step/invite-members-step.component.ts</context>
-          <context context-type="linenumber">281</context>
+          <context context-type="linenumber">262</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.members.sentMany" datatype="html">
         <source><x id="count" equiv-text="count"/> invitations have been sent.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/invite-members-step/invite-members-step.component.ts</context>
-          <context context-type="linenumber">284</context>
+          <context context-type="linenumber">265</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.members.sentOne" datatype="html">
         <source>An invitation has been sent to <x id="email" equiv-text="values[0].email"/>.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/invite-members-step/invite-members-step.component.ts</context>
-          <context context-type="linenumber">285</context>
+          <context context-type="linenumber">266</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.members.sendError" datatype="html">
         <source>Failed to send the invitation(s).</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/invite-members-step/invite-members-step.component.ts</context>
-          <context context-type="linenumber">295</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.plan.title" datatype="html">
-        <source> Choose a plan </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">23,26</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.plan.subtitle" datatype="html">
-        <source> Pick the plan that fits your team. You can change it any time — or stay on Free for now. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">29,32</context>
+          <context context-type="linenumber">276</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.plan.loadError" datatype="html">
         <source> We couldn&apos;t load the plans. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">53,55</context>
+          <context context-type="linenumber">16,19</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.retry" datatype="html">
         <source>Retry</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">57</context>
+          <context context-type="linenumber">20</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
@@ -2120,7 +2180,7 @@
         <source>Billing cadence</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">74,75</context>
+          <context context-type="linenumber">37,38</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
@@ -2131,7 +2191,7 @@
         <source>Free</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">98,99</context>
+          <context context-type="linenumber">61,62</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
@@ -2142,7 +2202,7 @@
         <source>Subscribe</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">121,122</context>
+          <context context-type="linenumber">81,82</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
@@ -2153,14 +2213,14 @@
         <source>Start on Free</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">132,133</context>
+          <context context-type="linenumber">92,93</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.empty" datatype="html">
         <source> No plans are available. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.html</context>
-          <context context-type="linenumber">151,153</context>
+          <context context-type="linenumber">111,113</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
@@ -2175,7 +2235,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">111</context>
+          <context context-type="linenumber">108</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.yearly" datatype="html">
@@ -2186,56 +2246,56 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">112</context>
+          <context context-type="linenumber">109</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.plan.checkoutError" datatype="html">
         <source>We couldn&apos;t start the checkout. Please try again.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.ts</context>
-          <context context-type="linenumber">252</context>
+          <context context-type="linenumber">241</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.plan.subscribedSummary" datatype="html">
         <source>Subscription started</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.ts</context>
-          <context context-type="linenumber">351</context>
+          <context context-type="linenumber">340</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.plan.subscribedDetail" datatype="html">
         <source>Your subscription is being activated — it may take a few seconds.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/components/select-plan-step/select-plan-step.component.ts</context>
-          <context context-type="linenumber">352</context>
+          <context context-type="linenumber">341</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.welcome.title" datatype="html">
         <source> Let&apos;s set up your workspace </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">19,22</context>
+          <context context-type="linenumber">10,13</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.welcome.lead" datatype="html">
         <source> A few quick steps to get your team, sites and equipment ready. About 5 minutes — you can leave and pick up where you left off at any time. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">25,28</context>
+          <context context-type="linenumber">16,20</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.welcome.point1" datatype="html">
         <source> Create your organization and invite your team </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">39,41</context>
+          <context context-type="linenumber">31,33</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.welcome.point2" datatype="html">
         <source> Add the facilities and equipment you monitor </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">48,50</context>
+          <context context-type="linenumber">44,46</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.welcome.point3" datatype="html">
@@ -2252,263 +2312,95 @@
           <context context-type="linenumber">67,68</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="onboarding.wizard.welcome.skipAll" datatype="html">
-        <source>I&apos;ll explore on my own</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">75,76</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="onboarding.wizard.stepCounter" datatype="html">
         <source>Step <x id="INTERPOLATION" equiv-text="{{ store.activeStepIndex() + 1 }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.steps().length }}"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">93,94</context>
+          <context context-type="linenumber">82,83</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="onboarding.wizard.progressDone" datatype="html">
-        <source><x id="INTERPOLATION" equiv-text="{{ store.progress().done }}"/> done</source>
+      <trans-unit id="common.optionalTag" datatype="html">
+        <source>Optional</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">98,99</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.wizard.blocked" datatype="html">
-        <source>Your setup is paused. Please resolve the issue and try again.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">120,122</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.wizard.finishLater" datatype="html">
-        <source>Finish later</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">17</context>
+          <context context-type="linenumber">121,122</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.blocked.title" datatype="html">
-        <source>Setup is paused</source>
+        <source> Setup is paused </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">138</context>
+          <context context-type="linenumber">139,141</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.blocked.fallback" datatype="html">
-        <source>Something stopped your setup from continuing.</source>
+        <source> Something stopped your setup from continuing. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">146</context>
+          <context context-type="linenumber">145,147</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.blocked.progressSaved" datatype="html">
-        <source>Your progress is saved — you can try again without losing anything.</source>
+        <source> Your progress is saved — you can try again without losing anything. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">151</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.showcase.headline" datatype="html">
-        <source> Let&apos;s get your workspace ready. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
-          <context context-type="linenumber">25,28</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.showcase.subline" datatype="html">
-        <source> A few guided steps to set up your organization, team and assets. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
-          <context context-type="linenumber">31,34</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.showcase.status.done" datatype="html">
-        <source>Completed</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
-          <context context-type="linenumber">76</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.showcase.status.current" datatype="html">
-        <source>In progress</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
-          <context context-type="linenumber">79,80</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.showcase.status.todo" datatype="html">
-        <source>To do</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
-          <context context-type="linenumber">83</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.showcase.footer" datatype="html">
-        <source>Your progress is saved as you go.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-showcase/onboarding-showcase.component.html</context>
-          <context context-type="linenumber">94</context>
+          <context context-type="linenumber">149,151</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.blocked.retry" datatype="html">
         <source>Try again</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">163</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.step.org.sublabel" datatype="html">
-        <source>Your structure</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
-          <context context-type="linenumber">24</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.step.plan.sublabel" datatype="html">
-        <source>Your subscription</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
-          <context context-type="linenumber">29</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.step.members.sublabel" datatype="html">
-        <source>Your team</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
-          <context context-type="linenumber">34</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.step.facility.sublabel" datatype="html">
-        <source>Establishment</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
-          <context context-type="linenumber">39</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.step.equipment.sublabel" datatype="html">
-        <source>Fire equipment</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/constants/onboarding-step-presentation.constants.ts</context>
-          <context context-type="linenumber">44</context>
+          <context context-type="linenumber">159,160</context>
         </context-group>
       </trans-unit>
       <trans-unit id="common.dismiss" datatype="html">
         <source> Dismiss </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">140,141</context>
+          <context context-type="linenumber">184,185</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.back" datatype="html">
         <source>Back</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">168</context>
+          <context context-type="linenumber">217</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.skip" datatype="html">
         <source>Skip for now</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">182,183</context>
+          <context context-type="linenumber">231,232</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.done.title" datatype="html">
         <source> You&apos;re all set </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">208,210</context>
+          <context context-type="linenumber">258,260</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.done.subtitleNamed" datatype="html">
         <source><x id="INTERPOLATION" equiv-text="{{ orgName }}"/> is ready. Jump into your dashboard to keep going.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">213,214</context>
+          <context context-type="linenumber">263,264</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.done.subtitle" datatype="html">
         <source> Your workspace is ready. Jump into your dashboard to keep going. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">221,224</context>
+          <context context-type="linenumber">271,274</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.wizard.done.cta" datatype="html">
         <source>Go to dashboard</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/components/onboarding-stepper/onboarding-wizard.component.html</context>
-          <context context-type="linenumber">228,229</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.checklist.ariaOpen" datatype="html">
-        <source>Open setup checklist</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.html</context>
-          <context context-type="linenumber">6,7</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.checklist.trigger" datatype="html">
-        <source>Finish setup</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.html</context>
-          <context context-type="linenumber">11,13</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.checklist.title" datatype="html">
-        <source> Finish setting up </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.html</context>
-          <context context-type="linenumber">28,30</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.checklist.progress" datatype="html">
-        <source><x id="INTERPOLATION" equiv-text="{{ store.progress().done }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.progress().total }}"/> done</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.html</context>
-          <context context-type="linenumber">32,33</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.checklist.continue" datatype="html">
-        <source>Continue setup</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.html</context>
-          <context context-type="linenumber">78,79</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.step.org.label" datatype="html">
-        <source>Create organization</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.ts</context>
-          <context context-type="linenumber">119</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.step.plan.label" datatype="html">
-        <source>Choose a plan</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.ts</context>
-          <context context-type="linenumber">123</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.step.members.label" datatype="html">
-        <source>Team &amp; technicians</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.ts</context>
-          <context context-type="linenumber">127</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.step.facility.label" datatype="html">
-        <source>First facility</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.ts</context>
-          <context context-type="linenumber">131</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="onboarding.step.equipment.label" datatype="html">
-        <source>First equipment</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/components/setup-checklist/setup-checklist.component.ts</context>
-          <context context-type="linenumber">135</context>
+          <context context-type="linenumber">278,279</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.equipment.typeLabel" datatype="html">
@@ -2587,98 +2479,98 @@
         <source>SN-20241234</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.html</context>
-          <context context-type="linenumber">80,81</context>
+          <context context-type="linenumber">81,82</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.equipment.submit" datatype="html">
         <source>Create equipment</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.html</context>
-          <context context-type="linenumber">87,88</context>
+          <context context-type="linenumber">88,89</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentType.fireExtinguisher" datatype="html">
         <source>Fire extinguisher</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.ts</context>
-          <context context-type="linenumber">96</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/options/equipment-type-options.constants.ts</context>
+          <context context-type="linenumber">20</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentType.smokeDetector" datatype="html">
         <source>Smoke detector</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.ts</context>
-          <context context-type="linenumber">99</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/options/equipment-type-options.constants.ts</context>
+          <context context-type="linenumber">23</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentType.heatDetector" datatype="html">
         <source>Heat detector</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.ts</context>
-          <context context-type="linenumber">100</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/options/equipment-type-options.constants.ts</context>
+          <context context-type="linenumber">24</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentType.sprinkler" datatype="html">
         <source>Sprinkler</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.ts</context>
-          <context context-type="linenumber">101</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/options/equipment-type-options.constants.ts</context>
+          <context context-type="linenumber">25</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentType.fireAlarmPanel" datatype="html">
         <source>Fire alarm panel</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.ts</context>
-          <context context-type="linenumber">103</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/options/equipment-type-options.constants.ts</context>
+          <context context-type="linenumber">26</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentType.hydrant" datatype="html">
         <source>Hydrant</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.ts</context>
-          <context context-type="linenumber">106</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/options/equipment-type-options.constants.ts</context>
+          <context context-type="linenumber">27</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentType.fireDoor" datatype="html">
         <source>Fire door</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.ts</context>
-          <context context-type="linenumber">107</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/options/equipment-type-options.constants.ts</context>
+          <context context-type="linenumber">28</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentType.emergencyLighting" datatype="html">
         <source>Emergency lighting</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.ts</context>
-          <context context-type="linenumber">109</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/options/equipment-type-options.constants.ts</context>
+          <context context-type="linenumber">30</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentType.accessControl" datatype="html">
         <source>Access control</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.ts</context>
-          <context context-type="linenumber">112</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/options/equipment-type-options.constants.ts</context>
+          <context context-type="linenumber">33</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentType.camera" datatype="html">
         <source>Camera</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.ts</context>
-          <context context-type="linenumber">113</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/options/equipment-type-options.constants.ts</context>
+          <context context-type="linenumber">34</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentType.gasDetector" datatype="html">
         <source>Gas detector</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.ts</context>
-          <context context-type="linenumber">114</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/options/equipment-type-options.constants.ts</context>
+          <context context-type="linenumber">35</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentType.other" datatype="html">
         <source>Other</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/create-equipment-form.component.ts</context>
-          <context context-type="linenumber">115</context>
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-equipment-form/options/equipment-type-options.constants.ts</context>
+          <context context-type="linenumber">36</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.facilities.firstRow" datatype="html">
@@ -2730,10 +2622,6 @@
           <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-facility-form/create-facility-form.component.html</context>
           <context context-type="linenumber">46,48</context>
         </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">120,122</context>
-        </context-group>
       </trans-unit>
       <trans-unit id="onboarding.field.min2" datatype="html">
         <source>At least 2 characters.</source>
@@ -2744,10 +2632,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-facility-form/create-facility-form.component.html</context>
           <context context-type="linenumber">49,51</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.html</context>
-          <context context-type="linenumber">123,125</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.facility.addressLabel" datatype="html">
@@ -2912,137 +2796,6 @@
           <context context-type="linenumber">76,77</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="inspectionResult.pass" datatype="html">
-        <source>Pass</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.ts</context>
-          <context context-type="linenumber">122</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-inspections-overview/facility-inspections-overview.component.ts</context>
-          <context context-type="linenumber">170</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dataviews/facility-inspection-dataview/facility-inspection-dataview.component.ts</context>
-          <context context-type="linenumber">145</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/tables/facility-inspection-table/facility-inspection-table.component.ts</context>
-          <context context-type="linenumber">344</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-form/options/inspection-result-options.constants.ts</context>
-          <context context-type="linenumber">4</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/tables/inspection-table/inspection-table.component.ts</context>
-          <context context-type="linenumber">373</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/models/intervention-tag/intervention-tag.util.ts</context>
-          <context context-type="linenumber">185</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/forms/intervention-discovery-form/intervention-discovery-form.component.ts</context>
-          <context context-type="linenumber">185</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/options/inspection/inspection-result-options.constants.ts</context>
-          <context context-type="linenumber">18</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="inspectionResult.fail" datatype="html">
-        <source>Fail</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.ts</context>
-          <context context-type="linenumber">123</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-inspections-overview/facility-inspections-overview.component.ts</context>
-          <context context-type="linenumber">172</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dataviews/facility-inspection-dataview/facility-inspection-dataview.component.ts</context>
-          <context context-type="linenumber">146</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/tables/facility-inspection-table/facility-inspection-table.component.ts</context>
-          <context context-type="linenumber">356</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-form/options/inspection-result-options.constants.ts</context>
-          <context context-type="linenumber">5</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/tables/inspection-table/inspection-table.component.ts</context>
-          <context context-type="linenumber">385</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/models/intervention-tag/intervention-tag.util.ts</context>
-          <context context-type="linenumber">195</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/forms/intervention-discovery-form/intervention-discovery-form.component.ts</context>
-          <context context-type="linenumber">187</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/options/inspection/inspection-result-options.constants.ts</context>
-          <context context-type="linenumber">25</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="inspectionResult.partial" datatype="html">
-        <source>Partial</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.ts</context>
-          <context context-type="linenumber">124</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-inspections-overview/facility-inspections-overview.component.ts</context>
-          <context context-type="linenumber">174</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dataviews/facility-inspection-dataview/facility-inspection-dataview.component.ts</context>
-          <context context-type="linenumber">147</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/tables/facility-inspection-table/facility-inspection-table.component.ts</context>
-          <context context-type="linenumber">350</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-form/options/inspection-result-options.constants.ts</context>
-          <context context-type="linenumber">6</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/tables/inspection-table/inspection-table.component.ts</context>
-          <context context-type="linenumber">379</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/models/intervention-tag/intervention-tag.util.ts</context>
-          <context context-type="linenumber">190</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/forms/intervention-discovery-form/intervention-discovery-form.component.ts</context>
-          <context context-type="linenumber">186</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/options/inspection/inspection-result-options.constants.ts</context>
-          <context context-type="linenumber">32</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="inspectorType.internal" datatype="html">
-        <source>Internal technician</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.ts</context>
-          <context context-type="linenumber">140</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="inspectorType.external" datatype="html">
-        <source>External contractor</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/create-inspection-form/create-inspection-form.component.ts</context>
-          <context context-type="linenumber">141</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="onboarding.org.nameLabel" datatype="html">
         <source>Organization Name</source>
         <context-group purpose="location">
@@ -3155,32 +2908,18 @@
           <context context-type="linenumber">100,103</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="onboarding.members.continue" datatype="html">
-        <source>Continue without inviting</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/invite-members-form/invite-members-form.component.html</context>
-          <context context-type="linenumber">118,119</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="common.skip" datatype="html">
-        <source>Skip</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/invite-members-form/invite-members-form.component.html</context>
-          <context context-type="linenumber">132</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="onboarding.members.sendMany" datatype="html">
         <source>Send <x id="count" equiv-text="count"/> invitations</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/forms/invite-members-form/invite-members-form.component.ts</context>
-          <context context-type="linenumber">252</context>
+          <context context-type="linenumber">219</context>
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.members.sendOne" datatype="html">
         <source>Send invitation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/forms/invite-members-form/invite-members-form.component.ts</context>
-          <context context-type="linenumber">253</context>
+          <context context-type="linenumber">220</context>
         </context-group>
       </trans-unit>
       <trans-unit id="quotaResource.members" datatype="html">
@@ -3230,6 +2969,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/checklists/checklists.routes.ts</context>
           <context context-type="linenumber">44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="checklist.toast.created" datatype="html">
+        <source>Checklist created</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/checklists/state/checklist/checklist.store.ts</context>
+          <context context-type="linenumber">413</context>
         </context-group>
       </trans-unit>
       <trans-unit id="checklist.backAria" datatype="html">
@@ -3389,20 +3135,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklist-create/checklist-create.component.html</context>
           <context context-type="linenumber">7,9</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklist.createdToast" datatype="html">
-        <source>Checklist created</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklist-create/checklist-create.component.ts</context>
-          <context context-type="linenumber">41</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="checklist.createdDetail" datatype="html">
-        <source>The checklist is ready for inspections.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/checklists/ui/pages/checklist-create/checklist-create.component.ts</context>
-          <context context-type="linenumber">42</context>
         </context-group>
       </trans-unit>
       <trans-unit id="checklist.detail.totalLines" datatype="html">
@@ -3783,7 +3515,14 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">206</context>
+          <context context-type="linenumber">197</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="equipment.toast.created" datatype="html">
+        <source>Equipment created</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/equipments/state/equipment/equipment.store.ts</context>
+          <context context-type="linenumber">494</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.assign.title" datatype="html">
@@ -4243,20 +3982,6 @@
           <context context-type="linenumber">7,9</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="equipment.created.summary" datatype="html">
-        <source>Equipment created</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-create/equipment-create.component.ts</context>
-          <context context-type="linenumber">157</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="equipment.created.detail" datatype="html">
-        <source>Equipment &quot;<x id="type" equiv-text="operation.data.type"/>&quot; has been created successfully.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-create/equipment-create.component.ts</context>
-          <context context-type="linenumber">158</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="equipment.tab.overview" datatype="html">
         <source>Overview</source>
         <context-group purpose="location">
@@ -4322,7 +4047,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">288</context>
+          <context context-type="linenumber">285</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.edit.title" datatype="html">
@@ -4677,7 +4402,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">198</context>
+          <context context-type="linenumber">189</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.equipmentBreakdown.commissioned" datatype="html">
@@ -4713,6 +4438,41 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-overview/facility-overview.store.ts</context>
           <context context-type="linenumber">246</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.toast.created" datatype="html">
+        <source>Facility created</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility/facility.store.ts</context>
+          <context context-type="linenumber">766</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.toast.updated" datatype="html">
+        <source>Facility updated</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility/facility.store.ts</context>
+          <context context-type="linenumber">821</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.toast.archived" datatype="html">
+        <source>Facility archived</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility/facility.store.ts</context>
+          <context context-type="linenumber">873</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.toast.restored" datatype="html">
+        <source>Facility restored</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility/facility.store.ts</context>
+          <context context-type="linenumber">912</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.toast.moved" datatype="html">
+        <source>Facility moved</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility/facility.store.ts</context>
+          <context context-type="linenumber">959</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.metric.active.title" datatype="html">
@@ -4975,6 +4735,111 @@
           <context context-type="linenumber">141</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="inspectionResult.pass" datatype="html">
+        <source>Pass</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-inspections-overview/facility-inspections-overview.component.ts</context>
+          <context context-type="linenumber">170</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dataviews/facility-inspection-dataview/facility-inspection-dataview.component.ts</context>
+          <context context-type="linenumber">145</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/tables/facility-inspection-table/facility-inspection-table.component.ts</context>
+          <context context-type="linenumber">344</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-form/options/inspection-result-options.constants.ts</context>
+          <context context-type="linenumber">4</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/tables/inspection-table/inspection-table.component.ts</context>
+          <context context-type="linenumber">373</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/models/intervention-tag/intervention-tag.util.ts</context>
+          <context context-type="linenumber">185</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/forms/intervention-discovery-form/intervention-discovery-form.component.ts</context>
+          <context context-type="linenumber">185</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/options/inspection/inspection-result-options.constants.ts</context>
+          <context context-type="linenumber">18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="inspectionResult.fail" datatype="html">
+        <source>Fail</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-inspections-overview/facility-inspections-overview.component.ts</context>
+          <context context-type="linenumber">172</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dataviews/facility-inspection-dataview/facility-inspection-dataview.component.ts</context>
+          <context context-type="linenumber">146</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/tables/facility-inspection-table/facility-inspection-table.component.ts</context>
+          <context context-type="linenumber">356</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-form/options/inspection-result-options.constants.ts</context>
+          <context context-type="linenumber">5</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/tables/inspection-table/inspection-table.component.ts</context>
+          <context context-type="linenumber">385</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/models/intervention-tag/intervention-tag.util.ts</context>
+          <context context-type="linenumber">195</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/forms/intervention-discovery-form/intervention-discovery-form.component.ts</context>
+          <context context-type="linenumber">187</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/options/inspection/inspection-result-options.constants.ts</context>
+          <context context-type="linenumber">25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="inspectionResult.partial" datatype="html">
+        <source>Partial</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-inspections-overview/facility-inspections-overview.component.ts</context>
+          <context context-type="linenumber">174</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dataviews/facility-inspection-dataview/facility-inspection-dataview.component.ts</context>
+          <context context-type="linenumber">147</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/tables/facility-inspection-table/facility-inspection-table.component.ts</context>
+          <context context-type="linenumber">350</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-form/options/inspection-result-options.constants.ts</context>
+          <context context-type="linenumber">6</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/tables/inspection-table/inspection-table.component.ts</context>
+          <context context-type="linenumber">379</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/models/intervention-tag/intervention-tag.util.ts</context>
+          <context context-type="linenumber">190</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/forms/intervention-discovery-form/intervention-discovery-form.component.ts</context>
+          <context context-type="linenumber">186</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/options/inspection/inspection-result-options.constants.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="facility.unknownInspector" datatype="html">
         <source>Unknown inspector</source>
         <context-group purpose="location">
@@ -5224,7 +5089,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail/facility-detail.component.ts</context>
-          <context context-type="linenumber">346</context>
+          <context context-type="linenumber">312</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.save" datatype="html">
@@ -5246,20 +5111,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-create/facility-create.component.html</context>
           <context context-type="linenumber">7,10</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="facility.created.summary" datatype="html">
-        <source>Facility created</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-create/facility-create.component.ts</context>
-          <context context-type="linenumber">192</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="facility.created.detail" datatype="html">
-        <source>&quot;<x id="name" equiv-text="operation.data.name"/>&quot; has been created successfully.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-create/facility-create.component.ts</context>
-          <context context-type="linenumber">193</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.tab.overview" datatype="html">
@@ -5304,39 +5155,11 @@
           <context context-type="linenumber">114,117</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="facility.moved.summary" datatype="html">
-        <source>Facility moved</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail/facility-detail.component.ts</context>
-          <context context-type="linenumber">403</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="facility.moved.detail" datatype="html">
-        <source>&quot;<x id="name" equiv-text="operation.data.name"/>&quot; has been moved successfully.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail/facility-detail.component.ts</context>
-          <context context-type="linenumber">404</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="facility.edit.title" datatype="html">
         <source> Edit Facility </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-edit/facility-edit.component.html</context>
           <context context-type="linenumber">7,10</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="facility.updated.summary" datatype="html">
-        <source>Facility updated</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-edit/facility-edit.component.ts</context>
-          <context context-type="linenumber">211</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="facility.updated.detail" datatype="html">
-        <source>&quot;<x id="name" equiv-text="operation.data.name"/>&quot; has been updated successfully.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-edit/facility-edit.component.ts</context>
-          <context context-type="linenumber">212</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.equipTable.title" datatype="html">
@@ -5727,7 +5550,14 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">214</context>
+          <context context-type="linenumber">205</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="inspection.toast.created" datatype="html">
+        <source>Inspection created</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/inspections/state/inspection/inspection.store.ts</context>
+          <context context-type="linenumber">273</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.metric.count.title" datatype="html">
@@ -6228,20 +6058,6 @@
           <context context-type="linenumber">7,9</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="inspection.created.summary" datatype="html">
-        <source>Inspection created</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-create/inspection-create.component.ts</context>
-          <context context-type="linenumber">207</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="inspection.created.detail" datatype="html">
-        <source>The inspection has been created successfully.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-create/inspection-create.component.ts</context>
-          <context context-type="linenumber">208</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="inspection.tab.overview" datatype="html">
         <source>Overview</source>
         <context-group purpose="location">
@@ -6559,33 +6375,22 @@
           <context context-type="linenumber">76</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="route.myInterventions" datatype="html">
-        <source>My interventions</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/interventions.routes.ts</context>
-          <context context-type="linenumber">42</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">176</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="route.calendar" datatype="html">
         <source>Calendar</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/interventions.routes.ts</context>
-          <context context-type="linenumber">53</context>
+          <context context-type="linenumber">41</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.interventions" datatype="html">
         <source>Interventions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/interventions.routes.ts</context>
-          <context context-type="linenumber">80</context>
+          <context context-type="linenumber">68</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">190</context>
+          <context context-type="linenumber">181</context>
         </context-group>
       </trans-unit>
       <trans-unit id="interventionPriority.low" datatype="html">
@@ -6871,11 +6676,29 @@
         <source>No assigned role</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-planning-options/intervention-planning-options.store.ts</context>
-          <context context-type="linenumber">80</context>
+          <context context-type="linenumber">93</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.emptyTitle" datatype="html">
+        <source>No interventions yet</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.html</context>
+          <context context-type="linenumber">19,20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.emptyDesc" datatype="html">
+        <source>Create an intervention when a site visit needs offline-ready facility, equipment and inspection preparation.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.html</context>
+          <context context-type="linenumber">21,24</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.newButton" datatype="html">
         <source>New intervention</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.html</context>
+          <context context-type="linenumber">25,27</context>
+        </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-calendar/intervention-calendar.component.html</context>
           <context context-type="linenumber">13,15</context>
@@ -6891,6 +6714,111 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-table/intervention-table.component.html</context>
           <context context-type="linenumber">248,249</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.card.actionsAria" datatype="html">
+        <source>Card actions</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.html</context>
+          <context context-type="linenumber">66,68</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.column.draft" datatype="html">
+        <source>Draft</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">67</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.column.planned" datatype="html">
+        <source>Planned</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">72</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.column.inProgress" datatype="html">
+        <source>In progress</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">77</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.column.review" datatype="html">
+        <source>In review</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">82</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.column.published" datatype="html">
+        <source>Published</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.column.empty" datatype="html">
+        <source>Drop a card here</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">229</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.open" datatype="html">
+        <source>Open</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">374</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.abandon" datatype="html">
+        <source>Abandon…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">379</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.publish" datatype="html">
+        <source>Publish…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">384</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.plan" datatype="html">
+        <source>Move to planned</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">393</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.start" datatype="html">
+        <source>Start work</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">403</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.submit" datatype="html">
+        <source>Submit for review</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">413</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.requestChanges" datatype="html">
+        <source>Request changes…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">424</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.resume" datatype="html">
+        <source>Resume work</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-board/intervention-board.component.ts</context>
+          <context context-type="linenumber">433</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cal.assignment" datatype="html">
@@ -6992,6 +6920,34 @@
           <context context-type="linenumber">347</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="intervention.metric.inProgress.title" datatype="html">
+        <source>In progress</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-in-progress-metric/intervention-in-progress-metric.component.html</context>
+          <context context-type="linenumber">3,4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.metric.inProgress.desc" datatype="html">
+        <source>Field work underway</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-in-progress-metric/intervention-in-progress-metric.component.html</context>
+          <context context-type="linenumber">5,8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.metric.inReview.title" datatype="html">
+        <source>In review</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-in-review-metric/intervention-in-review-metric.component.html</context>
+          <context context-type="linenumber">3,4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.metric.inReview.desc" datatype="html">
+        <source>Awaiting review</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-in-review-metric/intervention-in-review-metric.component.html</context>
+          <context context-type="linenumber">5,8</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="intervention.stepper.aria" datatype="html">
         <source>Intervention workflow progress</source>
         <context-group purpose="location">
@@ -7039,6 +6995,20 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-phase-stepper/intervention-phase-stepper.component.ts</context>
           <context context-type="linenumber">92</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.metric.planned.title" datatype="html">
+        <source>Planned</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-planned-metric/intervention-planned-metric.component.html</context>
+          <context context-type="linenumber">4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.metric.planned.desc" datatype="html">
+        <source>Scheduled ahead</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-planned-metric/intervention-planned-metric.component.html</context>
+          <context context-type="linenumber">5,8</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.prepare.ready" datatype="html">
@@ -7193,6 +7163,20 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-prepare-panel/intervention-prepare-panel.component.ts</context>
           <context context-type="linenumber">492</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.metric.published.title" datatype="html">
+        <source>Published</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-published-metric/intervention-published-metric.component.html</context>
+          <context context-type="linenumber">3,4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.metric.published.desc" datatype="html">
+        <source>Completed</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-published-metric/intervention-published-metric.component.html</context>
+          <context context-type="linenumber">5,7</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.review.offline" datatype="html">
@@ -7950,66 +7934,31 @@
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.view.tooltip" datatype="html">
-        <source>Toggle list / calendar (V)</source>
+        <source>Switch view (V)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions/interventions.component.html</context>
           <context context-type="linenumber">12,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.view.board" datatype="html">
+        <source>Pipeline</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions/interventions.component.ts</context>
+          <context context-type="linenumber">338</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.view.list" datatype="html">
         <source>List</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions/interventions.component.ts</context>
-          <context context-type="linenumber">297</context>
+          <context context-type="linenumber">342</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.view.calendar" datatype="html">
         <source>Calendar</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions/interventions.component.ts</context>
-          <context context-type="linenumber">299</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="intervention.my.intro" datatype="html">
-        <source> Planned interventions are prepared for offline use. Open one to continue from the next recommended action. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/my-interventions/my-interventions.component.html</context>
-          <context context-type="linenumber">6,10</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="intervention.my.open" datatype="html">
-        <source>Open</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/my-interventions/my-interventions.component.html</context>
-          <context context-type="linenumber">53</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="intervention.my.done" datatype="html">
-        <source>done</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/my-interventions/my-interventions.component.html</context>
-          <context context-type="linenumber">72,74</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="intervention.my.emptyTitle" datatype="html">
-        <source>No interventions assigned</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/my-interventions/my-interventions.component.html</context>
-          <context context-type="linenumber">86,87</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="intervention.my.emptyDesc" datatype="html">
-        <source>Planned or in-progress interventions assigned to you will appear here, ready to continue offline.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/my-interventions/my-interventions.component.html</context>
-          <context context-type="linenumber">88,93</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="intervention.my.siteUnavailable" datatype="html">
-        <source>Site not available locally</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/my-interventions/my-interventions.component.ts</context>
-          <context context-type="linenumber">38</context>
+          <context context-type="linenumber">344</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.fwt.title" datatype="html">
@@ -8412,14 +8361,14 @@
         <source>Checklists</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">222</context>
+          <context context-type="linenumber">213</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.team" datatype="html">
         <source>Team</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">230</context>
+          <context context-type="linenumber">221</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
@@ -8430,7 +8379,7 @@
         <source>Settings</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">244</context>
+          <context context-type="linenumber">235</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
@@ -8441,35 +8390,35 @@
         <source>Overview</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">263</context>
+          <context context-type="linenumber">254</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.fieldWork" datatype="html">
         <source>Field work</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">264</context>
+          <context context-type="linenumber">255</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.assets" datatype="html">
         <source>Assets</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">265</context>
+          <context context-type="linenumber">256</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.compliance" datatype="html">
         <source>Compliance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">266</context>
+          <context context-type="linenumber">257</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.administration" datatype="html">
         <source>Administration</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">267</context>
+          <context context-type="linenumber">258</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.acceptInvitation" datatype="html">
@@ -8505,6 +8454,48 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-dashboard/utils/constants.ts</context>
           <context context-type="linenumber">6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.savedDetail" datatype="html">
+        <source>The organization settings have been updated.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">98</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.saveError" datatype="html">
+        <source>The settings could not be saved.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">110</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.logoDetail" datatype="html">
+        <source>The organization logo has been updated.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.logoError" datatype="html">
+        <source>The logo could not be uploaded.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">158</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.deletedDetail" datatype="html">
+        <source>The organization has been permanently deleted.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">191</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.deleteError" datatype="html">
+        <source>The organization could not be deleted.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
+          <context context-type="linenumber">203</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.metric.active.title" datatype="html">
@@ -9475,105 +9466,105 @@
         <source>Switch to <x id="name" equiv-text="name"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">125</context>
+          <context context-type="linenumber">122</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.updatedSummary" datatype="html">
         <source>Plan updated</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">183</context>
+          <context context-type="linenumber">180</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.updatedDetail" datatype="html">
         <source>The organization subscription plan has been updated.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">184</context>
+          <context context-type="linenumber">181</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.cancelScheduledSummary" datatype="html">
         <source>Cancellation scheduled</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">199</context>
+          <context context-type="linenumber">196</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.cancelScheduledDetail" datatype="html">
         <source>Your subscription will end at the close of the current billing period.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">200</context>
+          <context context-type="linenumber">197</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.resumedSummary" datatype="html">
         <source>Subscription resumed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">209</context>
+          <context context-type="linenumber">206</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.resumedDetail" datatype="html">
         <source>Your subscription will renew normally.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">210</context>
+          <context context-type="linenumber">207</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.cancelConfirmHeader" datatype="html">
         <source>Cancel subscription</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">424</context>
+          <context context-type="linenumber">421</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.cancelConfirm" datatype="html">
         <source>Cancel your subscription at the end of the current period? You keep access until then and no data is deleted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">425</context>
+          <context context-type="linenumber">422</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.cancelConfirmAccept" datatype="html">
         <source>Cancel subscription</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">428</context>
+          <context context-type="linenumber">425</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.keepSubscription" datatype="html">
         <source>Keep subscription</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">432</context>
+          <context context-type="linenumber">429</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.checkoutSuccessSummary" datatype="html">
         <source>Subscription updated</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">475</context>
+          <context context-type="linenumber">472</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.checkoutSuccessDetail" datatype="html">
         <source>Your subscription is being activated — it may take a few seconds to appear.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">476</context>
+          <context context-type="linenumber">473</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.checkoutCancelSummary" datatype="html">
         <source>Checkout canceled</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">482</context>
+          <context context-type="linenumber">479</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.plan.checkoutCancelDetail" datatype="html">
         <source>No changes were made to your subscription.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.ts</context>
-          <context context-type="linenumber">483</context>
+          <context context-type="linenumber">480</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.usage.label" datatype="html">
@@ -9800,109 +9791,102 @@
           <context context-type="linenumber">24,26</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.general.logoError" datatype="html">
-        <source> We couldn&apos;t upload the logo. Please try again. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">57,58</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="org.general.changeLogo" datatype="html">
         <source>Change logo</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">69,70</context>
+          <context context-type="linenumber">59,60</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.general.logoHint" datatype="html">
         <source> JPEG, PNG, WebP or GIF — 5 MB max. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">75,77</context>
+          <context context-type="linenumber">65,67</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.general.details" datatype="html">
         <source> Details </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">89,92</context>
+          <context context-type="linenumber">79,82</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.general.name" datatype="html">
         <source>Name</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">99,101</context>
+          <context context-type="linenumber">89,91</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.general.nameDesc" datatype="html">
         <source> The organization&apos;s display name. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">105,107</context>
+          <context context-type="linenumber">95,97</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.general.nameError" datatype="html">
         <source>A name of 2 to 120 characters is required.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">112,114</context>
+          <context context-type="linenumber">102,104</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.general.slug" datatype="html">
         <source>Slug</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">124,126</context>
+          <context context-type="linenumber">114,116</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.general.slugDesc" datatype="html">
         <source> Used in URLs and to confirm deletion. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">130,132</context>
+          <context context-type="linenumber">120,122</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.general.slugError" datatype="html">
         <source>Use lowercase letters, numbers and single dashes (min. 3 characters).</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">137,139</context>
+          <context context-type="linenumber">127,129</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.general.description" datatype="html">
         <source>Description</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">149,152</context>
+          <context context-type="linenumber">139,142</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.general.descDesc" datatype="html">
         <source> A short summary of the organization. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">155,157</context>
+          <context context-type="linenumber">145,147</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.general.active" datatype="html">
         <source>Active</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">175,177</context>
+          <context context-type="linenumber">165,167</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.general.activeDesc" datatype="html">
         <source> Inactive organizations are hidden and read-only. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">181,183</context>
+          <context context-type="linenumber">171,173</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.saveChanges" datatype="html">
         <source>Save changes</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-general-form/organization-general-form.component.html</context>
-          <context context-type="linenumber">195,197</context>
+          <context context-type="linenumber">185,187</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-notifications-form/organization-notifications-form.component.html</context>
@@ -10233,7 +10217,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">118</context>
+          <context context-type="linenumber">115</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invAccept.header" datatype="html">
@@ -10292,144 +10276,88 @@
           <context context-type="linenumber">7,10</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.settings.saveError" datatype="html">
-        <source>The settings could not be saved.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">87</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.deleteError" datatype="html">
-        <source>The organization could not be deleted.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">89</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="org.settings.general" datatype="html">
         <source>General</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">139</context>
+          <context context-type="linenumber">131</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.generalDesc" datatype="html">
         <source>Name, slug, description, logo and active status.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">141</context>
+          <context context-type="linenumber">133</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription" datatype="html">
         <source>Subscription</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">145</context>
+          <context context-type="linenumber">137</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscriptionDesc" datatype="html">
         <source>Choose the plan that fits your organization.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">147</context>
+          <context context-type="linenumber">139</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.usage" datatype="html">
         <source>Usage</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">151</context>
+          <context context-type="linenumber">143</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.usageDesc" datatype="html">
         <source>Resource consumption against your plan limits.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">153</context>
+          <context context-type="linenumber">145</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.notifications" datatype="html">
         <source>Notifications</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">157</context>
+          <context context-type="linenumber">149</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.notificationsDesc" datatype="html">
         <source>Delivery channels and event notifications.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">159</context>
+          <context context-type="linenumber">151</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.regional" datatype="html">
         <source>Regional &amp; formats</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">163</context>
+          <context context-type="linenumber">155</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.regionalDesc" datatype="html">
         <source>Timezone, locale, date format and units.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">165</context>
+          <context context-type="linenumber">157</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger" datatype="html">
         <source>Danger zone</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">172</context>
+          <context context-type="linenumber">164</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.dangerDesc" datatype="html">
         <source>Irreversible actions for this organization.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">174</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.savedSummary" datatype="html">
-        <source>Settings saved</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">229</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.savedDetail" datatype="html">
-        <source>The organization settings have been updated.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">230</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.logoSummary" datatype="html">
-        <source>Logo updated</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">239</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.logoDetail" datatype="html">
-        <source>The organization logo has been updated.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">240</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.deletedSummary" datatype="html">
-        <source>Organization deleted</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">251</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.deletedDetail" datatype="html">
-        <source>The organization has been permanently deleted.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
-          <context context-type="linenumber">252</context>
+          <context context-type="linenumber">166</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.title" datatype="html">
@@ -10506,77 +10434,77 @@
         <source>The team administration data could not be loaded.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">103</context>
+          <context context-type="linenumber">100</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.mutationError" datatype="html">
         <source>The team operation could not be completed.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">105</context>
+          <context context-type="linenumber">102</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.editRoleCard" datatype="html">
         <source>Edit role</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">117</context>
+          <context context-type="linenumber">114</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.removeMemberHeader" datatype="html">
         <source>Remove member</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">215</context>
+          <context context-type="linenumber">212</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.removeMemberMessage" datatype="html">
         <source>Remove member <x id="user" equiv-text="member.userId"/> from this organization?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">216</context>
+          <context context-type="linenumber">213</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.remove" datatype="html">
         <source>Remove</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">218</context>
+          <context context-type="linenumber">215</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.revokeHeader" datatype="html">
         <source>Revoke invitation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">240</context>
+          <context context-type="linenumber">237</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.revokeMessage" datatype="html">
         <source>Revoke the invitation sent to <x id="email" equiv-text="invitation.email"/>?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">241</context>
+          <context context-type="linenumber">238</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.revoke" datatype="html">
         <source>Revoke</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">243</context>
+          <context context-type="linenumber">240</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.deleteRoleHeader" datatype="html">
         <source>Delete role</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">285</context>
+          <context context-type="linenumber">282</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.deleteRoleMessage" datatype="html">
         <source>Delete role &quot;<x id="role" equiv-text="role.name"/>&quot;?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-team/organization-team.component.ts</context>
-          <context context-type="linenumber">286</context>
+          <context context-type="linenumber">283</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invoiceTable.title" datatype="html">
@@ -10937,76 +10865,6 @@
           <context context-type="linenumber">36,37</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="splitLayout.headline" datatype="html">
-        <source> The future of fire safety, reimagined. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.html</context>
-          <context context-type="linenumber">23,26</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="splitLayout.subline" datatype="html">
-        <source> Monitor, coordinate and secure every site from one control plane designed for incident readiness and operational clarity. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.html</context>
-          <context context-type="linenumber">30,32</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="splitLayout.metric.liveAlerts" datatype="html">
-        <source>Live alerts</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
-          <context context-type="linenumber">9</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="splitLayout.metric.responseWorkflows" datatype="html">
-        <source>Response workflows</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
-          <context context-type="linenumber">11</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="splitLayout.metric.automated" datatype="html">
-        <source>Automated</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
-          <context context-type="linenumber">12</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="splitLayout.metric.complianceTracking" datatype="html">
-        <source>Compliance tracking</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
-          <context context-type="linenumber">15</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="splitLayout.metric.isoReady" datatype="html">
-        <source>ISO-ready</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
-          <context context-type="linenumber">16</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="splitLayout.highlight.commandCenter" datatype="html">
-        <source>Unified safety command center</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
-          <context context-type="linenumber">21</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="splitLayout.highlight.rbac" datatype="html">
-        <source>Role-based access and approvals</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
-          <context context-type="linenumber">22</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="splitLayout.highlight.auditHistory" datatype="html">
-        <source>Audit-ready incident history</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.ts</context>
-          <context context-type="linenumber">23</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="calendar.toggleConfig" datatype="html">
         <source>Toggle calendar configuration</source>
         <context-group purpose="location">
@@ -11141,6 +10999,41 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/components/trend-card/trend-card.component.html</context>
           <context context-type="linenumber">64,65</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="toast.severity.success" datatype="html">
+        <source>Success</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/toast/toast.component.ts</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="toast.severity.warn" datatype="html">
+        <source>Warning</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/toast/toast.component.ts</context>
+          <context context-type="linenumber">164</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="toast.severity.error" datatype="html">
+        <source>Error</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/toast/toast.component.ts</context>
+          <context context-type="linenumber">166</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="toast.severity.info" datatype="html">
+        <source>Information</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/toast/toast.component.ts</context>
+          <context context-type="linenumber">168</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="toast.time.now" datatype="html">
+        <source>now</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/toast/toast.component.ts</context>
+          <context context-type="linenumber">195</context>
         </context-group>
       </trans-unit>
     </body>

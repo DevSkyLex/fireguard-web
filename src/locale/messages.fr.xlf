@@ -3077,10 +3077,6 @@
         <source>Waived</source>
         <target>Levée</target>
       </trans-unit>
-      <trans-unit id="route.myInterventions" datatype="html">
-        <source>My interventions</source>
-        <target>Mes interventions</target>
-      </trans-unit>
       <trans-unit id="route.calendar" datatype="html">
         <source>Calendar</source>
         <target>Calendrier</target>
@@ -3748,30 +3744,6 @@
       <trans-unit id="intervention.view.calendar" datatype="html">
         <source>Calendar</source>
         <target>Calendrier</target>
-      </trans-unit>
-      <trans-unit id="intervention.my.intro" datatype="html">
-        <source> Planned interventions are prepared for offline use. Open one to continue from the next recommended action. </source>
-        <target>Les interventions planifiées sont préparées pour une utilisation hors ligne. Ouvrez-en une pour continuer à partir de l'action recommandée suivante.</target>
-      </trans-unit>
-      <trans-unit id="intervention.my.open" datatype="html">
-        <source>Open</source>
-        <target>Ouvrir</target>
-      </trans-unit>
-      <trans-unit id="intervention.my.done" datatype="html">
-        <source>done</source>
-        <target>terminé(s)</target>
-      </trans-unit>
-      <trans-unit id="intervention.my.emptyTitle" datatype="html">
-        <source>No interventions assigned</source>
-        <target>Aucune intervention assignée</target>
-      </trans-unit>
-      <trans-unit id="intervention.my.emptyDesc" datatype="html">
-        <source>Planned or in-progress interventions assigned to you will appear here, ready to continue offline.</source>
-        <target>Les interventions planifiées ou en cours qui vous sont assignées apparaîtront ici, prêtes à continuer hors ligne.</target>
-      </trans-unit>
-      <trans-unit id="intervention.my.siteUnavailable" datatype="html">
-        <source>Site not available locally</source>
-        <target>Site non disponible localement</target>
       </trans-unit>
       <trans-unit id="intervention.fwt.title" datatype="html">
         <source>Field work</source>
@@ -5718,6 +5690,110 @@
       <trans-unit id="org.settings.logoError" datatype="html">
         <source>The logo could not be uploaded.</source>
         <target>Le logo n'a pas pu être téléchargé.</target>
+      </trans-unit>
+      <trans-unit id="intervention.view.board" datatype="html">
+        <source>Pipeline</source>
+        <target>Pipeline</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.column.draft" datatype="html">
+        <source>Draft</source>
+        <target>Brouillon</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.column.planned" datatype="html">
+        <source>Planned</source>
+        <target>Planifiée</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.column.inProgress" datatype="html">
+        <source>In progress</source>
+        <target>En cours</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.column.review" datatype="html">
+        <source>In review</source>
+        <target>En revue</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.column.published" datatype="html">
+        <source>Published</source>
+        <target>Publiée</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.column.empty" datatype="html">
+        <source> Drop a card here </source>
+        <target> Déposer une carte ici </target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.open" datatype="html">
+        <source>Open</source>
+        <target>Ouvrir</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.abandon" datatype="html">
+        <source>Abandon…</source>
+        <target>Abandonner…</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.publish" datatype="html">
+        <source>Publish…</source>
+        <target>Publier…</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.plan" datatype="html">
+        <source>Move to planned</source>
+        <target>Passer en planifiée</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.start" datatype="html">
+        <source>Start work</source>
+        <target>Démarrer le travail</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.submit" datatype="html">
+        <source>Submit for review</source>
+        <target>Envoyer en revue</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.requestChanges" datatype="html">
+        <source>Request changes…</source>
+        <target>Demander des modifications…</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.action.resume" datatype="html">
+        <source>Resume work</source>
+        <target>Reprendre le travail</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.card.actionsAria" datatype="html">
+        <source>Card actions</source>
+        <target>Actions de la carte</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.emptyTitle" datatype="html">
+        <source>No interventions yet</source>
+        <target>Aucune intervention</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.emptyDesc" datatype="html">
+        <source>Create an intervention when a site visit needs offline-ready facility, equipment and inspection preparation.</source>
+        <target>Créez une intervention lorsqu'une visite de site nécessite une préparation hors ligne des installations, des équipements et des inspections.</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.inProgress.title" datatype="html">
+        <source>In progress</source>
+        <target>En cours</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.inProgress.desc" datatype="html">
+        <source>Field work underway</source>
+        <target>Travail terrain en cours</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.inReview.title" datatype="html">
+        <source>In review</source>
+        <target>En revue</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.inReview.desc" datatype="html">
+        <source>Awaiting review</source>
+        <target>En attente de revue</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.planned.title" datatype="html">
+        <source>Planned</source>
+        <target>Planifiées</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.planned.desc" datatype="html">
+        <source>Scheduled ahead</source>
+        <target>À venir</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.published.title" datatype="html">
+        <source>Published</source>
+        <target>Publiées</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.published.desc" datatype="html">
+        <source>Completed</source>
+        <target>Terminées</target>
       </trans-unit>
     </body>
   </file>

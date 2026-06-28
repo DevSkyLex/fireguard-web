@@ -1,4 +1,4 @@
-<div id="interventions" class="flex h-full flex-col gap-4">
+<div id="interventions" class="flex min-h-0 flex-1 flex-col gap-4">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <span id="interventions-view-label" i18n="@@intervention.view.label" class="sr-only">View</span>
     <p-selectbutton
@@ -9,7 +9,7 @@
       size="small"
       ariaLabelledBy="interventions-view-label"
       i18n-pTooltip="@@intervention.view.tooltip"
-      pTooltip="Toggle list / calendar (V)"
+      pTooltip="Switch view (V)"
       tooltipPosition="bottom"
       [ngModel]="view()"
       [ngModelOptions]="{ standalone: true }"
@@ -33,7 +33,24 @@
     />
   </div>
 
-  @if (view() === 'calendar') {
+  <section class="flex flex-row flex-wrap items-stretch gap-4">
+    <app-intervention-in-progress-metric class="min-w-56 flex-1" />
+    <app-intervention-in-review-metric class="min-w-56 flex-1" />
+    <app-intervention-planned-metric class="min-w-56 flex-1" />
+    <app-intervention-published-metric class="min-w-56 flex-1" />
+  </section>
+
+  @if (view() === 'board') {
+    <app-intervention-board
+      class="flex min-h-0 flex-1 flex-col"
+      [columns]="boardStore.columns()"
+      [loading]="boardStore.loading()"
+      [empty]="boardStore.isEmpty()"
+      (view)="onView($event)"
+      (advance)="onAdvance($event)"
+      (createRequested)="openCreate()"
+    />
+  } @else if (view() === 'calendar') {
     <app-intervention-calendar
       class="flex min-h-0 flex-1 flex-col"
       [interventions]="calendarStore.interventions()"

@@ -1,6 +1,6 @@
 import { computed, effect, inject, untracked } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { type ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -23,6 +23,7 @@ import {
 } from '@core/request-state';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import type { CurrentOrganizationMemberProfileOutput } from '@features/organization/models';
+import { routeTreeHasParam } from '@features/organization/utils';
 import { ActiveOrganizationStore } from '../active-organization';
 import type { OrganizationMemberAccessState } from './models';
 
@@ -31,13 +32,6 @@ const INITIAL_STATE: OrganizationMemberAccessState = {
   profile: null,
   accessCallState: idleCallState(),
 };
-
-function routeTreeHasParam(route: ActivatedRouteSnapshot, paramName: string): boolean {
-  return (
-    route.paramMap.has(paramName) ||
-    route.children.some((child: ActivatedRouteSnapshot) => routeTreeHasParam(child, paramName))
-  );
-}
 
 /**
  * Store OrganizationMemberAccessStore

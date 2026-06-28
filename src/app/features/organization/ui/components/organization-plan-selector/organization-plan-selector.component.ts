@@ -23,12 +23,9 @@ import {
   type PlanPricingOutput,
   resolveSubscriptionStatusTag,
 } from '@features/organization/models';
-import {
-  ActiveOrganizationStore,
-  OrganizationBillingStore,
-  OrganizationPlanStore,
-  OrganizationQuotaStore,
-} from '@features/organization/state';
+import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
+import { OrganizationPlanStore } from '@features/organization/state/organization-plan';
 import { BillingInvoiceTable } from '@features/organization/ui/tables';
 import { Tag, type TagDescriptor } from '@shared/components/tag';
 import { BillingCancelCard } from './components/billing-cancel-card/billing-cancel-card.component';

@@ -8,6 +8,7 @@ import type {
   InterventionOutput,
 } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '@features/organization/features/interventions/state';
+import { InterventionBoardStore } from '@features/organization/features/interventions/state/intervention-board';
 import { InterventionCalendarStore } from '@features/organization/features/interventions/state/intervention-calendar';
 import { InterventionPlanningOptionsStore } from '@features/organization/features/interventions/state/intervention-planning-options';
 import type { InterventionCreateFormValues } from '@features/organization/features/interventions/ui/forms';
@@ -24,7 +25,11 @@ type InterventionsPageHarness = {
   openCreate(): void;
   openCreateOnDay(day: Date): void;
   create(values: InterventionCreateFormValues): void;
-  setView(view: 'list' | 'calendar'): void;
+  setView(view: 'board' | 'list' | 'calendar'): void;
+  onAdvance(event: {
+    intervention: InterventionOutput;
+    toStatus: InterventionOutput['status'];
+  }): void;
   createDrawerVisible: WritableSignal<boolean>;
   initialPlannedStartAt: WritableSignal<Date | null>;
 };
@@ -42,6 +47,13 @@ describe('InterventionsPage', () => {
     currentMemberIri: WritableSignal<string | null>;
     loading: WritableSignal<boolean>;
     load: ReturnType<typeof vi.fn>;
+  };
+  let boardStore: {
+    columns: WritableSignal<readonly unknown[]>;
+    loading: WritableSignal<boolean>;
+    isEmpty: WritableSignal<boolean>;
+    load: ReturnType<typeof vi.fn>;
+    move: ReturnType<typeof vi.fn>;
   };
   let planningOptions: {
     loadCreationOptions: ReturnType<typeof vi.fn>;
@@ -88,6 +100,13 @@ describe('InterventionsPage', () => {
       sites: signal<readonly unknown[]>([]),
       members: signal<readonly unknown[]>([]),
     };
+    boardStore = {
+      columns: signal<readonly unknown[]>([]),
+      loading: signal(false),
+      isEmpty: signal(false),
+      load: vi.fn(),
+      move: vi.fn(),
+    };
     interventions = { create: vi.fn().mockReturnValue(of(created)) };
     activeOrg = { selectedOrganization: signal<OrganizationOutput | null>(MOCK_ORG) };
 
@@ -105,6 +124,7 @@ describe('InterventionsPage', () => {
         schemas: [CUSTOM_ELEMENTS_SCHEMA],
         providers: [
           { provide: InterventionStore, useValue: store },
+          { provide: InterventionBoardStore, useValue: boardStore },
           { provide: InterventionCalendarStore, useValue: calendarStore },
           { provide: InterventionPlanningOptionsStore, useValue: planningOptions },
         ],
@@ -165,7 +185,7 @@ describe('InterventionsPage', () => {
     );
   });
 
-  it('should toggle the view when the V shortcut is pressed', () => {
+  it('should cycle to the next view when the V shortcut is pressed', () => {
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     build();
@@ -174,8 +194,22 @@ describe('InterventionsPage', () => {
 
     expect(navigate).toHaveBeenCalledWith(
       ['/organizations', 'org-1', 'interventions'],
-      expect.objectContaining({ queryParams: { view: 'calendar', page: null } }),
+      expect.objectContaining({ queryParams: { view: 'list', page: null } }),
     );
+  });
+
+  it('should lazily load the board dataset by default', () => {
+    build();
+
+    expect(boardStore.load).toHaveBeenCalledWith({ organizationId: 'org-1' });
+  });
+
+  it('should apply an optimistic advance through the board store', () => {
+    const intervention = { id: 'i-3', status: 'draft' } as InterventionOutput;
+
+    build().onAdvance({ intervention, toStatus: 'planned' });
+
+    expect(boardStore.move).toHaveBeenCalledWith({ intervention, toStatus: 'planned' });
   });
 
   it('should ignore the V shortcut while typing in a field', () => {

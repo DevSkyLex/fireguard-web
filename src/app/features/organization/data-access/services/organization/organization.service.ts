@@ -16,7 +16,6 @@ import type {
   UpdateOrganizationInput,
   ChangeOrganizationPlanInput,
   OrganizationQuotaOutput,
-  OrganizationInvitationOutput,
   OrganizationPermissionOutput,
 } from '@features/organization/models';
 
@@ -28,7 +27,8 @@ import type {
  * @description
  * API service for organization management operations.
  * Handles CRUD, general & branding settings, logo upload,
- * invitations, dashboard analytics, and permissions.
+ * dashboard analytics, and permissions. Invitation transport
+ * lives in {@link OrganizationInvitationService}.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -328,56 +328,6 @@ export class OrganizationService extends HydraApiService {
         },
       )
       .pipe(catchError(this.handleError));
-  }
-
-  /**
-   * Method listInvitations
-   * @method listInvitations
-   *
-   * @description
-   * Retrieves a paginated list of pending and past invitations
-   * for the specified organization.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {string} organizationId - The ID of the organization.
-   * @param {RequestOptions} [options] - Optional pagination parameters.
-   *
-   * @return {Observable<HydraCollection<OrganizationInvitationOutput>>} An observable emitting the invitations collection.
-   */
-  public listInvitations(
-    organizationId: string,
-    options?: RequestOptions,
-  ): Observable<HydraCollection<OrganizationInvitationOutput>> {
-    return this.getCollection<OrganizationInvitationOutput>(
-      `${OrganizationService.BASE_PATH}/${organizationId}/invitations`,
-      options,
-    );
-  }
-
-  /**
-   * Method revokeInvitation
-   * @method revokeInvitation
-   *
-   * @description
-   * Revokes a pending invitation, preventing the invitee from joining.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @param {string} organizationId - The ID of the organization.
-   * @param {string} invitationId - The ID of the invitation to revoke.
-   *
-   * @return {Observable<OrganizationInvitationOutput>} An observable emitting the revoked invitation.
-   */
-  public revokeInvitation(
-    organizationId: string,
-    invitationId: string,
-  ): Observable<OrganizationInvitationOutput> {
-    return this.postAction<OrganizationInvitationOutput>(
-      `${OrganizationService.BASE_PATH}/${organizationId}/invitations/${invitationId}/revoke`,
-    );
   }
 
   /**

@@ -4,7 +4,6 @@ import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { interventionTitleResolver } from './http/resolvers';
 import type { InterventionDetailPage } from './ui/pages/intervention-detail/intervention-detail.component';
 import type { InterventionsPage } from './ui/pages/interventions/interventions.component';
-import type { MyInterventionsPage } from './ui/pages/my-interventions/my-interventions.component';
 
 /**
  * Constant INTERVENTION_ROUTES
@@ -30,17 +29,6 @@ import type { MyInterventionsPage } from './ui/pages/my-interventions/my-interve
  * @type {Routes}
  */
 export const INTERVENTION_ROUTES: Routes = [
-  {
-    path: 'my',
-    canActivate: [
-      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ] }),
-    ],
-    loadComponent: (): Promise<typeof MyInterventionsPage> =>
-      import('./ui/pages/my-interventions/my-interventions.component').then(
-        (module) => module.MyInterventionsPage,
-      ),
-    title: $localize`:@@route.myInterventions:My interventions`,
-  },
   {
     path: 'calendar',
     canActivate: [

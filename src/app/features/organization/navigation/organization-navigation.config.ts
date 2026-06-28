@@ -171,15 +171,6 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     group: 'overview',
     permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
   },
-  {
-    id: 'my-interventions',
-    label: $localize`:@@route.myInterventions:My interventions`,
-    icon: 'pi pi-briefcase',
-    path: 'interventions/my',
-    group: 'field-work',
-    permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ],
-  },
-
   /**
    * Intervention workspace entry for field preparation and publication flows.
    * Hosts both the planner table and the scheduling calendar through its own

@@ -1,6 +1,9 @@
 /**
  * Interventions model public exports.
  */
+export type { InterventionBoardBucket } from './intervention-board/intervention-board-bucket.interface';
+export type { InterventionBoardColumnDefinition } from './intervention-board/intervention-board-column-definition.interface';
+export type { InterventionBoardColumnId } from './intervention-board/intervention-board-column-id.type';
 export type { InterventionTagDescriptor } from './intervention-tag/intervention-tag-descriptor.interface';
 export type { InterventionTagKind } from './intervention-tag/intervention-tag-kind.type';
 export type { InterventionTagSeverity } from './intervention-tag/intervention-tag-severity.type';

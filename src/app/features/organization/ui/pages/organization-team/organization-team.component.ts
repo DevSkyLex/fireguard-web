@@ -26,11 +26,8 @@ import {
   ORGANIZATION_PERMISSION,
   ORGANIZATION_QUOTA_RESOURCE,
 } from '@features/organization/models';
-import {
-  ActiveOrganizationStore,
-  OrganizationQuotaStore,
-  OrganizationTeamStore,
-} from '@features/organization/state';
+import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import { OrganizationTeamStore } from '@features/organization/state/organization-team';
 import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/components';
 import {
   OrganizationInvitationForm,

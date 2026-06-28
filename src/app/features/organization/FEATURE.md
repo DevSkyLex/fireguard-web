@@ -9,6 +9,8 @@ This feature is responsible for:
 - organization list and active organization context,
 - organization member, invitation, role, settings (general & branding), and audit data,
 - organization subscription plan selection and plan-driven resource quotas (usage meters),
+- organization billing (Stripe-hosted Checkout / customer Portal and invoice history),
+- the organization overview dashboard (KPI cards and trend charts),
 - organization-scoped permission helpers derived from the active member access payload,
 - organization overview pages,
 - nested organization-scoped subfeatures such as facilities, equipments, and inspections,
@@ -53,12 +55,18 @@ Primary stores:
 - `OrganizationRoleListStore`
 - `OrganizationPlanStore` (scoped to the `OrganizationPlanSelector` in the settings Subscription tab; self-service plan change)
 - `OrganizationQuotaStore` (root-provided; active organization quota usage for the sidebar meters)
+- `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history)
+- `OrganizationDashboardStore` (aggregate slice: overview KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`)
+- `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations + logo upload, refreshes `ActiveOrganizationStore`)
+- `OrganizationTeamStore` (component-scoped to the team page; members, invitations, roles and their assignments)
+- `OrganizationInvitationAcceptStore` (page-scoped; accepts an invitation token)
 - `AuditStore`
 
 Primary services:
 
 - `OrganizationService` (includes `changePlan` and `getQuota`)
 - `PlanService`
+- `BillingService` (Stripe Checkout / Portal session creation and invoice listing)
 - `OrganizationInvitationService`
 - `OrganizationMemberService`
 - `OrganizationRoleService`

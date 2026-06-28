@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import type { ApiError } from '@core/api/models';
+import type { ApiError, HydraCollection, HydraItem } from '@core/api/models';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type {
   AcceptOrganizationInvitationInput,
@@ -11,6 +11,18 @@ import type {
   OrganizationMemberOutput,
 } from '@features/organization/models';
 import { OrganizationInvitationService } from '../organization-invitation.service';
+
+const mockCollection = <T extends HydraItem>(items: T[]): HydraCollection<T> => ({
+  '@context': '/api/contexts/Collection',
+  '@id': '/api/organizations/org-uuid-1/invitations',
+  '@type': 'Collection',
+  member: items,
+  totalItems: items.length,
+  view: {
+    '@id': '/api/organizations/org-uuid-1/invitations?page=1',
+    '@type': 'hydra:PartialCollectionView',
+  },
+});
 
 describe('OrganizationInvitationService', () => {
   let service: OrganizationInvitationService;
@@ -147,6 +159,38 @@ describe('OrganizationInvitationService', () => {
         { status: 422, title: 'Unprocessable Entity' },
         { status: 422, statusText: 'Unprocessable Entity' },
       );
+    });
+  });
+
+  // ── list ─────────────────────────────────────────────────────────────────────
+
+  describe('list', () => {
+    it('should send GET request and return invitations collection', () => {
+      service.list(orgId).subscribe((response) => {
+        expect(response.member.length).toBe(1);
+        expect(response.member[0].email).toBe('newmember@example.com');
+      });
+
+      const req = httpMock.expectOne(invitationsUrl);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(mockCollection([mockInvitation]));
+    });
+  });
+
+  // ── revoke ───────────────────────────────────────────────────────────────────
+
+  describe('revoke', () => {
+    it('should send POST action request and return the revoked invitation', () => {
+      service.revoke(orgId, 'inv-uuid-1').subscribe((invitation) => {
+        expect(invitation.status).toBe('revoked');
+      });
+
+      const req = httpMock.expectOne(`${invitationsUrl}/inv-uuid-1/revoke`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toBeNull();
+      expect(req.request.withCredentials).toBe(true);
+      req.flush({ ...mockInvitation, status: 'revoked' });
     });
   });
 });

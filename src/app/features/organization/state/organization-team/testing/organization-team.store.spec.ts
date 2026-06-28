@@ -49,18 +49,16 @@ describe('OrganizationTeamStore', () => {
     assignToMember: vi.fn(),
     removeFromMember: vi.fn(),
   };
-  const invitationService = { invite: vi.fn() };
+  const invitationService = { invite: vi.fn(), list: vi.fn(), revoke: vi.fn() };
   const organizationService = {
-    listInvitations: vi.fn(),
     listPermissions: vi.fn(),
-    revokeInvitation: vi.fn(),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     memberService.list.mockReturnValue(of(collection([member])));
     roleService.list.mockReturnValue(of(collection([role])));
-    organizationService.listInvitations.mockReturnValue(of(collection([invitation])));
+    invitationService.list.mockReturnValue(of(collection([invitation])));
     organizationService.listPermissions.mockReturnValue(of(collection([permission])));
     memberService.remove.mockReturnValue(of(undefined));
 
@@ -118,7 +116,7 @@ describe('OrganizationTeamStore', () => {
 
     expect(memberService.list).not.toHaveBeenCalled();
     expect(roleService.list).toHaveBeenCalled();
-    expect(organizationService.listInvitations).not.toHaveBeenCalled();
+    expect(invitationService.list).not.toHaveBeenCalled();
     expect(organizationService.listPermissions).not.toHaveBeenCalled();
     expect(store.roles()).toEqual([role]);
   });

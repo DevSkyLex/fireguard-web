@@ -1,8 +1,20 @@
-import { inject } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { forkJoin, of, pipe, switchMap, tap } from 'rxjs';
+import {
+  errorCallState,
+  idleCallState,
+  isCallError,
+  isCallPending,
+  pendingCallState,
+  successCallState,
+  toStoreError,
+  toStoreFailureEventPayload,
+  type StoreError,
+} from '@core/request-state';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
@@ -11,6 +23,7 @@ import type {
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import type { OrganizationMemberOutput } from '@features/organization/models';
+import { interventionPlanningOptionsStoreEvents } from './events';
 import type { InterventionPlanningOptionsState } from './models';
 
 const INITIAL_STATE: InterventionPlanningOptionsState = {
@@ -18,7 +31,7 @@ const INITIAL_STATE: InterventionPlanningOptionsState = {
   targets: [],
   equipmentTypes: [],
   members: [],
-  loading: false,
+  loadCallState: idleCallState(),
 };
 
 /**
@@ -100,9 +113,31 @@ function memberOption(
  */
 export const InterventionPlanningOptionsStore = signalStore(
   withState<InterventionPlanningOptionsState>(INITIAL_STATE),
+  withComputed((store) => ({
+    /**
+     * Computed loading.
+     *
+     * @description
+     * True while a planning-options load is in flight.
+     */
+    loading: computed<boolean>(() => isCallPending(store.loadCallState())),
+
+    /**
+     * Computed loadError.
+     *
+     * @description
+     * Normalized error of the last load when it failed, otherwise `null`. Lets
+     * the form distinguish genuinely empty option lists from a failed fetch.
+     */
+    loadError: computed<StoreError | null>(() => {
+      const state = store.loadCallState();
+      return isCallError(state) ? state.error : null;
+    }),
+  })),
   withMethods(
     (
       store,
+      dispatcher = inject<Dispatcher>(Dispatcher),
       facilities = inject<FacilityService>(FacilityService),
       equipment = inject<EquipmentService>(EquipmentService),
       members = inject<OrganizationMemberService>(OrganizationMemberService),
@@ -128,7 +163,7 @@ export const InterventionPlanningOptionsStore = signalStore(
               targets: [],
               equipmentTypes: [],
               members: [],
-              loading: true,
+              loadCallState: pendingCallState(),
             }),
           ),
           switchMap((organizationId) => {
@@ -149,7 +184,7 @@ export const InterventionPlanningOptionsStore = signalStore(
           tapResponse({
             next: (result) => {
               if (!result) {
-                patchState(store, { loading: false });
+                patchState(store, { loadCallState: successCallState(null) });
                 return;
               }
               const sites: readonly SelectOption[] = result.sites.member.map((facility) => ({
@@ -161,17 +196,24 @@ export const InterventionPlanningOptionsStore = signalStore(
                 members: result.members.member.map((member) =>
                   memberOption(member, result.organizationId),
                 ),
-                loading: false,
+                loadCallState: successCallState(null),
               });
             },
-            error: () =>
+            error: (error: unknown) => {
+              const storeError = toStoreError(error);
               patchState(store, {
                 sites: [],
                 targets: [],
                 equipmentTypes: [],
                 members: [],
-                loading: false,
-              }),
+                loadCallState: errorCallState(storeError),
+              });
+              dispatcher.dispatch(
+                interventionPlanningOptionsStoreEvents.loadFailed(
+                  toStoreFailureEventPayload(storeError, 'Failed to load planning options'),
+                ),
+              );
+            },
           }),
         ),
       ),
@@ -196,7 +238,7 @@ export const InterventionPlanningOptionsStore = signalStore(
               targets: [],
               equipmentTypes: [],
               members: [],
-              loading: true,
+              loadCallState: pendingCallState(),
             }),
           ),
           switchMap((organizationId) => {
@@ -229,7 +271,7 @@ export const InterventionPlanningOptionsStore = signalStore(
           tapResponse({
             next: (result) => {
               if (!result) {
-                patchState(store, { loading: false });
+                patchState(store, { loadCallState: successCallState(null) });
                 return;
               }
               patchState(store, {
@@ -254,17 +296,24 @@ export const InterventionPlanningOptionsStore = signalStore(
                 members: result.members.member.map((member) =>
                   memberOption(member, result.organizationId),
                 ),
-                loading: false,
+                loadCallState: successCallState(null),
               });
             },
-            error: () =>
+            error: (error: unknown) => {
+              const storeError = toStoreError(error);
               patchState(store, {
                 sites: [],
                 targets: [],
                 equipmentTypes: [],
                 members: [],
-                loading: false,
-              }),
+                loadCallState: errorCallState(storeError),
+              });
+              dispatcher.dispatch(
+                interventionPlanningOptionsStoreEvents.loadFailed(
+                  toStoreFailureEventPayload(storeError, 'Failed to load planning options'),
+                ),
+              );
+            },
           }),
         ),
       ),

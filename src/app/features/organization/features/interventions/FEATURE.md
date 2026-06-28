@@ -19,9 +19,9 @@ This subfeature is responsible for:
 
 ## Routes
 
-- `/organizations/:organizationId/interventions` — index page hosting the planner
-  table and the scheduling calendar as two views switched via `?view=list|calendar`.
-- `/organizations/:organizationId/interventions/my` — field-agent personal queue.
+- `/organizations/:organizationId/interventions` — index page hosting the workflow
+  pipeline board (default), the planner table and the scheduling calendar as three
+  views switched via `?view=board|list|calendar` (the `board` default omits the param).
 - `/organizations/:organizationId/interventions/calendar` — convenience entry that
   opens the index page on its calendar view (same `InterventionsPage`).
 - `/organizations/:organizationId/interventions/:interventionId`
@@ -33,6 +33,7 @@ Stores:
 - `InterventionStore` — root-scoped; intervention list and creation (normalized entities + request state).
 - `InterventionWorkspaceStore` — component-scoped (provided in `InterventionDetailPage`); the active intervention workspace (intervention, work items, changes, issues) with online/offline mutations.
 - `InterventionCalendarStore` — component-scoped (provided in `InterventionsPage`); every organization intervention plus the current member IRI driving the calendar view's All/Mine scope. Loaded lazily, only while the calendar view is active.
+- `InterventionBoardStore` — component-scoped (provided in `InterventionsPage`); a bounded page of cards per workflow lane plus per-status server totals, with optimistic status moves (rollback on failure). Loaded lazily, only while the board view is active. Lane grouping and legal transitions derive from `constants/` + `utils/` (mirroring the backend `InterventionTransitionPolicy`); `published` is reached through the publication flow, not a drag. Rendered by `ui/components/intervention-board`, a thin wrapper that composes the generic `@shared/components` `Kanban` (lanes + CDK drag-and-drop) and projects the intervention card, gating drops with the transition policy.
 
 Data-access (transport boundary — `data-access/`):
 

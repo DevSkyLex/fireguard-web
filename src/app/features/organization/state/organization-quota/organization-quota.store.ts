@@ -44,8 +44,11 @@ const INITIAL_STATE: OrganizationQuotaState = {
  * @description
  * Root-level NgRx SignalStore exposing the active organization's quota usage
  * (members, facilities, equipment, inspections) so the context sidebar can
- * render usage meters. It reloads whenever the active organization changes or
- * its plan changes (tracked through the active organization's `planId`).
+ * render usage meters. It reloads automatically whenever the active organization
+ * changes (tracked through `selectedOrganizationId`). A plan change keeps the
+ * same organization id, so the limits are refreshed imperatively by
+ * `OrganizationPlanStore.changePlan`, which calls {@link load} after assigning
+ * the new plan; {@link reload} resyncs the meters after a quota-affecting action.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>

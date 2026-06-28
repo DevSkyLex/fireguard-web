@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
-import { OrganizationPermissionService } from '@features/organization/access/services/organization-permission/organization-permission.service';
+import { OrganizationPermissionService } from '@features/organization/access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { DashboardStore } from '@features/organization/state/organization-dashboard';
 import { MetricCard } from '@shared/components';

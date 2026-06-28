@@ -1,3 +1,8 @@
+// Root-provided organization stores and the feature-shared stores consumed across
+// multiple pages/components (or by approved sibling features). Page-scoped stores
+// consumed by a single page (team, settings, plan, billing, invitation-accept,
+// audit) are intentionally NOT re-exported here — their owning page imports them
+// directly from the slice barrel (ARCHITECTURE.md §11.3).
 export type { ActiveOrganizationState } from './active-organization';
 export type { OrganizationMemberAccessState } from './organization-member-access';
 export type { OrganizationState } from './organization-list';
@@ -12,19 +17,5 @@ export { OrganizationRoleListStore } from './organization-roles';
 export type { OrganizationRoleListStoreType } from './organization-roles';
 export { activeOrganizationStoreEvents } from './active-organization';
 export { organizationStoreEvents } from './organization-list';
-export { AuditStore } from './organization-audit';
-export type { AuditStoreType } from './organization-audit';
-export { OrganizationTeamStore } from './organization-team';
-export type { OrganizationTeamStoreType } from './organization-team';
-export { OrganizationSettingsStore } from './organization-settings';
-export type { OrganizationSettingsStoreType } from './organization-settings';
-export { OrganizationPlanStore } from './organization-plan';
-export type { OrganizationPlanStoreType } from './organization-plan';
-export { organizationPlanStoreEvents } from './organization-plan/events';
-export { OrganizationBillingStore } from './organization-billing';
-export type { OrganizationBillingStoreType } from './organization-billing';
-export type { OrganizationBillingState, BillingCheckoutParams } from './organization-billing';
 export { OrganizationQuotaStore } from './organization-quota';
 export type { OrganizationQuotaStoreType } from './organization-quota';
-export { OrganizationInvitationAcceptStore } from './organization-invitation-accept';
-export type { OrganizationInvitationAcceptStoreType } from './organization-invitation-accept';

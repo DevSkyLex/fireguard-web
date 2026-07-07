@@ -2,12 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import type { ChartData, ChartOptions } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
 import { SkeletonModule } from 'primeng/skeleton';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationDashboardFacilitiesCreatedStore } from '@features/organization/state/organization-dashboard';
 import type { DashboardSingleTrendViewModel } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   buildDashboardSingleTrendBarChartData,
   buildDashboardSingleTrendViewModel,
 } from '@features/organization/ui/components/organization-dashboard/utils';
+import { buildChartTooltipStyle } from '@shared/utils';
 
 /**
  * Component FacilitiesCreatedChart
@@ -49,6 +51,22 @@ export class FacilitiesCreatedChart {
     inject<OrganizationDashboardFacilitiesCreatedStore>(
       OrganizationDashboardFacilitiesCreatedStore,
     );
+
+  /**
+   * Property themePort
+   * @readonly
+   *
+   * @description
+   * Neutral theme contract, read to resolve the current light/dark appearance
+   * so the canvas tooltip can be styled to match the app in both themes and
+   * recompute when the user switches theme.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @type {ThemePort}
+   */
+  private readonly themePort: ThemePort = inject<ThemePort>(THEME_PORT);
 
   /**
    * Property loading
@@ -113,11 +131,13 @@ export class FacilitiesCreatedChart {
    * @readonly
    *
    * @description
-   * Chart.js configuration for axes, legend, tooltips and interaction.
-   * Recomputes when compare mode toggles to update legend visibility.
+   * Theme-aware Chart.js configuration for axes, legend, tooltips and
+   * interaction. Recomputes when compare mode toggles to update legend
+   * visibility and when the user switches theme so the canvas tooltip stays
+   * styled to the app in both light and dark.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 2.1.0
    *
    * @type {Signal<ChartOptions<'bar'>>}
    */
@@ -148,13 +168,7 @@ export class FacilitiesCreatedChart {
         },
       },
       tooltip: {
-        backgroundColor: 'rgba(15, 23, 42, 0.92)',
-        titleColor: '#f1f5f9',
-        bodyColor: '#94a3b8',
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 10,
+        ...buildChartTooltipStyle(this.themePort.resolvedTheme() === 'dark'),
         callbacks: {
           title: (items) => items[0]?.label ?? '',
           label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,

@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import { OrganizationDashboardNonConformitiesResolvedStore } from '@features/organization/state/organization-dashboard';
 import { NonConformitiesResolvedChart } from '../non-conformities-resolved-chart.component';
 
@@ -9,12 +10,19 @@ const mockStore = {
   compareEnabled: signal(false),
 };
 
+const mockThemePort: ThemePort = {
+  theme: signal<ThemeMode>('light'),
+  resolvedTheme: signal<'light' | 'dark'>('light'),
+  setTheme: vi.fn(),
+};
+
 describe('NonConformitiesResolvedChart', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [NonConformitiesResolvedChart],
       providers: [
         { provide: OrganizationDashboardNonConformitiesResolvedStore, useValue: mockStore },
+        { provide: THEME_PORT, useValue: mockThemePort },
       ],
     });
   });

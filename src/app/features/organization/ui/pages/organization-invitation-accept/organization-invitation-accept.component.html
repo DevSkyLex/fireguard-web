@@ -1,36 +1,135 @@
-<section class="mx-auto flex max-w-xl flex-col gap-6 p-8">
-  <p-card i18n-header="@@org.invAccept.header" header="Accept invitation">
-    @if (!token) {
-      <p-message i18n="@@org.invAccept.missingToken" severity="error"
-        >The invitation token is missing.</p-message
-      >
-    } @else if (store.acceptCallState().status === 'success') {
-      <p-message i18n="@@org.invAccept.success" severity="success" class="mb-4"
-        >Invitation accepted. You can now open your organizations.</p-message
-      >
-      <p-button
-        i18n-label="@@org.invAccept.openOrgs"
-        label="Open organizations"
-        icon="pi pi-arrow-right"
-        (onClick)="goToOrganizations()"
-      />
-    } @else {
-      @if (store.acceptCallState().status === 'error') {
-        <p-message i18n="@@org.invAccept.error" severity="error" class="mb-4"
-          >The invitation could not be accepted. It may be expired or revoked.</p-message
+<main class="flex min-h-dvh items-center justify-center bg-surface-50 p-6 dark:bg-surface-950">
+  <p-card class="w-full max-w-md">
+    <ng-template pTemplate="header">
+      <div class="flex items-center gap-2 px-6 pt-6">
+        <i class="pi pi-send text-primary"></i>
+        <span i18n="@@org.invAccept.header" class="text-lg font-semibold"
+          >Organization invitation</span
         >
-      } @else {
-        <p i18n="@@org.invAccept.prompt" class="mb-4 text-sm text-surface-500">
-          Accept the invitation to join the organization.
+      </div>
+    </ng-template>
+
+    @if (!token) {
+      <p-message i18n="@@org.invAccept.missingToken" severity="error" class="block"
+        >The invitation link is missing its token.</p-message
+      >
+    } @else if (store.isLoadingPreview()) {
+      <div class="flex flex-col items-center gap-3 py-6">
+        <p-progressSpinner strokeWidth="4" [style]="{ width: '2.5rem', height: '2.5rem' }" />
+        <span i18n="@@org.invAccept.loading" class="text-sm text-surface-500"
+          >Loading your invitation…</span
+        >
+      </div>
+    } @else if (store.isPreviewError()) {
+      <p-message i18n="@@org.invAccept.invalid" severity="error" class="block"
+        >This invitation link is invalid or no longer available.</p-message
+      >
+    } @else if (store.preview(); as preview) {
+      <!-- Invitation summary -->
+      <div class="mb-5 flex flex-col gap-2">
+        <p class="text-sm text-surface-500">
+          <span i18n="@@org.invAccept.invitedTo">You've been invited to join</span>
         </p>
+        <p class="text-xl font-semibold text-surface-900 dark:text-surface-0">
+          {{ preview.organizationName }}
+        </p>
+        <div class="flex flex-wrap items-center gap-2 text-sm text-surface-500">
+          @if (preview.inviterDisplayName) {
+            <span i18n="@@org.invAccept.invitedBy"
+              >Invited by {{ preview.inviterDisplayName }}</span
+            >
+            <span aria-hidden="true">·</span>
+          }
+          <span>{{ preview.invitedEmail }}</span>
+          @if (statusDescriptor(); as descriptor) {
+            <app-tag [descriptor]="descriptor" />
+          }
+        </div>
+      </div>
+
+      @if (store.isAccepted()) {
+        <p-message i18n="@@org.invAccept.success" severity="success" class="mb-4 block"
+          >Invitation accepted. Welcome aboard!</p-message
+        >
+        <p-button
+          i18n-label="@@org.invAccept.openOrgs"
+          label="Open organizations"
+          icon="pi pi-arrow-right"
+          styleClass="w-full"
+          (onClick)="goToOrganizations()"
+        />
+      } @else if (emailMismatch()) {
+        <p-message severity="warn" class="mb-4 block">
+          <span i18n="@@org.invAccept.mismatch"
+            >You're signed in as {{ currentEmail() }}, but this invitation is for
+            {{ invitedEmail() }}.</span
+          >
+        </p-message>
+        <div class="flex flex-col gap-2">
+          <p-button
+            i18n-label="@@org.invAccept.switchAccount"
+            label="Sign in with the invited email"
+            icon="pi pi-sign-in"
+            styleClass="w-full"
+            (onClick)="switchAccount()"
+          />
+          <p-button
+            i18n-label="@@org.invAccept.openOrgs"
+            label="Open organizations"
+            [text]="true"
+            styleClass="w-full"
+            (onClick)="goToOrganizations()"
+          />
+        </div>
+      } @else if (!isPending()) {
+        <p-message i18n="@@org.invAccept.notPending" severity="warn" class="mb-4 block"
+          >This invitation is no longer active. Ask an organization administrator to send a new
+          one.</p-message
+        >
+        <p-button
+          i18n-label="@@org.invAccept.openOrgs"
+          label="Open organizations"
+          [text]="true"
+          styleClass="w-full"
+          (onClick)="goToOrganizations()"
+        />
+      } @else if (isAuthenticated()) {
+        @if (store.isAcceptError()) {
+          <p-message i18n="@@org.invAccept.error" severity="error" class="mb-4 block"
+            >The invitation could not be accepted. It may have expired or been revoked.</p-message
+          >
+        }
+        <p-button
+          i18n-label="@@org.invAccept.acceptButton"
+          label="Accept invitation"
+          icon="pi pi-check"
+          styleClass="w-full"
+          [loading]="store.isAccepting()"
+          (onClick)="accept()"
+        />
+      } @else {
+        <p i18n="@@org.invAccept.authPrompt" class="mb-4 text-sm text-surface-500">
+          Sign in or create an account with <strong>{{ preview.invitedEmail }}</strong> to accept
+          this invitation.
+        </p>
+        <div class="flex flex-col gap-2">
+          <p-button
+            i18n-label="@@org.invAccept.signIn"
+            label="Sign in to accept"
+            icon="pi pi-sign-in"
+            styleClass="w-full"
+            (onClick)="signIn()"
+          />
+          <p-button
+            i18n-label="@@org.invAccept.register"
+            label="Create an account"
+            icon="pi pi-user-plus"
+            [outlined]="true"
+            styleClass="w-full"
+            (onClick)="register()"
+          />
+        </div>
       }
-      <p-button
-        i18n-label="@@org.invAccept.acceptButton"
-        label="Accept invitation"
-        icon="pi pi-check"
-        [loading]="store.isAccepting()"
-        (onClick)="accept()"
-      />
     }
   </p-card>
-</section>
+</main>

@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { EMPTY } from 'rxjs';
@@ -13,7 +13,11 @@ type LoginPageTestApi = LoginPage & {
 };
 
 describe('LoginPage', () => {
-  const setup = (options?: { mfaRequired?: boolean; authenticated?: boolean }) => {
+  const setup = (options?: {
+    mfaRequired?: boolean;
+    authenticated?: boolean;
+    returnUrl?: string | null;
+  }) => {
     const authState = {
       isLoggingIn: signal(false),
       mfaRequired: signal(options?.mfaRequired ?? false),
@@ -24,15 +28,22 @@ describe('LoginPage', () => {
       login: vi.fn(),
     };
     const mockUserProfilePort = { load: vi.fn() };
-    const mockRouter = { navigate: vi.fn().mockResolvedValue(true) };
+    const mockRouter = {
+      navigate: vi.fn().mockResolvedValue(true),
+      navigateByUrl: vi.fn().mockResolvedValue(true),
+    };
     const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
     const mockMessageService = { add: vi.fn() };
+    const mockRoute = {
+      snapshot: { queryParamMap: { get: () => options?.returnUrl ?? null } },
+    };
 
     TestBed.configureTestingModule({
       providers: [
         { provide: AuthStore, useValue: mockAuthStore },
         { provide: USER_PROFILE_PORT, useValue: mockUserProfilePort },
         { provide: Router, useValue: mockRouter },
+        { provide: ActivatedRoute, useValue: mockRoute },
         { provide: Events, useValue: mockEvents },
         { provide: MessageService, useValue: mockMessageService },
       ],
@@ -63,13 +74,41 @@ describe('LoginPage', () => {
   it('should navigate to MFA page when MFA is required', () => {
     const { mockRouter } = setup({ mfaRequired: true });
 
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/mfa-verify']);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/mfa-verify'], { queryParams: {} });
+  });
+
+  it('should forward the returnUrl to the MFA page when MFA is required', () => {
+    const { mockRouter } = setup({
+      mfaRequired: true,
+      returnUrl: '/organizations/invitations/accept?token=abc',
+    });
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/mfa-verify'], {
+      queryParams: { returnUrl: '/organizations/invitations/accept?token=abc' },
+    });
   });
 
   it('should navigate home when user is authenticated', () => {
     const { mockUserProfilePort, mockRouter } = setup({ authenticated: true });
 
     expect(mockUserProfilePort.load).not.toHaveBeenCalled();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
+    expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/');
+  });
+
+  it('should navigate to a safe returnUrl when user is authenticated', () => {
+    const { mockRouter } = setup({
+      authenticated: true,
+      returnUrl: '/organizations/invitations/accept?token=abc',
+    });
+
+    expect(mockRouter.navigateByUrl).toHaveBeenCalledWith(
+      '/organizations/invitations/accept?token=abc',
+    );
+  });
+
+  it('should ignore an unsafe (external) returnUrl when authenticated', () => {
+    const { mockRouter } = setup({ authenticated: true, returnUrl: 'https://evil.example.com' });
+
+    expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/');
   });
 });

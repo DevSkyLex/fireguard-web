@@ -16,6 +16,8 @@ export interface OrganizationMemberOutput extends HydraItem {
   /** @type {string} */
   readonly userId: string;
   /** @type {string | null | undefined} */
+  readonly email?: string | null;
+  /** @type {string | null | undefined} */
   readonly firstName?: string | null;
   /** @type {string | null | undefined} */
   readonly lastName?: string | null;

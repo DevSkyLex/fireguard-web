@@ -7,7 +7,7 @@
           {{ title() }}
         </h2>
         @if (description(); as description) {
-          <p class="line-clamp-2 text-sm text-surface-500 dark:text-surface-300">
+          <p class="truncate text-sm text-surface-500 dark:text-surface-300">
             {{ description }}
           </p>
         }
@@ -24,9 +24,9 @@
       <!-- Metrics -->
       @if (loading() || metrics().length > 0) {
         <div
-          class="@container/metrics mb-5 border-y border-surface-200 bg-surface-200 dark:border-surface-800 dark:bg-surface-800"
+          class="mb-5 border-y border-surface-200 bg-surface-200 dark:border-surface-800 dark:bg-surface-800"
         >
-          <div class="grid grid-cols-2 gap-px @xl/metrics:grid-cols-4">
+          <div class="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-px">
             @if (loading()) {
               @for (_ of [1, 2, 3, 4]; track $index) {
                 <div class="flex flex-col gap-3 bg-surface-0 p-4 dark:bg-surface-950">

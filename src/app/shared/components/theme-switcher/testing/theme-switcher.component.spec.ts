@@ -8,6 +8,7 @@ describe('ThemeSwitcher', () => {
   const currentTheme = signal<ThemeMode>('light');
   const mockThemePort: ThemePort = {
     theme: currentTheme,
+    resolvedTheme: signal<'light' | 'dark'>('light'),
     setTheme: vi.fn((mode: ThemeMode) => {
       currentTheme.set(mode);
     }),

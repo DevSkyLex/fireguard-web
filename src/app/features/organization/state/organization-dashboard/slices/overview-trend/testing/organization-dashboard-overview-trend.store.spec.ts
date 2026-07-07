@@ -46,7 +46,6 @@ describe('OverviewTrendStore', () => {
   } as OrganizationDashboardTrendOutput;
 
   beforeEach(() => {
-    localStorage.clear();
     mockOrganizationService = {
       getDashboardInspectionsTrend: vi.fn().mockReturnValue(of(inspectionsTrend)),
       getDashboardNonConformitiesOpenedTrend: vi.fn().mockReturnValue(of(ncOpenedTrend)),
@@ -66,10 +65,6 @@ describe('OverviewTrendStore', () => {
     });
 
     store = TestBed.inject(OverviewTrendStore);
-  });
-
-  afterEach(() => {
-    localStorage.clear();
   });
 
   it('should auto-load the three overview trend resources', async () => {

@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import { OrganizationDashboardInspectionQualityStore } from '@features/organization/state/organization-dashboard';
 import { InspectionQualityChart } from '../inspection-quality-chart.component';
 
@@ -14,11 +15,20 @@ const mockStore = {
   rateSeriesData: signal([]),
 };
 
+const mockThemePort: ThemePort = {
+  theme: signal<ThemeMode>('light'),
+  resolvedTheme: signal<'light' | 'dark'>('light'),
+  setTheme: vi.fn(),
+};
+
 describe('InspectionQualityChart', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [InspectionQualityChart],
-      providers: [{ provide: OrganizationDashboardInspectionQualityStore, useValue: mockStore }],
+      providers: [
+        { provide: OrganizationDashboardInspectionQualityStore, useValue: mockStore },
+        { provide: THEME_PORT, useValue: mockThemePort },
+      ],
     });
   });
 

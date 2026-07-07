@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, effect, inject, PLATFORM_ID } from '@angular/core';
+import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -36,31 +36,6 @@ import {
   normalizeDashboardDateRange,
   withDashboardFilterState,
 } from '../../features';
-import {
-  DASHBOARD_PERSISTENCE_VERSION,
-  type PersistedDashboardBaseFilters,
-  buildDashboardStorageKey,
-  deserializeDateRange,
-  readDashboardStorage,
-  serializeDateRange,
-  writeDashboardStorage,
-} from '../../utils';
-
-/**
- * Type PersistedInspectionsTrendFilters
- *
- * @description
- * Shape of the persisted inspections-trend filter payload stored in
- * `localStorage`. Extends the base dashboard filter fields with the three
- * dimension filters specific to this widget.
- *
- * @since 1.0.0
- */
-type PersistedInspectionsTrendFilters = PersistedDashboardBaseFilters & {
-  readonly inspectionStatus: InspectionStatus | null;
-  readonly inspectionResult: InspectionResult | null;
-  readonly inspectorType: InspectorType | null;
-};
 
 /**
  * Store OrganizationDashboardInspectionsTrendStore
@@ -393,75 +368,20 @@ function createInspectionsTrendStore() {
       };
     }),
 
-    /**
-     * Feature withHooks
-     *
-     * @description
-     * Wires up the reactive data-fetching effect on store init.
-     *
-     * @since 1.0.0
-     */
-    withHooks((store) => {
-      const platformId: object = inject(PLATFORM_ID);
-      const activeOrganizationStore: ActiveOrganizationStore =
-        inject<ActiveOrganizationStore>(ActiveOrganizationStore);
-
-      return {
-        /**
-         * Hook onInit
-         *
-         * @description
-         * Restores persisted filters, connects {@link loadParams} to
-         * {@link load} via `rxMethod`, and registers the persistence
-         * write-back effect.
-         *
-         * @returns {void}
-         */
-        onInit(): void {
-          // === Persistence: Hydration ===
-          if (isPlatformBrowser(platformId)) {
-            const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
-              activeOrganizationStore.selectedOrganization();
-            if (organization) {
-              const key: string = buildDashboardStorageKey(organization.id, 'inspections');
-              const saved: PersistedInspectionsTrendFilters | null =
-                readDashboardStorage<PersistedInspectionsTrendFilters>(key);
-              if (saved) {
-                patchState(store, {
-                  selectedGranularity: saved.granularity,
-                  compareEnabled: saved.compareEnabled,
-                  selectedInspectionStatus: saved.inspectionStatus,
-                  selectedInspectionResult: saved.inspectionResult,
-                  selectedInspectorType: saved.inspectorType,
-                });
-                store.setDateRange(deserializeDateRange(saved.dateRange));
-              }
-            }
-          }
-
-          // === Reactive load ===
-          store.load(store.loadParams);
-
-          // === Persistence: Write effect ===
-          effect(() => {
-            if (!isPlatformBrowser(platformId)) return;
-            const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
-              activeOrganizationStore.selectedOrganization();
-            if (!organization) return;
-            const key: string = buildDashboardStorageKey(organization.id, 'inspections');
-            writeDashboardStorage<PersistedInspectionsTrendFilters>(key, {
-              _v: DASHBOARD_PERSISTENCE_VERSION,
-              granularity: store.selectedGranularity(),
-              dateRange: serializeDateRange(store.selectedDateRange()),
-              compareEnabled: store.compareEnabled(),
-              inspectionStatus: store.selectedInspectionStatus(),
-              inspectionResult: store.selectedInspectionResult(),
-              inspectorType: store.selectedInspectorType(),
-            });
-          });
-        },
-      };
-    }),
+    withHooks((store) => ({
+      /**
+       * Hook onInit
+       *
+       * @description
+       * Connects {@link loadParams} to {@link load} via `rxMethod` so the card
+       * refetches whenever a filter signal changes.
+       *
+       * @returns {void}
+       */
+      onInit(): void {
+        store.load(store.loadParams);
+      },
+    })),
     //#endregion
   );
 }

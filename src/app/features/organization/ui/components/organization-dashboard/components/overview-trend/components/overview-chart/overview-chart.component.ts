@@ -2,8 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import type { ChartData, ChartOptions } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
 import { SkeletonModule } from 'primeng/skeleton';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { buildDifferenceSeries } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import { OrganizationDashboardOverviewTrendStore } from '@features/organization/state/organization-dashboard';
+import { buildChartTooltipStyle } from '@shared/utils';
 
 /**
  * Component OverviewChart
@@ -44,6 +46,22 @@ export class OverviewChart {
    */
   private readonly store: OrganizationDashboardOverviewTrendStore =
     inject<OrganizationDashboardOverviewTrendStore>(OrganizationDashboardOverviewTrendStore);
+
+  /**
+   * Property themePort
+   * @readonly
+   *
+   * @description
+   * Neutral theme contract, read to resolve the current light/dark appearance
+   * so the canvas tooltip can be styled to match the app in both themes and
+   * recompute when the user switches theme.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @type {ThemePort}
+   */
+  private readonly themePort: ThemePort = inject<ThemePort>(THEME_PORT);
 
   /**
    * Property loading
@@ -150,15 +168,17 @@ export class OverviewChart {
    * @readonly
    *
    * @description
-   * Static Chart.js configuration for the multi-series line chart.
-   * The legend is always visible (four permanent series).
+   * Theme-aware Chart.js configuration for the multi-series line chart.
+   * Recomputes when the user switches theme so the canvas tooltip stays styled
+   * to the app in both light and dark. The legend is always visible (four
+   * permanent series).
    *
    * @access protected
-   * @since 2.0.0
+   * @since 2.1.0
    *
-   * @type {ChartOptions<'line'>}
+   * @type {Signal<ChartOptions<'line'>>}
    */
-  protected readonly options: ChartOptions<'line'> = {
+  protected readonly options: Signal<ChartOptions<'line'>> = computed<ChartOptions<'line'>>(() => ({
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 400 },
@@ -176,13 +196,7 @@ export class OverviewChart {
         },
       },
       tooltip: {
-        backgroundColor: 'rgba(15, 23, 42, 0.92)',
-        titleColor: '#f1f5f9',
-        bodyColor: '#94a3b8',
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 10,
+        ...buildChartTooltipStyle(this.themePort.resolvedTheme() === 'dark'),
         callbacks: {
           title: (items) => items[0]?.label ?? '',
           label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
@@ -204,7 +218,7 @@ export class OverviewChart {
         },
       },
     },
-  };
+  }));
 
   //#endregion
 }

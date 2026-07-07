@@ -110,13 +110,22 @@ describe('OrganizationNavPanel', () => {
     expect(text).toContain('Inspections');
   });
 
-  it('should display Team when a role read permission is granted', () => {
+  it('should display Roles when a role read permission is granted', () => {
     mockOrganizationMemberAccess.permissions.set([ORGANIZATION_PERMISSION.ROLES_READ]);
 
     const fixture = TestBed.createComponent(OrganizationNavPanel);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Team');
+    expect(fixture.nativeElement.textContent).toContain('Roles');
+  });
+
+  it('should display Members when a member read permission is granted', () => {
+    mockOrganizationMemberAccess.permissions.set([ORGANIZATION_PERMISSION.MEMBERS_READ]);
+
+    const fixture = TestBed.createComponent(OrganizationNavPanel);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Members');
   });
 
   it('should show no items when no organization is selected', () => {

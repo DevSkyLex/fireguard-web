@@ -1,0 +1,33 @@
+<p-drawer
+  i18n-header="@@org.members.inviteDrawer"
+  header="Invite member"
+  [visible]="visible()"
+  (visibleChange)="visibleChange.emit($event)"
+  [appendTo]="'body'"
+  [modal]="true"
+  [blockScroll]="true"
+  [dismissible]="!loading()"
+  [closeOnEscape]="!loading()"
+  position="right"
+  [pt]="drawerPt"
+>
+  <ng-template #content>
+    <div class="flex h-full flex-col gap-6">
+      <p
+        i18n="@@org.members.inviteDrawerIntro"
+        class="text-sm text-surface-600 dark:text-surface-300"
+      >
+        Send a secure email invitation to join this organization.
+      </p>
+
+      <div class="min-h-0 flex-1">
+        <app-organization-invitation-form
+          [roles]="roles()"
+          [loading]="loading()"
+          (submitted)="submitted.emit($event)"
+          (cancelled)="visibleChange.emit(false)"
+        />
+      </div>
+    </div>
+  </ng-template>
+</p-drawer>

@@ -34,7 +34,6 @@ describe('FacilitiesCreatedTrendStore', () => {
   } as OrganizationDashboardTrendOutput;
 
   beforeEach(() => {
-    localStorage.clear();
     mockOrganizationService = {
       getDashboardFacilitiesCreatedTrend: vi.fn().mockReturnValue(of(trend)),
     };
@@ -52,10 +51,6 @@ describe('FacilitiesCreatedTrendStore', () => {
     });
 
     store = TestBed.inject(FacilitiesCreatedTrendStore);
-  });
-
-  afterEach(() => {
-    localStorage.clear();
   });
 
   it('should auto-load the trend for the active organization', async () => {

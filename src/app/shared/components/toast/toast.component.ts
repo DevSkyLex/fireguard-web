@@ -10,41 +10,25 @@ import {
 } from '@angular/core';
 import type { ToastMessageOptions } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
-import { type TagSeverity, tagSeverityIconClass } from '../tag';
+import { type TagSeverity, tagSeverityDotClass } from '../tag';
 
 /**
  * Constant SEVERITY_TO_TAG
  *
  * @description
  * Maps a PrimeNG toast severity to the shared {@link TagSeverity} vocabulary so
- * the toast icon reuses the exact same colour roles as tags and calendar bars
- * (`error` maps to the tag `danger` role). Unknown severities fall back to info.
+ * the toast status dot reuses the exact same colour roles as tags and calendar
+ * bars: `success` stays green, `error` maps to the `danger` red, and neutral
+ * feedback (`info`) maps to the `secondary` surface/grey role. Unknown
+ * severities fall back to the neutral role.
  *
  * @since 1.0.0
  */
 const SEVERITY_TO_TAG: Readonly<Record<string, TagSeverity>> = {
   success: 'success',
-  info: 'info',
+  info: 'secondary',
   warn: 'warn',
   error: 'danger',
-};
-
-/**
- * Constant SEVERITY_TO_ICON
- *
- * @description
- * Maps a PrimeNG toast severity to its PrimeIcons glyph so each feedback type
- * carries a recognizable icon (alongside its colour), satisfying the "status
- * never conveyed by colour alone" accessibility rule. Unknown severities fall
- * back to the informational icon.
- *
- * @since 1.0.0
- */
-const SEVERITY_TO_ICON: Readonly<Record<string, string>> = {
-  success: 'pi-check-circle',
-  info: 'pi-info-circle',
-  warn: 'pi-exclamation-triangle',
-  error: 'pi-times-circle',
 };
 
 /**
@@ -54,9 +38,10 @@ const SEVERITY_TO_ICON: Readonly<Record<string, string>> = {
  * @description
  * Application toast outlet. Wraps PrimeNG's `p-toast` with a headless template
  * so every feedback message renders as a neutral elevated card (no tinted
- * background): a severity-coloured dot, a bold message, an optional secondary
- * detail line and a muted relative timestamp ("now", "1m", …). Toasts stack
- * natively, auto-dismiss, and can be clicked to dismiss early.
+ * background): a severity-coloured dot (no icon), a bold message, an optional
+ * secondary detail line and a muted relative timestamp ("now", "1m", …). Anchored
+ * bottom-center on every viewport. Toasts stack natively, auto-dismiss, and can
+ * be clicked to dismiss early.
  *
  * Mounted once in the app shell. It is driven entirely by `MessageService`
  * (through the core `FeedbackService`); it owns no business state.
@@ -118,27 +103,26 @@ export class Toast {
 
   //#region Methods
   /**
-   * Method iconClass
-   * @method iconClass
+   * Method dotClass
+   * @method dotClass
    *
    * @description
-   * Resolves the full class string for the severity icon: the PrimeIcons glyph
-   * for the feedback type plus the Tailwind text-colour utility matching the
-   * shared severity colour roles.
+   * Resolves the Tailwind background-colour utility for the status dot: green
+   * for success, red for errors and the neutral surface/grey role for neutral
+   * feedback, reusing the shared severity colour roles. Unknown severities fall
+   * back to the neutral role.
    *
    * @access protected
    * @since 1.0.0
    *
    * @param {ToastMessageOptions} message The toast message being rendered.
    *
-   * @return {string} The `pi pi-* text-*` utility classes for the icon.
+   * @return {string} The `bg-*` utility class string for the dot.
    */
-  protected iconClass(message: ToastMessageOptions): string {
+  protected dotClass(message: ToastMessageOptions): string {
     const severity: string = message.severity ?? 'info';
-    const glyph: string = SEVERITY_TO_ICON[severity] ?? 'pi-info-circle';
-    const colour: string = tagSeverityIconClass(SEVERITY_TO_TAG[severity] ?? 'info');
 
-    return `pi ${glyph} ${colour}`;
+    return tagSeverityDotClass(SEVERITY_TO_TAG[severity] ?? 'secondary');
   }
 
   /**

@@ -6,9 +6,10 @@ import {
   computed,
   type Signal,
 } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthStore } from '@features/auth/state';
 import { LoginForm, type LoginFormValues } from '@features/auth/ui/forms';
+import { resolveReturnUrl } from '@features/auth/utils';
 
 /**
  * Component LoginPage
@@ -59,6 +60,36 @@ export class LoginPage {
   private readonly router: Router = inject<Router>(Router);
 
   /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Active route used to read the optional `returnUrl` query parameter so the
+   * user is sent back to a deep link (e.g. an invitation) after signing in.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ActivatedRoute}
+   */
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
+
+  /**
+   * Property returnUrl
+   * @readonly
+   *
+   * @description
+   * Raw `returnUrl` query parameter captured on activation, forwarded through
+   * the MFA step and honored once authentication completes.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {string | null}
+   */
+  private readonly returnUrl: string | null = this.route.snapshot.queryParamMap.get('returnUrl');
+
+  /**
    * Computed loading
    * @readonly
    *
@@ -87,18 +118,22 @@ export class LoginPage {
    * @since 1.0.0
    */
   public constructor() {
-    // Navigate to MFA page when MFA is required
+    // Navigate to MFA page when MFA is required, preserving the returnUrl.
     effect(() => {
       if (this.authStore.mfaRequired()) {
-        this.router.navigate(['/auth/mfa-verify']).catch(() => undefined);
+        this.router
+          .navigate(['/auth/mfa-verify'], {
+            queryParams: this.returnUrl ? { returnUrl: this.returnUrl } : {},
+          })
+          .catch(() => undefined);
       }
     });
 
-    // Navigate to home when authenticated.
+    // Navigate to the returnUrl (or home) when authenticated.
     // User profile bootstrap is handled by auth/account initializers.
     effect(() => {
       if (this.authStore.isAuthenticated()) {
-        this.router.navigate(['/']).catch(() => undefined);
+        this.router.navigateByUrl(resolveReturnUrl(this.returnUrl)).catch(() => undefined);
       }
     });
   }

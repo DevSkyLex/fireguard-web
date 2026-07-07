@@ -6,6 +6,8 @@ import type {
   OrganizationMemberOutput,
   AddOrganizationMemberInput,
   CurrentOrganizationMemberProfileOutput,
+  RemoveOrganizationMembersInput,
+  RemoveOrganizationMembersResult,
 } from '@features/organization/models';
 
 /**
@@ -132,6 +134,31 @@ export class OrganizationMemberService extends HydraApiService {
   public remove(organizationId: string, memberId: string): Observable<void> {
     const url: string = `/api/organizations/${organizationId}/members/${memberId}`;
     return this.delete(url);
+  }
+
+  /**
+   * Method removeMany
+   * @method removeMany
+   *
+   * @description
+   * Removes several members in one request, returning the removed and failed IDs.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {ReadonlyArray<string>} memberIds - The member IDs to remove.
+   *
+   * @return {Observable<RemoveOrganizationMembersResult>} The batch outcome.
+   */
+  public removeMany(
+    organizationId: string,
+    memberIds: ReadonlyArray<string>,
+  ): Observable<RemoveOrganizationMembersResult> {
+    const url: string = `/api/organizations/${organizationId}/members/batch-remove`;
+    return this.post<RemoveOrganizationMembersInput, RemoveOrganizationMembersResult>(url, {
+      memberIds: [...memberIds],
+    });
   }
   //#endregion
 }

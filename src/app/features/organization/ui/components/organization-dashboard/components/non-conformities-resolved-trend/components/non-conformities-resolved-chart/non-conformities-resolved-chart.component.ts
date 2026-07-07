@@ -2,12 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import type { ChartData, ChartOptions } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
 import { SkeletonModule } from 'primeng/skeleton';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationDashboardNonConformitiesResolvedStore } from '@features/organization/state/organization-dashboard';
 import type { DashboardSingleTrendViewModel } from '@features/organization/ui/components/organization-dashboard/models';
 import {
   buildDashboardSingleTrendLineChartData,
   buildDashboardSingleTrendViewModel,
 } from '@features/organization/ui/components/organization-dashboard/utils';
+import { buildChartTooltipStyle } from '@shared/utils';
 
 /**
  * Component NonConformitiesResolvedChart
@@ -49,6 +51,21 @@ export class NonConformitiesResolvedChart {
     inject<OrganizationDashboardNonConformitiesResolvedStore>(
       OrganizationDashboardNonConformitiesResolvedStore,
     );
+
+  /**
+   * Property themePort
+   * @readonly
+   *
+   * @description
+   * Neutral theme contract used to resolve the active appearance mode so the
+   * chart tooltip can be styled to match the light or dark application theme.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {ThemePort}
+   */
+  private readonly themePort: ThemePort = inject<ThemePort>(THEME_PORT);
 
   /**
    * Property loading
@@ -137,13 +154,7 @@ export class NonConformitiesResolvedChart {
         },
       },
       tooltip: {
-        backgroundColor: 'rgba(15, 23, 42, 0.92)',
-        titleColor: '#f1f5f9',
-        bodyColor: '#94a3b8',
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 10,
+        ...buildChartTooltipStyle(this.themePort.resolvedTheme() === 'dark'),
         callbacks: {
           title: (items) => items[0]?.label ?? '',
           label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,

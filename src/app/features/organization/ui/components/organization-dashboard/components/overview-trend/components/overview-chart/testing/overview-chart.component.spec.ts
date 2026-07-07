@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import { OrganizationDashboardOverviewTrendStore } from '@features/organization/state/organization-dashboard';
 import { OverviewChart } from '../overview-chart.component';
 
@@ -11,11 +12,20 @@ const mockStore = {
   alignedTrendData: signal(mockAligned),
 };
 
+const mockThemePort: ThemePort = {
+  theme: signal<ThemeMode>('light'),
+  resolvedTheme: signal<'light' | 'dark'>('light'),
+  setTheme: vi.fn(),
+};
+
 describe('OverviewChart', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [OverviewChart],
-      providers: [{ provide: OrganizationDashboardOverviewTrendStore, useValue: mockStore }],
+      providers: [
+        { provide: OrganizationDashboardOverviewTrendStore, useValue: mockStore },
+        { provide: THEME_PORT, useValue: mockThemePort },
+      ],
     });
   });
 

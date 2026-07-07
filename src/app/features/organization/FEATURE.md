@@ -32,9 +32,13 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId/equipments`
 - `/organizations/:organizationId/inspections`
 - `/organizations/:organizationId/checklists`
-- `/organizations/:organizationId/team`
+- `/organizations/:organizationId/members` (members + invitations; gated by `organization.members.*`)
+- `/organizations/:organizationId/team` (roles & permissions only; gated by `organization.roles.*`)
 - `/organizations/:organizationId/settings` (tabbed via `?tab=`: general & branding, subscription, usage, notifications, regional & formats, danger zone; gated by `organization.settings.write`)
-- `/organizations/invitations/accept`
+- `/organizations/invitations/accept` — public invitation landing page; the
+  route is mounted at the **app root** (outside the auth-guarded dashboard
+  shell, in `app.routes.ts`) so a logged-out invitee can preview the invitation
+  and sign in / sign up before accepting. The page is owned by this feature.
 
 The `:organizationId` parent route resolves organization context before child pages render.
 Organization navigation and routes are filtered by the active member permissions. Subscription
@@ -58,8 +62,9 @@ Primary stores:
 - `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history)
 - `OrganizationDashboardStore` (aggregate slice: overview KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations + logo upload, refreshes `ActiveOrganizationStore`)
-- `OrganizationTeamStore` (component-scoped to the team page; members, invitations, roles and their assignments)
-- `OrganizationInvitationAcceptStore` (page-scoped; accepts an invitation token)
+- `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map)
+- `OrganizationTeamStore` (component-scoped to the roles page; roles and the permission catalog)
+- `OrganizationInvitationAcceptStore` (page-scoped; loads the public invitation preview and accepts an invitation token)
 - `AuditStore`
 
 Primary services:

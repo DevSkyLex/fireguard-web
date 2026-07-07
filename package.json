@@ -33,6 +33,8 @@
     "@angular/router": "^21.1.0",
     "@angular/service-worker": "^21.1.2",
     "@angular/ssr": "^21.1.0",
+    "@fontsource-variable/inter": "5.2.8",
+    "@fontsource-variable/jetbrains-mono": "5.2.8",
     "@ngrx/operators": "^21.0.1",
     "@ngrx/signals": "^21.0.1",
     "@primeuix/themes": "^2.0.3",

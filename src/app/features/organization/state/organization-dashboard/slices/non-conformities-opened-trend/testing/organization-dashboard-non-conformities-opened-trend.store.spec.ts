@@ -34,7 +34,6 @@ describe('NonConformitiesOpenedTrendStore', () => {
   } as OrganizationDashboardTrendOutput;
 
   beforeEach(() => {
-    localStorage.clear();
     mockOrganizationService = {
       getDashboardNonConformitiesOpenedTrend: vi.fn().mockReturnValue(of(trend)),
     };
@@ -52,10 +51,6 @@ describe('NonConformitiesOpenedTrendStore', () => {
     });
 
     store = TestBed.inject(NonConformitiesOpenedTrendStore);
-  });
-
-  afterEach(() => {
-    localStorage.clear();
   });
 
   it('should auto-load the opened non-conformities trend', async () => {

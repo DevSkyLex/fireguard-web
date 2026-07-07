@@ -1,28 +1,73 @@
-<form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
-  <p-select
-    [options]="[...members()]"
-    optionLabel="userId"
-    optionValue="id"
-    formControlName="memberId"
-    i18n-placeholder="@@org.roleAssign.member"
-    placeholder="Member"
-    [filter]="true"
-  />
-  <p-select
-    [options]="[...roles()]"
-    optionLabel="name"
-    optionValue="id"
-    formControlName="roleId"
-    i18n-placeholder="@@org.roleAssign.role"
-    placeholder="Role"
-    [filter]="true"
-  />
-  <p-button
-    type="submit"
-    i18n-label="@@org.roleAssign.submit"
-    label="Assign role"
-    icon="pi pi-plus"
-    [loading]="loading()"
-    [disabled]="form.invalid || loading()"
-  />
+<form [formGroup]="form" (ngSubmit)="submit()" class="flex h-full flex-col">
+  <div class="flex flex-1 flex-col gap-5">
+    <div class="flex flex-col gap-1.5">
+      <label for="assign-member" class="text-sm font-medium text-surface-700 dark:text-surface-200">
+        <ng-container i18n="@@org.roleAssign.member">Member</ng-container>
+        <span class="text-red-500" aria-hidden="true">&nbsp;*</span>
+      </label>
+      <p-select
+        inputId="assign-member"
+        [options]="[...memberOptions()]"
+        optionLabel="label"
+        optionValue="id"
+        formControlName="memberId"
+        i18n-placeholder="@@org.roleAssign.memberPlaceholder"
+        placeholder="Select a member"
+        [filter]="true"
+        filterBy="label"
+        styleClass="w-full"
+        [invalid]="form.controls.memberId.touched && form.controls.memberId.invalid"
+      />
+      @if (form.controls.memberId.touched && form.controls.memberId.invalid) {
+        <small i18n="@@org.roleAssign.memberError" class="text-red-500">
+          Select a member to assign the role to.
+        </small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label for="assign-role" class="text-sm font-medium text-surface-700 dark:text-surface-200">
+        <ng-container i18n="@@org.roleAssign.role">Role</ng-container>
+        <span class="text-red-500" aria-hidden="true">&nbsp;*</span>
+      </label>
+      <p-select
+        inputId="assign-role"
+        [options]="[...roles()]"
+        optionLabel="name"
+        optionValue="id"
+        formControlName="roleId"
+        i18n-placeholder="@@org.roleAssign.rolePlaceholder"
+        placeholder="Select a role"
+        [filter]="true"
+        filterBy="name"
+        styleClass="w-full"
+        [invalid]="form.controls.roleId.touched && form.controls.roleId.invalid"
+      />
+      @if (form.controls.roleId.touched && form.controls.roleId.invalid) {
+        <small i18n="@@org.roleAssign.roleError" class="text-red-500">Select a role.</small>
+      }
+    </div>
+  </div>
+
+  <div
+    class="mt-6 flex items-center justify-end gap-2 border-t border-surface-200 pt-4 dark:border-surface-800"
+  >
+    <p-button
+      type="button"
+      i18n-label="@@common.cancel"
+      label="Cancel"
+      severity="secondary"
+      [text]="true"
+      [disabled]="loading()"
+      (onClick)="cancelled.emit()"
+    />
+    <p-button
+      type="submit"
+      i18n-label="@@org.roleAssign.submit"
+      label="Assign role"
+      icon="pi pi-plus"
+      [loading]="loading()"
+      [disabled]="form.invalid || loading()"
+    />
+  </div>
 </form>

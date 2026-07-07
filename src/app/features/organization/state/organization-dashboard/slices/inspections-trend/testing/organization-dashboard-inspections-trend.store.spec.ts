@@ -34,7 +34,6 @@ describe('InspectionsTrendStore', () => {
   } as OrganizationDashboardTrendOutput;
 
   beforeEach(() => {
-    localStorage.clear();
     mockOrganizationService = {
       getDashboardInspectionsTrend: vi.fn().mockReturnValue(of(trend)),
     };
@@ -52,10 +51,6 @@ describe('InspectionsTrendStore', () => {
     });
 
     store = TestBed.inject(InspectionsTrendStore);
-  });
-
-  afterEach(() => {
-    localStorage.clear();
   });
 
   it('should auto-load the inspections trend', async () => {

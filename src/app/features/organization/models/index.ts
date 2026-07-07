@@ -2,6 +2,7 @@ export type { OrganizationOutput } from './organization-entity/organization-outp
 export type { CreateOrganizationInput } from './organization-entity/create-organization-input.interface';
 export type { InviteOrganizationMemberInput } from './member/invite-organization-member-input.interface';
 export type { OrganizationInvitationOutput } from './member/organization-invitation-output.interface';
+export type { OrganizationInvitationPreviewOutput } from './member/organization-invitation-preview-output.interface';
 export type { OrganizationMemberOutput } from './member/organization-member-output.interface';
 export type { CurrentOrganizationMemberProfileOutput } from './member/current-organization-member-profile-output.interface';
 export type { OrganizationRoleOutput } from './role/organization-role-output.interface';
@@ -11,6 +12,8 @@ export {
 } from './role/organization-permission-name.model';
 export type { OrganizationPermissionName } from './role/organization-permission-name.model';
 export type { AddOrganizationMemberInput } from './member/add-organization-member-input.interface';
+export type { RemoveOrganizationMembersInput } from './member/remove-organization-members-input.interface';
+export type { RemoveOrganizationMembersResult } from './member/remove-organization-members-result.interface';
 export type { CreateOrganizationRoleInput } from './role/create-organization-role-input.interface';
 export type { UpdateOrganizationRoleInput } from './role/update-organization-role-input.interface';
 export type { AssignOrganizationRoleInput } from './role/assign-organization-role-input.interface';
@@ -91,3 +94,6 @@ export type { CheckoutSessionInput } from './billing/checkout-session-input.inte
 export type { CheckoutSessionOutput } from './billing/checkout-session-output.interface';
 export type { PortalSessionOutput } from './billing/portal-session-output.interface';
 export { resolveSubscriptionStatusTag } from './billing-tag/subscription-status-tag.util';
+export type { InvitationTagDescriptor } from './invitation-tag/invitation-tag-descriptor.interface';
+export type { InvitationTagKind } from './invitation-tag/invitation-tag-kind.type';
+export { resolveInvitationTag } from './invitation-tag/invitation-tag.util';

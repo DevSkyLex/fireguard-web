@@ -8,27 +8,27 @@
  * stays owned by PrimeNG on the inner `.p-toast-message`, so it never fights
  * these resting transforms on the host.
  *
- * Position: bottom-right on desktop, re-centered to bottom-center on mobile.
+ * Position: bottom-center on every viewport (desktop and mobile alike).
  */
 
-/* Container: fixed bottom-right, deck of overlapping items. */
-:host ::ng-deep .p-toast.p-toast-bottom-right {
+/* Container: fixed bottom-center, deck of overlapping items. */
+:host ::ng-deep .p-toast.p-toast-bottom-center {
   bottom: 1.5rem;
-  right: 1.5rem;
+  left: 50%;
   width: 20rem;
   max-width: calc(100vw - 2rem);
   margin: 0;
-  transform: none;
+  transform: translateX(-50%);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   overflow: visible;
 }
 
-:host ::ng-deep .p-toast.p-toast-bottom-right > p-toastitem {
+:host ::ng-deep .p-toast.p-toast-bottom-center > p-toastitem {
   grid-area: 1 / 1;
   align-self: end;
   justify-self: stretch;
-  transform-origin: bottom right;
+  transform-origin: bottom center;
   transition:
     transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
     opacity 0.3s ease;
@@ -49,19 +49,19 @@
 }
 
 /* Collapsed deck: newest in front, older ones receding upward + scaled down. */
-:host ::ng-deep .p-toast-bottom-right > p-toastitem:nth-last-child(1) {
+:host ::ng-deep .p-toast-bottom-center > p-toastitem:nth-last-child(1) {
   transform: translateY(0) scale(1);
   z-index: 40;
 }
-:host ::ng-deep .p-toast-bottom-right > p-toastitem:nth-last-child(2) {
+:host ::ng-deep .p-toast-bottom-center > p-toastitem:nth-last-child(2) {
   transform: translateY(-0.85rem) scale(0.95);
   z-index: 30;
 }
-:host ::ng-deep .p-toast-bottom-right > p-toastitem:nth-last-child(3) {
+:host ::ng-deep .p-toast-bottom-center > p-toastitem:nth-last-child(3) {
   transform: translateY(-1.65rem) scale(0.9);
   z-index: 20;
 }
-:host ::ng-deep .p-toast-bottom-right > p-toastitem:nth-last-child(n + 4) {
+:host ::ng-deep .p-toast-bottom-center > p-toastitem:nth-last-child(n + 4) {
   transform: translateY(-2.3rem) scale(0.86);
   opacity: 0;
   pointer-events: none;
@@ -69,37 +69,25 @@
 }
 
 /* Hover fans the deck out into a readable, full-size vertical column. */
-:host ::ng-deep .p-toast-bottom-right:hover > p-toastitem {
+:host ::ng-deep .p-toast-bottom-center:hover > p-toastitem {
   opacity: 1;
   pointer-events: auto;
 }
-:host ::ng-deep .p-toast-bottom-right:hover > p-toastitem:nth-last-child(1) {
+:host ::ng-deep .p-toast-bottom-center:hover > p-toastitem:nth-last-child(1) {
   transform: translateY(0) scale(1);
 }
-:host ::ng-deep .p-toast-bottom-right:hover > p-toastitem:nth-last-child(2) {
+:host ::ng-deep .p-toast-bottom-center:hover > p-toastitem:nth-last-child(2) {
   transform: translateY(-4.75rem) scale(1);
 }
-:host ::ng-deep .p-toast-bottom-right:hover > p-toastitem:nth-last-child(3) {
+:host ::ng-deep .p-toast-bottom-center:hover > p-toastitem:nth-last-child(3) {
   transform: translateY(-9.5rem) scale(1);
 }
-:host ::ng-deep .p-toast-bottom-right:hover > p-toastitem:nth-last-child(n + 4) {
+:host ::ng-deep .p-toast-bottom-center:hover > p-toastitem:nth-last-child(n + 4) {
   transform: translateY(-14.25rem) scale(1);
 }
 
-/* Mobile: re-center the deck at the bottom of the viewport. */
-@media (max-width: 640px) {
-  :host ::ng-deep .p-toast.p-toast-bottom-right {
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-  :host ::ng-deep .p-toast.p-toast-bottom-right > p-toastitem {
-    transform-origin: bottom center;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  :host ::ng-deep .p-toast.p-toast-bottom-right > p-toastitem {
+  :host ::ng-deep .p-toast.p-toast-bottom-center > p-toastitem {
     transition: none;
   }
 }

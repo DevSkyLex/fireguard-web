@@ -6,9 +6,10 @@ import {
   computed,
   type Signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthStore, RegisterStore } from '@features/auth/state';
 import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/auth/ui/forms';
+import { resolveReturnUrl } from '@features/auth/utils';
 
 /**
  * Component RegisterVerifyPage
@@ -64,6 +65,21 @@ export class RegisterVerifyPage {
    * @type {Router}
    */
   private readonly router: Router = inject<Router>(Router);
+
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Active route used to read the optional `returnUrl` query parameter so an
+   * invited user lands back on the invitation after verifying their email.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ActivatedRoute}
+   */
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
    * Computed loading
@@ -127,7 +143,10 @@ export class RegisterVerifyPage {
   public constructor() {
     effect(() => {
       if (this.authStore.isAuthenticated()) {
-        this.router.navigate(['/onboarding']).catch(() => undefined);
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        this.router
+          .navigateByUrl(resolveReturnUrl(returnUrl, '/onboarding'))
+          .catch(() => undefined);
       }
     });
   }

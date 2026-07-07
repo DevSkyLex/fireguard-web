@@ -4061,8 +4061,8 @@
         <target>Listas de verificación</target>
       </trans-unit>
       <trans-unit id="route.team" datatype="html">
-        <source>Team</source>
-        <target>Equipo</target>
+        <source>Roles</source>
+        <target>Roles</target>
       </trans-unit>
       <trans-unit id="route.settings" datatype="html">
         <source>Settings</source>
@@ -4840,14 +4840,6 @@
         <source>Send invitation</source>
         <target>Enviar invitación</target>
       </trans-unit>
-      <trans-unit id="org.memberForm.userId" datatype="html">
-        <source>Existing user ID</source>
-        <target>ID de usuario existente</target>
-      </trans-unit>
-      <trans-unit id="org.memberForm.submit" datatype="html">
-        <source>Add member</source>
-        <target>Añadir miembro</target>
-      </trans-unit>
       <trans-unit id="org.notif.channels" datatype="html">
         <source> Delivery channels </source>
         <target>Canales de entrega</target>
@@ -5013,16 +5005,16 @@
         <target>Crear rol</target>
       </trans-unit>
       <trans-unit id="org.invAccept.header" datatype="html">
-        <source>Accept invitation</source>
-        <target>Aceptar invitación</target>
+        <source>Organization invitation</source>
+        <target>Invitación a la organización</target>
       </trans-unit>
       <trans-unit id="org.invAccept.missingToken" datatype="html">
-        <source>The invitation token is missing.</source>
-        <target>Falta el token de la invitación.</target>
+        <source>The invitation link is missing its token.</source>
+        <target>Al enlace de invitación le falta el token.</target>
       </trans-unit>
       <trans-unit id="org.invAccept.success" datatype="html">
-        <source>Invitation accepted. You can now open your organizations.</source>
-        <target>Invitación aceptada. Ya puedes abrir tus organizaciones.</target>
+        <source>Invitation accepted. Welcome aboard!</source>
+        <target>Invitación aceptada. ¡Bienvenido!</target>
       </trans-unit>
       <trans-unit id="org.invAccept.openOrgs" datatype="html">
         <source>Open organizations</source>
@@ -5125,12 +5117,12 @@
         <target>La organización se ha eliminado de forma permanente.</target>
       </trans-unit>
       <trans-unit id="org.team.title" datatype="html">
-        <source>Team</source>
-        <target>Equipo</target>
+        <source>Roles &amp; permissions</source>
+        <target>Roles y permisos</target>
       </trans-unit>
       <trans-unit id="org.team.subtitle" datatype="html">
-        <source>Manage members, invitations, roles and permissions.</source>
-        <target>Gestiona miembros, invitaciones, roles y permisos.</target>
+        <source>Define the roles and permissions that govern what members can do.</source>
+        <target>Define los roles y permisos que rigen lo que pueden hacer los miembros.</target>
       </trans-unit>
       <trans-unit id="org.team.tabMembers" datatype="html">
         <source>Members</source>
@@ -5803,6 +5795,334 @@
       <trans-unit id="intervention.metric.published.desc" datatype="html">
         <source>Completed</source>
         <target>Completadas</target>
+      </trans-unit>
+          <trans-unit id="route.members" datatype="html">
+        <source>Members</source>
+        <target>Miembros</target>
+      </trans-unit>
+      <trans-unit id="org.invAccept.invitedTo" datatype="html">
+        <source>You've been invited to join</source>
+        <target>Te han invitado a unirte a</target>
+      </trans-unit>
+      <trans-unit id="org.invAccept.loading" datatype="html">
+        <source>Loading your invitation…</source>
+        <target>Cargando tu invitación…</target>
+      </trans-unit>
+      <trans-unit id="org.invAccept.invalid" datatype="html">
+        <source>This invitation link is invalid or no longer available.</source>
+        <target>Este enlace de invitación no es válido o ya no está disponible.</target>
+      </trans-unit>
+      <trans-unit id="org.invAccept.switchAccount" datatype="html">
+        <source>Sign in with the invited email</source>
+        <target>Iniciar sesión con el correo invitado</target>
+      </trans-unit>
+      <trans-unit id="org.invAccept.notPending" datatype="html">
+        <source>This invitation is no longer active. Ask an organization administrator to send a new one.</source>
+        <target>Esta invitación ya no está activa. Pide a un administrador de la organización que envíe una nueva.</target>
+      </trans-unit>
+      <trans-unit id="org.invAccept.signIn" datatype="html">
+        <source>Sign in to accept</source>
+        <target>Iniciar sesión para aceptar</target>
+      </trans-unit>
+      <trans-unit id="org.invAccept.register" datatype="html">
+        <source>Create an account</source>
+        <target>Crear una cuenta</target>
+      </trans-unit>
+      <trans-unit id="org.invTable.copyAria" datatype="html">
+        <source>Copy invitation link</source>
+        <target>Copiar enlace de invitación</target>
+      </trans-unit>
+      <trans-unit id="org.invTable.resendAria" datatype="html">
+        <source>Resend invitation</source>
+        <target>Reenviar invitación</target>
+      </trans-unit>
+      <trans-unit id="org.invTable.roles" datatype="html">
+        <source>Roles</source>
+        <target>Roles</target>
+      </trans-unit>
+      <trans-unit id="org.invitationStatus.pending" datatype="html">
+        <source>Pending</source>
+        <target>Pendiente</target>
+      </trans-unit>
+      <trans-unit id="org.invitationStatus.accepted" datatype="html">
+        <source>Accepted</source>
+        <target>Aceptada</target>
+      </trans-unit>
+      <trans-unit id="org.invitationStatus.revoked" datatype="html">
+        <source>Revoked</source>
+        <target>Revocada</target>
+      </trans-unit>
+      <trans-unit id="org.invitationStatus.expired" datatype="html">
+        <source>Expired</source>
+        <target>Caducada</target>
+      </trans-unit>
+      <trans-unit id="org.memberStatus.active" datatype="html">
+        <source>Active</source>
+        <target>Activo</target>
+      </trans-unit>
+      <trans-unit id="org.memberStatus.inactive" datatype="html">
+        <source>Inactive</source>
+        <target>Inactivo</target>
+      </trans-unit>
+      <trans-unit id="org.memberTable.search" datatype="html">
+        <source>Search members</source>
+        <target>Buscar miembros</target>
+      </trans-unit>
+      <trans-unit id="org.memberTable.status" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="org.members.title" datatype="html">
+        <source>Members</source>
+        <target>Miembros</target>
+      </trans-unit>
+      <trans-unit id="org.members.subtitle" datatype="html">
+        <source>Manage who belongs to this organization and the invitations you've sent.</source>
+        <target>Gestiona quién pertenece a esta organización y las invitaciones que has enviado.</target>
+      </trans-unit>
+      <trans-unit id="org.members.invite" datatype="html">
+        <source>Invite member</source>
+        <target>Invitar miembro</target>
+      </trans-unit>
+      <trans-unit id="org.members.assignRole" datatype="html">
+        <source>Assign role</source>
+        <target>Asignar rol</target>
+      </trans-unit>
+      <trans-unit id="org.members.inviteDrawer" datatype="html">
+        <source>Invite member</source>
+        <target>Invitar miembro</target>
+      </trans-unit>
+      <trans-unit id="org.members.assignDrawer" datatype="html">
+        <source>Assign role</source>
+        <target>Asignar rol</target>
+      </trans-unit>
+      <trans-unit id="org.members.sectionInvitations" datatype="html">
+        <source>Pending invitations</source>
+        <target>Invitaciones pendientes</target>
+      </trans-unit>
+      <trans-unit id="org.members.atLimit" datatype="html">
+        <source>You've reached your plan's member limit. Upgrade your plan to add or invite more members.</source>
+        <target>Has alcanzado el límite de miembros de tu plan. Mejora tu plan para añadir o invitar a más miembros.</target>
+      </trans-unit>
+      <trans-unit id="org.members.loadError" datatype="html">
+        <source>The members could not be loaded.</source>
+        <target>No se pudieron cargar los miembros.</target>
+      </trans-unit>
+      <trans-unit id="org.members.mutationError" datatype="html">
+        <source>The operation could not be completed.</source>
+        <target>No se pudo completar la operación.</target>
+      </trans-unit>
+      <trans-unit id="org.members.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="org.members.remove" datatype="html">
+        <source>Remove</source>
+        <target>Eliminar</target>
+      </trans-unit>
+      <trans-unit id="org.members.removeHeader" datatype="html">
+        <source>Remove member</source>
+        <target>Eliminar miembro</target>
+      </trans-unit>
+      <trans-unit id="org.members.removeMessage" datatype="html">
+        <source>Remove this member from the organization?</source>
+        <target>¿Eliminar a este miembro de la organización?</target>
+      </trans-unit>
+      <trans-unit id="org.members.revokeHeader" datatype="html">
+        <source>Revoke invitation</source>
+        <target>Revocar invitación</target>
+      </trans-unit>
+      <trans-unit id="org.members.revoke" datatype="html">
+        <source>Revoke</source>
+        <target>Revocar</target>
+      </trans-unit>
+      <trans-unit id="org.members.linkCopiedSummary" datatype="html">
+        <source>Link copied</source>
+        <target>Enlace copiado</target>
+      </trans-unit>
+      <trans-unit id="org.members.linkCopiedDetail" datatype="html">
+        <source>The invitation link is on your clipboard.</source>
+        <target>El enlace de invitación está en tu portapapeles.</target>
+      </trans-unit>
+      <trans-unit id="org.members.linkCopyErrorSummary" datatype="html">
+        <source>Copy failed</source>
+        <target>Error al copiar</target>
+      </trans-unit>
+      <trans-unit id="org.members.linkCopyErrorDetail" datatype="html">
+        <source>The link could not be copied. Please copy it manually.</source>
+        <target>No se pudo copiar el enlace. Cópielo manualmente.</target>
+      </trans-unit>
+      <trans-unit id="org.members.copyRegenerateHeader" datatype="html">
+        <source>Generate a new link</source>
+        <target>Generar un nuevo enlace</target>
+      </trans-unit>
+      <trans-unit id="org.members.copyRegenerateMessage" datatype="html">
+        <source>A new invitation link will be generated, the previous one will stop working, and the invitation email will be sent again. Continue?</source>
+        <target>Se generará un nuevo enlace de invitación, el anterior dejará de funcionar y se reenviará el correo de invitación. ¿Continuar?</target>
+      </trans-unit>
+      <trans-unit id="org.members.copyRegenerateConfirm" datatype="html">
+        <source>Generate &amp; copy</source>
+        <target>Generar y copiar</target>
+      </trans-unit>
+      <trans-unit id="org.invAccept.invitedBy" datatype="html">
+        <source>Invited by <x id="INTERPOLATION" equiv-text="{{ preview.inviterDisplayName }}"/></source>
+        <target>Invitado por <x id="INTERPOLATION" equiv-text="{{ preview.inviterDisplayName }}"/></target>
+      </trans-unit>
+      <trans-unit id="org.invAccept.authPrompt" datatype="html">
+        <source> Sign in or create an account with <x id="START_TAG_STRONG" ctype="x-strong" equiv-text="&lt;strong&gt;"/><x id="INTERPOLATION" equiv-text="{{ preview.invitedEmail }}"/><x id="CLOSE_TAG_STRONG" ctype="x-strong" equiv-text="&lt;/strong&gt;"/> to accept this invitation. </source>
+        <target> Inicia sesión o crea una cuenta con <x id="START_TAG_STRONG" ctype="x-strong" equiv-text="&lt;strong&gt;"/><x id="INTERPOLATION" equiv-text="{{ preview.invitedEmail }}"/><x id="CLOSE_TAG_STRONG" ctype="x-strong" equiv-text="&lt;/strong&gt;"/> para aceptar esta invitación. </target>
+      </trans-unit>
+      <trans-unit id="org.invAccept.mismatch" datatype="html">
+        <source>You're signed in as <x id="INTERPOLATION" equiv-text="{{ currentEmail() }}"/>, but this invitation is for <x id="INTERPOLATION_1" equiv-text="{{ invitedEmail() }}"/>.</source>
+        <target>Has iniciado sesión como <x id="INTERPOLATION" equiv-text="{{ currentEmail() }}"/>, pero esta invitación es para <x id="INTERPOLATION_1" equiv-text="{{ invitedEmail() }}"/>.</target>
+      </trans-unit>
+      <trans-unit id="org.members.revokeMessage" datatype="html">
+        <source>Revoke the invitation sent to <x id="email" equiv-text="invitation.email"/>?</source>
+        <target>¿Revocar la invitación enviada a <x id="email" equiv-text="invitation.email"/>?</target>
+      </trans-unit>
+          <trans-unit id="org.invTable.copyLink" datatype="html">
+        <source>Copy link</source>
+        <target>Copiar enlace</target>
+      </trans-unit>
+      <trans-unit id="org.invTable.resend" datatype="html">
+        <source>Resend</source>
+        <target>Reenviar</target>
+      </trans-unit>
+      <trans-unit id="org.invTable.rowActions" datatype="html">
+        <source>Invitation actions</source>
+        <target>Acciones de invitación</target>
+      </trans-unit>
+      <trans-unit id="org.members.pageTitle" datatype="html">
+        <source>Members</source>
+        <target>Miembros</target>
+      </trans-unit>
+      <trans-unit id="org.members.pageSubtitle" datatype="html">
+        <source>Invite teammates, manage their roles, and track pending invitations.</source>
+        <target>Invita a compañeros, gestiona sus roles y haz seguimiento de las invitaciones pendientes.</target>
+      </trans-unit>
+      <trans-unit id="org.members.removeRoleHeader" datatype="html">
+        <source>Remove role</source>
+        <target>Quitar rol</target>
+      </trans-unit>
+      <trans-unit id="org.members.removeRoleMessage" datatype="html">
+        <source>Remove this role from the member?</source>
+        <target>¿Quitar este rol del miembro?</target>
+      </trans-unit>
+      <trans-unit id="org.members.bulkRemoveHeader" datatype="html">
+        <source>Remove members</source>
+        <target>Quitar miembros</target>
+      </trans-unit>
+      <trans-unit id="org.members.bulkRemoveMessage" datatype="html">
+        <source>Remove the selected members from the organization?</source>
+        <target>¿Quitar a los miembros seleccionados de la organización?</target>
+      </trans-unit>
+      <trans-unit id="org.members.selectedSuffix" datatype="html">
+        <source>selected</source>
+        <target>seleccionado(s)</target>
+      </trans-unit>
+      <trans-unit id="org.members.removeSelected" datatype="html">
+        <source>Remove</source>
+        <target>Quitar</target>
+      </trans-unit>
+      <trans-unit id="org.members.clearSelection" datatype="html">
+        <source>Clear</source>
+        <target>Borrar</target>
+      </trans-unit>
+      <trans-unit id="org.members.toast.removed" datatype="html">
+        <source>Member removed</source>
+        <target>Miembro eliminado</target>
+      </trans-unit>
+      <trans-unit id="org.members.toast.bulkRemoved" datatype="html">
+        <source>Members removed</source>
+        <target>Miembros eliminados</target>
+      </trans-unit>
+      <trans-unit id="org.members.toast.invited" datatype="html">
+        <source>Invitation sent</source>
+        <target>Invitación enviada</target>
+      </trans-unit>
+      <trans-unit id="org.members.toast.revoked" datatype="html">
+        <source>Invitation revoked</source>
+        <target>Invitación revocada</target>
+      </trans-unit>
+      <trans-unit id="org.members.toast.resent" datatype="html">
+        <source>Invitation resent</source>
+        <target>Invitación reenviada</target>
+      </trans-unit>
+      <trans-unit id="org.members.toast.roleAssigned" datatype="html">
+        <source>Role assigned</source>
+        <target>Rol asignado</target>
+      </trans-unit>
+      <trans-unit id="org.members.toast.roleRemoved" datatype="html">
+        <source>Role removed</source>
+        <target>Rol eliminado</target>
+      </trans-unit>
+      <trans-unit id="org.invTable.expired" datatype="html">
+        <source>Expired</source>
+        <target>Caducada</target>
+      </trans-unit>
+      <trans-unit id="org.invTable.expiresToday" datatype="html">
+        <source>Today</source>
+        <target>Hoy</target>
+      </trans-unit>
+      <trans-unit id="org.invTable.expiresTomorrow" datatype="html">
+        <source>Tomorrow</source>
+        <target>Mañana</target>
+      </trans-unit>
+      <trans-unit id="org.invForm.emailLabel" datatype="html">
+        <source>Email address</source>
+        <target>Correo electrónico</target>
+      </trans-unit>
+      <trans-unit id="org.invForm.emailError" datatype="html">
+        <source>Enter a valid email address.</source>
+        <target>Introduce una dirección de correo válida.</target>
+      </trans-unit>
+      <trans-unit id="org.invForm.emailHelp" datatype="html">
+        <source>We'll email them a secure link to join.</source>
+        <target>Le enviaremos un enlace seguro para unirse.</target>
+      </trans-unit>
+      <trans-unit id="org.invForm.rolePlaceholder" datatype="html">
+        <source>Select a role</source>
+        <target>Selecciona un rol</target>
+      </trans-unit>
+      <trans-unit id="org.invForm.roleHelp" datatype="html">
+        <source>New members receive this role. You can change it later.</source>
+        <target>Los nuevos miembros reciben este rol. Podrás cambiarlo más tarde.</target>
+      </trans-unit>
+      <trans-unit id="org.roleAssign.memberPlaceholder" datatype="html">
+        <source>Select a member</source>
+        <target>Selecciona un miembro</target>
+      </trans-unit>
+      <trans-unit id="org.roleAssign.memberError" datatype="html">
+        <source>Select a member to assign the role to.</source>
+        <target>Selecciona un miembro al que asignar el rol.</target>
+      </trans-unit>
+      <trans-unit id="org.roleAssign.rolePlaceholder" datatype="html">
+        <source>Select a role</source>
+        <target>Selecciona un rol</target>
+      </trans-unit>
+      <trans-unit id="org.roleAssign.roleError" datatype="html">
+        <source>Select a role.</source>
+        <target>Selecciona un rol.</target>
+      </trans-unit>
+      <trans-unit id="org.members.inviteDrawerIntro" datatype="html">
+        <source>Send a secure email invitation to join this organization.</source>
+        <target>Envía una invitación por correo seguro para unirse a esta organización.</target>
+      </trans-unit>
+      <trans-unit id="org.members.assignDrawerIntro" datatype="html">
+        <source>Give a member an additional role in this organization.</source>
+        <target>Otorga un rol adicional a un miembro de esta organización.</target>
+      </trans-unit>
+      <trans-unit id="org.members.toast.bulkPartial" datatype="html">
+        <source>Some members could not be removed.</source>
+        <target>No se pudieron eliminar algunos miembros.</target>
+      </trans-unit>
+      <trans-unit id="org.invTable.invitedBy" datatype="html">
+        <source>Invited by</source>
+        <target>Invitado por</target>
+      </trans-unit>
+      <trans-unit id="org.members.toast.bulkRoleFailed" datatype="html">
+        <source>The role could not be assigned to some members.</source>
+        <target>No se pudo asignar el rol a algunos miembros.</target>
       </trans-unit>
     </body>
   </file>

@@ -6,7 +6,7 @@ import {
   computed,
   type Signal,
 } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { RegisterStore } from '@features/auth/state';
 import { RegisterForm, type RegisterFormValues } from '@features/auth/ui/forms';
 
@@ -58,6 +58,21 @@ export class RegisterPage {
   private readonly router: Router = inject<Router>(Router);
 
   /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Active route used to forward the optional `returnUrl` query parameter
+   * through to the verification step (e.g. invitation acceptance).
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ActivatedRoute}
+   */
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
+
+  /**
    * Computed loading
    * @readonly
    *
@@ -87,7 +102,12 @@ export class RegisterPage {
   public constructor() {
     effect(() => {
       if (this.registerStore.hasChallenge()) {
-        this.router.navigate(['/auth/register/verify']).catch(() => undefined);
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        this.router
+          .navigate(['/auth/register/verify'], {
+            queryParams: returnUrl ? { returnUrl } : {},
+          })
+          .catch(() => undefined);
       }
     });
   }

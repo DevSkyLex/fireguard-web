@@ -2,8 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import type { ChartData, ChartOptions } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
 import { SkeletonModule } from 'primeng/skeleton';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { getDashboardTrendPointValue } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import { OrganizationDashboardAssetGrowthStore } from '@features/organization/state/organization-dashboard';
+import { buildChartTooltipStyle } from '@shared/utils';
 
 /**
  * Component AssetGrowthChart
@@ -43,6 +45,22 @@ export class AssetGrowthChart {
    */
   private readonly store: OrganizationDashboardAssetGrowthStore =
     inject<OrganizationDashboardAssetGrowthStore>(OrganizationDashboardAssetGrowthStore);
+
+  /**
+   * Property themePort
+   * @readonly
+   *
+   * @description
+   * Neutral theme contract used to resolve the concrete applied appearance
+   * (`'light'` or `'dark'`) so the canvas tooltip can theme itself and
+   * recompute when the user switches theme.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {ThemePort}
+   */
+  private readonly themePort: ThemePort = inject<ThemePort>(THEME_PORT);
 
   /**
    * Property loading
@@ -135,15 +153,16 @@ export class AssetGrowthChart {
    * @readonly
    *
    * @description
-   * Static Chart.js configuration for the grouped bar chart.
-   * The legend is always visible (no compare toggle dependency).
+   * Theme-aware Chart.js configuration for the grouped bar chart.
+   * The legend is always visible (no compare toggle dependency). The tooltip
+   * presentation is app-styled and recomputes on every theme switch.
    *
    * @access protected
    * @since 2.0.0
    *
-   * @type {ChartOptions<'bar'>}
+   * @type {Signal<ChartOptions<'bar'>>}
    */
-  protected readonly options: ChartOptions<'bar'> = {
+  protected readonly options: Signal<ChartOptions<'bar'>> = computed<ChartOptions<'bar'>>(() => ({
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 500 },
@@ -169,13 +188,7 @@ export class AssetGrowthChart {
         },
       },
       tooltip: {
-        backgroundColor: 'rgba(15, 23, 42, 0.92)',
-        titleColor: '#f1f5f9',
-        bodyColor: '#94a3b8',
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 10,
+        ...buildChartTooltipStyle(this.themePort.resolvedTheme() === 'dark'),
         callbacks: {
           title: (items) => items[0]?.label ?? '',
           label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
@@ -197,7 +210,7 @@ export class AssetGrowthChart {
         },
       },
     },
-  };
+  }));
 
   //#endregion
 }

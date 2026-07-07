@@ -2,12 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import type { ChartData, ChartOptions, ScriptableContext } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
 import { SkeletonModule } from 'primeng/skeleton';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationDashboardInspectionQualityStore } from '@features/organization/state/organization-dashboard';
 import {
   INSPECTION_RESULT_OPTIONS,
   INSPECTION_STATUS_OPTIONS,
   NON_CONFORMITY_SEVERITY_OPTIONS,
 } from '@features/organization/ui/components/organization-dashboard/options';
+import { buildChartTooltipStyle } from '@shared/utils';
 
 /**
  * Function hexToRgb
@@ -65,6 +67,22 @@ export class InspectionQualityChart {
     inject<OrganizationDashboardInspectionQualityStore>(
       OrganizationDashboardInspectionQualityStore,
     );
+
+  /**
+   * Property themePort
+   * @readonly
+   *
+   * @description
+   * Neutral theme contract, read to resolve the current light/dark appearance
+   * so the canvas tooltip can be styled to match the app in both themes and
+   * recompute when the user switches theme.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @type {ThemePort}
+   */
+  private readonly themePort: ThemePort = inject<ThemePort>(THEME_PORT);
 
   /**
    * Property loading
@@ -180,15 +198,17 @@ export class InspectionQualityChart {
    * @readonly
    *
    * @description
-   * Static Chart.js configuration for axes, legend, tooltips and interaction.
-   * Does not depend on store state; shared across all data refreshes.
+   * Theme-aware Chart.js configuration for axes, legend, tooltips and
+   * interaction. Recomputes when the user switches theme so the canvas tooltip
+   * stays styled to the app in both light and dark. Does not depend on store
+   * state; shared across all data refreshes.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.1.0
    *
-   * @type {ChartOptions<'bar'>}
+   * @type {Signal<ChartOptions<'bar'>>}
    */
-  protected readonly options: ChartOptions<'bar'> = {
+  protected readonly options: Signal<ChartOptions<'bar'>> = computed<ChartOptions<'bar'>>(() => ({
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 500 },
@@ -212,13 +232,7 @@ export class InspectionQualityChart {
         },
       },
       tooltip: {
-        backgroundColor: 'rgba(15, 23, 42, 0.92)',
-        titleColor: '#f1f5f9',
-        bodyColor: '#94a3b8',
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 10,
+        ...buildChartTooltipStyle(this.themePort.resolvedTheme() === 'dark'),
         callbacks: {
           title: (items) => items[0]?.label ?? '',
           label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`,
@@ -248,7 +262,7 @@ export class InspectionQualityChart {
         ticks: { display: false },
       },
     },
-  };
+  }));
 
   //#endregion
 }

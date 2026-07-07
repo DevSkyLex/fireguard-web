@@ -1,20 +1,71 @@
-<form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-3 md:grid-cols-[2fr_1fr_auto]">
-  <input pInputText type="email" formControlName="email" placeholder="member@example.com" />
-  <p-select
-    [options]="[...roles()]"
-    optionLabel="name"
-    optionValue="id"
-    formControlName="roleId"
-    i18n-placeholder="@@org.invForm.role"
-    placeholder="Initial role"
-    [showClear]="true"
-  />
-  <p-button
-    type="submit"
-    i18n-label="@@org.invForm.submit"
-    label="Send invitation"
-    icon="pi pi-send"
-    [loading]="loading()"
-    [disabled]="form.invalid || loading()"
-  />
+<form [formGroup]="form" (ngSubmit)="submit()" class="flex h-full flex-col">
+  <div class="flex flex-1 flex-col gap-5">
+    <div class="flex flex-col gap-1.5">
+      <label for="invite-email" class="text-sm font-medium text-surface-700 dark:text-surface-200">
+        <ng-container i18n="@@org.invForm.emailLabel">Email address</ng-container>
+        <span class="text-red-500" aria-hidden="true">&nbsp;*</span>
+      </label>
+      <input
+        id="invite-email"
+        pInputText
+        type="email"
+        autocomplete="email"
+        formControlName="email"
+        placeholder="member@example.com"
+        class="w-full"
+        [invalid]="form.controls.email.touched && form.controls.email.invalid"
+      />
+      @if (form.controls.email.touched && form.controls.email.invalid) {
+        <small i18n="@@org.invForm.emailError" class="text-red-500">
+          Enter a valid email address.
+        </small>
+      } @else {
+        <small i18n="@@org.invForm.emailHelp" class="text-surface-500 dark:text-surface-400">
+          We'll email them a secure link to join.
+        </small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label for="invite-role" class="text-sm font-medium text-surface-700 dark:text-surface-200">
+        <ng-container i18n="@@org.invForm.role">Initial role</ng-container>
+      </label>
+      <p-select
+        inputId="invite-role"
+        [options]="[...roles()]"
+        optionLabel="name"
+        optionValue="id"
+        formControlName="roleId"
+        i18n-placeholder="@@org.invForm.rolePlaceholder"
+        placeholder="Select a role"
+        [showClear]="true"
+        styleClass="w-full"
+      />
+      <small i18n="@@org.invForm.roleHelp" class="text-surface-500 dark:text-surface-400">
+        New members receive this role. You can change it later.
+      </small>
+    </div>
+  </div>
+
+  <div
+    class="mt-6 flex items-center justify-end gap-2 border-t border-surface-200 pt-4 dark:border-surface-800"
+  >
+    <p-button
+      type="button"
+      i18n-label="@@common.cancel"
+      label="Cancel"
+      severity="secondary"
+      [text]="true"
+      [disabled]="loading()"
+      (onClick)="cancelled.emit()"
+    />
+    <p-button
+      type="submit"
+      i18n-label="@@org.invForm.submit"
+      label="Send invitation"
+      icon="pi pi-send"
+      [loading]="loading()"
+      [disabled]="form.invalid || loading()"
+    />
+  </div>
 </form>

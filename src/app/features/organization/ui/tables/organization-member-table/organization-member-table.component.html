@@ -1,68 +1,224 @@
-<p-card>
-  <p-table [value]="loading() ? skeletonItems : [...members()]" dataKey="id" [stripedRows]="true">
-    <ng-template pTemplate="header"
-      ><tr>
-        <th i18n="@@org.memberTable.user">User</th>
-        <th i18n="@@org.memberTable.roles">Roles</th>
-        <th i18n="@@org.memberTable.joined">Joined</th>
-        <th class="w-20"><span i18n="@@org.memberTable.actions" class="sr-only">Actions</span></th>
-      </tr></ng-template
+<p-menu #rowMenu [model]="rowMenuItems()" [popup]="true" appendTo="body" />
+
+<p-card [pt]="cardPt">
+  <ng-template pTemplate="header">
+    <div
+      class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
     >
-    <ng-template pTemplate="body" let-member>
-      @if (loading()) {
-        <tr>
-          <td><p-skeleton width="12rem" /></td>
-          <td><p-skeleton width="10rem" /></td>
-          <td><p-skeleton width="8rem" /></td>
-          <td><p-skeleton shape="circle" size="2rem" /></td>
-        </tr>
+      @if (selectedCount() > 0) {
+        <span
+          role="status"
+          aria-live="polite"
+          class="text-sm font-medium text-surface-700 dark:text-surface-200"
+        >
+          {{ selectedCount() }} <span i18n="@@org.members.selectedSuffix">selected</span>
+        </span>
+        <div class="flex flex-wrap items-center gap-2">
+          @if (canManageRoles()) {
+            <p-select
+              [options]="[...roles()]"
+              optionLabel="name"
+              optionValue="id"
+              size="small"
+              i18n-placeholder="@@org.members.assignRole"
+              placeholder="Assign role"
+              styleClass="w-44"
+              (onChange)="emitBulkAssignRole($event.value)"
+            />
+          }
+          <p-button
+            i18n-label="@@org.members.removeSelected"
+            label="Remove"
+            icon="pi pi-trash"
+            severity="danger"
+            size="small"
+            (onClick)="emitBulkRemove()"
+          />
+          <p-button
+            i18n-label="@@org.members.clearSelection"
+            label="Clear"
+            severity="secondary"
+            size="small"
+            [text]="true"
+            (onClick)="clearSelection()"
+          />
+        </div>
       } @else {
+        <p-iconfield class="w-full sm:max-w-xs">
+          <p-inputicon class="pi pi-search" />
+          <input
+            #search
+            pInputText
+            type="text"
+            pSize="small"
+            i18n-placeholder="@@org.memberTable.search"
+            placeholder="Search members"
+            class="w-full"
+            (input)="onSearch(search.value)"
+          />
+        </p-iconfield>
+
+        <div class="flex flex-wrap items-center gap-2">
+          @if (canManageRoles()) {
+            <p-button
+              i18n-label="@@org.members.assignRole"
+              label="Assign role"
+              icon="pi pi-id-card"
+              severity="secondary"
+              size="small"
+              [outlined]="true"
+              (onClick)="assignRole.emit()"
+            />
+          }
+
+          @if (canManageMembers()) {
+            <p-button
+              i18n-label="@@org.members.invite"
+              label="Invite member"
+              icon="pi pi-envelope"
+              severity="primary"
+              size="small"
+              (onClick)="invite.emit()"
+            />
+          }
+        </div>
+      }
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="content">
+    <p-table
+      [value]="loading() ? skeletonItems : [...members()]"
+      dataKey="id"
+      [stripedRows]="true"
+      [pt]="tablePt"
+      [selection]="selection()"
+      (selectionChange)="selection.set($event)"
+    >
+      <ng-template pTemplate="header">
         <tr>
-          <td class="font-medium">{{ member.userId }}</td>
+          @if (canRemoveMember()) {
+            <th class="w-12 pl-5"><p-tableHeaderCheckbox /></th>
+          }
+          <th i18n="@@org.memberTable.user" class="min-w-64" [class.pl-5]="!canRemoveMember()">
+            User
+          </th>
+          <th i18n="@@org.memberTable.roles" class="min-w-48">Roles</th>
+          <th i18n="@@org.memberTable.status" class="min-w-28">Status</th>
+          <th i18n="@@org.memberTable.joined" class="min-w-36">Joined</th>
+          <th class="w-20">
+            <span i18n="@@org.memberTable.actions" class="sr-only">Actions</span>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        @for (_ of skeletonItems; track $index) {
+          <tr>
+            @if (canRemoveMember()) {
+              <td class="pl-5"><p-skeleton shape="circle" size="1.25rem" /></td>
+            }
+            <td [class.pl-5]="!canRemoveMember()">
+              <div class="flex items-center gap-3">
+                <p-skeleton shape="circle" size="2.25rem" />
+                <p-skeleton width="10rem" height="0.875rem" />
+              </div>
+            </td>
+            <td><p-skeleton width="8rem" height="1.25rem" borderRadius="999px" /></td>
+            <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
+            <td><p-skeleton width="6rem" height="0.875rem" /></td>
+            <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
+          </tr>
+        }
+      </ng-template>
+
+      <ng-template pTemplate="body" let-member>
+        <tr>
+          @if (canRemoveMember()) {
+            <td class="pl-5"><p-tableCheckbox [value]="member" /></td>
+          }
+          <td [class.pl-5]="!canRemoveMember()">
+            <div class="flex min-w-0 items-center gap-3">
+              <p-avatar
+                [image]="member.avatarUrl ?? undefined"
+                [label]="member.avatarUrl ? undefined : memberInitials(member)"
+                shape="circle"
+                size="normal"
+                styleClass="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+              />
+              <span class="flex min-w-0 flex-col">
+                <span class="truncate font-medium text-surface-900 dark:text-surface-100">{{
+                  memberName(member)
+                }}</span>
+                @if (member.email) {
+                  <span class="truncate text-xs text-surface-500 dark:text-surface-400">{{
+                    member.email
+                  }}</span>
+                }
+              </span>
+            </div>
+          </td>
           <td>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-1.5">
               @for (roleId of member.roleIds; track roleId) {
                 <p-chip
                   [label]="roleName(roleId)"
+                  styleClass="text-xs"
                   [removable]="canManageRoles()"
                   (onRemove)="removeRole.emit({ member, roleId })"
                 />
               } @empty {
-                <span i18n="@@org.memberTable.noRoles" class="text-sm text-surface-500"
+                <span i18n="@@org.memberTable.noRoles" class="text-sm text-surface-400"
                   >No roles</span
                 >
               }
             </div>
           </td>
-          <td>{{ member.joinedAt | date: 'mediumDate' }}</td>
+          <td><app-tag [descriptor]="memberStatusDescriptor(member)" /></td>
+          <td>
+            <span class="text-surface-600 dark:text-surface-300">{{
+              member.joinedAt | date: 'mediumDate'
+            }}</span>
+          </td>
           <td class="text-right">
-            @if (canRemoveMember()) {
+            @if (hasRowActions()) {
               <p-button
-                icon="pi pi-trash"
-                severity="danger"
-                [text]="true"
-                [rounded]="true"
+                icon="pi pi-ellipsis-v"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
                 i18n-ariaLabel="@@org.memberTable.removeAria"
-                ariaLabel="Remove member"
-                (onClick)="remove.emit(member)"
+                ariaLabel="Member actions"
+                (onClick)="onRowMenuToggle($event, member)"
               />
             }
           </td>
         </tr>
-      }
-    </ng-template>
-    <ng-template pTemplate="emptymessage">
-      <tr class="bg-transparent! [&>td]:border-b-0!">
-        <td colspan="4">
-          <app-empty-state
-            icon="pi-users"
-            i18n-title="@@org.memberTable.emptyTitle"
-            title="No members yet"
-            i18n-description="@@org.memberTable.emptyDesc"
-            description="People who join this organization will appear here."
-          />
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr class="bg-transparent! [&>td]:border-b-0!">
+          <td [attr.colspan]="canRemoveMember() ? 6 : 5">
+            <app-empty-state
+              icon="pi-users"
+              i18n-title="@@org.memberTable.emptyTitle"
+              title="No members yet"
+              i18n-description="@@org.memberTable.emptyDesc"
+              description="People who join this organization will appear here."
+            />
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    @if (!loading() && total() > pageSize()) {
+      <p-paginator
+        [rows]="pageSize()"
+        [totalRecords]="total()"
+        [first]="(page() - 1) * pageSize()"
+        styleClass="border-t border-surface-200 dark:border-surface-800"
+        (onPageChange)="pageChange.emit(($event.page ?? 0) + 1)"
+      />
+    }
+  </ng-template>
 </p-card>

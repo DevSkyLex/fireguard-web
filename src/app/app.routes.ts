@@ -28,6 +28,22 @@ import { provideSplitLayoutSlots, SplitLayout } from './layouts/split-layout';
  */
 export const APP_ROUTES: Routes = [
   {
+    /**
+     * Public invitation acceptance landing page.
+     *
+     * Mounted at the app root (outside the auth-guarded dashboard shell) so an
+     * invitee can open the email link, preview the invitation and choose to
+     * sign in or create an account before accepting. The URL is kept stable
+     * because it is embedded in invitation emails.
+     */
+    path: 'organizations/invitations/accept',
+    loadComponent: () =>
+      import('@features/organization/ui/pages/organization-invitation-accept/organization-invitation-accept.component').then(
+        (m) => m.OrganizationInvitationAcceptPage,
+      ),
+    title: $localize`:@@route.acceptInvitation:Accept Invitation`,
+  },
+  {
     path: 'auth',
     component: SplitLayout,
     providers: [

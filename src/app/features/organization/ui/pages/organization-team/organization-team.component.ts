@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   inject,
   signal,
   type Signal,
@@ -12,87 +11,47 @@ import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
-import { TabsModule } from 'primeng/tabs';
-import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
 import { OrganizationPermissionService } from '@features/organization/access';
-import type {
-  AddOrganizationMemberInput,
-  InviteOrganizationMemberInput,
-  OrganizationInvitationOutput,
-  OrganizationMemberOutput,
-  OrganizationRoleOutput,
-} from '@features/organization/models';
-import {
-  ORGANIZATION_PERMISSION,
-  ORGANIZATION_QUOTA_RESOURCE,
-} from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import type { OrganizationRoleOutput } from '@features/organization/models';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { ActiveOrganizationStore } from '@features/organization/state';
 import { OrganizationTeamStore } from '@features/organization/state/organization-team';
-import { OrganizationQuotaUpgradeDialog } from '@features/organization/ui/components';
 import {
-  OrganizationInvitationForm,
-  OrganizationMemberForm,
-  OrganizationRoleAssignmentForm,
   OrganizationRoleForm,
-  type OrganizationRoleAssignmentValues,
   type OrganizationRoleFormValues,
 } from '@features/organization/ui/forms';
-import {
-  OrganizationInvitationTable,
-  OrganizationMemberTable,
-  OrganizationRoleTable,
-  type OrganizationMemberRoleRemoval,
-} from '@features/organization/ui/tables';
-import { isQuotaExceededError } from '@features/organization/utils';
+import { OrganizationRoleTable } from '@features/organization/ui/tables';
 
 /**
  * Page OrganizationTeamPage
  *
  * @description
- * Coordinates organization members, invitations, roles and role assignments
- * according to the active member's management permissions.
+ * Roles & permissions administration for the active organization. Member and
+ * invitation management moved to the dedicated members page; this page owns role
+ * definitions only.
  *
  * @since 1.0.0
  */
 @Component({
   selector: 'app-organization-team',
-  imports: [
-    CardModule,
-    ButtonModule,
-    MessageModule,
-    OrganizationInvitationForm,
-    OrganizationInvitationTable,
-    OrganizationMemberForm,
-    OrganizationMemberTable,
-    OrganizationRoleAssignmentForm,
-    OrganizationRoleForm,
-    OrganizationRoleTable,
-    OrganizationQuotaUpgradeDialog,
-    TabsModule,
-  ],
+  imports: [CardModule, ButtonModule, MessageModule, OrganizationRoleForm, OrganizationRoleTable],
   providers: [OrganizationTeamStore],
   templateUrl: './organization-team.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationTeamPage {
-  /** PrimeNG confirmation service for destructive team operations. */
-  private readonly confirmationService: ConfirmationService =
-    inject<ConfirmationService>(ConfirmationService);
+  /** PrimeNG confirmation service for destructive role operations. */
+  private readonly confirmationService: ConfirmationService = inject(ConfirmationService);
   /** Active organization context store. */
   private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+    inject(ActiveOrganizationStore);
   /** Organization permission evaluator. */
   private readonly permissionService: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /** Root-provided quota store, reloaded after a member quota-exceeded failure. */
-  private readonly quotaStore: OrganizationQuotaStore =
-    inject<OrganizationQuotaStore>(OrganizationQuotaStore);
-
   /** Page-scoped team workflow store. */
-  protected readonly store: OrganizationTeamStore =
-    inject<OrganizationTeamStore>(OrganizationTeamStore);
+  protected readonly store: OrganizationTeamStore = inject(OrganizationTeamStore);
   /** Role currently selected for editing. */
   protected readonly selectedRole: WritableSignal<OrganizationRoleOutput | null> = signal(null);
 
@@ -100,6 +59,11 @@ export class OrganizationTeamPage {
   protected readonly loadErrorFallback: string = $localize`:@@org.team.loadError:The team administration data could not be loaded.`;
   /** Localized fallback for the mutation-error banner. */
   protected readonly mutationErrorFallback: string = $localize`:@@org.team.mutationError:The team operation could not be completed.`;
+
+  /** Whether the active member can manage organization roles. */
+  protected readonly canManageRoles: Signal<boolean> = computed(() =>
+    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.ROLES_MANAGE),
+  );
 
   /**
    * Localized role-form card header, depending on edit vs create mode.
@@ -115,139 +79,21 @@ export class OrganizationTeamPage {
       : $localize`:@@org.roleForm.create:Create role`;
   }
 
-  /** The capped resource governing member additions and invitations. */
-  protected readonly quotaResource = ORGANIZATION_QUOTA_RESOURCE.MEMBERS;
-  /** Whether the organization has reached its plan limit for members. */
-  protected readonly atMemberLimit: Signal<boolean> = computed<boolean>(() =>
-    this.quotaStore.isAtLimit(ORGANIZATION_QUOTA_RESOURCE.MEMBERS),
-  );
-  /** Visibility of the quota upgrade dialog shown on a 409 member failure. */
-  protected readonly quotaDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
-  /**
-   * Whether the current mutation error is an inline-displayable (non-quota)
-   * error. Quota (409) failures are surfaced through the upgrade dialog instead.
-   */
-  protected readonly hasInlineMutationError: Signal<boolean> = computed<boolean>(() => {
-    const error = this.store.mutationError();
-    return error !== null && !isQuotaExceededError(error);
-  });
-  /** Whether the active member can view the member workflow. */
-  protected readonly canViewMembers: Signal<boolean> = computed(() =>
-    this.permissionService.hasAnyPermission([
-      ORGANIZATION_PERMISSION.MEMBERS_READ,
-      ORGANIZATION_PERMISSION.MEMBERS_MANAGE,
-    ]),
-  );
-  /** Whether the active member can view the role workflow. */
-  protected readonly canViewRoles: Signal<boolean> = computed(() =>
-    this.permissionService.hasAnyPermission([
-      ORGANIZATION_PERMISSION.ROLES_READ,
-      ORGANIZATION_PERMISSION.ROLES_MANAGE,
-    ]),
-  );
-  /** Whether the active member can manage members and invitations. */
-  protected readonly canManageMembers: Signal<boolean> = computed(() =>
-    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.MEMBERS_MANAGE),
-  );
-  /** Whether the active member can manage organization roles. */
-  protected readonly canManageRoles: Signal<boolean> = computed(() =>
-    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.ROLES_MANAGE),
-  );
-  /** First visible team tab for the active member. */
-  protected readonly defaultTab: Signal<'members' | 'roles'> = computed(() =>
-    this.canViewMembers() ? 'members' : 'roles',
-  );
-  /** PrimeNG pass-through configuration for the tab container. */
-  protected readonly tabsPt: TabsPassThrough = {
-    root: { class: 'flex min-h-0 flex-1 flex-col' },
-  };
-  /** PrimeNG pass-through configuration for the tab list. */
-  protected readonly tabListPt: TabListPassThrough = {
-    content: { class: 'rounded-t-md' },
-    tabList: { class: 'px-4' },
-  };
-  /** PrimeNG pass-through configuration for the tab panels. */
-  protected readonly tabPanelsPt: TabPanelsPassThrough = {
-    root: { class: 'min-h-0 flex-1 overflow-y-auto px-0 pt-6' },
-  };
-
-  /** Initializes the team resources visible to the active member. */
+  /** Initializes the role resources visible to the active member. */
   public constructor() {
     this.reload();
-
-    // Surface member quota (409) failures through the actionable upgrade dialog
-    // and resync the usage meters.
-    effect(() => {
-      const error = this.store.mutationError();
-      if (error !== null && isQuotaExceededError(error)) {
-        this.quotaStore.reload();
-        this.quotaDialogVisible.set(true);
-      }
-    });
   }
 
-  /** Reloads only the team resources allowed by current permissions. */
+  /** Reloads roles and (when manageable) the permission catalog. */
   protected reload(): void {
     const organizationId = this.organizationId();
     if (!organizationId) return;
-
     this.store.load({
       organizationId,
-      includeMembers: this.canViewMembers(),
-      includeRoles: this.canViewRoles(),
-      includeInvitations: this.canViewMembers(),
+      includeMembers: false,
+      includeRoles: true,
+      includeInvitations: false,
       includePermissions: this.canManageRoles(),
-    });
-  }
-
-  /** Adds an existing user to the active organization. */
-  protected addMember(input: AddOrganizationMemberInput): void {
-    const organizationId = this.organizationId();
-    if (organizationId) this.store.addMember({ organizationId, input });
-  }
-
-  /** Confirms and removes a member from the active organization. */
-  protected removeMember(member: OrganizationMemberOutput): void {
-    this.confirmationService.confirm({
-      header: $localize`:@@org.team.removeMemberHeader:Remove member`,
-      message: $localize`:@@org.team.removeMemberMessage:Remove member ${member.userId}:user: from this organization?`,
-      icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: $localize`:@@org.team.remove:Remove`, severity: 'danger' },
-      rejectButtonProps: {
-        label: $localize`:@@common.cancel:Cancel`,
-        severity: 'secondary',
-        outlined: true,
-      },
-      accept: () => {
-        const organizationId = this.organizationId();
-        if (organizationId) this.store.removeMember({ organizationId, memberId: member.id });
-      },
-    });
-  }
-
-  /** Sends an invitation for the active organization. */
-  protected invite(input: InviteOrganizationMemberInput): void {
-    const organizationId = this.organizationId();
-    if (organizationId) this.store.invite({ organizationId, input });
-  }
-
-  /** Confirms and revokes an organization invitation. */
-  protected revokeInvitation(invitation: OrganizationInvitationOutput): void {
-    this.confirmationService.confirm({
-      header: $localize`:@@org.team.revokeHeader:Revoke invitation`,
-      message: $localize`:@@org.team.revokeMessage:Revoke the invitation sent to ${invitation.email}:email:?`,
-      icon: 'pi pi-exclamation-triangle',
-      acceptButtonProps: { label: $localize`:@@org.team.revoke:Revoke`, severity: 'danger' },
-      rejectButtonProps: {
-        label: $localize`:@@common.cancel:Cancel`,
-        severity: 'secondary',
-        outlined: true,
-      },
-      accept: () => {
-        const organizationId = this.organizationId();
-        if (organizationId)
-          this.store.revokeInvitation({ organizationId, invitationId: invitation.id });
-      },
     });
   }
 
@@ -293,28 +139,6 @@ export class OrganizationTeamPage {
         if (organizationId) this.store.removeRole({ organizationId, roleId: role.id });
       },
     });
-  }
-
-  /** Assigns a role to an organization member. */
-  protected assignRole(values: OrganizationRoleAssignmentValues): void {
-    const organizationId = this.organizationId();
-    if (organizationId)
-      this.store.assignRole({
-        organizationId,
-        memberId: values.memberId,
-        input: { roleId: values.roleId },
-      });
-  }
-
-  /** Removes an assigned role from an organization member. */
-  protected removeRoleFromMember(removal: OrganizationMemberRoleRemoval): void {
-    const organizationId = this.organizationId();
-    if (organizationId)
-      this.store.removeRoleFromMember({
-        organizationId,
-        memberId: removal.member.id,
-        roleId: removal.roleId,
-      });
   }
 
   /** Returns the active organization identifier when available. */

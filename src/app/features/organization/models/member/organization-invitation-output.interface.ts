@@ -19,6 +19,8 @@ export interface OrganizationInvitationOutput extends HydraItem {
   readonly status: string;
   /** @type {string} */
   readonly invitedByUserId: string;
+  /** @type {string | null | undefined} */
+  readonly invitedByDisplayName?: string | null;
   /** @type {string | null} */
   readonly acceptedByUserId: string | null;
   /** @type {string | null} */
@@ -31,5 +33,12 @@ export interface OrganizationInvitationOutput extends HydraItem {
   readonly updatedAt: string;
   /** @type {ReadonlyArray<string>} */
   readonly roleIds: ReadonlyArray<string>;
+  /**
+   * Public accept link, populated only on invite/resend responses (the token is
+   * never recoverable from a listed invitation). Empty otherwise.
+   *
+   * @type {string}
+   */
+  readonly acceptUrl?: string;
   //#endregion
 }

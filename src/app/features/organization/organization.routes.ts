@@ -20,17 +20,6 @@ import { ORGANIZATION_PERMISSION } from './models';
  */
 export const ORGANIZATION_ROUTES: Routes = [
   {
-    path: 'invitations/accept',
-    loadComponent: () =>
-      import('./ui/pages/organization-invitation-accept/organization-invitation-accept.component').then(
-        (m) => m.OrganizationInvitationAcceptPage,
-      ),
-    title: $localize`:@@route.acceptInvitation:Accept Invitation`,
-    data: {
-      breadcrumb: false,
-    },
-  },
-  {
     path: ':organizationId',
     canActivate: [organizationAccessGuard],
     resolve: {
@@ -92,15 +81,32 @@ export const ORGANIZATION_ROUTES: Routes = [
           import('./features/checklists/checklists.routes').then((m) => m.CHECKLIST_ROUTES),
       },
       {
-        path: 'team',
+        path: 'members',
         canActivate: [
           organizationPermissionGuard({
             permissions: [
               ORGANIZATION_PERMISSION.MEMBERS_READ,
               ORGANIZATION_PERMISSION.MEMBERS_MANAGE,
-              ORGANIZATION_PERMISSION.ROLES_READ,
-              ORGANIZATION_PERMISSION.ROLES_MANAGE,
             ],
+            match: 'any',
+            redirectTo: ['/organizations'],
+          }),
+        ],
+        loadComponent: () =>
+          import('./ui/pages/organization-members/organization-members.component').then(
+            (m) => m.OrganizationMembersPage,
+          ),
+        title: $localize`:@@route.members:Members`,
+        data: {
+          breadcrumb: 'Members',
+          preload: true,
+        },
+      },
+      {
+        path: 'team',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.ROLES_READ, ORGANIZATION_PERMISSION.ROLES_MANAGE],
             match: 'any',
             redirectTo: ['/organizations'],
           }),
@@ -109,9 +115,9 @@ export const ORGANIZATION_ROUTES: Routes = [
           import('./ui/pages/organization-team/organization-team.component').then(
             (m) => m.OrganizationTeamPage,
           ),
-        title: $localize`:@@route.team:Team`,
+        title: $localize`:@@route.team:Roles`,
         data: {
-          breadcrumb: 'Team',
+          breadcrumb: 'Roles',
           preload: true,
         },
       },

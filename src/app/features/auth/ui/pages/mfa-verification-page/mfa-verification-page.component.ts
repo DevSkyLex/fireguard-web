@@ -6,10 +6,11 @@ import {
   computed,
   type Signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthStore } from '@features/auth/state';
 import { ActiveTrustedDeviceStore } from '@features/auth/state';
 import { OtpVerificationForm, type OtpVerificationFormValues } from '@features/auth/ui/forms';
+import { resolveReturnUrl } from '@features/auth/utils';
 
 /**
  * Component MfaVerificationPage
@@ -91,6 +92,21 @@ export class MfaVerificationPage {
   private readonly router: Router = inject<Router>(Router);
 
   /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Active route used to read the optional `returnUrl` query parameter
+   * forwarded from the login step.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ActivatedRoute}
+   */
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
+
+  /**
    * Computed showTrustDevice
    * @readonly
    *
@@ -149,10 +165,11 @@ export class MfaVerificationPage {
    * @since 1.0.0
    */
   public constructor() {
-    // Navigate to home when authenticated
+    // Navigate to the returnUrl (or home) when authenticated
     effect(() => {
       if (this.authStore.isAuthenticated()) {
-        this.router.navigate(['/']).catch(() => undefined);
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        this.router.navigateByUrl(resolveReturnUrl(returnUrl)).catch(() => undefined);
       }
     });
   }

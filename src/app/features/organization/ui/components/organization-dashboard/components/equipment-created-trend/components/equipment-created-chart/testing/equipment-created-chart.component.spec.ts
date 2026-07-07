@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import { OrganizationDashboardEquipmentCreatedStore } from '@features/organization/state/organization-dashboard';
 import { EquipmentCreatedChart } from '../equipment-created-chart.component';
 
@@ -9,11 +10,20 @@ const mockStore = {
   compareEnabled: signal(false),
 };
 
+const mockThemePort: ThemePort = {
+  theme: signal<ThemeMode>('light'),
+  resolvedTheme: signal<'light' | 'dark'>('light'),
+  setTheme: vi.fn(),
+};
+
 describe('EquipmentCreatedChart', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [EquipmentCreatedChart],
-      providers: [{ provide: OrganizationDashboardEquipmentCreatedStore, useValue: mockStore }],
+      providers: [
+        { provide: OrganizationDashboardEquipmentCreatedStore, useValue: mockStore },
+        { provide: THEME_PORT, useValue: mockThemePort },
+      ],
     });
   });
 

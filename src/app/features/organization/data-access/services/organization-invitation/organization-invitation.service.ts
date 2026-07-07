@@ -6,6 +6,7 @@ import type {
   AcceptOrganizationInvitationInput,
   InviteOrganizationMemberInput,
   OrganizationInvitationOutput,
+  OrganizationInvitationPreviewOutput,
   OrganizationMemberOutput,
 } from '@features/organization/models';
 
@@ -123,6 +124,54 @@ export class OrganizationInvitationService extends HydraApiService {
   ): Observable<OrganizationInvitationOutput> {
     return this.postAction<OrganizationInvitationOutput>(
       `/api/organizations/${organizationId}/invitations/${invitationId}/revoke`,
+    );
+  }
+
+  /**
+   * Method resend
+   * @method resend
+   *
+   * @description
+   * Regenerates the token, resets the expiry and re-sends the invitation email,
+   * returning the invitation with a fresh `acceptUrl`. Any previously issued
+   * link is invalidated.
+   *
+   * @access public
+   * @since 1.3.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} invitationId - The ID of the invitation to resend.
+   *
+   * @return {Observable<OrganizationInvitationOutput>} An observable emitting the renewed invitation (with `acceptUrl`).
+   */
+  public resend(
+    organizationId: string,
+    invitationId: string,
+  ): Observable<OrganizationInvitationOutput> {
+    return this.postAction<OrganizationInvitationOutput>(
+      `/api/organizations/${organizationId}/invitations/${invitationId}/resend`,
+    );
+  }
+
+  /**
+   * Method preview
+   * @method preview
+   *
+   * @description
+   * Fetches a minimal, public-safe preview of an invitation resolved by token,
+   * used by the (unauthenticated) acceptance page to show the organization and
+   * inviter before the recipient signs in or registers.
+   *
+   * @access public
+   * @since 1.3.0
+   *
+   * @param {string} token - The raw invitation token.
+   *
+   * @return {Observable<OrganizationInvitationPreviewOutput>} An observable emitting the invitation preview.
+   */
+  public preview(token: string): Observable<OrganizationInvitationPreviewOutput> {
+    return this.getOne<OrganizationInvitationPreviewOutput>(
+      `/api/organizations/invitations/${encodeURIComponent(token)}/preview`,
     );
   }
   //#endregion

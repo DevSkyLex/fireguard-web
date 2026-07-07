@@ -1,5 +1,6 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
+  computed,
   effect,
   inject,
   Injectable,
@@ -116,6 +117,27 @@ export class ThemeService {
   private readonly prefersDark: Signal<boolean> = mediaQuery('(prefers-color-scheme: dark)', {
     initialValue: false,
   });
+
+  /**
+   * Property resolvedTheme
+   * @readonly
+   *
+   * @description
+   * Reactive signal exposing the concrete applied appearance — always
+   * `'light'` or `'dark'`, with `'system'` already resolved through the
+   * live {@link prefersDark} media query. Mirrors the `data-theme` attribute
+   * set on the document root, so consumers that cannot read CSS (e.g. canvas
+   * charts) can theme themselves and react to theme switches. SSR-safe:
+   * resolves to `'light'` on the server.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {Signal<'light' | 'dark'>}
+   */
+  public readonly resolvedTheme: Signal<'light' | 'dark'> = computed<'light' | 'dark'>(() =>
+    this.resolveTheme(this.theme()),
+  );
   //#endregion
 
   //#region Constructor

@@ -1,0 +1,96 @@
+<div id="organization-members" class="flex h-full min-h-0 flex-col gap-6 overflow-y-auto">
+  <header class="flex flex-col gap-1">
+    <h1
+      i18n="@@org.members.pageTitle"
+      class="text-xl font-semibold tracking-tight text-surface-900 dark:text-surface-50"
+    >
+      Members
+    </h1>
+    <p i18n="@@org.members.pageSubtitle" class="text-sm text-surface-600 dark:text-surface-400">
+      Invite teammates, manage their roles, and track pending invitations.
+    </p>
+  </header>
+
+  @if (store.loadError(); as error) {
+    <p-message severity="error">
+      <div class="flex flex-wrap items-center gap-3">
+        <span>{{ error.message ?? loadErrorFallback }}</span>
+        <p-button
+          i18n-label="@@org.members.retry"
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          (onClick)="reload()"
+        />
+      </div>
+    </p-message>
+  }
+  @if (hasInlineMutationError() && store.mutationError(); as error) {
+    <p-message severity="error">{{ error.message ?? mutationErrorFallback }}</p-message>
+  }
+  @if (atMemberLimit()) {
+    <p-message i18n="@@org.members.atLimit" severity="warn"
+      >You've reached your plan's member limit. Upgrade your plan to add or invite more
+      members.</p-message
+    >
+  }
+
+  @if (canViewMembers()) {
+    <app-organization-member-table
+      [members]="store.members()"
+      [roles]="store.roles()"
+      [loading]="store.isLoading()"
+      [canManageMembers]="canManageMembers()"
+      [canRemoveMember]="canManageMembers()"
+      [canManageRoles]="canManageRoles()"
+      [total]="store.membersTotal()"
+      [page]="store.membersPage()"
+      [pageSize]="membersPageSize"
+      (pageChange)="onMembersPage($event)"
+      (searchChange)="onMembersSearch($event)"
+      (invite)="inviteDrawerVisible.set(true)"
+      (assignRole)="assignDrawerVisible.set(true)"
+      (remove)="removeMember($event)"
+      (bulkRemove)="bulkRemoveMembers($event)"
+      (bulkAssignRole)="bulkAssignRole($event)"
+      (removeRole)="removeRoleFromMember($event)"
+    />
+
+    <app-organization-invitation-table
+      [invitations]="store.activeInvitations()"
+      [roles]="store.roles()"
+      [loading]="store.isLoading()"
+      [canManage]="canManageMembers()"
+      (revoke)="revokeInvitation($event)"
+      (resend)="resendInvitation($event)"
+      (copyLink)="copyLink($event)"
+    />
+  }
+
+  @if (canManageMembers()) {
+    <app-organization-invite-drawer
+      [visible]="inviteDrawerVisible()"
+      (visibleChange)="inviteDrawerVisible.set($event)"
+      [roles]="store.roles()"
+      [loading]="store.isMutating()"
+      (submitted)="invite($event)"
+    />
+  }
+
+  @if (canManageRoles()) {
+    <app-organization-role-assignment-drawer
+      [visible]="assignDrawerVisible()"
+      (visibleChange)="assignDrawerVisible.set($event)"
+      [members]="store.members()"
+      [roles]="store.roles()"
+      [loading]="store.isMutating()"
+      (submitted)="assignRole($event)"
+    />
+  }
+
+  <app-organization-quota-upgrade-dialog
+    [(visible)]="quotaDialogVisible"
+    [resource]="quotaResource"
+  />
+</div>

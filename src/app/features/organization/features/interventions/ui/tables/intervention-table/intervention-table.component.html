@@ -1,261 +1,310 @@
-<div class="flex h-full flex-col bg-surface-0 dark:bg-surface-900">
-  <p-card [pt]="cardPt">
-    <ng-template pTemplate="header">
-      <div
-        class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 lg:flex-row lg:items-center lg:justify-between dark:border-surface-800"
-      >
-        @if (showHeading()) {
-          <div class="min-w-0">
-            <h2
-              i18n="@@intervention.table.title"
-              class="font-semibold text-surface-950 dark:text-surface-0"
-            >
-              Interventions
-            </h2>
-            <p
-              i18n="@@intervention.table.subtitle"
-              class="mt-1 text-sm text-surface-500 dark:text-surface-400"
-            >
-              Prepare field data, resolve blockers and publish when the intervention is ready.
-            </p>
-          </div>
-        }
-
-        <div
-          class="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto lg:justify-end"
+<app-table-shell variant="fill">
+  <ng-template #actions>
+    @if (showHeading()) {
+      <div class="min-w-0">
+        <h2
+          i18n="@@intervention.table.title"
+          class="font-semibold text-surface-950 dark:text-surface-0"
         >
-          <p-select
-            [options]="statusOptions"
-            [formControl]="statusControl"
-            optionLabel="label"
-            optionValue="value"
-            i18n-placeholder="@@intervention.table.allStatuses"
-            placeholder="All statuses"
-            size="small"
-            [showClear]="true"
-            (onChange)="onStatusChange()"
-            (onClear)="onStatusChange()"
-            class="w-full sm:w-52"
-          >
-            <ng-template pTemplate="selectedItem" let-option>
-              <app-tag [descriptor]="option" variant="inline" />
-            </ng-template>
-            <ng-template pTemplate="item" let-option>
-              <app-tag [descriptor]="option" variant="inline" />
-            </ng-template>
-          </p-select>
+          Interventions
+        </h2>
+        <p
+          i18n="@@intervention.table.subtitle"
+          class="mt-1 text-sm text-surface-500 dark:text-surface-400"
+        >
+          Prepare field data, resolve blockers and publish when the intervention is ready.
+        </p>
+      </div>
+    }
 
-          @if (showCreate()) {
-            <p-splitbutton
-              i18n-label="@@intervention.newButton"
-              label="New intervention"
-              icon="pi pi-plus"
-              severity="primary"
+    <div class="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto lg:justify-end">
+      <p-button
+        i18n-label="@@intervention.table.filtersButton"
+        label="Filters"
+        icon="pi pi-filter"
+        severity="secondary"
+        size="small"
+        [outlined]="true"
+        [badge]="filterBadge()"
+        (onClick)="onFilterToggle($event)"
+        class="w-full sm:w-auto"
+      />
+
+      <p-popover #filterPopover>
+        <div class="flex w-72 flex-col gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label i18n="@@common.status" class="text-sm font-medium">Status</label>
+            <p-select
+              [options]="statusOptions"
+              [formControl]="statusControl"
+              optionLabel="label"
+              optionValue="value"
+              i18n-placeholder="@@intervention.table.allStatuses"
+              placeholder="All statuses"
               size="small"
-              [model]="toolbarActions()"
-              class="w-full sm:w-auto"
-              (onClick)="onCreateRequested()"
+              [showClear]="true"
+              class="w-full"
+            >
+              <ng-template pTemplate="item" let-option>
+                <app-tag [descriptor]="option" variant="inline" />
+              </ng-template>
+
+              <ng-template pTemplate="selectedItem" let-option>
+                @if (option) {
+                  <app-tag [descriptor]="option" variant="inline" />
+                }
+              </ng-template>
+            </p-select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label i18n="@@intervention.table.filterType" class="text-sm font-medium">Type</label>
+            <p-select
+              [options]="typeOptions"
+              [formControl]="typeControl"
+              optionLabel="label"
+              optionValue="value"
+              i18n-placeholder="@@intervention.table.filterType"
+              placeholder="Type"
+              size="small"
+              [showClear]="true"
+              class="w-full"
+            >
+              <ng-template pTemplate="item" let-option>
+                <app-tag [descriptor]="option" variant="inline" />
+              </ng-template>
+
+              <ng-template pTemplate="selectedItem" let-option>
+                @if (option) {
+                  <app-tag [descriptor]="option" variant="inline" />
+                }
+              </ng-template>
+            </p-select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label i18n="@@intervention.table.filterDue" class="text-sm font-medium"
+              >Due range</label
+            >
+            <p-datepicker
+              selectionMode="range"
+              [formControl]="dueAtControl"
+              [showClear]="true"
+              [readonlyInput]="true"
+              dateFormat="yy-mm-dd"
+              size="small"
+              i18n-placeholder="@@intervention.table.filterDue"
+              placeholder="Due range"
+              class="w-full"
             />
-          } @else {
+          </div>
+
+          <div
+            class="flex items-center justify-end gap-2 border-t border-surface-200 pt-3 dark:border-surface-800"
+          >
             <p-button
-              icon="pi pi-refresh"
+              i18n-label="@@common.reset"
+              label="Reset"
               severity="secondary"
               size="small"
               [text]="true"
-              [rounded]="true"
-              i18n-ariaLabel="@@intervention.table.refreshAria"
-              ariaLabel="Refresh interventions"
-              (onClick)="onRefresh()"
+              (onClick)="onResetColumnFilters()"
             />
-          }
+            <p-button
+              i18n-label="@@common.apply"
+              label="Apply"
+              severity="primary"
+              size="small"
+              (onClick)="onApplyColumnFilters()"
+            />
+          </div>
         </div>
-      </div>
-    </ng-template>
+      </p-popover>
 
-    <ng-template pTemplate="content">
-      <p-table
-        [value]="loading() ? skeletonItems : empty() ? [] : [...interventions()]"
-        [paginator]="true"
-        [rows]="rows"
-        [first]="firstPage()"
-        [totalRecords]="total()"
-        [lazy]="true"
-        (onLazyLoad)="onLazyLoad($event)"
-        [rowsPerPageOptions]="[12, 24, 48]"
-        [showCurrentPageReport]="true"
-        i18n-currentPageReportTemplate="@@intervention.table.pageReport"
-        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} interventions"
-        [stripedRows]="true"
-        [pt]="tablePt()"
-      >
-        <ng-template pTemplate="header">
+      @if (showCreate()) {
+        <p-splitbutton
+          i18n-label="@@intervention.newButton"
+          label="New intervention"
+          icon="pi pi-plus"
+          severity="primary"
+          size="small"
+          [model]="toolbarActions()"
+          class="w-full sm:w-auto"
+          (onClick)="onCreateRequested()"
+        />
+      } @else {
+        <p-button
+          icon="pi pi-refresh"
+          severity="secondary"
+          size="small"
+          [text]="true"
+          [rounded]="true"
+          i18n-ariaLabel="@@intervention.table.refreshAria"
+          ariaLabel="Refresh interventions"
+          (onClick)="onRefresh()"
+        />
+      }
+    </div>
+  </ng-template>
+
+  <ng-template #table>
+    <p-table
+      [value]="showSkeleton() ? skeletonItems : empty() ? [] : [...interventions()]"
+      [paginator]="true"
+      [rows]="rows"
+      [first]="firstPage()"
+      [totalRecords]="total()"
+      [lazy]="true"
+      (onLazyLoad)="onLazyLoad($event)"
+      [rowsPerPageOptions]="[12, 24, 48]"
+      [showCurrentPageReport]="true"
+      i18n-currentPageReportTemplate="@@intervention.table.pageReport"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} interventions"
+      [stripedRows]="true"
+      [pt]="tablePt({ empty: total() === 0 })"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="name" class="min-w-72">
+            <div class="flex items-center gap-2">
+              <span i18n="@@intervention.table.colName">Intervention</span
+              ><p-sortIcon field="name" />
+            </div>
+          </th>
+          <th pSortableColumn="priority" class="min-w-32">
+            <div class="flex items-center gap-2">
+              <span i18n="@@intervention.table.colPriority">Priority</span
+              ><p-sortIcon field="priority" />
+            </div>
+          </th>
+          <th pSortableColumn="status" class="min-w-32">
+            <div class="flex items-center gap-2">
+              <span i18n="@@intervention.table.colStatus">Status</span><p-sortIcon field="status" />
+            </div>
+          </th>
+          <th i18n="@@intervention.table.colFacilities" class="min-w-28 text-right">Facilities</th>
+          <th i18n="@@intervention.table.colEquipment" class="min-w-28 text-right">Equipment</th>
+          <th i18n="@@intervention.table.colInspections" class="min-w-28 text-right">
+            Inspections
+          </th>
+          <th i18n="@@intervention.table.colBlockers" class="min-w-32 text-right">Blockers</th>
+          <th pSortableColumn="updatedAt" class="min-w-36">
+            <div class="flex items-center justify-end gap-2">
+              <span i18n="@@intervention.table.colUpdated">Updated</span
+              ><p-sortIcon field="updatedAt" />
+            </div>
+          </th>
+          <th class="w-20">
+            <span i18n="@@intervention.table.srActions" class="sr-only">Actions</span>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        @for (_ of skeletonItems; track $index) {
           <tr>
-            <th pSortableColumn="name" class="min-w-72">
-              <div class="flex items-center gap-2">
-                <span i18n="@@intervention.table.colName">Intervention</span
-                ><p-sortIcon field="name" />
-              </div>
-            </th>
-            <th pSortableColumn="priority" class="min-w-32">
-              <div class="flex items-center gap-2">
-                <span i18n="@@intervention.table.colPriority">Priority</span
-                ><p-sortIcon field="priority" />
-              </div>
-            </th>
-            <th pSortableColumn="status" class="min-w-32">
-              <div class="flex items-center gap-2">
-                <span i18n="@@intervention.table.colStatus">Status</span
-                ><p-sortIcon field="status" />
-              </div>
-            </th>
-            <th i18n="@@intervention.table.colFacilities" class="min-w-28 text-right">
-              Facilities
-            </th>
-            <th i18n="@@intervention.table.colEquipment" class="min-w-28 text-right">Equipment</th>
-            <th i18n="@@intervention.table.colInspections" class="min-w-28 text-right">
-              Inspections
-            </th>
-            <th i18n="@@intervention.table.colBlockers" class="min-w-32 text-right">Blockers</th>
-            <th pSortableColumn="updatedAt" class="min-w-36">
-              <div class="flex items-center justify-end gap-2">
-                <span i18n="@@intervention.table.colUpdated">Updated</span
-                ><p-sortIcon field="updatedAt" />
-              </div>
-            </th>
-            <th class="w-20">
-              <span i18n="@@intervention.table.srActions" class="sr-only">Actions</span>
-            </th>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="loadingbody">
-          @for (_ of skeletonItems; track $index) {
-            <tr>
-              <td>
-                <div class="flex items-center gap-3">
-                  <p-skeleton shape="square" size="2.25rem" />
-                  <div class="flex flex-col gap-1.5">
-                    <p-skeleton width="14rem" height="0.875rem" />
-                    <p-skeleton width="9rem" height="0.75rem" />
-                  </div>
+            <td>
+              <div class="flex items-center gap-3">
+                <p-skeleton shape="square" size="2.25rem" />
+                <div class="flex flex-col gap-1.5">
+                  <p-skeleton width="14rem" height="0.875rem" />
+                  <p-skeleton width="9rem" height="0.75rem" />
                 </div>
-              </td>
-              <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
-              <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
-              <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
-              <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
-              <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
-              <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
-              <td><p-skeleton width="6rem" height="0.875rem" class="ml-auto" /></td>
-              <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
-            </tr>
-          }
-        </ng-template>
-
-        <ng-template pTemplate="body" let-intervention>
-          @if (loading()) {
-            <tr>
-              <td>
-                <div class="flex items-center gap-3">
-                  <p-skeleton shape="square" size="2.25rem" />
-                  <div class="flex flex-col gap-1.5">
-                    <p-skeleton width="14rem" height="0.875rem" />
-                    <p-skeleton width="9rem" height="0.75rem" />
-                  </div>
-                </div>
-              </td>
-              <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
-              <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
-              <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
-              <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
-              <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
-              <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
-              <td><p-skeleton width="6rem" height="0.875rem" class="ml-auto" /></td>
-              <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
-            </tr>
-          } @else {
-            <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
-              <td>
-                <div class="flex min-w-0 items-center gap-3">
-                  <p-avatar
-                    [icon]="getTypeIcon(intervention.type)"
-                    shape="square"
-                    size="normal"
-                    class="rounded-md bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-                  />
-
-                  <div class="flex min-w-0 flex-col gap-1">
-                    <button
-                      type="button"
-                      class="w-fit max-w-full cursor-pointer truncate text-left font-medium text-surface-900 transition-colors hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400"
-                      (click)="view.emit(intervention)"
-                    >
-                      {{ intervention.name }}
-                    </button>
-                    <span
-                      i18n="@@intervention.table.revision"
-                      class="truncate text-xs text-surface-500 dark:text-surface-400"
-                    >
-                      Revision {{ intervention.revision }}
-                    </span>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <app-intervention-tag kind="priority" [value]="intervention.priority" />
-              </td>
-              <td>
-                <app-intervention-tag kind="status" [value]="intervention.status" />
-              </td>
-              <td class="text-right tabular-nums">{{ intervention.facilitiesCount }}</td>
-              <td class="text-right tabular-nums">{{ intervention.equipmentCount }}</td>
-              <td class="text-right tabular-nums">{{ intervention.inspectionsCount }}</td>
-              <td class="text-right tabular-nums">
-                <span [class.text-red-600]="intervention.blockersCount > 0">
-                  {{ intervention.blockersCount }}
-                </span>
-              </td>
-              <td class="text-right text-surface-500 dark:text-surface-400">
-                {{ intervention.updatedAt | date: 'mediumDate' }}
-              </td>
-              <td class="text-right">
-                <p-button
-                  icon="pi pi-arrow-right"
-                  severity="secondary"
-                  size="small"
-                  [outlined]="true"
-                  i18n-ariaLabel="@@intervention.table.openAria"
-                  ariaLabel="Open intervention"
-                  (onClick)="view.emit(intervention)"
-                />
-              </td>
-            </tr>
-          }
-        </ng-template>
-
-        <ng-template pTemplate="emptymessage">
-          <tr class="bg-transparent [&>td]:border-b-0">
-            <td colspan="9">
-              <app-empty-state
-                icon="pi-compass"
-                i18n-title="@@intervention.table.emptyTitle"
-                title="No interventions yet"
-                i18n-description="@@intervention.table.emptyDesc"
-                description="Create an intervention when a site visit needs offline-ready facility, equipment and inspection preparation."
-              >
-                <p-button
-                  i18n-label="@@intervention.newButton"
-                  label="New intervention"
-                  icon="pi pi-plus"
-                  severity="primary"
-                  size="small"
-                  (onClick)="onCreateRequested()"
-                />
-              </app-empty-state>
+              </div>
             </td>
+            <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
+            <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
+            <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
+            <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
+            <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
+            <td><p-skeleton width="3rem" height="0.875rem" class="ml-auto" /></td>
+            <td><p-skeleton width="6rem" height="0.875rem" class="ml-auto" /></td>
+            <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
           </tr>
-        </ng-template>
-      </p-table>
-    </ng-template>
-  </p-card>
-</div>
+        }
+      </ng-template>
+
+      <ng-template pTemplate="body" let-intervention>
+        <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
+          <td>
+            <div class="flex min-w-0 items-center gap-3">
+              <p-avatar
+                [icon]="getTypeIcon(intervention.type)"
+                shape="square"
+                size="normal"
+                class="rounded-md bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+              />
+
+              <div class="flex min-w-0 flex-col gap-1">
+                <button
+                  type="button"
+                  class="w-fit max-w-full cursor-pointer truncate text-left font-medium text-surface-900 transition-colors hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400"
+                  (click)="view.emit(intervention)"
+                >
+                  {{ intervention.name }}
+                </button>
+                <span
+                  i18n="@@intervention.table.revision"
+                  class="truncate text-xs text-surface-500 dark:text-surface-400"
+                >
+                  Revision {{ intervention.revision }}
+                </span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <app-intervention-tag kind="priority" [value]="intervention.priority" />
+          </td>
+          <td>
+            <app-intervention-tag kind="status" [value]="intervention.status" />
+          </td>
+          <td class="text-right tabular-nums">{{ intervention.facilitiesCount }}</td>
+          <td class="text-right tabular-nums">{{ intervention.equipmentCount }}</td>
+          <td class="text-right tabular-nums">{{ intervention.inspectionsCount }}</td>
+          <td class="text-right tabular-nums">
+            <span [class.text-red-600]="intervention.blockersCount > 0">
+              {{ intervention.blockersCount }}
+            </span>
+          </td>
+          <td class="text-right text-surface-500 dark:text-surface-400">
+            {{ intervention.updatedAt | date: 'mediumDate' }}
+          </td>
+          <td class="text-right">
+            <p-button
+              icon="pi pi-arrow-right"
+              severity="secondary"
+              size="small"
+              [outlined]="true"
+              i18n-ariaLabel="@@intervention.table.openAria"
+              ariaLabel="Open intervention"
+              (onClick)="view.emit(intervention)"
+            />
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr class="bg-transparent [&>td]:border-b-0">
+          <td colspan="9">
+            <app-empty-state
+              icon="pi-compass"
+              i18n-title="@@intervention.table.emptyTitle"
+              title="No interventions yet"
+              i18n-description="@@intervention.table.emptyDesc"
+              description="Create an intervention when a site visit needs offline-ready facility, equipment and inspection preparation."
+            >
+              <p-button
+                i18n-label="@@intervention.newButton"
+                label="New intervention"
+                icon="pi pi-plus"
+                severity="primary"
+                size="small"
+                (onClick)="onCreateRequested()"
+              />
+            </app-empty-state>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </ng-template>
+</app-table-shell>

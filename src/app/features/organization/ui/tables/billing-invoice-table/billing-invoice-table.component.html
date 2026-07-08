@@ -1,13 +1,9 @@
-<p-card [pt]="cardPt">
-  <ng-template pTemplate="header">
-    <div
-      class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
-    >
-      <h2 i18n="@@org.invoiceTable.title" class="font-semibold">Invoices</h2>
-    </div>
+<app-table-shell variant="card">
+  <ng-template #actions>
+    <h2 i18n="@@org.invoiceTable.title" class="font-semibold">Invoices</h2>
   </ng-template>
 
-  <ng-template pTemplate="content">
+  <ng-template #table>
     <p-table
       [value]="loading() ? skeletonItems : [...invoices()]"
       dataKey="id"
@@ -18,7 +14,7 @@
       i18n-currentPageReportTemplate="@@org.invoiceTable.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} invoices"
       [stripedRows]="true"
-      [pt]="tablePt()"
+      [pt]="tablePt({ fill: false, empty: loading() || invoices().length === 0 })"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -93,4 +89,4 @@
       </ng-template>
     </p-table>
   </ng-template>
-</p-card>
+</app-table-shell>

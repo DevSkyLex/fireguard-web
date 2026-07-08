@@ -13,19 +13,18 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { SplitButtonModule } from 'primeng/splitbutton';
-import { Table, TableModule, type TablePassThroughOptions } from 'primeng/table';
+import { Table, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import {
   resolveInterventionTag,
   type InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
-import { EmptyState } from '@shared/components';
+import { EmptyState, TableShell, tablePt } from '@shared/components';
 import { InterventionTag } from '../../components/intervention-tag';
 import type { FieldWorkRow } from './models';
 
@@ -57,7 +56,6 @@ const EQUIPMENT_TARGET_PATTERN: RegExp = /^\/api\/equipment\/[^/?#]+$/;
   selector: 'app-intervention-field-work-table',
   imports: [
     ButtonModule,
-    CardModule,
     EmptyState,
     IconFieldModule,
     InputIconModule,
@@ -66,6 +64,7 @@ const EQUIPMENT_TARGET_PATTERN: RegExp = /^\/api\/equipment\/[^/?#]+$/;
     ReactiveFormsModule,
     SplitButtonModule,
     TableModule,
+    TableShell,
     TagModule,
   ],
   templateUrl: './intervention-field-work-table.component.html',
@@ -218,51 +217,20 @@ export class InterventionFieldWorkTable {
   ]);
 
   /**
-   * Property cardPt
-   * @readonly
-   *
-   * @description
-   * PrimeNG card pass-through classes matching the organization tables: a
-   * bordered, shadowless surface that sizes to its content so a sparse table
-   * never leaves an empty scroll body.
-   *
-   * @access protected
-   * @since 1.1.0
-   *
-   * @type {CardPassThroughOptions}
-   */
-  protected readonly cardPt: CardPassThroughOptions = {
-    root: {
-      class:
-        'flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
-    },
-    body: { class: 'p-0' },
-  };
-
-  /**
    * Property tablePt
    * @readonly
    *
    * @description
-   * PrimeNG table pass-through classes: full width, horizontally scrollable on
-   * narrow viewports, rounded bottom and a right-aligned paginator consistent
-   * with the other organization tables.
+   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
+   * member so the template can build the full-width, horizontally-scrollable
+   * card table classes via `tablePt({ scroll: true })`.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {TablePassThroughOptions}
+   * @type {typeof tablePt}
    */
-  protected readonly tablePt: TablePassThroughOptions = {
-    root: { class: 'w-full' },
-    table: { class: 'w-full text-sm' },
-    tableContainer: { class: 'overflow-x-auto' },
-    pcPaginator: {
-      root: {
-        class: 'justify-end rounded-b-xl bg-surface-0 dark:bg-surface-900',
-      },
-    },
-  };
+  protected readonly tablePt: typeof tablePt = tablePt;
 
   /**
    * Property rows

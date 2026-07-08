@@ -1,189 +1,183 @@
-<div class="flex h-full flex-col bg-surface-0 dark:bg-surface-900">
-  <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
+<p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
-  <p-card [pt]="cardPt">
-    <ng-template pTemplate="header">
-      <div
-        class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
-      >
-        <div class="flex flex-col">
-          <h2 class="font-semibold" i18n="@@account.sessionTable.title">Active sessions</h2>
-          <p class="text-sm text-surface-500" i18n="@@account.sessionTable.subtitle">
-            Review and revoke access to your account.
-          </p>
-        </div>
+<app-table-shell variant="fill">
+  <ng-template #actions>
+    <div class="flex flex-col">
+      <h2 class="font-semibold" i18n="@@account.sessionTable.title">Active sessions</h2>
+      <p class="text-sm text-surface-500" i18n="@@account.sessionTable.subtitle">
+        Review and revoke access to your account.
+      </p>
+    </div>
 
-        <div class="flex flex-wrap items-center gap-2">
-          <p-button
-            label="Refresh"
-            i18n-label="@@common.refresh"
-            icon="pi pi-refresh"
-            severity="secondary"
-            size="small"
-            [outlined]="true"
-            [disabled]="loading()"
-            class="w-full sm:w-auto"
-            (onClick)="onRefresh()"
-          />
+    <div class="flex flex-wrap items-center gap-2">
+      <p-button
+        label="Refresh"
+        i18n-label="@@common.refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        size="small"
+        [outlined]="true"
+        [disabled]="loading()"
+        class="w-full sm:w-auto"
+        (onClick)="onRefresh()"
+      />
 
-          @if (hasOtherSessions()) {
-            <p-button
-              label="Revoke all other sessions"
-              i18n-label="@@account.sessionTable.revokeAll"
-              icon="pi pi-sign-out"
-              severity="danger"
-              size="small"
-              [outlined]="true"
-              [loading]="revokingAll()"
-              class="w-full sm:w-auto"
-              (onClick)="revokeAll.emit()"
-            />
-          }
-        </div>
-      </div>
-    </ng-template>
+      @if (hasOtherSessions()) {
+        <p-button
+          label="Revoke all other sessions"
+          i18n-label="@@account.sessionTable.revokeAll"
+          icon="pi pi-sign-out"
+          severity="danger"
+          size="small"
+          [outlined]="true"
+          [loading]="revokingAll()"
+          class="w-full sm:w-auto"
+          (onClick)="revokeAll.emit()"
+        />
+      }
+    </div>
+  </ng-template>
 
-    <ng-template pTemplate="content">
-      <p-table
-        [value]="loading() ? skeletonItems : empty() ? [] : [...sessions()]"
-        dataKey="id"
-        [paginator]="true"
-        [rows]="rows"
-        [first]="firstPage()"
-        [totalRecords]="total()"
-        [lazy]="true"
-        (onLazyLoad)="onLazyLoad($event)"
-        [rowsPerPageOptions]="rowsPerPageOptions"
-        [showCurrentPageReport]="true"
-        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sessions"
-        i18n-currentPageReportTemplate="@@account.sessionTable.pageReport"
-        [stripedRows]="true"
-        [pt]="tablePt()"
-      >
-        <ng-template pTemplate="header">
+  <ng-template #table>
+    <p-table
+      [value]="loading() ? skeletonItems : empty() ? [] : [...sessions()]"
+      dataKey="id"
+      [paginator]="true"
+      [rows]="rows"
+      [first]="firstPage()"
+      [totalRecords]="total()"
+      [lazy]="true"
+      (onLazyLoad)="onLazyLoad($event)"
+      [rowsPerPageOptions]="rowsPerPageOptions"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sessions"
+      i18n-currentPageReportTemplate="@@account.sessionTable.pageReport"
+      [stripedRows]="true"
+      [pt]="tablePt({ empty: total() === 0 })"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="min-w-64" i18n="@@account.sessionTable.device">Device</th>
+          <th class="min-w-32" i18n="@@account.sessions.ipAddress">IP address</th>
+          <th class="min-w-40" i18n="@@account.sessionTable.lastActivity">Last activity</th>
+          <th class="w-20"><span class="sr-only" i18n="@@common.actions">Actions</span></th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        @for (_ of skeletonItems; track $index) {
           <tr>
-            <th class="min-w-64" i18n="@@account.sessionTable.device">Device</th>
-            <th class="min-w-32" i18n="@@account.sessions.ipAddress">IP address</th>
-            <th class="min-w-40" i18n="@@account.sessionTable.lastActivity">Last activity</th>
-            <th class="w-20"><span class="sr-only" i18n="@@common.actions">Actions</span></th>
+            <td>
+              <div class="flex items-center gap-3">
+                <p-skeleton shape="circle" size="2.25rem" />
+                <div class="flex flex-col gap-1.5">
+                  <p-skeleton width="10rem" height="0.875rem" />
+                  <p-skeleton width="7rem" height="0.75rem" />
+                </div>
+              </div>
+            </td>
+            <td><p-skeleton width="7rem" height="0.875rem" /></td>
+            <td><p-skeleton width="9rem" height="0.875rem" /></td>
+            <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
           </tr>
-        </ng-template>
+        }
+      </ng-template>
 
-        <ng-template pTemplate="loadingbody">
-          @for (_ of skeletonItems; track $index) {
-            <tr>
-              <td>
-                <div class="flex items-center gap-3">
-                  <p-skeleton shape="circle" size="2.25rem" />
-                  <div class="flex flex-col gap-1.5">
-                    <p-skeleton width="10rem" height="0.875rem" />
-                    <p-skeleton width="7rem" height="0.75rem" />
-                  </div>
+      <ng-template pTemplate="body" let-session>
+        @if (loading()) {
+          <tr>
+            <td>
+              <div class="flex items-center gap-3">
+                <p-skeleton shape="circle" size="2.25rem" />
+                <div class="flex flex-col gap-1.5">
+                  <p-skeleton width="10rem" height="0.875rem" />
+                  <p-skeleton width="7rem" height="0.75rem" />
                 </div>
-              </td>
-              <td><p-skeleton width="7rem" height="0.875rem" /></td>
-              <td><p-skeleton width="9rem" height="0.875rem" /></td>
-              <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
-            </tr>
-          }
-        </ng-template>
-
-        <ng-template pTemplate="body" let-session>
-          @if (loading()) {
-            <tr>
-              <td>
-                <div class="flex items-center gap-3">
-                  <p-skeleton shape="circle" size="2.25rem" />
-                  <div class="flex flex-col gap-1.5">
-                    <p-skeleton width="10rem" height="0.875rem" />
-                    <p-skeleton width="7rem" height="0.75rem" />
-                  </div>
-                </div>
-              </td>
-              <td><p-skeleton width="7rem" height="0.875rem" /></td>
-              <td><p-skeleton width="9rem" height="0.875rem" /></td>
-              <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
-            </tr>
-          } @else {
-            <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
-              <td>
-                <div class="flex min-w-0 items-center gap-3">
-                  <p-avatar
-                    icon="pi pi-desktop"
-                    shape="circle"
-                    size="normal"
-                    class="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-                  />
-
-                  <div class="flex min-w-0 flex-col">
-                    <span
-                      class="flex items-center gap-2 truncate font-medium text-surface-900 dark:text-surface-100"
-                    >
-                      @if (session.browser) {
-                        {{ session.browser }}
-                      } @else {
-                        <ng-container i18n="@@account.sessionTable.unknownBrowser"
-                          >Unknown browser</ng-container
-                        >
-                      }
-                      @if (session.isCurrent) {
-                        <span
-                          class="inline-flex h-5 items-center rounded-full border border-primary-200 bg-primary-50 px-2 text-[0.65rem] leading-none font-semibold text-primary-700 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300"
-                          i18n="@@account.sessionTable.current"
-                        >
-                          Current
-                        </span>
-                      }
-                    </span>
-                    <span class="truncate text-xs text-surface-500">
-                      @if (session.deviceType) {
-                        {{ session.deviceType }}
-                      } @else {
-                        <ng-container i18n="@@account.sessionTable.unknownDevice"
-                          >Unknown device</ng-container
-                        >
-                      }
-                    </span>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span class="text-surface-600 dark:text-surface-400">{{ session.ipAddress }}</span>
-              </td>
-              <td>
-                <span class="text-surface-500 dark:text-surface-400">
-                  {{ session.lastActivityAt | date: 'medium' }}
-                </span>
-              </td>
-              <td class="text-right">
-                <p-button
-                  icon="pi pi-ellipsis-v"
-                  severity="secondary"
-                  size="small"
-                  [outlined]="true"
-                  ariaLabel="Session actions"
-                  i18n-ariaLabel="@@account.sessionTable.actions"
-                  (onClick)="onActionMenuToggle($event, session)"
+              </div>
+            </td>
+            <td><p-skeleton width="7rem" height="0.875rem" /></td>
+            <td><p-skeleton width="9rem" height="0.875rem" /></td>
+            <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
+          </tr>
+        } @else {
+          <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
+            <td>
+              <div class="flex min-w-0 items-center gap-3">
+                <p-avatar
+                  icon="pi pi-desktop"
+                  shape="circle"
+                  size="normal"
+                  class="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
                 />
-              </td>
-            </tr>
-          }
-        </ng-template>
 
-        <ng-template pTemplate="emptymessage">
-          <tr class="bg-transparent! [&>td]:border-b-0!">
-            <td colspan="4">
-              <app-empty-state
-                icon="pi-desktop"
-                title="No active sessions"
-                i18n-title="@@account.sessionTable.emptyTitle"
-                description="There are no other active sessions on your account."
-                i18n-description="@@account.sessionTable.emptyDesc"
+                <div class="flex min-w-0 flex-col">
+                  <span
+                    class="flex items-center gap-2 truncate font-medium text-surface-900 dark:text-surface-100"
+                  >
+                    @if (session.browser) {
+                      {{ session.browser }}
+                    } @else {
+                      <ng-container i18n="@@account.sessionTable.unknownBrowser"
+                        >Unknown browser</ng-container
+                      >
+                    }
+                    @if (session.isCurrent) {
+                      <span
+                        class="inline-flex h-5 items-center rounded-full border border-primary-200 bg-primary-50 px-2 text-[0.65rem] leading-none font-semibold text-primary-700 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300"
+                        i18n="@@account.sessionTable.current"
+                      >
+                        Current
+                      </span>
+                    }
+                  </span>
+                  <span class="truncate text-xs text-surface-500">
+                    @if (session.deviceType) {
+                      {{ session.deviceType }}
+                    } @else {
+                      <ng-container i18n="@@account.sessionTable.unknownDevice"
+                        >Unknown device</ng-container
+                      >
+                    }
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="text-surface-600 dark:text-surface-400">{{ session.ipAddress }}</span>
+            </td>
+            <td>
+              <span class="text-surface-500 dark:text-surface-400">
+                {{ session.lastActivityAt | date: 'medium' }}
+              </span>
+            </td>
+            <td class="text-right">
+              <p-button
+                icon="pi pi-ellipsis-v"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                ariaLabel="Session actions"
+                i18n-ariaLabel="@@account.sessionTable.actions"
+                (onClick)="onActionMenuToggle($event, session)"
               />
             </td>
           </tr>
-        </ng-template>
-      </p-table>
-    </ng-template>
-  </p-card>
-</div>
+        }
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr class="bg-transparent! [&>td]:border-b-0!">
+          <td colspan="4">
+            <app-empty-state
+              icon="pi-desktop"
+              title="No active sessions"
+              i18n-title="@@account.sessionTable.emptyTitle"
+              description="There are no other active sessions on your account."
+              i18n-description="@@account.sessionTable.emptyDesc"
+            />
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </ng-template>
+</app-table-shell>

@@ -13,47 +13,17 @@
         i18n-aria-label="@@layout.sidebar.expand"
         (click)="sidebarService.togglePrimaryCollapsed()"
       >
-        <svg
-          class="size-7"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <path
-            d="M12 2 C12.6 8 16 11.4 22 12 C16 12.6 12.6 16 12 22 C11.4 16 8 12.6 2 12 C8 11.4 11.4 8 12 2 Z"
-          />
-        </svg>
+        <app-logo class="size-8" />
       </button>
     } @else {
-      <svg
-        class="size-7 text-primary-500"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
-        <path
-          d="M12 2 C12.6 8 16 11.4 22 12 C16 12.6 12.6 16 12 22 C11.4 16 8 12.6 2 12 C8 11.4 11.4 8 12 2 Z"
-        />
-      </svg>
+      <app-logo class="size-9" />
     }
   </div>
 } @else {
   <div
     class="flex h-16 items-center gap-2 border-b border-surface-200 px-5 dark:border-surface-800"
   >
-    <svg
-      class="size-6 shrink-0 text-primary-500"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M12 2 C12.6 8 16 11.4 22 12 C16 12.6 12.6 16 12 22 C11.4 16 8 12.6 2 12 C8 11.4 11.4 8 12 2 Z"
-      />
-    </svg>
+    <app-logo class="size-8 shrink-0" />
 
     <p
       class="min-w-0 flex-1 truncate text-[17px] font-bold tracking-tight text-surface-950 dark:text-surface-50"

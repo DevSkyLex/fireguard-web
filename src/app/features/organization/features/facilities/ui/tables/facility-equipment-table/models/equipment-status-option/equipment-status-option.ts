@@ -1,26 +1,14 @@
 import type { EquipmentStatus } from '@features/organization/features/equipments/models';
-import type { TagDescriptor } from '@shared/components';
+import type { TagOption } from '@shared/components';
 
 /**
- * Interface EquipmentStatusOption
+ * Type EquipmentStatusOption
+ * @typedef EquipmentStatusOption
  *
  * @description
- * Option rendered by the facility equipment status filter and badge. Extends
- * the shared {@link TagDescriptor} (`label`, `severity`, `icon`) so it can be
- * forwarded directly to `<app-tag>`, and adds the API `value` forwarded to the
- * equipment list filter.
+ * Option rendered by the facility equipment status filter and badge — the
+ * shared {@link TagOption} generic specialized to the equipment status enum.
  *
  * @since 1.0.0
  */
-export interface EquipmentStatusOption extends TagDescriptor {
-  /**
-   * Property value
-   * @readonly
-   *
-   * @description
-   * Equipment status value forwarded to the equipment API.
-   *
-   * @type {EquipmentStatus}
-   */
-  readonly value: EquipmentStatus;
-}
+export type EquipmentStatusOption = TagOption<EquipmentStatus>;

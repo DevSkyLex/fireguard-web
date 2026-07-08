@@ -1,287 +1,279 @@
-<div class="flex h-full flex-col bg-surface-0 dark:bg-surface-900">
-  <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
+<p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
-  <p-card [pt]="cardPt">
-    <ng-template pTemplate="header">
-      <div
-        class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
+<app-table-shell variant="fill">
+  <ng-template #actions>
+    <div class="flex items-center gap-2">
+      <h2 i18n="@@facility.inspections.title" class="font-semibold">Inspections</h2>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <p-select
+        [options]="resultOptions"
+        [formControl]="resultControl"
+        optionLabel="label"
+        optionValue="value"
+        i18n-placeholder="@@common.result"
+        placeholder="Result"
+        size="small"
+        [showClear]="true"
+        class="w-full sm:w-36"
       >
-        <div class="flex items-center gap-2">
-          <h2 i18n="@@facility.inspections.title" class="font-semibold">Inspections</h2>
-        </div>
+        <ng-template pTemplate="selectedItem" let-option>
+          <app-tag [descriptor]="option" variant="inline" />
+        </ng-template>
 
-        <div class="flex flex-wrap items-center gap-2">
-          <p-select
-            [options]="resultOptions"
-            [formControl]="resultControl"
-            optionLabel="label"
-            optionValue="value"
-            i18n-placeholder="@@common.result"
-            placeholder="Result"
-            size="small"
-            [showClear]="true"
-            class="w-full sm:w-36"
-          >
-            <ng-template pTemplate="selectedItem" let-option>
-              <app-tag [descriptor]="option" variant="inline" />
-            </ng-template>
+        <ng-template pTemplate="item" let-option>
+          <app-tag [descriptor]="option" variant="inline" />
+        </ng-template>
+      </p-select>
 
-            <ng-template pTemplate="item" let-option>
-              <app-tag [descriptor]="option" variant="inline" />
-            </ng-template>
-          </p-select>
-
-          <p-select
-            [options]="statusOptions"
-            [formControl]="statusControl"
-            optionLabel="label"
-            optionValue="value"
-            i18n-placeholder="@@common.status"
-            placeholder="Status"
-            size="small"
-            [showClear]="true"
-            class="w-full sm:w-40"
-          >
-            <ng-template pTemplate="selectedItem" let-option>
-              <app-tag [descriptor]="option" variant="inline" />
-            </ng-template>
-
-            <ng-template pTemplate="item" let-option>
-              <app-tag [descriptor]="option" variant="inline" />
-            </ng-template>
-          </p-select>
-
-          @if (canManageInspections()) {
-            <p-splitbutton
-              i18n-label="@@facility.inspTable.newButton"
-              label="New inspection"
-              icon="pi pi-plus"
-              severity="primary"
-              [model]="toolbarActions()"
-              size="small"
-              (onClick)="add.emit()"
-              [disabled]="loading()"
-              class="w-full sm:w-auto"
-            />
-          } @else {
-            <p-button
-              i18n-label="@@common.refresh"
-              label="Refresh"
-              icon="pi pi-refresh"
-              severity="secondary"
-              size="small"
-              [outlined]="true"
-              [disabled]="loading()"
-              class="w-full sm:w-auto"
-              (onClick)="onRefresh()"
-            />
-
-            <p-button
-              i18n-label="@@common.clearFilters"
-              label="Clear filters"
-              icon="pi pi-filter-slash"
-              severity="secondary"
-              size="small"
-              [outlined]="true"
-              [disabled]="loading()"
-              class="w-full sm:w-auto"
-              (onClick)="onClearFilters()"
-            />
-          }
-        </div>
-      </div>
-    </ng-template>
-
-    <ng-template pTemplate="content">
-      <p-table
-        [value]="loading() ? skeletonItems : empty() ? [] : [...inspections()]"
-        dataKey="id"
-        [paginator]="true"
-        [rows]="rows"
-        [first]="firstPage()"
-        [totalRecords]="total()"
-        [lazy]="true"
-        (onLazyLoad)="onLazyLoad($event)"
-        [rowsPerPageOptions]="[12, 24, 48]"
-        [showCurrentPageReport]="true"
-        i18n-currentPageReportTemplate="@@facility.inspTable.pageReport"
-        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} inspections"
-        [stripedRows]="true"
-        [pt]="tablePt()"
+      <p-select
+        [options]="statusOptions"
+        [formControl]="statusControl"
+        optionLabel="label"
+        optionValue="value"
+        i18n-placeholder="@@common.status"
+        placeholder="Status"
+        size="small"
+        [showClear]="true"
+        class="w-full sm:w-40"
       >
-        <ng-template pTemplate="header">
+        <ng-template pTemplate="selectedItem" let-option>
+          <app-tag [descriptor]="option" variant="inline" />
+        </ng-template>
+
+        <ng-template pTemplate="item" let-option>
+          <app-tag [descriptor]="option" variant="inline" />
+        </ng-template>
+      </p-select>
+
+      @if (canManageInspections()) {
+        <p-splitbutton
+          i18n-label="@@facility.inspTable.newButton"
+          label="New inspection"
+          icon="pi pi-plus"
+          severity="primary"
+          [model]="toolbarActions()"
+          size="small"
+          (onClick)="add.emit()"
+          [disabled]="loading()"
+          class="w-full sm:w-auto"
+        />
+      } @else {
+        <p-button
+          i18n-label="@@common.refresh"
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          size="small"
+          [outlined]="true"
+          [disabled]="loading()"
+          class="w-full sm:w-auto"
+          (onClick)="onRefresh()"
+        />
+
+        <p-button
+          i18n-label="@@common.clearFilters"
+          label="Clear filters"
+          icon="pi pi-filter-slash"
+          severity="secondary"
+          size="small"
+          [outlined]="true"
+          [disabled]="loading()"
+          class="w-full sm:w-auto"
+          (onClick)="onClearFilters()"
+        />
+      }
+    </div>
+  </ng-template>
+
+  <ng-template #table>
+    <p-table
+      [value]="loading() ? skeletonItems : empty() ? [] : [...inspections()]"
+      dataKey="id"
+      [paginator]="true"
+      [rows]="rows"
+      [first]="firstPage()"
+      [totalRecords]="total()"
+      [lazy]="true"
+      (onLazyLoad)="onLazyLoad($event)"
+      [rowsPerPageOptions]="[12, 24, 48]"
+      [showCurrentPageReport]="true"
+      i18n-currentPageReportTemplate="@@facility.inspTable.pageReport"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} inspections"
+      [stripedRows]="true"
+      [pt]="tablePt({ empty: total() === 0 })"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="min-w-56">
+            <div class="flex items-center gap-2">
+              <span i18n="@@facility.inspTable.colInspector">Inspector</span>
+            </div>
+          </th>
+
+          <th class="min-w-40">
+            <div class="flex items-center gap-2">
+              <span i18n="@@facility.inspTable.colContext">Context</span>
+            </div>
+          </th>
+
+          <th pSortableColumn="result" class="min-w-32">
+            <div class="flex items-center gap-2">
+              <span i18n="@@facility.inspTable.colResult">Result</span>
+              <p-sortIcon class="text-sm" field="result" />
+            </div>
+          </th>
+          <th pSortableColumn="status" class="min-w-32">
+            <div class="flex items-center gap-2">
+              <span i18n="@@facility.inspTable.colStatus">Status</span>
+              <p-sortIcon field="status" />
+            </div>
+          </th>
+          <th class="min-w-24">
+            <div class="flex items-center gap-2">
+              <span i18n="@@facility.inspTable.colFindings">Findings</span>
+            </div>
+          </th>
+          <th pSortableColumn="performedAt" class="min-w-40">
+            <div class="flex items-center gap-2">
+              <span i18n="@@facility.inspTable.colPerformed">Performed</span>
+              <p-sortIcon field="performedAt" />
+            </div>
+          </th>
+          <th class="w-20">
+            <span i18n="@@facility.inspTable.actions" class="sr-only">Actions</span>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        @for (_ of skeletonItems; track $index) {
           <tr>
-            <th class="min-w-56">
-              <div class="flex items-center gap-2">
-                <span i18n="@@facility.inspTable.colInspector">Inspector</span>
+            <td>
+              <div class="flex flex-col gap-1.5">
+                <p-skeleton width="10rem" height="0.875rem" />
+                <p-skeleton width="6rem" height="0.75rem" />
               </div>
-            </th>
-
-            <th class="min-w-40">
-              <div class="flex items-center gap-2">
-                <span i18n="@@facility.inspTable.colContext">Context</span>
-              </div>
-            </th>
-
-            <th pSortableColumn="result" class="min-w-32">
-              <div class="flex items-center gap-2">
-                <span i18n="@@facility.inspTable.colResult">Result</span>
-                <p-sortIcon class="text-sm" field="result" />
-              </div>
-            </th>
-            <th pSortableColumn="status" class="min-w-32">
-              <div class="flex items-center gap-2">
-                <span i18n="@@facility.inspTable.colStatus">Status</span>
-                <p-sortIcon field="status" />
-              </div>
-            </th>
-            <th class="min-w-24">
-              <div class="flex items-center gap-2">
-                <span i18n="@@facility.inspTable.colFindings">Findings</span>
-              </div>
-            </th>
-            <th pSortableColumn="performedAt" class="min-w-40">
-              <div class="flex items-center gap-2">
-                <span i18n="@@facility.inspTable.colPerformed">Performed</span>
-                <p-sortIcon field="performedAt" />
-              </div>
-            </th>
-            <th class="w-20">
-              <span i18n="@@facility.inspTable.actions" class="sr-only">Actions</span>
-            </th>
+            </td>
+            <td><p-skeleton width="8rem" height="0.875rem" /></td>
+            <td><p-skeleton width="5rem" height="1.25rem" borderRadius="0.375rem" /></td>
+            <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
+            <td><p-skeleton width="4rem" height="0.875rem" styleClass="ml-auto" /></td>
+            <td><p-skeleton width="7rem" height="0.875rem" styleClass="ml-auto" /></td>
+            <td><p-skeleton shape="circle" size="2rem" styleClass="ml-auto" /></td>
           </tr>
-        </ng-template>
+        }
+      </ng-template>
 
-        <ng-template pTemplate="loadingbody">
-          @for (_ of skeletonItems; track $index) {
-            <tr>
-              <td>
-                <div class="flex flex-col gap-1.5">
-                  <p-skeleton width="10rem" height="0.875rem" />
-                  <p-skeleton width="6rem" height="0.75rem" />
-                </div>
-              </td>
-              <td><p-skeleton width="8rem" height="0.875rem" /></td>
-              <td><p-skeleton width="5rem" height="1.25rem" borderRadius="0.375rem" /></td>
-              <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
-              <td><p-skeleton width="4rem" height="0.875rem" styleClass="ml-auto" /></td>
-              <td><p-skeleton width="7rem" height="0.875rem" styleClass="ml-auto" /></td>
-              <td><p-skeleton shape="circle" size="2rem" styleClass="ml-auto" /></td>
-            </tr>
-          }
-        </ng-template>
-
-        <ng-template pTemplate="body" let-inspection>
-          @if (loading()) {
-            <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
-              <td>
-                <div class="flex flex-col gap-1.5">
-                  <p-skeleton width="10rem" height="0.875rem" />
-                  <p-skeleton width="6rem" height="0.75rem" />
-                </div>
-              </td>
-              <td><p-skeleton width="8rem" height="0.875rem" /></td>
-              <td><p-skeleton width="5rem" height="1.25rem" borderRadius="0.375rem" /></td>
-              <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
-              <td><p-skeleton width="4rem" height="0.875rem" styleClass="ml-auto" /></td>
-              <td><p-skeleton width="7rem" height="0.875rem" styleClass="ml-auto" /></td>
-              <td><p-skeleton shape="circle" size="2rem" styleClass="ml-auto" /></td>
-            </tr>
-          } @else {
-            <tr>
-              <td>
-                <div class="flex min-w-0 items-center gap-3">
-                  <p-avatar
-                    [image]="getInspectorAvatarUrl(inspection) ?? undefined"
-                    [label]="
-                      getInspectorAvatarUrl(inspection)
-                        ? undefined
-                        : getInspectorInitials(inspection)
-                    "
-                    shape="circle"
-                    size="normal"
-                    class="shrink-0 bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-                  />
-
-                  <div class="flex min-w-0 flex-col">
-                    <span class="truncate font-medium text-surface-900 dark:text-surface-100">
-                      {{ getInspectorDisplayName(inspection) }}
-                    </span>
-                    <span class="truncate text-xs text-surface-500">
-                      {{ getInspectorTypeLabel(inspection) }}
-                    </span>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span class="text-surface-600 dark:text-surface-400">
-                  {{ getInspectorContextLabel(inspection) }}
-                </span>
-              </td>
-              <td>
-                <app-tag [descriptor]="getResultOption(inspection.result)" />
-              </td>
-              <td>
-                <app-tag [descriptor]="getStatusOption(inspection.status)" />
-              </td>
-              <td class="text-right">
-                @if (inspection.nonConformitiesCount > 0) {
-                  <app-tag
-                    [descriptor]="{
-                      label: getFindingsLabel(inspection.nonConformitiesCount),
-                      severity: 'danger',
-                      icon: 'pi pi-exclamation-circle',
-                    }"
-                  />
-                } @else {
-                  <span class="text-surface-300 dark:text-surface-600">-</span>
-                }
-              </td>
-              <td class="text-right">
-                <span class="text-surface-500 dark:text-surface-400">
-                  {{ inspection.performedAt | date: 'medium' }}
-                </span>
-              </td>
-              <td class="text-right">
-                <p-button
-                  icon="pi pi-ellipsis-v"
-                  severity="secondary"
-                  size="small"
-                  [outlined]="true"
-                  i18n-ariaLabel="@@facility.inspTable.rowActions"
-                  ariaLabel="Inspection actions"
-                  (onClick)="onActionMenuToggle($event, inspection)"
+      <ng-template pTemplate="body" let-inspection>
+        @if (loading()) {
+          <tr class="transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50">
+            <td>
+              <div class="flex flex-col gap-1.5">
+                <p-skeleton width="10rem" height="0.875rem" />
+                <p-skeleton width="6rem" height="0.75rem" />
+              </div>
+            </td>
+            <td><p-skeleton width="8rem" height="0.875rem" /></td>
+            <td><p-skeleton width="5rem" height="1.25rem" borderRadius="0.375rem" /></td>
+            <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
+            <td><p-skeleton width="4rem" height="0.875rem" styleClass="ml-auto" /></td>
+            <td><p-skeleton width="7rem" height="0.875rem" styleClass="ml-auto" /></td>
+            <td><p-skeleton shape="circle" size="2rem" styleClass="ml-auto" /></td>
+          </tr>
+        } @else {
+          <tr>
+            <td>
+              <div class="flex min-w-0 items-center gap-3">
+                <p-avatar
+                  [image]="getInspectorAvatarUrl(inspection) ?? undefined"
+                  [label]="
+                    getInspectorAvatarUrl(inspection) ? undefined : getInspectorInitials(inspection)
+                  "
+                  shape="circle"
+                  size="normal"
+                  class="shrink-0 bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
                 />
-              </td>
-            </tr>
-          }
-        </ng-template>
 
-        <ng-template pTemplate="emptymessage">
-          <tr class="bg-transparent! [&>td]:border-b-0!">
-            <td colspan="7">
-              <app-empty-state
-                icon="pi-clipboard"
-                i18n-title="@@facility.inspTable.emptyTitle"
-                title="No inspections found"
-                i18n-description="@@facility.inspTable.emptyDesc"
-                description="Adjust your search or filters, or record an inspection for this facility."
-              >
-                @if (canManageInspections()) {
-                  <p-button
-                    i18n-label="@@facility.inspTable.newButton"
-                    label="New inspection"
-                    icon="pi pi-plus"
-                    severity="primary"
-                    size="small"
-                    (onClick)="add.emit()"
-                  />
-                }
-              </app-empty-state>
+                <div class="flex min-w-0 flex-col">
+                  <span class="truncate font-medium text-surface-900 dark:text-surface-100">
+                    {{ getInspectorDisplayName(inspection) }}
+                  </span>
+                  <span class="truncate text-xs text-surface-500">
+                    {{ getInspectorTypeLabel(inspection) }}
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="text-surface-600 dark:text-surface-400">
+                {{ getInspectorContextLabel(inspection) }}
+              </span>
+            </td>
+            <td>
+              <app-tag [descriptor]="getResultOption(inspection.result)" />
+            </td>
+            <td>
+              <app-tag [descriptor]="getStatusOption(inspection.status)" />
+            </td>
+            <td class="text-right">
+              @if (inspection.nonConformitiesCount > 0) {
+                <app-tag
+                  [descriptor]="{
+                    label: getFindingsLabel(inspection.nonConformitiesCount),
+                    severity: 'danger',
+                    icon: 'pi pi-exclamation-circle',
+                  }"
+                />
+              } @else {
+                <span class="text-surface-300 dark:text-surface-600">-</span>
+              }
+            </td>
+            <td class="text-right">
+              <span class="text-surface-500 dark:text-surface-400">
+                {{ inspection.performedAt | date: 'medium' }}
+              </span>
+            </td>
+            <td class="text-right">
+              <p-button
+                icon="pi pi-ellipsis-v"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                i18n-ariaLabel="@@facility.inspTable.rowActions"
+                ariaLabel="Inspection actions"
+                (onClick)="onActionMenuToggle($event, inspection)"
+              />
             </td>
           </tr>
-        </ng-template>
-      </p-table>
-    </ng-template>
-  </p-card>
-</div>
+        }
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr class="bg-transparent! [&>td]:border-b-0!">
+          <td colspan="7">
+            <app-empty-state
+              icon="pi-clipboard"
+              i18n-title="@@facility.inspTable.emptyTitle"
+              title="No inspections found"
+              i18n-description="@@facility.inspTable.emptyDesc"
+              description="Adjust your search or filters, or record an inspection for this facility."
+            >
+              @if (canManageInspections()) {
+                <p-button
+                  i18n-label="@@facility.inspTable.newButton"
+                  label="New inspection"
+                  icon="pi pi-plus"
+                  severity="primary"
+                  size="small"
+                  (onClick)="add.emit()"
+                />
+              }
+            </app-empty-state>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </ng-template>
+</app-table-shell>

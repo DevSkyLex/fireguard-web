@@ -22,14 +22,15 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { Menu, MenuModule } from 'primeng/menu';
+import { Popover, PopoverModule } from 'primeng/popover';
+import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
-import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
+import { Table, TableModule, type TableLazyLoadEvent } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/api';
@@ -40,8 +41,10 @@ import type {
   FacilityType,
 } from '@features/organization/features/facilities/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag } from '@shared/components';
-import type { FacilityStatusOption, FacilityTypeIconMap } from './models';
+import { EmptyState, Tag, TableShell, tablePt } from '@shared/components';
+import { buildTableFilterParams } from '@shared/utils';
+import { FACILITY_FILTER_MAPPING } from './constants';
+import type { FacilityStatusOption, FacilityTypeIconMap, FacilityTypeOption } from './models';
 
 /**
  * Component FacilityTable
@@ -62,17 +65,19 @@ import type { FacilityStatusOption, FacilityTypeIconMap } from './models';
   imports: [
     AvatarModule,
     ButtonModule,
-    CardModule,
     DatePipe,
     EmptyState,
     IconFieldModule,
     InputIconModule,
     InputTextModule,
     MenuModule,
+    PopoverModule,
     ReactiveFormsModule,
+    SelectModule,
     SkeletonModule,
     SplitButtonModule,
     TableModule,
+    TableShell,
     TooltipModule,
     Tag,
   ],
@@ -314,62 +319,20 @@ export class FacilityTable implements OnInit {
     inject<OrganizationPermissionService>(OrganizationPermissionService);
 
   /**
-   * Property cardPt
-   * @readonly
-   *
-   * @description
-   * PrimeNG card pass-through classes used to make the table fill the page.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {CardPassThroughOptions}
-   */
-  protected readonly cardPt: CardPassThroughOptions = {
-    root: {
-      class:
-        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
-    },
-    body: {
-      class: 'p-0 flex flex-col flex-1 min-h-0',
-    },
-  };
-
-  /**
    * Property tablePt
    * @readonly
    *
    * @description
-   * PrimeNG table pass-through classes used for full-height table layout.
+   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
+   * member so the template can call it directly (Angular templates cannot
+   * invoke a bare module-level import).
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<TablePassThroughOptions>}
+   * @type {typeof tablePt}
    */
-  protected readonly tablePt: Signal<TablePassThroughOptions> = computed(
-    (): TablePassThroughOptions => ({
-      root: {
-        class: 'flex min-h-0 flex-1 flex-col',
-      },
-      tableContainer: {
-        class: 'flex-1 min-h-0 rounded-b-xl overflow-hidden',
-      },
-      table: {
-        class: 'text-sm',
-      },
-      header: {
-        class: 'border-0 p-0 bg-surface-0 dark:bg-surface-900',
-      },
-      pcPaginator: {
-        root: {
-          class:
-            'mt-auto rounded-t-none rounded-b-2xl bg-surface-0 dark:bg-surface-900 justify-end' +
-            (this.total() === 0 ? ' hidden' : ''),
-        },
-      },
-    }),
-  );
+  protected readonly tablePt: typeof tablePt = tablePt;
 
   /**
    * Property rows
@@ -400,6 +363,57 @@ export class FacilityTable implements OnInit {
   protected readonly skeletonItems: undefined[] = Array(this.rows);
 
   /**
+   * Property hasLoadedOnce
+   * @readonly
+   *
+   * @description
+   * Whether the table has completed at least one lazy load (successful or
+   * genuinely empty). Gates {@link showSkeleton} to the very first load only,
+   * so a filter, sort, or page change never flashes skeleton rows over
+   * already-visible data for what is typically a sub-second request.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly hasLoadedOnce: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property hasStartedLoading
+   *
+   * @description
+   * Tracks whether {@link loading} has ever been observed `true`, so the
+   * constructor effect can detect the loading→settled edge that marks the
+   * first completed lazy load. `total() === 0` alone cannot distinguish
+   * "never loaded" from "loaded but zero rows", hence this separate flag.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {boolean}
+   */
+  private hasStartedLoading: boolean = false;
+
+  /**
+   * Property showSkeleton
+   * @readonly
+   *
+   * @description
+   * Whether to render skeleton placeholders in place of {@link facilities}.
+   * True only while the first lazy load is in flight; see
+   * {@link hasLoadedOnce}.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly showSkeleton: Signal<boolean> = computed(
+    (): boolean => this.loading() && !this.hasLoadedOnce(),
+  );
+
+  /**
    * Property facilityTypeIcons
    * @readonly
    *
@@ -418,6 +432,31 @@ export class FacilityTable implements OnInit {
     zone: PrimeIcons.MAP,
     area: PrimeIcons.MAP_MARKER,
   };
+
+  /**
+   * Property typeOptions
+   * @readonly
+   *
+   * @description
+   * Visual options used to render the "Type" column filter select. No
+   * dedicated colour/severity registry exists for facility types today, so
+   * each option only pairs a title-cased label with the {@link facilityTypeIcons}
+   * icon already used for the type avatar.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FacilityTypeOption[]}
+   */
+  protected readonly typeOptions: FacilityTypeOption[] = (
+    ['site', 'building', 'floor', 'zone', 'area'] as const satisfies readonly FacilityType[]
+  ).map(
+    (type: FacilityType): FacilityTypeOption => ({
+      label: this.toDisplayLabel(type),
+      value: type,
+      icon: this.facilityTypeIcons[type],
+    }),
+  );
 
   /**
    * Property statusOptions
@@ -461,6 +500,106 @@ export class FacilityTable implements OnInit {
   protected readonly searchControl: FormControl<string> = new FormControl<string>('', {
     nonNullable: true,
   });
+
+  /**
+   * Property statusControl
+   * @readonly
+   *
+   * @description
+   * Draft value of the "Status" column filter, edited inside
+   * {@link filterPopover} and only forwarded to the table's native
+   * `filter()` API when {@link onApplyColumnFilters} runs.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FormControl<FacilityStatus | null>}
+   */
+  protected readonly statusControl: FormControl<FacilityStatus | null> =
+    new FormControl<FacilityStatus | null>(null);
+
+  /**
+   * Property typeControl
+   * @readonly
+   *
+   * @description
+   * Draft value of the "Type" column filter, edited inside
+   * {@link filterPopover} and only forwarded to the table's native
+   * `filter()` API when {@link onApplyColumnFilters} runs.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FormControl<FacilityType | null>}
+   */
+  protected readonly typeControl: FormControl<FacilityType | null> =
+    new FormControl<FacilityType | null>(null);
+
+  /**
+   * Property codeControl
+   * @readonly
+   *
+   * @description
+   * Draft value of the "Code" column filter, edited inside
+   * {@link filterPopover} and only forwarded to the table's native
+   * `filter()` API when {@link onApplyColumnFilters} runs.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FormControl<string>}
+   */
+  protected readonly codeControl: FormControl<string> = new FormControl<string>('', {
+    nonNullable: true,
+  });
+
+  /**
+   * Property activeFilterCount
+   * @readonly
+   *
+   * @description
+   * Number of column filters currently applied to the table (set on
+   * {@link onApplyColumnFilters}, cleared on {@link onResetColumnFilters}).
+   * Drives {@link filterBadge}.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<number>}
+   */
+  private readonly activeFilterCount: WritableSignal<number> = signal<number>(0);
+
+  /**
+   * Property filterBadge
+   * @readonly
+   *
+   * @description
+   * Badge text shown on the "Filters" toolbar button, or `undefined` when no
+   * column filter is applied.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<string | undefined>}
+   */
+  protected readonly filterBadge: Signal<string | undefined> = computed((): string | undefined =>
+    this.activeFilterCount() > 0 ? String(this.activeFilterCount()) : undefined,
+  );
+
+  /**
+   * Property filterPopover
+   * @readonly
+   *
+   * @description
+   * Reference to the popover hosting the column filter controls, toggled by
+   * the "Filters" toolbar button.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Signal<Popover>}
+   */
+  private readonly filterPopover: Signal<Popover> = viewChild.required<Popover>('filterPopover');
 
   /**
    * Property selectedFacilities
@@ -553,6 +692,21 @@ export class FacilityTable implements OnInit {
    * @type {Signal<Menu>}
    */
   private readonly rowMenu: Signal<Menu> = viewChild.required<Menu>('rowMenu');
+
+  /**
+   * Property table
+   * @readonly
+   *
+   * @description
+   * Reference to the underlying PrimeNG table, used to apply and reset native
+   * column filters from the "Filters" popover.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Signal<Table>}
+   */
+  private readonly table: Signal<Table> = viewChild.required<Table>(Table);
 
   /**
    * Property selectedFacility
@@ -667,7 +821,9 @@ export class FacilityTable implements OnInit {
    * Constructor
    *
    * @description
-   * Registers search subscriptions and disables controls while loading.
+   * Registers search subscriptions, disables controls while loading, and
+   * tracks the loading→settled edge that marks the first completed lazy
+   * load (see {@link hasLoadedOnce}).
    */
   public constructor() {
     this.searchControl.valueChanges
@@ -679,6 +835,14 @@ export class FacilityTable implements OnInit {
         this.searchControl.disable({ emitEvent: false });
       } else {
         this.searchControl.enable({ emitEvent: false });
+      }
+    });
+
+    effect(() => {
+      if (this.loading()) {
+        this.hasStartedLoading = true;
+      } else if (this.hasStartedLoading) {
+        this.hasLoadedOnce.set(true);
       }
     });
   }
@@ -734,6 +898,7 @@ export class FacilityTable implements OnInit {
     }
 
     if (search) params['search'] = search;
+    Object.assign(params, buildTableFilterParams(event.filters, FACILITY_FILTER_MAPPING));
     this.appendSortParams(params, event);
 
     this.load.emit({
@@ -767,7 +932,8 @@ export class FacilityTable implements OnInit {
    * Method onClearFilters
    *
    * @description
-   * Clears all filters and reloads the first page.
+   * Clears the free-text search and every column filter, then reloads the
+   * first page.
    *
    * @access protected
    * @since 1.0.0
@@ -776,7 +942,71 @@ export class FacilityTable implements OnInit {
    */
   protected onClearFilters(): void {
     this.searchControl.setValue('', { emitEvent: false });
-    this.reload();
+    this.resetColumnFilters();
+  }
+
+  /**
+   * Method onFilterToggle
+   *
+   * @description
+   * Opens or closes {@link filterPopover} anchored to the "Filters" toolbar
+   * button.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {Event} event Click event emitted by the "Filters" button.
+   *
+   * @returns {void}
+   */
+  protected onFilterToggle(event: Event): void {
+    this.filterPopover().toggle(event);
+  }
+
+  /**
+   * Method onApplyColumnFilters
+   *
+   * @description
+   * Forwards the popover's draft {@link statusControl}, {@link typeControl},
+   * and {@link codeControl} values to the table's native `filter()` API.
+   * `Table.filter()` debounces internally (`filterDelay`), so the three
+   * calls below collapse into a single `onLazyLoad` request. Closes the
+   * popover once applied.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  protected onApplyColumnFilters(): void {
+    const table: Table = this.table();
+    const code: string = this.codeControl.value.trim();
+
+    table.filter(this.statusControl.value, 'status', 'equals');
+    table.filter(this.typeControl.value, 'type', 'equals');
+    table.filter(code || null, 'code', 'equals');
+
+    this.activeFilterCount.set(
+      (this.statusControl.value ? 1 : 0) + (this.typeControl.value ? 1 : 0) + (code ? 1 : 0),
+    );
+    this.filterPopover().hide();
+  }
+
+  /**
+   * Method onResetColumnFilters
+   *
+   * @description
+   * Clears the draft filter controls, resets every native column filter, and
+   * closes the popover.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  protected onResetColumnFilters(): void {
+    this.resetColumnFilters();
+    this.filterPopover().hide();
   }
 
   /**
@@ -924,6 +1154,33 @@ export class FacilityTable implements OnInit {
   }
 
   /**
+   * Method resetColumnFilters
+   *
+   * @description
+   * Clears the draft {@link statusControl}, {@link typeControl}, and
+   * {@link codeControl} values and resets every native column filter via
+   * per-field `Table.filter()` calls (which trigger a fresh lazy load without
+   * disturbing the active sort, unlike `Table.clear()`). The row selection is
+   * cleared by {@link onLazyLoad}'s own filter-change guard, not here.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  private resetColumnFilters(): void {
+    const table: Table = this.table();
+
+    this.statusControl.setValue(null, { emitEvent: false });
+    this.typeControl.setValue(null, { emitEvent: false });
+    this.codeControl.setValue('', { emitEvent: false });
+    table.filter(null, 'status', 'equals');
+    table.filter(null, 'type', 'equals');
+    table.filter(null, 'code', 'equals');
+    this.activeFilterCount.set(0);
+  }
+
+  /**
    * Method appendSortParams
    *
    * @description
@@ -976,7 +1233,8 @@ export class FacilityTable implements OnInit {
       (previousEvent.first ?? 0) !== (event.first ?? 0) ||
       (previousEvent.rows ?? this.rows) !== (event.rows ?? this.rows) ||
       previousEvent.sortOrder !== event.sortOrder ||
-      this.getSortField(previousEvent) !== this.getSortField(event)
+      this.getSortField(previousEvent) !== this.getSortField(event) ||
+      JSON.stringify(previousEvent.filters ?? null) !== JSON.stringify(event.filters ?? null)
     );
   }
 

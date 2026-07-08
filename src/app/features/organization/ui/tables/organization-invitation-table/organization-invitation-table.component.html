@@ -1,20 +1,16 @@
 <p-menu #rowMenu [model]="rowMenuItems()" [popup]="true" appendTo="body" />
 
-<p-card [pt]="cardPt">
-  <ng-template pTemplate="header">
-    <div
-      class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
-    >
-      <h2 i18n="@@org.members.sectionInvitations" class="font-semibold">Pending invitations</h2>
-    </div>
+<app-table-shell variant="card">
+  <ng-template #actions>
+    <h2 i18n="@@org.members.sectionInvitations" class="font-semibold">Pending invitations</h2>
   </ng-template>
 
-  <ng-template pTemplate="content">
+  <ng-template #table>
     <p-table
       [value]="loading() ? skeletonItems : [...invitations()]"
       dataKey="id"
       [stripedRows]="true"
-      [pt]="tablePt"
+      [pt]="tablePt({ fill: false })"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -102,4 +98,4 @@
       </ng-template>
     </p-table>
   </ng-template>
-</p-card>
+</app-table-shell>

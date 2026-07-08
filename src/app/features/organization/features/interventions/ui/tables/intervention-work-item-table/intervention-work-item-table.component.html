@@ -1,102 +1,98 @@
 <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
-<p-card [pt]="cardPt">
-  <ng-template pTemplate="header">
-    <div
-      class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
-    >
-      <div class="flex items-center gap-2">
-        <h2
-          i18n="@@intervention.wit.title"
-          class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+<app-table-shell variant="card">
+  <ng-template #actions>
+    <div class="flex items-center gap-2">
+      <h2
+        i18n="@@intervention.wit.title"
+        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+      >
+        Work items
+      </h2>
+      @if (workItems().length > 0) {
+        <span
+          class="rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-300"
         >
-          Work items
-        </h2>
-        @if (workItems().length > 0) {
-          <span
-            class="rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-300"
-          >
-            {{ workItems().length }}
-          </span>
-        }
-      </div>
+          {{ workItems().length }}
+        </span>
+      }
+    </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <p-iconfield class="flex-1 sm:flex-none">
-          <p-inputicon class="pi pi-search" />
-          <input
-            pInputText
-            type="text"
-            pSize="small"
-            i18n-placeholder="@@intervention.wit.searchPlaceholder"
-            placeholder="Search work items..."
-            [formControl]="searchControl"
-            class="w-full"
-          />
-        </p-iconfield>
+    <div class="flex flex-wrap items-center gap-2">
+      <p-iconfield class="flex-1 sm:flex-none">
+        <p-inputicon class="pi pi-search" />
+        <input
+          pInputText
+          type="text"
+          pSize="small"
+          i18n-placeholder="@@intervention.wit.searchPlaceholder"
+          placeholder="Search work items..."
+          [formControl]="searchControl"
+          class="w-full"
+        />
+      </p-iconfield>
 
-        <p-select
-          [options]="statusOptions"
-          [formControl]="statusControl"
-          optionLabel="label"
-          optionValue="value"
-          i18n-placeholder="@@common.status"
-          placeholder="Status"
+      <p-select
+        [options]="statusOptions"
+        [formControl]="statusControl"
+        optionLabel="label"
+        optionValue="value"
+        i18n-placeholder="@@common.status"
+        placeholder="Status"
+        size="small"
+        [showClear]="true"
+        class="w-full sm:w-44"
+      >
+        <ng-template pTemplate="selectedItem" let-option>
+          <app-tag [descriptor]="option" variant="inline" />
+        </ng-template>
+        <ng-template pTemplate="item" let-option>
+          <app-tag [descriptor]="option" variant="inline" />
+        </ng-template>
+      </p-select>
+
+      @if (canDelete() && selectedRows().length > 0) {
+        <p-button
+          [label]="deleteLabel()"
+          icon="pi pi-trash"
+          severity="danger"
           size="small"
-          [showClear]="true"
-          class="w-full sm:w-44"
-        >
-          <ng-template pTemplate="selectedItem" let-option>
-            <app-tag [descriptor]="option" variant="inline" />
-          </ng-template>
-          <ng-template pTemplate="item" let-option>
-            <app-tag [descriptor]="option" variant="inline" />
-          </ng-template>
-        </p-select>
+          [outlined]="true"
+          [disabled]="saving()"
+          (onClick)="onDeleteSelected()"
+        />
+      }
 
-        @if (canDelete() && selectedRows().length > 0) {
-          <p-button
-            [label]="deleteLabel()"
-            icon="pi pi-trash"
-            severity="danger"
+      @if (canManage()) {
+        @if (canDelete()) {
+          <p-splitbutton
+            i18n-label="@@intervention.wit.addItem"
+            label="Add item"
+            icon="pi pi-plus"
+            severity="primary"
             size="small"
-            [outlined]="true"
+            [model]="toolbarActions()"
             [disabled]="saving()"
-            (onClick)="onDeleteSelected()"
+            class="w-full sm:w-auto"
+            (onClick)="add.emit()"
+          />
+        } @else {
+          <p-button
+            i18n-label="@@intervention.wit.addItem"
+            label="Add item"
+            icon="pi pi-plus"
+            severity="primary"
+            size="small"
+            [disabled]="saving()"
+            class="w-full sm:w-auto"
+            (onClick)="add.emit()"
           />
         }
-
-        @if (canManage()) {
-          @if (canDelete()) {
-            <p-splitbutton
-              i18n-label="@@intervention.wit.addItem"
-              label="Add item"
-              icon="pi pi-plus"
-              severity="primary"
-              size="small"
-              [model]="toolbarActions()"
-              [disabled]="saving()"
-              class="w-full sm:w-auto"
-              (onClick)="add.emit()"
-            />
-          } @else {
-            <p-button
-              i18n-label="@@intervention.wit.addItem"
-              label="Add item"
-              icon="pi pi-plus"
-              severity="primary"
-              size="small"
-              [disabled]="saving()"
-              class="w-full sm:w-auto"
-              (onClick)="add.emit()"
-            />
-          }
-        }
-      </div>
+      }
     </div>
   </ng-template>
 
-  <ng-template pTemplate="content">
+  <ng-template #table>
     <p-table
       #dt
       [value]="rowItems()"
@@ -111,7 +107,7 @@
       i18n-currentPageReportTemplate="@@intervention.wit.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} work items"
       [globalFilterFields]="globalFilterFields"
-      [pt]="tablePt"
+      [pt]="tablePt({ scroll: true })"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -231,4 +227,4 @@
       </ng-template>
     </p-table>
   </ng-template>
-</p-card>
+</app-table-shell>

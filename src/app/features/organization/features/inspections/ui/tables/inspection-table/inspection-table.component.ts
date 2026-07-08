@@ -22,15 +22,16 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
+import { DatePickerModule } from 'primeng/datepicker';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { Menu, MenuModule } from 'primeng/menu';
+import { Popover, PopoverModule } from 'primeng/popover';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
-import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
+import { Table, TableModule, type TableLazyLoadEvent } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/api';
@@ -42,7 +43,9 @@ import type {
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag } from '@shared/components';
+import { EmptyState, TableShell, Tag, tablePt } from '@shared/components';
+import { buildTableFilterParams } from '@shared/utils';
+import { INSPECTION_FILTER_MAPPING } from './constants';
 import type { InspectionFilterOption } from './models';
 
 /**
@@ -64,18 +67,20 @@ import type { InspectionFilterOption } from './models';
   imports: [
     AvatarModule,
     ButtonModule,
-    CardModule,
+    DatePickerModule,
     DatePipe,
     EmptyState,
     IconFieldModule,
     InputIconModule,
     InputTextModule,
     MenuModule,
+    PopoverModule,
     ReactiveFormsModule,
     SelectModule,
     SkeletonModule,
     SplitButtonModule,
     TableModule,
+    TableShell,
     TooltipModule,
     Tag,
   ],
@@ -271,62 +276,20 @@ export class InspectionTable implements OnInit {
     inject<OrganizationPermissionService>(OrganizationPermissionService);
 
   /**
-   * Property cardPt
-   * @readonly
-   *
-   * @description
-   * PrimeNG card pass-through classes used to make the table fill the page.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {CardPassThroughOptions}
-   */
-  protected readonly cardPt: CardPassThroughOptions = {
-    root: {
-      class:
-        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
-    },
-    body: {
-      class: 'p-0 flex flex-col flex-1 min-h-0',
-    },
-  };
-
-  /**
    * Property tablePt
    * @readonly
    *
    * @description
-   * PrimeNG table pass-through classes used for full-height table layout.
+   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
+   * member so the template can call it directly (Angular templates cannot
+   * invoke a bare module-level import).
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<TablePassThroughOptions>}
+   * @type {typeof tablePt}
    */
-  protected readonly tablePt: Signal<TablePassThroughOptions> = computed(
-    (): TablePassThroughOptions => ({
-      root: {
-        class: 'flex min-h-0 flex-1 flex-col',
-      },
-      tableContainer: {
-        class: 'flex-1 min-h-0 rounded-b-xl overflow-hidden',
-      },
-      table: {
-        class: 'text-sm',
-      },
-      header: {
-        class: 'border-0 p-0 bg-surface-0 dark:bg-surface-900',
-      },
-      pcPaginator: {
-        root: {
-          class:
-            'mt-auto rounded-t-none rounded-b-2xl bg-surface-0 dark:bg-surface-900 justify-end' +
-            (this.total() === 0 ? ' hidden' : ''),
-        },
-      },
-    }),
-  );
+  protected readonly tablePt: typeof tablePt = tablePt;
 
   /**
    * Property rows
@@ -355,6 +318,57 @@ export class InspectionTable implements OnInit {
    * @type {undefined[]}
    */
   protected readonly skeletonItems: undefined[] = Array(this.rows);
+
+  /**
+   * Property hasLoadedOnce
+   * @readonly
+   *
+   * @description
+   * Whether the table has completed at least one lazy load (successful or
+   * genuinely empty). Gates {@link showSkeleton} to the very first load only,
+   * so a filter, sort, or page change never flashes skeleton rows over
+   * already-visible data for what is typically a sub-second request.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly hasLoadedOnce: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property hasStartedLoading
+   *
+   * @description
+   * Tracks whether {@link loading} has ever been observed `true`, so the
+   * constructor effect can detect the loading→settled edge that marks the
+   * first completed lazy load. `total() === 0` alone cannot distinguish
+   * "never loaded" from "loaded but zero rows", hence this separate flag.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {boolean}
+   */
+  private hasStartedLoading: boolean = false;
+
+  /**
+   * Property showSkeleton
+   * @readonly
+   *
+   * @description
+   * Whether to render skeleton placeholders in place of {@link inspections}.
+   * True only while the first lazy load is in flight; see
+   * {@link hasLoadedOnce}.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly showSkeleton: Signal<boolean> = computed(
+    (): boolean => this.loading() && !this.hasLoadedOnce(),
+  );
 
   /**
    * Property resultOptions
@@ -443,7 +457,9 @@ export class InspectionTable implements OnInit {
    * @readonly
    *
    * @description
-   * Inspection result filter forwarded as the `result` query parameter.
+   * Draft value of the "Result" column filter, edited inside
+   * {@link filterPopover} and only forwarded to the table's native
+   * `filter()` API when {@link onApplyColumnFilters} runs.
    *
    * @access protected
    * @since 1.0.0
@@ -458,7 +474,9 @@ export class InspectionTable implements OnInit {
    * @readonly
    *
    * @description
-   * Inspection status filter forwarded as the `status` query parameter.
+   * Draft value of the "Status" column filter, edited inside
+   * {@link filterPopover} and only forwarded to the table's native
+   * `filter()` API when {@link onApplyColumnFilters} runs.
    *
    * @access protected
    * @since 1.0.0
@@ -467,6 +485,71 @@ export class InspectionTable implements OnInit {
    */
   protected readonly statusControl: FormControl<InspectionStatus | null> =
     new FormControl<InspectionStatus | null>(null);
+
+  /**
+   * Property performedAtControl
+   * @readonly
+   *
+   * @description
+   * Draft `[from, to]` value of the "Performed" date-range column filter,
+   * edited inside {@link filterPopover} and only forwarded to the table's
+   * native `filter()` API when {@link onApplyColumnFilters} runs.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {FormControl<[Date | null, Date | null] | null>}
+   */
+  protected readonly performedAtControl: FormControl<[Date | null, Date | null] | null> =
+    new FormControl<[Date | null, Date | null] | null>(null);
+
+  /**
+   * Property activeFilterCount
+   * @readonly
+   *
+   * @description
+   * Number of column filters currently applied to the table (set on
+   * {@link onApplyColumnFilters}, cleared on {@link onResetColumnFilters}).
+   * Drives {@link filterBadge}.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<number>}
+   */
+  private readonly activeFilterCount: WritableSignal<number> = signal<number>(0);
+
+  /**
+   * Property filterBadge
+   * @readonly
+   *
+   * @description
+   * Badge text shown on the "Filters" toolbar button, or `undefined` when no
+   * column filter is applied.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<string | undefined>}
+   */
+  protected readonly filterBadge: Signal<string | undefined> = computed((): string | undefined =>
+    this.activeFilterCount() > 0 ? String(this.activeFilterCount()) : undefined,
+  );
+
+  /**
+   * Property filterPopover
+   * @readonly
+   *
+   * @description
+   * Reference to the popover hosting the column filter controls, toggled by
+   * the "Filters" toolbar button.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Signal<Popover>}
+   */
+  private readonly filterPopover: Signal<Popover> = viewChild.required<Popover>('filterPopover');
 
   /**
    * Property toolbarActions
@@ -522,6 +605,21 @@ export class InspectionTable implements OnInit {
    * @type {Signal<Menu>}
    */
   private readonly actionMenu: Signal<Menu> = viewChild.required<Menu>('actionMenu');
+
+  /**
+   * Property table
+   * @readonly
+   *
+   * @description
+   * Reference to the underlying PrimeNG table, used to reset native column
+   * filters when the user clears all filters.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Signal<Table>}
+   */
+  private readonly table: Signal<Table> = viewChild.required<Table>(Table);
 
   /**
    * Property selectedInspection
@@ -629,25 +727,28 @@ export class InspectionTable implements OnInit {
    * Constructor
    *
    * @description
-   * Registers filter subscriptions and disables controls while loading.
+   * Registers filter subscriptions, disables controls while loading, and
+   * tracks the loading→settled edge that marks the first completed lazy
+   * load (see {@link hasLoadedOnce}).
    */
   public constructor() {
     this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(() => this.reload());
 
-    this.resultControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.reload());
-    this.statusControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.reload());
-
     effect(() => {
       if (this.loading()) {
         this.searchControl.disable({ emitEvent: false });
-        this.resultControl.disable({ emitEvent: false });
-        this.statusControl.disable({ emitEvent: false });
       } else {
         this.searchControl.enable({ emitEvent: false });
-        this.resultControl.enable({ emitEvent: false });
-        this.statusControl.enable({ emitEvent: false });
+      }
+    });
+
+    effect(() => {
+      if (this.loading()) {
+        this.hasStartedLoading = true;
+      } else if (this.hasStartedLoading) {
+        this.hasLoadedOnce.set(true);
       }
     });
   }
@@ -691,15 +792,12 @@ export class InspectionTable implements OnInit {
     const page: number = Math.floor(first / rowsPerPage) + 1;
     const params: Record<string, string | number | boolean> = {};
     const search: string = this.searchControl.value.trim();
-    const result: InspectionResult | null = this.resultControl.value;
-    const status: InspectionStatus | null = this.statusControl.value;
 
     this.firstPage.set(first);
     this.lastLazyEvent.set(event);
 
     if (search) params['search'] = search;
-    if (result) params['result'] = result;
-    if (status) params['status'] = status;
+    Object.assign(params, buildTableFilterParams(event.filters, INSPECTION_FILTER_MAPPING));
     this.appendSortParams(params, event);
 
     this.load.emit({
@@ -733,7 +831,8 @@ export class InspectionTable implements OnInit {
    * Method onClearFilters
    *
    * @description
-   * Clears all filters and reloads the first page.
+   * Clears the free-text search and every column filter, then reloads the
+   * first page.
    *
    * @access protected
    * @since 1.0.0
@@ -742,9 +841,75 @@ export class InspectionTable implements OnInit {
    */
   protected onClearFilters(): void {
     this.searchControl.setValue('', { emitEvent: false });
-    this.resultControl.setValue(null, { emitEvent: false });
-    this.statusControl.setValue(null, { emitEvent: false });
-    this.reload();
+    this.resetColumnFilters();
+  }
+
+  /**
+   * Method onFilterToggle
+   *
+   * @description
+   * Opens or closes {@link filterPopover} anchored to the "Filters" toolbar
+   * button.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {Event} event Click event emitted by the "Filters" button.
+   *
+   * @returns {void}
+   */
+  protected onFilterToggle(event: Event): void {
+    this.filterPopover().toggle(event);
+  }
+
+  /**
+   * Method onApplyColumnFilters
+   *
+   * @description
+   * Forwards the popover's draft {@link resultControl}, {@link statusControl},
+   * and {@link performedAtControl} values to the table's native `filter()`
+   * API. `Table.filter()` debounces internally (`filterDelay`), so the three
+   * calls below collapse into a single `onLazyLoad` request. Closes the
+   * popover once applied.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  protected onApplyColumnFilters(): void {
+    const table: Table = this.table();
+    const performedAt: [Date | null, Date | null] | null = this.hasPerformedAtValue()
+      ? this.performedAtControl.value
+      : null;
+
+    table.filter(this.resultControl.value, 'result', 'equals');
+    table.filter(this.statusControl.value, 'status', 'equals');
+    table.filter(performedAt, 'performedAt', 'between');
+
+    this.activeFilterCount.set(
+      (this.resultControl.value ? 1 : 0) +
+        (this.statusControl.value ? 1 : 0) +
+        (this.hasPerformedAtValue() ? 1 : 0),
+    );
+    this.filterPopover().hide();
+  }
+
+  /**
+   * Method onResetColumnFilters
+   *
+   * @description
+   * Clears the draft filter controls, resets every native column filter, and
+   * closes the popover.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  protected onResetColumnFilters(): void {
+    this.resetColumnFilters();
+    this.filterPopover().hide();
   }
 
   /**
@@ -915,6 +1080,52 @@ export class InspectionTable implements OnInit {
     return count > 1
       ? $localize`:@@inspection.findingsPlural:${count}:count: findings`
       : $localize`:@@inspection.findingsOne:${count}:count: finding`;
+  }
+
+  /**
+   * Method resetColumnFilters
+   *
+   * @description
+   * Clears the draft {@link resultControl}, {@link statusControl}, and
+   * {@link performedAtControl} values and resets every native column filter
+   * via per-field `Table.filter()` calls (which trigger a fresh lazy load
+   * without disturbing the active sort, unlike `Table.clear()`), then zeroes
+   * {@link activeFilterCount}.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  private resetColumnFilters(): void {
+    const table: Table = this.table();
+
+    this.resultControl.setValue(null, { emitEvent: false });
+    this.statusControl.setValue(null, { emitEvent: false });
+    this.performedAtControl.setValue(null, { emitEvent: false });
+    table.filter(null, 'result', 'equals');
+    table.filter(null, 'status', 'equals');
+    table.filter(null, 'performedAt', 'between');
+    this.activeFilterCount.set(0);
+  }
+
+  /**
+   * Method hasPerformedAtValue
+   *
+   * @description
+   * Whether {@link performedAtControl} carries at least one bound date. A
+   * range picker's cleared value is `[null, null]`, which is truthy as an
+   * array and would otherwise read as an active filter.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @returns {boolean} Whether either end of the range is set.
+   */
+  private hasPerformedAtValue(): boolean {
+    const range: [Date | null, Date | null] | null = this.performedAtControl.value;
+
+    return !!range && (range[0] != null || range[1] != null);
   }
 
   /**

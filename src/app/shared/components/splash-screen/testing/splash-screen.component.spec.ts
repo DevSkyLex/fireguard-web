@@ -45,7 +45,11 @@ describe('SplashScreen', () => {
 
     expect(fixture.componentInstance['rendered']()).toBe(true);
     expect(fixture.componentInstance['hiding']()).toBe(false);
-    expect(fixture.nativeElement.querySelector('[data-testid="boot-spinner"]')).toBeTruthy();
+    const indicator: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="boot-indicator"]',
+    );
+    expect(indicator).toBeTruthy();
+    expect(indicator?.classList.contains('animate-pulse')).toBe(true);
   });
 
   it('should surface a phase-appropriate boot status title', () => {
@@ -67,7 +71,11 @@ describe('SplashScreen', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain("Can't reach the server");
-    expect(fixture.nativeElement.querySelector('[data-testid="boot-spinner"]')).toBeNull();
+    const indicator: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="boot-indicator"]',
+    );
+    expect(indicator).toBeTruthy();
+    expect(indicator?.classList.contains('animate-pulse')).toBe(false);
 
     const retryButton: HTMLButtonElement | null =
       fixture.nativeElement.querySelector('p-button button');

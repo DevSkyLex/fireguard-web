@@ -73,7 +73,7 @@ export class TitleService {
    *
    * @type {string}
    */
-  private readonly separator: string = '|';
+  private readonly separator: string = '-';
 
   /**
    * Property pageTitle
@@ -126,22 +126,6 @@ export class TitleService {
   public setTitle(pageTitle: string): void {
     this.pageTitle.set(pageTitle);
     this.title.setTitle(this.fullTitle());
-  }
-
-  /**
-   * Method getTitle
-   *
-   * @description
-   * Gets the current page title
-   * from the browser.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @returns {string} - The current browser title
-   */
-  public getTitle(): string {
-    return this.title.getTitle();
   }
   //#endregion
 }

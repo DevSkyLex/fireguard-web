@@ -22,12 +22,11 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
-import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
+import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
 import type { RequestOptions } from '@core/api';
 import { pickAvatarUrl } from '@core/api/utils';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -37,7 +36,7 @@ import type {
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag } from '@shared/components';
+import { EmptyState, Tag, TableShell, tablePt } from '@shared/components';
 import type { InspectionFilterOption } from './models';
 
 /**
@@ -58,7 +57,6 @@ import type { InspectionFilterOption } from './models';
   imports: [
     AvatarModule,
     ButtonModule,
-    CardModule,
     DatePipe,
     EmptyState,
     MenuModule,
@@ -67,6 +65,7 @@ import type { InspectionFilterOption } from './models';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
+    TableShell,
     Tag,
   ],
   templateUrl: './facility-inspection-table.component.html',
@@ -241,63 +240,20 @@ export class FacilityInspectionTable implements OnInit {
     inject<OrganizationPermissionService>(OrganizationPermissionService);
 
   /**
-   * Property cardPt
-   * @readonly
-   *
-   * @description
-   * PrimeNG card pass-through classes used to make the table fill the tab.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {CardPassThroughOptions}
-   */
-  protected readonly cardPt: CardPassThroughOptions = {
-    root: {
-      class:
-        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
-    },
-    body: {
-      class: 'p-0 flex flex-col flex-1 min-h-0',
-    },
-  };
-
-  /**
    * Property tablePt
    * @readonly
    *
    * @description
-   * PrimeNG table pass-through classes used for full-height table layout and
-   * paginator alignment.
+   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
+   * member so the template can call it directly (Angular templates cannot
+   * invoke a bare module-level import).
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<TablePassThroughOptions>}
+   * @type {typeof tablePt}
    */
-  protected readonly tablePt: Signal<TablePassThroughOptions> = computed(
-    (): TablePassThroughOptions => ({
-      root: {
-        class: 'flex min-h-0 flex-1 flex-col',
-      },
-      tableContainer: {
-        class: 'flex-1 min-h-0 rounded-b-xl overflow-hidden',
-      },
-      table: {
-        class: 'text-sm',
-      },
-      header: {
-        class: 'border-0 p-0 bg-surface-0 dark:bg-surface-900',
-      },
-      pcPaginator: {
-        root: {
-          class:
-            'mt-auto rounded-t-none rounded-b-2xl bg-surface-0 dark:bg-surface-900 justify-end' +
-            (this.total() === 0 ? ' hidden' : ''),
-        },
-      },
-    }),
-  );
+  protected readonly tablePt: typeof tablePt = tablePt;
 
   /**
    * Property rows

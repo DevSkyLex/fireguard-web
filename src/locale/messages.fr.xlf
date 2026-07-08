@@ -737,6 +737,10 @@
         <source>Reset</source>
         <target>Réinitialiser</target>
       </trans-unit>
+      <trans-unit id="common.apply" datatype="html">
+        <source>Apply</source>
+        <target>Appliquer</target>
+      </trans-unit>
       <trans-unit id="common.saveChanges" datatype="html">
         <source>Save changes</source>
         <target>Enregistrer les modifications</target>
@@ -1613,6 +1617,10 @@
         <source>Reusable inspection templates</source>
         <target>Modèles d'inspection réutilisables</target>
       </trans-unit>
+      <trans-unit id="checklist.table.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
       <trans-unit id="common.status" datatype="html">
         <source>Status</source>
         <target>Statut</target>
@@ -2073,6 +2081,22 @@
         <source>Adjust your search or filters, or register the assets you track.</source>
         <target>Ajustez votre recherche ou vos filtres, ou enregistrez les actifs que vous suivez.</target>
       </trans-unit>
+      <trans-unit id="equipment.table.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
+      <trans-unit id="equipment.table.filterSubType" datatype="html">
+        <source>Sub-type</source>
+        <target>Sous-type</target>
+      </trans-unit>
+      <trans-unit id="equipment.table.filterBrand" datatype="html">
+        <source>Brand</source>
+        <target>Marque</target>
+      </trans-unit>
+      <trans-unit id="equipment.table.filterModel" datatype="html">
+        <source>Model</source>
+        <target>Modèle</target>
+      </trans-unit>
       <trans-unit id="equipmentStatus.inStock" datatype="html">
         <source>In Stock</source>
         <target>En stock</target>
@@ -2500,6 +2524,10 @@
       <trans-unit id="facility.newButton" datatype="html">
         <source>New facility</source>
         <target>Nouvel établissement</target>
+      </trans-unit>
+      <trans-unit id="facility.table.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
       </trans-unit>
       <trans-unit id="facility.table.colFacility" datatype="html">
         <source>Facility</source>
@@ -2996,6 +3024,14 @@
       <trans-unit id="inspection.table.colPerformed" datatype="html">
         <source>Performed</source>
         <target>Réalisée</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.filterPerformed" datatype="html">
+        <source>Performed range</source>
+        <target>Période de réalisation</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
       </trans-unit>
       <trans-unit id="inspection.table.srActions" datatype="html">
         <source>Actions</source>
@@ -3809,9 +3845,21 @@
         <source> Prepare field data, resolve blockers and publish when the intervention is ready. </source>
         <target>Préparez les données terrain, résolvez les blocages et publiez lorsque l'intervention est prête.</target>
       </trans-unit>
+      <trans-unit id="intervention.table.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
       <trans-unit id="intervention.table.allStatuses" datatype="html">
         <source>All statuses</source>
         <target>Tous les statuts</target>
+      </trans-unit>
+      <trans-unit id="intervention.table.filterType" datatype="html">
+        <source>Type</source>
+        <target>Type</target>
+      </trans-unit>
+      <trans-unit id="intervention.table.filterDue" datatype="html">
+        <source>Due range</source>
+        <target>Période d'échéance</target>
       </trans-unit>
       <trans-unit id="intervention.table.refreshAria" datatype="html">
         <source>Refresh interventions</source>

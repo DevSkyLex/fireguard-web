@@ -1,56 +1,52 @@
-<p-card [pt]="cardPt">
-  <ng-template pTemplate="header">
-    <div
-      class="flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
-    >
-      <div class="flex items-center gap-2">
-        <h2
-          i18n="@@intervention.fwt.title"
-          class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+<app-table-shell variant="card">
+  <ng-template #actions>
+    <div class="flex items-center gap-2">
+      <h2
+        i18n="@@intervention.fwt.title"
+        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+      >
+        Field work
+      </h2>
+      @if (workItems().length > 0) {
+        <span
+          class="rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-300"
         >
-          Field work
-        </h2>
-        @if (workItems().length > 0) {
-          <span
-            class="rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-300"
-          >
-            {{ workItems().length }}
-          </span>
-        }
-      </div>
+          {{ workItems().length }}
+        </span>
+      }
+    </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <p-iconfield class="flex-1 sm:flex-none">
-          <p-inputicon class="pi pi-search" />
-          <input
-            pInputText
-            type="text"
-            pSize="small"
-            i18n-placeholder="@@intervention.fwt.searchPlaceholder"
-            placeholder="Search field work..."
-            [formControl]="searchControl"
-            class="w-full sm:w-56"
-          />
-        </p-iconfield>
+    <div class="flex flex-wrap items-center gap-2">
+      <p-iconfield class="flex-1 sm:flex-none">
+        <p-inputicon class="pi pi-search" />
+        <input
+          pInputText
+          type="text"
+          pSize="small"
+          i18n-placeholder="@@intervention.fwt.searchPlaceholder"
+          placeholder="Search field work..."
+          [formControl]="searchControl"
+          class="w-full sm:w-56"
+        />
+      </p-iconfield>
 
-        @if (canExecute()) {
-          <p-splitbutton
-            i18n-label="@@intervention.df.submit"
-            label="Add discovery"
-            icon="pi pi-plus"
-            severity="primary"
-            size="small"
-            [model]="fieldActions()"
-            [disabled]="saving()"
-            class="w-full sm:w-auto"
-            (onClick)="addDiscovery.emit()"
-          />
-        }
-      </div>
+      @if (canExecute()) {
+        <p-splitbutton
+          i18n-label="@@intervention.df.submit"
+          label="Add discovery"
+          icon="pi pi-plus"
+          severity="primary"
+          size="small"
+          [model]="fieldActions()"
+          [disabled]="saving()"
+          class="w-full sm:w-auto"
+          (onClick)="addDiscovery.emit()"
+        />
+      }
     </div>
   </ng-template>
 
-  <ng-template pTemplate="content">
+  <ng-template #table>
     <p-table
       #dt
       [value]="rowItems()"
@@ -63,7 +59,7 @@
       i18n-currentPageReportTemplate="@@intervention.fwt.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} tasks"
       [globalFilterFields]="globalFilterFields"
-      [pt]="tablePt"
+      [pt]="tablePt({ scroll: true })"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -179,4 +175,4 @@
       </ng-template>
     </p-table>
   </ng-template>
-</p-card>
+</app-table-shell>

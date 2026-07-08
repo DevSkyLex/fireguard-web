@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { TooltipModule } from 'primeng/tooltip';
 import { DashboardSidebarService } from '@layouts/dashboard-layout/services';
+import { Logo } from '@shared/components';
 
 /**
  * Component DashboardLayoutSidebarHeader
@@ -16,7 +17,7 @@ import { DashboardSidebarService } from '@layouts/dashboard-layout/services';
  */
 @Component({
   selector: 'app-dashboard-layout-sidebar-header',
-  imports: [TooltipModule],
+  imports: [TooltipModule, Logo],
   templateUrl: './dashboard-layout-sidebar-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

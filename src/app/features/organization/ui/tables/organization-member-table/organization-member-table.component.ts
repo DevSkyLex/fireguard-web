@@ -16,7 +16,6 @@ import {
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { ChipModule } from 'primeng/chip';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -25,13 +24,13 @@ import { Menu, MenuModule } from 'primeng/menu';
 import { PaginatorModule } from 'primeng/paginator';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TableModule, type TablePassThroughOptions } from 'primeng/table';
+import { TableModule } from 'primeng/table';
 import { resolveInvitationTag } from '@features/organization/models';
 import type {
   OrganizationMemberOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
+import { EmptyState, Tag, TableShell, tablePt, type TagDescriptor } from '@shared/components';
 import type { OrganizationMemberBulkRoleAssignment, OrganizationMemberRoleRemoval } from './models';
 
 /**
@@ -43,7 +42,6 @@ import type { OrganizationMemberBulkRoleAssignment, OrganizationMemberRoleRemova
   imports: [
     AvatarModule,
     ButtonModule,
-    CardModule,
     ChipModule,
     DatePipe,
     EmptyState,
@@ -55,12 +53,20 @@ import type { OrganizationMemberBulkRoleAssignment, OrganizationMemberRoleRemova
     SelectModule,
     SkeletonModule,
     TableModule,
+    TableShell,
     Tag,
   ],
   templateUrl: './organization-member-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationMemberTable {
+  /**
+   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
+   * member so the template can call it directly (Angular templates cannot
+   * invoke a bare module-level import).
+   */
+  protected readonly tablePt: typeof tablePt = tablePt;
+
   /** Organization members to display. */
   public readonly members: InputSignal<readonly OrganizationMemberOutput[]> = input.required();
 
@@ -126,20 +132,6 @@ export class OrganizationMemberTable {
 
   /** Number of members currently checked. */
   protected readonly selectedCount: Signal<number> = computed(() => this.selection().length);
-
-  /** PrimeNG card pass-through classes matching the app's entity tables. */
-  protected readonly cardPt: CardPassThroughOptions = {
-    root: {
-      class:
-        'flex flex-col overflow-hidden rounded-xl border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
-    },
-    body: { class: 'p-0' },
-  };
-
-  /** PrimeNG table pass-through classes. */
-  protected readonly tablePt: TablePassThroughOptions = {
-    table: { class: 'text-sm' },
-  };
 
   /** Contextual row actions for the selected member. */
   protected readonly rowMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {

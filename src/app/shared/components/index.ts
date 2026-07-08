@@ -6,7 +6,7 @@ export { RadioCardGroup } from './radio-card-group';
 export type { RadioCardOption } from './radio-card-group';
 export { SplashScreen } from './splash-screen';
 export { Tag } from './tag';
-export type { TagDescriptor, TagSeverity, TagVariant } from './tag';
+export type { TagDescriptor, TagOption, TagSeverity, TagVariant } from './tag';
 export { tagSeverityIconClass, tagSeverityDotClass } from './tag';
 export {
   Calendar,
@@ -23,7 +23,9 @@ export {
   type KanbanColumn,
   type KanbanDropEvent,
 } from './kanban';
+export { Logo } from './logo';
 export { ThemeSwitcher, withThemeSwitcher } from './theme-switcher';
 export { Toast } from './toast';
 export { TrendCard } from './trend-card';
 export type { MetricSummary } from './trend-card';
+export { TableShell, tablePt } from './table-shell';

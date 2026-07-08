@@ -1,19 +1,10 @@
 import { DatePipe, DOCUMENT } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  type InputSignal,
-  type Signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, type InputSignal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TableModule, type TablePassThroughOptions } from 'primeng/table';
+import { TableModule } from 'primeng/table';
 import type { InvoiceOutput } from '@features/organization/models';
-import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
+import { EmptyState, Tag, TableShell, tablePt, type TagDescriptor } from '@shared/components';
 
 /**
  * Component BillingInvoiceTable
@@ -33,7 +24,7 @@ import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
  */
 @Component({
   selector: 'app-billing-invoice-table',
-  imports: [ButtonModule, CardModule, DatePipe, EmptyState, SkeletonModule, TableModule, Tag],
+  imports: [ButtonModule, DatePipe, EmptyState, SkeletonModule, TableModule, TableShell, Tag],
   templateUrl: './billing-invoice-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -87,56 +78,20 @@ export class BillingInvoiceTable {
 
   //#region Properties
   /**
-   * Property cardPt
-   * @readonly
-   *
-   * @description
-   * PrimeNG card pass-through classes giving the table a bordered, shadowless
-   * surface whose body has no padding so rows reach the card edges.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {CardPassThroughOptions}
-   */
-  protected readonly cardPt: CardPassThroughOptions = {
-    root: {
-      class:
-        'flex flex-col overflow-hidden border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
-    },
-    body: {
-      class: 'p-0 flex flex-col',
-    },
-  };
-
-  /**
    * Property tablePt
    * @readonly
    *
    * @description
-   * PrimeNG table pass-through classes used for the carded table layout. The
-   * paginator is pinned to the bottom of the card, right-aligned, and hidden
-   * while loading or when there are no invoices to page through.
+   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
+   * member so the template can call it directly (Angular templates cannot
+   * invoke a bare module-level import).
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<TablePassThroughOptions>}
+   * @type {typeof tablePt}
    */
-  protected readonly tablePt: Signal<TablePassThroughOptions> = computed(
-    (): TablePassThroughOptions => ({
-      table: {
-        class: 'text-sm',
-      },
-      pcPaginator: {
-        root: {
-          class:
-            'mt-auto rounded-t-none rounded-b-2xl bg-surface-0 dark:bg-surface-900 justify-end' +
-            (this.loading() || this.invoices().length === 0 ? ' hidden' : ''),
-        },
-      },
-    }),
-  );
+  protected readonly tablePt: typeof tablePt = tablePt;
 
   /**
    * Property rows

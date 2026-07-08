@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { SPLASH_SCREEN_PORT, type SplashScreenPort } from '@core/splash-screen';
+import { Logo } from '../logo';
 
 /**
  * Constant FADE_DURATION_MS
@@ -32,23 +33,22 @@ const FADE_DURATION_MS: number = 300;
  * and lazy-loaded route transitions. Theme-aware via the
  * `data-theme` attribute already applied on `<html>`: a clean
  * white surface in light mode, a deep surface in dark mode,
- * both fronted by the brand lockup and a slim indeterminate
- * boot indicator.
+ * both fronted by the bare brand mark and a phase-appropriate
+ * status title and detail line.
  *
  * Uses a CSS opacity transition (Tailwind) instead of
  * `@angular/animations` to drive the fade-out effect.
  * Visibility and boot phase are consumed through a neutral splash
  * port so the component stays decoupled from core implementations.
- * The brand badge sits inside a circular progress ring with a phase
- * title and detail line; a stalled boot swaps the ring for a retry
- * affordance.
+ * The brand mark pulses while booting; a stalled boot swaps the
+ * status line for a retry affordance.
  *
  * @version 1.3.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-splash-screen',
-  imports: [ButtonModule],
+  imports: [ButtonModule, Logo],
   templateUrl: './splash-screen.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -101,7 +101,7 @@ export class SplashScreen {
   protected readonly hiding: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
-   * Property statusMessage
+   * Property statusTitle
    * @readonly
    *
    * @description

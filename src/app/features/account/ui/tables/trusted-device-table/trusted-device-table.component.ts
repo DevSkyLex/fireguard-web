@@ -16,13 +16,12 @@ import {
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TableModule, type TableLazyLoadEvent, type TablePassThroughOptions } from 'primeng/table';
+import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
 import type { RequestOptions } from '@core/api';
 import type { TrustedDeviceOutput } from '@features/auth/models';
-import { EmptyState } from '@shared/components';
+import { EmptyState, TableShell, tablePt } from '@shared/components';
 
 /**
  * Component TrustedDeviceTable
@@ -43,12 +42,12 @@ import { EmptyState } from '@shared/components';
   imports: [
     AvatarModule,
     ButtonModule,
-    CardModule,
     DatePipe,
     EmptyState,
     MenuModule,
     SkeletonModule,
     TableModule,
+    TableShell,
   ],
   templateUrl: './trusted-device-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -187,62 +186,20 @@ export class TrustedDeviceTable {
 
   //#region Properties
   /**
-   * Property cardPt
-   * @readonly
-   *
-   * @description
-   * PrimeNG card pass-through classes used to make the table fill its host.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {CardPassThroughOptions}
-   */
-  protected readonly cardPt: CardPassThroughOptions = {
-    root: {
-      class:
-        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
-    },
-    body: {
-      class: 'p-0 flex flex-col flex-1 min-h-0',
-    },
-  };
-
-  /**
    * Property tablePt
    * @readonly
    *
    * @description
-   * PrimeNG table pass-through classes used for full-height table layout.
+   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
+   * member so the template can call it directly (Angular templates cannot
+   * invoke a bare module-level import).
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<TablePassThroughOptions>}
+   * @type {typeof tablePt}
    */
-  protected readonly tablePt: Signal<TablePassThroughOptions> = computed(
-    (): TablePassThroughOptions => ({
-      root: {
-        class: 'flex min-h-0 flex-1 flex-col',
-      },
-      tableContainer: {
-        class: 'flex-1 min-h-0 rounded-b-xl overflow-hidden',
-      },
-      table: {
-        class: 'text-sm',
-      },
-      header: {
-        class: 'border-0 p-0 bg-surface-0 dark:bg-surface-900',
-      },
-      pcPaginator: {
-        root: {
-          class:
-            'mt-auto rounded-t-none rounded-b-2xl bg-surface-0 dark:bg-surface-900 justify-end' +
-            (this.total() === 0 ? ' hidden' : ''),
-        },
-      },
-    }),
-  );
+  protected readonly tablePt: typeof tablePt = tablePt;
 
   /**
    * Property rows

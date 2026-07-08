@@ -1,27 +1,16 @@
-import type { TagDescriptor } from '@shared/components';
+import type { TagOption } from '@shared/components';
 
 /**
- * Interface InspectionFilterOption
+ * Type InspectionFilterOption
+ * @typedef InspectionFilterOption
  *
  * @description
  * Option rendered by facility inspection result and status filters and their
- * badges. Extends the shared {@link TagDescriptor} (`label`, `severity`,
- * `icon`) so it can be forwarded directly to `<app-tag>`, and adds the API
- * `value` sent to the inspection list filter.
+ * badges — the shared {@link TagOption} generic specialized to the inspection
+ * filter value type.
  *
  * @template TValue Inspection filter value type.
  *
  * @since 1.0.0
  */
-export interface InspectionFilterOption<TValue extends string> extends TagDescriptor {
-  /**
-   * Property value
-   * @readonly
-   *
-   * @description
-   * Inspection filter value sent to the inspection API.
-   *
-   * @type {TValue}
-   */
-  readonly value: TValue;
-}
+export type InspectionFilterOption<TValue extends string> = TagOption<TValue>;

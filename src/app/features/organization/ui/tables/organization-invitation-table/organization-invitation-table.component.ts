@@ -14,17 +14,16 @@ import {
 } from '@angular/core';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { ChipModule } from 'primeng/chip';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TableModule, type TablePassThroughOptions } from 'primeng/table';
+import { TableModule } from 'primeng/table';
 import { resolveInvitationTag } from '@features/organization/models';
 import type {
   OrganizationInvitationOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
+import { EmptyState, Tag, TableShell, tablePt, type TagDescriptor } from '@shared/components';
 import { invitationExpiryBucket } from './utils';
 
 /**
@@ -36,19 +35,26 @@ import { invitationExpiryBucket } from './utils';
   selector: 'app-organization-invitation-table',
   imports: [
     ButtonModule,
-    CardModule,
     ChipModule,
     DatePipe,
     EmptyState,
     MenuModule,
     SkeletonModule,
     TableModule,
+    TableShell,
     Tag,
   ],
   templateUrl: './organization-invitation-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationInvitationTable {
+  /**
+   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
+   * member so the template can call it directly (Angular templates cannot
+   * invoke a bare module-level import).
+   */
+  protected readonly tablePt: typeof tablePt = tablePt;
+
   /** Pending invitations to display. */
   public readonly invitations: InputSignal<readonly OrganizationInvitationOutput[]> =
     input.required();
@@ -73,20 +79,6 @@ export class OrganizationInvitationTable {
 
   /** Placeholder rows displayed while loading. */
   protected readonly skeletonItems: undefined[] = Array(4);
-
-  /** PrimeNG card pass-through classes matching the app's entity tables. */
-  protected readonly cardPt: CardPassThroughOptions = {
-    root: {
-      class:
-        'flex flex-col overflow-hidden rounded-xl border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
-    },
-    body: { class: 'p-0' },
-  };
-
-  /** PrimeNG table pass-through classes. */
-  protected readonly tablePt: TablePassThroughOptions = {
-    table: { class: 'text-sm' },
-  };
 
   /** Contextual row actions for the selected invitation. */
   protected readonly rowMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {

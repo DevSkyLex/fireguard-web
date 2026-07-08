@@ -1,141 +1,183 @@
-<section class="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
-  <div class="flex flex-col gap-5">
-    @if (publicationMessage(); as message) {
-      <p-message severity="info" [closable]="false">{{ message }}</p-message>
-    }
-    @if (!online()) {
-      <p-message i18n="@@intervention.review.offline" severity="warn" [closable]="false">
-        Connect to the network before publishing this intervention.
-      </p-message>
-    }
+<div class="flex flex-col gap-5 lg:pb-0" [class.pb-24]="publishActionVisible()">
+  @if (publishActionVisible()) {
+    <!--
+      Publish action bar — the phase's destination, mirroring the prepare and
+      execute panels' pinned bars so every phase surfaces its forward step the
+      same way: pinned to the thumb zone on narrow viewports, a borderless
+      tinted band on desktop.
+    -->
+    <div
+      class="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-surface-200 bg-surface-0/95 px-4 py-3 backdrop-blur-sm lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:px-0.5 lg:py-0 lg:backdrop-blur-none dark:border-surface-800 dark:bg-surface-950/95 lg:dark:bg-transparent"
+    >
+      <div class="flex min-w-0 items-center gap-2">
+        @if (readyToPublishCount() === publishChecks().length) {
+          <span class="size-1.5 shrink-0 rounded-full bg-green-500" aria-hidden="true"></span>
+          <span
+            i18n="@@intervention.review.readyPublish"
+            class="truncate text-sm text-surface-600 dark:text-surface-300"
+          >
+            Ready to publish
+          </span>
+        } @else {
+          <span class="size-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden="true"></span>
+          <span
+            i18n="@@intervention.review.readyPublishCount"
+            class="truncate text-sm text-surface-500 dark:text-surface-400"
+          >
+            <span class="font-semibold text-surface-700 tabular-nums dark:text-surface-200"
+              >{{ readyToPublishCount() }} of 3</span
+            >
+            ready to publish
+          </span>
+        }
+      </div>
 
-    @if (issues().length > 0) {
+      <p-button
+        i18n-label="@@intervention.review.publish"
+        label="Publish intervention"
+        icon="pi pi-check-circle"
+        [loading]="saving()"
+        [disabled]="
+          !canPublish() ||
+          !online() ||
+          intervention().status !== 'submitted' ||
+          intervention().blockersCount > 0
+        "
+        (onClick)="publishIntervention.emit()"
+      />
+    </div>
+  }
+
+  <section class="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="flex flex-col gap-5">
+      @if (publicationMessage(); as message) {
+        <p-message severity="info" [closable]="false">{{ message }}</p-message>
+      }
+      @if (!online()) {
+        <p-message i18n="@@intervention.review.offline" severity="warn" [closable]="false">
+          Connect to the network before publishing this intervention.
+        </p-message>
+      }
+
+      @if (issues().length > 0) {
+        <app-card
+          i18n-title="@@intervention.review.findingsTitle"
+          title="Validation findings"
+          [description]="findingsDescription()"
+        >
+          <ng-template #content>
+            <div class="mt-2 grid gap-3">
+              @for (issue of issues(); track issue.resource + issue.message) {
+                <p-message
+                  [severity]="
+                    issue.severity === 'blocker'
+                      ? 'error'
+                      : issue.severity === 'warning'
+                        ? 'warn'
+                        : 'info'
+                  "
+                >
+                  {{ issue.message }}
+                </p-message>
+              }
+            </div>
+          </ng-template>
+        </app-card>
+      }
+
       <app-card
-        i18n-title="@@intervention.review.findingsTitle"
-        title="Validation findings"
-        [description]="findingsDescription()"
+        i18n-title="@@intervention.review.changesTitle"
+        title="Proposed changes"
+        i18n-description="@@intervention.review.changesDesc"
+        description="Updates applied atomically when the intervention is published."
       >
         <ng-template #content>
-          <div class="mt-2 grid gap-3">
-            @for (issue of issues(); track issue.resource + issue.message) {
-              <p-message
-                [severity]="
-                  issue.severity === 'blocker'
-                    ? 'error'
-                    : issue.severity === 'warning'
-                      ? 'warn'
-                      : 'info'
-                "
-              >
-                {{ issue.message }}
-              </p-message>
-            }
-          </div>
+          @if (changes().length > 0) {
+            <ul class="mt-2 divide-y divide-surface-200 dark:divide-surface-800">
+              @for (change of changes(); track change.id) {
+                <li class="flex items-start justify-between gap-4 py-3 first:pt-1 last:pb-1">
+                  <div class="min-w-0">
+                    <p class="truncate font-medium">{{ change.resource }}</p>
+                    <p class="mt-0.5 truncate font-mono text-xs text-surface-500">
+                      {{ change.patch | json }}
+                    </p>
+                  </div>
+                  <app-intervention-tag kind="changeStatus" [value]="change.status" />
+                </li>
+              }
+            </ul>
+          } @else {
+            <p i18n="@@intervention.review.noChanges" class="mt-2 text-sm text-surface-500">
+              No proposed changes.
+            </p>
+          }
         </ng-template>
       </app-card>
-    }
+    </div>
 
-    <app-card
-      i18n-title="@@intervention.review.changesTitle"
-      title="Proposed changes"
-      i18n-description="@@intervention.review.changesDesc"
-      description="Updates applied atomically when the intervention is published."
-    >
-      <ng-template #content>
-        @if (changes().length > 0) {
-          <ul class="mt-2 divide-y divide-surface-200 dark:divide-surface-800">
-            @for (change of changes(); track change.id) {
-              <li class="flex items-start justify-between gap-4 py-3 first:pt-1 last:pb-1">
-                <div class="min-w-0">
-                  <p class="truncate font-medium">{{ change.resource }}</p>
-                  <p class="mt-0.5 truncate font-mono text-xs text-surface-500">
-                    {{ change.patch | json }}
-                  </p>
-                </div>
-                <app-intervention-tag kind="changeStatus" [value]="change.status" />
-              </li>
-            }
-          </ul>
-        } @else {
-          <p i18n="@@intervention.review.noChanges" class="mt-2 text-sm text-surface-500">
-            No proposed changes.
-          </p>
-        }
-      </ng-template>
-    </app-card>
-  </div>
-
-  <aside class="min-w-0">
-    <app-card
-      class="block h-full"
-      i18n-title="@@intervention.review.decisionTitle"
-      title="Review decision"
-      i18n-description="@@intervention.review.decisionDesc"
-      description="Publication is atomic — a failed publication leaves all operational records unchanged."
-    >
-      <ng-template #content>
-        <div class="flex items-center justify-between">
+    <aside class="min-w-0">
+      <app-card
+        class="block h-full"
+        i18n-title="@@intervention.review.decisionTitle"
+        title="Review decision"
+        i18n-description="@@intervention.review.decisionDesc"
+        description="Publication is atomic — a failed publication leaves all operational records unchanged."
+      >
+        <ng-template #content>
           <h3
             i18n="@@intervention.review.readyPublish"
             class="text-sm font-semibold text-surface-900 dark:text-surface-50"
           >
             Ready to publish
           </h3>
-          <span
-            class="rounded-md bg-surface-100 px-1.5 py-0.5 text-xs font-medium text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-300"
-          >
-            {{ readyToPublishCount() }} / 3
-          </span>
-        </div>
 
-        <ul class="mt-3 grid gap-2 text-sm">
-          @for (check of publishChecks(); track check.label) {
-            <li class="flex items-center gap-2">
-              @if (check.done) {
-                <i
-                  class="pi pi-check-circle shrink-0 text-green-600 dark:text-green-400"
-                  aria-hidden="true"
-                ></i>
-                <span class="text-surface-700 dark:text-surface-200">{{ check.label }}</span>
-              } @else {
-                <i
-                  class="pi pi-exclamation-circle shrink-0 text-amber-500 dark:text-amber-400"
-                  aria-hidden="true"
-                ></i>
-                <span class="text-surface-500 dark:text-surface-400">{{ check.label }}</span>
-              }
-            </li>
-          }
-        </ul>
-      </ng-template>
+          <ul class="mt-3 grid gap-2 text-sm">
+            @for (check of publishChecks(); track check.label) {
+              <li class="flex items-center gap-2">
+                @if (check.done) {
+                  <i
+                    class="pi pi-check-circle shrink-0 text-green-600 dark:text-green-400"
+                    aria-hidden="true"
+                  ></i>
+                  <span class="text-surface-700 dark:text-surface-200">{{ check.label }}</span>
+                } @else {
+                  <i
+                    class="pi pi-exclamation-circle shrink-0 text-amber-500 dark:text-amber-400"
+                    aria-hidden="true"
+                  ></i>
+                  <span class="text-surface-500 dark:text-surface-400">{{ check.label }}</span>
+                }
+              </li>
+            }
+          </ul>
+        </ng-template>
 
-      <ng-template #footer>
-        <div class="grid gap-2">
-          <p-button
-            i18n-label="@@intervention.review.requestChanges"
-            label="Request changes"
-            icon="pi pi-replay"
-            severity="secondary"
-            [outlined]="true"
-            [loading]="saving()"
-            [disabled]="!canReview() || intervention().status !== 'submitted'"
-            (onClick)="requestCorrection()"
-          />
-          <p-button
-            i18n-label="@@intervention.review.publish"
-            label="Publish intervention"
-            icon="pi pi-check-circle"
-            [loading]="saving()"
-            [disabled]="
-              !canPublish() ||
-              !online() ||
-              intervention().status !== 'submitted' ||
-              intervention().blockersCount > 0
-            "
-            (onClick)="publishIntervention.emit()"
-          />
-        </div>
-      </ng-template>
-    </app-card>
-  </aside>
-</section>
+        <ng-template #footer>
+          <div class="grid gap-2">
+            <p-button
+              i18n-label="@@intervention.review.requestChanges"
+              label="Request changes"
+              icon="pi pi-replay"
+              severity="secondary"
+              [outlined]="true"
+              [loading]="saving()"
+              [disabled]="!canReview() || intervention().status !== 'submitted'"
+              (onClick)="requestCorrection()"
+            />
+            @if (canAbandon()) {
+              <p-button
+                i18n-label="@@intervention.abandon.action"
+                label="Abandon intervention"
+                icon="pi pi-ban"
+                severity="danger"
+                [text]="true"
+                [disabled]="saving()"
+                (onClick)="abandonIntervention.emit()"
+              />
+            }
+          </div>
+        </ng-template>
+      </app-card>
+    </aside>
+  </section>
+</div>

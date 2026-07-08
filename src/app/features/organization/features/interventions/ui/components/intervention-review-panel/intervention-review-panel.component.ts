@@ -159,6 +159,22 @@ export class InterventionReviewPanel {
   public readonly canPublish: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property canAbandon
+   * @readonly
+   *
+   * @description
+   * Whether the intervention may be abandoned from this panel (workflow-legal and
+   * permitted for the current user); resolved by the parent page. Gates the
+   * destructive "Abandon" affordance.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canAbandon: InputSignal<boolean> = input<boolean>(false);
+
+  /**
    * Property publicationMessage
    * @readonly
    *
@@ -199,6 +215,21 @@ export class InterventionReviewPanel {
    * @type {OutputEmitterRef<void>}
    */
   public readonly publishIntervention: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property abandonIntervention
+   * @readonly
+   *
+   * @description
+   * Emits when the user asks to abandon the intervention, so the parent page can
+   * confirm the destructive action and perform the transition.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly abandonIntervention: OutputEmitterRef<void> = output<void>();
 
   /**
    * Property publishChecks
@@ -251,6 +282,26 @@ export class InterventionReviewPanel {
    */
   protected readonly readyToPublishCount: Signal<number> = computed<number>(
     () => this.publishChecks().filter((check: ReviewReadinessCheck): boolean => check.done).length,
+  );
+
+  /**
+   * Property publishActionVisible
+   * @readonly
+   *
+   * @description
+   * Whether the pinned "Publish intervention" action bar is shown: the user
+   * must hold the publish capability, mirroring the prepare and execute
+   * panels' action-bar visibility rule so a reviewer who may only request
+   * changes is never shown a permanently disabled control pinned to the
+   * viewport.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly publishActionVisible: Signal<boolean> = computed<boolean>(() =>
+    this.canPublish(),
   );
 
   /**

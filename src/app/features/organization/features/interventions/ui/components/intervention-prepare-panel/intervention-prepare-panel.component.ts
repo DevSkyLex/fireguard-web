@@ -162,6 +162,22 @@ export class InterventionPreparePanel {
   public readonly canPlan: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property canAbandon
+   * @readonly
+   *
+   * @description
+   * Whether the intervention may be abandoned from this panel (workflow-legal and
+   * permitted for the current user); resolved by the parent page. Gates the
+   * destructive "Abandon" affordance.
+   *
+   * @access public
+   * @since 2.5.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canAbandon: InputSignal<boolean> = input<boolean>(false);
+
+  /**
    * Property online
    * @readonly
    *
@@ -286,6 +302,21 @@ export class InterventionPreparePanel {
    */
   public readonly deleteWorkItems: OutputEmitterRef<readonly InterventionWorkItemOutput[]> =
     output<readonly InterventionWorkItemOutput[]>();
+
+  /**
+   * Property abandonIntervention
+   * @readonly
+   *
+   * @description
+   * Emits when the user asks to abandon the intervention, so the parent page can
+   * confirm the destructive action and perform the transition.
+   *
+   * @access public
+   * @since 2.5.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly abandonIntervention: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
@@ -467,10 +498,15 @@ export class InterventionPreparePanel {
    * @readonly
    *
    * @description
-   * The three planning-readiness conditions surfaced in the rail checklist.
+   * The four planning-readiness conditions surfaced in the rail checklist,
+   * mirroring exactly the four hard preconditions the backend enforces before
+   * a `draft` may transition to `planned` (`Intervention::applyTransition`): a
+   * site, a responsible member, a planned start and a due date. Adding a work
+   * item stays a soft recommendation (see {@link canSubmitPlan}) and is
+   * intentionally not counted here.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 2.6.0
    *
    * @type {Signal<readonly PrepareReadinessCheck[]>}
    */
@@ -481,16 +517,20 @@ export class InterventionPreparePanel {
 
     return [
       {
-        label: $localize`:@@intervention.prepare.checkSite:Single site & responsible`,
-        done: !!intervention.site && !!intervention.responsible,
+        label: $localize`:@@intervention.prepare.checkSite:Site assigned`,
+        done: !!intervention.site,
       },
       {
-        label: $localize`:@@intervention.prepare.checkSchedule:Schedule window set`,
-        done: !!intervention.plannedStartAt && !!intervention.dueAt,
+        label: $localize`:@@intervention.prepare.checkResponsible:Responsible member assigned`,
+        done: !!intervention.responsible,
       },
       {
-        label: $localize`:@@intervention.prepare.checkWorkItem:Add at least one work item`,
-        done: this.workItems().length > 0,
+        label: $localize`:@@intervention.prepare.checkStart:Planned start set`,
+        done: !!intervention.plannedStartAt,
+      },
+      {
+        label: $localize`:@@intervention.prepare.checkDue:Due date set`,
+        done: !!intervention.dueAt,
       },
     ];
   });
@@ -500,7 +540,7 @@ export class InterventionPreparePanel {
    * @readonly
    *
    * @description
-   * Number of satisfied readiness conditions, shown as the rail's `N / 3` badge.
+   * Number of satisfied readiness conditions, shown as the rail's `N / 4` badge.
    *
    * @access protected
    * @since 2.0.0

@@ -167,6 +167,22 @@ export class InterventionCalendar {
    * @type {OutputEmitterRef<void>}
    */
   public readonly create: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Output focusedDateChange
+   * @readonly
+   *
+   * @description
+   * Emits the calendar's newly focused date after navigation, forwarded from the
+   * shared calendar so the host page can refetch a bounded interventions window
+   * when the visible month changes.
+   *
+   * @access public
+   * @since 2.2.0
+   *
+   * @type {OutputEmitterRef<Date>}
+   */
+  public readonly focusedDateChange: OutputEmitterRef<Date> = output<Date>();
   //#endregion
 
   //#region Properties

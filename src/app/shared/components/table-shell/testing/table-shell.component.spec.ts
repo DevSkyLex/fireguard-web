@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TableShell } from '../table-shell.component';
-import { tablePt } from '../utils';
+import { TableShell, type TableShellVariant } from '../table-shell.component';
 
 /**
  * Host exercising the shell with both projected templates.
@@ -20,7 +19,7 @@ import { tablePt } from '../utils';
   `,
 })
 class TableShellHost {
-  public variant: 'fill' | 'card' = 'fill';
+  public variant: TableShellVariant = 'fill';
 }
 
 /**
@@ -68,7 +67,7 @@ describe('TableShell', () => {
     expect(host.textContent).not.toContain('Toolbar');
   });
 
-  function setupWithVariant(variant: 'fill' | 'card'): HTMLElement {
+  function setupWithVariant(variant: TableShellVariant): HTMLElement {
     TestBed.configureTestingModule({ imports: [TableShellHost] });
     const fixture = TestBed.createComponent(TableShellHost);
     fixture.componentInstance.variant = variant;
@@ -103,55 +102,39 @@ describe('TableShell', () => {
     expect(shell?.className).toContain('block');
     expect(shell?.className).not.toContain('h-full');
   });
-});
 
-describe('tablePt', () => {
-  it('always sets the compact text-sm table class', () => {
-    expect(tablePt().table).toEqual({ class: 'text-sm' });
+  it('makes the host a plain block box for the scroll variant', () => {
+    const host = setupWithVariant('scroll');
+    const shell: Element | null = host.querySelector('app-table-shell');
+
+    expect(shell?.className).toContain('block');
+    expect(shell?.className).not.toContain('h-full');
   });
 
-  it('returns only the table and tbody classes when fill is false', () => {
-    expect(tablePt({ fill: false })).toEqual({
-      table: { class: 'text-sm' },
-      tbody: { class: '[&>tr:last-child>td]:border-b-0' },
-    });
+  it('applies the same rounded, non-stretched card root classes for the scroll variant as for card', () => {
+    const host = setupWithVariant('scroll');
+
+    expect(host.querySelector('.p-card')?.className).toContain('rounded-xl');
   });
 
-  it('builds the full-height layout classes when fill is true (default)', () => {
-    const pt = tablePt();
+  it('reflects the fill variant on the host data-variant attribute', () => {
+    const host = setupWithVariant('fill');
+    const shell: Element | null = host.querySelector('app-table-shell');
 
-    expect(pt.root).toEqual({ class: 'flex min-h-0 flex-1 flex-col' });
-    expect(pt.tableContainer).toEqual({ class: 'min-h-0 flex-1 overflow-hidden' });
+    expect(shell?.getAttribute('data-variant')).toBe('fill');
   });
 
-  it('never rounds the table container or the paginator (the card alone clips corners)', () => {
-    const pt = tablePt({ empty: false });
+  it('reflects the card variant on the host data-variant attribute', () => {
+    const host = setupWithVariant('card');
+    const shell: Element | null = host.querySelector('app-table-shell');
 
-    expect(pt.tableContainer).toEqual({ class: 'min-h-0 flex-1 overflow-hidden' });
-    expect(pt.pcPaginator).toEqual({
-      root: { class: 'mt-auto justify-end bg-surface-0 dark:bg-surface-950' },
-    });
+    expect(shell?.getAttribute('data-variant')).toBe('card');
   });
 
-  it('does not hide the paginator when the page has rows', () => {
-    const pt = tablePt({ empty: false });
+  it('reflects the scroll variant on the host data-variant attribute', () => {
+    const host = setupWithVariant('scroll');
+    const shell: Element | null = host.querySelector('app-table-shell');
 
-    expect(pt.pcPaginator).toEqual({
-      root: { class: 'mt-auto justify-end bg-surface-0 dark:bg-surface-950' },
-    });
-  });
-
-  it('hides the paginator when the page is empty', () => {
-    const pt = tablePt({ empty: true });
-
-    expect(pt.pcPaginator).toEqual({
-      root: { class: 'mt-auto justify-end bg-surface-0 dark:bg-surface-950 hidden' },
-    });
-  });
-
-  it('hides a card-variant table own internal paginator when the page is empty', () => {
-    const pt = tablePt({ fill: false, empty: true });
-
-    expect(pt.pcPaginator).toEqual({ root: { class: 'hidden' } });
+    expect(shell?.getAttribute('data-variant')).toBe('scroll');
   });
 });

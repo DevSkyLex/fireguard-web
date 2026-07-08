@@ -93,11 +93,27 @@ describe('InterventionPreparePanel', () => {
   it('should allow submitting a scheduled draft while work items remain a soft recommendation', () => {
     const component = createComponent();
 
-    // Site/responsible + schedule are satisfied (2/3); the work-item check stays
-    // open, yet planning can still be confirmed because it is not a hard gate.
-    expect(component.readyCount()).toBe(2);
+    // All four backend preconditions (site, responsible, planned start, due
+    // date) are satisfied (4/4); work items are never part of this checklist —
+    // they stay a soft recommendation and do not gate planning.
+    expect(component.readyCount()).toBe(4);
     expect(component.canSubmitPlan()).toBe(true);
     expect(component.canAddWorkItem()).toBe(true);
+  });
+
+  it('should report a partial readiness count when a precondition is missing', () => {
+    const fixture = TestBed.createComponent(InterventionPreparePanel);
+    fixture.componentRef.setInput('intervention', { ...draftIntervention, dueAt: null });
+    fixture.componentRef.setInput('workItems', []);
+    fixture.componentRef.setInput('siteOptions', siteOptions);
+    fixture.componentRef.setInput('memberOptions', memberOptions);
+    fixture.componentRef.setInput('targetOptions', []);
+    fixture.componentRef.setInput('canPlan', true);
+    fixture.detectChanges();
+
+    const partial = fixture.componentInstance as unknown as InterventionPreparePanelHarness;
+    expect(partial.readyCount()).toBe(3);
+    expect(partial.canSubmitPlan()).toBe(false);
   });
 
   it('should gate work-item deletion on connectivity', () => {

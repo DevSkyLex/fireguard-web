@@ -170,7 +170,7 @@ export const InterventionWorkspaceStore = signalStore(
                     changes: [],
                     issues: [],
                     loading: false,
-                    error: 'The intervention workspace could not be loaded.',
+                    error: $localize`:@@intervention.workspace.loadFailed:The intervention workspace could not be loaded.`,
                   }),
               }),
             ),
@@ -229,7 +229,7 @@ export const InterventionWorkspaceStore = signalStore(
                     error: () =>
                       patchState(store, {
                         saving: false,
-                        error: 'The intervention status could not be updated.',
+                        error: $localize`:@@intervention.workspace.transitionFailed:The intervention status could not be updated.`,
                       }),
                   }),
                 );
@@ -246,7 +246,7 @@ export const InterventionWorkspaceStore = signalStore(
                   error: () =>
                     patchState(store, {
                       saving: false,
-                      error: 'Intervention planning details could not be saved.',
+                      error: $localize`:@@intervention.workspace.detailsFailed:Intervention planning details could not be saved.`,
                     }),
                 }),
               ),
@@ -328,7 +328,7 @@ export const InterventionWorkspaceStore = signalStore(
                   error: () =>
                     patchState(store, {
                       saving: false,
-                      error: 'The work item could not be created.',
+                      error: $localize`:@@intervention.workspace.workItemCreateFailed:The work item could not be created.`,
                     }),
                 }),
               );
@@ -398,7 +398,7 @@ export const InterventionWorkspaceStore = signalStore(
                     error: () =>
                       patchState(store, {
                         saving: false,
-                        error: 'The work item could not be updated.',
+                        error: $localize`:@@intervention.workspace.workItemUpdateFailed:The work item could not be updated.`,
                       }),
                   }),
                 );
@@ -421,7 +421,7 @@ export const InterventionWorkspaceStore = signalStore(
               if (connectivity.isOffline()) {
                 patchState(store, {
                   saving: false,
-                  error: 'Connect to the network to delete planned work items.',
+                  error: $localize`:@@intervention.workspace.workItemDeleteOffline:Connect to the network to delete planned work items.`,
                 });
                 return EMPTY;
               }
@@ -463,7 +463,7 @@ export const InterventionWorkspaceStore = signalStore(
                   error: () =>
                     patchState(store, {
                       saving: false,
-                      error: 'The work item could not be deleted.',
+                      error: $localize`:@@intervention.workspace.workItemDeleteFailed:The work item could not be deleted.`,
                     }),
                 }),
               );

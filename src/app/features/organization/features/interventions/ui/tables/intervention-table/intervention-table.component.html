@@ -148,9 +148,31 @@
   </ng-template>
 
   <ng-template #table>
+    @if (error(); as err) {
+      <p-message severity="error" class="mb-3 block">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="flex items-center gap-2">
+            <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+            <span i18n="@@intervention.table.errorText"
+              >The interventions could not be loaded. Check your connection and try again.</span
+            >
+          </span>
+          <p-button
+            i18n-label="@@interventionBoard.retry"
+            label="Retry"
+            icon="pi pi-refresh"
+            severity="danger"
+            size="small"
+            [outlined]="true"
+            (onClick)="onRetry()"
+          />
+        </div>
+      </p-message>
+    }
+
     <p-table
       [value]="showSkeleton() ? skeletonItems : empty() ? [] : [...interventions()]"
-      [paginator]="true"
+      [paginator]="total() > 0"
       [rows]="rows"
       [first]="firstPage()"
       [totalRecords]="total()"
@@ -161,7 +183,6 @@
       i18n-currentPageReportTemplate="@@intervention.table.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} interventions"
       [stripedRows]="true"
-      [pt]="tablePt({ empty: total() === 0 })"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -284,26 +305,28 @@
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
-        <tr class="bg-transparent [&>td]:border-b-0">
-          <td colspan="9">
-            <app-empty-state
-              icon="pi-compass"
-              i18n-title="@@intervention.table.emptyTitle"
-              title="No interventions yet"
-              i18n-description="@@intervention.table.emptyDesc"
-              description="Create an intervention when a site visit needs offline-ready facility, equipment and inspection preparation."
-            >
-              <p-button
-                i18n-label="@@intervention.newButton"
-                label="New intervention"
-                icon="pi pi-plus"
-                severity="primary"
-                size="small"
-                (onClick)="onCreateRequested()"
-              />
-            </app-empty-state>
-          </td>
-        </tr>
+        @if (!error()) {
+          <tr class="bg-transparent [&>td]:border-b-0">
+            <td colspan="9">
+              <app-empty-state
+                icon="pi-compass"
+                i18n-title="@@intervention.table.emptyTitle"
+                title="No interventions yet"
+                i18n-description="@@intervention.table.emptyDesc"
+                description="Create an intervention when a site visit needs offline-ready facility, equipment and inspection preparation."
+              >
+                <p-button
+                  i18n-label="@@intervention.newButton"
+                  label="New intervention"
+                  icon="pi pi-plus"
+                  severity="primary"
+                  size="small"
+                  (onClick)="onCreateRequested()"
+                />
+              </app-empty-state>
+            </td>
+          </tr>
+        }
       </ng-template>
     </p-table>
   </ng-template>

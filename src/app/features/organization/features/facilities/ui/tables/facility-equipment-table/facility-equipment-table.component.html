@@ -86,7 +86,7 @@
       [selection]="selectedEquipments()"
       (selectionChange)="selectedEquipments.set($event)"
       dataKey="id"
-      [paginator]="true"
+      [paginator]="total() > 0"
       [rows]="rows"
       [first]="firstPage()"
       [totalRecords]="total()"
@@ -97,7 +97,6 @@
       i18n-currentPageReportTemplate="@@equipment.table.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} equipments"
       [stripedRows]="true"
-      [pt]="tablePt({ empty: total() === 0 })"
     >
       <ng-template pTemplate="header">
         <tr>

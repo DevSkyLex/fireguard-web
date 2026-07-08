@@ -179,6 +179,22 @@ export class InterventionExecutePanel {
   public readonly canExecute: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property canAbandon
+   * @readonly
+   *
+   * @description
+   * Whether the intervention may be abandoned from this panel (workflow-legal and
+   * permitted for the current user); resolved by the parent page. Gates the
+   * destructive "Abandon" affordance.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canAbandon: InputSignal<boolean> = input<boolean>(false);
+
+  /**
    * Property scanSupported
    * @readonly
    *
@@ -297,6 +313,21 @@ export class InterventionExecutePanel {
   public readonly submitIntervention: OutputEmitterRef<void> = output<void>();
 
   /**
+   * Property abandonIntervention
+   * @readonly
+   *
+   * @description
+   * Emits when the user asks to abandon the intervention, so the parent page can
+   * confirm the destructive action and perform the transition.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly abandonIntervention: OutputEmitterRef<void> = output<void>();
+
+  /**
    * Property nextTargetLabel
    * @readonly
    *
@@ -364,6 +395,25 @@ export class InterventionExecutePanel {
    */
   protected readonly readyToSubmitCount: Signal<number> = computed<number>(
     () => this.submitChecks().filter((check: ExecuteSubmitCheck): boolean => check.done).length,
+  );
+
+  /**
+   * Property submitActionVisible
+   * @readonly
+   *
+   * @description
+   * Whether the pinned "Submit for review" action bar is shown: the user must
+   * hold the execute capability, mirroring the prepare panel's plan-action-bar
+   * visibility rule so a read-only viewer is never shown a permanently
+   * disabled control pinned to the field viewport.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly submitActionVisible: Signal<boolean> = computed<boolean>(() =>
+    this.canExecute(),
   );
 
   /**

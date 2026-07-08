@@ -3,7 +3,7 @@ import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { catchError, EMPTY, map, of, pipe, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, map, of, pipe, switchMap, tap, type Observable } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -52,12 +52,14 @@ const INITIAL_STATE: InterventionCalendarState = {
  *
  * @description
  * Component-scoped NgRx SignalStore backing the organization intervention
- * calendar. A single {@link load} fetches every intervention for the active
- * organization (auto-paginated via {@link InterventionService.listAll}) together
- * with the current member IRI, so the page can switch the All/Mine scope
- * client-side without refetching.
+ * calendar. A single {@link load} fetches the interventions inside a bounded
+ * date window (the visible month ± one month, via
+ * {@link InterventionService.listCalendarWindow}) together with the current
+ * member IRI, so the page can switch the All/Mine scope client-side without
+ * refetching and never loads the whole organization history at once. The member
+ * IRI is resolved once per organization and reused across window refetches.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -96,22 +98,24 @@ export const InterventionCalendarStore = signalStore(
        * @method load
        *
        * @description
-       * Loads every intervention for the given organization and resolves the
-       * current member IRI used by the "Mine" scope filter. Resolves to an empty
+       * Loads the interventions inside the requested date window for the given
+       * organization and resolves the current member IRI used by the "Mine"
+       * scope filter (reusing an already-resolved IRI for the same organization
+       * so month navigation does not refetch the profile). Resolves to an empty
        * calendar when no organization is active. A failed member-profile lookup
        * degrades gracefully (interventions shown, "Mine" scope disabled), but a
        * failed list fetch surfaces as an error call state and a dispatched
        * failure event (toast) rather than a silently empty calendar.
        *
        * @access public
-       * @since 1.0.0
+       * @since 1.1.0
        *
        * @type {RxMethod<InterventionCalendarLoadRequest>}
        */
       load: rxMethod<InterventionCalendarLoadRequest>(
         pipe(
           tap(() => patchState(store, { loadCallState: pendingCallState() })),
-          switchMap(({ organizationId }) => {
+          switchMap(({ organizationId, window }) => {
             if (!organizationId) {
               patchState(store, {
                 interventions: [],
@@ -121,17 +125,20 @@ export const InterventionCalendarStore = signalStore(
               return EMPTY;
             }
 
-            return service.listAll(organizationId).pipe(
+            const memberPrefix = `/api/organizations/${organizationId}/members/`;
+            const cachedMemberIri: string | null = store.currentMemberIri();
+            const memberIri$: Observable<string | null> = cachedMemberIri?.startsWith(memberPrefix)
+              ? of<string | null>(cachedMemberIri)
+              : members.getCurrentProfile(organizationId).pipe(
+                  map((profile): string | null => `${memberPrefix}${profile.id}`),
+                  catchError(() => of<string | null>(null)),
+                );
+
+            return service.listCalendarWindow(organizationId, window.after, window.before).pipe(
               switchMap((interventions) =>
-                members.getCurrentProfile(organizationId).pipe(
+                memberIri$.pipe(
                   map(
-                    (profile): CalendarLoadResult => ({
-                      interventions,
-                      currentMemberIri: `/api/organizations/${organizationId}/members/${profile.id}`,
-                    }),
-                  ),
-                  catchError(() =>
-                    of<CalendarLoadResult>({ interventions, currentMemberIri: null }),
+                    (currentMemberIri): CalendarLoadResult => ({ interventions, currentMemberIri }),
                   ),
                 ),
               ),

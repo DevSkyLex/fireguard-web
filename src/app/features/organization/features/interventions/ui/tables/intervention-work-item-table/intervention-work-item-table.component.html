@@ -1,6 +1,6 @@
 <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
-<app-table-shell variant="card">
+<app-table-shell variant="scroll">
   <ng-template #actions>
     <div class="flex items-center gap-2">
       <h2
@@ -100,14 +100,13 @@
       (selectionChange)="selectedRows.set($event)"
       dataKey="id"
       [stripedRows]="true"
-      [paginator]="true"
+      [paginator]="rowItems().length > 0"
       [rows]="rows"
       [rowsPerPageOptions]="rowsPerPageOptions"
       [showCurrentPageReport]="true"
       i18n-currentPageReportTemplate="@@intervention.wit.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} work items"
       [globalFilterFields]="globalFilterFields"
-      [pt]="tablePt({ scroll: true })"
     >
       <ng-template pTemplate="header">
         <tr>

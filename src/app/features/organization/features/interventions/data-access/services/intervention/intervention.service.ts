@@ -1,5 +1,16 @@
 import { Injectable } from '@angular/core';
-import { EMPTY, expand, of, reduce, switchMap, takeWhile, timer, type Observable } from 'rxjs';
+import {
+  EMPTY,
+  expand,
+  forkJoin,
+  map,
+  of,
+  reduce,
+  switchMap,
+  takeWhile,
+  timer,
+  type Observable,
+} from 'rxjs';
 import { HydraApiService } from '@core/api';
 import type { HydraCollection, HydraItem, PaginationOptions } from '@core/api/models';
 import type {
@@ -105,6 +116,8 @@ export class InterventionService extends HydraApiService {
       site?: string;
       dueAtAfter?: string;
       dueAtBefore?: string;
+      plannedStartAtAfter?: string;
+      plannedStartAtBefore?: string;
       order?: Readonly<Record<string, 'asc' | 'desc'>>;
     },
   ): Observable<HydraCollection<InterventionOutput>> {
@@ -159,10 +172,62 @@ export class InterventionService extends HydraApiService {
       site?: string;
       dueAtAfter?: string;
       dueAtBefore?: string;
+      plannedStartAtAfter?: string;
+      plannedStartAtBefore?: string;
     },
   ): Observable<readonly InterventionOutput[]> {
     return this.collectPages((page) =>
       this.list(organizationId, { ...options, page, itemsPerPage: WORKSPACE_PAGE_SIZE }),
+    );
+  }
+
+  /**
+   * Method listCalendarWindow
+   * @method listCalendarWindow
+   *
+   * @description
+   * Loads every organization intervention whose schedule anchor (the planned
+   * start, falling back to the due date) falls inside a bounded date window, so
+   * the calendar never fetches the entire org history. Because a single API
+   * range filter cannot express the `plannedStartAt ?? dueAt` anchor, the window
+   * is fetched as the union of two bounded queries — one filtered by the planned
+   * start, one by the due date (catching interventions with only a due date) —
+   * merged and de-duped by id. Both bounds are inclusive; over-fetching (an
+   * intervention whose anchor lands outside the visible cells) is harmless since
+   * the calendar grid only renders anchors inside its cells.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - Active organization identifier.
+   * @param {Date} after - Inclusive lower window bound.
+   * @param {Date} before - Inclusive upper window bound.
+   *
+   * @return {Observable<readonly InterventionOutput[]>} Interventions inside the window, de-duped by id.
+   */
+  public listCalendarWindow(
+    organizationId: string,
+    after: Date,
+    before: Date,
+  ): Observable<readonly InterventionOutput[]> {
+    const afterIso: string = toSecondsUtc(after);
+    const beforeIso: string = toSecondsUtc(before);
+
+    return forkJoin([
+      this.listAll(organizationId, {
+        plannedStartAtAfter: afterIso,
+        plannedStartAtBefore: beforeIso,
+      }),
+      this.listAll(organizationId, { dueAtAfter: afterIso, dueAtBefore: beforeIso }),
+    ]).pipe(
+      map(([byPlannedStart, byDueDate]): readonly InterventionOutput[] => {
+        const merged = new Map<string, InterventionOutput>();
+        for (const intervention of [...byPlannedStart, ...byDueDate]) {
+          merged.set(intervention.id, intervention);
+        }
+
+        return [...merged.values()];
+      }),
     );
   }
 

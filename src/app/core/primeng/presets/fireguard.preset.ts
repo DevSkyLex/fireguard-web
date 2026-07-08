@@ -79,19 +79,81 @@ export const FireguardTheme: Preset = definePreset(Aura, {
           },
         },
       },
-      // PrimeNG ties a sorted column's header text/background AND its sort
-      // icon to the same `headerCell.selected*` tokens (see the compiled
-      // `.p-datatable-column-sorted` rules in `primeng/table`), so no
-      // combination of design tokens can make only the icon go primary. This
-      // scoped `css` override — PrimeNG's own sanctioned "additional styles"
-      // extension point (`DesignTokens.css`), not `::ng-deep` and not
-      // `src/styles.css` — resets the header cell's own color/background back
-      // to their unsorted values, leaving the icon rule (untouched, still
-      // reading `headerCell.selectedColor`) as the only sorted-state cue.
       css: `
         .p-datatable-thead > tr > th.p-datatable-column-sorted {
           background: var(--p-datatable-header-cell-background) !important;
           color: var(--p-datatable-header-cell-color) !important;
+        }
+
+        /* base (every variant): compact table body text — was tablePt()'s
+           unconditional { table: { class: 'text-sm' } }. */
+        app-table-shell .p-datatable-table {
+          font-size: 0.875rem;
+        }
+
+        /* variant="fill": stretches to the shell's full height, its table
+           container scrolling internally with the paginator pinned to the
+           bottom-right. */
+        app-table-shell[data-variant="fill"] .p-datatable {
+          display: flex;
+          min-height: 0;
+          flex: 1 1 0%;
+          flex-direction: column;
+        }
+
+        app-table-shell[data-variant="fill"] .p-datatable-table-container {
+          min-height: 0;
+          flex: 1 1 0%;
+          overflow: hidden;
+        }
+
+        app-table-shell[data-variant="fill"] .p-datatable-header {
+          border-width: 0;
+          padding: 0;
+          background: var(--p-surface-0);
+        }
+
+        app-table-shell[data-variant="fill"] .p-paginator {
+          margin-top: auto;
+          justify-content: flex-end;
+          background: var(--p-surface-0);
+        }
+
+        html[data-theme="dark"] app-table-shell[data-variant="fill"] .p-datatable-header,
+        html[data-theme="dark"] app-table-shell[data-variant="fill"] .p-paginator {
+          background: var(--p-surface-950);
+        }
+
+        /* variant="card": a self-contained, non-stretched card. Its own
+           border already closes the surface, so the last row's bottom
+           border is dropped to avoid a doubled line at the seam. */
+        app-table-shell[data-variant="card"] .p-datatable-tbody > tr:last-child > td {
+          border-bottom-width: 0;
+        }
+
+        /* variant="scroll": a full-width card table whose table container
+           scrolls horizontally, keeping its own bottom-rounded, right-aligned
+           paginator (the intervention field-work / work-item tables). */
+        app-table-shell[data-variant="scroll"] .p-datatable {
+          width: 100%;
+        }
+
+        app-table-shell[data-variant="scroll"] .p-datatable-table {
+          width: 100%;
+        }
+
+        app-table-shell[data-variant="scroll"] .p-datatable-table-container {
+          overflow-x: auto;
+        }
+
+        app-table-shell[data-variant="scroll"] .p-paginator {
+          justify-content: flex-end;
+          border-radius: 0 0 0.75rem 0.75rem;
+          background: var(--p-surface-0);
+        }
+
+        html[data-theme="dark"] app-table-shell[data-variant="scroll"] .p-paginator {
+          background: var(--p-surface-950);
         }
       `,
     },

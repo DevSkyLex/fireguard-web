@@ -21,7 +21,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
 import type { RequestOptions } from '@core/api';
 import type { SessionOutput } from '@features/auth/models';
-import { EmptyState, TableShell, tablePt } from '@shared/components';
+import { EmptyState, TableShell } from '@shared/components';
 
 /**
  * Component SessionTable
@@ -199,22 +199,6 @@ export class SessionTable {
   //#endregion
 
   //#region Properties
-  /**
-   * Property tablePt
-   * @readonly
-   *
-   * @description
-   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
-   * member so the template can call it directly (Angular templates cannot
-   * invoke a bare module-level import).
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {typeof tablePt}
-   */
-  protected readonly tablePt: typeof tablePt = tablePt;
-
   /**
    * Property rows
    * @readonly

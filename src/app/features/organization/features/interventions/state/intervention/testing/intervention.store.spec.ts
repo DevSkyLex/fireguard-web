@@ -50,13 +50,47 @@ describe('InterventionStore', () => {
     expect(store.isEmpty()).toBe(false);
   });
 
-  it('should create a intervention and expose it for navigation handoff', () => {
+  it('should create an intervention and expose it for navigation handoff', () => {
     store.create({ organizationId: 'org-1', name: 'Site visit' });
 
-    expect(mockInterventionService.create).toHaveBeenCalledWith('org-1', 'Site visit');
+    expect(mockInterventionService.create).toHaveBeenCalledWith(
+      'org-1',
+      'Site visit',
+      expect.any(Object),
+    );
     expect(store.createdIntervention()).toEqual(intervention);
     expect(store.interventionList()).toEqual([intervention]);
     expect(store.totalInterventions()).toBe(1);
+  });
+
+  it('should dispatch a created event carrying the new intervention on success', () => {
+    store.create({ organizationId: 'org-1', name: 'Site visit' });
+
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(dispatch.mock.calls[0][0]).toMatchObject({ payload: intervention });
+  });
+
+  it('should forward the guided-creation options to the service', () => {
+    const plannedStartAt = new Date('2026-07-08T09:00:00Z');
+    store.create({
+      organizationId: 'org-1',
+      name: 'Site visit',
+      type: 'inspection_campaign',
+      priority: 'high',
+      participants: ['/api/organizations/org-1/members/m1'],
+      plannedStartAt,
+    });
+
+    expect(mockInterventionService.create).toHaveBeenCalledWith(
+      'org-1',
+      'Site visit',
+      expect.objectContaining({
+        type: 'inspection_campaign',
+        priority: 'high',
+        participants: ['/api/organizations/org-1/members/m1'],
+        plannedStartAt,
+      }),
+    );
   });
 
   it('should clear the created intervention handoff', () => {
@@ -73,6 +107,26 @@ describe('InterventionStore', () => {
 
     expect(store.listCallState().status).toBe('error');
     expect(dispatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('should expose the load error and not report empty on a failed load', () => {
+    mockInterventionService.list.mockReturnValue(throwError(() => new Error('network')));
+
+    store.load({ organizationId: 'org-1' });
+
+    expect(store.listError()).not.toBeNull();
+    expect(store.isEmpty()).toBe(false);
+  });
+
+  it('should report empty only on a successful load with no items', () => {
+    mockInterventionService.list.mockReturnValue(
+      of({ '@id': '/api/interventions', '@type': 'Collection', totalItems: 0, member: [] }),
+    );
+
+    store.load({ organizationId: 'org-1' });
+
+    expect(store.listError()).toBeNull();
+    expect(store.isEmpty()).toBe(true);
   });
 
   it('should dispatch a failure event when creation fails', () => {

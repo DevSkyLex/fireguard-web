@@ -21,18 +21,20 @@ import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
+import { MessageModule } from 'primeng/message';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { Table, TableModule, type TableLazyLoadEvent } from 'primeng/table';
+import type { StoreError } from '@core/request-state';
 import {
   type InterventionListOptions,
   type InterventionOutput,
   type InterventionStatus,
   type InterventionType,
 } from '@features/organization/features/interventions/models';
-import { EmptyState, Tag, TableShell, tablePt } from '@shared/components';
+import { EmptyState, Tag, TableShell } from '@shared/components';
 import { buildTableFilterParams } from '@shared/utils';
 import { InterventionTag } from '../../components/intervention-tag';
 import { INTERVENTION_FILTER_MAPPING } from './constants';
@@ -62,6 +64,7 @@ import { getInterventionTypeIcon } from './utils';
     DatePipe,
     EmptyState,
     InterventionTag,
+    MessageModule,
     PopoverModule,
     ReactiveFormsModule,
     SelectModule,
@@ -132,6 +135,22 @@ export class InterventionTable implements OnInit {
    * @type {InputSignal<boolean>}
    */
   public readonly empty: InputSignal<boolean> = input.required<boolean>();
+
+  /**
+   * Input error
+   * @readonly
+   *
+   * @description
+   * Normalized list-load error, or `null` when the last load succeeded. When
+   * set, the table renders a dedicated error banner with a retry action instead
+   * of the "No interventions yet" empty state.
+   *
+   * @access public
+   * @since 1.5.0
+   *
+   * @type {InputSignal<StoreError | null>}
+   */
+  public readonly error: InputSignal<StoreError | null> = input<StoreError | null>(null);
 
   /**
    * Input initialPage
@@ -217,7 +236,7 @@ export class InterventionTable implements OnInit {
    * @readonly
    *
    * @description
-   * Emits a intervention selected for detail navigation.
+   * Emits an intervention selected for detail navigation.
    *
    * @access public
    * @since 1.0.0
@@ -243,22 +262,6 @@ export class InterventionTable implements OnInit {
   //#endregion
 
   //#region Properties
-  /**
-   * Property tablePt
-   * @readonly
-   *
-   * @description
-   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
-   * member so the template can call it directly (Angular templates cannot
-   * invoke a bare module-level import).
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {typeof tablePt}
-   */
-  protected readonly tablePt: typeof tablePt = tablePt;
-
   /**
    * Property rows
    * @readonly
@@ -666,6 +669,24 @@ export class InterventionTable implements OnInit {
    * @return {void}
    */
   protected onRefresh(): void {
+    this.reload();
+  }
+
+  /**
+   * Method onRetry
+   * @method onRetry
+   *
+   * @description
+   * Re-triggers the failed load from the error banner by replaying the last
+   * lazy-load event (preserving its sort and filters), which re-emits `load` for
+   * the parent store.
+   *
+   * @access protected
+   * @since 1.5.0
+   *
+   * @return {void}
+   */
+  protected onRetry(): void {
     this.reload();
   }
 

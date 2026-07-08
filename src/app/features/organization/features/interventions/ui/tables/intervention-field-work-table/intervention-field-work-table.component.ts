@@ -24,7 +24,7 @@ import {
   resolveInterventionTag,
   type InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
-import { EmptyState, TableShell, tablePt } from '@shared/components';
+import { EmptyState, TableShell } from '@shared/components';
 import { InterventionTag } from '../../components/intervention-tag';
 import type { FieldWorkRow } from './models';
 
@@ -215,22 +215,6 @@ export class InterventionFieldWorkTable {
       command: (): void => this.scanQr.emit(),
     },
   ]);
-
-  /**
-   * Property tablePt
-   * @readonly
-   *
-   * @description
-   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
-   * member so the template can build the full-width, horizontally-scrollable
-   * card table classes via `tablePt({ scroll: true })`.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {typeof tablePt}
-   */
-  protected readonly tablePt: typeof tablePt = tablePt;
 
   /**
    * Property rows

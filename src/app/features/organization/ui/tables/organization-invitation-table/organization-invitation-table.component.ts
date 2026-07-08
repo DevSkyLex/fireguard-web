@@ -23,7 +23,7 @@ import type {
   OrganizationInvitationOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-import { EmptyState, Tag, TableShell, tablePt, type TagDescriptor } from '@shared/components';
+import { EmptyState, Tag, TableShell, type TagDescriptor } from '@shared/components';
 import { invitationExpiryBucket } from './utils';
 
 /**
@@ -48,13 +48,6 @@ import { invitationExpiryBucket } from './utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationInvitationTable {
-  /**
-   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
-   * member so the template can call it directly (Angular templates cannot
-   * invoke a bare module-level import).
-   */
-  protected readonly tablePt: typeof tablePt = tablePt;
-
   /** Pending invitations to display. */
   public readonly invitations: InputSignal<readonly OrganizationInvitationOutput[]> =
     input.required();

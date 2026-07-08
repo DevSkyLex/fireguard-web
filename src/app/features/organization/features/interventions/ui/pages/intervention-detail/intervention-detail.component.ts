@@ -43,6 +43,10 @@ import {
   InterventionWorkspaceStore,
   type InterventionWorkspaceStoreType,
 } from '@features/organization/features/interventions/state/intervention-workspace';
+import {
+  capabilityForTransition,
+  resolveAllowedTransitions,
+} from '@features/organization/features/interventions/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ActiveOrganizationStore,
@@ -451,6 +455,37 @@ export class InterventionDetailPage {
   );
 
   /**
+   * Property canAbandon
+   * @readonly
+   *
+   * @description
+   * Whether the loaded intervention may be abandoned: the move is workflow-legal
+   * for its current status (per `allowedTransitions`) AND the current user holds
+   * the capability that transition requires (draft→plan, changes_requested→
+   * review, otherwise execute), mirroring the backend mapping.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canAbandon: Signal<boolean> = computed<boolean>(() => {
+    const intervention = this.store.intervention();
+    if (!intervention || !resolveAllowedTransitions(intervention).includes('abandoned')) {
+      return false;
+    }
+
+    switch (capabilityForTransition(intervention.status, 'abandoned')) {
+      case 'plan':
+        return this.canPlan();
+      case 'review':
+        return this.canReview();
+      default:
+        return this.canExecute();
+    }
+  });
+
+  /**
    * Property permissionService
    * @readonly
    *
@@ -703,9 +738,13 @@ export class InterventionDetailPage {
       if (discovery.queued) {
         await this.store.recordQueuedDiscovery(discovery.workItem);
       } else this.store.load(this.interventionId());
-      this.fieldMessage.set('Discovery saved as a intervention draft resource.');
+      this.fieldMessage.set(
+        $localize`:@@intervention.field.discoverySaved:Discovery saved as an intervention draft resource.`,
+      );
     } catch {
-      this.fieldMessage.set('The discovered resource could not be saved.');
+      this.fieldMessage.set(
+        $localize`:@@intervention.field.discoveryFailed:The discovered resource could not be saved.`,
+      );
     } finally {
       this.fieldActionBusy.set(false);
     }
@@ -732,7 +771,7 @@ export class InterventionDetailPage {
       const scannedValue = await this.fieldExecution.scan(file);
       if (!scannedValue) {
         this.fieldMessage.set(
-          'No QR code was detected. Capture it again or add the discovery manually.',
+          $localize`:@@intervention.field.qrNotDetected:No QR code was detected. Capture it again or add the discovery manually.`,
         );
         return;
       }
@@ -743,7 +782,7 @@ export class InterventionDetailPage {
       });
     } catch {
       this.fieldMessage.set(
-        'The QR code could not be read. Capture it again or add the discovery manually.',
+        $localize`:@@intervention.field.qrUnreadable:The QR code could not be read. Capture it again or add the discovery manually.`,
       );
     } finally {
       this.fieldActionBusy.set(false);
@@ -775,12 +814,18 @@ export class InterventionDetailPage {
       );
       if (queued) {
         await this.store.touchOfflineIntervention();
-        this.fieldMessage.set('Photo compressed and queued for synchronization.');
+        this.fieldMessage.set(
+          $localize`:@@intervention.field.photoQueued:Photo compressed and queued for synchronization.`,
+        );
         return;
       }
-      this.fieldMessage.set('Evidence photo uploaded.');
+      this.fieldMessage.set(
+        $localize`:@@intervention.field.photoUploaded:Evidence photo uploaded.`,
+      );
     } catch {
-      this.fieldMessage.set('The evidence photo could not be saved.');
+      this.fieldMessage.set(
+        $localize`:@@intervention.field.photoFailed:The evidence photo could not be saved.`,
+      );
     } finally {
       this.fieldActionBusy.set(false);
     }
@@ -819,6 +864,41 @@ export class InterventionDetailPage {
         outlined: true,
       },
       accept: (): void => void this.sync.discardBlocked(),
+    });
+  }
+
+  /**
+   * Method confirmAbandon
+   * @method confirmAbandon
+   *
+   * @description
+   * Confirms then abandons the intervention, moving it to `abandoned` through the
+   * workspace store's transition — the same path every other status change uses.
+   * Reuses the destructive-confirmation pattern of {@link discardBlocked}. The
+   * panels only surface the trigger when {@link canAbandon} holds, so this is the
+   * final safety step.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @return {void}
+   */
+  protected confirmAbandon(): void {
+    this.confirmationService.confirm({
+      header: $localize`:@@intervention.abandon.header:Abandon intervention`,
+      message: $localize`:@@intervention.abandon.message:Abandon this intervention? It leaves the active workflow and cannot be resumed.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: {
+        label: $localize`:@@intervention.abandon.accept:Abandon`,
+        severity: 'danger',
+      },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
+      accept: (): void =>
+        void this.store.transition({ interventionId: this.interventionId(), status: 'abandoned' }),
     });
   }
 
@@ -897,7 +977,9 @@ export class InterventionDetailPage {
   protected async publishIntervention(): Promise<void> {
     const intervention = this.store.intervention();
     if (!intervention || !this.online()) {
-      this.publicationMessage.set('Connect to the network before publishing this intervention.');
+      this.publicationMessage.set(
+        $localize`:@@intervention.publication.offline:Connect to the network before publishing this intervention.`,
+      );
       return;
     }
     this.publishing.set(true);
@@ -911,10 +993,14 @@ export class InterventionDetailPage {
         );
         return;
       }
-      this.publicationMessage.set('Intervention published successfully.');
+      this.publicationMessage.set(
+        $localize`:@@intervention.publication.success:Intervention published successfully.`,
+      );
       this.store.load(this.interventionId());
     } catch {
-      this.publicationMessage.set('The publication request could not be completed.');
+      this.publicationMessage.set(
+        $localize`:@@intervention.publication.failed:The publication request could not be completed.`,
+      );
     } finally {
       this.publishing.set(false);
     }

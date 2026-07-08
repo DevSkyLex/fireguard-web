@@ -39,9 +39,10 @@ export interface InterventionOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Intervention workflow type. Only site setup interventions are supported today.
+   * Intervention workflow type — one of `site_setup`, `inventory` or
+   * `inspection_campaign`.
    *
-   * @type {'site_setup'}
+   * @type {InterventionType}
    */
   readonly type: InterventionType;
 
@@ -66,6 +67,22 @@ export interface InterventionOutput extends HydraItem {
    * @type {InterventionStatus}
    */
   readonly status: InterventionStatus;
+
+  /**
+   * Property allowedTransitions
+   * @readonly
+   *
+   * @description
+   * Workflow-legal next statuses reachable from the current {@link status},
+   * straight from the domain `InterventionTransitionPolicy`. This is the single
+   * source of truth for the client-side state machine: the pipeline board and
+   * the workspace derive their drag/menu affordances from this set rather than
+   * duplicating the transition table. `published` never appears here — it is
+   * reached through the publication flow, not a plain status update.
+   *
+   * @type {readonly InterventionStatus[]}
+   */
+  readonly allowedTransitions: readonly InterventionStatus[];
 
   /**
    * Property site

@@ -2,7 +2,7 @@ import type { InspectionResult } from '@features/organization/features/inspectio
 import type { InterventionWorkItemAction } from '@features/organization/features/interventions/models';
 
 /**
- * Canonical resource discovered while executing a intervention.
+ * Canonical resource discovered while executing an intervention.
  */
 export interface InterventionFieldDiscovery {
   readonly action: InterventionWorkItemAction;

@@ -31,7 +31,7 @@ import {
   type MemberSelectOption,
   type SelectOption,
 } from '@features/organization/features/interventions/models';
-import { EmptyState, Tag, TableShell, tablePt } from '@shared/components';
+import { EmptyState, Tag, TableShell } from '@shared/components';
 import { InterventionMemberOption } from '../../components/intervention-member-option/intervention-member-option.component';
 import { InterventionTag } from '../../components/intervention-tag';
 import type { WorkItemRow, WorkItemStatusOption } from './models';
@@ -207,22 +207,6 @@ export class InterventionWorkItemTable {
   //#endregion
 
   //#region Properties
-  /**
-   * Property tablePt
-   * @readonly
-   *
-   * @description
-   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
-   * member so the template can build the full-width, horizontally-scrollable
-   * card table classes via `tablePt({ scroll: true })`.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {typeof tablePt}
-   */
-  protected readonly tablePt: typeof tablePt = tablePt;
-
   /**
    * Property rows
    * @readonly

@@ -28,4 +28,4 @@ export { ThemeSwitcher, withThemeSwitcher } from './theme-switcher';
 export { Toast } from './toast';
 export { TrendCard } from './trend-card';
 export type { MetricSummary } from './trend-card';
-export { TableShell, tablePt } from './table-shell';
+export { TableShell } from './table-shell';

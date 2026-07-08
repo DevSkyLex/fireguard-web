@@ -1,10 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
+ * Port for the `e2e` build/serve configuration (`angular.json`), a
+ * client-side-only (no SSR) build of the app. Tests intercept every backend
+ * call at the network layer (`e2e/support/mocks/api-mock.ts`); running
+ * without SSR guarantees Playwright's `page.route` — which only reaches the
+ * browser — sees every request the app makes, instead of missing the ones
+ * a Node SSR render would issue server-side.
  */
-// require('dotenv').config();
+const E2E_PORT = 4273;
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -17,17 +21,30 @@ export default defineConfig({
   forbidOnly: !!process.env['CI'],
   /* Retry on CI only */
   retries: process.env['CI'] ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env['CI'] ? 1 : undefined,
+  /*
+   * Opt out of parallel tests on CI. Locally, cap workers instead of letting
+   * Playwright auto-detect from CPU count: this project's single dev-server
+   * instance (a Vite-based `ng serve`) becomes the bottleneck under heavy
+   * concurrency, not the CPU — 16+ workers produced sporadic timeouts on
+   * fully static pages with zero network mocking, while 8 ran the full
+   * three-browser suite green repeatedly.
+   */
+  workers: process.env['CI'] ? 1 : 8,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: process.env['CI'] ? [['html', { open: 'never' }], ['github']] : 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env['PLAYWRIGHT_TEST_BASE_URL'] ?? 'http://localhost:4200',
+    baseURL: process.env['PLAYWRIGHT_TEST_BASE_URL'] ?? `http://localhost:${E2E_PORT}`,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+
+    /* Screenshot only on failure keeps report size small while still giving proof on red runs. */
+    screenshot: 'only-on-failure',
+
+    /* Video only on the first retry — cheap signal for flaky/failing specs without bloating every run. */
+    video: 'on-first-retry',
   },
 
   /* Configure projects for major browsers */
@@ -68,10 +85,14 @@ export default defineConfig({
     // },
   ],
 
-  /* Start the dev server before running tests. */
+  /*
+   * Starts the SSR-less `e2e` build (see comment on E2E_PORT above) before
+   * running tests, reusing an already-running instance locally so repeated
+   * runs stay fast.
+   */
   webServer: {
-    command: 'npm run start',
-    url: 'http://localhost:4200',
+    command: `npx ng serve --configuration=e2e --port=${E2E_PORT}`,
+    url: `http://localhost:${E2E_PORT}`,
     reuseExistingServer: !process.env['CI'],
     timeout: 120_000,
   },

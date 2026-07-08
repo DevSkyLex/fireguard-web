@@ -4,7 +4,7 @@ import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import type { InvoiceOutput } from '@features/organization/models';
-import { EmptyState, Tag, TableShell, tablePt, type TagDescriptor } from '@shared/components';
+import { EmptyState, Tag, TableShell, type TagDescriptor } from '@shared/components';
 
 /**
  * Component BillingInvoiceTable
@@ -77,22 +77,6 @@ export class BillingInvoiceTable {
   //#endregion
 
   //#region Properties
-  /**
-   * Property tablePt
-   * @readonly
-   *
-   * @description
-   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
-   * member so the template can call it directly (Angular templates cannot
-   * invoke a bare module-level import).
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {typeof tablePt}
-   */
-  protected readonly tablePt: typeof tablePt = tablePt;
-
   /**
    * Property rows
    * @readonly

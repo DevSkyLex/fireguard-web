@@ -118,7 +118,7 @@ export class InterventionSyncService {
    * @method replayOutbox
    *
    * @description
-   * Replays every queued operation of a intervention sequentially, preserving
+   * Replays every queued operation of an intervention sequentially, preserving
    * field entry order, and removes each replayed operation from the outbox.
    *
    * @access public
@@ -142,7 +142,7 @@ export class InterventionSyncService {
   }
 
   /**
-   * Replays a intervention outbox after intervention-level serialization has been acquired.
+   * Replays an intervention outbox after intervention-level serialization has been acquired.
    */
   private async replayInterventionOutbox(
     organizationId: string,

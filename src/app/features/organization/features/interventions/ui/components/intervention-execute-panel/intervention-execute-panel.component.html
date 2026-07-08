@@ -1,4 +1,4 @@
-<div class="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+<div class="flex flex-col gap-6 lg:pb-0" [class.pb-24]="submitActionVisible()">
   <input
     #scanInput
     type="file"
@@ -16,121 +16,162 @@
     (change)="capturePhoto($event)"
   />
 
-  <!-- Field work -->
-  <div class="flex min-w-0 flex-col gap-6">
-    @if (fieldMessage(); as message) {
-      <p-message severity="info" [closable]="false">{{ message }}</p-message>
-    }
-
-    @if (nextWorkItem(); as next) {
-      <div
-        class="rounded-xl border border-primary-200 bg-primary-50 p-5 dark:border-primary-900 dark:bg-primary-950"
-      >
-        <p
-          i18n="@@intervention.exec.nextAction"
-          class="flex items-center gap-2 text-sm font-medium text-primary-700 dark:text-primary-300"
-        >
-          <i class="pi pi-bolt" aria-hidden="true"></i>Next recommended action
-        </p>
-        <div class="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 class="text-xl font-semibold capitalize">{{ next.action.replace('_', ' ') }}</h2>
-            <p class="mt-1 text-sm text-surface-600 dark:text-surface-300">
-              {{ nextTargetLabel() || siteLevelLabel }}
-            </p>
-          </div>
-          <p-button
-            [label]="next.status === 'in_progress' ? completeLabel : startWorkLabel"
-            [icon]="next.status === 'in_progress' ? 'pi pi-check' : 'pi pi-play'"
-            [loading]="saving()"
-            [disabled]="!canExecute()"
-            (onClick)="
-              updateWorkItem.emit({
-                workItemId: next.id,
-                status: next.status === 'in_progress' ? 'completed' : 'in_progress',
-              })
-            "
-          />
-        </div>
-      </div>
-    } @else {
-      <p-message i18n="@@intervention.exec.allDone" severity="success"
-        >All prepared work items are complete or skipped.</p-message
-      >
-    }
-
-    <app-intervention-field-work-table
-      class="block"
-      [workItems]="workItems()"
-      [canExecute]="canExecute()"
-      [saving]="saving()"
-      [scanSupported]="scanSupported()"
-      (attachPhoto)="openPhotoCapture($event, photoInput)"
-      (skip)="openSkip($event)"
-      (addDiscovery)="discoveryDrawerVisible.set(true)"
-      (scanQr)="scanInput.click()"
-    />
-  </div>
-
-  <!-- Submit rail -->
-  <aside class="min-w-0">
-    <app-card
-      class="block h-full"
-      i18n-title="@@intervention.exec.submitTitle"
-      title="Submit for review"
-      i18n-description="@@intervention.exec.submitDesc"
-      description="Hand the intervention to a manager once every field work item is resolved."
+  @if (submitActionVisible()) {
+    <!--
+      Submit action bar — the phase's destination, mirroring the prepare panel's
+      pinned "Plan intervention" bar so every phase surfaces its forward step the
+      same way: pinned to the thumb zone on mobile/field viewports, a borderless
+      tinted band on desktop.
+    -->
+    <div
+      class="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-surface-200 bg-surface-0/95 px-4 py-3 backdrop-blur-sm lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:px-0.5 lg:py-0 lg:backdrop-blur-none dark:border-surface-800 dark:bg-surface-950/95 lg:dark:bg-transparent"
     >
-      <ng-template #content>
-        <div class="flex items-center justify-between">
+      <div class="flex min-w-0 items-center gap-2">
+        @if (readyToSubmitCount() === submitChecks().length) {
+          <span class="size-1.5 shrink-0 rounded-full bg-green-500" aria-hidden="true"></span>
+          <span
+            i18n="@@intervention.exec.readySubmit"
+            class="truncate text-sm text-surface-600 dark:text-surface-300"
+          >
+            Ready to submit
+          </span>
+        } @else {
+          <span class="size-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden="true"></span>
+          <span
+            i18n="@@intervention.exec.readySubmitCount"
+            class="truncate text-sm text-surface-500 dark:text-surface-400"
+          >
+            <span class="font-semibold text-surface-700 tabular-nums dark:text-surface-200"
+              >{{ readyToSubmitCount() }} of 2</span
+            >
+            ready to submit
+          </span>
+        }
+      </div>
+
+      <p-button
+        i18n-label="@@intervention.exec.submitTitle"
+        label="Submit for review"
+        icon="pi pi-send"
+        [loading]="saving()"
+        [disabled]="!canExecute() || !canSubmit() || progress() < 100"
+        (onClick)="submitIntervention.emit()"
+      />
+    </div>
+  }
+
+  <div class="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <!-- Field work -->
+    <div class="flex min-w-0 flex-col gap-6">
+      @if (fieldMessage(); as message) {
+        <p-message severity="info" [closable]="false">{{ message }}</p-message>
+      }
+
+      @if (nextWorkItem(); as next) {
+        <div
+          class="rounded-xl border border-primary-200 bg-primary-50 p-5 dark:border-primary-900 dark:bg-primary-950"
+        >
+          <p
+            i18n="@@intervention.exec.nextAction"
+            class="flex items-center gap-2 text-sm font-medium text-primary-700 dark:text-primary-300"
+          >
+            <i class="pi pi-bolt" aria-hidden="true"></i>Next recommended action
+          </p>
+          <div class="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 class="text-xl font-semibold capitalize">{{ next.action.replace('_', ' ') }}</h2>
+              <p class="mt-1 text-sm text-surface-600 dark:text-surface-300">
+                {{ nextTargetLabel() || siteLevelLabel }}
+              </p>
+            </div>
+            <p-button
+              [label]="next.status === 'in_progress' ? completeLabel : startWorkLabel"
+              [icon]="next.status === 'in_progress' ? 'pi pi-check' : 'pi pi-play'"
+              [loading]="saving()"
+              [disabled]="!canExecute()"
+              (onClick)="
+                updateWorkItem.emit({
+                  workItemId: next.id,
+                  status: next.status === 'in_progress' ? 'completed' : 'in_progress',
+                })
+              "
+            />
+          </div>
+        </div>
+      } @else {
+        <p-message i18n="@@intervention.exec.allDone" severity="success"
+          >All prepared work items are complete or skipped.</p-message
+        >
+      }
+
+      <app-intervention-field-work-table
+        class="block"
+        [workItems]="workItems()"
+        [canExecute]="canExecute()"
+        [saving]="saving()"
+        [scanSupported]="scanSupported()"
+        (attachPhoto)="openPhotoCapture($event, photoInput)"
+        (skip)="openSkip($event)"
+        (addDiscovery)="discoveryDrawerVisible.set(true)"
+        (scanQr)="scanInput.click()"
+      />
+    </div>
+
+    <!-- Submit rail -->
+    <aside class="min-w-0">
+      <app-card
+        class="block h-full"
+        i18n-title="@@intervention.exec.submitTitle"
+        title="Submit for review"
+        i18n-description="@@intervention.exec.submitDesc"
+        description="Hand the intervention to a manager once every field work item is resolved."
+      >
+        <ng-template #content>
           <h3
             i18n="@@intervention.exec.readySubmit"
             class="text-sm font-semibold text-surface-900 dark:text-surface-50"
           >
             Ready to submit
           </h3>
-          <span
-            class="rounded-md bg-surface-100 px-1.5 py-0.5 text-xs font-medium text-surface-600 tabular-nums dark:bg-surface-800 dark:text-surface-300"
-          >
-            {{ readyToSubmitCount() }} / 2
-          </span>
-        </div>
 
-        <ul class="mt-3 grid gap-2 text-sm">
-          @for (check of submitChecks(); track check.label) {
-            <li class="flex items-center gap-2">
-              @if (check.done) {
-                <i
-                  class="pi pi-check-circle shrink-0 text-green-600 dark:text-green-400"
-                  aria-hidden="true"
-                ></i>
-                <span class="text-surface-700 dark:text-surface-200">{{ check.label }}</span>
-              } @else {
-                <i
-                  class="pi pi-exclamation-circle shrink-0 text-amber-500 dark:text-amber-400"
-                  aria-hidden="true"
-                ></i>
-                <span class="text-surface-500 dark:text-surface-400">{{ check.label }}</span>
-              }
-            </li>
+          <ul class="mt-3 grid gap-2 text-sm">
+            @for (check of submitChecks(); track check.label) {
+              <li class="flex items-center gap-2">
+                @if (check.done) {
+                  <i
+                    class="pi pi-check-circle shrink-0 text-green-600 dark:text-green-400"
+                    aria-hidden="true"
+                  ></i>
+                  <span class="text-surface-700 dark:text-surface-200">{{ check.label }}</span>
+                } @else {
+                  <i
+                    class="pi pi-exclamation-circle shrink-0 text-amber-500 dark:text-amber-400"
+                    aria-hidden="true"
+                  ></i>
+                  <span class="text-surface-500 dark:text-surface-400">{{ check.label }}</span>
+                }
+              </li>
+            }
+          </ul>
+
+          @if (canAbandon()) {
+            <div class="mt-4 border-t border-surface-200 pt-3 dark:border-surface-800">
+              <p-button
+                i18n-label="@@intervention.abandon.action"
+                label="Abandon intervention"
+                icon="pi pi-ban"
+                severity="danger"
+                size="small"
+                [text]="true"
+                [disabled]="saving()"
+                (onClick)="abandonIntervention.emit()"
+              />
+            </div>
           }
-        </ul>
-      </ng-template>
-
-      <ng-template #footer>
-        <p-button
-          class="block"
-          i18n-label="@@intervention.exec.submitTitle"
-          label="Submit for review"
-          icon="pi pi-send"
-          [fluid]="true"
-          [loading]="saving()"
-          [disabled]="!canExecute() || !canSubmit() || progress() < 100"
-          (onClick)="submitIntervention.emit()"
-        />
-      </ng-template>
-    </app-card>
-  </aside>
+        </ng-template>
+      </app-card>
+    </aside>
+  </div>
 </div>
 
 <app-intervention-skip-drawer

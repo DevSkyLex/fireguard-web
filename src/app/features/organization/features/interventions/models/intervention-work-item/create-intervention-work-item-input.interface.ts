@@ -2,7 +2,7 @@ import type { InterventionWorkItemAction } from './intervention-work-item-action
 import type { InterventionWorkItemSource } from './intervention-work-item-source.type';
 
 /**
- * Input used to create a intervention work item.
+ * Input used to create an intervention work item.
  */
 export interface CreateInterventionWorkItemInput {
   readonly clientId?: string;

@@ -42,7 +42,7 @@
     <p-table
       [value]="loading() ? skeletonItems : empty() ? [] : [...devices()]"
       dataKey="id"
-      [paginator]="true"
+      [paginator]="total() > 0"
       [rows]="rows"
       [first]="firstPage()"
       [totalRecords]="total()"
@@ -53,7 +53,6 @@
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} devices"
       i18n-currentPageReportTemplate="@@account.deviceTable.pageReport"
       [stripedRows]="true"
-      [pt]="tablePt({ empty: total() === 0 })"
     >
       <ng-template pTemplate="header">
         <tr>

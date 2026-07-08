@@ -44,7 +44,7 @@
     <p-table
       [value]="loading() ? skeletonItems : empty() ? [] : [...notifications()]"
       dataKey="id"
-      [paginator]="true"
+      [paginator]="total() > 0"
       [rows]="rows"
       [first]="firstPage()"
       [totalRecords]="total()"
@@ -55,7 +55,6 @@
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} notifications"
       i18n-currentPageReportTemplate="@@account.notifications.pageReport"
       [stripedRows]="true"
-      [pt]="tablePt({ empty: total() === 0 })"
     >
       <ng-template pTemplate="header">
         <tr>

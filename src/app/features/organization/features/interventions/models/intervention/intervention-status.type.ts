@@ -1,5 +1,5 @@
 /**
- * Workflow status of a intervention from creation to publication.
+ * Workflow status of an intervention from creation to publication.
  */
 export type InterventionStatus =
   | 'draft'

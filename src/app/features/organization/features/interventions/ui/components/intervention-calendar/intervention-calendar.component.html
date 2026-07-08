@@ -5,6 +5,7 @@
   [categoryGroups]="categoryGroups"
   (eventClick)="onEventClick($event)"
   (dayCreate)="selectDay.emit($event)"
+  (focusedDateChange)="focusedDateChange.emit($event)"
 >
   @if (showCreate()) {
     <ng-template #actions>

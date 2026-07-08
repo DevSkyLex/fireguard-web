@@ -7,14 +7,13 @@
     <p-table
       [value]="loading() ? skeletonItems : [...invoices()]"
       dataKey="id"
-      [paginator]="true"
+      [paginator]="!(loading() || invoices().length === 0)"
       [rows]="rows"
       [rowsPerPageOptions]="rowsPerPageOptions"
       [showCurrentPageReport]="true"
       i18n-currentPageReportTemplate="@@org.invoiceTable.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} invoices"
       [stripedRows]="true"
-      [pt]="tablePt({ fill: false, empty: loading() || invoices().length === 0 })"
     >
       <ng-template pTemplate="header">
         <tr>

@@ -16,7 +16,11 @@ import { CardModule, type CardPassThroughOptions } from 'primeng/card';
  * @typedef TableShellVariant
  *
  * @description
- * Layout variant of the {@link TableShell} card chrome.
+ * Layout variant of the {@link TableShell} card chrome. Reflected verbatim on
+ * the host's `data-variant` attribute, which is the scoping hook the
+ * `components.datatable.css` extension in `FireguardTheme`
+ * (`core/primeng/presets/fireguard.preset.ts`) uses to style the projected
+ * `<p-table>` per variant — the shell itself carries no table layout classes.
  *
  * - `fill` — stretches to fill its parent's height, with the table container
  *   scrolling internally and the paginator pinned to the bottom. Use for
@@ -24,11 +28,15 @@ import { CardModule, type CardPassThroughOptions } from 'primeng/card';
  * - `card` — a self-contained, non-stretched card. Use for tables composed
  *   inside another layout (member/invitation lists) that render their own
  *   external `p-paginator` below the card.
+ * - `scroll` — a self-contained, non-stretched card like `card`, whose inner
+ *   table scrolls horizontally instead of wrapping and keeps its own
+ *   bottom-rounded, right-aligned internal paginator (the intervention
+ *   field-work / work-item tables).
  *
  * @access public
  * @since 1.0.0
  */
-export type TableShellVariant = 'fill' | 'card';
+export type TableShellVariant = 'fill' | 'card' | 'scroll';
 
 /**
  * Component TableShell
@@ -39,11 +47,15 @@ export type TableShellVariant = 'fill' | 'card';
  * `p-card` and its toolbar header, standardized once so every feature table
  * stops re-declaring the same `CardPassThroughOptions`. It is deliberately
  * **not** a `p-table` wrapper — it never receives, renders, or re-exposes any
- * table input, output, or `pTemplate` slot. The consumer keeps writing a
- * fully native `<p-table>` (columns, lazy load, selection, skeleton,
- * `emptymessage`, row menus) inside the projected `#table` template, styled
- * with the companion {@link tablePt} factory bound directly on that
- * `<p-table [pt]>` input.
+ * table input, output, or `pTemplate` slot, and it carries no table layout
+ * classes of its own. The consumer keeps writing a fully native `<p-table>`
+ * (columns, lazy load, selection, skeleton, `emptymessage`, row menus) inside
+ * the projected `#table` template; its per-variant styling lives entirely in
+ * the `FireguardTheme` preset's `components.datatable.css` extension
+ * (`core/primeng/presets/fireguard.preset.ts`), scoped through the host's own
+ * `data-variant` attribute (see {@link TableShellVariant}) rather than a
+ * `[pt]` factory, because the projected `<p-table>` is always a DOM
+ * descendant of this shell.
  *
  * Two content templates are projected through PrimeNG's own `p-card`
  * `pTemplate="header"` / `pTemplate="content"` slots, mirroring the
@@ -66,7 +78,7 @@ export type TableShellVariant = 'fill' | 'card';
  *   </ng-template>
  *
  *   <ng-template #table>
- *     <p-table [value]="facilities()" [pt]="tablePt({ empty: empty() })">
+ *     <p-table [value]="facilities()" [paginator]="!empty()">
  *       <ng-template pTemplate="header"> … </ng-template>
  *       <ng-template pTemplate="body" let-facility> … </ng-template>
  *     </p-table>
@@ -74,7 +86,7 @@ export type TableShellVariant = 'fill' | 'card';
  * </app-table-shell>
  * ```
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -84,6 +96,7 @@ export type TableShellVariant = 'fill' | 'card';
   imports: [CardModule, NgTemplateOutlet],
   host: {
     '[class]': 'hostClass()',
+    '[attr.data-variant]': 'variant()',
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -95,7 +108,7 @@ export class TableShell {
    *
    * @description
    * Layout variant of the card chrome. See {@link TableShellVariant} for the
-   * distinction between `fill` and `card`.
+   * distinction between `fill`, `card`, and `scroll`.
    *
    * @access public
    * @since 1.0.0
@@ -152,8 +165,9 @@ export class TableShell {
    * size to its content while the surrounding layout stays full height,
    * leaving a blank gap below a visibly truncated rounded corner. `fill`
    * makes the host a full-height flex column so the inner `p-card`'s own
-   * `h-full` actually resolves against something; `card` keeps it a plain
-   * block box.
+   * `h-full` actually resolves against something; `card` and `scroll` keep it
+   * a plain block box (a `scroll` table is a card-shaped surface too — only
+   * its inner table scrolls horizontally, not the outer shell).
    *
    * @access protected
    * @since 1.0.0
@@ -170,12 +184,14 @@ export class TableShell {
    *
    * @description
    * PrimeNG `p-card` pass-through classes for the current {@link variant}: a
-   * bordered, shadow-less surface that either stretches full-height
-   * (`fill`) or sits as a self-contained rounded card (`card`). Both variants
-   * clip their content with `overflow-hidden` on the root — the card alone
-   * owns the rounded corners, so the table container and paginator inside it
-   * stay flat rectangles instead of each rounding their own corner and
-   * fighting the card's clip at the seam.
+   * bordered, shadow-less surface that either stretches full-height (`fill`)
+   * or sits as a self-contained rounded card (`card` and `scroll` share the
+   * same card chrome — `scroll` only differs in how its projected `<p-table>`
+   * scrolls, not in the outer card shape). Both branches clip their content
+   * with `overflow-hidden` on the root — the card alone owns the rounded
+   * corners, so the table container and paginator inside it stay flat
+   * rectangles instead of each rounding their own corner and fighting the
+   * card's clip at the seam.
    *
    * @access protected
    * @since 1.0.0

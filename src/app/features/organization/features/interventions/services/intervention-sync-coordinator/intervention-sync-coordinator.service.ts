@@ -273,7 +273,7 @@ export class InterventionSyncCoordinatorService {
               await this.sync.replayOutbox(organizationId, interventionId);
             } catch {
               this.problemState.set(
-                'A temporary synchronization error interrupted this intervention.',
+                $localize`:@@intervention.sync.problem:A temporary synchronization error interrupted this intervention.`,
               );
             }
           }),

@@ -3273,6 +3273,12 @@
         <source> Ready to submit </source>
         <target>Prêt à soumettre</target>
       </trans-unit>
+      <trans-unit id="intervention.exec.readySubmitCount" datatype="html">
+        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-semibold text-surface-900 tabular-nums dark:text-surface-50&quot;
+              &gt;"/><x id="INTERPOLATION" equiv-text="{{ readyToSubmitCount() }}"/> of 2<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span
+            &gt;"/> ready to submit </source>
+        <target><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-semibold text-surface-900 tabular-nums dark:text-surface-50&quot; &gt;"/><x id="INTERPOLATION" equiv-text="{{ readyToSubmitCount() }}"/> sur 2<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span &gt;"/> prêtes à soumettre</target>
+      </trans-unit>
       <trans-unit id="intervention.exec.siteLevel" datatype="html">
         <source>Site-level work item</source>
         <target>Élément de travail au niveau du site</target>
@@ -3386,16 +3392,20 @@
         <target>Prêt à planifier</target>
       </trans-unit>
       <trans-unit id="intervention.prepare.checkSite" datatype="html">
-        <source>Single site &amp; responsible</source>
-        <target>Site et responsable uniques</target>
+        <source>Site assigned</source>
+        <target>Site attribué</target>
       </trans-unit>
-      <trans-unit id="intervention.prepare.checkSchedule" datatype="html">
-        <source>Schedule window set</source>
-        <target>Fenêtre de planification définie</target>
+      <trans-unit id="intervention.prepare.checkResponsible" datatype="html">
+        <source>Responsible member assigned</source>
+        <target>Responsable désigné</target>
       </trans-unit>
-      <trans-unit id="intervention.prepare.checkWorkItem" datatype="html">
-        <source>Add at least one work item</source>
-        <target>Ajouter au moins un élément de travail</target>
+      <trans-unit id="intervention.prepare.checkStart" datatype="html">
+        <source>Planned start set</source>
+        <target>Début planifié défini</target>
+      </trans-unit>
+      <trans-unit id="intervention.prepare.checkDue" datatype="html">
+        <source>Due date set</source>
+        <target>Échéance définie</target>
       </trans-unit>
       <trans-unit id="intervention.review.offline" datatype="html">
         <source> Connect to the network before publishing this intervention. </source>
@@ -3428,6 +3438,12 @@
       <trans-unit id="intervention.review.readyPublish" datatype="html">
         <source> Ready to publish </source>
         <target>Prêt à publier</target>
+      </trans-unit>
+      <trans-unit id="intervention.review.readyPublishCount" datatype="html">
+        <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-semibold text-surface-900 tabular-nums dark:text-surface-50&quot;
+              &gt;"/><x id="INTERPOLATION" equiv-text="{{ readyToPublishCount() }}"/> of 3<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span
+            &gt;"/> ready to publish </source>
+        <target><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-semibold text-surface-900 tabular-nums dark:text-surface-50&quot; &gt;"/><x id="INTERPOLATION" equiv-text="{{ readyToPublishCount() }}"/> sur 3<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span &gt;"/> prêtes à publier</target>
       </trans-unit>
       <trans-unit id="intervention.review.requestChanges" datatype="html">
         <source>Request changes</source>
@@ -4011,9 +4027,9 @@
       </trans-unit>
       <trans-unit id="intervention.prepare.readyCount" datatype="html">
         <source><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-semibold text-surface-900 tabular-nums dark:text-surface-50&quot;
-              &gt;"/><x id="INTERPOLATION" equiv-text="{{ readyCount() }}"/> of 3<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span
+              &gt;"/><x id="INTERPOLATION" equiv-text="{{ readyCount() }}"/> of 4<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span
             &gt;"/> ready to plan </source>
-        <target><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-semibold text-surface-900 tabular-nums dark:text-surface-50&quot; &gt;"/><x id="INTERPOLATION" equiv-text="{{ readyCount() }}"/> sur 3<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span &gt;"/> prêtes à planifier</target>
+        <target><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-semibold text-surface-900 tabular-nums dark:text-surface-50&quot; &gt;"/><x id="INTERPOLATION" equiv-text="{{ readyCount() }}"/> sur 4<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span &gt;"/> prêtes à planifier</target>
       </trans-unit>
       <trans-unit id="intervention.review.findingsDesc" datatype="html">
         <source><x id="count" equiv-text="count"/> item(s) to resolve before publication</source>
@@ -5795,6 +5811,10 @@
         <source>Card actions</source>
         <target>Actions de la carte</target>
       </trans-unit>
+      <trans-unit id="interventionBoard.card.overdue" datatype="html">
+        <source>Overdue</source>
+        <target>En retard</target>
+      </trans-unit>
       <trans-unit id="interventionBoard.emptyTitle" datatype="html">
         <source>No interventions yet</source>
         <target>Aucune intervention</target>
@@ -6162,6 +6182,114 @@
       <trans-unit id="org.members.toast.bulkRoleFailed" datatype="html">
         <source>The role could not be assigned to some members.</source>
         <target>Le rôle n'a pas pu être attribué à certains membres.</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.retry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.errorTitle" datatype="html">
+        <source>The pipeline could not be loaded</source>
+        <target>Le pipeline n'a pas pu être chargé</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.errorDesc" datatype="html">
+        <source> Something went wrong while loading the interventions. Check your connection and try again. </source>
+        <target> Une erreur s'est produite lors du chargement des interventions. Vérifiez votre connexion et réessayez. </target>
+      </trans-unit>
+      <trans-unit id="intervention.table.errorText" datatype="html">
+        <source>The interventions could not be loaded. Check your connection and try again.</source>
+        <target>Les interventions n'ont pas pu être chargées. Vérifiez votre connexion et réessayez.</target>
+      </trans-unit>
+      <trans-unit id="intervention.abandon.header" datatype="html">
+        <source>Abandon intervention</source>
+        <target>Abandonner l'intervention</target>
+      </trans-unit>
+      <trans-unit id="intervention.abandon.message" datatype="html">
+        <source>Abandon this intervention? It leaves the active workflow and cannot be resumed.</source>
+        <target>Abandonner cette intervention ? Elle quitte le flux de travail actif et ne peut pas être reprise.</target>
+      </trans-unit>
+      <trans-unit id="intervention.abandon.accept" datatype="html">
+        <source>Abandon</source>
+        <target>Abandonner</target>
+      </trans-unit>
+      <trans-unit id="intervention.abandon.action" datatype="html">
+        <source>Abandon intervention</source>
+        <target>Abandonner l'intervention</target>
+      </trans-unit>
+      <trans-unit id="interventionBoard.loadMore" datatype="html">
+        <source>Load more</source>
+        <target>Charger plus</target>
+      </trans-unit>
+      <trans-unit id="intervention.field.discoverySaved" datatype="html">
+        <source>Discovery saved as an intervention draft resource.</source>
+        <target>Découverte enregistrée comme ressource brouillon de l'intervention.</target>
+      </trans-unit>
+      <trans-unit id="intervention.field.discoveryFailed" datatype="html">
+        <source>The discovered resource could not be saved.</source>
+        <target>La ressource découverte n'a pas pu être enregistrée.</target>
+      </trans-unit>
+      <trans-unit id="intervention.field.qrNotDetected" datatype="html">
+        <source>No QR code was detected. Capture it again or add the discovery manually.</source>
+        <target>Aucun QR code n'a été détecté. Capturez-le à nouveau ou ajoutez la découverte manuellement.</target>
+      </trans-unit>
+      <trans-unit id="intervention.field.qrUnreadable" datatype="html">
+        <source>The QR code could not be read. Capture it again or add the discovery manually.</source>
+        <target>Le QR code n'a pas pu être lu. Capturez-le à nouveau ou ajoutez la découverte manuellement.</target>
+      </trans-unit>
+      <trans-unit id="intervention.field.photoQueued" datatype="html">
+        <source>Photo compressed and queued for synchronization.</source>
+        <target>Photo compressée et mise en file d'attente pour la synchronisation.</target>
+      </trans-unit>
+      <trans-unit id="intervention.field.photoUploaded" datatype="html">
+        <source>Evidence photo uploaded.</source>
+        <target>Photo de preuve téléversée.</target>
+      </trans-unit>
+      <trans-unit id="intervention.field.photoFailed" datatype="html">
+        <source>The evidence photo could not be saved.</source>
+        <target>La photo de preuve n'a pas pu être enregistrée.</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.offline" datatype="html">
+        <source>Connect to the network before publishing this intervention.</source>
+        <target>Connectez-vous au réseau avant de publier cette intervention.</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.success" datatype="html">
+        <source>Intervention published successfully.</source>
+        <target>Intervention publiée avec succès.</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.failed" datatype="html">
+        <source>The publication request could not be completed.</source>
+        <target>La demande de publication n'a pas pu être menée à bien.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.loadFailed" datatype="html">
+        <source>The intervention workspace could not be loaded.</source>
+        <target>L'espace de travail de l'intervention n'a pas pu être chargé.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.transitionFailed" datatype="html">
+        <source>The intervention status could not be updated.</source>
+        <target>Le statut de l'intervention n'a pas pu être mis à jour.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.detailsFailed" datatype="html">
+        <source>Intervention planning details could not be saved.</source>
+        <target>Les détails de planification de l'intervention n'ont pas pu être enregistrés.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.workItemCreateFailed" datatype="html">
+        <source>The work item could not be created.</source>
+        <target>L'élément de travail n'a pas pu être créé.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.workItemUpdateFailed" datatype="html">
+        <source>The work item could not be updated.</source>
+        <target>L'élément de travail n'a pas pu être mis à jour.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.workItemDeleteOffline" datatype="html">
+        <source>Connect to the network to delete planned work items.</source>
+        <target>Connectez-vous au réseau pour supprimer les éléments de travail planifiés.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.workItemDeleteFailed" datatype="html">
+        <source>The work item could not be deleted.</source>
+        <target>L'élément de travail n'a pas pu être supprimé.</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.problem" datatype="html">
+        <source>A temporary synchronization error interrupted this intervention.</source>
+        <target>Une erreur de synchronisation temporaire a interrompu cette intervention.</target>
       </trans-unit>
     </body>
   </file>

@@ -160,4 +160,47 @@ describe('InterventionService', () => {
 
     expect(result).toEqual([first, second]);
   });
+
+  it('fetches the calendar window as a de-duped union of planned-start and due-date queries', () => {
+    const after = new Date(Date.UTC(2026, 5, 1, 0, 0, 0));
+    const before = new Date(Date.UTC(2026, 6, 31, 23, 59, 59));
+    const shared = { id: 'shared' } as InterventionOutput;
+    const dueOnly = { id: 'due-only' } as InterventionOutput;
+    let result: readonly InterventionOutput[] = [];
+
+    service.listCalendarWindow('organization-1', after, before).subscribe((interventions) => {
+      result = interventions;
+    });
+
+    const plannedRequest = httpMock.expectOne(
+      (request) =>
+        request.url === `${mockEnv.apiUrl}/api/interventions` &&
+        request.params.get('plannedStartAtAfter') === '2026-06-01T00:00:00Z' &&
+        request.params.get('plannedStartAtBefore') === '2026-07-31T23:59:59Z',
+    );
+    plannedRequest.flush({
+      '@id': '/api/interventions',
+      '@type': 'Collection',
+      totalItems: 1,
+      member: [shared],
+    });
+
+    const dueRequest = httpMock.expectOne(
+      (request) =>
+        request.url === `${mockEnv.apiUrl}/api/interventions` &&
+        request.params.get('dueAtAfter') === '2026-06-01T00:00:00Z' &&
+        request.params.get('dueAtBefore') === '2026-07-31T23:59:59Z',
+    );
+    dueRequest.flush({
+      '@id': '/api/interventions',
+      '@type': 'Collection',
+      totalItems: 2,
+      member: [shared, dueOnly],
+    });
+
+    expect(result.map((intervention) => intervention.id).toSorted()).toEqual([
+      'due-only',
+      'shared',
+    ]);
+  });
 });

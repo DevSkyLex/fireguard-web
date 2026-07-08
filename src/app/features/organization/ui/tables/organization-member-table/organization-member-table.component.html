@@ -87,7 +87,6 @@
       [value]="loading() ? skeletonItems : [...members()]"
       dataKey="id"
       [stripedRows]="true"
-      [pt]="tablePt({ fill: false })"
       [selection]="selection()"
       (selectionChange)="selection.set($event)"
     >

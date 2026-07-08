@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   HostListener,
   inject,
@@ -8,15 +9,18 @@ import {
   numberAttribute,
   signal,
   type InputSignalWithTransform,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TooltipModule } from 'primeng/tooltip';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
+import { OrganizationPermissionService } from '@features/organization/access';
 import type {
+  InterventionBoardColumnId,
   InterventionListOptions,
   InterventionOutput,
 } from '@features/organization/features/interventions/models';
@@ -31,6 +35,7 @@ import {
 import {
   InterventionCalendarStore,
   type InterventionCalendarStoreType,
+  type InterventionCalendarWindow,
 } from '@features/organization/features/interventions/state/intervention-calendar';
 import {
   InterventionPlanningOptionsStore,
@@ -39,15 +44,13 @@ import {
 import {
   InterventionBoard,
   InterventionCalendar,
-  InterventionInProgressMetric,
-  InterventionInReviewMetric,
-  InterventionPlannedMetric,
-  InterventionPublishedMetric,
+  InterventionMetric,
   type InterventionBoardAdvanceEvent,
 } from '@features/organization/features/interventions/ui/components';
 import { InterventionCreateDrawer } from '@features/organization/features/interventions/ui/drawers';
 import type { InterventionCreateFormValues } from '@features/organization/features/interventions/ui/forms';
 import { InterventionTable } from '@features/organization/features/interventions/ui/tables';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
@@ -57,11 +60,22 @@ import { ActiveOrganizationStore } from '@features/organization/state';
 const DEFAULT_PLANNED_HOUR = 9;
 
 /**
+ * Returns midnight (local time) of the given date, dropping the time component.
+ *
+ * @param {Date} date - Reference date.
+ * @returns {Date} Local start-of-day for the date.
+ */
+function startOfLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+/**
  * Type InterventionsView
  *
  * @description
- * The two presentations the interventions index can render: the paginated
- * planner table (`list`) and the scheduling calendar (`calendar`).
+ * The three presentations the interventions index can render: the workflow
+ * pipeline board (`board`, the default), the paginated planner table (`list`)
+ * and the scheduling calendar (`calendar`).
  *
  * @since 2.0.0
  */
@@ -116,17 +130,20 @@ interface InterventionsViewOption {
  * @class InterventionsPage
  *
  * @description
- * Route entry page for the organization interventions index. Hosts the planner
- * table and the scheduling calendar as two interchangeable views of the same
- * intervention collection, switched through a `?view=` query parameter, and
- * orchestrates the shared guided-creation flow (pre-filling the planned start
- * when created from a calendar day) and navigation into an intervention.
+ * Route entry page for the organization interventions index. Hosts the workflow
+ * pipeline board, the planner table and the scheduling calendar as three
+ * interchangeable views of the same intervention collection, switched through a
+ * `?view=` query parameter, and orchestrates the shared guided-creation flow
+ * (pre-filling the planned start when created from a calendar day) and
+ * navigation into an intervention.
  *
- * The two views own different load shapes, so each keeps its own store: the
- * table paginates server-side through {@link InterventionStore}; the calendar
- * loads every scheduled intervention up front through
- * {@link InterventionCalendarStore}. Calendar data is fetched lazily, only while
- * its view is active.
+ * The three views own different load shapes, so each keeps its own store: the
+ * board fetches a bounded page of cards per lane through
+ * {@link InterventionBoardStore}; the table paginates server-side through
+ * {@link InterventionStore}; the calendar loads a bounded date window through
+ * {@link InterventionCalendarStore}. Board cards and calendar data are fetched
+ * lazily, only while their view is active, while the lightweight per-status
+ * counts feeding the metric strip refresh on every view.
  *
  * @version 2.1.0
  *
@@ -140,10 +157,7 @@ interface InterventionsViewOption {
     InterventionBoard,
     InterventionCalendar,
     InterventionCreateDrawer,
-    InterventionInProgressMetric,
-    InterventionInReviewMetric,
-    InterventionPlannedMetric,
-    InterventionPublishedMetric,
+    InterventionMetric,
     InterventionTable,
     SelectButtonModule,
     TooltipModule,
@@ -205,19 +219,38 @@ export class InterventionsPage {
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
   /**
-   * Property interventions
+   * Property permissionService
    * @readonly
    *
    * @description
-   * Intervention data-access service used to submit the guided creation request.
+   * Resolves the current member's organization permissions used to derive the
+   * board's `canPlan`/`canExecute`/`canReview`/`canPublish` capability inputs so
+   * disallowed workflow moves are never offered.
    *
    * @access private
-   * @since 1.2.0
+   * @since 2.3.0
    *
-   * @type {InterventionService}
+   * @type {OrganizationPermissionService}
    */
-  private readonly interventions: InterventionService =
-    inject<InterventionService>(InterventionService);
+  private readonly permissionService: OrganizationPermissionService = inject(
+    OrganizationPermissionService,
+  );
+
+  /**
+   * Property confirmationService
+   * @readonly
+   *
+   * @description
+   * Confirmation service guarding the destructive "Abandon" action triggered
+   * from the pipeline board card menu.
+   *
+   * @access private
+   * @since 2.3.0
+   *
+   * @type {ConfirmationService}
+   */
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
 
   /**
    * Property store
@@ -282,6 +315,140 @@ export class InterventionsPage {
    */
   protected readonly boardStore: InterventionBoardStoreType =
     inject<InterventionBoardStoreType>(InterventionBoardStore);
+
+  /**
+   * Property plannedTotal
+   * @readonly
+   *
+   * @description
+   * Server-reported total of interventions in the `planned` lane, backing the
+   * metric strip's "Planned" card.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly plannedTotal: Signal<number> = computed<number>(() =>
+    this.laneTotal('planned'),
+  );
+
+  /**
+   * Property inProgressTotal
+   * @readonly
+   *
+   * @description
+   * Server-reported total of interventions in the `in_progress` lane, backing
+   * the metric strip's "In progress" card.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly inProgressTotal: Signal<number> = computed<number>(() =>
+    this.laneTotal('in_progress'),
+  );
+
+  /**
+   * Property inReviewTotal
+   * @readonly
+   *
+   * @description
+   * Server-reported total of interventions in the `review` lane (fusing the
+   * `submitted` and `changes_requested` statuses), backing the metric strip's
+   * "In review" card.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly inReviewTotal: Signal<number> = computed<number>(() =>
+    this.laneTotal('review'),
+  );
+
+  /**
+   * Property publishedTotal
+   * @readonly
+   *
+   * @description
+   * Server-reported total of interventions in the terminal `published` lane,
+   * backing the metric strip's "Published" card.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly publishedTotal: Signal<number> = computed<number>(() =>
+    this.laneTotal('published'),
+  );
+
+  /**
+   * Property canPlan
+   * @readonly
+   *
+   * @description
+   * Whether the current user may plan interventions, forwarded to the board so a
+   * read-only user is never offered a plan-gated drag or menu action.
+   *
+   * @access protected
+   * @since 2.3.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canPlan: Signal<boolean> = computed<boolean>(() =>
+    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
+  );
+
+  /**
+   * Property canExecute
+   * @readonly
+   *
+   * @description
+   * Whether the current user may execute interventions, forwarded to the board.
+   *
+   * @access protected
+   * @since 2.3.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canExecute: Signal<boolean> = computed<boolean>(() =>
+    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_EXECUTE),
+  );
+
+  /**
+   * Property canReview
+   * @readonly
+   *
+   * @description
+   * Whether the current user may review interventions, forwarded to the board.
+   *
+   * @access protected
+   * @since 2.3.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReview: Signal<boolean> = computed<boolean>(() =>
+    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_REVIEW),
+  );
+
+  /**
+   * Property canPublish
+   * @readonly
+   *
+   * @description
+   * Whether the current user may publish interventions, forwarded to the board.
+   *
+   * @access protected
+   * @since 2.3.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canPublish: Signal<boolean> = computed<boolean>(() =>
+    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PUBLISH),
+  );
 
   /**
    * Input view
@@ -363,20 +530,6 @@ export class InterventionsPage {
   protected readonly createDrawerVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
-   * Property creating
-   * @readonly
-   *
-   * @description
-   * Whether a guided creation request is in flight; disables the drawer form.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {WritableSignal<boolean>}
-   */
-  protected readonly creating: WritableSignal<boolean> = signal<boolean>(false);
-
-  /**
    * Property initialPlannedStartAt
    * @readonly
    *
@@ -390,6 +543,40 @@ export class InterventionsPage {
    * @type {WritableSignal<Date | null>}
    */
   protected readonly initialPlannedStartAt: WritableSignal<Date | null> = signal<Date | null>(null);
+
+  /**
+   * Property calendarFocusedDate
+   * @readonly
+   *
+   * @description
+   * Date the calendar is currently focused on, seeded to today and updated from
+   * the calendar's `focusedDateChange` output. Drives the bounded window the
+   * calendar dataset is fetched for, so the calendar only loads the visible
+   * month (± one month) instead of the whole organization history.
+   *
+   * @access protected
+   * @since 4.1.0
+   *
+   * @type {WritableSignal<Date>}
+   */
+  protected readonly calendarFocusedDate: WritableSignal<Date> = signal<Date>(
+    startOfLocalDay(new Date()),
+  );
+
+  /**
+   * Property lastCalendarWindowKey
+   *
+   * @description
+   * Organization-and-month key of the last calendar window loaded, used to skip
+   * a redundant refetch when navigation stays inside the same month (or the same
+   * window is otherwise re-derived).
+   *
+   * @access private
+   * @since 4.1.0
+   *
+   * @type {string | null}
+   */
+  private lastCalendarWindowKey: string | null = null;
   //#endregion
 
   //#region Constructor
@@ -398,28 +585,50 @@ export class InterventionsPage {
    * @constructor
    *
    * @description
-   * Lazily loads the calendar dataset whenever the calendar view is active and
-   * the active organization changes, so switching to the table never triggers
-   * the load-all calendar query and vice versa.
+   * Wires the three lazy data flows so each view only pays for what it renders:
    *
-   * The pipeline board is loaded on every view (not just the board view) because
-   * its per-lane server totals also back the metric strip rendered under the
-   * toolbar, which must stay populated on the list and calendar views too.
+   * - the lightweight per-status counts feeding the metric strip refresh on
+   *   every view whenever the active organization changes, so the strip stays
+   *   populated on the list and calendar views without the board card fetch;
+   * - the heavier board card pages load only while the board view is active;
+   * - the calendar dataset loads only while the calendar view is active.
    *
    * @since 2.0.0
    */
   public constructor() {
     effect(() => {
-      if (this.view() !== 'calendar') return;
-      this.calendarStore.load({
+      this.boardStore.loadCounts({
         organizationId: this.organization.selectedOrganization()?.id ?? null,
       });
     });
 
     effect(() => {
+      if (this.view() !== 'board') return;
       this.boardStore.load({
         organizationId: this.organization.selectedOrganization()?.id ?? null,
       });
+    });
+
+    effect(() => {
+      if (this.view() !== 'calendar') return;
+      const organizationId: string | null = this.organization.selectedOrganization()?.id ?? null;
+      const focused: Date = this.calendarFocusedDate();
+      const key = `${organizationId ?? ''}:${focused.getFullYear()}-${focused.getMonth()}`;
+      if (key === this.lastCalendarWindowKey) return;
+
+      this.lastCalendarWindowKey = key;
+      this.calendarStore.load({ organizationId, window: this.calendarWindowFor(focused) });
+    });
+
+    effect(() => {
+      const created: InterventionOutput | null = this.store.createdIntervention();
+      if (!created) return;
+
+      const organizationId: string | undefined = this.organizationId();
+      this.store.clearCreatedIntervention();
+      if (organizationId) {
+        void this.router.navigate(['/organizations', organizationId, 'interventions', created.id]);
+      }
     });
   }
   //#endregion
@@ -579,12 +788,33 @@ export class InterventionsPage {
   }
 
   /**
+   * Method onCalendarFocusChange
+   * @method onCalendarFocusChange
+   *
+   * @description
+   * Records the calendar's newly focused date so the windowed-load effect can
+   * refetch the bounded interventions window whenever the visible month changes.
+   *
+   * @access protected
+   * @since 4.1.0
+   *
+   * @param {Date} date - Date the calendar navigated to.
+   * @returns {void}
+   */
+  protected onCalendarFocusChange(date: Date): void {
+    this.calendarFocusedDate.set(date);
+  }
+
+  /**
    * Method create
    * @method create
    *
    * @description
-   * Submits the validated draft to the API and navigates into the newly created
-   * intervention workspace on success.
+   * Routes the validated draft through {@link InterventionStore.create}. The
+   * store owns the request state (`isCreating` drives the drawer, `createFailed`
+   * surfaces a toast) and, on success, publishes the created intervention through
+   * `createdIntervention`, which the constructor effect consumes to navigate into
+   * the new workspace.
    *
    * @access protected
    * @since 1.2.0
@@ -596,27 +826,17 @@ export class InterventionsPage {
     const organizationId: string | undefined = this.organizationId();
     if (!organizationId) return;
 
-    this.creating.set(true);
-    this.interventions
-      .create(organizationId, values.name.trim(), {
-        type: values.type,
-        priority: values.priority,
-        participants: values.participants,
-        ...(values.site ? { site: values.site } : {}),
-        ...(values.responsible ? { responsible: values.responsible } : {}),
-        ...(values.plannedStartAt ? { plannedStartAt: values.plannedStartAt } : {}),
-        ...(values.dueAt ? { dueAt: values.dueAt } : {}),
-      })
-      .subscribe({
-        next: (intervention: InterventionOutput) =>
-          void this.router.navigate([
-            '/organizations',
-            organizationId,
-            'interventions',
-            intervention.id,
-          ]),
-        error: () => this.creating.set(false),
-      });
+    this.store.create({
+      organizationId,
+      name: values.name.trim(),
+      type: values.type,
+      priority: values.priority,
+      participants: values.participants,
+      ...(values.site ? { site: values.site } : {}),
+      ...(values.responsible ? { responsible: values.responsible } : {}),
+      ...(values.plannedStartAt ? { plannedStartAt: values.plannedStartAt } : {}),
+      ...(values.dueAt ? { dueAt: values.dueAt } : {}),
+    });
   }
 
   /**
@@ -663,6 +883,75 @@ export class InterventionsPage {
   }
 
   /**
+   * Method onLoadMore
+   * @method onLoadMore
+   *
+   * @description
+   * Reveals the next bounded page of one pipeline lane through the board store's
+   * incremental load, requested from the lane footer.
+   *
+   * @access protected
+   * @since 4.1.0
+   *
+   * @param {InterventionBoardColumnId} columnId - Lane whose next page is requested.
+   * @returns {void}
+   */
+  protected onLoadMore(columnId: InterventionBoardColumnId): void {
+    this.boardStore.loadMore({ organizationId: this.organizationId() ?? null, columnId });
+  }
+
+  /**
+   * Method onAbandon
+   * @method onAbandon
+   *
+   * @description
+   * Confirms then moves the intervention to `abandoned` through the board store's
+   * optimistic status move, reusing the destructive-confirmation pattern from the
+   * detail workspace. The board menu already gates the action by workflow
+   * legality and RBAC, so the confirm is the final safety step.
+   *
+   * @access protected
+   * @since 2.3.0
+   *
+   * @param {InterventionOutput} intervention - Intervention to abandon.
+   * @returns {void}
+   */
+  protected onAbandon(intervention: InterventionOutput): void {
+    this.confirmationService.confirm({
+      header: $localize`:@@intervention.abandon.header:Abandon intervention`,
+      message: $localize`:@@intervention.abandon.message:Abandon this intervention? It leaves the active workflow and cannot be resumed.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: {
+        label: $localize`:@@intervention.abandon.accept:Abandon`,
+        severity: 'danger',
+      },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
+      accept: (): void => void this.boardStore.move({ intervention, toStatus: 'abandoned' }),
+    });
+  }
+
+  /**
+   * Method retryBoard
+   * @method retryBoard
+   *
+   * @description
+   * Re-triggers the pipeline board load for the active organization after a
+   * failed fetch, from the board's inline error surface.
+   *
+   * @access protected
+   * @since 2.3.0
+   *
+   * @returns {void}
+   */
+  protected retryBoard(): void {
+    this.boardStore.load({ organizationId: this.organizationId() ?? null });
+  }
+
+  /**
    * Method openDrawer
    * @method openDrawer
    *
@@ -693,6 +982,48 @@ export class InterventionsPage {
    */
   private organizationId(): string | undefined {
     return this.organization.selectedOrganization()?.id;
+  }
+
+  /**
+   * Method laneTotal
+   * @method laneTotal
+   *
+   * @description
+   * Server-reported total for one pipeline lane, read from the board store's
+   * per-lane bucket. Backs the metric strip's four per-variant computed totals.
+   *
+   * @access private
+   * @since 4.0.0
+   *
+   * @param {InterventionBoardColumnId} columnId - Lane identifier.
+   *
+   * @returns {number} Total for the lane, or `0` when the lane has not loaded.
+   */
+  private laneTotal(columnId: InterventionBoardColumnId): number {
+    return this.boardStore.columns().find((column) => column.id === columnId)?.total ?? 0;
+  }
+
+  /**
+   * Method calendarWindowFor
+   * @method calendarWindowFor
+   *
+   * @description
+   * Bounded date window the calendar dataset is fetched for: the focused month
+   * padded by one month on each side, so navigating one step always keeps the
+   * adjacent months populated. Both bounds are inclusive local instants.
+   *
+   * @access private
+   * @since 4.1.0
+   *
+   * @param {Date} focused - Date the calendar is focused on.
+   *
+   * @returns {InterventionCalendarWindow} Inclusive window to fetch.
+   */
+  private calendarWindowFor(focused: Date): InterventionCalendarWindow {
+    return {
+      after: new Date(focused.getFullYear(), focused.getMonth() - 1, 1, 0, 0, 0, 0),
+      before: new Date(focused.getFullYear(), focused.getMonth() + 2, 0, 23, 59, 59, 999),
+    };
   }
   //#endregion
 }

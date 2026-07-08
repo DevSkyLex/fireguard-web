@@ -1,8 +1,8 @@
 import { CUSTOM_ELEMENTS_SCHEMA, signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import { of } from 'rxjs';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
+import { ConfirmationService } from 'primeng/api';
+import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   InterventionListOptions,
   InterventionOutput,
@@ -30,6 +30,8 @@ type InterventionsPageHarness = {
     intervention: InterventionOutput;
     toStatus: InterventionOutput['status'];
   }): void;
+  onAbandon(intervention: InterventionOutput): void;
+  onLoadMore(columnId: 'draft' | 'planned' | 'in_progress' | 'review' | 'published'): void;
   createDrawerVisible: WritableSignal<boolean>;
   initialPlannedStartAt: WritableSignal<Date | null>;
 };
@@ -40,7 +42,12 @@ describe('InterventionsPage', () => {
     totalInterventions: WritableSignal<number>;
     isLoadingInterventions: WritableSignal<boolean>;
     isEmpty: WritableSignal<boolean>;
+    listError: WritableSignal<unknown>;
+    isCreating: WritableSignal<boolean>;
+    createdIntervention: WritableSignal<InterventionOutput | null>;
     load: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    clearCreatedIntervention: ReturnType<typeof vi.fn>;
   };
   let calendarStore: {
     interventions: WritableSignal<readonly InterventionOutput[]>;
@@ -51,8 +58,12 @@ describe('InterventionsPage', () => {
   let boardStore: {
     columns: WritableSignal<readonly unknown[]>;
     loading: WritableSignal<boolean>;
+    countsLoading: WritableSignal<boolean>;
     isEmpty: WritableSignal<boolean>;
+    loadError: WritableSignal<unknown>;
+    loadCounts: ReturnType<typeof vi.fn>;
     load: ReturnType<typeof vi.fn>;
+    loadMore: ReturnType<typeof vi.fn>;
     move: ReturnType<typeof vi.fn>;
   };
   let planningOptions: {
@@ -61,7 +72,8 @@ describe('InterventionsPage', () => {
     sites: WritableSignal<readonly unknown[]>;
     members: WritableSignal<readonly unknown[]>;
   };
-  let interventions: { create: ReturnType<typeof vi.fn> };
+  let permissionService: { hasPermission: ReturnType<typeof vi.fn> };
+  let confirmationService: { confirm: ReturnType<typeof vi.fn> };
   let activeOrg: { selectedOrganization: WritableSignal<OrganizationOutput | null> };
 
   beforeAll(() => {
@@ -86,7 +98,12 @@ describe('InterventionsPage', () => {
       totalInterventions: signal(0),
       isLoadingInterventions: signal(false),
       isEmpty: signal(false),
+      listError: signal<unknown>(null),
+      isCreating: signal(false),
+      createdIntervention: signal<InterventionOutput | null>(null),
       load: vi.fn(),
+      create: vi.fn(),
+      clearCreatedIntervention: vi.fn(),
     };
     calendarStore = {
       interventions: signal<readonly InterventionOutput[]>([]),
@@ -103,11 +120,16 @@ describe('InterventionsPage', () => {
     boardStore = {
       columns: signal<readonly unknown[]>([]),
       loading: signal(false),
+      countsLoading: signal(false),
       isEmpty: signal(false),
+      loadError: signal<unknown>(null),
+      loadCounts: vi.fn(),
       load: vi.fn(),
+      loadMore: vi.fn(),
       move: vi.fn(),
     };
-    interventions = { create: vi.fn().mockReturnValue(of(created)) };
+    permissionService = { hasPermission: vi.fn().mockReturnValue(true) };
+    confirmationService = { confirm: vi.fn() };
     activeOrg = { selectedOrganization: signal<OrganizationOutput | null>(MOCK_ORG) };
 
     TestBed.configureTestingModule({
@@ -116,7 +138,8 @@ describe('InterventionsPage', () => {
         provideRouter([]),
         { provide: ActivatedRoute, useValue: {} },
         { provide: ActiveOrganizationStore, useValue: activeOrg },
-        { provide: InterventionService, useValue: interventions },
+        { provide: OrganizationPermissionService, useValue: permissionService },
+        { provide: ConfirmationService, useValue: confirmationService },
       ],
     }).overrideComponent(InterventionsPage, {
       set: {
@@ -148,12 +171,20 @@ describe('InterventionsPage', () => {
     expect(calendarStore.load).not.toHaveBeenCalled();
   });
 
-  it('should lazily load the calendar dataset when the calendar view becomes active', () => {
+  it('should lazily load the calendar dataset for a bounded window when the calendar view becomes active', () => {
     const fixture = TestBed.createComponent(InterventionsPage);
     fixture.componentRef.setInput('view', 'calendar');
     fixture.detectChanges();
 
-    expect(calendarStore.load).toHaveBeenCalledWith({ organizationId: 'org-1' });
+    expect(calendarStore.load).toHaveBeenCalledTimes(1);
+    const request = calendarStore.load.mock.calls[0][0] as {
+      organizationId: string | null;
+      window: { after: Date; before: Date };
+    };
+    expect(request.organizationId).toBe('org-1');
+    expect(request.window.after).toBeInstanceOf(Date);
+    expect(request.window.before).toBeInstanceOf(Date);
+    expect(request.window.after.getTime()).toBeLessThan(request.window.before.getTime());
   });
 
   it('should forward a lazy-load request to the table store for the active organization', () => {
@@ -202,6 +233,24 @@ describe('InterventionsPage', () => {
     build();
 
     expect(boardStore.load).toHaveBeenCalledWith({ organizationId: 'org-1' });
+  });
+
+  it('should refresh the metric counts regardless of the active view', () => {
+    const fixture = TestBed.createComponent(InterventionsPage);
+    fixture.componentRef.setInput('view', 'list');
+    fixture.detectChanges();
+
+    expect(boardStore.loadCounts).toHaveBeenCalledWith({ organizationId: 'org-1' });
+    expect(boardStore.load).not.toHaveBeenCalled();
+  });
+
+  it('should reveal the next lane page through the board store', () => {
+    build().onLoadMore('published');
+
+    expect(boardStore.loadMore).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      columnId: 'published',
+    });
   });
 
   it('should apply an optimistic advance through the board store', () => {
@@ -254,13 +303,10 @@ describe('InterventionsPage', () => {
     expect(planningOptions.loadCreationOptions).toHaveBeenCalledWith('org-1');
   });
 
-  it('should create an intervention and navigate into its workspace on success', () => {
-    const router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-
+  it('should route creation through the store with the trimmed name', () => {
     build().create({
       name: '  Roof check  ',
-      type: 'inspection',
+      type: 'inspection_campaign',
       priority: 'normal',
       participants: [],
       site: null,
@@ -269,7 +315,35 @@ describe('InterventionsPage', () => {
       dueAt: null,
     } as unknown as InterventionCreateFormValues);
 
-    expect(interventions.create).toHaveBeenCalledWith('org-1', 'Roof check', expect.any(Object));
+    expect(store.create).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: 'org-1', name: 'Roof check' }),
+    );
+  });
+
+  it('should navigate into the workspace when the store publishes the created intervention', () => {
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const fixture = TestBed.createComponent(InterventionsPage);
+    fixture.detectChanges();
+
+    store.createdIntervention.set(created);
+    fixture.detectChanges();
+
+    expect(store.clearCreatedIntervention).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'i-9']);
+  });
+
+  it('should confirm before abandoning a board card and move it on accept', () => {
+    const intervention = { id: 'i-4', status: 'draft' } as InterventionOutput;
+
+    build().onAbandon(intervention);
+
+    expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
+    const config = confirmationService.confirm.mock.calls[0][0] as { accept?: () => void };
+    expect(boardStore.move).not.toHaveBeenCalled();
+
+    config.accept?.();
+    expect(boardStore.move).toHaveBeenCalledWith({ intervention, toStatus: 'abandoned' });
   });
 });

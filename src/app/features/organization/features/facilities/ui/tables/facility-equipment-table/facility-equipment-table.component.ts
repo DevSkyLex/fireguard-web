@@ -37,7 +37,7 @@ import type {
   EquipmentStatus,
 } from '@features/organization/features/equipments/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, TableShell, Tag, tablePt } from '@shared/components';
+import { EmptyState, TableShell, Tag } from '@shared/components';
 import type { EquipmentStatusOption } from './models';
 
 /**
@@ -239,22 +239,6 @@ export class FacilityEquipmentTable implements OnInit {
    */
   private readonly organizationPermissionService: OrganizationPermissionService =
     inject<OrganizationPermissionService>(OrganizationPermissionService);
-
-  /**
-   * Property tablePt
-   * @readonly
-   *
-   * @description
-   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
-   * member so the template can call it directly (Angular templates cannot
-   * invoke a bare module-level import).
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {typeof tablePt}
-   */
-  protected readonly tablePt: typeof tablePt = tablePt;
 
   /**
    * Property rows

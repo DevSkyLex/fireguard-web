@@ -92,6 +92,15 @@
               }
             }
           </div>
+
+          @if (columnFooterTemplate(); as footer) {
+            <div class="px-2 pb-2">
+              <ng-container
+                [ngTemplateOutlet]="footer"
+                [ngTemplateOutletContext]="{ $implicit: column }"
+              />
+            </div>
+          }
         </section>
       }
     </div>

@@ -71,12 +71,22 @@ npm run build         # validates strict Angular templates
 If a graphify graph exists (`graphify-out/`), run `graphify update .` and prefer
 `graphify query` for codebase questions.
 
-## Tooling available in this repo
+## Tooling available (from the monorepo root)
 
-- `.claude/commands/` — slash commands: `/fg-quality`, `/fg-feature`,
-  `/fg-component`, `/fg-store`, `/fg-arch-review`, `/fg-primeng`.
-- `.claude/agents/` — subagents: `fg-architecture-reviewer`, `fg-feature-scaffolder`,
-  `fg-primeng-ui`.
-- `.claude/output-styles/fireguard.md` — concise, architecture-aware response style.
-- A PrimeNG MCP server is configured (`.vscode/mcp.json`) — use it to look up
-  component props, events, theming tokens and examples instead of guessing.
+This app no longer ships its own `.claude/`. All Claude Code tooling lives in the
+**monorepo-root** `G:\Projets\fireguard\.claude\` and is active when you work from
+that root. Web-focused subagents:
+
+- `fg-architecture-reviewer` — review Angular code against this `ARCHITECTURE.md`
+  (ownership, dependency direction, type-only `models/`, ports, barrels; read-only).
+- `fg-feature-scaffolder` — scaffold a new feature / page / slice per §8.3/§8.4.
+- `fg-signal-store` — NgRx SignalStore work per §9.7/§17 and `@core/request-state`.
+- `fg-primeng-ui` — PrimeNG tables/dataviews/forms/dialogs/drawers, Tailwind + `[pt]`,
+  dark mode; it uses the PrimeNG MCP for real props/events/tokens.
+- `fg-a11y-auditor` — static WCAG 2.1 AA + `PRODUCT.md` audit of templates (read-only).
+- `fg-web-test-writer` — unit/integration specs by architectural boundary
+  (`npx ng test --watch=false`, never bare `vitest`).
+
+Frontend gate and cross-cutting commands also live at the root: `/fg-web-quality`,
+`/fg-e2e`, `/fg-contract-check`, `/fg-map`. A PrimeNG MCP server is available — use
+it to look up component props, events, theming tokens and examples instead of guessing.

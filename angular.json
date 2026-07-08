@@ -107,6 +107,21 @@
               "extractLicenses": false,
               "sourceMap": true
             },
+            "e2e": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.development.ts"
+                }
+              ],
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "ssr": false,
+              "server": false,
+              "outputMode": "static",
+              "serviceWorker": false
+            },
             "fr": {
               "localize": ["fr"]
             },
@@ -124,6 +139,9 @@
             },
             "development": {
               "buildTarget": "fireguard-web:build:development"
+            },
+            "e2e": {
+              "buildTarget": "fireguard-web:build:e2e"
             },
             "fr": {
               "buildTarget": "fireguard-web:build:development,fr"

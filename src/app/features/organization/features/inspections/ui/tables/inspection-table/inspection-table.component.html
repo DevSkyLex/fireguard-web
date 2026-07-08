@@ -173,7 +173,7 @@
     <p-table
       [value]="showSkeleton() ? skeletonItems : empty() ? [] : [...inspections()]"
       dataKey="id"
-      [paginator]="true"
+      [paginator]="total() > 0"
       [rows]="rows"
       [first]="firstPage()"
       [totalRecords]="total()"
@@ -184,7 +184,6 @@
       i18n-currentPageReportTemplate="@@inspection.table.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} inspections"
       [stripedRows]="true"
-      [pt]="tablePt({ empty: total() === 0 })"
     >
       <ng-template pTemplate="header">
         <tr>

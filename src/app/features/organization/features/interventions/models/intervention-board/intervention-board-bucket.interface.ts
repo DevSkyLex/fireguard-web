@@ -45,4 +45,16 @@ export interface InterventionBoardBucket {
    * @type {number}
    */
   readonly total: number;
+
+  /**
+   * Property loadingMore
+   * @readonly
+   *
+   * @description
+   * Whether an incremental "load more" fetch is currently in flight for this
+   * lane. Drives the lane footer's busy state while the next page appends.
+   *
+   * @type {boolean}
+   */
+  readonly loadingMore: boolean;
 }

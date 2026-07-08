@@ -8,10 +8,12 @@ import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
+  isCallError,
   pendingCallState,
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
+  type StoreError,
 } from '@core/request-state';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
@@ -92,14 +94,32 @@ export const InterventionStore = signalStore(
     createdIntervention: computed<InterventionOutput | null>(() => store.createCallState().data),
 
     /**
+     * Computed listError.
+     *
+     * @description
+     * Normalized error from the last failed list load, or `null` when the load
+     * is idle, pending or successful. Lets the page distinguish a failed fetch
+     * from a legitimately empty collection.
+     */
+    listError: computed<StoreError | null>(() => {
+      const state = store.listCallState();
+
+      return isCallError(state) ? state.error : null;
+    }),
+
+    /**
      * Computed isEmpty.
      *
      * @description
-     * True when there are no interventions and the list is not loading.
+     * True only when there are no interventions and the last list load neither
+     * is in flight nor failed — a failed load surfaces an error, not the empty
+     * state.
      */
-    isEmpty: computed<boolean>(
-      () => store.interventionIds().length === 0 && store.listCallState().status !== 'pending',
-    ),
+    isEmpty: computed<boolean>(() => {
+      const status = store.listCallState().status;
+
+      return store.interventionIds().length === 0 && status !== 'pending' && status !== 'error';
+    }),
   })),
   withMethods(
     (
@@ -156,38 +176,63 @@ export const InterventionStore = signalStore(
        * @method create
        *
        * @description
-       * Creates a intervention and stores it in the local entity collection.
-       * Uses `exhaustMap` to avoid duplicate submissions.
+       * Creates an intervention from the guided-creation payload, stores it in
+       * the local entity collection, records the success in `createCallState`
+       * (so `createdIntervention`/`isCreating` drive the page) and dispatches a
+       * typed `created` event for navigation. Uses `exhaustMap` to avoid
+       * duplicate submissions.
        *
        * @access public
        * @since 1.0.0
        *
-       * @type {RxMethod<{ organizationId: string; name: string }>}
+       * @type {RxMethod<InterventionCreateCommand>}
        */
 
       create: rxMethod<InterventionCreateCommand>(
         pipe(
           tap(() => patchState(store, { createCallState: pendingCallState<InterventionOutput>() })),
-          exhaustMap(({ organizationId, name }) =>
-            interventionService.create(organizationId, name).pipe(
-              tapResponse({
-                next: (intervention) => {
-                  patchState(store, addEntity(intervention, { collection: 'intervention' }), {
-                    totalInterventions: store.totalInterventions() + 1,
-                    createCallState: successCallState(intervention),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError = toStoreError(error);
-                  patchState(store, { createCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    interventionStoreEvents.createFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to create intervention'),
-                    ),
-                  );
-                },
-              }),
-            ),
+          exhaustMap(
+            ({
+              organizationId,
+              name,
+              type: interventionType,
+              site,
+              responsible,
+              participants,
+              priority,
+              plannedStartAt,
+              dueAt,
+            }) =>
+              interventionService
+                .create(organizationId, name, {
+                  type: interventionType,
+                  site,
+                  responsible,
+                  participants,
+                  priority,
+                  plannedStartAt,
+                  dueAt,
+                })
+                .pipe(
+                  tapResponse({
+                    next: (intervention) => {
+                      patchState(store, addEntity(intervention, { collection: 'intervention' }), {
+                        totalInterventions: store.totalInterventions() + 1,
+                        createCallState: successCallState(intervention),
+                      });
+                      dispatcher.dispatch(interventionStoreEvents.created(intervention));
+                    },
+                    error: (error: unknown) => {
+                      const storeError = toStoreError(error);
+                      patchState(store, { createCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        interventionStoreEvents.createFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to create intervention'),
+                        ),
+                      );
+                    },
+                  }),
+                ),
           ),
         ),
       ),

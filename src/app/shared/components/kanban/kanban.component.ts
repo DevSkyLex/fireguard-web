@@ -20,7 +20,13 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
-import type { KanbanCard, KanbanCardContext, KanbanColumn, KanbanDropEvent } from './models';
+import type {
+  KanbanCard,
+  KanbanCardContext,
+  KanbanColumn,
+  KanbanColumnContext,
+  KanbanDropEvent,
+} from './models';
 
 /**
  * Type KanbanDropPredicate
@@ -218,6 +224,24 @@ export class Kanban {
    */
   protected readonly cardTemplate: Signal<TemplateRef<KanbanCardContext> | undefined> =
     contentChild<TemplateRef<KanbanCardContext>>('card');
+
+  /**
+   * Property columnFooterTemplate
+   * @readonly
+   *
+   * @description
+   * Optional per-lane footer template projected as `<ng-template #columnFooter
+   * let-column>`. Rendered pinned below each lane's card list; receives the lane
+   * through {@link KanbanColumnContext}. Nothing is rendered when absent, so the
+   * host owns any "load more" or lane-level affordance and its wording.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<TemplateRef<KanbanColumnContext> | undefined>}
+   */
+  protected readonly columnFooterTemplate: Signal<TemplateRef<KanbanColumnContext> | undefined> =
+    contentChild<TemplateRef<KanbanColumnContext>>('columnFooter');
   //#endregion
 
   //#region Outputs

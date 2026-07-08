@@ -30,7 +30,7 @@ import type {
   ChecklistOutput,
   ChecklistStatus,
 } from '@features/organization/features/checklists/models';
-import { EmptyState, TableShell, Tag, tablePt, type TagOption } from '@shared/components';
+import { EmptyState, TableShell, Tag, type TagOption } from '@shared/components';
 import type { TableFilterParamValue } from '@shared/models';
 import { buildTableFilterParams } from '@shared/utils';
 import { CHECKLIST_FILTER_MAPPING } from './constants';
@@ -232,22 +232,6 @@ export class ChecklistTable implements OnInit {
   //#endregion
 
   //#region Properties
-  /**
-   * Property tablePt
-   * @readonly
-   *
-   * @description
-   * Re-exposes the shared {@link tablePt} pass-through factory as an instance
-   * member so the template can call it directly (Angular templates cannot
-   * invoke a bare module-level import).
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {typeof tablePt}
-   */
-  protected readonly tablePt: typeof tablePt = tablePt;
-
   /**
    * Property rows
    * @readonly

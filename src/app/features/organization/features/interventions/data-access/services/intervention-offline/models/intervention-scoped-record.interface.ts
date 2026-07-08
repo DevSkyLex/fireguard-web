@@ -1,5 +1,5 @@
 /**
- * Minimal shape of a locally persisted record scoped to a intervention.
+ * Minimal shape of a locally persisted record scoped to an intervention.
  */
 export interface InterventionScopedRecord {
   readonly interventionId?: string;

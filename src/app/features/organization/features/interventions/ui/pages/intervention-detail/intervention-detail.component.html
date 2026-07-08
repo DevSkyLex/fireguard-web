@@ -105,11 +105,13 @@
           [targetOptions]="targetOptions()"
           [saving]="store.saving()"
           [canPlan]="canPlan()"
+          [canAbandon]="canAbandon()"
           [online]="online()"
           (saveDetails)="saveDetails($event)"
           (createWorkItem)="createWorkItem($event)"
           (deleteWorkItems)="confirmDeleteWorkItems($event)"
           (planIntervention)="planIntervention()"
+          (abandonIntervention)="confirmAbandon()"
         />
       }
       @case ('execute') {
@@ -122,6 +124,7 @@
           [saving]="store.saving() || fieldActionBusy()"
           [canSubmit]="canSubmit()"
           [canExecute]="canExecute()"
+          [canAbandon]="canAbandon()"
           [scanSupported]="scanSupported()"
           [fieldMessage]="fieldMessage()"
           [equipmentTypeOptions]="equipmentTypeOptions()"
@@ -130,6 +133,7 @@
           (attachPhoto)="attachPhoto($event)"
           (updateWorkItem)="updateWorkItem($event)"
           (submitIntervention)="submitIntervention()"
+          (abandonIntervention)="confirmAbandon()"
         />
       }
       @case ('review') {
@@ -142,9 +146,11 @@
           [online]="online()"
           [canReview]="canReview()"
           [canPublish]="canPublish()"
+          [canAbandon]="canAbandon()"
           [publicationMessage]="publicationMessage()"
           (requestChanges)="requestChanges($event)"
           (publishIntervention)="publishIntervention()"
+          (abandonIntervention)="confirmAbandon()"
         />
       }
     }

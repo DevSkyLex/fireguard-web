@@ -64,6 +64,7 @@
         [lazy]="true"
         (onLazyLoad)="onLazyLoad($event)"
         [rowsPerPageOptions]="[12, 24, 48]"
+        [paginatorDropdownAppendTo]="'body'"
         [showCurrentPageReport]="true"
         i18n-currentPageReportTemplate="@@org.dataview.pageReport"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} organizations"

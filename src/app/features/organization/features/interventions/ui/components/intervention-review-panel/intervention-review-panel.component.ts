@@ -1,38 +1,32 @@
-import { JsonPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   input,
   output,
+  signal,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
 import type {
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
 } from '@features/organization/features/interventions/models';
-import { Card } from '@shared/components';
+import { InterventionRequestChangesDrawer } from '@features/organization/features/interventions/ui/drawers';
+import type { InterventionRequestChangesFormValues } from '@features/organization/features/interventions/ui/forms';
+import { InterventionChangeDiff } from '../intervention-change-diff';
+import {
+  InterventionReadinessChecklist,
+  type InterventionReadinessCheck,
+} from '../intervention-readiness-checklist';
+import { InterventionSubstepNav, type InterventionSubstep } from '../intervention-substep-nav';
 import { InterventionTag } from '../intervention-tag';
-
-/**
- * Interface ReviewReadinessCheck
- * @interface ReviewReadinessCheck
- *
- * @description
- * One publication-readiness condition rendered in the review decision
- * checklist, mirroring the preparation panel's "Ready to plan" pattern.
- */
-interface ReviewReadinessCheck {
-  /** Human-readable condition label. */
-  readonly label: string;
-  /** Whether the condition is currently satisfied. */
-  readonly done: boolean;
-}
 
 /**
  * Component InterventionReviewPanel
@@ -46,7 +40,16 @@ interface ReviewReadinessCheck {
  */
 @Component({
   selector: 'app-intervention-review-panel',
-  imports: [ButtonModule, Card, InterventionTag, JsonPipe, MessageModule],
+  imports: [
+    ButtonModule,
+    CardModule,
+    InterventionChangeDiff,
+    InterventionReadinessChecklist,
+    InterventionRequestChangesDrawer,
+    InterventionSubstepNav,
+    InterventionTag,
+    MessageModule,
+  ],
   templateUrl: './intervention-review-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -244,10 +247,10 @@ export class InterventionReviewPanel {
    * @access protected
    * @since 1.1.0
    *
-   * @type {Signal<readonly ReviewReadinessCheck[]>}
+   * @type {Signal<readonly InterventionReadinessCheck[]>}
    */
-  protected readonly publishChecks: Signal<readonly ReviewReadinessCheck[]> = computed<
-    readonly ReviewReadinessCheck[]
+  protected readonly publishChecks: Signal<readonly InterventionReadinessCheck[]> = computed<
+    readonly InterventionReadinessCheck[]
   >(() => {
     const intervention: InterventionOutput = this.intervention();
 
@@ -268,55 +271,83 @@ export class InterventionReviewPanel {
   });
 
   /**
-   * Property readyToPublishCount
+   * Property requestChangesDrawerVisible
    * @readonly
    *
    * @description
-   * Number of satisfied publication-readiness conditions, shown as the review
-   * decision rail's `N / 3` badge.
+   * Controls the visibility of the request-changes drawer that captures the
+   * reviewer's note before the intervention returns to execution.
    *
    * @access protected
-   * @since 1.1.0
+   * @since 1.3.0
    *
-   * @type {Signal<number>}
+   * @type {WritableSignal<boolean>}
    */
-  protected readonly readyToPublishCount: Signal<number> = computed<number>(
-    () => this.publishChecks().filter((check: ReviewReadinessCheck): boolean => check.done).length,
-  );
+  protected readonly requestChangesDrawerVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
-   * Property publishActionVisible
+   * Property subStep
    * @readonly
    *
    * @description
-   * Whether the pinned "Publish intervention" action bar is shown: the user
-   * must hold the publish capability, mirroring the prepare and execute
-   * panels' action-bar visibility rule so a reviewer who may only request
-   * changes is never shown a permanently disabled control pinned to the
-   * viewport.
+   * Active review sub-step, switching the content column between the validation
+   * findings and the proposed changes without leaving the review phase.
    *
    * @access protected
-   * @since 1.2.0
+   * @since 1.3.0
    *
-   * @type {Signal<boolean>}
+   * @type {WritableSignal<'findings' | 'changes'>}
    */
-  protected readonly publishActionVisible: Signal<boolean> = computed<boolean>(() =>
-    this.canPublish(),
-  );
+  protected readonly subStep: WritableSignal<'findings' | 'changes'> = signal<
+    'findings' | 'changes'
+  >('findings');
 
   /**
-   * Method requestCorrection
-   * @method requestCorrection
+   * Property substeps
+   * @readonly
    *
    * @description
-   * Executes the request correction operation.
+   * Review sub-step segments; the findings step is marked complete once no
+   * validation findings remain to resolve.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 1.3.0
    *
-   * @return {void} Result of the request correction operation.
+   * @type {Signal<readonly InterventionSubstep[]>}
    */
-  protected requestCorrection(): void {
-    this.requestChanges.emit('Please resolve the remaining review findings before resubmitting.');
+  protected readonly substeps: Signal<readonly InterventionSubstep[]> = computed<
+    readonly InterventionSubstep[]
+  >(() => [
+    {
+      key: 'findings',
+      label: $localize`:@@intervention.review.stepFindings:Findings`,
+      complete: this.issues().length === 0,
+    },
+    {
+      key: 'changes',
+      label: $localize`:@@intervention.review.stepChanges:Changes`,
+    },
+  ]);
+
+  /**
+   * Method confirmRequestChanges
+   * @method confirmRequestChanges
+   *
+   * @description
+   * Emits the reviewer's captured note via {@link requestChanges} so the parent
+   * page transitions the intervention back to `changes_requested`, then closes
+   * the drawer. Replaces the previous fixed, English-only note with the
+   * reviewer's own specific feedback.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @param {InterventionRequestChangesFormValues} values - Captured review note.
+   *
+   * @return {void}
+   */
+  protected confirmRequestChanges(values: InterventionRequestChangesFormValues): void {
+    this.requestChanges.emit(values.note);
+    this.requestChangesDrawerVisible.set(false);
   }
 }

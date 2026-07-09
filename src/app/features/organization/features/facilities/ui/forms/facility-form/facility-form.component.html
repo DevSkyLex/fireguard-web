@@ -108,6 +108,50 @@
     </p-iconfield>
   </div>
 
+  <!-- Coordinates -->
+  <div class="flex flex-col gap-2">
+    <span
+      i18n="@@facility.form.coordinates"
+      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+    >
+      Coordinates
+      <span class="font-normal text-surface-400">(optional)</span>
+    </span>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <p-inputnumber
+        formControlName="latitude"
+        mode="decimal"
+        [useGrouping]="false"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="7"
+        [min]="-90"
+        [max]="90"
+        [fluid]="true"
+        i18n-placeholder="@@facility.form.latitude"
+        placeholder="Latitude (e.g. 48.8566)"
+      />
+      <p-inputnumber
+        formControlName="longitude"
+        mode="decimal"
+        [useGrouping]="false"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="7"
+        [min]="-180"
+        [max]="180"
+        [fluid]="true"
+        i18n-placeholder="@@facility.form.longitude"
+        placeholder="Longitude (e.g. 2.3522)"
+      />
+    </div>
+    @if (form.hasError('coordinatesIncomplete') && (form.touched || form.dirty)) {
+      <p-message severity="error" variant="simple">
+        <span i18n="@@facility.form.coordinatesIncomplete"
+          >Enter both latitude and longitude, or leave both empty.</span
+        >
+      </p-message>
+    }
+  </div>
+
   <!-- Parent Facility (create mode only) -->
   @if (!isEditMode) {
     <div class="flex flex-col gap-2">

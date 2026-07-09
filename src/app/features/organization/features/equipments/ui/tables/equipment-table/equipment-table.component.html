@@ -1,7 +1,17 @@
 <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
-<app-table-shell variant="fill">
-  <ng-template #actions>
+<p-card
+  styleClass="flex h-full min-h-0 flex-col overflow-hidden border border-surface-200 dark:border-surface-800"
+  [pt]="{
+    body: { class: 'flex min-h-0 flex-1 flex-col p-0' },
+    content: { class: 'flex min-h-0 flex-1 flex-col p-0' },
+    header: {
+      class:
+        'flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800',
+    },
+  }"
+>
+  <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
       <h2 class="font-semibold" i18n="@@equipment.table.title">Equipments</h2>
     </div>
@@ -149,7 +159,7 @@
     </div>
   </ng-template>
 
-  <ng-template #table>
+  <ng-template pTemplate="content">
     <p-table
       [value]="showSkeleton() ? skeletonItems : empty() ? [] : [...equipments()]"
       [selection]="selectedEquipments()"
@@ -162,6 +172,7 @@
       [lazy]="true"
       (onLazyLoad)="onLazyLoad($event)"
       [rowsPerPageOptions]="[12, 24, 48]"
+      [paginatorDropdownAppendTo]="'body'"
       [showCurrentPageReport]="true"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} equipments"
       i18n-currentPageReportTemplate="@@equipment.table.pageReport"
@@ -334,4 +345,4 @@
       </ng-template>
     </p-table>
   </ng-template>
-</app-table-shell>
+</p-card>

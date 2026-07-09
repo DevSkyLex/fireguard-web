@@ -20,10 +20,13 @@ import { InterventionOfflineService } from '@features/organization/features/inte
 import type {
   CreateInterventionWorkItemInput,
   InterventionDiscoveryRequest,
+  InterventionOutput,
   InterventionPhotoAttachment,
   InterventionPlanningDetails,
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
+  MemberSelectOption,
+  SelectOption,
 } from '@features/organization/features/interventions/models';
 import {
   InterventionFieldExecutionService,
@@ -52,6 +55,10 @@ import {
   ActiveOrganizationStore,
   OrganizationMemberAccessStore,
 } from '@features/organization/state';
+import {
+  InterventionCommandHeader,
+  type InterventionCommandAction,
+} from '../../components/intervention-command-header';
 import { InterventionExecutePanel } from '../../components/intervention-execute-panel/intervention-execute-panel.component';
 import { InterventionPhaseStepper } from '../../components/intervention-phase-stepper/intervention-phase-stepper.component';
 import { InterventionPreparePanel } from '../../components/intervention-prepare-panel/intervention-prepare-panel.component';
@@ -77,6 +84,7 @@ import { InterventionReviewPanel } from '../../components/intervention-review-pa
   imports: [
     ButtonModule,
     MessageModule,
+    InterventionCommandHeader,
     InterventionExecutePanel,
     InterventionPhaseStepper,
     InterventionPreparePanel,
@@ -484,6 +492,117 @@ export class InterventionDetailPage {
         return this.canExecute();
     }
   });
+
+  /**
+   * Property responsibleMember
+   * @readonly
+   *
+   * @description
+   * Resolved member option for the responsible agent, forwarded to the command
+   * header so its avatar and name match the properties rail.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<MemberSelectOption | null>}
+   */
+  protected readonly responsibleMember: Signal<MemberSelectOption | null> =
+    computed<MemberSelectOption | null>(() => {
+      const responsible: string | null | undefined = this.store.intervention()?.responsible;
+      if (!responsible) return null;
+      return (
+        this.memberOptions().find(
+          (option: MemberSelectOption): boolean => option.value === responsible,
+        ) ?? null
+      );
+    });
+
+  /**
+   * Property siteLabel
+   * @readonly
+   *
+   * @description
+   * Resolved label of the intervention site, forwarded to the command header.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly siteLabel: Signal<string | null> = computed<string | null>(() => {
+    const site: string | null | undefined = this.store.intervention()?.site;
+    if (!site) return null;
+    return (
+      this.siteOptions().find((option: SelectOption): boolean => option.value === site)?.label ??
+      null
+    );
+  });
+
+  /**
+   * Property commandAction
+   * @readonly
+   *
+   * @description
+   * The single canonical forward action for the current phase, surfaced in the
+   * command header: "Plan intervention" (prepare, once the four preconditions are
+   * met), "Submit for review" (execute, once all field work is resolved and the
+   * user is the responsible agent) or "Publish intervention" (review, once
+   * submitted, blocker-free and connected). Returns null when the current user
+   * lacks the phase capability, so the header shows identity only.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<InterventionCommandAction | null>}
+   */
+  protected readonly commandAction: Signal<InterventionCommandAction | null> =
+    computed<InterventionCommandAction | null>(() => {
+      const intervention: InterventionOutput | null = this.store.intervention();
+      if (!intervention) return null;
+      const saving: boolean = this.store.saving();
+
+      switch (this.phase()) {
+        case 'prepare': {
+          if (!this.canPlan() || intervention.status !== 'draft') return null;
+          const ready: boolean =
+            !!intervention.site &&
+            !!intervention.responsible &&
+            !!intervention.plannedStartAt &&
+            !!intervention.dueAt;
+          return {
+            label: $localize`:@@intervention.prepare.plan:Plan intervention`,
+            icon: 'pi pi-calendar',
+            disabled: !ready,
+            loading: saving,
+          };
+        }
+        case 'execute': {
+          if (!this.canExecute()) return null;
+          const ready: boolean = this.canSubmit() && this.store.progress() >= 100;
+          return {
+            label: $localize`:@@intervention.exec.submitTitle:Submit for review`,
+            icon: 'pi pi-send',
+            disabled: !ready,
+            loading: saving || this.fieldActionBusy(),
+          };
+        }
+        case 'review': {
+          if (!this.canPublish()) return null;
+          const ready: boolean =
+            this.online() &&
+            intervention.status === 'submitted' &&
+            (intervention.blockersCount ?? 0) === 0;
+          return {
+            label: $localize`:@@intervention.review.publish:Publish intervention`,
+            icon: 'pi pi-check-circle',
+            disabled: !ready,
+            loading: saving || this.publishing(),
+          };
+        }
+        default:
+          return null;
+      }
+    });
 
   /**
    * Property permissionService
@@ -916,6 +1035,35 @@ export class InterventionDetailPage {
    */
   protected submitIntervention(): void {
     this.store.transition({ interventionId: this.interventionId(), status: 'submitted' });
+  }
+
+  /**
+   * Method invokeCommandAction
+   * @method invokeCommandAction
+   *
+   * @description
+   * Runs the canonical forward action for the current phase when the command
+   * header's primary control is triggered, routing to the same handler each
+   * phase's readiness governs: plan (prepare), submit (execute) or publish
+   * (review).
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @return {void}
+   */
+  protected invokeCommandAction(): void {
+    switch (this.phase()) {
+      case 'prepare':
+        this.planIntervention();
+        break;
+      case 'execute':
+        this.submitIntervention();
+        break;
+      case 'review':
+        void this.publishIntervention();
+        break;
+    }
   }
 
   /**

@@ -20,6 +20,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { DatePickerModule } from 'primeng/datepicker';
 import { MessageModule } from 'primeng/message';
 import { Popover, PopoverModule } from 'primeng/popover';
@@ -34,7 +35,7 @@ import {
   type InterventionStatus,
   type InterventionType,
 } from '@features/organization/features/interventions/models';
-import { EmptyState, Tag, TableShell } from '@shared/components';
+import { EmptyState, Tag } from '@shared/components';
 import { buildTableFilterParams } from '@shared/utils';
 import { InterventionTag } from '../../components/intervention-tag';
 import { INTERVENTION_FILTER_MAPPING } from './constants';
@@ -71,7 +72,7 @@ import { getInterventionTypeIcon } from './utils';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
-    TableShell,
+    CardModule,
     Tag,
   ],
   templateUrl: './intervention-table.component.html',

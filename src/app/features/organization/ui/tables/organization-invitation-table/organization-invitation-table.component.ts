@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { ChipModule } from 'primeng/chip';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -23,7 +24,7 @@ import type {
   OrganizationInvitationOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-import { EmptyState, Tag, TableShell, type TagDescriptor } from '@shared/components';
+import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
 import { invitationExpiryBucket } from './utils';
 
 /**
@@ -35,13 +36,13 @@ import { invitationExpiryBucket } from './utils';
   selector: 'app-organization-invitation-table',
   imports: [
     ButtonModule,
+    CardModule,
     ChipModule,
     DatePipe,
     EmptyState,
     MenuModule,
     SkeletonModule,
     TableModule,
-    TableShell,
     Tag,
   ],
   templateUrl: './organization-invitation-table.component.html',

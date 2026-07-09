@@ -28,6 +28,18 @@ export const FACILITY_ROUTES: Routes = [
     title: $localize`:@@route.facility.create:Create Facility`,
   },
   {
+    path: 'map',
+    canActivate: [
+      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ] }),
+    ],
+    loadComponent: () =>
+      import('./ui/pages/facility-map/facility-map.component').then((m) => m.FacilityMapPage),
+    title: $localize`:@@route.facilities.map:Facilities map`,
+    data: {
+      breadcrumb: false,
+    },
+  },
+  {
     path: ':facilityId',
     canActivate: [
       organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ] }),

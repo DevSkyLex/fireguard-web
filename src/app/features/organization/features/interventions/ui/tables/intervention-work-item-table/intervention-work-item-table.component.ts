@@ -16,6 +16,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
@@ -31,7 +32,7 @@ import {
   type MemberSelectOption,
   type SelectOption,
 } from '@features/organization/features/interventions/models';
-import { EmptyState, Tag, TableShell } from '@shared/components';
+import { EmptyState, Tag } from '@shared/components';
 import { InterventionMemberOption } from '../../components/intervention-member-option/intervention-member-option.component';
 import { InterventionTag } from '../../components/intervention-tag';
 import type { WorkItemRow, WorkItemStatusOption } from './models';
@@ -59,6 +60,7 @@ import { WORK_ITEM_STATUS_OPTIONS } from './options';
   selector: 'app-intervention-work-item-table',
   imports: [
     ButtonModule,
+    CardModule,
     EmptyState,
     IconFieldModule,
     InputIconModule,
@@ -71,7 +73,6 @@ import { WORK_ITEM_STATUS_OPTIONS } from './options';
     SplitButtonModule,
     Tag,
     TableModule,
-    TableShell,
   ],
   templateUrl: './intervention-work-item-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

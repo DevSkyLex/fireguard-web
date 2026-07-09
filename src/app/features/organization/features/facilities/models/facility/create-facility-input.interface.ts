@@ -2,7 +2,7 @@ import type { FacilityOutput } from './facility-output.interface';
 
 type FacilityWritableFields = Pick<
   FacilityOutput,
-  'type' | 'name' | 'parentFacilityId' | 'code' | 'address' | 'metadata'
+  'type' | 'name' | 'parentFacilityId' | 'code' | 'address' | 'metadata' | 'latitude' | 'longitude'
 >;
 
 /**

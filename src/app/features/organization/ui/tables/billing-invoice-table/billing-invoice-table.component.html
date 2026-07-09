@@ -1,15 +1,26 @@
-<app-table-shell variant="card">
-  <ng-template #actions>
+<p-card
+  styleClass="flex flex-col overflow-hidden border border-surface-200 dark:border-surface-800"
+  [pt]="{
+    body: { class: 'p-0' },
+    content: { class: 'p-0' },
+    header: {
+      class:
+        'flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800',
+    },
+  }"
+>
+  <ng-template pTemplate="header">
     <h2 i18n="@@org.invoiceTable.title" class="font-semibold">Invoices</h2>
   </ng-template>
 
-  <ng-template #table>
+  <ng-template pTemplate="content">
     <p-table
       [value]="loading() ? skeletonItems : [...invoices()]"
       dataKey="id"
       [paginator]="!(loading() || invoices().length === 0)"
       [rows]="rows"
       [rowsPerPageOptions]="rowsPerPageOptions"
+      [paginatorDropdownAppendTo]="'body'"
       [showCurrentPageReport]="true"
       i18n-currentPageReportTemplate="@@org.invoiceTable.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} invoices"
@@ -88,4 +99,4 @@
       </ng-template>
     </p-table>
   </ng-template>
-</app-table-shell>
+</p-card>

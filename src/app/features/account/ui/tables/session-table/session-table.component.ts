@@ -16,12 +16,13 @@ import {
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
 import type { RequestOptions } from '@core/api';
 import type { SessionOutput } from '@features/auth/models';
-import { EmptyState, TableShell } from '@shared/components';
+import { EmptyState } from '@shared/components';
 
 /**
  * Component SessionTable
@@ -42,12 +43,12 @@ import { EmptyState, TableShell } from '@shared/components';
   imports: [
     AvatarModule,
     ButtonModule,
+    CardModule,
     DatePipe,
     EmptyState,
     MenuModule,
     SkeletonModule,
     TableModule,
-    TableShell,
   ],
   templateUrl: './session-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

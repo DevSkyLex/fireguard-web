@@ -16,12 +16,13 @@ import {
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
 import type { RequestOptions } from '@core/api';
 import type { TrustedDeviceOutput } from '@features/auth/models';
-import { EmptyState, TableShell } from '@shared/components';
+import { EmptyState } from '@shared/components';
 
 /**
  * Component TrustedDeviceTable
@@ -47,7 +48,7 @@ import { EmptyState, TableShell } from '@shared/components';
     MenuModule,
     SkeletonModule,
     TableModule,
-    TableShell,
+    CardModule,
   ],
   templateUrl: './trusted-device-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

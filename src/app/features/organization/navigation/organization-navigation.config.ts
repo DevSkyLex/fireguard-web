@@ -193,6 +193,14 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
   },
   {
+    id: 'facilities-map',
+    label: $localize`:@@route.facilities.map:Facilities map`,
+    icon: 'pi pi-map-marker',
+    path: 'facilities/map',
+    group: 'assets',
+    permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
+  },
+  {
     id: 'equipments',
     label: $localize`:@@route.equipments:Equipments`,
     icon: 'pi pi-box',

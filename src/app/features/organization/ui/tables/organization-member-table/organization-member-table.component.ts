@@ -16,6 +16,7 @@ import {
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { ChipModule } from 'primeng/chip';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -30,7 +31,7 @@ import type {
   OrganizationMemberOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-import { EmptyState, Tag, TableShell, type TagDescriptor } from '@shared/components';
+import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
 import type { OrganizationMemberBulkRoleAssignment, OrganizationMemberRoleRemoval } from './models';
 
 /**
@@ -42,6 +43,7 @@ import type { OrganizationMemberBulkRoleAssignment, OrganizationMemberRoleRemova
   imports: [
     AvatarModule,
     ButtonModule,
+    CardModule,
     ChipModule,
     DatePipe,
     EmptyState,
@@ -53,7 +55,6 @@ import type { OrganizationMemberBulkRoleAssignment, OrganizationMemberRoleRemova
     SelectModule,
     SkeletonModule,
     TableModule,
-    TableShell,
     Tag,
   ],
   templateUrl: './organization-member-table.component.html',

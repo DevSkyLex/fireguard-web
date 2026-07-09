@@ -12,11 +12,14 @@ import {
   NonNullableFormBuilder,
   ReactiveFormsModule,
   Validators,
+  type AbstractControl,
   type FormGroup,
+  type ValidationErrors,
 } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
@@ -25,6 +28,29 @@ import type {
   FacilityType,
 } from '@features/organization/features/facilities/models';
 import type { FacilityFormData, FacilityFormValues } from './models';
+
+/**
+ * Function coordinatesPairValidator
+ *
+ * @description
+ * Group validator enforcing both-or-neither on the coordinate pair: latitude and
+ * longitude must be provided together, or both left empty, matching the backend
+ * value object invariant.
+ *
+ * @param {AbstractControl} control - The facility form group.
+ *
+ * @returns {ValidationErrors | null} `{ coordinatesIncomplete: true }` when only
+ * one of the two is set, otherwise null.
+ *
+ * @since 1.1.0
+ */
+function coordinatesPairValidator(control: AbstractControl): ValidationErrors | null {
+  const latitude: unknown = control.get('latitude')?.value;
+  const longitude: unknown = control.get('longitude')?.value;
+  const hasLatitude: boolean = latitude !== null && latitude !== undefined;
+  const hasLongitude: boolean = longitude !== null && longitude !== undefined;
+  return hasLatitude === hasLongitude ? null : { coordinatesIncomplete: true };
+}
 
 /**
  * Component FacilityForm
@@ -48,6 +74,7 @@ import type { FacilityFormData, FacilityFormValues } from './models';
   imports: [
     ReactiveFormsModule,
     InputTextModule,
+    InputNumberModule,
     ButtonModule,
     MessageModule,
     IconFieldModule,
@@ -162,17 +189,28 @@ export class FacilityForm {
    *
    * @type {FormGroup<FacilityFormData>}
    */
-  protected readonly form: FormGroup<FacilityFormData> = this.formBuilder.group<FacilityFormData>({
-    type: this.formBuilder.control<FacilityType>('site', [Validators.required]),
-    name: this.formBuilder.control<string>('', [
-      Validators.required,
-      Validators.minLength(2),
-      Validators.maxLength(255),
-    ]),
-    code: this.formBuilder.control<string>(''),
-    address: this.formBuilder.control<string>(''),
-    parentFacilityId: this.formBuilder.control<string>(''),
-  });
+  protected readonly form: FormGroup<FacilityFormData> = this.formBuilder.group<FacilityFormData>(
+    {
+      type: this.formBuilder.control<FacilityType>('site', [Validators.required]),
+      name: this.formBuilder.control<string>('', [
+        Validators.required,
+        Validators.minLength(2),
+        Validators.maxLength(255),
+      ]),
+      code: this.formBuilder.control<string>(''),
+      address: this.formBuilder.control<string>(''),
+      parentFacilityId: this.formBuilder.control<string>(''),
+      latitude: this.formBuilder.control<number | null>(null, [
+        Validators.min(-90),
+        Validators.max(90),
+      ]),
+      longitude: this.formBuilder.control<number | null>(null, [
+        Validators.min(-180),
+        Validators.max(180),
+      ]),
+    },
+    { validators: coordinatesPairValidator },
+  );
 
   /**
    * Property typeOptions
@@ -283,6 +321,8 @@ export class FacilityForm {
         code: facility.code ?? '',
         address: facility.address ?? '',
         parentFacilityId: facility.parentFacilityId ?? '',
+        latitude: facility.latitude ?? null,
+        longitude: facility.longitude ?? null,
       });
       // Type cannot be changed after creation
       this.form.controls.type.disable();

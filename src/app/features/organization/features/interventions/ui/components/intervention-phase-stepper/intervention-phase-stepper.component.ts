@@ -137,7 +137,7 @@ const LABEL_CLASS: Record<InterventionPhaseStepState, string> = {
  * @class InterventionPhaseStepper
  *
  * @description
- * Presentational, horizontal progress indicator for the three-phase
+ * Presentational, vertical progress indicator for the three-phase
  * intervention workflow (Prepare → Execute → Review). It derives each node's
  * done/current/upcoming state from the active {@link InterventionPhase} and the
  * intervention {@link InterventionStatus} (a `published` intervention marks the

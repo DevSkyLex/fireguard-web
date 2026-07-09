@@ -205,6 +205,8 @@ export class FacilityEditPage {
       name: values.name,
       ...(values.code !== undefined ? { code: values.code || null } : {}),
       ...(values.address !== undefined ? { address: values.address || null } : {}),
+      latitude: values.latitude,
+      longitude: values.longitude,
     };
 
     this.store.update({ organizationId, facilityId, input });

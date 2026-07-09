@@ -73,6 +73,25 @@ Main provider:
 
 - `provideInterventionsFeature`
 
+## Detail workspace composition
+
+The detail page (`ui/pages/intervention-detail`) leads with a full-width **command
+header** (`ui/components/intervention-command-header`) carrying the intervention
+identity, status/priority/type, responsible, site, schedule (with an overdue
+signal), a work-item progress meter and the **single canonical forward action** for
+the current phase — Plan / Submit / Publish — mirrored into a mobile thumb-zone bar.
+The phase-forward action lives **only** in the header; the phase panels no longer
+render their own action bar. Below the header sit the vertical phase stepper and the
+active phase panel. Cross-phase presentation is shared: readiness is one
+`ui/components/intervention-readiness-checklist` (prepare/execute/review), the review
+panel renders proposed changes through `ui/components/intervention-change-diff` (a
+legible field → value diff, not raw JSON), and a reviewer returns work through
+`ui/drawers/intervention-request-changes-drawer` with a required note (replacing the
+former fixed message). Each phase splits its content column into in-page sub-steps
+through `ui/components/intervention-substep-nav` (an ARIA tablist with roving
+tabindex) — prepare: Scope / Work items; execute: Brief / Field work; review:
+Findings / Changes — while the readiness/decision rail stays persistent.
+
 ## Status / enum presentation (badges & select options)
 
 Every intervention enum (`priority`, `status`, `type`, `workItemAction`,

@@ -2132,6 +2132,42 @@
         <source>Facilities</source>
         <target>Instalaciones</target>
       </trans-unit>
+      <trans-unit id="route.facilities.map" datatype="html">
+        <source>Facilities map</source>
+        <target>Mapa de instalaciones</target>
+      </trans-unit>
+      <trans-unit id="facility.map.loadError" datatype="html">
+        <source>The facilities could not be loaded. Try again later.</source>
+        <target>No se pudieron cargar las instalaciones. Inténtalo de nuevo más tarde.</target>
+      </trans-unit>
+      <trans-unit id="facility.map.emptyTitle" datatype="html">
+        <source>No facilities on the map yet</source>
+        <target>Aún no hay instalaciones en el mapa</target>
+      </trans-unit>
+      <trans-unit id="facility.map.emptyDesc" datatype="html">
+        <source>Add coordinates to a facility to plot it here.</source>
+        <target>Añade coordenadas a una instalación para mostrarla aquí.</target>
+      </trans-unit>
+      <trans-unit id="facility.map.notOnMapTitle" datatype="html">
+        <source>Not on the map</source>
+        <target>Fuera del mapa</target>
+      </trans-unit>
+      <trans-unit id="facility.map.notOnMapCount" datatype="html">
+        <source>facility(ies) without coordinates</source>
+        <target>instalación(es) sin coordenadas</target>
+      </trans-unit>
+      <trans-unit id="facility.map.allOnMap" datatype="html">
+        <source>Every facility with coordinates is on the map.</source>
+        <target>Todas las instalaciones con coordenadas están en el mapa.</target>
+      </trans-unit>
+      <trans-unit id="facility.map.viewFacility" datatype="html">
+        <source>View facility</source>
+        <target>Ver instalación</target>
+      </trans-unit>
+      <trans-unit id="facility.map.canvasAria" datatype="html">
+        <source>Facilities map</source>
+        <target>Mapa de instalaciones</target>
+      </trans-unit>
       <trans-unit id="facility.equipmentBreakdown.commissioned" datatype="html">
         <source>Commissioned</source>
         <target>Puesto en servicio</target>
@@ -2611,6 +2647,22 @@
       <trans-unit id="facility.form.address" datatype="html">
         <source> Address <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-400&quot;&gt;"/>(optional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <target>Dirección <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-400&quot;&gt;"/>(opcional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></target>
+      </trans-unit>
+      <trans-unit id="facility.form.coordinates" datatype="html">
+        <source> Coordinates <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-400&quot;&gt;"/>(optional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
+        <target>Coordenadas <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-normal text-surface-400&quot;&gt;"/>(opcional)<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></target>
+      </trans-unit>
+      <trans-unit id="facility.form.latitude" datatype="html">
+        <source>Latitude (e.g. 48.8566)</source>
+        <target>Latitud (p. ej. 48.8566)</target>
+      </trans-unit>
+      <trans-unit id="facility.form.longitude" datatype="html">
+        <source>Longitude (e.g. 2.3522)</source>
+        <target>Longitud (p. ej. 2.3522)</target>
+      </trans-unit>
+      <trans-unit id="facility.form.coordinatesIncomplete" datatype="html">
+        <source>Enter both latitude and longitude, or leave both empty.</source>
+        <target>Introduce la latitud y la longitud, o deja ambas vacías.</target>
       </trans-unit>
       <trans-unit id="facility.created.detail" datatype="html">
         <source>&quot;<x id="name" equiv-text="operation.data.name"/>&quot; has been created successfully.</source>
@@ -3337,6 +3389,86 @@
       <trans-unit id="intervention.prepare.plan" datatype="html">
         <source>Plan intervention</source>
         <target>Planificar intervención</target>
+      </trans-unit>
+      <trans-unit id="intervention.rc.title" datatype="html">
+        <source>Request changes</source>
+        <target>Solicitar cambios</target>
+      </trans-unit>
+      <trans-unit id="intervention.rc.hint" datatype="html">
+        <source>Explain what must change before this intervention can be published.</source>
+        <target>Explique qué debe cambiar antes de que se pueda publicar esta intervención. El agente de campo ve esta nota cuando el trabajo vuelve a ejecución.</target>
+      </trans-unit>
+      <trans-unit id="intervention.rc.note" datatype="html">
+        <source>Note <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;text-red-500&quot; aria-hidden=&quot;true&quot;&gt;"/>*<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
+        <target>Nota <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;text-red-500&quot; aria-hidden=&quot;true&quot;&gt;"/>*<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.rc.notePlaceholder" datatype="html">
+        <source>e.g. Re-inspect the extinguishers — the pressure gauge photo is missing.</source>
+        <target>p. ej. Vuelva a inspeccionar los extintores: falta la foto del manómetro.</target>
+      </trans-unit>
+      <trans-unit id="intervention.rc.noteRequired" datatype="html">
+        <source>A note is required so the agent knows what to fix.</source>
+        <target>Se requiere una nota para que el agente sepa qué corregir.</target>
+      </trans-unit>
+      <trans-unit id="intervention.rc.submit" datatype="html">
+        <source>Request changes</source>
+        <target>Solicitar cambios</target>
+      </trans-unit>
+      <trans-unit id="intervention.rcDrawer.header" datatype="html">
+        <source>Request changes</source>
+        <target>Solicitar cambios</target>
+      </trans-unit>
+      <trans-unit id="intervention.changeDiff.empty" datatype="html">
+        <source>No field changes.</source>
+        <target>Sin cambios de campo.</target>
+      </trans-unit>
+      <trans-unit id="intervention.header.overdue" datatype="html">
+        <source>Overdue</source>
+        <target>Atrasada</target>
+      </trans-unit>
+      <trans-unit id="intervention.header.progress" datatype="html">
+        <source>Progress</source>
+        <target>Progreso</target>
+      </trans-unit>
+      <trans-unit id="intervention.prepare.stepsAria" datatype="html">
+        <source>Preparation steps</source>
+        <target>Pasos de preparación</target>
+      </trans-unit>
+      <trans-unit id="intervention.prepare.stepScope" datatype="html">
+        <source>Scope</source>
+        <target>Alcance</target>
+      </trans-unit>
+      <trans-unit id="intervention.prepare.stepWorkItems" datatype="html">
+        <source>Work items</source>
+        <target>Tareas</target>
+      </trans-unit>
+      <trans-unit id="intervention.exec.stepsAria" datatype="html">
+        <source>Field work steps</source>
+        <target>Pasos de trabajo de campo</target>
+      </trans-unit>
+      <trans-unit id="intervention.exec.stepBrief" datatype="html">
+        <source>Brief</source>
+        <target>Resumen</target>
+      </trans-unit>
+      <trans-unit id="intervention.exec.stepFieldWork" datatype="html">
+        <source>Field work</source>
+        <target>Trabajo de campo</target>
+      </trans-unit>
+      <trans-unit id="intervention.review.stepsAria" datatype="html">
+        <source>Review steps</source>
+        <target>Pasos de revisión</target>
+      </trans-unit>
+      <trans-unit id="intervention.review.stepFindings" datatype="html">
+        <source>Findings</source>
+        <target>Hallazgos</target>
+      </trans-unit>
+      <trans-unit id="intervention.review.stepChanges" datatype="html">
+        <source>Changes</source>
+        <target>Cambios</target>
+      </trans-unit>
+      <trans-unit id="intervention.review.noFindings" datatype="html">
+        <source>No validation findings — nothing blocks publication.</source>
+        <target>Sin hallazgos de validación: nada impide la publicación.</target>
       </trans-unit>
       <trans-unit id="intervention.prepare.properties" datatype="html">
         <source>Properties</source>

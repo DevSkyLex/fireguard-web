@@ -1,257 +1,244 @@
-<div class="flex flex-col gap-6 lg:pb-0" [class.pb-24]="planActionVisible()">
-  @if (planActionVisible()) {
-    <!--
-      Plan action bar — the phase's destination. A borderless header row under the
-      stepper on desktop; a pinned thumb-zone bar on single-column/field viewports.
-      One canonical control: the readiness checklist in the rail stays as detail.
-    -->
-    <div
-      class="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-surface-200 bg-surface-0/95 px-4 py-3 backdrop-blur-sm lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:px-0.5 lg:py-0 lg:backdrop-blur-none dark:border-surface-800 dark:bg-surface-950/95 lg:dark:bg-transparent"
-    >
-      <div class="flex min-w-0 items-center gap-2">
-        @if (canSubmitPlan()) {
-          <span class="size-1.5 shrink-0 rounded-full bg-green-500" aria-hidden="true"></span>
-          <span
-            i18n="@@intervention.prepare.ready"
-            class="truncate text-sm text-surface-600 dark:text-surface-300"
-          >
-            Ready to plan
-          </span>
-        } @else {
-          <span class="size-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden="true"></span>
-          <span
-            i18n="@@intervention.prepare.readyCount"
-            class="truncate text-sm text-surface-500 dark:text-surface-400"
-          >
-            <span class="font-semibold text-surface-700 tabular-nums dark:text-surface-200"
-              >{{ readyCount() }} of 4</span
-            >
-            ready to plan
-          </span>
-        }
-      </div>
-
-      <p-button
-        i18n-label="@@intervention.prepare.plan"
-        label="Plan intervention"
-        icon="pi pi-calendar"
-        [loading]="saving()"
-        [disabled]="!canSubmitPlan()"
-        (onClick)="planIntervention.emit()"
-      />
-    </div>
-  }
-
+<div class="flex flex-col">
   <div class="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
     <!-- Main document -->
     <div class="flex min-w-0 flex-col gap-6">
-      <app-intervention-work-item-table
-        class="block"
-        [workItems]="workItems()"
-        [memberOptions]="memberOptions()"
-        [targetOptions]="targetOptions()"
-        [canManage]="canAddWorkItem()"
-        [canDelete]="canDeleteWorkItem()"
-        [saving]="saving()"
-        (add)="workItemDrawerVisible.set(true)"
-        (deleteWorkItems)="deleteWorkItems.emit($event)"
+      <app-intervention-substep-nav
+        [steps]="substeps()"
+        [(active)]="subStep"
+        i18n-ariaLabel="@@intervention.prepare.stepsAria"
+        ariaLabel="Preparation steps"
       />
+
+      @switch (subStep()) {
+        @case ('scope') {
+          <p-card
+            styleClass="flex flex-col gap-4 border border-surface-200 dark:border-surface-800"
+            [pt]="{
+              header: { class: 'px-4 pt-4' },
+              body: { class: 'flex flex-1 flex-col p-0' },
+              content: { class: 'flex flex-1 flex-col px-4 pb-4' },
+            }"
+          >
+            <ng-template pTemplate="header">
+              <div class="flex items-center justify-between">
+                <h2
+                  i18n="@@intervention.prepare.properties"
+                  class="text-lg font-semibold text-surface-900 dark:text-surface-100"
+                >
+                  Properties
+                </h2>
+
+                @if (canPlan() && intervention().status === 'draft') {
+                  <p-button
+                    icon="pi pi-pencil"
+                    severity="secondary"
+                    size="small"
+                    [text]="true"
+                    [rounded]="true"
+                    i18n-ariaLabel="@@intervention.prepare.editDetails"
+                    ariaLabel="Edit details"
+                    (onClick)="editDrawerVisible.set(true)"
+                  />
+                }
+              </div>
+            </ng-template>
+
+            <ng-template pTemplate="content">
+              <dl
+                class="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-x-3 gap-y-3.5 text-sm"
+              >
+                <dt
+                  i18n="@@intervention.prop.status"
+                  class="text-surface-500 dark:text-surface-400"
+                >
+                  Status
+                </dt>
+                <dd class="flex min-h-6 min-w-0 items-center">
+                  <app-intervention-tag
+                    kind="status"
+                    [value]="intervention().status"
+                    variant="inline"
+                  />
+                </dd>
+
+                <dt
+                  i18n="@@intervention.prop.priority"
+                  class="text-surface-500 dark:text-surface-400"
+                >
+                  Priority
+                </dt>
+                <dd class="flex min-h-6 min-w-0 items-center">
+                  <app-intervention-tag
+                    kind="priority"
+                    [value]="intervention().priority"
+                    variant="inline"
+                  />
+                </dd>
+
+                <dt
+                  i18n="@@intervention.prop.responsible"
+                  class="text-surface-500 dark:text-surface-400"
+                >
+                  Responsible
+                </dt>
+                <dd class="flex min-h-6 min-w-0 items-center">
+                  @if (responsibleMember(); as member) {
+                    <app-intervention-member-option [option]="member" [compact]="true" />
+                  } @else {
+                    <span
+                      i18n="@@intervention.prop.unassigned"
+                      class="text-surface-400 dark:text-surface-500"
+                      >Unassigned</span
+                    >
+                  }
+                </dd>
+
+                <dt
+                  i18n="@@intervention.prop.participants"
+                  class="text-surface-500 dark:text-surface-400"
+                >
+                  Participants
+                </dt>
+                <dd class="flex min-h-6 min-w-0 items-center">
+                  @if (participantMembers().length) {
+                    <p-avatar-group>
+                      @for (member of visibleParticipants(); track member.value) {
+                        <p-avatar
+                          [image]="member.avatarUrl ?? undefined"
+                          [label]="member.avatarUrl ? undefined : member.initials"
+                          shape="circle"
+                          [pt]="participantAvatarPt"
+                          [pTooltip]="member.displayName"
+                          tooltipPosition="top"
+                        />
+                      }
+                      @if (participantOverflow(); as overflow) {
+                        <p-avatar
+                          [label]="'+' + overflow"
+                          shape="circle"
+                          [pt]="participantAvatarPt"
+                          [pTooltip]="participantOverflowNames()"
+                          tooltipPosition="top"
+                        />
+                      }
+                    </p-avatar-group>
+                  } @else {
+                    <span
+                      i18n="@@intervention.prop.none"
+                      class="text-surface-400 dark:text-surface-500"
+                      >None</span
+                    >
+                  }
+                </dd>
+
+                <dt i18n="@@intervention.prop.site" class="text-surface-500 dark:text-surface-400">
+                  Site
+                </dt>
+                <dd class="flex min-h-6 min-w-0 items-center">
+                  @if (siteLabel(); as site) {
+                    <span class="flex min-w-0 items-center gap-1.5 font-medium">
+                      <i
+                        class="pi pi-building shrink-0 text-sm text-surface-400"
+                        aria-hidden="true"
+                      ></i>
+                      <span class="truncate">{{ site }}</span>
+                    </span>
+                  } @else {
+                    <span
+                      i18n="@@intervention.prop.noSite"
+                      class="text-surface-400 dark:text-surface-500"
+                      >No site</span
+                    >
+                  }
+                </dd>
+
+                <div
+                  class="col-span-2 my-1 border-t border-surface-200 dark:border-surface-800"
+                  role="presentation"
+                ></div>
+
+                <dt i18n="@@intervention.prop.start" class="text-surface-500 dark:text-surface-400">
+                  Start
+                </dt>
+                <dd class="flex min-h-6 min-w-0 items-center font-medium">
+                  @if (intervention().plannedStartAt; as start) {
+                    <span class="flex items-center gap-1.5">
+                      <i
+                        class="pi pi-calendar shrink-0 text-sm text-surface-400"
+                        aria-hidden="true"
+                      ></i>
+                      {{ start | date: 'MMM d, HH:mm' }}
+                    </span>
+                  } @else {
+                    <span
+                      i18n="@@intervention.prop.notSet"
+                      class="font-normal text-surface-400 dark:text-surface-500"
+                      >Not set</span
+                    >
+                  }
+                </dd>
+
+                <dt i18n="@@intervention.prop.due" class="text-surface-500 dark:text-surface-400">
+                  Due
+                </dt>
+                <dd class="flex min-h-6 min-w-0 items-center font-medium">
+                  @if (intervention().dueAt; as due) {
+                    <span class="flex items-center gap-1.5">
+                      <i
+                        class="pi pi-calendar shrink-0 text-sm text-red-500/80"
+                        aria-hidden="true"
+                      ></i>
+                      {{ due | date: 'MMM d, HH:mm' }}
+                    </span>
+                  } @else {
+                    <span
+                      i18n="@@intervention.prop.notSet"
+                      class="font-normal text-surface-400 dark:text-surface-500"
+                      >Not set</span
+                    >
+                  }
+                </dd>
+              </dl>
+            </ng-template>
+          </p-card>
+        }
+        @case ('work-items') {
+          <app-intervention-work-item-table
+            class="block"
+            [workItems]="workItems()"
+            [memberOptions]="memberOptions()"
+            [targetOptions]="targetOptions()"
+            [canManage]="canAddWorkItem()"
+            [canDelete]="canDeleteWorkItem()"
+            [saving]="saving()"
+            (add)="workItemDrawerVisible.set(true)"
+            (deleteWorkItems)="deleteWorkItems.emit($event)"
+          />
+        }
+      }
     </div>
 
-    <!-- Properties rail -->
+    <!-- Readiness rail -->
     <aside class="min-w-0">
-      <app-card
-        i18n-title="@@intervention.prepare.properties"
-        title="Properties"
-        class="block h-full"
+      <p-card
+        styleClass="flex h-full flex-col gap-4 border border-surface-200 dark:border-surface-800"
+        [pt]="{
+          header: { class: 'px-4 pt-4' },
+          body: { class: 'flex flex-1 flex-col p-0' },
+          content: { class: 'flex flex-1 flex-col px-4 pb-4' },
+        }"
       >
-        @if (canPlan() && intervention().status === 'draft') {
-          <ng-template #action>
-            <p-button
-              icon="pi pi-pencil"
-              severity="secondary"
-              size="small"
-              [text]="true"
-              [rounded]="true"
-              i18n-ariaLabel="@@intervention.prepare.editDetails"
-              ariaLabel="Edit details"
-              (onClick)="editDrawerVisible.set(true)"
-            />
-          </ng-template>
-        }
-
-        <ng-template #content>
-          <dl class="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-x-3 gap-y-3.5 text-sm">
-            <dt i18n="@@intervention.prop.status" class="text-surface-500 dark:text-surface-400">
-              Status
-            </dt>
-            <dd class="flex min-h-6 min-w-0 items-center">
-              <app-intervention-tag
-                kind="status"
-                [value]="intervention().status"
-                variant="inline"
-              />
-            </dd>
-
-            <dt i18n="@@intervention.prop.priority" class="text-surface-500 dark:text-surface-400">
-              Priority
-            </dt>
-            <dd class="flex min-h-6 min-w-0 items-center">
-              <app-intervention-tag
-                kind="priority"
-                [value]="intervention().priority"
-                variant="inline"
-              />
-            </dd>
-
-            <dt
-              i18n="@@intervention.prop.responsible"
-              class="text-surface-500 dark:text-surface-400"
-            >
-              Responsible
-            </dt>
-            <dd class="flex min-h-6 min-w-0 items-center">
-              @if (responsibleMember(); as member) {
-                <app-intervention-member-option [option]="member" [compact]="true" />
-              } @else {
-                <span
-                  i18n="@@intervention.prop.unassigned"
-                  class="text-surface-400 dark:text-surface-500"
-                  >Unassigned</span
-                >
-              }
-            </dd>
-
-            <dt
-              i18n="@@intervention.prop.participants"
-              class="text-surface-500 dark:text-surface-400"
-            >
-              Participants
-            </dt>
-            <dd class="flex min-h-6 min-w-0 items-center">
-              @if (participantMembers().length) {
-                <p-avatar-group>
-                  @for (member of visibleParticipants(); track member.value) {
-                    <p-avatar
-                      [image]="member.avatarUrl ?? undefined"
-                      [label]="member.avatarUrl ? undefined : member.initials"
-                      shape="circle"
-                      [pt]="participantAvatarPt"
-                      [pTooltip]="member.displayName"
-                      tooltipPosition="top"
-                    />
-                  }
-                  @if (participantOverflow(); as overflow) {
-                    <p-avatar
-                      [label]="'+' + overflow"
-                      shape="circle"
-                      [pt]="participantAvatarPt"
-                      [pTooltip]="participantOverflowNames()"
-                      tooltipPosition="top"
-                    />
-                  }
-                </p-avatar-group>
-              } @else {
-                <span i18n="@@intervention.prop.none" class="text-surface-400 dark:text-surface-500"
-                  >None</span
-                >
-              }
-            </dd>
-
-            <dt i18n="@@intervention.prop.site" class="text-surface-500 dark:text-surface-400">
-              Site
-            </dt>
-            <dd class="flex min-h-6 min-w-0 items-center">
-              @if (siteLabel(); as site) {
-                <span class="flex min-w-0 items-center gap-1.5 font-medium">
-                  <i
-                    class="pi pi-building shrink-0 text-sm text-surface-400"
-                    aria-hidden="true"
-                  ></i>
-                  <span class="truncate">{{ site }}</span>
-                </span>
-              } @else {
-                <span
-                  i18n="@@intervention.prop.noSite"
-                  class="text-surface-400 dark:text-surface-500"
-                  >No site</span
-                >
-              }
-            </dd>
-
-            <div
-              class="col-span-2 my-1 border-t border-surface-200 dark:border-surface-800"
-              role="presentation"
-            ></div>
-
-            <dt i18n="@@intervention.prop.start" class="text-surface-500 dark:text-surface-400">
-              Start
-            </dt>
-            <dd class="flex min-h-6 min-w-0 items-center font-medium">
-              @if (intervention().plannedStartAt; as start) {
-                <span class="flex items-center gap-1.5">
-                  <i
-                    class="pi pi-calendar shrink-0 text-sm text-surface-400"
-                    aria-hidden="true"
-                  ></i>
-                  {{ start | date: 'MMM d, HH:mm' }}
-                </span>
-              } @else {
-                <span
-                  i18n="@@intervention.prop.notSet"
-                  class="font-normal text-surface-400 dark:text-surface-500"
-                  >Not set</span
-                >
-              }
-            </dd>
-
-            <dt i18n="@@intervention.prop.due" class="text-surface-500 dark:text-surface-400">
-              Due
-            </dt>
-            <dd class="flex min-h-6 min-w-0 items-center font-medium">
-              @if (intervention().dueAt; as due) {
-                <span class="flex items-center gap-1.5">
-                  <i class="pi pi-calendar shrink-0 text-sm text-red-500/80" aria-hidden="true"></i>
-                  {{ due | date: 'MMM d, HH:mm' }}
-                </span>
-              } @else {
-                <span
-                  i18n="@@intervention.prop.notSet"
-                  class="font-normal text-surface-400 dark:text-surface-500"
-                  >Not set</span
-                >
-              }
-            </dd>
-          </dl>
-        </ng-template>
-
-        <ng-template #footer>
-          <h3
+        <ng-template pTemplate="header">
+          <h2
             i18n="@@intervention.prepare.readyTitle"
-            class="text-sm font-semibold text-surface-900 dark:text-surface-50"
+            class="text-lg font-semibold text-surface-900 dark:text-surface-100"
           >
             Ready to plan
-          </h3>
+          </h2>
+        </ng-template>
 
-          <ul class="mt-3 grid gap-2 text-sm">
-            @for (check of readinessChecks(); track check.label) {
-              <li class="flex items-center gap-2">
-                @if (check.done) {
-                  <i
-                    class="pi pi-check-circle shrink-0 text-green-600 dark:text-green-400"
-                    aria-hidden="true"
-                  ></i>
-                  <span class="text-surface-700 dark:text-surface-200">{{ check.label }}</span>
-                } @else {
-                  <i
-                    class="pi pi-exclamation-circle shrink-0 text-amber-500 dark:text-amber-400"
-                    aria-hidden="true"
-                  ></i>
-                  <span class="text-surface-500 dark:text-surface-400">{{ check.label }}</span>
-                }
-              </li>
-            }
-          </ul>
+        <ng-template pTemplate="content">
+          <app-intervention-readiness-checklist class="block" [checks]="readinessChecks()" />
 
           @if (canAbandon()) {
             <div class="mt-4 border-t border-surface-200 pt-3 dark:border-surface-800">
@@ -268,7 +255,7 @@
             </div>
           }
         </ng-template>
-      </app-card>
+      </p-card>
     </aside>
   </div>
 </div>

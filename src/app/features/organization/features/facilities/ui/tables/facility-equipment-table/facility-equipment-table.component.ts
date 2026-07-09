@@ -21,6 +21,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
@@ -37,7 +38,7 @@ import type {
   EquipmentStatus,
 } from '@features/organization/features/equipments/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, TableShell, Tag } from '@shared/components';
+import { EmptyState, Tag } from '@shared/components';
 import type { EquipmentStatusOption } from './models';
 
 /**
@@ -57,6 +58,7 @@ import type { EquipmentStatusOption } from './models';
   selector: 'app-facility-equipment-table',
   imports: [
     ButtonModule,
+    CardModule,
     DatePipe,
     EmptyState,
     IconFieldModule,
@@ -68,7 +70,6 @@ import type { EquipmentStatusOption } from './models';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
-    TableShell,
     Tag,
   ],
   templateUrl: './facility-equipment-table.component.html',

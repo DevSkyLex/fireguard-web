@@ -15,5 +15,7 @@ export const environment: EnvironmentConfig = {
   apiUrl: 'http://localhost:8000',
   appName: 'Fireguard',
   mercureHubUrl: 'http://localhost:3000/.well-known/mercure',
+  mapStyleUrl: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+  mapStyleUrlDark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
   maintenance: false,
 };

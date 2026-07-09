@@ -1,0 +1,21 @@
+<p-drawer
+  i18n-header="@@intervention.rcDrawer.header"
+  header="Request changes"
+  [visible]="visible()"
+  (visibleChange)="visibleChange.emit($event)"
+  [appendTo]="'body'"
+  [modal]="true"
+  [blockScroll]="true"
+  [dismissible]="!loading()"
+  [closeOnEscape]="!loading()"
+  position="right"
+  [pt]="drawerPt"
+>
+  <ng-template #content>
+    <app-intervention-request-changes-form
+      [loading]="loading()"
+      [disabled]="disabled()"
+      (submitted)="submitted.emit($event)"
+    />
+  </ng-template>
+</p-drawer>

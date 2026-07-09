@@ -1,0 +1,33 @@
+<div
+  role="tablist"
+  [attr.aria-label]="ariaLabel()"
+  (keydown)="onKeydown($event)"
+  class="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl border border-surface-200 bg-surface-50 p-1 dark:border-surface-800 dark:bg-surface-900/60"
+>
+  @for (step of steps(); track step.key; let i = $index) {
+    <button
+      #tab
+      type="button"
+      role="tab"
+      [id]="'intervention-substep-tab-' + step.key"
+      [attr.aria-selected]="step.key === active()"
+      [attr.aria-current]="step.key === active() ? 'step' : null"
+      [attr.tabindex]="step.key === active() ? 0 : -1"
+      (click)="select(i)"
+      class="flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none"
+      [class]="
+        step.key === active()
+          ? 'bg-surface-0 text-surface-900 shadow-sm dark:bg-surface-950 dark:text-surface-50'
+          : 'text-surface-500 hover:text-surface-800 dark:text-surface-400 dark:hover:text-surface-200'
+      "
+    >
+      @if (step.complete) {
+        <i
+          class="pi pi-check-circle text-xs text-green-600 dark:text-green-400"
+          aria-hidden="true"
+        ></i>
+      }
+      <span>{{ step.label }}</span>
+    </button>
+  }
+</div>

@@ -19,6 +19,7 @@ import {
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { Menu, MenuModule } from 'primeng/menu';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { SelectModule } from 'primeng/select';
@@ -30,7 +31,7 @@ import type {
   ChecklistOutput,
   ChecklistStatus,
 } from '@features/organization/features/checklists/models';
-import { EmptyState, TableShell, Tag, type TagOption } from '@shared/components';
+import { EmptyState, Tag, type TagOption } from '@shared/components';
 import type { TableFilterParamValue } from '@shared/models';
 import { buildTableFilterParams } from '@shared/utils';
 import { CHECKLIST_FILTER_MAPPING } from './constants';
@@ -53,6 +54,7 @@ import { CHECKLIST_FILTER_MAPPING } from './constants';
   selector: 'app-checklist-table',
   imports: [
     ButtonModule,
+    CardModule,
     DatePipe,
     EmptyState,
     MenuModule,
@@ -62,7 +64,6 @@ import { CHECKLIST_FILTER_MAPPING } from './constants';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
-    TableShell,
     Tag,
   ],
   templateUrl: './checklist-table.component.html',

@@ -126,6 +126,8 @@ describe('FacilityCreatePage', () => {
       code: 'NS-01',
       address: '',
       parentFacilityId: '',
+      latitude: null,
+      longitude: null,
     };
     fixture.componentInstance['handleSubmit'](values);
 
@@ -150,6 +152,8 @@ describe('FacilityCreatePage', () => {
       code: '',
       address: '',
       parentFacilityId: '',
+      latitude: null,
+      longitude: null,
     });
     expect(mockFacilityStore.create).not.toHaveBeenCalled();
   });

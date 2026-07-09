@@ -19,6 +19,7 @@ export {
 } from './facility-inspections-overview';
 export { FacilityInspectionTab } from './facility-inspection-tab';
 export { FacilityInstallationsPanel } from './facility-installations-panel';
+export { FacilityMapCanvas } from './facility-map-canvas';
 export { FacilityNextInspectionMetric } from './facility-next-inspection-metric';
 export { FacilityOverdueInspectionsMetric } from './facility-overdue-inspections-metric';
 export { FacilitySitesMetric } from './facility-sites-metric';

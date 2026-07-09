@@ -13,6 +13,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
@@ -24,7 +25,7 @@ import {
   resolveInterventionTag,
   type InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
-import { EmptyState, TableShell } from '@shared/components';
+import { EmptyState } from '@shared/components';
 import { InterventionTag } from '../../components/intervention-tag';
 import type { FieldWorkRow } from './models';
 
@@ -56,6 +57,7 @@ const EQUIPMENT_TARGET_PATTERN: RegExp = /^\/api\/equipment\/[^/?#]+$/;
   selector: 'app-intervention-field-work-table',
   imports: [
     ButtonModule,
+    CardModule,
     EmptyState,
     IconFieldModule,
     InputIconModule,
@@ -64,7 +66,6 @@ const EQUIPMENT_TARGET_PATTERN: RegExp = /^\/api\/equipment\/[^/?#]+$/;
     ReactiveFormsModule,
     SplitButtonModule,
     TableModule,
-    TableShell,
     TagModule,
   ],
   templateUrl: './intervention-field-work-table.component.html',

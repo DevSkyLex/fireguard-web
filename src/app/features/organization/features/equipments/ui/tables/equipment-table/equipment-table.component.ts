@@ -22,6 +22,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
@@ -40,7 +41,7 @@ import type {
   EquipmentStatus,
 } from '@features/organization/features/equipments/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag, TableShell } from '@shared/components';
+import { EmptyState, Tag } from '@shared/components';
 import { buildTableFilterParams } from '@shared/utils';
 import { EQUIPMENT_FILTER_MAPPING } from './constants';
 import type { EquipmentStatusOption } from './models';
@@ -77,7 +78,7 @@ import type { EquipmentStatusOption } from './models';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
-    TableShell,
+    CardModule,
     TooltipModule,
     Tag,
   ],

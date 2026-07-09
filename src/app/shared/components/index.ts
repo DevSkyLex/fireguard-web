@@ -1,4 +1,3 @@
-export { Card } from './card';
 export { EmptyState } from './empty-state';
 export { MetricCard } from './metric-card';
 export type { MetricComparison } from './metric-card';
@@ -28,4 +27,3 @@ export { ThemeSwitcher, withThemeSwitcher } from './theme-switcher';
 export { Toast } from './toast';
 export { TrendCard } from './trend-card';
 export type { MetricSummary } from './trend-card';
-export { TableShell } from './table-shell';

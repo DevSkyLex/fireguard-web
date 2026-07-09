@@ -126,6 +126,8 @@ describe('FacilityEditPage', () => {
       code: '',
       address: '123 Main St',
       parentFacilityId: '',
+      latitude: null,
+      longitude: null,
     };
     fixture.componentInstance['handleSubmit'](values);
 
@@ -136,6 +138,8 @@ describe('FacilityEditPage', () => {
         name: 'Updated Site',
         code: null,
         address: '123 Main St',
+        latitude: null,
+        longitude: null,
       },
     });
   });
@@ -152,6 +156,8 @@ describe('FacilityEditPage', () => {
       code: '',
       address: '',
       parentFacilityId: '',
+      latitude: null,
+      longitude: null,
     });
     expect(mockFacilityStore.update).not.toHaveBeenCalled();
   });

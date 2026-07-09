@@ -16,13 +16,14 @@ import {
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import type { RequestOptions } from '@core/api';
 import type { NotificationOutput } from '@features/account/models';
-import { EmptyState, TableShell } from '@shared/components';
+import { EmptyState } from '@shared/components';
 import type { NotificationCategoryColor } from './models';
 
 /**
@@ -44,12 +45,12 @@ import type { NotificationCategoryColor } from './models';
   imports: [
     AvatarModule,
     ButtonModule,
+    CardModule,
     DatePipe,
     EmptyState,
     MenuModule,
     SkeletonModule,
     TableModule,
-    TableShell,
     TagModule,
     TitleCasePipe,
   ],

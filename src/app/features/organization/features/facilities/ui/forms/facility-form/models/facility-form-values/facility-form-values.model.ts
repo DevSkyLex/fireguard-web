@@ -16,4 +16,6 @@ export interface FacilityFormValues {
   readonly code: string;
   readonly address: string;
   readonly parentFacilityId: string;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
 }

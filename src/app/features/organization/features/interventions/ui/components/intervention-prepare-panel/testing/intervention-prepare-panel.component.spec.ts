@@ -6,6 +6,7 @@ import type {
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
+import type { InterventionReadinessCheck } from '@features/organization/features/interventions/ui/components/intervention-readiness-checklist';
 import type { InterventionWorkItemFormValues } from '@features/organization/features/interventions/ui/forms';
 import { InterventionPreparePanel } from '../intervention-prepare-panel.component';
 
@@ -13,11 +14,9 @@ type InterventionPreparePanelHarness = {
   readonly siteLabel: () => string | null;
   readonly responsibleMember: () => MemberSelectOption | null;
   readonly participantMembers: () => readonly MemberSelectOption[];
-  readonly readyCount: () => number;
-  readonly canSubmitPlan: () => boolean;
+  readonly readinessChecks: () => readonly InterventionReadinessCheck[];
   readonly canAddWorkItem: () => boolean;
   readonly canDeleteWorkItem: () => boolean;
-  readonly planActionVisible: () => boolean;
   addWorkItem(values: InterventionWorkItemFormValues): void;
   readonly createWorkItem: {
     subscribe(listener: (value: CreateInterventionWorkItemInput) => void): { unsubscribe(): void };
@@ -47,6 +46,11 @@ const memberOptions: readonly MemberSelectOption[] = [
     initials: 'JD',
   },
 ];
+
+/** Counts the satisfied readiness conditions surfaced by the panel. */
+function doneCount(harness: InterventionPreparePanelHarness): number {
+  return harness.readinessChecks().filter((check: InterventionReadinessCheck) => check.done).length;
+}
 
 describe('InterventionPreparePanel', () => {
   beforeEach(() => {
@@ -90,14 +94,13 @@ describe('InterventionPreparePanel', () => {
     expect(component.participantMembers()).toHaveLength(1);
   });
 
-  it('should allow submitting a scheduled draft while work items remain a soft recommendation', () => {
+  it('should mark every backend precondition ready for a fully scheduled draft', () => {
     const component = createComponent();
 
     // All four backend preconditions (site, responsible, planned start, due
     // date) are satisfied (4/4); work items are never part of this checklist —
     // they stay a soft recommendation and do not gate planning.
-    expect(component.readyCount()).toBe(4);
-    expect(component.canSubmitPlan()).toBe(true);
+    expect(doneCount(component)).toBe(4);
     expect(component.canAddWorkItem()).toBe(true);
   });
 
@@ -112,8 +115,7 @@ describe('InterventionPreparePanel', () => {
     fixture.detectChanges();
 
     const partial = fixture.componentInstance as unknown as InterventionPreparePanelHarness;
-    expect(partial.readyCount()).toBe(3);
-    expect(partial.canSubmitPlan()).toBe(false);
+    expect(doneCount(partial)).toBe(3);
   });
 
   it('should gate work-item deletion on connectivity', () => {
@@ -121,16 +123,11 @@ describe('InterventionPreparePanel', () => {
     expect(createComponent({ online: false }).canDeleteWorkItem()).toBe(false);
   });
 
-  it('should block planning affordances when the user may not plan', () => {
+  it('should block work-item authoring when the user may not plan', () => {
     const component = createComponent({ canPlan: false });
 
-    expect(component.canSubmitPlan()).toBe(false);
     expect(component.canAddWorkItem()).toBe(false);
-  });
-
-  it('should surface the plan action bar only for a draft the user may plan', () => {
-    expect(createComponent({ canPlan: true }).planActionVisible()).toBe(true);
-    expect(createComponent({ canPlan: false }).planActionVisible()).toBe(false);
+    expect(component.canDeleteWorkItem()).toBe(false);
   });
 
   it('should map and emit a planned work item from the form values', () => {

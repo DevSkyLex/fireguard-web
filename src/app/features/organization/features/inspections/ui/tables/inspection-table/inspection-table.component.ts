@@ -22,6 +22,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { DatePickerModule } from 'primeng/datepicker';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -43,7 +44,7 @@ import type {
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, TableShell, Tag } from '@shared/components';
+import { EmptyState, Tag } from '@shared/components';
 import { buildTableFilterParams } from '@shared/utils';
 import { INSPECTION_FILTER_MAPPING } from './constants';
 import type { InspectionFilterOption } from './models';
@@ -67,6 +68,7 @@ import type { InspectionFilterOption } from './models';
   imports: [
     AvatarModule,
     ButtonModule,
+    CardModule,
     DatePickerModule,
     DatePipe,
     EmptyState,
@@ -80,7 +82,6 @@ import type { InspectionFilterOption } from './models';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
-    TableShell,
     TooltipModule,
     Tag,
   ],

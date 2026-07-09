@@ -7,9 +7,23 @@ import type { Preset } from '@primeuix/themes/types';
  * @type {Preset}
  *
  * @description
- * This is the theme for the application.
+ * The application theme. Appearance is expressed through PrimeNG **design
+ * tokens** (the sanctioned extension point) rather than component wrappers or
+ * ad-hoc CSS:
  *
- * @version 1.0.0
+ * - `card` — the app's global card identity: no shadow, `surface`-based
+ *   background per color scheme, and an `xl` radius. The card **border** has no
+ *   PrimeNG token, so it stays a Tailwind class on each `<p-card>` that needs it
+ *   (`border border-surface-200 dark:border-surface-800`).
+ * - `datatable` — striped/header/row colors per color scheme, plus a single CSS
+ *   rule for the sorted header cell (no token exists for it — the theme's only
+ *   raw CSS). Tables use PrimeNG's default layout; no per-table `[pt]` layout
+ *   overrides.
+ * - `formField` / `overlay.select` — no shadow on inputs, selects, textareas or
+ *   their overlays (Aura's default subtle drop shadow is disabled per color
+ *   scheme).
+ *
+ * @version 2.0.0
  *
  * @example
  * ```typescript
@@ -40,6 +54,14 @@ export const FireguardTheme: Preset = definePreset(Aura, {
     overlay: {
       select: { shadow: 'none' },
     },
+    colorScheme: {
+      light: {
+        formField: { shadow: 'none' },
+      },
+      dark: {
+        formField: { shadow: 'none' },
+      },
+    },
   },
   components: {
     progressspinner: {
@@ -62,6 +84,24 @@ export const FireguardTheme: Preset = definePreset(Aura, {
         },
       },
     },
+    card: {
+      colorScheme: {
+        light: {
+          root: {
+            background: '{surface.0}',
+          },
+        },
+        dark: {
+          root: {
+            background: '{surface.950}',
+          },
+        },
+      },
+      root: {
+        shadow: 'none',
+        borderRadius: '{border.radius.xl}',
+      },
+    },
     datatable: {
       colorScheme: {
         light: {
@@ -80,80 +120,12 @@ export const FireguardTheme: Preset = definePreset(Aura, {
         },
       },
       css: `
+        /* Sorted header cells keep the plain header background. PrimeNG has no
+           token for the sorted-column header, so this single rule is the theme's
+           only raw CSS — every other appearance is a token. */
         .p-datatable-thead > tr > th.p-datatable-column-sorted {
           background: var(--p-datatable-header-cell-background) !important;
           color: var(--p-datatable-header-cell-color) !important;
-        }
-
-        /* base (every variant): compact table body text — was tablePt()'s
-           unconditional { table: { class: 'text-sm' } }. */
-        app-table-shell .p-datatable-table {
-          font-size: 0.875rem;
-        }
-
-        /* variant="fill": stretches to the shell's full height, its table
-           container scrolling internally with the paginator pinned to the
-           bottom-right. */
-        app-table-shell[data-variant="fill"] .p-datatable {
-          display: flex;
-          min-height: 0;
-          flex: 1 1 0%;
-          flex-direction: column;
-        }
-
-        app-table-shell[data-variant="fill"] .p-datatable-table-container {
-          min-height: 0;
-          flex: 1 1 0%;
-          overflow: hidden;
-        }
-
-        app-table-shell[data-variant="fill"] .p-datatable-header {
-          border-width: 0;
-          padding: 0;
-          background: var(--p-surface-0);
-        }
-
-        app-table-shell[data-variant="fill"] .p-paginator {
-          margin-top: auto;
-          justify-content: flex-end;
-          background: var(--p-surface-0);
-        }
-
-        html[data-theme="dark"] app-table-shell[data-variant="fill"] .p-datatable-header,
-        html[data-theme="dark"] app-table-shell[data-variant="fill"] .p-paginator {
-          background: var(--p-surface-950);
-        }
-
-        /* variant="card": a self-contained, non-stretched card. Its own
-           border already closes the surface, so the last row's bottom
-           border is dropped to avoid a doubled line at the seam. */
-        app-table-shell[data-variant="card"] .p-datatable-tbody > tr:last-child > td {
-          border-bottom-width: 0;
-        }
-
-        /* variant="scroll": a full-width card table whose table container
-           scrolls horizontally, keeping its own bottom-rounded, right-aligned
-           paginator (the intervention field-work / work-item tables). */
-        app-table-shell[data-variant="scroll"] .p-datatable {
-          width: 100%;
-        }
-
-        app-table-shell[data-variant="scroll"] .p-datatable-table {
-          width: 100%;
-        }
-
-        app-table-shell[data-variant="scroll"] .p-datatable-table-container {
-          overflow-x: auto;
-        }
-
-        app-table-shell[data-variant="scroll"] .p-paginator {
-          justify-content: flex-end;
-          border-radius: 0 0 0.75rem 0.75rem;
-          background: var(--p-surface-0);
-        }
-
-        html[data-theme="dark"] app-table-shell[data-variant="scroll"] .p-paginator {
-          background: var(--p-surface-950);
         }
       `,
     },

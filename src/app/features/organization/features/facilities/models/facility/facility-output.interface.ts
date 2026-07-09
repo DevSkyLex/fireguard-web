@@ -152,6 +152,30 @@ export interface FacilityOutput extends HydraItem {
   readonly metadata: Readonly<Record<string, string | null>>;
 
   /**
+   * Property latitude
+   * @readonly
+   *
+   * @description
+   * Geographic latitude of the facility in decimal degrees, or null when the
+   * facility has not been located.
+   *
+   * @type {number | null | undefined}
+   */
+  readonly latitude?: number | null;
+
+  /**
+   * Property longitude
+   * @readonly
+   *
+   * @description
+   * Geographic longitude of the facility in decimal degrees, or null when the
+   * facility has not been located.
+   *
+   * @type {number | null | undefined}
+   */
+  readonly longitude?: number | null;
+
+  /**
    * Property createdAt
    * @readonly
    *

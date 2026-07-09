@@ -1,10 +1,11 @@
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import type { InterventionRequestChangesFormValues } from '@features/organization/features/interventions/ui/forms';
 import { InterventionReviewPanel } from '../intervention-review-panel.component';
 
 type InterventionReviewPanelHarness = {
-  requestCorrection(): void;
+  confirmRequestChanges(values: InterventionRequestChangesFormValues): void;
   readonly requestChanges: {
     subscribe(listener: (value: string) => void): { unsubscribe(): void };
   };
@@ -38,13 +39,13 @@ describe('InterventionReviewPanel', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should emit a correction request with guidance when changes are requested', () => {
+  it("should emit the reviewer's captured note when changes are requested", () => {
     const component = createComponent();
     let emitted: string | undefined;
     component.requestChanges.subscribe((value) => (emitted = value));
 
-    component.requestCorrection();
+    component.confirmRequestChanges({ note: 'Re-check the third-floor extinguishers.' });
 
-    expect(emitted).toContain('review findings');
+    expect(emitted).toBe('Re-check the third-floor extinguishers.');
   });
 });

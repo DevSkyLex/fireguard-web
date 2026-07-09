@@ -22,6 +22,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -36,7 +37,7 @@ import type {
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag, TableShell } from '@shared/components';
+import { EmptyState, Tag } from '@shared/components';
 import type { InspectionFilterOption } from './models';
 
 /**
@@ -57,6 +58,7 @@ import type { InspectionFilterOption } from './models';
   imports: [
     AvatarModule,
     ButtonModule,
+    CardModule,
     DatePipe,
     EmptyState,
     MenuModule,
@@ -65,7 +67,6 @@ import type { InspectionFilterOption } from './models';
     SkeletonModule,
     SplitButtonModule,
     TableModule,
-    TableShell,
     Tag,
   ],
   templateUrl: './facility-inspection-table.component.html',

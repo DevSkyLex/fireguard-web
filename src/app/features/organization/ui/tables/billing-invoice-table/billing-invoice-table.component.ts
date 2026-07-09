@@ -1,10 +1,11 @@
 import { DatePipe, DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, input, type InputSignal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import type { InvoiceOutput } from '@features/organization/models';
-import { EmptyState, Tag, TableShell, type TagDescriptor } from '@shared/components';
+import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
 
 /**
  * Component BillingInvoiceTable
@@ -24,7 +25,7 @@ import { EmptyState, Tag, TableShell, type TagDescriptor } from '@shared/compone
  */
 @Component({
   selector: 'app-billing-invoice-table',
-  imports: [ButtonModule, DatePipe, EmptyState, SkeletonModule, TableModule, TableShell, Tag],
+  imports: [ButtonModule, CardModule, DatePipe, EmptyState, SkeletonModule, TableModule, Tag],
   templateUrl: './billing-invoice-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

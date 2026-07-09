@@ -10,6 +10,10 @@ export {
   InterventionPlanningForm,
   type InterventionPlanningFormValues,
 } from './intervention-planning-form';
+export {
+  InterventionRequestChangesForm,
+  type InterventionRequestChangesFormValues,
+} from './intervention-request-changes-form';
 export { InterventionSkipForm, type InterventionSkipFormValues } from './intervention-skip-form';
 export {
   InterventionWorkItemForm,

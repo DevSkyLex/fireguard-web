@@ -22,10 +22,38 @@ This subfeature does not own top-level organization selection. That remains in `
 
 - `/organizations/:organizationId/facilities`
 - `/organizations/:organizationId/facilities/create`
+- `/organizations/:organizationId/facilities/map`
 - `/organizations/:organizationId/facilities/:facilityId`
 - `/organizations/:organizationId/facilities/:facilityId/edit`
 
-Facility detail routes resolve facility context before child pages render.
+Facility detail routes resolve facility context before child pages render. The
+`map` route is registered **before** `:facilityId` so it is not captured as a
+facility id.
+
+## Facilities Map (MapLibre)
+
+`/facilities/map` (`ui/pages/facility-map`) plots the organization's located
+facilities as clustered pins on a MapLibre GL map:
+
+- the component-scoped `FacilityMapStore` loads every facility browser-side via
+  `FacilityService.listAll` (no SSR / `TransferState`) and partitions them into
+  `mappable` (both `latitude` and `longitude` set) and `unlocated`,
+- the heavy WebGL canvas lives in `ui/components/facility-map-canvas` and is kept
+  out of SSR and the initial bundle three ways: the route is lazy, the canvas is
+  behind `@defer (on viewport)`, and MapLibre itself is pulled with
+  `await import('maplibre-gl')` inside an `afterNextRender` hook (types are
+  imported with `import type` so they erase),
+- the base style follows the app theme via `THEME_PORT` (light/dark style URLs in
+  `EnvironmentConfig.mapStyleUrl` / `mapStyleUrlDark`), and fly-to is suppressed
+  under `prefers-reduced-motion`,
+- facilities without coordinates are surfaced in a side list linking to their
+  detail page.
+
+**Exception:** MapLibre's stylesheet is registered in `angular.json` `styles[]`
+(`node_modules/maplibre-gl/dist/maplibre-gl.css`) — the only sanctioned global-CSS
+channel besides the off-limits `src/styles.css`. Coordinates come from the backend
+`latitude`/`longitude` fields (optional on `FacilityOutput`) and are captured in the
+facility create/edit form (`ui/forms/facility-form`, enforced both-or-neither).
 
 ## Facility Listing (Roots-Only DataView)
 

@@ -11,6 +11,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
 import type {
   InterventionDiscoveryRequest,
@@ -21,6 +22,14 @@ import type {
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import {
+  InterventionReadinessChecklist,
+  type InterventionReadinessCheck,
+} from '@features/organization/features/interventions/ui/components/intervention-readiness-checklist';
+import {
+  InterventionSubstepNav,
+  type InterventionSubstep,
+} from '@features/organization/features/interventions/ui/components/intervention-substep-nav';
+import {
   InterventionDiscoveryDrawer,
   InterventionSkipDrawer,
 } from '@features/organization/features/interventions/ui/drawers';
@@ -29,22 +38,6 @@ import type {
   InterventionSkipFormValues,
 } from '@features/organization/features/interventions/ui/forms';
 import { InterventionFieldWorkTable } from '@features/organization/features/interventions/ui/tables/intervention-field-work-table';
-import { Card } from '@shared/components';
-
-/**
- * Interface ExecuteSubmitCheck
- * @interface ExecuteSubmitCheck
- *
- * @description
- * One submit-readiness condition rendered in the execute rail checklist,
- * mirroring the prepare and review panels' readiness lists.
- */
-interface ExecuteSubmitCheck {
-  /** Human-readable condition label. */
-  readonly label: string;
-  /** Whether the condition is currently satisfied. */
-  readonly done: boolean;
-}
 
 /**
  * Component InterventionExecutePanel
@@ -60,10 +53,12 @@ interface ExecuteSubmitCheck {
   selector: 'app-intervention-execute-panel',
   imports: [
     ButtonModule,
-    Card,
+    CardModule,
     InterventionDiscoveryDrawer,
     InterventionFieldWorkTable,
+    InterventionReadinessChecklist,
     InterventionSkipDrawer,
+    InterventionSubstepNav,
     MessageModule,
   ],
   templateUrl: './intervention-execute-panel.component.html',
@@ -365,10 +360,10 @@ export class InterventionExecutePanel {
    * @access protected
    * @since 1.3.0
    *
-   * @type {Signal<readonly ExecuteSubmitCheck[]>}
+   * @type {Signal<readonly InterventionReadinessCheck[]>}
    */
-  protected readonly submitChecks: Signal<readonly ExecuteSubmitCheck[]> = computed<
-    readonly ExecuteSubmitCheck[]
+  protected readonly submitChecks: Signal<readonly InterventionReadinessCheck[]> = computed<
+    readonly InterventionReadinessCheck[]
   >(() => [
     {
       label: $localize`:@@intervention.exec.checkResolved:All field work resolved`,
@@ -381,40 +376,49 @@ export class InterventionExecutePanel {
   ]);
 
   /**
-   * Property readyToSubmitCount
+   * Property subStep
    * @readonly
    *
    * @description
-   * Number of satisfied {@link submitChecks}, surfaced as the rail's progress
-   * counter.
-   *
-   * @access protected
-   * @since 1.3.0
-   *
-   * @type {Signal<number>}
-   */
-  protected readonly readyToSubmitCount: Signal<number> = computed<number>(
-    () => this.submitChecks().filter((check: ExecuteSubmitCheck): boolean => check.done).length,
-  );
-
-  /**
-   * Property submitActionVisible
-   * @readonly
-   *
-   * @description
-   * Whether the pinned "Submit for review" action bar is shown: the user must
-   * hold the execute capability, mirroring the prepare panel's plan-action-bar
-   * visibility rule so a read-only viewer is never shown a permanently
-   * disabled control pinned to the field viewport.
+   * Active execute sub-step, switching the content column between the field
+   * brief (next recommended action) and the full field-work list.
    *
    * @access protected
    * @since 1.4.0
    *
-   * @type {Signal<boolean>}
+   * @type {WritableSignal<'brief' | 'field-work'>}
    */
-  protected readonly submitActionVisible: Signal<boolean> = computed<boolean>(() =>
-    this.canExecute(),
-  );
+  protected readonly subStep: WritableSignal<'brief' | 'field-work'> = signal<
+    'brief' | 'field-work'
+  >('brief');
+
+  /**
+   * Property substeps
+   * @readonly
+   *
+   * @description
+   * Execute sub-step segments; the brief is marked complete once no work item
+   * remains to start, and the field-work step once every item is resolved.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {Signal<readonly InterventionSubstep[]>}
+   */
+  protected readonly substeps: Signal<readonly InterventionSubstep[]> = computed<
+    readonly InterventionSubstep[]
+  >(() => [
+    {
+      key: 'brief',
+      label: $localize`:@@intervention.exec.stepBrief:Brief`,
+      complete: this.nextWorkItem() === null,
+    },
+    {
+      key: 'field-work',
+      label: $localize`:@@intervention.exec.stepFieldWork:Field work`,
+      complete: this.progress() >= 100,
+    },
+  ]);
 
   /**
    * Property skipDrawerVisible

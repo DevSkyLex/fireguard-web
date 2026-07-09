@@ -197,6 +197,9 @@ export class FacilityCreatePage {
       ...(values.code ? { code: values.code } : {}),
       ...(values.address ? { address: values.address } : {}),
       ...(values.parentFacilityId ? { parentFacilityId: values.parentFacilityId } : {}),
+      ...(values.latitude !== null && values.longitude !== null
+        ? { latitude: values.latitude, longitude: values.longitude }
+        : {}),
     };
 
     this.store.create({ organizationId, input });

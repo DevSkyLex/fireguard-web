@@ -87,6 +87,42 @@ export interface EnvironmentConfig {
   readonly mercureHubUrl: string;
 
   /**
+   * Property mapStyleUrl
+   * @type {string}
+   * @readonly
+   *
+   * @description
+   * MapLibre GL style URL used for the light-theme facilities map. A token-free
+   * vector style (e.g. a CARTO or OpenFreeMap public style JSON).
+   *
+   * @version 1.0.0
+   *
+   * @example
+   * ```typescript
+   * mapStyleUrl: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
+   * ```
+   */
+  readonly mapStyleUrl: string;
+
+  /**
+   * Property mapStyleUrlDark
+   * @type {string}
+   * @readonly
+   *
+   * @description
+   * MapLibre GL style URL used for the dark-theme facilities map, swapped in when
+   * the resolved application theme is dark.
+   *
+   * @version 1.0.0
+   *
+   * @example
+   * ```typescript
+   * mapStyleUrlDark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+   * ```
+   */
+  readonly mapStyleUrlDark: string;
+
+  /**
    * Property maintenance
    * @type {boolean | undefined}
    * @readonly

@@ -14,6 +14,7 @@ import {
 import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
 import { AvatarGroupModule } from 'primeng/avatargroup';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { TooltipModule } from 'primeng/tooltip';
 import type {
   CreateInterventionWorkItemInput,
@@ -24,6 +25,14 @@ import type {
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import { InterventionMemberOption } from '@features/organization/features/interventions/ui/components/intervention-member-option/intervention-member-option.component';
+import {
+  InterventionReadinessChecklist,
+  type InterventionReadinessCheck,
+} from '@features/organization/features/interventions/ui/components/intervention-readiness-checklist';
+import {
+  InterventionSubstepNav,
+  type InterventionSubstep,
+} from '@features/organization/features/interventions/ui/components/intervention-substep-nav';
 import { InterventionTag } from '@features/organization/features/interventions/ui/components/intervention-tag';
 import {
   InterventionEditDrawer,
@@ -34,21 +43,6 @@ import type {
   InterventionWorkItemFormValues,
 } from '@features/organization/features/interventions/ui/forms';
 import { InterventionWorkItemTable } from '@features/organization/features/interventions/ui/tables/intervention-work-item-table';
-import { Card } from '@shared/components';
-
-/**
- * Interface PrepareReadinessCheck
- * @interface PrepareReadinessCheck
- *
- * @description
- * One planning-readiness condition rendered in the rail checklist.
- */
-interface PrepareReadinessCheck {
-  /** Human-readable condition label. */
-  readonly label: string;
-  /** Whether the condition is currently satisfied. */
-  readonly done: boolean;
-}
 
 /**
  * Constant PARTICIPANT_AVATAR_LIMIT
@@ -89,10 +83,12 @@ const PARTICIPANT_AVATAR_LIMIT = 5;
     AvatarModule,
     AvatarGroupModule,
     ButtonModule,
-    Card,
+    CardModule,
     DatePipe,
     InterventionEditDrawer,
     InterventionMemberOption,
+    InterventionReadinessChecklist,
+    InterventionSubstepNav,
     InterventionTag,
     InterventionWorkItemDrawer,
     InterventionWorkItemTable,
@@ -502,16 +498,15 @@ export class InterventionPreparePanel {
    * mirroring exactly the four hard preconditions the backend enforces before
    * a `draft` may transition to `planned` (`Intervention::applyTransition`): a
    * site, a responsible member, a planned start and a due date. Adding a work
-   * item stays a soft recommendation (see {@link canSubmitPlan}) and is
-   * intentionally not counted here.
+   * item stays a soft recommendation and is intentionally not counted here.
    *
    * @access protected
    * @since 2.6.0
    *
-   * @type {Signal<readonly PrepareReadinessCheck[]>}
+   * @type {Signal<readonly InterventionReadinessCheck[]>}
    */
-  protected readonly readinessChecks: Signal<readonly PrepareReadinessCheck[]> = computed<
-    readonly PrepareReadinessCheck[]
+  protected readonly readinessChecks: Signal<readonly InterventionReadinessCheck[]> = computed<
+    readonly InterventionReadinessCheck[]
   >(() => {
     const intervention: InterventionOutput = this.intervention();
 
@@ -533,50 +528,6 @@ export class InterventionPreparePanel {
         done: !!intervention.dueAt,
       },
     ];
-  });
-
-  /**
-   * Property readyCount
-   * @readonly
-   *
-   * @description
-   * Number of satisfied readiness conditions, shown as the rail's `N / 4` badge.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<number>}
-   */
-  protected readonly readyCount: Signal<number> = computed<number>(
-    () =>
-      this.readinessChecks().filter((check: PrepareReadinessCheck): boolean => check.done).length,
-  );
-
-  /**
-   * Property canSubmitPlan
-   * @readonly
-   *
-   * @description
-   * Whether planning can be confirmed: the user may plan, the intervention is
-   * still a draft, and the hard conditions (site, responsible, schedule) are met.
-   * Work items remain a soft recommendation.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<boolean>}
-   */
-  protected readonly canSubmitPlan: Signal<boolean> = computed<boolean>(() => {
-    const intervention: InterventionOutput = this.intervention();
-
-    return (
-      this.canPlan() &&
-      intervention.status === 'draft' &&
-      !!intervention.site &&
-      !!intervention.responsible &&
-      !!intervention.plannedStartAt &&
-      !!intervention.dueAt
-    );
   });
 
   /**
@@ -617,24 +568,51 @@ export class InterventionPreparePanel {
   );
 
   /**
-   * Property planActionVisible
+   * Property subStep
    * @readonly
    *
    * @description
-   * Whether the "Plan intervention" action bar is shown: the user may plan and
-   * the intervention is still a draft. Planning is only the next step from a
-   * draft, so the bar (and its disabled-while-incomplete CTA) is suppressed for
-   * read-only viewers and for non-draft prepare-phase statuses, avoiding a
-   * permanently dead control pinned to the field viewport.
+   * Active preparation sub-step, switching the content column between the scope
+   * (properties) and the planned work-item list.
    *
    * @access protected
-   * @since 2.3.0
+   * @since 2.7.0
    *
-   * @type {Signal<boolean>}
+   * @type {WritableSignal<'scope' | 'work-items'>}
    */
-  protected readonly planActionVisible: Signal<boolean> = computed<boolean>(
-    () => this.canPlan() && this.intervention().status === 'draft',
-  );
+  protected readonly subStep: WritableSignal<'scope' | 'work-items'> = signal<
+    'scope' | 'work-items'
+  >('scope');
+
+  /**
+   * Property substeps
+   * @readonly
+   *
+   * @description
+   * Preparation sub-step segments; scope is complete once every planning
+   * precondition is met, and work items once at least one is planned.
+   *
+   * @access protected
+   * @since 2.7.0
+   *
+   * @type {Signal<readonly InterventionSubstep[]>}
+   */
+  protected readonly substeps: Signal<readonly InterventionSubstep[]> = computed<
+    readonly InterventionSubstep[]
+  >(() => [
+    {
+      key: 'scope',
+      label: $localize`:@@intervention.prepare.stepScope:Scope`,
+      complete: this.readinessChecks().every(
+        (check: InterventionReadinessCheck): boolean => check.done,
+      ),
+    },
+    {
+      key: 'work-items',
+      label: $localize`:@@intervention.prepare.stepWorkItems:Work items`,
+      complete: this.workItems().length > 0,
+    },
+  ]);
   //#endregion
 
   //#region Methods

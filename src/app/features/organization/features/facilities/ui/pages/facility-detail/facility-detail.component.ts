@@ -28,15 +28,11 @@ import {
   FacilityStore,
 } from '@features/organization/features/facilities/state';
 import {
-  FacilityComplianceMetric,
   FacilityDetailHeader,
-  FacilityEquipmentsMetric,
   FacilityEquipmentTab,
   FacilityInformationPanel,
   FacilityInspectionTab,
   FacilityInstallationsPanel,
-  FacilityNextInspectionMetric,
-  FacilityOverdueInspectionsMetric,
 } from '@features/organization/features/facilities/ui/components';
 import {
   FacilityEquipmentDataview,
@@ -68,10 +64,6 @@ import { ActiveOrganizationStore } from '@features/organization/state';
     SkeletonModule,
     TabsModule,
     FacilityDetailHeader,
-    FacilityComplianceMetric,
-    FacilityOverdueInspectionsMetric,
-    FacilityNextInspectionMetric,
-    FacilityEquipmentsMetric,
     FacilityInspectionDataview,
     FacilityEquipmentDataview,
     FacilityInformationPanel,

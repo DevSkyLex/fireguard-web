@@ -26,16 +26,6 @@
     }
   </section>
 
-  <!-- KPI metrics -->
-  @if (facility(); as facility) {
-    <section class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-      <app-facility-compliance-metric />
-      <app-facility-overdue-inspections-metric />
-      <app-facility-next-inspection-metric />
-      <app-facility-equipments-metric />
-    </section>
-  }
-
   <!-- Workspace -->
   <section class="flex min-h-0 flex-1 flex-col">
     <p-tabs [value]="activeTab()" [pt]="tabsPt" (valueChange)="activeTab.set(+$event!)">

@@ -14,12 +14,6 @@ import type { RequestOptions } from '@core/api';
 import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
-import {
-  FacilityActiveMetric,
-  FacilityArchivedMetric,
-  FacilitySitesMetric,
-  FacilitySubSitesMetric,
-} from '@features/organization/features/facilities/ui/components';
 import { FacilityTable } from '@features/organization/features/facilities/ui/tables';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
@@ -38,15 +32,7 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
  */
 @Component({
   selector: 'app-facility-list',
-  imports: [
-    RouterModule,
-    ButtonModule,
-    FacilityTable,
-    FacilitySitesMetric,
-    FacilityActiveMetric,
-    FacilityArchivedMetric,
-    FacilitySubSitesMetric,
-  ],
+  imports: [RouterModule, ButtonModule, FacilityTable],
   providers: [FacilityStore],
   templateUrl: './facility-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

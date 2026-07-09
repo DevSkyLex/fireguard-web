@@ -1,9 +1,4 @@
-import {
-  allowedTransitions,
-  canTransition,
-  columnIdForStatus,
-  dropTargetForColumn,
-} from '../intervention-status-transition.utils';
+import { allowedTransitions, canTransition } from '../intervention-status-transition.utils';
 
 describe('intervention status transition utils', () => {
   it('allows policy transitions and no-op moves', () => {
@@ -28,18 +23,5 @@ describe('intervention status transition utils', () => {
       'abandoned',
     ]);
     expect(allowedTransitions('published')).toEqual([]);
-  });
-
-  it('maps statuses to lanes, fusing the review lane', () => {
-    expect(columnIdForStatus('submitted')).toBe('review');
-    expect(columnIdForStatus('changes_requested')).toBe('review');
-    expect(columnIdForStatus('in_progress')).toBe('in_progress');
-    expect(columnIdForStatus('abandoned')).toBeNull();
-  });
-
-  it('resolves the drop target per lane', () => {
-    expect(dropTargetForColumn('draft')).toBe('draft');
-    expect(dropTargetForColumn('review')).toBe('submitted');
-    expect(dropTargetForColumn('published')).toBeNull();
   });
 });

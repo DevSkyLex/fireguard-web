@@ -1,11 +1,4 @@
 <div id="inspection-list" class="flex h-full flex-col gap-6">
-  <section class="flex flex-row flex-wrap items-stretch gap-6">
-    <app-inspection-count-metric class="min-w-56 flex-1" />
-    <app-inspection-passed-metric class="min-w-56 flex-1" />
-    <app-inspection-failed-metric class="min-w-56 flex-1" />
-    <app-inspection-non-conformity-metric class="min-w-56 flex-1" />
-  </section>
-
   <app-inspection-table
     class="flex min-h-0 flex-1 flex-col"
     [inspections]="store.inspections()"

@@ -87,7 +87,7 @@ describe('DashboardLayoutSidebarNavigation', () => {
 
     // Home + Overview + Assets + Compliance sections are visible for the
     // granted permissions, so three dividers separate the four sections.
-    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(7);
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(6);
     expect(
       fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
     ).toBe(3);

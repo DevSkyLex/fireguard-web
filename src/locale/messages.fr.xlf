@@ -3929,6 +3929,54 @@
         <source>Calendar</source>
         <target>Calendrier</target>
       </trans-unit>
+      <trans-unit id="intervention.dashboard.title" datatype="html">
+        <source> Interventions </source>
+        <target> Interventions </target>
+      </trans-unit>
+      <trans-unit id="intervention.dashboard.subtitle" datatype="html">
+        <source> Plan field work, track progress and publish when interventions are ready. </source>
+        <target> Planifiez les interventions terrain, suivez leur avancement et publiez-les une fois prêtes. </target>
+      </trans-unit>
+      <trans-unit id="intervention.dashboard.listTitle" datatype="html">
+        <source> All interventions </source>
+        <target> Toutes les interventions </target>
+      </trans-unit>
+      <trans-unit id="intervention.dashboard.scheduleTitle" datatype="html">
+        <source> Schedule </source>
+        <target> Planning </target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.inProgress.title" datatype="html">
+        <source>In progress</source>
+        <target>En cours</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.inProgress.description" datatype="html">
+        <source>Active field work</source>
+        <target>Travaux terrain actifs</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.planned.title" datatype="html">
+        <source>Planned</source>
+        <target>Planifiées</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.planned.description" datatype="html">
+        <source>Scheduled, not started</source>
+        <target>Programmées, non démarrées</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.overdue.title" datatype="html">
+        <source>Overdue</source>
+        <target>En retard</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.overdue.description" datatype="html">
+        <source>Past their due date</source>
+        <target>Échéance dépassée</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.blocked.title" datatype="html">
+        <source>Blocked</source>
+        <target>Bloquées</target>
+      </trans-unit>
+      <trans-unit id="intervention.metric.blocked.description" datatype="html">
+        <source>Have publication blockers</source>
+        <target>Présentent des bloqueurs de publication</target>
+      </trans-unit>
       <trans-unit id="intervention.fwt.title" datatype="html">
         <source>Field work</source>
         <target>Travail terrain</target>

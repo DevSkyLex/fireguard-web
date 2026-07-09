@@ -13,11 +13,8 @@ import type { InterventionsPage } from './ui/pages/interventions/interventions.c
  * Route tree for organization-scoped intervention workflows.
  *
  * - `/organizations/:organizationId/interventions` exposes the interventions
- *   index page, hosting the workflow pipeline board (default), the planner table
- *   and the scheduling calendar as three interchangeable views
- *   (`?view=board|list|calendar`, with the `board` default omitting the param).
- * - `/organizations/:organizationId/interventions/calendar` is a convenience
- *   entry that opens the same index page on its calendar view.
+ *   index page, laid out as a dashboard that shows the workflow-health metric
+ *   strip, the planner table and the scheduling calendar together as cards.
  * - `/organizations/:organizationId/interventions/:interventionId` exposes the intervention
  *   detail page that orchestrates facilities, equipment and inspections for
  *   one intervention.
@@ -30,18 +27,6 @@ import type { InterventionsPage } from './ui/pages/interventions/interventions.c
  * @type {Routes}
  */
 export const INTERVENTION_ROUTES: Routes = [
-  {
-    path: 'calendar',
-    canActivate: [
-      organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ] }),
-    ],
-    loadComponent: (): Promise<typeof InterventionsPage> =>
-      import('./ui/pages/interventions/interventions.component').then(
-        (module) => module.InterventionsPage,
-      ),
-    title: $localize`:@@route.calendar:Calendar`,
-    data: { view: 'calendar', breadcrumb: false },
-  },
   {
     path: ':interventionId',
     canActivate: [

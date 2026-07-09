@@ -1,1 +1,0 @@
-export { interventionBoardStoreEvents } from './events';

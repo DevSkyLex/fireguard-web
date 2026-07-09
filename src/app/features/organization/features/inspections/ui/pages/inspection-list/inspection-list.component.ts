@@ -14,12 +14,6 @@ import type { RequestOptions } from '@core/api';
 import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { InspectionStore } from '@features/organization/features/inspections/state';
-import {
-  InspectionCountMetric,
-  InspectionFailedMetric,
-  InspectionNonConformityMetric,
-  InspectionPassedMetric,
-} from '@features/organization/features/inspections/ui/components';
 import { InspectionTable } from '@features/organization/features/inspections/ui/tables';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
@@ -38,13 +32,7 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
  */
 @Component({
   selector: 'app-inspection-list',
-  imports: [
-    InspectionTable,
-    InspectionCountMetric,
-    InspectionPassedMetric,
-    InspectionFailedMetric,
-    InspectionNonConformityMetric,
-  ],
+  imports: [InspectionTable],
   providers: [InspectionStore],
   templateUrl: './inspection-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

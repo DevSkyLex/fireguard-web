@@ -84,7 +84,7 @@ describe('DashboardLayoutSidebar', () => {
     ).toBeTruthy();
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-footer'))).toBeTruthy();
 
-    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(7);
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(6);
     expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
     // Home + Overview + Assets + Compliance sections → three dividers.
     expect(
@@ -102,7 +102,6 @@ describe('DashboardLayoutSidebar', () => {
     expect(textContent).toContain('Facilities');
     expect(textContent).toContain('Equipments');
     expect(textContent).toContain('Inspections');
-    expect(textContent).toContain('Checklists');
     expect(textContent).toContain('2026 Fireguard, Inc.');
   });
 

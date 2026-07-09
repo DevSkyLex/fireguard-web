@@ -1,16 +1,14 @@
 import { CUSTOM_ELEMENTS_SCHEMA, signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import { ConfirmationService } from 'primeng/api';
-import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   InterventionListOptions,
   InterventionOutput,
 } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '@features/organization/features/interventions/state';
-import { InterventionBoardStore } from '@features/organization/features/interventions/state/intervention-board';
 import { InterventionCalendarStore } from '@features/organization/features/interventions/state/intervention-calendar';
 import { InterventionPlanningOptionsStore } from '@features/organization/features/interventions/state/intervention-planning-options';
+import { InterventionSummaryStore } from '@features/organization/features/interventions/state/intervention-summary';
 import type { InterventionCreateFormValues } from '@features/organization/features/interventions/ui/forms';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
@@ -25,13 +23,6 @@ type InterventionsPageHarness = {
   openCreate(): void;
   openCreateOnDay(day: Date): void;
   create(values: InterventionCreateFormValues): void;
-  setView(view: 'board' | 'list' | 'calendar'): void;
-  onAdvance(event: {
-    intervention: InterventionOutput;
-    toStatus: InterventionOutput['status'];
-  }): void;
-  onAbandon(intervention: InterventionOutput): void;
-  onLoadMore(columnId: 'draft' | 'planned' | 'in_progress' | 'review' | 'published'): void;
   createDrawerVisible: WritableSignal<boolean>;
   initialPlannedStartAt: WritableSignal<Date | null>;
 };
@@ -55,16 +46,13 @@ describe('InterventionsPage', () => {
     loading: WritableSignal<boolean>;
     load: ReturnType<typeof vi.fn>;
   };
-  let boardStore: {
-    columns: WritableSignal<readonly unknown[]>;
+  let summaryStore: {
+    inProgressCount: WritableSignal<number>;
+    plannedCount: WritableSignal<number>;
+    overdueCount: WritableSignal<number>;
+    blockedCount: WritableSignal<number>;
     loading: WritableSignal<boolean>;
-    countsLoading: WritableSignal<boolean>;
-    isEmpty: WritableSignal<boolean>;
-    loadError: WritableSignal<unknown>;
-    loadCounts: ReturnType<typeof vi.fn>;
     load: ReturnType<typeof vi.fn>;
-    loadMore: ReturnType<typeof vi.fn>;
-    move: ReturnType<typeof vi.fn>;
   };
   let planningOptions: {
     loadCreationOptions: ReturnType<typeof vi.fn>;
@@ -72,8 +60,6 @@ describe('InterventionsPage', () => {
     sites: WritableSignal<readonly unknown[]>;
     members: WritableSignal<readonly unknown[]>;
   };
-  let permissionService: { hasPermission: ReturnType<typeof vi.fn> };
-  let confirmationService: { confirm: ReturnType<typeof vi.fn> };
   let activeOrg: { selectedOrganization: WritableSignal<OrganizationOutput | null> };
 
   beforeAll(() => {
@@ -111,25 +97,20 @@ describe('InterventionsPage', () => {
       loading: signal(false),
       load: vi.fn(),
     };
+    summaryStore = {
+      inProgressCount: signal(0),
+      plannedCount: signal(0),
+      overdueCount: signal(0),
+      blockedCount: signal(0),
+      loading: signal(false),
+      load: vi.fn(),
+    };
     planningOptions = {
       loadCreationOptions: vi.fn(),
       loading: signal(false),
       sites: signal<readonly unknown[]>([]),
       members: signal<readonly unknown[]>([]),
     };
-    boardStore = {
-      columns: signal<readonly unknown[]>([]),
-      loading: signal(false),
-      countsLoading: signal(false),
-      isEmpty: signal(false),
-      loadError: signal<unknown>(null),
-      loadCounts: vi.fn(),
-      load: vi.fn(),
-      loadMore: vi.fn(),
-      move: vi.fn(),
-    };
-    permissionService = { hasPermission: vi.fn().mockReturnValue(true) };
-    confirmationService = { confirm: vi.fn() };
     activeOrg = { selectedOrganization: signal<OrganizationOutput | null>(MOCK_ORG) };
 
     TestBed.configureTestingModule({
@@ -138,8 +119,6 @@ describe('InterventionsPage', () => {
         provideRouter([]),
         { provide: ActivatedRoute, useValue: {} },
         { provide: ActiveOrganizationStore, useValue: activeOrg },
-        { provide: OrganizationPermissionService, useValue: permissionService },
-        { provide: ConfirmationService, useValue: confirmationService },
       ],
     }).overrideComponent(InterventionsPage, {
       set: {
@@ -147,9 +126,9 @@ describe('InterventionsPage', () => {
         schemas: [CUSTOM_ELEMENTS_SCHEMA],
         providers: [
           { provide: InterventionStore, useValue: store },
-          { provide: InterventionBoardStore, useValue: boardStore },
           { provide: InterventionCalendarStore, useValue: calendarStore },
           { provide: InterventionPlanningOptionsStore, useValue: planningOptions },
+          { provide: InterventionSummaryStore, useValue: summaryStore },
         ],
       },
     });
@@ -165,16 +144,8 @@ describe('InterventionsPage', () => {
     expect(build()).toBeTruthy();
   });
 
-  it('should not load the calendar dataset while the list view is active', () => {
+  it('should load the calendar dataset for a bounded window on the active organization', () => {
     build();
-
-    expect(calendarStore.load).not.toHaveBeenCalled();
-  });
-
-  it('should lazily load the calendar dataset for a bounded window when the calendar view becomes active', () => {
-    const fixture = TestBed.createComponent(InterventionsPage);
-    fixture.componentRef.setInput('view', 'calendar');
-    fixture.detectChanges();
 
     expect(calendarStore.load).toHaveBeenCalledTimes(1);
     const request = calendarStore.load.mock.calls[0][0] as {
@@ -185,6 +156,12 @@ describe('InterventionsPage', () => {
     expect(request.window.after).toBeInstanceOf(Date);
     expect(request.window.before).toBeInstanceOf(Date);
     expect(request.window.after.getTime()).toBeLessThan(request.window.before.getTime());
+  });
+
+  it('should load the workflow-health metric strip for the active organization', () => {
+    build();
+
+    expect(summaryStore.load).toHaveBeenCalledWith('org-1');
   });
 
   it('should forward a lazy-load request to the table store for the active organization', () => {
@@ -202,76 +179,6 @@ describe('InterventionsPage', () => {
     build().onLoad({ page: 1, itemsPerPage: 12 });
 
     expect(store.load).not.toHaveBeenCalled();
-  });
-
-  it('should switch to the calendar view through the view query param', () => {
-    const router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-
-    build().setView('calendar');
-
-    expect(navigate).toHaveBeenCalledWith(
-      ['/organizations', 'org-1', 'interventions'],
-      expect.objectContaining({ queryParams: { view: 'calendar', page: null } }),
-    );
-  });
-
-  it('should cycle to the next view when the V shortcut is pressed', () => {
-    const router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    build();
-
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', bubbles: true }));
-
-    expect(navigate).toHaveBeenCalledWith(
-      ['/organizations', 'org-1', 'interventions'],
-      expect.objectContaining({ queryParams: { view: 'list', page: null } }),
-    );
-  });
-
-  it('should lazily load the board dataset by default', () => {
-    build();
-
-    expect(boardStore.load).toHaveBeenCalledWith({ organizationId: 'org-1' });
-  });
-
-  it('should refresh the metric counts regardless of the active view', () => {
-    const fixture = TestBed.createComponent(InterventionsPage);
-    fixture.componentRef.setInput('view', 'list');
-    fixture.detectChanges();
-
-    expect(boardStore.loadCounts).toHaveBeenCalledWith({ organizationId: 'org-1' });
-    expect(boardStore.load).not.toHaveBeenCalled();
-  });
-
-  it('should reveal the next lane page through the board store', () => {
-    build().onLoadMore('published');
-
-    expect(boardStore.loadMore).toHaveBeenCalledWith({
-      organizationId: 'org-1',
-      columnId: 'published',
-    });
-  });
-
-  it('should apply an optimistic advance through the board store', () => {
-    const intervention = { id: 'i-3', status: 'draft' } as InterventionOutput;
-
-    build().onAdvance({ intervention, toStatus: 'planned' });
-
-    expect(boardStore.move).toHaveBeenCalledWith({ intervention, toStatus: 'planned' });
-  });
-
-  it('should ignore the V shortcut while typing in a field', () => {
-    const router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    build();
-
-    const input: HTMLInputElement = document.createElement('input');
-    document.body.appendChild(input);
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', bubbles: true }));
-    input.remove();
-
-    expect(navigate).not.toHaveBeenCalled();
   });
 
   it('should navigate to the intervention detail when an intervention is viewed', () => {
@@ -332,18 +239,5 @@ describe('InterventionsPage', () => {
 
     expect(store.clearCreatedIntervention).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'i-9']);
-  });
-
-  it('should confirm before abandoning a board card and move it on accept', () => {
-    const intervention = { id: 'i-4', status: 'draft' } as InterventionOutput;
-
-    build().onAbandon(intervention);
-
-    expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
-    const config = confirmationService.confirm.mock.calls[0][0] as { accept?: () => void };
-    expect(boardStore.move).not.toHaveBeenCalled();
-
-    config.accept?.();
-    expect(boardStore.move).toHaveBeenCalledWith({ intervention, toStatus: 'abandoned' });
   });
 });

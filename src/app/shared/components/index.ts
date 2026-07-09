@@ -15,14 +15,9 @@ export {
   type CalendarCategoryGroup,
   type CalendarConfig,
 } from './calendar';
-export {
-  Kanban,
-  type KanbanCard,
-  type KanbanCardContext,
-  type KanbanColumn,
-  type KanbanDropEvent,
-} from './kanban';
 export { Logo } from './logo';
+export { MapCanvas } from './map';
+export type { MapMarker } from './map';
 export { ThemeSwitcher, withThemeSwitcher } from './theme-switcher';
 export { Toast } from './toast';
 export { TrendCard } from './trend-card';

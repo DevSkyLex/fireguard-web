@@ -73,7 +73,7 @@ const INITIAL_CHECKLIST_STATE: ChecklistState = {
  * @example
  * ```typescript
  * @Component({ providers: [ChecklistStore] })
- * export class ChecklistListPage {
+ * export class InspectionCreatePage {
  *   readonly store = inject<ChecklistStore>(ChecklistStore);
  * }
  * ```

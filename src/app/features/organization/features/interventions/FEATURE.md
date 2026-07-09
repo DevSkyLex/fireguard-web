@@ -19,11 +19,10 @@ This subfeature is responsible for:
 
 ## Routes
 
-- `/organizations/:organizationId/interventions` — index page hosting the workflow
-  pipeline board (default), the planner table and the scheduling calendar as three
-  views switched via `?view=board|list|calendar` (the `board` default omits the param).
-- `/organizations/:organizationId/interventions/calendar` — convenience entry that
-  opens the index page on its calendar view (same `InterventionsPage`).
+- `/organizations/:organizationId/interventions` — index page laid out as a
+  **dashboard**: a workflow-health metric strip (in progress / planned / overdue /
+  blocked), the paginated planner table and the scheduling calendar are shown
+  together as adjacent cards (no view switch). `?page=` drives the table page.
 - `/organizations/:organizationId/interventions/:interventionId`
 
 ## State and Data Access
@@ -32,8 +31,8 @@ Stores:
 
 - `InterventionStore` — root-scoped; intervention list and creation (normalized entities + request state).
 - `InterventionWorkspaceStore` — component-scoped (provided in `InterventionDetailPage`); the active intervention workspace (intervention, work items, changes, issues) with online/offline mutations.
-- `InterventionCalendarStore` — component-scoped (provided in `InterventionsPage`); the interventions inside a bounded date window (the visible month ± one month) plus the current member IRI driving the calendar view's All/Mine scope. Loaded lazily, only while the calendar view is active, and refetched when the visible month changes (fed by the calendar's `focusedDateChange`); the window is fetched as the de-duped union of a `plannedStartAt`-range query and a `dueAt`-range query (the anchor is `plannedStartAt ?? dueAt`), and the member IRI is resolved once per organization and reused across window refetches.
-- `InterventionBoardStore` — component-scoped (provided in `InterventionsPage`); a bounded page of cards per workflow lane, per-lane incremental "load more" (`loadMore`, appending the next page of each backing status de-duped by id), per-status server totals, and optimistic status moves (rollback on failure). The heavier board **card** pages load lazily, only while the board view is active; the **totals** feeding the metric strip come from a separate lightweight `loadCounts` fetch (one `itemsPerPage=1` query per status) that runs on every view, so switching to the list/calendar view no longer pays for board card data. Lane grouping comes from `constants/`; legal transitions come from each card's API `allowedTransitions` (the single source of truth, straight from the backend `InterventionTransitionPolicy`), with `constants/` + `utils/` kept only as the offline fallback for cards cached before that field shipped; `published` is reached through the publication flow, not a drag. The store also exposes `loadError` so the page distinguishes a failed load from an empty board. Rendered by `ui/components/intervention-board`, a thin presentational wrapper that composes the generic `@shared/components` `Kanban` (lanes + CDK drag-and-drop) and projects the intervention card. Drops and card-menu actions are gated by the per-card allowed transitions **intersected with the current user's RBAC capabilities** (`canPlan`/`canExecute`/`canReview`/`canPublish`, resolved at the page from `OrganizationPermissionService` and passed down as inputs, mirroring `MutateInterventionWorkflowHandler::permission()`); the destructive **Abandon** action is confirmed at the page before the store move. The metric strip above the board (`ui/components/intervention-metric`) is a single component parameterized by `variant`/`title`/`description`/`icon`/`value`/`loading`, replacing four former near-identical per-lane wrapper components; the page reads the four per-lane totals from `InterventionBoardStore.columns()` and passes them down — the component itself injects no store.
+- `InterventionCalendarStore` — component-scoped (provided in `InterventionsPage`); the interventions inside a bounded date window (the visible month ± one month) plus the current member IRI driving the calendar card's All/Mine scope. Loaded for the active organization and refetched when the visible month changes (fed by the calendar's `focusedDateChange`); the window is fetched as the de-duped union of a `plannedStartAt`-range query and a `dueAt`-range query (the anchor is `plannedStartAt ?? dueAt`), and the member IRI is resolved once per organization and reused across window refetches.
+- `InterventionSummaryStore` — component-scoped (provided in `InterventionsPage`); loads the full organization intervention set once (via `InterventionService.listAll`) and derives the dashboard metric-strip KPIs (in progress, planned, overdue, blocked). Overdue and blocked exclude interventions in a terminal status (`published`, `abandoned`).
 
 Data-access (transport boundary — `data-access/`):
 

@@ -153,6 +153,16 @@ Two hard constraints keep this honest:
 
 This generalizes sections 3.6 and 3.7: just as provider scope and rendering location do not grant ownership, neither does convenience. The set of consumers — and nothing else — determines how high a unit sits.
 
+### 3.8.1 Rule of three — do not force DRY
+
+Lifting an _already-shared_ unit (above) is about placement. **Creating** a new shared abstraction is a separate, stricter decision: do not extract a util, helper, constant, or wrapper until the **third** real usage appears.
+
+- Two near-duplicate snippets are cheaper left inline than abstracted prematurely. A helper called from a single site — or a one-line pass-through that only forwards its arguments — earns nothing but an extra file and a layer of indirection.
+- Inline first. Let a genuine third consumer prove the shape before you name it. A wrong early abstraction is more expensive to unwind than a little duplication.
+- This does not contradict "lift when a second consumer appears" (section 3.8): a second consumer justifies _moving_ a unit that already earns its existence to the lowest common scope; it does not justify _inventing_ a new one. The trigger to abstract is the third occurrence, not the second.
+
+Duplication is a smell, not a crime. Prefer clarity now over a speculative abstraction that may never pay off.
+
 ## 4. Layer Model
 
 The frontend is organized into five top-level responsibilities under `src/app`.
@@ -1874,6 +1884,8 @@ Document:
 - reasons for approved exceptions.
 
 Avoid comments that merely restate obvious types or code.
+
+**Keep `@description` blocks concise.** The mandated JSDoc tags stay, but the prose is one or two sentences on purpose and any non-obvious behavior — not a line-by-line narration of the implementation. A `@description` that re-derives the whole method body, lists every branch, or restates what the signature and `@param`/`@returns`/`@type` tags already convey is noise: it rots when the code changes and buries the one caveat a reader actually needs. Say what and why, briefly; let the code say how.
 
 ## 13. Approved Patterns
 

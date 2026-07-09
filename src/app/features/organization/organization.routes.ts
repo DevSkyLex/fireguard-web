@@ -72,15 +72,6 @@ export const ORGANIZATION_ROUTES: Routes = [
           import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
       },
       {
-        path: 'checklists',
-        data: {
-          breadcrumb: 'Checklists',
-          preload: true,
-        },
-        loadChildren: () =>
-          import('./features/checklists/checklists.routes').then((m) => m.CHECKLIST_ROUTES),
-      },
-      {
         path: 'members',
         canActivate: [
           organizationPermissionGuard({

@@ -22,9 +22,13 @@
    `html[data-theme="dark"]`.
 4. **Strict TypeScript.** Explicit types, `readonly` members, no `any`, no
    non-null assertions. Reuse shared model/presentation types.
-5. **Heavy JSDoc.** Every class, public/protected member and exported function
-   gets `@description`, `@access`, `@since`, `@type`/`@param`/`@returns`, and on
-   components `@author Valentin FORTIN <contact@valentin-fortin.pro>`.
+5. **Heavy JSDoc, concise prose.** Every class, public/protected member and
+   exported function gets `@description`, `@access`, `@since`,
+   `@type`/`@param`/`@returns`, and on components
+   `@author Valentin FORTIN <contact@valentin-fortin.pro>`. Keep the
+   `@description` short — one or two sentences on purpose and any non-obvious
+   behavior. Do not over-detail: never narrate the implementation line-by-line or
+   restate what the signature and types already say.
 6. **Keep `models/` type-only.** Runtime values go to sibling `utils/`,
    `constants/`, `options/`. See `ARCHITECTURE.md` §9 for the two cohesion
    exceptions (presentation registry, const-enum catalog).
@@ -35,6 +39,14 @@
    `ports/`, `ui/{pages,components,tables,dataviews,forms,dialogs,drawers}`,
    `state/`, `models/`, `utils/`, `constants/`, `options/`, `providers/`); do
    not invent undocumented sibling layers/folders.
+8. **Rule of three — don't force DRY.** Do not extract a shared util, helper,
+   constant, or abstraction until the **third** real usage appears. Two
+   near-duplicates are cheaper left inline than abstracted prematurely; a
+   one-line wrapper that is only called once earns nothing but an extra file and
+   an indirection. Inline first, extract when a genuine third consumer proves the
+   shape. (This tightens rule 7: a _second_ consumer justifies lifting an
+   already-shared unit to the lowest common scope, but it does not justify
+   _inventing_ a new abstraction — wait for the third.)
 
 ## Boundaries (hard rules)
 

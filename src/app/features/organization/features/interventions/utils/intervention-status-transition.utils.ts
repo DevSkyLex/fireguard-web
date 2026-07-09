@@ -1,11 +1,5 @@
-import {
-  INTERVENTION_BOARD_COLUMNS,
-  INTERVENTION_STATUS_TRANSITIONS,
-} from '@features/organization/features/interventions/constants';
-import type {
-  InterventionBoardColumnId,
-  InterventionStatus,
-} from '@features/organization/features/interventions/models';
+import { INTERVENTION_STATUS_TRANSITIONS } from '@features/organization/features/interventions/constants';
+import type { InterventionStatus } from '@features/organization/features/interventions/models';
 
 /**
  * Type InterventionTransitionCapability
@@ -152,40 +146,4 @@ export function capabilityForTransition(
     default:
       return 'execute';
   }
-}
-
-/**
- * Function columnIdForStatus
- *
- * @description
- * Resolves the board lane a status belongs to, or `null` when the status has no
- * lane (e.g. `abandoned`).
- *
- * @param {InterventionStatus} status - Status to resolve.
- *
- * @returns {InterventionBoardColumnId | null} Owning lane, or null.
- *
- * @since 1.0.0
- */
-export function columnIdForStatus(status: InterventionStatus): InterventionBoardColumnId | null {
-  return INTERVENTION_BOARD_COLUMNS.find((column) => column.statuses.includes(status))?.id ?? null;
-}
-
-/**
- * Function dropTargetForColumn
- *
- * @description
- * The status a card adopts when dropped into a lane, or `null` when the lane is
- * not a valid drop target.
- *
- * @param {InterventionBoardColumnId} columnId - Target lane.
- *
- * @returns {InterventionStatus | null} Status to adopt, or null.
- *
- * @since 1.0.0
- */
-export function dropTargetForColumn(
-  columnId: InterventionBoardColumnId,
-): InterventionStatus | null {
-  return INTERVENTION_BOARD_COLUMNS.find((column) => column.id === columnId)?.dropTarget ?? null;
 }

@@ -1,27 +1,19 @@
-<div id="interventions" class="flex min-h-0 flex-1 flex-col gap-4">
-  <div class="flex flex-wrap items-center justify-between gap-3">
-    <span id="interventions-view-label" i18n="@@intervention.view.label" class="sr-only">View</span>
-    <p-selectbutton
-      [options]="viewOptions"
-      [allowEmpty]="false"
-      optionLabel="label"
-      optionValue="value"
-      size="small"
-      ariaLabelledBy="interventions-view-label"
-      i18n-pTooltip="@@intervention.view.tooltip"
-      pTooltip="Switch view (V)"
-      tooltipPosition="bottom"
-      [ngModel]="view()"
-      [ngModelOptions]="{ standalone: true }"
-      (ngModelChange)="setView($event)"
-    >
-      <ng-template #item let-item>
-        <span class="flex items-center gap-2">
-          <i [class]="item.icon" aria-hidden="true"></i>
-          <span>{{ item.label }}</span>
-        </span>
-      </ng-template>
-    </p-selectbutton>
+<div id="interventions" class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
+  <header class="flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h1
+        i18n="@@intervention.dashboard.title"
+        class="text-xl font-semibold text-surface-950 dark:text-surface-0"
+      >
+        Interventions
+      </h1>
+      <p
+        i18n="@@intervention.dashboard.subtitle"
+        class="mt-1 text-sm text-surface-500 dark:text-surface-400"
+      >
+        Plan field work, track progress and publish when interventions are ready.
+      </p>
+    </div>
 
     <p-button
       i18n-label="@@intervention.newButton"
@@ -31,87 +23,55 @@
       size="small"
       (onClick)="openCreate()"
     />
-  </div>
+  </header>
 
-  <section class="flex flex-row flex-wrap items-stretch gap-4">
-    <app-intervention-metric
-      class="min-w-56 flex-1"
-      variant="in_progress"
+  <section class="grid grid-cols-2 gap-4 xl:grid-cols-4">
+    <app-metric-card
       i18n-title="@@intervention.metric.inProgress.title"
       title="In progress"
-      i18n-description="@@intervention.metric.inProgress.desc"
-      description="Field work underway"
-      icon="pi pi-wrench"
-      [value]="inProgressTotal()"
-      [loading]="boardStore.countsLoading()"
+      i18n-description="@@intervention.metric.inProgress.description"
+      description="Active field work"
+      icon="pi pi-bolt"
+      [value]="summaryStore.inProgressCount()"
+      [loading]="summaryStore.loading()"
     />
-    <app-intervention-metric
-      class="min-w-56 flex-1"
-      variant="review"
-      i18n-title="@@intervention.metric.inReview.title"
-      title="In review"
-      i18n-description="@@intervention.metric.inReview.desc"
-      description="Awaiting review"
-      icon="pi pi-eye"
-      [value]="inReviewTotal()"
-      [loading]="boardStore.countsLoading()"
-    />
-    <app-intervention-metric
-      class="min-w-56 flex-1"
-      variant="planned"
+    <app-metric-card
       i18n-title="@@intervention.metric.planned.title"
       title="Planned"
-      i18n-description="@@intervention.metric.planned.desc"
-      description="Scheduled ahead"
+      i18n-description="@@intervention.metric.planned.description"
+      description="Scheduled, not started"
       icon="pi pi-calendar"
-      [value]="plannedTotal()"
-      [loading]="boardStore.countsLoading()"
+      [value]="summaryStore.plannedCount()"
+      [loading]="summaryStore.loading()"
     />
-    <app-intervention-metric
-      class="min-w-56 flex-1"
-      variant="published"
-      i18n-title="@@intervention.metric.published.title"
-      title="Published"
-      i18n-description="@@intervention.metric.published.desc"
-      description="Completed"
-      icon="pi pi-check-circle"
-      [value]="publishedTotal()"
-      [loading]="boardStore.countsLoading()"
+    <app-metric-card
+      i18n-title="@@intervention.metric.overdue.title"
+      title="Overdue"
+      i18n-description="@@intervention.metric.overdue.description"
+      description="Past their due date"
+      icon="pi pi-exclamation-triangle"
+      [value]="summaryStore.overdueCount()"
+      [loading]="summaryStore.loading()"
+    />
+    <app-metric-card
+      i18n-title="@@intervention.metric.blocked.title"
+      title="Blocked"
+      i18n-description="@@intervention.metric.blocked.description"
+      description="Have publication blockers"
+      icon="pi pi-ban"
+      [value]="summaryStore.blockedCount()"
+      [loading]="summaryStore.loading()"
     />
   </section>
 
-  @if (view() === 'board') {
-    <app-intervention-board
-      class="flex min-h-0 flex-1 flex-col"
-      [columns]="boardStore.columns()"
-      [loading]="boardStore.loading()"
-      [empty]="boardStore.isEmpty()"
-      [error]="boardStore.loadError()"
-      [canPlan]="canPlan()"
-      [canExecute]="canExecute()"
-      [canReview]="canReview()"
-      [canPublish]="canPublish()"
-      (view)="onView($event)"
-      (advance)="onAdvance($event)"
-      (abandon)="onAbandon($event)"
-      (retryRequested)="retryBoard()"
-      (loadMore)="onLoadMore($event)"
-      (createRequested)="openCreate()"
-    />
-  } @else if (view() === 'calendar') {
-    <app-intervention-calendar
-      class="flex min-h-0 flex-1 flex-col"
-      [interventions]="calendarStore.interventions()"
-      [loading]="calendarStore.loading()"
-      [currentMemberIri]="calendarStore.currentMemberIri()"
-      [showCreate]="false"
-      (selectIntervention)="onView($event)"
-      (selectDay)="openCreateOnDay($event)"
-      (focusedDateChange)="onCalendarFocusChange($event)"
-    />
-  } @else {
+  <section class="flex flex-col gap-3">
+    <h2
+      i18n="@@intervention.dashboard.listTitle"
+      class="font-semibold text-surface-950 dark:text-surface-0"
+    >
+      All interventions
+    </h2>
     <app-intervention-table
-      class="flex min-h-0 flex-1 flex-col"
       [interventions]="store.interventionList()"
       [total]="store.totalInterventions()"
       [loading]="store.isLoadingInterventions()"
@@ -125,7 +85,28 @@
       (createRequested)="openCreate()"
       (view)="onView($event)"
     />
-  }
+  </section>
+
+  <section class="flex flex-col gap-3">
+    <h2
+      i18n="@@intervention.dashboard.scheduleTitle"
+      class="font-semibold text-surface-950 dark:text-surface-0"
+    >
+      Schedule
+    </h2>
+    <div class="flex h-[38rem] flex-col">
+      <app-intervention-calendar
+        class="flex min-h-0 flex-1 flex-col"
+        [interventions]="calendarStore.interventions()"
+        [loading]="calendarStore.loading()"
+        [currentMemberIri]="calendarStore.currentMemberIri()"
+        [showCreate]="false"
+        (selectIntervention)="onView($event)"
+        (selectDay)="openCreateOnDay($event)"
+        (focusedDateChange)="onCalendarFocusChange($event)"
+      />
+    </div>
+  </section>
 </div>
 
 <app-intervention-create-drawer

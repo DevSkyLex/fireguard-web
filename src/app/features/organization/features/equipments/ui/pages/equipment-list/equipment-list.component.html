@@ -1,11 +1,4 @@
 <div id="equipment-list" class="flex h-full flex-col gap-6">
-  <section class="flex flex-row flex-wrap items-stretch gap-6">
-    <app-equipment-count-metric class="min-w-56 flex-1" />
-    <app-equipment-commissioned-metric class="min-w-56 flex-1" />
-    <app-equipment-maintenance-metric class="min-w-56 flex-1" />
-    <app-equipment-in-stock-metric class="min-w-56 flex-1" />
-  </section>
-
   <app-equipment-table
     class="flex min-h-0 flex-1 flex-col"
     [equipments]="store.equipmentList()"

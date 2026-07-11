@@ -1,0 +1,125 @@
+/*
+ * Quill (PrimeNG Editor) theming overrides.
+ *
+ * The `snow` theme ships light-only colours; these rules re-map its toolbar,
+ * container and icons onto PrimeNG's semantic design tokens so the editor adapts
+ * to light/dark automatically. Also styles rendered comment HTML (`.comment-prose`).
+ */
+
+.ql-toolbar.ql-snow,
+.ql-container.ql-snow {
+  border-color: var(--p-content-border-color);
+}
+
+.ql-toolbar.ql-snow {
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  background: var(--p-content-background);
+}
+
+.ql-container.ql-snow {
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  background: var(--p-content-background);
+  color: var(--p-text-color);
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.ql-editor {
+  min-height: 6rem;
+}
+
+.ql-editor.ql-blank::before {
+  color: var(--p-text-muted-color);
+  font-style: normal;
+  left: 0.75rem;
+  right: 0.75rem;
+}
+
+/* Toolbar icons follow the muted text colour, primary on hover/active. */
+.ql-snow .ql-stroke {
+  stroke: var(--p-text-muted-color);
+}
+
+.ql-snow .ql-fill {
+  fill: var(--p-text-muted-color);
+}
+
+.ql-snow .ql-picker {
+  color: var(--p-text-muted-color);
+}
+
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke,
+.ql-snow .ql-toolbar button:hover .ql-stroke,
+.ql-snow .ql-toolbar button.ql-active .ql-stroke {
+  stroke: var(--p-primary-color);
+}
+
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill {
+  fill: var(--p-primary-color);
+}
+
+/* Rendered comment HTML in the activity feed. */
+.comment-prose {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.comment-prose > *:first-child {
+  margin-top: 0;
+}
+
+.comment-prose > *:last-child {
+  margin-bottom: 0;
+}
+
+.comment-prose p {
+  margin: 0 0 0.25rem;
+}
+
+.comment-prose ul,
+.comment-prose ol {
+  margin: 0 0 0.25rem;
+  padding-left: 1.25rem;
+}
+
+.comment-prose ul {
+  list-style: disc;
+}
+
+.comment-prose ol {
+  list-style: decimal;
+}
+
+.comment-prose a {
+  color: var(--p-primary-color);
+  text-decoration: underline;
+}
+
+.comment-prose blockquote {
+  margin: 0 0 0.25rem;
+  border-left: 3px solid var(--p-content-border-color);
+  padding-left: 0.75rem;
+  color: var(--p-text-muted-color);
+}
+
+.comment-prose pre,
+.comment-prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+}
+
+.comment-prose pre {
+  margin: 0 0 0.25rem;
+  overflow-x: auto;
+  border-radius: 0.375rem;
+  background: var(--p-surface-100);
+  padding: 0.5rem 0.75rem;
+}
+
+:root[data-theme='dark'] .comment-prose pre {
+  background: var(--p-surface-800);
+}

@@ -11,13 +11,6 @@
 @import '@fontsource-variable/inter/index.css';
 @import '@fontsource-variable/jetbrains-mono/index.css';
 
-/*
- * Brand typography tokens. Inter drives every sans-serif surface (weights
- * 400/500/600/700) and JetBrains Mono every monospace surface (400/500/600);
- * both ship as variable fonts, so the whole weight range resolves from one file
- * each. Overriding Tailwind's `--font-sans` / `--font-mono` retargets the base
- * body font and every `font-sans` / `font-mono` utility at once.
- */
 @theme {
   --font-sans:
     'Inter Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',

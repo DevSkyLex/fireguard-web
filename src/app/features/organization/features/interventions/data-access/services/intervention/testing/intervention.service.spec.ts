@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type {
+  InterventionActivityOutput,
   InterventionOutput,
   InterventionWorkItemOutput,
   PublicationOutput,
@@ -202,5 +203,96 @@ describe('InterventionService', () => {
       'due-only',
       'shared',
     ]);
+  });
+
+  it('forwards the name filter to the collection endpoint', () => {
+    service.list('organization-1', { name: 'Annual' }).subscribe();
+
+    const request = httpMock.expectOne(
+      (req) =>
+        req.url === `${mockEnv.apiUrl}/api/interventions` && req.params.get('name') === 'Annual',
+    );
+    request.flush({
+      '@id': '/api/interventions',
+      '@type': 'Collection',
+      totalItems: 0,
+      member: [],
+    });
+  });
+
+  it('sends description and labelIds on create when provided', () => {
+    service
+      .create('organization-1', 'Site visit', {
+        description: 'Quarterly check',
+        labelIds: ['label-1', 'label-2'],
+      })
+      .subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/interventions`);
+    expect(request.request.body).toMatchObject({
+      description: 'Quarterly check',
+      labelIds: ['label-1', 'label-2'],
+    });
+    request.flush({});
+  });
+
+  it('sends labelIds on update only when explicitly provided (merge-patch replace semantics)', () => {
+    service.update('intervention-1', { name: 'Renamed' }, 7).subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/interventions/intervention-1`);
+    expect(request.request.body).not.toHaveProperty('labelIds');
+    request.flush({});
+  });
+
+  it('replaces the whole label set when labelIds is provided on update', () => {
+    service.update('intervention-1', { labelIds: ['label-3'] }, 7).subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/interventions/intervention-1`);
+    expect(request.request.body).toEqual({ labelIds: ['label-3'] });
+    request.flush({});
+  });
+
+  it('loads one page of the activity timeline', () => {
+    const activity = {
+      id: 'activity-1',
+      intervention: '/api/interventions/intervention-1',
+      kind: 'comment',
+      event: 'comment',
+      actor: '/api/organizations/org-1/members/member-1',
+      body: 'Looks good',
+      payload: null,
+      createdAt: '2026-07-01T00:00:00.000Z',
+    } as InterventionActivityOutput;
+    let result: InterventionActivityOutput[] = [];
+
+    service.listActivities('intervention-1', 2).subscribe((collection) => {
+      result = [...collection.member];
+    });
+
+    const request = httpMock.expectOne(
+      (req) =>
+        req.url === `${mockEnv.apiUrl}/api/interventions/intervention-1/activities` &&
+        req.params.get('page') === '2',
+    );
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      '@id': '/api/interventions/intervention-1/activities',
+      '@type': 'Collection',
+      totalItems: 1,
+      member: [activity],
+    });
+
+    expect(result).toEqual([activity]);
+  });
+
+  it('posts a comment onto the activity timeline', () => {
+    service.addComment('intervention-1', 'Looks good').subscribe();
+
+    const request = httpMock.expectOne(
+      `${mockEnv.apiUrl}/api/interventions/intervention-1/comments`,
+    );
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ body: 'Looks good' });
+    request.flush({});
   });
 });

@@ -10,6 +10,13 @@ import type { InterventionType } from './intervention-type.type';
  * the status/type/due-date filters and column sort directions.
  */
 export type InterventionListOptions = PaginationOptions & {
+  /**
+   * Case-insensitive partial match against the intervention name.
+   *
+   * @type {string}
+   */
+  readonly name?: string;
+
   /** @type {InterventionStatus} */
   readonly status?: InterventionStatus;
 

@@ -18,6 +18,7 @@ import {
 import { OrganizationMemberService } from '@features/organization/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
+import { InterventionLabelService } from '@features/organization/features/interventions/data-access';
 import type {
   MemberSelectOption,
   SelectOption,
@@ -31,6 +32,7 @@ const INITIAL_STATE: InterventionPlanningOptionsState = {
   targets: [],
   equipmentTypes: [],
   members: [],
+  labels: [],
   loadCallState: idleCallState(),
 };
 
@@ -141,6 +143,7 @@ export const InterventionPlanningOptionsStore = signalStore(
       facilities = inject<FacilityService>(FacilityService),
       equipment = inject<EquipmentService>(EquipmentService),
       members = inject<OrganizationMemberService>(OrganizationMemberService),
+      labelService = inject<InterventionLabelService>(InterventionLabelService),
     ) => ({
       /**
        * Method loadCreationOptions
@@ -163,6 +166,7 @@ export const InterventionPlanningOptionsStore = signalStore(
               targets: [],
               equipmentTypes: [],
               members: [],
+              labels: [],
               loadCallState: pendingCallState(),
             }),
           ),
@@ -206,6 +210,7 @@ export const InterventionPlanningOptionsStore = signalStore(
                 targets: [],
                 equipmentTypes: [],
                 members: [],
+                labels: [],
                 loadCallState: errorCallState(storeError),
               });
               dispatcher.dispatch(
@@ -222,11 +227,12 @@ export const InterventionPlanningOptionsStore = signalStore(
        * @method loadWorkspaceOptions
        *
        * @description
-       * Loads site, target (facilities + equipment) and member options for
-       * the intervention workspace forms. Resets all options before fetching.
+       * Loads site, target (facilities + equipment), member and label options
+       * for the intervention workspace forms. Resets all options before
+       * fetching. Labels feed the detail page's sidebar label editor.
        *
        * @access public
-       * @since 1.0.0
+       * @since 1.1.0
        *
        * @type {RxMethod<string | null>}
        */
@@ -238,6 +244,7 @@ export const InterventionPlanningOptionsStore = signalStore(
               targets: [],
               equipmentTypes: [],
               members: [],
+              labels: [],
               loadCallState: pendingCallState(),
             }),
           ),
@@ -266,6 +273,7 @@ export const InterventionPlanningOptionsStore = signalStore(
                 page: 1,
                 itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
               }),
+              labels: labelService.list(`/api/organizations/${organizationId}`),
             });
           }),
           tapResponse({
@@ -296,6 +304,7 @@ export const InterventionPlanningOptionsStore = signalStore(
                 members: result.members.member.map((member) =>
                   memberOption(member, result.organizationId),
                 ),
+                labels: result.labels.member,
                 loadCallState: successCallState(null),
               });
             },
@@ -306,6 +315,7 @@ export const InterventionPlanningOptionsStore = signalStore(
                 targets: [],
                 equipmentTypes: [],
                 members: [],
+                labels: [],
                 loadCallState: errorCallState(storeError),
               });
               dispatcher.dispatch(

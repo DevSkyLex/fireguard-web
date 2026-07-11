@@ -33,6 +33,8 @@ export interface InterventionOutboxPayloadMap {
     readonly plannedStartAt: string | null;
     readonly dueAt: string | null;
     readonly reviewNote: string | null;
+    readonly description: string | null;
+    readonly labelIds: readonly string[];
   }>;
   readonly 'work-item.create': CreateInterventionWorkItemInput;
   readonly 'work-item.update': UpdateInterventionWorkItemInput & {

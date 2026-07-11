@@ -47,6 +47,20 @@ export interface InterventionWorkItemStatusCommand extends InterventionWorkItemS
 }
 
 /**
+ * Interface InterventionCommentAddCommand
+ * @interface InterventionCommentAddCommand
+ *
+ * @description
+ * Command used to post a comment onto an intervention's activity timeline.
+ *
+ * @since 1.2.0
+ */
+export interface InterventionCommentAddCommand {
+  readonly interventionId: string;
+  readonly body: string;
+}
+
+/**
  * Interface InterventionWorkItemDeleteCommand
  * @interface InterventionWorkItemDeleteCommand
  *

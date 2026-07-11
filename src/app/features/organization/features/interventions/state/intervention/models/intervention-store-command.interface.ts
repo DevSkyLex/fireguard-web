@@ -1,6 +1,7 @@
 import type {
   InterventionListOptions,
   InterventionPriority,
+  InterventionStatus,
   InterventionType,
 } from '@features/organization/features/interventions/models';
 
@@ -31,4 +32,16 @@ export interface InterventionCreateCommand {
   readonly priority?: InterventionPriority;
   readonly plannedStartAt?: Date;
   readonly dueAt?: Date;
+}
+
+/**
+ * Command applying a single status transition to a cached intervention entity.
+ * Carries the revision required for the optimistic-concurrency `If-Match`
+ * header; the store patches the entity optimistically and rolls back on
+ * failure.
+ */
+export interface InterventionTransitionCommand {
+  readonly id: string;
+  readonly status: InterventionStatus;
+  readonly revision: number;
 }

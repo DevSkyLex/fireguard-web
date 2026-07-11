@@ -8,4 +8,6 @@ export interface InterventionPlanningFormValues {
   readonly priority: InterventionPriority;
   readonly plannedStartAt: Date | null;
   readonly dueAt: Date | null;
+  /** Free-text description; empty string is normalized to `null` on submit. */
+  readonly description: string;
 }

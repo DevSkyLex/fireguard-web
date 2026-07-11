@@ -1,9 +1,19 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, EMPTY, forkJoin, from, map, pipe, switchMap, tap, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
+import {
+  errorCallState,
+  errorFeedback,
+  idleCallState,
+  pendingCallState,
+  successCallState,
+  toStoreError,
+  toStoreFailureEventPayload,
+} from '@core/request-state';
 import {
   InterventionOfflineService,
   InterventionService,
@@ -14,7 +24,9 @@ import type {
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
 import { InterventionWorkspaceOptimisticService } from '@features/organization/features/interventions/services/intervention-workspace-optimistic';
+import { interventionWorkspaceStoreEvents } from './events';
 import type {
+  InterventionCommentAddCommand,
   InterventionDetailsUpdateCommand,
   InterventionWorkItemCreateCommand,
   InterventionWorkItemDeleteCommand,
@@ -42,6 +54,8 @@ const INITIAL_STATE: InterventionWorkspaceState = {
   loading: false,
   saving: false,
   error: null,
+  activities: [],
+  activityCallState: idleCallState(),
 };
 
 /**
@@ -117,6 +131,7 @@ export const InterventionWorkspaceStore = signalStore(
       optimistic = inject<InterventionWorkspaceOptimisticService>(
         InterventionWorkspaceOptimisticService,
       ),
+      dispatcher = inject<Dispatcher>(Dispatcher),
     ) => {
       const load = rxMethod<string>(
         pipe(
@@ -178,8 +193,111 @@ export const InterventionWorkspaceStore = signalStore(
         ),
       );
 
+      /**
+       * Method loadActivities
+       * @method loadActivities
+       *
+       * @description
+       * Loads the intervention's activity timeline. On a network failure
+       * while an in-memory snapshot already exists (the tab was opened
+       * before going offline), keeps that snapshot and reports success
+       * instead of surfacing a transient offline error; otherwise the error
+       * is normalized into `activityCallState`.
+       *
+       * ⚠️ Zoneless: this method reads and writes `activityCallState`. Never
+       * call it from inside a tracked `effect()` without `untracked()`.
+       *
+       * @access public
+       * @since 1.2.0
+       *
+       * @type {RxMethod<string>}
+       */
+      const loadActivities = rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { activityCallState: pendingCallState() })),
+          switchMap((interventionId) =>
+            service.listActivities(interventionId).pipe(
+              tapResponse({
+                next: (response) =>
+                  patchState(store, {
+                    activities: response.member,
+                    activityCallState: successCallState(null),
+                  }),
+                error: (error: unknown) => {
+                  if (connectivity.isNetworkFailure(error) && store.activities().length > 0) {
+                    patchState(store, { activityCallState: successCallState(null) });
+                    return;
+                  }
+                  patchState(store, { activityCallState: errorCallState(toStoreError(error)) });
+                },
+              }),
+            ),
+          ),
+        ),
+      );
+
+      /**
+       * Method addComment
+       * @method addComment
+       *
+       * @description
+       * Posts a comment and appends the server-returned activity entry to the
+       * local timeline on success. Offline calls are refused up front (the
+       * page is expected to disable the composer while offline) and comments
+       * are never queued to the outbox in this version. On any failure a
+       * `commentAddFailed` event is dispatched so the app-wide feedback
+       * listener surfaces a toast; the timeline is left untouched.
+       *
+       * @access public
+       * @since 1.2.0
+       *
+       * @type {RxMethod<InterventionCommentAddCommand>}
+       */
+      const addComment = rxMethod<InterventionCommentAddCommand>(
+        pipe(
+          tap(() => patchState(store, { saving: true })),
+          switchMap(({ interventionId, body }) => {
+            if (connectivity.isOffline()) {
+              patchState(store, { saving: false });
+              dispatcher.dispatch(
+                interventionWorkspaceStoreEvents.commentAddFailed(
+                  errorFeedback(
+                    $localize`:@@intervention.workspace.commentOffline:Comments can't be posted while offline.`,
+                  ),
+                ),
+              );
+              return EMPTY;
+            }
+
+            return service.addComment(interventionId, body).pipe(
+              tapResponse({
+                next: (activity) =>
+                  patchState(store, {
+                    activities: [...store.activities(), activity],
+                    saving: false,
+                  }),
+                error: (error: unknown) => {
+                  patchState(store, { saving: false });
+                  const storeError = toStoreError(error);
+                  dispatcher.dispatch(
+                    interventionWorkspaceStoreEvents.commentAddFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        $localize`:@@intervention.workspace.commentAddFailed:The comment could not be posted.`,
+                      ),
+                    ),
+                  );
+                },
+              }),
+            );
+          }),
+        ),
+      );
+
       return {
         load,
+        loadActivities,
+        addComment,
 
         transition: rxMethod<InterventionTransitionRequest>(
           pipe(

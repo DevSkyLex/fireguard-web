@@ -1,3 +1,4 @@
+export { interventionLifecycleProgress } from './intervention-progress.utils';
 export {
   allowedTransitions,
   canTransition,

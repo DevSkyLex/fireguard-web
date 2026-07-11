@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
@@ -19,6 +19,7 @@ describe('InterventionStore', () => {
   let mockInterventionService: {
     list: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
   };
   let dispatch: ReturnType<typeof vi.fn>;
 
@@ -26,6 +27,7 @@ describe('InterventionStore', () => {
     mockInterventionService = {
       list: vi.fn().mockReturnValue(of(collection)),
       create: vi.fn().mockReturnValue(of(intervention)),
+      update: vi.fn(),
     };
     dispatch = vi.fn();
 
@@ -43,11 +45,47 @@ describe('InterventionStore', () => {
   it('should load interventions for an organization', () => {
     store.load({ organizationId: 'org-1' });
 
-    expect(mockInterventionService.list).toHaveBeenCalledWith('org-1', undefined);
+    expect(mockInterventionService.list).toHaveBeenCalledWith('org-1', {
+      page: 1,
+      itemsPerPage: 100,
+    });
     expect(store.interventionList()).toEqual([intervention]);
     expect(store.totalInterventions()).toBe(1);
     expect(store.isLoadingInterventions()).toBe(false);
     expect(store.isEmpty()).toBe(false);
+    expect(store.isListCapped()).toBe(false);
+  });
+
+  it('should accumulate up to 500 interventions across 100-item pages and flag the cap', () => {
+    const pageOf = (page: number, totalItems: number): HydraCollection<InterventionOutput> => ({
+      '@id': '/api/interventions',
+      '@type': 'Collection',
+      totalItems,
+      member: Array.from(
+        { length: 100 },
+        (_, index) => ({ id: `i-${(page - 1) * 100 + index}` }) as InterventionOutput,
+      ),
+    });
+    mockInterventionService.list.mockImplementation(
+      (_organizationId: string, options: { page: number }) => of(pageOf(options.page, 650)),
+    );
+
+    store.load({ organizationId: 'org-1' });
+
+    expect(mockInterventionService.list).toHaveBeenCalledTimes(5);
+    expect(store.interventionList()).toHaveLength(500);
+    expect(store.totalInterventions()).toBe(650);
+    expect(store.isListCapped()).toBe(true);
+  });
+
+  it('should forward the name filter while paginating', () => {
+    store.load({ organizationId: 'org-1', options: { name: 'roof' } });
+
+    expect(mockInterventionService.list).toHaveBeenCalledWith('org-1', {
+      name: 'roof',
+      page: 1,
+      itemsPerPage: 100,
+    });
   });
 
   it('should create an intervention and expose it for navigation handoff', () => {
@@ -137,5 +175,76 @@ describe('InterventionStore', () => {
     expect(store.createCallState().status).toBe('error');
     expect(store.createdIntervention()).toBeNull();
     expect(dispatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('should expose the entity order as orderedIds', () => {
+    store.load({ organizationId: 'org-1' });
+
+    expect(store.orderedIds()).toEqual(['intervention-1']);
+  });
+
+  describe('transition', () => {
+    const draftIntervention = {
+      id: 'intervention-1',
+      name: 'Site visit',
+      status: 'draft',
+      revision: 1,
+    } as InterventionOutput;
+
+    beforeEach(() => {
+      mockInterventionService.list.mockReturnValue(
+        of({
+          '@id': '/api/interventions',
+          '@type': 'Collection',
+          totalItems: 1,
+          member: [draftIntervention],
+        }),
+      );
+      store.load({ organizationId: 'org-1' });
+    });
+
+    it('should optimistically patch the entity status before the request resolves', () => {
+      // Never resolves, so the assertion observes the state right after the
+      // optimistic patch and before any server response could apply.
+      mockInterventionService.update.mockReturnValue(NEVER);
+
+      store.transition({ id: 'intervention-1', status: 'planned', revision: 1 });
+
+      expect(store.interventionList()[0]).toMatchObject({ status: 'planned' });
+      expect(store.transitionCallState().status).toBe('pending');
+      expect(mockInterventionService.update).toHaveBeenCalledWith(
+        'intervention-1',
+        { status: 'planned' },
+        1,
+      );
+    });
+
+    it('should merge the fresh server entity on success', () => {
+      const updated = {
+        ...draftIntervention,
+        status: 'planned',
+        revision: 2,
+        allowedTransitions: ['in_progress'],
+      } as InterventionOutput;
+      mockInterventionService.update.mockReturnValue(of(updated));
+
+      store.transition({ id: 'intervention-1', status: 'planned', revision: 1 });
+
+      expect(store.interventionList()[0]).toEqual(updated);
+      expect(store.transitionCallState().status).toBe('success');
+    });
+
+    it('should roll back the optimistic patch and dispatch a failure event on error', () => {
+      mockInterventionService.update.mockReturnValue(throwError(() => new Error('conflict')));
+
+      store.transition({ id: 'intervention-1', status: 'planned', revision: 1 });
+
+      expect(store.interventionList()[0]).toEqual(draftIntervention);
+      expect(store.transitionCallState().status).toBe('error');
+      expect(dispatch).toHaveBeenCalledTimes(1);
+      expect(dispatch.mock.calls[0][0]).toMatchObject({
+        type: '[Intervention Store] transitionFailed',
+      });
+    });
   });
 });

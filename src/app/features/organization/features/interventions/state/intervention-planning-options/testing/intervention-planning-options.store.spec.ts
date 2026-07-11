@@ -4,7 +4,10 @@ import { of, throwError } from 'rxjs';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionLabelService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import { InterventionPlanningOptionsStore } from '../intervention-planning-options.store';
 
 describe('InterventionPlanningOptionsStore', () => {
@@ -12,6 +15,7 @@ describe('InterventionPlanningOptionsStore', () => {
   let facilities: { list: ReturnType<typeof vi.fn> };
   let equipment: { list: ReturnType<typeof vi.fn>; listTypes: ReturnType<typeof vi.fn> };
   let members: { list: ReturnType<typeof vi.fn> };
+  let labels: { list: ReturnType<typeof vi.fn> };
   let interventions: Record<string, never>;
   let dispatch: ReturnType<typeof vi.fn>;
 
@@ -54,6 +58,14 @@ describe('InterventionPlanningOptionsStore', () => {
         }),
       ),
     };
+    labels = {
+      list: vi.fn().mockReturnValue(
+        of({
+          member: [{ id: 'label-1', name: 'Compliance', color: '#ff0000' }],
+          totalItems: 1,
+        }),
+      ),
+    };
     interventions = {};
 
     TestBed.configureTestingModule({
@@ -63,6 +75,7 @@ describe('InterventionPlanningOptionsStore', () => {
         { provide: FacilityService, useValue: facilities },
         { provide: EquipmentService, useValue: equipment },
         { provide: OrganizationMemberService, useValue: members },
+        { provide: InterventionLabelService, useValue: labels },
         { provide: InterventionService, useValue: interventions },
       ],
     });
@@ -112,6 +125,8 @@ describe('InterventionPlanningOptionsStore', () => {
     expect(store.equipmentTypes()).toEqual([
       { label: 'Fire extinguisher', value: 'fire_extinguisher' },
     ]);
+    expect(labels.list).toHaveBeenCalledWith('/api/organizations/org-1');
+    expect(store.labels()).toEqual([{ id: 'label-1', name: 'Compliance', color: '#ff0000' }]);
   });
 
   it('surfaces an error and clears options when a planning load fails', async () => {

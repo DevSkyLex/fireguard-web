@@ -1,112 +1,270 @@
-<div id="interventions" class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
-  <header class="flex flex-wrap items-start justify-between gap-3">
-    <div class="min-w-0">
-      <h1
-        i18n="@@intervention.dashboard.title"
-        class="text-xl font-semibold text-surface-950 dark:text-surface-0"
-      >
-        Interventions
-      </h1>
-      <p
-        i18n="@@intervention.dashboard.subtitle"
-        class="mt-1 text-sm text-surface-500 dark:text-surface-400"
-      >
-        Plan field work, track progress and publish when interventions are ready.
-      </p>
-    </div>
+<div
+  id="interventions"
+  class="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-6 overflow-y-auto"
+>
+  <header class="flex flex-wrap items-center justify-between gap-3">
+    <p class="text-sm text-surface-500 dark:text-surface-400">
+      <ng-container i18n="@@intervention.list.count">{loadedCount(), plural,
+        =1 {1 intervention loaded}
+        other {{{ loadedCount() }} interventions loaded}
+      }</ng-container>
+    </p>
 
-    <p-button
-      i18n-label="@@intervention.newButton"
-      label="New intervention"
-      icon="pi pi-plus"
-      severity="primary"
-      size="small"
-      (onClick)="openCreate()"
-    />
+    <div class="flex flex-wrap items-center gap-2">
+      <p-iconfield>
+        <p-inputicon class="pi pi-search" />
+        <input
+          pInputText
+          type="text"
+          pSize="small"
+          i18n-placeholder="@@intervention.list.searchPlaceholder"
+          placeholder="Search interventions..."
+          [formControl]="searchControl"
+          class="w-[210px]"
+        />
+      </p-iconfield>
+
+      <p-selectbutton
+        [options]="viewOptions"
+        [ngModel]="view()"
+        (onChange)="onViewChange($event)"
+        optionValue="value"
+        optionLabel="label"
+        [allowEmpty]="false"
+        size="small"
+      >
+        <ng-template #item let-item>
+          <i [class]="item.icon" [attr.aria-label]="item.label"></i>
+        </ng-template>
+      </p-selectbutton>
+
+      <p-button
+        i18n-label="@@intervention.list.newButton"
+        label="New"
+        icon="pi pi-plus"
+        severity="primary"
+        size="small"
+        (onClick)="openCreate()"
+      />
+    </div>
   </header>
 
-  <section class="grid grid-cols-2 gap-4 xl:grid-cols-4">
-    <app-metric-card
-      i18n-title="@@intervention.metric.inProgress.title"
-      title="In progress"
-      i18n-description="@@intervention.metric.inProgress.description"
-      description="Active field work"
-      icon="pi pi-bolt"
-      [value]="summaryStore.inProgressCount()"
-      [loading]="summaryStore.loading()"
-    />
-    <app-metric-card
-      i18n-title="@@intervention.metric.planned.title"
-      title="Planned"
-      i18n-description="@@intervention.metric.planned.description"
-      description="Scheduled, not started"
-      icon="pi pi-calendar"
-      [value]="summaryStore.plannedCount()"
-      [loading]="summaryStore.loading()"
-    />
-    <app-metric-card
-      i18n-title="@@intervention.metric.overdue.title"
-      title="Overdue"
-      i18n-description="@@intervention.metric.overdue.description"
-      description="Past their due date"
-      icon="pi pi-exclamation-triangle"
-      [value]="summaryStore.overdueCount()"
-      [loading]="summaryStore.loading()"
-    />
-    <app-metric-card
-      i18n-title="@@intervention.metric.blocked.title"
-      title="Blocked"
-      i18n-description="@@intervention.metric.blocked.description"
-      description="Have publication blockers"
-      icon="pi pi-ban"
-      [value]="summaryStore.blockedCount()"
-      [loading]="summaryStore.loading()"
-    />
-  </section>
+  @if (store.listError()) {
+    <p-message severity="error" class="block">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span class="flex items-center gap-2">
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+          <span i18n="@@intervention.list.errorText"
+            >The interventions could not be loaded. Check your connection and try again.</span
+          >
+        </span>
+      </div>
+    </p-message>
+  } @else if (store.isListCapped()) {
+    <p-message severity="info" class="block">
+      <span i18n="@@intervention.list.cappedNotice"
+        >Showing the 500 most recent interventions — refine your search to narrow results.</span
+      >
+    </p-message>
+  }
 
-  <section class="flex flex-col gap-3">
-    <h2
-      i18n="@@intervention.dashboard.listTitle"
-      class="font-semibold text-surface-950 dark:text-surface-0"
-    >
-      All interventions
-    </h2>
-    <app-intervention-table
-      [interventions]="store.interventionList()"
-      [total]="store.totalInterventions()"
-      [loading]="store.isLoadingInterventions()"
-      [empty]="store.isEmpty()"
-      [error]="store.listError()"
-      [initialPage]="page()"
-      [showHeading]="false"
-      [showCreate]="false"
-      (load)="onLoad($event)"
-      (pageChange)="onPageChange($event)"
-      (createRequested)="openCreate()"
-      (view)="onView($event)"
-    />
-  </section>
-
-  <section class="flex flex-col gap-3">
-    <h2
-      i18n="@@intervention.dashboard.scheduleTitle"
-      class="font-semibold text-surface-950 dark:text-surface-0"
-    >
-      Schedule
-    </h2>
-    <div class="flex h-[38rem] flex-col">
+  @if (view() === 'calendar') {
+    <div class="flex h-[38rem] min-h-0 flex-1 flex-col">
       <app-intervention-calendar
         class="flex min-h-0 flex-1 flex-col"
         [interventions]="calendarStore.interventions()"
         [loading]="calendarStore.loading()"
-        [currentMemberIri]="calendarStore.currentMemberIri()"
+        [currentMemberIri]="currentMemberIri()"
         [showCreate]="false"
         (selectIntervention)="onView($event)"
         (selectDay)="openCreateOnDay($event)"
         (focusedDateChange)="onCalendarFocusChange($event)"
       />
     </div>
-  </section>
+  } @else if (store.isLoadingInterventions() && store.isEmpty()) {
+    <div class="flex flex-col gap-6" aria-hidden="true">
+      @for (group of [1, 2]; track group) {
+        <div class="flex flex-col gap-2">
+          <p-skeleton width="9rem" height="1.75rem" borderRadius="0.5rem" />
+          @for (row of [1, 2, 3]; track row) {
+            <div
+              class="flex items-center gap-3 border-b border-surface-100 py-2.5 dark:border-surface-800/60"
+            >
+              <p-skeleton shape="circle" size="0.875rem" />
+              <p-skeleton width="1.25rem" height="1rem" />
+              <p-skeleton width="3rem" height="0.75rem" />
+              <p-skeleton width="35%" height="0.9rem" />
+              <p-skeleton width="4rem" height="0.75rem" styleClass="ml-auto" />
+              <p-skeleton shape="circle" size="1.25rem" />
+            </div>
+          }
+        </div>
+      }
+    </div>
+  } @else if (store.isEmpty() && !store.isLoadingInterventions()) {
+    <app-empty-state
+      icon="pi-bolt"
+      i18n-title="@@intervention.list.emptyTitle"
+      title="No interventions yet"
+      i18n-description="@@intervention.list.emptyDescription"
+      description="Create your first intervention to start planning field work."
+    >
+      <p-button
+        i18n-label="@@intervention.list.newButton"
+        label="New"
+        icon="pi pi-plus"
+        severity="primary"
+        size="small"
+        (onClick)="openCreate()"
+      />
+    </app-empty-state>
+  } @else if (view() === 'list') {
+    <app-grouped-list
+      class="min-h-0 flex-1 overflow-y-auto"
+      [groups]="listGroups()"
+      [itemId]="itemId"
+      [collapsible]="true"
+      [initiallyCollapsed]="listInitiallyCollapsed"
+      (rowClicked)="onView($event.intervention)"
+    >
+      <ng-template appGroupedListHeader let-group let-count="count">
+        <div class="flex items-center gap-2">
+          <app-intervention-tag kind="status" [value]="group.id" />
+          <span class="text-xs text-surface-400">{{ count }}</span>
+        </div>
+      </ng-template>
+
+      <ng-template appGroupedListRow let-item>
+        @let vm = asItem(item);
+        <div class="flex items-center gap-3">
+          <app-progress-ring [value]="vm.progress" [size]="14" [ariaLabel]="vm.progressLabel" />
+          <app-intervention-priority-icon [priority]="vm.intervention.priority" />
+          <span class="w-16 shrink-0 font-mono text-xs text-surface-400 tabular-nums"
+            >FG-{{ vm.intervention.number }}</span
+          >
+          <span
+            class="min-w-0 flex-1 truncate text-sm font-medium text-surface-900 dark:text-surface-100"
+            >{{ vm.intervention.name }}</span
+          >
+
+          <span class="hidden shrink-0 items-center gap-1 text-xs text-surface-500 sm:flex">
+            <i class="pi pi-building text-[0.65rem]" aria-hidden="true"></i
+            >{{ vm.intervention.facilitiesCount }}
+          </span>
+          <span class="hidden shrink-0 items-center gap-1 text-xs text-surface-500 sm:flex">
+            <i class="pi pi-box text-[0.65rem]" aria-hidden="true"></i
+            >{{ vm.intervention.equipmentCount }}
+          </span>
+
+          @if (vm.intervention.dueAt) {
+            <span
+              class="hidden shrink-0 text-xs sm:block"
+              [class.text-red-600]="vm.isOverdue"
+              [class.dark:text-red-400]="vm.isOverdue"
+              [class.text-surface-500]="!vm.isOverdue"
+              [class.dark:text-surface-400]="!vm.isOverdue"
+              >{{ vm.intervention.dueAt | date: 'mediumDate' }}</span
+            >
+          }
+
+          <div class="hidden max-w-40 flex-wrap items-center gap-1 md:flex">
+            @for (label of vm.intervention.labels.slice(0, 3); track label.id) {
+              <app-intervention-label-chip [label]="label" />
+            }
+            @if (vm.intervention.labels.length > 3) {
+              <span class="text-xs text-surface-400">+{{ vm.intervention.labels.length - 3 }}</span>
+            }
+          </div>
+
+          <app-avatar-stack class="shrink-0" [people]="vm.people" [max]="3" />
+        </div>
+      </ng-template>
+    </app-grouped-list>
+  } @else {
+    <div class="flex items-center justify-end">
+      <p-button
+        [text]="true"
+        severity="secondary"
+        size="small"
+        [icon]="showAbandoned() ? 'pi pi-eye-slash' : 'pi pi-eye'"
+        [label]="showAbandoned() ? hideAbandonedLabel : showAbandonedLabel"
+        (onClick)="showAbandoned.set(!showAbandoned())"
+      />
+    </div>
+
+    <app-board
+      class="min-h-0 flex-1"
+      [columns]="boardColumns()"
+      [itemId]="itemId"
+      [canDrop]="canDropCard"
+      [dragDisabled]="dragDisabled()"
+      (itemDropped)="onItemDropped($event)"
+    >
+      <ng-template appBoardColumnHeader let-column let-count="count">
+        <div
+          class="flex items-center justify-between text-sm font-medium text-surface-700 dark:text-surface-200"
+        >
+          <span>{{ boardColumnLabel(column.id) }}</span>
+          <span class="text-xs text-surface-400">{{ count }}</span>
+        </div>
+      </ng-template>
+
+      <ng-template appBoardCard let-item>
+        @let vm = asItem(item);
+        <div
+          role="button"
+          tabindex="0"
+          class="flex cursor-pointer flex-col gap-2 rounded-lg p-3 outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+          (click)="onView(vm.intervention)"
+          (keydown.enter)="onView(vm.intervention)"
+          (keydown.space)="onView(vm.intervention); $event.preventDefault()"
+        >
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-mono text-xs text-surface-400 tabular-nums"
+              >FG-{{ vm.intervention.number }}</span
+            >
+            <app-intervention-priority-icon [priority]="vm.intervention.priority" />
+          </div>
+
+          <span class="line-clamp-2 text-sm font-medium text-surface-900 dark:text-surface-100">{{
+            vm.intervention.name
+          }}</span>
+
+          <app-intervention-tag kind="status" [value]="vm.intervention.status" />
+
+          <div class="flex items-center justify-between gap-2">
+            <span class="flex items-center gap-1 text-xs text-surface-500">
+              <i class="pi pi-building text-[0.65rem]" aria-hidden="true"></i
+              >{{ vm.intervention.facilitiesCount }}
+            </span>
+            @if (vm.intervention.dueAt) {
+              <span
+                class="text-xs"
+                [class.text-red-600]="vm.isOverdue"
+                [class.dark:text-red-400]="vm.isOverdue"
+                [class.text-surface-500]="!vm.isOverdue"
+                [class.dark:text-surface-400]="!vm.isOverdue"
+                >{{ vm.intervention.dueAt | date: 'shortDate' }}</span
+              >
+            }
+          </div>
+
+          <div class="flex items-center justify-between gap-2">
+            <app-avatar-stack [people]="vm.people" [max]="3" />
+            <div class="flex items-center gap-1">
+              @for (label of vm.intervention.labels.slice(0, 3); track label.id) {
+                <span
+                  class="size-2 shrink-0 rounded-full"
+                  [style.background]="label.color"
+                  [attr.aria-label]="label.name"
+                ></span>
+              }
+            </div>
+          </div>
+        </div>
+      </ng-template>
+    </app-board>
+  }
 </div>
 
 <app-intervention-create-drawer

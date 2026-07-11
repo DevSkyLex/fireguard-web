@@ -1,0 +1,26 @@
+<p-avatar-group>
+  @for (person of visiblePeople(); track person.label + (person.image ?? '')) {
+    <p-avatar
+      [image]="person.image ?? undefined"
+      [label]="person.image ? undefined : initialsFor(person.label)"
+      shape="circle"
+      [size]="avatarSize()"
+      [pt]="avatarPt()"
+      [ariaLabel]="person.tooltip ?? person.label"
+      [pTooltip]="person.tooltip ?? person.label"
+      tooltipPosition="top"
+    />
+  }
+
+  @if (overflowPeople().length > 0) {
+    <p-avatar
+      [label]="'+' + overflowPeople().length"
+      shape="circle"
+      [size]="avatarSize()"
+      [pt]="avatarPt()"
+      [ariaLabel]="overflowTooltip()"
+      [pTooltip]="overflowTooltip()"
+      tooltipPosition="top"
+    />
+  }
+</p-avatar-group>

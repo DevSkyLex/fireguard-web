@@ -1,31 +1,77 @@
-import { CUSTOM_ELEMENTS_SCHEMA, signal, type WritableSignal } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import type {
-  InterventionListOptions,
-  InterventionOutput,
-} from '@features/organization/features/interventions/models';
+import type { SelectButtonChangeEvent } from 'primeng/selectbutton';
+import { OrganizationPermissionService } from '@features/organization/access';
+import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { InterventionCalendarStore } from '@features/organization/features/interventions/state/intervention-calendar';
 import { InterventionPlanningOptionsStore } from '@features/organization/features/interventions/state/intervention-planning-options';
-import { InterventionSummaryStore } from '@features/organization/features/interventions/state/intervention-summary';
 import type { InterventionCreateFormValues } from '@features/organization/features/interventions/ui/forms';
 import type { OrganizationOutput } from '@features/organization/models';
-import { ActiveOrganizationStore } from '@features/organization/state';
+import {
+  ActiveOrganizationStore,
+  OrganizationMemberAccessStore,
+} from '@features/organization/state';
 import { InterventionsPage } from '../interventions.component';
 
 const MOCK_ORG = { id: 'org-1', name: 'Acme', slug: 'acme' } as OrganizationOutput;
 const created = { id: 'i-9' } as InterventionOutput;
 
+type ItemViewModel = { intervention: InterventionOutput };
+
 type InterventionsPageHarness = {
+  view(): 'list' | 'board' | 'calendar';
+  q(): string;
+  onViewChange(event: SelectButtonChangeEvent): void;
   onView(intervention: InterventionOutput): void;
-  onLoad(options: InterventionListOptions): void;
+  onItemDropped(event: { item: ItemViewModel; fromColumnId: string; toColumnId: string }): void;
   openCreate(): void;
   openCreateOnDay(day: Date): void;
   create(values: InterventionCreateFormValues): void;
+  items(): readonly ItemViewModel[];
+  listGroups(): readonly { id: string; items: readonly ItemViewModel[] }[];
+  boardColumns(): readonly { id: string; items: readonly ItemViewModel[] }[];
+  showAbandoned: WritableSignal<boolean>;
+  canDropCard(item: ItemViewModel, fromColumnId: string, toColumnId: string): boolean;
   createDrawerVisible: WritableSignal<boolean>;
   initialPlannedStartAt: WritableSignal<Date | null>;
 };
+
+function intervention(overrides: Partial<InterventionOutput>): InterventionOutput {
+  return {
+    id: 'i-1',
+    organization: '/api/organizations/org-1',
+    number: 1,
+    type: 'inspection_campaign',
+    name: 'Roof check',
+    description: null,
+    status: 'draft',
+    allowedTransitions: ['planned', 'abandoned'],
+    site: null,
+    responsible: null,
+    participants: [],
+    labels: [],
+    priority: 'normal',
+    plannedStartAt: null,
+    dueAt: null,
+    reviewNote: null,
+    revision: 1,
+    facilitiesCount: 0,
+    equipmentCount: 0,
+    inspectionsCount: 0,
+    blockersCount: 0,
+    workItemsCount: 0,
+    completedWorkItemsCount: 0,
+    proposedChangesCount: 0,
+    commentsCount: 0,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+    '@id': '/api/interventions/i-1',
+    '@type': 'Intervention',
+    ...overrides,
+  } as InterventionOutput;
+}
 
 describe('InterventionsPage', () => {
   let store: {
@@ -34,23 +80,16 @@ describe('InterventionsPage', () => {
     isLoadingInterventions: WritableSignal<boolean>;
     isEmpty: WritableSignal<boolean>;
     listError: WritableSignal<unknown>;
+    isListCapped: WritableSignal<boolean>;
     isCreating: WritableSignal<boolean>;
     createdIntervention: WritableSignal<InterventionOutput | null>;
     load: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
+    transition: ReturnType<typeof vi.fn>;
     clearCreatedIntervention: ReturnType<typeof vi.fn>;
   };
   let calendarStore: {
     interventions: WritableSignal<readonly InterventionOutput[]>;
-    currentMemberIri: WritableSignal<string | null>;
-    loading: WritableSignal<boolean>;
-    load: ReturnType<typeof vi.fn>;
-  };
-  let summaryStore: {
-    inProgressCount: WritableSignal<number>;
-    plannedCount: WritableSignal<number>;
-    overdueCount: WritableSignal<number>;
-    blockedCount: WritableSignal<number>;
     loading: WritableSignal<boolean>;
     load: ReturnType<typeof vi.fn>;
   };
@@ -61,6 +100,11 @@ describe('InterventionsPage', () => {
     members: WritableSignal<readonly unknown[]>;
   };
   let activeOrg: { selectedOrganization: WritableSignal<OrganizationOutput | null> };
+  let memberAccess: { profile: WritableSignal<{ id: string } | null> };
+  let permissionService: {
+    hasPermission: ReturnType<typeof vi.fn>;
+    hasAnyPermission: ReturnType<typeof vi.fn>;
+  };
 
   beforeAll(() => {
     Object.defineProperty(window, 'matchMedia', {
@@ -85,23 +129,16 @@ describe('InterventionsPage', () => {
       isLoadingInterventions: signal(false),
       isEmpty: signal(false),
       listError: signal<unknown>(null),
+      isListCapped: signal(false),
       isCreating: signal(false),
       createdIntervention: signal<InterventionOutput | null>(null),
       load: vi.fn(),
       create: vi.fn(),
+      transition: vi.fn(),
       clearCreatedIntervention: vi.fn(),
     };
     calendarStore = {
       interventions: signal<readonly InterventionOutput[]>([]),
-      currentMemberIri: signal<string | null>('/api/organizations/org-1/members/m1'),
-      loading: signal(false),
-      load: vi.fn(),
-    };
-    summaryStore = {
-      inProgressCount: signal(0),
-      plannedCount: signal(0),
-      overdueCount: signal(0),
-      blockedCount: signal(0),
       loading: signal(false),
       load: vi.fn(),
     };
@@ -112,6 +149,11 @@ describe('InterventionsPage', () => {
       members: signal<readonly unknown[]>([]),
     };
     activeOrg = { selectedOrganization: signal<OrganizationOutput | null>(MOCK_ORG) };
+    memberAccess = { profile: signal<{ id: string } | null>({ id: 'm1' }) };
+    permissionService = {
+      hasPermission: vi.fn().mockReturnValue(true),
+      hasAnyPermission: vi.fn().mockReturnValue(true),
+    };
 
     TestBed.configureTestingModule({
       imports: [InterventionsPage],
@@ -119,16 +161,17 @@ describe('InterventionsPage', () => {
         provideRouter([]),
         { provide: ActivatedRoute, useValue: {} },
         { provide: ActiveOrganizationStore, useValue: activeOrg },
+        { provide: OrganizationMemberAccessStore, useValue: memberAccess },
+        { provide: OrganizationPermissionService, useValue: permissionService },
       ],
     }).overrideComponent(InterventionsPage, {
       set: {
         imports: [],
-        schemas: [CUSTOM_ELEMENTS_SCHEMA],
+        schemas: [NO_ERRORS_SCHEMA],
         providers: [
           { provide: InterventionStore, useValue: store },
           { provide: InterventionCalendarStore, useValue: calendarStore },
           { provide: InterventionPlanningOptionsStore, useValue: planningOptions },
-          { provide: InterventionSummaryStore, useValue: summaryStore },
         ],
       },
     });
@@ -144,59 +187,88 @@ describe('InterventionsPage', () => {
     expect(build()).toBeTruthy();
   });
 
-  it('should load the calendar dataset for a bounded window on the active organization', () => {
-    build();
-
-    expect(calendarStore.load).toHaveBeenCalledTimes(1);
-    const request = calendarStore.load.mock.calls[0][0] as {
-      organizationId: string | null;
-      window: { after: Date; before: Date };
-    };
-    expect(request.organizationId).toBe('org-1');
-    expect(request.window.after).toBeInstanceOf(Date);
-    expect(request.window.before).toBeInstanceOf(Date);
-    expect(request.window.after.getTime()).toBeLessThan(request.window.before.getTime());
+  it('should default to the list view', () => {
+    expect(build().view()).toBe('list');
   });
 
-  it('should load the workflow-health metric strip for the active organization', () => {
+  it('should load interventions for the active organization with no search filter', () => {
     build();
 
-    expect(summaryStore.load).toHaveBeenCalledWith('org-1');
+    expect(store.load).toHaveBeenCalledWith({ organizationId: 'org-1', options: undefined });
   });
 
-  it('should forward a lazy-load request to the table store for the active organization', () => {
-    build().onLoad({ page: 2, itemsPerPage: 12 });
+  it('should reload with a name filter when the ?q= input changes', () => {
+    const fixture = TestBed.createComponent(InterventionsPage);
+    fixture.detectChanges();
 
-    expect(store.load).toHaveBeenCalledWith({
+    fixture.componentRef.setInput('q', 'roof');
+    fixture.detectChanges();
+
+    expect(store.load).toHaveBeenLastCalledWith({
       organizationId: 'org-1',
-      options: { page: 2, itemsPerPage: 12 },
+      options: { name: 'roof' },
     });
   });
 
-  it('should not load without an active organization', () => {
-    activeOrg.selectedOrganization.set(null);
+  it('should navigate merging ?view= when switching to board', () => {
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    build().onLoad({ page: 1, itemsPerPage: 12 });
+    build().onViewChange({ value: 'board' } as unknown as SelectButtonChangeEvent);
 
-    expect(store.load).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith([], {
+      relativeTo: expect.anything(),
+      queryParams: { view: 'board' },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   });
 
-  it('should navigate to the intervention detail when an intervention is viewed', () => {
+  it('should omit ?view= when switching back to list (the default)', () => {
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    build().onViewChange({ value: 'list' } as unknown as SelectButtonChangeEvent);
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { view: null } }),
+    );
+  });
+
+  it('should navigate to the intervention detail relative to the current route', () => {
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     build().onView({ id: 'i-1' } as InterventionOutput);
 
-    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'i-1']);
+    expect(navigate).toHaveBeenCalledWith(['i-1'], { relativeTo: expect.anything() });
   });
 
-  it('should lazily load creation options when the drawer opens', () => {
-    build().openCreate();
+  it('should navigate into the workspace when the store publishes the created intervention', () => {
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    expect(planningOptions.loadCreationOptions).toHaveBeenCalledWith('org-1');
+    const fixture = TestBed.createComponent(InterventionsPage);
+    fixture.detectChanges();
+
+    store.createdIntervention.set(created);
+    fixture.detectChanges();
+
+    expect(store.clearCreatedIntervention).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'i-9']);
   });
 
-  it('should pre-fill the planned start and open the drawer when creating from a day', () => {
+  it('should open the drawer without a pre-filled day for the generic action', () => {
+    const harness = build();
+
+    harness.openCreate();
+
+    expect(harness.createDrawerVisible()).toBe(true);
+    expect(harness.initialPlannedStartAt()).toBeNull();
+  });
+
+  it('should pre-fill the planned start when creating from a calendar day', () => {
     const harness = build();
 
     harness.openCreateOnDay(new Date(2026, 5, 15));
@@ -207,7 +279,6 @@ describe('InterventionsPage', () => {
     expect(prefilled?.getDate()).toBe(15);
     expect(prefilled?.getHours()).toBe(9);
     expect(harness.createDrawerVisible()).toBe(true);
-    expect(planningOptions.loadCreationOptions).toHaveBeenCalledWith('org-1');
   });
 
   it('should route creation through the store with the trimmed name', () => {
@@ -227,17 +298,183 @@ describe('InterventionsPage', () => {
     );
   });
 
-  it('should navigate into the workspace when the store publishes the created intervention', () => {
-    const router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+  describe('grouping', () => {
+    it('should group interventions into lifecycle-ordered list sections, omitting empty ones', () => {
+      store.interventionList.set([
+        intervention({ id: 'a', status: 'draft' }),
+        intervention({ id: 'b', status: 'in_progress' }),
+        intervention({ id: 'c', status: 'in_progress' }),
+      ]);
 
-    const fixture = TestBed.createComponent(InterventionsPage);
-    fixture.detectChanges();
+      const groups = build().listGroups();
 
-    store.createdIntervention.set(created);
-    fixture.detectChanges();
+      expect(groups.map((group) => group.id)).toEqual(['in_progress', 'draft']);
+      expect(groups[0].items).toHaveLength(2);
+    });
 
-    expect(store.clearCreatedIntervention).toHaveBeenCalled();
-    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'i-9']);
+    it('should merge submitted and changes_requested into a single review board column', () => {
+      store.interventionList.set([
+        intervention({ id: 'a', status: 'submitted' }),
+        intervention({ id: 'b', status: 'changes_requested' }),
+        intervention({ id: 'c', status: 'draft' }),
+      ]);
+
+      const columns = build().boardColumns();
+      const review = columns.find((column) => column.id === 'review');
+
+      expect(columns.map((column) => column.id)).toEqual([
+        'draft',
+        'planned',
+        'in_progress',
+        'review',
+        'published',
+      ]);
+      expect(review?.items).toHaveLength(2);
+    });
+
+    it('should append a read-only abandoned column only when toggled on', () => {
+      store.interventionList.set([intervention({ id: 'a', status: 'abandoned' })]);
+      const harness = build();
+
+      expect(harness.boardColumns().some((column) => column.id === 'abandoned')).toBe(false);
+
+      harness.showAbandoned.set(true);
+
+      expect(harness.boardColumns().some((column) => column.id === 'abandoned')).toBe(true);
+    });
+  });
+
+  describe('canDropCard', () => {
+    it('should reject any drop into the published column', () => {
+      const harness = build();
+      const item = { intervention: intervention({ status: 'in_progress' }) };
+
+      expect(harness.canDropCard(item, 'in_progress', 'published')).toBe(false);
+    });
+
+    it('should reject a transition the workflow policy does not allow', () => {
+      const harness = build();
+      const item = {
+        intervention: intervention({
+          status: 'draft',
+          allowedTransitions: ['planned', 'abandoned'],
+        }),
+      };
+
+      expect(harness.canDropCard(item, 'draft', 'in_progress')).toBe(false);
+    });
+
+    it('should map a drop into review to a submitted transition and require the execute capability', () => {
+      const harness = build();
+      const item = {
+        intervention: intervention({
+          status: 'in_progress',
+          allowedTransitions: ['submitted', 'abandoned'],
+          responsible: '/api/organizations/org-1/members/m1',
+        }),
+      };
+
+      expect(harness.canDropCard(item, 'in_progress', 'review')).toBe(true);
+      expect(permissionService.hasPermission).toHaveBeenCalledWith(
+        'organization.interventions.execute',
+      );
+    });
+
+    it('should reject the transition when the member lacks the required capability', () => {
+      permissionService.hasPermission.mockReturnValue(false);
+      const harness = build();
+      const item = {
+        intervention: intervention({
+          status: 'in_progress',
+          allowedTransitions: ['submitted', 'abandoned'],
+        }),
+      };
+
+      expect(harness.canDropCard(item, 'in_progress', 'review')).toBe(false);
+    });
+
+    it('should reject submitting when the current member is not the responsible agent', () => {
+      const harness = build();
+      const item = {
+        intervention: intervention({
+          status: 'in_progress',
+          allowedTransitions: ['submitted', 'abandoned'],
+          responsible: '/api/organizations/org-1/members/someone-else',
+        }),
+      };
+
+      expect(harness.canDropCard(item, 'in_progress', 'review')).toBe(false);
+    });
+
+    it('should allow submitting when the current member identity is unresolved (server backstop)', () => {
+      memberAccess.profile.set(null);
+      const harness = build();
+      const item = {
+        intervention: intervention({
+          status: 'in_progress',
+          allowedTransitions: ['submitted', 'abandoned'],
+          responsible: '/api/organizations/org-1/members/someone-else',
+        }),
+      };
+
+      expect(harness.canDropCard(item, 'in_progress', 'review')).toBe(true);
+    });
+  });
+
+  describe('onItemDropped', () => {
+    it('should apply a valid drop as a status transition', () => {
+      const harness = build();
+      const droppedIntervention = intervention({ id: 'i-42', status: 'draft', revision: 3 });
+
+      harness.onItemDropped({
+        item: { intervention: droppedIntervention },
+        fromColumnId: 'draft',
+        toColumnId: 'planned',
+      });
+
+      expect(store.transition).toHaveBeenCalledWith({ id: 'i-42', status: 'planned', revision: 3 });
+    });
+
+    it('should map a review drop to the submitted status', () => {
+      const harness = build();
+      const droppedIntervention = intervention({ id: 'i-7', status: 'in_progress', revision: 1 });
+
+      harness.onItemDropped({
+        item: { intervention: droppedIntervention },
+        fromColumnId: 'in_progress',
+        toColumnId: 'review',
+      });
+
+      expect(store.transition).toHaveBeenCalledWith({
+        id: 'i-7',
+        status: 'submitted',
+        revision: 1,
+      });
+    });
+
+    it('should never transition on a drop into the published column', () => {
+      const harness = build();
+
+      harness.onItemDropped({
+        item: { intervention: intervention({ id: 'i-8' }) },
+        fromColumnId: 'draft',
+        toColumnId: 'published',
+      });
+
+      expect(store.transition).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('empty state', () => {
+    it('should expose no items and empty groups when the store reports an empty list', () => {
+      store.isEmpty.set(true);
+      store.interventionList.set([]);
+
+      const harness = build();
+
+      expect(harness.items()).toHaveLength(0);
+      expect(harness.listGroups()).toHaveLength(0);
+      expect(harness.boardColumns().every((column) => column.items.length === 0)).toBe(true);
+    });
   });
 });

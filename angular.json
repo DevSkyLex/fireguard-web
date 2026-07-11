@@ -72,7 +72,12 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.css", "node_modules/maplibre-gl/dist/maplibre-gl.css"],
+            "styles": [
+              "src/styles.css",
+              "node_modules/maplibre-gl/dist/maplibre-gl.css",
+              "node_modules/quill/dist/quill.snow.css",
+              "src/quill.css"
+            ],
             "server": "src/main.server.ts",
             "outputMode": "server",
             "ssr": {
@@ -86,8 +91,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "600kB",
-                  "maximumError": "1.5MB"
+                  "maximumWarning": "700kB",
+                  "maximumError": "1.7MB"
                 },
                 {
                   "type": "anyComponentStyle",

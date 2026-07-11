@@ -1,11 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
 import {
   InterventionOfflineService,
   InterventionService,
 } from '@features/organization/features/interventions/data-access';
 import type {
+  InterventionActivityOutput,
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
@@ -297,5 +299,149 @@ describe('InterventionWorkspaceStore offline field work', () => {
 
     expect(store.intervention()?.completedWorkItemsCount).toBe(0);
     expect(store.workItems()[0]?.skipReason).toBeNull();
+  });
+});
+
+describe('InterventionWorkspaceStore activity timeline', () => {
+  let store: InstanceType<typeof InterventionWorkspaceStore>;
+  let mockService: {
+    get: ReturnType<typeof vi.fn>;
+    listAllWorkItems: ReturnType<typeof vi.fn>;
+    listAllChanges: ReturnType<typeof vi.fn>;
+    listIssues: ReturnType<typeof vi.fn>;
+    listActivities: ReturnType<typeof vi.fn>;
+    addComment: ReturnType<typeof vi.fn>;
+  };
+  let mockOffline: {
+    getWorkspace: ReturnType<typeof vi.fn>;
+    saveWorkspace: ReturnType<typeof vi.fn>;
+    queue: ReturnType<typeof vi.fn>;
+  };
+  let dispatch: ReturnType<typeof vi.fn>;
+
+  const comment = {
+    '@id': '/api/intervention-activities/activity-1',
+    '@type': 'InterventionActivity',
+    id: 'activity-1',
+    intervention: '/api/interventions/intervention-1',
+    kind: 'comment',
+    event: 'comment',
+    actor: '/api/organizations/org-1/members/member-1',
+    body: 'Looks good',
+    payload: null,
+    createdAt: '2026-07-01T00:00:00.000Z',
+  } as InterventionActivityOutput;
+
+  beforeEach(() => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    mockService = {
+      get: vi.fn().mockReturnValue(of(intervention)),
+      listAllWorkItems: vi.fn().mockReturnValue(of([])),
+      listAllChanges: vi.fn().mockReturnValue(of([])),
+      listIssues: vi.fn().mockReturnValue(
+        of({
+          '@id': '/api/interventions/intervention-1/issues',
+          '@type': 'Collection',
+          totalItems: 0,
+          member: [],
+        }),
+      ),
+      listActivities: vi.fn().mockReturnValue(
+        of({
+          '@id': '/api/interventions/intervention-1/activities',
+          '@type': 'Collection',
+          totalItems: 1,
+          member: [comment],
+        }),
+      ),
+      addComment: vi.fn().mockReturnValue(of(comment)),
+    };
+    mockOffline = {
+      getWorkspace: vi.fn(),
+      saveWorkspace: vi.fn().mockResolvedValue(undefined),
+      queue: vi.fn().mockResolvedValue(undefined),
+    };
+    dispatch = vi.fn();
+
+    TestBed.configureTestingModule({
+      providers: [
+        InterventionWorkspaceStore,
+        { provide: InterventionService, useValue: mockService },
+        { provide: InterventionOfflineService, useValue: mockOffline },
+        { provide: Dispatcher, useValue: { dispatch } },
+      ],
+    });
+
+    store = TestBed.inject(InterventionWorkspaceStore);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('loads the activity timeline', () => {
+    store.loadActivities('intervention-1');
+
+    expect(mockService.listActivities).toHaveBeenCalledWith('intervention-1');
+    expect(store.activities()).toEqual([comment]);
+    expect(store.activityCallState().status).toBe('success');
+  });
+
+  it('keeps the in-memory snapshot on a network failure and reports success', () => {
+    store.loadActivities('intervention-1');
+    mockService.listActivities.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 0 })),
+    );
+
+    store.loadActivities('intervention-1');
+
+    expect(store.activities()).toEqual([comment]);
+    expect(store.activityCallState().status).toBe('success');
+  });
+
+  it('surfaces the error when there is no snapshot to fall back to', () => {
+    mockService.listActivities.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 500 })),
+    );
+
+    store.loadActivities('intervention-1');
+
+    expect(store.activities()).toEqual([]);
+    expect(store.activityCallState().status).toBe('error');
+  });
+
+  it('appends the returned comment to the timeline on success', () => {
+    store.addComment({ interventionId: 'intervention-1', body: 'Looks good' });
+
+    expect(mockService.addComment).toHaveBeenCalledWith('intervention-1', 'Looks good');
+    expect(store.activities()).toEqual([comment]);
+    expect(store.saving()).toBe(false);
+  });
+
+  it('dispatches a failure event and leaves the timeline untouched on error', () => {
+    mockService.addComment.mockReturnValue(throwError(() => new Error('network')));
+
+    store.addComment({ interventionId: 'intervention-1', body: 'Looks good' });
+
+    expect(store.activities()).toEqual([]);
+    expect(store.saving()).toBe(false);
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(dispatch.mock.calls[0][0]).toMatchObject({
+      type: '[Intervention Workspace Store] commentAddFailed',
+    });
+  });
+
+  it('refuses to post a comment while offline and dispatches a failure event', () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    window.dispatchEvent(new Event('offline'));
+
+    store.addComment({ interventionId: 'intervention-1', body: 'Looks good' });
+
+    expect(mockService.addComment).not.toHaveBeenCalled();
+    expect(store.activities()).toEqual([]);
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(dispatch.mock.calls[0][0]).toMatchObject({
+      type: '[Intervention Workspace Store] commentAddFailed',
+    });
   });
 });

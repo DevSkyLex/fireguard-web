@@ -20,6 +20,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { MessageModule } from 'primeng/message';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectModule } from 'primeng/select';
+import { TextareaModule } from 'primeng/textarea';
 import type {
   InterventionOutput,
   InterventionPriority,
@@ -52,6 +53,7 @@ import type { InterventionPlanningFormData, InterventionPlanningFormValues } fro
     MultiSelectModule,
     ReactiveFormsModule,
     SelectModule,
+    TextareaModule,
   ],
   templateUrl: './intervention-planning-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -189,6 +191,7 @@ export class InterventionPlanningForm {
       priority: this.formBuilder.control<InterventionPriority>('normal', [Validators.required]),
       plannedStartAt: new FormControl<Date | null>(null, [Validators.required]),
       dueAt: new FormControl<Date | null>(null, [Validators.required]),
+      description: this.formBuilder.control(''),
     });
 
   /**
@@ -235,6 +238,7 @@ export class InterventionPlanningForm {
           priority: intervention.priority,
           plannedStartAt: this.toDate(intervention.plannedStartAt),
           dueAt: this.toDate(intervention.dueAt),
+          description: intervention.description ?? '',
         },
         { emitEvent: false },
       );

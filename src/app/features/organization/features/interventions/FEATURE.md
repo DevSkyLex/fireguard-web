@@ -19,24 +19,36 @@ This subfeature is responsible for:
 
 ## Routes
 
-- `/organizations/:organizationId/interventions` — index page laid out as a
-  **dashboard**: a workflow-health metric strip (in progress / planned / overdue /
-  blocked), the paginated planner table and the scheduling calendar are shown
-  together as adjacent cards (no view switch). `?page=` drives the table page.
+- `/organizations/:organizationId/interventions` — index page offering a
+  Linear-style **List / Board / Calendar** browsing experience over one shared
+  dataset, toggled with a header `p-selectbutton` and synced to `?view=`
+  (default `list`, omitted from the URL). List groups interventions into
+  status sections (`app-grouped-list`); Board lays them into
+  draft/planned/in_progress/review/published columns (`app-board`,
+  drag-and-drop applies a status `transition`, gated by the workflow policy
+  and RBAC capability) with a "Show abandoned" toggle for a 6th read-only
+  column; Calendar reuses the existing bounded-window calendar. A header
+  search box debounces into `?q=` and reloads the store with a server-side
+  `name` filter. The metric strip is gone from this page (`InterventionSummaryStore`
+  is unused here, kept for a future dashboard).
 - `/organizations/:organizationId/interventions/:interventionId`
 
 ## State and Data Access
 
 Stores:
 
-- `InterventionStore` — root-scoped; intervention list and creation (normalized entities + request state).
-- `InterventionWorkspaceStore` — component-scoped (provided in `InterventionDetailPage`); the active intervention workspace (intervention, work items, changes, issues) with online/offline mutations.
+- `InterventionStore` — component-scoped (provided in `InterventionsPage`); intervention list and creation (normalized entities + request state). `load` accumulates up to 500 interventions across 100-item pages (the backend clamps `itemsPerPage` at 100) and sets `isListCapped` when the organization has more, driving the list page's "refine your search" notice. `transition` applies a single status change optimistically (entity patch → PATCH with `If-Match` → merge fresh output on success, rollback + `transitionFailed` toast event on error); `orderedIds` exposes the current entity order for prev/next navigation.
+- `InterventionWorkspaceStore` — component-scoped (provided in `InterventionDetailPage`); the active intervention workspace (intervention, work items, changes, issues) with online/offline mutations. Also owns the activity timeline (`activities` + `activityCallState`, `loadActivities`, `addComment`); comment posting is refused outright while offline (not queued to the outbox) and failures dispatch a `commentAddFailed` toast event via `interventionWorkspaceStoreEvents`.
 - `InterventionCalendarStore` — component-scoped (provided in `InterventionsPage`); the interventions inside a bounded date window (the visible month ± one month) plus the current member IRI driving the calendar card's All/Mine scope. Loaded for the active organization and refetched when the visible month changes (fed by the calendar's `focusedDateChange`); the window is fetched as the de-duped union of a `plannedStartAt`-range query and a `dueAt`-range query (the anchor is `plannedStartAt ?? dueAt`), and the member IRI is resolved once per organization and reused across window refetches.
 - `InterventionSummaryStore` — component-scoped (provided in `InterventionsPage`); loads the full organization intervention set once (via `InterventionService.listAll`) and derives the dashboard metric-strip KPIs (in progress, planned, overdue, blocked). Overdue and blocked exclude interventions in a terminal status (`published`, `abandoned`).
 
 Data-access (transport boundary — `data-access/`):
 
-- `InterventionService` — HTTP API service (`HydraApiService`).
+- `InterventionService` — HTTP API service (`HydraApiService`). Also owns the
+  intervention activity timeline (`listActivities`, `addComment`).
+- `InterventionLabelService` — HTTP API service (`HydraApiService`) for the
+  organization-scoped intervention label catalog (CRUD); labels are embedded
+  as `InterventionLabelSummary` on `InterventionOutput.labels`.
 - `InterventionOfflineService` — IndexedDB persistence façade + cross-cutting purges (public entry point). Delegates to its internal collaborators:
   - `InterventionDatabaseService` — IndexedDB connection/schema, CRUD primitives, owner binding (also published for logout reset).
   - `InterventionOutboxRepository` — replay outbox + `hasUnsyncedChanges` signal.
@@ -74,22 +86,30 @@ Main provider:
 
 ## Detail workspace composition
 
-The detail page (`ui/pages/intervention-detail`) leads with a full-width **command
-header** (`ui/components/intervention-command-header`) carrying the intervention
-identity, status/priority/type, responsible, site, schedule (with an overdue
-signal), a work-item progress meter and the **single canonical forward action** for
-the current phase — Plan / Submit / Publish — mirrored into a mobile thumb-zone bar.
-The phase-forward action lives **only** in the header; the phase panels no longer
-render their own action bar. Below the header sit the vertical phase stepper and the
-active phase panel. Cross-phase presentation is shared: readiness is one
-`ui/components/intervention-readiness-checklist` (prepare/execute/review), the review
-panel renders proposed changes through `ui/components/intervention-change-diff` (a
-legible field → value diff, not raw JSON), and a reviewer returns work through
-`ui/drawers/intervention-request-changes-drawer` with a required note (replacing the
-former fixed message). Each phase splits its content column into in-page sub-steps
-through `ui/components/intervention-substep-nav` (an ARIA tablist with roving
-tabindex) — prepare: Scope / Work items; execute: Brief / Field work; review:
-Findings / Changes — while the readiness/decision rail stays persistent.
+The detail page (`ui/pages/intervention-detail`) uses a Linear-style two-column
+layout instead of a phase-panel wizard. A top bar carries back navigation, the
+`FG-{number}` code, prev/next chevrons (walking the shared `InterventionStore`'s
+`orderedIds()`, provided at the parent route so it survives navigation from the
+list page — see `interventions.routes.ts`) and the **single canonical forward
+action** for the current phase — Plan / Submit / Publish — mirrored into a mobile
+thumb-zone bar. The wide main column renders identity, a blockers banner, the
+description (editable through `ui/drawers/intervention-edit-drawer`, extended with
+a `description` field) and a **single work-item checklist** — the one work-item
+surface, no duplicate table view. Each row toggles complete via its checkbox; its
+overflow menu carries every per-item action for the current phase (attach evidence
+photo for equipment, skip, delete), and the section header carries the phase
+affordances ("+" to create in draft; add-discovery and scan-QR in execution).
+Proposed changes render below as a plain section
+(`ui/components/intervention-change-diff` — a legible field → value diff, not raw
+JSON), followed by the activity timeline (`@shared/components` `ActivityFeed` +
+`CommentComposer`, fed by the workspace store's `activities`/`loadActivities`/
+`addComment`). The narrow "Properties" sidebar covers status (with a transition
+menu — selecting `changes_requested` opens
+`ui/drawers/intervention-request-changes-drawer` with a required note), priority,
+assignees, due date, facility/equipment counts, labels (a `p-multiselect` of the
+organization's labels, loaded by `InterventionPlanningOptionsStore`) and
+publication. Readiness stays one `ui/components/intervention-readiness-checklist`,
+now phase-scoped inline in the sidebar rather than per-panel.
 
 ## Status / enum presentation (badges & select options)
 

@@ -1,0 +1,48 @@
+<div class="flex h-full items-start gap-4 overflow-x-auto pb-2" cdkDropListGroup>
+  @for (column of columns(); track column.id) {
+    <div
+      class="flex w-72 shrink-0 flex-col rounded-lg border border-surface-200 bg-surface-50 dark:border-surface-800 dark:bg-surface-900/40"
+    >
+      <div class="border-b border-surface-200 px-3 py-2.5 dark:border-surface-800">
+        @if (columnHeaderTemplate(); as headerTemplate) {
+          <ng-container
+            *ngTemplateOutlet="
+              headerTemplate;
+              context: { $implicit: column, columnId: column.id, count: column.items.length }
+            "
+          />
+        } @else {
+          <div
+            class="flex items-center justify-between text-sm font-medium text-surface-700 dark:text-surface-200"
+          >
+            <span>{{ column.id }}</span>
+            <span class="text-xs text-surface-400">{{ column.items.length }}</span>
+          </div>
+        }
+      </div>
+
+      <div
+        cdkDropList
+        [cdkDropListData]="column.id"
+        [cdkDropListEnterPredicate]="enterPredicate"
+        [cdkDropListDisabled]="dragDisabled()"
+        (cdkDropListDropped)="onDropped($event, column.id)"
+        class="flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto p-2"
+      >
+        @for (item of column.items; track itemId()(item)) {
+          <div
+            cdkDrag
+            [cdkDragData]="item"
+            [cdkDragDisabled]="dragDisabled()"
+            [cdkDragStartDelay]="dragStartDelay"
+            class="cursor-grab rounded-md bg-surface-0 shadow-sm active:cursor-grabbing dark:bg-surface-950 dark:shadow-none"
+          >
+            @if (cardTemplate(); as template) {
+              <ng-container *ngTemplateOutlet="template; context: { $implicit: item }" />
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

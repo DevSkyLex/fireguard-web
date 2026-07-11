@@ -6480,6 +6480,262 @@
         <source>A temporary synchronization error interrupted this intervention.</source>
         <target>Un error de sincronización temporal interrumpió esta intervención.</target>
       </trans-unit>
+      <trans-unit id="common.save" datatype="html">
+        <source>Save</source>
+        <target>Guardar</target>
+      </trans-unit>
+      <trans-unit id="intervention.activity.created" datatype="html">
+        <source>created the intervention</source>
+        <target>creó la intervención</target>
+      </trans-unit>
+      <trans-unit id="intervention.activity.statusChanged" datatype="html">
+        <source>changed status to <x id="to" equiv-text="toLabel"/></source>
+        <target>cambió el estado a <x id="to" equiv-text="toLabel"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.activity.system" datatype="html">
+        <source>System</source>
+        <target>Sistema</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.hideAbandoned" datatype="html">
+        <source>Hide abandoned</source>
+        <target>Ocultar abandonadas</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.review" datatype="html">
+        <source>Review</source>
+        <target>Revisión</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.showAbandoned" datatype="html">
+        <source>Show abandoned</source>
+        <target>Mostrar abandonadas</target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.skip" datatype="html">
+        <source>Skip</source>
+        <target>Omitir</target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.toggleAria" datatype="html">
+        <source>Toggle work item complete</source>
+        <target>Alternar tarea completada</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.activity" datatype="html">
+        <source>Activity</source>
+        <target>Actividad</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.back" datatype="html">
+        <source>Interventions</source>
+        <target>Intervenciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.blockersBanner" datatype="html">
+        <source>Publication blocked — a compliance point must be cleared</source>
+        <target>Publicación bloqueada — debe resolverse un punto de conformidad</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.checklist" datatype="html">
+        <source> Work items </source>
+        <target>Tareas</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.commentOffline" datatype="html">
+        <source> Comments can&apos;t be posted while offline. </source>
+        <target>No se pueden publicar comentarios sin conexión.</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.commentPlaceholder" datatype="html">
+        <source>Write a comment…</source>
+        <target>Escribe un comentario…</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.description" datatype="html">
+        <source> Description </source>
+        <target>Descripción</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.editAssignees" datatype="html">
+        <source>Edit assignees</source>
+        <target>Editar asignados</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.editDescription" datatype="html">
+        <source>Edit description</source>
+        <target>Editar descripción</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.editLabels" datatype="html">
+        <source>Edit labels</source>
+        <target>Editar etiquetas</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.editPriority" datatype="html">
+        <source>Edit priority</source>
+        <target>Editar prioridad</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.fieldExecution" datatype="html">
+        <source>Field execution</source>
+        <target>Ejecución en campo</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.moreActions" datatype="html">
+        <source>More actions</source>
+        <target>Más acciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.next" datatype="html">
+        <source>Next intervention</source>
+        <target>Intervención siguiente</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.noDescription" datatype="html">
+        <source> No description yet. Add context, scope notes or instructions for this intervention. </source>
+        <target>Aún no hay descripción. Añade contexto, notas de alcance o instrucciones para esta intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.prev" datatype="html">
+        <source>Previous intervention</source>
+        <target>Intervención anterior</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.revision" datatype="html">
+        <source>Revision <x id="INTERPOLATION" equiv-text="{{ intervention.revision }}"/></source>
+        <target>Revisión <x id="INTERPOLATION" equiv-text="{{ intervention.revision }}"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.statusMenu" datatype="html">
+        <source>Change status</source>
+        <target>Cambiar estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.tableView" datatype="html">
+        <source>Work items — table view</source>
+        <target>Tareas — vista de tabla</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.cappedNotice" datatype="html">
+        <source>Showing the 500 most recent interventions — refine your search to narrow results.</source>
+        <target>Mostrando las 500 intervenciones más recientes — refina tu búsqueda para acotar los resultados.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.count" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 intervention loaded} other {# interventions loaded}}</source>
+        <target>{VAR_PLURAL, plural, =1 {1 intervención cargada} other {<x id="INTERPOLATION"/> intervenciones cargadas}}</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.emptyDescription" datatype="html">
+        <source>Create your first intervention to start planning field work.</source>
+        <target>Crea tu primera intervención para empezar a planificar el trabajo de campo.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.emptyTitle" datatype="html">
+        <source>No interventions yet</source>
+        <target>Aún no hay intervenciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.errorText" datatype="html">
+        <source>The interventions could not be loaded. Check your connection and try again.</source>
+        <target>No se pudieron cargar las intervenciones. Comprueba tu conexión e inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.newButton" datatype="html">
+        <source>New</source>
+        <target>Nueva</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.searchPlaceholder" datatype="html">
+        <source>Search interventions...</source>
+        <target>Buscar intervenciones...</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.title" datatype="html">
+        <source> Interventions </source>
+        <target>Intervenciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.unknownMember" datatype="html">
+        <source>Member</source>
+        <target>Miembro</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.viewBoard" datatype="html">
+        <source>Board</source>
+        <target>Tablero</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.viewCalendar" datatype="html">
+        <source>Calendar</source>
+        <target>Calendario</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.viewList" datatype="html">
+        <source>List</source>
+        <target>Lista</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.workItemsProgress" datatype="html">
+        <source><x id="done" equiv-text="done"/> of <x id="total" equiv-text="total"/> work items complete</source>
+        <target><x id="done" equiv-text="done"/> de <x id="total" equiv-text="total"/> tareas completadas</target>
+      </trans-unit>
+      <trans-unit id="intervention.pf.description" datatype="html">
+        <source>Description</source>
+        <target>Descripción</target>
+      </trans-unit>
+      <trans-unit id="intervention.pf.descriptionPlaceholder" datatype="html">
+        <source>Add context, scope notes or instructions for this intervention</source>
+        <target>Añade contexto, notas de alcance o instrucciones para esta intervención</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.assignees" datatype="html">
+        <source> Assignees </source>
+        <target>Asignados</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.equipment" datatype="html">
+        <source> Equipment </source>
+        <target>Equipos</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.facilities" datatype="html">
+        <source> Facilities </source>
+        <target>Instalaciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.labels" datatype="html">
+        <source> Labels </source>
+        <target>Etiquetas</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.publication" datatype="html">
+        <source> Publication </source>
+        <target>Publicación</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.publicationBlocked" datatype="html">
+        <source>Blocked (<x id="INTERPOLATION" equiv-text="{{ store.blockerCount() }}"/>)</source>
+        <target>Bloqueada (<x id="INTERPOLATION" equiv-text="{{ store.blockerCount() }}"/>)</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.publicationReady" datatype="html">
+        <source>Ready</source>
+        <target>Lista</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.responsibleTooltip" datatype="html">
+        <source><x id="name" equiv-text="responsible.displayName"/> (responsible)</source>
+        <target><x id="name" equiv-text="responsible.displayName"/> (responsable)</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.revision" datatype="html">
+        <source> Revision </source>
+        <target>Revisión</target>
+      </trans-unit>
+      <trans-unit id="intervention.store.transitionFailed" datatype="html">
+        <source>The intervention status could not be updated.</source>
+        <target>No se pudo actualizar el estado de la intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.store.transitionForbidden" datatype="html">
+        <source>You do not have permission to change this intervention&apos;s status.</source>
+        <target>No tienes permiso para cambiar el estado de esta intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.store.transitionInvalid" datatype="html">
+        <source>This status change is not allowed from the intervention&apos;s current status.</source>
+        <target>Este cambio de estado no está permitido desde el estado actual de la intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.store.transitionStale" datatype="html">
+        <source>This intervention changed since it was loaded. Refresh and try again.</source>
+        <target>Esta intervención cambió desde que se cargó. Actualiza e inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.commentAddFailed" datatype="html">
+        <source>The comment could not be posted.</source>
+        <target>No se pudo publicar el comentario.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.commentOffline" datatype="html">
+        <source>Comments can&apos;t be posted while offline.</source>
+        <target>No se pueden publicar comentarios sin conexión.</target>
+      </trans-unit>
+      <trans-unit id="map.canvasAria" datatype="html">
+        <source>Map</source>
+        <target>Mapa</target>
+      </trans-unit>
+      <trans-unit id="shared.activityFeed.emptyLabel" datatype="html">
+        <source>No activity yet</source>
+        <target>Aún no hay actividad</target>
+      </trans-unit>
+      <trans-unit id="shared.commentComposer.placeholder" datatype="html">
+        <source>Write a comment…</source>
+        <target>Escribe un comentario…</target>
+      </trans-unit>
+      <trans-unit id="shared.commentComposer.submitLabel" datatype="html">
+        <source>Send</source>
+        <target>Enviar</target>
+      </trans-unit>
+      <trans-unit id="shared.groupedList.collapse" datatype="html">
+        <source>Collapse section</source>
+        <target>Contraer sección</target>
+      </trans-unit>
+      <trans-unit id="shared.groupedList.expand" datatype="html">
+        <source>Expand section</source>
+        <target>Expandir sección</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

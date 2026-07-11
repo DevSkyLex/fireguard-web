@@ -168,6 +168,18 @@
           </p-message>
         }
       </label>
+
+      <label class="grid gap-1.5 text-sm md:col-span-2">
+        <span i18n="@@intervention.pf.description" class="font-medium">Description</span>
+        <textarea
+          pTextarea
+          formControlName="description"
+          rows="4"
+          i18n-placeholder="@@intervention.pf.descriptionPlaceholder"
+          placeholder="Add context, scope notes or instructions for this intervention"
+          class="w-full"
+        ></textarea>
+      </label>
     </div>
   </section>
 

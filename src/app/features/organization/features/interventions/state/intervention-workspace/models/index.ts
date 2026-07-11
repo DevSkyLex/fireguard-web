@@ -1,4 +1,5 @@
 export type {
+  InterventionCommentAddCommand,
   InterventionDetailsUpdateCommand,
   InterventionWorkItemCreateCommand,
   InterventionWorkItemDeleteCommand,

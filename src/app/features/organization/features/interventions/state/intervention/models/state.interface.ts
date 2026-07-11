@@ -54,5 +54,35 @@ export interface InterventionState {
    * @type {CallState<InterventionOutput>}
    */
   readonly createCallState: CallState<InterventionOutput>;
+
+  /**
+   * Property transitionCallState
+   * @readonly
+   *
+   * @description
+   * Loading / success / error state for a single-status-transition PATCH,
+   * kept separate from {@link listCallState} so a transition in flight never
+   * clobbers the list's own loading state.
+   *
+   * @since 1.2.0
+   *
+   * @type {CallState<InterventionOutput>}
+   */
+  readonly transitionCallState: CallState<InterventionOutput>;
+
+  /**
+   * Property isListCapped
+   * @readonly
+   *
+   * @description
+   * True when the last successful `load` found more than the 500-item cap
+   * fetched across up to five 100-item pages, so the page can surface a
+   * "refine your search" notice instead of silently truncating the list.
+   *
+   * @since 1.3.0
+   *
+   * @type {boolean}
+   */
+  readonly isListCapped: boolean;
   //#endregion
 }

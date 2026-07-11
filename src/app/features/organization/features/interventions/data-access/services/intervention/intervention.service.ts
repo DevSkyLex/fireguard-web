@@ -16,6 +16,7 @@ import type { HydraCollection, HydraItem, PaginationOptions } from '@core/api/mo
 import type {
   CreateInterventionChangeInput,
   CreateInterventionWorkItemInput,
+  InterventionActivityOutput,
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
@@ -95,6 +96,7 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} organizationId - organization Id value.
    * @param {PaginationOptions & {
+   * name?: string;
    * responsible?: string;
    * participant?: string;
    * type?: string;
@@ -109,6 +111,7 @@ export class InterventionService extends HydraApiService {
   public list(
     organizationId: string,
     options?: PaginationOptions & {
+      name?: string;
       responsible?: string;
       participant?: string;
       type?: string;
@@ -151,6 +154,7 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} organizationId - organization Id value.
    * @param {Omit<PaginationOptions, 'page' | 'itemsPerPage'> & {
+   * name?: string;
    * responsible?: string;
    * participant?: string;
    * type?: string;
@@ -165,6 +169,7 @@ export class InterventionService extends HydraApiService {
   public listAll(
     organizationId: string,
     options?: Omit<PaginationOptions, 'page' | 'itemsPerPage'> & {
+      name?: string;
       responsible?: string;
       participant?: string;
       type?: string;
@@ -250,6 +255,55 @@ export class InterventionService extends HydraApiService {
   }
 
   /**
+   * Method listActivities
+   * @method listActivities
+   *
+   * @description
+   * Loads one page of the intervention's activity timeline (comments and
+   * system entries such as status changes), sorted `createdAt` ascending by
+   * the API.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} interventionId - intervention Id value.
+   * @param {number} [page] - Page number, forwarded as-is to the API.
+   *
+   * @return {Observable<HydraCollection<InterventionActivityOutput>>} Result of the list activities operation.
+   */
+  public listActivities(
+    interventionId: string,
+    page?: number,
+  ): Observable<HydraCollection<InterventionActivityOutput>> {
+    return this.getCollection<InterventionActivityOutput>(
+      `/api/interventions/${interventionId}/activities`,
+      { page },
+    );
+  }
+
+  /**
+   * Method addComment
+   * @method addComment
+   *
+   * @description
+   * Posts a comment onto the intervention's activity timeline.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} interventionId - intervention Id value.
+   * @param {string} body - Comment text (max 2000 characters).
+   *
+   * @return {Observable<InterventionActivityOutput>} The created comment activity entry.
+   */
+  public addComment(interventionId: string, body: string): Observable<InterventionActivityOutput> {
+    return this.post<{ body: string }, InterventionActivityOutput>(
+      `/api/interventions/${interventionId}/comments`,
+      { body },
+    );
+  }
+
+  /**
    * Method listTypes
    * @method listTypes
    *
@@ -285,6 +339,8 @@ export class InterventionService extends HydraApiService {
    * priority: InterventionOutput['priority'];
    * plannedStartAt: Date;
    * dueAt: Date;
+   * description: string | null;
+   * labelIds: readonly string[];
    * }>} [options] - options value.
    *
    * @return {Observable<InterventionOutput>} Result of the create operation.
@@ -300,6 +356,8 @@ export class InterventionService extends HydraApiService {
       priority: InterventionOutput['priority'];
       plannedStartAt: Date;
       dueAt: Date;
+      description: string | null;
+      labelIds: readonly string[];
     }>,
   ): Observable<InterventionOutput> {
     return this.post<Record<string, unknown>, InterventionOutput>('/api/interventions', {
@@ -312,6 +370,8 @@ export class InterventionService extends HydraApiService {
       priority: options?.priority ?? 'normal',
       ...(options?.plannedStartAt ? { plannedStartAt: toSecondsUtc(options.plannedStartAt) } : {}),
       ...(options?.dueAt ? { dueAt: toSecondsUtc(options.dueAt) } : {}),
+      ...(options?.description !== undefined ? { description: options.description } : {}),
+      ...(options?.labelIds ? { labelIds: options.labelIds } : {}),
     });
   }
 
@@ -336,7 +396,10 @@ export class InterventionService extends HydraApiService {
    * plannedStartAt: Date | null;
    * dueAt: Date | null;
    * reviewNote: string | null;
-   * }>} input - input value.
+   * description: string | null;
+   * labelIds: readonly string[];
+   * }>} input - input value. `labelIds`, when present, replaces the intervention's
+   * whole label set (merge-patch semantics); omit the key to leave labels untouched.
    * @param {number} [revision] - revision value.
    *
    * @return {Observable<InterventionOutput>} Result of the update operation.
@@ -353,6 +416,8 @@ export class InterventionService extends HydraApiService {
       plannedStartAt: Date | null;
       dueAt: Date | null;
       reviewNote: string | null;
+      description: string | null;
+      labelIds: readonly string[];
     }>,
     revision?: number,
   ): Observable<InterventionOutput> {

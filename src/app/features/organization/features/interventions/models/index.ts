@@ -12,6 +12,14 @@ export type { InterventionOutput } from './intervention/intervention-output.inte
 export type { InterventionPriority } from './intervention/intervention-priority.type';
 export type { InterventionStatus } from './intervention/intervention-status.type';
 export type { InterventionType } from './intervention/intervention-type.type';
+export type { CreateInterventionLabelInput } from './intervention-label/create-intervention-label-input.interface';
+export type { InterventionLabelOutput } from './intervention-label/intervention-label-output.interface';
+export type { InterventionLabelSummary } from './intervention-label/intervention-label-summary.interface';
+export type { UpdateInterventionLabelInput } from './intervention-label/update-intervention-label-input.interface';
+export type { InterventionActivityEvent } from './intervention-activity/intervention-activity-event.type';
+export type { InterventionActivityKind } from './intervention-activity/intervention-activity-kind.type';
+export type { InterventionActivityOutput } from './intervention-activity/intervention-activity-output.interface';
+export type { InterventionStatusChangePayload } from './intervention-activity/intervention-status-change-payload.interface';
 export type { CreateInterventionWorkItemInput } from './intervention-work-item/create-intervention-work-item-input.interface';
 export type { InterventionWorkItemAction } from './intervention-work-item/intervention-work-item-action.type';
 export type { InterventionWorkItemAssignee } from './intervention-work-item/intervention-work-item-assignee.interface';

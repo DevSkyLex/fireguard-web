@@ -1,4 +1,5 @@
 import type { HydraItem } from '@core/api/models';
+import type { InterventionLabelSummary } from '../intervention-label/intervention-label-summary.interface';
 import type { InterventionPriority } from './intervention-priority.type';
 import type { InterventionStatus } from './intervention-status.type';
 import type { InterventionType } from './intervention-type.type';
@@ -35,6 +36,17 @@ export interface InterventionOutput extends HydraItem {
   readonly organization: string;
 
   /**
+   * Property number
+   * @readonly
+   *
+   * @description
+   * Per-organization sequential number, rendered as `FG-{number}`.
+   *
+   * @type {number}
+   */
+  readonly number: number;
+
+  /**
    * Property type
    * @readonly
    *
@@ -56,6 +68,17 @@ export interface InterventionOutput extends HydraItem {
    * @type {string}
    */
   readonly name: string;
+
+  /**
+   * Property description
+   * @readonly
+   *
+   * @description
+   * Optional free-text intervention description.
+   *
+   * @type {string | null}
+   */
+  readonly description: string | null;
 
   /**
    * Property status
@@ -116,6 +139,17 @@ export interface InterventionOutput extends HydraItem {
    * @type {readonly string[]}
    */
   readonly participants: readonly string[];
+
+  /**
+   * Property labels
+   * @readonly
+   *
+   * @description
+   * Labels attached to the intervention, embedded by the API.
+   *
+   * @type {readonly InterventionLabelSummary[]}
+   */
+  readonly labels: readonly InterventionLabelSummary[];
 
   /**
    * Property priority
@@ -248,6 +282,17 @@ export interface InterventionOutput extends HydraItem {
    * @type {number}
    */
   readonly proposedChangesCount: number;
+
+  /**
+   * Property commentsCount
+   * @readonly
+   *
+   * @description
+   * Number of comment-kind activities recorded on the intervention.
+   *
+   * @type {number}
+   */
+  readonly commentsCount: number;
 
   /**
    * Property createdAt

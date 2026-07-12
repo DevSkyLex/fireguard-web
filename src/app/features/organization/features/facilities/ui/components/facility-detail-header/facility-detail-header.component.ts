@@ -49,6 +49,8 @@ export class FacilityDetailHeader {
    * @type {InputSignal<FacilityOutput>}
    */
   public readonly facility: InputSignal<FacilityOutput> = input.required<FacilityOutput>();
+  /** Whether the active member can mutate the facility (gates Move/Edit). */
+  public readonly canManage: InputSignal<boolean> = input(false);
   //#endregion
 
   //#region Outputs

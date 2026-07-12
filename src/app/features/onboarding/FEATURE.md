@@ -44,6 +44,9 @@ mandatory.
 ## Cross-Feature Dependencies
 
 - Creates activation resources through `@features/organization/setup`.
+- The `create_equipment` step's form imports the canonical `EQUIPMENT_TYPE_OPTIONS`
+  from the equipments subfeature public API (`@features/organization/features/equipments`)
+  instead of keeping a local copy — the equipment type catalog is owned there.
 - The `select_plan` step proposes a subscription using the organization-owned,
   root-provided `PlanService` + `BillingService` (`@features/organization/data-access`)
   and the billing/plan models — onboarding runs on its own top-level route

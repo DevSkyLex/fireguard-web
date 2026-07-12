@@ -23,12 +23,22 @@
       </span>
       <div class="min-w-0">
         <p class="text-xs text-surface-500" i18n="@@equipment.assign.current">Current facility</p>
-        <p class="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
-          {{ currentFacilityLabel() }}
-        </p>
+        @if (facilityId(); as fid) {
+          <button
+            type="button"
+            class="truncate text-left text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
+            (click)="viewFacility.emit(fid)"
+          >
+            {{ currentFacilityLabel() }}
+          </button>
+        } @else {
+          <p class="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
+            {{ currentFacilityLabel() }}
+          </p>
+        }
       </div>
     </div>
-    @if (canManage()) {
+    @if (canManage() && !decommissioned()) {
       <div class="flex flex-col gap-2">
         <p-select
           [options]="[...options()]"

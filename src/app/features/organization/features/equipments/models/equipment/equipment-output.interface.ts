@@ -11,6 +11,28 @@ import type { EquipmentTagOutput } from '../equipment-tag/equipment-tag-output.i
 export type EquipmentStatus = 'in_stock' | 'operational' | 'decommissioned' | 'under_maintenance';
 
 /**
+ * Type EquipmentType
+ *
+ * @description
+ * Supported equipment types (mirrors the backend `EquipmentType` value
+ * object). Used to constrain the type select in the create/edit form and
+ * the type column filter, replacing free-text entry that produced a 400.
+ */
+export type EquipmentType =
+  | 'fire_extinguisher'
+  | 'smoke_detector'
+  | 'heat_detector'
+  | 'sprinkler'
+  | 'fire_alarm_panel'
+  | 'hydrant'
+  | 'fire_door'
+  | 'emergency_lighting'
+  | 'access_control'
+  | 'camera'
+  | 'gas_detector'
+  | 'other';
+
+/**
  * Interface EquipmentOutput
  * @interface EquipmentOutput
  *

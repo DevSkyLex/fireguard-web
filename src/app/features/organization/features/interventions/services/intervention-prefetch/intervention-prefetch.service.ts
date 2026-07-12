@@ -1,5 +1,5 @@
 import { effect, inject, Injectable, signal, type WritableSignal } from '@angular/core';
-import { catchError, EMPTY, forkJoin, from, map, type Observable, switchMap } from 'rxjs';
+import { catchError, EMPTY, forkJoin, from, map, mergeMap, type Observable, switchMap } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import {
@@ -144,12 +144,18 @@ export class InterventionPrefetchService {
             }),
           ),
           switchMap((interventions) =>
-            forkJoin(
-              interventions
-                .filter((item) =>
-                  ['planned', 'in_progress', 'changes_requested'].includes(item.status),
-                )
-                .map((intervention) => this.prefetch(organizationId, intervention)),
+            // Prefetch each workspace independently: a single failure must not
+            // wipe out every other cached workspace (the old forkJoin was
+            // all-or-nothing), so an offline-bound agent keeps the ones that
+            // did load.
+            from(
+              interventions.filter((item) =>
+                ['planned', 'in_progress', 'changes_requested'].includes(item.status),
+              ),
+            ).pipe(
+              mergeMap((intervention) =>
+                this.prefetch(organizationId, intervention).pipe(catchError(() => EMPTY)),
+              ),
             ),
           ),
           catchError(() => EMPTY),

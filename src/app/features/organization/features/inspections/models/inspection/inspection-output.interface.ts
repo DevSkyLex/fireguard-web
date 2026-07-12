@@ -14,7 +14,7 @@ export type InspectionResult = 'pass' | 'fail' | 'partial';
  * @description
  * Supported workflow statuses for an inspection.
  */
-export type InspectionStatus = 'draft' | 'submitted' | 'closed';
+export type InspectionStatus = 'draft' | 'submitted' | 'closed' | 'cancelled';
 
 /**
  * Type InspectorType

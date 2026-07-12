@@ -36,10 +36,14 @@ export class EquipmentAssignmentPanel {
   public readonly canManage: InputSignal<boolean> = input(false);
   /** Whether an assignment mutation is pending. */
   public readonly loading: InputSignal<boolean> = input(false);
+  /** Whether the equipment is decommissioned (terminal — assignment is frozen). */
+  public readonly decommissioned: InputSignal<boolean> = input(false);
   /** Emits a facility selected for assignment. */
   public readonly assign: OutputEmitterRef<string> = output();
   /** Emits a request to remove the current assignment. */
   public readonly unassign: OutputEmitterRef<void> = output();
+  /** Emits a request to open the currently assigned facility's detail. */
+  public readonly viewFacility: OutputEmitterRef<string> = output();
   /** Facility selection control. */
   protected readonly control = new FormControl<string | null>(null);
   /** Human-readable label of the currently assigned facility. */

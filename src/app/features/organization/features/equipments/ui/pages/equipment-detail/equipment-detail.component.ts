@@ -153,6 +153,11 @@ export class EquipmentDetailPage {
     );
   }
 
+  /** Opens the detail page of the equipment's currently assigned facility. */
+  protected viewFacility(facilityId: string): void {
+    this.router.navigate(['..', '..', 'facilities', facilityId], { relativeTo: this.route });
+  }
+
   /** Moves the active equipment to its commissioned lifecycle state. */
   protected commission(): void {
     this.run((organizationId, equipmentId) =>

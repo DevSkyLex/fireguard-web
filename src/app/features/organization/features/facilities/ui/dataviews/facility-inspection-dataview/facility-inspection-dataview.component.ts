@@ -133,12 +133,14 @@ export class FacilityInspectionDataview {
     draft: 'secondary',
     submitted: 'info',
     closed: 'success',
+    cancelled: 'secondary',
   };
 
   private readonly statusLabels: Record<InspectionStatus, string> = {
     draft: $localize`:@@facility.inspStatus.draft:To plan`,
     submitted: $localize`:@@facility.inspStatus.submitted:In progress`,
     closed: $localize`:@@facility.inspStatus.closed:Closed`,
+    cancelled: $localize`:@@facility.inspStatus.cancelled:Cancelled`,
   };
 
   private readonly resultLabels: Record<InspectionResult, string> = {

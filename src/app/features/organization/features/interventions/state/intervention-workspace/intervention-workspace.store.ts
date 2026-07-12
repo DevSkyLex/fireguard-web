@@ -10,6 +10,7 @@ import {
   forkJoin,
   from,
   map,
+  mergeMap,
   pipe,
   switchMap,
   tap,
@@ -18,7 +19,6 @@ import {
 import { ConnectivityService } from '@core/connectivity';
 import {
   errorCallState,
-  errorFeedback,
   idleCallState,
   pendingCallState,
   successCallState,
@@ -249,16 +249,38 @@ export const InterventionWorkspaceStore = signalStore(
       );
 
       /**
+       * Queues a comment as an idempotent `comment.create` outbox operation and
+       * appends an optimistic entry to the timeline. Reused by the offline
+       * branch and by the online branch on a network failure, so a comment is
+       * never lost when the connection is down or unreachable.
+       */
+      const queueComment = (interventionId: string, body: string) => {
+        const clientId = crypto.randomUUID();
+        return from(offline.queue(interventionId, 'comment.create', { clientId, body })).pipe(
+          map(() => {
+            patchState(store, {
+              activities: [
+                ...store.activities(),
+                optimistic.comment(interventionId, body, clientId),
+              ],
+              saving: false,
+            });
+          }),
+        );
+      };
+
+      /**
        * Method addComment
        * @method addComment
        *
        * @description
        * Posts a comment and appends the server-returned activity entry to the
-       * local timeline on success. Offline calls are refused up front (the
-       * page is expected to disable the composer while offline) and comments
-       * are never queued to the outbox in this version. On any failure a
-       * `commentAddFailed` event is dispatched so the app-wide feedback
-       * listener surfaces a toast; the timeline is left untouched.
+       * local timeline on success. When offline — or when the request fails on a
+       * network error (online but unreachable) — the comment is queued as an
+       * idempotent `comment.create` outbox operation and appended optimistically
+       * instead of being lost, mirroring the other field actions. Only a genuine
+       * server rejection dispatches `commentAddFailed` for the app-wide feedback
+       * listener; the timeline is then left untouched.
        *
        * @access public
        * @since 1.2.0
@@ -268,38 +290,34 @@ export const InterventionWorkspaceStore = signalStore(
       const addComment = rxMethod<InterventionCommentAddCommand>(
         pipe(
           tap(() => patchState(store, { saving: true })),
-          switchMap(({ interventionId, body }) => {
+          // concatMap (not switchMap): comments are independent and must never
+          // cancel a previous in-flight post — a dropped comment is lost work.
+          concatMap(({ interventionId, body }) => {
             if (connectivity.isOffline()) {
-              patchState(store, { saving: false });
-              dispatcher.dispatch(
-                interventionWorkspaceStoreEvents.commentAddFailed(
-                  errorFeedback(
-                    $localize`:@@intervention.workspace.commentOffline:Comments can't be posted while offline.`,
-                  ),
-                ),
-              );
-              return EMPTY;
+              return queueComment(interventionId, body);
             }
 
             return service.addComment(interventionId, body).pipe(
-              tapResponse({
-                next: (activity) =>
-                  patchState(store, {
-                    activities: [...store.activities(), activity],
-                    saving: false,
-                  }),
-                error: (error: unknown) => {
-                  patchState(store, { saving: false });
-                  const storeError = toStoreError(error);
-                  dispatcher.dispatch(
-                    interventionWorkspaceStoreEvents.commentAddFailed(
-                      toStoreFailureEventPayload(
-                        storeError,
-                        $localize`:@@intervention.workspace.commentAddFailed:The comment could not be posted.`,
-                      ),
+              map((activity) => {
+                patchState(store, {
+                  activities: [...store.activities(), activity],
+                  saving: false,
+                });
+              }),
+              catchError((error: unknown) => {
+                if (connectivity.isNetworkFailure(error)) {
+                  return queueComment(interventionId, body);
+                }
+                patchState(store, { saving: false });
+                dispatcher.dispatch(
+                  interventionWorkspaceStoreEvents.commentAddFailed(
+                    toStoreFailureEventPayload(
+                      toStoreError(error),
+                      $localize`:@@intervention.workspace.commentAddFailed:The comment could not be posted.`,
                     ),
-                  );
-                },
+                  ),
+                );
+                return EMPTY;
               }),
             );
           }),
@@ -316,16 +334,21 @@ export const InterventionWorkspaceStore = signalStore(
             tap(() => patchState(store, { saving: true, error: null })),
             switchMap(({ interventionId, status, reviewNote }) => {
               const intervention = store.intervention();
-              if (connectivity.isOffline() && intervention) {
-                return from(
+
+              // Queue the transition and apply it optimistically. Reused by the
+              // offline branch and by the online branch when the request fails on
+              // a network error (offline that slipped past navigator.onLine), so
+              // a real connectivity drop never surfaces as a lost transition.
+              const queueTransition = (current: InterventionOutput) =>
+                from(
                   offline.queue(interventionId, 'intervention.update', {
                     status,
                     reviewNote,
-                    revision: intervention.revision,
+                    revision: current.revision,
                   }),
                 ).pipe(
-                  tap(() => {
-                    const updatedIntervention = optimistic.transition(intervention, {
+                  map(() => {
+                    const updatedIntervention = optimistic.transition(current, {
                       interventionId,
                       status,
                       reviewNote,
@@ -341,26 +364,43 @@ export const InterventionWorkspaceStore = signalStore(
                         store.changes(),
                         store.issues(),
                         [],
-                        {
-                          replace: false,
-                        },
+                        { replace: false },
                       )
                       .catch(() => undefined);
+                    return updatedIntervention;
                   }),
                 );
+
+              if (connectivity.isOffline() && intervention) {
+                return queueTransition(intervention);
               }
 
               return service
                 .update(interventionId, { status, reviewNote }, intervention?.revision)
                 .pipe(
-                  tapResponse({
-                    next: (updatedIntervention) =>
-                      patchState(store, { intervention: updatedIntervention, saving: false }),
-                    error: () =>
-                      patchState(store, {
-                        saving: false,
-                        error: $localize`:@@intervention.workspace.transitionFailed:The intervention status could not be updated.`,
-                      }),
+                  tap((updatedIntervention) =>
+                    patchState(store, { intervention: updatedIntervention, saving: false }),
+                  ),
+                  catchError((error: unknown) => {
+                    if (connectivity.isNetworkFailure(error) && intervention) {
+                      return queueTransition(intervention);
+                    }
+                    // Distinguish the workflow-relevant statuses so a stale
+                    // revision (412) tells the user to refresh instead of
+                    // retrying in a loop, mirroring the list store's mapping.
+                    const storeError = toStoreError(error);
+                    patchState(store, {
+                      saving: false,
+                      error:
+                        storeError.code === 412
+                          ? $localize`:@@intervention.store.transitionStale:This intervention changed since it was loaded. Refresh and try again.`
+                          : storeError.code === 403
+                            ? $localize`:@@intervention.store.transitionForbidden:You do not have permission to change this intervention's status.`
+                            : storeError.code === 422
+                              ? $localize`:@@intervention.store.transitionInvalid:This status change is not allowed from the intervention's current status.`
+                              : $localize`:@@intervention.workspace.transitionFailed:The intervention status could not be updated.`,
+                    });
+                    return EMPTY;
                   }),
                 );
             }),
@@ -371,7 +411,12 @@ export const InterventionWorkspaceStore = signalStore(
             tap(() => patchState(store, { saving: true, error: null })),
             concatMap(({ interventionId, input }) => {
               const intervention = store.intervention();
-              if (connectivity.isOffline() && intervention) {
+
+              // Queue the details update and apply it optimistically. Reused by
+              // the offline branch and by the online branch on a network failure
+              // (offline that slipped past navigator.onLine), so a real
+              // connectivity drop never surfaces as a lost planning edit.
+              const queueDetails = (current: InterventionOutput) => {
                 const { plannedStartAt, dueAt, labelIds, ...optimisticInput } = input;
                 const queuedInput = {
                   ...optimisticInput,
@@ -380,18 +425,18 @@ export const InterventionWorkspaceStore = signalStore(
                     ? { plannedStartAt: plannedStartAt?.toISOString() ?? null }
                     : {}),
                   ...(dueAt !== undefined ? { dueAt: dueAt?.toISOString() ?? null } : {}),
-                  revision: intervention.revision,
+                  revision: current.revision,
                 };
                 return from(offline.queue(interventionId, 'intervention.update', queuedInput)).pipe(
-                  concatMap(async () => {
+                  concatMap(async (): Promise<InterventionOutput> => {
                     const updatedIntervention: InterventionOutput = {
-                      ...intervention,
+                      ...current,
                       ...optimisticInput,
                       ...(plannedStartAt !== undefined
                         ? { plannedStartAt: plannedStartAt?.toISOString() ?? null }
                         : {}),
                       ...(dueAt !== undefined ? { dueAt: dueAt?.toISOString() ?? null } : {}),
-                      revision: intervention.revision + 1,
+                      revision: current.revision + 1,
                       updatedAt: new Date().toISOString(),
                     };
                     patchState(store, { intervention: updatedIntervention, saving: false });
@@ -403,6 +448,7 @@ export const InterventionWorkspaceStore = signalStore(
                       [],
                       { replace: false },
                     );
+                    return updatedIntervention;
                   }),
                   catchError(() => {
                     patchState(store, {
@@ -412,17 +458,25 @@ export const InterventionWorkspaceStore = signalStore(
                     return EMPTY;
                   }),
                 );
+              };
+
+              if (connectivity.isOffline() && intervention) {
+                return queueDetails(intervention);
               }
 
               return service.update(interventionId, input, intervention?.revision).pipe(
-                tapResponse({
-                  next: (updatedIntervention) =>
-                    patchState(store, { intervention: updatedIntervention, saving: false }),
-                  error: () =>
-                    patchState(store, {
-                      saving: false,
-                      error: $localize`:@@intervention.workspace.detailsFailed:Intervention planning details could not be saved.`,
-                    }),
+                tap((updatedIntervention) =>
+                  patchState(store, { intervention: updatedIntervention, saving: false }),
+                ),
+                catchError((error: unknown) => {
+                  if (connectivity.isNetworkFailure(error) && intervention) {
+                    return queueDetails(intervention);
+                  }
+                  patchState(store, {
+                    saving: false,
+                    error: $localize`:@@intervention.workspace.detailsFailed:Intervention planning details could not be saved.`,
+                  });
+                  return EMPTY;
                 }),
               );
             }),
@@ -513,7 +567,10 @@ export const InterventionWorkspaceStore = signalStore(
         setWorkItemStatus: rxMethod<InterventionWorkItemStatusCommand>(
           pipe(
             tap(() => patchState(store, { saving: true, error: null })),
-            switchMap(({ interventionId, workItemId, status, skipReason }) => {
+            // mergeMap (not switchMap): a field agent ticks several checklist
+            // items quickly; each toggle is independent and must not cancel the
+            // previous in-flight PATCH.
+            mergeMap(({ interventionId, workItemId, status, skipReason }) => {
               const item = store.workItems().find((current) => current.id === workItemId);
               const normalizedSkipReason: string | null =
                 status === 'skipped' ? (skipReason ?? item?.skipReason ?? null) : null;
@@ -566,9 +623,43 @@ export const InterventionWorkspaceStore = signalStore(
                 )
                 .pipe(
                   tapResponse({
+                    // Patch the toggled item (and the intervention's recomputed
+                    // progress) in place instead of a full `load()`, so ticking an
+                    // item never flashes the full-screen skeleton and concurrent
+                    // ticks don't each trigger a competing reload.
                     next: () => {
-                      patchState(store, { saving: false });
-                      load(interventionId);
+                      if (!item) {
+                        patchState(store, { saving: false });
+
+                        return;
+                      }
+                      const result = optimistic.updateWorkItem(store.intervention(), item, {
+                        workItemId,
+                        status,
+                        skipReason: normalizedSkipReason ?? undefined,
+                      });
+                      const workItems = replaceWorkItem(
+                        store.workItems(),
+                        workItemId,
+                        result.workItem,
+                      );
+                      patchState(store, {
+                        intervention: result.intervention,
+                        workItems,
+                        saving: false,
+                      });
+                      if (result.intervention) {
+                        void offline
+                          .saveWorkspace(
+                            result.intervention,
+                            workItems,
+                            store.changes(),
+                            store.issues(),
+                            [],
+                            { replace: false },
+                          )
+                          .catch(() => undefined);
+                      }
                     },
                     error: () =>
                       patchState(store, {

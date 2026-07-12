@@ -4,7 +4,7 @@ import { patchState, signalStore, type, withComputed, withMethods, withState } f
 import { addEntity, setAllEntities, updateEntity, withEntities } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, exhaustMap, expand, pipe, reduce, switchMap, tap } from 'rxjs';
+import { EMPTY, exhaustMap, expand, mergeMap, pipe, reduce, switchMap, tap } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -235,6 +235,10 @@ export const InterventionStore = signalStore(
             switchMap(({ organizationId, options }) => {
               const fetchPage = (page: number) =>
                 interventionService.list(organizationId, {
+                  // Default to newest-first so the 500-item cap really keeps the
+                  // "most recent" interventions the banner promises; a caller may
+                  // still override the order via options.
+                  order: { createdAt: 'desc' },
                   ...options,
                   page,
                   itemsPerPage: INTERVENTION_LIST_PAGE_SIZE,
@@ -385,7 +389,12 @@ export const InterventionStore = signalStore(
               }
               patchState(store, { transitionCallState: pendingCallState<InterventionOutput>() });
             }),
-            switchMap(({ id, status, revision }) =>
+            // mergeMap (not switchMap): board drag-drop can fire several
+            // transitions in quick succession, each keyed by its own id with its
+            // own optimistic snapshot/rollback. switchMap would cancel an
+            // in-flight PATCH — dropping its success/rollback handlers and
+            // leaving a card visually moved while the server never confirmed.
+            mergeMap(({ id, status, revision }) =>
               interventionService.update(id, { status }, revision).pipe(
                 tapResponse({
                   next: (updated) => {

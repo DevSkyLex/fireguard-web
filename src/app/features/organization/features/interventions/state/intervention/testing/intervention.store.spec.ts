@@ -46,6 +46,7 @@ describe('InterventionStore', () => {
     store.load({ organizationId: 'org-1' });
 
     expect(mockInterventionService.list).toHaveBeenCalledWith('org-1', {
+      order: { createdAt: 'desc' },
       page: 1,
       itemsPerPage: 100,
     });
@@ -82,6 +83,7 @@ describe('InterventionStore', () => {
     store.load({ organizationId: 'org-1', options: { name: 'roof' } });
 
     expect(mockInterventionService.list).toHaveBeenCalledWith('org-1', {
+      order: { createdAt: 'desc' },
       name: 'roof',
       page: 1,
       itemsPerPage: 100,

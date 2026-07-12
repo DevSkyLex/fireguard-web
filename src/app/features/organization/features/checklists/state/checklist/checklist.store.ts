@@ -350,7 +350,10 @@ export const ChecklistStore = signalStore(
 
           loadFn({
             organizationId,
-            options: { itemsPerPage: INSPECTION_CREATE_CHECKLIST_ITEMS_PER_PAGE },
+            // Only active checklists are usable as inspection templates; an
+            // archived one is rejected on submit (400), so keep them out of the
+            // inspection-create selector.
+            options: { itemsPerPage: INSPECTION_CREATE_CHECKLIST_ITEMS_PER_PAGE, status: 'active' },
           });
         },
 

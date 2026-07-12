@@ -5,6 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { MessageService } from 'primeng/api';
 import { EMPTY, of } from 'rxjs';
+import { OrganizationPermissionService } from '@features/organization/access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
@@ -95,6 +96,7 @@ describe('FacilityDetailPage', () => {
       data: null,
     }),
     childFacilitiesByParent: signal<Record<string, readonly FacilityOutput[]>>({}),
+    childFacilityIdsByParent: signal<Record<string, readonly string[]>>({}),
     loadedParentIds: signal<readonly string[]>([]),
     loadingParentIds: signal<readonly string[]>([]),
     ensureParentOptionsLoaded: vi.fn(),
@@ -137,6 +139,7 @@ describe('FacilityDetailPage', () => {
     mockFacilityStore.facilities.set([]);
     mockFacilityStore.moveCallState.set({ status: 'idle', data: null });
     mockFacilityStore.childFacilitiesByParent.set({});
+    mockFacilityStore.childFacilityIdsByParent.set({});
     mockFacilityStore.loadedParentIds.set([]);
     mockFacilityStore.loadingParentIds.set([]);
     mockFacilityStore.ensureParentOptionsLoaded.mockReset();
@@ -162,6 +165,10 @@ describe('FacilityDetailPage', () => {
         { provide: MessageService, useValue: mockMessageService },
         { provide: EquipmentService, useValue: mockEquipmentService },
         { provide: InspectionService, useValue: mockInspectionService },
+        {
+          provide: OrganizationPermissionService,
+          useValue: { hasPermission: (): boolean => true },
+        },
       ],
     })
       .overrideComponent(FacilityDetailPage, {
@@ -285,6 +292,35 @@ describe('FacilityDetailPage', () => {
     expect(fixture.componentInstance['showMoveDialog']()).toBe(false);
   });
 
+  it('should exclude self, descendants and archived facilities from move parent options', () => {
+    mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
+    mockFacilityStore.facilities.set([
+      MOCK_FACILITY,
+      { ...MOCK_FACILITY, id: 'fac-2', name: 'Valid Parent' } as unknown as FacilityOutput,
+      {
+        ...MOCK_FACILITY,
+        id: 'fac-3',
+        name: 'Archived',
+        status: 'archived',
+      } as unknown as FacilityOutput,
+      { ...MOCK_FACILITY, id: 'fac-4', name: 'Descendant' } as unknown as FacilityOutput,
+    ]);
+    mockFacilityStore.childFacilityIdsByParent.set({ 'fac-1': ['fac-4'] });
+
+    const fixture = TestBed.createComponent(FacilityDetailPage);
+    fixture.detectChanges();
+
+    const optionValues: string[] = fixture.componentInstance['parentOptions']().map(
+      (option) => option.value,
+    );
+
+    expect(optionValues).toContain('');
+    expect(optionValues).toContain('fac-2');
+    expect(optionValues).not.toContain('fac-1');
+    expect(optionValues).not.toContain('fac-3');
+    expect(optionValues).not.toContain('fac-4');
+  });
+
   it('should call store.move with correct payload on onMoveSubmit', () => {
     mockActiveFacilityStore.selectedFacility.set(MOCK_FACILITY);
     const fixture = TestBed.createComponent(FacilityDetailPage);
@@ -330,6 +366,10 @@ describe('FacilityDetailPage', () => {
         { provide: MessageService, useValue: mockMessageService },
         { provide: EquipmentService, useValue: mockEquipmentService },
         { provide: InspectionService, useValue: mockInspectionService },
+        {
+          provide: OrganizationPermissionService,
+          useValue: { hasPermission: (): boolean => true },
+        },
       ],
     })
       .overrideComponent(FacilityDetailPage, {

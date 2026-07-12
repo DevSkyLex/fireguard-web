@@ -19,7 +19,9 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import type { EquipmentFormData, EquipmentFormValues } from './models';
 
 /**
@@ -40,6 +42,7 @@ import type { EquipmentFormData, EquipmentFormValues } from './models';
   imports: [
     ReactiveFormsModule,
     InputTextModule,
+    SelectModule,
     ButtonModule,
     MessageModule,
     IconFieldModule,
@@ -127,11 +130,7 @@ export class EquipmentForm {
    */
   protected readonly form: FormGroup<EquipmentFormData> = this.formBuilder.group<EquipmentFormData>(
     {
-      type: this.formBuilder.control<string>('', [
-        Validators.required,
-        Validators.minLength(2),
-        Validators.maxLength(255),
-      ]),
+      type: this.formBuilder.control<string>('', [Validators.required]),
       subType: this.formBuilder.control<string>(''),
       brand: this.formBuilder.control<string>(''),
       model: this.formBuilder.control<string>(''),
@@ -139,6 +138,23 @@ export class EquipmentForm {
       locationLabel: this.formBuilder.control<string>(''),
     },
   );
+
+  /**
+   * Property typeOptions
+   * @readonly
+   *
+   * @description
+   * Localized equipment type choices for the type `p-select`, shared with the
+   * table filter. Constrains input to the backend `EquipmentType` value set.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {ReadonlyArray<{ readonly label: string; readonly value: string }>}
+   */
+  protected readonly typeOptions: { readonly label: string; readonly value: string }[] = [
+    ...EQUIPMENT_TYPE_OPTIONS,
+  ];
   //#endregion
 
   //#region Constructor

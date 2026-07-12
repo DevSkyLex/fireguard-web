@@ -7,28 +7,23 @@
       i18n="@@equipment.form.type"
       >Type</label
     >
-    <p-iconfield>
-      <p-inputicon class="pi pi-box" />
-      <input
-        pInputText
-        id="type"
-        formControlName="type"
-        class="w-full"
-        placeholder="Fire Extinguisher"
-        i18n-placeholder="@@equipment.form.typePlaceholder"
-      />
-    </p-iconfield>
+    <p-select
+      id="type"
+      formControlName="type"
+      [options]="typeOptions"
+      optionLabel="label"
+      optionValue="value"
+      [filter]="true"
+      appendTo="body"
+      styleClass="w-full"
+      placeholder="Select an equipment type"
+      i18n-placeholder="@@equipment.form.typePlaceholder"
+    />
 
     @if (form.controls.type.invalid && form.controls.type.touched) {
       <p-message severity="error" variant="simple">
         @if (form.controls.type.hasError('required')) {
           <span i18n="@@equipment.form.typeRequired">Equipment type is required.</span>
-        }
-        @if (form.controls.type.hasError('minlength')) {
-          <span i18n="@@equipment.form.typeMin">Type must be at least 2 characters.</span>
-        }
-        @if (form.controls.type.hasError('maxlength')) {
-          <span i18n="@@equipment.form.typeMax">Type must be less than 255 characters.</span>
         }
       </p-message>
     }

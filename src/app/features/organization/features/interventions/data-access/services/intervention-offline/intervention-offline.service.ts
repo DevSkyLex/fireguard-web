@@ -94,6 +94,23 @@ export class InterventionOfflineService {
    * @type {Signal<boolean>}
    */
   public readonly hasUnsyncedChanges: Signal<boolean> = this.outbox.hasUnsyncedChanges;
+
+  /**
+   * Property hasPendingChanges
+   * @readonly
+   *
+   * @description
+   * Whether operations that can still synchronize on their own remain queued
+   * locally, excluding `conflict`/`failed` operations that need user
+   * resolution. Deferrable side effects should gate on this rather than
+   * {@link hasUnsyncedChanges} to avoid deadlocking on unsynchronizable work.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  public readonly hasPendingChanges: Signal<boolean> = this.outbox.hasPendingChanges;
   //#endregion
 
   //#region Workspace
@@ -311,6 +328,15 @@ export class InterventionOfflineService {
    */
   public markOutboxFailed(id: string, error: string): Promise<void> {
     return this.outbox.markOutboxFailed(id, error);
+  }
+
+  /**
+   * Rebases one stale-revision operation onto the current server revision and
+   * marks it as a conflict, so a retry sends a valid `If-Match` instead of
+   * looping on the stale revision.
+   */
+  public rebaseOutboxRevision(id: string, revision: number, error: string): Promise<void> {
+    return this.outbox.rebaseOutboxRevision(id, revision, error);
   }
 
   /**

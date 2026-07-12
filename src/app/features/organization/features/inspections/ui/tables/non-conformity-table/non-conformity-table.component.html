@@ -75,7 +75,9 @@
             />
           </td>
           <td>
-            @if (canManage()) {
+            @if (
+              canManage() && nonConformity.status !== 'done' && nonConformity.status !== 'waived'
+            ) {
               <p-select
                 [options]="statusOptions"
                 optionLabel="label"
@@ -85,6 +87,8 @@
                 (ngModelChange)="statusChange.emit({ nonConformity, status: $event })"
               />
             } @else {
+              <!-- A resolved non-conformity is immutable (the backend rejects further
+                   status changes with 422), so its status is shown frozen. -->
               <p-tag [value]="nonConformity.status | titlecase" severity="secondary" />
             }
           </td>

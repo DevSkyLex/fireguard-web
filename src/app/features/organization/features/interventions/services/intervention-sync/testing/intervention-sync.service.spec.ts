@@ -34,6 +34,11 @@ describe('InterventionSyncService', () => {
   let mockInterventionService: {
     createWorkItem: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+    updateWorkItem: ReturnType<typeof vi.fn>;
+    addComment: ReturnType<typeof vi.fn>;
+    get: ReturnType<typeof vi.fn>;
+    listAllWorkItems: ReturnType<typeof vi.fn>;
+    listAllChanges: ReturnType<typeof vi.fn>;
   };
   let mockFacilities: { createForIntervention: ReturnType<typeof vi.fn> };
   let mockEquipment: {
@@ -46,12 +51,18 @@ describe('InterventionSyncService', () => {
     removeOutbox: ReturnType<typeof vi.fn>;
     markOutboxConflict: ReturnType<typeof vi.fn>;
     markOutboxFailed: ReturnType<typeof vi.fn>;
+    rebaseOutboxRevision: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
     mockInterventionService = {
       createWorkItem: vi.fn().mockReturnValue(of({})),
       update: vi.fn().mockReturnValue(of({})),
+      updateWorkItem: vi.fn().mockReturnValue(of({})),
+      addComment: vi.fn().mockReturnValue(of({})),
+      get: vi.fn().mockReturnValue(of({ revision: 0 })),
+      listAllWorkItems: vi.fn().mockReturnValue(of([])),
+      listAllChanges: vi.fn().mockReturnValue(of([])),
     };
     mockFacilities = { createForIntervention: vi.fn().mockReturnValue(of({})) };
     mockEquipment = {
@@ -64,6 +75,7 @@ describe('InterventionSyncService', () => {
       removeOutbox: vi.fn().mockResolvedValue(undefined),
       markOutboxConflict: vi.fn().mockResolvedValue(undefined),
       markOutboxFailed: vi.fn().mockResolvedValue(undefined),
+      rebaseOutboxRevision: vi.fn().mockResolvedValue(undefined),
     };
 
     TestBed.configureTestingModule({
@@ -142,17 +154,21 @@ describe('InterventionSyncService', () => {
     expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
   });
 
-  it('should stop the replay and keep the operation queued on other failures', async () => {
+  it('should keep a transient (5xx) operation queued but continue replaying the rest', async () => {
     mockOffline.listOutbox.mockResolvedValue([
       operation('op-1', 'facility.create', { name: 'Building A', type: 'building' }),
       operation('op-2', 'equipment.create', { type: 'fire_extinguisher' }),
     ]);
     mockFacilities.createForIntervention.mockReturnValue(throwError(() => ({ status: 500 })));
 
-    await expect(service.replayOutbox('org-1', 'intervention-1')).rejects.toBeTruthy();
+    const replayed = await service.replayOutbox('org-1', 'intervention-1');
 
-    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
-    expect(mockEquipment.createForIntervention).not.toHaveBeenCalled();
+    // A transient 5xx must not freeze the queue: op-1 stays queued (retried next
+    // cycle) while the independent op-2 is still attempted and dequeued.
+    expect(replayed).toBe(1);
+    expect(mockEquipment.createForIntervention).toHaveBeenCalled();
+    expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-2');
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalledWith('op-1');
   });
 
   it('should mark permanently rejected operations as failed and continue', async () => {
@@ -190,7 +206,7 @@ describe('InterventionSyncService', () => {
     expect(mockFacilities.createForIntervention).toHaveBeenCalledOnce();
   });
 
-  it('should suspend only the stale operation and continue replaying the outbox', async () => {
+  it('should rebase a stale update onto the current revision and continue replaying', async () => {
     mockOffline.listOutbox.mockResolvedValue([
       operation('op-1', 'intervention.update', { status: 'in_progress', revision: 3 }),
       operation('op-2', 'equipment.create', { type: 'fire_extinguisher' }),
@@ -198,16 +214,44 @@ describe('InterventionSyncService', () => {
     mockInterventionService.update.mockReturnValue(
       throwError(() => ({ status: 412, error: { detail: 'The intervention changed.' } })),
     );
+    mockInterventionService.get.mockReturnValue(of({ revision: 7 }));
 
     const replayed = await service.replayOutbox('org-1', 'intervention-1');
 
+    // op-1 is rebased onto the fresh revision (so a retry no longer loops on the
+    // stale If-Match) and surfaced as a conflict; the independent op-2 replays.
     expect(replayed).toBe(1);
-    expect(mockOffline.markOutboxConflict).toHaveBeenCalledWith(
+    expect(mockInterventionService.get).toHaveBeenCalledWith('intervention-1');
+    expect(mockOffline.rebaseOutboxRevision).toHaveBeenCalledWith(
       'op-1',
+      7,
       'The intervention changed.',
     );
+    expect(mockOffline.markOutboxConflict).not.toHaveBeenCalled();
     expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-2');
     expect(mockEquipment.createForIntervention).toHaveBeenCalled();
+  });
+
+  it('should mark a plain conflict when the current revision cannot be resolved', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'work-item.update', {
+        workItemId: 'work-item-1',
+        status: 'completed',
+        revision: 2,
+      }),
+    ]);
+    mockInterventionService.updateWorkItem.mockReturnValue(
+      throwError(() => ({ status: 412, error: { detail: 'The work item changed.' } })),
+    );
+    // The target work item is gone from the server, so no revision can be
+    // rebased onto: fall back to a plain conflict mark (retry/discard).
+    mockInterventionService.listAllWorkItems.mockReturnValue(of([]));
+
+    const replayed = await service.replayOutbox('org-1', 'intervention-1');
+
+    expect(replayed).toBe(0);
+    expect(mockOffline.markOutboxConflict).toHaveBeenCalledWith('op-1', 'The work item changed.');
+    expect(mockOffline.rebaseOutboxRevision).not.toHaveBeenCalled();
   });
 
   it('should treat an existing client UUID creation as already synchronized', async () => {
@@ -252,7 +296,7 @@ describe('InterventionSyncService', () => {
     expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
   });
 
-  it('should leave operations depending on a conflicted resource pending', async () => {
+  it('should fail an operation whose parent create is permanently conflicted', async () => {
     mockOffline.listOutbox.mockResolvedValue([
       operation('op-1', 'equipment.create', {
         clientId: 'equipment-client-id',
@@ -278,8 +322,58 @@ describe('InterventionSyncService', () => {
       'op-1',
       'The intervention changed.',
     );
+    // IF-16: the dependent is surfaced as failed (visible, actionable) instead
+    // of sitting invisibly pending forever behind a parent that can never be
+    // created.
+    expect(mockOffline.markOutboxFailed).toHaveBeenCalledWith('op-2', expect.any(String));
     expect(mockInterventionService.createWorkItem).not.toHaveBeenCalled();
     expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+  });
+
+  it('should keep a dependent of a transient (5xx) parent pending, not failed', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'equipment.create', {
+        clientId: 'equipment-client-id',
+        type: 'fire_extinguisher',
+      }),
+      operation('op-2', 'work-item.create', {
+        clientId: 'work-item-client-id',
+        intervention: '/api/interventions/intervention-1',
+        action: 'inventory',
+        target: '/api/equipment/equipment-client-id',
+        source: 'discovered',
+        required: false,
+      }),
+    ]);
+    mockEquipment.createForIntervention.mockReturnValue(throwError(() => ({ status: 503 })));
+
+    const replayed = await service.replayOutbox('org-1', 'intervention-1');
+
+    // The parent stays queued (transient 5xx), so its dependent must stay
+    // pending for the next cycle — never marked failed or conflicted.
+    expect(replayed).toBe(0);
+    expect(mockOffline.markOutboxFailed).not.toHaveBeenCalled();
+    expect(mockOffline.markOutboxConflict).not.toHaveBeenCalled();
+    expect(mockInterventionService.createWorkItem).not.toHaveBeenCalled();
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+  });
+
+  it('should replay a queued offline comment and dequeue it', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'comment.create', {
+        clientId: 'comment-client-id',
+        body: 'Checked the extinguisher on site.',
+      }),
+    ]);
+
+    const replayed = await service.replayOutbox('org-1', 'intervention-1');
+
+    expect(replayed).toBe(1);
+    expect(mockInterventionService.addComment).toHaveBeenCalledWith(
+      'intervention-1',
+      'Checked the extinguisher on site.',
+    );
+    expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
   });
 
   it('should reject malformed media operations', async () => {

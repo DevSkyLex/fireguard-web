@@ -54,12 +54,14 @@
                   [facilityId]="equipment.facilityId"
                   [options]="facilityOptions()"
                   [canManage]="canManage()"
+                  [decommissioned]="equipment.status === 'decommissioned'"
                   [loading]="
                     store.assignToFacilityCallState().status === 'pending' ||
                     store.unassignFromFacilityCallState().status === 'pending'
                   "
                   (assign)="assign($event)"
                   (unassign)="unassign()"
+                  (viewFacility)="viewFacility($event)"
                 />
                 <app-equipment-tags-panel
                   [tags]="equipment.tags"

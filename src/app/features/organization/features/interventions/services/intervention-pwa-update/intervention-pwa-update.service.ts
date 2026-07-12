@@ -12,8 +12,10 @@ import { InterventionOfflineService } from '@features/organization/features/inte
  * Coordinates service-worker update prompts with intervention offline safety.
  *
  * The service listens to Angular service-worker version events and only
- * proposes reload when intervention outbox is clean. If unsynchronized field
- * operations exist, the update is deferred and users receive a warning.
+ * proposes reload when the intervention outbox has no field operations still
+ * waiting to synchronize. It defers on `pending` operations only — never on
+ * `conflict`/`failed` operations, which can never sync on their own and would
+ * otherwise deadlock the update indefinitely.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -121,7 +123,7 @@ export class InterventionPwaUpdateService {
    */
   public constructor() {
     effect(() => {
-      if (this.updateReady() && !this.offline.hasUnsyncedChanges()) {
+      if (this.updateReady() && !this.offline.hasPendingChanges()) {
         this.promptUpdate();
       }
     });
@@ -137,8 +139,8 @@ export class InterventionPwaUpdateService {
    * Starts service-worker update monitoring.
    *
    * On `VERSION_READY`, prompts reload only when the intervention offline outbox
-   * has no pending operations; otherwise warns the user and defers the
-   * update until field changes are synchronized.
+   * has no pending operations; otherwise informs the user that the update will
+   * install automatically once queued field changes finish synchronizing.
    *
    * @access public
    * @since 1.0.0
@@ -152,11 +154,11 @@ export class InterventionPwaUpdateService {
       .pipe(filter((event) => event.type === 'VERSION_READY'))
       .subscribe(() => {
         this.updateReady.set(true);
-        if (this.offline.hasUnsyncedChanges()) {
+        if (this.offline.hasPendingChanges()) {
           this.messages.add({
-            severity: 'warn',
+            severity: 'info',
             summary: $localize`:@@intervention.pwa.waitingSummary:Update waiting`,
-            detail: $localize`:@@intervention.pwa.waitingDetail:Synchronize field changes before installing the new version.`,
+            detail: $localize`:@@intervention.pwa.waitingDetail:Field changes are still syncing. The update will install automatically once they are saved.`,
           });
         }
       });

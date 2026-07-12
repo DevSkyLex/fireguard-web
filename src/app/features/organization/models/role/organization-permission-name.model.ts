@@ -10,6 +10,7 @@
  * @since 1.0.0
  */
 export const ORGANIZATION_PERMISSION = {
+  READ: 'organization.read',
   DASHBOARD_READ: 'organization.dashboard.read',
   MEMBERS_READ: 'organization.members.read',
   MEMBERS_MANAGE: 'organization.members.manage',

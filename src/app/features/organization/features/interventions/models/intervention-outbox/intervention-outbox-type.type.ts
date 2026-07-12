@@ -6,6 +6,7 @@ export type InterventionOutboxType =
   | 'equipment.create'
   | 'inspection.create'
   | 'media.create'
+  | 'comment.create'
   | 'intervention.update'
   | 'work-item.create'
   | 'work-item.update'

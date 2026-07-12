@@ -1,4 +1,8 @@
-export type { EquipmentOutput, EquipmentStatus } from './equipment/equipment-output.interface';
+export type {
+  EquipmentOutput,
+  EquipmentStatus,
+  EquipmentType,
+} from './equipment/equipment-output.interface';
 export type { CreateEquipmentInput } from './equipment/create-equipment-input.interface';
 export type { UpdateEquipmentInput } from './equipment/update-equipment-input.interface';
 export type { AssignToFacilityInput } from './equipment/assign-to-facility-input.interface';

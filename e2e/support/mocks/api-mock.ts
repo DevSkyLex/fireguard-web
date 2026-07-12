@@ -1,5 +1,6 @@
 import type { Page, Route } from '@playwright/test';
 import {
+  apiError,
   challengeOutput,
   currentOrganizationMemberProfileOutput,
   hydraCollection,
@@ -16,6 +17,13 @@ import {
   type OrganizationOutputFixture,
   type UserProfileOutputFixture,
 } from '../fixtures/api-fixtures';
+import {
+  interventionActivityOutput,
+  interventionOutput,
+  interventionWorkItemOutput,
+  type InterventionOutputFixture,
+  type InterventionWorkItemOutputFixture,
+} from '../fixtures/intervention-fixtures';
 
 /**
  * Backend origin the app is configured to call in the `e2e` build
@@ -55,6 +63,8 @@ async function fulfillJson(route: Route, status: number, body: unknown): Promise
 export class ApiMock {
   private readonly page: Page;
   private loginRequestCount = 0;
+  private equipmentReplayRequestCount = 0;
+  private commentCreateRequestCount = 0;
   private safetyNetInstalled = false;
 
   public constructor(page: Page) {
@@ -64,6 +74,21 @@ export class ApiMock {
   /** Number of times POST /api/auth/login was called during this test. */
   public get loginCallCount(): number {
     return this.loginRequestCount;
+  }
+
+  /**
+   * Number of times an offline equipment create was replayed (PUT
+   * /api/equipment/{clientId}). Proves the sync engine actually attempted a
+   * replay for the transient-retry scenario, where the outbox otherwise looks
+   * unchanged.
+   */
+  public get equipmentCreateReplayCount(): number {
+    return this.equipmentReplayRequestCount;
+  }
+
+  /** Number of times POST /api/interventions/{id}/comments was called (online post or replay). */
+  public get commentCreateCount(): number {
+    return this.commentCreateRequestCount;
   }
 
   /**
@@ -391,6 +416,206 @@ export class ApiMock {
     await this.installSafetyNet();
     await this.page.route(`${API_BASE_URL}/api/organizations/${organization.id}`, async (route) => {
       await fulfillJson(route, 200, organization);
+    });
+  }
+
+  /**
+   * Mocks `GET /api/interventions/{id}` — consumed by the title resolver, the
+   * active-intervention store, and the workspace `forkJoin`. Served repeatably.
+   */
+  public async mockInterventionDetail(
+    intervention: InterventionOutputFixture = interventionOutput(),
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/interventions/${intervention.id}`, async (route) => {
+      await fulfillJson(route, 200, intervention);
+    });
+  }
+
+  /**
+   * Mocks the four workspace collection reads (`work-items`, `changes`,
+   * `issues`, `activities`) as empty collections, enough for the detail page to
+   * render its execute-phase workspace without any 404s.
+   */
+  public async mockInterventionWorkspace(
+    interventionId: string,
+    options: { workItems?: ReadonlyArray<InterventionWorkItemOutputFixture> } = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    const workItems = options.workItems ?? [];
+    await this.page.route(/\/api\/intervention-work-items(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, hydraCollection(workItems));
+    });
+    await this.page.route(/\/api\/intervention-changes(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(
+      `${API_BASE_URL}/api/interventions/${interventionId}/issues`,
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection([]));
+      },
+    );
+    await this.page.route(
+      new RegExp(`/api/interventions/${interventionId}/activities(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection([]));
+      },
+    );
+  }
+
+  /**
+   * Mocks the six planning-option reads the detail page's
+   * `InterventionPlanningOptionsStore` loads (facilities x2 by query, equipment,
+   * equipment-types, members, intervention-labels) as empty collections.
+   */
+  public async mockInterventionPlanningOptions(organizationId: string): Promise<void> {
+    await this.installSafetyNet();
+    const empty = async (route: Route): Promise<void> =>
+      fulfillJson(route, 200, hydraCollection([]));
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/equipment-types(\\?.*)?$`),
+      empty,
+    );
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/facilities(\\?.*)?$`),
+      empty,
+    );
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/equipment(\\?.*)?$`),
+      empty,
+    );
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/members(\\?.*)?$`),
+      empty,
+    );
+    await this.page.route(/\/api\/intervention-labels(\?.*)?$/, empty);
+  }
+
+  /**
+   * Mocks `POST /api/interventions/{id}/comments` (online post and offline
+   * replay of a `comment.create` operation) to succeed with a created activity.
+   * Counts calls so a spec can prove the comment was actually posted.
+   */
+  public async mockCommentCreate(interventionId: string): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/interventions/${interventionId}/comments`,
+      async (route) => {
+        this.commentCreateRequestCount += 1;
+        await fulfillJson(
+          route,
+          201,
+          interventionActivityOutput({ intervention: `/api/interventions/${interventionId}` }),
+        );
+      },
+    );
+  }
+
+  /**
+   * Mocks `POST /api/interventions/{id}/comments` to fail at the network layer
+   * (a status-0 error), simulating "online but unreachable" — a captive portal
+   * or dropped connection where `navigator.onLine` stays true. Drives the
+   * store's `isNetworkFailure` queue fallback (IF-5).
+   */
+  public async mockCommentCreateNetworkError(interventionId: string): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/interventions/${interventionId}/comments`,
+      async (route) => {
+        this.commentCreateRequestCount += 1;
+        await route.abort('failed');
+      },
+    );
+  }
+
+  /**
+   * Mocks the replay of an offline equipment create (`PUT /api/equipment/{clientId}`)
+   * to return the given status: a 4xx to make it a permanent failure, a 5xx to
+   * make it a transient one, or a 2xx to succeed. Pass `problemType` (with a
+   * 409/412 status) to return an RFC7807 body whose `type` marks the resource as
+   * already applied, which the sync engine treats as an idempotent dequeue.
+   * Counts attempts so a spec can prove the replay ran.
+   */
+  public async mockEquipmentCreateReplay(
+    status: number,
+    options: { problemType?: string } = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/equipment\/[^/?]+(\?.*)?$/, async (route) => {
+      this.equipmentReplayRequestCount += 1;
+      if (status >= 200 && status < 300) {
+        await fulfillJson(route, status, {
+          '@id': '/api/equipment/e2e-created',
+          '@type': 'Equipment',
+          id: 'e2e-created',
+        });
+        return;
+      }
+      await fulfillJson(
+        route,
+        status,
+        apiError({
+          status,
+          type: options.problemType ?? 'about:blank',
+          title: status >= 500 ? 'Temporary server error' : 'Rejected',
+          detail:
+            status >= 500 ? 'The server is temporarily unavailable.' : 'The equipment is invalid.',
+        }),
+      );
+    });
+  }
+
+  /**
+   * Mocks the replay of an offline work-item status change
+   * (`PATCH /api/intervention-work-items/{id}`) to succeed, so a queued
+   * `work-item.update` drains on reconnect.
+   */
+  public async mockWorkItemUpdateReplay(): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/intervention-work-items\/[^/?]+(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, interventionWorkItemOutput());
+    });
+  }
+
+  /**
+   * Mocks `/api/interventions/{id}` for the 412-rebase scenario: `GET` always
+   * returns the current server revision, while `PATCH` returns `412` for any
+   * `If-Match` other than the current revision (a stale replay) and `200` once
+   * the operation has been rebased onto it (a successful retry).
+   */
+  public async mockInterventionUpdateRebase(
+    interventionId: string,
+    currentRevision: number,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/interventions/${interventionId}`, async (route) => {
+      const request = route.request();
+      if (request.method() === 'PATCH') {
+        const ifMatch = request.headers()['if-match'];
+        if (ifMatch === `"revision-${currentRevision}"`) {
+          await fulfillJson(
+            route,
+            200,
+            interventionOutput({ id: interventionId, revision: currentRevision + 1 }),
+          );
+          return;
+        }
+        await fulfillJson(
+          route,
+          412,
+          apiError({
+            status: 412,
+            title: 'Precondition failed',
+            detail: 'The intervention changed.',
+          }),
+        );
+        return;
+      }
+      await fulfillJson(
+        route,
+        200,
+        interventionOutput({ id: interventionId, revision: currentRevision }),
+      );
     });
   }
 }

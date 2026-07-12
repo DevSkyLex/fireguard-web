@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
   type Signal,
@@ -120,6 +121,15 @@ export class InspectionDetailPage {
         options: { itemsPerPage: 30 },
       }),
     );
+
+    // Leave the detail page only once the cancellation has actually succeeded
+    // (the store is page-scoped, so its call state starts idle). Navigating
+    // eagerly would strand the user on the list even if the cancel failed.
+    effect(() => {
+      if ('success' === this.store.cancelCallState().status) {
+        this.router.navigate(['..'], { relativeTo: this.route });
+      }
+    });
   }
 
   /** Navigates to the active inspection edit page. */
@@ -155,7 +165,6 @@ export class InspectionDetailPage {
       accept: () =>
         this.run((organizationId, inspectionId) => {
           this.store.cancel({ organizationId, inspectionId });
-          this.router.navigate(['..'], { relativeTo: this.route });
         }),
     });
   }
@@ -207,5 +216,26 @@ export class InspectionDetailPage {
     const organizationId = this.activeOrganizationStore.selectedOrganization()?.id;
     const inspectionId = this.inspection()?.id;
     if (organizationId && inspectionId) operation(organizationId, inspectionId);
+  }
+
+  /**
+   * Method humanizeLabel
+   *
+   * @description
+   * Turns an enum value (e.g. `in_progress`, `critical`) into a readable,
+   * title-cased label for the non-conformity detail dialog.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {string} value - Raw enum value.
+   *
+   * @returns {string} The human-readable label.
+   */
+  protected humanizeLabel(value: string): string {
+    return value
+      .split('_')
+      .map((word: string): string => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+      .join(' ');
   }
 }

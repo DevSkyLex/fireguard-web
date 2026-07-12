@@ -71,7 +71,18 @@
 
           <div class="flex flex-col gap-1.5">
             <label i18n="@@equipment.form.type" class="text-sm font-medium">Type</label>
-            <input pInputText [formControl]="typeControl" size="small" class="w-full" />
+            <p-select
+              [options]="typeOptions"
+              [formControl]="typeControl"
+              optionLabel="label"
+              optionValue="value"
+              [filter]="true"
+              [showClear]="true"
+              size="small"
+              class="w-full"
+              placeholder="Any type"
+              i18n-placeholder="@@equipment.table.filterTypePlaceholder"
+            />
           </div>
 
           <div class="flex flex-col gap-1.5">

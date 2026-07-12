@@ -195,7 +195,7 @@ export class FacilityForm {
       name: this.formBuilder.control<string>('', [
         Validators.required,
         Validators.minLength(2),
-        Validators.maxLength(255),
+        Validators.maxLength(120),
       ]),
       code: this.formBuilder.control<string>(''),
       address: this.formBuilder.control<string>(''),

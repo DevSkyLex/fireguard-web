@@ -67,6 +67,9 @@ describe('ChecklistStore', () => {
     store.ensureInspectionCreateOptionsLoaded('org-1');
     await flushEffects();
 
-    expect(mockChecklistService.list).toHaveBeenCalledWith('org-1', { itemsPerPage: 200 });
+    expect(mockChecklistService.list).toHaveBeenCalledWith('org-1', {
+      itemsPerPage: 200,
+      status: 'active',
+    });
   });
 });

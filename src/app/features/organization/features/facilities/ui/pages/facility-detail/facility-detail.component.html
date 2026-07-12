@@ -20,6 +20,7 @@
     } @else if (facility(); as facility) {
       <app-facility-detail-header
         [facility]="facility"
+        [canManage]="canManage()"
         (edit)="onEdit()"
         (move)="onOpenMoveDialog()"
       />

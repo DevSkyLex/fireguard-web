@@ -246,8 +246,7 @@
       (onClick)="onCancel()"
     />
     <p-button
-      i18n-label="@@inspection.form.submit"
-      label="Create Inspection"
+      [label]="submitLabel"
       type="submit"
       icon="pi pi-check"
       [loading]="loading()"

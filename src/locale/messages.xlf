@@ -3313,7 +3313,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.form.typePlaceholder" datatype="html">
-        <source>Fire Extinguisher</source>
+        <source>Select an equipment type</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/forms/equipment-form/equipment-form.component.html</context>
           <context context-type="linenumber">17,18</context>
@@ -3706,6 +3706,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/tables/equipment-table/equipment-table.component.html</context>
           <context context-type="linenumber">79,81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="equipment.table.filterTypePlaceholder" datatype="html">
+        <source>Any type</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/tables/equipment-table/equipment-table.component.html</context>
+          <context context-type="linenumber">83</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.table.filterBrand" datatype="html">
@@ -4515,7 +4522,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.nameMax" datatype="html">
-        <source>Name must be less than 255 characters.</source>
+        <source>Name must be at most 120 characters.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-form/facility-form.component.html</context>
           <context context-type="linenumber">59,61</context>
@@ -5128,6 +5135,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/state/inspection/inspection.store.ts</context>
           <context context-type="linenumber">273</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="inspection.toast.cancelled" datatype="html">
+        <source>Inspection cancelled</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/inspections/state/inspection/inspection.store.ts</context>
+          <context context-type="linenumber">352</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.header.title" datatype="html">
@@ -6193,7 +6207,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.pwa.waitingDetail" datatype="html">
-        <source>Synchronize field changes before installing the new version.</source>
+        <source>Field changes are still syncing. The update will install automatically once they are saved.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/services/intervention-pwa-update/intervention-pwa-update.service.ts</context>
           <context context-type="linenumber">159</context>
@@ -6232,13 +6246,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
           <context context-type="linenumber">200</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="intervention.workspace.commentOffline" datatype="html">
-        <source>Comments can&apos;t be posted while offline.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">277</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.commentAddFailed" datatype="html">
@@ -7631,7 +7638,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.commentOffline" datatype="html">
-        <source> Comments can&apos;t be posted while offline. </source>
+        <source> Comments are saved locally and posted when you reconnect. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail/intervention-detail.component.html</context>
           <context context-type="linenumber">680,682</context>
@@ -8125,6 +8132,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail/intervention-detail.component.ts</context>
           <context context-type="linenumber">2996</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.activity.you" datatype="html">
+        <source>You</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail/intervention-detail.component.ts</context>
+          <context context-type="linenumber">3036</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.list.unknownMember" datatype="html">

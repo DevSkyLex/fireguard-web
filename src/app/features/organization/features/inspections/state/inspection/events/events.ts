@@ -15,6 +15,8 @@ export const inspectionStoreEvents = eventGroup({
     updateFailed: type<StoreFailureEventPayload>(),
     /** Dispatched when cancelling an inspection fails. */
     cancelFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when an inspection is cancelled. */
+    cancelSucceeded: type<FeedbackEventPayload>(),
     /** Dispatched when submitting an inspection fails. */
     submitFailed: type<StoreFailureEventPayload>(),
     /** Dispatched when closing an inspection fails. */

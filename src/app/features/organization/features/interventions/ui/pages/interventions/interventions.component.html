@@ -55,7 +55,7 @@
     </div>
   </header>
 
-  @if (store.listError()) {
+  @if (view() !== 'calendar' && store.listError()) {
     <p-message severity="error" class="block">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <span class="flex items-center gap-2">
@@ -75,7 +75,7 @@
         />
       </div>
     </p-message>
-  } @else if (store.isListCapped()) {
+  } @else if (view() !== 'calendar' && store.isListCapped()) {
     <p-message severity="info" class="block">
       <span i18n="@@intervention.list.cappedNotice"
         >Showing the 500 most recent interventions — refine your search to narrow results.</span

@@ -221,6 +221,38 @@ export class InspectionForm {
    * @type {{ label: string; value: InspectorType }[]}
    */
   protected readonly inspectorTypeOptions = INSPECTOR_TYPE_OPTIONS;
+
+  /**
+   * Property isEditMode
+   *
+   * @description
+   * Whether the form edits an existing inspection (inspection input provided).
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {boolean}
+   */
+  protected get isEditMode(): boolean {
+    return this.inspection() !== null;
+  }
+
+  /**
+   * Property submitLabel
+   *
+   * @description
+   * Localized submit button label, depending on create vs edit mode.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
+  protected get submitLabel(): string {
+    return this.isEditMode
+      ? $localize`:@@common.saveChanges:Save changes`
+      : $localize`:@@inspection.form.submit:Create Inspection`;
+  }
   //#endregion
 
   //#region Constructor
@@ -244,7 +276,7 @@ export class InspectionForm {
           equipmentId: inspection.equipmentId,
           result: inspection.result,
           performedAt: new Date(inspection.performedAt),
-          inspectorType: 'external',
+          inspectorType: 'user' === inspection.inspector?.type ? 'user' : 'external',
           inspectorName:
             inspection.inspector?.displayName ??
             $localize`:@@inspection.form.inspectorDefault:Inspector`,

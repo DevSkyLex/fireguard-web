@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { computed, Injectable, type Signal } from '@angular/core';
 import { online as createOnlineSignal } from '@signality/core';
+import { isApiError } from '@core/api/utils';
 
 /**
  * Service ConnectivityService
@@ -101,8 +102,13 @@ export class ConnectivityService {
    *
    * @description
    * Determines whether a transport error should be treated as a connectivity
-   * loss, so callers may safely fall back to local data. True when the
-   * browser is offline or the response is a status-0 `HttpErrorResponse`.
+   * loss, so callers may safely fall back to local data. True when the browser
+   * is offline, or the response carries HTTP status 0 (a transport failure —
+   * the "online but unreachable" case: captive portals, dropped cells, a dead
+   * server while `navigator.onLine` stays true). Status 0 is detected both on a
+   * raw `HttpErrorResponse` and on an `ApiError` already normalized by
+   * `HydraApiService.handleError` (which strips the `HttpErrorResponse` type),
+   * so every error flowing through a feature service is classified correctly.
    *
    * @access public
    * @since 1.0.0
@@ -112,7 +118,13 @@ export class ConnectivityService {
    * @return {boolean} Whether the failure represents unavailable connectivity.
    */
   public isNetworkFailure(error: unknown): boolean {
-    return !this.online() || (error instanceof HttpErrorResponse && error.status === 0);
+    if (!this.online()) {
+      return true;
+    }
+    if (error instanceof HttpErrorResponse) {
+      return error.status === 0;
+    }
+    return isApiError(error) && error.status === 0;
   }
   //#endregion
 }

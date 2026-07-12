@@ -419,6 +419,12 @@ export class InspectionTable implements OnInit {
       icon: PrimeIcons.LOCK,
       severity: 'secondary',
     },
+    {
+      label: $localize`:@@inspectionStatus.cancelled:Cancelled`,
+      value: 'cancelled',
+      icon: PrimeIcons.BAN,
+      severity: 'danger',
+    },
   ];
 
   /**

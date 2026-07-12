@@ -18,6 +18,7 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TabsModule } from 'primeng/tabs';
 import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
+import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   FacilityOutput,
   MoveFacilityInput,
@@ -38,6 +39,7 @@ import {
   FacilityEquipmentDataview,
   FacilityInspectionDataview,
 } from '@features/organization/features/facilities/ui/dataviews';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
 /**
@@ -106,6 +108,15 @@ export class FacilityDetailPage {
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
+
+  /** Permission helper gating facility write actions in the header. */
+  private readonly organizationPermissionService: OrganizationPermissionService =
+    inject<OrganizationPermissionService>(OrganizationPermissionService);
+
+  /** Whether the active member can mutate facilities (gates header Move/Edit). */
+  protected readonly canManage: Signal<boolean> = computed<boolean>(() =>
+    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_WRITE),
+  );
 
   /**
    * Property activeOrganizationStore
@@ -282,13 +293,57 @@ export class FacilityDetailPage {
   );
 
   /**
+   * Property descendantIds
+   * @readonly
+   *
+   * @description
+   * Transitive set of the current facility's descendant ids, derived by
+   * walking the loaded `childFacilityIdsByParent` map. Used to exclude
+   * descendants from the move-dialog parent options — re-parenting a facility
+   * under its own descendant would create a hierarchy cycle (rejected by the
+   * backend), so it must not be offered.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Signal<ReadonlySet<string>>}
+   */
+  private readonly descendantIds: Signal<ReadonlySet<string>> = computed<ReadonlySet<string>>(
+    () => {
+      const currentId: string | undefined = this.facility()?.id;
+      const idsByParent: Readonly<Record<string, ReadonlyArray<string>>> =
+        this.store.childFacilityIdsByParent();
+      const result: Set<string> = new Set<string>();
+      if (undefined === currentId) {
+        return result;
+      }
+
+      const queue: string[] = [currentId];
+      for (let index = 0; index < queue.length; index++) {
+        const parentId: string = queue[index];
+        for (const childId of idsByParent[parentId] ?? []) {
+          if (!result.has(childId)) {
+            result.add(childId);
+            queue.push(childId);
+          }
+        }
+      }
+
+      return result;
+    },
+  );
+
+  /**
    * Property parentOptions
    * @readonly
    *
    * @description
-   * Computed select options for the move-dialog parent picker.
-   * Includes a "None (root level)" sentinel and all facilities
-   * except the current one to avoid circular parenting.
+   * Computed select options for the move-dialog parent picker. Includes a
+   * "None (root level)" sentinel and every facility except invalid targets:
+   * the current facility itself, any of its descendants (would create a cycle),
+   * and archived facilities (a facility cannot be re-parented under an archived
+   * one). All three are rejected by the backend, so offering them would only
+   * produce a guaranteed error.
    *
    * @access protected
    * @since 1.0.0
@@ -300,16 +355,18 @@ export class FacilityDetailPage {
   >(() => {
     const currentId: string | undefined = this.facility()?.id;
     const facilities: readonly FacilityOutput[] = this.store.facilities();
+    const descendants: ReadonlySet<string> = this.descendantIds();
     const options: { label: string; value: string }[] = [
       { label: $localize`:@@facility.form.parentNone:None (root level)`, value: '' },
     ];
     for (const f of facilities) {
-      if (f.id !== currentId) {
-        options.push({
-          label: `${f.name}${f.code ? ' (' + f.code + ')' : ''}`,
-          value: f.id,
-        });
+      if (f.id === currentId || f.status === 'archived' || descendants.has(f.id)) {
+        continue;
       }
+      options.push({
+        label: `${f.name}${f.code ? ' (' + f.code + ')' : ''}`,
+        value: f.id,
+      });
     }
     return options;
   });

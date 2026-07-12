@@ -159,7 +159,36 @@ describe('InterventionPlanningGuide', () => {
     await new Promise((resolve) => setTimeout(resolve, 700));
 
     expect(emitted).toEqual([{ site: '/api/facilities/f-1' }]);
+    // Stays dirty until the persisted intervention confirms the save, so a
+    // failed autosave can never be silently reverted on reseed.
+    expect(harness.siteControl.dirty).toBe(true);
+
+    // Once the persisted intervention reflects the saved value, the control is
+    // confirmed pristine — without reverting the value.
+    fixture.componentRef.setInput(
+      'intervention',
+      makeIntervention({ site: '/api/facilities/f-1' }),
+    );
+    fixture.detectChanges();
+
+    expect(harness.siteControl.value).toBe('/api/facilities/f-1');
     expect(harness.siteControl.dirty).toBe(false);
+  });
+
+  it('should keep an unconfirmed edit when a refresh does not reflect it', async () => {
+    const harness = build(makeIntervention());
+
+    harness.siteControl.setValue('/api/facilities/f-1');
+    harness.siteControl.markAsDirty();
+    await new Promise((resolve) => setTimeout(resolve, 700));
+
+    // A refresh that does not carry the edited value (a failed save, or a
+    // concurrent push) must not silently revert the pending edit.
+    fixture.componentRef.setInput('intervention', makeIntervention({ site: null }));
+    fixture.detectChanges();
+
+    expect(harness.siteControl.value).toBe('/api/facilities/f-1');
+    expect(harness.siteControl.dirty).toBe(true);
   });
 
   it('should only request planning once every step is complete', () => {

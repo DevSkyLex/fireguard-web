@@ -348,6 +348,13 @@ export const InspectionStore = signalStore(
                     if (activeInspectionStore.selectedInspection()?.id === inspectionId) {
                       activeInspectionStore.clearSelectedInspection();
                     }
+                    dispatcher.dispatch(
+                      inspectionStoreEvents.cancelSucceeded(
+                        successFeedback(
+                          $localize`:@@inspection.toast.cancelled:Inspection cancelled`,
+                        ),
+                      ),
+                    );
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);

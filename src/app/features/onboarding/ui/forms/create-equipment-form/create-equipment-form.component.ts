@@ -18,8 +18,8 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
+import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
 import type { CreateEquipmentFormData, CreateEquipmentFormValues } from './models';
-import { EQUIPMENT_TYPE_OPTIONS } from './options';
 
 /**
  * Component CreateEquipmentForm
@@ -85,8 +85,10 @@ export class CreateEquipmentForm {
    * @readonly
    *
    * @description
-   * Available equipment type options, sourced from the shared onboarding option
-   * set (`EQUIPMENT_TYPE_OPTIONS`) so the catalog lives in a single place.
+   * Available equipment type options, imported from the canonical equipments
+   * feature public API (`@features/organization/features/equipments`) so the
+   * catalog lives in a single place. Spread into a mutable array for the
+   * `p-select` `[options]` binding.
    *
    * @access protected
    * @since 1.1.0

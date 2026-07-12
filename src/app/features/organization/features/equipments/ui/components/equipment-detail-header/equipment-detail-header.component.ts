@@ -2,10 +2,12 @@ import { DatePipe, TitleCasePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
@@ -24,6 +26,10 @@ import type { EquipmentOutput } from '@features/organization/features/equipments
 export class EquipmentDetailHeader {
   /** Equipment presented by the header. */
   public readonly equipment: InputSignal<EquipmentOutput> = input.required();
+  /** Human-readable equipment type (underscores replaced), title-cased in the template. */
+  public readonly typeLabel: Signal<string> = computed((): string =>
+    this.equipment().type.replace(/_/g, ' '),
+  );
   /** Whether the active member can mutate equipment. */
   public readonly canManage: InputSignal<boolean> = input(false);
   /** Whether a lifecycle transition is pending. */

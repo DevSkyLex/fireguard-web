@@ -102,6 +102,10 @@
         <source>Cancel</source>
         <target>Annuler</target>
       </trans-unit>
+      <trans-unit id="common.close" datatype="html">
+        <source>Close</source>
+        <target>Fermer</target>
+      </trans-unit>
       <trans-unit id="auth.newPassword.submit" datatype="html">
         <source>Reset Password</source>
         <target>Réinitialiser le mot de passe</target>
@@ -1749,6 +1753,10 @@
         <source>Commission</source>
         <target>Mettre en service</target>
       </trans-unit>
+      <trans-unit id="equipment.resumeService" datatype="html">
+        <source>Resume service</source>
+        <target>Remettre en service</target>
+      </trans-unit>
       <trans-unit id="equipment.maintenance" datatype="html">
         <source>Maintenance</source>
         <target>Maintenance</target>
@@ -1862,8 +1870,8 @@
         <target>Type</target>
       </trans-unit>
       <trans-unit id="equipment.form.typePlaceholder" datatype="html">
-        <source>Fire Extinguisher</source>
-        <target>Extincteur</target>
+        <source>Select an equipment type</source>
+        <target>Sélectionner un type d'équipement</target>
       </trans-unit>
       <trans-unit id="equipment.form.typeRequired" datatype="html">
         <source>Equipment type is required.</source>
@@ -2089,6 +2097,10 @@
         <source>Sub-type</source>
         <target>Sous-type</target>
       </trans-unit>
+      <trans-unit id="equipment.table.filterTypePlaceholder" datatype="html">
+        <source>Any type</source>
+        <target>Tous les types</target>
+      </trans-unit>
       <trans-unit id="equipment.table.filterBrand" datatype="html">
         <source>Brand</source>
         <target>Marque</target>
@@ -2301,6 +2313,10 @@
         <source>Closed</source>
         <target>Clôturée</target>
       </trans-unit>
+      <trans-unit id="facility.inspStatus.cancelled" datatype="html">
+        <source>Cancelled</source>
+        <target>Annulée</target>
+      </trans-unit>
       <trans-unit id="facility.unknownInspector" datatype="html">
         <source>Unknown inspector</source>
         <target>Inspecteur inconnu</target>
@@ -2386,8 +2402,8 @@
         <target>Le nom doit comporter au moins 2 caractères.</target>
       </trans-unit>
       <trans-unit id="facility.form.nameMax" datatype="html">
-        <source>Name must be less than 255 characters.</source>
-        <target>Le nom doit comporter moins de 255 caractères.</target>
+        <source>Name must be at most 120 characters.</source>
+        <target>Le nom doit comporter au plus 120 caractères.</target>
       </trans-unit>
       <trans-unit id="facility.form.codePlaceholder" datatype="html">
         <source>BLD-001</source>
@@ -2548,6 +2564,10 @@
       <trans-unit id="inspectionStatus.closed" datatype="html">
         <source>Closed</source>
         <target>Clôturée</target>
+      </trans-unit>
+      <trans-unit id="inspectionStatus.cancelled" datatype="html">
+        <source>Cancelled</source>
+        <target>Annulée</target>
       </trans-unit>
       <trans-unit id="facility.unknown" datatype="html">
         <source>Unknown</source>
@@ -3278,8 +3298,8 @@
         <target>Mise à jour en attente</target>
       </trans-unit>
       <trans-unit id="intervention.pwa.waitingDetail" datatype="html">
-        <source>Synchronize field changes before installing the new version.</source>
-        <target>Synchronisez les modifications terrain avant d'installer la nouvelle version.</target>
+        <source>Field changes are still syncing. The update will install automatically once they are saved.</source>
+        <target>Les modifications terrain sont en cours de synchronisation. La mise à jour s'installera automatiquement une fois qu'elles seront enregistrées.</target>
       </trans-unit>
       <trans-unit id="intervention.pwa.updateHeader" datatype="html">
         <source>Application update</source>
@@ -6139,6 +6159,10 @@
         <source>Inspection created</source>
         <target>Inspection créée</target>
       </trans-unit>
+      <trans-unit id="inspection.toast.cancelled" datatype="html">
+        <source>Inspection cancelled</source>
+        <target>Inspection annulée</target>
+      </trans-unit>
       <trans-unit id="checklist.toast.created" datatype="html">
         <source>Checklist created</source>
         <target>Checklist créée</target>
@@ -6707,6 +6731,10 @@
         <source>System</source>
         <target>Système</target>
       </trans-unit>
+      <trans-unit id="intervention.activity.you" datatype="html">
+        <source>You</source>
+        <target>Vous</target>
+      </trans-unit>
       <trans-unit id="intervention.board.hideAbandoned" datatype="html">
         <source>Hide abandoned</source>
         <target>Masquer les abandonnées</target>
@@ -6744,8 +6772,8 @@
         <target>Tâches</target>
       </trans-unit>
       <trans-unit id="intervention.detail.commentOffline" datatype="html">
-        <source> Comments can&apos;t be posted while offline. </source>
-        <target>Impossible de publier des commentaires hors ligne.</target>
+        <source> Comments are saved locally and posted when you reconnect. </source>
+        <target>Les commentaires sont enregistrés localement et publiés à la reconnexion.</target>
       </trans-unit>
       <trans-unit id="intervention.detail.commentPlaceholder" datatype="html">
         <source>Write a comment…</source>
@@ -6934,10 +6962,6 @@
       <trans-unit id="intervention.workspace.commentAddFailed" datatype="html">
         <source>The comment could not be posted.</source>
         <target>Impossible de publier le commentaire.</target>
-      </trans-unit>
-      <trans-unit id="intervention.workspace.commentOffline" datatype="html">
-        <source>Comments can&apos;t be posted while offline.</source>
-        <target>Impossible de publier des commentaires hors ligne.</target>
       </trans-unit>
       <trans-unit id="map.canvasAria" datatype="html">
         <source>Map</source>

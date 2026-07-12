@@ -761,7 +761,9 @@ export class InterventionPlanningGuide {
     for (const [key, control] of controls) {
       if (!control.dirty || control.invalid) continue;
       values[key] = this.controlValue(key, control);
-      control.markAsPristine();
+      // Do NOT mark pristine here: the control stays dirty until the persisted
+      // intervention confirms the save (see seedControl). Marking it pristine
+      // before confirmation lets a failed save be silently reverted on reseed.
     }
     if (Object.keys(values).length > 0) {
       this.stepSaved.emit(values as InterventionPlanningGuideValues);
@@ -899,7 +901,9 @@ export class InterventionPlanningGuide {
     if (this.disabled() || this.saving()) return;
     if (!control.dirty || control.invalid) return;
     const values: Record<string, unknown> = { [key]: this.controlValue(key, control) };
-    control.markAsPristine();
+    // The control stays dirty until the persisted intervention confirms the save
+    // (see seedControl); marking it pristine here would let a failed autosave be
+    // silently reverted on the next reseed.
     this.stepSaved.emit(values as InterventionPlanningGuideValues);
   }
 
@@ -921,8 +925,46 @@ export class InterventionPlanningGuide {
    * @returns {void}
    */
   private seedControl<T>(control: FormControl<T>, value: T, fresh: boolean): void {
-    if (!fresh && control.dirty) return;
+    if (!fresh && control.dirty) {
+      // A dirty control carries a pending (optimistic) edit. When the persisted
+      // value now equals it, the save has landed — confirm it clean without
+      // reverting. Otherwise keep the dirty edit (still saving, or save failed).
+      if (this.seedValuesEqual(control.value, value)) {
+        control.markAsPristine();
+      }
+      return;
+    }
     control.reset(value, { emitEvent: false });
+  }
+
+  /**
+   * Method seedValuesEqual
+   * @method seedValuesEqual
+   *
+   * @description
+   * Compares a control's current value with a persisted value, handling the
+   * planning controls' shapes: dates by instant, participant arrays by members,
+   * everything else by identity.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @param {unknown} current - The control's current value.
+   * @param {unknown} persisted - The persisted intervention value.
+   *
+   * @returns {boolean} Whether the two values are equivalent.
+   */
+  private seedValuesEqual(current: unknown, persisted: unknown): boolean {
+    if (current instanceof Date && persisted instanceof Date) {
+      return current.getTime() === persisted.getTime();
+    }
+    if (Array.isArray(current) && Array.isArray(persisted)) {
+      return (
+        current.length === persisted.length &&
+        current.every((item: unknown, index: number): boolean => item === persisted[index])
+      );
+    }
+    return current === persisted;
   }
 
   /**

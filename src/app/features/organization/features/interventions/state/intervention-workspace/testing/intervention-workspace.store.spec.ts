@@ -462,17 +462,40 @@ describe('InterventionWorkspaceStore activity timeline', () => {
     });
   });
 
-  it('refuses to post a comment while offline and dispatches a failure event', () => {
+  it('queues the comment offline and appends it optimistically', async () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
     window.dispatchEvent(new Event('offline'));
 
-    store.addComment({ interventionId: 'intervention-1', body: 'Looks good' });
+    store.addComment({ interventionId: 'intervention-1', body: 'On-site check done' });
+    await vi.waitFor(() => expect(store.saving()).toBe(false));
 
     expect(mockService.addComment).not.toHaveBeenCalled();
-    expect(store.activities()).toEqual([]);
-    expect(dispatch).toHaveBeenCalledTimes(1);
-    expect(dispatch.mock.calls[0][0]).toMatchObject({
-      type: '[Intervention Workspace Store] commentAddFailed',
+    expect(mockOffline.queue).toHaveBeenCalledWith(
+      'intervention-1',
+      'comment.create',
+      expect.objectContaining({ body: 'On-site check done' }),
+    );
+    expect(store.activities()).toHaveLength(1);
+    expect(store.activities()[0]).toMatchObject({
+      kind: 'comment',
+      body: 'On-site check done',
+      actor: null,
     });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('queues the comment when an online post fails on a network error', async () => {
+    mockService.addComment.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+
+    store.addComment({ interventionId: 'intervention-1', body: 'On-site check done' });
+    await vi.waitFor(() => expect(store.saving()).toBe(false));
+
+    expect(mockOffline.queue).toHaveBeenCalledWith(
+      'intervention-1',
+      'comment.create',
+      expect.objectContaining({ body: 'On-site check done' }),
+    );
+    expect(store.activities()).toHaveLength(1);
+    expect(dispatch).not.toHaveBeenCalled();
   });
 });

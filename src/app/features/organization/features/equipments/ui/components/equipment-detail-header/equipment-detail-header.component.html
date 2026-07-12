@@ -6,7 +6,7 @@
     <div class="flex min-w-0 flex-col gap-1">
       <div class="flex flex-wrap items-center gap-2">
         <h1 class="truncate text-2xl font-semibold text-surface-900 dark:text-surface-100">
-          {{ equipment().type }} {{ equipment().brand }} {{ equipment().model }}
+          {{ typeLabel() | titlecase }} {{ equipment().brand }} {{ equipment().model }}
         </h1>
         <p-tag
           [value]="equipment().status | titlecase"
@@ -53,7 +53,17 @@
         size="small"
         (onClick)="edit.emit()"
       />
-      @if (equipment().status !== 'operational') {
+      @if (equipment().status === 'under_maintenance') {
+        <p-button
+          label="Resume service"
+          i18n-label="@@equipment.resumeService"
+          icon="pi pi-check"
+          severity="success"
+          size="small"
+          [loading]="lifecycleLoading()"
+          (onClick)="commission.emit()"
+        />
+      } @else if (equipment().status !== 'operational' && equipment().status !== 'decommissioned') {
         <p-button
           label="Commission"
           i18n-label="@@equipment.commission"
@@ -61,6 +71,7 @@
           severity="success"
           size="small"
           [loading]="lifecycleLoading()"
+          [disabled]="!equipment().facilityId"
           (onClick)="commission.emit()"
         />
       }

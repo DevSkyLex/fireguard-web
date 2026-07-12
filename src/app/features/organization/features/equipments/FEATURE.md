@@ -44,6 +44,7 @@ Primary service:
 
 - Depends on organization route context from the parent feature.
 - May be referenced by other organization subfeatures, but equipment ownership stays local to this subfeature.
+- Publishes the canonical `EQUIPMENT_TYPE_OPTIONS` through the feature public API (`index.ts`); the onboarding `create-equipment-form` consumes it so the equipment type catalog is not duplicated.
 
 ## Invariants
 

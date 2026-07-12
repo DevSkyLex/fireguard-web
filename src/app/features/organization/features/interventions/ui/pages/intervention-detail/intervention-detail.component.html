@@ -669,7 +669,6 @@
                 i18n-placeholder="@@intervention.detail.commentPlaceholder"
                 placeholder="Write a comment…"
                 [pending]="store.saving()"
-                [disabled]="!online()"
                 (submitted)="addComment($event)"
               />
               @if (!online()) {
@@ -677,7 +676,7 @@
                   i18n="@@intervention.detail.commentOffline"
                   class="text-xs text-surface-400 dark:text-surface-500"
                 >
-                  Comments can't be posted while offline.
+                  Comments are saved locally and posted when you reconnect.
                 </p>
               }
             </div>

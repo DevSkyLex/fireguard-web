@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import type {
   CreateInterventionWorkItemInput,
+  InterventionActivityOutput,
   InterventionOutput,
   InterventionTransitionRequest,
   InterventionWorkItemOutput,
@@ -87,6 +88,44 @@ export class InterventionWorkspaceOptimisticService {
       revision: 1,
       createdAt: now,
       updatedAt: now,
+    };
+  }
+
+  /**
+   * Method comment
+   * @method comment
+   *
+   * @description
+   * Builds an optimistic activity entry for a comment queued offline, using the
+   * client-generated id so the local entry can be reconciled with the server
+   * one once the outbox replays. Its `actor` is left null: the local author is
+   * resolved to "You" by the timeline until the synced entry replaces it.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} interventionId - Owning intervention identifier.
+   * @param {string} body - Comment text.
+   * @param {string} clientId - Client-generated identifier.
+   *
+   * @returns {InterventionActivityOutput} Synthesized comment ready for local state.
+   */
+  public comment(
+    interventionId: string,
+    body: string,
+    clientId: string,
+  ): InterventionActivityOutput {
+    return {
+      '@id': `/api/interventions/${interventionId}/activities/${clientId}`,
+      '@type': 'InterventionActivity',
+      id: clientId,
+      intervention: `/api/interventions/${interventionId}`,
+      kind: 'comment',
+      event: 'comment',
+      actor: null,
+      body,
+      payload: null,
+      createdAt: new Date().toISOString(),
     };
   }
 

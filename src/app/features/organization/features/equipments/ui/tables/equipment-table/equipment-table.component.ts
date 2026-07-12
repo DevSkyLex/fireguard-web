@@ -40,6 +40,7 @@ import type {
   EquipmentOutput,
   EquipmentStatus,
 } from '@features/organization/features/equipments/models';
+import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { EmptyState, Tag } from '@shared/components';
 import { buildTableFilterParams } from '@shared/utils';
@@ -387,6 +388,24 @@ export class EquipmentTable implements OnInit {
       icon: PrimeIcons.BAN,
       severity: 'danger',
     },
+  ];
+
+  /**
+   * Property typeOptions
+   * @readonly
+   *
+   * @description
+   * Localized equipment type choices for the type filter select, shared with
+   * the create/edit form. Constrains the filter to valid `EquipmentType`
+   * values instead of free text.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {ReadonlyArray<{ readonly label: string; readonly value: string }>}
+   */
+  protected readonly typeOptions: { readonly label: string; readonly value: string }[] = [
+    ...EQUIPMENT_TYPE_OPTIONS,
   ];
 
   /**

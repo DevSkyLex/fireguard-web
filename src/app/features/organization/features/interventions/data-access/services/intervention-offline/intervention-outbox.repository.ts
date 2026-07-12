@@ -86,6 +86,23 @@ export class InterventionOutboxRepository {
   private readonly unsynced: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property pending
+   * @readonly
+   *
+   * @description
+   * Internal flag tracking whether operations that can still synchronize on
+   * their own (status `pending`) remain in the outbox. Excludes `conflict` and
+   * `failed` operations, which need explicit user resolution and never clear by
+   * a background replay.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  private readonly pending: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
    * Property lastQueuedAt
    *
    * @description
@@ -112,6 +129,23 @@ export class InterventionOutboxRepository {
    * @type {Signal<boolean>}
    */
   public readonly hasUnsyncedChanges = this.unsynced.asReadonly();
+
+  /**
+   * Property hasPendingChanges
+   * @readonly
+   *
+   * @description
+   * Whether operations that can still synchronize on their own remain queued
+   * locally. Unlike {@link hasUnsyncedChanges}, this excludes `conflict` and
+   * `failed` operations, so deferrable side effects (a PWA update) never
+   * deadlock on work that can never sync without user resolution.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  public readonly hasPendingChanges = this.pending.asReadonly();
   //#endregion
 
   //#region Constructor
@@ -130,7 +164,10 @@ export class InterventionOutboxRepository {
     this.events
       .on(authStoreEvents.logoutSucceeded)
       .pipe(takeUntilDestroyed())
-      .subscribe(() => this.unsynced.set(false));
+      .subscribe(() => {
+        this.unsynced.set(false);
+        this.pending.set(false);
+      });
 
     if (this.database.browser) {
       effect(() => {
@@ -186,6 +223,7 @@ export class InterventionOutboxRepository {
     };
     await this.database.put('outbox', operation.id, operation);
     this.unsynced.set(true);
+    this.pending.set(true);
   }
 
   /**
@@ -217,7 +255,10 @@ export class InterventionOutboxRepository {
     await this.database.putTransaction({
       outbox: operations.map((operation) => ({ key: operation.id, value: operation })),
     });
-    if (operations.length > 0) this.unsynced.set(true);
+    if (operations.length > 0) {
+      this.unsynced.set(true);
+      this.pending.set(true);
+    }
     return operations.map((operation) => operation.id);
   }
 
@@ -306,7 +347,7 @@ export class InterventionOutboxRepository {
     const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
     if (!operation) return;
     await this.database.put('outbox', id, { ...operation, status: 'conflict', error });
-    this.unsynced.set(true);
+    await this.refresh();
   }
 
   /**
@@ -317,7 +358,39 @@ export class InterventionOutboxRepository {
     const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
     if (!operation) return;
     await this.database.put('outbox', id, { ...operation, status: 'failed', error });
-    this.unsynced.set(true);
+    await this.refresh();
+  }
+
+  /**
+   * Method rebaseOutboxRevision
+   * @method rebaseOutboxRevision
+   *
+   * @description
+   * Rebases one stale-revision operation onto the current server revision and
+   * marks it as a conflict for explicit user resolution. Retrying the operation
+   * then sends a valid `If-Match` instead of looping forever on the stale
+   * revision that first triggered the `412 Precondition Failed`.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} id - Outbox operation identifier.
+   * @param {number} revision - Current server revision to rebase the payload onto.
+   * @param {string} error - Conflict detail surfaced to the user.
+   *
+   * @return {Promise<void>} Resolves once the operation is rebased and marked.
+   */
+  public async rebaseOutboxRevision(id: string, revision: number, error: string): Promise<void> {
+    await this.database.ensureOwnerBound();
+    const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
+    if (!operation) return;
+    await this.database.put('outbox', id, {
+      ...operation,
+      payload: { ...operation.payload, revision },
+      status: 'conflict',
+      error,
+    });
+    await this.refresh();
   }
 
   /**
@@ -339,6 +412,8 @@ export class InterventionOutboxRepository {
     const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
     if (!operation) return;
     await this.database.put('outbox', id, { ...operation, status: 'pending', error: null });
+    this.unsynced.set(true);
+    this.pending.set(true);
   }
 
   /**
@@ -346,7 +421,8 @@ export class InterventionOutboxRepository {
    * @method refresh
    *
    * @description
-   * Recomputes whether any queued operations remain in the outbox.
+   * Recomputes whether any queued operations remain in the outbox and, of
+   * those, whether any can still synchronize on their own (status `pending`).
    *
    * @access public
    * @since 1.0.0
@@ -356,8 +432,13 @@ export class InterventionOutboxRepository {
   public async refresh(): Promise<void> {
     if (!this.database.browser) return;
     await this.database.ensureOwnerBound();
-    const count = await this.database.count('outbox');
-    this.unsynced.set(count > 0);
+    const operations = await this.database.getAll<InterventionOutboxOperation>('outbox');
+    this.unsynced.set(operations.length > 0);
+    this.pending.set(
+      operations.some(
+        (operation) => operation.status === 'pending' || operation.status === undefined,
+      ),
+    );
   }
   //#endregion
 }

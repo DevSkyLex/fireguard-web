@@ -22,14 +22,17 @@ automatically for `npm run e2e:*`.
 e2e/
   support/
     fixtures/api-fixtures.ts   # factory functions for API response shapes
+    fixtures/intervention-fixtures.ts  # intervention/activity/outbox-op factories
     mocks/api-mock.ts          # ApiMock — page.route() wrapper, one method per endpoint/scenario
     pages/*.page.ts            # page objects — selectors + user-intent methods
+    helpers/offline.ts         # connectivity toggling + IndexedDB outbox read/seed
   auth/                        # login, register, forgot-password, mfa-verify,
                                 # register-verify, password-reset-verify+new
   dashboard/                   # authenticated-landing redirect specs
   onboarding/                  # wizard welcome-phase + onboardingGuard specs
   account/                     # /account profile + tab-switch specs
   organization/                # /organizations list + access-control specs
+  interventions/               # offline-first outbox/sync engine (IF-25/16/4/3)
   misc/                        # static error pages (404/403/500) + maintenance
 ```
 
@@ -37,20 +40,54 @@ e2e/
 
 Covered: every auth page, the dashboard landing redirect matrix, the
 onboarding wizard's entry phase, the account page's default section, the
-organization list, and the full organization access-control guard chain
+organization list, the full organization access-control guard chain
 (`organizationAccessGuard` → `organizationLandingGuard` →
-`organizationPermissionGuard` for members/team/settings).
+`organizationPermissionGuard` for members/team/settings), and the
+**intervention offline outbox/sync engine** (`interventions/` — see below).
 
 Intentionally **not** covered by this suite (each is a large, self-contained
-feature area — interventions in particular is offline-first with IndexedDB
-sync — that warrants its own dedicated test suite rather than being bolted
-onto this one):
+feature area):
 
 - the organization dashboard's own trend-chart widgets,
 - the onboarding wizard's step-by-step forms (past the welcome phase),
 - the account page's "security" and "notifications" sections,
-- nested org features: interventions, facilities, equipment, inspections,
-  checklists (list/create/edit/detail for each).
+- CRUD (list/create/edit/detail) for facilities, equipment, inspections, and
+  checklists, and the intervention list/board/calendar and planning surfaces
+  (the `interventions/` suite covers only the offline/sync engine on the
+  detail page, not those flows).
+
+## Intervention offline / sync suite
+
+`interventions/` is the dedicated home for the offline-first "zero data loss"
+subsystem, driven entirely through the live UI + IndexedDB (still fully
+hermetic — every HTTP call is mocked). Two extra support pieces make it work:
+
+- `support/helpers/offline.ts` — `setAppOffline()` / `setAppOnline()` flip the
+  app's perceived connectivity via `navigator.onLine` + the `online`/`offline`
+  window events (which the app's `ConnectivityService` re-reads), leaving
+  `page.route` mocks intact; `readOutboxOperations()` / `seedOutboxOperations()`
+  read/seed the IndexedDB outbox (`fireguard-field-interventions`, store
+  `outbox`). Owner binding is inert in e2e (the `/me` fixture has no `sub`), so
+  seeding after page load is never wiped.
+- `ApiMock.mockInterventionDetail/Workspace/PlanningOptions` render the detail
+  page; `mockCommentCreate`, `mockEquipmentCreateReplay(status)`, and
+  `mockInterventionUpdateRebase(id, revision)` drive the replay outcomes.
+
+Covered: offline comment queue + optimistic "You" entry + replay drain (IF-25);
+online-but-unreachable comment fallback via a status-0 abort (IF-5); ticking a
+checklist item offline through the real store path (IF-7); 412-rebase so Retry
+no longer loops (IF-4); a dependent of a permanently-failed create surfaced as
+failed (IF-16); a transient 5xx leaving ops pending (IF-3); idempotent dequeue
+of an already-applied create (IF-6); Discard clearing blocked ops (IF-8). The
+PWA-update deferral (IF-20) is service-worker-gated and is covered by unit
+tests, not here.
+
+> The IF-5 test also surfaced a real bug it now guards against:
+> `ConnectivityService.isNetworkFailure` only detected status-0 via
+> `instanceof HttpErrorResponse`, but `HydraApiService.handleError` normalizes
+> every error to a plain `ApiError` first — so "online but unreachable" edits
+> were dropped instead of queued. The fix additionally detects a status-0
+> `ApiError`.
 
 If you extend coverage into one of these, remove it from this list.
 

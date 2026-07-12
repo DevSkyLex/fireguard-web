@@ -12,9 +12,31 @@ import {
   CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE,
   HTTP_CONFLICT,
   HTTP_PRECONDITION_FAILED,
+  HTTP_SERVER_ERROR,
   PERMANENT_FAILURE_STATUSES,
 } from './constants';
 import type { SyncProblemResponse } from './models';
+
+/**
+ * Detail surfaced on a queued operation whose parent resource can never be
+ * created (its create is permanently failed or conflicted). Marking the
+ * dependent `failed` makes an otherwise invisible, permanently-stuck operation
+ * visible and actionable (retry after resolving the parent, or discard).
+ */
+const DEPENDENCY_UNAVAILABLE_DETAIL =
+  'A resource this change depends on could not be created. Resolve the blocked operation it depends on, then retry.';
+
+/**
+ * Resources whose replay left a dependent-blocking marker in the current cycle.
+ * `permanent` resources come from a failed/conflicted create and can never
+ * appear on their own, so their dependents are surfaced as `failed`.
+ * `transient` resources come from a retriable 5xx and will be re-attempted next
+ * cycle, so their dependents stay `pending`.
+ */
+interface BlockedResources {
+  readonly permanent: Set<string>;
+  readonly transient: Set<string>;
+}
 
 /**
  * Service InterventionSyncService
@@ -149,7 +171,10 @@ export class InterventionSyncService {
     interventionId: string,
   ): Promise<number> {
     const operations = await this.offline.listOutbox(interventionId);
-    return this.replayOperations(organizationId, operations, 0, 0, new Set<string>());
+    return this.replayOperations(organizationId, operations, 0, 0, {
+      permanent: new Set<string>(),
+      transient: new Set<string>(),
+    });
   }
 
   /**
@@ -166,7 +191,7 @@ export class InterventionSyncService {
    * @param {readonly InterventionOutboxOperation[]} operations - operations value.
    * @param {number} index - index value.
    * @param {number} replayed - replayed value.
-   * @param {Set<string>} blockedResources - Resources whose create operation is in conflict.
+   * @param {BlockedResources} blocked - Resources blocking their dependents this cycle.
    *
    * @return {Promise<number>} Result of the replay operations operation.
    */
@@ -175,41 +200,42 @@ export class InterventionSyncService {
     operations: readonly InterventionOutboxOperation[],
     index: number,
     replayed: number,
-    blockedResources: Set<string>,
+    blocked: BlockedResources,
   ): Promise<number> {
     const operation = operations[index];
     if (!operation) return replayed;
+
+    const advance = (next: number): Promise<number> =>
+      this.replayOperations(organizationId, operations, index + 1, next, blocked);
+
+    // A previously failed/conflicted operation keeps permanently blocking its
+    // dependents until the user retries or discards it.
     if (operation.status === 'conflict' || operation.status === 'failed') {
-      const createdResource = this.createdResource(operation);
-      if (createdResource) blockedResources.add(createdResource);
-      return this.replayOperations(
-        organizationId,
-        operations,
-        index + 1,
-        replayed,
-        blockedResources,
-      );
+      this.block(operation, blocked.permanent);
+      return advance(replayed);
     }
-    if (this.dependsOnBlockedResource(operation, blockedResources)) {
-      return this.replayOperations(
-        organizationId,
-        operations,
-        index + 1,
-        replayed,
-        blockedResources,
-      );
+
+    // A dependent of a permanently blocked resource can never succeed on its
+    // own: surface it as `failed` (so it is counted and actionable instead of
+    // sitting invisibly `pending`) and cascade the permanent block onward.
+    if (this.dependsOnBlockedResource(operation, blocked.permanent)) {
+      await this.offline.markOutboxFailed(operation.id, DEPENDENCY_UNAVAILABLE_DETAIL);
+      this.block(operation, blocked.permanent);
+      return advance(replayed);
+    }
+
+    // A dependent of a transiently blocked (5xx) resource must stay `pending`
+    // so it retries next cycle once the parent is created; cascade the
+    // transient block so its own dependents also wait rather than fail.
+    if (this.dependsOnBlockedResource(operation, blocked.transient)) {
+      this.block(operation, blocked.transient);
+      return advance(replayed);
     }
 
     try {
       await this.replay(organizationId, operation);
       await this.offline.removeOutbox(operation.id);
-      return this.replayOperations(
-        organizationId,
-        operations,
-        index + 1,
-        replayed + 1,
-        blockedResources,
-      );
+      return advance(replayed + 1);
     } catch (error: unknown) {
       const response = error as SyncProblemResponse;
       const detail =
@@ -222,37 +248,36 @@ export class InterventionSyncService {
         this.problemType(response) === CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE
       ) {
         await this.offline.removeOutbox(operation.id);
-        return this.replayOperations(
-          organizationId,
-          operations,
-          index + 1,
-          replayed + 1,
-          blockedResources,
-        );
+        return advance(replayed + 1);
       }
       if (response.status === HTTP_PRECONDITION_FAILED) {
-        await this.offline.markOutboxConflict(operation.id, detail);
-        const createdResource = this.createdResource(operation);
-        if (createdResource) blockedResources.add(createdResource);
-        return this.replayOperations(
-          organizationId,
-          operations,
-          index + 1,
-          replayed,
-          blockedResources,
-        );
+        // A stale-revision conflict would otherwise loop forever on retry (the
+        // same If-Match is re-sent). Re-fetch the current server revision and
+        // rebase the queued payload so a retry sends a valid If-Match; fall back
+        // to a plain conflict mark when the revision cannot be resolved (the
+        // re-fetch failed, or the operation carries no revision to rebase).
+        const rebasedRevision = await this.currentRevision(operation);
+        const queuedRevision = (operation.payload as { readonly revision?: number }).revision;
+        if (rebasedRevision !== null && rebasedRevision !== queuedRevision) {
+          await this.offline.rebaseOutboxRevision(operation.id, rebasedRevision, detail);
+        } else {
+          await this.offline.markOutboxConflict(operation.id, detail);
+        }
+        this.block(operation, blocked.permanent);
+        return advance(replayed);
       }
       if (this.isPermanentFailure(error, response)) {
         await this.offline.markOutboxFailed(operation.id, detail);
-        const createdResource = this.createdResource(operation);
-        if (createdResource) blockedResources.add(createdResource);
-        return this.replayOperations(
-          organizationId,
-          operations,
-          index + 1,
-          replayed,
-          blockedResources,
-        );
+        this.block(operation, blocked.permanent);
+        return advance(replayed);
+      }
+      if (typeof response.status === 'number' && response.status >= HTTP_SERVER_ERROR) {
+        // A transient server error (5xx) on one operation must not freeze the
+        // rest of the queue: leave this one pending (it retries next cycle),
+        // transiently block its created resource so dependents wait without
+        // being failed, and keep replaying the others instead of aborting.
+        this.block(operation, blocked.transient);
+        return advance(replayed);
       }
       throw error;
     }
@@ -325,6 +350,12 @@ export class InterventionSyncService {
             operation.payload.clientId,
           ),
         );
+        break;
+      }
+      case 'comment.create': {
+        const body = operation.payload['body'];
+        if (typeof body !== 'string') throw new Error('Invalid offline comment operation');
+        await firstValueFrom(this.service.addComment(operation.interventionId, body));
         break;
       }
       case 'intervention.update': {
@@ -470,6 +501,51 @@ export class InterventionSyncService {
             : operation.type === 'change.create'
               ? `/api/intervention-changes/${clientId}`
               : null;
+  }
+
+  /**
+   * Adds the resource an operation would create to a blocked set, so operations
+   * later in the queue that reference it wait or fail with it.
+   */
+  private block(operation: InterventionOutboxOperation, resources: Set<string>): void {
+    const createdResource = this.createdResource(operation);
+    if (createdResource) resources.add(createdResource);
+  }
+
+  /**
+   * Re-fetches the current server revision of the resource an update operation
+   * targets, so a stale-revision conflict can be rebased. Returns `null` for
+   * non-update operations, when the target can no longer be found, or when the
+   * re-fetch itself fails (offline mid-replay) — the caller then falls back to
+   * a plain conflict mark.
+   */
+  private async currentRevision(operation: InterventionOutboxOperation): Promise<number | null> {
+    try {
+      switch (operation.type) {
+        case 'intervention.update': {
+          const intervention = await firstValueFrom(this.service.get(operation.interventionId));
+          return intervention.revision;
+        }
+        case 'work-item.update': {
+          const workItemId = operation.payload['workItemId'];
+          const items = await firstValueFrom(
+            this.service.listAllWorkItems(operation.interventionId),
+          );
+          return items.find((item) => item.id === workItemId)?.revision ?? null;
+        }
+        case 'change.update': {
+          const changeId = operation.payload['changeId'];
+          const changes = await firstValueFrom(
+            this.service.listAllChanges(operation.interventionId),
+          );
+          return changes.find((change) => change.id === changeId)?.revision ?? null;
+        }
+        default:
+          return null;
+      }
+    } catch {
+      return null;
+    }
   }
 
   /**

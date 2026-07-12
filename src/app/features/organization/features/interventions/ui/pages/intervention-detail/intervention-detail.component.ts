@@ -1527,7 +1527,7 @@ export class InterventionDetailPage {
           },
           {
             label: $localize`:@@intervention.review.checkNoIssues:No blocking issues`,
-            done: (intervention.blockersCount ?? 0) === 0,
+            done: this.store.blockerCount() === 0,
           },
           {
             label: $localize`:@@intervention.review.checkOnline:Connected to the network`,
@@ -1719,7 +1719,10 @@ export class InterventionDetailPage {
         }
         case 'review': {
           if (!this.canPublish() || intervention.status !== 'submitted') return null;
-          const blockers: number = intervention.blockersCount ?? 0;
+          // Single source of truth for blockers: the store's issue-derived count,
+          // used by the readiness banner and aside too, so the Publish button and
+          // the banners never disagree.
+          const blockers: number = this.store.blockerCount();
           const online: boolean = this.online();
           const ready: boolean = online && blockers === 0;
           return {
@@ -1759,18 +1762,24 @@ export class InterventionDetailPage {
     const intervention: InterventionOutput | null = this.store.intervention();
     if (!intervention) return [];
 
-    return resolveAllowedTransitions(intervention)
-      .filter((status: InterventionStatus): boolean => status !== 'abandoned')
-      .filter((status: InterventionStatus): boolean =>
-        this.hasCapability(capabilityForTransition(intervention.status, status)),
-      )
-      .map(
-        (status: InterventionStatus): MenuItem => ({
-          label: resolveInterventionTag('status', status).label,
-          icon: 'pi pi-arrow-right',
-          command: (): void => this.onTransitionSelect(status),
-        }),
-      );
+    return (
+      resolveAllowedTransitions(intervention)
+        .filter((status: InterventionStatus): boolean => status !== 'abandoned')
+        .filter((status: InterventionStatus): boolean =>
+          this.hasCapability(capabilityForTransition(intervention.status, status)),
+        )
+        // Only the responsible member may submit; hide "Submit" from the status
+        // menu for others (mirrors the canonical action button) so the UI never
+        // offers a transition the backend rejects with 403.
+        .filter((status: InterventionStatus): boolean => status !== 'submitted' || this.canSubmit())
+        .map(
+          (status: InterventionStatus): MenuItem => ({
+            label: resolveInterventionTag('status', status).label,
+            icon: 'pi pi-arrow-right',
+            command: (): void => this.onTransitionSelect(status),
+          }),
+        )
+    );
   });
 
   /**
@@ -3023,7 +3032,10 @@ export class InterventionDetailPage {
       return {
         id: activity.id,
         timestamp: activity.createdAt,
-        authorLabel,
+        // A comment with no actor is an optimistic entry queued locally by the
+        // current user while offline; label it "You" until the synced entry
+        // (carrying the real actor) replaces it.
+        authorLabel: activity.actor ? authorLabel : $localize`:@@intervention.activity.you:You`,
         body: activity.body ?? '',
         kind: 'comment',
       };

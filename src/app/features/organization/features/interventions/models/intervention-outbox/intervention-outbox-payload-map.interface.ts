@@ -21,6 +21,10 @@ export interface InterventionOutboxPayloadMap {
     readonly file: Blob;
     readonly fileName: string;
   };
+  readonly 'comment.create': {
+    readonly clientId?: string;
+    readonly body: string;
+  };
   readonly 'intervention.update': Partial<{
     readonly clientId: string;
     readonly revision: number;

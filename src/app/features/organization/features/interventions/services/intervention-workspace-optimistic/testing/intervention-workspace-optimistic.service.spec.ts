@@ -69,4 +69,18 @@ describe('InterventionWorkspaceOptimisticService', () => {
     expect(updated.status).toBe('submitted');
     expect(updated.revision).toBe(5);
   });
+
+  it('should synthesize a comment activity keyed by client id with no actor', () => {
+    const activity = service.comment('intervention-1', 'On-site check done', 'client-1');
+
+    expect(activity.id).toBe('client-1');
+    expect(activity.kind).toBe('comment');
+    expect(activity.event).toBe('comment');
+    expect(activity.body).toBe('On-site check done');
+    // A null actor marks the entry as locally authored until the synced entry
+    // (carrying the real actor) replaces it.
+    expect(activity.actor).toBeNull();
+    expect(activity.intervention).toBe('/api/interventions/intervention-1');
+    expect(activity['@id']).toContain('client-1');
+  });
 });

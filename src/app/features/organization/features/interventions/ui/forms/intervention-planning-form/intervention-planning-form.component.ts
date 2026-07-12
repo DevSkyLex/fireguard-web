@@ -246,9 +246,18 @@ export class InterventionPlanningForm {
    *
    * @since 1.0.0
    */
+  /** Id of the intervention the form was last seeded from. */
+  private lastSeededId: string | null = null;
+
   public constructor() {
     effect(() => {
       const intervention = this.intervention();
+      const fresh: boolean = intervention.id !== this.lastSeededId;
+      this.lastSeededId = intervention.id;
+      // Preserve in-progress edits: only reseed when a different intervention
+      // loads, never on a refresh of the same one (Mercure push / concurrent
+      // autosave) while the user is still editing.
+      if (!fresh && this.form.dirty) return;
       this.form.reset(
         {
           site: intervention.site ?? '',

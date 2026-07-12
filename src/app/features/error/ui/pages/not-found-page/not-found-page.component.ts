@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { ErrorContent } from '../../components/error-content';
 
 /**
  * Component NotFoundPage
@@ -13,7 +15,7 @@ import { RouterLink } from '@angular/router';
  */
 @Component({
   selector: 'app-not-found-page',
-  imports: [RouterLink],
+  imports: [RouterLink, ButtonModule, ErrorContent],
   templateUrl: './not-found-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

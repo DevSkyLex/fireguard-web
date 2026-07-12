@@ -1,6 +1,10 @@
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import {
+  resolveFacilityTag,
+  type FacilityOutput,
+} from '@features/organization/features/facilities/models';
+import { Tag, type TagDescriptor } from '@shared/components';
 
 /**
  * Component FacilityInformationPanel
@@ -17,7 +21,7 @@ import type { FacilityOutput } from '@features/organization/features/facilities/
  */
 @Component({
   selector: 'app-facility-information-panel',
-  imports: [DatePipe, TitleCasePipe],
+  imports: [DatePipe, TitleCasePipe, Tag],
   templateUrl: './facility-information-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -40,13 +44,14 @@ export class FacilityInformationPanel {
 
   //#region Methods
   /**
-   * Returns the Tailwind background token for the facility status dot.
+   * Resolves the facility status badge descriptor from the shared facility tag
+   * registry so status carries a label and icon, never colour alone.
    *
    * @param {FacilityOutput['status']} status - Facility lifecycle status.
-   * @returns {string} Tailwind background color class.
+   * @returns {TagDescriptor} Matching status descriptor.
    */
-  protected getStatusDotClass(status: FacilityOutput['status']): string {
-    return status === 'active' ? 'bg-green-500' : 'bg-orange-500';
+  protected statusDescriptor(status: FacilityOutput['status']): TagDescriptor {
+    return resolveFacilityTag('status', status);
   }
   //#endregion
 }

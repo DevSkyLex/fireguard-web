@@ -11,3 +11,9 @@ export type { AddAttachmentInput } from './equipment-attachment/add-attachment-i
 export type { EquipmentTagOutput } from './equipment-tag/equipment-tag-output.interface';
 export type { AddTagInput } from './equipment-tag/add-tag-input.interface';
 export type { EquipmentMaintenanceLogOutput } from './equipment/equipment-maintenance-log-output.interface';
+export type { EquipmentTagDescriptor } from './equipment-status-tag/equipment-tag-descriptor.interface';
+export type { EquipmentTagKind } from './equipment-status-tag/equipment-tag-kind.type';
+export {
+  resolveEquipmentTag,
+  equipmentTagOptions,
+} from './equipment-status-tag/equipment-tag.util';

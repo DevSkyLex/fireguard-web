@@ -13,13 +13,12 @@ import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { DataViewModule, type DataViewPassThroughOptions } from 'primeng/dataview';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TagModule } from 'primeng/tag';
 import { FacilityOverviewStore } from '@features/organization/features/facilities/state';
-import type {
-  InspectionOutput,
-  InspectionResult,
-  InspectionStatus,
+import {
+  resolveInspectionTag,
+  type InspectionOutput,
 } from '@features/organization/features/inspections/models';
+import { Tag, type TagDescriptor } from '@shared/components';
 
 /**
  * Type InspectionOverviewFilter
@@ -50,7 +49,7 @@ export type InspectionOverviewFilter = 'all' | 'overdue' | 'upcoming';
     DataViewModule,
     SelectButtonModule,
     SkeletonModule,
-    TagModule,
+    Tag,
   ],
   templateUrl: './facility-inspection-dataview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -123,48 +122,27 @@ export class FacilityInspectionDataview {
     emptyMessage: { class: 'hidden' },
   };
 
-  private readonly resultSeverities: Record<InspectionResult, 'success' | 'danger' | 'warn'> = {
-    pass: 'success',
-    fail: 'danger',
-    partial: 'warn',
-  };
-
-  private readonly statusSeverities: Record<InspectionStatus, 'secondary' | 'info' | 'success'> = {
-    draft: 'secondary',
-    submitted: 'info',
-    closed: 'success',
-    cancelled: 'secondary',
-  };
-
-  private readonly statusLabels: Record<InspectionStatus, string> = {
-    draft: $localize`:@@facility.inspStatus.draft:To plan`,
-    submitted: $localize`:@@facility.inspStatus.submitted:In progress`,
-    closed: $localize`:@@facility.inspStatus.closed:Closed`,
-    cancelled: $localize`:@@facility.inspStatus.cancelled:Cancelled`,
-  };
-
-  private readonly resultLabels: Record<InspectionResult, string> = {
-    pass: $localize`:@@inspectionResult.pass:Pass`,
-    fail: $localize`:@@inspectionResult.fail:Fail`,
-    partial: $localize`:@@inspectionResult.partial:Partial`,
-  };
   //#endregion
 
   //#region Methods
-  protected getResultLabel(result: InspectionResult): string {
-    return this.resultLabels[result];
+  /**
+   * Resolves the result badge descriptor for an inspection row.
+   *
+   * @param {string} result - Inspection result.
+   * @returns {TagDescriptor} Matching result descriptor.
+   */
+  protected resultDescriptor(result: string): TagDescriptor {
+    return resolveInspectionTag('result', result);
   }
 
-  protected getStatusLabel(status: InspectionStatus): string {
-    return this.statusLabels[status];
-  }
-
-  protected getResultSeverity(result: InspectionResult): 'success' | 'danger' | 'warn' {
-    return this.resultSeverities[result];
-  }
-
-  protected getStatusSeverity(status: InspectionStatus): 'secondary' | 'info' | 'success' {
-    return this.statusSeverities[status];
+  /**
+   * Resolves the status badge descriptor for an inspection row.
+   *
+   * @param {string} status - Inspection status.
+   * @returns {TagDescriptor} Matching status descriptor.
+   */
+  protected statusDescriptor(status: string): TagDescriptor {
+    return resolveInspectionTag('status', status);
   }
 
   protected getInspectorDisplayName(inspection: InspectionOutput): string {

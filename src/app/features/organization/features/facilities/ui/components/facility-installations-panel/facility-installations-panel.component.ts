@@ -9,11 +9,13 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
-import type {
-  FacilityOutput,
-  FacilityType,
+import {
+  resolveFacilityTag,
+  type FacilityOutput,
+  type FacilityType,
 } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
+import { Tag, type TagDescriptor } from '@shared/components';
 
 /**
  * Component FacilityInstallationsPanel
@@ -33,6 +35,7 @@ import { FacilityStore } from '@features/organization/features/facilities/state'
  */
 @Component({
   selector: 'app-facility-installations-panel',
+  imports: [Tag],
   templateUrl: './facility-installations-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -158,13 +161,14 @@ export class FacilityInstallationsPanel {
   }
 
   /**
-   * Returns the Tailwind background token for the facility status dot.
+   * Resolves the status badge descriptor for a facility row so status carries a
+   * label and icon, never colour alone.
    *
-   * @param {FacilityOutput['status']} status - Facility lifecycle status.
-   * @returns {string} Tailwind background color class.
+   * @param {string} status - Facility lifecycle status.
+   * @returns {TagDescriptor} Matching status descriptor.
    */
-  protected getStatusDotClass(status: FacilityOutput['status']): string {
-    return status === 'active' ? 'bg-green-500' : 'bg-orange-500';
+  protected statusDescriptor(status: string): TagDescriptor {
+    return resolveFacilityTag('status', status);
   }
   //#endregion
 }

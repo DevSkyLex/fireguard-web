@@ -14,3 +14,6 @@ export type { CreateFacilityInput } from './facility/create-facility-input.inter
 export type { UpdateFacilityInput } from './facility/update-facility-input.interface';
 export type { MoveFacilityInput } from './facility/move-facility-input.interface';
 export type { FacilityTypeOutput } from './facility-type/facility-type-output.interface';
+export type { FacilityTagDescriptor } from './facility-tag/facility-tag-descriptor.interface';
+export type { FacilityTagKind } from './facility-tag/facility-tag-kind.type';
+export { resolveFacilityTag, facilityTagOptions } from './facility-tag/facility-tag.util';

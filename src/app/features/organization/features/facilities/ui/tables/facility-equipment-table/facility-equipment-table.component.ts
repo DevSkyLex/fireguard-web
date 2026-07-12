@@ -33,13 +33,14 @@ import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/api';
 import { OrganizationPermissionService } from '@features/organization/access';
-import type {
-  EquipmentOutput,
-  EquipmentStatus,
+import {
+  equipmentTagOptions,
+  resolveEquipmentTag,
+  type EquipmentOutput,
+  type EquipmentStatus,
 } from '@features/organization/features/equipments/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag } from '@shared/components';
-import type { EquipmentStatusOption } from './models';
+import { EmptyState, Tag, type TagDescriptor, type TagOption } from '@shared/components';
 
 /**
  * Component FacilityEquipmentTable
@@ -274,39 +275,15 @@ export class FacilityEquipmentTable implements OnInit {
    * @readonly
    *
    * @description
-   * Status filter choices available for facility equipment.
+   * Status filter choices available for facility equipment, resolved from the
+   * shared equipment tag registry.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {EquipmentStatusOption[]}
+   * @type {TagOption[]}
    */
-  protected readonly statusOptions: EquipmentStatusOption[] = [
-    {
-      label: $localize`:@@equipmentStatus.inStock:In Stock`,
-      value: 'in_stock',
-      icon: PrimeIcons.BOX,
-      severity: 'secondary',
-    },
-    {
-      label: $localize`:@@equipmentStatus.operational:Operational`,
-      value: 'operational',
-      icon: PrimeIcons.CHECK_CIRCLE,
-      severity: 'success',
-    },
-    {
-      label: $localize`:@@equipmentStatus.maintenance:Maintenance`,
-      value: 'under_maintenance',
-      icon: PrimeIcons.WRENCH,
-      severity: 'warn',
-    },
-    {
-      label: $localize`:@@equipmentStatus.decommissioned:Decommissioned`,
-      value: 'decommissioned',
-      icon: PrimeIcons.BAN,
-      severity: 'danger',
-    },
-  ];
+  protected readonly statusOptions: TagOption[] = equipmentTagOptions('status');
 
   /**
    * Property searchControl
@@ -727,19 +704,10 @@ export class FacilityEquipmentTable implements OnInit {
    *
    * @param {EquipmentStatus} status API equipment status.
    *
-   * @returns {EquipmentStatusOption} Matching status badge option.
+   * @returns {TagDescriptor} Matching status descriptor.
    */
-  protected getStatusOption(status: EquipmentStatus): EquipmentStatusOption {
-    return (
-      this.statusOptions.find(
-        (option: EquipmentStatusOption): boolean => option.value === status,
-      ) ?? {
-        label: this.toDisplayLabel(status),
-        value: status,
-        icon: PrimeIcons.CIRCLE,
-        severity: 'secondary',
-      }
-    );
+  protected getStatusOption(status: EquipmentStatus): TagDescriptor {
+    return resolveEquipmentTag('status', status);
   }
 
   /**

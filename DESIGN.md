@@ -52,7 +52,10 @@ All tokens are PrimeNG surface/primary primitives consumed via Tailwind utilitie
 
 **Base size:** `14px` set on `html`. All `rem` values are relative to this.
 
-**Family:** PrimeNG / browser default sans-serif stack. No custom web font loaded.
+**Family:** **Inter Variable** for sans (`--font-sans`) and **JetBrains Mono Variable**
+for mono (`--font-mono`), both self-hosted via `@fontsource-variable/*` and imported in
+`src/styles.css` (offline-safe, cached by the service worker). Each falls back to the
+system UI stack.
 
 **Scale (approximate, relative to 14px root):**
 
@@ -69,7 +72,9 @@ All tokens are PrimeNG surface/primary primitives consumed via Tailwind utilitie
 
 - `font-medium` — section labels, card titles at sm, icon tray title
 - `font-semibold` — card h2, splash status title, badge text, metric values, comparison values
-- No bold (`font-bold`) in use; semibold is the ceiling
+- `font-semibold` is the weight ceiling for content. `font-bold` is reserved for the
+  brand wordmark only (`auth-showcase`, `onboarding-showcase`, sidebar header) — never for
+  page or section headings.
 
 **Tracking:**
 
@@ -121,13 +126,36 @@ All tokens are PrimeNG surface/primary primitives consumed via Tailwind utilitie
 
 ### Cards
 
-**`app-card`:** PrimeNG card wrapper with consistent header (title + optional description + optional action slot), content and footer slots.
+Cards are the **native PrimeNG `p-card`** styled through `[pt]` + Tailwind (there is no
+`app-card` wrapper). The card border is a Tailwind class on `styleClass`
+(`border border-surface-200 dark:border-surface-800`); padding is zeroed on `body`/`content`
+via `[pt]` when the card hosts a full-bleed table.
 
-**`app-metric-card`:** Extends card pattern. Icon tray (bordered square) + title row, then large `text-5xl` value with optional up/down comparison. Skeleton loading state via `p-skeleton`.
+**`app-metric-card`:** Icon tray (bordered square) + title row, then large `text-5xl` value
+with optional up/down comparison. Skeleton loading state via `p-skeleton`.
+
+### Tables
+
+Every entity table is a **`p-table` inside a `p-card`** with the shared shell recipe (the
+`session-table` is the reference): `styleClass="flex min-h-0 flex-col overflow-hidden border
+border-surface-200 dark:border-surface-800"` and a `[pt]` that zeroes `body`/`content`
+padding (`p-0`) and gives the `header` a `border-b … px-4 py-3` bar. The card header hosts
+the title + toolbar; the empty state is `app-empty-state` in `pTemplate="emptymessage"`.
+Preferred skeleton strategy is `pTemplate="loadingbody"` with `p-skeleton` rows. Do **not**
+hand-roll a bordered `<section>` shell for a table.
 
 ### Tag / Badge
 
-**`app-tag`:** Two variants — `badge` (pill: `h-7 rounded-full border px-2.5 text-xs`) and plain (inline icon + label). Both resolve label and icon from a feature-owned descriptor registry; components never branch on enum values.
+**`app-tag`:** Two variants — `badge` (pill: `h-7 rounded-full border px-2.5 text-xs`) and plain (inline icon + label). It consumes a resolved `TagDescriptor` (`label` + `severity` + `icon`); components never branch on enum values.
+
+**Single source for status presentation.** Every domain enum's label, severity and icon is
+owned by that feature's `models/<concept>-tag/` registry — a descriptor interface, a kind
+type, and a `resolve<Concept>Tag(kind, value)` resolver, per `ARCHITECTURE.md` §9.6. Current
+registries: `facility-tag`, `inspection-tag`, `equipment-status-tag`, `intervention-tag`,
+`invitation-tag`, `billing-tag`. A value must render identically on its list, detail header,
+panel and dataview — always through `<app-tag [descriptor]="resolve…Tag('status', value)">`.
+**Do not** use raw `<p-tag severity=…>` for a domain status/result/severity enum; raw
+`p-tag` is only for non-registry accents (e.g. a facility _type_ chip with no severity meaning).
 
 ### Splash Screen
 
@@ -135,7 +163,27 @@ Full-screen overlay (`fixed inset-0 z-50`). SVG progress arc around a filled `bg
 
 ### Empty State
 
-Exists as `app-empty-state` (HTML not deeply analyzed yet — candidate for `$impeccable audit`).
+**`app-empty-state`:** centered icon + title + optional description + optional projected
+CTA (`ng-content`). The single empty-state primitive for tables, dataviews and panels.
+The full-screen error pages (403/404/500) share the same visual language through the
+feature-local `error-content` shell (muted status glyph + title + description + action row).
+
+### Buttons
+
+All actions use `p-button`. **One severity per intent** — colour encodes the action's
+meaning, never its feature:
+
+| Intent                               | PrimeNG severity         | Example                         |
+| ------------------------------------ | ------------------------ | ------------------------------- |
+| Primary / positive workflow action   | default (orange primary) | Submit, Close, Commission, Save |
+| Neutral / secondary (incl. **Edit**) | `secondary` `[outlined]` | Edit, Move, Cancel-editing      |
+| Cautionary state transition          | `warn`                   | Maintenance                     |
+| Destructive                          | `danger` `[outlined]`    | Decommission, Delete, Revoke    |
+
+`success` (green) is **not** an action colour — green is reserved for positive _state_,
+not for "Edit" or a generic go-action. **Size:** `size="small"` on table toolbars and
+detail-header action bars; default size on form submit footers (the two contexts stay
+internally consistent).
 
 ### Form Controls
 
@@ -166,7 +214,9 @@ Delegated entirely to PrimeNG (`p-button`, `p-select`, `p-drawer`, `p-divider`, 
 
 **Animations:**
 
-- Splash spinner: `animate-spin [animation-duration:1.4s]` — disabled via `motion-reduce:animate-none`
+- Splash indicator: `animate-pulse` gated by `motion-reduce:animate-none`
+- Skeleton loaders (`animate-pulse` on onboarding wizard and plan-selection steps) are all
+  gated by `motion-reduce:animate-none`
 - No page-load choreography on app surfaces
 
 **Philosophy:** State feedback only. 150–200ms on interactive state changes. Nothing decorative.

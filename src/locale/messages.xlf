@@ -1799,40 +1799,61 @@
           <context context-type="linenumber">35</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="error.forbidden.message" datatype="html">
-        <source>You do not have permission to access this resource.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/error/ui/pages/forbidden-page/forbidden-page.component.html</context>
-          <context context-type="linenumber">3,4</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="error.goHome" datatype="html">
-        <source>Go back home</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/error/ui/pages/forbidden-page/forbidden-page.component.html</context>
-          <context context-type="linenumber">4,6</context>
-        </context-group>
+      <trans-unit id="error.404.title" datatype="html">
+        <source>Page not found</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/error/ui/pages/not-found-page/not-found-page.component.html</context>
-          <context context-type="linenumber">4,6</context>
+          <context context-type="linenumber">4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="error.404.description" datatype="html">
+        <source>The page you're looking for doesn't exist or may have moved.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/not-found-page/not-found-page.component.html</context>
+          <context context-type="linenumber">6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="error.403.title" datatype="html">
+        <source>Access denied</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/forbidden-page/forbidden-page.component.html</context>
+          <context context-type="linenumber">4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="error.403.description" datatype="html">
+        <source>You don't have permission to access this resource.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/forbidden-page/forbidden-page.component.html</context>
+          <context context-type="linenumber">6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="error.500.title" datatype="html">
+        <source>Something went wrong</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/server-error-page/server-error-page.component.html</context>
+          <context context-type="linenumber">4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="error.500.description" datatype="html">
+        <source>An unexpected error occurred on our end. Please try again in a moment.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/server-error-page/server-error-page.component.html</context>
+          <context context-type="linenumber">6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="error.backHome" datatype="html">
+        <source>Back to home</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/not-found-page/not-found-page.component.html</context>
+          <context context-type="linenumber">8</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/forbidden-page/forbidden-page.component.html</context>
+          <context context-type="linenumber">8</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/error/ui/pages/server-error-page/server-error-page.component.html</context>
-          <context context-type="linenumber">4,6</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="error.notFound.message" datatype="html">
-        <source>The page you are looking for does not exist.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/error/ui/pages/not-found-page/not-found-page.component.html</context>
-          <context context-type="linenumber">3,4</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="error.serverError.message" datatype="html">
-        <source>An unexpected error occurred. Please try again later.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/error/ui/pages/server-error-page/server-error-page.component.html</context>
-          <context context-type="linenumber">3,4</context>
+          <context context-type="linenumber">9</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.home" datatype="html">
@@ -4273,39 +4294,6 @@
           <context context-type="linenumber">74</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="facility.inspStatus.draft" datatype="html">
-        <source>To plan</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-inspections-overview/facility-inspections-overview.component.ts</context>
-          <context context-type="linenumber">151</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dataviews/facility-inspection-dataview/facility-inspection-dataview.component.ts</context>
-          <context context-type="linenumber">139</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="facility.inspStatus.submitted" datatype="html">
-        <source>In progress</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-inspections-overview/facility-inspections-overview.component.ts</context>
-          <context context-type="linenumber">153</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dataviews/facility-inspection-dataview/facility-inspection-dataview.component.ts</context>
-          <context context-type="linenumber">140</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="facility.inspStatus.closed" datatype="html">
-        <source>Closed</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-inspections-overview/facility-inspections-overview.component.ts</context>
-          <context context-type="linenumber">155</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dataviews/facility-inspection-dataview/facility-inspection-dataview.component.ts</context>
-          <context context-type="linenumber">141</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="inspectionResult.pass" datatype="html">
         <source>Pass</source>
         <context-group purpose="location">
@@ -4452,13 +4440,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dataviews/facility-equipment-dataview/facility-equipment-dataview.component.html</context>
           <context context-type="linenumber">33,35</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="facility.equipDvStatus.inStock" datatype="html">
-        <source>In stock</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dataviews/facility-equipment-dataview/facility-equipment-dataview.component.ts</context>
-          <context context-type="linenumber">70</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.inspections.title" datatype="html">

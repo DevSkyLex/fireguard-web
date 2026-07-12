@@ -15,7 +15,7 @@
   <div class="grid gap-3 border-b border-surface-200 p-4 sm:grid-cols-3 dark:border-surface-800">
     <div class="rounded-md bg-surface-50 p-3 dark:bg-surface-900">
       <p i18n="@@inspection.info.result" class="text-xs text-surface-500">Result</p>
-      <p-tag class="mt-2" [value]="inspection().result | titlecase" severity="info" />
+      <app-tag class="mt-2 inline-flex" [descriptor]="resultDescriptor(inspection().result)" />
     </div>
     <div class="rounded-md bg-surface-50 p-3 dark:bg-surface-900">
       <p i18n="@@inspection.info.performed" class="text-xs text-surface-500">Performed</p>

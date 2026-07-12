@@ -43,11 +43,14 @@ import type {
   InspectionResult,
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
+import {
+  inspectionTagOptions,
+  resolveInspectionTag,
+} from '@features/organization/features/inspections/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag } from '@shared/components';
+import { EmptyState, Tag, type TagDescriptor, type TagOption } from '@shared/components';
 import { buildTableFilterParams } from '@shared/utils';
 import { INSPECTION_FILTER_MAPPING } from './constants';
-import type { InspectionFilterOption } from './models';
 
 /**
  * Component InspectionTable
@@ -360,72 +363,30 @@ export class InspectionTable implements OnInit {
    * @readonly
    *
    * @description
-   * Visual options used to render and filter inspection results.
+   * Visual options used to render and filter inspection results, resolved from
+   * the shared inspection tag registry.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {InspectionFilterOption<InspectionResult>[]}
+   * @type {TagOption[]}
    */
-  protected readonly resultOptions: InspectionFilterOption<InspectionResult>[] = [
-    {
-      label: $localize`:@@inspectionResult.pass:Pass`,
-      value: 'pass',
-      icon: PrimeIcons.CHECK_CIRCLE,
-      severity: 'success',
-    },
-    {
-      label: $localize`:@@inspectionResult.partial:Partial`,
-      value: 'partial',
-      icon: PrimeIcons.EXCLAMATION_CIRCLE,
-      severity: 'warn',
-    },
-    {
-      label: $localize`:@@inspectionResult.fail:Fail`,
-      value: 'fail',
-      icon: PrimeIcons.TIMES_CIRCLE,
-      severity: 'danger',
-    },
-  ];
+  protected readonly resultOptions: TagOption[] = inspectionTagOptions('result');
 
   /**
    * Property statusOptions
    * @readonly
    *
    * @description
-   * Visual options used to render and filter inspection statuses.
+   * Visual options used to render and filter inspection statuses, resolved from
+   * the shared inspection tag registry.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {InspectionFilterOption<InspectionStatus>[]}
+   * @type {TagOption[]}
    */
-  protected readonly statusOptions: InspectionFilterOption<InspectionStatus>[] = [
-    {
-      label: $localize`:@@inspectionStatus.draft:Draft`,
-      value: 'draft',
-      icon: PrimeIcons.FILE_EDIT,
-      severity: 'info',
-    },
-    {
-      label: $localize`:@@inspectionStatus.submitted:Submitted`,
-      value: 'submitted',
-      icon: PrimeIcons.SEND,
-      severity: 'warn',
-    },
-    {
-      label: $localize`:@@inspectionStatus.closed:Closed`,
-      value: 'closed',
-      icon: PrimeIcons.LOCK,
-      severity: 'secondary',
-    },
-    {
-      label: $localize`:@@inspectionStatus.cancelled:Cancelled`,
-      value: 'cancelled',
-      icon: PrimeIcons.BAN,
-      severity: 'danger',
-    },
-  ];
+  protected readonly statusOptions: TagOption[] = inspectionTagOptions('status');
 
   /**
    * Property searchControl
@@ -1013,19 +974,10 @@ export class InspectionTable implements OnInit {
    *
    * @param {InspectionResult} result API inspection result.
    *
-   * @returns {InspectionFilterOption<InspectionResult>} Matching result option.
+   * @returns {TagDescriptor} Matching result descriptor.
    */
-  protected getResultOption(result: InspectionResult): InspectionFilterOption<InspectionResult> {
-    return (
-      this.resultOptions.find(
-        (option: InspectionFilterOption<InspectionResult>): boolean => option.value === result,
-      ) ?? {
-        label: this.toDisplayLabel(result),
-        value: result,
-        icon: PrimeIcons.CIRCLE,
-        severity: 'secondary',
-      }
-    );
+  protected getResultOption(result: InspectionResult): TagDescriptor {
+    return resolveInspectionTag('result', result);
   }
 
   /**
@@ -1039,19 +991,10 @@ export class InspectionTable implements OnInit {
    *
    * @param {InspectionStatus} status API inspection status.
    *
-   * @returns {InspectionFilterOption<InspectionStatus>} Matching status option.
+   * @returns {TagDescriptor} Matching status descriptor.
    */
-  protected getStatusOption(status: InspectionStatus): InspectionFilterOption<InspectionStatus> {
-    return (
-      this.statusOptions.find(
-        (option: InspectionFilterOption<InspectionStatus>): boolean => option.value === status,
-      ) ?? {
-        label: this.toDisplayLabel(status),
-        value: status,
-        icon: PrimeIcons.CIRCLE,
-        severity: 'secondary',
-      }
-    );
+  protected getStatusOption(status: InspectionStatus): TagDescriptor {
+    return resolveInspectionTag('status', status);
   }
 
   /**

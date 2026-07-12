@@ -69,11 +69,7 @@
               {{ getResultLabel(inspection.result) }}
             </span>
 
-            <span
-              class="rounded-full border border-surface-200 px-2 py-0.5 text-xs text-surface-600 dark:border-surface-700 dark:text-surface-300"
-            >
-              {{ getStatusLabel(inspection.status) }}
-            </span>
+            <app-tag [descriptor]="statusDescriptor(inspection.status)" variant="inline" />
           </div>
         </article>
       }

@@ -10,22 +10,22 @@ test.describe('Error pages', () => {
     const errorPage = new ErrorPage(page);
     await errorPage.goto('/error/404');
 
-    await expect(errorPage.heading).toHaveText('404');
-    await expect(errorPage.homeLink).toBeVisible();
+    await expect(errorPage.code).toHaveText('404');
+    await expect(errorPage.homeButton).toBeVisible();
   });
 
   test('renders the 403 page', async ({ page }) => {
     const errorPage = new ErrorPage(page);
     await errorPage.goto('/error/403');
 
-    await expect(errorPage.heading).toHaveText('403');
+    await expect(errorPage.code).toHaveText('403');
   });
 
   test('renders the 500 page', async ({ page }) => {
     const errorPage = new ErrorPage(page);
     await errorPage.goto('/error/500');
 
-    await expect(errorPage.heading).toHaveText('500');
+    await expect(errorPage.code).toHaveText('500');
   });
 
   test('redirects an unknown top-level route to 404', async ({ page }) => {

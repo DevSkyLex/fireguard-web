@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { ErrorContent } from '../../components/error-content';
 
 /**
  * Component ServerErrorPage
@@ -13,8 +15,22 @@ import { RouterLink } from '@angular/router';
  */
 @Component({
   selector: 'app-server-error-page',
-  imports: [RouterLink],
+  imports: [RouterLink, ButtonModule, ErrorContent],
   templateUrl: './server-error-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ServerErrorPage {}
+export class ServerErrorPage {
+  /**
+   * Method refresh
+   * @method refresh
+   *
+   * @description
+   * Reloads the current document so the user can retry after a server error.
+   *
+   * @access public
+   * @returns {void}
+   */
+  public refresh(): void {
+    window.location.reload();
+  }
+}

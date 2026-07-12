@@ -40,12 +40,15 @@ import type {
   EquipmentOutput,
   EquipmentStatus,
 } from '@features/organization/features/equipments/models';
+import {
+  equipmentTagOptions,
+  resolveEquipmentTag,
+} from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag } from '@shared/components';
+import { EmptyState, Tag, type TagDescriptor, type TagOption } from '@shared/components';
 import { buildTableFilterParams } from '@shared/utils';
 import { EQUIPMENT_FILTER_MAPPING } from './constants';
-import type { EquipmentStatusOption } from './models';
 
 /**
  * Component EquipmentTable
@@ -356,39 +359,15 @@ export class EquipmentTable implements OnInit {
    * @readonly
    *
    * @description
-   * Visual options used to render and filter equipment statuses.
+   * Visual options used to render and filter equipment statuses, resolved from
+   * the shared equipment tag registry.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {EquipmentStatusOption[]}
+   * @type {TagOption[]}
    */
-  protected readonly statusOptions: EquipmentStatusOption[] = [
-    {
-      label: $localize`:@@equipmentStatus.inStock:In Stock`,
-      value: 'in_stock',
-      icon: PrimeIcons.BOX,
-      severity: 'secondary',
-    },
-    {
-      label: $localize`:@@equipmentStatus.operational:Operational`,
-      value: 'operational',
-      icon: PrimeIcons.CHECK_CIRCLE,
-      severity: 'success',
-    },
-    {
-      label: $localize`:@@equipmentStatus.maintenance:Maintenance`,
-      value: 'under_maintenance',
-      icon: PrimeIcons.WRENCH,
-      severity: 'warn',
-    },
-    {
-      label: $localize`:@@equipmentStatus.decommissioned:Decommissioned`,
-      value: 'decommissioned',
-      icon: PrimeIcons.BAN,
-      severity: 'danger',
-    },
-  ];
+  protected readonly statusOptions: TagOption[] = equipmentTagOptions('status');
 
   /**
    * Property typeOptions
@@ -1056,19 +1035,10 @@ export class EquipmentTable implements OnInit {
    *
    * @param {EquipmentStatus} status API equipment status.
    *
-   * @returns {EquipmentStatusOption} Matching status badge option.
+   * @returns {TagDescriptor} Matching status descriptor.
    */
-  protected getStatusOption(status: EquipmentStatus): EquipmentStatusOption {
-    return (
-      this.statusOptions.find(
-        (option: EquipmentStatusOption): boolean => option.value === status,
-      ) ?? {
-        label: this.toDisplayLabel(status),
-        value: status,
-        icon: PrimeIcons.CIRCLE,
-        severity: 'secondary',
-      }
-    );
+  protected getStatusOption(status: EquipmentStatus): TagDescriptor {
+    return resolveEquipmentTag('status', status);
   }
 
   /**

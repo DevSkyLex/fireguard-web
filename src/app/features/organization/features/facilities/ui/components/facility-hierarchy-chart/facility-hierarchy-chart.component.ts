@@ -15,7 +15,11 @@ import { AvatarModule } from 'primeng/avatar';
 import { OrganizationChartModule } from 'primeng/organizationchart';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import {
+  resolveFacilityTag,
+  type FacilityOutput,
+} from '@features/organization/features/facilities/models';
+import { Tag, type TagDescriptor } from '@shared/components';
 import { toFacilityTreeNodes } from './facility-hierarchy-chart.mapper';
 import type { FacilityHierarchyNodeData } from './models';
 
@@ -37,7 +41,7 @@ import type { FacilityHierarchyNodeData } from './models';
  */
 @Component({
   selector: 'app-facility-hierarchy-chart',
-  imports: [OrganizationChartModule, AvatarModule, TagModule, SkeletonModule],
+  imports: [OrganizationChartModule, AvatarModule, TagModule, SkeletonModule, Tag],
   templateUrl: './facility-hierarchy-chart.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -259,6 +263,24 @@ export class FacilityHierarchyChart {
    */
   protected onNavigate(facility: FacilityOutput): void {
     this.navigate.emit(facility);
+  }
+
+  /**
+   * Method statusDescriptor
+   * @method statusDescriptor
+   *
+   * @description
+   * Resolves the status badge descriptor for a facility node.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {string} status - Facility lifecycle status.
+   *
+   * @returns {TagDescriptor} Matching status descriptor.
+   */
+  protected statusDescriptor(status: string): TagDescriptor {
+    return resolveFacilityTag('status', status);
   }
   //#endregion
 }

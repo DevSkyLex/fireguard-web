@@ -11,15 +11,18 @@ import {
 } from '@angular/core';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
-import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import {
+  resolveEquipmentTag,
+  type EquipmentOutput,
+} from '@features/organization/features/equipments/models';
+import { Tag, type TagDescriptor } from '@shared/components';
 
 /**
  * Header presenting equipment identity, status and lifecycle actions.
  */
 @Component({
   selector: 'app-equipment-detail-header',
-  imports: [AvatarModule, ButtonModule, DatePipe, TagModule, TitleCasePipe],
+  imports: [AvatarModule, ButtonModule, DatePipe, TitleCasePipe, Tag],
   templateUrl: './equipment-detail-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -42,4 +45,9 @@ export class EquipmentDetailHeader {
   public readonly maintenance: OutputEmitterRef<void> = output();
   /** Emits an equipment decommission request. */
   public readonly decommission: OutputEmitterRef<void> = output();
+
+  /** Resolves the status badge descriptor for the equipment. */
+  protected statusDescriptor(status: string): TagDescriptor {
+    return resolveEquipmentTag('status', status);
+  }
 }

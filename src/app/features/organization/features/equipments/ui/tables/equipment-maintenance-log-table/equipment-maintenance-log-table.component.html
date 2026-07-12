@@ -1,9 +1,15 @@
-<section
-  class="flex min-h-0 flex-1 flex-col rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-950"
+<p-card
+  styleClass="flex min-h-0 flex-1 flex-col overflow-hidden border border-surface-200 dark:border-surface-800"
+  [pt]="{
+    body: { class: 'flex min-h-0 flex-1 flex-col p-0' },
+    content: { class: 'flex min-h-0 flex-1 flex-col p-0' },
+    header: {
+      class:
+        'flex items-center justify-between gap-4 border-b border-surface-200 px-4 py-3 dark:border-surface-800',
+    },
+  }"
 >
-  <header
-    class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
-  >
+  <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
       <i class="pi pi-wrench text-sm text-surface-500"></i>
       <h2
@@ -16,7 +22,7 @@
     <span class="text-xs text-surface-500" i18n="@@equipment.maint.eventCount"
       >{{ logs().length }} event(s)</span
     >
-  </header>
+  </ng-template>
   <p-table [value]="loading() ? skeletonItems : [...logs()]" dataKey="id" [stripedRows]="true">
     <ng-template pTemplate="header">
       <tr>
@@ -44,13 +50,9 @@
           </td>
           <td>
             @if (log.completedAt) {
-              <p-tag
-                value="Completed"
-                i18n-value="@@equipment.maint.completed"
-                severity="success"
-              />
+              <app-tag [descriptor]="completedDescriptor" />
             } @else {
-              <p-tag value="Active" i18n-value="@@equipment.maint.active" severity="warn" />
+              <app-tag [descriptor]="activeDescriptor" />
             }
           </td>
         </tr>
@@ -70,4 +72,4 @@
       </tr>
     </ng-template>
   </p-table>
-</section>
+</p-card>

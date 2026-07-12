@@ -52,16 +52,8 @@
               </div>
 
               <div class="flex items-center gap-2">
-                <p-tag
-                  [value]="getResultLabel(item.result)"
-                  [severity]="getResultSeverity(item.result)"
-                  [rounded]="true"
-                />
-                <p-tag
-                  [value]="getStatusLabel(item.status)"
-                  [severity]="getStatusSeverity(item.status)"
-                  [rounded]="true"
-                />
+                <app-tag [descriptor]="resultDescriptor(item.result)" />
+                <app-tag [descriptor]="statusDescriptor(item.status)" />
               </div>
             </article>
           }

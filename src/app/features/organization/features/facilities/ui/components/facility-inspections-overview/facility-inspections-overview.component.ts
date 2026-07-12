@@ -10,11 +10,13 @@ import {
 } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
 import { FacilityOverviewStore } from '@features/organization/features/facilities/state';
-import type {
-  InspectionOutput,
-  InspectionResult,
-  InspectionStatus,
+import {
+  resolveInspectionTag,
+  type InspectionOutput,
+  type InspectionResult,
+  type InspectionStatus,
 } from '@features/organization/features/inspections/models';
+import { Tag, type TagDescriptor } from '@shared/components';
 
 /**
  * Type InspectionOverviewFilter
@@ -39,7 +41,7 @@ export type InspectionOverviewFilter = 'all' | 'overdue' | 'upcoming';
  */
 @Component({
   selector: 'app-facility-inspections-overview',
-  imports: [DatePipe, SkeletonModule],
+  imports: [DatePipe, SkeletonModule, Tag],
   templateUrl: './facility-inspections-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -140,22 +142,14 @@ export class FacilityInspectionsOverview {
 
   //#region Methods
   /**
-   * Returns a short label for an inspection workflow status.
+   * Resolves the status badge descriptor for an inspection so status carries a
+   * label and icon from the shared inspection tag registry, never colour alone.
    *
    * @param {InspectionStatus} status - Inspection workflow status.
-   * @returns {string} Display label.
+   * @returns {TagDescriptor} Matching status descriptor.
    */
-  protected getStatusLabel(status: InspectionStatus): string {
-    switch (status) {
-      case 'draft':
-        return $localize`:@@facility.inspStatus.draft:To plan`;
-      case 'submitted':
-        return $localize`:@@facility.inspStatus.submitted:In progress`;
-      case 'closed':
-        return $localize`:@@facility.inspStatus.closed:Closed`;
-      default:
-        return status;
-    }
+  protected statusDescriptor(status: InspectionStatus): TagDescriptor {
+    return resolveInspectionTag('status', status);
   }
 
   /**

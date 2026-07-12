@@ -41,11 +41,15 @@ import type {
   FacilityStatus,
   FacilityType,
 } from '@features/organization/features/facilities/models';
+import {
+  facilityTagOptions,
+  resolveFacilityTag,
+} from '@features/organization/features/facilities/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag } from '@shared/components';
+import { EmptyState, Tag, type TagDescriptor, type TagOption } from '@shared/components';
 import { buildTableFilterParams } from '@shared/utils';
 import { FACILITY_FILTER_MAPPING } from './constants';
-import type { FacilityStatusOption, FacilityTypeIconMap, FacilityTypeOption } from './models';
+import type { FacilityTypeIconMap, FacilityTypeOption } from './models';
 
 /**
  * Component FacilityTable
@@ -448,27 +452,15 @@ export class FacilityTable implements OnInit {
    * @readonly
    *
    * @description
-   * Visual options used to render facility status badges.
+   * Visual options used to render facility status badges, resolved from the
+   * shared facility tag registry.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {FacilityStatusOption[]}
+   * @type {TagOption[]}
    */
-  protected readonly statusOptions: FacilityStatusOption[] = [
-    {
-      label: $localize`:@@status.active:Active`,
-      value: 'active',
-      icon: PrimeIcons.CHECK_CIRCLE,
-      severity: 'success',
-    },
-    {
-      label: $localize`:@@status.archived:Archived`,
-      value: 'archived',
-      icon: PrimeIcons.BOX,
-      severity: 'secondary',
-    },
-  ];
+  protected readonly statusOptions: TagOption[] = facilityTagOptions('status');
 
   /**
    * Property searchControl
@@ -1060,19 +1052,10 @@ export class FacilityTable implements OnInit {
    *
    * @param {FacilityStatus} status API facility status.
    *
-   * @returns {FacilityStatusOption} Matching status badge option.
+   * @returns {TagDescriptor} Matching status descriptor.
    */
-  protected getStatusOption(status: FacilityStatus): FacilityStatusOption {
-    return (
-      this.statusOptions.find(
-        (option: FacilityStatusOption): boolean => option.value === status,
-      ) ?? {
-        label: this.toDisplayLabel(status),
-        value: status,
-        icon: PrimeIcons.CIRCLE,
-        severity: 'secondary',
-      }
-    );
+  protected getStatusOption(status: FacilityStatus): TagDescriptor {
+    return resolveFacilityTag('status', status);
   }
 
   /**

@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { DataViewModule, type DataViewPassThroughOptions } from 'primeng/dataview';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TagModule } from 'primeng/tag';
-import type {
-  EquipmentOutput,
-  EquipmentStatus,
+import {
+  resolveEquipmentTag,
+  type EquipmentOutput,
 } from '@features/organization/features/equipments/models';
 import { FacilityOverviewStore } from '@features/organization/features/facilities/state';
+import { Tag, type TagDescriptor } from '@shared/components';
 
 /**
  * Component FacilityEquipmentDataview
@@ -23,7 +23,7 @@ import { FacilityOverviewStore } from '@features/organization/features/facilitie
  */
 @Component({
   selector: 'app-facility-equipment-dataview',
-  imports: [CardModule, DataViewModule, SkeletonModule, TagModule],
+  imports: [CardModule, DataViewModule, SkeletonModule, Tag],
   templateUrl: './facility-equipment-dataview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -56,33 +56,17 @@ export class FacilityEquipmentDataview {
     emptyMessage: { class: 'hidden' },
   };
 
-  private readonly statusSeverities: Record<
-    EquipmentStatus,
-    'secondary' | 'success' | 'warn' | 'danger'
-  > = {
-    in_stock: 'secondary',
-    operational: 'success',
-    under_maintenance: 'warn',
-    decommissioned: 'danger',
-  };
-
-  private readonly statusLabels: Record<EquipmentStatus, string> = {
-    in_stock: $localize`:@@facility.equipDvStatus.inStock:In stock`,
-    operational: $localize`:@@equipmentStatus.operational:Operational`,
-    under_maintenance: $localize`:@@equipmentStatus.maintenance:Maintenance`,
-    decommissioned: $localize`:@@equipmentStatus.decommissioned:Decommissioned`,
-  };
   //#endregion
 
   //#region Methods
-  protected getStatusLabel(status: EquipmentStatus): string {
-    return this.statusLabels[status];
-  }
-
-  protected getStatusSeverity(
-    status: EquipmentStatus,
-  ): 'secondary' | 'success' | 'warn' | 'danger' {
-    return this.statusSeverities[status];
+  /**
+   * Resolves the status badge descriptor for an equipment row.
+   *
+   * @param {string} status - Equipment lifecycle status.
+   * @returns {TagDescriptor} Matching status descriptor.
+   */
+  protected statusDescriptor(status: string): TagDescriptor {
+    return resolveEquipmentTag('status', status);
   }
   //#endregion
 }

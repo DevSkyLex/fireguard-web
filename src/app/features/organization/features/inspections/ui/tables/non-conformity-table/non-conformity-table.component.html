@@ -63,16 +63,7 @@
             </div>
           </td>
           <td>
-            <p-tag
-              [value]="nonConformity.severity | titlecase"
-              [severity]="
-                nonConformity.severity === 'critical' || nonConformity.severity === 'high'
-                  ? 'danger'
-                  : nonConformity.severity === 'medium'
-                    ? 'warn'
-                    : 'secondary'
-              "
-            />
+            <app-tag [descriptor]="severityDescriptor(nonConformity.severity)" />
           </td>
           <td>
             @if (
@@ -89,7 +80,7 @@
             } @else {
               <!-- A resolved non-conformity is immutable (the backend rejects further
                    status changes with 422), so its status is shown frozen. -->
-              <p-tag [value]="nonConformity.status | titlecase" severity="secondary" />
+              <app-tag [descriptor]="statusDescriptor(nonConformity.status)" />
             }
           </td>
           <td>

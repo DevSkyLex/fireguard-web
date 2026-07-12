@@ -1,4 +1,4 @@
-import { DatePipe, TitleCasePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,15 +12,17 @@ import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
-import type {
-  NonConformityOutput,
-  NonConformityStatus,
+import {
+  inspectionTagOptions,
+  resolveInspectionTag,
+  type NonConformityOutput,
+  type NonConformityStatus,
 } from '@features/organization/features/inspections/models';
 import {
   NonConformityForm,
   type NonConformityFormValues,
 } from '@features/organization/features/inspections/ui/forms';
+import { Tag, type TagDescriptor, type TagOption } from '@shared/components';
 
 /** Describes a requested non-conformity status transition. */
 export interface NonConformityStatusChange {
@@ -41,8 +43,7 @@ export interface NonConformityStatusChange {
     SelectModule,
     SkeletonModule,
     TableModule,
-    TagModule,
-    TitleCasePipe,
+    Tag,
   ],
   templateUrl: './non-conformity-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,11 +69,16 @@ export class NonConformityTable {
   protected readonly skeletonItems = Array(5);
   /** Localized placeholder for empty due-date cells. */
   protected readonly noneLabel: string = $localize`:@@inspection.info.none:None`;
-  /** Supported non-conformity status options. */
-  protected readonly statusOptions: { label: string; value: NonConformityStatus }[] = [
-    { label: $localize`:@@ncStatus.open:Open`, value: 'open' },
-    { label: $localize`:@@ncStatus.inProgress:In progress`, value: 'in_progress' },
-    { label: $localize`:@@ncStatus.done:Done`, value: 'done' },
-    { label: $localize`:@@ncStatus.waived:Waived`, value: 'waived' },
-  ];
+  /** Supported non-conformity status options, resolved from the shared registry. */
+  protected readonly statusOptions: TagOption[] = inspectionTagOptions('nonConformityStatus');
+
+  /** Resolves the severity badge descriptor for a non-conformity. */
+  protected severityDescriptor(severity: string): TagDescriptor {
+    return resolveInspectionTag('nonConformitySeverity', severity);
+  }
+
+  /** Resolves the status badge descriptor for a non-conformity. */
+  protected statusDescriptor(status: string): TagDescriptor {
+    return resolveInspectionTag('nonConformityStatus', status);
+  }
 }

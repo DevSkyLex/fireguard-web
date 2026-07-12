@@ -3,7 +3,9 @@
     <!-- Loading -->
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       @for (i of [0, 1, 2]; track i) {
-        <div class="h-56 animate-pulse rounded-xl bg-surface-100 dark:bg-surface-900"></div>
+        <div
+          class="h-56 animate-pulse rounded-xl bg-surface-100 motion-reduce:animate-none dark:bg-surface-900"
+        ></div>
       }
     </div>
   } @else if (catalogError()) {

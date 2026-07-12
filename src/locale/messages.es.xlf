@@ -310,21 +310,33 @@
         <source>Server error</source>
         <target>Error del servidor</target>
       </trans-unit>
-      <trans-unit id="error.forbidden.message" datatype="html">
-        <source>You do not have permission to access this resource.</source>
+      <trans-unit id="error.404.title" datatype="html">
+        <source>Page not found</source>
+        <target>Página no encontrada</target>
+      </trans-unit>
+      <trans-unit id="error.404.description" datatype="html">
+        <source>The page you're looking for doesn't exist or may have moved.</source>
+        <target>La página que buscas no existe o puede que se haya movido.</target>
+      </trans-unit>
+      <trans-unit id="error.403.title" datatype="html">
+        <source>Access denied</source>
+        <target>Acceso denegado</target>
+      </trans-unit>
+      <trans-unit id="error.403.description" datatype="html">
+        <source>You don't have permission to access this resource.</source>
         <target>No tienes permiso para acceder a este recurso.</target>
       </trans-unit>
-      <trans-unit id="error.goHome" datatype="html">
-        <source>Go back home</source>
+      <trans-unit id="error.500.title" datatype="html">
+        <source>Something went wrong</source>
+        <target>Algo ha salido mal</target>
+      </trans-unit>
+      <trans-unit id="error.500.description" datatype="html">
+        <source>An unexpected error occurred on our end. Please try again in a moment.</source>
+        <target>Se ha producido un error inesperado por nuestra parte. Inténtalo de nuevo en un momento.</target>
+      </trans-unit>
+      <trans-unit id="error.backHome" datatype="html">
+        <source>Back to home</source>
         <target>Volver al inicio</target>
-      </trans-unit>
-      <trans-unit id="error.notFound.message" datatype="html">
-        <source>The page you are looking for does not exist.</source>
-        <target>La página que buscas no existe.</target>
-      </trans-unit>
-      <trans-unit id="error.serverError.message" datatype="html">
-        <source>An unexpected error occurred. Please try again later.</source>
-        <target>Se ha producido un error inesperado. Inténtalo de nuevo más tarde.</target>
       </trans-unit>
       <trans-unit id="route.home" datatype="html">
         <source>Home</source>
@@ -2304,22 +2316,6 @@
         <source>Upcoming</source>
         <target>Próximas</target>
       </trans-unit>
-      <trans-unit id="facility.inspStatus.draft" datatype="html">
-        <source>To plan</source>
-        <target>Por planificar</target>
-      </trans-unit>
-      <trans-unit id="facility.inspStatus.submitted" datatype="html">
-        <source>In progress</source>
-        <target>En curso</target>
-      </trans-unit>
-      <trans-unit id="facility.inspStatus.closed" datatype="html">
-        <source>Closed</source>
-        <target>Cerrada</target>
-      </trans-unit>
-      <trans-unit id="facility.inspStatus.cancelled" datatype="html">
-        <source>Cancelled</source>
-        <target>Cancelada</target>
-      </trans-unit>
       <trans-unit id="facility.unknownInspector" datatype="html">
         <source>Unknown inspector</source>
         <target>Inspector desconocido</target>
@@ -2371,10 +2367,6 @@
       <trans-unit id="facility.equipDv.empty" datatype="html">
         <source> No equipment assigned to this facility. </source>
         <target>No hay equipos asignados a esta instalación.</target>
-      </trans-unit>
-      <trans-unit id="facility.equipDvStatus.inStock" datatype="html">
-        <source>In stock</source>
-        <target>En stock</target>
       </trans-unit>
       <trans-unit id="facility.form.type" datatype="html">
         <source>Type</source>

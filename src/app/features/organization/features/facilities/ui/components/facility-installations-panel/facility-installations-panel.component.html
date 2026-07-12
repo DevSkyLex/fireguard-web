@@ -25,7 +25,7 @@
           {{ facility.name }}
         </span>
       </div>
-      <span class="h-1.5 w-1.5 rounded-full" [class]="getStatusDotClass(facility.status)"></span>
+      <app-tag [descriptor]="statusDescriptor(facility.status)" />
     </div>
 
     @if (directChildren().length === 0) {
@@ -47,10 +47,7 @@
                   {{ child.name }}
                 </span>
               </span>
-              <span
-                class="h-1.5 w-1.5 rounded-full"
-                [class]="getStatusDotClass(child.status)"
-              ></span>
+              <app-tag [descriptor]="statusDescriptor(child.status)" />
             </button>
 
             @if (childrenOf(child.id).length > 0) {
@@ -71,10 +68,7 @@
                           {{ grandChild.name }}
                         </span>
                       </span>
-                      <span
-                        class="h-1.5 w-1.5 rounded-full"
-                        [class]="getStatusDotClass(grandChild.status)"
-                      ></span>
+                      <app-tag [descriptor]="statusDescriptor(grandChild.status)" />
                     </button>
                   </li>
                 }

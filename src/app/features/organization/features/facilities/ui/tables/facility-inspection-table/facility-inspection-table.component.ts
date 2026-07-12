@@ -31,14 +31,15 @@ import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
 import type { RequestOptions } from '@core/api';
 import { pickAvatarUrl } from '@core/api/utils';
 import { OrganizationPermissionService } from '@features/organization/access';
-import type {
-  InspectionOutput,
-  InspectionResult,
-  InspectionStatus,
+import {
+  inspectionTagOptions,
+  resolveInspectionTag,
+  type InspectionOutput,
+  type InspectionResult,
+  type InspectionStatus,
 } from '@features/organization/features/inspections/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { EmptyState, Tag } from '@shared/components';
-import type { InspectionFilterOption } from './models';
+import { EmptyState, Tag, type TagDescriptor, type TagOption } from '@shared/components';
 
 /**
  * Component FacilityInspectionTable
@@ -273,66 +274,30 @@ export class FacilityInspectionTable implements OnInit {
    * @readonly
    *
    * @description
-   * Result filter choices available for facility inspections.
+   * Result filter choices available for facility inspections, resolved from the
+   * shared inspection tag registry.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {InspectionFilterOption<InspectionResult>[]}
+   * @type {TagOption[]}
    */
-  protected readonly resultOptions: InspectionFilterOption<InspectionResult>[] = [
-    {
-      label: $localize`:@@inspectionResult.pass:Pass`,
-      value: 'pass',
-      icon: PrimeIcons.CHECK_CIRCLE,
-      severity: 'success',
-    },
-    {
-      label: $localize`:@@inspectionResult.partial:Partial`,
-      value: 'partial',
-      icon: PrimeIcons.EXCLAMATION_CIRCLE,
-      severity: 'warn',
-    },
-    {
-      label: $localize`:@@inspectionResult.fail:Fail`,
-      value: 'fail',
-      icon: PrimeIcons.TIMES_CIRCLE,
-      severity: 'danger',
-    },
-  ];
+  protected readonly resultOptions: TagOption[] = inspectionTagOptions('result');
 
   /**
    * Property statusOptions
    * @readonly
    *
    * @description
-   * Status filter choices available for facility inspections.
+   * Status filter choices available for facility inspections, resolved from the
+   * shared inspection tag registry.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @type {InspectionFilterOption<InspectionStatus>[]}
+   * @type {TagOption[]}
    */
-  protected readonly statusOptions: InspectionFilterOption<InspectionStatus>[] = [
-    {
-      label: $localize`:@@inspectionStatus.draft:Draft`,
-      value: 'draft',
-      icon: PrimeIcons.FILE_EDIT,
-      severity: 'info',
-    },
-    {
-      label: $localize`:@@inspectionStatus.submitted:Submitted`,
-      value: 'submitted',
-      icon: PrimeIcons.SEND,
-      severity: 'warn',
-    },
-    {
-      label: $localize`:@@inspectionStatus.closed:Closed`,
-      value: 'closed',
-      icon: PrimeIcons.LOCK,
-      severity: 'secondary',
-    },
-  ];
+  protected readonly statusOptions: TagOption[] = inspectionTagOptions('status');
 
   /**
    * Property resultControl
@@ -771,19 +736,10 @@ export class FacilityInspectionTable implements OnInit {
    *
    * @param {InspectionResult} result API inspection result.
    *
-   * @returns {InspectionFilterOption<InspectionResult>} Matching result badge option.
+   * @returns {TagDescriptor} Matching result descriptor.
    */
-  protected getResultOption(result: InspectionResult): InspectionFilterOption<InspectionResult> {
-    return (
-      this.resultOptions.find(
-        (option: InspectionFilterOption<InspectionResult>): boolean => option.value === result,
-      ) ?? {
-        label: this.toDisplayLabel(result),
-        value: result,
-        icon: PrimeIcons.CIRCLE,
-        severity: 'secondary',
-      }
-    );
+  protected getResultOption(result: InspectionResult): TagDescriptor {
+    return resolveInspectionTag('result', result);
   }
 
   /**
@@ -797,19 +753,10 @@ export class FacilityInspectionTable implements OnInit {
    *
    * @param {InspectionStatus} status API inspection status.
    *
-   * @returns {InspectionFilterOption<InspectionStatus>} Matching status badge option.
+   * @returns {TagDescriptor} Matching status descriptor.
    */
-  protected getStatusOption(status: InspectionStatus): InspectionFilterOption<InspectionStatus> {
-    return (
-      this.statusOptions.find(
-        (option: InspectionFilterOption<InspectionStatus>): boolean => option.value === status,
-      ) ?? {
-        label: this.toDisplayLabel(status),
-        value: status,
-        icon: PrimeIcons.CIRCLE,
-        severity: 'secondary',
-      }
-    );
+  protected getStatusOption(status: InspectionStatus): TagDescriptor {
+    return resolveInspectionTag('status', status);
   }
 
   /**

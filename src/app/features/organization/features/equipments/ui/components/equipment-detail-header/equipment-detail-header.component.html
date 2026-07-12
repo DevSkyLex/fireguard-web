@@ -8,18 +8,7 @@
         <h1 class="truncate text-2xl font-semibold text-surface-900 dark:text-surface-100">
           {{ typeLabel() | titlecase }} {{ equipment().brand }} {{ equipment().model }}
         </h1>
-        <p-tag
-          [value]="equipment().status | titlecase"
-          [severity]="
-            equipment().status === 'operational'
-              ? 'success'
-              : equipment().status === 'under_maintenance'
-                ? 'warn'
-                : equipment().status === 'decommissioned'
-                  ? 'danger'
-                  : 'secondary'
-          "
-        />
+        <app-tag [descriptor]="statusDescriptor(equipment().status)" />
       </div>
       <div class="flex flex-wrap items-center gap-3 text-sm text-surface-500 dark:text-surface-300">
         <span class="inline-flex items-center gap-1.5">
@@ -48,7 +37,7 @@
         label="Edit"
         i18n-label="@@common.edit"
         icon="pi pi-pencil"
-        severity="success"
+        severity="secondary"
         [outlined]="true"
         size="small"
         (onClick)="edit.emit()"
@@ -58,7 +47,6 @@
           label="Resume service"
           i18n-label="@@equipment.resumeService"
           icon="pi pi-check"
-          severity="success"
           size="small"
           [loading]="lifecycleLoading()"
           (onClick)="commission.emit()"
@@ -68,7 +56,6 @@
           label="Commission"
           i18n-label="@@equipment.commission"
           icon="pi pi-check"
-          severity="success"
           size="small"
           [loading]="lifecycleLoading()"
           [disabled]="!equipment().facilityId"

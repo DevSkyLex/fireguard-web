@@ -1,5 +1,22 @@
-<section class="error-page error-page--server-error">
-  <h1>500</h1>
-  <p i18n="@@error.serverError.message">An unexpected error occurred. Please try again later.</p>
-  <a routerLink="/" i18n="@@error.goHome">Go back home</a>
-</section>
+<app-error-content
+  code="500"
+  title="Something went wrong"
+  i18n-title="@@error.500.title"
+  description="An unexpected error occurred on our end. Please try again in a moment."
+  i18n-description="@@error.500.description"
+>
+  <p-button
+    label="Try again"
+    i18n-label="@@common.tryAgain"
+    icon="pi pi-refresh"
+    (onClick)="refresh()"
+  />
+  <p-button
+    label="Back to home"
+    i18n-label="@@error.backHome"
+    icon="pi pi-home"
+    routerLink="/"
+    severity="secondary"
+    [outlined]="true"
+  />
+</app-error-content>

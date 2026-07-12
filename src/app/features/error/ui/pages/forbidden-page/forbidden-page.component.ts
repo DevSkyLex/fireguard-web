@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { ErrorContent } from '../../components/error-content';
 
 /**
  * Component ForbiddenPage
@@ -13,7 +15,7 @@ import { RouterLink } from '@angular/router';
  */
 @Component({
   selector: 'app-forbidden-page',
-  imports: [RouterLink],
+  imports: [RouterLink, ButtonModule, ErrorContent],
   templateUrl: './forbidden-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

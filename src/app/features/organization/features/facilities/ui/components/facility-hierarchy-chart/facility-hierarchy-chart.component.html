@@ -47,12 +47,7 @@
                   </div>
                 </p-tag>
 
-                <span
-                  class="h-1.5 w-1.5 shrink-0 rounded-full"
-                  [class.bg-green-500]="facility.status === 'active'"
-                  [class.bg-orange-500]="facility.status === 'archived'"
-                  [title]="facility.status"
-                ></span>
+                <app-tag [descriptor]="statusDescriptor(facility.status)" />
               </div>
 
               @if (facility.id !== root()?.id) {

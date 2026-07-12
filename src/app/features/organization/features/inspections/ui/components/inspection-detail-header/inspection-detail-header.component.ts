@@ -1,4 +1,4 @@
-import { DatePipe, TitleCasePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,15 +9,18 @@ import {
 } from '@angular/core';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
-import type { InspectionOutput } from '@features/organization/features/inspections/models';
+import {
+  resolveInspectionTag,
+  type InspectionOutput,
+} from '@features/organization/features/inspections/models';
+import { Tag, type TagDescriptor } from '@shared/components';
 
 /**
  * Header presenting inspection identity, status and lifecycle actions.
  */
 @Component({
   selector: 'app-inspection-detail-header',
-  imports: [AvatarModule, ButtonModule, DatePipe, TagModule, TitleCasePipe],
+  imports: [AvatarModule, ButtonModule, DatePipe, Tag],
   templateUrl: './inspection-detail-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -38,4 +41,14 @@ export class InspectionDetailHeader {
   public readonly cancelInspection: OutputEmitterRef<void> = output();
   /** Localized fallback shown when the inspector identity is unavailable. */
   protected readonly unknownInspectorLabel: string = $localize`:@@inspection.unknownInspector:Unknown inspector`;
+
+  /** Resolves the status badge descriptor for the inspection. */
+  protected statusDescriptor(status: string): TagDescriptor {
+    return resolveInspectionTag('status', status);
+  }
+
+  /** Resolves the result badge descriptor for the inspection. */
+  protected resultDescriptor(result: string): TagDescriptor {
+    return resolveInspectionTag('result', result);
+  }
 }

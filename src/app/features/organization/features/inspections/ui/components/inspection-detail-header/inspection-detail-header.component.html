@@ -11,20 +11,8 @@
         >
           Inspection {{ inspection().performedAt | date: 'mediumDate' }}
         </h1>
-        <p-tag
-          [value]="inspection().status | titlecase"
-          [severity]="inspection().status === 'closed' ? 'success' : 'secondary'"
-        />
-        <p-tag
-          [value]="inspection().result | titlecase"
-          [severity]="
-            inspection().result === 'pass'
-              ? 'success'
-              : inspection().result === 'fail'
-                ? 'danger'
-                : 'warn'
-          "
-        />
+        <app-tag [descriptor]="statusDescriptor(inspection().status)" />
+        <app-tag [descriptor]="resultDescriptor(inspection().result)" />
       </div>
       <div class="flex flex-wrap items-center gap-3 text-sm text-surface-500 dark:text-surface-300">
         <span class="inline-flex items-center gap-1.5">

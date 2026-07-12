@@ -1,5 +1,9 @@
-<section class="error-page error-page--forbidden">
-  <h1>403</h1>
-  <p i18n="@@error.forbidden.message">You do not have permission to access this resource.</p>
-  <a routerLink="/" i18n="@@error.goHome">Go back home</a>
-</section>
+<app-error-content
+  code="403"
+  title="Access denied"
+  i18n-title="@@error.403.title"
+  description="You don't have permission to access this resource."
+  i18n-description="@@error.403.description"
+>
+  <p-button label="Back to home" i18n-label="@@error.backHome" icon="pi pi-home" routerLink="/" />
+</app-error-content>

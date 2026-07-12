@@ -11,7 +11,7 @@
     </p>
 
     <div class="flex flex-wrap items-center gap-2">
-      <p-iconfield>
+      <p-iconfield class="w-full sm:w-auto">
         <p-inputicon class="pi pi-search" />
         <input
           pInputText
@@ -20,7 +20,7 @@
           i18n-placeholder="@@intervention.list.searchPlaceholder"
           placeholder="Search interventions..."
           [formControl]="searchControl"
-          class="w-[210px]"
+          class="w-full sm:w-[210px]"
         />
       </p-iconfield>
 

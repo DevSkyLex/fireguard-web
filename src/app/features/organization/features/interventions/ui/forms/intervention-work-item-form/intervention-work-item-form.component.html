@@ -21,7 +21,7 @@
       <label class="grid gap-1.5 text-sm">
         <span i18n="@@intervention.wif.action" class="font-medium"
           >Action <span class="text-red-500" aria-hidden="true">*</span></span
-        >
+        ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <p-select
           formControlName="action"
           [options]="[...actionOptions]"

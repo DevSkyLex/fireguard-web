@@ -21,6 +21,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectButtonModule, type SelectButtonChangeEvent } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
@@ -52,7 +53,6 @@ import { InterventionCreateDrawer } from '@features/organization/features/interv
 import type { InterventionCreateFormValues } from '@features/organization/features/interventions/ui/forms';
 import {
   capabilityForTransition,
-  interventionLifecycleProgress,
   resolveAllowedTransitions,
   type InterventionTransitionCapability,
 } from '@features/organization/features/interventions/utils';
@@ -70,7 +70,6 @@ import {
   GroupedList,
   GroupedListHeaderDirective,
   GroupedListRowDirective,
-  ProgressRing,
   type AvatarStackPerson,
   type BoardColumn,
   type BoardItemDropped,
@@ -107,15 +106,12 @@ const LIST_STATUS_ORDER: readonly InterventionStatus[] = [
  *
  * @description
  * Presentation view model wrapping one {@link InterventionOutput} for the
- * list row / board card templates: the derived work-item progress, its
- * accessible label, whether the intervention is overdue, and the resolved
- * avatar-stack people. Every other rendered field reads straight off the
- * wrapped `intervention`.
+ * list row / board card templates: whether the intervention is overdue and
+ * the resolved avatar-stack people. Every other rendered field reads
+ * straight off the wrapped `intervention`.
  */
 interface InterventionListItemViewModel {
   readonly intervention: InterventionOutput;
-  readonly progress: number;
-  readonly progressLabel: string;
   readonly isOverdue: boolean;
   readonly people: readonly AvatarStackPerson[];
 }
@@ -162,10 +158,10 @@ interface InterventionListItemViewModel {
     InterventionPriorityIcon,
     InterventionTag,
     MessageModule,
-    ProgressRing,
     ReactiveFormsModule,
     SelectButtonModule,
     SkeletonModule,
+    TooltipModule,
   ],
   // InterventionStore is provided at the parent route level (interventions.routes.ts)
   // so it survives navigation into a detail page — do not re-provide it here.
@@ -534,6 +530,41 @@ export class InterventionsPage {
   );
 
   /**
+   * Property hasSearch
+   * @readonly
+   *
+   * @description
+   * Whether a non-blank search query is active, used to branch the empty
+   * state between "no results" and the true first-run empty state.
+   *
+   * @access protected
+   * @since 5.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasSearch: Signal<boolean> = computed<boolean>(
+    () => this.q().trim().length > 0,
+  );
+
+  /**
+   * Property searchEmptyTitle
+   * @readonly
+   *
+   * @description
+   * Localized "No results for …" title echoing the active search query back
+   * in the filtered-search empty state.
+   *
+   * @access protected
+   * @since 5.1.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly searchEmptyTitle: Signal<string> = computed<string>(
+    () =>
+      $localize`:@@intervention.list.searchEmptyTitle:No results for “${this.q().trim()}:query:”`,
+  );
+
+  /**
    * Property loadedCount
    * @readonly
    *
@@ -884,6 +915,44 @@ export class InterventionsPage {
   }
 
   /**
+   * Method retry
+   * @method retry
+   *
+   * @description
+   * Re-dispatches the interventions load with the current organization and
+   * search query after a failed load (the error banner's Retry action).
+   *
+   * @access protected
+   * @since 5.1.0
+   *
+   * @returns {void}
+   */
+  protected retry(): void {
+    const organizationId: string | undefined = this.organizationId();
+    if (!organizationId) return;
+
+    const name: string = this.q().trim();
+    this.store.load({ organizationId, options: name ? { name } : undefined });
+  }
+
+  /**
+   * Method clearSearch
+   * @method clearSearch
+   *
+   * @description
+   * Clears the active search by removing `?q=` from the URL, which
+   * round-trips into {@link q} and reloads the unfiltered list.
+   *
+   * @access protected
+   * @since 5.1.0
+   *
+   * @returns {void}
+   */
+  protected clearSearch(): void {
+    this.navigateQuery({ q: null });
+  }
+
+  /**
    * Method openCreate
    * @method openCreate
    *
@@ -1068,8 +1137,8 @@ export class InterventionsPage {
    *
    * @description
    * Maps a raw {@link InterventionOutput} into its
-   * {@link InterventionListItemViewModel}: work-item completion ratio and its
-   * accessible label, overdue status, and resolved avatar-stack people.
+   * {@link InterventionListItemViewModel}: overdue status and resolved
+   * avatar-stack people.
    *
    * @access private
    * @since 5.0.0
@@ -1078,8 +1147,6 @@ export class InterventionsPage {
    * @returns {InterventionListItemViewModel} The derived view model.
    */
   private toItemViewModel(intervention: InterventionOutput): InterventionListItemViewModel {
-    const progress: number = interventionLifecycleProgress(intervention.status);
-    const progressLabel: string = resolveInterventionTag('status', intervention.status).label;
     const isTerminal: boolean =
       intervention.status === 'published' || intervention.status === 'abandoned';
     const isOverdue: boolean =
@@ -1092,8 +1159,6 @@ export class InterventionsPage {
 
     return {
       intervention,
-      progress,
-      progressLabel,
       isOverdue,
       people: memberIris.map((iri) => this.toPerson(iri)),
     };

@@ -3,7 +3,18 @@ import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { catchError, EMPTY, forkJoin, from, map, pipe, switchMap, tap, throwError } from 'rxjs';
+import {
+  catchError,
+  concatMap,
+  EMPTY,
+  forkJoin,
+  from,
+  map,
+  pipe,
+  switchMap,
+  tap,
+  throwError,
+} from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import {
   errorCallState,
@@ -20,6 +31,7 @@ import {
 } from '@features/organization/features/interventions/data-access';
 import type {
   CreateInterventionWorkItemInput,
+  InterventionOutput,
   InterventionTransitionRequest,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
@@ -357,18 +369,63 @@ export const InterventionWorkspaceStore = signalStore(
         updateDetails: rxMethod<InterventionDetailsUpdateCommand>(
           pipe(
             tap(() => patchState(store, { saving: true, error: null })),
-            switchMap(({ interventionId, input }) =>
-              service.update(interventionId, input, store.intervention()?.revision).pipe(
+            concatMap(({ interventionId, input }) => {
+              const intervention = store.intervention();
+              if (connectivity.isOffline() && intervention) {
+                const { plannedStartAt, dueAt, labelIds, ...optimisticInput } = input;
+                const queuedInput = {
+                  ...optimisticInput,
+                  ...(labelIds !== undefined ? { labelIds } : {}),
+                  ...(plannedStartAt !== undefined
+                    ? { plannedStartAt: plannedStartAt?.toISOString() ?? null }
+                    : {}),
+                  ...(dueAt !== undefined ? { dueAt: dueAt?.toISOString() ?? null } : {}),
+                  revision: intervention.revision,
+                };
+                return from(offline.queue(interventionId, 'intervention.update', queuedInput)).pipe(
+                  concatMap(async () => {
+                    const updatedIntervention: InterventionOutput = {
+                      ...intervention,
+                      ...optimisticInput,
+                      ...(plannedStartAt !== undefined
+                        ? { plannedStartAt: plannedStartAt?.toISOString() ?? null }
+                        : {}),
+                      ...(dueAt !== undefined ? { dueAt: dueAt?.toISOString() ?? null } : {}),
+                      revision: intervention.revision + 1,
+                      updatedAt: new Date().toISOString(),
+                    };
+                    patchState(store, { intervention: updatedIntervention, saving: false });
+                    await offline.saveWorkspace(
+                      updatedIntervention,
+                      store.workItems(),
+                      store.changes(),
+                      store.issues(),
+                      [],
+                      { replace: false },
+                    );
+                  }),
+                  catchError(() => {
+                    patchState(store, {
+                      saving: false,
+                      error: $localize`:@@intervention.workspace.detailsFailed:Intervention planning details could not be saved.`,
+                    });
+                    return EMPTY;
+                  }),
+                );
+              }
+
+              return service.update(interventionId, input, intervention?.revision).pipe(
                 tapResponse({
-                  next: (intervention) => patchState(store, { intervention, saving: false }),
+                  next: (updatedIntervention) =>
+                    patchState(store, { intervention: updatedIntervention, saving: false }),
                   error: () =>
                     patchState(store, {
                       saving: false,
                       error: $localize`:@@intervention.workspace.detailsFailed:Intervention planning details could not be saved.`,
                     }),
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
 

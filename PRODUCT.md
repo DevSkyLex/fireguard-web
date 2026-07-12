@@ -62,5 +62,6 @@ reserved for primary actions and active state, never decoration.
 - Target WCAG 2.1 AA: body text ≥ 4.5:1, large/UI text ≥ 3:1, visible focus.
 - Full dark mode (`html[data-theme="dark"]`) parity.
 - `prefers-reduced-motion` honored on every animation.
-- Keyboard-navigable workflow (phase tablist already implements roving tabindex).
+- Keyboard-navigable workflow (real buttons everywhere; the phase stepper is a
+  non-interactive presentational list).
 - Status never conveyed by color alone — pair severity color with a label/icon.

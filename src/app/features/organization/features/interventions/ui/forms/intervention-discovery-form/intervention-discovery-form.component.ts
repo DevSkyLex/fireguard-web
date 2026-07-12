@@ -8,6 +8,7 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   NonNullableFormBuilder,
   ReactiveFormsModule,
@@ -18,6 +19,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
+import { map } from 'rxjs';
 import type { InspectionResult } from '@features/organization/features/inspections/models';
 import type {
   InterventionWorkItemAction,
@@ -150,6 +152,23 @@ export class InterventionDiscoveryForm {
       target: this.formBuilder.control('', [Validators.required]),
       result: this.formBuilder.control<InspectionResult>('pass'),
     });
+
+  /**
+   * Property dirty
+   * @readonly
+   *
+   * @description
+   * Whether the form holds unsaved user edits, exposed so the host drawer
+   * can guard accidental dismissal (Esc, backdrop) against data loss.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  public readonly dirty = toSignal(this.form.events.pipe(map((): boolean => this.form.dirty)), {
+    initialValue: false,
+  });
 
   /**
    * Property actionOptions

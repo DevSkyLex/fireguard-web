@@ -1,12 +1,12 @@
 <div
   id="interventions"
-  class="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-6 overflow-y-auto"
+  class="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-6 overflow-y-auto p-3 sm:p-6 md:p-7 lg:p-8"
 >
   <header class="flex flex-wrap items-center justify-between gap-3">
     <p class="text-sm text-surface-500 dark:text-surface-400">
       <ng-container i18n="@@intervention.list.count">{loadedCount(), plural,
-        =1 {1 intervention loaded}
-        other {{{ loadedCount() }} interventions loaded}
+        =1 {1 intervention}
+        other {{{ loadedCount() }} interventions}
       }</ng-container>
     </p>
 
@@ -34,7 +34,13 @@
         size="small"
       >
         <ng-template #item let-item>
-          <i [class]="item.icon" [attr.aria-label]="item.label"></i>
+          <i
+            [class]="item.icon"
+            [pTooltip]="item.label"
+            tooltipPosition="bottom"
+            aria-hidden="true"
+          ></i>
+          <span class="sr-only">{{ item.label }}</span>
         </ng-template>
       </p-selectbutton>
 
@@ -58,6 +64,15 @@
             >The interventions could not be loaded. Check your connection and try again.</span
           >
         </span>
+        <p-button
+          i18n-label="@@intervention.list.retry"
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="danger"
+          [text]="true"
+          size="small"
+          (onClick)="retry()"
+        />
       </div>
     </p-message>
   } @else if (store.isListCapped()) {
@@ -88,13 +103,12 @@
           <p-skeleton width="9rem" height="1.75rem" borderRadius="0.5rem" />
           @for (row of [1, 2, 3]; track row) {
             <div
-              class="flex items-center gap-3 border-b border-surface-100 py-2.5 dark:border-surface-800/60"
+              class="flex min-h-11 items-center gap-3 border-b border-surface-100 px-3 py-2 dark:border-surface-800/60"
             >
-              <p-skeleton shape="circle" size="0.875rem" />
               <p-skeleton width="1.25rem" height="1rem" />
-              <p-skeleton width="3rem" height="0.75rem" />
+              <p-skeleton width="3rem" height="0.8rem" />
               <p-skeleton width="35%" height="0.9rem" />
-              <p-skeleton width="4rem" height="0.75rem" styleClass="ml-auto" />
+              <p-skeleton width="4rem" height="0.8rem" styleClass="ml-auto" />
               <p-skeleton shape="circle" size="1.25rem" />
             </div>
           }
@@ -102,22 +116,41 @@
       }
     </div>
   } @else if (store.isEmpty() && !store.isLoadingInterventions()) {
-    <app-empty-state
-      icon="pi-bolt"
-      i18n-title="@@intervention.list.emptyTitle"
-      title="No interventions yet"
-      i18n-description="@@intervention.list.emptyDescription"
-      description="Create your first intervention to start planning field work."
-    >
-      <p-button
-        i18n-label="@@intervention.list.newButton"
-        label="New"
-        icon="pi pi-plus"
-        severity="primary"
-        size="small"
-        (onClick)="openCreate()"
-      />
-    </app-empty-state>
+    @if (hasSearch()) {
+      <app-empty-state
+        icon="pi-search"
+        [title]="searchEmptyTitle()"
+        i18n-description="@@intervention.list.searchEmptyDescription"
+        description="Try a different search term, or clear the search to see every intervention."
+      >
+        <p-button
+          i18n-label="@@intervention.list.clearSearch"
+          label="Clear search"
+          icon="pi pi-times"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (onClick)="clearSearch()"
+        />
+      </app-empty-state>
+    } @else {
+      <app-empty-state
+        icon="pi-bolt"
+        i18n-title="@@intervention.list.emptyTitle"
+        title="No interventions yet"
+        i18n-description="@@intervention.list.emptyDescription"
+        description="Create your first intervention to start planning field work."
+      >
+        <p-button
+          i18n-label="@@intervention.list.newButton"
+          label="New"
+          icon="pi pi-plus"
+          severity="primary"
+          size="small"
+          (onClick)="openCreate()"
+        />
+      </app-empty-state>
+    }
   } @else if (view() === 'list') {
     <app-grouped-list
       class="min-h-0 flex-1 overflow-y-auto"
@@ -130,51 +163,60 @@
       <ng-template appGroupedListHeader let-group let-count="count">
         <div class="flex items-center gap-2">
           <app-intervention-tag kind="status" [value]="group.id" />
-          <span class="text-xs text-surface-400">{{ count }}</span>
+          <span class="text-sm text-surface-500 tabular-nums dark:text-surface-400">{{
+            count
+          }}</span>
         </div>
       </ng-template>
 
       <ng-template appGroupedListRow let-item>
         @let vm = asItem(item);
         <div class="flex items-center gap-3">
-          <app-progress-ring [value]="vm.progress" [size]="14" [ariaLabel]="vm.progressLabel" />
           <app-intervention-priority-icon [priority]="vm.intervention.priority" />
-          <span class="w-16 shrink-0 font-mono text-xs text-surface-400 tabular-nums"
+          <span
+            class="w-16 shrink-0 font-mono text-sm text-surface-500 tabular-nums dark:text-surface-400"
             >FG-{{ vm.intervention.number }}</span
           >
           <span
-            class="min-w-0 flex-1 truncate text-sm font-medium text-surface-900 dark:text-surface-100"
+            class="min-w-0 flex-1 truncate text-[0.9375rem] font-medium text-surface-900 dark:text-surface-100"
             >{{ vm.intervention.name }}</span
           >
-
-          <span class="hidden shrink-0 items-center gap-1 text-xs text-surface-500 sm:flex">
-            <i class="pi pi-building text-[0.65rem]" aria-hidden="true"></i
-            >{{ vm.intervention.facilitiesCount }}
-          </span>
-          <span class="hidden shrink-0 items-center gap-1 text-xs text-surface-500 sm:flex">
-            <i class="pi pi-box text-[0.65rem]" aria-hidden="true"></i
-            >{{ vm.intervention.equipmentCount }}
-          </span>
-
-          @if (vm.intervention.dueAt) {
-            <span
-              class="hidden shrink-0 text-xs sm:block"
-              [class.text-red-600]="vm.isOverdue"
-              [class.dark:text-red-400]="vm.isOverdue"
-              [class.text-surface-500]="!vm.isOverdue"
-              [class.dark:text-surface-400]="!vm.isOverdue"
-              >{{ vm.intervention.dueAt | date: 'mediumDate' }}</span
-            >
-          }
 
           <div class="hidden max-w-40 flex-wrap items-center gap-1 md:flex">
             @for (label of vm.intervention.labels.slice(0, 3); track label.id) {
               <app-intervention-label-chip [label]="label" />
             }
             @if (vm.intervention.labels.length > 3) {
-              <span class="text-xs text-surface-400">+{{ vm.intervention.labels.length - 3 }}</span>
+              <span class="text-sm text-surface-500 dark:text-surface-400"
+                >+{{ vm.intervention.labels.length - 3 }}</span
+              >
             }
           </div>
+
+          <span
+            class="hidden w-10 shrink-0 items-center justify-end gap-1 text-sm text-surface-500 tabular-nums sm:flex dark:text-surface-400"
+          >
+            <i class="pi pi-building text-xs" aria-hidden="true"></i
+            >{{ vm.intervention.facilitiesCount }}
+          </span>
+          <span
+            class="hidden w-10 shrink-0 items-center justify-end gap-1 text-sm text-surface-500 tabular-nums sm:flex dark:text-surface-400"
+          >
+            <i class="pi pi-box text-xs" aria-hidden="true"></i>{{ vm.intervention.equipmentCount }}
+          </span>
+
+          @if (vm.intervention.dueAt) {
+            <span
+              class="hidden w-24 shrink-0 text-right text-sm tabular-nums sm:block"
+              [class.text-red-600]="vm.isOverdue"
+              [class.dark:text-red-400]="vm.isOverdue"
+              [class.text-surface-500]="!vm.isOverdue"
+              [class.dark:text-surface-400]="!vm.isOverdue"
+              >{{ vm.intervention.dueAt | date: 'mediumDate' }}</span
+            >
+          } @else {
+            <span class="hidden w-24 shrink-0 sm:block" aria-hidden="true"></span>
+          }
 
           <app-avatar-stack class="shrink-0" [people]="vm.people" [max]="3" />
         </div>
@@ -205,7 +247,9 @@
           class="flex items-center justify-between text-sm font-medium text-surface-700 dark:text-surface-200"
         >
           <span>{{ boardColumnLabel(column.id) }}</span>
-          <span class="text-xs text-surface-400">{{ count }}</span>
+          <span class="text-sm text-surface-500 tabular-nums dark:text-surface-400">{{
+            count
+          }}</span>
         </div>
       </ng-template>
 
@@ -214,13 +258,13 @@
         <div
           role="button"
           tabindex="0"
-          class="flex cursor-pointer flex-col gap-2 rounded-lg p-3 outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+          class="flex cursor-pointer flex-col gap-2 rounded-lg p-3 outline-none focus-visible:ring-2 focus-visible:ring-primary"
           (click)="onView(vm.intervention)"
           (keydown.enter)="onView(vm.intervention)"
           (keydown.space)="onView(vm.intervention); $event.preventDefault()"
         >
           <div class="flex items-center justify-between gap-2">
-            <span class="font-mono text-xs text-surface-400 tabular-nums"
+            <span class="font-mono text-sm text-surface-500 tabular-nums dark:text-surface-400"
               >FG-{{ vm.intervention.number }}</span
             >
             <app-intervention-priority-icon [priority]="vm.intervention.priority" />
@@ -230,34 +274,35 @@
             vm.intervention.name
           }}</span>
 
-          <app-intervention-tag kind="status" [value]="vm.intervention.status" />
-
           <div class="flex items-center justify-between gap-2">
-            <span class="flex items-center gap-1 text-xs text-surface-500">
-              <i class="pi pi-building text-[0.65rem]" aria-hidden="true"></i
+            <span
+              class="flex items-center gap-1 text-sm text-surface-500 tabular-nums dark:text-surface-400"
+            >
+              <i class="pi pi-building text-xs" aria-hidden="true"></i
               >{{ vm.intervention.facilitiesCount }}
             </span>
             @if (vm.intervention.dueAt) {
               <span
-                class="text-xs"
+                class="text-sm tabular-nums"
                 [class.text-red-600]="vm.isOverdue"
                 [class.dark:text-red-400]="vm.isOverdue"
                 [class.text-surface-500]="!vm.isOverdue"
                 [class.dark:text-surface-400]="!vm.isOverdue"
-                >{{ vm.intervention.dueAt | date: 'shortDate' }}</span
+                >{{ vm.intervention.dueAt | date: 'mediumDate' }}</span
               >
             }
           </div>
 
           <div class="flex items-center justify-between gap-2">
             <app-avatar-stack [people]="vm.people" [max]="3" />
-            <div class="flex items-center gap-1">
-              @for (label of vm.intervention.labels.slice(0, 3); track label.id) {
-                <span
-                  class="size-2 shrink-0 rounded-full"
-                  [style.background]="label.color"
-                  [attr.aria-label]="label.name"
-                ></span>
+            <div class="flex max-w-36 flex-wrap items-center justify-end gap-1">
+              @for (label of vm.intervention.labels.slice(0, 2); track label.id) {
+                <app-intervention-label-chip [label]="label" />
+              }
+              @if (vm.intervention.labels.length > 2) {
+                <span class="text-sm text-surface-500 dark:text-surface-400"
+                  >+{{ vm.intervention.labels.length - 2 }}</span
+                >
               }
             </div>
           </div>

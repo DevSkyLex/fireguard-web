@@ -21,7 +21,7 @@
       <label class="grid gap-1.5 text-sm">
         <span i18n="@@intervention.sf.reason" class="font-medium"
           >Reason <span class="text-red-500" aria-hidden="true">*</span></span
-        >
+        ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <textarea
           pTextarea
           formControlName="reason"
@@ -29,10 +29,16 @@
           i18n-placeholder="@@intervention.sf.reasonPlaceholder"
           placeholder="e.g. Equipment inaccessible — locked plant room, no key on site."
           [invalid]="form.controls.reason.invalid && form.controls.reason.touched"
+          [attr.aria-invalid]="form.controls.reason.invalid && form.controls.reason.touched"
+          [attr.aria-describedby]="
+            form.controls.reason.invalid && form.controls.reason.touched
+              ? 'intervention-skip-reason-error'
+              : null
+          "
         ></textarea>
         @if (form.controls.reason.invalid && form.controls.reason.touched) {
           <p-message severity="error" variant="simple">
-            <span i18n="@@intervention.sf.reasonRequired"
+            <span id="intervention-skip-reason-error" i18n="@@intervention.sf.reasonRequired"
               >A reason is required to skip this work.</span
             >
           </p-message>

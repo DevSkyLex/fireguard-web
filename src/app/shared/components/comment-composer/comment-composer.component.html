@@ -4,22 +4,15 @@
     (onTextChange)="onTextChange($event)"
     [readonly]="disabled()"
     [placeholder]="effectivePlaceholder()"
-    [style]="{ height: '8rem' }"
+    [style]="{ height: '6.25rem' }"
   >
     <ng-template #header>
       <span class="ql-formats">
         <button type="button" class="ql-bold" aria-label="Bold"></button>
         <button type="button" class="ql-italic" aria-label="Italic"></button>
-        <button type="button" class="ql-underline" aria-label="Underline"></button>
-        <button type="button" class="ql-strike" aria-label="Strikethrough"></button>
       </span>
       <span class="ql-formats">
-        <button type="button" class="ql-list" value="ordered" aria-label="Ordered list"></button>
         <button type="button" class="ql-list" value="bullet" aria-label="Bullet list"></button>
-        <button type="button" class="ql-blockquote" aria-label="Blockquote"></button>
-        <button type="button" class="ql-code-block" aria-label="Code block"></button>
-      </span>
-      <span class="ql-formats">
         <button type="button" class="ql-link" aria-label="Link"></button>
         <button type="button" class="ql-clean" aria-label="Clear formatting"></button>
       </span>
@@ -31,6 +24,8 @@
       [label]="submitLabel"
       icon="pi pi-send"
       size="small"
+      severity="secondary"
+      [outlined]="true"
       [loading]="pending()"
       [disabled]="!canSubmit()"
       (onClick)="submit()"

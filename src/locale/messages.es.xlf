@@ -3347,12 +3347,12 @@
         <target>Iniciar trabajo</target>
       </trans-unit>
       <trans-unit id="intervention.exec.checkResolved" datatype="html">
-        <source>All field work resolved</source>
-        <target>Todo el trabajo de campo resuelto</target>
+        <source>Resolve all field work</source>
+        <target>Resolver todo el trabajo de campo</target>
       </trans-unit>
       <trans-unit id="intervention.exec.checkResponsible" datatype="html">
-        <source>You are the responsible agent</source>
-        <target>Eres el agente responsable</target>
+        <source>Submit as the responsible agent</source>
+        <target>Enviar como agente responsable</target>
       </trans-unit>
       <trans-unit id="intervention.stepper.aria" datatype="html">
         <source>Intervention workflow progress</source>
@@ -3557,6 +3557,154 @@
       <trans-unit id="intervention.review.changesDesc" datatype="html">
         <source>Updates applied atomically when the intervention is published.</source>
         <target>Las actualizaciones se aplican de forma atómica al publicar la intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.review.executionComplete" datatype="html">
+        <source>Execution complete — all field work is resolved and no blocking issues remain.</source>
+        <target>Ejecución completada: todo el trabajo de campo está resuelto y no quedan problemas bloqueantes.</target>
+      </trans-unit>
+      <trans-unit id="intervention.review.publishedBanner" datatype="html">
+        <source>Published — every approved change was applied to the records atomically.</source>
+        <target>Publicada: cada cambio aprobado se aplicó a los registros de forma atómica.</target>
+      </trans-unit>
+      <trans-unit id="intervention.review.summaryTitle" datatype="html">
+        <source>Publication summary</source>
+        <target>Resumen de publicación</target>
+      </trans-unit>
+      <trans-unit id="intervention.review.summaryBody" datatype="html">
+        <source>Publishing applies every pending change in one atomic operation — either everything succeeds or no record is modified.</source>
+        <target>La publicación aplica todos los cambios pendientes en una sola operación atómica: o todo tiene éxito o no se modifica ningún registro.</target>
+      </trans-unit>
+      <trans-unit id="intervention.review.summaryChanges" datatype="html">
+        <source>Pending changes</source>
+        <target>Cambios pendientes</target>
+      </trans-unit>
+      <trans-unit id="intervention.review.summaryInspections" datatype="html">
+        <source>Inspections recorded</source>
+        <target>Inspecciones registradas</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.title" datatype="html">
+        <source>Properties</source>
+        <target>Propiedades</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.inspections" datatype="html">
+        <source>Inspections</source>
+        <target>Inspecciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.readiness" datatype="html">
+        <source>Readiness</source>
+        <target>Requisitos</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.linked" datatype="html">
+        <source>Linked</source>
+        <target>Vinculados</target>
+      </trans-unit>
+      <trans-unit id="intervention.prop.status" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.header.updatedLabel" datatype="html">
+        <source>Updated <x id="INTERPOLATION" equiv-text="{{ intervention.updatedAt | date: &apos;mediumDate&apos; }}"/></source>
+        <target>Actualizado <x id="INTERPOLATION" equiv-text="{{ intervention.updatedAt | date: &apos;mediumDate&apos; }}"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.phase.stepperAria" datatype="html">
+        <source>Workflow phases</source>
+        <target>Fases del flujo de trabajo</target>
+      </trans-unit>
+      <trans-unit id="intervention.phase.prepare" datatype="html">
+        <source>Preparation</source>
+        <target>Preparación</target>
+      </trans-unit>
+      <trans-unit id="intervention.phase.execute" datatype="html">
+        <source>Execution</source>
+        <target>Ejecución</target>
+      </trans-unit>
+      <trans-unit id="intervention.phase.review" datatype="html">
+        <source>Review</source>
+        <target>Revisión</target>
+      </trans-unit>
+      <trans-unit id="intervention.phase.publish" datatype="html">
+        <source>Publication</source>
+        <target>Publicación</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.title" datatype="html">
+        <source>Prepare the intervention</source>
+        <target>Preparar la intervención</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.autosaved" datatype="html">
+        <source>Each step saves as you continue</source>
+        <target>Cada paso se guarda al continuar</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.stepContext" datatype="html">
+        <source>Context</source>
+        <target>Contexto</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.stepContextHint" datatype="html">
+        <source>Name and description</source>
+        <target>Nombre y descripción</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.stepScope" datatype="html">
+        <source>Scope</source>
+        <target>Alcance</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.stepScopeHint" datatype="html">
+        <source>Site and work items</source>
+        <target>Sitio y elementos de trabajo</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.stepTeam" datatype="html">
+        <source>Team</source>
+        <target>Equipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.stepTeamHint" datatype="html">
+        <source>Responsible and participants</source>
+        <target>Responsable y participantes</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.stepSchedule" datatype="html">
+        <source>Schedule</source>
+        <target>Calendario</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.stepScheduleHint" datatype="html">
+        <source>Dates and priority</source>
+        <target>Fechas y prioridad</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.contextTitle" datatype="html">
+        <source>What is this intervention about?</source>
+        <target>¿De qué trata esta intervención?</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.scopeTitle" datatype="html">
+        <source>Where does the work happen?</source>
+        <target>¿Dónde se realiza el trabajo?</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.teamTitle" datatype="html">
+        <source>Who is involved?</source>
+        <target>¿Quién interviene?</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.scheduleTitle" datatype="html">
+        <source>When does it happen?</source>
+        <target>¿Cuándo tiene lugar?</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.name" datatype="html">
+        <source>Name</source>
+        <target>Nombre</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.nameRequired" datatype="html">
+        <source>A name is required.</source>
+        <target>Se requiere un nombre.</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.back" datatype="html">
+        <source>Back</source>
+        <target>Atrás</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.continue" datatype="html">
+        <source>Continue</source>
+        <target>Continuar</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.toggleChecklist" datatype="html">
+        <source>Toggle work items</source>
+        <target>Mostrar u ocultar los elementos de trabajo</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.toggleActivity" datatype="html">
+        <source>Toggle activity</source>
+        <target>Mostrar u ocultar la actividad</target>
       </trans-unit>
       <trans-unit id="intervention.review.noChanges" datatype="html">
         <source>No proposed changes.</source>
@@ -3892,6 +4040,78 @@
         <source>Intervention not found or unavailable offline.</source>
         <target>Intervención no encontrada o no disponible sin conexión.</target>
       </trans-unit>
+      <trans-unit id="intervention.detail.changesRequestedBanner" datatype="html">
+        <source>Changes requested by the reviewer</source>
+        <target>Cambios solicitados por el revisor</target>
+      </trans-unit>
+      <trans-unit id="common.requiredSr" datatype="html">
+        <source>required</source>
+        <target>obligatorio</target>
+      </trans-unit>
+      <trans-unit id="intervention.cta.reasonPlanning" datatype="html">
+        <source>Complete the remaining planning steps first.</source>
+        <target>Complete primero los pasos de preparación restantes.</target>
+      </trans-unit>
+      <trans-unit id="intervention.cta.reasonResponsible" datatype="html">
+        <source>Only the responsible agent can submit.</source>
+        <target>Solo el agente responsable puede enviar.</target>
+      </trans-unit>
+      <trans-unit id="intervention.cta.reasonOffline" datatype="html">
+        <source>Connect to the network to publish.</source>
+        <target>Conéctese a la red para publicar.</target>
+      </trans-unit>
+      <trans-unit id="intervention.cta.reasonBlockersOne" datatype="html">
+        <source>1 blocking issue to clear.</source>
+        <target>1 problema bloqueante por resolver.</target>
+      </trans-unit>
+      <trans-unit id="intervention.cta.reasonBlockersMany" datatype="html">
+        <source><x id="count" equiv-text="blockers"/> blocking issues to clear.</source>
+        <target><x id="count" equiv-text="blockers"/> problemas bloqueantes por resolver.</target>
+      </trans-unit>
+      <trans-unit id="intervention.cta.recordWork" datatype="html">
+        <source>Record field work</source>
+        <target>Registrar el trabajo de campo</target>
+      </trans-unit>
+      <trans-unit id="intervention.cta.completeOne" datatype="html">
+        <source>Complete 1 remaining item</source>
+        <target>Completar 1 elemento restante</target>
+      </trans-unit>
+      <trans-unit id="intervention.cta.completeMany" datatype="html">
+        <source>Complete <x id="count" equiv-text="remaining"/> remaining items</source>
+        <target>Completar <x id="count" equiv-text="remaining"/> elementos restantes</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.planHint" datatype="html">
+        <source> Complete the remaining steps to plan. </source>
+        <target> Complete los pasos restantes para planificar. </target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.prevShortcut" datatype="html">
+        <source>Previous intervention (K)</source>
+        <target>Intervención anterior (K)</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.nextShortcut" datatype="html">
+        <source>Next intervention (J)</source>
+        <target>Intervención siguiente (J)</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.notFoundTitle" datatype="html">
+        <source>Intervention not found</source>
+        <target>Intervención no encontrada</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.backToList" datatype="html">
+        <source>Back to interventions</source>
+        <target>Volver a las intervenciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.editSite" datatype="html">
+        <source>Edit site</source>
+        <target>Editar el sitio</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.editDue" datatype="html">
+        <source>Edit due date</source>
+        <target>Editar la fecha límite</target>
+      </trans-unit>
+      <trans-unit id="intervention.guide.dueBeforeStart" datatype="html">
+        <source>The due date must be on or after the planned start.</source>
+        <target>La fecha límite debe ser igual o posterior al inicio planificado.</target>
+      </trans-unit>
       <trans-unit id="intervention.deleteWi.headerOne" datatype="html">
         <source>Delete work item</source>
         <target>Eliminar elemento de trabajo</target>
@@ -4161,8 +4381,8 @@
         <target>Aún no hay elementos de trabajo</target>
       </trans-unit>
       <trans-unit id="intervention.wit.emptyDesc" datatype="html">
-        <source>Add explicit tasks to make the scope assignable.</source>
-        <target>Añade tareas explícitas para que el alcance sea asignable.</target>
+        <source> List the tasks to complete during this intervention. </source>
+        <target> Enumere las tareas a completar durante esta intervención. </target>
       </trans-unit>
       <trans-unit id="intervention.wit.newItem" datatype="html">
         <source>New item</source>
@@ -6596,9 +6816,13 @@
         <source>Showing the 500 most recent interventions — refine your search to narrow results.</source>
         <target>Mostrando las 500 intervenciones más recientes — refina tu búsqueda para acotar los resultados.</target>
       </trans-unit>
+      <trans-unit id="intervention.list.clearSearch" datatype="html">
+        <source>Clear search</source>
+        <target>Borrar la búsqueda</target>
+      </trans-unit>
       <trans-unit id="intervention.list.count" datatype="html">
-        <source>{VAR_PLURAL, plural, =1 {1 intervention loaded} other {# interventions loaded}}</source>
-        <target>{VAR_PLURAL, plural, =1 {1 intervención cargada} other {<x id="INTERPOLATION"/> intervenciones cargadas}}</target>
+        <source>{VAR_PLURAL, plural, =1 {1 intervention} other {<x id="INTERPOLATION"/> interventions}}</source>
+        <target>{VAR_PLURAL, plural, =1 {1 intervención} other {<x id="INTERPOLATION"/> intervenciones}}</target>
       </trans-unit>
       <trans-unit id="intervention.list.emptyDescription" datatype="html">
         <source>Create your first intervention to start planning field work.</source>
@@ -6615,6 +6839,18 @@
       <trans-unit id="intervention.list.newButton" datatype="html">
         <source>New</source>
         <target>Nueva</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.searchEmptyDescription" datatype="html">
+        <source>Try a different search term, or clear the search to see every intervention.</source>
+        <target>Prueba con otro término de búsqueda o borra la búsqueda para ver todas las intervenciones.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.searchEmptyTitle" datatype="html">
+        <source>No results for “<x id="query" equiv-text="this.q().trim()"/>”</source>
+        <target>Sin resultados para «<x id="query" equiv-text="this.q().trim()"/>»</target>
       </trans-unit>
       <trans-unit id="intervention.list.searchPlaceholder" datatype="html">
         <source>Search interventions...</source>

@@ -41,6 +41,13 @@ type InterventionDetailPageHarness = {
   readonly nextInterventionId: () => string | null;
   readonly transitionMenuItems: () => MenuItem[];
   readonly blockerIssues: () => readonly InterventionIssueOutput[];
+  readonly pendingChangesCount: () => number;
+  readonly readyToPublish: () => boolean;
+  readonly canRequestChanges: () => boolean;
+  readonly showPlanningGuide: () => boolean;
+  readonly activityExpanded: { (): boolean; set(value: boolean): void };
+  readonly workItemsExpanded: { (): boolean; set(value: boolean): void };
+  saveGuideStep(values: Record<string, unknown>): void;
   readonly requestChangesDrawerVisible: { (): boolean; set(value: boolean): void };
   readonly editDrawerVisible: { (): boolean; set(value: boolean): void };
   readonly labelsEditorOpen: { (): boolean; set(value: boolean): void };
@@ -52,10 +59,17 @@ type InterventionDetailPageHarness = {
   toggleWorkItemComplete(item: InterventionWorkItemOutput): void;
   checklistRowHasActions(item: InterventionWorkItemOutput): boolean;
   readonly canAddDiscovery: () => boolean;
+  readonly canEditPlanning: () => boolean;
+  readonly canEditDetails: () => boolean;
+  readonly descriptionEditorOpen: { (): boolean; set(value: boolean): void };
+  readonly descriptionControl: { value: string; setValue(value: string): void };
+  openDescriptionEditor(): void;
+  saveDescription(): void;
   onTransitionSelect(status: InterventionOutput['status']): void;
   navigatePrev(): void;
   navigateNext(): void;
-  navigateBack(): void;
+  readonly listPosition: () => string | null;
+  readonly stageDetail: () => string | null;
   addComment(body: string): void;
   openLabelsEditor(): void;
   saveLabels(): void;
@@ -271,6 +285,44 @@ describe('InterventionDetailPage', () => {
     expect(harness.checklistRowHasActions(resolved)).toBe(false);
   });
 
+  it('should freeze planning edits once the intervention leaves draft', () => {
+    store.intervention.set({ status: 'draft' } as InterventionOutput);
+    const harness = build();
+
+    expect(harness.canEditPlanning()).toBe(true);
+    expect(harness.canEditDetails()).toBe(true);
+
+    // The backend rejects planning-field patches after planning (409), but
+    // keeps description and labels mutable until a terminal status.
+    store.intervention.set({ status: 'in_progress' } as InterventionOutput);
+    expect(harness.canEditPlanning()).toBe(false);
+    expect(harness.canEditDetails()).toBe(true);
+
+    store.intervention.set({ status: 'published' } as InterventionOutput);
+    expect(harness.canEditDetails()).toBe(false);
+  });
+
+  it('should merge-patch only the description from the inline editor', () => {
+    store.intervention.set({
+      status: 'in_progress',
+      description: 'Old notes',
+    } as InterventionOutput);
+    const harness = build();
+
+    harness.openDescriptionEditor();
+    expect(harness.descriptionEditorOpen()).toBe(true);
+    expect(harness.descriptionControl.value).toBe('Old notes');
+
+    harness.descriptionControl.setValue('  New notes  ');
+    harness.saveDescription();
+
+    expect(store.updateDetails).toHaveBeenCalledWith({
+      interventionId: 'i-1',
+      input: { description: 'New notes' },
+    });
+    expect(harness.descriptionEditorOpen()).toBe(false);
+  });
+
   it('should confirm before deleting work items and delete on accept', () => {
     const workItems = [{ id: 'wi-1' }] as unknown as readonly InterventionWorkItemOutput[];
 
@@ -325,12 +377,26 @@ describe('InterventionDetailPage', () => {
     ]);
   });
 
-  it('should navigate back to the interventions list', () => {
+  it('should expose the list position only when the id is in the cached ordering', () => {
+    interventionListStore.orderedIds.set(['i-0', 'i-1', 'i-2']);
+    expect(build().listPosition()).toBe('2 / 3');
+
+    interventionListStore.orderedIds.set(['other']);
+    expect(build().listPosition()).toBeNull();
+  });
+
+  it('should expose the work-item counter as the active stage detail during execution', () => {
+    store.intervention.set({ status: 'in_progress' } as InterventionOutput);
+    store.workItems.set([
+      { id: 'wi-1', status: 'completed' },
+      { id: 'wi-2', status: 'planned' },
+    ] as unknown as readonly InterventionWorkItemOutput[]);
     const harness = build();
 
-    harness.navigateBack();
+    expect(harness.stageDetail()).toBe('1/2');
 
-    expect(router.navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions']);
+    store.intervention.set({ status: 'submitted' } as InterventionOutput);
+    expect(harness.stageDetail()).toBeNull();
   });
 
   it('should list the allowed transitions in the status menu, excluding abandoned', () => {
@@ -360,6 +426,73 @@ describe('InterventionDetailPage', () => {
     harness.onTransitionSelect('planned');
 
     expect(store.transition).toHaveBeenCalledWith({ interventionId: 'i-1', status: 'planned' });
+  });
+
+  it('should flag ready-to-publish only when submitted with no blockers left', () => {
+    const harness = build();
+
+    expect(harness.readyToPublish()).toBe(false);
+
+    store.intervention.set({ status: 'submitted' } as InterventionOutput);
+    expect(harness.readyToPublish()).toBe(true);
+
+    store.blockerCount.set(2);
+    expect(harness.readyToPublish()).toBe(false);
+
+    store.blockerCount.set(0);
+    store.intervention.set({ status: 'published' } as InterventionOutput);
+    expect(harness.readyToPublish()).toBe(false);
+  });
+
+  it('should count only proposed changes as pending', () => {
+    store.changes.set([{ status: 'proposed' }, { status: 'applied' }, { status: 'proposed' }]);
+
+    expect(build().pendingChangesCount()).toBe(2);
+  });
+
+  it('should surface the request-changes action only while the intervention awaits review', () => {
+    const harness = build();
+
+    expect(harness.canRequestChanges()).toBe(false);
+
+    store.intervention.set({ status: 'submitted' } as InterventionOutput);
+    expect(harness.canRequestChanges()).toBe(true);
+
+    store.intervention.set({ status: 'published' } as InterventionOutput);
+    expect(harness.canRequestChanges()).toBe(false);
+  });
+
+  it('should show the guided planning surface only for drafts', () => {
+    const harness = build();
+
+    expect(harness.showPlanningGuide()).toBe(false);
+
+    store.intervention.set({ status: 'draft' } as InterventionOutput);
+    expect(harness.showPlanningGuide()).toBe(true);
+
+    store.intervention.set({ status: 'planned' } as InterventionOutput);
+    expect(harness.showPlanningGuide()).toBe(false);
+  });
+
+  it('should collapse activity during preparation and the checklist during review', () => {
+    store.intervention.set({ status: 'draft' } as InterventionOutput);
+    const harness = build();
+
+    expect(harness.activityExpanded()).toBe(false);
+    expect(harness.workItemsExpanded()).toBe(true);
+
+    store.intervention.set({ status: 'submitted' } as InterventionOutput);
+    expect(harness.activityExpanded()).toBe(true);
+    expect(harness.workItemsExpanded()).toBe(false);
+  });
+
+  it('should merge-patch the fields edited on a guided step', () => {
+    build().saveGuideStep({ site: '/api/facilities/f-1' });
+
+    expect(store.updateDetails).toHaveBeenCalledWith({
+      interventionId: 'i-1',
+      input: { site: '/api/facilities/f-1' },
+    });
   });
 
   it('should surface blocker-severity issues in the blockers banner', () => {

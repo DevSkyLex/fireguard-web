@@ -124,6 +124,37 @@ describe('InterventionWorkspaceStore offline field work', () => {
     expect(mockOffline.saveWorkspace).toHaveBeenCalled();
   });
 
+  it('queues and persists planning detail updates while offline', async () => {
+    const dueAt = new Date('2026-07-01T10:00:00.000Z');
+
+    store.updateDetails({
+      interventionId: intervention.id,
+      input: { priority: 'urgent', dueAt },
+    });
+
+    await vi.waitFor(() => expect(store.saving()).toBe(false));
+
+    expect(mockService.update).not.toHaveBeenCalled();
+    expect(mockOffline.queue).toHaveBeenCalledWith(intervention.id, 'intervention.update', {
+      priority: 'urgent',
+      dueAt: dueAt.toISOString(),
+      revision: intervention.revision,
+    });
+    expect(store.intervention()).toMatchObject({
+      priority: 'urgent',
+      dueAt: dueAt.toISOString(),
+      revision: intervention.revision + 1,
+    });
+    expect(mockOffline.saveWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({ priority: 'urgent', dueAt: dueAt.toISOString() }),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      [],
+      { replace: false },
+    );
+  });
+
   it('creates and persists a discovered work item with its stable client UUID offline', async () => {
     store.createWorkItem({
       interventionId: intervention.id,

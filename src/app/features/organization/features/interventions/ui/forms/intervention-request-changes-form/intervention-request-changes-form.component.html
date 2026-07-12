@@ -21,7 +21,7 @@
       <label class="grid gap-1.5 text-sm">
         <span i18n="@@intervention.rc.note" class="font-medium"
           >Note <span class="text-red-500" aria-hidden="true">*</span></span
-        >
+        ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <textarea
           pTextarea
           formControlName="note"
@@ -29,10 +29,16 @@
           i18n-placeholder="@@intervention.rc.notePlaceholder"
           placeholder="e.g. Re-inspect the third-floor extinguishers — the pressure gauge photo is missing."
           [invalid]="form.controls.note.invalid && form.controls.note.touched"
+          [attr.aria-invalid]="form.controls.note.invalid && form.controls.note.touched"
+          [attr.aria-describedby]="
+            form.controls.note.invalid && form.controls.note.touched
+              ? 'intervention-rc-note-error'
+              : null
+          "
         ></textarea>
         @if (form.controls.note.invalid && form.controls.note.touched) {
           <p-message severity="error" variant="simple">
-            <span i18n="@@intervention.rc.noteRequired"
+            <span id="intervention-rc-note-error" i18n="@@intervention.rc.noteRequired"
               >A note is required so the agent knows what to fix.</span
             >
           </p-message>

@@ -1,3 +1,4 @@
+export type { InterventionCommandAction } from './intervention-command-action.interface';
 export type { InterventionDiscoveryRequest } from './intervention-discovery-request.interface';
 export type { InterventionDiscoveryResult } from './intervention-discovery-result.interface';
 export type { InterventionPhase } from './intervention-phase.type';

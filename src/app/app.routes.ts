@@ -12,6 +12,7 @@ import {
   withOrganizationNavigation,
   withOrganizationSwitcher,
 } from '@features/organization';
+import { withInterventionHeaderActions } from '@features/organization/features/interventions';
 import { DashboardLayout, provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
 import { withThemeSwitcher } from '@shared/components';
 import { FocusedLayout } from './layouts/focused-layout';
@@ -82,6 +83,7 @@ export const APP_ROUTES: Routes = [
           withAccountProfile(),
         ],
         aside: [withOrganizationContext()],
+        pageHeader: [withInterventionHeaderActions()],
       }),
     ],
     children: [

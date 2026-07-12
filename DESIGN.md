@@ -12,7 +12,7 @@
 
 ## Color Palette
 
-All tokens are PrimeNG surface/primary primitives consumed via Tailwind utilities. No OKLCH overrides yet — the palette is fully delegated to PrimeNG's design token system.
+All tokens are PrimeNG surface/primary primitives consumed via Tailwind utilities. No OKLCH overrides yet — the palette is fully delegated to PrimeNG's design token system. The primary ramp is **orange** (`fireguard.preset.ts`), matching the PRODUCT.md brand mandate.
 
 ### Surface scale (light → dark pair)
 
@@ -30,13 +30,13 @@ All tokens are PrimeNG surface/primary primitives consumed via Tailwind utilitie
 
 ### Accent
 
-| Role                 | Token                                     | Notes                              |
-| -------------------- | ----------------------------------------- | ---------------------------------- |
-| Primary action       | `bg-primary-500`                          | Buttons, active nav indicator, FAB |
-| Primary shadow       | `shadow-primary-500/30`                   | Badge shadow on splash screen only |
-| Ambient halo         | `bg-primary-500/5` (light) / `/10` (dark) | Splash screen only; decorative     |
-| Active arc / spinner | `text-primary-500`                        | Splash screen progress ring        |
-| Focus ring           | `outline-primary`                         | Focusable interactive elements     |
+| Role                 | Token                                                 | Notes                                                                                                                                       |
+| -------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Primary action       | `bg-primary` (`orange.600` light / `orange.400` dark) | Buttons carry **dark ink** labels in both schemes (`primary.contrastColor`): white on orange fails the 4.5:1 AA floor at button label sizes |
+| Primary shadow       | `shadow-primary-500/30`                               | Badge shadow on splash screen only                                                                                                          |
+| Ambient halo         | `bg-primary-500/5` (light) / `/10` (dark)             | Splash screen only; decorative                                                                                                              |
+| Active arc / spinner | `text-primary-500`                                    | Splash screen progress ring                                                                                                                 |
+| Focus ring           | `outline-primary`                                     | Focusable interactive elements                                                                                                              |
 
 ### Semantic state colors
 
@@ -56,14 +56,14 @@ All tokens are PrimeNG surface/primary primitives consumed via Tailwind utilitie
 
 **Scale (approximate, relative to 14px root):**
 
-| Step | Class       | Approx size | Usage                                                 |
-| ---- | ----------- | ----------- | ----------------------------------------------------- |
-| xs   | `text-xs`   | 12px        | Helper copy, timestamps, tag labels, secondary meta   |
-| sm   | `text-sm`   | 14px        | Body copy, card descriptions, nav labels, form labels |
-| base | `text-base` | 16px        | (rarely used directly)                                |
-| lg   | `text-lg`   | 18px        | Card title headings (section h2)                      |
-| 2xl  | `text-2xl`  | 24px        | Splash screen status title                            |
-| 5xl  | `text-5xl`  | ~56px       | Metric card primary value                             |
+| Step | Class       | Rendered size (14px root)                                                                   | Usage                                          |
+| ---- | ----------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| xs   | `text-xs`   | 10.5px — decorative icons only; **below the 12px text floor**, do not use for readable text | Tiny glyphs paired with a larger count/label   |
+| sm   | `text-sm`   | 12.25px                                                                                     | Meta text, timestamps, tag labels, form labels |
+| base | `text-base` | 14px                                                                                        | Body copy                                      |
+| lg   | `text-lg`   | 15.75px                                                                                     | Card title headings (section h2)               |
+| 2xl  | `text-2xl`  | 21px                                                                                        | Splash screen status title                     |
+| 5xl  | `text-5xl`  | 42px                                                                                        | Metric card primary value                      |
 
 **Weight conventions:**
 

@@ -8,8 +8,11 @@ import { DashboardLayoutPageHeader } from '../dashboard-layout-page-header/dashb
  * @description
  * Content component for dashboard layout. Renders the route-driven page header
  * banner ({@link DashboardLayoutPageHeader}) above the projected page content.
+ * The main region is deliberately unpadded — each routed page owns its own
+ * padding (`p-3 sm:p-6 md:p-7 lg:p-8` by convention) so full-bleed workspaces
+ * such as the intervention detail can reach the edges.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @example
  * ```html

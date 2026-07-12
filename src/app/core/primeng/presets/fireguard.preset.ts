@@ -56,6 +56,15 @@ export const FireguardTheme: Preset = definePreset(Aura, {
     },
     colorScheme: {
       light: {
+        // Dark ink on the vivid orange fill: white on orange.500/600 sits
+        // below the 4.5:1 AA floor for button-sized labels, ink clears it in
+        // both base and hover states (mirrors the dark scheme's ink-on-400).
+        primary: {
+          color: '{orange.600}',
+          contrastColor: '{surface.950}',
+          hoverColor: '{orange.500}',
+          activeColor: '{orange.700}',
+        },
         formField: { shadow: 'none' },
       },
       dark: {

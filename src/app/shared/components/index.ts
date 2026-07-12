@@ -29,7 +29,6 @@ export { MapCanvas } from './map';
 export type { MapMarker } from './map';
 export { MetricCard } from './metric-card';
 export type { MetricComparison } from './metric-card';
-export { ProgressRing } from './progress-ring';
 export { RadioCardGroup } from './radio-card-group';
 export type { RadioCardOption } from './radio-card-group';
 export { SplashScreen } from './splash-screen';

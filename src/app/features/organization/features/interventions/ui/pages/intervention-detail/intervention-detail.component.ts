@@ -3,9 +3,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   input,
+  linkedSignal,
   signal,
   untracked,
   viewChild,
@@ -14,14 +16,17 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Events } from '@ngrx/signals/events';
 import { ConfirmationService, type MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { Menu, MenuModule } from 'primeng/menu';
 import { MessageModule } from 'primeng/message';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TextareaModule } from 'primeng/textarea';
 import { ConnectivityService } from '@core/connectivity';
 import { isCallPending } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -29,6 +34,8 @@ import { InterventionOfflineService } from '@features/organization/features/inte
 import type {
   CreateInterventionWorkItemInput,
   InterventionActivityOutput,
+  InterventionChangeOutput,
+  InterventionCommandAction,
   InterventionDiscoveryRequest,
   InterventionIssueOutput,
   InterventionOutput,
@@ -49,8 +56,11 @@ import { InterventionDiscoveryService } from '@features/organization/features/in
 import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
 import {
   ActiveInterventionStore,
+  InterventionHeaderStore,
   InterventionStore,
+  interventionHeaderEvents,
   type ActiveInterventionStoreType,
+  type InterventionHeaderStoreType,
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
 import {
@@ -63,10 +73,12 @@ import {
 } from '@features/organization/features/interventions/state/intervention-workspace';
 import {
   InterventionLabelChip,
-  InterventionPriorityIcon,
   InterventionTag,
 } from '@features/organization/features/interventions/ui/components';
 import { InterventionChangeDiff } from '@features/organization/features/interventions/ui/components/intervention-change-diff';
+import { InterventionPhaseStepper } from '@features/organization/features/interventions/ui/components/intervention-phase-stepper';
+import { InterventionPlanningGuide } from '@features/organization/features/interventions/ui/components/intervention-planning-guide';
+import type { InterventionPlanningGuideValues } from '@features/organization/features/interventions/ui/components/intervention-planning-guide';
 import { InterventionReadinessChecklist } from '@features/organization/features/interventions/ui/components/intervention-readiness-checklist';
 import type { InterventionReadinessCheck } from '@features/organization/features/interventions/ui/components/intervention-readiness-checklist';
 import {
@@ -85,7 +97,6 @@ import type {
 } from '@features/organization/features/interventions/ui/forms';
 import {
   capabilityForTransition,
-  interventionLifecycleProgress,
   resolveAllowedTransitions,
   type InterventionTransitionCapability,
 } from '@features/organization/features/interventions/utils';
@@ -99,26 +110,27 @@ import {
   AvatarStack,
   CommentComposer,
   EmptyState,
-  ProgressRing,
   type ActivityFeedItem,
   type AvatarStackPerson,
 } from '@shared/components';
-import type { InterventionCommandAction } from './models';
 
 /**
  * Component InterventionDetailPage
  * @class InterventionDetailPage
  *
  * @description
- * Route entry page for one intervention, laid out Linear-style: a top bar
- * (back navigation, code, prev/next, the canonical forward action), a wide
- * main column (identity, blockers, description, work-item checklist,
- * execute/table/change accordions, activity) and a narrow "Properties"
- * sidebar (status, priority, assignees, schedule, labels, revision,
- * publication). It orchestrates the same field workflow the previous
- * three-panel layout did — online/offline field actions, discovery,
- * publication polling — through the unchanged {@link InterventionWorkspaceStore}
- * and services; every child it composes stays presentational.
+ * Route entry page for one intervention, laid out as a full-bleed,
+ * divider-based Linear-style workspace (no page padding — the dashboard
+ * layout's main is unpadded and this page owns its own edges): an integrated
+ * top bar (breadcrumb link, code, prev/next with list position, phase
+ * actions), page-level banners, then a two-column body — title block, phase
+ * stepper row, guided planning (draft) or flat work-item checklist, proposed
+ * changes, publication summary and activity in the main column; a tinted
+ * "Properties" rail (properties, linked resource counts, readiness,
+ * publication) on the right. It orchestrates the same field workflow as
+ * before — online/offline field actions, discovery, publication polling —
+ * through the unchanged {@link InterventionWorkspaceStore} and services;
+ * every child it composes stays presentational.
  *
  * @version 3.0.0
  *
@@ -137,7 +149,8 @@ import type { InterventionCommandAction } from './models';
     InterventionDiscoveryDrawer,
     InterventionEditDrawer,
     InterventionLabelChip,
-    InterventionPriorityIcon,
+    InterventionPhaseStepper,
+    InterventionPlanningGuide,
     InterventionReadinessChecklist,
     InterventionRequestChangesDrawer,
     InterventionSkipDrawer,
@@ -146,13 +159,18 @@ import type { InterventionCommandAction } from './models';
     MenuModule,
     MessageModule,
     MultiSelectModule,
-    ProgressRing,
     ReactiveFormsModule,
+    RouterLink,
     SkeletonModule,
+    TextareaModule,
   ],
   providers: [InterventionPlanningOptionsStore, InterventionWorkspaceStore],
   templateUrl: './intervention-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    class: 'flex min-h-0 flex-1 flex-col',
+    '(document:keydown)': 'onDocumentKeydown($event)',
+  },
 })
 export class InterventionDetailPage {
   //#region Inputs
@@ -223,6 +241,54 @@ export class InterventionDetailPage {
    */
   private readonly interventionListStore: InterventionStoreType =
     inject<InterventionStoreType>(InterventionStore);
+
+  /**
+   * Property headerStore
+   * @readonly
+   *
+   * @description
+   * Root-provided bridge to the dashboard layout's page-header action slot:
+   * the page publishes its header view state (phase action, review
+   * affordance, prev/next, overflow) here and reacts to the slot's
+   * `interventionHeaderEvents`.
+   *
+   * @access private
+   * @since 6.1.0
+   *
+   * @type {InterventionHeaderStoreType}
+   */
+  private readonly headerStore: InterventionHeaderStoreType =
+    inject<InterventionHeaderStoreType>(InterventionHeaderStore);
+
+  /**
+   * Property events
+   * @readonly
+   *
+   * @description
+   * Global NgRx event stream, listened to for the header slot's dispatched
+   * interactions.
+   *
+   * @access private
+   * @since 6.1.0
+   *
+   * @type {Events}
+   */
+  private readonly events: Events = inject<Events>(Events);
+
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Destroy hook used to clear the published header state when the page is
+   * torn down.
+   *
+   * @access private
+   * @since 6.1.0
+   *
+   * @type {DestroyRef}
+   */
+  private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
 
   /**
    * Property planningOptions
@@ -497,6 +563,14 @@ export class InterventionDetailPage {
     null,
   );
 
+  /** Semantic severity matching the latest publication outcome. */
+  protected readonly publicationSeverity: WritableSignal<'success' | 'error' | 'warn'> = signal<
+    'success' | 'error' | 'warn'
+  >('success');
+
+  /** Keeps the review drawer open until the requested transition succeeds. */
+  private readonly requestChangesPending: WritableSignal<boolean> = signal<boolean>(false);
+
   /**
    * Property fieldActionBusy
    * @readonly
@@ -658,6 +732,38 @@ export class InterventionDetailPage {
   protected readonly labelsEditorOpen: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property descriptionEditorOpen
+   * @readonly
+   *
+   * @description
+   * Whether the identity block's inline description editor is expanded in
+   * place of the read-only description text.
+   *
+   * @access protected
+   * @since 6.3.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly descriptionEditorOpen: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property descriptionControl
+   * @readonly
+   *
+   * @description
+   * Draft description bound to the inline editor, seeded by
+   * {@link openDescriptionEditor} and read by {@link saveDescription}.
+   *
+   * @access protected
+   * @since 6.3.0
+   *
+   * @type {FormControl<string>}
+   */
+  protected readonly descriptionControl: FormControl<string> = new FormControl<string>('', {
+    nonNullable: true,
+  });
+
+  /**
    * Property labelSelectionControl
    * @readonly
    *
@@ -718,18 +824,20 @@ export class InterventionDetailPage {
   private readonly statusMenu: Signal<Menu> = viewChild.required<Menu>('statusMenu');
 
   /**
-   * Property overflowMenu
+   * Property workItemsSection
    * @readonly
    *
    * @description
-   * Top bar's secondary-actions popup menu (Abandon).
+   * Work-item checklist section, scrolled into view by the living
+   * "complete the field work" command action.
    *
    * @access private
-   * @since 3.0.0
+   * @since 7.0.0
    *
-   * @type {Signal<Menu>}
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
    */
-  private readonly overflowMenu: Signal<Menu> = viewChild.required<Menu>('overflowMenu');
+  private readonly workItemsSection: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('workItemsSection');
 
   /**
    * Property photoCaptureInput
@@ -921,6 +1029,43 @@ export class InterventionDetailPage {
   });
 
   /**
+   * Property canEditPlanning
+   * @readonly
+   *
+   * @description
+   * Whether the planning fields (site, responsible, participants, priority,
+   * schedule) may still be edited: the backend freezes them once the
+   * intervention leaves draft, so the edit affordances hide with them.
+   *
+   * @access protected
+   * @since 6.3.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canEditPlanning: Signal<boolean> = computed<boolean>(
+    () => this.canPlan() && this.store.intervention()?.status === 'draft',
+  );
+
+  /**
+   * Property canEditDetails
+   * @readonly
+   *
+   * @description
+   * Whether the free-text description and labels may be edited: unlike
+   * planning fields they stay mutable until the intervention reaches a
+   * terminal status (published, abandoned).
+   *
+   * @access protected
+   * @since 6.3.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canEditDetails: Signal<boolean> = computed<boolean>(() => {
+    const status: InterventionStatus | undefined = this.store.intervention()?.status;
+    return this.canPlan() && !!status && status !== 'published' && status !== 'abandoned';
+  });
+
+  /**
    * Property canAddWorkItem
    * @readonly
    *
@@ -1051,6 +1196,8 @@ export class InterventionDetailPage {
       });
     }
     for (const participant of this.participantMembers()) {
+      // The responsible often participates too — list them once.
+      if (participant.value === responsible?.value) continue;
       people.push({
         label: participant.displayName,
         image: participant.avatarUrl ?? undefined,
@@ -1159,6 +1306,168 @@ export class InterventionDetailPage {
   );
 
   /**
+   * Property pendingChangesCount
+   * @readonly
+   *
+   * @description
+   * Number of proposed (not yet applied or rejected) changes, backing the
+   * changes section counter and the publication summary.
+   *
+   * @access protected
+   * @since 5.2.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly pendingChangesCount: Signal<number> = computed<number>(
+    () =>
+      this.store
+        .changes()
+        .filter((change: InterventionChangeOutput): boolean => change.status === 'proposed').length,
+  );
+
+  /**
+   * Property readyToPublish
+   * @readonly
+   *
+   * @description
+   * Whether the intervention is submitted with no blocking issue left —
+   * drives the review phase's "execution complete" banner.
+   *
+   * @access protected
+   * @since 5.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly readyToPublish: Signal<boolean> = computed<boolean>(
+    () => this.store.intervention()?.status === 'submitted' && this.store.blockerCount() === 0,
+  );
+
+  /**
+   * Property showPlanningGuide
+   * @readonly
+   *
+   * @description
+   * Whether the main column renders the guided-planning surface instead of
+   * the standard workspace panels: only while the intervention is a draft.
+   *
+   * @access protected
+   * @since 5.3.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly showPlanningGuide: Signal<boolean> = computed<boolean>(
+    () => this.store.intervention()?.status === 'draft',
+  );
+
+  /**
+   * Property activityExpanded
+   * @readonly
+   *
+   * @description
+   * Whether the activity panel body is expanded. Defaults per phase —
+   * collapsed during preparation to keep the guided flow focused — and
+   * resets when the phase changes; the header toggle overrides in between.
+   *
+   * @access protected
+   * @since 5.3.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly activityExpanded: WritableSignal<boolean> = linkedSignal<boolean>(
+    () => this.phase() !== 'prepare',
+  );
+
+  /**
+   * Property workItemsExpanded
+   * @readonly
+   *
+   * @description
+   * Whether the work-item checklist body is expanded. Defaults per phase —
+   * collapsed to a summary during review, where changes and publication
+   * take the stage — and resets when the phase changes.
+   *
+   * @access protected
+   * @since 5.3.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly workItemsExpanded: WritableSignal<boolean> = linkedSignal<boolean>(
+    () => this.phase() !== 'review',
+  );
+
+  /**
+   * Property canRequestChanges
+   * @readonly
+   *
+   * @description
+   * Whether the top bar surfaces the secondary "Request changes" action: the
+   * user may review and the intervention is awaiting review.
+   *
+   * @access protected
+   * @since 5.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canRequestChanges: Signal<boolean> = computed<boolean>(
+    () => this.canReview() && this.store.intervention()?.status === 'submitted',
+  );
+
+  /**
+   * Property hasMobileCommandBar
+   * @readonly
+   *
+   * @description
+   * Whether the fixed mobile bottom bar renders: there is a phase command
+   * action, or a review affordance that would otherwise be unreachable on
+   * small screens (the header slot hides it below `lg`).
+   *
+   * @access protected
+   * @since 6.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasMobileCommandBar: Signal<boolean> = computed<boolean>(
+    () => !!this.commandAction() || this.canRequestChanges(),
+  );
+
+  /**
+   * Property stageDetail
+   * @readonly
+   *
+   * @description
+   * Short counter rendered inside the phase stepper's active pill — the
+   * `{done}/{total}` work-item progress during execution, nothing otherwise.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly stageDetail: Signal<string | null> = computed<string | null>(() => {
+    if (this.phase() !== 'execute' || this.store.workItems().length === 0) return null;
+    return `${this.workItemsDoneCount()}/${this.store.workItems().length}`;
+  });
+
+  /**
+   * Property readinessDoneCount
+   * @readonly
+   *
+   * @description
+   * Number of readiness checks currently satisfied, backing the rail
+   * section's `{done}/{total}` counter.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly readinessDoneCount: Signal<number> = computed<number>(
+    () =>
+      this.readinessChecks().filter((check: InterventionReadinessCheck): boolean => check.done)
+        .length,
+  );
+
+  /**
    * Property readinessChecks
    * @readonly
    *
@@ -1202,11 +1511,11 @@ export class InterventionDetailPage {
       case 'execute':
         return [
           {
-            label: $localize`:@@intervention.exec.checkResolved:All field work resolved`,
-            done: this.store.progress() >= 100,
+            label: $localize`:@@intervention.exec.checkResolved:Resolve all field work`,
+            done: this.store.progress() >= 100 && this.store.workItems().length > 0,
           },
           {
-            label: $localize`:@@intervention.exec.checkResponsible:You are the responsible agent`,
+            label: $localize`:@@intervention.exec.checkResponsible:Submit as the responsible agent`,
             done: this.canSubmit(),
           },
         ];
@@ -1279,6 +1588,25 @@ export class InterventionDetailPage {
   );
 
   /**
+   * Property listPosition
+   * @readonly
+   *
+   * @description
+   * `position / total` indicator within the cached list ordering, or null
+   * when the current id isn't part of it.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly listPosition: Signal<string | null> = computed<string | null>(() => {
+    const index: number = this.currentIndex();
+    if (index === -1) return null;
+    return `${index + 1} / ${this.orderedIds().length}`;
+  });
+
+  /**
    * Property prevInterventionId
    * @readonly
    *
@@ -1320,10 +1648,13 @@ export class InterventionDetailPage {
    * @readonly
    *
    * @description
-   * The single canonical forward action for the current phase, surfaced in
-   * the top bar: "Plan intervention" (prepare), "Submit for review"
-   * (execute) or "Publish intervention" (review). Returns null when the
-   * current user lacks the phase capability.
+   * The single recommended forward action for the current phase, surfaced in
+   * the header slot and the mobile bar. During execution it is a living
+   * action — "Record field work" / "Complete N remaining items" — until the
+   * checklist is resolved, then the phase-exit gate ("Plan", "Submit",
+   * "Publish"). When gated, `disabledReason` explains the unmet condition at
+   * the point of action. Null when the user lacks the phase capability or
+   * the intervention is already published.
    *
    * @access protected
    * @since 2.1.0
@@ -1348,95 +1679,65 @@ export class InterventionDetailPage {
             label: $localize`:@@intervention.prepare.plan:Plan intervention`,
             icon: 'pi pi-calendar',
             disabled: !ready,
+            disabledReason: ready
+              ? null
+              : $localize`:@@intervention.cta.reasonPlanning:Complete the remaining planning steps first.`,
             loading: saving,
           };
         }
         case 'execute': {
           if (!this.canExecute()) return null;
-          const ready: boolean = this.canSubmit() && this.store.progress() >= 100;
+          const total: number = this.store.workItems().length;
+          const remaining: number = total - this.workItemsDoneCount();
+          // The bar carries the recommended action itself: finish (or start)
+          // the field work, then hand over to the submit gate.
+          if (total === 0 || remaining > 0) {
+            const label: string =
+              total === 0
+                ? $localize`:@@intervention.cta.recordWork:Record field work`
+                : remaining === 1
+                  ? $localize`:@@intervention.cta.completeOne:Complete 1 remaining item`
+                  : $localize`:@@intervention.cta.completeMany:Complete ${remaining}:count: remaining items`;
+            return {
+              label,
+              icon: 'pi pi-check-square',
+              disabled: false,
+              disabledReason: null,
+              loading: saving || this.fieldActionBusy(),
+            };
+          }
+          const ready: boolean = this.canSubmit();
           return {
             label: $localize`:@@intervention.exec.submitTitle:Submit for review`,
             icon: 'pi pi-send',
             disabled: !ready,
+            disabledReason: ready
+              ? null
+              : $localize`:@@intervention.cta.reasonResponsible:Only the responsible agent can submit.`,
             loading: saving || this.fieldActionBusy(),
           };
         }
         case 'review': {
-          if (!this.canPublish()) return null;
-          const ready: boolean =
-            this.online() &&
-            intervention.status === 'submitted' &&
-            (intervention.blockersCount ?? 0) === 0;
+          if (!this.canPublish() || intervention.status !== 'submitted') return null;
+          const blockers: number = intervention.blockersCount ?? 0;
+          const online: boolean = this.online();
+          const ready: boolean = online && blockers === 0;
           return {
             label: $localize`:@@intervention.review.publish:Publish intervention`,
             icon: 'pi pi-check-circle',
             disabled: !ready,
+            disabledReason: ready
+              ? null
+              : !online
+                ? $localize`:@@intervention.cta.reasonOffline:Connect to the network to publish.`
+                : blockers === 1
+                  ? $localize`:@@intervention.cta.reasonBlockersOne:1 blocking issue to clear.`
+                  : $localize`:@@intervention.cta.reasonBlockersMany:${blockers}:count: blocking issues to clear.`,
             loading: saving || this.publishing(),
           };
         }
       }
     });
-
-  /**
-   * Property priorityLabel
-   * @readonly
-   *
-   * @description
-   * Localized label for the intervention's priority, resolved from the tag
-   * registry. Rendered as plain text next to the design priority glyph so the
-   * sidebar shows a single priority indicator (the bars) rather than doubling
-   * it with the registry's flag badge.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @type {Signal<string>}
-   */
-  protected readonly priorityLabel: Signal<string> = computed((): string => {
-    const priority: InterventionOutput['priority'] | undefined =
-      this.store.intervention()?.priority;
-
-    return priority ? resolveInterventionTag('priority', priority).label : '';
-  });
-
-  /**
-   * Property lifecycleProgress
-   * @readonly
-   *
-   * @description
-   * How far the intervention has advanced through its workflow (0–100),
-   * derived from the status rather than work-item completion, so the status
-   * ring always reflects meaningful progression even before work items exist.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @type {Signal<number>}
-   */
-  protected readonly lifecycleProgress: Signal<number> = computed((): number => {
-    const status: InterventionOutput['status'] | undefined = this.store.intervention()?.status;
-
-    return status ? interventionLifecycleProgress(status) : 0;
-  });
-
-  /**
-   * Property statusLabel
-   * @readonly
-   *
-   * @description
-   * Localized label for the current status, used as the status ring's
-   * accessible name.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @type {Signal<string>}
-   */
-  protected readonly statusLabel: Signal<string> = computed((): string => {
-    const status: InterventionOutput['status'] | undefined = this.store.intervention()?.status;
-
-    return status ? resolveInterventionTag('status', status).label : '';
-  });
 
   /**
    * Property transitionMenuItems
@@ -1640,8 +1941,10 @@ export class InterventionDetailPage {
    *
    * @description
    * Loads the workspace and planning options for the routed intervention id,
-   * mirrors the loaded intervention into {@link activeIntervention}, and
-   * fetches the activity timeline once per freshly loaded intervention.
+   * mirrors the loaded intervention into {@link activeIntervention}, publishes
+   * the header view state to {@link headerStore} for the layout's page-header
+   * action slot (reacting to its dispatched events), and fetches the activity
+   * timeline once per freshly loaded intervention.
    *
    * @access public
    * @since 1.0.0
@@ -1659,6 +1962,12 @@ export class InterventionDetailPage {
       const intervention = this.store.intervention();
       if (intervention) this.activeIntervention.setIntervention(intervention);
     });
+    effect(() => {
+      if (!this.requestChangesPending()) return;
+      if (this.store.intervention()?.status !== 'changes_requested') return;
+      this.requestChangesPending.set(false);
+      this.requestChangesDrawerVisible.set(false);
+    });
     // ⚠️ Zoneless: reads `store.intervention()` (tracked) but writes/reads
     // `activityCallState` through `loadActivities` inside `untracked()`, so
     // the write never re-triggers this effect (see intervention-workspace.store.ts).
@@ -1670,6 +1979,39 @@ export class InterventionDetailPage {
       this.lastActivitiesLoadedFor = intervention.id;
       untracked(() => this.store.loadActivities(intervention.id));
     });
+    effect(() => {
+      if (!this.store.intervention()) {
+        this.headerStore.clear();
+        return;
+      }
+      this.headerStore.setHeader({
+        commandAction: this.commandAction(),
+        canRequestChanges: this.canRequestChanges(),
+        listPosition: this.listPosition(),
+        showPrevNext: this.showPrevNext(),
+        prevDisabled: !this.prevInterventionId(),
+        nextDisabled: !this.nextInterventionId(),
+        overflowItems: this.overflowMenuItems(),
+      });
+    });
+    this.destroyRef.onDestroy(() => this.headerStore.clear());
+
+    this.events
+      .on(interventionHeaderEvents.commandInvoked)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.invokeCommandAction());
+    this.events
+      .on(interventionHeaderEvents.changesRequested)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.requestChangesDrawerVisible.set(true));
+    this.events
+      .on(interventionHeaderEvents.prevRequested)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.navigatePrev());
+    this.events
+      .on(interventionHeaderEvents.nextRequested)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.navigateNext());
   }
   //#endregion
 
@@ -1723,13 +2065,44 @@ export class InterventionDetailPage {
       case 'prepare':
         this.planIntervention();
         break;
-      case 'execute':
-        this.submitIntervention();
+      case 'execute': {
+        const total: number = this.store.workItems().length;
+        if (total === 0 || total - this.workItemsDoneCount() > 0) this.revealFieldWork();
+        else this.submitIntervention();
         break;
+      }
       case 'review':
         void this.publishIntervention();
         break;
     }
+  }
+
+  /**
+   * Method revealFieldWork
+   * @method revealFieldWork
+   *
+   * @description
+   * Carries out the living "complete the field work" command: expands the
+   * checklist and scrolls it into view, or opens the discovery drawer when
+   * there is nothing to complete yet.
+   *
+   * @access private
+   * @since 7.0.0
+   *
+   * @return {void}
+   */
+  private revealFieldWork(): void {
+    this.workItemsExpanded.set(true);
+    if (this.store.workItems().length === 0 && this.canAddDiscovery()) {
+      this.discoveryDrawerVisible.set(true);
+      return;
+    }
+    const section: HTMLElement | undefined = this.workItemsSection()?.nativeElement;
+    if (!section) return;
+    const reduceMotion: boolean =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    section.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
   }
 
   /**
@@ -1772,12 +2145,12 @@ export class InterventionDetailPage {
    * @return {void}
    */
   protected requestChanges(values: InterventionRequestChangesFormValues): void {
+    this.requestChangesPending.set(true);
     this.store.transition({
       interventionId: this.interventionId(),
       status: 'changes_requested',
       reviewNote: values.note,
     });
-    this.requestChangesDrawerVisible.set(false);
   }
 
   /**
@@ -1796,6 +2169,7 @@ export class InterventionDetailPage {
   protected async publishIntervention(): Promise<void> {
     const intervention = this.store.intervention();
     if (!intervention || !this.online()) {
+      this.publicationSeverity.set('warn');
       this.publicationMessage.set(
         $localize`:@@intervention.publication.offline:Connect to the network before publishing this intervention.`,
       );
@@ -1806,17 +2180,20 @@ export class InterventionDetailPage {
     try {
       const completed = await this.publication.publish(intervention);
       if (completed.status === 'failed') {
+        this.publicationSeverity.set('error');
         this.publicationMessage.set(
           completed.error ??
             $localize`:@@intervention.publishFailed:Publication failed without applying partial changes.`,
         );
         return;
       }
+      this.publicationSeverity.set('success');
       this.publicationMessage.set(
         $localize`:@@intervention.publication.success:Intervention published successfully.`,
       );
       this.store.load(this.interventionId());
     } catch {
+      this.publicationSeverity.set('error');
       this.publicationMessage.set(
         $localize`:@@intervention.publication.failed:The publication request could not be completed.`,
       );
@@ -1917,6 +2294,65 @@ export class InterventionDetailPage {
       input: { ...planningDetails, description: values.description.trim() || null },
     });
     this.editDrawerVisible.set(false);
+  }
+
+  /**
+   * Method saveGuideStep
+   * @method saveGuideStep
+   *
+   * @description
+   * Merge-patches the fields edited on one guided-planning step into the
+   * intervention.
+   *
+   * @access protected
+   * @since 5.3.0
+   *
+   * @param {InterventionPlanningGuideValues} values - Fields the step edited.
+   *
+   * @return {void}
+   */
+  protected saveGuideStep(values: InterventionPlanningGuideValues): void {
+    this.store.updateDetails({ interventionId: this.interventionId(), input: values });
+  }
+
+  /**
+   * Method openDescriptionEditor
+   * @method openDescriptionEditor
+   *
+   * @description
+   * Seeds {@link descriptionControl} from the intervention's current
+   * description and expands the inline editor. The description stays
+   * editable after planning (unlike planning fields), so this bypasses the
+   * planning drawer.
+   *
+   * @access protected
+   * @since 6.3.0
+   *
+   * @return {void}
+   */
+  protected openDescriptionEditor(): void {
+    this.descriptionControl.setValue(this.store.intervention()?.description ?? '');
+    this.descriptionEditorOpen.set(true);
+  }
+
+  /**
+   * Method saveDescription
+   * @method saveDescription
+   *
+   * @description
+   * Merge-patches only the description and collapses the inline editor.
+   *
+   * @access protected
+   * @since 6.3.0
+   *
+   * @return {void}
+   */
+  protected saveDescription(): void {
+    this.store.updateDetails({
+      interventionId: this.interventionId(),
+      input: { description: this.descriptionControl.value.trim() || null },
+    });
+    this.descriptionEditorOpen.set(false);
   }
 
   /**
@@ -2109,6 +2545,25 @@ export class InterventionDetailPage {
   }
 
   /**
+   * Method isNextWorkItem
+   * @method isNextWorkItem
+   *
+   * @description
+   * Whether a checklist row is the workspace's next recommended work item,
+   * highlighted so the field agent always sees the obvious next action.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @param {InterventionWorkItemOutput} item - Work item to evaluate.
+   *
+   * @return {boolean}
+   */
+  protected isNextWorkItem(item: InterventionWorkItemOutput): boolean {
+    return this.store.nextWorkItem()?.id === item.id;
+  }
+
+  /**
    * Method canToggleWorkItem
    * @method canToggleWorkItem
    *
@@ -2189,23 +2644,6 @@ export class InterventionDetailPage {
     this.statusMenu().toggle(event);
   }
 
-  /**
-   * Method onOverflowMenuToggle
-   * @method onOverflowMenuToggle
-   *
-   * @description
-   * Toggles the top bar's secondary-actions menu.
-   *
-   * @access protected
-   * @since 3.0.0
-   *
-   * @param {MouseEvent} event - Click event from the overflow control.
-   *
-   * @return {void}
-   */
-  protected onOverflowMenuToggle(event: MouseEvent): void {
-    this.overflowMenu().toggle(event);
-  }
   //#endregion
 
   //#region Field execution (skip, discovery, scan, photo)
@@ -2650,23 +3088,47 @@ export class InterventionDetailPage {
   }
   //#endregion
 
-  //#region Top bar navigation
+  //#region Header slot navigation
   /**
-   * Method navigateBack
-   * @method navigateBack
+   * Method onDocumentKeydown
+   * @method onDocumentKeydown
    *
    * @description
-   * Navigates to the organization's interventions list.
+   * List-navigation accelerators: `j` opens the next intervention, `k` the
+   * previous one — ignored while typing, while an overlay is open, or with
+   * modifier keys held.
    *
    * @access protected
-   * @since 3.0.0
+   * @since 7.0.0
+   *
+   * @param {KeyboardEvent} event - Document-level keydown.
    *
    * @return {void}
    */
-  protected navigateBack(): void {
-    const organizationId = this.organization.selectedOrganization()?.id;
-    if (!organizationId) return;
-    void this.router.navigate(['/organizations', organizationId, 'interventions']);
+  protected onDocumentKeydown(event: KeyboardEvent): void {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.key !== 'j' && event.key !== 'k') return;
+    const target: HTMLElement | null = event.target as HTMLElement | null;
+    if (
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable)
+    ) {
+      return;
+    }
+    if (
+      this.editDrawerVisible() ||
+      this.workItemDrawerVisible() ||
+      this.skipDrawerVisible() ||
+      this.discoveryDrawerVisible() ||
+      this.requestChangesDrawerVisible()
+    ) {
+      return;
+    }
+    if (event.key === 'j') this.navigateNext();
+    else this.navigatePrev();
   }
 
   /**
@@ -2699,6 +3161,25 @@ export class InterventionDetailPage {
    */
   protected navigateNext(): void {
     this.navigateToNeighbour(this.nextInterventionId());
+  }
+
+  /**
+   * Method navigateToList
+   * @method navigateToList
+   *
+   * @description
+   * Navigates back to the organization's interventions list, offered by the
+   * not-found state so it never dead-ends.
+   *
+   * @access protected
+   * @since 6.2.0
+   *
+   * @return {void}
+   */
+  protected navigateToList(): void {
+    const organizationId = this.organization.selectedOrganization()?.id;
+    if (!organizationId) return;
+    void this.router.navigate(['/organizations', organizationId, 'interventions']);
   }
 
   /**

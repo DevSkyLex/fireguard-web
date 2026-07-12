@@ -8,6 +8,7 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   FormControl,
   NonNullableFormBuilder,
@@ -21,6 +22,7 @@ import { MessageModule } from 'primeng/message';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
+import { map } from 'rxjs';
 import type {
   InterventionOutput,
   InterventionPriority,
@@ -193,6 +195,23 @@ export class InterventionPlanningForm {
       dueAt: new FormControl<Date | null>(null, [Validators.required]),
       description: this.formBuilder.control(''),
     });
+
+  /**
+   * Property dirty
+   * @readonly
+   *
+   * @description
+   * Whether the form holds unsaved user edits, exposed so the host drawer
+   * can guard accidental dismissal (Esc, backdrop) against data loss.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  public readonly dirty = toSignal(this.form.events.pipe(map((): boolean => this.form.dirty)), {
+    initialValue: false,
+  });
 
   /**
    * Property priorityOptions

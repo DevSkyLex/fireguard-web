@@ -1,5 +1,12 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import type { InputSignal, OutputEmitterRef } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
+import type { InputSignal, OutputEmitterRef, Signal } from '@angular/core';
 import { DrawerModule, type DrawerPassThroughOptions } from 'primeng/drawer';
 import type {
   InterventionOutput,
@@ -32,6 +39,9 @@ import {
   imports: [DrawerModule, InterventionPlanningForm],
   templateUrl: './intervention-edit-drawer.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:keydown.escape)': 'onEscape($event)',
+  },
 })
 export class InterventionEditDrawer {
   //#region Inputs
@@ -175,5 +185,62 @@ export class InterventionEditDrawer {
   protected readonly drawerPt: DrawerPassThroughOptions = {
     root: { class: '!w-full md:!w-[52rem] xl:!w-[60rem]' },
   };
+  //#endregion
+
+  //#region Dismissal guard
+  /**
+   * Property formRef
+   * @readonly
+   *
+   * @description
+   * Composed form component, observed for unsaved edits.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {Signal<InterventionPlanningForm | undefined>}
+   */
+  private readonly formRef: Signal<InterventionPlanningForm | undefined> =
+    viewChild(InterventionPlanningForm);
+
+  /**
+   * Property canDismiss
+   * @readonly
+   *
+   * @description
+   * Whether accidental dismissal (Esc, backdrop tap) may close the drawer:
+   * blocked while a request is in flight or the form holds unsaved edits, so
+   * a mis-tap never silently discards field input.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canDismiss: Signal<boolean> = computed<boolean>(
+    () => !this.loading() && !(this.formRef()?.dirty() ?? false),
+  );
+
+  /**
+   * Method onEscape
+   * @method onEscape
+   *
+   * @description
+   * Dirty-aware Escape handling (PrimeNG's own escape listener is bound at
+   * open time and closes unconditionally, so it stays disabled): closes the
+   * drawer only while {@link canDismiss} holds.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {Event} event - Document-level Escape keydown.
+   *
+   * @return {void}
+   */
+  protected onEscape(event: Event): void {
+    if (event.defaultPrevented || !this.visible()) return;
+    if (!this.canDismiss()) return;
+    this.visibleChange.emit(false);
+  }
   //#endregion
 }

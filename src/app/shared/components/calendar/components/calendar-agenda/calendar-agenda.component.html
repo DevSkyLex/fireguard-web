@@ -6,7 +6,7 @@
         class="sticky top-0 z-10 -mx-4 flex items-center justify-between gap-3 border-b border-surface-200 bg-surface-0 px-4 py-2 dark:border-surface-800 dark:bg-surface-900"
       >
         <div class="flex items-baseline gap-2">
-          <h3
+          <h2
             class="text-sm font-semibold first-letter:uppercase"
             [class]="
               isToday(day.date)
@@ -15,7 +15,7 @@
             "
           >
             {{ day.date | date: 'EEEE d MMMM' }}
-          </h3>
+          </h2>
           @if (relativeLabel(day.date); as label) {
             <span
               class="rounded-full bg-primary-50 px-1.5 py-0.5 text-[0.65rem] font-semibold tracking-wide text-primary-700 uppercase dark:bg-primary-950/40 dark:text-primary-300"

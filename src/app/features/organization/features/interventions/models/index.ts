@@ -41,6 +41,7 @@ export type { InterventionOutboxType } from './intervention-outbox/intervention-
 export type { PublicationOutput } from './publication/publication-output.interface';
 export type { PublicationStatus } from './publication/publication-status.type';
 export type {
+  InterventionCommandAction,
   InterventionDiscoveryRequest,
   InterventionDiscoveryResult,
   InterventionPhase,

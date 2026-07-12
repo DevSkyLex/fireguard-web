@@ -6,8 +6,8 @@
   [appendTo]="'body'"
   [modal]="true"
   [blockScroll]="true"
-  [dismissible]="!loading()"
-  [closeOnEscape]="!loading()"
+  [dismissible]="canDismiss()"
+  [closeOnEscape]="canDismiss()"
   position="right"
   [pt]="drawerPt"
 >

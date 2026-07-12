@@ -1,4 +1,4 @@
-import { NgComponentOutlet, TitleCasePipe } from '@angular/common';
+import { NgComponentOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DashboardPageHeaderService } from '@layouts/dashboard-layout/services';
 
@@ -27,7 +27,7 @@ import { DashboardPageHeaderService } from '@layouts/dashboard-layout/services';
  */
 @Component({
   selector: 'app-dashboard-layout-page-header',
-  imports: [NgComponentOutlet, TitleCasePipe],
+  imports: [NgComponentOutlet],
   templateUrl: './dashboard-layout-page-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

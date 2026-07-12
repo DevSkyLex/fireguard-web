@@ -40,7 +40,8 @@
       <label class="grid gap-1.5 text-sm">
         <span class="font-medium">
           {{ targetLabel() }}
-          <span class="text-red-500" aria-hidden="true">*</span>
+          <span class="text-red-500" aria-hidden="true">*</span
+          ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         </span>
         @if (form.controls.action.value === 'inventory') {
           <p-select
@@ -53,6 +54,12 @@
             i18n-placeholder="@@intervention.df.equipTypePlaceholder"
             placeholder="Select an equipment type"
             [invalid]="form.controls.target.invalid && form.controls.target.touched"
+            [attr.aria-invalid]="form.controls.target.invalid && form.controls.target.touched"
+            [attr.aria-describedby]="
+              form.controls.target.invalid && form.controls.target.touched
+                ? 'intervention-discovery-target-error'
+                : null
+            "
           />
         } @else {
           <input
@@ -60,12 +67,20 @@
             formControlName="target"
             class="w-full"
             [invalid]="form.controls.target.invalid && form.controls.target.touched"
+            [attr.aria-invalid]="form.controls.target.invalid && form.controls.target.touched"
+            [attr.aria-describedby]="
+              form.controls.target.invalid && form.controls.target.touched
+                ? 'intervention-discovery-target-error'
+                : null
+            "
             [placeholder]="targetInputPlaceholder()"
           />
         }
         @if (form.controls.target.invalid && form.controls.target.touched) {
           <p-message severity="error" variant="simple">
-            <span i18n="@@intervention.df.targetRequired">Describe the discovered resource.</span>
+            <span id="intervention-discovery-target-error" i18n="@@intervention.df.targetRequired"
+              >Describe the discovered resource.</span
+            >
           </p-message>
         }
       </label>

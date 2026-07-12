@@ -40,7 +40,7 @@
       <label class="grid gap-1.5 text-sm md:col-span-2">
         <span i18n="@@intervention.cf.name" class="font-medium"
           >Intervention name <span class="text-red-500" aria-hidden="true">*</span></span
-        >
+        ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <input
           pInputText
           formControlName="name"
@@ -49,16 +49,24 @@
           autocomplete="off"
           class="w-full"
           [invalid]="form.controls.name.invalid && form.controls.name.touched"
+          [attr.aria-invalid]="form.controls.name.invalid && form.controls.name.touched"
+          [attr.aria-describedby]="
+            form.controls.name.invalid && form.controls.name.touched
+              ? 'intervention-create-name-error'
+              : null
+          "
         />
         @if (form.controls.name.invalid && form.controls.name.touched) {
           <p-message severity="error" variant="simple">
-            @if (form.controls.name.hasError('required')) {
-              <span i18n="@@intervention.cf.nameRequired"
-                >A name is required to start the draft.</span
-              >
-            } @else {
-              <span i18n="@@intervention.cf.nameLength">Use between 2 and 255 characters.</span>
-            }
+            <span id="intervention-create-name-error">
+              @if (form.controls.name.hasError('required')) {
+                <span i18n="@@intervention.cf.nameRequired"
+                  >A name is required to start the draft.</span
+                >
+              } @else {
+                <span i18n="@@intervention.cf.nameLength">Use between 2 and 255 characters.</span>
+              }
+            </span>
           </p-message>
         }
       </label>
@@ -66,7 +74,7 @@
       <label class="grid gap-1.5 text-sm md:col-span-2">
         <span i18n="@@intervention.cf.priority" class="font-medium"
           >Priority <span class="text-red-500" aria-hidden="true">*</span></span
-        >
+        ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <p-select
           formControlName="priority"
           [options]="[...priorityOptions]"

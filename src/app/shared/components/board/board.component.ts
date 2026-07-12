@@ -56,6 +56,10 @@ import type {
   imports: [CdkDrag, CdkDropList, CdkDropListGroup, NgTemplateOutlet],
   templateUrl: './board.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Flex-column host so the lanes track (flex-1) fills whatever height the
+  // consumer gives the board — a child h-full cannot resolve against the
+  // host's auto block height.
+  host: { class: 'flex min-h-0 flex-col' },
 })
 export class Board<T> {
   //#region Inputs

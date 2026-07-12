@@ -8,6 +8,7 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   NonNullableFormBuilder,
   ReactiveFormsModule,
@@ -17,6 +18,7 @@ import {
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { TextareaModule } from 'primeng/textarea';
+import { map } from 'rxjs';
 import type { InterventionSkipFormData, InterventionSkipFormValues } from './models';
 
 /**
@@ -116,6 +118,23 @@ export class InterventionSkipForm {
     this.formBuilder.group<InterventionSkipFormData>({
       reason: this.formBuilder.control('', [Validators.required]),
     });
+
+  /**
+   * Property dirty
+   * @readonly
+   *
+   * @description
+   * Whether the form holds unsaved user edits, exposed so the host drawer
+   * can guard accidental dismissal (Esc, backdrop) against data loss.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  public readonly dirty = toSignal(this.form.events.pipe(map((): boolean => this.form.dirty)), {
+    initialValue: false,
+  });
 
   //#endregion
 

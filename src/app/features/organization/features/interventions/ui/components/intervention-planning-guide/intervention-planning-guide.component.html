@@ -1,0 +1,410 @@
+<section
+  class="rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-950"
+>
+  <header
+    class="flex flex-wrap items-center gap-2 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
+  >
+    <h2
+      i18n="@@intervention.guide.title"
+      class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+    >
+      Prepare the intervention
+    </h2>
+    <span class="flex-1"></span>
+    <span
+      i18n="@@intervention.guide.autosaved"
+      class="text-xs text-surface-400 dark:text-surface-500"
+    >
+      Each step saves as you continue
+    </span>
+  </header>
+
+  <div class="grid md:grid-cols-[15.5rem_minmax(0,1fr)]">
+    <!-- Step rail -->
+    <ol
+      class="flex flex-row gap-1 overflow-x-auto border-b border-surface-200 p-3 md:flex-col md:border-r md:border-b-0 dark:border-surface-800"
+    >
+      @for (step of steps; track step.id; let index = $index) {
+        <li class="shrink-0 md:shrink">
+          <button
+            type="button"
+            class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-50 dark:hover:bg-surface-900"
+            [class.bg-surface-100]="activeStep() === step.id"
+            [class.dark:bg-surface-800]="activeStep() === step.id"
+            [attr.aria-current]="activeStep() === step.id ? 'step' : null"
+            (click)="goTo(step.id)"
+          >
+            @if (completion()[step.id]) {
+              <span
+                class="flex size-6 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400"
+              >
+                <i class="pi pi-check text-xs" aria-hidden="true"></i>
+              </span>
+            } @else {
+              <span
+                class="flex size-6 shrink-0 items-center justify-center rounded-full border text-xs tabular-nums"
+                [class.border-primary]="activeStep() === step.id"
+                [class.text-primary]="activeStep() === step.id"
+                [class.font-medium]="activeStep() === step.id"
+                [class.border-surface-300]="activeStep() !== step.id"
+                [class.text-surface-500]="activeStep() !== step.id"
+                [class.dark:border-surface-600]="activeStep() !== step.id"
+                [class.dark:text-surface-400]="activeStep() !== step.id"
+              >
+                {{ index + 1 }}
+              </span>
+            }
+            <span class="min-w-0">
+              <span
+                class="block truncate text-sm"
+                [class.font-medium]="activeStep() === step.id"
+                [class.text-surface-900]="activeStep() === step.id"
+                [class.dark:text-surface-100]="activeStep() === step.id"
+                [class.text-surface-600]="activeStep() !== step.id"
+                [class.dark:text-surface-300]="activeStep() !== step.id"
+              >
+                {{ step.label }}
+              </span>
+              <span class="hidden text-xs text-surface-400 md:block dark:text-surface-500">
+                {{ step.hint }}
+              </span>
+            </span>
+          </button>
+        </li>
+      }
+    </ol>
+
+    <!-- Active step -->
+    <div class="flex min-w-0 flex-col gap-5 p-4 sm:p-5">
+      @switch (activeStep()) {
+        @case ('context') {
+          <h3
+            i18n="@@intervention.guide.contextTitle"
+            class="text-base font-semibold text-surface-900 dark:text-surface-100"
+          >
+            What is this intervention about?
+          </h3>
+
+          <label class="grid gap-1.5 text-sm">
+            <span i18n="@@intervention.guide.name" class="font-medium"
+              >Name <span class="text-red-500" aria-hidden="true">*</span></span
+            ><span i18n="@@common.requiredSr" class="sr-only">required</span>
+            <input
+              pInputText
+              [formControl]="nameControl"
+              class="w-full"
+              [invalid]="nameControl.invalid && nameControl.touched"
+              [attr.aria-invalid]="nameControl.invalid && nameControl.touched"
+              [attr.aria-describedby]="
+                nameControl.invalid && nameControl.touched ? 'intervention-guide-name-error' : null
+              "
+            />
+            @if (nameControl.invalid && nameControl.touched) {
+              <p-message severity="error" variant="simple">
+                <span id="intervention-guide-name-error" i18n="@@intervention.guide.nameRequired"
+                  >A name is required.</span
+                >
+              </p-message>
+            }
+          </label>
+
+          <label class="grid gap-1.5 text-sm">
+            <span i18n="@@intervention.pf.description" class="font-medium">Description</span>
+            <textarea
+              pTextarea
+              [formControl]="descriptionControl"
+              rows="4"
+              i18n-placeholder="@@intervention.pf.descriptionPlaceholder"
+              placeholder="Add context, scope notes or instructions for this intervention"
+              class="w-full"
+            ></textarea>
+          </label>
+        }
+
+        @case ('scope') {
+          <h3
+            i18n="@@intervention.guide.scopeTitle"
+            class="text-base font-semibold text-surface-900 dark:text-surface-100"
+          >
+            Where does the work happen?
+          </h3>
+
+          <label class="grid gap-1.5 text-sm">
+            <span i18n="@@intervention.pf.site" class="font-medium"
+              >Site <span class="text-red-500" aria-hidden="true">*</span></span
+            ><span i18n="@@common.requiredSr" class="sr-only">required</span>
+            <p-select
+              [formControl]="siteControl"
+              [options]="[...siteOptions()]"
+              optionLabel="label"
+              optionValue="value"
+              [filter]="true"
+              [showClear]="true"
+              i18n-placeholder="@@intervention.pf.sitePlaceholder"
+              placeholder="Select a site"
+              appendTo="body"
+              [invalid]="siteControl.invalid && siteControl.touched"
+            />
+            @if (siteControl.invalid && siteControl.touched) {
+              <p-message severity="error" variant="simple">
+                <span i18n="@@intervention.pf.siteRequired">A site is required.</span>
+              </p-message>
+            }
+          </label>
+
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-between gap-2">
+              <span i18n="@@intervention.detail.checklist" class="text-sm font-medium"
+                >Work items</span
+              >
+              <p-button
+                i18n-label="@@intervention.wit.addItem"
+                label="Add item"
+                icon="pi pi-plus"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                [disabled]="disabled() || saving()"
+                (onClick)="addWorkItemRequested.emit()"
+              />
+            </div>
+            @if (workItems().length > 0) {
+              <ul
+                class="divide-y divide-surface-100 rounded-lg border border-surface-200 dark:divide-surface-800 dark:border-surface-800"
+              >
+                @for (item of workItems(); track item.id) {
+                  <li class="flex items-center gap-2 px-3 py-2 text-sm">
+                    <i class="pi pi-check-square text-sm text-surface-400" aria-hidden="true"></i>
+                    <span class="min-w-0 flex-1 truncate">{{ workItemLabel(item) }}</span>
+                    @if (canRemoveWorkItems()) {
+                      <p-button
+                        icon="pi pi-trash"
+                        severity="secondary"
+                        [text]="true"
+                        [rounded]="true"
+                        size="small"
+                        i18n-ariaLabel="@@common.delete"
+                        ariaLabel="Delete"
+                        (onClick)="removeWorkItemRequested.emit(item)"
+                      />
+                    }
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p
+                i18n="@@intervention.wit.emptyDesc"
+                class="text-sm text-surface-400 dark:text-surface-500"
+              >
+                List the tasks to complete during this intervention.
+              </p>
+            }
+          </div>
+        }
+
+        @case ('team') {
+          <h3
+            i18n="@@intervention.guide.teamTitle"
+            class="text-base font-semibold text-surface-900 dark:text-surface-100"
+          >
+            Who is involved?
+          </h3>
+
+          <label class="grid gap-1.5 text-sm">
+            <span i18n="@@intervention.pf.responsible" class="font-medium"
+              >Responsible agent <span class="text-red-500" aria-hidden="true">*</span></span
+            ><span i18n="@@common.requiredSr" class="sr-only">required</span>
+            <p-select
+              [formControl]="responsibleControl"
+              [options]="[...memberOptions()]"
+              optionLabel="label"
+              optionValue="value"
+              [filter]="true"
+              filterBy="label,roleLabel"
+              [showClear]="true"
+              i18n-placeholder="@@intervention.pf.responsiblePlaceholder"
+              placeholder="Assign a responsible agent"
+              appendTo="body"
+              [invalid]="responsibleControl.invalid && responsibleControl.touched"
+            >
+              <ng-template #item let-option>
+                <app-intervention-member-option [option]="option" />
+              </ng-template>
+              <ng-template #selectedItem let-option>
+                @if (option) {
+                  <app-intervention-member-option [option]="option" [compact]="true" />
+                }
+              </ng-template>
+            </p-select>
+            @if (responsibleControl.invalid && responsibleControl.touched) {
+              <p-message severity="error" variant="simple">
+                <span i18n="@@intervention.pf.responsibleRequired"
+                  >A responsible agent is required.</span
+                >
+              </p-message>
+            }
+          </label>
+
+          <label class="grid gap-1.5 text-sm">
+            <span i18n="@@intervention.pf.participants" class="font-medium">Participants</span>
+            <p-multiselect
+              [formControl]="participantsControl"
+              [options]="[...memberOptions()]"
+              optionLabel="label"
+              optionValue="value"
+              [filter]="true"
+              filterBy="label,roleLabel"
+              display="chip"
+              i18n-placeholder="@@intervention.pf.participantsPlaceholder"
+              placeholder="Add field participants"
+              appendTo="body"
+            >
+              <ng-template #item let-option>
+                <app-intervention-member-option [option]="option" />
+              </ng-template>
+            </p-multiselect>
+          </label>
+        }
+
+        @case ('schedule') {
+          <h3
+            i18n="@@intervention.guide.scheduleTitle"
+            class="text-base font-semibold text-surface-900 dark:text-surface-100"
+          >
+            When does it happen?
+          </h3>
+
+          <div class="grid gap-5 sm:grid-cols-2">
+            <label class="grid gap-1.5 text-sm">
+              <span i18n="@@intervention.pf.plannedStart" class="font-medium"
+                >Planned start <span class="text-red-500" aria-hidden="true">*</span></span
+              ><span i18n="@@common.requiredSr" class="sr-only">required</span>
+              <p-datepicker
+                [formControl]="plannedStartAtControl"
+                [showTime]="true"
+                hourFormat="24"
+                [showIcon]="true"
+                [showClear]="true"
+                [showButtonBar]="true"
+                appendTo="body"
+                dateFormat="yy-mm-dd"
+                i18n-placeholder="@@intervention.pf.startPlaceholder"
+                placeholder="Select start date and time"
+                class="w-full"
+                [invalid]="plannedStartAtControl.invalid && plannedStartAtControl.touched"
+              />
+              @if (plannedStartAtControl.invalid && plannedStartAtControl.touched) {
+                <p-message severity="error" variant="simple">
+                  <span i18n="@@intervention.pf.startRequired">A planned start is required.</span>
+                </p-message>
+              }
+            </label>
+
+            <label class="grid gap-1.5 text-sm">
+              <span i18n="@@intervention.pf.due" class="font-medium"
+                >Due <span class="text-red-500" aria-hidden="true">*</span></span
+              ><span i18n="@@common.requiredSr" class="sr-only">required</span>
+              <p-datepicker
+                [formControl]="dueAtControl"
+                [showTime]="true"
+                hourFormat="24"
+                [showIcon]="true"
+                [showClear]="true"
+                [showButtonBar]="true"
+                [minDate]="plannedStartAtControl.value ?? undefined"
+                appendTo="body"
+                dateFormat="yy-mm-dd"
+                i18n-placeholder="@@intervention.pf.duePlaceholder"
+                placeholder="Select due date and time"
+                class="w-full"
+                [invalid]="dueAtControl.invalid && dueAtControl.touched"
+              />
+              @if (dueAtControl.touched && dueAtControl.hasError('required')) {
+                <p-message severity="error" variant="simple">
+                  <span i18n="@@intervention.pf.dueRequired">A due date is required.</span>
+                </p-message>
+              } @else if (dueAtControl.touched && dueAtControl.hasError('dueBeforeStart')) {
+                <p-message severity="error" variant="simple">
+                  <span i18n="@@intervention.guide.dueBeforeStart"
+                    >The due date must be on or after the planned start.</span
+                  >
+                </p-message>
+              }
+            </label>
+          </div>
+
+          <label class="grid gap-1.5 text-sm">
+            <span i18n="@@intervention.pf.priority" class="font-medium"
+              >Priority <span class="text-red-500" aria-hidden="true">*</span></span
+            ><span i18n="@@common.requiredSr" class="sr-only">required</span>
+            <p-select
+              [formControl]="priorityControl"
+              [options]="[...priorityOptions]"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+            >
+              <ng-template #selectedItem let-option>
+                @if (option) {
+                  <app-intervention-option kind="priority" [value]="option.value" />
+                }
+              </ng-template>
+              <ng-template #item let-option>
+                <app-intervention-option kind="priority" [value]="option.value" />
+              </ng-template>
+            </p-select>
+          </label>
+        }
+      }
+
+      <!-- Step footer -->
+      <div
+        class="mt-auto flex flex-wrap items-center gap-2 border-t border-surface-200 pt-4 dark:border-surface-800"
+      >
+        @if (!isFirstStep()) {
+          <p-button
+            i18n-label="@@intervention.guide.back"
+            label="Back"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [text]="true"
+            size="small"
+            [disabled]="saving()"
+            (onClick)="backStep()"
+          />
+        }
+        <span class="flex-1"></span>
+        @if (!isLastStep()) {
+          <p-button
+            i18n-label="@@intervention.guide.continue"
+            label="Continue"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            size="small"
+            [loading]="saving()"
+            [disabled]="disabled()"
+            (onClick)="continueStep()"
+          />
+        } @else {
+          @if (!allComplete()) {
+            <span
+              i18n="@@intervention.guide.planHint"
+              class="text-xs text-surface-400 dark:text-surface-500"
+            >
+              Complete the remaining steps to plan.
+            </span>
+          }
+          <p-button
+            i18n-label="@@intervention.prepare.plan"
+            label="Plan intervention"
+            icon="pi pi-calendar"
+            size="small"
+            [loading]="saving()"
+            [disabled]="disabled() || !allComplete()"
+            (onClick)="requestPlan()"
+          />
+        }
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,67 @@
+<ol
+  class="flex w-full items-center"
+  i18n-aria-label="@@intervention.phase.stepperAria"
+  aria-label="Workflow phases"
+>
+  @for (step of steps(); track step.key; let last = $last) {
+    <li
+      class="flex min-w-0 items-center"
+      [class.flex-1]="!last"
+      [attr.aria-current]="step.state === 'active' ? 'step' : null"
+      [attr.aria-label]="step.label"
+    >
+      @if (step.state === 'active') {
+        <span
+          class="flex shrink-0 items-center gap-2 rounded-full border border-orange-200 bg-orange-50 py-1 pr-3 pl-1.5 dark:border-orange-900 dark:bg-orange-950/40"
+        >
+          <span class="flex size-4 shrink-0 items-center justify-center rounded-full bg-primary">
+            <span class="size-1.5 rounded-full bg-white" aria-hidden="true"></span>
+          </span>
+          <span
+            class="text-xs font-semibold whitespace-nowrap text-orange-700 dark:text-orange-300"
+          >
+            {{ step.label }}
+          </span>
+          @if (activeDetail(); as detail) {
+            <span
+              class="hidden text-xs font-medium text-orange-600 tabular-nums sm:inline dark:text-orange-400"
+            >
+              {{ detail }}
+            </span>
+          }
+        </span>
+      } @else {
+        <span class="flex shrink-0 items-center gap-1.5">
+          @if (step.state === 'done') {
+            <span
+              class="flex size-4 shrink-0 items-center justify-center rounded-full bg-green-600 dark:bg-green-500"
+            >
+              <i class="pi pi-check text-[9px] text-white" aria-hidden="true"></i>
+            </span>
+          } @else {
+            <span
+              class="size-4 shrink-0 rounded-full border-2 border-surface-300 bg-surface-0 dark:border-surface-600 dark:bg-surface-950"
+              aria-hidden="true"
+            ></span>
+          }
+          <span
+            class="hidden text-xs font-medium whitespace-nowrap sm:inline"
+            [class.text-surface-700]="step.state === 'done'"
+            [class.dark:text-surface-200]="step.state === 'done'"
+            [class.text-surface-500]="step.state === 'upcoming'"
+            [class.dark:text-surface-400]="step.state === 'upcoming'"
+          >
+            {{ step.label }}
+          </span>
+        </span>
+      }
+      @if (!last) {
+        <span
+          class="mx-1.5 h-0.5 min-w-2 flex-1 rounded-full sm:mx-2.5 sm:min-w-3"
+          [class]="connectorClasses(step.state)"
+          aria-hidden="true"
+        ></span>
+      }
+    </li>
+  }
+</ol>

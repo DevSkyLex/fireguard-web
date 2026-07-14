@@ -13,6 +13,8 @@ type MfaVerificationPageTestApi = MfaVerificationPage & {
   handleOtpSubmit(values: { code: string; trustDevice: boolean }): void;
   handleOtpCancel(): Promise<void>;
   handleOtpResend(): void;
+  showResend: () => boolean;
+  mfaDestination: () => string | null;
 };
 
 describe('MfaVerificationPage', () => {
@@ -20,12 +22,17 @@ describe('MfaVerificationPage', () => {
     authenticated?: boolean;
     mfaToken?: string | null;
     returnUrl?: string | null;
+    mfaMethod?: string | null;
+    mfaDestination?: string | null;
   }) => {
     const mockAuthStore = {
       isAuthenticated: signal(options?.authenticated ?? false),
       isVerifyingMfa: signal(false),
       mfaToken: signal(options?.mfaToken ?? null),
+      mfaMethod: signal(options?.mfaMethod ?? null),
+      mfaDestination: signal(options?.mfaDestination ?? null),
       loginOperation: signal({ status: 'idle', data: null }),
+      loginCallState: signal({ status: 'idle', data: null }),
       mfaVerify: vi.fn(),
       clearMfaState: vi.fn(),
       mfaResend: vi.fn(),
@@ -126,5 +133,21 @@ describe('MfaVerificationPage', () => {
     page.handleOtpResend();
 
     expect(mockAuthStore.mfaResend).toHaveBeenCalledTimes(1);
+  });
+
+  it('should show resend for a non-totp MFA method', () => {
+    const { component } = setup({ mfaMethod: 'email', mfaDestination: 'j***e@example.com' });
+    const page = component as unknown as MfaVerificationPageTestApi;
+
+    expect(page.showResend()).toBe(true);
+    expect(page.mfaDestination()).toBe('j***e@example.com');
+  });
+
+  it('should hide resend and surface the authenticator app destination for totp', () => {
+    const { component } = setup({ mfaMethod: 'totp', mfaDestination: 'Authenticator App' });
+    const page = component as unknown as MfaVerificationPageTestApi;
+
+    expect(page.showResend()).toBe(false);
+    expect(page.mfaDestination()).toBe('Authenticator App');
   });
 });

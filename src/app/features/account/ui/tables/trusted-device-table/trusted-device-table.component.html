@@ -1,16 +1,6 @@
 <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
-<p-card
-  styleClass="flex h-full min-h-0 flex-col overflow-hidden border border-surface-200 dark:border-surface-800"
-  [pt]="{
-    body: { class: 'flex min-h-0 flex-1 flex-col p-0' },
-    content: { class: 'flex min-h-0 flex-1 flex-col p-0' },
-    header: {
-      class:
-        'flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800',
-    },
-  }"
->
+<p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
     <div class="flex flex-col">
       <h2 class="font-semibold" i18n="@@account.deviceTable.title">Trusted devices</h2>
@@ -68,7 +58,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th class="min-w-64" i18n="@@account.sessionTable.device">Device</th>
-          <th class="min-w-36" i18n="@@common.created">Created</th>
+          <th class="hidden min-w-36 md:table-cell" i18n="@@common.created">Created</th>
           <th class="min-w-36" i18n="@@account.deviceTable.lastUsed">Last used</th>
           <th class="min-w-36" i18n="@@account.deviceTable.expires">Expires</th>
           <th class="w-20"><span class="sr-only" i18n="@@common.actions">Actions</span></th>
@@ -84,7 +74,7 @@
                 <p-skeleton width="10rem" height="0.875rem" />
               </div>
             </td>
-            <td><p-skeleton width="8rem" height="0.875rem" /></td>
+            <td class="hidden md:table-cell"><p-skeleton width="8rem" height="0.875rem" /></td>
             <td><p-skeleton width="8rem" height="0.875rem" /></td>
             <td><p-skeleton width="8rem" height="0.875rem" /></td>
             <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
@@ -101,7 +91,7 @@
                 <p-skeleton width="10rem" height="0.875rem" />
               </div>
             </td>
-            <td><p-skeleton width="8rem" height="0.875rem" /></td>
+            <td class="hidden md:table-cell"><p-skeleton width="8rem" height="0.875rem" /></td>
             <td><p-skeleton width="8rem" height="0.875rem" /></td>
             <td><p-skeleton width="8rem" height="0.875rem" /></td>
             <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
@@ -121,7 +111,7 @@
                 </span>
               </div>
             </td>
-            <td>
+            <td class="hidden md:table-cell">
               <span class="text-surface-500 dark:text-surface-400">
                 {{ device.createdAt | date: 'medium' }}
               </span>

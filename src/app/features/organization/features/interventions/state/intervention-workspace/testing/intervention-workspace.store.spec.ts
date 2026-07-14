@@ -55,6 +55,7 @@ describe('InterventionWorkspaceStore offline field work', () => {
     createWorkItem: ReturnType<typeof vi.fn>;
     updateWorkItem: ReturnType<typeof vi.fn>;
     removeWorkItem: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
   };
   let mockOffline: {
     getWorkspace: ReturnType<typeof vi.fn>;
@@ -80,6 +81,7 @@ describe('InterventionWorkspaceStore offline field work', () => {
       createWorkItem: vi.fn(),
       updateWorkItem: vi.fn(),
       removeWorkItem: vi.fn().mockReturnValue(of(undefined)),
+      remove: vi.fn().mockReturnValue(of(undefined)),
     };
     mockOffline = {
       getWorkspace: vi.fn(),
@@ -288,6 +290,52 @@ describe('InterventionWorkspaceStore offline field work', () => {
     expect(mockService.removeWorkItem).not.toHaveBeenCalled();
     expect(store.workItems()).toHaveLength(1);
     expect(store.error()).toBe('Connect to the network to delete planned work items.');
+  });
+
+  it('deletes the intervention and dispatches a success toast', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    window.dispatchEvent(new Event('online'));
+    await vi.waitFor(() => expect(store.intervention()?.id).toBe('intervention-1'));
+
+    const dispatcher = TestBed.inject(Dispatcher);
+    const dispatchSpy = vi.spyOn(dispatcher, 'dispatch');
+
+    store.delete({ interventionId: intervention.id });
+
+    await vi.waitFor(() => expect(store.saving()).toBe(false));
+
+    expect(mockService.remove).toHaveBeenCalledWith('intervention-1', 3);
+    expect(store.error()).toBeNull();
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ type: '[Intervention Workspace Store] deleteSucceeded' }),
+    );
+  });
+
+  it('surfaces the 409 conflict detail when the intervention cannot be deleted', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    window.dispatchEvent(new Event('online'));
+    await vi.waitFor(() => expect(store.intervention()?.id).toBe('intervention-1'));
+
+    // `HydraApiService.handleError` already unwraps a structured API error
+    // before the observable errors, so the store receives the ApiError shape
+    // directly (not wrapped in an `HttpErrorResponse`).
+    mockService.remove.mockReturnValueOnce(
+      throwError(() => ({
+        '@id': '',
+        '@type': 'Error',
+        status: 409,
+        type: 'about:blank',
+        title: 'Conflict',
+        detail: 'Only draft or abandoned interventions can be deleted.',
+        instance: null,
+      })),
+    );
+
+    store.delete({ interventionId: intervention.id });
+
+    await vi.waitFor(() => expect(store.saving()).toBe(false));
+
+    expect(store.error()).toBe('Only draft or abandoned interventions can be deleted.');
   });
 
   it('does not expose cached intervention data after an authorization failure', async () => {

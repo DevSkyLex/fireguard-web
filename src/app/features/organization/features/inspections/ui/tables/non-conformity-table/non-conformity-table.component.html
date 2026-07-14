@@ -37,7 +37,7 @@
         <th i18n="@@nc.table.colDescription">Description</th>
         <th i18n="@@nc.table.colSeverity">Severity</th>
         <th i18n="@@nc.table.colStatus">Status</th>
-        <th i18n="@@nc.table.colDue">Due</th>
+        <th i18n="@@nc.table.colDue" class="hidden md:table-cell">Due</th>
         <th class="w-20"><span i18n="@@nc.table.srActions" class="sr-only">Actions</span></th>
       </tr>
     </ng-template>
@@ -47,7 +47,7 @@
           <td><p-skeleton width="14rem" /></td>
           <td><p-skeleton width="5rem" /></td>
           <td><p-skeleton width="7rem" /></td>
-          <td><p-skeleton width="7rem" /></td>
+          <td class="hidden md:table-cell"><p-skeleton width="7rem" /></td>
           <td><p-skeleton shape="circle" size="2rem" /></td>
         </tr>
       } @else {
@@ -83,7 +83,7 @@
               <app-tag [descriptor]="statusDescriptor(nonConformity.status)" />
             }
           </td>
-          <td>
+          <td class="hidden md:table-cell">
             {{ nonConformity.dueAt ? (nonConformity.dueAt | date: 'mediumDate') : noneLabel }}
           </td>
           <td class="text-right">

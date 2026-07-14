@@ -26,6 +26,10 @@ export const equipmentStoreEvents = eventGroup({
     commissionFailed: type<StoreFailureEventPayload>(),
     decommissionFailed: type<StoreFailureEventPayload>(),
     maintenanceFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when deleting equipment through the canonical resource fails. */
+    deleteFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when equipment is deleted through the canonical resource. */
+    deleteSucceeded: type<FeedbackEventPayload>(),
     attachmentsListFailed: type<StoreFailureEventPayload>(),
     addAttachmentFailed: type<StoreFailureEventPayload>(),
     deleteAttachmentFailed: type<StoreFailureEventPayload>(),

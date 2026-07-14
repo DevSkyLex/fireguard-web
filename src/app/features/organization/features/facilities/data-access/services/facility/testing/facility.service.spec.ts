@@ -314,6 +314,51 @@ describe('FacilityService', () => {
     });
   });
 
+  // ── remove ─────────────────────────────────────────────────────────────────
+
+  describe('remove', () => {
+    it('should resolve the canonical revision then send a DELETE with If-Match', () => {
+      service.remove(facilityId).subscribe();
+
+      const canonicalReq = httpMock.expectOne(`${mockEnv.apiUrl}/api/facilities/${facilityId}`);
+      expect(canonicalReq.request.method).toBe('GET');
+      canonicalReq.flush({ ...mockFacility, revision: 3 });
+
+      const deleteReq = httpMock.expectOne(`${mockEnv.apiUrl}/api/facilities/${facilityId}`);
+      expect(deleteReq.request.method).toBe('DELETE');
+      expect(deleteReq.request.headers.get('If-Match')).toBe('"revision-3"');
+      expect(deleteReq.request.withCredentials).toBe(true);
+      deleteReq.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    it('should surface a 409 conflict when the facility still has children', () => {
+      service.remove(facilityId).subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(409);
+          expect(error.detail).toContain('child facilities');
+        },
+      });
+
+      const canonicalReq = httpMock.expectOne(`${mockEnv.apiUrl}/api/facilities/${facilityId}`);
+      canonicalReq.flush({ ...mockFacility, revision: 1 });
+
+      const deleteReq = httpMock.expectOne(`${mockEnv.apiUrl}/api/facilities/${facilityId}`);
+      deleteReq.flush(
+        {
+          '@id': '',
+          '@type': 'Error',
+          status: 409,
+          type: 'about:blank',
+          title: 'Conflict',
+          detail:
+            'Cannot delete a facility that still has child facilities; move or remove them first.',
+          instance: null,
+        },
+        { status: 409, statusText: 'Conflict' },
+      );
+    });
+  });
+
   // ── move ───────────────────────────────────────────────────────────────────
 
   describe('move', () => {

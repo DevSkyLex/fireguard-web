@@ -21,8 +21,10 @@
       <app-facility-detail-header
         [facility]="facility"
         [canManage]="canManage()"
+        [deleting]="isDeleting()"
         (edit)="onEdit()"
         (move)="onOpenMoveDialog()"
+        (delete)="onConfirmDelete()"
       />
     }
   </section>

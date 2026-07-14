@@ -22,6 +22,7 @@ import {
   idleCallState,
   pendingCallState,
   successCallState,
+  successFeedback,
   toStoreError,
   toStoreFailureEventPayload,
 } from '@core/request-state';
@@ -731,6 +732,61 @@ export const InterventionWorkspaceStore = signalStore(
                       saving: false,
                       error: $localize`:@@intervention.workspace.workItemDeleteFailed:The work item could not be deleted.`,
                     }),
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /**
+         * Method delete
+         * @method delete
+         *
+         * @description
+         * Deletes the loaded intervention (`InterventionService.remove`). Only
+         * draft or abandoned interventions may be deleted; the API refuses
+         * any other status with a 409, whose RFC 7807 `detail` is surfaced
+         * verbatim. On success dispatches `deleteSucceeded` (toast) — the
+         * page listens and navigates away, since there is nothing left here
+         * to render once the component-scoped store is torn down.
+         *
+         * @access public
+         * @since 1.0.0
+         *
+         * @type {RxMethod<{ interventionId: string }>}
+         */
+        delete: rxMethod<{ interventionId: string }>(
+          pipe(
+            tap(() => patchState(store, { saving: true, error: null })),
+            switchMap(({ interventionId }) => {
+              const intervention = store.intervention();
+              if (!intervention) {
+                patchState(store, { saving: false });
+                return EMPTY;
+              }
+
+              return service.remove(interventionId, intervention.revision).pipe(
+                tap(() => {
+                  patchState(store, { saving: false });
+                  dispatcher.dispatch(
+                    interventionWorkspaceStoreEvents.deleteSucceeded(
+                      successFeedback($localize`:@@intervention.delete.toast:Intervention deleted`),
+                    ),
+                  );
+                }),
+                catchError((error: unknown) => {
+                  const storeError = toStoreError(error);
+                  patchState(store, {
+                    saving: false,
+                    error:
+                      storeError.code === 409
+                        ? (storeError.message ??
+                          $localize`:@@intervention.store.deleteConflict:Only draft or abandoned interventions can be deleted.`)
+                        : storeError.code === 403
+                          ? $localize`:@@intervention.store.deleteForbidden:You do not have permission to delete this intervention.`
+                          : $localize`:@@intervention.workspace.deleteFailed:The intervention could not be deleted.`,
+                  });
+                  return EMPTY;
                 }),
               );
             }),

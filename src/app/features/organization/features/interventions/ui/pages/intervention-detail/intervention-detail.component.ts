@@ -69,6 +69,7 @@ import {
 } from '@features/organization/features/interventions/state/intervention-planning-options';
 import {
   InterventionWorkspaceStore,
+  interventionWorkspaceStoreEvents,
   type InterventionWorkspaceStoreType,
 } from '@features/organization/features/interventions/state/intervention-workspace';
 import {
@@ -1029,6 +1030,29 @@ export class InterventionDetailPage {
   });
 
   /**
+   * Property canDeleteIntervention
+   * @readonly
+   *
+   * @description
+   * Whether the loaded intervention may be deleted: the backend only allows
+   * deleting a `draft` (requires plan capability) or `abandoned`
+   * (requires execute capability) intervention — every other status returns
+   * a 409 conflict, so the action is hidden rather than offered and rejected.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canDeleteIntervention: Signal<boolean> = computed<boolean>(() => {
+    const intervention = this.store.intervention();
+    if (!intervention) return false;
+    if (intervention.status === 'draft') return this.canPlan();
+    if (intervention.status === 'abandoned') return this.canExecute();
+    return false;
+  });
+
+  /**
    * Property canEditPlanning
    * @readonly
    *
@@ -1787,8 +1811,9 @@ export class InterventionDetailPage {
    * @readonly
    *
    * @description
-   * Top bar's secondary-actions menu: currently only "Abandon", surfaced
-   * when {@link canAbandon} holds.
+   * Top bar's secondary-actions menu: "Abandon" (surfaced when
+   * {@link canAbandon} holds) and "Delete" (surfaced when
+   * {@link canDeleteIntervention} holds — draft or abandoned only).
    *
    * @access protected
    * @since 3.0.0
@@ -1796,14 +1821,23 @@ export class InterventionDetailPage {
    * @type {Signal<MenuItem[]>}
    */
   protected readonly overflowMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
-    if (!this.canAbandon()) return [];
-    return [
-      {
+    const items: MenuItem[] = [];
+    if (this.canAbandon()) {
+      items.push({
         label: $localize`:@@intervention.abandon.action:Abandon intervention`,
         icon: 'pi pi-ban',
         command: (): void => this.confirmAbandon(),
-      },
-    ];
+      });
+    }
+    if (this.canDeleteIntervention()) {
+      items.push({
+        label: $localize`:@@intervention.delete.action:Delete intervention`,
+        icon: 'pi pi-trash',
+        styleClass: 'text-red-500',
+        command: (): void => this.confirmDeleteIntervention(),
+      });
+    }
+    return items;
   });
 
   /**
@@ -2021,6 +2055,13 @@ export class InterventionDetailPage {
       .on(interventionHeaderEvents.nextRequested)
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.navigateNext());
+    // The success toast is dispatched by the store itself; this listener only
+    // owns navigation, since the component-scoped workspace store is torn
+    // down once the page leaves.
+    this.events
+      .on(interventionWorkspaceStoreEvents.deleteSucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.navigateToList());
   }
   //#endregion
 
@@ -2240,6 +2281,36 @@ export class InterventionDetailPage {
       },
       accept: (): void =>
         void this.store.transition({ interventionId: this.interventionId(), status: 'abandoned' }),
+    });
+  }
+
+  /**
+   * Method confirmDeleteIntervention
+   * @method confirmDeleteIntervention
+   *
+   * @description
+   * Confirms then deletes the intervention through the workspace store. Only
+   * offered for draft or abandoned interventions (see
+   * {@link canDeleteIntervention}); the store's `deleteSucceeded` event
+   * navigates back to the list (see the constructor's event subscription).
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @return {void}
+   */
+  protected confirmDeleteIntervention(): void {
+    this.confirmationService.confirm({
+      header: $localize`:@@intervention.delete.header:Delete intervention`,
+      message: $localize`:@@intervention.delete.message:Delete this intervention? This cannot be undone.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: { label: $localize`:@@common.delete:Delete`, severity: 'danger' },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
+      accept: (): void => void this.store.delete({ interventionId: this.interventionId() }),
     });
   }
 

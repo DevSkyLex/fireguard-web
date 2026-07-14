@@ -35,6 +35,10 @@ export const facilityStoreEvents = eventGroup({
     restoreFailed: type<StoreFailureEventPayload>(),
     /** Dispatched when a facility is restored. */
     restoreSucceeded: type<FeedbackEventPayload>(),
+    /** Dispatched when deleting a facility fails. */
+    deleteFailed: type<StoreFailureEventPayload>(),
+    /** Dispatched when a facility is deleted. */
+    deleteSucceeded: type<FeedbackEventPayload>(),
     /** Dispatched when moving a facility fails. */
     moveFailed: type<StoreFailureEventPayload>(),
     /** Dispatched when a facility is moved. */

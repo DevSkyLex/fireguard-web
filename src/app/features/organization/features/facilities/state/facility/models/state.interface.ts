@@ -88,6 +88,9 @@ export interface FacilityState {
   /** Tracks the restore facility operation state. */
   readonly restoreCallState: CallState<FacilityOutput | null>;
 
+  /** Tracks the delete facility operation state. */
+  readonly deleteCallState: CallState;
+
   /**
    * Property moveOperation
    * @readonly

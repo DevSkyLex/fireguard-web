@@ -15,3 +15,13 @@ export type { NotificationOutput } from './notification/notification-output.inte
 export type { NotificationTypeOutput } from './notification/notification-type-output.interface';
 export type { NotificationFilter } from './notification/notification-filter.interface';
 export type { NotificationListOptions } from './notification/notification-list-options.interface';
+export type {
+  SetupTotpOutput,
+  ConfirmTotpInput,
+  ConfirmTotpOutput,
+  DisableTotpInput,
+  DisableTotpOutput,
+} from './totp';
+export type { MfaMethodTagDescriptor } from './mfa-method-tag/mfa-method-tag-descriptor.interface';
+export type { MfaMethodTagKind } from './mfa-method-tag/mfa-method-tag-kind.type';
+export { resolveMfaMethodTag } from './mfa-method-tag/mfa-method-tag.util';

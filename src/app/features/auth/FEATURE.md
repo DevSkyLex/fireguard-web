@@ -82,3 +82,8 @@ It exposes the access token, initialization state, authenticated-session validit
   step (`/auth/register/verify`) activates it and auto-logs the user in by
   applying the returned session to `AuthStore` (`applySession`), then routing to
   `/onboarding`. Registration never creates an organization — onboarding owns that.
+- A user with an active TOTP (authenticator app) enrollment (`features/account`) gets
+  `mfa_method: 'totp'` and `mfa_destination: 'Authenticator App'` at login. TOTP challenges have
+  no delivery counterpart to resend — the backend rejects `POST /api/auth/mfa/resend` for a
+  `totp` challenge with `totp_not_resendable` (400), so `MfaVerificationPage` hides the resend
+  affordance (`OtpVerificationForm`'s `showResend` input) whenever `AuthStore.mfaMethod() === 'totp'`.

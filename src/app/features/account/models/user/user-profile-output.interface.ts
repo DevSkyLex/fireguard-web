@@ -39,6 +39,9 @@ export interface UserProfileOutput extends HydraItem {
   /** Whether the email address has been verified. */
   readonly emailVerified: boolean;
 
+  /** Whether the authenticated user has an active TOTP (authenticator app) enrollment. */
+  readonly totpEnabled: boolean;
+
   /** Tenant identifier when the user belongs to one. */
   readonly tenantId: string | null;
 

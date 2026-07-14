@@ -16,13 +16,14 @@ import {
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
+import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
 import type { RequestOptions } from '@core/api';
 import type { TrustedDeviceOutput } from '@features/auth/models';
 import { EmptyState } from '@shared/components';
+import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
 
 /**
  * Component TrustedDeviceTable
@@ -186,6 +187,36 @@ export class TrustedDeviceTable {
   //#endregion
 
   //#region Properties
+  /**
+   * Property cardStyleClass
+   * @readonly
+   *
+   * @description
+   * Shared `styleClass` for the bordered, full-height card shell wrapping the
+   * table, identical across every feature entity table.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
+  protected readonly cardStyleClass: string = TABLE_CARD_SHELL_STYLE_CLASS;
+
+  /**
+   * Property cardPt
+   * @readonly
+   *
+   * @description
+   * Shared pass-through options for the table's card shell (body, content,
+   * header), identical across every feature entity table.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {CardPassThroughOptions}
+   */
+  protected readonly cardPt: CardPassThroughOptions = TABLE_CARD_SHELL_PT;
+
   /**
    * Property rows
    * @readonly

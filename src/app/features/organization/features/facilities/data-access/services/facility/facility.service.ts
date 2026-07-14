@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { EMPTY, expand, reduce, type Observable } from 'rxjs';
+import { EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
 import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection, OptionOutput } from '@core/api/models';
 import type {
@@ -366,6 +366,58 @@ export class FacilityService extends HydraApiService {
     return this.patch<Record<string, never>, FacilityOutput>(
       `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/restore`,
       {},
+    );
+  }
+
+  /**
+   * Method getCanonical
+   * @method getCanonical
+   *
+   * @description
+   * Retrieves the canonical facility representation (`GET /api/facilities/{id}`),
+   * the only surface that reports `revision`. Used internally by {@link remove}
+   * to resolve the current revision immediately before deleting, since the
+   * organization-scoped {@link get} never carries it.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {string} facilityId - The ID of the facility.
+   *
+   * @return {Observable<FacilityOutput>} An observable emitting the canonical facility.
+   */
+  private getCanonical(facilityId: string): Observable<FacilityOutput> {
+    return this.getOne<FacilityOutput>(`/api/facilities/${facilityId}`);
+  }
+
+  /**
+   * Method remove
+   * @method remove
+   *
+   * @description
+   * Deletes a facility through the canonical resource
+   * (`DELETE /api/facilities/{id}`). Backend semantics depend on the
+   * facility's record status: a **published** facility (the normal case for
+   * organization-scoped facilities shown by this app) is archived — the same
+   * outcome as {@link archive} — while a **draft** facility created by an
+   * in-progress intervention is hard-deleted, refused with a 409 if it still
+   * has child facilities. Resolves the current revision via {@link getCanonical}
+   * first to satisfy the required `If-Match` precondition.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} facilityId - The ID of the facility to delete.
+   *
+   * @return {Observable<void>} An observable completing once the facility is deleted.
+   */
+  public remove(facilityId: string): Observable<void> {
+    return this.getCanonical(facilityId).pipe(
+      switchMap((canonical) =>
+        this.delete(`/api/facilities/${facilityId}`, {
+          headers: { 'If-Match': `"revision-${canonical.revision}"` },
+        }),
+      ),
     );
   }
 

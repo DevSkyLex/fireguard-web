@@ -1,16 +1,6 @@
 <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
-<p-card
-  styleClass="flex h-full min-h-0 flex-col overflow-hidden border border-surface-200 dark:border-surface-800"
-  [pt]="{
-    body: { class: 'flex min-h-0 flex-1 flex-col p-0' },
-    content: { class: 'flex min-h-0 flex-1 flex-col p-0' },
-    header: {
-      class:
-        'flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800',
-    },
-  }"
->
+<p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
       <h2 class="font-semibold" i18n="@@equipment.table.title">Equipments</h2>
@@ -202,7 +192,7 @@
               <p-sortIcon field="type" />
             </div>
           </th>
-          <th class="min-w-36">
+          <th class="hidden min-w-36 md:table-cell">
             <div class="flex items-center gap-2">
               <span i18n="@@equipment.table.colSerial">Serial</span>
             </div>
@@ -218,7 +208,7 @@
               <p-sortIcon field="status" />
             </div>
           </th>
-          <th pSortableColumn="updatedAt" class="min-w-36">
+          <th pSortableColumn="updatedAt" class="hidden min-w-36 lg:table-cell">
             <div class="flex items-center gap-2">
               <span i18n="@@common.updated">Updated</span>
               <p-sortIcon field="updatedAt" />
@@ -245,10 +235,10 @@
                 </div>
               </div>
             </td>
-            <td><p-skeleton width="6rem" height="0.875rem" /></td>
+            <td class="hidden md:table-cell"><p-skeleton width="6rem" height="0.875rem" /></td>
             <td><p-skeleton width="8rem" height="0.875rem" /></td>
             <td><p-skeleton width="7rem" height="1.75rem" borderRadius="999px" /></td>
-            <td><p-skeleton width="6rem" height="0.875rem" /></td>
+            <td class="hidden lg:table-cell"><p-skeleton width="6rem" height="0.875rem" /></td>
             @if (canManageEquipment()) {
               <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
             }
@@ -282,7 +272,7 @@
               </div>
             </div>
           </td>
-          <td>
+          <td class="hidden md:table-cell">
             @if (equipment.serialNumber) {
               <code class="font-mono text-xs text-surface-500 dark:text-surface-400">
                 {{ equipment.serialNumber }}
@@ -304,7 +294,7 @@
           <td>
             <app-tag [descriptor]="getStatusOption(equipment.status)" />
           </td>
-          <td class="text-right">
+          <td class="hidden text-right lg:table-cell">
             <span class="text-surface-500 dark:text-surface-400">
               {{ equipment.updatedAt | date: 'mediumDate' }}
             </span>

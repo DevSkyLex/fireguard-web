@@ -40,6 +40,7 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/api';
+import { DATAVIEW_CARD_PT } from '@features/organization/constants';
 import type { OrganizationOutput } from '@features/organization/models';
 import { EmptyState } from '@shared/components';
 import { ORGANIZATION_DATAVIEW_LAYOUT_OPTIONS } from './options';
@@ -179,19 +180,7 @@ export class OrganizationDataview implements OnInit {
    *
    * @type {CardPassThroughOptions}
    */
-  protected readonly cardPt: CardPassThroughOptions = {
-    root: {
-      class:
-        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
-    },
-    body: {
-      class: 'p-0! flex flex-col flex-1',
-    },
-    footer: {
-      class:
-        'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 rounded-b-md',
-    },
-  };
+  protected readonly cardPt: CardPassThroughOptions = DATAVIEW_CARD_PT;
 
   /**
    * Property dataviewPt
@@ -209,15 +198,15 @@ export class OrganizationDataview implements OnInit {
   protected readonly dataviewPt: Signal<DataViewPassThroughOptions> = computed(
     (): DataViewPassThroughOptions => ({
       root: {
-        class: 'flex flex-col flex-1 min-h-0 bg-surface-0 dark:bg-surface-950',
+        class: 'flex flex-col flex-1 min-h-0 bg-surface-0 dark:bg-surface-900',
       },
       content: {
-        class: 'flex-1 min-h-0 overflow-auto bg-surface-0 dark:bg-surface-950',
+        class: 'flex-1 min-h-0 overflow-auto bg-surface-0 dark:bg-surface-900',
       },
       pcPaginator: {
         root: {
           class:
-            'rounded-none justify-end bg-surface-0 dark:bg-surface-950' +
+            'rounded-none justify-end bg-surface-0 dark:bg-surface-900' +
             (this.total() === 0 ? ' hidden' : ''),
         },
       },

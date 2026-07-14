@@ -1,16 +1,6 @@
 <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
-<p-card
-  styleClass="flex h-full min-h-0 flex-col overflow-hidden border border-surface-200 dark:border-surface-800"
-  [pt]="{
-    body: { class: 'flex min-h-0 flex-1 flex-col p-0' },
-    content: { class: 'flex min-h-0 flex-1 flex-col p-0' },
-    header: {
-      class:
-        'flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800',
-    },
-  }"
->
+<p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
       <h2 i18n="@@inspection.table.title" class="font-semibold">Inspections</h2>
@@ -215,12 +205,12 @@
               <p-sortIcon field="status" />
             </div>
           </th>
-          <th class="min-w-36">
+          <th class="hidden min-w-36 md:table-cell">
             <div class="flex items-center gap-2">
               <span i18n="@@inspection.table.colFindings">Findings</span>
             </div>
           </th>
-          <th pSortableColumn="performedAt" class="min-w-40">
+          <th pSortableColumn="performedAt" class="hidden min-w-40 lg:table-cell">
             <div class="flex items-center gap-2">
               <span i18n="@@inspection.table.colPerformed">Performed</span>
               <p-sortIcon field="performedAt" />
@@ -246,8 +236,8 @@
             </td>
             <td><p-skeleton width="5rem" height="1.75rem" borderRadius="999px" /></td>
             <td><p-skeleton width="6rem" height="1.75rem" borderRadius="999px" /></td>
-            <td><p-skeleton width="5rem" height="0.875rem" /></td>
-            <td><p-skeleton width="8rem" height="0.875rem" /></td>
+            <td class="hidden md:table-cell"><p-skeleton width="5rem" height="0.875rem" /></td>
+            <td class="hidden lg:table-cell"><p-skeleton width="8rem" height="0.875rem" /></td>
             <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
           </tr>
         }
@@ -283,12 +273,12 @@
           <td>
             <app-tag [descriptor]="getStatusOption(inspection.status)" />
           </td>
-          <td>
+          <td class="hidden md:table-cell">
             <span class="text-surface-600 dark:text-surface-400">
               {{ getFindingsLabel(inspection.nonConformitiesCount) }}
             </span>
           </td>
-          <td class="text-right">
+          <td class="hidden text-right lg:table-cell">
             <span class="text-surface-500 dark:text-surface-400">
               {{ inspection.performedAt | date: 'medium' }}
             </span>

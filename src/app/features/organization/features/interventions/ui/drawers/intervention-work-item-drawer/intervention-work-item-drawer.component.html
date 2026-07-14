@@ -1,6 +1,8 @@
 <p-drawer
   i18n-header="@@intervention.workItemDrawer.header"
   header="Add work item"
+  i18n-ariaCloseLabel="@@intervention.workItemDrawer.closeAria"
+  ariaCloseLabel="Close add work item"
   [visible]="visible()"
   (visibleChange)="visibleChange.emit($event)"
   [appendTo]="'body'"

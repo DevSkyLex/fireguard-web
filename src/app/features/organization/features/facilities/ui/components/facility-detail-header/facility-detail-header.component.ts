@@ -51,8 +51,10 @@ export class FacilityDetailHeader {
    * @type {InputSignal<FacilityOutput>}
    */
   public readonly facility: InputSignal<FacilityOutput> = input.required<FacilityOutput>();
-  /** Whether the active member can mutate the facility (gates Move/Edit). */
+  /** Whether the active member can mutate the facility (gates Move/Edit/Delete). */
   public readonly canManage: InputSignal<boolean> = input(false);
+  /** Whether a delete request is in flight (disables/loading-gates the Delete button). */
+  public readonly deleting: InputSignal<boolean> = input(false);
   //#endregion
 
   //#region Outputs
@@ -83,6 +85,21 @@ export class FacilityDetailHeader {
    * @type {OutputEmitterRef<void>}
    */
   public readonly move: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property delete
+   * @readonly
+   *
+   * @description
+   * Emitted when the user requests deleting the facility. The page confirms
+   * before dispatching the store mutation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly delete: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties

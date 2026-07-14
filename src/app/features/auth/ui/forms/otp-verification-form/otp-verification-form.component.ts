@@ -128,6 +128,25 @@ export class OtpVerificationForm {
    * @default null
    */
   public readonly resendIn: InputSignal<number | null> = input<number | null>(null);
+
+  /**
+   * Property showResend
+   * @input
+   * @readonly
+   *
+   * @description
+   * Whether to render the resend link and help text. Set to `false` for
+   * delivery methods that have no resend counterpart (e.g. an authenticator
+   * app code, which the backend rejects with `totp_not_resendable`).
+   *
+   * @access public
+   * @since 2.1.0
+   *
+   * @type {InputSignal<boolean>}
+   *
+   * @default true
+   */
+  public readonly showResend: InputSignal<boolean> = input<boolean>(true);
   //#endregion
 
   //#region Outputs

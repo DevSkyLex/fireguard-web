@@ -1,6 +1,8 @@
 <p-drawer
   i18n-header="@@intervention.discoveryDrawer.header"
   header="Add field discovery"
+  i18n-ariaCloseLabel="@@intervention.discoveryDrawer.closeAria"
+  ariaCloseLabel="Close add field discovery"
   [visible]="visible()"
   (visibleChange)="visibleChange.emit($event)"
   [appendTo]="'body'"

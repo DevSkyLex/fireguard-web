@@ -22,7 +22,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
+import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
@@ -47,6 +47,7 @@ import {
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { EmptyState, Tag, type TagDescriptor, type TagOption } from '@shared/components';
+import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
 import { buildTableFilterParams } from '@shared/utils';
 import { EQUIPMENT_FILTER_MAPPING } from './constants';
 
@@ -260,6 +261,36 @@ export class EquipmentTable implements OnInit {
   //#endregion
 
   //#region Properties
+  /**
+   * Property cardStyleClass
+   * @readonly
+   *
+   * @description
+   * Shared `styleClass` for the bordered, full-height card shell wrapping the
+   * table, identical across every feature entity table.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
+  protected readonly cardStyleClass: string = TABLE_CARD_SHELL_STYLE_CLASS;
+
+  /**
+   * Property cardPt
+   * @readonly
+   *
+   * @description
+   * Shared pass-through options for the table's card shell (body, content,
+   * header), identical across every feature entity table.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {CardPassThroughOptions}
+   */
+  protected readonly cardPt: CardPassThroughOptions = TABLE_CARD_SHELL_PT;
+
   /**
    * Property organizationPermissionService
    * @readonly

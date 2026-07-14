@@ -58,6 +58,8 @@
         [visible]="sidebarService.visible()"
         (visibleChange)="sidebarService.setVisible($event)"
         [blockScroll]="true"
+        i18n-ariaCloseLabel="@@layout.sidebar.closeAria"
+        ariaCloseLabel="Close navigation menu"
       >
         <ng-template #headless>
           <app-dashboard-layout-sidebar />

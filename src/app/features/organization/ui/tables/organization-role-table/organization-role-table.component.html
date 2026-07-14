@@ -11,7 +11,7 @@
     <ng-template pTemplate="header"
       ><tr>
         <th i18n="@@org.roleTable.name">Name</th>
-        <th i18n="@@org.roleTable.description">Description</th>
+        <th i18n="@@org.roleTable.description" class="hidden md:table-cell">Description</th>
         <th i18n="@@org.roleTable.permissions">Permissions</th>
         <th class="w-28"><span i18n="@@org.roleTable.actions" class="sr-only">Actions</span></th>
       </tr></ng-template
@@ -20,7 +20,7 @@
       @if (loading()) {
         <tr>
           <td><p-skeleton width="8rem" /></td>
-          <td><p-skeleton width="12rem" /></td>
+          <td class="hidden md:table-cell"><p-skeleton width="12rem" /></td>
           <td><p-skeleton width="14rem" /></td>
           <td><p-skeleton width="5rem" /></td>
         </tr>
@@ -32,7 +32,7 @@
               <span i18n="@@org.roleTable.system" class="text-xs text-surface-500">(system)</span>
             }
           </td>
-          <td>{{ role.description || noDescriptionLabel }}</td>
+          <td class="hidden md:table-cell">{{ role.description || noDescriptionLabel }}</td>
           <td class="max-w-xl text-sm text-surface-500">
             {{ role.permissions.join(', ') || noPermissionsLabel }}
           </td>

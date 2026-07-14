@@ -34,6 +34,9 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId/checklists`
 - `/organizations/:organizationId/members` (members + invitations; gated by `organization.members.*`)
 - `/organizations/:organizationId/team` (roles & permissions only; gated by `organization.roles.*`)
+- `/organizations/:organizationId/audit` (audit log; gated by the **global** `audit.read`
+  permission via `@features/account`'s `accountPermissionGuard`/`ACCOUNT_PERMISSION`, not
+  organization-member RBAC — see Cross-Feature Dependencies)
 - `/organizations/:organizationId/settings` (tabbed via `?tab=`: general & branding, subscription, usage, notifications, regional & formats, danger zone; gated by `organization.settings.write`)
 - `/organizations/invitations/accept` — public invitation landing page; the
   route is mounted at the **app root** (outside the auth-guarded dashboard
@@ -65,7 +68,9 @@ Primary stores:
 - `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map)
 - `OrganizationTeamStore` (component-scoped to the roles page; roles and the permission catalog)
 - `OrganizationInvitationAcceptStore` (page-scoped; loads the public invitation preview and accepts an invitation token)
-- `AuditStore`
+- `AuditStore` (page-scoped to the audit log page; `/api/audit-events` is a **platform-wide**
+  ledger with no `organizationId` filter, so its content is not scoped to the active organization
+  even though the route lives under `/organizations/:organizationId`)
 
 Primary services:
 
@@ -127,6 +132,12 @@ These contracts are the stable boundaries for approved consumers:
 - May expose current active member access to approved sibling features through `ORGANIZATION_MEMBER_ACCESS_PORT`.
 - May expose onboarding-approved setup workflows through `organization/setup`.
 - Must not move organization-owned widgets into layouts just because they render in the shell.
+- Consumes `@features/account`'s `accountPermissionGuard` and `ACCOUNT_PERMISSION` to gate the
+  `audit` route, and `UserPermissionService`/`ACCOUNT_PERMISSION` to gate the "Audit log" sidebar
+  entry in `OrganizationNavPanel`. `audit.read` is a global user permission, not an
+  `OrganizationPermissionName`, so it cannot be expressed through `ORGANIZATION_NAVIGATION_ITEMS`
+  (org-member-RBAC-only) — visibility is resolved directly against the account permission service
+  instead.
 
 ## Invariants
 

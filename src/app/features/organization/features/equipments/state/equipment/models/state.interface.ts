@@ -143,6 +143,20 @@ export interface EquipmentState {
    * @type {CallState<EquipmentOutput | null>}
    */
   readonly maintenanceCallState: CallState<EquipmentOutput | null>;
+
+  /**
+   * Property deleteCallState
+   * @readonly
+   *
+   * @description
+   * Loading / success / error state for deleting equipment through the
+   * canonical resource (`EquipmentService.remove`).
+   *
+   * @since 1.0.0
+   *
+   * @type {CallState}
+   */
+  readonly deleteCallState: CallState;
   //#endregion
 
   //#region Attachments

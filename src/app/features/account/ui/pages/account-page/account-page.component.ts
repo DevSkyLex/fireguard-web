@@ -10,6 +10,7 @@ import { MenuModule, type MenuPassThroughOptions } from 'primeng/menu';
 import { TagModule } from 'primeng/tag';
 import { map } from 'rxjs';
 import { NotificationStore, UserStore } from '@features/account/state';
+import { AccountMfaPanel } from '../../components/account-mfa-panel/account-mfa-panel.component';
 import { AccountNotificationsPanel } from '../../components/account-notifications-panel/account-notifications-panel.component';
 import { AccountProfilePanel } from '../../components/account-profile-panel/account-profile-panel.component';
 import { AccountSessionsPanel } from '../../components/account-sessions-panel/account-sessions-panel.component';
@@ -44,6 +45,7 @@ import { type AccountNavItem, type AccountTab } from './models';
     TagModule,
     AccountProfilePanel,
     AccountSettingsPanel,
+    AccountMfaPanel,
     AccountSessionsPanel,
     AccountTrustedDevicesPanel,
     AccountNotificationsPanel,

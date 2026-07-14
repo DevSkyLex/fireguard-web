@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { EMPTY, expand, reduce, type Observable } from 'rxjs';
+import { EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
 import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection, HydraItem, OptionOutput } from '@core/api/models';
 import type {
@@ -369,6 +369,58 @@ export class EquipmentService extends HydraApiService {
     return this.patch<UpdateEquipmentInput, EquipmentOutput>(
       this.equipmentPath(organizationId, equipmentId),
       input,
+    );
+  }
+
+  /**
+   * Method getCanonical
+   * @method getCanonical
+   *
+   * @description
+   * Retrieves the canonical equipment representation (`GET /api/equipment/{id}`),
+   * the only surface that reports `revision`. Used internally by {@link remove}
+   * to resolve the current revision immediately before deleting, since the
+   * organization-scoped {@link get} never carries it.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {string} equipmentId - The ID of the equipment.
+   *
+   * @return {Observable<EquipmentOutput>} An observable emitting the canonical equipment.
+   */
+  private getCanonical(equipmentId: string): Observable<EquipmentOutput> {
+    return this.getOne<EquipmentOutput>(`/api/equipment/${equipmentId}`);
+  }
+
+  /**
+   * Method remove
+   * @method remove
+   *
+   * @description
+   * Deletes an equipment through the canonical resource
+   * (`DELETE /api/equipment/{id}`). A **published** equipment (the normal
+   * case for organization-scoped equipment shown by this app) is
+   * decommissioned server-side — the same terminal outcome as
+   * {@link decommission} — while a **draft** equipment created by an
+   * in-progress intervention is hard-deleted. Resolves the current revision
+   * via {@link getCanonical} first to satisfy the required `If-Match`
+   * precondition.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} equipmentId - The ID of the equipment to delete.
+   *
+   * @return {Observable<void>} An observable completing once the equipment is deleted.
+   */
+  public remove(equipmentId: string): Observable<void> {
+    return this.getCanonical(equipmentId).pipe(
+      switchMap((canonical) =>
+        this.delete(`/api/equipment/${equipmentId}`, {
+          headers: { 'If-Match': `"revision-${canonical.revision}"` },
+        }),
+      ),
     );
   }
 

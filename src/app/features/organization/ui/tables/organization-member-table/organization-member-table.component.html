@@ -110,7 +110,7 @@
           </th>
           <th i18n="@@org.memberTable.roles" class="min-w-48">Roles</th>
           <th i18n="@@org.memberTable.status" class="min-w-28">Status</th>
-          <th i18n="@@org.memberTable.joined" class="min-w-36">Joined</th>
+          <th i18n="@@org.memberTable.joined" class="hidden min-w-36 md:table-cell">Joined</th>
           <th class="w-20">
             <span i18n="@@org.memberTable.actions" class="sr-only">Actions</span>
           </th>
@@ -131,7 +131,7 @@
             </td>
             <td><p-skeleton width="8rem" height="1.25rem" borderRadius="999px" /></td>
             <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
-            <td><p-skeleton width="6rem" height="0.875rem" /></td>
+            <td class="hidden md:table-cell"><p-skeleton width="6rem" height="0.875rem" /></td>
             <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
           </tr>
         }
@@ -180,7 +180,7 @@
             </div>
           </td>
           <td><app-tag [descriptor]="memberStatusDescriptor(member)" /></td>
-          <td>
+          <td class="hidden md:table-cell">
             <span class="text-surface-600 dark:text-surface-300">{{
               member.joinedAt | date: 'mediumDate'
             }}</span>

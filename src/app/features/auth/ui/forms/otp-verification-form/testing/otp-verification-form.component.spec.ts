@@ -60,4 +60,8 @@ describe('OtpVerificationForm', () => {
 
     expect(emitSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('should default showResend to true', () => {
+    expect(component.showResend()).toBe(true);
+  });
 });

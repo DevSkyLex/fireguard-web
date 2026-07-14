@@ -1,4 +1,5 @@
 import type { Routes } from '@angular/router';
+import { ACCOUNT_PERMISSION, accountPermissionGuard } from '@features/account';
 import {
   organizationAccessGuard,
   organizationLandingGuard,
@@ -109,6 +110,30 @@ export const ORGANIZATION_ROUTES: Routes = [
         title: $localize`:@@route.team:Roles`,
         data: {
           breadcrumb: 'Roles',
+          preload: true,
+        },
+      },
+      {
+        /**
+         * Audit log entry point. Gated by the global `audit.read` permission
+         * (`@features/account`), not organization-member RBAC: audit access is a
+         * platform-wide capability that happens to be reachable from inside the
+         * organization shell rather than a per-organization member permission.
+         */
+        path: 'audit',
+        canActivate: [
+          accountPermissionGuard({
+            permissions: [ACCOUNT_PERMISSION.AUDIT_READ],
+            redirectTo: ['/organizations'],
+          }),
+        ],
+        loadComponent: () =>
+          import('./ui/pages/organization-audit-log/organization-audit-log.component').then(
+            (m) => m.OrganizationAuditLogPage,
+          ),
+        title: $localize`:@@route.audit:Audit log`,
+        data: {
+          breadcrumb: 'Audit log',
           preload: true,
         },
       },

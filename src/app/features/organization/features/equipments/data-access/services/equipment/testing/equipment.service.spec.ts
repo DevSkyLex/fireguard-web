@@ -278,6 +278,24 @@ describe('EquipmentService', () => {
     });
   });
 
+  // ── remove ─────────────────────────────────────────────────────────────────
+
+  describe('remove', () => {
+    it('should resolve the canonical revision then send a DELETE with If-Match', () => {
+      service.remove(equipmentId).subscribe();
+
+      const canonicalUrl = `${mockEnv.apiUrl}/api/equipment/${equipmentId}`;
+      const canonicalReq = httpMock.expectOne(canonicalUrl);
+      expect(canonicalReq.request.method).toBe('GET');
+      canonicalReq.flush({ ...mockEquipment, revision: 2 });
+
+      const deleteReq = httpMock.expectOne(canonicalUrl);
+      expect(deleteReq.request.method).toBe('DELETE');
+      expect(deleteReq.request.headers.get('If-Match')).toBe('"revision-2"');
+      deleteReq.flush(null, { status: 204, statusText: 'No Content' });
+    });
+  });
+
   // ── maintenance ────────────────────────────────────────────────────────────
 
   describe('maintenance', () => {

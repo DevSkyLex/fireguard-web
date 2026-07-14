@@ -24,7 +24,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th i18n="@@org.invTable.email" class="min-w-64 pl-5">Email</th>
-          <th i18n="@@org.invTable.roles" class="min-w-48">Roles</th>
+          <th i18n="@@org.invTable.roles" class="hidden min-w-48 md:table-cell">Roles</th>
           <th i18n="@@org.invTable.status" class="min-w-28">Status</th>
           <th i18n="@@org.invTable.expires" class="min-w-36">Expires</th>
           <th class="w-20"><span i18n="@@org.invTable.actions" class="sr-only">Actions</span></th>
@@ -35,7 +35,9 @@
         @for (_ of skeletonItems; track $index) {
           <tr>
             <td class="pl-5"><p-skeleton width="12rem" height="0.875rem" /></td>
-            <td><p-skeleton width="8rem" height="1.25rem" borderRadius="999px" /></td>
+            <td class="hidden md:table-cell">
+              <p-skeleton width="8rem" height="1.25rem" borderRadius="999px" />
+            </td>
             <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
             <td><p-skeleton width="6rem" height="0.875rem" /></td>
             <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
@@ -58,7 +60,7 @@
               }
             </span>
           </td>
-          <td>
+          <td class="hidden md:table-cell">
             <div class="flex flex-wrap gap-1.5">
               @for (roleId of invitation.roleIds; track roleId) {
                 <p-chip [label]="roleName(roleId)" styleClass="text-xs" />

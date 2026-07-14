@@ -37,7 +37,7 @@
         <th i18n="@@equipment.attach.colFile">File</th>
         <th i18n="@@equipment.attach.colType">Type</th>
         <th i18n="@@equipment.attach.colSize">Size</th>
-        <th i18n="@@equipment.attach.colUploaded">Uploaded</th>
+        <th i18n="@@equipment.attach.colUploaded" class="hidden md:table-cell">Uploaded</th>
         <th class="w-20"><span class="sr-only" i18n="@@common.actions">Actions</span></th>
       </tr>
     </ng-template>
@@ -47,7 +47,7 @@
           <td><p-skeleton width="12rem" /></td>
           <td><p-skeleton width="8rem" /></td>
           <td><p-skeleton width="4rem" /></td>
-          <td><p-skeleton width="8rem" /></td>
+          <td class="hidden md:table-cell"><p-skeleton width="8rem" /></td>
           <td><p-skeleton shape="circle" size="2rem" /></td>
         </tr>
       } @else {
@@ -71,7 +71,7 @@
           </td>
           <td>{{ attachment.mimeType }}</td>
           <td>{{ attachment.size / 1024 | number: '1.0-1' }} KB</td>
-          <td>{{ attachment.uploadedAt | date: 'medium' }}</td>
+          <td class="hidden md:table-cell">{{ attachment.uploadedAt | date: 'medium' }}</td>
           <td class="text-right">
             @if (canManage()) {
               <p-button

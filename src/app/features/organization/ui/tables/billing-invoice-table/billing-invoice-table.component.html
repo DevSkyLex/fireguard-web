@@ -29,7 +29,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th i18n="@@org.invoiceTable.colInvoice" class="min-w-64">Invoice</th>
-          <th i18n="@@org.invoiceTable.colDate" class="min-w-36">Date</th>
+          <th i18n="@@org.invoiceTable.colDate" class="hidden min-w-36 md:table-cell">Date</th>
           <th i18n="@@org.invoiceTable.colAmount" class="min-w-32">Amount</th>
           <th i18n="@@org.invoiceTable.colStatus" class="min-w-40">Status</th>
           <th class="w-20">
@@ -42,7 +42,7 @@
         @if (loading()) {
           <tr>
             <td><p-skeleton width="9rem" height="0.875rem" /></td>
-            <td><p-skeleton width="7rem" height="0.875rem" /></td>
+            <td class="hidden md:table-cell"><p-skeleton width="7rem" height="0.875rem" /></td>
             <td><p-skeleton width="5rem" height="0.875rem" /></td>
             <td><p-skeleton width="6rem" height="1.75rem" borderRadius="999px" /></td>
             <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
@@ -54,7 +54,7 @@
                 {{ invoice.number || invoice.id }}
               </span>
             </td>
-            <td>
+            <td class="hidden md:table-cell">
               <span class="text-surface-600 dark:text-surface-400">
                 {{ invoice.createdAt | date: 'mediumDate' }}
               </span>

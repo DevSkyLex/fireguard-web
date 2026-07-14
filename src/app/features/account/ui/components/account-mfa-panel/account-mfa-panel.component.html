@@ -1,0 +1,303 @@
+<div class="flex flex-col gap-4" data-testid="account-mfa-panel">
+  <div class="flex flex-col gap-1">
+    <span
+      class="text-sm font-medium text-surface-900 dark:text-surface-100"
+      i18n="@@account.mfa.title"
+      >Two-factor authentication</span
+    >
+    <p class="text-sm text-surface-500 dark:text-surface-400" i18n="@@account.mfa.subtitle">
+      Extra verification methods used when you sign in.
+    </p>
+  </div>
+
+  <!-- Email code — standing default sign-in verification method -->
+  <div
+    class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-surface-200 p-3 dark:border-surface-800"
+  >
+    <div class="flex items-center gap-3">
+      <i class="pi pi-envelope text-surface-500 dark:text-surface-400" aria-hidden="true"></i>
+      <div class="flex flex-col">
+        <span
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+          i18n="@@account.mfa.emailLabel"
+          >Email code</span
+        >
+        @if (totpEnabled()) {
+          <span
+            class="text-xs text-surface-500 dark:text-surface-400"
+            i18n="@@account.mfa.emailHintTotpActive"
+            data-testid="account-mfa-email-totp-note"
+            >Sign-in codes now come from your authenticator app instead.</span
+          >
+        } @else {
+          <span
+            class="text-xs text-surface-500 dark:text-surface-400"
+            i18n="@@account.mfa.emailHint"
+            >Used by default to verify sign-ins.</span
+          >
+        }
+      </div>
+    </div>
+    <app-tag [descriptor]="emailStatus" />
+  </div>
+
+  <!-- Authenticator app (TOTP) — full enrollment lifecycle -->
+  <div
+    class="flex flex-col gap-3 rounded-md border border-surface-200 p-3 dark:border-surface-800"
+    data-testid="account-mfa-totp-section"
+  >
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <i class="pi pi-mobile text-surface-500 dark:text-surface-400" aria-hidden="true"></i>
+        <div class="flex flex-col">
+          <span
+            class="text-sm font-medium text-surface-900 dark:text-surface-50"
+            i18n="@@account.mfa.totpLabel"
+            >Authenticator app</span
+          >
+          <span
+            class="text-xs text-surface-500 dark:text-surface-400"
+            i18n="@@account.mfa.totpHint"
+          >
+            Generate a time-based one-time code with an app like Google Authenticator or 1Password.
+          </span>
+        </div>
+      </div>
+
+      <app-tag [descriptor]="totpStatus()" data-testid="account-mfa-totp-status" />
+    </div>
+
+    @if (store.setupError(); as error) {
+      <p-message severity="error" [closable]="false" data-testid="account-mfa-setup-error">
+        @if (error.message; as message) {
+          {{ message }}
+        } @else {
+          <ng-container i18n="@@account.mfa.setupError"
+            >The authenticator key could not be generated.</ng-container
+          >
+        }
+      </p-message>
+    }
+
+    @if (totpEnabled()) {
+      <!-- Active: disable affordance requiring a valid current code -->
+      @if (!showDisableForm()) {
+        <div>
+          <p-button
+            type="button"
+            label="Disable"
+            i18n-label="@@account.mfa.disableButton"
+            icon="pi pi-times-circle"
+            severity="danger"
+            [outlined]="true"
+            data-testid="account-mfa-start-disable"
+            (onClick)="startDisable()"
+          />
+        </div>
+      } @else {
+        <form
+          class="flex flex-col gap-3"
+          data-testid="account-mfa-disable-form"
+          [formGroup]="disableForm"
+          (ngSubmit)="disable()"
+        >
+          <div class="flex flex-col gap-2">
+            <label
+              for="account-mfa-disable-code"
+              class="text-xs font-medium text-surface-700 dark:text-surface-300"
+              i18n="@@account.mfa.confirmCodeLabel"
+              >Verification code</label
+            >
+            <p-inputotp
+              inputId="account-mfa-disable-code"
+              [formControl]="disableCode"
+              [length]="6"
+              [integerOnly]="true"
+              data-testid="account-mfa-disable-code"
+            />
+            @if (disableCode.invalid && disableCode.touched) {
+              <p-message severity="error" variant="simple" i18n="@@account.mfa.codePatternHint"
+                >Enter the 6-digit code.</p-message
+              >
+            } @else if (disableErrorMessage(); as message) {
+              <p-message
+                severity="error"
+                variant="simple"
+                data-testid="account-mfa-disable-error"
+                >{{ message }}</p-message
+              >
+            }
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <p-button
+              type="submit"
+              label="Disable"
+              i18n-label="@@account.mfa.disableButton"
+              icon="pi pi-times-circle"
+              severity="danger"
+              [outlined]="true"
+              [loading]="store.isDisabling()"
+              [disabled]="disableCode.invalid || store.isDisabling()"
+              data-testid="account-mfa-confirm-disable"
+            />
+            <p-button
+              type="button"
+              label="Cancel"
+              i18n-label="@@common.cancel"
+              severity="secondary"
+              [text]="true"
+              [disabled]="store.isDisabling()"
+              (onClick)="cancelDisable()"
+            />
+          </div>
+        </form>
+      }
+    } @else if (store.setupResult(); as result) {
+      <!-- Pending confirmation: show the secret/URI preview and the confirm form -->
+      <div class="flex flex-col gap-3 sm:flex-row sm:gap-4">
+        <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+          <span
+            class="text-xs font-medium text-surface-700 dark:text-surface-300"
+            i18n="@@account.mfa.secretLabel"
+            >Manual entry key</span
+          >
+          <div
+            class="flex items-center gap-2 rounded-md border border-surface-200 bg-surface-50 p-2.5 dark:border-surface-700 dark:bg-surface-800"
+          >
+            <code
+              class="min-w-0 flex-1 truncate font-mono text-sm text-surface-800 dark:text-surface-100"
+              data-testid="account-mfa-secret"
+              >{{ groupedSecret() }}</code
+            >
+            <p-button
+              type="button"
+              icon="pi pi-copy"
+              severity="secondary"
+              [text]="true"
+              size="small"
+              ariaLabel="Copy setup key"
+              i18n-ariaLabel="@@account.mfa.copySecretAria"
+              [pt]="copyButtonPt"
+              (onClick)="copySecret()"
+            />
+          </div>
+        </div>
+
+        <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+          <span
+            class="text-xs font-medium text-surface-700 dark:text-surface-300"
+            i18n="@@account.mfa.uriLabel"
+            >Setup URI</span
+          >
+          <div
+            class="flex items-center gap-2 rounded-md border border-surface-200 bg-surface-50 p-2.5 dark:border-surface-700 dark:bg-surface-800"
+          >
+            <code
+              class="min-w-0 flex-1 truncate font-mono text-sm text-surface-800 dark:text-surface-100"
+              [title]="result.qrCodeUri"
+              data-testid="account-mfa-uri"
+              >{{ result.qrCodeUri }}</code
+            >
+            <p-button
+              type="button"
+              icon="pi pi-copy"
+              severity="secondary"
+              [text]="true"
+              size="small"
+              ariaLabel="Copy setup URI"
+              i18n-ariaLabel="@@account.mfa.copyUriAria"
+              [pt]="copyButtonPt"
+              (onClick)="copyUri()"
+            />
+          </div>
+        </div>
+      </div>
+
+      <p class="text-xs text-surface-500 dark:text-surface-400" i18n="@@account.mfa.qrNote">
+        A scannable QR code isn't available yet; enter this key manually, or paste the setup URI if
+        your app supports it.
+      </p>
+
+      <form
+        class="flex flex-col gap-3"
+        data-testid="account-mfa-confirm-form"
+        [formGroup]="confirmForm"
+        (ngSubmit)="confirm()"
+      >
+        <div class="flex flex-col gap-2">
+          <label
+            for="account-mfa-confirm-code"
+            class="text-xs font-medium text-surface-700 dark:text-surface-300"
+            i18n="@@account.mfa.confirmCodeLabel"
+            >Verification code</label
+          >
+          <p-inputotp
+            inputId="account-mfa-confirm-code"
+            [formControl]="confirmCode"
+            [length]="6"
+            [integerOnly]="true"
+            data-testid="account-mfa-confirm-code"
+          />
+          @if (confirmCode.invalid && confirmCode.touched) {
+            <p-message severity="error" variant="simple" i18n="@@account.mfa.codePatternHint"
+              >Enter the 6-digit code.</p-message
+            >
+          } @else if (confirmErrorMessage(); as message) {
+            <p-message severity="error" variant="simple" data-testid="account-mfa-confirm-error">{{
+              message
+            }}</p-message>
+          }
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <p-button
+            type="submit"
+            label="Confirm"
+            i18n-label="@@account.mfa.confirmButton"
+            icon="pi pi-check"
+            [loading]="store.isConfirming()"
+            [disabled]="confirmCode.invalid || store.isConfirming()"
+            data-testid="account-mfa-confirm"
+          />
+          <p-button
+            type="button"
+            label="Generate a new key"
+            i18n-label="@@account.mfa.regenerate"
+            icon="pi pi-refresh"
+            severity="secondary"
+            [outlined]="true"
+            [loading]="store.isSettingUp()"
+            [disabled]="store.isSettingUp() || store.isConfirming()"
+            data-testid="account-mfa-generate"
+            (onClick)="generate()"
+          />
+          <p-button
+            type="button"
+            label="Cancel"
+            i18n-label="@@common.cancel"
+            severity="secondary"
+            [text]="true"
+            [disabled]="store.isConfirming()"
+            data-testid="account-mfa-cancel-setup"
+            (onClick)="cancelSetup()"
+          />
+        </div>
+      </form>
+    } @else {
+      <!-- Not set up yet -->
+      <div>
+        <p-button
+          type="button"
+          label="Enable"
+          i18n-label="@@account.mfa.enable"
+          icon="pi pi-qrcode"
+          [loading]="store.isSettingUp()"
+          [disabled]="store.isSettingUp()"
+          data-testid="account-mfa-generate"
+          (onClick)="generate()"
+        />
+      </div>
+    }
+  </div>
+</div>

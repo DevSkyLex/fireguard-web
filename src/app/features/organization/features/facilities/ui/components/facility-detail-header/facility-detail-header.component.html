@@ -67,6 +67,16 @@
         size="small"
         (onClick)="edit.emit()"
       />
+      <p-button
+        i18n-label="@@common.delete"
+        label="Delete"
+        icon="pi pi-trash"
+        severity="danger"
+        [outlined]="true"
+        size="small"
+        [loading]="deleting()"
+        (onClick)="delete.emit()"
+      />
     </div>
   }
 </div>

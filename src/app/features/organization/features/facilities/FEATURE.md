@@ -94,9 +94,25 @@ Primary service:
 - Depends on organization route context from the parent organization feature.
 - May compose with sibling organization subfeatures in pages when the workflow requires it, but must not take ownership of their state.
 
+## Deletion
+
+The facility detail page exposes a **Delete** action (danger, confirm-gated,
+`FACILITIES_WRITE`) that calls `FacilityStore.remove` →
+`FacilityService.remove`, the canonical `DELETE /api/facilities/{id}`
+endpoint. Backend semantics depend on the facility's canonical record status
+(opaque to this app, which only ever creates `published` facilities through
+the organization-scoped endpoints): a published facility is **archived**
+server-side — the same outcome as the existing row-menu Archive action, so
+deleting simply removes it from active lists and it can still be restored —
+while a draft facility (created by an in-progress intervention) would be
+hard-deleted and refused with a 409 if it still has children. `remove()`
+resolves the current revision via a canonical `GET` first, since the
+organization-scoped read never carries `revision`, then sends the required
+`If-Match` precondition.
+
 ## Invariants
 
 - Facility routes remain organization-scoped.
 - Active facility state belongs to this subfeature.
-- Archived facilities can be restored; facilities are never deleted from the UI.
+- Archived facilities can be restored.
 - Facility resolvers and facility page orchestration belong here, not in the parent feature or layouts.

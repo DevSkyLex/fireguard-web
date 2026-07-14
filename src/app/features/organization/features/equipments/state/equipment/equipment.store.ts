@@ -67,6 +67,7 @@ const INITIAL_EQUIPMENT_STATE: EquipmentState = {
   commissionCallState: idleCallState(),
   decommissionCallState: idleCallState(),
   maintenanceCallState: idleCallState(),
+  deleteCallState: idleCallState(),
   totalAttachments: 0,
   attachmentsListCallState: idleCallState(),
   addAttachmentCallState: idleCallState(),
@@ -734,6 +735,63 @@ export const EquipmentStore = signalStore(
                     dispatcher.dispatch(
                       equipmentStoreEvents.decommissionFailed(
                         toStoreFailureEventPayload(storeError, 'Failed to decommission equipment'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method remove
+         * @method remove
+         *
+         * @description
+         * Deletes equipment through the canonical resource
+         * (`DELETE /api/equipment/{id}`, {@link EquipmentService.remove}).
+         * A published equipment (the normal case) is decommissioned
+         * server-side — the same terminal outcome as {@link decommission} —
+         * so the entity is dropped from this store's collection either way,
+         * since it leaves the active view. Uses `exhaustMap` to prevent
+         * concurrent submissions.
+         *
+         * Not wired to a detail-page UI action: `equipment-detail` already
+         * exposes the equivalent lifecycle action ({@link decommission}), so
+         * this method exists for data-access parity and future consumers
+         * (for example, a draft-equipment hard-delete flow inside an
+         * intervention) rather than a duplicate button.
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<{ organizationId: string; equipmentId: string }>}
+         */
+        remove: rxMethod<{ organizationId: string; equipmentId: string }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { deleteCallState: pendingCallState() });
+            }),
+            exhaustMap(({ equipmentId }) =>
+              equipmentService.remove(equipmentId).pipe(
+                tapResponse({
+                  next: (): void => {
+                    patchState(store, removeEntity(equipmentId, { collection: 'equipment' }), {
+                      totalEquipment: Math.max(0, store.totalEquipment() - 1),
+                      deleteCallState: successCallState(null),
+                    });
+                    dispatcher.dispatch(
+                      equipmentStoreEvents.deleteSucceeded(
+                        successFeedback($localize`:@@equipment.toast.deleted:Equipment deleted`),
+                      ),
+                    );
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { deleteCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      equipmentStoreEvents.deleteFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to delete equipment'),
                       ),
                     );
                   },

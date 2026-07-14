@@ -28,6 +28,7 @@ describe('UserStore', () => {
     avatarUrl: 'https://example.com/avatar.png',
     status: 'active',
     emailVerified: true,
+    totpEnabled: false,
     tenantId: 'tenant-1',
     createdAt: '2026-04-01T08:00:00+00:00',
     lastLoginAt: '2026-04-20T08:00:00+00:00',

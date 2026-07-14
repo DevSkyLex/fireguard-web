@@ -3,13 +3,18 @@ import { type IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angula
 import type { MenuItem } from 'primeng/api';
 import { RippleModule } from 'primeng/ripple';
 import { OrganizationOutput } from '@app/features/organization/models';
+import { ACCOUNT_PERMISSION, UserPermissionService } from '@features/account';
 import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
   type OrganizationContextPort,
   type OrganizationMemberAccessPort,
 } from '@features/organization';
-import { buildOrganizationNavigationSections } from '@features/organization/navigation';
+import {
+  buildOrganizationNavigationSections,
+  ORGANIZATION_NAVIGATION_GROUPS,
+  type OrganizationNavigationGroup,
+} from '@features/organization/navigation';
 import { getOrganizationInitials } from '@features/organization/utils';
 import { OrganizationQuotaMeters } from '../organization-quota-meters/organization-quota-meters.component';
 
@@ -71,6 +76,25 @@ export class OrganizationNavPanel {
     inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT);
 
   /**
+   * Property userPermissionService
+   * @readonly
+   *
+   * @description
+   * Account-owned global permission helper. The audit log destination is
+   * gated by the global `audit.read` permission rather than organization
+   * member RBAC, so it cannot be expressed as an `OrganizationNavigationItem`
+   * (whose `permissions` are typed to `OrganizationPermissionName`). This
+   * service resolves visibility for that one item instead.
+   *
+   * @access private
+   * @since 1.3.0
+   *
+   * @type {UserPermissionService}
+   */
+  private readonly userPermissionService: UserPermissionService =
+    inject<UserPermissionService>(UserPermissionService);
+
+  /**
    * Property selectedOrganization
    * @readonly
    *
@@ -109,8 +133,13 @@ export class OrganizationNavPanel {
       this.organizationMemberAccess.permissions(),
     );
     const prefix: string = `/organizations/${organization.id}`;
+    const sections: MenuItem[] = buildOrganizationNavigationSections(prefix, grantedPermissions);
 
-    return buildOrganizationNavigationSections(prefix, grantedPermissions);
+    if (!this.userPermissionService.hasPermission(ACCOUNT_PERMISSION.AUDIT_READ)) {
+      return sections;
+    }
+
+    return this.withAuditNavigationItem(sections, prefix);
   });
 
   /**
@@ -153,6 +182,56 @@ export class OrganizationNavPanel {
   //#endregion
 
   //#region Methods
+  /**
+   * Method withAuditNavigationItem
+   * @method withAuditNavigationItem
+   *
+   * @description
+   * Appends the audit log destination to the "Administration" section,
+   * creating that section when no organization-permission-gated item is
+   * currently visible in it.
+   *
+   * @access private
+   * @since 1.3.0
+   *
+   * @param {MenuItem[]} sections - Sections built from organization-member permissions.
+   * @param {string} prefix - Active organization route prefix.
+   *
+   * @returns {MenuItem[]} Sections including the audit log destination.
+   */
+  private withAuditNavigationItem(sections: MenuItem[], prefix: string): MenuItem[] {
+    const auditItem: MenuItem = {
+      id: 'audit',
+      label: $localize`:@@org.nav.audit:Audit log`,
+      icon: 'pi pi-history',
+      routerLink: `${prefix}/audit`,
+    };
+
+    const administrationIndex: number = sections.findIndex(
+      (section: MenuItem): boolean => section.id === 'administration',
+    );
+
+    if (administrationIndex === -1) {
+      const group: OrganizationNavigationGroup | undefined = ORGANIZATION_NAVIGATION_GROUPS.find(
+        (candidate: OrganizationNavigationGroup): boolean => candidate.id === 'administration',
+      );
+
+      return [
+        ...sections,
+        { id: 'administration', label: group?.label ?? '', expanded: true, items: [auditItem] },
+      ];
+    }
+
+    const updatedSections: MenuItem[] = [...sections];
+    const administrationSection: MenuItem = updatedSections[administrationIndex];
+    updatedSections[administrationIndex] = {
+      ...administrationSection,
+      items: [...(administrationSection.items ?? []), auditItem],
+    };
+
+    return updatedSections;
+  }
+
   /**
    * Method orgInitials
    * @method orgInitials

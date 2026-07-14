@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
+import { UserPermissionService } from '@features/account';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
@@ -40,6 +41,7 @@ describe('OrganizationNavPanel', () => {
       ORGANIZATION_PERMISSION.INSPECTION_READ,
     ]),
   };
+  const mockUserPermissionService = { hasPermission: vi.fn(() => false) };
 
   beforeEach(() => {
     installMatchMediaMock();
@@ -50,6 +52,7 @@ describe('OrganizationNavPanel', () => {
       ORGANIZATION_PERMISSION.EQUIPMENT_READ,
       ORGANIZATION_PERMISSION.INSPECTION_READ,
     ]);
+    mockUserPermissionService.hasPermission.mockReturnValue(false);
 
     TestBed.configureTestingModule({
       imports: [OrganizationNavPanel],
@@ -57,6 +60,7 @@ describe('OrganizationNavPanel', () => {
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationContext },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
         { provide: OrganizationQuotaStore, useValue: { items: signal([]) } },
+        { provide: UserPermissionService, useValue: mockUserPermissionService },
         provideRouter([
           { path: '', component: DummyRouteComponent },
           { path: 'organizations/:organizationId', component: DummyRouteComponent },
@@ -135,6 +139,25 @@ describe('OrganizationNavPanel', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('No organization navigation available.');
+  });
+
+  it('should not display Audit log when the global audit.read permission is missing', () => {
+    mockUserPermissionService.hasPermission.mockReturnValue(false);
+
+    const fixture = TestBed.createComponent(OrganizationNavPanel);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Audit log');
+  });
+
+  it('should display Audit log when the global audit.read permission is granted', () => {
+    mockUserPermissionService.hasPermission.mockReturnValue(true);
+    mockOrganizationMemberAccess.permissions.set([]);
+
+    const fixture = TestBed.createComponent(OrganizationNavPanel);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Audit log');
   });
 
   it('should use the active organization id in navigation routerLinks', () => {

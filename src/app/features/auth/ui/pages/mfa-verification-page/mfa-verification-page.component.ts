@@ -150,6 +150,42 @@ export class MfaVerificationPage {
     const loginOp = this.authStore.loginCallState();
     return loginOp.data?.mfa_resend_in ?? null;
   });
+
+  /**
+   * Computed mfaDestination
+   * @readonly
+   *
+   * @description
+   * Masked destination (or method label, e.g. "Authenticator App" for TOTP)
+   * where the verification code can be found, as reported by the backend.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly mfaDestination: Signal<string | null> = computed(() =>
+    this.authStore.mfaDestination(),
+  );
+
+  /**
+   * Computed showResend
+   * @readonly
+   *
+   * @description
+   * Whether the resend affordance should be shown. TOTP codes are generated
+   * locally by the authenticator app, so there is nothing to resend — the
+   * backend rejects a resend attempt for a `totp` challenge with
+   * `totp_not_resendable`.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly showResend: Signal<boolean> = computed(
+    () => this.authStore.mfaMethod() !== 'totp',
+  );
   //#endregion
 
   //#region Constructor

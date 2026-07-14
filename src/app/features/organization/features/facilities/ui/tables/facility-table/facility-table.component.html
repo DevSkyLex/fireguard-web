@@ -1,16 +1,6 @@
 <p-menu #rowMenu [model]="rowMenuItems()" [popup]="true" appendTo="body" />
 
-<p-card
-  styleClass="flex h-full min-h-0 flex-col overflow-hidden border border-surface-200 dark:border-surface-800"
-  [pt]="{
-    body: { class: 'flex min-h-0 flex-1 flex-col p-0' },
-    content: { class: 'flex min-h-0 flex-1 flex-col p-0' },
-    header: {
-      class:
-        'flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800',
-    },
-  }"
->
+<p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
       <h2 i18n="@@facility.table.title" class="font-semibold">Facilities</h2>
@@ -45,8 +35,14 @@
       <p-popover #filterPopover>
         <div class="flex w-72 flex-col gap-4">
           <div class="flex flex-col gap-1.5">
-            <label i18n="@@facility.table.colType" class="text-sm font-medium">Type</label>
+            <label
+              for="facility-filter-type"
+              i18n="@@facility.table.colType"
+              class="text-sm font-medium"
+              >Type</label
+            >
             <p-select
+              inputId="facility-filter-type"
               [options]="typeOptions"
               [formControl]="typeControl"
               optionLabel="label"
@@ -76,8 +72,11 @@
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label i18n="@@common.status" class="text-sm font-medium">Status</label>
+            <label for="facility-filter-status" i18n="@@common.status" class="text-sm font-medium"
+              >Status</label
+            >
             <p-select
+              inputId="facility-filter-status"
               [options]="statusOptions"
               [formControl]="statusControl"
               optionLabel="label"
@@ -101,9 +100,15 @@
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label i18n="@@facility.table.colCode" class="text-sm font-medium">Code</label>
+            <label
+              for="facility-filter-code"
+              i18n="@@facility.table.colCode"
+              class="text-sm font-medium"
+              >Code</label
+            >
             <input
               pInputText
+              id="facility-filter-code"
               type="text"
               pSize="small"
               i18n-placeholder="@@facility.table.colCode"
@@ -207,18 +212,18 @@
               <p-tableHeaderCheckbox />
             </th>
           }
-          <th pSortableColumn="name" class="min-w-72">
+          <th pSortableColumn="name" class="min-w-56 sm:min-w-72">
             <div class="flex items-center gap-2">
               <span i18n="@@facility.table.colFacility">Facility</span>
               <p-sortIcon field="name" />
             </div>
           </th>
-          <th class="min-w-32">
+          <th class="hidden min-w-32 md:table-cell">
             <div class="flex items-center gap-2">
               <span i18n="@@facility.table.colCode">Code</span>
             </div>
           </th>
-          <th pSortableColumn="type" class="min-w-36">
+          <th pSortableColumn="type" class="hidden min-w-36 sm:table-cell">
             <div class="flex items-center gap-2">
               <span i18n="@@facility.table.colType">Type</span>
               <p-sortIcon field="type" />
@@ -230,12 +235,12 @@
               <p-sortIcon field="status" />
             </div>
           </th>
-          <th class="min-w-36">
+          <th class="hidden min-w-36 md:table-cell">
             <div class="flex items-center gap-2">
               <span i18n="@@facility.table.colHierarchy">Hierarchy</span>
             </div>
           </th>
-          <th pSortableColumn="updatedAt" class="min-w-36">
+          <th pSortableColumn="updatedAt" class="hidden min-w-36 lg:table-cell">
             <div class="flex items-center gap-2">
               <span i18n="@@facility.table.colUpdated">Updated</span>
               <p-sortIcon field="updatedAt" />
@@ -264,11 +269,11 @@
                 </div>
               </div>
             </td>
-            <td><p-skeleton width="5rem" height="0.875rem" /></td>
-            <td><p-skeleton width="5rem" height="0.875rem" /></td>
+            <td class="hidden md:table-cell"><p-skeleton width="5rem" height="0.875rem" /></td>
+            <td class="hidden sm:table-cell"><p-skeleton width="5rem" height="0.875rem" /></td>
             <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
-            <td><p-skeleton width="6rem" height="0.875rem" /></td>
-            <td><p-skeleton width="6rem" height="0.875rem" /></td>
+            <td class="hidden md:table-cell"><p-skeleton width="6rem" height="0.875rem" /></td>
+            <td class="hidden lg:table-cell"><p-skeleton width="6rem" height="0.875rem" /></td>
             <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
           </tr>
         }
@@ -299,14 +304,14 @@
                   {{ facility.name }}
                 </button>
                 @if (facility.address) {
-                  <span class="truncate text-xs text-surface-500">
+                  <span class="truncate text-xs text-surface-500 dark:text-surface-400">
                     {{ facility.address }}
                   </span>
                 }
               </div>
             </div>
           </td>
-          <td>
+          <td class="hidden md:table-cell">
             @if (facility.code) {
               <code class="font-mono text-xs text-surface-500 dark:text-surface-400">
                 {{ facility.code }}
@@ -315,7 +320,7 @@
               <span class="text-surface-300 dark:text-surface-600">-</span>
             }
           </td>
-          <td>
+          <td class="hidden sm:table-cell">
             <span class="text-surface-600 dark:text-surface-400">
               {{ facility.type }}
             </span>
@@ -323,7 +328,7 @@
           <td>
             <app-tag [descriptor]="getStatusOption(facility.status)" />
           </td>
-          <td>
+          <td class="hidden md:table-cell">
             <span class="inline-flex items-center gap-1.5 text-surface-600 dark:text-surface-400">
               <i
                 [class]="
@@ -336,7 +341,7 @@
               {{ getChildrenLabel(facility) }}
             </span>
           </td>
-          <td class="text-right">
+          <td class="hidden text-right lg:table-cell">
             <span class="text-surface-500 dark:text-surface-400">
               {{ facility.updatedAt | date: 'mediumDate' }}
             </span>

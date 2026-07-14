@@ -26,8 +26,7 @@ This subfeature does not own top-level organization context or inspection workfl
 - `/organizations/:organizationId/equipments/:equipmentId`
 - `/organizations/:organizationId/equipments/:equipmentId/edit`
 
-Equipment detail routes resolve active equipment context before rendering. Equipment removal is
-not exposed because the API has no delete endpoint.
+Equipment detail routes resolve active equipment context before rendering.
 
 ## State and Data Access
 
@@ -45,6 +44,21 @@ Primary service:
 - Depends on organization route context from the parent feature.
 - May be referenced by other organization subfeatures, but equipment ownership stays local to this subfeature.
 - Publishes the canonical `EQUIPMENT_TYPE_OPTIONS` through the feature public API (`index.ts`); the onboarding `create-equipment-form` consumes it so the equipment type catalog is not duplicated.
+
+## Deletion (data-access only, no duplicate UI)
+
+`EquipmentService.remove` / `EquipmentStore.remove` call the canonical
+`DELETE /api/equipment/{id}` endpoint (resolving the current revision via a
+canonical `GET` first, since the organization-scoped read never carries
+`revision`). For a published equipment — the only state reachable from this
+app's org-scoped pages — the backend outcome is **decommissioned**, which is
+exactly what the equipment-detail header's existing, non-deprecated
+**Decommission** action already does through a different endpoint. To avoid
+shipping two buttons with an identical outcome and permission gate, the
+canonical `remove()` path is **not** wired to a second detail-page action; it
+exists for data-access parity and future consumers (for example, a
+draft-equipment hard-delete flow inside an intervention). If a genuinely
+distinct "delete" outcome is ever needed here, revisit this decision.
 
 ## Invariants
 

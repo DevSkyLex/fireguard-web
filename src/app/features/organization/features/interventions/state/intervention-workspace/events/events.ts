@@ -1,6 +1,6 @@
 import { type } from '@ngrx/signals';
 import { eventGroup } from '@ngrx/signals/events';
-import type { StoreFailureEventPayload } from '@core/request-state';
+import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/request-state';
 
 /**
  * Constant interventionWorkspaceStoreEvents
@@ -9,7 +9,9 @@ import type { StoreFailureEventPayload } from '@core/request-state';
  * @description
  * Component-scoped intervention workspace store events. `commentAddFailed` is
  * dispatched when posting a comment fails (including the offline guard) so
- * the app-wide feedback listener can surface a toast; the rest of the
+ * the app-wide feedback listener can surface a toast; `deleteSucceeded` is
+ * dispatched when the intervention is deleted so the toast fires and the page
+ * can navigate away before the store is torn down. The rest of the
  * workspace's mutations still report failures through the inline `error`
  * field.
  *
@@ -20,5 +22,6 @@ export const interventionWorkspaceStoreEvents = eventGroup({
   source: 'Intervention Workspace Store',
   events: {
     commentAddFailed: type<StoreFailureEventPayload>(),
+    deleteSucceeded: type<FeedbackEventPayload>(),
   },
 });

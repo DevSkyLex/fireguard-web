@@ -4,6 +4,7 @@ import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import {
   addEntity,
+  removeEntity,
   setAllEntities,
   setEntity,
   upsertEntities,
@@ -86,6 +87,7 @@ const INITIAL_FACILITY_STATE: FacilityState = {
   updateCallState: idleCallState(),
   archiveCallState: idleCallState(),
   restoreCallState: idleCallState(),
+  deleteCallState: idleCallState(),
   moveCallState: idleCallState(),
   rootFacilityIds: [],
   totalRootFacilities: 0,
@@ -919,6 +921,56 @@ export const FacilityStore = signalStore(
                     dispatcher.dispatch(
                       facilityStoreEvents.restoreFailed(
                         toStoreFailureEventPayload(storeError, 'Failed to restore facility'),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method remove
+         * @method remove
+         *
+         * @description
+         * Deletes a facility through the canonical resource
+         * (`DELETE /api/facilities/{id}`, {@link FacilityService.remove}).
+         * A published facility (the normal case) is archived server-side —
+         * the same outcome as {@link archive} — so the entity is dropped from
+         * this store's collection either way, since it leaves the active
+         * view. Uses `exhaustMap` to prevent concurrent submissions.
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<{ facilityId: string }>}
+         */
+        remove: rxMethod<{ facilityId: string }>(
+          pipe(
+            tap((): void => {
+              patchState(store, { deleteCallState: pendingCallState() });
+            }),
+            exhaustMap(({ facilityId }) =>
+              facilityService.remove(facilityId).pipe(
+                tapResponse({
+                  next: (): void => {
+                    patchState(store, removeEntity(facilityId, { collection: 'facility' }), {
+                      totalFacilities: Math.max(0, store.totalFacilities() - 1),
+                      deleteCallState: successCallState(null),
+                    });
+                    dispatcher.dispatch(
+                      facilityStoreEvents.deleteSucceeded(
+                        successFeedback($localize`:@@facility.toast.deleted:Facility deleted`),
+                      ),
+                    );
+                  },
+                  error: (error: unknown): void => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { deleteCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      facilityStoreEvents.deleteFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to delete facility'),
                       ),
                     );
                   },

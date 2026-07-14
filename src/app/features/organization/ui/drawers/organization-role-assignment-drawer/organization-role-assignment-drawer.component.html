@@ -1,6 +1,8 @@
 <p-drawer
   i18n-header="@@org.members.assignDrawer"
   header="Assign role"
+  i18n-ariaCloseLabel="@@org.members.assignDrawerCloseAria"
+  ariaCloseLabel="Close assign role"
   [visible]="visible()"
   (visibleChange)="visibleChange.emit($event)"
   [appendTo]="'body'"

@@ -76,6 +76,15 @@ describe('InterventionService', () => {
     request.flush({});
   });
 
+  it('sends a DELETE with the current revision as If-Match when deleting an intervention', () => {
+    service.remove('intervention-1', 4).subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/interventions/intervention-1`);
+    expect(request.request.method).toBe('DELETE');
+    expect(request.request.headers.get('If-Match')).toBe('"revision-4"');
+    request.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
   it('preserves explicit null values in intervention patches', () => {
     service.update('intervention-1', { responsible: null, dueAt: null }, 7).subscribe();
 

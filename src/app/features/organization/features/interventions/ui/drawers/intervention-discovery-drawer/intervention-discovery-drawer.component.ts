@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import type { InputSignal, OutputEmitterRef, Signal } from '@angular/core';
 import { DrawerModule, type DrawerPassThroughOptions } from 'primeng/drawer';
+import { INTERVENTION_DRAWER_PT } from '@features/organization/features/interventions/constants';
 import type { SelectOption } from '@features/organization/features/interventions/models';
 import {
   InterventionDiscoveryForm,
@@ -147,9 +148,7 @@ export class InterventionDiscoveryDrawer {
    *
    * @type {DrawerPassThroughOptions}
    */
-  protected readonly drawerPt: DrawerPassThroughOptions = {
-    root: { class: '!w-full sm:!w-[34rem]' },
-  };
+  protected readonly drawerPt: DrawerPassThroughOptions = INTERVENTION_DRAWER_PT;
   //#endregion
 
   //#region Dismissal guard

@@ -436,6 +436,29 @@ export class InterventionService extends HydraApiService {
   }
 
   /**
+   * Method remove
+   * @method remove
+   *
+   * @description
+   * Deletes an intervention (`DELETE /api/interventions/{id}`). Only draft
+   * or abandoned interventions may be deleted — the API refuses any other
+   * status with a 409 conflict.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} interventionId - intervention Id value.
+   * @param {number} revision - Current intervention revision, required as the `If-Match` precondition.
+   *
+   * @return {Observable<void>} Result of the remove operation.
+   */
+  public remove(interventionId: string, revision: number): Observable<void> {
+    return this.delete(`/api/interventions/${interventionId}`, {
+      headers: { 'If-Match': `"revision-${revision}"` },
+    });
+  }
+
+  /**
    * Method listWorkItems
    * @method listWorkItems
    *

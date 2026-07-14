@@ -20,7 +20,9 @@ describe('EquipmentStore', () => {
   let mockEquipmentService: {
     list: ReturnType<typeof vi.fn>;
     listMaintenanceLogs: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
   };
+  let mockDispatcher: { dispatch: ReturnType<typeof vi.fn> };
 
   const equipment = { id: 'equipment-1', name: 'Generator' } as unknown as EquipmentOutput;
   const collection: HydraCollection<EquipmentOutput> = {
@@ -43,12 +45,14 @@ describe('EquipmentStore', () => {
           ],
         }),
       ),
+      remove: vi.fn().mockReturnValue(of(undefined)),
     };
+    mockDispatcher = { dispatch: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [
         EquipmentStore,
-        { provide: Dispatcher, useValue: { dispatch: vi.fn() } },
+        { provide: Dispatcher, useValue: mockDispatcher },
         { provide: EquipmentService, useValue: mockEquipmentService },
         {
           provide: ActiveEquipmentStore,
@@ -91,5 +95,23 @@ describe('EquipmentStore', () => {
     );
     expect(store.maintenanceLogs()).toHaveLength(1);
     expect(store.totalMaintenanceLogs()).toBe(1);
+  });
+
+  describe('remove', () => {
+    it('should delete the equipment, drop it from the collection and dispatch a success toast', async () => {
+      store.load({ organizationId: 'org-1' });
+      await flushEffects();
+      expect(store.equipmentList()).toEqual([equipment]);
+
+      store.remove({ organizationId: 'org-1', equipmentId: 'equipment-1' });
+      await flushEffects();
+
+      expect(mockEquipmentService.remove).toHaveBeenCalledWith('equipment-1');
+      expect(store.deleteCallState().status).toBe('success');
+      expect(store.equipmentList()).toEqual([]);
+      expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ type: '[Equipment Store] deleteSucceeded' }),
+      );
+    });
   });
 });

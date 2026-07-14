@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { EMPTY, of } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
@@ -99,10 +99,12 @@ describe('FacilityDetailPage', () => {
     childFacilityIdsByParent: signal<Record<string, readonly string[]>>({}),
     loadedParentIds: signal<readonly string[]>([]),
     loadingParentIds: signal<readonly string[]>([]),
+    deleteCallState: signal<{ status: string }>({ status: 'idle' }),
     ensureParentOptionsLoaded: vi.fn(),
     ensureChildFacilitiesLoaded: vi.fn(),
     ensureFacilityDescendantsLoaded: vi.fn(),
     move: vi.fn(),
+    remove: vi.fn(),
   };
 
   const mockActiveOrgStore = {
@@ -110,6 +112,7 @@ describe('FacilityDetailPage', () => {
   };
   const mockEvents = { on: vi.fn().mockReturnValue(EMPTY) };
   const mockMessageService = { add: vi.fn() };
+  const mockConfirmationService = { confirm: vi.fn() };
 
   const mockEquipmentService = {
     list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
@@ -146,6 +149,8 @@ describe('FacilityDetailPage', () => {
     mockFacilityStore.ensureChildFacilitiesLoaded.mockReset();
     mockFacilityStore.ensureFacilityDescendantsLoaded.mockReset();
     mockFacilityStore.move.mockReset();
+    mockFacilityStore.remove.mockReset();
+    mockFacilityStore.deleteCallState.set({ status: 'idle' });
     mockEquipmentStore.load.mockReset();
     mockInspectionStore.load.mockReset();
     mockActiveOrgStore.selectedOrganization.set(MOCK_ORG);
@@ -163,6 +168,7 @@ describe('FacilityDetailPage', () => {
         { provide: ActiveFacilityStore, useValue: mockActiveFacilityStore },
         { provide: Events, useValue: mockEvents },
         { provide: MessageService, useValue: mockMessageService },
+        { provide: ConfirmationService, useValue: mockConfirmationService },
         { provide: EquipmentService, useValue: mockEquipmentService },
         { provide: InspectionService, useValue: mockInspectionService },
         {
@@ -364,6 +370,7 @@ describe('FacilityDetailPage', () => {
         { provide: ActiveFacilityStore, useValue: mockActiveFacilityStore },
         { provide: Events, useValue: mockEvents },
         { provide: MessageService, useValue: mockMessageService },
+        { provide: ConfirmationService, useValue: mockConfirmationService },
         { provide: EquipmentService, useValue: mockEquipmentService },
         { provide: InspectionService, useValue: mockInspectionService },
         {

@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
@@ -19,6 +20,11 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TabsModule } from 'primeng/tabs';
 import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
 import { OrganizationPermissionService } from '@features/organization/access';
+import {
+  DETAIL_TAB_LIST_PT,
+  DETAIL_TAB_PANELS_PT,
+  DETAIL_TABS_PT,
+} from '@features/organization/constants';
 import type {
   FacilityOutput,
   MoveFacilityInput,
@@ -108,6 +114,10 @@ export class FacilityDetailPage {
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
+
+  /** PrimeNG confirmation service guarding the destructive delete action. */
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
 
   /** Permission helper gating facility write actions in the header. */
   private readonly organizationPermissionService: OrganizationPermissionService =
@@ -293,6 +303,23 @@ export class FacilityDetailPage {
   );
 
   /**
+   * Property isDeleting
+   * @readonly
+   *
+   * @description
+   * Whether a delete operation is currently in-flight. Drives the header's
+   * Delete button loading state.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isDeleting: Signal<boolean> = computed<boolean>(
+    () => this.store.deleteCallState().status === 'pending',
+  );
+
+  /**
    * Property descendantIds
    * @readonly
    *
@@ -371,26 +398,11 @@ export class FacilityDetailPage {
     return options;
   });
 
-  protected readonly tabsPt: TabsPassThrough = {
-    root: {
-      class: 'flex min-h-0 flex-1 flex-col',
-    },
-  };
+  protected readonly tabsPt: TabsPassThrough = DETAIL_TABS_PT;
 
-  protected readonly tabListPt: TabListPassThrough = {
-    content: {
-      class: 'rounded-t-md',
-    },
-    tabList: {
-      class: 'px-4',
-    },
-  };
+  protected readonly tabListPt: TabListPassThrough = DETAIL_TAB_LIST_PT;
 
-  protected readonly tabPanelsPt: TabPanelsPassThrough = {
-    root: {
-      class: 'min-h-0 flex-1 overflow-y-auto px-0 pt-6',
-    },
-  };
+  protected readonly tabPanelsPt: TabPanelsPassThrough = DETAIL_TAB_PANELS_PT;
   //#endregion
 
   //#region Constructor
@@ -413,6 +425,14 @@ export class FacilityDetailPage {
       const operation = this.store.moveCallState();
       if (operation.status === 'success' && operation.data) {
         this.showMoveDialog.set(false);
+      }
+    });
+
+    // Navigate back to the facility list once the delete succeeds — the
+    // success toast is dispatched centrally by the store's feedback event.
+    effect(() => {
+      if (this.store.deleteCallState().status === 'success') {
+        this.router.navigate(['..', '..'], { relativeTo: this.route });
       }
     });
 
@@ -537,6 +557,39 @@ export class FacilityDetailPage {
    */
   protected onMoveCancel(): void {
     this.showMoveDialog.set(false);
+  }
+
+  /**
+   * Method onConfirmDelete
+   * @method onConfirmDelete
+   *
+   * @description
+   * Confirms then deletes the active facility. Published facilities are
+   * archived server-side (mirrors the row-menu Archive action); the API
+   * refuses with a 409 — surfaced as an error toast — when the facility still
+   * has child facilities.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  protected onConfirmDelete(): void {
+    const facilityId: string | undefined = this.facility()?.id;
+    if (!facilityId) return;
+
+    this.confirmationService.confirm({
+      header: $localize`:@@facility.deleteConfirm.header:Delete facility`,
+      message: $localize`:@@facility.deleteConfirm.message:This facility will be archived and removed from active lists. It can be restored later from an archived-facility view.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: { label: $localize`:@@common.delete:Delete`, severity: 'danger' },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
+      accept: (): void => void this.store.remove({ facilityId }),
+    });
   }
 
   /**

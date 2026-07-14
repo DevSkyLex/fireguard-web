@@ -1,6 +1,8 @@
 <p-drawer
   i18n-header="@@intervention.skipDrawer.header"
   header="Skip work item"
+  i18n-ariaCloseLabel="@@intervention.skipDrawer.closeAria"
+  ariaCloseLabel="Close skip work item"
   [visible]="visible()"
   (visibleChange)="visibleChange.emit($event)"
   [appendTo]="'body'"

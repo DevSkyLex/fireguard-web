@@ -1,0 +1,196 @@
+<p-drawer
+  i18n-header="@@audit.detailDrawer.header"
+  header="Event details"
+  i18n-ariaCloseLabel="@@audit.detailDrawer.closeAria"
+  ariaCloseLabel="Close event details"
+  [visible]="visible()"
+  (visibleChange)="visibleChange.emit($event)"
+  [appendTo]="'body'"
+  [modal]="true"
+  [blockScroll]="true"
+  [dismissible]="true"
+  [closeOnEscape]="true"
+  position="right"
+  [pt]="drawerPt"
+>
+  <ng-template #content>
+    @if (auditEvent(); as event) {
+      <dl class="flex flex-col gap-4 text-sm">
+        <div class="flex flex-col gap-1">
+          <dt
+            class="text-xs font-medium text-surface-500 dark:text-surface-400"
+            i18n="@@audit.detailDrawer.action"
+          >
+            Action
+          </dt>
+          <dd class="font-mono text-surface-900 dark:text-surface-100">{{ event.action }}</dd>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1">
+            <dt
+              class="text-xs font-medium text-surface-500 dark:text-surface-400"
+              i18n="@@audit.detailDrawer.occurredAt"
+            >
+              Occurred at
+            </dt>
+            <dd class="text-surface-900 dark:text-surface-100">
+              {{ event.occurredAt | date: 'medium' }}
+            </dd>
+          </div>
+          <div class="flex flex-col gap-1">
+            <dt
+              class="text-xs font-medium text-surface-500 dark:text-surface-400"
+              i18n="@@audit.detailDrawer.recordedAt"
+            >
+              Recorded at
+            </dt>
+            <dd class="text-surface-900 dark:text-surface-100">
+              {{ event.recordedAt | date: 'medium' }}
+            </dd>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1">
+            <dt
+              class="text-xs font-medium text-surface-500 dark:text-surface-400"
+              i18n="@@audit.detailDrawer.actorType"
+            >
+              Actor type
+            </dt>
+            <dd class="text-surface-900 dark:text-surface-100">{{ event.actorType }}</dd>
+          </div>
+          <div class="flex flex-col gap-1">
+            <dt
+              class="text-xs font-medium text-surface-500 dark:text-surface-400"
+              i18n="@@audit.detailDrawer.actorId"
+            >
+              Actor
+            </dt>
+            <dd class="truncate text-surface-900 dark:text-surface-100">
+              {{ event.actorEmail ?? event.actorId ?? '—' }}
+            </dd>
+          </div>
+        </div>
+
+        @if (event.subjectType || event.subjectId) {
+          <div class="grid grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1">
+              <dt
+                class="text-xs font-medium text-surface-500 dark:text-surface-400"
+                i18n="@@audit.detailDrawer.subjectType"
+              >
+                Subject type
+              </dt>
+              <dd class="text-surface-900 dark:text-surface-100">{{ event.subjectType ?? '—' }}</dd>
+            </div>
+            <div class="flex flex-col gap-1">
+              <dt
+                class="text-xs font-medium text-surface-500 dark:text-surface-400"
+                i18n="@@audit.detailDrawer.subjectId"
+              >
+                Subject id
+              </dt>
+              <dd class="truncate text-surface-900 dark:text-surface-100">
+                {{ event.subjectId ?? '—' }}
+              </dd>
+            </div>
+          </div>
+        }
+
+        @if (event.clientId || event.tenantId) {
+          <div class="grid grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1">
+              <dt
+                class="text-xs font-medium text-surface-500 dark:text-surface-400"
+                i18n="@@audit.detailDrawer.clientId"
+              >
+                Client id
+              </dt>
+              <dd class="truncate text-surface-900 dark:text-surface-100">
+                {{ event.clientId ?? '—' }}
+              </dd>
+            </div>
+            <div class="flex flex-col gap-1">
+              <dt
+                class="text-xs font-medium text-surface-500 dark:text-surface-400"
+                i18n="@@audit.detailDrawer.tenantId"
+              >
+                Tenant id
+              </dt>
+              <dd class="truncate text-surface-900 dark:text-surface-100">
+                {{ event.tenantId ?? '—' }}
+              </dd>
+            </div>
+          </div>
+        }
+
+        @if (event.ipAddress || event.userAgent) {
+          <div class="flex flex-col gap-1">
+            <dt
+              class="text-xs font-medium text-surface-500 dark:text-surface-400"
+              i18n="@@audit.detailDrawer.ipAddress"
+            >
+              IP address
+            </dt>
+            <dd class="text-surface-900 dark:text-surface-100">{{ event.ipAddress ?? '—' }}</dd>
+          </div>
+          <div class="flex flex-col gap-1">
+            <dt
+              class="text-xs font-medium text-surface-500 dark:text-surface-400"
+              i18n="@@audit.detailDrawer.userAgent"
+            >
+              User agent
+            </dt>
+            <dd class="break-all text-surface-900 dark:text-surface-100">
+              {{ event.userAgent ?? '—' }}
+            </dd>
+          </div>
+        }
+
+        @if (hasMetadataEntries(event.metadata)) {
+          <div class="flex flex-col gap-1">
+            <dt
+              class="text-xs font-medium text-surface-500 dark:text-surface-400"
+              i18n="@@audit.detailDrawer.metadata"
+            >
+              Metadata
+            </dt>
+            <dd>
+              <pre
+                class="overflow-x-auto rounded-md bg-surface-100 p-3 text-xs text-surface-700 dark:bg-surface-800 dark:text-surface-300"
+                >{{ event.metadata | json }}</pre
+              >
+            </dd>
+          </div>
+        }
+
+        <div class="border-t border-surface-200 pt-4 dark:border-surface-800">
+          <div class="flex flex-col gap-1">
+            <dt
+              class="text-xs font-medium text-surface-500 dark:text-surface-400"
+              i18n="@@audit.detailDrawer.chain"
+            >
+              Chain
+            </dt>
+            <dd class="truncate font-mono text-xs text-surface-600 dark:text-surface-400">
+              #{{ event.sequence }} · {{ event.chainId }}
+            </dd>
+          </div>
+          <div class="mt-2 flex flex-col gap-1">
+            <dt
+              class="text-xs font-medium text-surface-500 dark:text-surface-400"
+              i18n="@@audit.detailDrawer.eventHash"
+            >
+              Event hash
+            </dt>
+            <dd class="truncate font-mono text-xs text-surface-600 dark:text-surface-400">
+              {{ event.eventHash }}
+            </dd>
+          </div>
+        </div>
+      </dl>
+    }
+  </ng-template>
+</p-drawer>

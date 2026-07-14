@@ -1,7 +1,7 @@
 import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import type { HydraCollection, OptionOutput } from '@core/api/models';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
@@ -19,7 +19,9 @@ describe('FacilityStore', () => {
     listChildren: ReturnType<typeof vi.fn>;
     listDescendants: ReturnType<typeof vi.fn>;
     listTypes: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
   };
+  let mockDispatcher: { dispatch: ReturnType<typeof vi.fn> };
 
   const facility = { id: 'facility-1', name: 'HQ' } as unknown as FacilityOutput;
   const collection: HydraCollection<FacilityOutput> = {
@@ -41,12 +43,14 @@ describe('FacilityStore', () => {
       listChildren: vi.fn().mockReturnValue(of(collection)),
       listDescendants: vi.fn().mockReturnValue(of(collection)),
       listTypes: vi.fn().mockReturnValue(of(typesCollection)),
+      remove: vi.fn().mockReturnValue(of(undefined)),
     };
+    mockDispatcher = { dispatch: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [
         FacilityStore,
-        { provide: Dispatcher, useValue: { dispatch: vi.fn() } },
+        { provide: Dispatcher, useValue: mockDispatcher },
         { provide: FacilityService, useValue: mockFacilityService },
         {
           provide: ActiveFacilityStore,
@@ -191,5 +195,53 @@ describe('FacilityStore', () => {
 
     expect(mockFacilityService.listDescendants).toHaveBeenCalledWith('org-1', 'facility-1');
     expect(store.loadedParentIds()).toContain('facility-1');
+  });
+
+  describe('remove', () => {
+    it('should delete the facility, drop it from the collection and dispatch a success toast', async () => {
+      store.load({ organizationId: 'org-1' });
+      await flushEffects();
+      expect(store.facilities()).toEqual([facility]);
+
+      store.remove({ facilityId: 'facility-1' });
+      await flushEffects();
+
+      expect(mockFacilityService.remove).toHaveBeenCalledWith('facility-1');
+      expect(store.deleteCallState().status).toBe('success');
+      expect(store.facilities()).toEqual([]);
+      expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ type: '[Facility Store] deleteSucceeded' }),
+      );
+    });
+
+    it('should surface a 409 conflict (facility still has children) as an error toast', async () => {
+      mockFacilityService.remove.mockReturnValueOnce(
+        throwError(() => ({
+          '@id': '',
+          '@type': 'Error',
+          status: 409,
+          type: 'about:blank',
+          title: 'Conflict',
+          detail:
+            'Cannot delete a facility that still has child facilities; move or remove them first.',
+          instance: null,
+        })),
+      );
+
+      store.remove({ facilityId: 'facility-1' });
+      await flushEffects();
+
+      expect(store.deleteCallState().status).toBe('error');
+      expect(store.deleteCallState().error?.code).toBe(409);
+      expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: '[Facility Store] deleteFailed',
+          payload: expect.objectContaining({
+            message:
+              'Cannot delete a facility that still has child facilities; move or remove them first.',
+          }),
+        }),
+      );
+    });
   });
 });

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { DataViewModule, type DataViewPassThroughOptions } from 'primeng/dataview';
 import { SkeletonModule } from 'primeng/skeleton';
+import { DATAVIEW_CARD_PT } from '@features/organization/constants';
 import {
   resolveEquipmentTag,
   type EquipmentOutput,
@@ -36,23 +37,11 @@ export class FacilityEquipmentDataview {
     ReadonlyArray<EquipmentOutput>
   >(() => this.store.equipment());
 
-  protected readonly cardPt: CardPassThroughOptions = {
-    root: {
-      class:
-        'h-full flex flex-col border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
-    },
-    body: {
-      class: 'p-0! flex flex-col flex-1',
-    },
-    footer: {
-      class:
-        'border-t border-surface-200 dark:border-surface-800 bg-surface-50/10 dark:bg-surface-900/10 rounded-b-md',
-    },
-  };
+  protected readonly cardPt: CardPassThroughOptions = DATAVIEW_CARD_PT;
 
   protected readonly dataviewPt: DataViewPassThroughOptions = {
-    root: { class: 'flex min-h-0 flex-1 flex-col bg-surface-0 dark:bg-surface-950' },
-    content: { class: 'flex-1 bg-surface-0 dark:bg-surface-950' },
+    root: { class: 'flex min-h-0 flex-1 flex-col bg-surface-0 dark:bg-surface-900' },
+    content: { class: 'flex-1 bg-surface-0 dark:bg-surface-900' },
     emptyMessage: { class: 'hidden' },
   };
 

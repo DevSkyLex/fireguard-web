@@ -174,11 +174,12 @@ export interface LoginOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Masked destination where the MFA code was sent.
+   * Masked destination where the MFA code was sent, or a method label when
+   * there is no delivery destination.
    * Examples:
    * - Email: "c*****t@v*************n.pro"
    * - Phone: "+336****5678"
-   * - TOTP: Not applicable (null)
+   * - TOTP: "Authenticator App" (code is generated locally, not delivered)
    *
    * @since 1.0.0
    *

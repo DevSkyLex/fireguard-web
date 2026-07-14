@@ -51,20 +51,25 @@ export const FireguardTheme: Preset = definePreset(Aura, {
       900: '{orange.900}',
       950: '{orange.950}',
     },
+    surface: {
+      0: '{zinc.0}',
+      50: '{zinc.50}',
+      100: '{zinc.100}',
+      200: '{zinc.200}',
+      300: '{zinc.300}',
+      400: '{zinc.400}',
+      500: '{zinc.500}',
+      600: '{zinc.600}',
+      700: '{zinc.700}',
+      800: '{zinc.800}',
+      900: '{zinc.900}',
+      950: '{zinc.950}',
+    },
     overlay: {
       select: { shadow: 'none' },
     },
     colorScheme: {
       light: {
-        // Dark ink on the vivid orange fill: white on orange.500/600 sits
-        // below the 4.5:1 AA floor for button-sized labels, ink clears it in
-        // both base and hover states (mirrors the dark scheme's ink-on-400).
-        primary: {
-          color: '{orange.600}',
-          contrastColor: '{surface.950}',
-          hoverColor: '{orange.500}',
-          activeColor: '{orange.700}',
-        },
         formField: { shadow: 'none' },
       },
       dark: {
@@ -128,15 +133,6 @@ export const FireguardTheme: Preset = definePreset(Aura, {
           },
         },
       },
-      css: `
-        /* Sorted header cells keep the plain header background. PrimeNG has no
-           token for the sorted-column header, so this single rule is the theme's
-           only raw CSS — every other appearance is a token. */
-        .p-datatable-thead > tr > th.p-datatable-column-sorted {
-          background: var(--p-datatable-header-cell-background) !important;
-          color: var(--p-datatable-header-cell-color) !important;
-        }
-      `,
     },
   },
 });

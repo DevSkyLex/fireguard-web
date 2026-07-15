@@ -3,12 +3,12 @@
     <!-- ─────────────────────────── Welcome ─────────────────────────── -->
     @case ('welcome') {
       <section class="flex flex-col">
-        <h2
-          class="text-2xl font-semibold text-balance text-surface-900 dark:text-surface-0"
+        <h1
+          class="text-2xl font-semibold tracking-tight text-balance text-surface-900 sm:text-[1.75rem] dark:text-surface-0"
           i18n="@@onboarding.wizard.welcome.title"
         >
           Let's set up your workspace
-        </h2>
+        </h1>
         <p
           class="mt-2 max-w-md text-sm leading-relaxed text-surface-500 dark:text-surface-400"
           i18n="@@onboarding.wizard.welcome.lead"
@@ -106,9 +106,11 @@
                 ></i>
               </div>
               <div class="flex min-w-0 flex-col gap-1">
-                <h2 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
+                <h1
+                  class="text-2xl font-semibold tracking-tight text-surface-900 sm:text-[1.75rem] dark:text-surface-0"
+                >
                   {{ presentation.label }}
-                </h2>
+                </h1>
                 <p
                   class="max-w-prose text-sm leading-relaxed text-pretty text-surface-500 dark:text-surface-400"
                 >
@@ -247,16 +249,16 @@
     @case ('completion') {
       <section class="flex flex-col">
         <span
-          class="grid h-12 w-12 content-center justify-items-center rounded-lg border border-surface-200 text-green-500 dark:border-surface-700"
+          class="grid h-12 w-12 content-center justify-items-center rounded-xl border border-primary-500/35 bg-primary-500/10 text-primary-600 dark:border-primary-500/40 dark:text-primary-400"
         >
           <i class="pi pi-check text-2xl"></i>
         </span>
-        <h2
-          class="mt-6 text-2xl font-semibold text-balance text-surface-900 dark:text-surface-0"
+        <h1
+          class="mt-6 text-2xl font-semibold tracking-tight text-balance text-surface-900 sm:text-[1.75rem] dark:text-surface-0"
           i18n="@@onboarding.wizard.done.title"
         >
           You're all set
-        </h2>
+        </h1>
         @if (store.targetOrganizationName(); as orgName) {
           <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">
             <ng-container i18n="@@onboarding.wizard.done.subtitleNamed"

@@ -23,6 +23,25 @@
         (maintenance)="maintenance()"
         (decommission)="decommission()"
       />
+    } @else {
+      <div class="flex flex-1 items-center justify-center p-4 sm:p-7">
+        <app-empty-state
+          icon="pi-compass"
+          i18n-title="@@equipment.detail.notFoundTitle"
+          title="Equipment not found"
+          i18n-description="@@equipment.detail.notFound"
+          description="Equipment not found or unavailable offline."
+        >
+          <p-button
+            i18n-label="@@equipment.detail.backToList"
+            label="Back to equipment"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="navigateBack()"
+          />
+        </app-empty-state>
+      </div>
     }
   </section>
 

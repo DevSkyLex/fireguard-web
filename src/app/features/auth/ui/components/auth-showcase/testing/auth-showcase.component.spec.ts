@@ -14,6 +14,6 @@ describe('AuthShowcase', () => {
 
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('Fireguard');
-    expect(text).toContain('The future of fire safety');
+    expect(text).toContain('Fire-safety compliance');
   });
 });

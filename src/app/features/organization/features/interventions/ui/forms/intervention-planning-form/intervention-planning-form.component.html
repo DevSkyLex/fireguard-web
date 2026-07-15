@@ -18,8 +18,10 @@
     </div>
 
     <div class="grid gap-5 md:grid-cols-2">
-      <label class="grid gap-1.5 text-sm md:col-span-2">
-        <span i18n="@@intervention.pf.priority" class="font-medium"
+      <label class="flex flex-col gap-2 md:col-span-2">
+        <span
+          i18n="@@intervention.pf.priority"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Priority <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <p-select
@@ -28,6 +30,7 @@
           optionLabel="label"
           optionValue="value"
           appendTo="body"
+          [invalid]="form.controls.priority.invalid && form.controls.priority.touched"
         >
           <ng-template #selectedItem let-option>
             @if (option) {
@@ -40,8 +43,10 @@
         </p-select>
       </label>
 
-      <label class="grid gap-1.5 text-sm">
-        <span i18n="@@intervention.pf.site" class="font-medium"
+      <label class="flex flex-col gap-2">
+        <span
+          i18n="@@intervention.pf.site"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Site <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <p-select
@@ -57,14 +62,16 @@
           [invalid]="form.controls.site.invalid && form.controls.site.touched"
         />
         @if (form.controls.site.invalid && form.controls.site.touched) {
-          <p-message severity="error" variant="simple">
+          <p-message severity="error" variant="simple" size="small">
             <span i18n="@@intervention.pf.siteRequired">A site is required.</span>
           </p-message>
         }
       </label>
 
-      <label class="grid gap-1.5 text-sm">
-        <span i18n="@@intervention.pf.responsible" class="font-medium"
+      <label class="flex flex-col gap-2">
+        <span
+          i18n="@@intervention.pf.responsible"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Responsible agent <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <p-select
@@ -90,7 +97,7 @@
           </ng-template>
         </p-select>
         @if (form.controls.responsible.invalid && form.controls.responsible.touched) {
-          <p-message severity="error" variant="simple">
+          <p-message severity="error" variant="simple" size="small">
             <span i18n="@@intervention.pf.responsibleRequired"
               >A responsible agent is required.</span
             >
@@ -98,8 +105,12 @@
         }
       </label>
 
-      <label class="grid gap-1.5 text-sm md:col-span-2">
-        <span i18n="@@intervention.pf.participants" class="font-medium">Participants</span>
+      <label class="flex flex-col gap-2 md:col-span-2">
+        <span
+          i18n="@@intervention.pf.participants"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+          >Participants</span
+        >
         <p-multiselect
           formControlName="participants"
           [options]="[...memberOptions()]"
@@ -118,8 +129,10 @@
         </p-multiselect>
       </label>
 
-      <label class="grid gap-1.5 text-sm">
-        <span i18n="@@intervention.pf.plannedStart" class="font-medium"
+      <label class="flex flex-col gap-2">
+        <span
+          i18n="@@intervention.pf.plannedStart"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Planned start <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <p-datepicker
@@ -137,14 +150,16 @@
           [invalid]="form.controls.plannedStartAt.invalid && form.controls.plannedStartAt.touched"
         />
         @if (form.controls.plannedStartAt.invalid && form.controls.plannedStartAt.touched) {
-          <p-message severity="error" variant="simple">
+          <p-message severity="error" variant="simple" size="small">
             <span i18n="@@intervention.pf.startRequired">A planned start is required.</span>
           </p-message>
         }
       </label>
 
-      <label class="grid gap-1.5 text-sm">
-        <span i18n="@@intervention.pf.due" class="font-medium"
+      <label class="flex flex-col gap-2">
+        <span
+          i18n="@@intervention.pf.due"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Due <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <p-datepicker
@@ -163,14 +178,18 @@
           [invalid]="form.controls.dueAt.invalid && form.controls.dueAt.touched"
         />
         @if (form.controls.dueAt.invalid && form.controls.dueAt.touched) {
-          <p-message severity="error" variant="simple">
+          <p-message severity="error" variant="simple" size="small">
             <span i18n="@@intervention.pf.dueRequired">A due date is required.</span>
           </p-message>
         }
       </label>
 
-      <label class="grid gap-1.5 text-sm md:col-span-2">
-        <span i18n="@@intervention.pf.description" class="font-medium">Description</span>
+      <label class="flex flex-col gap-2 md:col-span-2">
+        <span
+          i18n="@@intervention.pf.description"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+          >Description</span
+        >
         <textarea
           pTextarea
           formControlName="description"

@@ -95,7 +95,19 @@
         </div>
       </div>
 
-      <div class="min-h-0 flex-1">
+      <div class="relative min-h-0 flex-1">
+        @if (loading()) {
+          <div
+            class="absolute inset-0 z-10 grid place-items-center bg-surface-0/70 backdrop-blur-[1px] dark:bg-surface-900/70"
+            role="status"
+            aria-live="polite"
+          >
+            <span class="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
+              <i class="pi pi-spin pi-spinner text-xl"></i>
+              <span i18n="@@calendar.loading">Loading calendar…</span>
+            </span>
+          </div>
+        }
         @switch (activeView()) {
           @case ('month') {
             <app-calendar-month

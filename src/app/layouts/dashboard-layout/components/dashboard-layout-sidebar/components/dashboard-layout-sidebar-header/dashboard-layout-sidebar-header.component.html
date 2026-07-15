@@ -13,17 +13,17 @@
         i18n-aria-label="@@layout.sidebar.expand"
         (click)="sidebarService.togglePrimaryCollapsed()"
       >
-        <app-logo class="size-8" />
+        <app-logo class="size-8 text-surface-950 dark:text-surface-50" />
       </button>
     } @else {
-      <app-logo class="size-9" />
+      <app-logo class="size-9 text-surface-950 dark:text-surface-50" />
     }
   </div>
 } @else {
   <div
     class="flex h-16 items-center gap-2 border-b border-surface-200 px-5 dark:border-surface-800"
   >
-    <app-logo class="size-8 shrink-0" />
+    <app-logo class="size-8 shrink-0 text-surface-950 dark:text-surface-50" />
 
     <p
       class="min-w-0 flex-1 truncate text-[17px] font-bold tracking-tight text-surface-950 dark:text-surface-50"

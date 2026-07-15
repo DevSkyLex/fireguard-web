@@ -14,21 +14,31 @@
           <span class="text-sm font-medium text-surface-700 dark:text-surface-200">
             {{ row.label }}
           </span>
-          <span
-            class="text-sm tabular-nums"
-            [class.text-red-500]="row.atLimit"
-            [class.font-semibold]="row.atLimit"
-            [class.text-surface-500]="!row.atLimit"
-            [class.dark:text-surface-400]="!row.atLimit"
-          >
-            @if (row.limit === null) {
-              <ng-container i18n="@@org.usage.unlimited"
-                >{{ row.used }} used · Unlimited</ng-container
+          <span class="flex items-baseline gap-2">
+            @if (row.atLimit) {
+              <span
+                class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600 dark:bg-red-950 dark:text-red-400"
               >
-            } @else {
-              {{ row.used }} / {{ row.limit }}
-              <span class="text-surface-400 dark:text-surface-500">({{ row.percent }}%)</span>
+                <i class="pi pi-exclamation-triangle text-[0.65rem]" aria-hidden="true"></i>
+                <span i18n="@@org.usage.atLimit">At limit</span>
+              </span>
             }
+            <span
+              class="text-sm tabular-nums"
+              [class.text-red-500]="row.atLimit"
+              [class.font-semibold]="row.atLimit"
+              [class.text-surface-500]="!row.atLimit"
+              [class.dark:text-surface-400]="!row.atLimit"
+            >
+              @if (row.limit === null) {
+                <ng-container i18n="@@org.usage.unlimited"
+                  >{{ row.used }} used · Unlimited</ng-container
+                >
+              } @else {
+                {{ row.used }} / {{ row.limit }}
+                <span class="text-surface-400 dark:text-surface-500">({{ row.percent }}%)</span>
+              }
+            </span>
           </span>
         </div>
 

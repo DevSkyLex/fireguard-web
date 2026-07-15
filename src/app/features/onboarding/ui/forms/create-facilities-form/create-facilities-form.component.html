@@ -44,7 +44,7 @@
           <div class="flex flex-col gap-2">
             <label
               [for]="'facilityType-' + i"
-              class="text-sm font-medium text-surface-700 dark:text-surface-300"
+              class="text-sm font-medium text-surface-900 dark:text-surface-50"
               i18n="@@onboarding.facility.typeLabel"
             >
               Facility type
@@ -58,9 +58,10 @@
               fluid
               placeholder="Select a type"
               i18n-placeholder="@@onboarding.field.selectType"
+              [invalid]="row.controls['type'].invalid && row.controls['type'].touched"
             />
             @if (row.controls['type'].invalid && row.controls['type'].touched) {
-              <p-message severity="error" variant="simple">
+              <p-message severity="error" variant="simple" size="small">
                 <span i18n="@@onboarding.field.typeRequired">Type is required.</span>
               </p-message>
             }
@@ -70,7 +71,7 @@
           <div class="flex flex-col gap-2">
             <label
               [for]="'facilityName-' + i"
-              class="text-sm font-medium text-surface-700 dark:text-surface-300"
+              class="text-sm font-medium text-surface-900 dark:text-surface-50"
               i18n="@@onboarding.facility.nameLabel"
             >
               Facility name
@@ -82,9 +83,10 @@
               fluid
               placeholder="Paris HQ"
               i18n-placeholder="@@onboarding.facility.namePlaceholder"
+              [invalid]="row.controls['name'].invalid && row.controls['name'].touched"
             />
             @if (row.controls['name'].invalid && row.controls['name'].touched) {
-              <p-message severity="error" variant="simple">
+              <p-message severity="error" variant="simple" size="small">
                 @if (row.controls['name'].hasError('required')) {
                   <span i18n="@@onboarding.field.nameRequired">Name is required.</span>
                 }
@@ -100,11 +102,11 @@
         <div class="flex flex-col gap-2">
           <label
             [for]="'facilityAddress-' + i"
-            class="text-sm font-medium text-surface-700 dark:text-surface-300"
+            class="text-sm font-medium text-surface-900 dark:text-surface-50"
             i18n="@@onboarding.facility.addressLabel"
           >
             Address
-            <span class="font-normal text-surface-400">(optional)</span>
+            <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
           </label>
           <input
             pInputText
@@ -123,7 +125,7 @@
   @if (rows.length < maxRows) {
     <button
       type="button"
-      class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-surface-200 py-3 text-sm font-medium text-surface-400 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-surface-800 dark:text-surface-500"
+      class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-surface-200 py-3 text-sm font-medium text-surface-500 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-surface-800 dark:text-surface-400"
       [disabled]="loading()"
       (click)="addRow()"
     >

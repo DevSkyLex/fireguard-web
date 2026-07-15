@@ -25,13 +25,17 @@
       @if (store.isLoadingEquipment()) {
         <div class="space-y-2 p-4">
           @for (_ of items; track $index) {
-            <p-skeleton width="100%" height="2.5rem" />
+            <p-skeleton width="100%" height="3.5rem" />
           }
         </div>
       } @else if (items.length === 0) {
-        <div i18n="@@facility.equipDv.empty" class="px-4 py-8 text-sm text-surface-500">
-          No equipment assigned to this facility.
-        </div>
+        <app-empty-state
+          icon="pi-box"
+          i18n-title="@@facility.equipDv.emptyTitle"
+          title="No equipment"
+          i18n-description="@@facility.equipDv.empty"
+          description="No equipment assigned to this facility."
+        />
       } @else {
         <div class="divide-y divide-surface-100 dark:divide-surface-800">
           @for (item of items; track item.id) {

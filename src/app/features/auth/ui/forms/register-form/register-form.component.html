@@ -1,28 +1,26 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-6">
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-5">
   <!-- Name fields -->
-  <div class="flex flex-col gap-6 sm:flex-row sm:gap-4">
+  <div class="flex flex-col gap-5 sm:flex-row sm:gap-4">
     <div class="flex flex-1 flex-col gap-2">
       <label
         for="firstName"
-        class="text-sm font-medium text-surface-700 dark:text-surface-300"
+        class="text-sm font-medium text-surface-900 dark:text-surface-50"
         i18n="@@auth.register.firstName.label"
         >First name</label
       >
-      <p-iconfield>
-        <p-inputicon class="pi pi-user" />
-        <input
-          pInputText
-          id="firstName"
-          formControlName="firstName"
-          class="w-full"
-          autocomplete="given-name"
-          placeholder="Jane"
-          i18n-placeholder="@@auth.register.firstName.placeholder"
-        />
-      </p-iconfield>
+      <input
+        pInputText
+        id="firstName"
+        formControlName="firstName"
+        class="w-full"
+        autocomplete="given-name"
+        placeholder="Jane"
+        i18n-placeholder="@@auth.register.firstName.placeholder"
+        [invalid]="form.controls.firstName.invalid && form.controls.firstName.touched"
+      />
 
       @if (form.controls.firstName.invalid && form.controls.firstName.touched) {
-        <p-message severity="error" variant="simple">
+        <p-message severity="error" variant="simple" size="small">
           <span i18n="@@auth.register.firstName.required">First name is required.</span>
         </p-message>
       }
@@ -31,25 +29,23 @@
     <div class="flex flex-1 flex-col gap-2">
       <label
         for="lastName"
-        class="text-sm font-medium text-surface-700 dark:text-surface-300"
+        class="text-sm font-medium text-surface-900 dark:text-surface-50"
         i18n="@@auth.register.lastName.label"
         >Last name</label
       >
-      <p-iconfield>
-        <p-inputicon class="pi pi-user" />
-        <input
-          pInputText
-          id="lastName"
-          formControlName="lastName"
-          class="w-full"
-          autocomplete="family-name"
-          placeholder="Doe"
-          i18n-placeholder="@@auth.register.lastName.placeholder"
-        />
-      </p-iconfield>
+      <input
+        pInputText
+        id="lastName"
+        formControlName="lastName"
+        class="w-full"
+        autocomplete="family-name"
+        placeholder="Doe"
+        i18n-placeholder="@@auth.register.lastName.placeholder"
+        [invalid]="form.controls.lastName.invalid && form.controls.lastName.touched"
+      />
 
       @if (form.controls.lastName.invalid && form.controls.lastName.touched) {
-        <p-message severity="error" variant="simple">
+        <p-message severity="error" variant="simple" size="small">
           <span i18n="@@auth.register.lastName.required">Last name is required.</span>
         </p-message>
       }
@@ -60,24 +56,23 @@
   <div class="flex flex-col gap-2">
     <label
       for="email"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@auth.register.email.label"
       >Email address</label
     >
-    <p-iconfield>
-      <p-inputicon class="pi pi-envelope" />
-      <input
-        pInputText
-        id="email"
-        formControlName="email"
-        class="w-full"
-        autocomplete="email"
-        placeholder="example@email.com"
-      />
-    </p-iconfield>
+    <input
+      pInputText
+      id="email"
+      type="email"
+      formControlName="email"
+      class="w-full"
+      autocomplete="email"
+      placeholder="name@company.com"
+      [invalid]="form.controls.email.invalid && form.controls.email.touched"
+    />
 
     @if (form.controls.email.invalid && form.controls.email.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         @if (form.controls.email.hasError('required')) {
           <span i18n="@@auth.register.email.required">Email is required.</span>
         }
@@ -92,26 +87,24 @@
   <div class="flex flex-col gap-2">
     <label
       for="password"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@auth.register.password.label"
       >Password</label
     >
 
-    <p-iconfield>
-      <p-inputicon class="pi pi-lock" />
-      <p-password
-        id="password"
-        formControlName="password"
-        [toggleMask]="true"
-        class="w-full"
-        inputStyleClass="w-full"
-        autocomplete="new-password"
-        placeholder="••••••••"
-      />
-    </p-iconfield>
+    <p-password
+      id="password"
+      formControlName="password"
+      [toggleMask]="true"
+      [invalid]="form.controls.password.invalid && form.controls.password.touched"
+      class="w-full"
+      inputStyleClass="w-full"
+      autocomplete="new-password"
+      placeholder="••••••••"
+    />
 
     @if (form.controls.password.invalid && form.controls.password.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         @if (form.controls.password.hasError('required')) {
           <span i18n="@@auth.register.password.required">Password is required.</span>
         } @else {
@@ -128,32 +121,33 @@
   <div class="flex flex-col gap-2">
     <label
       for="confirmPassword"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@auth.register.confirmPassword.label"
       >Confirm password</label
     >
 
-    <p-iconfield>
-      <p-inputicon class="pi pi-lock" />
-      <p-password
-        id="confirmPassword"
-        formControlName="confirmPassword"
-        [feedback]="false"
-        [toggleMask]="true"
-        class="w-full"
-        inputStyleClass="w-full"
-        autocomplete="new-password"
-        placeholder="••••••••"
-      />
-    </p-iconfield>
+    <p-password
+      id="confirmPassword"
+      formControlName="confirmPassword"
+      [feedback]="false"
+      [toggleMask]="true"
+      [invalid]="
+        (form.controls.confirmPassword.invalid || form.hasError(matchFieldsErrorKey)) &&
+        form.controls.confirmPassword.touched
+      "
+      class="w-full"
+      inputStyleClass="w-full"
+      autocomplete="new-password"
+      placeholder="••••••••"
+    />
 
     @if (form.controls.confirmPassword.invalid && form.controls.confirmPassword.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         <span i18n="@@auth.register.confirmPassword.required">Please confirm your password.</span>
       </p-message>
     }
     @if (form.hasError(matchFieldsErrorKey) && form.controls.confirmPassword.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         <span i18n="@@auth.register.password.mismatch">Passwords do not match.</span>
       </p-message>
     }
@@ -166,6 +160,6 @@
     type="submit"
     [loading]="loading()"
     [disabled]="form.invalid || loading()"
-    styleClass="w-full"
+    styleClass="mt-1 w-full"
   />
 </form>

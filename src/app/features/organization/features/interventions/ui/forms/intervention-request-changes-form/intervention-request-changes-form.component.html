@@ -18,8 +18,10 @@
     </div>
 
     <div class="grid gap-5">
-      <label class="grid gap-1.5 text-sm">
-        <span i18n="@@intervention.rc.note" class="font-medium"
+      <label class="flex flex-col gap-2">
+        <span
+          i18n="@@intervention.rc.note"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Note <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <textarea
@@ -37,7 +39,7 @@
           "
         ></textarea>
         @if (form.controls.note.invalid && form.controls.note.touched) {
-          <p-message severity="error" variant="simple">
+          <p-message severity="error" variant="simple" size="small">
             <span id="intervention-rc-note-error" i18n="@@intervention.rc.noteRequired"
               >A note is required so the agent knows what to fix.</span
             >

@@ -210,4 +210,15 @@ describe('OrganizationMembersStore', () => {
     expect(store.loadError()).not.toBeNull();
     expect(store.isLoading()).toBe(false);
   });
+
+  it('flags only the invite mutation as quota-bearing so other 409s are not read as quota', async () => {
+    invitationService.invite.mockReturnValue(of(invitation('new')));
+    store.invite({ organizationId: 'org-1', input: { email: 'new@example.com', roleIds: [] } });
+    await flush();
+    expect(store.lastMutationCanExceedQuota()).toBe(true);
+
+    store.removeMember({ organizationId: 'org-1', memberId: 'm1' });
+    await flush();
+    expect(store.lastMutationCanExceedQuota()).toBe(false);
+  });
 });

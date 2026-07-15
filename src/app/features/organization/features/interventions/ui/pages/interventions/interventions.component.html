@@ -83,6 +83,28 @@
     </p-message>
   }
 
+  @if (view() === 'calendar' && calendarStore.loadError()) {
+    <p-message severity="error" class="block">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span class="flex items-center gap-2">
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+          <span i18n="@@intervention.calendar.errorText"
+            >The calendar could not be loaded. Check your connection and try again.</span
+          >
+        </span>
+        <p-button
+          i18n-label="@@intervention.calendar.retry"
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="danger"
+          [text]="true"
+          size="small"
+          (onClick)="retryCalendar()"
+        />
+      </div>
+    </p-message>
+  }
+
   @if (view() === 'calendar') {
     <div class="flex h-[38rem] min-h-0 flex-1 flex-col">
       <app-intervention-calendar
@@ -97,24 +119,48 @@
       />
     </div>
   } @else if (store.isLoadingInterventions() && store.isEmpty()) {
-    <div class="flex flex-col gap-6" aria-hidden="true">
-      @for (group of [1, 2]; track group) {
-        <div class="flex flex-col gap-2">
-          <p-skeleton width="9rem" height="1.75rem" borderRadius="0.5rem" />
-          @for (row of [1, 2, 3]; track row) {
-            <div
-              class="flex min-h-11 items-center gap-3 border-b border-surface-100 px-3 py-2 dark:border-surface-800/60"
-            >
-              <p-skeleton width="1.25rem" height="1rem" />
-              <p-skeleton width="3rem" height="0.8rem" />
-              <p-skeleton width="35%" height="0.9rem" />
-              <p-skeleton width="4rem" height="0.8rem" styleClass="ml-auto" />
-              <p-skeleton shape="circle" size="1.25rem" />
+    @if (view() === 'board') {
+      <div
+        class="flex min-h-0 flex-1 flex-col gap-4 sm:flex-row sm:items-stretch"
+        aria-hidden="true"
+      >
+        @for (column of [1, 2, 3, 4]; track column) {
+          <div
+            class="flex w-full flex-col gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3 sm:w-72 sm:shrink-0 dark:border-surface-800 dark:bg-surface-900/40"
+          >
+            <p-skeleton width="7rem" height="1.25rem" borderRadius="0.5rem" />
+            <app-skeleton
+              preset="card"
+              [count]="3"
+              label="Loading interventions"
+              i18n-label="@@intervention.board.loadingLabel"
+            />
+          </div>
+        }
+      </div>
+    } @else {
+      <div role="status">
+        <span class="sr-only" i18n="@@intervention.list.loadingLabel">Loading interventions</span>
+        <div class="flex flex-col gap-6" aria-hidden="true">
+          @for (group of [1, 2]; track group) {
+            <div class="flex flex-col gap-2">
+              <p-skeleton width="9rem" height="1.75rem" borderRadius="0.5rem" />
+              @for (row of [1, 2, 3]; track row) {
+                <div
+                  class="flex min-h-11 items-center gap-3 border-b border-surface-100 px-3 py-2 dark:border-surface-800/60"
+                >
+                  <p-skeleton width="1.25rem" height="1rem" />
+                  <p-skeleton width="3rem" height="0.8rem" />
+                  <p-skeleton width="35%" height="0.9rem" />
+                  <p-skeleton width="4rem" height="0.8rem" styleClass="ml-auto" />
+                  <p-skeleton shape="circle" size="1.25rem" />
+                </div>
+              }
             </div>
           }
         </div>
-      }
-    </div>
+      </div>
+    }
   } @else if (store.isEmpty() && !store.isLoadingInterventions()) {
     @if (hasSearch()) {
       <app-empty-state

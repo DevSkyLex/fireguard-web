@@ -100,15 +100,14 @@
             } @else {
               @for (organization of items; track organization.id) {
                 <div
-                  class="flex cursor-pointer items-center justify-between px-4 py-3 transition-colors hover:bg-surface-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-900/50"
-                  role="button"
-                  tabindex="0"
-                  [attr.aria-label]="openLabel(organization.name)"
-                  (click)="view.emit(organization)"
-                  (keydown.enter)="onItemKeydown($event, organization)"
-                  (keydown.space)="onItemKeydown($event, organization)"
+                  class="flex items-center justify-between px-4 py-3 transition-colors hover:bg-surface-50 dark:hover:bg-surface-900/50"
                 >
-                  <div class="flex min-w-0 items-center gap-3">
+                  <button
+                    type="button"
+                    class="flex min-w-0 flex-1 items-center gap-3 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    [attr.aria-label]="openLabel(organization.name)"
+                    (click)="view.emit(organization)"
+                  >
                     <p-avatar
                       [image]="organization.logoUrl || undefined"
                       [label]="
@@ -127,22 +126,10 @@
                         >/{{ organization.slug }}</span
                       >
                     </div>
-                  </div>
+                  </button>
 
                   <div class="ml-4 flex shrink-0 items-center gap-4">
-                    <p-tag
-                      class="rounded-full border border-surface-200 bg-surface-0 text-xs font-medium dark:border-surface-700 dark:bg-surface-900"
-                      severity="secondary"
-                    >
-                      <div class="flex items-center gap-1.5">
-                        <div
-                          class="h-1.5 w-1.5 rounded-full"
-                          [class.bg-green-500]="organization.status === 'active'"
-                          [class.bg-red-500]="organization.status === 'inactive'"
-                        ></div>
-                        <span>{{ organization.status | titlecase }}</span>
-                      </div>
-                    </p-tag>
+                    <app-tag [descriptor]="statusDescriptor(organization)" />
 
                     <span class="hidden text-sm text-surface-500 sm:block dark:text-surface-400">
                       {{ organization.createdAt | date: 'mediumDate' }}
@@ -189,13 +176,7 @@
             } @else {
               @for (organization of items; track organization.id) {
                 <div
-                  class="flex cursor-pointer flex-col gap-3 rounded-lg border border-surface-200 bg-surface-0 p-4 transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-800 dark:bg-surface-900"
-                  role="button"
-                  tabindex="0"
-                  [attr.aria-label]="openLabel(organization.name)"
-                  (click)="view.emit(organization)"
-                  (keydown.enter)="onItemKeydown($event, organization)"
-                  (keydown.space)="onItemKeydown($event, organization)"
+                  class="flex flex-col gap-3 rounded-lg border border-surface-200 bg-surface-0 p-4 transition-shadow hover:shadow-md dark:border-surface-800 dark:bg-surface-900"
                 >
                   <div class="flex items-start justify-between">
                     <p-avatar
@@ -218,28 +199,21 @@
                   </div>
 
                   <div class="flex min-w-0 flex-col gap-1">
-                    <span class="truncate font-semibold text-surface-900 dark:text-surface-100">
+                    <button
+                      type="button"
+                      class="truncate rounded-md text-left font-semibold text-surface-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-100"
+                      [attr.aria-label]="openLabel(organization.name)"
+                      (click)="view.emit(organization)"
+                    >
                       {{ organization.name }}
-                    </span>
+                    </button>
                     <span class="truncate text-xs text-surface-500">/{{ organization.slug }}</span>
                   </div>
 
                   <div
                     class="mt-auto flex items-center justify-between border-t border-surface-100 pt-2 dark:border-surface-800"
                   >
-                    <p-tag
-                      class="rounded-full border border-surface-200 bg-surface-0 text-xs font-medium dark:border-surface-700 dark:bg-surface-900"
-                      severity="secondary"
-                    >
-                      <div class="flex items-center gap-1.5">
-                        <div
-                          class="h-1.5 w-1.5 rounded-full"
-                          [class.bg-green-500]="organization.status === 'active'"
-                          [class.bg-red-500]="organization.status === 'inactive'"
-                        ></div>
-                        <span>{{ organization.status | titlecase }}</span>
-                      </div>
-                    </p-tag>
+                    <app-tag [descriptor]="statusDescriptor(organization)" />
                     <span class="text-xs text-surface-400">{{
                       organization.createdAt | date: 'mediumDate'
                     }}</span>

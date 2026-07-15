@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { SPLIT_LAYOUT_CONTENT_MAX_WIDTH } from '../../../slots/content';
 import { SplitLayoutContent } from '../split-layout-content.component';
 
 @Component({
@@ -32,21 +31,12 @@ describe('SplitLayoutContent', () => {
     expect(projected.textContent).toContain('Projected Content');
   });
 
-  it('applies the default content max-width', () => {
+  it('carries no width policy — the projected page owns its own max-width', () => {
     const fixture = TestBed.createComponent(HostComponent);
     fixture.detectChanges();
 
     const main = fixture.nativeElement.querySelector('main') as HTMLElement;
-    expect(main.classList).toContain('max-w-3xl');
-  });
-
-  it('applies a route-provided content max-width override', () => {
-    TestBed.overrideProvider(SPLIT_LAYOUT_CONTENT_MAX_WIDTH, { useValue: 'max-w-4xl' });
-    const fixture = TestBed.createComponent(HostComponent);
-    fixture.detectChanges();
-
-    const main = fixture.nativeElement.querySelector('main') as HTMLElement;
-    expect(main.classList).toContain('max-w-4xl');
-    expect(main.classList).not.toContain('max-w-3xl');
+    const hasMaxWidth = Array.from(main.classList).some((c) => c.startsWith('max-w-'));
+    expect(hasMaxWidth).toBe(false);
   });
 });

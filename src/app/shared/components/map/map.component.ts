@@ -7,16 +7,21 @@ import {
   inject,
   input,
   output,
+  signal,
   viewChild,
   type ElementRef,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import type { FeatureCollection, Point } from 'geojson';
 import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
+import { ButtonModule } from 'primeng/button';
 import { ENV_CONFIG, type EnvironmentConfig } from '@core/config/environment';
 import { THEME_PORT, type ThemePort } from '@core/theme';
+import { ErrorState } from '../error-state';
+import { Skeleton } from '../skeleton';
 import type { MapMarker } from './models';
 
 /** GeoJSON source id holding the marker points. */
@@ -45,6 +50,7 @@ const PIN_COLOR = '#f97316';
  */
 @Component({
   selector: 'app-map',
+  imports: [ButtonModule, ErrorState, Skeleton],
   templateUrl: './map.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -101,6 +107,39 @@ export class MapCanvas {
   /** Host element MapLibre renders into. */
   private readonly mapContainer: Signal<ElementRef<HTMLDivElement>> =
     viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
+
+  /**
+   * Property loading
+   * @readonly
+   *
+   * @description
+   * Whether the map is still initializing — true from mount (covering the dynamic
+   * MapLibre import) until the first successful `load` event, then never again.
+   * Drives the loading overlay so the surface is not silently blank while the
+   * WebGL bundle downloads and the map warms up.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly loading: WritableSignal<boolean> = signal<boolean>(true);
+
+  /**
+   * Property error
+   * @readonly
+   *
+   * @description
+   * Whether map initialization failed (WebGL/MapLibre threw). True when init
+   * throws, reset to false on a successful `load` or a manual {@link retry}, so a
+   * failure surfaces a recoverable error overlay instead of a blank container.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly error: WritableSignal<boolean> = signal<boolean>(false);
 
   /** Runtime MapLibre map instance (browser-only), or null before init. */
   private mapInstance: MapLibreMap | null = null;
@@ -204,8 +243,10 @@ export class MapCanvas {
         attributionControl: { compact: true },
       });
     } catch {
-      // A failed WebGL/map initialization leaves the surface blank instead of
-      // propagating and taking down the host. MapLibre logs its own error.
+      // A failed WebGL/map initialization surfaces a recoverable error overlay
+      // instead of propagating and taking down the host. MapLibre logs its own
+      // error; retry() lets the user attempt initialization again.
+      this.error.set(true);
       return;
     }
 
@@ -216,8 +257,31 @@ export class MapCanvas {
       this.addMarkerLayers(map);
       this.wireInteractions(map);
       this.styleReady = true;
+      this.error.set(false);
+      this.loading.set(false);
       this.fitToMarkers(map, this.markers());
     });
+  }
+
+  /**
+   * Method retry
+   * @method retry
+   *
+   * @description
+   * Re-attempts map initialization after a failure: clears the error, restores
+   * the loading state, and re-runs {@link initMap} (the MapLibre import is already
+   * cached, so only the map/WebGL context is recreated).
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @returns {void}
+   */
+  protected retry(): void {
+    this.error.set(false);
+    this.loading.set(true);
+    this.initStarted = false;
+    void this.initMap();
   }
 
   /**

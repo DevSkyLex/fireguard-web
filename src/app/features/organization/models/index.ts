@@ -97,3 +97,6 @@ export { resolveSubscriptionStatusTag } from './billing-tag/subscription-status-
 export type { InvitationTagDescriptor } from './invitation-tag/invitation-tag-descriptor.interface';
 export type { InvitationTagKind } from './invitation-tag/invitation-tag-kind.type';
 export { resolveInvitationTag } from './invitation-tag/invitation-tag.util';
+export type { OrganizationStatusTagDescriptor } from './organization-status-tag/organization-status-tag-descriptor.interface';
+export type { OrganizationStatusTagKind } from './organization-status-tag/organization-status-tag-kind.type';
+export { resolveOrganizationStatusTag } from './organization-status-tag/organization-status-tag.util';

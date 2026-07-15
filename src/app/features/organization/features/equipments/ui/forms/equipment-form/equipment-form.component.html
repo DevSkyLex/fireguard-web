@@ -3,7 +3,7 @@
   <div class="flex flex-col gap-2">
     <label
       for="type"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@equipment.form.type"
       >Type</label
     >
@@ -18,10 +18,11 @@
       styleClass="w-full"
       placeholder="Select an equipment type"
       i18n-placeholder="@@equipment.form.typePlaceholder"
+      [invalid]="form.controls.type.invalid && form.controls.type.touched"
     />
 
     @if (form.controls.type.invalid && form.controls.type.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         @if (form.controls.type.hasError('required')) {
           <span i18n="@@equipment.form.typeRequired">Equipment type is required.</span>
         }
@@ -33,115 +34,100 @@
   <div class="flex flex-col gap-2">
     <label
       for="subType"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@equipment.form.subtype"
     >
       Sub-type
-      <span class="font-normal text-surface-400">(optional)</span>
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
-    <p-iconfield>
-      <p-inputicon class="pi pi-tag" />
-      <input
-        pInputText
-        id="subType"
-        formControlName="subType"
-        class="w-full"
-        placeholder="CO2"
-        i18n-placeholder="@@equipment.form.subtypePlaceholder"
-      />
-    </p-iconfield>
+    <input
+      pInputText
+      id="subType"
+      formControlName="subType"
+      class="w-full"
+      placeholder="CO2"
+      i18n-placeholder="@@equipment.form.subtypePlaceholder"
+    />
   </div>
 
   <!-- Brand -->
   <div class="flex flex-col gap-2">
     <label
       for="brand"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@equipment.form.brand"
     >
       Brand
-      <span class="font-normal text-surface-400">(optional)</span>
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
-    <p-iconfield>
-      <p-inputicon class="pi pi-briefcase" />
-      <input
-        pInputText
-        id="brand"
-        formControlName="brand"
-        class="w-full"
-        placeholder="Kidde"
-        i18n-placeholder="@@equipment.form.brandPlaceholder"
-      />
-    </p-iconfield>
+    <input
+      pInputText
+      id="brand"
+      formControlName="brand"
+      class="w-full"
+      placeholder="Kidde"
+      i18n-placeholder="@@equipment.form.brandPlaceholder"
+    />
   </div>
 
   <!-- Model -->
   <div class="flex flex-col gap-2">
     <label
       for="model"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@equipment.form.model"
     >
       Model
-      <span class="font-normal text-surface-400">(optional)</span>
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
-    <p-iconfield>
-      <p-inputicon class="pi pi-wrench" />
-      <input
-        pInputText
-        id="model"
-        formControlName="model"
-        class="w-full"
-        placeholder="Pro 210"
-        i18n-placeholder="@@equipment.form.modelPlaceholder"
-      />
-    </p-iconfield>
+    <input
+      pInputText
+      id="model"
+      formControlName="model"
+      class="w-full"
+      placeholder="Pro 210"
+      i18n-placeholder="@@equipment.form.modelPlaceholder"
+    />
   </div>
 
   <!-- Serial Number -->
   <div class="flex flex-col gap-2">
     <label
       for="serialNumber"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@equipment.form.serial"
     >
       Serial Number
-      <span class="font-normal text-surface-400">(optional)</span>
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
-    <p-iconfield>
-      <p-inputicon class="pi pi-hashtag" />
-      <input
-        pInputText
-        id="serialNumber"
-        formControlName="serialNumber"
-        class="w-full"
-        placeholder="SN-2024-001"
-        i18n-placeholder="@@equipment.form.serialPlaceholder"
-      />
-    </p-iconfield>
+    <input
+      pInputText
+      id="serialNumber"
+      formControlName="serialNumber"
+      class="w-full"
+      placeholder="SN-2024-001"
+      i18n-placeholder="@@equipment.form.serialPlaceholder"
+    />
   </div>
 
   <!-- Location Label -->
   <div class="flex flex-col gap-2">
     <label
       for="locationLabel"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@equipment.form.location"
     >
       Location Label
-      <span class="font-normal text-surface-400">(optional)</span>
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
-    <p-iconfield>
-      <p-inputicon class="pi pi-map-marker" />
-      <input
-        pInputText
-        id="locationLabel"
-        formControlName="locationLabel"
-        class="w-full"
-        placeholder="Floor 2 — Near elevator"
-        i18n-placeholder="@@equipment.form.locationPlaceholder"
-      />
-    </p-iconfield>
+    <input
+      pInputText
+      id="locationLabel"
+      formControlName="locationLabel"
+      class="w-full"
+      placeholder="Floor 2 — Near elevator"
+      i18n-placeholder="@@equipment.form.locationPlaceholder"
+    />
   </div>
 
   <!-- Actions -->

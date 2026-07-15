@@ -212,7 +212,7 @@ export class Calendar {
    * @readonly
    *
    * @description
-   * Whether the events are loading (reserved for skeleton states).
+   * Whether the events are loading; overlays a loading affordance on the grid.
    *
    * @access public
    * @since 1.0.0

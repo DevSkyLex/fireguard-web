@@ -26,6 +26,25 @@
         (move)="onOpenMoveDialog()"
         (delete)="onConfirmDelete()"
       />
+    } @else {
+      <div class="flex flex-1 items-center justify-center p-4 sm:p-7">
+        <app-empty-state
+          icon="pi-compass"
+          i18n-title="@@facility.detail.notFoundTitle"
+          title="Facility not found"
+          i18n-description="@@facility.detail.notFound"
+          description="This facility could not be found or is unavailable offline."
+        >
+          <p-button
+            i18n-label="@@facility.detail.backToList"
+            label="Back to facilities"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="navigateBack()"
+          />
+        </app-empty-state>
+      </div>
     }
   </section>
 
@@ -91,6 +110,7 @@
   (visibleChange)="showMoveDialog.set($event)"
   [modal]="true"
   [style]="{ width: '28rem' }"
+  [breakpoints]="{ '640px': '90vw' }"
   [closable]="!isMoving()"
 >
   <div class="flex flex-col gap-6">

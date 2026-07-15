@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TabsModule } from 'primeng/tabs';
 import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
@@ -43,6 +44,7 @@ import type { FacilityOutput } from '@features/organization/features/facilities/
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
+import { EmptyState } from '@shared/components';
 
 /**
  * Page EquipmentDetailPage
@@ -62,6 +64,8 @@ import { ActiveOrganizationStore } from '@features/organization/state';
     EquipmentInformationPanel,
     EquipmentMaintenanceLogTable,
     EquipmentTagsPanel,
+    ButtonModule,
+    EmptyState,
     SkeletonModule,
     TabsModule,
   ],
@@ -135,6 +139,16 @@ export class EquipmentDetailPage {
   /** Navigates to the active equipment edit page. */
   protected onEdit(): void {
     this.router.navigate(['edit'], { relativeTo: this.route });
+  }
+
+  /**
+   * Navigates back to the organization's equipment list, offered by the
+   * not-found state so a failed or absent load never dead-ends.
+   */
+  protected navigateBack(): void {
+    const organizationId = this.activeOrganizationStore.selectedOrganization()?.id;
+    if (!organizationId) return;
+    this.router.navigate(['/organizations', organizationId, 'equipments']);
   }
 
   /** Assigns the active equipment to a facility. */

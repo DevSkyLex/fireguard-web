@@ -18,8 +18,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import type { SetupOrganizationRole } from '@features/organization/setup';
@@ -45,15 +43,7 @@ import type {
  */
 @Component({
   selector: 'app-invite-members-form',
-  imports: [
-    ReactiveFormsModule,
-    RadioCardGroup,
-    InputTextModule,
-    ButtonModule,
-    MessageModule,
-    IconFieldModule,
-    InputIconModule,
-  ],
+  imports: [ReactiveFormsModule, RadioCardGroup, InputTextModule, ButtonModule, MessageModule],
   templateUrl: './invite-members-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

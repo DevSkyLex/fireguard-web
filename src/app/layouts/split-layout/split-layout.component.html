@@ -1,24 +1,17 @@
-<div
-  id="split-layout"
-  class="flex min-h-dvh flex-row bg-surface-0 transition-colors dark:bg-surface-950"
->
-  <section class="hidden max-w-[50%] place-content-stretch xl:grid">
-    <!-- Showcase slot: sizes to its content, capped at half the viewport -->
+<div id="split-layout" class="flex min-h-dvh bg-surface-50 transition-colors dark:bg-surface-950">
+  <!-- Showcase panel (left): full-bleed, 50/50 with the form column on large screens -->
+  <aside class="hidden lg:block lg:w-1/2">
     <app-split-layout-showcase-outlet />
-  </section>
+  </aside>
 
-  <section
-    class="mx-auto grid min-h-dvh flex-1 grid-cols-[1fr] grid-rows-[auto_1fr_auto] gap-10 [grid-template-areas:'header'_'content'_'footer']"
-  >
-    <!-- Layout Header -->
-    <app-split-layout-header class="[grid-area:header]" />
+  <!-- Form column (right). The header floats so the content centers on the full height. -->
+  <div class="relative flex min-h-dvh flex-1 flex-col">
+    <app-split-layout-header class="absolute inset-x-0 top-0 z-10" />
 
-    <!-- Layout Content -->
-    <app-split-layout-content class="[grid-area:content]">
+    <app-split-layout-content class="flex flex-1 flex-col">
       <router-outlet />
     </app-split-layout-content>
 
-    <!-- Layout Footer -->
-    <app-split-layout-footer class="[grid-area:footer]" />
-  </section>
+    <app-split-layout-footer class="shrink-0" />
+  </div>
 </div>

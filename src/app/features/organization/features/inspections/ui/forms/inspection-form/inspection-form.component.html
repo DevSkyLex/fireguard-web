@@ -4,7 +4,7 @@
     <label
       for="equipmentId"
       i18n="@@inspection.form.equipment"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       >Equipment</label
     >
     <p-select
@@ -19,10 +19,11 @@
       i18n-filterPlaceholder="@@inspection.form.searchEquipment"
       filterPlaceholder="Search equipment..."
       class="w-full"
+      [invalid]="form.controls.equipmentId.invalid && form.controls.equipmentId.touched"
     />
 
     @if (form.controls.equipmentId.invalid && form.controls.equipmentId.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         <span i18n="@@inspection.form.equipmentRequired">Equipment is required.</span>
       </p-message>
     }
@@ -33,7 +34,7 @@
     <label
       for="result"
       i18n="@@inspection.form.result"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       >Result</label
     >
     <p-select
@@ -45,10 +46,11 @@
       i18n-placeholder="@@inspection.form.resultPlaceholder"
       placeholder="Select result"
       class="w-full"
+      [invalid]="form.controls.result.invalid && form.controls.result.touched"
     />
 
     @if (form.controls.result.invalid && form.controls.result.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         <span i18n="@@inspection.form.resultRequired">Result is required.</span>
       </p-message>
     }
@@ -59,7 +61,7 @@
     <label
       for="performedAt"
       i18n="@@inspection.form.performedAt"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       >Performed At</label
     >
     <p-datepicker
@@ -74,7 +76,7 @@
     />
 
     @if (form.controls.performedAt.invalid && form.controls.performedAt.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         <span i18n="@@inspection.form.performedAtRequired">Performed date is required.</span>
       </p-message>
     }
@@ -85,7 +87,7 @@
     <label
       for="inspectorType"
       i18n="@@inspection.form.inspectorType"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       >Inspector Type</label
     >
     <p-select
@@ -97,10 +99,11 @@
       i18n-placeholder="@@inspection.form.inspectorTypePlaceholder"
       placeholder="Select inspector type"
       class="w-full"
+      [invalid]="form.controls.inspectorType.invalid && form.controls.inspectorType.touched"
     />
 
     @if (form.controls.inspectorType.invalid && form.controls.inspectorType.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         <span i18n="@@inspection.form.inspectorTypeRequired">Inspector type is required.</span>
       </p-message>
     }
@@ -111,23 +114,21 @@
     <label
       for="inspectorName"
       i18n="@@inspection.form.inspectorName"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       >Inspector Name</label
     >
-    <p-iconfield>
-      <p-inputicon class="pi pi-user" />
-      <input
-        pInputText
-        id="inspectorName"
-        formControlName="inspectorName"
-        class="w-full"
-        i18n-placeholder="@@inspection.form.inspectorNamePlaceholder"
-        placeholder="John Doe"
-      />
-    </p-iconfield>
+    <input
+      pInputText
+      id="inspectorName"
+      formControlName="inspectorName"
+      class="w-full"
+      i18n-placeholder="@@inspection.form.inspectorNamePlaceholder"
+      placeholder="John Doe"
+      [invalid]="form.controls.inspectorName.invalid && form.controls.inspectorName.touched"
+    />
 
     @if (form.controls.inspectorName.invalid && form.controls.inspectorName.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         @if (form.controls.inspectorName.hasError('required')) {
           <span i18n="@@inspection.form.inspectorNameRequired">Inspector name is required.</span>
         }
@@ -146,10 +147,10 @@
     <label
       for="facilityId"
       i18n="@@inspection.form.facility"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
     >
       Facility
-      <span class="font-normal text-surface-400">(optional)</span>
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
     <p-select
       id="facilityId"
@@ -171,10 +172,10 @@
     <label
       for="checklistId"
       i18n="@@inspection.form.checklist"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
     >
       Checklist
-      <span class="font-normal text-surface-400">(optional)</span>
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
     <p-select
       id="checklistId"
@@ -196,10 +197,10 @@
     <label
       for="notes"
       i18n="@@inspection.form.notes"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
     >
       Notes
-      <span class="font-normal text-surface-400">(optional)</span>
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
     <textarea
       pTextarea
@@ -217,22 +218,19 @@
     <label
       for="signature"
       i18n="@@inspection.form.signature"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
     >
       Signature
-      <span class="font-normal text-surface-400">(optional)</span>
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
-    <p-iconfield>
-      <p-inputicon class="pi pi-pencil" />
-      <input
-        pInputText
-        id="signature"
-        formControlName="signature"
-        class="w-full"
-        i18n-placeholder="@@inspection.form.signaturePlaceholder"
-        placeholder="Inspector signature"
-      />
-    </p-iconfield>
+    <input
+      pInputText
+      id="signature"
+      formControlName="signature"
+      class="w-full"
+      i18n-placeholder="@@inspection.form.signaturePlaceholder"
+      placeholder="Inspector signature"
+    />
   </div>
 
   <!-- Actions -->

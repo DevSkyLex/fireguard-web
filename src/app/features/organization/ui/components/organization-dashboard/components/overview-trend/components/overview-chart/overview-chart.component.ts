@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import type { ChartData, ChartOptions } from 'chart.js';
+import { ButtonModule } from 'primeng/button';
 import { ChartModule } from 'primeng/chart';
 import { SkeletonModule } from 'primeng/skeleton';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { buildDifferenceSeries } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import { OrganizationDashboardOverviewTrendStore } from '@features/organization/state/organization-dashboard';
+import { EmptyState, ErrorState } from '@shared/components';
 import { buildChartTooltipStyle } from '@shared/utils';
 
 /**
@@ -25,7 +27,7 @@ import { buildChartTooltipStyle } from '@shared/utils';
 @Component({
   selector: 'app-overview-chart',
   templateUrl: './overview-chart.component.html',
-  imports: [ChartModule, SkeletonModule],
+  imports: [ChartModule, SkeletonModule, ButtonModule, EmptyState, ErrorState],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OverviewChart {
@@ -78,6 +80,41 @@ export class OverviewChart {
    */
   protected readonly loading: Signal<boolean> = computed<boolean>(() =>
     this.store.isQueryLoading(),
+  );
+
+  /**
+   * Property hasError
+   * @readonly
+   *
+   * @description
+   * `true` when the underlying trend query failed, so the card can offer a
+   * retry instead of rendering a blank canvas.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasError: Signal<boolean> = computed<boolean>(() =>
+    this.store.queryHasError(),
+  );
+
+  /**
+   * Property hasData
+   * @readonly
+   *
+   * @description
+   * `true` when the computed chart payload has at least one time bucket to
+   * plot; `false` for an empty (zero-row) result so the card can show an
+   * empty state instead of a blank chart.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasData: Signal<boolean> = computed<boolean>(
+    () => (this.data().labels?.length ?? 0) > 0,
   );
 
   /**
@@ -219,6 +256,26 @@ export class OverviewChart {
       },
     },
   }));
+
+  //#endregion
+
+  //#region Methods
+
+  /**
+   * Method retry
+   *
+   * @description
+   * Re-runs the trend query with the current filter params after a load
+   * failure, delegating to the store's reactive `load` method.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @returns {void}
+   */
+  protected retry(): void {
+    this.store.load(this.store.loadParams());
+  }
 
   //#endregion
 }

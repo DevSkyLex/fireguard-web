@@ -74,6 +74,8 @@
                 optionLabel="label"
                 optionValue="value"
                 size="small"
+                i18n-ariaLabel="@@nc.table.statusAria"
+                ariaLabel="Non-conformity status"
                 [ngModel]="nonConformity.status"
                 (ngModelChange)="statusChange.emit({ nonConformity, status: $event })"
               />
@@ -104,20 +106,13 @@
     <ng-template pTemplate="emptymessage">
       <tr class="bg-transparent! [&>td]:border-b-0!">
         <td colspan="5">
-          <div class="flex flex-col items-center gap-3 py-16 text-center">
-            <i class="pi pi-check-circle text-5xl text-green-400"></i>
-            <div>
-              <p
-                i18n="@@nc.table.emptyTitle"
-                class="font-medium text-surface-900 dark:text-surface-100"
-              >
-                No non-conformities
-              </p>
-              <p i18n="@@nc.table.emptyDesc" class="text-sm text-surface-500">
-                No findings have been reported for this inspection.
-              </p>
-            </div>
-          </div>
+          <app-empty-state
+            icon="pi-check-circle"
+            i18n-title="@@nc.table.emptyTitle"
+            title="No non-conformities"
+            i18n-description="@@nc.table.emptyDesc"
+            description="No findings have been reported for this inspection."
+          />
         </td>
       </tr>
     </ng-template>

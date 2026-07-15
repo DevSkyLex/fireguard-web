@@ -9,6 +9,7 @@ import {
   type Signal,
   type TemplateRef,
 } from '@angular/core';
+import { EmptyState } from '../empty-state';
 import { ActivityFeedItemDirective } from './activity-feed-item.directive';
 import type { ActivityFeedItem, ActivityFeedItemContext } from './models';
 
@@ -33,7 +34,7 @@ import type { ActivityFeedItem, ActivityFeedItemContext } from './models';
  */
 @Component({
   selector: 'app-activity-feed',
-  imports: [DatePipe, NgTemplateOutlet],
+  imports: [DatePipe, NgTemplateOutlet, EmptyState],
   templateUrl: './activity-feed.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

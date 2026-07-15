@@ -10,6 +10,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import type { RequestOptions } from '@core/api';
 import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
@@ -32,7 +34,7 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
  */
 @Component({
   selector: 'app-inspection-list',
-  imports: [InspectionTable],
+  imports: [InspectionTable, ButtonModule, MessageModule],
   providers: [InspectionStore],
   templateUrl: './inspection-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -117,6 +119,21 @@ export class InspectionListPage {
   /** Tooltip explaining why inspection creation is disabled. */
   protected readonly quotaLimitTooltip: string = QUOTA_LIMIT_REACHED_TOOLTIP;
 
+  /**
+   * Property lastLoadOptions
+   * @readonly
+   *
+   * @description
+   * Most recent pagination and filter params requested by the table, retained
+   * so the error banner's Retry action can replay the same load.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {RequestOptions}
+   */
+  private lastLoadOptions: RequestOptions = {};
+
   //#endregion
 
   //#region Constructor
@@ -192,10 +209,32 @@ export class InspectionListPage {
    * @returns {void}
    */
   public onLoad(options: RequestOptions): void {
+    this.lastLoadOptions = options;
     const organizationId: string | undefined =
       this.activeOrganizationStore.selectedOrganization()?.id;
     if (organizationId) {
       this.store.load({ organizationId, options });
+    }
+  }
+
+  /**
+   * Method retry
+   * @method retry
+   *
+   * @description
+   * Replays the last inspection list load for the current organization after a
+   * failed fetch (the error banner's Retry action).
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @returns {void}
+   */
+  protected retry(): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (organizationId) {
+      this.store.load({ organizationId, options: this.lastLoadOptions });
     }
   }
 

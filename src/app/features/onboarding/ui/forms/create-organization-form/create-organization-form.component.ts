@@ -15,8 +15,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import type { CreateOrganizationFormData, CreateOrganizationFormValues } from './models';
@@ -35,14 +33,7 @@ import type { CreateOrganizationFormData, CreateOrganizationFormValues } from '.
  */
 @Component({
   selector: 'app-create-organization-form',
-  imports: [
-    ReactiveFormsModule,
-    InputTextModule,
-    ButtonModule,
-    MessageModule,
-    IconFieldModule,
-    InputIconModule,
-  ],
+  imports: [ReactiveFormsModule, InputTextModule, ButtonModule, MessageModule],
   templateUrl: './create-organization-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

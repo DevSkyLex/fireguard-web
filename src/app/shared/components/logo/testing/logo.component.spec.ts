@@ -12,18 +12,19 @@ describe('Logo', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('renders the brand gradient mark by default (three strokes referencing the gradient)', () => {
+  it('renders the "Garde diagonale" mark: three currentColor blocks + one indigo accent', () => {
     const fixture = TestBed.createComponent(Logo);
     fixture.detectChanges();
     const host: HTMLElement = fixture.nativeElement;
 
-    const gradient = host.querySelector('linearGradient');
-    expect(gradient?.id).toBe('fireguard-logo-gradient');
+    const rects = Array.from(host.querySelectorAll('rect'));
+    expect(rects.length).toBe(4);
 
-    const paths = host.querySelectorAll('path');
-    expect(paths.length).toBe(3);
-    for (const path of Array.from(paths)) {
-      expect(path.getAttribute('stroke')).toBe('url(#fireguard-logo-gradient)');
-    }
+    const blocks = rects.filter((r) => r.getAttribute('fill') === 'currentColor');
+    expect(blocks.length).toBe(3);
+
+    const accent = rects.find((r) => r.getAttribute('fill') !== 'currentColor');
+    expect(accent?.getAttribute('fill')).toBe('var(--p-primary-600)');
+    expect(accent?.getAttribute('transform')).toContain('rotate(45');
   });
 });

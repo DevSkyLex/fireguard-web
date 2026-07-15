@@ -7368,6 +7368,322 @@
         <source>Close navigation menu</source>
         <target>Cerrar el menú de navegación</target>
       </trans-unit>
+      <trans-unit id="auth.showcase.eyebrow" datatype="html">
+        <source>Fire safety platform</source>
+        <target>Plataforma de seguridad contra incendios</target>
+      </trans-unit>
+      <trans-unit id="auth.showcase.headline" datatype="html">
+        <source>Fire-safety compliance across every site, run from one place.</source>
+        <target>La conformidad contra incendios de todos tus sitios, gestionada desde un solo lugar.</target>
+      </trans-unit>
+      <trans-unit id="auth.showcase.feature.inventory" datatype="html">
+        <source>Equipment inventory and lifecycle</source>
+        <target>Inventario y ciclo de vida de los equipos</target>
+      </trans-unit>
+      <trans-unit id="auth.showcase.feature.inspections" datatype="html">
+        <source>Inspections, checklists and non-conformity tracking</source>
+        <target>Inspecciones, checklists y seguimiento de no conformidades</target>
+      </trans-unit>
+      <trans-unit id="auth.showcase.feature.multiSite" datatype="html">
+        <source>Multi-site, multi-organization, roles and permissions</source>
+        <target>Multisitio, multiorganización, roles y permisos</target>
+      </trans-unit>
+      <trans-unit id="auth.showcase.copyright" datatype="html">
+        <source>© 2026 Fireguard — Safety &amp; compliance</source>
+        <target>© 2026 Fireguard — Seguridad y conformidad</target>
+      </trans-unit>
+      <trans-unit id="onboarding.showcase.status.skipped" datatype="html">
+        <source>Skipped</source>
+        <target>Omitida</target>
+      </trans-unit>
+      <trans-unit id="equipment.detail.notFoundTitle" datatype="html">
+        <source>Equipment not found</source>
+        <target>Equipo no encontrado</target>
+      </trans-unit>
+      <trans-unit id="equipment.detail.notFound" datatype="html">
+        <source>Equipment not found or unavailable offline.</source>
+        <target>Equipo no encontrado o no disponible sin conexión.</target>
+      </trans-unit>
+      <trans-unit id="equipment.detail.backToList" datatype="html">
+        <source>Back to equipment</source>
+        <target>Volver a los equipos</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.errorText" datatype="html">
+        <source>The equipment could not be loaded. Check your connection and try again.</source>
+        <target>No se pudieron cargar los equipos. Comprueba tu conexión e inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="facility.equipDv.emptyTitle" datatype="html">
+        <source>No equipment</source>
+        <target>Sin equipos</target>
+      </trans-unit>
+      <trans-unit id="facility.inspDv.emptyTitle" datatype="html">
+        <source>No inspections</source>
+        <target>Sin inspecciones</target>
+      </trans-unit>
+      <trans-unit id="facility.inspDv.empty" datatype="html">
+        <source>No inspection matches this filter.</source>
+        <target>Ninguna inspección coincide con este filtro.</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.notFoundTitle" datatype="html">
+        <source>Facility not found</source>
+        <target>Instalación no encontrada</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.notFound" datatype="html">
+        <source>This facility could not be found or is unavailable offline.</source>
+        <target>No se pudo encontrar esta instalación o no está disponible sin conexión.</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.backToList" datatype="html">
+        <source>Back to facilities</source>
+        <target>Volver a las instalaciones</target>
+      </trans-unit>
+      <trans-unit id="facility.list.errorText" datatype="html">
+        <source>The facilities could not be loaded. Check your connection and try again.</source>
+        <target>No se pudieron cargar las instalaciones. Comprueba tu conexión e inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="facility.list.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.notFoundTitle" datatype="html">
+        <source>Inspection not found</source>
+        <target>Inspección no encontrada</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.notFound" datatype="html">
+        <source>Inspection not found or unavailable offline.</source>
+        <target>Inspección no encontrada o no disponible sin conexión.</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.backToList" datatype="html">
+        <source>Back to inspections</source>
+        <target>Volver a las inspecciones</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.errorText" datatype="html">
+        <source>The inspections could not be loaded. Check your connection and try again.</source>
+        <target>No se pudieron cargar las inspecciones. Comprueba tu conexión e inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="nc.table.statusAria" datatype="html">
+        <source>Non-conformity status</source>
+        <target>Estado de la no conformidad</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.errorText" datatype="html">
+        <source>The calendar could not be loaded. Check your connection and try again.</source>
+        <target>No se pudo cargar el calendario. Comprueba tu conexión e inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.loadingLabel" datatype="html">
+        <source>Loading interventions</source>
+        <target>Cargando intervenciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.loadingLabel" datatype="html">
+        <source>Loading interventions</source>
+        <target>Cargando intervenciones</target>
+      </trans-unit>
+      <trans-unit id="org.status.active" datatype="html">
+        <source>Active</source>
+        <target>Activa</target>
+      </trans-unit>
+      <trans-unit id="org.status.inactive" datatype="html">
+        <source>Inactive</source>
+        <target>Inactiva</target>
+      </trans-unit>
+      <trans-unit id="org.trend.assetGrowth.chartErrorTitle" datatype="html">
+        <source>Couldn&apos;t load this chart</source>
+        <target>No se pudo cargar este gráfico</target>
+      </trans-unit>
+      <trans-unit id="org.trend.assetGrowth.chartRetry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="org.trend.assetGrowth.chartEmptyTitle" datatype="html">
+        <source>No data yet</source>
+        <target>Aún no hay datos</target>
+      </trans-unit>
+      <trans-unit id="org.trend.assetGrowth.chartEmptyDesc" datatype="html">
+        <source>No activity in the selected period.</source>
+        <target>No hay actividad en el período seleccionado.</target>
+      </trans-unit>
+      <trans-unit id="org.trend.equipCreated.chartErrorTitle" datatype="html">
+        <source>Couldn&apos;t load this chart</source>
+        <target>No se pudo cargar este gráfico</target>
+      </trans-unit>
+      <trans-unit id="org.trend.equipCreated.chartRetry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="org.trend.equipCreated.chartEmptyTitle" datatype="html">
+        <source>No data yet</source>
+        <target>Aún no hay datos</target>
+      </trans-unit>
+      <trans-unit id="org.trend.equipCreated.chartEmptyDesc" datatype="html">
+        <source>No activity in the selected period.</source>
+        <target>No hay actividad en el período seleccionado.</target>
+      </trans-unit>
+      <trans-unit id="org.trend.facCreated.chartErrorTitle" datatype="html">
+        <source>Couldn&apos;t load this chart</source>
+        <target>No se pudo cargar este gráfico</target>
+      </trans-unit>
+      <trans-unit id="org.trend.facCreated.chartRetry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="org.trend.facCreated.chartEmptyTitle" datatype="html">
+        <source>No data yet</source>
+        <target>Aún no hay datos</target>
+      </trans-unit>
+      <trans-unit id="org.trend.facCreated.chartEmptyDesc" datatype="html">
+        <source>No activity in the selected period.</source>
+        <target>No hay actividad en el período seleccionado.</target>
+      </trans-unit>
+      <trans-unit id="org.trend.inspQuality.chartErrorTitle" datatype="html">
+        <source>Couldn&apos;t load this chart</source>
+        <target>No se pudo cargar este gráfico</target>
+      </trans-unit>
+      <trans-unit id="org.trend.inspQuality.chartRetry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="org.trend.inspQuality.chartEmptyTitle" datatype="html">
+        <source>No data yet</source>
+        <target>Aún no hay datos</target>
+      </trans-unit>
+      <trans-unit id="org.trend.inspQuality.chartEmptyDesc" datatype="html">
+        <source>No activity in the selected period.</source>
+        <target>No hay actividad en el período seleccionado.</target>
+      </trans-unit>
+      <trans-unit id="org.trend.inspections.chartErrorTitle" datatype="html">
+        <source>Couldn&apos;t load this chart</source>
+        <target>No se pudo cargar este gráfico</target>
+      </trans-unit>
+      <trans-unit id="org.trend.inspections.chartRetry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="org.trend.inspections.chartEmptyTitle" datatype="html">
+        <source>No data yet</source>
+        <target>Aún no hay datos</target>
+      </trans-unit>
+      <trans-unit id="org.trend.inspections.chartEmptyDesc" datatype="html">
+        <source>No activity in the selected period.</source>
+        <target>No hay actividad en el período seleccionado.</target>
+      </trans-unit>
+      <trans-unit id="org.trend.ncOpened.chartErrorTitle" datatype="html">
+        <source>Couldn&apos;t load this chart</source>
+        <target>No se pudo cargar este gráfico</target>
+      </trans-unit>
+      <trans-unit id="org.trend.ncOpened.chartRetry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="org.trend.ncOpened.chartEmptyTitle" datatype="html">
+        <source>No data yet</source>
+        <target>Aún no hay datos</target>
+      </trans-unit>
+      <trans-unit id="org.trend.ncOpened.chartEmptyDesc" datatype="html">
+        <source>No activity in the selected period.</source>
+        <target>No hay actividad en el período seleccionado.</target>
+      </trans-unit>
+      <trans-unit id="org.trend.ncResolved.chartErrorTitle" datatype="html">
+        <source>Couldn&apos;t load this chart</source>
+        <target>No se pudo cargar este gráfico</target>
+      </trans-unit>
+      <trans-unit id="org.trend.ncResolved.chartRetry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="org.trend.ncResolved.chartEmptyTitle" datatype="html">
+        <source>No data yet</source>
+        <target>Aún no hay datos</target>
+      </trans-unit>
+      <trans-unit id="org.trend.ncResolved.chartEmptyDesc" datatype="html">
+        <source>No activity in the selected period.</source>
+        <target>No hay actividad en el período seleccionado.</target>
+      </trans-unit>
+      <trans-unit id="org.trend.overview.chartErrorTitle" datatype="html">
+        <source>Couldn&apos;t load this chart</source>
+        <target>No se pudo cargar este gráfico</target>
+      </trans-unit>
+      <trans-unit id="org.trend.overview.chartRetry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="org.trend.overview.chartEmptyTitle" datatype="html">
+        <source>No data yet</source>
+        <target>Aún no hay datos</target>
+      </trans-unit>
+      <trans-unit id="org.trend.overview.chartEmptyDesc" datatype="html">
+        <source>No activity in the selected period.</source>
+        <target>No hay actividad en el período seleccionado.</target>
+      </trans-unit>
+      <trans-unit id="org.dash.resourcesLoading" datatype="html">
+        <source>Loading resource trends</source>
+        <target>Cargando tendencias de recursos</target>
+      </trans-unit>
+      <trans-unit id="org.dash.noAccessTitle" datatype="html">
+        <source>Nothing to show</source>
+        <target>Nada que mostrar</target>
+      </trans-unit>
+      <trans-unit id="org.dash.noAccessDesc" datatype="html">
+        <source>You do not have permission to view dashboard metrics for this organization. Contact an administrator if you need access.</source>
+        <target>No tienes permiso para ver las métricas del panel de esta organización. Contacta con un administrador si necesitas acceso.</target>
+      </trans-unit>
+      <trans-unit id="org.usage.atLimit" datatype="html">
+        <source>At limit</source>
+        <target>En el límite</target>
+      </trans-unit>
+      <trans-unit id="org.memberTable.emptySearchTitle" datatype="html">
+        <source>No members match your search</source>
+        <target>Ningún miembro coincide con tu búsqueda</target>
+      </trans-unit>
+      <trans-unit id="org.memberTable.emptySearchDesc" datatype="html">
+        <source>No member matches your search. Try different keywords.</source>
+        <target>Ningún miembro coincide con tu búsqueda. Prueba con otras palabras clave.</target>
+      </trans-unit>
+      <trans-unit id="board.column.empty" datatype="html">
+        <source>No items</source>
+        <target>Sin elementos</target>
+      </trans-unit>
+      <trans-unit id="calendar.loading" datatype="html">
+        <source>Loading calendar…</source>
+        <target>Cargando calendario…</target>
+      </trans-unit>
+      <trans-unit id="map.errorTitle" datatype="html">
+        <source>Map unavailable</source>
+        <target>Mapa no disponible</target>
+      </trans-unit>
+      <trans-unit id="map.errorDescription" datatype="html">
+        <source>The map could not be loaded on this device. Check your connection and try again.</source>
+        <target>No se pudo cargar el mapa en este dispositivo. Comprueba tu conexión e inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="map.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="map.loading" datatype="html">
+        <source>Loading map</source>
+        <target>Cargando mapa</target>
+      </trans-unit>
+      <trans-unit id="common.comparisonIncreased" datatype="html">
+        <source>increased</source>
+        <target>aumentó</target>
+      </trans-unit>
+      <trans-unit id="common.comparisonDecreased" datatype="html">
+        <source>decreased</source>
+        <target>disminuyó</target>
+      </trans-unit>
+      <trans-unit id="common.comparisonNoChange" datatype="html">
+        <source>no change</source>
+        <target>sin cambios</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

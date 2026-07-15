@@ -9,7 +9,10 @@ import {
   type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import type { RequestOptions } from '@core/api';
+import { isCallError } from '@core/request-state';
 import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
 import { EquipmentTable } from '@features/organization/features/equipments/ui/tables';
@@ -30,7 +33,7 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
  */
 @Component({
   selector: 'app-equipment-list',
-  imports: [EquipmentTable],
+  imports: [EquipmentTable, MessageModule, ButtonModule],
   providers: [EquipmentStore],
   templateUrl: './equipment-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -112,6 +115,38 @@ export class EquipmentListPage {
   /** Tooltip explaining why equipment creation is disabled. */
   protected readonly quotaLimitTooltip: string = QUOTA_LIMIT_REACHED_TOOLTIP;
 
+  /**
+   * Property hasListError
+   * @readonly
+   *
+   * @description
+   * True when the last equipment list load failed, derived from the store's
+   * `listCallState`. Drives the page-level error/offline banner.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasListError: Signal<boolean> = computed<boolean>(() =>
+    isCallError(this.store.listCallState()),
+  );
+
+  /**
+   * Property lastLoadOptions
+   *
+   * @description
+   * Most recent lazy-load options emitted by the table, replayed by
+   * {@link retry} so a failed load retries the exact same page, filters, and
+   * sort.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {RequestOptions | undefined}
+   */
+  private lastLoadOptions: RequestOptions | undefined = undefined;
+
   //#endregion
 
   //#region Constructor
@@ -163,7 +198,30 @@ export class EquipmentListPage {
     const organizationId: string | undefined =
       this.activeOrganizationStore.selectedOrganization()?.id;
     if (organizationId) {
+      this.lastLoadOptions = options;
       this.store.load({ organizationId, options });
+    }
+  }
+
+  /**
+   * Method retry
+   * @method retry
+   *
+   * @description
+   * Re-dispatches the equipment list load with the active organization and the
+   * most recent request options after a failed load (the error banner's Retry
+   * action).
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @returns {void}
+   */
+  public retry(): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (organizationId) {
+      this.store.load({ organizationId, options: this.lastLoadOptions });
     }
   }
 

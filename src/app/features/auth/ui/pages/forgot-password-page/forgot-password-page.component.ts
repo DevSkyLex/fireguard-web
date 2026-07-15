@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, effect } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { PasswordResetStore } from '@features/auth/state';
 import { ForgotPasswordForm, type ForgotPasswordFormValues } from '@features/auth/ui/forms';
 
@@ -16,7 +16,7 @@ import { ForgotPasswordForm, type ForgotPasswordFormValues } from '@features/aut
  */
 @Component({
   selector: 'app-forgot-password-page',
-  imports: [ForgotPasswordForm],
+  imports: [ForgotPasswordForm, RouterLink],
   templateUrl: './forgot-password-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

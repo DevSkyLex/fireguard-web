@@ -16,8 +16,6 @@ import {
 import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
@@ -54,8 +52,6 @@ import type { LoginFormData, LoginFormValues } from './models';
     CheckboxModule,
     ButtonModule,
     MessageModule,
-    IconFieldModule,
-    InputIconModule,
   ],
   templateUrl: './login-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

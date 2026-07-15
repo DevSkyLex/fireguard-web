@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TabsModule } from 'primeng/tabs';
@@ -20,9 +21,10 @@ import {
   DETAIL_TAB_PANELS_PT,
   DETAIL_TABS_PT,
 } from '@features/organization/constants';
-import type {
-  InspectionOutput,
-  NonConformityOutput,
+import {
+  resolveInspectionTag,
+  type InspectionOutput,
+  type NonConformityOutput,
 } from '@features/organization/features/inspections/models';
 import {
   ActiveInspectionStore,
@@ -39,6 +41,7 @@ import {
 } from '@features/organization/features/inspections/ui/tables';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
+import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
 
 /**
  * Page InspectionDetailPage
@@ -52,11 +55,14 @@ import { ActiveOrganizationStore } from '@features/organization/state';
 @Component({
   selector: 'app-inspection-detail',
   imports: [
+    ButtonModule,
     DialogModule,
+    EmptyState,
     InspectionDetailHeader,
     InspectionInformationPanel,
     NonConformityTable,
     SkeletonModule,
+    Tag,
     TabsModule,
   ],
   providers: [InspectionStore],
@@ -133,6 +139,11 @@ export class InspectionDetailPage {
   /** Navigates to the active inspection edit page. */
   protected onEdit(): void {
     this.router.navigate(['edit'], { relativeTo: this.route });
+  }
+
+  /** Navigates back to the inspection list. */
+  protected navigateBack(): void {
+    this.router.navigate(['..'], { relativeTo: this.route });
   }
 
   /** Submits the active draft inspection. */
@@ -216,24 +227,13 @@ export class InspectionDetailPage {
     if (organizationId && inspectionId) operation(organizationId, inspectionId);
   }
 
-  /**
-   * Method humanizeLabel
-   *
-   * @description
-   * Turns an enum value (e.g. `in_progress`, `critical`) into a readable,
-   * title-cased label for the non-conformity detail dialog.
-   *
-   * @access protected
-   * @since 1.1.0
-   *
-   * @param {string} value - Raw enum value.
-   *
-   * @returns {string} The human-readable label.
-   */
-  protected humanizeLabel(value: string): string {
-    return value
-      .split('_')
-      .map((word: string): string => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
-      .join(' ');
+  /** Resolves the severity badge descriptor for the non-conformity dialog. */
+  protected severityDescriptor(severity: string): TagDescriptor {
+    return resolveInspectionTag('nonConformitySeverity', severity);
+  }
+
+  /** Resolves the status badge descriptor for the non-conformity dialog. */
+  protected statusDescriptor(status: string): TagDescriptor {
+    return resolveInspectionTag('nonConformityStatus', status);
   }
 }

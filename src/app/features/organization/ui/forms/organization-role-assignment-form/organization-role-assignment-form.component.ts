@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import type {
   OrganizationMemberOutput,
@@ -35,7 +36,7 @@ import type { MemberOption, OrganizationRoleAssignmentValues } from './models';
  */
 @Component({
   selector: 'app-organization-role-assignment-form',
-  imports: [ButtonModule, ReactiveFormsModule, SelectModule],
+  imports: [ButtonModule, MessageModule, ReactiveFormsModule, SelectModule],
   templateUrl: './organization-role-assignment-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,13 +1,17 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Logo, ThemeSwitcher } from '@shared/components';
 
 /**
  * Component SplitLayoutHeader
  * @class SplitLayoutHeader
  *
  * @description
- * Component for the auth layout header
+ * Top bar of the split layout form column. Carries the compact brand lockup on
+ * small screens (where the showcase panel is hidden, so the brand would
+ * otherwise disappear) and the theme switcher, which stays reachable on every
+ * breakpoint.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @example
  * ```html
@@ -18,6 +22,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
  */
 @Component({
   selector: 'app-split-layout-header',
+  imports: [Logo, ThemeSwitcher],
   templateUrl: './split-layout-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -8,7 +8,7 @@ import {
   type EquipmentOutput,
 } from '@features/organization/features/equipments/models';
 import { FacilityOverviewStore } from '@features/organization/features/facilities/state';
-import { Tag, type TagDescriptor } from '@shared/components';
+import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
 
 /**
  * Component FacilityEquipmentDataview
@@ -24,7 +24,7 @@ import { Tag, type TagDescriptor } from '@shared/components';
  */
 @Component({
   selector: 'app-facility-equipment-dataview',
-  imports: [CardModule, DataViewModule, SkeletonModule, Tag],
+  imports: [CardModule, DataViewModule, EmptyState, SkeletonModule, Tag],
   templateUrl: './facility-equipment-dataview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -37,7 +37,12 @@ export class FacilityEquipmentDataview {
     ReadonlyArray<EquipmentOutput>
   >(() => this.store.equipment());
 
-  protected readonly cardPt: CardPassThroughOptions = DATAVIEW_CARD_PT;
+  protected readonly cardPt: CardPassThroughOptions = {
+    ...DATAVIEW_CARD_PT,
+    root: {
+      class: 'h-full flex flex-col bg-surface-0 dark:bg-surface-900 shadow-none!',
+    },
+  };
 
   protected readonly dataviewPt: DataViewPassThroughOptions = {
     root: { class: 'flex min-h-0 flex-1 flex-col bg-surface-0 dark:bg-surface-900' },

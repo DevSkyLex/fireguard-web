@@ -2,20 +2,26 @@
   <input
     pInputText
     formControlName="fileName"
+    fluid
     placeholder="File name"
     i18n-placeholder="@@equipment.attach.fileName"
+    [invalid]="form.controls.fileName.invalid && form.controls.fileName.touched"
   />
   <input
     pInputText
     formControlName="mimeType"
+    fluid
     placeholder="MIME type"
     i18n-placeholder="@@equipment.attach.mimeType"
+    [invalid]="form.controls.mimeType.invalid && form.controls.mimeType.touched"
   />
   <input
     pInputText
     formControlName="content"
+    fluid
     placeholder="Base64 content"
     i18n-placeholder="@@equipment.attach.content"
+    [invalid]="form.controls.content.invalid && form.controls.content.touched"
   />
   <p-button
     type="submit"

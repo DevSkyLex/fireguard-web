@@ -3,24 +3,22 @@
   <div class="flex flex-col gap-2">
     <label
       for="organizationName"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@onboarding.org.nameLabel"
       >Organization Name</label
     >
-    <p-iconfield>
-      <p-inputicon class="pi pi-building" />
-      <input
-        pInputText
-        id="organizationName"
-        formControlName="organizationName"
-        fluid
-        placeholder="Fireguard Paris"
-        i18n-placeholder="@@onboarding.org.namePlaceholder"
-      />
-    </p-iconfield>
+    <input
+      pInputText
+      id="organizationName"
+      formControlName="organizationName"
+      fluid
+      placeholder="Fireguard Paris"
+      i18n-placeholder="@@onboarding.org.namePlaceholder"
+      [invalid]="form.controls.organizationName.invalid && form.controls.organizationName.touched"
+    />
 
     @if (form.controls.organizationName.invalid && form.controls.organizationName.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         @if (form.controls.organizationName.hasError('required')) {
           <span i18n="@@onboarding.org.nameRequired">Organization name is required.</span>
         }

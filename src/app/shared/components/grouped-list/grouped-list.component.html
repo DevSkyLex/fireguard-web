@@ -3,8 +3,6 @@
     <section>
       <header
         class="flex items-center justify-between gap-2 rounded-md bg-surface-50 px-3 py-2 dark:bg-surface-900/50"
-        [class.cursor-pointer]="collapsible()"
-        (click)="toggle(group.id)"
       >
         @if (headerTemplate(); as template) {
           <ng-container
@@ -19,9 +17,10 @@
         @if (collapsible()) {
           <button
             type="button"
-            class="grid size-6 shrink-0 place-items-center rounded text-surface-400 hover:text-surface-600 dark:hover:text-surface-300"
+            class="grid size-6 shrink-0 place-items-center rounded text-surface-400 hover:text-surface-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:text-surface-300"
             [attr.aria-expanded]="!isCollapsed(group)"
             [attr.aria-label]="toggleAriaLabel(isCollapsed(group))"
+            (click)="toggle(group.id)"
           >
             <i
               class="pi text-xs"

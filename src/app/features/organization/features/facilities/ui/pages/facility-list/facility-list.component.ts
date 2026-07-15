@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import type { RequestOptions } from '@core/api';
 import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
@@ -32,7 +33,7 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
  */
 @Component({
   selector: 'app-facility-list',
-  imports: [RouterModule, ButtonModule, FacilityTable],
+  imports: [RouterModule, ButtonModule, MessageModule, FacilityTable],
   providers: [FacilityStore],
   templateUrl: './facility-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -141,6 +142,21 @@ export class FacilityListPage {
 
   /** Tooltip explaining why facility creation is disabled. */
   protected readonly quotaLimitTooltip: string = QUOTA_LIMIT_REACHED_TOOLTIP;
+
+  /**
+   * Property lastLoadOptions
+   *
+   * @description
+   * Pagination and filter params from the most recent dataview lazy-load,
+   * retained so {@link retry} can re-dispatch the same root-facility page
+   * after a failed load.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {RequestOptions | undefined}
+   */
+  private lastLoadOptions: RequestOptions | undefined;
 
   //#endregion
 
@@ -272,10 +288,33 @@ export class FacilityListPage {
    * @returns {void}
    */
   public onLoad(options: RequestOptions): void {
+    this.lastLoadOptions = options;
     const organizationId: string | undefined =
       this.activeOrganizationStore.selectedOrganization()?.id;
     if (organizationId) {
       this.store.loadRootFacilities({ organizationId, options });
+    }
+  }
+
+  /**
+   * Method retry
+   * @method retry
+   *
+   * @description
+   * Re-dispatches the root-facility load for the active organization using the
+   * most recent lazy-load params after a failed load (the error banner's Retry
+   * action).
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @returns {void}
+   */
+  public retry(): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    if (organizationId) {
+      this.store.loadRootFacilities({ organizationId, options: this.lastLoadOptions });
     }
   }
 

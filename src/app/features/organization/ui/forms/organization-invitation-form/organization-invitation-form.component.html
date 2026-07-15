@@ -1,7 +1,7 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="flex h-full flex-col">
   <div class="flex flex-1 flex-col gap-5">
-    <div class="flex flex-col gap-1.5">
-      <label for="invite-email" class="text-sm font-medium text-surface-700 dark:text-surface-200">
+    <div class="flex flex-col gap-2">
+      <label for="invite-email" class="text-sm font-medium text-surface-900 dark:text-surface-50">
         <ng-container i18n="@@org.invForm.emailLabel">Email address</ng-container>
         <span class="text-red-500" aria-hidden="true">&nbsp;*</span>
       </label>
@@ -13,12 +13,12 @@
         formControlName="email"
         placeholder="member@example.com"
         class="w-full"
-        [invalid]="form.controls.email.touched && form.controls.email.invalid"
+        [invalid]="form.controls.email.invalid && form.controls.email.touched"
       />
-      @if (form.controls.email.touched && form.controls.email.invalid) {
-        <small i18n="@@org.invForm.emailError" class="text-red-500">
-          Enter a valid email address.
-        </small>
+      @if (form.controls.email.invalid && form.controls.email.touched) {
+        <p-message severity="error" variant="simple" size="small">
+          <span i18n="@@org.invForm.emailError">Enter a valid email address.</span>
+        </p-message>
       } @else {
         <small i18n="@@org.invForm.emailHelp" class="text-surface-500 dark:text-surface-400">
           We'll email them a secure link to join.
@@ -26,8 +26,8 @@
       }
     </div>
 
-    <div class="flex flex-col gap-1.5">
-      <label for="invite-role" class="text-sm font-medium text-surface-700 dark:text-surface-200">
+    <div class="flex flex-col gap-2">
+      <label for="invite-role" class="text-sm font-medium text-surface-900 dark:text-surface-50">
         <ng-container i18n="@@org.invForm.role">Initial role</ng-container>
       </label>
       <p-select
@@ -40,6 +40,7 @@
         placeholder="Select a role"
         [showClear]="true"
         styleClass="w-full"
+        [invalid]="form.controls.roleId.invalid && form.controls.roleId.touched"
       />
       <small i18n="@@org.invForm.roleHelp" class="text-surface-500 dark:text-surface-400">
         New members receive this role. You can change it later.

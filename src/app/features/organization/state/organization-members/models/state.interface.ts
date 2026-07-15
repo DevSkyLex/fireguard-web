@@ -40,4 +40,10 @@ export interface OrganizationMembersState {
   readonly loadCallState: CallState;
   /** Request state for member/invitation mutations. */
   readonly mutationCallState: CallState;
+  /**
+   * Whether the last dispatched mutation can be rejected for exceeding the plan
+   * quota (only inviting a member does). Lets the page tell a quota 409 — which
+   * opens the upgrade dialog — apart from other 409s such as the last-admin guard.
+   */
+  readonly lastMutationCanExceedQuota: boolean;
 }

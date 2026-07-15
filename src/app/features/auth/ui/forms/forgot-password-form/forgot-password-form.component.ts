@@ -16,8 +16,6 @@ import {
 } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import type { ForgotPasswordFormData, ForgotPasswordFormValues } from './models';
@@ -35,15 +33,7 @@ import type { ForgotPasswordFormData, ForgotPasswordFormValues } from './models'
  */
 @Component({
   selector: 'app-forgot-password-form',
-  imports: [
-    ReactiveFormsModule,
-    RouterModule,
-    InputTextModule,
-    ButtonModule,
-    MessageModule,
-    IconFieldModule,
-    InputIconModule,
-  ],
+  imports: [ReactiveFormsModule, RouterModule, InputTextModule, ButtonModule, MessageModule],
   templateUrl: './forgot-password-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

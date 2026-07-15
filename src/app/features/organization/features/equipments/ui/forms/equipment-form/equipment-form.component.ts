@@ -15,8 +15,6 @@ import {
   type FormGroup,
 } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
@@ -39,15 +37,7 @@ import type { EquipmentFormData, EquipmentFormValues } from './models';
  */
 @Component({
   selector: 'app-equipment-form',
-  imports: [
-    ReactiveFormsModule,
-    InputTextModule,
-    SelectModule,
-    ButtonModule,
-    MessageModule,
-    IconFieldModule,
-    InputIconModule,
-  ],
+  imports: [ReactiveFormsModule, InputTextModule, SelectModule, ButtonModule, MessageModule],
   templateUrl: './equipment-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

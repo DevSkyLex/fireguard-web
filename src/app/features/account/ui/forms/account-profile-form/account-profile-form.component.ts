@@ -10,10 +10,8 @@ import {
 } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { IconFieldModule } from 'primeng/iconfield';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import type { UpdateCurrentUserProfileInput, UserProfileOutput } from '@features/account/models';
@@ -47,8 +45,6 @@ import type { AccountProfileFormData } from './models';
   imports: [
     ReactiveFormsModule,
     ButtonModule,
-    IconFieldModule,
-    InputIconModule,
     InputGroupModule,
     InputGroupAddonModule,
     InputTextModule,

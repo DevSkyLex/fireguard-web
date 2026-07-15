@@ -1,7 +1,7 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="flex h-full flex-col">
   <div class="flex flex-1 flex-col gap-5">
-    <div class="flex flex-col gap-1.5">
-      <label for="assign-member" class="text-sm font-medium text-surface-700 dark:text-surface-200">
+    <div class="flex flex-col gap-2">
+      <label for="assign-member" class="text-sm font-medium text-surface-900 dark:text-surface-50">
         <ng-container i18n="@@org.roleAssign.member">Member</ng-container>
         <span class="text-red-500" aria-hidden="true">&nbsp;*</span>
       </label>
@@ -16,17 +16,17 @@
         [filter]="true"
         filterBy="label"
         styleClass="w-full"
-        [invalid]="form.controls.memberId.touched && form.controls.memberId.invalid"
+        [invalid]="form.controls.memberId.invalid && form.controls.memberId.touched"
       />
-      @if (form.controls.memberId.touched && form.controls.memberId.invalid) {
-        <small i18n="@@org.roleAssign.memberError" class="text-red-500">
-          Select a member to assign the role to.
-        </small>
+      @if (form.controls.memberId.invalid && form.controls.memberId.touched) {
+        <p-message severity="error" variant="simple" size="small">
+          <span i18n="@@org.roleAssign.memberError">Select a member to assign the role to.</span>
+        </p-message>
       }
     </div>
 
-    <div class="flex flex-col gap-1.5">
-      <label for="assign-role" class="text-sm font-medium text-surface-700 dark:text-surface-200">
+    <div class="flex flex-col gap-2">
+      <label for="assign-role" class="text-sm font-medium text-surface-900 dark:text-surface-50">
         <ng-container i18n="@@org.roleAssign.role">Role</ng-container>
         <span class="text-red-500" aria-hidden="true">&nbsp;*</span>
       </label>
@@ -41,10 +41,12 @@
         [filter]="true"
         filterBy="name"
         styleClass="w-full"
-        [invalid]="form.controls.roleId.touched && form.controls.roleId.invalid"
+        [invalid]="form.controls.roleId.invalid && form.controls.roleId.touched"
       />
-      @if (form.controls.roleId.touched && form.controls.roleId.invalid) {
-        <small i18n="@@org.roleAssign.roleError" class="text-red-500">Select a role.</small>
+      @if (form.controls.roleId.invalid && form.controls.roleId.touched) {
+        <p-message severity="error" variant="simple" size="small">
+          <span i18n="@@org.roleAssign.roleError">Select a role.</span>
+        </p-message>
       }
     </div>
   </div>

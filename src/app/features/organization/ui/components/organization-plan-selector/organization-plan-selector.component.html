@@ -92,11 +92,15 @@
 
   @if (store.isLoadingPlans()) {
     <!-- Loading -->
-    <div
-      class="flex items-center justify-center gap-3 rounded-lg border border-surface-200 p-10 text-surface-500 dark:border-surface-800 dark:text-surface-400"
-    >
-      <i class="pi pi-spin pi-spinner text-xl"></i>
-      <span i18n="@@org.plan.loading">Loading plans…</span>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      @for (placeholder of [0, 1, 2]; track placeholder) {
+        <app-skeleton
+          preset="card"
+          [count]="1"
+          label="Loading plans…"
+          i18n-label="@@org.plan.loading"
+        />
+      }
     </div>
   } @else if (store.plansError()) {
     <!-- Error -->

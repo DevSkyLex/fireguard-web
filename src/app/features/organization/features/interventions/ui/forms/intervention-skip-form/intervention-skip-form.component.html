@@ -18,8 +18,10 @@
     </div>
 
     <div class="grid gap-5">
-      <label class="grid gap-1.5 text-sm">
-        <span i18n="@@intervention.sf.reason" class="font-medium"
+      <label class="flex flex-col gap-2">
+        <span
+          i18n="@@intervention.sf.reason"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Reason <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <textarea
@@ -37,7 +39,7 @@
           "
         ></textarea>
         @if (form.controls.reason.invalid && form.controls.reason.touched) {
-          <p-message severity="error" variant="simple">
+          <p-message severity="error" variant="simple" size="small">
             <span id="intervention-skip-reason-error" i18n="@@intervention.sf.reasonRequired"
               >A reason is required to skip this work.</span
             >

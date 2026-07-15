@@ -1,25 +1,25 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-8">
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex w-full flex-col gap-5">
   <!-- Email Field -->
   <div class="flex flex-col gap-2">
     <label
       for="email"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@auth.login.email.label"
       >Email Address</label
     >
-    <p-iconfield>
-      <p-inputicon class="pi pi-user" />
-      <input
-        pInputText
-        id="email"
-        formControlName="email"
-        class="w-full"
-        placeholder="example@email.com"
-      />
-    </p-iconfield>
+    <input
+      pInputText
+      id="email"
+      type="email"
+      formControlName="email"
+      class="w-full"
+      autocomplete="email"
+      placeholder="name@company.com"
+      [invalid]="form.controls.email.invalid && form.controls.email.touched"
+    />
 
     @if (form.controls.email.invalid && form.controls.email.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         @if (form.controls.email.hasError('required')) {
           <span i18n="@@auth.login.email.required">Email is required.</span>
         }
@@ -32,54 +32,53 @@
 
   <!-- Password Field -->
   <div class="flex flex-col gap-2">
-    <label
-      for="password"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
-      i18n="@@auth.login.password.label"
-    >
-      Password
-    </label>
+    <div class="flex items-center justify-between gap-3">
+      <label
+        for="password"
+        class="text-sm font-medium text-surface-900 dark:text-surface-50"
+        i18n="@@auth.login.password.label"
+      >
+        Password
+      </label>
 
-    <p-iconfield>
-      <p-inputicon class="pi pi-lock" />
-      <p-password
-        id="password"
-        formControlName="password"
-        [feedback]="false"
-        [toggleMask]="true"
-        class="w-full"
-        inputStyleClass="w-full"
-        placeholder="••••••••"
-      />
-    </p-iconfield>
+      <a
+        routerLink="/auth/password-reset/forgot"
+        class="text-sm font-medium text-primary hover:underline"
+        i18n="@@auth.login.forgotPassword"
+      >
+        Forgot password?
+      </a>
+    </div>
+
+    <p-password
+      id="password"
+      formControlName="password"
+      [feedback]="false"
+      [toggleMask]="true"
+      [invalid]="form.controls.password.invalid && form.controls.password.touched"
+      class="w-full"
+      inputStyleClass="w-full"
+      autocomplete="current-password"
+      placeholder="••••••••"
+    />
 
     @if (form.controls.password.invalid && form.controls.password.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         <span i18n="@@auth.login.password.required">Password is required.</span>
       </p-message>
     }
   </div>
 
-  <!-- Options Row -->
-  <div class="mt-2 flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <p-checkbox inputId="remember_me" formControlName="remember_me" [binary]="true" />
-      <label
-        for="remember_me"
-        class="cursor-pointer text-sm text-surface-700 dark:text-surface-300"
-        i18n="@@auth.login.rememberMe"
-      >
-        Remember me
-      </label>
-    </div>
-
-    <a
-      routerLink="/auth/password-reset/forgot"
-      class="text-sm font-medium text-primary hover:underline"
-      i18n="@@auth.login.forgotPassword"
+  <!-- Remember me -->
+  <div class="flex items-center gap-2.5">
+    <p-checkbox inputId="remember_me" formControlName="remember_me" [binary]="true" />
+    <label
+      for="remember_me"
+      class="cursor-pointer text-sm text-surface-600 dark:text-surface-300"
+      i18n="@@auth.login.rememberMe"
     >
-      Forgot password?
-    </a>
+      Remember me
+    </label>
   </div>
 
   <!-- Submit Button -->
@@ -89,6 +88,6 @@
     type="submit"
     [loading]="loading()"
     [disabled]="form.invalid || loading()"
-    styleClass="w-full"
+    styleClass="mt-1 w-full"
   />
 </form>

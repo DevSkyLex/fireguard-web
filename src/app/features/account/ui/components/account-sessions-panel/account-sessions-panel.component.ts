@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -29,7 +30,7 @@ import { SessionStore } from '@features/auth/state';
  */
 @Component({
   selector: 'app-account-sessions-panel',
-  imports: [ButtonModule, DialogModule, MessageModule, SessionTable],
+  imports: [ButtonModule, DatePipe, DialogModule, MessageModule, SessionTable],
   providers: [SessionStore],
   templateUrl: './account-sessions-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

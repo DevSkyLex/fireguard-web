@@ -18,8 +18,10 @@
     </div>
 
     <div class="grid gap-5">
-      <label class="grid gap-1.5 text-sm">
-        <span i18n="@@intervention.wif.action" class="font-medium"
+      <label class="flex flex-col gap-2">
+        <span
+          i18n="@@intervention.wif.action"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Action <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <p-select
@@ -27,6 +29,7 @@
           [options]="[...actionOptions]"
           optionLabel="label"
           optionValue="value"
+          [invalid]="form.controls.action.invalid && form.controls.action.touched"
           appendTo="body"
         >
           <ng-template #selectedItem let-option>
@@ -40,8 +43,12 @@
         </p-select>
       </label>
 
-      <label class="grid gap-1.5 text-sm">
-        <span i18n="@@intervention.wif.target" class="font-medium">Target resource</span>
+      <label class="flex flex-col gap-2">
+        <span
+          i18n="@@intervention.wif.target"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+          >Target resource</span
+        >
         <p-select
           formControlName="target"
           [options]="[...targetOptions()]"
@@ -49,6 +56,7 @@
           optionValue="value"
           [filter]="true"
           [showClear]="true"
+          [invalid]="form.controls.target.invalid && form.controls.target.touched"
           i18n-placeholder="@@intervention.wif.targetPlaceholder"
           placeholder="Optional site, facility or equipment target"
           appendTo="body"
@@ -58,8 +66,12 @@
         </small>
       </label>
 
-      <label class="grid gap-1.5 text-sm">
-        <span i18n="@@intervention.wif.assignee" class="font-medium">Assignee</span>
+      <label class="flex flex-col gap-2">
+        <span
+          i18n="@@intervention.wif.assignee"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+          >Assignee</span
+        >
         <p-select
           formControlName="assignee"
           [options]="[...memberOptions()]"
@@ -68,6 +80,7 @@
           [filter]="true"
           filterBy="label,roleLabel"
           [showClear]="true"
+          [invalid]="form.controls.assignee.invalid && form.controls.assignee.touched"
           i18n-placeholder="@@intervention.wif.assigneePlaceholder"
           placeholder="Assign this work item"
           appendTo="body"

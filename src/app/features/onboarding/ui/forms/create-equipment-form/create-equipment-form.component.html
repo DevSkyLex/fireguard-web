@@ -3,7 +3,7 @@
   <div class="flex flex-col gap-2">
     <label
       for="equipmentType"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@onboarding.equipment.typeLabel"
       >Equipment type</label
     >
@@ -16,9 +16,10 @@
       fluid
       placeholder="Select a type"
       i18n-placeholder="@@onboarding.field.selectType"
+      [invalid]="form.controls.type.invalid && form.controls.type.touched"
     />
     @if (form.controls.type.invalid && form.controls.type.touched) {
-      <p-message severity="error" variant="simple"
+      <p-message severity="error" variant="simple" size="small"
         ><span i18n="@@onboarding.field.typeRequired">Type is required.</span></p-message
       >
     }
@@ -28,10 +29,10 @@
   <div class="flex flex-col gap-2">
     <label
       for="equipmentBrand"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@onboarding.equipment.brandLabel"
     >
-      Brand <span class="font-normal text-surface-400">(optional)</span>
+      Brand <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
     <input
       pInputText
@@ -47,10 +48,10 @@
   <div class="flex flex-col gap-2">
     <label
       for="equipmentModel"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@onboarding.equipment.modelLabel"
     >
-      Model <span class="font-normal text-surface-400">(optional)</span>
+      Model <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
     <input
       pInputText
@@ -66,11 +67,11 @@
   <div class="flex flex-col gap-2">
     <label
       for="serialNumber"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       i18n="@@onboarding.equipment.serialLabel"
     >
       Serial number
-      <span class="font-normal text-surface-400">(optional)</span>
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
     <input
       pInputText

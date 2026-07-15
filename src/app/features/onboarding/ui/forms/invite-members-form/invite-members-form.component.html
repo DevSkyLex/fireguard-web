@@ -38,24 +38,22 @@
           <!-- Email -->
           <div class="flex flex-col gap-1.5">
             <label
-              class="text-sm font-medium text-surface-700 dark:text-surface-300"
+              class="text-sm font-medium text-surface-900 dark:text-surface-50"
               i18n="@@onboarding.members.emailLabel"
             >
               Email address
             </label>
-            <p-iconfield>
-              <p-inputicon class="pi pi-envelope" />
-              <input
-                pInputText
-                type="email"
-                formControlName="email"
-                fluid
-                placeholder="member@example.com"
-                i18n-placeholder="@@onboarding.members.emailPlaceholder"
-              />
-            </p-iconfield>
+            <input
+              pInputText
+              type="email"
+              formControlName="email"
+              fluid
+              placeholder="member@example.com"
+              i18n-placeholder="@@onboarding.members.emailPlaceholder"
+              [invalid]="row.controls.email.invalid && row.controls.email.touched"
+            />
             @if (row.controls.email.invalid && row.controls.email.touched) {
-              <p-message severity="error" variant="simple">
+              <p-message severity="error" variant="simple" size="small">
                 @if (row.controls.email.hasError('required')) {
                   <span i18n="@@onboarding.members.emailRequired">Email is required.</span>
                 } @else if (row.controls.email.hasError('email')) {
@@ -71,14 +69,14 @@
           @if (roleOptions().length > 0) {
             <div class="flex flex-col gap-1.5">
               <label
-                class="text-sm font-medium text-surface-700 dark:text-surface-300"
+                class="text-sm font-medium text-surface-900 dark:text-surface-50"
                 i18n="@@onboarding.members.roleLabel"
               >
                 Role
               </label>
               <app-radio-card-group formControlName="roleId" [options]="roleOptions()" />
               @if (row.controls.roleId.invalid && row.controls.roleId.touched) {
-                <p-message severity="error" variant="simple">
+                <p-message severity="error" variant="simple" size="small">
                   <span i18n="@@onboarding.members.roleRequired">Please select a role.</span>
                 </p-message>
               }
@@ -92,7 +90,7 @@
     @if (rows.length < maxRows) {
       <button
         type="button"
-        class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-surface-200 py-3 text-sm font-medium text-surface-400 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-surface-800 dark:text-surface-500"
+        class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-surface-200 py-3 text-sm font-medium text-surface-500 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-surface-800 dark:text-surface-400"
         [disabled]="busy() || inviting()"
         (click)="addRow()"
       >

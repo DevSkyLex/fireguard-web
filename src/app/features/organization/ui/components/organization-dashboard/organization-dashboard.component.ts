@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import { OrganizationPermissionService } from '@features/organization/access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { DashboardStore } from '@features/organization/state/organization-dashboard';
-import { MetricCard } from '@shared/components';
+import { EmptyState, MetricCard, Skeleton } from '@shared/components';
 import {
   AssetGrowthTrend,
   InspectionQualityTrend,
@@ -35,6 +35,8 @@ import {
     NonConformitiesOpenedTrend,
     NonConformitiesResolvedTrend,
     AssetGrowthTrend,
+    Skeleton,
+    EmptyState,
   ],
   providers: [DashboardStore],
   changeDetection: ChangeDetectionStrategy.OnPush,

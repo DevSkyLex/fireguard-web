@@ -6,18 +6,20 @@ import type {
   OnboardingStepPresentation,
 } from '@features/onboarding/models';
 import { OnboardingStore } from '@features/onboarding/state';
+import { Logo } from '@shared/components';
 
 /**
  * Type ShowcaseStepStatus
  * @typedef ShowcaseStepStatus
  *
  * @description
- * Visual state of a step in the showcase rail: `done` (completed or skipped),
- * `current` (the next step to execute), or `todo` (not yet reached).
+ * Visual state of a step in the showcase rail: `done` (completed), `skipped`
+ * (resolved by skipping), `current` (the next step to execute), or `todo` (not
+ * yet reached).
  *
  * @since 1.0.0
  */
-type ShowcaseStepStatus = 'done' | 'current' | 'todo';
+type ShowcaseStepStatus = 'done' | 'current' | 'todo' | 'skipped';
 
 /**
  * Component OnboardingShowcase
@@ -45,7 +47,7 @@ type ShowcaseStepStatus = 'done' | 'current' | 'todo';
  */
 @Component({
   selector: 'app-onboarding-showcase',
-  imports: [],
+  imports: [Logo],
   templateUrl: './onboarding-showcase.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -120,8 +122,9 @@ export class OnboardingShowcase {
    * Method statusOf
    *
    * @description
-   * Resolves the visual rail status of a step: `done` when it is completed or
-   * skipped, `current` when it is the next step to execute, otherwise `todo`.
+   * Resolves the visual rail status of a step: `done` when completed, `skipped`
+   * when skipped, `current` when it is the next step to execute, otherwise
+   * `todo`. Both `done` and `skipped` count as resolved for the progress bar.
    *
    * @access protected
    * @since 1.0.0
@@ -130,7 +133,8 @@ export class OnboardingShowcase {
    * @returns {ShowcaseStepStatus} The visual status for the rail.
    */
   protected statusOf(step: OnboardingStepOutput): ShowcaseStepStatus {
-    if (step.status === 'completed' || step.status === 'skipped') return 'done';
+    if (step.status === 'completed') return 'done';
+    if (step.status === 'skipped') return 'skipped';
     return step.key === this.store.nextStep() ? 'current' : 'todo';
   }
   //#endregion

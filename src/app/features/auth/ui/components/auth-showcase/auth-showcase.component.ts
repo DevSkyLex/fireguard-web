@@ -1,35 +1,34 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Logo } from '@shared/components';
 
 /**
- * Type ShowcaseMetric
- * @typedef ShowcaseMetric
+ * Type ShowcaseFeature
+ * @typedef ShowcaseFeature
  *
  * @description
- * A single headline metric rendered in the auth showcase panel.
+ * A single capability line rendered in the auth showcase panel: a PrimeIcons
+ * glyph paired with a short label.
  *
- * @since 1.0.0
+ * @since 2.0.0
  */
-type ShowcaseMetric = {
+type ShowcaseFeature = {
+  readonly icon: string;
   readonly label: string;
-  readonly value: string;
 };
 
-const SHOWCASE_METRICS: readonly ShowcaseMetric[] = [
-  { label: $localize`:@@splitLayout.metric.liveAlerts:Live alerts`, value: '24/7' },
+const SHOWCASE_FEATURES: readonly ShowcaseFeature[] = [
   {
-    label: $localize`:@@splitLayout.metric.responseWorkflows:Response workflows`,
-    value: $localize`:@@splitLayout.metric.automated:Automated`,
+    icon: 'pi pi-box',
+    label: $localize`:@@auth.showcase.feature.inventory:Equipment inventory and lifecycle`,
   },
   {
-    label: $localize`:@@splitLayout.metric.complianceTracking:Compliance tracking`,
-    value: $localize`:@@splitLayout.metric.isoReady:ISO-ready`,
+    icon: 'pi pi-check-circle',
+    label: $localize`:@@auth.showcase.feature.inspections:Inspections, checklists and non-conformity tracking`,
   },
-];
-
-const SHOWCASE_HIGHLIGHTS: readonly string[] = [
-  $localize`:@@splitLayout.highlight.commandCenter:Unified safety command center`,
-  $localize`:@@splitLayout.highlight.rbac:Role-based access and approvals`,
-  $localize`:@@splitLayout.highlight.auditHistory:Audit-ready incident history`,
+  {
+    icon: 'pi pi-sitemap',
+    label: $localize`:@@auth.showcase.feature.multiSite:Multi-site, multi-organization, roles and permissions`,
+  },
 ];
 
 /**
@@ -37,12 +36,12 @@ const SHOWCASE_HIGHLIGHTS: readonly string[] = [
  * @class AuthShowcase
  *
  * @description
- * Branded marketing panel rendered in the split layout showcase slot on the
- * authentication pages (login, register, password reset). It is auth-owned
- * content contributed to the layout through `withAuthShowcase()`; the layout
- * renders it generically without knowing what it shows.
+ * Branded panel rendered in the split layout showcase slot on the
+ * authentication pages (login, register, password reset). Auth-owned content
+ * contributed to the layout through `withAuthShowcase()`; the layout renders it
+ * generically without knowing what it shows.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @example
  * ```html
@@ -53,36 +52,22 @@ const SHOWCASE_HIGHLIGHTS: readonly string[] = [
  */
 @Component({
   selector: 'app-auth-showcase',
-  imports: [],
+  imports: [Logo],
   templateUrl: './auth-showcase.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthShowcase {
   /**
-   * Property metrics
+   * Property features
    * @readonly
    *
    * @description
-   * Headline metrics displayed in the showcase grid.
+   * Capability lines listed under the showcase headline.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @type {readonly ShowcaseMetric[]}
+   * @type {readonly ShowcaseFeature[]}
    */
-  protected readonly metrics: readonly ShowcaseMetric[] = SHOWCASE_METRICS;
-
-  /**
-   * Property highlights
-   * @readonly
-   *
-   * @description
-   * Bullet highlights displayed at the foot of the showcase.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {readonly string[]}
-   */
-  protected readonly highlights: readonly string[] = SHOWCASE_HIGHLIGHTS;
+  protected readonly features: readonly ShowcaseFeature[] = SHOWCASE_FEATURES;
 }

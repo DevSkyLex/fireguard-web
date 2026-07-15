@@ -6,7 +6,9 @@ import type { Routes } from '@angular/router';
  * @description
  * Routes for the main feature module.
  *
- * - `/home` — application home page (dashboard landing)
+ * The application root (`/`) has no standalone landing page: FireGuard is
+ * organization-scoped, so the root redirects to the organizations entry point,
+ * which forwards to the active organization's workspace.
  *
  * @since 1.0.0
  */
@@ -14,11 +16,6 @@ export const MAIN_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    loadComponent: () => import('./ui/pages/home-page/home-page.component').then((m) => m.HomePage),
-    title: $localize`:@@route.home:Home`,
-    data: {
-      breadcrumb: false,
-      preload: true,
-    },
+    redirectTo: '/organizations',
   },
 ];

@@ -21,6 +21,7 @@ export {
 } from './calendar';
 export { CommentComposer } from './comment-composer';
 export { EmptyState } from './empty-state';
+export { ErrorState } from './error-state';
 export { GroupedList } from './grouped-list';
 export { GroupedListHeaderDirective, GroupedListRowDirective } from './grouped-list';
 export type { GroupedListHeaderContext, GroupedListRowContext } from './grouped-list';
@@ -31,6 +32,8 @@ export { MetricCard } from './metric-card';
 export type { MetricComparison } from './metric-card';
 export { RadioCardGroup } from './radio-card-group';
 export type { RadioCardOption } from './radio-card-group';
+export { Skeleton } from './skeleton';
+export type { SkeletonPreset } from './skeleton';
 export { SplashScreen } from './splash-screen';
 export { Tag } from './tag';
 export type { TagDescriptor, TagOption, TagSeverity, TagVariant } from './tag';

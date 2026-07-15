@@ -1,55 +1,64 @@
-<div class="relative h-full">
-  <div class="sticky top-0 h-dvh">
-    <div
-      class="relative grid h-full overflow-hidden border border-surface-800/70 bg-linear-to-br from-surface-950 via-surface-900 to-surface-800 dark:border-surface-950 dark:from-black dark:via-surface-950 dark:to-surface-950"
-    >
-      <div
-        class="pointer-events-none absolute top-8 -right-20 h-64 w-64 rounded-full bg-primary-500/15 blur-3xl"
-      ></div>
-      <div
-        class="pointer-events-none absolute bottom-0 -left-12 h-52 w-52 rounded-full bg-primary-500/5 blur-3xl"
-      ></div>
+<div class="relative flex h-full min-h-dvh flex-col overflow-hidden bg-surface-950 text-surface-0">
+  <!-- Ambient indigo glow -->
+  <div
+    class="pointer-events-none absolute -top-28 -right-24 h-[30rem] w-[30rem] rounded-full bg-primary-500/20 blur-[130px]"
+  ></div>
+  <div
+    class="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-primary-700/20 blur-[120px]"
+  ></div>
 
-      <section class="relative flex h-full flex-col justify-between gap-10 p-12 2xl:p-16">
-        <header class="flex items-center justify-between gap-4">
-          <span class="text-3xl font-bold tracking-tight text-surface-0">Fireguard</span>
-        </header>
+  <!-- Faint dot grid, fading out toward the lower half -->
+  <div
+    class="pointer-events-none absolute inset-0"
+    aria-hidden="true"
+    style="
+      background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+      mask-image: linear-gradient(to bottom, black, transparent 62%);
+      -webkit-mask-image: linear-gradient(to bottom, black, transparent 62%);
+    "
+  ></div>
 
-        <section class="flex max-w-3xl flex-col gap-6">
-          <h1
-            class="text-4xl leading-tight font-semibold text-surface-0 2xl:text-5xl"
-            i18n="@@splitLayout.headline"
-          >
-            The future of fire safety, reimagined.
-          </h1>
-
-          <p
-            class="max-w-2xl text-lg leading-relaxed text-surface-300"
-            i18n="@@splitLayout.subline"
-          >
-            Monitor, coordinate and secure every site from one control plane designed for incident
-            readiness and operational clarity.
-          </p>
-
-          <div class="grid gap-3 sm:grid-cols-3">
-            @for (metric of metrics; track metric.label) {
-              <article class="rounded-xl border border-surface-700/30 bg-surface-900/50 px-4 py-3">
-                <p class="text-xs tracking-wide text-surface-400 uppercase">{{ metric.label }}</p>
-                <p class="mt-2 text-base font-semibold text-surface-0">{{ metric.value }}</p>
-              </article>
-            }
-          </div>
-        </section>
-
-        <footer class="grid gap-3 text-sm text-surface-200">
-          @for (highlight of highlights; track highlight) {
-            <div class="inline-flex items-center gap-2 rounded-lg bg-surface-900/40 px-3 py-2">
-              <i class="pi pi-check text-primary-400"></i>
-              <span>{{ highlight }}</span>
-            </div>
-          }
-        </footer>
-      </section>
+  <div class="relative flex h-full flex-1 flex-col justify-between gap-12 p-12 2xl:p-16">
+    <!-- Brand lockup -->
+    <div class="flex items-center gap-2.5">
+      <app-logo class="size-8 shrink-0 text-surface-0" />
+      <span class="text-xl font-bold tracking-tight text-surface-0">Fireguard</span>
     </div>
+
+    <!-- Hero -->
+    <div class="flex max-w-xl flex-col gap-9">
+      <div class="flex flex-col gap-5">
+        <span
+          class="text-xs font-semibold tracking-[0.18em] text-primary-500 uppercase"
+          i18n="@@auth.showcase.eyebrow"
+        >
+          Fire safety platform
+        </span>
+
+        <p
+          class="text-4xl leading-[1.1] font-semibold tracking-tight text-balance text-surface-0 2xl:text-[3.25rem]"
+          i18n="@@auth.showcase.headline"
+        >
+          Fire-safety compliance across every site, run from one place.
+        </p>
+      </div>
+
+      <ul class="flex flex-col gap-3.5">
+        @for (feature of features; track feature.label) {
+          <li class="flex items-center gap-3.5">
+            <span class="flex shrink-0 items-center justify-center text-primary-500">
+              <i [class]="feature.icon" class="text-base"></i>
+            </span>
+            <span class="text-sm text-surface-300 2xl:text-base">{{ feature.label }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <!-- Footer -->
+    <p class="text-sm text-surface-400" i18n="@@auth.showcase.copyright">
+      © 2026 Fireguard — Safety &amp; compliance
+    </p>
   </div>
 </div>

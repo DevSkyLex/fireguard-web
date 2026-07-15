@@ -17,8 +17,6 @@ import {
 } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
@@ -57,8 +55,6 @@ import { INSPECTION_RESULT_OPTIONS, INSPECTOR_TYPE_OPTIONS } from './options';
     InputTextModule,
     ButtonModule,
     MessageModule,
-    IconFieldModule,
-    InputIconModule,
     SelectModule,
     TextareaModule,
     DatePickerModule,

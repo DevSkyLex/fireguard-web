@@ -17,8 +17,6 @@ import {
   type ValidationErrors,
 } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
@@ -77,8 +75,6 @@ function coordinatesPairValidator(control: AbstractControl): ValidationErrors | 
     InputNumberModule,
     ButtonModule,
     MessageModule,
-    IconFieldModule,
-    InputIconModule,
     SelectModule,
   ],
   templateUrl: './facility-form.component.html',

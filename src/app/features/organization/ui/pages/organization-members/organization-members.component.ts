@@ -113,7 +113,9 @@ export class OrganizationMembersPage {
   /** Whether the current mutation error is an inline-displayable (non-quota) error. */
   protected readonly hasInlineMutationError: Signal<boolean> = computed<boolean>(() => {
     const error = this.store.mutationError();
-    return error !== null && !isQuotaExceededError(error);
+    return (
+      error !== null && !(isQuotaExceededError(error) && this.store.lastMutationCanExceedQuota())
+    );
   });
 
   /** Whether the active member can view the member workflow. */
@@ -144,9 +146,15 @@ export class OrganizationMembersPage {
     this.reload();
 
     // Surface member quota (409) failures through the actionable upgrade dialog.
+    // Only the invite mutation can hit the plan quota, so gate on that flag to
+    // avoid misreading other 409s (e.g. the last-admin guard) as a quota error.
     effect(() => {
       const error = this.store.mutationError();
-      if (error !== null && isQuotaExceededError(error)) {
+      if (
+        error !== null &&
+        isQuotaExceededError(error) &&
+        this.store.lastMutationCanExceedQuota()
+      ) {
         this.quotaStore.reload();
         this.quotaDialogVisible.set(true);
       }

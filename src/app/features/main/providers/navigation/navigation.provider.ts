@@ -7,7 +7,8 @@ import type { DashboardLayoutNavigationSlotFeature } from '@layouts/dashboard-la
  *
  * @description
  * Registers the Home section in the dashboard sidebar navigation slot.
- * Contributes a "Home" group containing the Home and Organizations links.
+ * Contributes a "Home" group containing the Organizations link. The root path
+ * (`/`) redirects to `/organizations`, so it has no separate nav entry.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -27,12 +28,6 @@ export function withMainNavigation(): DashboardLayoutNavigationSlotFeature {
         label: 'Home',
         expanded: true,
         items: [
-          {
-            id: 'home',
-            label: 'Home',
-            icon: 'pi pi-home',
-            routerLink: '/',
-          },
           {
             id: 'organizations',
             label: 'Organizations',

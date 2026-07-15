@@ -1,6 +1,34 @@
 <div class="h-72">
   @if (loading()) {
     <p-skeleton height="100%" class="w-full" />
+  } @else if (hasError()) {
+    <div class="flex h-full items-center justify-center">
+      <app-error-state
+        icon="pi-exclamation-triangle"
+        i18n-title="@@org.trend.assetGrowth.chartErrorTitle"
+        title="Couldn't load this chart"
+      >
+        <p-button
+          i18n-label="@@org.trend.assetGrowth.chartRetry"
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          size="small"
+          (onClick)="retry()"
+        />
+      </app-error-state>
+    </div>
+  } @else if (!hasData()) {
+    <div class="flex h-full items-center justify-center">
+      <app-empty-state
+        icon="pi-chart-bar"
+        i18n-title="@@org.trend.assetGrowth.chartEmptyTitle"
+        title="No data yet"
+        i18n-description="@@org.trend.assetGrowth.chartEmptyDesc"
+        description="No activity in the selected period."
+      />
+    </div>
   } @else {
     <p-chart
       type="bar"

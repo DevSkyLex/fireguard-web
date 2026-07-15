@@ -204,13 +204,23 @@
       <ng-template pTemplate="emptymessage">
         <tr class="bg-transparent! [&>td]:border-b-0!">
           <td [attr.colspan]="canRemoveMember() ? 6 : 5">
-            <app-empty-state
-              icon="pi-users"
-              i18n-title="@@org.memberTable.emptyTitle"
-              title="No members yet"
-              i18n-description="@@org.memberTable.emptyDesc"
-              description="People who join this organization will appear here."
-            />
+            @if (searchTerm()) {
+              <app-empty-state
+                icon="pi-search"
+                i18n-title="@@org.memberTable.emptySearchTitle"
+                title="No members match your search"
+                i18n-description="@@org.memberTable.emptySearchDesc"
+                description="No member matches your search. Try different keywords."
+              />
+            } @else {
+              <app-empty-state
+                icon="pi-users"
+                i18n-title="@@org.memberTable.emptyTitle"
+                title="No members yet"
+                i18n-description="@@org.memberTable.emptyDesc"
+                description="People who join this organization will appear here."
+              />
+            }
           </td>
         </tr>
       </ng-template>

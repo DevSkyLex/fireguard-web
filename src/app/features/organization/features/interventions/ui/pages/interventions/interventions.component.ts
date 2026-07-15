@@ -70,6 +70,7 @@ import {
   GroupedList,
   GroupedListHeaderDirective,
   GroupedListRowDirective,
+  Skeleton,
   type AvatarStackPerson,
   type BoardColumn,
   type BoardItemDropped,
@@ -160,6 +161,7 @@ interface InterventionListItemViewModel {
     MessageModule,
     ReactiveFormsModule,
     SelectButtonModule,
+    Skeleton,
     SkeletonModule,
     TooltipModule,
   ],
@@ -933,6 +935,28 @@ export class InterventionsPage {
 
     const name: string = this.q().trim();
     this.store.load({ organizationId, options: name ? { name } : undefined });
+  }
+
+  /**
+   * Method retryCalendar
+   * @method retryCalendar
+   *
+   * @description
+   * Re-dispatches the calendar's windowed load for the active organization and
+   * currently focused month after a failed fetch (the calendar error banner's
+   * Retry action).
+   *
+   * @access protected
+   * @since 5.2.0
+   *
+   * @returns {void}
+   */
+  protected retryCalendar(): void {
+    const organizationId: string | null = this.organization.selectedOrganization()?.id ?? null;
+    this.calendarStore.load({
+      organizationId,
+      window: this.calendarWindowFor(this.calendarFocusedDate()),
+    });
   }
 
   /**

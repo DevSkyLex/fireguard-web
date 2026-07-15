@@ -7,23 +7,12 @@ import type { Preset } from '@primeuix/themes/types';
  * @type {Preset}
  *
  * @description
- * The application theme. Appearance is expressed through PrimeNG **design
- * tokens** (the sanctioned extension point) rather than component wrappers or
- * ad-hoc CSS:
+ * The FireguardTheme is a custom theme preset for PrimeNG components,
+ * built on top of the Aura theme. It defines a color scheme, semantic colors,
+ * and component-specific styles to create a cohesive and visually
+ * appealing user interface.
  *
- * - `card` — the app's global card identity: no shadow, `surface`-based
- *   background per color scheme, and an `xl` radius. The card **border** has no
- *   PrimeNG token, so it stays a Tailwind class on each `<p-card>` that needs it
- *   (`border border-surface-200 dark:border-surface-800`).
- * - `datatable` — striped/header/row colors per color scheme, plus a single CSS
- *   rule for the sorted header cell (no token exists for it — the theme's only
- *   raw CSS). Tables use PrimeNG's default layout; no per-table `[pt]` layout
- *   overrides.
- * - `formField` / `overlay.select` — no shadow on inputs, selects, textareas or
- *   their overlays (Aura's default subtle drop shadow is disabled per color
- *   scheme).
- *
- * @version 2.0.0
+ * @version 4.0.0
  *
  * @example
  * ```typescript
@@ -39,44 +28,122 @@ import type { Preset } from '@primeuix/themes/types';
 export const FireguardTheme: Preset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '{blue.50}',
-      100: '{blue.100}',
-      200: '{blue.200}',
-      300: '{blue.300}',
-      400: '{blue.400}',
-      500: '{blue.500}',
-      600: '{blue.600}',
-      700: '{blue.700}',
-      800: '{blue.800}',
-      900: '{blue.900}',
-      950: '{blue.950}',
+      50: '{indigo.50}',
+      100: '{indigo.100}',
+      200: '{indigo.200}',
+      300: '{indigo.300}',
+      400: '{indigo.400}',
+      500: '{indigo.500}',
+      600: '{indigo.600}',
+      700: '{indigo.700}',
+      800: '{indigo.800}',
+      900: '{indigo.900}',
+      950: '{indigo.950}',
     },
-    surface: {
-      0: '{slate.50}',
-      50: '{slate.100}',
-      100: '{slate.200}',
-      200: '{slate.300}',
-      300: '{slate.400}',
-      400: '{slate.500}',
-      500: '{slate.600}',
-      600: '{slate.700}',
-      700: '{slate.800}',
-      800: '{slate.900}',
-      900: '{slate.950}',
+    focusRing: {
+      width: '2px',
+      style: 'solid',
+      color: '{primary.color}',
+      offset: '2px',
+      shadow: 'none',
+    },
+    formField: {
+      paddingX: '0.875rem',
+      paddingY: '0.625rem',
+      borderRadius: '8px',
+      transitionDuration: '0.15s',
+      focusRing: {
+        width: '3px',
+        style: 'solid',
+        color: 'color-mix(in srgb, {primary.500}, transparent 82%)',
+        offset: '0',
+        shadow: 'none',
+      },
     },
     overlay: {
       select: { shadow: 'none' },
     },
     colorScheme: {
       light: {
-        formField: { shadow: 'none' },
+        surface: {
+          0: '#ffffff',
+          50: '{zinc.50}',
+          100: '{zinc.100}',
+          200: '{zinc.200}',
+          300: '{zinc.300}',
+          400: '{zinc.400}',
+          500: '{zinc.500}',
+          600: '{zinc.600}',
+          700: '{zinc.700}',
+          800: '{zinc.800}',
+          900: '{zinc.900}',
+          950: '{zinc.950}',
+        },
+        primary: {
+          color: '{primary.600}',
+          contrastColor: '#ffffff',
+          hoverColor: '{primary.700}',
+          activeColor: '{primary.800}',
+        },
+        formField: {
+          shadow: 'none',
+          borderColor: '{surface.200}',
+          hoverBorderColor: '{surface.300}',
+          focusBorderColor: '{primary.color}',
+          invalidBorderColor: '{red.600}',
+          placeholderColor: '{surface.500}',
+        },
       },
       dark: {
-        formField: { shadow: 'none' },
+        surface: {
+          0: '#ffffff',
+          50: '{zinc.50}',
+          100: '{zinc.100}',
+          200: '{zinc.200}',
+          300: '{zinc.300}',
+          400: '{zinc.400}',
+          500: '{zinc.500}',
+          600: '{zinc.600}',
+          700: '{zinc.700}',
+          800: '{zinc.800}',
+          900: '{zinc.900}',
+          950: '{zinc.950}',
+        },
+        primary: {
+          color: '{primary.400}',
+          contrastColor: '{surface.950}',
+          hoverColor: '{primary.300}',
+          activeColor: '{primary.200}',
+        },
+        formField: {
+          shadow: 'none',
+          background: '#131316',
+          borderColor: '{surface.700}',
+          hoverBorderColor: '{surface.600}',
+          focusBorderColor: '{primary.color}',
+          invalidBorderColor: '{red.400}',
+          placeholderColor: '{surface.400}',
+        },
       },
     },
   },
   components: {
+    button: {
+      root: {
+        borderRadius: '8px',
+        paddingX: '1.125rem',
+        paddingY: '0.625rem',
+        label: { fontWeight: '600' },
+      },
+    },
+    inputtext: {
+      css: `
+.p-inputtext.p-invalid:enabled:focus {
+    border-color: var(--p-inputtext-invalid-border-color);
+    outline-color: color-mix(in srgb, var(--p-inputtext-invalid-border-color), transparent 78%);
+}
+`,
+    },
     progressspinner: {
       colorScheme: {
         light: {

@@ -27,6 +27,7 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import { OrganizationPlanStore } from '@features/organization/state/organization-plan';
 import { BillingInvoiceTable } from '@features/organization/ui/tables';
+import { Skeleton } from '@shared/components';
 import { Tag, type TagDescriptor } from '@shared/components/tag';
 import { BillingCancelCard } from './components/billing-cancel-card/billing-cancel-card.component';
 
@@ -69,6 +70,7 @@ interface IntervalOption {
     SelectButtonModule,
     FormsModule,
     Tag,
+    Skeleton,
     BillingInvoiceTable,
     BillingCancelCard,
   ],

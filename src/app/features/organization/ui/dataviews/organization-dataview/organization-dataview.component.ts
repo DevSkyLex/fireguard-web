@@ -1,4 +1,4 @@
-import { DatePipe, TitleCasePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -36,13 +36,13 @@ import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SplitButtonModule } from 'primeng/splitbutton';
-import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { RequestOptions } from '@core/api';
 import { DATAVIEW_CARD_PT } from '@features/organization/constants';
+import { resolveOrganizationStatusTag } from '@features/organization/models';
 import type { OrganizationOutput } from '@features/organization/models';
-import { EmptyState } from '@shared/components';
+import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
 import { ORGANIZATION_DATAVIEW_LAYOUT_OPTIONS } from './options';
 
 /**
@@ -81,8 +81,7 @@ import { ORGANIZATION_DATAVIEW_LAYOUT_OPTIONS } from './options';
     SplitButtonModule,
     SelectModule,
     SkeletonModule,
-    TagModule,
-    TitleCasePipe,
+    Tag,
     TooltipModule,
   ],
   templateUrl: './organization-dataview.component.html',
@@ -100,6 +99,24 @@ export class OrganizationDataview implements OnInit {
    */
   protected openLabel(name: string): string {
     return $localize`:@@org.dataview.openAria:Open ${name}:name:`;
+  }
+
+  /**
+   * Method statusDescriptor
+   * @method statusDescriptor
+   *
+   * @description
+   * Resolves the shared status badge descriptor for an organization from the
+   * organization tag registry, replacing the previous hand-rolled colour dot.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {OrganizationOutput} organization - Organization to describe.
+   * @returns {TagDescriptor} Resolved label + severity + icon descriptor.
+   */
+  protected statusDescriptor(organization: OrganizationOutput): TagDescriptor {
+    return resolveOrganizationStatusTag('status', organization.status);
   }
 
   //#region Inputs
@@ -617,29 +634,6 @@ export class OrganizationDataview implements OnInit {
 
     const menu: Menu = this.rowMenu();
     menu.toggle(event);
-  }
-
-  /**
-   * Method onItemKeydown
-   * @method onItemKeydown
-   *
-   * @description
-   * Keyboard activation of a clickable item. Ignores key events bubbling
-   * from interactive children (e.g. the row menu button) so opening the
-   * menu with the keyboard never triggers the item navigation.
-   *
-   * @access protected
-   * @since 1.1.0
-   *
-   * @param {Event} event - The keydown event from the item element.
-   * @param {OrganizationOutput} organization - The targeted organization.
-   *
-   * @returns {void}
-   */
-  protected onItemKeydown(event: Event, organization: OrganizationOutput): void {
-    if (event.target !== event.currentTarget) return;
-    event.preventDefault();
-    this.view.emit(organization);
   }
 
   /**

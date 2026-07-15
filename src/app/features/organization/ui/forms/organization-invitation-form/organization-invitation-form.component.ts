@@ -11,6 +11,7 @@ import {
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import type {
   InviteOrganizationMemberInput,
@@ -33,7 +34,7 @@ import type {
  */
 @Component({
   selector: 'app-organization-invitation-form',
-  imports: [ButtonModule, InputTextModule, ReactiveFormsModule, SelectModule],
+  imports: [ButtonModule, InputTextModule, MessageModule, ReactiveFormsModule, SelectModule],
   templateUrl: './organization-invitation-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

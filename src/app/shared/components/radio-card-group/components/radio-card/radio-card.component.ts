@@ -6,8 +6,6 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { RadioButtonModule } from 'primeng/radiobutton';
 
 /**
  * Component RadioCard
@@ -15,8 +13,13 @@ import { RadioButtonModule } from 'primeng/radiobutton';
  *
  * @description
  * Presentational component that renders a single selectable card
- * containing a PrimeNG radio button with a label and optional
- * description. Intended for use inside {@link RadioCardGroup}.
+ * backed by a visually-hidden native `<input type="radio">`. The
+ * card itself is the focus target — a `:has(:focus-visible)` ring
+ * frames the whole card, not a nested control — and selection is
+ * conveyed by the card border/background plus a CSS radio indicator.
+ * Uses a native input rather than a nested PrimeNG radio to keep the
+ * focus on the card and avoid a component-in-component. Intended for
+ * use inside {@link RadioCardGroup}.
  *
  * @since 1.0.0
  *
@@ -24,7 +27,6 @@ import { RadioButtonModule } from 'primeng/radiobutton';
  */
 @Component({
   selector: 'app-radio-card',
-  imports: [FormsModule, RadioButtonModule],
   templateUrl: './radio-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

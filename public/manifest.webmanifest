@@ -1,7 +1,7 @@
 {
   "name": "Fireguard Field Operations",
   "short_name": "Fireguard",
-  "theme_color": "#f97316",
+  "theme_color": "#4f46e5",
   "background_color": "#fafafa",
   "display": "standalone",
   "scope": "/",

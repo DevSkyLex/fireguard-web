@@ -37,9 +37,13 @@
           }
         </div>
       } @else if (items.length === 0) {
-        <div i18n="@@facility.inspections.empty" class="px-4 py-8 text-sm text-surface-500">
-          No inspection matches this filter.
-        </div>
+        <app-empty-state
+          icon="pi-search"
+          i18n-title="@@facility.inspDv.emptyTitle"
+          title="No inspections"
+          i18n-description="@@facility.inspDv.empty"
+          description="No inspection matches this filter."
+        />
       } @else {
         <div class="divide-y divide-surface-100 dark:divide-surface-800">
           @for (item of items; track item.id) {

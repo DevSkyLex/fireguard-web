@@ -10,11 +10,11 @@
 
     <div class="divide-y divide-surface-100 dark:divide-surface-800/70">
       <!-- Timezone -->
-      <div class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-2">
+      <div class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-6 sm:grid-cols-2">
         <label for="regional-timezone" class="flex flex-col gap-0.5">
           <span
             i18n="@@org.regional.timezone"
-            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            class="text-sm font-medium text-surface-900 dark:text-surface-50"
             >Timezone</span
           >
           <span
@@ -33,6 +33,7 @@
           [filter]="true"
           filterBy="label,offset"
           appendTo="body"
+          [invalid]="form.controls.timezone.invalid && form.controls.timezone.touched"
           fluid
         >
           <ng-template let-opt pTemplate="selectedItem">
@@ -58,11 +59,11 @@
       </div>
 
       <!-- Locale -->
-      <div class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-2">
+      <div class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-6 sm:grid-cols-2">
         <label for="regional-locale" class="flex flex-col gap-0.5">
           <span
             i18n="@@org.regional.language"
-            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            class="text-sm font-medium text-surface-900 dark:text-surface-50"
             >Language &amp; locale</span
           >
           <span
@@ -79,6 +80,7 @@
           optionValue="value"
           formControlName="locale"
           appendTo="body"
+          [invalid]="form.controls.locale.invalid && form.controls.locale.touched"
           fluid
         >
           <ng-template let-opt pTemplate="selectedItem">
@@ -121,11 +123,11 @@
 
     <div class="divide-y divide-surface-100 dark:divide-surface-800/70">
       <!-- Date format -->
-      <div class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-2">
+      <div class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-6 sm:grid-cols-2">
         <label for="regional-date-format" class="flex flex-col gap-0.5">
           <span
             i18n="@@org.regional.dateFormat"
-            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            class="text-sm font-medium text-surface-900 dark:text-surface-50"
             >Date format</span
           >
           <span
@@ -142,16 +144,17 @@
           optionValue="value"
           formControlName="dateFormat"
           appendTo="body"
+          [invalid]="form.controls.dateFormat.invalid && form.controls.dateFormat.touched"
           fluid
         />
       </div>
 
       <!-- First day of week -->
-      <div class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-2">
+      <div class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-6 sm:grid-cols-2">
         <label for="regional-first-day" class="flex flex-col gap-0.5">
           <span
             i18n="@@org.regional.firstDay"
-            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            class="text-sm font-medium text-surface-900 dark:text-surface-50"
             >First day of week</span
           >
           <span
@@ -168,16 +171,17 @@
           optionValue="value"
           formControlName="firstDayOfWeek"
           appendTo="body"
+          [invalid]="form.controls.firstDayOfWeek.invalid && form.controls.firstDayOfWeek.touched"
           fluid
         />
       </div>
 
       <!-- Measurement system -->
-      <div class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-5 sm:grid-cols-2">
+      <div class="grid grid-cols-1 items-center gap-x-8 gap-y-2 py-6 sm:grid-cols-2">
         <label for="regional-measurement" class="flex flex-col gap-0.5">
           <span
             i18n="@@org.regional.measurement"
-            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            class="text-sm font-medium text-surface-900 dark:text-surface-50"
             >Measurement system</span
           >
           <span
@@ -194,6 +198,9 @@
           optionValue="value"
           formControlName="measurementSystem"
           appendTo="body"
+          [invalid]="
+            form.controls.measurementSystem.invalid && form.controls.measurementSystem.touched
+          "
           fluid
         />
       </div>

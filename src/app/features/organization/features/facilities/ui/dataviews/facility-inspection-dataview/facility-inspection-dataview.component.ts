@@ -19,7 +19,7 @@ import {
   resolveInspectionTag,
   type InspectionOutput,
 } from '@features/organization/features/inspections/models';
-import { Tag, type TagDescriptor } from '@shared/components';
+import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
 
 /**
  * Type InspectionOverviewFilter
@@ -48,6 +48,7 @@ export type InspectionOverviewFilter = 'all' | 'overdue' | 'upcoming';
     FormsModule,
     CardModule,
     DataViewModule,
+    EmptyState,
     SelectButtonModule,
     SkeletonModule,
     Tag,
@@ -103,7 +104,12 @@ export class FacilityInspectionDataview {
       .slice(0, FacilityInspectionDataview.PREVIEW_LIMIT);
   });
 
-  protected readonly cardPt: CardPassThroughOptions = DATAVIEW_CARD_PT;
+  protected readonly cardPt: CardPassThroughOptions = {
+    ...DATAVIEW_CARD_PT,
+    root: {
+      class: 'h-full flex flex-col bg-surface-0 dark:bg-surface-900 shadow-none!',
+    },
+  };
 
   protected readonly dataviewPt: DataViewPassThroughOptions = {
     root: { class: 'flex min-h-0 flex-1 flex-col bg-surface-0 dark:bg-surface-900' },

@@ -66,18 +66,19 @@
   [visible]="selectedSession() !== null"
   (visibleChange)="!$event && selectedSession.set(null)"
   [style]="{ width: '42rem' }"
+  [breakpoints]="{ '640px': '90vw' }"
 >
   @if (selectedSession(); as session) {
     <dl class="grid gap-4 md:grid-cols-2">
       <div>
         <dt class="text-xs text-surface-500" i18n="@@common.created">Created</dt>
-        <dd>{{ session.createdAt }}</dd>
+        <dd>{{ session.createdAt | date: 'medium' }}</dd>
       </div>
       <div>
         <dt class="text-xs text-surface-500" i18n="@@account.sessions.lastActivity">
           Last activity
         </dt>
-        <dd>{{ session.lastActivityAt }}</dd>
+        <dd>{{ session.lastActivityAt | date: 'medium' }}</dd>
       </div>
       <div>
         <dt class="text-xs text-surface-500" i18n="@@account.sessions.ipAddress">IP address</dt>

@@ -1,13 +1,21 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import { SplitLayout } from '../split-layout.component';
 
 describe('SplitLayout', () => {
   beforeEach(() => {
+    const themePort: ThemePort = {
+      theme: signal<ThemeMode>('light'),
+      resolvedTheme: signal<'light' | 'dark'>('light'),
+      setTheme: (): void => undefined,
+    };
+
     TestBed.configureTestingModule({
       imports: [SplitLayout],
-      providers: [provideRouter([])],
+      providers: [provideRouter([]), { provide: THEME_PORT, useValue: themePort }],
     });
   });
 

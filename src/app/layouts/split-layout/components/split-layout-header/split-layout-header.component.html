@@ -1,1 +1,14 @@
-<header class="flex items-center justify-between"></header>
+<header class="flex items-center justify-between gap-4 px-6 py-5 sm:px-8">
+  <!-- Compact brand: only shown when the showcase panel is off screen -->
+  <div class="flex items-center gap-2 lg:hidden">
+    <app-logo class="size-7 shrink-0 text-surface-950 dark:text-surface-50" />
+    <span class="text-lg font-bold tracking-tight text-surface-950 dark:text-surface-50"
+      >Fireguard</span
+    >
+  </div>
+
+  <!-- Spacer keeps the theme switcher pinned right on large screens -->
+  <span class="hidden lg:block" aria-hidden="true"></span>
+
+  <app-theme-switcher />
+</header>

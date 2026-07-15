@@ -37,8 +37,10 @@
     </div>
 
     <div class="grid gap-5 md:grid-cols-2">
-      <label class="grid gap-1.5 text-sm md:col-span-2">
-        <span i18n="@@intervention.cf.name" class="font-medium"
+      <label class="flex flex-col gap-2 md:col-span-2">
+        <span
+          i18n="@@intervention.cf.name"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Intervention name <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <input
@@ -57,7 +59,7 @@
           "
         />
         @if (form.controls.name.invalid && form.controls.name.touched) {
-          <p-message severity="error" variant="simple">
+          <p-message severity="error" variant="simple" size="small">
             <span id="intervention-create-name-error">
               @if (form.controls.name.hasError('required')) {
                 <span i18n="@@intervention.cf.nameRequired"
@@ -71,8 +73,10 @@
         }
       </label>
 
-      <label class="grid gap-1.5 text-sm md:col-span-2">
-        <span i18n="@@intervention.cf.priority" class="font-medium"
+      <label class="flex flex-col gap-2 md:col-span-2">
+        <span
+          i18n="@@intervention.cf.priority"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           >Priority <span class="text-red-500" aria-hidden="true">*</span></span
         ><span i18n="@@common.requiredSr" class="sr-only">required</span>
         <p-select
@@ -93,14 +97,18 @@
           </ng-template>
         </p-select>
         @if (form.controls.priority.invalid && form.controls.priority.touched) {
-          <p-message severity="error" variant="simple">
+          <p-message severity="error" variant="simple" size="small">
             <span i18n="@@intervention.cf.priorityRequired">A priority is required.</span>
           </p-message>
         }
       </label>
 
-      <label class="grid gap-1.5 text-sm">
-        <span i18n="@@intervention.cf.site" class="font-medium">Site</span>
+      <label class="flex flex-col gap-2">
+        <span
+          i18n="@@intervention.cf.site"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+          >Site</span
+        >
         <p-select
           formControlName="site"
           [options]="[...siteOptions()]"
@@ -115,8 +123,12 @@
         />
       </label>
 
-      <label class="grid gap-1.5 text-sm">
-        <span i18n="@@intervention.cf.responsible" class="font-medium">Responsible agent</span>
+      <label class="flex flex-col gap-2">
+        <span
+          i18n="@@intervention.cf.responsible"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+          >Responsible agent</span
+        >
         <p-select
           formControlName="responsible"
           [options]="[...memberOptions()]"
@@ -141,8 +153,12 @@
         </p-select>
       </label>
 
-      <label class="grid gap-1.5 text-sm md:col-span-2">
-        <span i18n="@@intervention.cf.participants" class="font-medium">Participants</span>
+      <label class="flex flex-col gap-2 md:col-span-2">
+        <span
+          i18n="@@intervention.cf.participants"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+          >Participants</span
+        >
         <p-multiselect
           formControlName="participants"
           [options]="[...memberOptions()]"
@@ -162,8 +178,12 @@
         </p-multiselect>
       </label>
 
-      <label class="grid gap-1.5 text-sm">
-        <span i18n="@@intervention.cf.plannedStart" class="font-medium">Planned start</span>
+      <label class="flex flex-col gap-2">
+        <span
+          i18n="@@intervention.cf.plannedStart"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+          >Planned start</span
+        >
         <p-datepicker
           formControlName="plannedStartAt"
           [showTime]="true"
@@ -179,8 +199,12 @@
         />
       </label>
 
-      <label class="grid gap-1.5 text-sm">
-        <span i18n="@@intervention.cf.due" class="font-medium">Due</span>
+      <label class="flex flex-col gap-2">
+        <span
+          i18n="@@intervention.cf.due"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
+          >Due</span
+        >
         <p-datepicker
           formControlName="dueAt"
           [showTime]="true"

@@ -121,6 +121,9 @@ export class OrganizationMemberTable {
   /** Members currently checked for a bulk action. */
   protected readonly selection: WritableSignal<OrganizationMemberOutput[]> = signal([]);
 
+  /** Current trimmed search term, used to distinguish an empty search result. */
+  protected readonly searchTerm: WritableSignal<string> = signal('');
+
   /** Placeholder rows displayed while loading. */
   protected readonly skeletonItems: undefined[] = Array(6);
 
@@ -205,8 +208,10 @@ export class OrganizationMemberTable {
    * never act on members outside the new result set.
    */
   protected onSearch(term: string): void {
+    const trimmed: string = term.trim();
     this.selection.set([]);
-    this.searchChange.emit(term.trim());
+    this.searchTerm.set(trimmed);
+    this.searchChange.emit(trimmed);
   }
 
   /** Stores the targeted member and toggles the shared row menu. */

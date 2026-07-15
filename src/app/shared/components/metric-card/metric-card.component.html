@@ -4,7 +4,7 @@
       <div class="flex flex-row items-center gap-3">
         @if (icon(); as icon) {
           <div
-            class="grid content-center rounded-lg border border-surface-200 p-2 dark:border-surface-700"
+            class="grid content-center rounded-lg border border-surface-200 p-2 dark:border-surface-800"
           >
             <i class="{{ icon }} text-lg text-surface-500 dark:text-surface-400"></i>
           </div>
@@ -42,6 +42,7 @@
         @if (comparison(); as comparison) {
           <div class="flex flex-row items-center gap-2">
             <i
+              aria-hidden="true"
               class="text-xs"
               [class]="
                 comparison.direction === 'up'
@@ -49,6 +50,17 @@
                   : 'pi pi-arrow-down-right text-red-500'
               "
             ></i>
+            @switch (comparison.direction) {
+              @case ('up') {
+                <span class="sr-only" i18n="@@common.comparisonIncreased">increased</span>
+              }
+              @case ('down') {
+                <span class="sr-only" i18n="@@common.comparisonDecreased">decreased</span>
+              }
+              @default {
+                <span class="sr-only" i18n="@@common.comparisonNoChange">no change</span>
+              }
+            }
             <div class="flex flex-row gap-1 text-sm">
               <span class="font-semibold">{{ comparison.value }}</span>
               <span class="text-surface-500" i18n="@@common.lastPeriod">last period</span>

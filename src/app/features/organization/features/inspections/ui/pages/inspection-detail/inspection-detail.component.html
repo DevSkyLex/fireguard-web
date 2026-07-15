@@ -23,6 +23,25 @@
         (closeInspection)="close()"
         (cancelInspection)="cancel()"
       />
+    } @else {
+      <div class="flex flex-1 items-center justify-center p-4 sm:p-7">
+        <app-empty-state
+          icon="pi-compass"
+          i18n-title="@@inspection.detail.notFoundTitle"
+          title="Inspection not found"
+          i18n-description="@@inspection.detail.notFound"
+          description="Inspection not found or unavailable offline."
+        >
+          <p-button
+            i18n-label="@@inspection.detail.backToList"
+            label="Back to inspections"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="navigateBack()"
+          />
+        </app-empty-state>
+      </div>
     }
   </section>
 
@@ -71,6 +90,7 @@
   [visible]="selectedNonConformity() !== null"
   (visibleChange)="!$event && selectedNonConformity.set(null)"
   [style]="{ width: '36rem' }"
+  [breakpoints]="{ '640px': '90vw' }"
 >
   @if (selectedNonConformity(); as nonConformity) {
     <dl class="grid gap-4 sm:grid-cols-2">
@@ -82,11 +102,11 @@
       </div>
       <div>
         <dt i18n="@@inspection.ncDialog.severity" class="text-xs text-surface-500">Severity</dt>
-        <dd>{{ humanizeLabel(nonConformity.severity) }}</dd>
+        <dd><app-tag [descriptor]="severityDescriptor(nonConformity.severity)" /></dd>
       </div>
       <div>
         <dt i18n="@@inspection.ncDialog.status" class="text-xs text-surface-500">Status</dt>
-        <dd>{{ humanizeLabel(nonConformity.status) }}</dd>
+        <dd><app-tag [descriptor]="statusDescriptor(nonConformity.status)" /></dd>
       </div>
       <div class="sm:col-span-2">
         <dt i18n="@@inspection.ncDialog.notes" class="text-xs text-surface-500">Notes</dt>

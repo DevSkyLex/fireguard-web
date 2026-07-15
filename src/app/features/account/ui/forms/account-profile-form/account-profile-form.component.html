@@ -28,28 +28,26 @@
       <div class="flex flex-col gap-1.5">
         <label
           for="profile-first-name"
-          class="text-sm font-medium text-surface-700 dark:text-surface-300"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           i18n="@@account.profileForm.firstName"
         >
           First name
         </label>
-        <p-iconfield>
-          <p-inputicon class="pi pi-user" />
-          <input
-            id="profile-first-name"
-            pInputText
-            formControlName="firstName"
-            placeholder="First name"
-            i18n-placeholder="@@account.profileForm.firstNamePh"
-            maxlength="100"
-            class="w-full"
-          />
-        </p-iconfield>
+        <input
+          id="profile-first-name"
+          pInputText
+          formControlName="firstName"
+          placeholder="First name"
+          i18n-placeholder="@@account.profileForm.firstNamePh"
+          maxlength="100"
+          class="w-full"
+          [invalid]="form.controls.firstName.invalid && form.controls.firstName.touched"
+        />
       </div>
       <div class="flex flex-col gap-1.5">
         <label
           for="profile-last-name"
-          class="text-sm font-medium text-surface-700 dark:text-surface-300"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           i18n="@@account.profileForm.lastName"
         >
           Last name
@@ -62,6 +60,7 @@
           i18n-placeholder="@@account.profileForm.lastNamePh"
           maxlength="100"
           class="w-full"
+          [invalid]="form.controls.lastName.invalid && form.controls.lastName.touched"
         />
       </div>
     </div>
@@ -85,7 +84,7 @@
       <div class="flex flex-col gap-1.5">
         <label
           for="profile-username"
-          class="text-sm font-medium text-surface-700 dark:text-surface-300"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           i18n="@@account.profileForm.username"
         >
           Username
@@ -106,26 +105,23 @@
       <div class="flex flex-col gap-1.5">
         <label
           for="profile-email"
-          class="text-sm font-medium text-surface-700 dark:text-surface-300"
+          class="text-sm font-medium text-surface-900 dark:text-surface-50"
           i18n="@@account.profileForm.emailAddress"
         >
           Email address
         </label>
-        <p-iconfield>
-          <p-inputicon class="pi pi-envelope" />
-          <input
-            id="profile-email"
-            pInputText
-            type="email"
-            [value]="profile()?.email ?? ''"
-            placeholder="you@example.com"
-            readonly
-            class="w-full"
-          />
-        </p-iconfield>
+        <input
+          id="profile-email"
+          pInputText
+          type="email"
+          [value]="profile()?.email ?? ''"
+          placeholder="you@example.com"
+          readonly
+          class="w-full"
+        />
       </div>
       <p
-        class="text-xs text-surface-400 sm:col-span-2 dark:text-surface-500"
+        class="text-xs text-surface-500 sm:col-span-2 dark:text-surface-400"
         i18n="@@account.profileForm.readonlyHint"
       >
         Your username and email address cannot be changed here.

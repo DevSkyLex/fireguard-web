@@ -65,23 +65,6 @@
         </tr>
       </ng-template>
 
-      <ng-template pTemplate="loadingbody">
-        @for (_ of skeletonItems; track $index) {
-          <tr>
-            <td>
-              <div class="flex items-center gap-3">
-                <p-skeleton shape="circle" size="2.25rem" />
-                <p-skeleton width="10rem" height="0.875rem" />
-              </div>
-            </td>
-            <td class="hidden md:table-cell"><p-skeleton width="8rem" height="0.875rem" /></td>
-            <td><p-skeleton width="8rem" height="0.875rem" /></td>
-            <td><p-skeleton width="8rem" height="0.875rem" /></td>
-            <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
-          </tr>
-        }
-      </ng-template>
-
       <ng-template pTemplate="body" let-device>
         @if (loading()) {
           <tr>

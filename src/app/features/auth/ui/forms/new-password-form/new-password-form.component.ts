@@ -15,8 +15,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
 import { MATCH_FIELDS_ERROR_KEY, matchFieldsValidator } from '@shared/validators';
@@ -35,14 +33,7 @@ import type { NewPasswordFormData, NewPasswordFormValues } from './models';
  */
 @Component({
   selector: 'app-new-password-form',
-  imports: [
-    ReactiveFormsModule,
-    PasswordModule,
-    ButtonModule,
-    MessageModule,
-    IconFieldModule,
-    InputIconModule,
-  ],
+  imports: [ReactiveFormsModule, PasswordModule, ButtonModule, MessageModule],
   templateUrl: './new-password-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -49,13 +49,22 @@
                     <div class="flex min-w-0 flex-row items-center gap-2">
                       @switch (comparison.direction) {
                         @case ('up') {
-                          <i class="pi pi-arrow-up-right shrink-0 text-xs text-green-500"></i>
+                          <i
+                            aria-hidden="true"
+                            class="pi pi-arrow-up-right shrink-0 text-xs text-green-500"
+                          ></i>
+                          <span class="sr-only" i18n="@@common.comparisonIncreased">increased</span>
                         }
                         @case ('down') {
-                          <i class="pi pi-arrow-down-right shrink-0 text-xs text-red-500"></i>
+                          <i
+                            aria-hidden="true"
+                            class="pi pi-arrow-down-right shrink-0 text-xs text-red-500"
+                          ></i>
+                          <span class="sr-only" i18n="@@common.comparisonDecreased">decreased</span>
                         }
                         @default {
-                          -
+                          <span aria-hidden="true">-</span>
+                          <span class="sr-only" i18n="@@common.comparisonNoChange">no change</span>
                         }
                       }
                       <div class="flex min-w-0 flex-row gap-1 text-sm">

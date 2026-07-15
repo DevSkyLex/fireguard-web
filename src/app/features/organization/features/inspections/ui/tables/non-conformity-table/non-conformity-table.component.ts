@@ -22,7 +22,7 @@ import {
   NonConformityForm,
   type NonConformityFormValues,
 } from '@features/organization/features/inspections/ui/forms';
-import { Tag, type TagDescriptor, type TagOption } from '@shared/components';
+import { EmptyState, Tag, type TagDescriptor, type TagOption } from '@shared/components';
 
 /** Describes a requested non-conformity status transition. */
 export interface NonConformityStatusChange {
@@ -38,6 +38,7 @@ export interface NonConformityStatusChange {
   imports: [
     ButtonModule,
     DatePipe,
+    EmptyState,
     FormsModule,
     NonConformityForm,
     SelectModule,

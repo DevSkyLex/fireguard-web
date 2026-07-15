@@ -1,38 +1,60 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-4 lg:grid-cols-4">
   <div class="flex flex-col gap-2 lg:col-span-2">
-    <label for="nc-description" i18n="@@nc.form.description" class="text-sm font-medium"
+    <label
+      for="nc-description"
+      i18n="@@nc.form.description"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       >Description</label
     >
     <input
       pInputText
       id="nc-description"
       formControlName="description"
+      fluid
       i18n-placeholder="@@nc.form.descriptionPlaceholder"
       placeholder="Describe the finding"
+      [invalid]="form.controls.description.invalid && form.controls.description.touched"
     />
     @if (form.controls.description.invalid && form.controls.description.touched) {
-      <p-message i18n="@@nc.form.descriptionRequired" severity="error" variant="simple"
-        >A description of at least 3 characters is required.</p-message
-      >
+      <p-message severity="error" variant="simple" size="small">
+        <span i18n="@@nc.form.descriptionRequired"
+          >A description of at least 3 characters is required.</span
+        >
+      </p-message>
     }
   </div>
   <div class="flex flex-col gap-2">
-    <label for="nc-severity" i18n="@@nc.form.severity" class="text-sm font-medium">Severity</label>
+    <label
+      for="nc-severity"
+      i18n="@@nc.form.severity"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
+      >Severity</label
+    >
     <p-select
       id="nc-severity"
       [options]="severityOptions"
       optionLabel="label"
       optionValue="value"
       formControlName="severity"
+      [invalid]="form.controls.severity.invalid && form.controls.severity.touched"
     />
   </div>
   <div class="flex flex-col gap-2">
-    <label for="nc-due" i18n="@@nc.form.dueDate" class="text-sm font-medium">Due date</label>
+    <label
+      for="nc-due"
+      i18n="@@nc.form.dueDate"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
+      >Due date</label
+    >
     <p-datepicker id="nc-due" formControlName="dueAt" [showIcon]="true" dateFormat="yy-mm-dd" />
   </div>
   <div class="flex flex-col gap-2 lg:col-span-4">
-    <label for="nc-notes" i18n="@@nc.form.notes" class="text-sm font-medium"
-      >Notes <span class="font-normal text-surface-400">(optional)</span></label
+    <label
+      for="nc-notes"
+      i18n="@@nc.form.notes"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
+      >Notes
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span></label
     >
     <textarea pTextarea id="nc-notes" formControlName="notes" rows="3"></textarea>
   </div>

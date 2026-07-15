@@ -15,6 +15,7 @@ import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
   idleCallState,
+  isCallError,
   pendingCallState,
   successCallState,
   successFeedback,
@@ -119,10 +120,27 @@ export const InspectionStore = signalStore(
         store.nonConformityEntities(),
       ),
 
-      /** True when the entity collection is empty and no list request is in-flight. */
-      isEmpty: computed<boolean>(
-        () => store.inspectionIds().length === 0 && store.listCallState().status !== 'pending',
-      ),
+      /**
+       * Normalized error from the last failed list load, or `null` when the load
+       * is idle, pending or successful. Lets the page distinguish a failed fetch
+       * from a legitimately empty collection.
+       */
+      listError: computed<StoreError | null>(() => {
+        const state = store.listCallState();
+
+        return isCallError(state) ? state.error : null;
+      }),
+
+      /**
+       * True only when the collection is empty and the last list load neither is
+       * in flight nor failed — a failed load surfaces an error, not the empty
+       * state.
+       */
+      isEmpty: computed<boolean>(() => {
+        const status = store.listCallState().status;
+
+        return store.inspectionIds().length === 0 && status !== 'pending' && status !== 'error';
+      }),
 
       /** Proxied from {@link ActiveInspectionStore}. */
       selectedInspection: computed<InspectionOutput | null>(() =>

@@ -4,7 +4,7 @@
     <label
       for="type"
       i18n="@@facility.form.type"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       >Type</label
     >
     <p-select
@@ -16,10 +16,11 @@
       i18n-placeholder="@@facility.form.typePlaceholder"
       placeholder="Select a facility type"
       class="w-full"
+      [invalid]="form.controls.type.invalid && form.controls.type.touched"
     />
 
     @if (form.controls.type.invalid && form.controls.type.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         @if (form.controls.type.hasError('required')) {
           <span i18n="@@facility.form.typeRequired">Facility type is required.</span>
         }
@@ -32,23 +33,21 @@
     <label
       for="name"
       i18n="@@facility.form.name"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
       >Name</label
     >
-    <p-iconfield>
-      <p-inputicon class="pi pi-building" />
-      <input
-        pInputText
-        id="name"
-        formControlName="name"
-        class="w-full"
-        i18n-placeholder="@@facility.form.namePlaceholder"
-        placeholder="Main Building"
-      />
-    </p-iconfield>
+    <input
+      pInputText
+      id="name"
+      formControlName="name"
+      class="w-full"
+      i18n-placeholder="@@facility.form.namePlaceholder"
+      placeholder="Main Building"
+      [invalid]="form.controls.name.invalid && form.controls.name.touched"
+    />
 
     @if (form.controls.name.invalid && form.controls.name.touched) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         @if (form.controls.name.hasError('required')) {
           <span i18n="@@facility.form.nameRequired">Name is required.</span>
         }
@@ -67,22 +66,19 @@
     <label
       for="code"
       i18n="@@facility.form.code"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
     >
       Code
-      <span class="font-normal text-surface-400">(optional)</span>
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
-    <p-iconfield>
-      <p-inputicon class="pi pi-hashtag" />
-      <input
-        pInputText
-        id="code"
-        formControlName="code"
-        class="w-full"
-        i18n-placeholder="@@facility.form.codePlaceholder"
-        placeholder="BLD-001"
-      />
-    </p-iconfield>
+    <input
+      pInputText
+      id="code"
+      formControlName="code"
+      class="w-full"
+      i18n-placeholder="@@facility.form.codePlaceholder"
+      placeholder="BLD-001"
+    />
   </div>
 
   <!-- Address -->
@@ -90,32 +86,29 @@
     <label
       for="address"
       i18n="@@facility.form.address"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
     >
       Address
-      <span class="font-normal text-surface-400">(optional)</span>
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </label>
-    <p-iconfield>
-      <p-inputicon class="pi pi-map-marker" />
-      <input
-        pInputText
-        id="address"
-        formControlName="address"
-        class="w-full"
-        i18n-placeholder="@@facility.form.addressPlaceholder"
-        placeholder="123 Main Street, City"
-      />
-    </p-iconfield>
+    <input
+      pInputText
+      id="address"
+      formControlName="address"
+      class="w-full"
+      i18n-placeholder="@@facility.form.addressPlaceholder"
+      placeholder="123 Main Street, City"
+    />
   </div>
 
   <!-- Coordinates -->
   <div class="flex flex-col gap-2">
     <span
       i18n="@@facility.form.coordinates"
-      class="text-sm font-medium text-surface-700 dark:text-surface-300"
+      class="text-sm font-medium text-surface-900 dark:text-surface-50"
     >
       Coordinates
-      <span class="font-normal text-surface-400">(optional)</span>
+      <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
     </span>
     <div class="grid gap-4 sm:grid-cols-2">
       <p-inputnumber
@@ -144,7 +137,7 @@
       />
     </div>
     @if (form.hasError('coordinatesIncomplete') && (form.touched || form.dirty)) {
-      <p-message severity="error" variant="simple">
+      <p-message severity="error" variant="simple" size="small">
         <span i18n="@@facility.form.coordinatesIncomplete"
           >Enter both latitude and longitude, or leave both empty.</span
         >
@@ -157,10 +150,10 @@
     <div class="flex flex-col gap-2">
       <label
         for="parentFacilityId"
-        class="text-sm font-medium text-surface-700 dark:text-surface-300"
+        class="text-sm font-medium text-surface-900 dark:text-surface-50"
       >
         <ng-container i18n="@@facility.form.parent">Parent Facility</ng-container>
-        <span class="font-normal text-surface-400">(optional)</span>
+        <span class="font-normal text-surface-500 dark:text-surface-400">(optional)</span>
       </label>
       <p-select
         id="parentFacilityId"
@@ -174,6 +167,7 @@
         i18n-filterPlaceholder="@@facility.searchFacilities"
         filterPlaceholder="Search facilities..."
         class="w-full"
+        [invalid]="form.controls.parentFacilityId.invalid && form.controls.parentFacilityId.touched"
       />
     </div>
   }

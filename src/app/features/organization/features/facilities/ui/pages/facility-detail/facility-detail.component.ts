@@ -47,6 +47,7 @@ import {
 } from '@features/organization/features/facilities/ui/dataviews';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
+import { EmptyState } from '@shared/components';
 
 /**
  * Component FacilityDetailPage
@@ -78,6 +79,7 @@ import { ActiveOrganizationStore } from '@features/organization/state';
     FacilityInstallationsPanel,
     FacilityEquipmentTab,
     FacilityInspectionTab,
+    EmptyState,
   ],
   providers: [FacilityStore, FacilityOverviewStore],
   templateUrl: './facility-detail.component.html',
@@ -609,6 +611,23 @@ export class FacilityDetailPage {
    */
   protected onNavigateToFacility(facility: FacilityOutput): void {
     this.router.navigate(['..', '..', facility.id], { relativeTo: this.route });
+  }
+
+  /**
+   * Method navigateBack
+   * @method navigateBack
+   *
+   * @description
+   * Navigates back to the facility list. Used by the not-found/offline
+   * fallback when no facility could be resolved for the current route.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  protected navigateBack(): void {
+    this.router.navigate(['..', '..'], { relativeTo: this.route });
   }
   //#endregion
 }

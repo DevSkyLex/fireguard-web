@@ -14,7 +14,7 @@
         <div class="flex flex-col gap-0.5">
           <span
             i18n="@@org.general.logo"
-            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            class="text-sm font-medium text-surface-900 dark:text-surface-50"
             >Logo</span
           >
           <span
@@ -85,7 +85,7 @@
         <label for="organization-name" class="flex flex-col gap-0.5">
           <span
             i18n="@@org.general.name"
-            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            class="text-sm font-medium text-surface-900 dark:text-surface-50"
             >Name</span
           >
           <span
@@ -96,7 +96,14 @@
           </span>
         </label>
         <div class="flex flex-col gap-1.5">
-          <input pInputText id="organization-name" formControlName="name" maxlength="120" fluid />
+          <input
+            pInputText
+            id="organization-name"
+            formControlName="name"
+            maxlength="120"
+            [invalid]="form.controls.name.invalid && form.controls.name.touched"
+            fluid
+          />
           @if (form.controls.name.invalid && form.controls.name.touched) {
             <p-message i18n="@@org.general.nameError" severity="error" variant="simple" size="small"
               >A name of 2 to 120 characters is required.</p-message
@@ -110,7 +117,7 @@
         <label for="organization-slug" class="flex flex-col gap-0.5">
           <span
             i18n="@@org.general.slug"
-            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            class="text-sm font-medium text-surface-900 dark:text-surface-50"
             >Slug</span
           >
           <span
@@ -121,7 +128,14 @@
           </span>
         </label>
         <div class="flex flex-col gap-1.5">
-          <input pInputText id="organization-slug" formControlName="slug" maxlength="120" fluid />
+          <input
+            pInputText
+            id="organization-slug"
+            formControlName="slug"
+            maxlength="120"
+            [invalid]="form.controls.slug.invalid && form.controls.slug.touched"
+            fluid
+          />
           @if (form.controls.slug.invalid && form.controls.slug.touched) {
             <p-message i18n="@@org.general.slugError" severity="error" variant="simple" size="small"
               >Use lowercase letters, numbers and single dashes (min. 3 characters).</p-message
@@ -135,7 +149,7 @@
         <label for="organization-description" class="flex flex-col gap-0.5">
           <span
             i18n="@@org.general.description"
-            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            class="text-sm font-medium text-surface-900 dark:text-surface-50"
             >Description</span
           >
           <span
@@ -152,6 +166,7 @@
           rows="3"
           maxlength="2000"
           [autoResize]="true"
+          [invalid]="form.controls.description.invalid && form.controls.description.touched"
           fluid
         ></textarea>
       </div>
@@ -161,7 +176,7 @@
         <label for="organization-active" class="flex flex-col gap-0.5">
           <span
             i18n="@@org.general.active"
-            class="text-sm font-medium text-surface-800 dark:text-surface-100"
+            class="text-sm font-medium text-surface-900 dark:text-surface-50"
             >Active</span
           >
           <span

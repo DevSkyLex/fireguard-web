@@ -52,6 +52,7 @@ const INITIAL_STATE: OrganizationMembersState = {
   invitationLinks: {},
   loadCallState: idleCallState(),
   mutationCallState: idleCallState(),
+  lastMutationCanExceedQuota: false,
 };
 
 /** Server-side page size for the members table. */
@@ -196,7 +197,12 @@ export const OrganizationMembersStore = signalStore(
       /** Removes a member from the organization. */
       removeMember: rxMethod<{ organizationId: string; memberId: string }>(
         pipe(
-          tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+          tap(() =>
+            patchState(store, {
+              mutationCallState: pendingCallState(),
+              lastMutationCanExceedQuota: false,
+            }),
+          ),
           exhaustMap(({ organizationId, memberId }) =>
             memberService.remove(organizationId, memberId).pipe(
               tapResponse({
@@ -221,7 +227,12 @@ export const OrganizationMembersStore = signalStore(
       /** Removes several members in one action and confirms with a single toast. */
       removeMembers: rxMethod<{ organizationId: string; memberIds: readonly string[] }>(
         pipe(
-          tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+          tap(() =>
+            patchState(store, {
+              mutationCallState: pendingCallState(),
+              lastMutationCanExceedQuota: false,
+            }),
+          ),
           exhaustMap(({ organizationId, memberIds }) => {
             const ids = [...memberIds];
             if (ids.length === 0) {
@@ -262,7 +273,12 @@ export const OrganizationMembersStore = signalStore(
       /** Sends an organization invitation. */
       invite: rxMethod<{ organizationId: string; input: InviteOrganizationMemberInput }>(
         pipe(
-          tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+          tap(() =>
+            patchState(store, {
+              mutationCallState: pendingCallState(),
+              lastMutationCanExceedQuota: true,
+            }),
+          ),
           exhaustMap(({ organizationId, input }) =>
             invitationService.invite(organizationId, input).pipe(
               tapResponse({
@@ -287,7 +303,12 @@ export const OrganizationMembersStore = signalStore(
       /** Revokes a pending organization invitation. */
       revokeInvitation: rxMethod<{ organizationId: string; invitationId: string }>(
         pipe(
-          tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+          tap(() =>
+            patchState(store, {
+              mutationCallState: pendingCallState(),
+              lastMutationCanExceedQuota: false,
+            }),
+          ),
           exhaustMap(({ organizationId, invitationId }) =>
             invitationService.revoke(organizationId, invitationId).pipe(
               tapResponse({
@@ -311,7 +332,12 @@ export const OrganizationMembersStore = signalStore(
       /** Resends an invitation, regenerating its token and accept link. */
       resendInvitation: rxMethod<{ organizationId: string; invitationId: string }>(
         pipe(
-          tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+          tap(() =>
+            patchState(store, {
+              mutationCallState: pendingCallState(),
+              lastMutationCanExceedQuota: false,
+            }),
+          ),
           exhaustMap(({ organizationId, invitationId }) =>
             invitationService.resend(organizationId, invitationId).pipe(
               tapResponse({
@@ -347,7 +373,12 @@ export const OrganizationMembersStore = signalStore(
         input: AssignOrganizationRoleInput;
       }>(
         pipe(
-          tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+          tap(() =>
+            patchState(store, {
+              mutationCallState: pendingCallState(),
+              lastMutationCanExceedQuota: false,
+            }),
+          ),
           exhaustMap(({ organizationId, memberId, input }) =>
             roleService.assignToMember(organizationId, memberId, input).pipe(
               tapResponse({
@@ -377,7 +408,12 @@ export const OrganizationMembersStore = signalStore(
         roleId: string;
       }>(
         pipe(
-          tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+          tap(() =>
+            patchState(store, {
+              mutationCallState: pendingCallState(),
+              lastMutationCanExceedQuota: false,
+            }),
+          ),
           exhaustMap(({ organizationId, memberIds, roleId }) => {
             const ids = [...memberIds];
             if (ids.length === 0) {
@@ -432,7 +468,12 @@ export const OrganizationMembersStore = signalStore(
         roleId: string;
       }>(
         pipe(
-          tap(() => patchState(store, { mutationCallState: pendingCallState() })),
+          tap(() =>
+            patchState(store, {
+              mutationCallState: pendingCallState(),
+              lastMutationCanExceedQuota: false,
+            }),
+          ),
           exhaustMap(({ organizationId, memberId, roleId }) =>
             roleService.removeFromMember(organizationId, memberId, roleId).pipe(
               tapResponse({

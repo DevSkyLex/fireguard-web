@@ -103,6 +103,21 @@ export class InterventionOutboxRepository {
   private readonly pending: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property pendingOps
+   * @readonly
+   *
+   * @description
+   * Internal counter of operations with status `pending` (self-syncable)
+   * remaining in the outbox. Powers the shell sync-status badge.
+   *
+   * @access private
+   * @since 1.3.0
+   *
+   * @type {WritableSignal<number>}
+   */
+  private readonly pendingOps: WritableSignal<number> = signal<number>(0);
+
+  /**
    * Property lastQueuedAt
    *
    * @description
@@ -146,6 +161,22 @@ export class InterventionOutboxRepository {
    * @type {Signal<boolean>}
    */
   public readonly hasPendingChanges = this.pending.asReadonly();
+
+  /**
+   * Property pendingCount
+   * @readonly
+   *
+   * @description
+   * Number of operations with status `pending` remaining in the outbox.
+   * Excludes `conflict`/`failed` operations, mirroring
+   * {@link hasPendingChanges}.
+   *
+   * @access public
+   * @since 1.3.0
+   *
+   * @type {Signal<number>}
+   */
+  public readonly pendingCount = this.pendingOps.asReadonly();
   //#endregion
 
   //#region Constructor
@@ -167,6 +198,7 @@ export class InterventionOutboxRepository {
       .subscribe(() => {
         this.unsynced.set(false);
         this.pending.set(false);
+        this.pendingOps.set(0);
       });
 
     if (this.database.browser) {
@@ -224,6 +256,7 @@ export class InterventionOutboxRepository {
     await this.database.put('outbox', operation.id, operation);
     this.unsynced.set(true);
     this.pending.set(true);
+    this.pendingOps.update((count: number) => count + 1);
   }
 
   /**
@@ -258,6 +291,7 @@ export class InterventionOutboxRepository {
     if (operations.length > 0) {
       this.unsynced.set(true);
       this.pending.set(true);
+      this.pendingOps.update((count: number) => count + operations.length);
     }
     return operations.map((operation) => operation.id);
   }
@@ -414,6 +448,9 @@ export class InterventionOutboxRepository {
     await this.database.put('outbox', id, { ...operation, status: 'pending', error: null });
     this.unsynced.set(true);
     this.pending.set(true);
+    if (operation.status !== 'pending') {
+      this.pendingOps.update((count: number) => count + 1);
+    }
   }
 
   /**
@@ -433,12 +470,12 @@ export class InterventionOutboxRepository {
     if (!this.database.browser) return;
     await this.database.ensureOwnerBound();
     const operations = await this.database.getAll<InterventionOutboxOperation>('outbox');
+    const pendingOperations: number = operations.filter(
+      (operation) => operation.status === 'pending' || operation.status === undefined,
+    ).length;
     this.unsynced.set(operations.length > 0);
-    this.pending.set(
-      operations.some(
-        (operation) => operation.status === 'pending' || operation.status === undefined,
-      ),
-    );
+    this.pending.set(pendingOperations > 0);
+    this.pendingOps.set(pendingOperations);
   }
   //#endregion
 }

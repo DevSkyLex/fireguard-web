@@ -1,5 +1,15 @@
-import { ChangeDetectionStrategy, Component, inject, input, InputSignal } from '@angular/core';
+import { NgComponentOutlet } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  InputSignal,
+  type Signal,
+} from '@angular/core';
 import { DashboardSidebarNavigationService } from '@layouts/dashboard-layout/services';
+import { SIDEBAR_SLOT, type SidebarContribution } from '@layouts/dashboard-layout/slots/sidebar';
 import {
   DashboardLayoutSidebarFooter,
   DashboardLayoutSidebarHeader,
@@ -11,16 +21,18 @@ import {
  * @class DashboardLayoutSidebar
  *
  * @description
- * The DashboardLayoutSidebar component is responsible for rendering the sidebar
- * navigation menu in the dashboard layout.
+ * Single tinted sidebar of the dashboard shell: brand row, lead shell
+ * widgets (SIDEBAR_SLOT `lead` region), navigation, and footer widgets
+ * (SIDEBAR_SLOT `footer` region). Slot widgets are hidden in icon-only mode.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-dashboard-layout-sidebar',
   imports: [
+    NgComponentOutlet,
     DashboardLayoutSidebarHeader,
     DashboardLayoutSidebarNavigation,
     DashboardLayoutSidebarFooter,
@@ -46,15 +58,63 @@ export class DashboardLayoutSidebar {
     inject<DashboardSidebarNavigationService>(DashboardSidebarNavigationService);
 
   /**
+   * Property contributions
+   * @readonly
+   *
+   * @description
+   * Shell widget contributions injected via the `SIDEBAR_SLOT` multi-provider
+   * token, sorted by ascending `order`.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {SidebarContribution[]}
+   */
+  private readonly contributions: SidebarContribution[] = (
+    inject(SIDEBAR_SLOT, { optional: true }) ?? []
+  ).toSorted((a: SidebarContribution, b: SidebarContribution): number => a.order - b.order);
+
+  /**
+   * Property leadContributions
+   * @readonly
+   *
+   * @description
+   * Widgets rendered between the brand row and the navigation.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {SidebarContribution[]}
+   */
+  protected readonly leadContributions: SidebarContribution[] = this.contributions.filter(
+    (contribution: SidebarContribution): boolean => contribution.region === 'lead',
+  );
+
+  /**
+   * Property footerContributions
+   * @readonly
+   *
+   * @description
+   * Widgets pinned at the bottom of the sidebar.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {SidebarContribution[]}
+   */
+  protected readonly footerContributions: SidebarContribution[] = this.contributions.filter(
+    (contribution: SidebarContribution): boolean => contribution.region === 'footer',
+  );
+
+  /**
    * Property variant
    * @readonly
    *
    * @description
    * Rendering variant for this sidebar instance.
-   * - `'primary'`: renders the global navigation items (Home + Account)
-   *   without the search field; used for the always-visible desktop sidebar.
-   * - `'mobile'` (default): renders all navigation items including the
-   *   organization section with the search field; used for the mobile drawer.
+   * - `'primary'`: always-visible desktop sidebar, supports icon-only mode.
+   * - `'mobile'` (default): sidebar rendered inside the mobile drawer,
+   *   always expanded.
    *
    * @access public
    * @since 2.0.0
@@ -95,5 +155,22 @@ export class DashboardLayoutSidebar {
    * @type {InputSignal<boolean>}
    */
   public readonly collapsible: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property isIconOnly
+   * @readonly
+   *
+   * @description
+   * Whether this instance currently renders in icon-only (rail) mode —
+   * only the primary variant collapses; the mobile drawer stays expanded.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isIconOnly: Signal<boolean> = computed(
+    (): boolean => this.variant() === 'primary' && this.iconOnly(),
+  );
   //#endregion
 }

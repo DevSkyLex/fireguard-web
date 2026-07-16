@@ -9,4 +9,4 @@ export * from './data-access';
 export * from './state';
 export * from './services';
 export { provideInterventionsFeature } from './interventions.feature';
-export { withInterventionHeaderActions } from './providers';
+export { withInterventionHeaderActions, withInterventionSyncChip } from './providers';

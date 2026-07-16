@@ -1,12 +1,16 @@
 import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
-import type { MenuItem } from 'primeng/api';
 import { EMPTY } from 'rxjs';
 import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
 import { AUTH_LOGOUT_PORT } from '@features/auth';
 import { AccountUserMenu } from '../account-user-menu.component';
+
+const query = <T extends HTMLElement>(
+  fixture: ComponentFixture<AccountUserMenu>,
+  testid: string,
+): T | null => fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
 
 describe('AccountUserMenu', () => {
   const setup = (unread = 0) => {
@@ -28,48 +32,98 @@ describe('AccountUserMenu', () => {
     };
 
     TestBed.configureTestingModule({
+      imports: [AccountUserMenu],
       providers: [
+        provideRouter([]),
         { provide: USER_IDENTITY_PORT, useValue: mockUserIdentityPort },
         { provide: AUTH_LOGOUT_PORT, useValue: mockAuthLogoutPort },
         { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
-        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
         { provide: Events, useValue: { on: () => EMPTY } },
       ],
     });
 
-    const component = TestBed.runInInjectionContext(() => new AccountUserMenu());
-    const items = (component as unknown as { menuItems: () => MenuItem[] }).menuItems();
-    return { items };
+    const fixture: ComponentFixture<AccountUserMenu> = TestBed.createComponent(AccountUserMenu);
+    fixture.detectChanges();
+
+    return { fixture, mockAuthLogoutPort };
   };
 
+  it('should render the collapsed panel with the trigger row', () => {
+    const { fixture } = setup();
+
+    const trigger = query<HTMLButtonElement>(fixture, 'header-user-menu-trigger');
+    const panel = query<HTMLElement>(fixture, 'header-user-menu-panel');
+
+    expect(trigger).not.toBeNull();
+    expect(trigger?.getAttribute('aria-expanded')).toBe('false');
+    expect(panel?.className).toContain('grid-rows-[0fr]');
+    expect(panel?.inert).toBe(true);
+  });
+
+  it('should expand the inline panel upward when the trigger is clicked', () => {
+    const { fixture } = setup();
+
+    query<HTMLButtonElement>(fixture, 'header-user-menu-trigger')?.click();
+    fixture.detectChanges();
+
+    const trigger = query<HTMLButtonElement>(fixture, 'header-user-menu-trigger');
+    const panel = query<HTMLElement>(fixture, 'header-user-menu-panel');
+
+    expect(trigger?.getAttribute('aria-expanded')).toBe('true');
+    expect(trigger?.getAttribute('aria-controls')).toBe(panel?.id);
+    expect(panel?.className).toContain('grid-rows-[1fr]');
+    expect(panel?.inert).toBe(false);
+  });
+
   it('should expose the account sections deep-linking into the account page', () => {
-    const { items } = setup();
+    const { fixture } = setup();
 
-    const labels = items.filter((item) => !item.separator).map((item) => item.label);
-    expect(labels).toEqual(['Profile', 'Security', 'Notifications', 'Logout']);
+    query<HTMLButtonElement>(fixture, 'header-user-menu-trigger')?.click();
+    fixture.detectChanges();
 
-    const profile = items.find((item) => item.label === 'Profile');
-    expect(profile?.routerLink).toBe('/account');
-    expect(profile?.queryParams).toEqual({ tab: 'profile' });
+    const profile = query<HTMLAnchorElement>(fixture, 'header-user-menu-profile-link');
+    const security = query<HTMLAnchorElement>(fixture, 'header-user-menu-security');
+    const notifications = query<HTMLAnchorElement>(fixture, 'header-user-menu-notifications');
 
-    const security = items.find((item) => item.label === 'Security');
-    expect(security?.queryParams).toEqual({ tab: 'security' });
+    expect(profile?.getAttribute('href')).toBe('/account?tab=profile');
+    expect(security?.getAttribute('href')).toBe('/account?tab=security');
+    expect(notifications?.getAttribute('href')).toBe('/account?tab=notifications');
+  });
 
-    const notifications = items.find((item) => item.label === 'Notifications');
-    expect(notifications?.queryParams).toEqual({ tab: 'notifications' });
+  it('should collapse the panel after activating an entry', () => {
+    const { fixture } = setup();
+
+    query<HTMLButtonElement>(fixture, 'header-user-menu-trigger')?.click();
+    fixture.detectChanges();
+
+    query<HTMLAnchorElement>(fixture, 'header-user-menu-profile-link')?.click();
+    fixture.detectChanges();
+
+    const panel = query<HTMLElement>(fixture, 'header-user-menu-panel');
+    expect(panel?.className).toContain('grid-rows-[0fr]');
   });
 
   it('should surface unread notifications as a badge on the notifications entry', () => {
-    const { items } = setup(4);
+    const { fixture } = setup(4);
 
-    const notifications = items.find((item) => item.label === 'Notifications');
-    expect(notifications?.badge).toBe('4');
+    const badge = query<HTMLElement>(fixture, 'header-user-menu-notifications-badge');
+    expect(badge?.textContent?.trim()).toBe('4');
   });
 
-  it('should not set a badge when there are no unread notifications', () => {
-    const { items } = setup(0);
+  it('should not render a badge when there are no unread notifications', () => {
+    const { fixture } = setup(0);
 
-    const notifications = items.find((item) => item.label === 'Notifications');
-    expect(notifications?.badge).toBeUndefined();
+    expect(query(fixture, 'header-user-menu-notifications-badge')).toBeNull();
+  });
+
+  it('should trigger logout from the panel action', () => {
+    const { fixture, mockAuthLogoutPort } = setup();
+
+    query<HTMLButtonElement>(fixture, 'header-user-menu-trigger')?.click();
+    fixture.detectChanges();
+
+    query<HTMLButtonElement>(fixture, 'header-user-menu-logout')?.click();
+
+    expect(mockAuthLogoutPort.logout).toHaveBeenCalledTimes(1);
   });
 });

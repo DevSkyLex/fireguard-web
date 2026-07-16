@@ -4,9 +4,9 @@ import {
   type EnvironmentProviders,
   type Provider,
 } from '@angular/core';
-import { ASIDE_SLOT, type AsideContribution } from '../../slots/aside';
 import { NAVIGATION_SLOT, type NavigationContribution } from '../../slots/navigation';
 import { PAGE_HEADER_SLOT, type PageHeaderContribution } from '../../slots/page-header';
+import { SIDEBAR_SLOT, type SidebarContribution } from '../../slots/sidebar';
 import { TOPBAR_SLOT, type TopbarContribution } from '../../slots/topbar';
 
 /**
@@ -27,7 +27,7 @@ export type DashboardLayoutNavigationSlotFeature =
 
 export type DashboardLayoutTopbarSlotFeature = DashboardLayoutSlotFeature<TopbarContribution>;
 
-export type DashboardLayoutAsideSlotFeature = DashboardLayoutSlotFeature<AsideContribution>;
+export type DashboardLayoutSidebarSlotFeature = DashboardLayoutSlotFeature<SidebarContribution>;
 
 export type DashboardLayoutPageHeaderSlotFeature =
   DashboardLayoutSlotFeature<PageHeaderContribution>;
@@ -43,8 +43,8 @@ export type DashboardLayoutPageHeaderSlotFeature =
  */
 export interface DashboardLayoutSlotsConfig {
   readonly navigation?: DashboardLayoutNavigationSlotFeature[];
+  readonly sidebar?: DashboardLayoutSidebarSlotFeature[];
   readonly topbar?: DashboardLayoutTopbarSlotFeature[];
-  readonly aside?: DashboardLayoutAsideSlotFeature[];
   readonly pageHeader?: DashboardLayoutPageHeaderSlotFeature[];
 }
 
@@ -65,8 +65,8 @@ export function provideDashboardLayoutSlots(
 ): EnvironmentProviders {
   return makeEnvironmentProviders([
     ...provideSlotContributions(NAVIGATION_SLOT, config.navigation),
+    ...provideSlotContributions(SIDEBAR_SLOT, config.sidebar),
     ...provideSlotContributions(TOPBAR_SLOT, config.topbar),
-    ...provideSlotContributions(ASIDE_SLOT, config.aside),
     ...provideSlotContributions(PAGE_HEADER_SLOT, config.pageHeader),
   ]);
 }

@@ -222,7 +222,9 @@ export class OrganizationSettingsPage {
       if (this.store.deleteSucceeded()) {
         this.deleteDialogVisible.set(false);
         this.activeOrganizationStore.clear();
-        void this.router.navigate(['/organizations']);
+        // Root forwards to the next remaining organization (or onboarding);
+        // organizationGuard invalidates the stale last-organization cookie.
+        void this.router.navigate(['/']);
       }
     });
   }

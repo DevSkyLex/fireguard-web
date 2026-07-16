@@ -1,112 +1,100 @@
-<div class="flex min-h-full flex-col gap-3 py-5">
-  <nav class="flex-1 overflow-x-clip overflow-y-auto" [attr.aria-label]="navAriaLabel()">
-    @if (menuItems().length === 0) {
-      <div
-        class="flex min-h-28 items-center justify-center rounded-md border border-dashed border-surface-200 bg-surface-50 px-4 text-center text-[13px] text-surface-500 transition-colors dark:border-surface-800 dark:bg-surface-900"
-        i18n="@@layout.nav.empty"
-      >
-        No navigation items available.
-      </div>
-    } @else {
-      <ul class="flex flex-col">
-        @for (section of menuItems(); track section.id ?? section.label; let isFirst = $first) {
-          @if (!isFirst && !iconOnly()) {
-            <li
-              role="separator"
-              data-testid="sidebar-section-divider"
-              class="my-5 border-t border-surface-200 dark:border-surface-800"
-            ></li>
+<nav
+  class="flex min-h-full flex-col px-3 pt-2 pb-4"
+  [class.px-2]="iconOnly()"
+  [attr.aria-label]="navAriaLabel()"
+>
+  @if (menuItems().length === 0) {
+    <div
+      class="flex min-h-28 items-center justify-center rounded-lg border border-dashed border-surface-300 px-4 text-center text-[13px] text-surface-600 transition-colors dark:border-surface-700 dark:text-surface-400"
+      i18n="@@layout.nav.empty"
+    >
+      No navigation items available.
+    </div>
+  } @else {
+    <ul class="flex flex-col">
+      @for (section of menuItems(); track section.id ?? section.label; let isFirst = $first) {
+        <li [class]="isFirst ? '' : 'mt-3.5'">
+          @if (!iconOnly() && section.label) {
+            <p
+              class="px-2.5 pt-1.5 pb-1 text-[11px] font-semibold tracking-[0.06em] text-surface-600 uppercase dark:text-surface-400"
+            >
+              {{ section.label }}
+            </p>
           }
 
-          <li class="px-3">
-            @if (!iconOnly()) {
-              <p
-                class="px-2 pt-1 pb-1.5 text-[11px] font-semibold text-surface-500 dark:text-surface-400"
-              >
-                {{ section.label }}
-              </p>
-            }
+          <ul class="flex flex-col gap-0.5">
+            @for (item of section.items ?? []; track item.id ?? item.label) {
+              <li>
+                <a
+                  [pTooltip]="iconOnly() ? (item.label ?? '') : ''"
+                  tooltipPosition="right"
+                  [class]="
+                    'group relative flex min-h-9 w-full cursor-pointer items-center rounded-lg px-2.5 py-2 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ' +
+                    (iconOnly() ? 'justify-center ' : 'gap-2.5 ') +
+                    (linkActive.isActive
+                      ? 'bg-primary-50 font-semibold text-primary-700 dark:bg-primary-400/15 dark:text-primary-300'
+                      : 'font-medium text-surface-600 hover:bg-surface-100 hover:text-surface-950 dark:text-surface-400 dark:hover:bg-surface-900 dark:hover:text-surface-50')
+                  "
+                  [routerLink]="item.routerLink ?? null"
+                  routerLinkActive
+                  [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.routerLink)"
+                  #linkActive="routerLinkActive"
+                  [attr.aria-current]="item.routerLink && linkActive.isActive ? 'page' : null"
+                  [attr.data-sidebar-item-id]="item.id ?? null"
+                  (click)="onItemClick(item)"
+                >
+                  @if (item.icon) {
+                    <i
+                      [class]="
+                        item.icon +
+                        ' w-4.5 shrink-0 text-center transition-colors ' +
+                        (linkActive.isActive
+                          ? 'text-primary-600 dark:text-primary-400'
+                          : 'text-surface-500 group-hover:text-surface-600 dark:text-surface-500 dark:group-hover:text-surface-400')
+                      "
+                      aria-hidden="true"
+                    ></i>
+                  }
 
-            <ul class="flex flex-col gap-0.5">
-              @for (item of section.items ?? []; track item.id ?? item.label) {
-                <li>
-                  <a
-                    pRipple
-                    [pTooltip]="iconOnly() ? (item.label ?? '') : ''"
-                    tooltipPosition="right"
-                    class="group relative flex min-h-9 w-full cursor-pointer items-center rounded-md border border-transparent px-3 py-2 text-[13px] font-medium transition-colors hover:bg-surface-100/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-900/70"
-                    [class.justify-center]="iconOnly()"
-                    [class.gap-2.5]="!iconOnly()"
-                    [class.bg-surface-50]="linkActive.isActive"
-                    [class.border-surface-200]="linkActive.isActive"
-                    [class.shadow-xs]="linkActive.isActive"
-                    [class.font-semibold]="linkActive.isActive"
-                    [class.dark:bg-surface-900]="linkActive.isActive"
-                    [class.dark:border-surface-800]="linkActive.isActive"
-                    [routerLink]="item.routerLink ?? null"
-                    routerLinkActive
-                    [routerLinkActiveOptions]="getRouterLinkActiveOptions(item.routerLink)"
-                    #linkActive="routerLinkActive"
-                    [attr.aria-current]="item.routerLink && linkActive.isActive ? 'page' : null"
-                    [attr.data-sidebar-item-id]="item.id ?? null"
-                    (click)="onItemClick(item)"
-                  >
-                    @if (item.icon) {
-                      <i
-                        [class]="
-                          item.icon +
-                          ' w-4 shrink-0 text-center ' +
-                          (linkActive.isActive
-                            ? 'text-primary-600 dark:text-primary-400'
-                            : 'text-surface-400 dark:text-surface-500')
-                        "
-                        aria-hidden="true"
-                      ></i>
-                    }
+                  @if (!iconOnly()) {
+                    <span class="min-w-0 flex-1 truncate leading-none">{{ item.label }}</span>
+                  }
 
-                    @if (!iconOnly()) {
+                  @if (item.badge && !iconOnly()) {
+                    @if (isNumericBadge(item.badge)) {
                       <span
                         [class]="
-                          'min-w-0 flex-1 truncate leading-none ' +
+                          'inline-flex min-w-5 items-center justify-center rounded-full px-1.75 py-px text-[11px] font-semibold tabular-nums ' +
                           (linkActive.isActive
-                            ? 'text-surface-950 dark:text-surface-50'
-                            : 'text-surface-700 dark:text-surface-200')
+                            ? 'bg-primary-600/15 text-primary-700 dark:bg-primary-400/20 dark:text-primary-300'
+                            : 'bg-surface-100 text-surface-600 dark:bg-surface-900 dark:text-surface-400')
                         "
-                        >{{ item.label }}</span
                       >
+                        {{ item.badge }}
+                      </span>
+                    } @else {
+                      <span
+                        class="inline-flex items-center rounded-sm bg-primary-50 px-1.5 py-0.5 text-[9px] font-semibold tracking-wider text-primary-700 uppercase dark:bg-primary-400/15 dark:text-primary-300"
+                      >
+                        {{ item.badge }}
+                      </span>
                     }
+                  }
 
-                    @if (item.badge && !iconOnly()) {
-                      @if (isNumericBadge(item.badge)) {
-                        <span
-                          class="inline-flex h-4 min-w-4 items-center justify-center rounded px-1 text-[10px] font-semibold text-surface-500 dark:text-surface-400"
-                        >
-                          {{ item.badge }}
-                        </span>
-                      } @else {
-                        <span
-                          class="inline-flex items-center rounded-sm bg-primary-50 px-1.5 py-0.5 text-[9px] font-semibold tracking-wider text-primary-700 uppercase dark:bg-primary-950 dark:text-primary-300"
-                        >
-                          {{ item.badge }}
-                        </span>
-                      }
-                    }
-
-                    @if (item.badge && iconOnly()) {
-                      <p-badge
-                        class="absolute top-0.5 right-0.5"
-                        [value]="item.badge"
-                        severity="contrast"
-                        size="small"
-                      />
-                    }
-                  </a>
-                </li>
-              }
-            </ul>
-          </li>
-        }
-      </ul>
-    }
-  </nav>
-</div>
+                  @if (item.badge && iconOnly()) {
+                    <p-badge
+                      class="absolute top-0.5 right-0.5"
+                      [value]="item.badge"
+                      severity="contrast"
+                      size="small"
+                    />
+                  }
+                </a>
+              </li>
+            }
+          </ul>
+        </li>
+      }
+    </ul>
+  }
+</nav>

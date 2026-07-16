@@ -6,8 +6,8 @@ Owns the default authenticated landing area of the application.
 
 This feature is responsible for:
 
-- the root dashboard landing route,
-- route-entry page composition for the home page.
+- the root dashboard landing route (`/`), which forwards to the organizations
+  entry point where `organizationGuard` resolves the user's default workspace.
 
 This feature is intentionally thin. It must not absorb shell concerns, global routing infrastructure, or unrelated business workflows.
 
@@ -20,7 +20,10 @@ This feature is intentionally thin. It must not absorb shell concerns, global ro
 
 - `/`
 
-The feature currently exposes a single lazy-loaded home page route.
+The root has no landing page of its own: FireGuard is organization-scoped, so
+`/` redirects to `/organizations`, which forwards to the active organization's
+workspace. The feature contributes no sidebar navigation — organization
+switching is owned by `@features/organization`'s switcher.
 
 ## State and Data Access
 

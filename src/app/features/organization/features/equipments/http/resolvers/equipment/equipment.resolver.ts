@@ -23,7 +23,7 @@ export const equipmentResolver: ResolveFn<EquipmentOutput> = (
   const equipmentId: string | null = route.paramMap.get('equipmentId');
 
   if (!organizationId || !equipmentId) {
-    return new RedirectCommand(router.parseUrl('/organizations'));
+    return new RedirectCommand(router.parseUrl('/'));
   }
 
   return activeEquipmentStore

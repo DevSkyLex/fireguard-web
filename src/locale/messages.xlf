@@ -6,7 +6,7 @@
         <source>Accept Invitation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/app.routes.ts</context>
-          <context context-type="linenumber">37</context>
+          <context context-type="linenumber">39</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.account" datatype="html">
@@ -589,36 +589,18 @@
           <context context-type="linenumber">70</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="account.userMenu.open" datatype="html">
-        <source>Open user menu</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.html</context>
-          <context context-type="linenumber">7,8</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="common.user.defaultName" datatype="html">
-        <source>User</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.html</context>
-          <context context-type="linenumber">48,50</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-user-profile/auth-user-profile.component.html</context>
-          <context context-type="linenumber">55,57</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="account.menu.profile" datatype="html">
         <source>Profile</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.ts</context>
-          <context context-type="linenumber">164</context>
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.html</context>
+          <context context-type="linenumber">32,34</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.menu.security" datatype="html">
         <source>Security</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.ts</context>
-          <context context-type="linenumber">171</context>
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.html</context>
+          <context context-type="linenumber">44,46</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/components/notification-bell-filter/notification-bell-filter.component.ts</context>
@@ -628,8 +610,8 @@
       <trans-unit id="common.notifications" datatype="html">
         <source>Notifications</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.ts</context>
-          <context context-type="linenumber">178</context>
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.html</context>
+          <context context-type="linenumber">57,59</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/components/notification-bell-header/notification-bell-header.component.html</context>
@@ -651,8 +633,8 @@
       <trans-unit id="auth.userProfile.loggingOut" datatype="html">
         <source>Logging out...</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.ts</context>
-          <context context-type="linenumber">188</context>
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.html</context>
+          <context context-type="linenumber">83,85</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/components/auth-user-profile/auth-user-profile.component.html</context>
@@ -662,12 +644,30 @@
       <trans-unit id="auth.userProfile.logout" datatype="html">
         <source>Logout</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.ts</context>
-          <context context-type="linenumber">189</context>
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.html</context>
+          <context context-type="linenumber">85,87</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/components/auth-user-profile/auth-user-profile.component.html</context>
           <context context-type="linenumber">105,107</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.userMenu.open" datatype="html">
+        <source>Open user menu</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.html</context>
+          <context context-type="linenumber">96,97</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="common.user.defaultName" datatype="html">
+        <source>User</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-user-menu/account-user-menu.component.html</context>
+          <context context-type="linenumber">127,129</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/components/auth-user-profile/auth-user-profile.component.html</context>
+          <context context-type="linenumber">55,57</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.bell.filterAll" datatype="html">
@@ -1208,10 +1208,6 @@
           <context context-type="linenumber">551</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-dataview/organization-dataview.component.ts</context>
-          <context context-type="linenumber">370</context>
-        </context-group>
-        <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/tables/audit-event-table/audit-event-table.component.html</context>
           <context context-type="linenumber">130</context>
         </context-group>
@@ -1524,7 +1520,7 @@
         <source> © 2026 Fireguard — Safety &amp; compliance </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/components/auth-showcase/auth-showcase.component.html</context>
-          <context context-type="linenumber">63,67</context>
+          <context context-type="linenumber">61,65</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.showcase.feature.inventory" datatype="html">
@@ -3128,7 +3124,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">197</context>
+          <context context-type="linenumber">200</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipmentStatus.inStock" datatype="html">
@@ -4225,10 +4221,6 @@
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/tables/inspection-table/inspection-table.component.ts</context>
           <context context-type="linenumber">643</context>
         </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-dataview/organization-dataview.component.ts</context>
-          <context context-type="linenumber">439</context>
-        </context-group>
       </trans-unit>
       <trans-unit id="route.facility.create" datatype="html">
         <source>Create Facility</source>
@@ -4252,7 +4244,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">189</context>
+          <context context-type="linenumber">192</context>
         </context-group>
       </trans-unit>
       <trans-unit id="status.active" datatype="html">
@@ -5321,7 +5313,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">205</context>
+          <context context-type="linenumber">208</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspectionStatus.draft" datatype="html">
@@ -6221,7 +6213,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">181</context>
+          <context context-type="linenumber">184</context>
         </context-group>
       </trans-unit>
       <trans-unit id="interventionPriority.low" datatype="html">
@@ -7231,6 +7223,145 @@
           <context context-type="linenumber">505</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="interventions.syncChip.panel.pending" datatype="html">
+        <source> <x id="ICU" equiv-text="{offline.pendingCount(), plural,
+                =1 {1 local change awaiting sync}
+                other {{{ offline.pendingCount() }} local changes awaiting sync}
+              }" xid="220351285219033391"/> </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.html</context>
+          <context context-type="linenumber">49,54</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2123810782300167691" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 local change awaiting sync} other {<x id="INTERPOLATION"/> local changes awaiting sync}}</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.html</context>
+          <context context-type="linenumber">49,51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.panel.pendingHint" datatype="html">
+        <source> Changes sync automatically once online. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.html</context>
+          <context context-type="linenumber">58,61</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.panel.blocked" datatype="html">
+        <source> <x id="ICU" equiv-text="{sync.blockedOperations(), plural,
+                =1 {1 operation needs your attention}
+                other {{{ sync.blockedOperations() }} operations need your attention}
+              }" xid="6082906636298873223"/> </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.html</context>
+          <context context-type="linenumber">75,80</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7969458221442163857" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 operation needs your attention} other {<x id="INTERPOLATION"/> operations need your attention}}</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.html</context>
+          <context context-type="linenumber">75,77</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.panel.synced" datatype="html">
+        <source> Everything is synced. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.html</context>
+          <context context-type="linenumber">99,103</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.syncNow" datatype="html">
+        <source>Sync now</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.html</context>
+          <context context-type="linenumber">108,109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.retryBlocked" datatype="html">
+        <source>Retry blocked operations</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.html</context>
+          <context context-type="linenumber">122,123</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.offline" datatype="html">
+        <source>Offline</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.ts</context>
+          <context context-type="linenumber">146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.offlinePendingAria" datatype="html">
+        <source>Sync status: offline, <x id="count" equiv-text="pending"/> pending changes</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.ts</context>
+          <context context-type="linenumber">150</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.offlineAria" datatype="html">
+        <source>Sync status: offline</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.ts</context>
+          <context context-type="linenumber">151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.blocked" datatype="html">
+        <source><x id="count" equiv-text="blocked"/> blocked</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.ts</context>
+          <context context-type="linenumber">159</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.blockedAria" datatype="html">
+        <source>Sync status: <x id="count" equiv-text="blocked"/> blocked operations</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.ts</context>
+          <context context-type="linenumber">161</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.syncing" datatype="html">
+        <source>Syncing…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.ts</context>
+          <context context-type="linenumber">169</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.syncingAria" datatype="html">
+        <source>Sync status: synchronizing</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.ts</context>
+          <context context-type="linenumber">171</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.pending" datatype="html">
+        <source><x id="count" equiv-text="pending"/> pending</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.ts</context>
+          <context context-type="linenumber">179</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.pendingAria" datatype="html">
+        <source>Sync status: <x id="count" equiv-text="pending"/> pending changes</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.ts</context>
+          <context context-type="linenumber">181</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.synced" datatype="html">
+        <source>Up to date</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.ts</context>
+          <context context-type="linenumber">188</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="interventions.syncChip.syncedAria" datatype="html">
+        <source>Sync status: everything is synced</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-chip/intervention-sync-chip.component.ts</context>
+          <context context-type="linenumber">190</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="intervention.createDrawer.header" datatype="html">
         <source>Create a field intervention</source>
         <context-group purpose="location">
@@ -7772,6 +7903,10 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail/intervention-detail.component.html</context>
           <context context-type="linenumber">50</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/layouts/dashboard-layout/components/dashboard-layout-search/dashboard-layout-search.component.html</context>
+          <context context-type="linenumber">66</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.syncBlocked" datatype="html">
@@ -8849,75 +8984,82 @@
         <source>Dashboard</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">168</context>
+          <context context-type="linenumber">171</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.members" datatype="html">
         <source>Members</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">213</context>
+          <context context-type="linenumber">216</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">91</context>
+          <context context-type="linenumber">93</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.team" datatype="html">
         <source>Roles</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">222</context>
+          <context context-type="linenumber">225</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">110</context>
+          <context context-type="linenumber">111</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.settings" datatype="html">
         <source>Settings</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">231</context>
+          <context context-type="linenumber">234</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">152</context>
+          <context context-type="linenumber">151</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.overview" datatype="html">
         <source>Overview</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">250</context>
+          <context context-type="linenumber">252</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.fieldWork" datatype="html">
         <source>Field work</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">251</context>
+          <context context-type="linenumber">253</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.assets" datatype="html">
         <source>Assets</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">252</context>
+          <context context-type="linenumber">254</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.compliance" datatype="html">
         <source>Compliance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">253</context>
+          <context context-type="linenumber">255</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.navGroup.administration" datatype="html">
         <source>Administration</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
-          <context context-type="linenumber">254</context>
+          <context context-type="linenumber">256</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.nav.audit" datatype="html">
+        <source>Audit log</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
+          <context context-type="linenumber">385</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.audit" datatype="html">
@@ -8925,13 +9067,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
           <context context-type="linenumber">134</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="route.organizations" datatype="html">
-        <source>Organizations</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
-          <context context-type="linenumber">180</context>
         </context-group>
       </trans-unit>
       <trans-unit id="dash.granularity.daily" datatype="html">
@@ -10067,44 +10202,6 @@
           <context context-type="linenumber">13</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.nav.memberCount" datatype="html">
-        <source> <x id="ICU" equiv-text="{organization.memberCount, plural,
-            =1 {1 member}
-            other {{{ organization.memberCount }} members}
-          }" xid="1966636891262262878"/> </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-nav-panel/organization-nav-panel.component.html</context>
-          <context context-type="linenumber">31,37</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="3221703638828955024" datatype="html">
-        <source>{VAR_PLURAL, plural, =1 {1 member} other {<x id="INTERPOLATION"/> members}}</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-nav-panel/organization-nav-panel.component.html</context>
-          <context context-type="linenumber">31,33</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.nav.aria" datatype="html">
-        <source>Organization navigation</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-nav-panel/organization-nav-panel.component.html</context>
-          <context context-type="linenumber">43,45</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.nav.empty" datatype="html">
-        <source>No organization navigation available.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-nav-panel/organization-nav-panel.component.html</context>
-          <context context-type="linenumber">49,50</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.nav.audit" datatype="html">
-        <source>Audit log</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-nav-panel/organization-nav-panel.component.ts</context>
-          <context context-type="linenumber">205</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="org.cancelCard.ending" datatype="html">
         <source> Subscription ending </source>
         <context-group purpose="location">
@@ -10350,24 +10447,6 @@
           <context context-type="linenumber">482</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.usage.label" datatype="html">
-        <source> Usage </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-quota-meters/organization-quota-meters.component.html</context>
-          <context context-type="linenumber">9,12</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.usage.atLimit" datatype="html">
-        <source>At limit</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-quota-meters/organization-quota-meters.component.html</context>
-          <context context-type="linenumber">22,24</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-usage-panel/organization-usage-panel.component.html</context>
-          <context context-type="linenumber">23,25</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="org.quota.header" datatype="html">
         <source>Plan limit reached</source>
         <context-group purpose="location">
@@ -10397,67 +10476,67 @@
           <context context-type="linenumber">41,42</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.switcher.create" datatype="html">
-        <source>Create organization</source>
+      <trans-unit id="org.switcher.selectWorkspace" datatype="html">
+        <source>Select workspace</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/components/organization-switcher-footer/organization-switcher-footer.component.html</context>
-          <context context-type="linenumber">13,16</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.switcher.title" datatype="html">
-        <source>Organizations</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/components/organization-switcher-header/organization-switcher-header.component.html</context>
-          <context context-type="linenumber">9,13</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.switcher.loading" datatype="html">
-        <source> Loading workspaces... </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/components/organization-switcher-list/organization-switcher-list.component.html</context>
-          <context context-type="linenumber">8,11</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.switcher.empty" datatype="html">
-        <source> No workspaces found </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/components/organization-switcher-list/organization-switcher-list.component.html</context>
-          <context context-type="linenumber">37,41</context>
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/components/organization-switcher-trigger/organization-switcher-trigger.component.html</context>
+          <context context-type="linenumber">53,57</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.switcher.current" datatype="html">
         <source>Current organization</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/components/organization-switcher-nav/organization-switcher-nav.component.html</context>
-          <context context-type="linenumber">17,20</context>
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.html</context>
+          <context context-type="linenumber">23,26</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.switcher.members" datatype="html">
         <source>Members</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/components/organization-switcher-nav/organization-switcher-nav.component.html</context>
-          <context context-type="linenumber">31,34</context>
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.ts</context>
+          <context context-type="linenumber">139</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.switcher.settings" datatype="html">
         <source>Settings</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/components/organization-switcher-nav/organization-switcher-nav.component.html</context>
-          <context context-type="linenumber">40,43</context>
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.ts</context>
+          <context context-type="linenumber">144</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.switcher.billing" datatype="html">
         <source>Billing</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/components/organization-switcher-nav/organization-switcher-nav.component.html</context>
-          <context context-type="linenumber">50,53</context>
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.ts</context>
+          <context context-type="linenumber">149</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.switcher.selectWorkspace" datatype="html">
-        <source>Select workspace</source>
+      <trans-unit id="org.switcher.loading" datatype="html">
+        <source>Loading workspaces...</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/components/organization-switcher-trigger/organization-switcher-trigger.component.html</context>
-          <context context-type="linenumber">31,32</context>
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.ts</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.switcher.empty" datatype="html">
+        <source>No workspaces found</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.ts</context>
+          <context context-type="linenumber">178</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.switcher.title" datatype="html">
+        <source>Organizations</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.ts</context>
+          <context context-type="linenumber">184</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.switcher.create" datatype="html">
+        <source>Create organization</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.ts</context>
+          <context context-type="linenumber">190</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.usage.loading" datatype="html">
@@ -10465,6 +10544,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-usage-panel/organization-usage-panel.component.html</context>
           <context context-type="linenumber">7,10</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.usage.atLimit" datatype="html">
+        <source>At limit</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-usage-panel/organization-usage-panel.component.html</context>
+          <context context-type="linenumber">23,25</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.usage.unlimited" datatype="html">
@@ -10479,73 +10565,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-usage-panel/organization-usage-panel.component.html</context>
           <context context-type="linenumber">59,61</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.dataview.title" datatype="html">
-        <source>Organizations</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-dataview/organization-dataview.component.html</context>
-          <context context-type="linenumber">10,13</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.dataview.searchPlaceholder" datatype="html">
-        <source>Search organizations...</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-dataview/organization-dataview.component.html</context>
-          <context context-type="linenumber">21,22</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.newButton" datatype="html">
-        <source>New organization</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-dataview/organization-dataview.component.html</context>
-          <context context-type="linenumber">43,44</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-dataview/organization-dataview.component.html</context>
-          <context context-type="linenumber">247,248</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.dataview.pageReport" datatype="html">
-        <source>Showing {first} to {last} of {totalRecords} organizations</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-dataview/organization-dataview.component.html</context>
-          <context context-type="linenumber">70,71</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.dataview.emptySearchTitle" datatype="html">
-        <source>No organizations found</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-dataview/organization-dataview.component.html</context>
-          <context context-type="linenumber">233,234</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.dataview.emptySearchDesc" datatype="html">
-        <source>No organization matches your search. Try different keywords.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-dataview/organization-dataview.component.html</context>
-          <context context-type="linenumber">235,238</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.dataview.emptyTitle" datatype="html">
-        <source>No organizations yet</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-dataview/organization-dataview.component.html</context>
-          <context context-type="linenumber">241,242</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.dataview.emptyDesc" datatype="html">
-        <source>Organizations group your facilities, equipment, inspections and team.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-dataview/organization-dataview.component.html</context>
-          <context context-type="linenumber">243,245</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.dataview.openAria" datatype="html">
-        <source>Open <x id="name" equiv-text="name"/></source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dataviews/organization-dataview/organization-dataview.component.ts</context>
-          <context context-type="linenumber">101</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.deleteDialog.message" datatype="html">
@@ -11291,7 +11310,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="org.invAccept.openOrgs" datatype="html">
-        <source>Open organizations</source>
+        <source>Open workspace</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept/organization-invitation-accept.component.html</context>
           <context context-type="linenumber">59,61</context>
@@ -12268,7 +12287,49 @@
         <source>Open navigation menu</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/dashboard-layout/components/dashboard-layout-header/dashboard-layout-header.component.html</context>
-          <context context-type="linenumber">11,12</context>
+          <context context-type="linenumber">8,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="layout.search.open" datatype="html">
+        <source>Search</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/layouts/dashboard-layout/components/dashboard-layout-search/dashboard-layout-search.component.html</context>
+          <context context-type="linenumber">6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="layout.search.placeholderShort" datatype="html">
+        <source>Search…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/layouts/dashboard-layout/components/dashboard-layout-search/dashboard-layout-search.component.html</context>
+          <context context-type="linenumber">13,16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="layout.search.placeholder" datatype="html">
+        <source>Search or jump to…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/layouts/dashboard-layout/components/dashboard-layout-search/dashboard-layout-search.component.html</context>
+          <context context-type="linenumber">51,52</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="layout.search.inputAria" datatype="html">
+        <source>Search a destination</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/layouts/dashboard-layout/components/dashboard-layout-search/dashboard-layout-search.component.html</context>
+          <context context-type="linenumber">53,54</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="layout.search.empty" datatype="html">
+        <source> No matching destination. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/layouts/dashboard-layout/components/dashboard-layout-search/dashboard-layout-search.component.html</context>
+          <context context-type="linenumber">80,82</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="layout.search.goTo" datatype="html">
+        <source> Go to </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/layouts/dashboard-layout/components/dashboard-layout-search/dashboard-layout-search.component.html</context>
+          <context context-type="linenumber">87,90</context>
         </context-group>
       </trans-unit>
       <trans-unit id="layout.sidebar.expand" datatype="html">
@@ -12297,35 +12358,28 @@
         <source> No navigation items available. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/dashboard-layout/components/dashboard-layout-sidebar/components/dashboard-layout-sidebar-navigation/dashboard-layout-sidebar-navigation.component.html</context>
-          <context context-type="linenumber">8,10</context>
+          <context context-type="linenumber">11,14</context>
         </context-group>
       </trans-unit>
       <trans-unit id="layout.nav.primaryAria" datatype="html">
         <source>Primary navigation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/dashboard-layout/components/dashboard-layout-sidebar/components/dashboard-layout-sidebar-navigation/dashboard-layout-sidebar-navigation.component.ts</context>
-          <context context-type="linenumber">157</context>
+          <context context-type="linenumber">156</context>
         </context-group>
       </trans-unit>
       <trans-unit id="layout.nav.sidebarAria" datatype="html">
         <source>Sidebar navigation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/dashboard-layout/components/dashboard-layout-sidebar/components/dashboard-layout-sidebar-navigation/dashboard-layout-sidebar-navigation.component.ts</context>
-          <context context-type="linenumber">158</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="layout.sidebar.resize" datatype="html">
-        <source>Resize sidebar</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layouts/dashboard-layout/dashboard-layout.component.html</context>
-          <context context-type="linenumber">35,36</context>
+          <context context-type="linenumber">157</context>
         </context-group>
       </trans-unit>
       <trans-unit id="layout.sidebar.closeAria" datatype="html">
         <source>Close navigation menu</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/dashboard-layout/dashboard-layout.component.html</context>
-          <context context-type="linenumber">62,64</context>
+          <context context-type="linenumber">28,31</context>
         </context-group>
       </trans-unit>
       <trans-unit id="shared.activityFeed.emptyLabel" datatype="html">

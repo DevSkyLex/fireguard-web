@@ -1,0 +1,136 @@
+<button
+  type="button"
+  class="flex h-8.5 shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-surface-200 bg-surface-0 px-2.5 text-[12.5px] font-semibold whitespace-nowrap text-surface-950 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-800 dark:bg-surface-900 dark:text-surface-50 dark:hover:bg-surface-800"
+  [attr.aria-label]="chip().aria"
+  [pTooltip]="chip().aria"
+  tooltipPosition="bottom"
+  aria-haspopup="true"
+  data-testid="sync-chip-trigger"
+  (click)="toggle($event)"
+>
+  <i [class]="chip().icon + ' text-sm ' + chip().iconClass" aria-hidden="true"></i>
+
+  <span class="hidden sm:inline" data-testid="sync-chip-label">
+    {{ chip().label }}
+    @if (chip().count) {
+      <span class="font-medium text-surface-600 dark:text-surface-400">{{ chip().count }}</span>
+    }
+  </span>
+</button>
+
+<p-popover #popover [pt]="popoverPt">
+  <div class="flex w-80 flex-col">
+    <!-- Status header -->
+    <div
+      class="flex items-center justify-between gap-3 border-b border-surface-100 px-4 py-3 dark:border-surface-800"
+    >
+      <span class="text-[13px] font-semibold text-surface-950 dark:text-surface-50">
+        {{ chip().label }}
+        @if (chip().count) {
+          <span class="font-medium text-surface-600 dark:text-surface-400">{{ chip().count }}</span>
+        }
+      </span>
+      <i [class]="chip().icon + ' text-sm ' + chip().iconClass" aria-hidden="true"></i>
+    </div>
+
+    <!-- Queue summary -->
+    <div class="flex flex-col gap-0.5 p-2">
+      @if (offline.pendingCount() > 0) {
+        <div class="flex items-start gap-2.5 rounded-md px-2.5 py-2">
+          <i
+            class="pi pi-cloud-upload mt-0.5 text-sm text-amber-600 dark:text-amber-400"
+            aria-hidden="true"
+          ></i>
+          <div class="min-w-0 leading-tight">
+            <p
+              class="text-[13px] font-medium text-surface-950 dark:text-surface-50"
+              i18n="@@interventions.syncChip.panel.pending"
+            >
+              {offline.pendingCount(), plural,
+                =1 {1 local change awaiting sync}
+                other {{{ offline.pendingCount() }} local changes awaiting sync}
+              }
+            </p>
+            <p
+              class="mt-0.5 text-xs text-surface-600 dark:text-surface-400"
+              i18n="@@interventions.syncChip.panel.pendingHint"
+            >
+              Changes sync automatically once online.
+            </p>
+          </div>
+        </div>
+      }
+
+      @if (sync.blockedOperations() > 0) {
+        <div class="flex items-start gap-2.5 rounded-md px-2.5 py-2">
+          <i
+            class="pi pi-exclamation-triangle mt-0.5 text-sm text-red-600 dark:text-red-400"
+            aria-hidden="true"
+          ></i>
+          <div class="min-w-0 leading-tight">
+            <p
+              class="text-[13px] font-medium text-surface-950 dark:text-surface-50"
+              i18n="@@interventions.syncChip.panel.blocked"
+            >
+              {sync.blockedOperations(), plural,
+                =1 {1 operation needs your attention}
+                other {{{ sync.blockedOperations() }} operations need your attention}
+              }
+            </p>
+            @if (sync.problem(); as problem) {
+              <p class="mt-0.5 truncate text-xs text-surface-600 dark:text-surface-400">
+                {{ problem }}
+              </p>
+            }
+          </div>
+        </div>
+      }
+
+      @if (offline.pendingCount() === 0 && sync.blockedOperations() === 0) {
+        <div class="flex items-center gap-2.5 rounded-md px-2.5 py-2">
+          <i
+            class="pi pi-check-circle text-sm text-emerald-600 dark:text-emerald-400"
+            aria-hidden="true"
+          ></i>
+          <p
+            class="text-[13px] font-medium text-surface-950 dark:text-surface-50"
+            i18n="@@interventions.syncChip.panel.synced"
+          >
+            Everything is synced.
+          </p>
+        </div>
+      }
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-col gap-1 border-t border-surface-100 p-2 dark:border-surface-800">
+      <p-button
+        label="Sync now"
+        i18n-label="@@interventions.syncChip.syncNow"
+        icon="pi pi-sync"
+        size="small"
+        [text]="true"
+        [loading]="sync.syncing()"
+        [disabled]="connectivity.offline()"
+        styleClass="w-full"
+        data-testid="sync-chip-sync-now"
+        (onClick)="syncNow()"
+      />
+
+      @if (sync.blockedOperations() > 0) {
+        <p-button
+          label="Retry blocked operations"
+          i18n-label="@@interventions.syncChip.retryBlocked"
+          icon="pi pi-refresh"
+          size="small"
+          severity="danger"
+          [text]="true"
+          [disabled]="connectivity.offline() || sync.syncing()"
+          styleClass="w-full"
+          data-testid="sync-chip-retry-blocked"
+          (onClick)="retryBlocked()"
+        />
+      }
+    </div>
+  </div>
+</p-popover>

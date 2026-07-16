@@ -2,17 +2,19 @@ import type { Routes } from '@angular/router';
 import { withAccountProfile, withNotificationBell } from '@features/account';
 import { withAuthShowcase } from '@features/auth';
 import { authGuard } from '@features/auth/http/guards';
-import { provideMainFeature, withMainNavigation } from '@features/main';
+import { provideMainFeature } from '@features/main';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
 import { onboardingGuard, onboardingRequiredGuard } from '@features/onboarding/http/guards';
 import { withOnboardingShowcase } from '@features/onboarding/providers';
 import {
   provideOrganizationFeature,
-  withOrganizationContext,
   withOrganizationNavigation,
   withOrganizationSwitcher,
 } from '@features/organization';
-import { withInterventionHeaderActions } from '@features/organization/features/interventions';
+import {
+  withInterventionHeaderActions,
+  withInterventionSyncChip,
+} from '@features/organization/features/interventions';
 import { DashboardLayout, provideDashboardLayoutSlots } from '@layouts/dashboard-layout';
 import { withThemeSwitcher } from '@shared/components';
 import { FocusedLayout } from './layouts/focused-layout';
@@ -66,14 +68,9 @@ export const APP_ROUTES: Routes = [
       provideMainFeature(),
       provideOrganizationFeature(),
       provideDashboardLayoutSlots({
-        navigation: [withMainNavigation(), ...withOrganizationNavigation()],
-        topbar: [
-          withOrganizationSwitcher(),
-          withThemeSwitcher(),
-          withNotificationBell(),
-          withAccountProfile(),
-        ],
-        aside: [withOrganizationContext()],
+        navigation: [...withOrganizationNavigation()],
+        sidebar: [withOrganizationSwitcher(), withAccountProfile()],
+        topbar: [withInterventionSyncChip(), withNotificationBell(), withThemeSwitcher()],
         pageHeader: [withInterventionHeaderActions()],
       }),
     ],
@@ -85,7 +82,7 @@ export const APP_ROUTES: Routes = [
       },
       {
         path: 'organizations',
-        data: { breadcrumb: 'Organizations', preload: true },
+        data: { breadcrumb: false, preload: true },
         loadChildren: () =>
           import('@features/organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
       },

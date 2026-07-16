@@ -1,27 +1,15 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import {
-  Component,
-  ChangeDetectionStrategy,
-  computed,
-  effect,
-  inject,
-  type Signal,
-  untracked,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, inject, type Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
-import { Ripple } from 'primeng/ripple';
 import { map } from 'rxjs';
 import { BreadcrumbService } from '@core/breadcrumb';
 import {
   DashboardLayoutHeader,
   DashboardLayoutSidebar,
   DashboardLayoutContent,
-  DashboardLayoutContextPanel,
 } from '@layouts/dashboard-layout/components';
-import { ASIDE_SLOT, type AsideContribution } from '@layouts/dashboard-layout/slots/aside';
-import { DashboardSidebarResizeHandleDirective } from './directives';
 import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
@@ -34,18 +22,20 @@ import {
  * @class DashboardLayout
  *
  * @description
- * Layout component for dashboard pages like
- * home, profile, settings, etc.
+ * Application shell for dashboard pages: a single tinted sidebar (brand,
+ * shell widgets, navigation) next to a header + content column. The header
+ * and the content share the same centered max-width column.
  *
  * Provides {@link DashboardSidebarService} and
  * {@link DashboardSidebarNavigationService} at the component level
  * so child components can inject them directly.
  *
  * Responsive behavior:
- * - Desktop (lg+): resizable sidebar panel on the left (drag handle)
+ * - Desktop (xl+): full sidebar, collapsible to an icon-only rail
+ * - Tablet (lg-xl): icon-only rail
  * - Mobile (<lg): sidebar hidden, accessible via Drawer overlay
  *
- * @version 1.5.0
+ * @version 2.0.0
  *
  * @example
  * ```html
@@ -60,11 +50,8 @@ import {
     RouterOutlet,
     DashboardLayoutHeader,
     DashboardLayoutSidebar,
-    DashboardLayoutContextPanel,
     DashboardLayoutContent,
     DrawerModule,
-    Ripple,
-    DashboardSidebarResizeHandleDirective,
   ],
   providers: [
     DashboardSidebarService,
@@ -81,13 +68,6 @@ export class DashboardLayout {
   protected readonly sidebarService: DashboardSidebarService =
     inject<DashboardSidebarService>(DashboardSidebarService);
 
-  private readonly contributions: AsideContribution[] =
-    inject<AsideContribution[]>(ASIDE_SLOT, { optional: true }) ?? [];
-
-  protected readonly hasActiveContextPanel: Signal<boolean> = computed((): boolean =>
-    this.contributions.some((c: AsideContribution) => c.active()),
-  );
-
   protected readonly isDesktopSidebar: Signal<boolean> = toSignal(
     inject<BreakpointObserver>(BreakpointObserver)
       .observe('(min-width: 1280px)')
@@ -100,9 +80,9 @@ export class DashboardLayout {
    * @readonly
    *
    * @description
-   * Whether the primary sidebar should render in its icon-only (reduced)
-   * form. True either when below the desktop breakpoint (tablet) or when
-   * the user has explicitly collapsed the sidebar via the header toggle.
+   * Whether the sidebar should render in its icon-only (rail) form. True
+   * either when below the desktop breakpoint (tablet) or when the user has
+   * explicitly collapsed the sidebar via the brand toggle.
    *
    * @access protected
    * @since 4.0.0
@@ -112,50 +92,5 @@ export class DashboardLayout {
   protected readonly primaryIconOnly: Signal<boolean> = computed(
     (): boolean => !this.isDesktopSidebar() || this.sidebarService.primaryCollapsed(),
   );
-
-  /**
-   * Tracks the previous context-panel active state so the effect reacts
-   * only to open/close transitions, not to every change detection pass.
-   */
-  private contextPanelWasActive: boolean = false;
-
-  /**
-   * Primary sidebar collapsed state captured right before the context
-   * panel auto-collapsed it, restored when the context panel closes.
-   */
-  private primaryCollapsedBeforeContext: boolean = false;
-
-  //#endregion
-
-  //#region Constructor
-  /**
-   * Constructor
-   * @constructor
-   *
-   * @description
-   * Wires the primary sidebar to the context panel: opening the context
-   * navigation bar auto-collapses the primary sidebar to its icon-only
-   * form (the header toggle still lets the user re-open it), and closing
-   * the context panel restores the sidebar to its pre-context state.
-   *
-   * @access public
-   * @since 1.6.0
-   */
-  public constructor() {
-    effect((): void => {
-      const active: boolean = this.hasActiveContextPanel();
-      if (active === this.contextPanelWasActive) return;
-      this.contextPanelWasActive = active;
-
-      if (active) {
-        this.primaryCollapsedBeforeContext = untracked((): boolean =>
-          this.sidebarService.primaryCollapsed(),
-        );
-        this.sidebarService.setPrimaryCollapsed(true);
-      } else {
-        this.sidebarService.setPrimaryCollapsed(this.primaryCollapsedBeforeContext);
-      }
-    });
-  }
   //#endregion
 }

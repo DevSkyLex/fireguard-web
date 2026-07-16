@@ -1,26 +1,23 @@
 import { NgComponentOutlet } from '@angular/common';
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { ButtonModule } from 'primeng/button';
-import { DividerModule } from 'primeng/divider';
-import type { DividerPassThroughOptions } from 'primeng/types/divider';
 import {
   DashboardSidebarService,
   DashboardHeaderActionsService,
 } from '@layouts/dashboard-layout/services';
 import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
+import { DashboardLayoutSearch } from '../dashboard-layout-search/dashboard-layout-search.component';
 
 /**
  * Component DashboardLayoutHeader
  * @class DashboardLayoutHeader
  *
  * @description
- * Header component for dashboard layout. Contains the mobile sidebar
- * toggle button and other relevant information for the user.
+ * Header (topbar) of the dashboard shell: mobile sidebar toggle, breadcrumb,
+ * and topbar slot actions. Its horizontal padding grows with the viewport so
+ * the header content stays aligned with the centered max-width content
+ * column below it.
  *
- * Injects {@link DashboardSidebarService} to control sidebar visibility
- * without output chaining.
- *
- * @version 1.3.0
+ * @version 2.0.0
  *
  * @example
  * ```html
@@ -31,7 +28,7 @@ import { DashboardLayoutBreadcrumb } from '../dashboard-layout-breadcrumb/dashbo
  */
 @Component({
   selector: 'app-dashboard-layout-header',
-  imports: [ButtonModule, DividerModule, NgComponentOutlet, DashboardLayoutBreadcrumb],
+  imports: [NgComponentOutlet, DashboardLayoutBreadcrumb, DashboardLayoutSearch],
   templateUrl: './dashboard-layout-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -45,7 +42,7 @@ export class DashboardLayoutHeader {
    * Injected DashboardSidebarService instance for
    * controlling sidebar visibility.
    *
-   * @access private
+   * @access protected
    * @since 1.3.0
    *
    * @type {DashboardSidebarService}
@@ -68,23 +65,5 @@ export class DashboardLayoutHeader {
    */
   protected readonly headerActionsService: DashboardHeaderActionsService =
     inject<DashboardHeaderActionsService>(DashboardHeaderActionsService);
-
-  /**
-   * Property dividerPt
-   * @readonly
-   *
-   * @description
-   * PrimeNG Divider passthrough options used by the header action separator.
-   *
-   * @access protected
-   * @since 1.4.0
-   *
-   * @type {DividerPassThroughOptions}
-   */
-  protected readonly dividerPt: DividerPassThroughOptions = {
-    root: {
-      class: 'mx-1',
-    },
-  };
   //#endregion
 }

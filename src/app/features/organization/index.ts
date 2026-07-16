@@ -4,11 +4,7 @@ export { ORGANIZATION_PERMISSION, ORGANIZATION_PERMISSION_NAMES } from './models
 export type { OrganizationPermissionName } from './models';
 export { OrganizationPermissionService } from './access';
 export { provideOrganizationFeature } from './organization.feature';
-export {
-  withOrganizationContext,
-  withOrganizationNavigation,
-  withOrganizationSwitcher,
-} from './providers';
+export { withOrganizationNavigation, withOrganizationSwitcher } from './providers';
 export { organizationGuard, organizationPermissionGuard } from './http/guards';
 export type {
   OrganizationPermissionGuardMatch,
@@ -16,4 +12,3 @@ export type {
   OrganizationPermissionGuardRedirect,
 } from './http/guards';
 export { OrganizationSwitcher } from './ui/components/organization-switcher';
-export { OrganizationNavPanel } from './ui/components/organization-nav-panel';

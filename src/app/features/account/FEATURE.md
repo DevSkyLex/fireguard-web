@@ -71,7 +71,8 @@ These contracts are intended for shell consumers such as layouts and shared shel
 plus approved external workflows that need to bootstrap or clear the authenticated user profile.
 `accountPermissionGuard`/`ACCOUNT_PERMISSION`/`UserPermissionService` are the stable surface for
 gating **global** (non-organization-scoped) permissions such as `audit.read` outside this feature —
-see `features/organization`'s `audit` route and `OrganizationNavPanel` for the first consumer.
+see `features/organization`'s `audit` route and its sidebar "Audit log" navigation entry for the
+first consumers.
 
 ## Cross-Feature Dependencies
 

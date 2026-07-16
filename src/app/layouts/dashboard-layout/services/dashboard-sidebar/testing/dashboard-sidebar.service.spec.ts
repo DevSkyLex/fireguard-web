@@ -16,49 +16,6 @@ describe('DashboardSidebarService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should clamp width when setting it directly', () => {
-    service.setWidth(service.minWidth() - 50);
-    expect(service.width()).toBe(service.minWidth());
-
-    service.setWidth(service.maxWidth() + 50);
-    expect(service.width()).toBe(service.maxWidth());
-  });
-
-  it('should clamp width when adjusting it', () => {
-    service.setWidth(service.defaultWidth());
-
-    service.adjustWidth(500);
-    expect(service.width()).toBe(service.maxWidth());
-
-    service.adjustWidth(-500);
-    expect(service.width()).toBe(service.minWidth());
-  });
-
-  it('should allow updating default, min and max width signals', () => {
-    service.minWidth.set(240);
-    service.maxWidth.set(420);
-    service.defaultWidth.set(360);
-
-    expect(service.minWidth()).toBe(240);
-    expect(service.maxWidth()).toBe(420);
-    expect(service.defaultWidth()).toBe(360);
-
-    service.setWidth(200);
-    expect(service.width()).toBe(240);
-
-    service.setWidth(500);
-    expect(service.width()).toBe(420);
-  });
-
-  it('should keep width bounded when constraints are updated', () => {
-    service.setWidth(400);
-    service.maxWidth.set(320);
-    expect(service.width()).toBe(320);
-
-    service.minWidth.set(340);
-    expect(service.width()).toBe(340);
-  });
-
   it('should open, close and toggle drawer visibility', () => {
     expect(service.visible()).toBe(false);
 
@@ -80,45 +37,21 @@ describe('DashboardSidebarService', () => {
     expect(service.visible()).toBe(false);
   });
 
-  describe('collapse / expand', () => {
-    it('should not be collapsed initially', () => {
-      expect(service.isCollapsed()).toBe(false);
-      expect(service.width()).toBe(service.defaultWidth());
-    });
+  it('should toggle the primary sidebar collapsed state', () => {
+    expect(service.primaryCollapsed()).toBe(false);
 
-    it('should collapse to zero width', () => {
-      service.collapse();
+    service.togglePrimaryCollapsed();
+    expect(service.primaryCollapsed()).toBe(true);
 
-      expect(service.isCollapsed()).toBe(true);
-      expect(service.width()).toBe(0);
-    });
+    service.togglePrimaryCollapsed();
+    expect(service.primaryCollapsed()).toBe(false);
+  });
 
-    it('should expand and restore the previous width', () => {
-      service.setWidth(350);
-      service.collapse();
-      service.expand();
+  it('should set the primary sidebar collapsed state explicitly', () => {
+    service.setPrimaryCollapsed(true);
+    expect(service.primaryCollapsed()).toBe(true);
 
-      expect(service.isCollapsed()).toBe(false);
-      expect(service.width()).toBe(350);
-    });
-
-    it('should clear collapsed state when setWidth is called', () => {
-      service.collapse();
-      expect(service.isCollapsed()).toBe(true);
-
-      service.setWidth(300);
-
-      expect(service.isCollapsed()).toBe(false);
-      expect(service.width()).toBe(300);
-    });
-
-    it('should expose COLLAPSE_THRESHOLD as a public constant', () => {
-      expect(DashboardSidebarService.COLLAPSE_THRESHOLD).toBeGreaterThan(0);
-      expect(DashboardSidebarService.COLLAPSE_THRESHOLD).toBeLessThan(
-        DashboardSidebarService[
-          'INITIAL_MIN_WIDTH' as keyof typeof DashboardSidebarService
-        ] as number,
-      );
-    });
+    service.setPrimaryCollapsed(false);
+    expect(service.primaryCollapsed()).toBe(false);
   });
 });

@@ -1,1 +1,0 @@
-export { withMainNavigation } from './navigation';

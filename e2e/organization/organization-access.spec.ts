@@ -30,7 +30,7 @@ test.describe('Organization access control', () => {
     await expect(overviewPage.root).toBeVisible();
   });
 
-  test('redirects to the organization list when the member access payload fails to resolve', async ({
+  test('redirects to the forbidden page when the only organization is inaccessible', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -45,7 +45,11 @@ test.describe('Organization access control', () => {
 
     await page.goto(`/organizations/${organization.id}`);
 
-    await expect(page).toHaveURL('/organizations');
+    // The access guard fails and forwards to `/organizations?excluded={id}`
+    // (no last-organization cookie exists in this fresh context), where
+    // `organizationGuard` lists a single organization that is precisely the
+    // excluded one — so the loop breaker lands on the forbidden page.
+    await expect(page).toHaveURL(/\/error\/403$/);
   });
 
   const permissionGatedPages: ReadonlyArray<{ path: string; rootSelector: string }> = [
@@ -67,7 +71,7 @@ test.describe('Organization access control', () => {
     });
   }
 
-  test('redirects to the organization list when a permission is missing', async ({ page }) => {
+  test('redirects to the organization overview when a permission is missing', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession({ organizations: [organization] });
     await api.mockOrganizationDetail(organization);
@@ -77,6 +81,9 @@ test.describe('Organization access control', () => {
 
     await page.goto(`/organizations/${organization.id}/settings`);
 
-    await expect(page).toHaveURL('/organizations');
+    // The permission guard defaults its denial redirect to the organization
+    // overview, and the landing guard allows it because the access payload
+    // grants `organization.dashboard.read`.
+    await expect(page).toHaveURL(`/organizations/${organization.id}`);
   });
 });

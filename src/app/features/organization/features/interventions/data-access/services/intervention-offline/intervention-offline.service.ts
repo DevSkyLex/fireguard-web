@@ -111,6 +111,21 @@ export class InterventionOfflineService {
    * @type {Signal<boolean>}
    */
   public readonly hasPendingChanges: Signal<boolean> = this.outbox.hasPendingChanges;
+
+  /**
+   * Property pendingCount
+   * @readonly
+   *
+   * @description
+   * Number of self-syncable (`pending`) operations remaining in the outbox.
+   * Powers the shell sync-status chip badge.
+   *
+   * @access public
+   * @since 2.1.0
+   *
+   * @type {Signal<number>}
+   */
+  public readonly pendingCount: Signal<number> = this.outbox.pendingCount;
   //#endregion
 
   //#region Workspace

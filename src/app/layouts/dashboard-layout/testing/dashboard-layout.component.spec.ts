@@ -1,132 +1,26 @@
-import { Component, signal } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import {
-  ORGANIZATION_CONTEXT_PORT,
-  ORGANIZATION_MEMBER_ACCESS_PORT,
-} from '@features/organization/ports';
-import { ASIDE_SLOT } from '@layouts/dashboard-layout/slots/aside';
-import { DashboardLayoutHeader } from '../components';
+import { SIDEBAR_SLOT } from '@layouts/dashboard-layout/slots/sidebar';
+import { DashboardLayoutHeader, DashboardLayoutSidebar } from '../components';
 import { DashboardLayout } from '../dashboard-layout.component';
 import { DashboardSidebarService } from '../services';
 
-const MOCK_ORG = {
-  id: 'org-1',
-  name: 'Acme Corp',
-  slug: 'acme',
-  isActive: true,
-  status: 'active',
-  ownerUserId: 'u1',
-  createdByUserId: 'u1',
-  createdAt: '2025-01-01',
-  updatedAt: '2025-01-01',
-};
-
-@Component({ template: '' })
-class ContributionStub {}
-
-type PointerEventOptions = {
-  readonly pointerId?: number;
-  readonly clientX?: number;
-  readonly pointerType?: string;
-  readonly button?: number;
-};
-
-const createPointerEvent = (type: string, options: PointerEventOptions = {}): Event => {
-  const event = new Event(type, { bubbles: true, cancelable: true });
-  Object.defineProperties(event, {
-    pointerId: { value: options.pointerId ?? 1 },
-    clientX: { value: options.clientX ?? 0 },
-    pointerType: { value: options.pointerType ?? 'mouse' },
-    button: { value: options.button ?? 0 },
-  });
-
-  return event;
-};
-
-const dispatchPointerEvent = (
-  target: EventTarget,
-  type: string,
-  options: PointerEventOptions = {},
-): Event => {
-  const event = createPointerEvent(type, options);
-  target.dispatchEvent(event);
-  return event;
-};
-
-const dispatchKeydown = (target: EventTarget, key: string, shiftKey: boolean = false): boolean => {
-  const event = new KeyboardEvent('keydown', {
-    key,
-    shiftKey,
-    bubbles: true,
-    cancelable: true,
-  });
-
-  return target.dispatchEvent(event);
-};
-
-const getResizeHandle = (fixture: ComponentFixture<DashboardLayout>): HTMLButtonElement => {
-  const debugElement = fixture.debugElement.query(By.css('button[aria-label="Resize sidebar"]'));
-  return debugElement.nativeElement as HTMLButtonElement;
-};
-
-const getResizeContainer = (fixture: ComponentFixture<DashboardLayout>): HTMLElement => {
-  // The resize handle now sits beside the aside inside a shared wrapper.
-  const handle = getResizeHandle(fixture);
-  return handle.parentElement as HTMLElement;
-};
-
-const mockPointerCapture = (handle: HTMLButtonElement): ReturnType<typeof vi.fn> => {
-  const spy = vi.fn();
-  Object.defineProperty(handle, 'setPointerCapture', {
-    configurable: true,
-    value: spy,
-  });
-
-  return spy;
-};
-
-const createDomRect = (left: number): DOMRect => new DOMRect(left, 0, 0, 0);
+@Component({ template: '<div data-testid="sidebar-widget-stub"></div>' })
+class SidebarWidgetStub {}
 
 describe('DashboardLayout', () => {
-  const mockOrganizationStore = {
-    selectedOrganization: signal<typeof MOCK_ORG | null>(MOCK_ORG),
-    organizations: signal([MOCK_ORG]),
-    isLoadingOrganizations: signal(false),
-    isLoadingOrganization: signal(false),
-    setOrganization: vi.fn(),
-    loadOrganizations: vi.fn(),
-  };
-  const mockOrganizationMemberAccess = {
-    profile: signal(null),
-    roles: signal<ReadonlyArray<string>>([]),
-    permissions: signal<ReadonlyArray<string>>([]),
-    isLoadingAccess: signal(false),
-    accessError: signal(null),
-    reload: vi.fn(),
-    clear: vi.fn(),
-  };
-
-  const contributionIsActive = signal(true);
-  const mockContribution = {
-    id: 'test',
-    priority: 10,
-    component: ContributionStub,
-    active: contributionIsActive,
-  };
-
   beforeEach(() => {
-    mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
-    contributionIsActive.set(true);
-
     TestBed.configureTestingModule({
       imports: [DashboardLayout],
       providers: [
         provideRouter([]),
-        { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
-        { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
-        { provide: ASIDE_SLOT, useValue: mockContribution, multi: true },
+        {
+          provide: SIDEBAR_SLOT,
+          useValue: { id: 'stub', order: 10, region: 'lead', component: SidebarWidgetStub },
+          multi: true,
+        },
       ],
     }).overrideComponent(DashboardLayoutHeader, {
       set: {
@@ -141,214 +35,48 @@ describe('DashboardLayout', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render the secondary sidebar when a contribution is active', () => {
-    contributionIsActive.set(true);
-
+  it('should render a single primary sidebar', () => {
     const fixture = TestBed.createComponent(DashboardLayout);
     fixture.detectChanges();
 
-    expect(fixture.debugElement.query(By.css('app-dashboard-layout-context-panel'))).toBeTruthy();
-  });
+    const sidebars = fixture.debugElement.queryAll(By.directive(DashboardLayoutSidebar));
+    const primary = sidebars.filter((sidebar) => sidebar.componentInstance.variant() === 'primary');
 
-  it('should not render the secondary sidebar when no contribution is active', () => {
-    contributionIsActive.set(false);
-
-    const fixture = TestBed.createComponent(DashboardLayout);
-    fixture.detectChanges();
-
+    expect(primary).toHaveLength(1);
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-context-panel'))).toBeFalsy();
   });
 
-  it('should collapse the primary sidebar when the context panel opens', () => {
-    contributionIsActive.set(false);
-
+  it('should render the header and the content plane', () => {
     const fixture = TestBed.createComponent(DashboardLayout);
-    const sidebarService = fixture.debugElement.injector.get(DashboardSidebarService);
-    fixture.detectChanges();
-    expect(sidebarService.primaryCollapsed()).toBe(false);
-
-    contributionIsActive.set(true);
     fixture.detectChanges();
 
-    expect(sidebarService.primaryCollapsed()).toBe(true);
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="dashboard-layout-header-stub"]')),
+    ).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('app-dashboard-layout-content'))).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('router-outlet'))).toBeTruthy();
   });
 
-  it('should let the user re-open the primary sidebar while the context panel stays open', () => {
-    contributionIsActive.set(true);
-
+  it('should render the icon-only rail width below the desktop breakpoint', () => {
     const fixture = TestBed.createComponent(DashboardLayout);
-    const sidebarService = fixture.debugElement.injector.get(DashboardSidebarService);
-    fixture.detectChanges();
-    expect(sidebarService.primaryCollapsed()).toBe(true);
-
-    sidebarService.setPrimaryCollapsed(false);
     fixture.detectChanges();
 
-    expect(sidebarService.primaryCollapsed()).toBe(false);
+    // jsdom reports no matching media query, so the layout stays in rail mode.
+    const aside = fixture.debugElement.query(By.css('aside')).nativeElement as HTMLElement;
+    expect(aside.style.width).toBe('64px');
   });
 
-  it('should restore the primary sidebar state when the context panel closes', () => {
-    contributionIsActive.set(false);
-
+  it('should open the mobile drawer through the sidebar service', () => {
     const fixture = TestBed.createComponent(DashboardLayout);
     const sidebarService = fixture.debugElement.injector.get(DashboardSidebarService);
     fixture.detectChanges();
 
-    contributionIsActive.set(true);
-    fixture.detectChanges();
-    expect(sidebarService.primaryCollapsed()).toBe(true);
+    expect(sidebarService.visible()).toBe(false);
 
-    contributionIsActive.set(false);
+    sidebarService.open();
     fixture.detectChanges();
 
-    expect(sidebarService.primaryCollapsed()).toBe(false);
-  });
-
-  it('should render an accessible desktop resize handle', () => {
-    const fixture = TestBed.createComponent(DashboardLayout);
-    fixture.detectChanges();
-
-    const handle = getResizeHandle(fixture);
-    expect(handle.getAttribute('role')).toBe('separator');
-    expect(handle.getAttribute('aria-orientation')).toBe('vertical');
-  });
-
-  it('should resize sidebar from pointer move and cleanup on pointerup', () => {
-    const fixture = TestBed.createComponent(DashboardLayout);
-    const sidebarService = fixture.debugElement.injector.get(DashboardSidebarService);
-    const setWidthSpy = vi.spyOn(sidebarService, 'setWidth');
-
-    fixture.detectChanges();
-    const handle = getResizeHandle(fixture);
-    const resizeContainer = getResizeContainer(fixture);
-    const captureSpy = mockPointerCapture(handle);
-    vi.spyOn(resizeContainer, 'getBoundingClientRect').mockReturnValue(createDomRect(100));
-
-    dispatchPointerEvent(handle, 'pointerdown', { pointerId: 7, pointerType: 'mouse', button: 0 });
-    expect(captureSpy).toHaveBeenCalledWith(7);
-    expect(document.body.style.cursor).toBe('col-resize');
-    expect(document.body.style.userSelect).toBe('none');
-
-    dispatchPointerEvent(document, 'pointermove', { pointerId: 7, clientX: 352 });
-    expect(setWidthSpy).toHaveBeenCalledWith(252);
-
-    dispatchPointerEvent(document, 'pointerup', { pointerId: 7 });
-    expect(document.body.style.cursor).toBe('');
-    expect(document.body.style.userSelect).toBe('');
-  });
-
-  it('should recalculate sidebar left offset on each pointer move', () => {
-    const fixture = TestBed.createComponent(DashboardLayout);
-    const sidebarService = fixture.debugElement.injector.get(DashboardSidebarService);
-    const setWidthSpy = vi.spyOn(sidebarService, 'setWidth');
-
-    fixture.detectChanges();
-    const handle = getResizeHandle(fixture);
-    const resizeContainer = getResizeContainer(fixture);
-    mockPointerCapture(handle);
-    vi.spyOn(resizeContainer, 'getBoundingClientRect')
-      .mockReturnValueOnce(createDomRect(100))
-      .mockReturnValueOnce(createDomRect(140));
-
-    dispatchPointerEvent(handle, 'pointerdown', { pointerId: 21, pointerType: 'mouse', button: 0 });
-    dispatchPointerEvent(document, 'pointermove', { pointerId: 21, clientX: 360 });
-    dispatchPointerEvent(document, 'pointermove', { pointerId: 21, clientX: 360 });
-
-    expect(setWidthSpy).toHaveBeenNthCalledWith(1, 260);
-    expect(setWidthSpy).toHaveBeenNthCalledWith(2, 220);
-  });
-
-  it('should resize sidebar with keyboard arrows and home/end', () => {
-    const fixture = TestBed.createComponent(DashboardLayout);
-    const sidebarService = fixture.debugElement.injector.get(DashboardSidebarService);
-
-    fixture.detectChanges();
-    const handle = getResizeHandle(fixture);
-    sidebarService.setWidth(320);
-
-    const leftHandled = dispatchKeydown(handle, 'ArrowLeft');
-    expect(leftHandled).toBe(false);
-    expect(sidebarService.width()).toBe(304);
-
-    const rightHandled = dispatchKeydown(handle, 'ArrowRight', true);
-    expect(rightHandled).toBe(false);
-    expect(sidebarService.width()).toBe(336);
-
-    const homeHandled = dispatchKeydown(handle, 'Home');
-    expect(homeHandled).toBe(false);
-    expect(sidebarService.width()).toBe(sidebarService.minWidth());
-
-    const endHandled = dispatchKeydown(handle, 'End');
-    expect(endHandled).toBe(false);
-    expect(sidebarService.width()).toBe(sidebarService.maxWidth());
-  });
-
-  it('should cleanup on pointercancel', () => {
-    const fixture = TestBed.createComponent(DashboardLayout);
-    const sidebarService = fixture.debugElement.injector.get(DashboardSidebarService);
-    const setWidthSpy = vi.spyOn(sidebarService, 'setWidth');
-
-    fixture.detectChanges();
-    const handle = getResizeHandle(fixture);
-    mockPointerCapture(handle);
-
-    dispatchPointerEvent(handle, 'pointerdown', { pointerId: 11, pointerType: 'mouse', button: 0 });
-    dispatchPointerEvent(document, 'pointercancel', { pointerId: 11 });
-    dispatchPointerEvent(document, 'pointermove', { pointerId: 11, clientX: 450 });
-
-    expect(setWidthSpy).not.toHaveBeenCalled();
-    expect(document.body.style.cursor).toBe('');
-    expect(document.body.style.userSelect).toBe('');
-  });
-
-  it('should cleanup on window blur', () => {
-    const fixture = TestBed.createComponent(DashboardLayout);
-    const sidebarService = fixture.debugElement.injector.get(DashboardSidebarService);
-    const setWidthSpy = vi.spyOn(sidebarService, 'setWidth');
-
-    fixture.detectChanges();
-    const handle = getResizeHandle(fixture);
-    mockPointerCapture(handle);
-
-    dispatchPointerEvent(handle, 'pointerdown', { pointerId: 13, pointerType: 'mouse', button: 0 });
-    window.dispatchEvent(new Event('blur'));
-    dispatchPointerEvent(document, 'pointermove', { pointerId: 13, clientX: 450 });
-
-    expect(setWidthSpy).not.toHaveBeenCalled();
-    expect(document.body.style.cursor).toBe('');
-    expect(document.body.style.userSelect).toBe('');
-  });
-
-  it('should ignore non-resize keys', () => {
-    const fixture = TestBed.createComponent(DashboardLayout);
-    const sidebarService = fixture.debugElement.injector.get(DashboardSidebarService);
-    const adjustWidthSpy = vi.spyOn(sidebarService, 'adjustWidth');
-    const setWidthSpy = vi.spyOn(sidebarService, 'setWidth');
-
-    fixture.detectChanges();
-    const handle = getResizeHandle(fixture);
-
-    const handled = dispatchKeydown(handle, 'Enter');
-    expect(handled).toBe(true);
-    expect(adjustWidthSpy).not.toHaveBeenCalled();
-    expect(setWidthSpy).not.toHaveBeenCalled();
-  });
-
-  it('should stop resizing listeners when component is destroyed', () => {
-    const fixture = TestBed.createComponent(DashboardLayout);
-    const sidebarService = fixture.debugElement.injector.get(DashboardSidebarService);
-    const setWidthSpy = vi.spyOn(sidebarService, 'setWidth');
-
-    fixture.detectChanges();
-    const handle = getResizeHandle(fixture);
-    mockPointerCapture(handle);
-
-    dispatchPointerEvent(handle, 'pointerdown', { pointerId: 9, pointerType: 'mouse', button: 0 });
-    fixture.destroy();
-    dispatchPointerEvent(document, 'pointermove', { pointerId: 9, clientX: 400 });
-
-    expect(setWidthSpy).not.toHaveBeenCalled();
-    expect(document.body.style.cursor).toBe('');
-    expect(document.body.style.userSelect).toBe('');
+    expect(sidebarService.visible()).toBe(true);
+    expect(fixture.debugElement.query(By.css('p-drawer'))).toBeTruthy();
   });
 });

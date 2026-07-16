@@ -1,18 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   inject,
-  viewChild,
-  type Signal,
+  signal,
+  type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
-import type { MenuItem } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
-import { DividerModule } from 'primeng/divider';
-import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
   NOTIFICATION_CENTER_PORT,
@@ -27,15 +23,16 @@ import { AUTH_LOGOUT_PORT, authStoreEvents, type AuthLogoutPort } from '@feature
  * @class AccountUserMenu
  *
  * @description
- * Compact avatar button rendered in the dashboard header (far-right slot)
- * that opens a PrimeNG Menu popup with the account sections (Profile,
- * Security, Notifications) and a Logout action. The Notifications entry shows
- * the unread count as a badge.
+ * Account row rendered in the dashboard sidebar footer (avatar, display
+ * name, email) that expands an inline panel upward inside the sidebar with
+ * the account sections (Profile, Security, Notifications) and a Logout
+ * action. The panel animates open via a CSS grid-rows transition and the
+ * Notifications entry shows the unread count as a badge.
  *
  * Subscribes to `authStoreEvents.logoutSucceeded` and
  * `authStoreEvents.logoutFailed` to redirect to `/auth/login` after logout.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @example
  * ```html
@@ -46,25 +43,55 @@ import { AUTH_LOGOUT_PORT, authStoreEvents, type AuthLogoutPort } from '@feature
  */
 @Component({
   selector: 'app-account-user-menu',
-  imports: [AvatarModule, DividerModule, MenuModule, SkeletonModule],
+  imports: [AvatarModule, RouterLink, SkeletonModule],
   templateUrl: './account-user-menu.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountUserMenu {
   //#region Properties
   /**
-   * Property menu
+   * Property nextInstanceId
+   * @static
+   *
+   * @description
+   * Monotonic counter making each rendered instance's panel id unique —
+   * the sidebar (and its mobile drawer twin) can coexist in the DOM.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {number}
+   */
+  private static nextInstanceId: number = 0;
+
+  /**
+   * Property panelId
    * @readonly
    *
    * @description
-   * Reference to the PrimeNG popup Menu used by the avatar trigger.
+   * Unique id of the expandable panel, referenced by the trigger's
+   * `aria-controls`.
    *
-   * @access private
-   * @since 1.0.0
+   * @access protected
+   * @since 2.0.0
    *
-   * @type {Signal<Menu>}
+   * @type {string}
    */
-  private readonly menu: Signal<Menu> = viewChild.required<Menu>('actionMenu');
+  protected readonly panelId: string = `account-user-menu-panel-${AccountUserMenu.nextInstanceId++}`;
+
+  /**
+   * Property expanded
+   * @readonly
+   *
+   * @description
+   * Whether the inline account panel is expanded above the trigger row.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly expanded: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property userIdentityPort
@@ -103,14 +130,14 @@ export class AccountUserMenu {
    *
    * @description
    * Port exposing the authenticated user's notification center state, used to
-   * surface the unread count as a badge on the Notifications menu entry.
+   * surface the unread count as a badge on the Notifications entry.
    *
-   * @access private
+   * @access protected
    * @since 1.0.0
    *
    * @type {NotificationCenterPort}
    */
-  private readonly notificationCenter: NotificationCenterPort =
+  protected readonly notificationCenter: NotificationCenterPort =
     inject<NotificationCenterPort>(NOTIFICATION_CENTER_PORT);
 
   /**
@@ -140,60 +167,6 @@ export class AccountUserMenu {
    * @type {Events}
    */
   private readonly events: Events = inject<Events>(Events);
-
-  /**
-   * Property menuItems
-   * @readonly
-   *
-   * @description
-   * Reactive list of PrimeNG `MenuItem` entries shown in the popup.
-   * The Logout label and disabled state react to `authStore.isLoggingOut()`.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<MenuItem[]>}
-   */
-  protected readonly menuItems: Signal<MenuItem[]> = computed<MenuItem[]>((): MenuItem[] => {
-    const unreadBadge: string | undefined = this.notificationCenter.hasUnread()
-      ? String(this.notificationCenter.unreadCount())
-      : undefined;
-
-    return [
-      {
-        label: $localize`:@@account.menu.profile:Profile`,
-        icon: 'pi pi-user',
-        routerLink: '/account',
-        queryParams: { tab: 'profile' },
-        data: { testid: 'header-user-menu-profile-link' },
-      },
-      {
-        label: $localize`:@@account.menu.security:Security`,
-        icon: 'pi pi-shield',
-        routerLink: '/account',
-        queryParams: { tab: 'security' },
-        data: { testid: 'header-user-menu-security' },
-      },
-      {
-        label: $localize`:@@common.notifications:Notifications`,
-        icon: 'pi pi-bell',
-        routerLink: '/account',
-        queryParams: { tab: 'notifications' },
-        badge: unreadBadge,
-        data: { testid: 'header-user-menu-notifications' },
-      },
-      { separator: true },
-      {
-        label: this.authLogoutPort.isLoggingOut()
-          ? $localize`:@@auth.userProfile.loggingOut:Logging out...`
-          : $localize`:@@auth.userProfile.logout:Logout`,
-        icon: 'pi pi-sign-out',
-        disabled: this.authLogoutPort.isLoggingOut(),
-        command: (): void => this.onLogout(),
-        data: { testid: 'header-user-menu-logout' },
-      },
-    ];
-  });
   //#endregion
 
   //#region Constructor
@@ -226,20 +199,35 @@ export class AccountUserMenu {
 
   //#region Methods
   /**
-   * Method toggleMenu
-   * @method toggleMenu
+   * Method togglePanel
+   * @method togglePanel
    *
    * @description
-   * Delegates the click event to the PrimeNG Menu to toggle the popup.
+   * Toggles the inline account panel open or closed.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @param {MouseEvent} event - The click event from the avatar button.
-   * @returns {void}
+   * @returns {void} - This method does not return a value.
    */
-  protected toggleMenu(event: MouseEvent): void {
-    this.menu().toggle(event);
+  protected togglePanel(): void {
+    this.expanded.update((expanded: boolean) => !expanded);
+  }
+
+  /**
+   * Method closePanel
+   * @method closePanel
+   *
+   * @description
+   * Collapses the inline account panel, called after activating an entry.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @returns {void} - This method does not return a value.
+   */
+  protected closePanel(): void {
+    this.expanded.set(false);
   }
 
   /**

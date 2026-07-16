@@ -41,16 +41,16 @@ describe('OrganizationSwitcherTrigger', () => {
     fixture.componentRef.setInput('organization', MOCK_ORG);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('p-button')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('button')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('p-skeleton')).toBeNull();
   });
 
-  it('should render the button when isLoading is false', () => {
+  it('should render the trigger button when isLoading is false', () => {
     const fixture = TestBed.createComponent(OrganizationSwitcherTrigger);
     fixture.componentRef.setInput('isLoading', false);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('p-button')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('button')).not.toBeNull();
   });
 
   it('should display the organization name when an org is provided', () => {
@@ -102,12 +102,13 @@ describe('OrganizationSwitcherTrigger', () => {
     expect(fixture.nativeElement.querySelector('.pi-spinner')).not.toBeNull();
   });
 
-  it('should show the chevron icon when isSwitching is false', () => {
+  it('should show the stacked chevron caret when isSwitching is false', () => {
     const fixture = TestBed.createComponent(OrganizationSwitcherTrigger);
     fixture.componentRef.setInput('organization', MOCK_ORG);
     fixture.componentRef.setInput('isSwitching', false);
     fixture.detectChanges();
 
+    expect(fixture.nativeElement.querySelector('.pi-chevron-up')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.pi-chevron-down')).not.toBeNull();
   });
 });

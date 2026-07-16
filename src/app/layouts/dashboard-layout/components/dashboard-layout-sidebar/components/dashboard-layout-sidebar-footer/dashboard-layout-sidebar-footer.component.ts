@@ -1,19 +1,40 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { NgComponentOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
+import type { SidebarContribution } from '@layouts/dashboard-layout/slots/sidebar';
 
 /**
  * Component DashboardLayoutSidebarFooter
  * @class DashboardLayoutSidebarFooter
  *
  * @description
- * Sidebar footer containing the copyright line.
+ * Sidebar footer rendering the shell widgets contributed to the sidebar
+ * `footer` region (account menu).
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-dashboard-layout-sidebar-footer',
+  imports: [NgComponentOutlet],
   templateUrl: './dashboard-layout-sidebar-footer.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DashboardLayoutSidebarFooter {}
+export class DashboardLayoutSidebarFooter {
+  /**
+   * Property contributions
+   * @readonly
+   *
+   * @description
+   * Footer-region sidebar contributions to render, already sorted by the
+   * parent sidebar.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<SidebarContribution[]>}
+   */
+  public readonly contributions: InputSignal<SidebarContribution[]> = input<SidebarContribution[]>(
+    [],
+  );
+}

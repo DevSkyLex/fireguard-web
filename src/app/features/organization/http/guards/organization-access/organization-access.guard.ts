@@ -7,6 +7,8 @@ import {
   Router,
 } from '@angular/router';
 import { map } from 'rxjs';
+import { CookieService } from '@core/cookie';
+import { LAST_ORGANIZATION_COOKIE_NAME } from '@features/organization/constants';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 
 /**
@@ -26,8 +28,11 @@ const ROOT_REDIRECT: ReadonlyArray<string> = ['/'];
  * @const ORGANIZATIONS_REDIRECT
  *
  * @description
- * Absolute route segments to redirect to when the
- * organization access payload fails to resolve in the store.
+ * Absolute route segments to redirect to when the organization access payload
+ * fails to resolve in the store. The bare `/organizations` route forwards to
+ * the user's default workspace via `organizationGuard`; the failing
+ * organization is passed as the `excluded` query parameter so the guard never
+ * picks it again (redirect-loop breaker).
  *
  * @type ReadonlyArray<string>
  */
@@ -74,6 +79,18 @@ export const organizationAccessGuard: CanActivateFn = (
   const organizationMemberAccessStore: OrganizationMemberAccessStore =
     inject<OrganizationMemberAccessStore>(OrganizationMemberAccessStore);
 
+  /**
+   * Constant cookieService
+   * @const cookieService
+   *
+   * @description
+   * Cookie service used to forget a persisted last-organization preference
+   * that points at an organization the user can no longer access.
+   *
+   * @type {CookieService}
+   */
+  const cookieService: CookieService = inject<CookieService>(CookieService);
+
   // Extract the organization ID from the route parameters
   const organizationId: string | null = route.paramMap.get('organizationId');
 
@@ -81,12 +98,18 @@ export const organizationAccessGuard: CanActivateFn = (
   if (!organizationId) return router.createUrlTree([...ROOT_REDIRECT]);
 
   // Ensure the organization access payload is resolved in the store and determine access
-  return organizationMemberAccessStore
-    .ensureAccessResolved(organizationId)
-    .pipe(
-      map(
-        (isResolved: boolean): GuardResult =>
-          isResolved ? true : router.createUrlTree([...ORGANIZATIONS_REDIRECT]),
-      ),
-    );
+  return organizationMemberAccessStore.ensureAccessResolved(organizationId).pipe(
+    map((isResolved: boolean): GuardResult => {
+      if (isResolved) return true;
+
+      // Stale preference pointing at the failing organization: forget it
+      if (cookieService.getCookie<string>(LAST_ORGANIZATION_COOKIE_NAME) === organizationId) {
+        cookieService.deleteCookie(LAST_ORGANIZATION_COOKIE_NAME);
+      }
+
+      return router.createUrlTree([...ORGANIZATIONS_REDIRECT], {
+        queryParams: { excluded: organizationId },
+      });
+    }),
+  );
 };

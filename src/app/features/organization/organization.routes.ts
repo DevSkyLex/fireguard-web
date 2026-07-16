@@ -2,6 +2,7 @@ import type { Routes } from '@angular/router';
 import { ACCOUNT_PERMISSION, accountPermissionGuard } from '@features/account';
 import {
   organizationAccessGuard,
+  organizationGuard,
   organizationLandingGuard,
   organizationPermissionGuard,
 } from './http/guards';
@@ -14,7 +15,9 @@ import { ORGANIZATION_PERMISSION } from './models';
  * @description
  * Routes for the organization feature module.
  *
- * - `/organizations` — list of user organizations
+ * - `/organizations` — redirect-only entry point: `organizationGuard` forwards
+ *   to the user's default organization workspace (last used, else first
+ *   accessible, else onboarding)
  * - `/organizations/:organizationId` — organization-scoped pages
  *
  * @since 1.0.0
@@ -81,7 +84,6 @@ export const ORGANIZATION_ROUTES: Routes = [
               ORGANIZATION_PERMISSION.MEMBERS_MANAGE,
             ],
             match: 'any',
-            redirectTo: ['/organizations'],
           }),
         ],
         loadComponent: () =>
@@ -100,7 +102,6 @@ export const ORGANIZATION_ROUTES: Routes = [
           organizationPermissionGuard({
             permissions: [ORGANIZATION_PERMISSION.ROLES_READ, ORGANIZATION_PERMISSION.ROLES_MANAGE],
             match: 'any',
-            redirectTo: ['/organizations'],
           }),
         ],
         loadComponent: () =>
@@ -124,7 +125,6 @@ export const ORGANIZATION_ROUTES: Routes = [
         canActivate: [
           accountPermissionGuard({
             permissions: [ACCOUNT_PERMISSION.AUDIT_READ],
-            redirectTo: ['/organizations'],
           }),
         ],
         loadComponent: () =>
@@ -142,7 +142,6 @@ export const ORGANIZATION_ROUTES: Routes = [
         canActivate: [
           organizationPermissionGuard({
             permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
-            redirectTo: ['/organizations'],
           }),
         ],
         loadComponent: () =>
@@ -171,16 +170,16 @@ export const ORGANIZATION_ROUTES: Routes = [
     ],
   },
   {
+    /**
+     * Redirect-only default-organization entry point.
+     *
+     * `organizationGuard` always returns a UrlTree (last-used organization,
+     * first accessible organization, or onboarding), so this route never
+     * activates and needs no component.
+     */
     path: '',
     pathMatch: 'full',
-    loadComponent: () =>
-      import('./ui/pages/organization-list/organization-list.component').then(
-        (m) => m.OrganizationListPage,
-      ),
-    title: $localize`:@@route.organizations:Organizations`,
-    data: {
-      breadcrumb: false,
-      preload: true,
-    },
+    canActivate: [organizationGuard],
+    children: [],
   },
 ];

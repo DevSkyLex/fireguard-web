@@ -1,12 +1,22 @@
 <div
   class="flex h-full w-full flex-col border-r border-surface-200 bg-surface-0 text-surface-950 transition-colors dark:border-surface-800 dark:bg-surface-950 dark:text-surface-50"
 >
+  <!-- Brand row -->
   <section class="shrink-0">
     <app-dashboard-layout-sidebar-header
-      [iconOnly]="variant() === 'primary' ? iconOnly() : false"
+      [iconOnly]="isIconOnly()"
       [collapsible]="variant() === 'primary' ? collapsible() : false"
     />
   </section>
+
+  <!-- Lead shell widgets (organization switcher) -->
+  @if (!isIconOnly() && leadContributions.length > 0) {
+    <section class="flex shrink-0 flex-col gap-2 px-3 pt-3 pb-1">
+      @for (contribution of leadContributions; track contribution.id) {
+        <ng-container *ngComponentOutlet="contribution.component" />
+      }
+    </section>
+  }
 
   <!-- Sidebar navigation -->
   <section class="min-h-0 flex-1 overflow-y-auto">
@@ -20,8 +30,8 @@
     }
   </section>
 
-  <!-- Sidebar footer: copyright only (expanded mode only) -->
-  @if (!(variant() === 'primary' && iconOnly())) {
-    <app-dashboard-layout-sidebar-footer />
+  <!-- Footer shell widgets (account menu) -->
+  @if (!isIconOnly() && footerContributions.length > 0) {
+    <app-dashboard-layout-sidebar-footer [contributions]="footerContributions" />
   }
 </div>

@@ -6,7 +6,7 @@ Owns organization context and organization-scoped business workflows.
 
 This feature is responsible for:
 
-- organization list and active organization context,
+- active organization context (default-workspace resolution and the persisted last-organization preference),
 - organization member, invitation, role, settings (general & branding), and audit data,
 - organization subscription plan selection and plan-driven resource quotas (usage meters),
 - organization billing (Stripe-hosted Checkout / customer Portal and invoice history),
@@ -26,7 +26,12 @@ This feature does not own generic shell composition or account-level user identi
 
 ## Routes
 
-- `/organizations`
+- `/organizations` — redirect-only: `organizationGuard` forwards to the default
+  workspace (the last organization persisted in the `last-organization` cookie
+  when still accessible, else the first accessible organization, else
+  `/onboarding`). An `excluded` query parameter names an organization the guard
+  must not pick again (redirect-loop breaker set by failing guards). There is
+  no organization list page; switching happens through the sidebar switcher.
 - `/organizations/:organizationId`
 - `/organizations/:organizationId/facilities`
 - `/organizations/:organizationId/equipments`
@@ -61,7 +66,7 @@ Primary stores:
 - `OrganizationStore`
 - `OrganizationRoleListStore`
 - `OrganizationPlanStore` (scoped to the `OrganizationPlanSelector` in the settings Subscription tab; self-service plan change)
-- `OrganizationQuotaStore` (root-provided; active organization quota usage for the sidebar meters)
+- `OrganizationQuotaStore` (root-provided; active organization quota usage feeding the settings Usage tab and the create-flow quota checks)
 - `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history)
 - `OrganizationDashboardStore` (aggregate slice: overview KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations + logo upload, refreshes `ActiveOrganizationStore`)
@@ -96,8 +101,9 @@ limit quantities.
 - Enforcement is **strict and backend-owned**: each create flow (member add/invite, facility,
   equipment, inspection) asserts the quota before persisting and returns **HTTP 409** when the cap
   is reached. There is no frontend route gating.
-- The `OrganizationQuotaMeters` widget renders PrimeNG `MeterGroup` bars (used / limit per resource)
-  in the organization context sidebar, driven by `OrganizationQuotaStore`.
+- The settings **Usage** tab (`OrganizationUsagePanel`) renders PrimeNG `MeterGroup` bars
+  (used / limit per resource, with percentages and unlimited rows), driven by
+  `OrganizationQuotaStore`.
 - Plan cards consume `PlanOutput.quotas`: a backend-built list of `{ resource, label, limit, summary }`
   where `summary` is a ready-made sentence (e.g. "Up to 125 facilities" / "Unlimited inspections")
   phrased server-side in `OrganizationQuotaResource::summarize`, so the UI never re-derives the wording.
@@ -133,11 +139,12 @@ These contracts are the stable boundaries for approved consumers:
 - May expose onboarding-approved setup workflows through `organization/setup`.
 - Must not move organization-owned widgets into layouts just because they render in the shell.
 - Consumes `@features/account`'s `accountPermissionGuard` and `ACCOUNT_PERMISSION` to gate the
-  `audit` route, and `UserPermissionService`/`ACCOUNT_PERMISSION` to gate the "Audit log" sidebar
-  entry in `OrganizationNavPanel`. `audit.read` is a global user permission, not an
-  `OrganizationPermissionName`, so it cannot be expressed through `ORGANIZATION_NAVIGATION_ITEMS`
-  (org-member-RBAC-only) — visibility is resolved directly against the account permission service
-  instead.
+  `audit` route, and its `UserPermissionService` in `withOrganizationNavigation` to resolve the
+  sidebar "Audit log" entry (appended to the Administration section via
+  `appendOrganizationAuditNavigationItem`). `audit.read` is a global user permission, not an
+  `OrganizationPermissionName`, so it cannot be expressed through
+  `ORGANIZATION_NAVIGATION_ITEMS` (org-member-RBAC-only) — visibility must be resolved directly
+  against the account permission surface.
 
 ## Invariants
 

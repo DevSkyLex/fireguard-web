@@ -1,13 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { MenuItem } from 'primeng/api';
-import { ASIDE_SLOT } from '../../../slots/aside';
 import { NAVIGATION_SLOT } from '../../../slots/navigation';
+import { SIDEBAR_SLOT } from '../../../slots/sidebar';
 import { TOPBAR_SLOT } from '../../../slots/topbar';
 import {
   provideDashboardLayoutSlots,
-  type DashboardLayoutAsideSlotFeature,
   type DashboardLayoutNavigationSlotFeature,
+  type DashboardLayoutSidebarSlotFeature,
   type DashboardLayoutTopbarSlotFeature,
 } from '../dashboard-layout-slots.provider';
 
@@ -19,7 +19,7 @@ import {
 class TestSlotComponent {}
 
 describe('provideDashboardLayoutSlots', () => {
-  it('should aggregate navigation, topbar and aside providers', () => {
+  it('should aggregate navigation, sidebar and topbar providers', () => {
     const navigationFeature: DashboardLayoutNavigationSlotFeature = {
       useFactory: () => ({
         id: 'test-navigation',
@@ -30,6 +30,14 @@ describe('provideDashboardLayoutSlots', () => {
         }),
       }),
     };
+    const sidebarFeature: DashboardLayoutSidebarSlotFeature = {
+      useFactory: () => ({
+        id: 'test-sidebar',
+        order: 10,
+        region: 'lead',
+        component: TestSlotComponent,
+      }),
+    };
     const topbarFeature: DashboardLayoutTopbarSlotFeature = {
       useFactory: () => ({
         id: 'test-topbar',
@@ -37,27 +45,19 @@ describe('provideDashboardLayoutSlots', () => {
         component: TestSlotComponent,
       }),
     };
-    const asideFeature: DashboardLayoutAsideSlotFeature = {
-      useFactory: () => ({
-        id: 'test-aside',
-        priority: 10,
-        component: TestSlotComponent,
-        active: signal(true),
-      }),
-    };
 
     TestBed.configureTestingModule({
       providers: [
         provideDashboardLayoutSlots({
           navigation: [navigationFeature],
+          sidebar: [sidebarFeature],
           topbar: [topbarFeature],
-          aside: [asideFeature],
         }),
       ],
     });
 
     expect(TestBed.inject(NAVIGATION_SLOT).map((item) => item.id)).toEqual(['test-navigation']);
+    expect(TestBed.inject(SIDEBAR_SLOT).map((item) => item.id)).toEqual(['test-sidebar']);
     expect(TestBed.inject(TOPBAR_SLOT).map((item) => item.id)).toEqual(['test-topbar']);
-    expect(TestBed.inject(ASIDE_SLOT).map((item) => item.id)).toEqual(['test-aside']);
   });
 });

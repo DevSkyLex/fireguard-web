@@ -4584,10 +4584,6 @@
         <source>Accept Invitation</source>
         <target>Aceptar invitación</target>
       </trans-unit>
-      <trans-unit id="route.organizations" datatype="html">
-        <source>Organizations</source>
-        <target>Organizaciones</target>
-      </trans-unit>
       <trans-unit id="dash.granularity.daily" datatype="html">
         <source>Daily</source>
         <target>Diario</target>
@@ -5160,10 +5156,6 @@
         <source>No changes were made to your subscription.</source>
         <target>No se realizaron cambios en tu suscripción.</target>
       </trans-unit>
-      <trans-unit id="org.usage.label" datatype="html">
-        <source> Usage </source>
-        <target>Uso</target>
-      </trans-unit>
       <trans-unit id="org.quota.header" datatype="html">
         <source>Plan limit reached</source>
         <target>Límite del plan alcanzado</target>
@@ -5219,38 +5211,6 @@
       <trans-unit id="org.usage.empty" datatype="html">
         <source>Usage data is not available yet.</source>
         <target>Los datos de uso aún no están disponibles.</target>
-      </trans-unit>
-      <trans-unit id="org.dataview.title" datatype="html">
-        <source>Organizations</source>
-        <target>Organizaciones</target>
-      </trans-unit>
-      <trans-unit id="org.dataview.searchPlaceholder" datatype="html">
-        <source>Search organizations...</source>
-        <target>Buscar organizaciones...</target>
-      </trans-unit>
-      <trans-unit id="org.newButton" datatype="html">
-        <source>New organization</source>
-        <target>Nueva organización</target>
-      </trans-unit>
-      <trans-unit id="org.dataview.pageReport" datatype="html">
-        <source>Showing {first} to {last} of {totalRecords} organizations</source>
-        <target>Mostrando {first} a {last} de {totalRecords} organizaciones</target>
-      </trans-unit>
-      <trans-unit id="org.dataview.emptySearchTitle" datatype="html">
-        <source>No organizations found</source>
-        <target>No se encontraron organizaciones</target>
-      </trans-unit>
-      <trans-unit id="org.dataview.emptySearchDesc" datatype="html">
-        <source>No organization matches your search. Try different keywords.</source>
-        <target>Ninguna organización coincide con tu búsqueda. Prueba con otras palabras clave.</target>
-      </trans-unit>
-      <trans-unit id="org.dataview.emptyTitle" datatype="html">
-        <source>No organizations yet</source>
-        <target>Aún no hay organizaciones</target>
-      </trans-unit>
-      <trans-unit id="org.dataview.emptyDesc" datatype="html">
-        <source>Organizations group your facilities, equipment, inspections and team.</source>
-        <target>Las organizaciones agrupan tus instalaciones, equipos, inspecciones y equipo de personas.</target>
       </trans-unit>
       <trans-unit id="org.general.branding" datatype="html">
         <source>Branding</source>
@@ -5509,8 +5469,8 @@
         <target>Invitación aceptada. ¡Bienvenido!</target>
       </trans-unit>
       <trans-unit id="org.invAccept.openOrgs" datatype="html">
-        <source>Open organizations</source>
-        <target>Abrir organizaciones</target>
+        <source>Open workspace</source>
+        <target>Abrir el espacio de trabajo</target>
       </trans-unit>
       <trans-unit id="org.invAccept.error" datatype="html">
         <source>The invitation could not be accepted. It may be expired or revoked.</source>
@@ -5883,10 +5843,6 @@
       <trans-unit id="org.usage.unlimited" datatype="html">
         <source><x id="INTERPOLATION" equiv-text="{{ row.used }}"/> used · Unlimited</source>
         <target><x id="INTERPOLATION" equiv-text="{{ row.used }}"/> usados · Ilimitado</target>
-      </trans-unit>
-      <trans-unit id="org.dataview.openAria" datatype="html">
-        <source>Open <x id="name" equiv-text="name"/></source>
-        <target>Abrir <x id="name" equiv-text="name"/></target>
       </trans-unit>
       <trans-unit id="org.deleteDialog.message" datatype="html">
         <source>This action is permanent. The organization <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;font-semibold&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ organizationName() }}"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/> and all of its data will be deleted and cannot be recovered.</source>

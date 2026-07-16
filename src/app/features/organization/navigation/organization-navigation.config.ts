@@ -156,9 +156,12 @@ export interface OrganizationNavigationItem {
  * Constant ORGANIZATION_NAVIGATION_ITEMS
  *
  * @description
- * Canonical ordered list of organization destinations. The dashboard
- * navigation provider, organization panel and landing guard all consume this
- * list so route visibility and fallback behavior cannot diverge.
+ * Canonical ordered list of organization destinations gated by
+ * organization-member RBAC. The dashboard navigation provider and the
+ * organization landing guard both consume this list so route visibility and
+ * fallback behavior cannot diverge. The audit log destination is deliberately
+ * absent: it is gated by the global `audit.read` account permission and is
+ * appended separately via {@link appendOrganizationAuditNavigationItem}.
  *
  * @since 1.0.0
  */
@@ -240,9 +243,8 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
  * Constant ORGANIZATION_NAVIGATION_GROUPS
  *
  * @description
- * Ordered organization navigation sections. The navigation provider and the
- * organization context panel both render items grouped by these sections, so
- * the grouping stays consistent across the primary sidebar and the context bar.
+ * Ordered organization navigation sections. The navigation provider renders
+ * items grouped by these sections in the primary sidebar.
  *
  * @since 1.1.0
  */
@@ -357,24 +359,46 @@ export function buildOrganizationNavigationSection(
 }
 
 /**
- * Function buildOrganizationNavigationSections
+ * Function appendOrganizationAuditNavigationItem
  *
  * @description
- * Builds the full ordered list of organization navigation sections, dropping
- * groups with no permission-visible items.
+ * Appends the audit log destination to the "Administration" section, creating
+ * that section when no organization-permission item is visible in it. The
+ * destination is gated by the global `audit.read` account permission — not an
+ * `OrganizationPermissionName` — so it cannot be expressed as an
+ * {@link OrganizationNavigationItem}; the caller resolves visibility against
+ * the account permission surface before appending.
  *
+ * @param {MenuItem | null} section - Administration section built from organization-member permissions, or `null` when empty.
  * @param {string} prefix - Active organization route prefix.
- * @param {ReadonlySet<string>} grantedPermissions - Active member permissions.
  *
- * @returns {MenuItem[]} Ordered, non-empty navigation sections.
+ * @returns {MenuItem} Administration section including the audit log destination.
  *
- * @since 1.1.0
+ * @since 1.2.0
  */
-export function buildOrganizationNavigationSections(
+export function appendOrganizationAuditNavigationItem(
+  section: MenuItem | null,
   prefix: string,
-  grantedPermissions: ReadonlySet<string>,
-): MenuItem[] {
-  return ORGANIZATION_NAVIGATION_GROUPS.map((group: OrganizationNavigationGroup): MenuItem | null =>
-    buildOrganizationNavigationSection(group, prefix, grantedPermissions),
-  ).filter((section: MenuItem | null): section is MenuItem => section !== null);
+): MenuItem {
+  const auditItem: MenuItem = {
+    id: 'audit',
+    label: $localize`:@@org.nav.audit:Audit log`,
+    icon: 'pi pi-history',
+    routerLink: `${prefix}/audit`,
+  };
+
+  if (section === null) {
+    const group: OrganizationNavigationGroup | undefined = ORGANIZATION_NAVIGATION_GROUPS.find(
+      (candidate: OrganizationNavigationGroup): boolean => candidate.id === 'administration',
+    );
+
+    return {
+      id: 'administration',
+      label: group?.label ?? '',
+      expanded: true,
+      items: [auditItem],
+    };
+  }
+
+  return { ...section, items: [...(section.items ?? []), auditItem] };
 }

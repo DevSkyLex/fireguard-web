@@ -1,30 +1,27 @@
 <header
-  class="flex h-16 shrink-0 items-center border-b border-surface-200 bg-surface-0 transition-colors dark:border-surface-800 dark:bg-surface-950"
+  class="flex h-[60px] shrink-0 items-center gap-3 border-b border-surface-200 bg-surface-0 px-4 transition-colors sm:px-[max(28px,calc((100%_-_1200px)/2_+_28px))] dark:border-surface-800 dark:bg-surface-950"
 >
-  <!-- Mobile sidebar toggle (also acts as brand area on small screens) -->
-  <section class="flex items-center px-2 lg:hidden">
-    <p-button
-      icon="pi pi-bars"
-      severity="secondary"
-      [text]="true"
-      [rounded]="true"
-      ariaLabel="Open navigation menu"
-      i18n-ariaLabel="@@layout.header.openMenu"
-      (onClick)="sidebarService.open()"
-    />
-  </section>
+  <!-- Mobile sidebar toggle -->
+  <button
+    type="button"
+    class="flex size-8.5 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-surface-200 text-surface-600 transition-colors hover:bg-surface-100 hover:text-surface-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary lg:hidden dark:border-surface-800 dark:text-surface-400 dark:hover:bg-surface-900 dark:hover:text-surface-50"
+    aria-label="Open navigation menu"
+    i18n-aria-label="@@layout.header.openMenu"
+    (click)="sidebarService.open()"
+  >
+    <i class="pi pi-bars text-base"></i>
+  </button>
 
   <!-- Header Breadcrumb -->
-  <section class="flex min-w-0 flex-1 overflow-hidden px-5">
+  <section class="flex min-w-0 flex-1 overflow-hidden">
     <app-dashboard-layout-breadcrumb class="min-w-0 flex-1" />
   </section>
 
-  <section class="flex shrink-0 items-center gap-2 px-5">
-    @for (action of headerActionsService.actions; track action.id) {
-      @if (action.id === 'user-menu') {
-        <p-divider class="-mx-1 h-6" layout="vertical" [pt]="dividerPt" />
-      }
+  <!-- Header actions: layout-owned search, then topbar slot contributions -->
+  <section class="flex shrink-0 items-center gap-2">
+    <app-dashboard-layout-search />
 
+    @for (action of headerActionsService.actions; track action.id) {
       <ng-container *ngComponentOutlet="action.component" />
     }
   </section>

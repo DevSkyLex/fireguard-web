@@ -23,7 +23,7 @@ export const inspectionResolver: ResolveFn<InspectionOutput> = (
   const inspectionId: string | null = route.paramMap.get('inspectionId');
 
   if (!organizationId || !inspectionId) {
-    return new RedirectCommand(router.parseUrl('/organizations'));
+    return new RedirectCommand(router.parseUrl('/'));
   }
 
   return activeInspectionStore

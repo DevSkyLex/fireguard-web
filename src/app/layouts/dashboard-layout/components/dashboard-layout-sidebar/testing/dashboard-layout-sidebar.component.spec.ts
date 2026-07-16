@@ -1,9 +1,9 @@
-import { signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
-import { withMainNavigation } from '@features/main';
+import { UserPermissionService } from '@features/account';
 import { withOrganizationNavigation } from '@features/organization';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
@@ -15,6 +15,12 @@ import {
 } from '@layouts/dashboard-layout/services';
 import { DashboardLayoutSidebarNavigation } from '../components';
 import { DashboardLayoutSidebar } from '../dashboard-layout-sidebar.component';
+
+@Component({ template: '<div data-testid="lead-widget-stub"></div>' })
+class LeadWidgetStub {}
+
+@Component({ template: '<div data-testid="footer-widget-stub"></div>' })
+class FooterWidgetStub {}
 
 const MOCK_ORG = {
   id: 'org-1',
@@ -61,10 +67,29 @@ describe('DashboardLayoutSidebar', () => {
         DashboardSidebarService,
         provideRouter([]),
         provideDashboardLayoutSlots({
-          navigation: [withMainNavigation(), ...withOrganizationNavigation()],
+          navigation: [...withOrganizationNavigation()],
+          sidebar: [
+            {
+              useFactory: () => ({
+                id: 'lead-stub',
+                order: 10,
+                region: 'lead',
+                component: LeadWidgetStub,
+              }),
+            },
+            {
+              useFactory: () => ({
+                id: 'footer-stub',
+                order: 10,
+                region: 'footer',
+                component: FooterWidgetStub,
+              }),
+            },
+          ],
         }),
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
+        { provide: UserPermissionService, useValue: { hasPermission: (): boolean => false } },
       ],
     });
   });
@@ -74,7 +99,7 @@ describe('DashboardLayoutSidebar', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render branding and section labels', () => {
+  it('should render branding, slot widgets and section labels', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebar);
     fixture.detectChanges();
 
@@ -83,18 +108,14 @@ describe('DashboardLayoutSidebar', () => {
       fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-navigation')),
     ).toBeTruthy();
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-footer'))).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('[data-testid="lead-widget-stub"]'))).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('[data-testid="footer-widget-stub"]'))).toBeTruthy();
 
-    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(6);
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(4);
     expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
-    // Home + Overview + Assets + Compliance sections → three dividers.
-    expect(
-      fixture.debugElement.queryAll(By.css('[data-testid="sidebar-section-divider"]')).length,
-    ).toBe(3);
 
     const textContent = fixture.nativeElement.textContent;
     expect(textContent).toContain('Fireguard');
-    expect(textContent).toContain('Home');
-    expect(textContent).toContain('Organizations');
     expect(textContent).toContain('Overview');
     expect(textContent).toContain('Assets');
     expect(textContent).toContain('Compliance');
@@ -102,16 +123,17 @@ describe('DashboardLayoutSidebar', () => {
     expect(textContent).toContain('Facilities');
     expect(textContent).toContain('Equipments');
     expect(textContent).toContain('Inspections');
-    expect(textContent).toContain('2026 Fireguard, Inc.');
   });
 
-  it('should hide the footer in primary icon-only mode', () => {
+  it('should hide the slot widgets in primary icon-only mode', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebar);
     fixture.componentRef.setInput('variant', 'primary');
     fixture.componentRef.setInput('iconOnly', true);
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.css('app-dashboard-layout-sidebar-footer'))).toBeFalsy();
+    expect(fixture.debugElement.query(By.css('[data-testid="lead-widget-stub"]'))).toBeFalsy();
+    expect(fixture.debugElement.query(By.css('[data-testid="footer-widget-stub"]'))).toBeFalsy();
   });
 
   it('should close sidebar only for routerLink leaf items', () => {
@@ -164,7 +186,7 @@ describe('DashboardLayoutSidebar', () => {
 
     const labels = navigation.menuItems().map((group) => group.label);
 
-    expect(labels).toEqual(['Home', 'Overview', 'Assets', 'Compliance']);
+    expect(labels).toEqual(['Overview', 'Assets', 'Compliance']);
   });
 
   it('should not render collapsed flyout ui', () => {

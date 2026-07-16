@@ -99,7 +99,12 @@ as the page h1, and the **main actions live in the banner's action slot**:
 `ui/components/intervention-header-actions` is contributed to the dashboard
 layout's `PAGE_HEADER_SLOT` through `withInterventionHeaderActions()`
 (`providers/page-header/`, registered in `app.routes.ts` and exported from the
-feature `index.ts`). The page publishes its header view state — prev/next
+feature `index.ts`). The feature also contributes the shell-wide
+offline/sync-status chip: `ui/components/intervention-sync-chip` (connectivity
+state, pending outbox count via `InterventionOfflineService.pendingCount`,
+blocked operations, manual "Sync now") is registered in the dashboard layout's
+`TOPBAR_SLOT` through `withInterventionSyncChip()` (`providers/topbar/`,
+exported from the feature `index.ts`). The page publishes its header view state — prev/next
 chevrons with a `position / total` pill (walking the shared
 `InterventionStore`'s `orderedIds()`, provided at the parent route — see
 `interventions.routes.ts`), a secondary **Request changes** button while the

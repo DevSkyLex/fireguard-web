@@ -56,10 +56,10 @@
         >
         <p-button
           i18n-label="@@org.invAccept.openOrgs"
-          label="Open organizations"
+          label="Open workspace"
           icon="pi pi-arrow-right"
           styleClass="w-full"
-          (onClick)="goToOrganizations()"
+          (onClick)="goToWorkspace()"
         />
       } @else if (emailMismatch()) {
         <p-message severity="warn" class="mb-4 block">
@@ -78,10 +78,10 @@
           />
           <p-button
             i18n-label="@@org.invAccept.openOrgs"
-            label="Open organizations"
+            label="Open workspace"
             [text]="true"
             styleClass="w-full"
-            (onClick)="goToOrganizations()"
+            (onClick)="goToWorkspace()"
           />
         </div>
       } @else if (!isPending()) {
@@ -91,10 +91,10 @@
         >
         <p-button
           i18n-label="@@org.invAccept.openOrgs"
-          label="Open organizations"
+          label="Open workspace"
           [text]="true"
           styleClass="w-full"
-          (onClick)="goToOrganizations()"
+          (onClick)="goToWorkspace()"
         />
       } @else if (isAuthenticated()) {
         @if (store.isAcceptError()) {

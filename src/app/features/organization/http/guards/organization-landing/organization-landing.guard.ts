@@ -60,7 +60,7 @@ export const organizationLandingGuard: CanActivateFn = (
   const organizationId: string | null = findRouteParam(route, 'organizationId');
 
   if (!organizationId) {
-    return router.createUrlTree(['/organizations']);
+    return router.createUrlTree(['/']);
   }
 
   const isAccessible = (item: OrganizationNavigationItem): boolean =>
@@ -79,7 +79,9 @@ export const organizationLandingGuard: CanActivateFn = (
       candidate.id !== 'dashboard' && isAccessible(candidate),
   );
 
+  // No permitted destination in this organization: let the default-organization
+  // guard pick another workspace, excluding this one to avoid a redirect loop.
   return destination
     ? router.createUrlTree(['/organizations', organizationId, ...destination.path.split('/')])
-    : router.createUrlTree(['/organizations']);
+    : router.createUrlTree(['/organizations'], { queryParams: { excluded: organizationId } });
 };

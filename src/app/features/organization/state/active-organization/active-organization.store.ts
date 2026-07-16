@@ -1,4 +1,5 @@
-import { computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { computed, effect, inject, PLATFORM_ID } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import {
@@ -11,6 +12,7 @@ import {
 } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { Observable, filter, tap } from 'rxjs';
+import { CookieService } from '@core/cookie';
 import {
   errorCallState,
   idleCallState,
@@ -20,6 +22,10 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
 } from '@core/request-state';
+import {
+  LAST_ORGANIZATION_COOKIE_MAX_AGE,
+  LAST_ORGANIZATION_COOKIE_NAME,
+} from '@features/organization/constants';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { routeTreeHasParam } from '@features/organization/utils';
@@ -206,9 +212,34 @@ export const ActiveOrganizationStore = signalStore(
 
   withHooks((store) => {
     const router: Router = inject<Router>(Router);
+    const cookieService: CookieService = inject<CookieService>(CookieService);
+    const platformId: object = inject<object>(PLATFORM_ID);
 
     return {
       onInit(): void {
+        /**
+         * Persist the active organization as the user's default workspace.
+         *
+         * Tracks {@link selectedOrganizationId} (value equality) so metadata
+         * refreshes do not rewrite the cookie, and never deletes it on
+         * deselection — leaving an organization-scoped page must not forget
+         * the preference. Stale identifiers are invalidated by
+         * `organizationGuard` when the organization is no longer accessible.
+         */
+        effect((): void => {
+          const organizationId: string | null = store.selectedOrganizationId();
+
+          if (organizationId !== null && isPlatformBrowser(platformId)) {
+            cookieService.setCookie<string>({
+              name: LAST_ORGANIZATION_COOKIE_NAME,
+              value: organizationId,
+              maxAge: LAST_ORGANIZATION_COOKIE_MAX_AGE,
+              path: '/',
+              sameSite: 'Lax',
+            });
+          }
+        });
+
         router.events
           .pipe(
             filter((e): e is NavigationEnd => e instanceof NavigationEnd),

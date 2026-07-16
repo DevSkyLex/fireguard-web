@@ -151,9 +151,15 @@ export class OrganizationInvitationAcceptPage {
       .catch(() => undefined);
   }
 
-  /** Navigates to the organization list. */
-  protected goToOrganizations(): void {
-    this.router.navigate(['/organizations']).catch(() => undefined);
+  /**
+   * Navigates to the joined organization when the invitation was accepted,
+   * otherwise to the default organization workspace.
+   */
+  protected goToWorkspace(): void {
+    const organizationId: string | null = this.store.preview()?.organizationId ?? null;
+    const target: ReadonlyArray<string> =
+      this.store.isAccepted() && organizationId ? ['/organizations', organizationId] : ['/'];
+    this.router.navigate([...target]).catch(() => undefined);
   }
 
   /** Builds the absolute internal return path back to this invitation. */

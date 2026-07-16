@@ -10,7 +10,6 @@ import {
 import { type IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
-import { RippleModule } from 'primeng/ripple';
 import { TooltipModule } from 'primeng/tooltip';
 import {
   DashboardSidebarNavigationService,
@@ -47,7 +46,7 @@ import {
  */
 @Component({
   selector: 'app-dashboard-layout-sidebar-navigation',
-  imports: [BadgeModule, RippleModule, RouterLink, RouterLinkActive, TooltipModule],
+  imports: [BadgeModule, RouterLink, RouterLinkActive, TooltipModule],
   templateUrl: './dashboard-layout-sidebar-navigation.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

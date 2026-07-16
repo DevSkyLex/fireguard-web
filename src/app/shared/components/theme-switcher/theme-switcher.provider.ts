@@ -16,7 +16,7 @@ export function withThemeSwitcher(): DashboardLayoutTopbarSlotFeature {
   return {
     useFactory: () => ({
       id: 'theme-switcher',
-      order: 15,
+      order: 30,
       component: ThemeSwitcher,
     }),
   };

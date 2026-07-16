@@ -1,11 +1,11 @@
 @if (iconOnly()) {
   <div
-    class="flex h-16 items-center justify-center border-b border-surface-200 px-3 dark:border-surface-800"
+    class="flex h-[60px] items-center justify-center border-b border-surface-200 px-3 dark:border-surface-800"
   >
     @if (collapsible()) {
       <button
         type="button"
-        class="flex size-9 items-center justify-center rounded-md text-primary-500 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-900"
+        class="flex size-9 cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-900"
         pTooltip="Expand sidebar"
         i18n-pTooltip="@@layout.sidebar.expand"
         tooltipPosition="right"
@@ -13,20 +13,20 @@
         i18n-aria-label="@@layout.sidebar.expand"
         (click)="sidebarService.togglePrimaryCollapsed()"
       >
-        <app-logo class="size-8 text-surface-950 dark:text-surface-50" />
+        <app-logo class="size-7 text-surface-950 dark:text-surface-50" />
       </button>
     } @else {
-      <app-logo class="size-9 text-surface-950 dark:text-surface-50" />
+      <app-logo class="size-7 text-surface-950 dark:text-surface-50" />
     }
   </div>
 } @else {
   <div
-    class="flex h-16 items-center gap-2 border-b border-surface-200 px-5 dark:border-surface-800"
+    class="flex h-[60px] items-center gap-2.5 border-b border-surface-200 px-5.5 dark:border-surface-800"
   >
-    <app-logo class="size-8 shrink-0 text-surface-950 dark:text-surface-50" />
+    <app-logo class="size-7 shrink-0 text-surface-950 dark:text-surface-50" />
 
     <p
-      class="min-w-0 flex-1 truncate text-[17px] font-bold tracking-tight text-surface-950 dark:text-surface-50"
+      class="min-w-0 flex-1 truncate text-[15px] font-bold tracking-tight text-surface-950 dark:text-surface-50"
     >
       Fireguard
     </p>
@@ -34,7 +34,7 @@
     @if (collapsible()) {
       <button
         type="button"
-        class="flex size-7 shrink-0 items-center justify-center rounded-md border border-surface-200 text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-800 dark:text-surface-400 dark:hover:bg-surface-900 dark:hover:text-surface-200"
+        class="flex size-6.5 shrink-0 cursor-pointer items-center justify-center rounded-md border border-surface-200 text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-800 dark:text-surface-400 dark:hover:bg-surface-900 dark:hover:text-surface-100"
         pTooltip="Collapse sidebar"
         i18n-pTooltip="@@layout.sidebar.collapse"
         tooltipPosition="right"
@@ -42,7 +42,7 @@
         i18n-aria-label="@@layout.sidebar.collapse"
         (click)="sidebarService.togglePrimaryCollapsed()"
       >
-        <i class="pi pi-arrow-left text-[10px]"></i>
+        <i class="pi pi-angle-left text-sm"></i>
       </button>
     }
   </div>

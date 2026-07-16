@@ -7,7 +7,6 @@ import {
   type OutputEmitterRef,
 } from '@angular/core';
 import { AvatarModule, type AvatarPassThroughOptions } from 'primeng/avatar';
-import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import type { OrganizationOutput } from '@features/organization/models';
 import { getOrganizationInitials } from '@features/organization/utils';
@@ -28,7 +27,7 @@ import { getOrganizationInitials } from '@features/organization/utils';
  */
 @Component({
   selector: 'app-organization-switcher-trigger',
-  imports: [AvatarModule, ButtonModule, SkeletonModule],
+  imports: [AvatarModule, SkeletonModule],
   templateUrl: './organization-switcher-trigger.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -110,7 +109,7 @@ export class OrganizationSwitcherTrigger {
    * @access protected
    * @since 2.0.0
    *
-   * @param {MouseEvent} event - The native click event from `p-button`.
+   * @param {MouseEvent} event - The native click event from the trigger button.
    * @returns {void}
    */
   protected onButtonClick(event: MouseEvent): void {
@@ -133,9 +132,9 @@ export class OrganizationSwitcherTrigger {
   protected avatarPt(org: OrganizationOutput): AvatarPassThroughOptions {
     return {
       root: {
-        class: [this.orgColor(org.id), 'shrink-0 size-4 overflow-hidden rounded text-white'],
+        class: [this.orgColor(org.id), 'shrink-0 size-7 overflow-hidden rounded-md text-white'],
       },
-      label: { class: 'text-[9px] font-bold leading-none' },
+      label: { class: 'text-[11px] font-bold leading-none' },
     };
   }
 

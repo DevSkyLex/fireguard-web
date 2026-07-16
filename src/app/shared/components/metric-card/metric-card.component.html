@@ -1,22 +1,22 @@
 <p-card [pt]="cardPt">
   <ng-template pTemplate="header">
     <div class="flex flex-row items-center justify-between">
-      <div class="flex flex-row items-center gap-3">
+      <div class="flex min-w-0 flex-row items-center gap-3">
         @if (icon(); as icon) {
           <div
-            class="grid content-center rounded-lg border border-surface-200 p-2 dark:border-surface-800"
+            class="grid size-9 shrink-0 place-items-center rounded-lg bg-surface-100 dark:bg-surface-800"
           >
             <i class="{{ icon }} text-lg text-surface-500 dark:text-surface-400"></i>
           </div>
         }
 
         <div class="flex flex-col">
-          <span class="text-sm font-medium">
+          <span class="truncate text-sm font-semibold text-surface-800 dark:text-surface-100">
             {{ title() }}
           </span>
 
           @if (description(); as description) {
-            <span class="text-xs text-surface-500">
+            <span class="truncate text-xs text-surface-600 dark:text-surface-400">
               {{ description }}
             </span>
           }
@@ -31,16 +31,18 @@
 
   <ng-template pTemplate="content">
     @if (loading()) {
-      <p-skeleton height="48px" />
+      <p-skeleton height="32px" width="45%" />
       <p-skeleton height="16px" width="50%" class="mt-2" />
     } @else {
-      <div class="flex flex-col justify-center gap-3">
-        <span class="text-5xl font-semibold">
+      <div class="flex flex-col justify-center gap-2.5">
+        <span
+          class="text-3xl font-semibold tracking-[-0.03em] text-surface-950 tabular-nums dark:text-surface-50"
+        >
           {{ value() }}
         </span>
 
         @if (comparison(); as comparison) {
-          <div class="flex flex-row items-center gap-2">
+          <div class="flex flex-row items-center gap-1.5">
             <i
               aria-hidden="true"
               class="text-xs"
@@ -61,9 +63,13 @@
                 <span class="sr-only" i18n="@@common.comparisonNoChange">no change</span>
               }
             }
-            <div class="flex flex-row gap-1 text-sm">
-              <span class="font-semibold">{{ comparison.value }}</span>
-              <span class="text-surface-500" i18n="@@common.lastPeriod">last period</span>
+            <div class="flex flex-row gap-1 text-xs">
+              <span class="font-semibold text-surface-700 dark:text-surface-200">{{
+                comparison.value
+              }}</span>
+              <span class="text-surface-600 dark:text-surface-400" i18n="@@common.lastPeriod"
+                >last period</span
+              >
             </div>
           </div>
         }

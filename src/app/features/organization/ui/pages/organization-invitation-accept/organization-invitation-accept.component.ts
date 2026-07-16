@@ -12,7 +12,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SkeletonModule } from 'primeng/skeleton';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { resolveInvitationTag } from '@features/organization/models';
@@ -35,7 +35,7 @@ import type { TagDescriptor } from '@shared/components';
  */
 @Component({
   selector: 'app-organization-invitation-accept',
-  imports: [ButtonModule, CardModule, MessageModule, ProgressSpinnerModule, Tag],
+  imports: [ButtonModule, CardModule, MessageModule, SkeletonModule, Tag],
   providers: [OrganizationInvitationAcceptStore],
   templateUrl: './organization-invitation-accept.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

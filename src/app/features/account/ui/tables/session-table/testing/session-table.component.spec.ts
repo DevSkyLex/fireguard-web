@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import type { TableLazyLoadEvent } from 'primeng/table';
 import type { SessionOutput } from '@features/auth/models';
 import { SessionTable } from '../session-table.component';
@@ -75,7 +74,7 @@ describe('SessionTable', () => {
   it('should show skeleton placeholders while loading', () => {
     const fixture = createComponent({ loading: true });
 
-    expect(fixture.debugElement.query(By.css('.p-skeleton'))).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.p-skeleton')).toBeTruthy();
   });
 
   it('should emit a load request with the resolved page', () => {

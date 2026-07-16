@@ -18,7 +18,7 @@ test.describe('MFA verification', () => {
     await expect(page).toHaveURL(/\/auth\/login/);
   });
 
-  test('verifies the code and lands on the dashboard home', async ({ page }) => {
+  test('verifies the code and lands on the default organization workspace', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockUnauthenticatedSession();
     await api.mockLoginMfaRequired();
@@ -33,7 +33,8 @@ test.describe('MFA verification', () => {
     await mfaPage.waitForLoad();
     await mfaPage.verify('123456');
 
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL(/\/organizations\/e2e-org-1$/);
+    await expect(page.locator('#organization-overview')).toBeVisible();
   });
 
   test('shows an error and stays on the page for an invalid code', async ({ page }) => {

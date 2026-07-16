@@ -1,7 +1,7 @@
 <main class="flex min-h-dvh items-center justify-center bg-surface-50 p-6 dark:bg-surface-950">
   <p-card
     class="w-full max-w-md"
-    styleClass="border border-surface-200 shadow-lg dark:border-surface-800"
+    styleClass="border border-surface-200 shadow-none dark:border-surface-800 dark:bg-surface-900"
   >
     <ng-template pTemplate="header">
       <div class="flex items-center gap-2 px-6 pt-6">
@@ -17,11 +17,16 @@
         >The invitation link is missing its token.</p-message
       >
     } @else if (store.isLoadingPreview()) {
-      <div class="flex flex-col items-center gap-3 py-6">
-        <p-progressSpinner strokeWidth="4" [style]="{ width: '2.5rem', height: '2.5rem' }" />
-        <span i18n="@@org.invAccept.loading" class="text-sm text-surface-500"
-          >Loading your invitation…</span
-        >
+      <div
+        class="flex flex-col gap-4 py-3"
+        role="status"
+        aria-label="Loading your invitation"
+        i18n-aria-label="@@org.invAccept.loading"
+      >
+        <p-skeleton width="45%" height="0.875rem" />
+        <p-skeleton width="72%" height="1.75rem" />
+        <p-skeleton width="100%" height="0.875rem" />
+        <p-skeleton width="100%" height="2.625rem" class="mt-2" />
       </div>
     } @else if (store.isPreviewError()) {
       <p-message i18n="@@org.invAccept.invalid" severity="error" class="block"

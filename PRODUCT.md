@@ -32,7 +32,7 @@ leaves records untouched.
 Dependable, operational, calm under pressure. Three words: **trustworthy,
 precise, efficient**. The interface should feel like a professional field tool
 that disappears into the task — closer to Linear/Stripe dashboards than to a
-consumer app. Orange is the single brand accent (safety/fire association),
+consumer app. The established indigo palette remains the brand accent and is
 reserved for primary actions and active state, never decoration.
 
 ## Anti-references

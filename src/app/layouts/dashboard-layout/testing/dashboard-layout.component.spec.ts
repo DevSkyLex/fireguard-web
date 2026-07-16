@@ -63,7 +63,7 @@ describe('DashboardLayout', () => {
 
     // jsdom reports no matching media query, so the layout stays in rail mode.
     const aside = fixture.debugElement.query(By.css('aside')).nativeElement as HTMLElement;
-    expect(aside.style.width).toBe('64px');
+    expect(aside.style.width).toBe('68px');
   });
 
   it('should open the mobile drawer through the sidebar service', () => {

@@ -4,10 +4,11 @@ import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import { OrganizationDashboardAssetGrowthStore } from '@features/organization/state/organization-dashboard';
 import { AssetGrowthChart } from '../asset-growth-chart.component';
 
-const mockAligned = { labels: [], datasets: [[], []] };
+const mockAligned = { labels: ['Apr 1'], datasets: [[1], [1]] };
 
 const mockStore = {
   isQueryLoading: signal(false),
+  queryHasError: signal(false),
   queryData: signal(null),
   compareEnabled: signal(false),
   canReadEquipment: signal(true),

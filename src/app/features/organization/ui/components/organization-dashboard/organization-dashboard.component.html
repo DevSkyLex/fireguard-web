@@ -1,14 +1,25 @@
 ﻿<div id="organization-dashboard" class="flex flex-col gap-6">
   @if (showActivitySection()) {
     <div class="flex flex-col gap-6">
-      <section class="flex flex-row items-center gap-4">
-        <div class="rounded-lg border border-surface-200 dark:border-surface-800">
-          <i class="pi pi-chart-line p-3 text-2xl text-surface-600 dark:text-surface-400"></i>
-        </div>
+      <section
+        class="flex flex-row items-start gap-3 border-b border-surface-200 pb-4 dark:border-surface-800"
+      >
+        <i
+          class="pi pi-chart-line mt-0.5 text-lg text-surface-500 dark:text-surface-400"
+          aria-hidden="true"
+        ></i>
 
         <div class="flex flex-col">
-          <h2 i18n="@@org.dash.activity" class="text-xl font-semibold">Activity</h2>
-          <p i18n="@@org.dash.activityDesc" class="text-surface-600 dark:text-surface-400">
+          <h2
+            i18n="@@org.dash.activity"
+            class="text-lg font-semibold tracking-[-0.015em] text-surface-950 dark:text-surface-50"
+          >
+            Activity
+          </h2>
+          <p
+            i18n="@@org.dash.activityDesc"
+            class="text-sm leading-6 text-surface-600 dark:text-surface-400"
+          >
             Overview of activity trends and key metrics for your organization.
           </p>
         </div>
@@ -16,7 +27,7 @@
 
       <section class="flex flex-col gap-6">
         @if (hasActivityMetrics()) {
-          <div class="flex flex-row flex-wrap items-stretch gap-6">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             @if (canReadFacilities()) {
               <app-metric-card
                 i18n-title="@@org.dash.facilities"
@@ -27,7 +38,6 @@
                 [value]="store.facilityCount()"
                 [loading]="store.isQueryLoading()"
                 [comparison]="store.facilitiesComparison()"
-                class="flex-1"
               />
             }
 
@@ -41,7 +51,6 @@
                 [value]="store.memberCount()"
                 [loading]="store.isQueryLoading()"
                 [comparison]="store.membersComparison()"
-                class="flex-1"
               />
             }
 
@@ -55,7 +64,6 @@
                 [value]="store.equipmentCount()"
                 [loading]="store.isQueryLoading()"
                 [comparison]="store.equipmentComparison()"
-                class="flex-1"
               />
             }
 
@@ -69,7 +77,6 @@
                 [value]="store.inspectionCount()"
                 [loading]="store.isQueryLoading()"
                 [comparison]="store.inspectionsComparison()"
-                class="flex-1"
               />
             }
           </div>
@@ -89,14 +96,25 @@
 
   @if (showResourcesSection()) {
     <div class="flex flex-col gap-6">
-      <section class="flex flex-row items-center gap-4">
-        <div class="rounded-lg border border-surface-200 dark:border-surface-800">
-          <i class="pi pi-building p-3 text-2xl text-surface-600 dark:text-surface-400"></i>
-        </div>
+      <section
+        class="flex flex-row items-start gap-3 border-b border-surface-200 pb-4 dark:border-surface-800"
+      >
+        <i
+          class="pi pi-building mt-0.5 text-lg text-surface-500 dark:text-surface-400"
+          aria-hidden="true"
+        ></i>
 
         <div class="flex flex-col">
-          <h2 i18n="@@org.dash.resources" class="text-xl font-semibold">Resources</h2>
-          <p i18n="@@org.dash.resourcesDesc" class="text-surface-600 dark:text-surface-400">
+          <h2
+            i18n="@@org.dash.resources"
+            class="text-lg font-semibold tracking-[-0.015em] text-surface-950 dark:text-surface-50"
+          >
+            Resources
+          </h2>
+          <p
+            i18n="@@org.dash.resourcesDesc"
+            class="text-sm leading-6 text-surface-600 dark:text-surface-400"
+          >
             Overview of resource trends and key metrics for your organization.
           </p>
         </div>

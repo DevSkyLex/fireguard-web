@@ -64,8 +64,9 @@ describe('GroupedList', () => {
     fixture.componentInstance.initiallyCollapsed = (id: string): boolean => id === 'closed';
     fixture.detectChanges();
 
-    const headers: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('header');
-    headers[1].click();
+    const toggles: NodeListOf<HTMLButtonElement> =
+      fixture.nativeElement.querySelectorAll('header button');
+    toggles[1].click();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Replace hose');

@@ -23,12 +23,15 @@ test.describe('Onboarding', () => {
     await expect(onboardingPage.startSetupButton).toBeVisible();
   });
 
-  test('redirects to the dashboard home when onboarding is already completed', async ({ page }) => {
+  test('redirects to the default organization when onboarding is already completed', async ({
+    page,
+  }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession({ onboarding: { state: 'completed' } });
 
     await page.goto('/onboarding');
 
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL(/\/organizations\/e2e-org-1$/);
+    await expect(page.locator('#organization-overview')).toBeVisible();
   });
 });

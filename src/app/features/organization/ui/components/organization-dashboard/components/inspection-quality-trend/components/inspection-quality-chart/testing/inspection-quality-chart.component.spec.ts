@@ -6,13 +6,14 @@ import { InspectionQualityChart } from '../inspection-quality-chart.component';
 
 const mockStore = {
   isQueryLoading: signal(false),
+  queryHasError: signal(false),
   queryData: signal(null),
   selectedGranularity: signal('week'),
   selectedInspectionStatus: signal(null),
   selectedInspectionResult: signal(null),
   selectedNonConformitySeverity: signal(null),
-  alignedTrendData: signal({ buckets: [], labels: [], datasets: [[], []] }),
-  rateSeriesData: signal([]),
+  alignedTrendData: signal({ buckets: ['2026-04-01'], labels: ['Apr 1'], datasets: [[1], [1]] }),
+  rateSeriesData: signal([100]),
 };
 
 const mockThemePort: ThemePort = {

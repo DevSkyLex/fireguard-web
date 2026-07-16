@@ -163,6 +163,13 @@ export class ApiMock {
     await this.page.route(/\/api\/organizations(\?.*)?$/, async (route) => {
       await fulfillJson(route, 200, hydraCollection(organizations));
     });
+
+    await Promise.all(
+      organizations.flatMap((organization: OrganizationOutputFixture) => [
+        this.mockOrganizationDetail(organization),
+        this.mockOrganizationAccess(organization.id),
+      ]),
+    );
   }
 
   /**

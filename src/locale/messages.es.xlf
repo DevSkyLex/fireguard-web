@@ -1956,6 +1956,10 @@
         <source>New Equipment</source>
         <target>Nuevo equipo</target>
       </trans-unit>
+      <trans-unit id="equipment.create.description" datatype="html">
+        <source> Register an asset with the details field agents need to identify and inspect it. </source>
+        <target>Registra un activo con la información necesaria para identificarlo e inspeccionarlo sobre el terreno.</target>
+      </trans-unit>
       <trans-unit id="equipment.created.summary" datatype="html">
         <source>Equipment created</source>
         <target>Equipo creado</target>
@@ -1999,6 +2003,10 @@
       <trans-unit id="equipment.edit.title" datatype="html">
         <source>Edit Equipment</source>
         <target>Editar equipo</target>
+      </trans-unit>
+      <trans-unit id="equipment.edit.description" datatype="html">
+        <source> Update identification, lifecycle, and assignment information for this asset. </source>
+        <target>Actualiza la identificación, el ciclo de vida y la asignación de este activo.</target>
       </trans-unit>
       <trans-unit id="equipment.attach.title" datatype="html">
         <source>Attachments</source>
@@ -2452,6 +2460,10 @@
         <source>New Facility</source>
         <target>Nueva instalación</target>
       </trans-unit>
+      <trans-unit id="facility.create.description" datatype="html">
+        <source> Add a location and place it in your organization's facility hierarchy. </source>
+        <target>Añade una ubicación y sitúala en la jerarquía de instalaciones de tu organización.</target>
+      </trans-unit>
       <trans-unit id="facility.created.summary" datatype="html">
         <source>Facility created</source>
         <target>Instalación creada</target>
@@ -2483,6 +2495,10 @@
       <trans-unit id="facility.edit.title" datatype="html">
         <source>Edit Facility</source>
         <target>Editar instalación</target>
+      </trans-unit>
+      <trans-unit id="facility.edit.description" datatype="html">
+        <source> Keep location, contact, and hierarchy information accurate for field teams. </source>
+        <target>Mantén actualizada la información de ubicación, contacto y jerarquía para los equipos de campo.</target>
       </trans-unit>
       <trans-unit id="facility.updated.summary" datatype="html">
         <source>Facility updated</source>
@@ -3012,6 +3028,10 @@
         <source>New Inspection</source>
         <target>Nueva inspección</target>
       </trans-unit>
+      <trans-unit id="inspection.create.description" datatype="html">
+        <source> Prepare the inspection scope, target, and checklist before field execution. </source>
+        <target>Prepara el alcance, el objetivo y la lista de control antes del trabajo de campo.</target>
+      </trans-unit>
       <trans-unit id="inspection.created.summary" datatype="html">
         <source>Inspection created</source>
         <target>Inspección creada</target>
@@ -3067,6 +3087,10 @@
       <trans-unit id="inspection.edit.title" datatype="html">
         <source> Edit Inspection Draft </source>
         <target>Editar borrador de inspección</target>
+      </trans-unit>
+      <trans-unit id="inspection.edit.description" datatype="html">
+        <source> Refine the inspection scope and checklist while the record is still a draft. </source>
+        <target>Perfecciona el alcance y la lista de control mientras la inspección siga siendo un borrador.</target>
       </trans-unit>
       <trans-unit id="inspection.cancel.message" datatype="html">
         <source>Cancel this draft inspection?</source>
@@ -5487,6 +5511,14 @@
       <trans-unit id="org.settings.navAria" datatype="html">
         <source>Settings sections</source>
         <target>Secciones de ajustes</target>
+      </trans-unit>
+      <trans-unit id="org.settings.pageTitle" datatype="html">
+        <source> Organization settings </source>
+        <target>Ajustes de la organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.pageSubtitle" datatype="html">
+        <source> Manage workspace preferences, subscription, usage, and organization-wide policies. </source>
+        <target>Gestiona las preferencias del espacio de trabajo, la suscripción, el uso y las políticas de la organización.</target>
       </trans-unit>
       <trans-unit id="org.settings.saveError" datatype="html">
         <source>The settings could not be saved.</source>

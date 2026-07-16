@@ -37,7 +37,7 @@ describe('EmptyState', () => {
     fixture.detectChanges();
 
     const element: HTMLElement = fixture.nativeElement;
-    expect(element.querySelector('span')).toBeFalsy();
+    expect(element.querySelector('p')).toBeFalsy();
   });
 
   it('should project the action content', () => {

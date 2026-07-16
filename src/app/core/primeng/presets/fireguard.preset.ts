@@ -51,7 +51,7 @@ export const FireguardTheme: Preset = definePreset(Aura, {
       paddingX: '0.875rem',
       paddingY: '0.625rem',
       borderRadius: '8px',
-      transitionDuration: '0.15s',
+      transitionDuration: '0.18s',
       focusRing: {
         width: '3px',
         style: 'solid',
@@ -61,7 +61,22 @@ export const FireguardTheme: Preset = definePreset(Aura, {
       },
     },
     overlay: {
-      select: { shadow: 'none' },
+      select: {
+        borderRadius: '10px',
+        shadow: '0 8px 18px -12px rgba(15, 23, 42, 0.34)',
+      },
+      popover: {
+        borderRadius: '10px',
+        shadow: '0 8px 18px -12px rgba(15, 23, 42, 0.34)',
+      },
+      modal: {
+        borderRadius: '12px',
+        padding: '1.25rem',
+        shadow: '0 24px 60px -28px rgba(15, 23, 42, 0.52)',
+      },
+      navigation: {
+        shadow: '0 8px 18px -12px rgba(15, 23, 42, 0.34)',
+      },
     },
     colorScheme: {
       light: {
@@ -91,7 +106,7 @@ export const FireguardTheme: Preset = definePreset(Aura, {
           hoverBorderColor: '{surface.300}',
           focusBorderColor: '{primary.color}',
           invalidBorderColor: '{red.600}',
-          placeholderColor: '{surface.500}',
+          placeholderColor: '{surface.600}',
         },
       },
       dark: {
@@ -131,9 +146,12 @@ export const FireguardTheme: Preset = definePreset(Aura, {
     button: {
       root: {
         borderRadius: '8px',
-        paddingX: '1.125rem',
+        paddingX: '1rem',
         paddingY: '0.625rem',
+        gap: '0.5rem',
+        iconOnlyWidth: '2.625rem',
         label: { fontWeight: '600' },
+        raisedShadow: '0 2px 4px -2px rgba(15, 23, 42, 0.28)',
       },
     },
     inputtext: {
@@ -173,31 +191,141 @@ export const FireguardTheme: Preset = definePreset(Aura, {
         },
         dark: {
           root: {
-            background: '{surface.950}',
+            background: '{surface.900}',
           },
         },
       },
       root: {
         shadow: 'none',
-        borderRadius: '{border.radius.xl}',
+        borderRadius: '12px',
+      },
+      body: {
+        padding: '1.5rem',
+        gap: '0.75rem',
+      },
+      title: {
+        fontSize: '1.125rem',
+        fontWeight: '650',
       },
     },
     datatable: {
       colorScheme: {
         light: {
           row: {
-            stripedBackground: 'rgba(0, 0, 0, 0.02)',
+            background: '{surface.0}',
+            stripedBackground: '{surface.50}',
+          },
+          headerCell: {
+            background: '{surface.50}',
           },
         },
         dark: {
           row: {
-            background: '{surface.950}',
-            stripedBackground: 'rgba(255, 255, 255, 0.04)',
+            background: '{surface.900}',
+            stripedBackground: '{surface.800}',
           },
           headerCell: {
-            background: '{surface.950}',
+            background: '{surface.900}',
           },
         },
+      },
+      headerCell: {
+        padding: '0.75rem 1rem',
+      },
+      bodyCell: {
+        padding: '0.8rem 1rem',
+      },
+      columnTitle: {
+        fontWeight: '650',
+      },
+    },
+    dialog: {
+      root: {
+        borderRadius: '12px',
+      },
+      header: {
+        padding: '1.25rem 1.5rem',
+      },
+      content: {
+        padding: '0 1.5rem 1.5rem',
+      },
+      footer: {
+        padding: '0 1.5rem 1.5rem',
+        gap: '0.75rem',
+      },
+      title: {
+        fontSize: '1.125rem',
+        fontWeight: '650',
+      },
+    },
+    drawer: {
+      header: {
+        padding: '1.25rem 1.5rem',
+      },
+      content: {
+        padding: '0 1.5rem 1.5rem',
+      },
+      footer: {
+        padding: '1.25rem 1.5rem',
+      },
+      title: {
+        fontSize: '1.125rem',
+        fontWeight: '650',
+      },
+    },
+    tabs: {
+      tab: {
+        padding: '0.875rem 1rem',
+        fontWeight: '600',
+      },
+      tabpanel: {
+        padding: '1rem 0 0',
+      },
+      activeBar: {
+        height: '2px',
+      },
+    },
+    paginator: {
+      root: {
+        padding: '0.625rem 0.75rem',
+        gap: '0.25rem',
+      },
+      navButton: {
+        width: '2.25rem',
+        height: '2.25rem',
+        borderRadius: '8px',
+      },
+    },
+    menu: {
+      root: {
+        borderRadius: '10px',
+      },
+      item: {
+        padding: '0.625rem 0.75rem',
+        borderRadius: '7px',
+        gap: '0.625rem',
+      },
+    },
+    tag: {
+      root: {
+        fontSize: '0.75rem',
+        fontWeight: '650',
+        padding: '0.25rem 0.5rem',
+        borderRadius: '6px',
+      },
+    },
+    toast: {
+      root: {
+        width: 'min(25rem, calc(100vw - 2rem))',
+        borderRadius: '10px',
+      },
+      summary: {
+        fontWeight: '650',
+      },
+    },
+    skeleton: {
+      root: {
+        borderRadius: '8px',
       },
     },
   },

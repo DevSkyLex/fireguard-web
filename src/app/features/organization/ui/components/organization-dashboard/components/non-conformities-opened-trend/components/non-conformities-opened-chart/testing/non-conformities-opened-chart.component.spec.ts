@@ -6,7 +6,8 @@ import { NonConformitiesOpenedChart } from '../non-conformities-opened-chart.com
 
 const mockStore = {
   isQueryLoading: signal(false),
-  queryData: signal(null),
+  queryHasError: signal(false),
+  queryData: signal({ series: [{ bucket: '2026-04-01', value: 1 }] }),
   compareEnabled: signal(false),
 };
 
@@ -29,7 +30,6 @@ describe('NonConformitiesOpenedChart', () => {
 
   function createComponent(loading = false) {
     mockStore.isQueryLoading.set(loading);
-    mockStore.queryData.set(null);
     const fixture = TestBed.createComponent(NonConformitiesOpenedChart);
     fixture.detectChanges();
     return fixture;

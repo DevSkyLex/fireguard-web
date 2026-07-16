@@ -1,8 +1,8 @@
 <div
   id="account-page"
-  class="mx-auto flex w-full max-w-7xl flex-col gap-8 p-3 sm:p-6 md:p-7 lg:p-8"
+  class="mx-auto flex w-full max-w-7xl flex-col gap-8 p-3 sm:p-6 lg:p-8 xl:p-10"
 >
-  <!-- GitHub-style account header -->
+  <!-- Account identity header -->
   <header
     class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
     data-testid="account-page-header"
@@ -28,7 +28,7 @@
       <div class="min-w-0">
         <div class="flex min-w-0 flex-wrap items-baseline gap-x-2">
           <h1
-            class="truncate text-xl font-semibold text-surface-900 dark:text-surface-50"
+            class="truncate text-2xl font-semibold tracking-[-0.025em] text-surface-950 dark:text-surface-50"
             data-testid="account-page-display-name"
           >
             @if (userStore.displayName(); as name) {
@@ -80,7 +80,7 @@
   <p-divider class="my-0" />
 
   <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
-    <!-- GitHub-settings-style vertical navigation (sticky on large screens) -->
+    <!-- Vertical account navigation (sticky on large screens) -->
     <nav
       class="lg:sticky lg:top-6"
       aria-label="Account sections"

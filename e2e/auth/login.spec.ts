@@ -22,7 +22,7 @@ test.describe('Login', () => {
     await expect(loginPage.submitButton).toBeDisabled();
   });
 
-  test('signs in and lands on the dashboard home', async ({ page }) => {
+  test('signs in and lands on the default organization workspace', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockUnauthenticatedSession();
     await api.mockLoginSuccess();
@@ -32,8 +32,8 @@ test.describe('Login', () => {
     await loginPage.goto();
     await loginPage.login('e2e.user@fireguard.test', 'Sup3rSecret!');
 
-    await expect(page).toHaveURL('/');
-    await expect(page.locator('#home-page')).toBeVisible();
+    await expect(page).toHaveURL(/\/organizations\/e2e-org-1$/);
+    await expect(page.locator('#organization-overview')).toBeVisible();
     expect(api.loginCallCount).toBe(1);
   });
 

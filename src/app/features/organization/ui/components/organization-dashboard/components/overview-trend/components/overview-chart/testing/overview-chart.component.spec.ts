@@ -4,10 +4,11 @@ import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import { OrganizationDashboardOverviewTrendStore } from '@features/organization/state/organization-dashboard';
 import { OverviewChart } from '../overview-chart.component';
 
-const mockAligned = { labels: [], datasets: [[], [], []] };
+const mockAligned = { labels: ['Apr 1'], datasets: [[1], [1], [1]] };
 
 const mockStore = {
   isQueryLoading: signal(false),
+  queryHasError: signal(false),
   queryData: signal(null),
   alignedTrendData: signal(mockAligned),
 };

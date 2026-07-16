@@ -50,6 +50,7 @@ describe('FacilityListPage', () => {
     totalRootFacilities: signal<number>(0),
     isLoadingRootFacilities: signal<boolean>(false),
     isRootEmpty: signal<boolean>(true),
+    rootListCallState: signal({ status: 'success' as const }),
     loadRootFacilities: vi.fn(),
     archive: vi.fn(),
   };
@@ -67,6 +68,7 @@ describe('FacilityListPage', () => {
     mockFacilityStore.totalRootFacilities.set(0);
     mockFacilityStore.isLoadingRootFacilities.set(false);
     mockFacilityStore.isRootEmpty.set(true);
+    mockFacilityStore.rootListCallState.set({ status: 'success' });
     mockFacilityStore.loadRootFacilities.mockReset();
     mockFacilityStore.archive.mockReset();
 

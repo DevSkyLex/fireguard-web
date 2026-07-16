@@ -156,16 +156,16 @@ export class MetricCard {
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
       class:
-        'h-full flex flex-col gap-4 border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
+        'h-full flex flex-col gap-4 border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none!',
     },
     body: {
       class: 'p-0! flex flex-col flex-1',
     },
     content: {
-      class: 'px-4 pb-4',
+      class: 'px-4 pb-4 sm:px-5 sm:pb-5',
     },
     header: {
-      class: 'px-4 pt-4',
+      class: 'px-4 pt-4 sm:px-5 sm:pt-5',
     },
     footer: {
       class:

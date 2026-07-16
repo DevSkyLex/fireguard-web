@@ -6,7 +6,8 @@ import { InspectionsChart } from '../inspections-chart.component';
 
 const mockStore = {
   isQueryLoading: signal(false),
-  queryData: signal(null),
+  queryHasError: signal(false),
+  queryData: signal({ series: [{ bucket: '2026-04-01', value: 1 }] }),
   compareEnabled: signal(false),
   selectedInspectionResult: signal(null),
   selectedInspectionStatus: signal(null),
@@ -31,7 +32,6 @@ describe('InspectionsChart', () => {
 
   function createComponent(loading = false) {
     mockStore.isQueryLoading.set(loading);
-    mockStore.queryData.set(null);
     const fixture = TestBed.createComponent(InspectionsChart);
     fixture.detectChanges();
     return fixture;

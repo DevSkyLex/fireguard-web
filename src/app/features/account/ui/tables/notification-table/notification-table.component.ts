@@ -231,9 +231,12 @@ export class NotificationTable {
    * @access protected
    * @since 1.0.0
    *
-   * @type {undefined[]}
+   * @type {{ id: string }[]}
    */
-  protected readonly skeletonItems: undefined[] = Array(this.rows);
+  protected readonly skeletonItems: { readonly id: string }[] = Array.from(
+    { length: this.rows },
+    (_, index: number) => ({ id: `notification-skeleton-${index}` }),
+  );
 
   /**
    * Property typeIcons

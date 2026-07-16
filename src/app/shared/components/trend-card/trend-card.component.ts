@@ -164,7 +164,7 @@ export class TrendCard {
   protected readonly cardPt: CardPassThroughOptions = {
     root: {
       class:
-        'h-full flex flex-col gap-4 border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-950 shadow-none!',
+        'h-full flex flex-col gap-4 border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none!',
     },
     body: {
       class: 'p-0! flex flex-col flex-1',

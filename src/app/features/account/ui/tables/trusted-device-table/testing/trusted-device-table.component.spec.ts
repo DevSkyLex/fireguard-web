@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import type { TableLazyLoadEvent } from 'primeng/table';
 import type { TrustedDeviceOutput } from '@features/auth/models';
 import { TrustedDeviceTable } from '../trusted-device-table.component';
@@ -69,7 +68,7 @@ describe('TrustedDeviceTable', () => {
   it('should show skeleton placeholders while loading', () => {
     const fixture = createComponent({ loading: true });
 
-    expect(fixture.debugElement.query(By.css('.p-skeleton'))).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.p-skeleton')).toBeTruthy();
   });
 
   it('should emit a load request with the resolved page', () => {

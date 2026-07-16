@@ -1,19 +1,23 @@
 <div
   id="error-content"
-  class="flex min-h-full flex-col items-center justify-center px-4 py-16 text-center"
+  class="mx-auto flex min-h-full max-w-xl flex-col items-center justify-center px-5 py-16 text-center sm:py-24"
 >
   <p
-    class="text-7xl leading-none font-semibold tracking-tight text-surface-300 select-none dark:text-surface-700"
+    class="grid size-16 place-items-center rounded-xl bg-surface-100 font-mono text-2xl leading-none font-semibold tracking-[-0.03em] text-surface-600 select-none dark:bg-surface-800 dark:text-surface-300"
     aria-hidden="true"
   >
     {{ code() }}
   </p>
 
-  <h1 class="mt-6 text-2xl font-semibold text-surface-900 dark:text-surface-100">
+  <h1
+    class="mt-6 text-3xl font-semibold tracking-[-0.03em] text-balance text-surface-950 dark:text-surface-50"
+  >
     {{ title() }}
   </h1>
 
-  <p class="mt-2 mb-8 max-w-sm text-sm text-surface-500 dark:text-surface-400">
+  <p
+    class="mt-2 mb-8 max-w-md text-sm leading-6 text-pretty text-surface-600 dark:text-surface-400"
+  >
     {{ description() }}
   </p>
 

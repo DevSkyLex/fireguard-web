@@ -29,14 +29,14 @@
           <div class="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-px">
             @if (loading()) {
               @for (_ of [1, 2, 3, 4]; track $index) {
-                <div class="flex flex-col gap-3 bg-surface-0 p-4 dark:bg-surface-950">
+                <div class="flex flex-col gap-3 bg-surface-0 p-4 dark:bg-surface-900">
                   <p-skeleton height="48px" />
                   <p-skeleton height="16px" width="60%" />
                 </div>
               }
             } @else {
               @for (metric of metrics(); track metric.label) {
-                <div class="flex min-w-0 flex-col gap-1 bg-surface-0 p-4 dark:bg-surface-950">
+                <div class="flex min-w-0 flex-col gap-1 bg-surface-0 p-4 dark:bg-surface-900">
                   <span class="truncate text-sm font-medium">
                     {{ metric.label }}
                   </span>

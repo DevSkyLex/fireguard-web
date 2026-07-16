@@ -46,7 +46,7 @@
             [cdkDragData]="item"
             [cdkDragDisabled]="dragDisabled()"
             [cdkDragStartDelay]="dragStartDelay"
-            class="cursor-grab rounded-md bg-surface-0 shadow-sm active:cursor-grabbing dark:bg-surface-950 dark:shadow-none"
+            class="cursor-grab rounded-md bg-surface-0 shadow-sm active:cursor-grabbing dark:bg-surface-900 dark:shadow-none"
           >
             @if (cardTemplate(); as template) {
               <ng-container *ngTemplateOutlet="template; context: { $implicit: item }" />

@@ -7,19 +7,27 @@ import { DashboardLayoutPageHeader } from '../dashboard-layout-page-header.compo
 class TestExportAction {}
 
 describe('DashboardLayoutPageHeader', () => {
-  const createComponent = (title: string | null, actions: Type<unknown>[] = []) => {
+  const createComponent = (
+    title: string | null,
+    actions: Type<unknown>[] = [],
+    description: string | null = null,
+  ) => {
     const titleSignal: WritableSignal<string | null> = signal(title);
+    const descriptionSignal: WritableSignal<string | null> = signal(description);
 
     TestBed.configureTestingModule({
       imports: [DashboardLayoutPageHeader],
       providers: [
-        { provide: DashboardPageHeaderService, useValue: { title: titleSignal, actions } },
+        {
+          provide: DashboardPageHeaderService,
+          useValue: { title: titleSignal, description: descriptionSignal, actions },
+        },
       ],
     });
 
     const fixture = TestBed.createComponent(DashboardLayoutPageHeader);
     fixture.detectChanges();
-    return { fixture, titleSignal };
+    return { fixture, titleSignal, descriptionSignal };
   };
 
   it('should render nothing when there is no title', () => {
@@ -45,5 +53,19 @@ describe('DashboardLayoutPageHeader', () => {
 
     expect(fixture.nativeElement.querySelector('test-export-action')).toBeTruthy();
     expect(fixture.nativeElement.textContent ?? '').toContain('Export');
+  });
+
+  // Every prototype page carries a title *and* a sentence saying what it is
+  // for; the banner used to render only the title.
+  it('should render the description under the title', () => {
+    const { fixture } = createComponent('Overview', [], 'Your operations at a glance.');
+
+    expect(fixture.nativeElement.textContent).toContain('Your operations at a glance.');
+  });
+
+  it('should render nothing but the title when there is no description', () => {
+    const { fixture } = createComponent('Overview');
+
+    expect(fixture.nativeElement.querySelector('p')).toBeNull();
   });
 });

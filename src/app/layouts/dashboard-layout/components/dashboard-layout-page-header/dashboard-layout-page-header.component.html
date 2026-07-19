@@ -1,12 +1,18 @@
 @if (pageHeaderService.title(); as title) {
-  <section
-    class="flex flex-col gap-4 px-3 pt-6 pb-2 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:pt-7 lg:px-8 xl:px-10"
-  >
-    <h1
-      class="text-2xl font-semibold tracking-[-0.025em] text-balance text-surface-950 dark:text-surface-50"
-    >
-      {{ title }}
-    </h1>
+  <section class="flex flex-col gap-4 px-4 pt-6 pb-2 sm:flex-row sm:items-start sm:justify-between">
+    <div class="flex min-w-0 flex-col gap-1">
+      <h1
+        class="text-2xl font-semibold tracking-[-0.025em] text-balance text-surface-950 dark:text-surface-50"
+      >
+        {{ title }}
+      </h1>
+
+      @if (pageHeaderService.description(); as description) {
+        <p class="max-w-[70ch] text-sm text-pretty text-surface-600 dark:text-surface-400">
+          {{ description }}
+        </p>
+      }
+    </div>
 
     @if (pageHeaderService.actions.length) {
       <div class="flex shrink-0 flex-wrap items-center gap-2">

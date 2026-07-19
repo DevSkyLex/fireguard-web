@@ -197,6 +197,11 @@ export const ORGANIZATION_ROUTES: Routes = [
         data: {
           breadcrumb: false,
           preload: true,
+          // Deviation from the prototype, deliberately: it titles this page
+          // "Overview", but `title` also drives the browser tab, and the
+          // organization name identifies the tab far better than a word every
+          // workspace shares. The description carries the prototype's copy.
+          description: $localize`:@@org.overview.description:Your fire-safety operations at a glance across all sites.`,
         },
       },
     ],

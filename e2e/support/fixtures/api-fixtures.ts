@@ -1,3 +1,4 @@
+import { ORGANIZATION_PERMISSION_NAMES } from '../../../src/app/features/organization/models/role/organization-permission-name.model';
 /**
  * API response fixtures matching the backend transport contracts consumed by
  * `HydraApiService`. Kept as plain factory functions (not classes) so tests
@@ -267,33 +268,15 @@ export interface CurrentOrganizationMemberProfileOutputFixture {
 }
 
 /**
- * All `ORGANIZATION_PERMISSION` catalog values
- * (`src/app/features/organization/models`), granted by default so a smoke
- * test can reach any permission-gated organization page. Pass `permissions`
- * to `currentOrganizationMemberProfileOutput` to scope down for a
- * guard-denial test.
+ * Every organization permission, granted by default so a smoke test can reach
+ * any permission-gated page. Pass `permissions` to
+ * `currentOrganizationMemberProfileOutput` to scope down for a denial test.
+ *
+ * Derived from the catalog rather than hand-copied: the previous literal list
+ * had drifted 19 names behind, so a page gated on one of the missing ones
+ * rendered its *denied* branch and the test passed against the wrong UI.
  */
-export const ALL_ORGANIZATION_PERMISSIONS: ReadonlyArray<string> = [
-  'organization.dashboard.read',
-  'organization.members.read',
-  'organization.members.manage',
-  'organization.roles.read',
-  'organization.roles.manage',
-  'organization.facilities.read',
-  'organization.facilities.write',
-  'organization.equipment.read',
-  'organization.equipment.write',
-  'organization.inspection.read',
-  'organization.inspection.write',
-  'organization.interventions.read',
-  'organization.interventions.write',
-  'organization.interventions.plan',
-  'organization.interventions.execute',
-  'organization.interventions.review',
-  'organization.interventions.publish',
-  'organization.settings.write',
-  'organization.delete',
-];
+export const ALL_ORGANIZATION_PERMISSIONS: ReadonlyArray<string> = ORGANIZATION_PERMISSION_NAMES;
 
 export function currentOrganizationMemberProfileOutput(
   overrides: Partial<CurrentOrganizationMemberProfileOutputFixture> & {

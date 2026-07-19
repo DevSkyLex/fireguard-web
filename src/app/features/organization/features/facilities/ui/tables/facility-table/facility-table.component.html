@@ -1,189 +1,195 @@
 <p-menu #rowMenu [model]="rowMenuItems()" [popup]="true" appendTo="body" />
 
+<div class="mb-4 flex flex-wrap items-center gap-2.5">
+  <p-iconfield class="min-w-60 flex-1 sm:max-w-96">
+    <p-inputicon class="pi pi-search" />
+    <input
+      pInputText
+      type="text"
+      i18n-placeholder="@@facility.searchFacilities"
+      placeholder="Search facilities..."
+      [formControl]="searchControl"
+      class="w-full"
+    />
+  </p-iconfield>
+
+  <p-button
+    i18n-label="@@facility.table.filtersButton"
+    label="Filters"
+    icon="pi pi-filter"
+    severity="secondary"
+    [outlined]="true"
+    [badge]="filterBadge()"
+    (onClick)="onFilterToggle($event)"
+  />
+
+  <p-popover #filterPopover>
+    <div class="flex w-72 flex-col gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label
+          for="facility-filter-type"
+          i18n="@@facility.table.colType"
+          class="text-sm font-medium"
+          >Type</label
+        >
+        <p-select
+          inputId="facility-filter-type"
+          [options]="typeOptions"
+          [formControl]="typeControl"
+          optionLabel="label"
+          optionValue="value"
+          i18n-placeholder="@@facility.table.colType"
+          placeholder="Type"
+          size="small"
+          [showClear]="true"
+          class="w-full"
+        >
+          <ng-template pTemplate="item" let-option>
+            <span class="inline-flex items-center gap-2">
+              <i [class]="'pi ' + option.icon" aria-hidden="true"></i>
+              {{ option.label }}
+            </span>
+          </ng-template>
+
+          <ng-template pTemplate="selectedItem" let-option>
+            @if (option) {
+              <span class="inline-flex items-center gap-2">
+                <i [class]="'pi ' + option.icon" aria-hidden="true"></i>
+                {{ option.label }}
+              </span>
+            }
+          </ng-template>
+        </p-select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="facility-filter-status" i18n="@@common.status" class="text-sm font-medium"
+          >Status</label
+        >
+        <p-select
+          inputId="facility-filter-status"
+          [options]="statusOptions"
+          [formControl]="statusControl"
+          optionLabel="label"
+          optionValue="value"
+          i18n-placeholder="@@common.status"
+          placeholder="Status"
+          size="small"
+          [showClear]="true"
+          class="w-full"
+        >
+          <ng-template pTemplate="item" let-option>
+            <app-tag [descriptor]="option" variant="inline" />
+          </ng-template>
+
+          <ng-template pTemplate="selectedItem" let-option>
+            @if (option) {
+              <app-tag [descriptor]="option" variant="inline" />
+            }
+          </ng-template>
+        </p-select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label
+          for="facility-filter-code"
+          i18n="@@facility.table.colCode"
+          class="text-sm font-medium"
+          >Code</label
+        >
+        <input
+          pInputText
+          id="facility-filter-code"
+          type="text"
+          pSize="small"
+          i18n-placeholder="@@facility.table.colCode"
+          placeholder="Code"
+          [formControl]="codeControl"
+          class="w-full"
+        />
+      </div>
+
+      <div
+        class="flex items-center justify-end gap-2 border-t border-surface-200 pt-3 dark:border-surface-800"
+      >
+        <p-button
+          i18n-label="@@common.reset"
+          label="Reset"
+          severity="secondary"
+          size="small"
+          [text]="true"
+          (onClick)="onResetColumnFilters()"
+        />
+        <p-button
+          i18n-label="@@common.apply"
+          label="Apply"
+          severity="primary"
+          size="small"
+          (onClick)="onApplyColumnFilters()"
+        />
+      </div>
+    </div>
+  </p-popover>
+
+  <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+    @if (canManageFacilities()) {
+      <span
+        class="inline-flex w-full sm:w-auto"
+        [pTooltip]="createDisabled() ? createDisabledTooltip() : ''"
+        tooltipPosition="bottom"
+      >
+        <p-splitbutton
+          i18n-label="@@facility.newButton"
+          label="New facility"
+          icon="pi pi-plus"
+          severity="primary"
+          [model]="toolbarActions()"
+          (onClick)="add.emit()"
+          [disabled]="loading() || createDisabled()"
+          class="w-full sm:w-auto"
+        />
+      </span>
+    } @else {
+      <p-button
+        i18n-label="@@common.refresh"
+        label="Refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="loading()"
+        class="w-full sm:w-auto"
+        (onClick)="onRefresh()"
+      />
+
+      <p-button
+        i18n-label="@@common.clearFilters"
+        label="Clear filters"
+        icon="pi pi-filter-slash"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="loading()"
+        class="w-full sm:w-auto"
+        (onClick)="onClearFilters()"
+      />
+    }
+  </div>
+</div>
+
 <p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
-      <h2 i18n="@@facility.table.title" class="font-semibold">Facilities</h2>
+      <h2 i18n="@@facility.table.title" class="text-[15px] font-semibold tracking-[-0.01em]">
+        Facilities
+      </h2>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
-      <p-iconfield class="flex-1 sm:flex-none">
-        <p-inputicon class="pi pi-search" />
-        <input
-          pInputText
-          type="text"
-          pSize="small"
-          i18n-placeholder="@@facility.searchFacilities"
-          placeholder="Search facilities..."
-          [formControl]="searchControl"
-          class="w-full"
-        />
-      </p-iconfield>
-
-      <p-button
-        i18n-label="@@facility.table.filtersButton"
-        label="Filters"
-        icon="pi pi-filter"
-        severity="secondary"
-        size="small"
-        [outlined]="true"
-        [badge]="filterBadge()"
-        (onClick)="onFilterToggle($event)"
-        class="w-full sm:w-auto"
-      />
-
-      <p-popover #filterPopover>
-        <div class="flex w-72 flex-col gap-4">
-          <div class="flex flex-col gap-1.5">
-            <label
-              for="facility-filter-type"
-              i18n="@@facility.table.colType"
-              class="text-sm font-medium"
-              >Type</label
-            >
-            <p-select
-              inputId="facility-filter-type"
-              [options]="typeOptions"
-              [formControl]="typeControl"
-              optionLabel="label"
-              optionValue="value"
-              i18n-placeholder="@@facility.table.colType"
-              placeholder="Type"
-              size="small"
-              [showClear]="true"
-              class="w-full"
-            >
-              <ng-template pTemplate="item" let-option>
-                <span class="inline-flex items-center gap-2">
-                  <i [class]="'pi ' + option.icon" aria-hidden="true"></i>
-                  {{ option.label }}
-                </span>
-              </ng-template>
-
-              <ng-template pTemplate="selectedItem" let-option>
-                @if (option) {
-                  <span class="inline-flex items-center gap-2">
-                    <i [class]="'pi ' + option.icon" aria-hidden="true"></i>
-                    {{ option.label }}
-                  </span>
-                }
-              </ng-template>
-            </p-select>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label for="facility-filter-status" i18n="@@common.status" class="text-sm font-medium"
-              >Status</label
-            >
-            <p-select
-              inputId="facility-filter-status"
-              [options]="statusOptions"
-              [formControl]="statusControl"
-              optionLabel="label"
-              optionValue="value"
-              i18n-placeholder="@@common.status"
-              placeholder="Status"
-              size="small"
-              [showClear]="true"
-              class="w-full"
-            >
-              <ng-template pTemplate="item" let-option>
-                <app-tag [descriptor]="option" variant="inline" />
-              </ng-template>
-
-              <ng-template pTemplate="selectedItem" let-option>
-                @if (option) {
-                  <app-tag [descriptor]="option" variant="inline" />
-                }
-              </ng-template>
-            </p-select>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label
-              for="facility-filter-code"
-              i18n="@@facility.table.colCode"
-              class="text-sm font-medium"
-              >Code</label
-            >
-            <input
-              pInputText
-              id="facility-filter-code"
-              type="text"
-              pSize="small"
-              i18n-placeholder="@@facility.table.colCode"
-              placeholder="Code"
-              [formControl]="codeControl"
-              class="w-full"
-            />
-          </div>
-
-          <div
-            class="flex items-center justify-end gap-2 border-t border-surface-200 pt-3 dark:border-surface-800"
-          >
-            <p-button
-              i18n-label="@@common.reset"
-              label="Reset"
-              severity="secondary"
-              size="small"
-              [text]="true"
-              (onClick)="onResetColumnFilters()"
-            />
-            <p-button
-              i18n-label="@@common.apply"
-              label="Apply"
-              severity="primary"
-              size="small"
-              (onClick)="onApplyColumnFilters()"
-            />
-          </div>
-        </div>
-      </p-popover>
-
-      @if (canManageFacilities()) {
-        <span
-          class="inline-flex w-full sm:w-auto"
-          [pTooltip]="createDisabled() ? createDisabledTooltip() : ''"
-          tooltipPosition="bottom"
-        >
-          <p-splitbutton
-            i18n-label="@@facility.newButton"
-            label="New facility"
-            icon="pi pi-plus"
-            severity="primary"
-            [model]="toolbarActions()"
-            size="small"
-            (onClick)="add.emit()"
-            [disabled]="loading() || createDisabled()"
-            class="w-full sm:w-auto"
-          />
-        </span>
-      } @else {
-        <p-button
-          i18n-label="@@common.refresh"
-          label="Refresh"
-          icon="pi pi-refresh"
-          severity="secondary"
-          size="small"
-          [outlined]="true"
-          [disabled]="loading()"
-          class="w-full sm:w-auto"
-          (onClick)="onRefresh()"
-        />
-
-        <p-button
-          i18n-label="@@common.clearFilters"
-          label="Clear filters"
-          icon="pi pi-filter-slash"
-          severity="secondary"
-          size="small"
-          [outlined]="true"
-          [disabled]="loading()"
-          class="w-full sm:w-auto"
-          (onClick)="onClearFilters()"
-        />
-      }
-    </div>
+    @if (total() > 0) {
+      <span
+        i18n="@@facility.table.resultCount"
+        class="text-sm text-surface-600 tabular-nums dark:text-surface-400"
+        >{total(), plural, =1 {1 facility} other {{{ total() }} facilities}}</span
+      >
+    }
   </ng-template>
 
   <ng-template pTemplate="content">
@@ -203,7 +209,7 @@
       [showCurrentPageReport]="true"
       i18n-currentPageReportTemplate="@@facility.table.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} facilities"
-      [stripedRows]="true"
+      [rowHover]="true"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -261,12 +267,9 @@
               </td>
             }
             <td>
-              <div class="flex items-center gap-3">
-                <p-skeleton shape="square" size="2.25rem" />
-                <div class="flex flex-col gap-1.5">
-                  <p-skeleton width="11rem" height="0.875rem" />
-                  <p-skeleton width="8rem" height="0.75rem" />
-                </div>
+              <div class="flex flex-col gap-1.5">
+                <p-skeleton width="11rem" height="0.875rem" />
+                <p-skeleton width="8rem" height="0.75rem" />
               </div>
             </td>
             <td class="hidden md:table-cell"><p-skeleton width="5rem" height="0.875rem" /></td>
@@ -280,35 +283,28 @@
       </ng-template>
 
       <ng-template pTemplate="body" let-facility>
-        <tr>
+        <tr class="group">
           @if (canManageFacilities()) {
             <td class="pl-5">
               <p-tableCheckbox [value]="facility" />
             </td>
           }
           <td>
-            <div class="flex min-w-0 items-center gap-3">
-              <p-avatar
-                [icon]="getTypeIcon(facility.type)"
-                shape="square"
-                size="normal"
-                class="rounded-md bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-              />
-
-              <div class="flex min-w-0 flex-col">
-                <button
-                  type="button"
-                  class="w-fit max-w-full cursor-pointer truncate text-left font-medium text-surface-900 transition-colors hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400"
-                  (click)="view.emit(facility)"
+            <div class="flex min-w-0 flex-col gap-0.5">
+              <button
+                type="button"
+                class="w-fit max-w-full cursor-pointer truncate text-left font-semibold text-surface-950 transition-colors duration-150 hover:text-primary-600 dark:text-surface-50 dark:hover:text-primary-400"
+                (click)="view.emit(facility)"
+              >
+                {{ facility.name }}
+              </button>
+              @if (facility.address) {
+                <span
+                  class="truncate text-xs font-semibold tracking-[0.04em] text-surface-500 tabular-nums dark:text-surface-400"
                 >
-                  {{ facility.name }}
-                </button>
-                @if (facility.address) {
-                  <span class="truncate text-xs text-surface-500 dark:text-surface-400">
-                    {{ facility.address }}
-                  </span>
-                }
-              </div>
+                  {{ facility.address }}
+                </span>
+              }
             </div>
           </td>
           <td class="hidden md:table-cell">
@@ -321,7 +317,8 @@
             }
           </td>
           <td class="hidden sm:table-cell">
-            <span class="text-surface-600 dark:text-surface-400">
+            <span class="inline-flex items-center gap-1.5 text-surface-600 dark:text-surface-400">
+              <i [class]="getTypeIcon(facility.type) + ' text-xs'" aria-hidden="true"></i>
               {{ facility.type }}
             </span>
           </td>
@@ -342,7 +339,7 @@
             </span>
           </td>
           <td class="hidden text-right lg:table-cell">
-            <span class="text-surface-500 dark:text-surface-400">
+            <span class="text-surface-600 tabular-nums dark:text-surface-400">
               {{ facility.updatedAt | date: 'mediumDate' }}
             </span>
           </td>
@@ -355,6 +352,7 @@
               i18n-ariaLabel="@@facility.table.rowActions"
               ariaLabel="Facility actions"
               (onClick)="onRowMenuToggle($event, facility)"
+              class="transition-opacity duration-150 pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100"
             />
           </td>
         </tr>

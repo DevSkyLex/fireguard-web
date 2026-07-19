@@ -2,47 +2,56 @@
   id="interventions"
   class="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-6 overflow-y-auto p-3 sm:p-6 md:p-7 lg:p-8"
 >
-  <header class="flex flex-wrap items-center justify-between gap-3">
-    <p class="text-sm text-surface-500 dark:text-surface-400">
-      <ng-container i18n="@@intervention.list.count">{loadedCount(), plural,
-        =1 {1 intervention}
-        other {{{ loadedCount() }} interventions}
-      }</ng-container>
-    </p>
-
-    <div class="flex flex-wrap items-center gap-2">
-      <p-iconfield class="w-full sm:w-auto">
-        <p-inputicon class="pi pi-search" />
-        <input
-          pInputText
-          type="text"
-          pSize="small"
-          i18n-placeholder="@@intervention.list.searchPlaceholder"
-          placeholder="Search interventions..."
-          [formControl]="searchControl"
-          class="w-full sm:w-[210px]"
-        />
-      </p-iconfield>
-
-      <p-selectbutton
-        [options]="viewOptions"
-        [ngModel]="view()"
-        (onChange)="onViewChange($event)"
-        optionValue="value"
-        optionLabel="label"
-        [allowEmpty]="false"
-        size="small"
-      >
-        <ng-template #item let-item>
+  <header class="flex flex-wrap items-center gap-2.5">
+    <div
+      role="tablist"
+      aria-label="Interventions view"
+      i18n-aria-label="@@intervention.list.viewTabs"
+      class="inline-flex shrink-0 gap-0.5 rounded-md border border-surface-200 bg-surface-100 p-0.5 dark:border-surface-800 dark:bg-surface-900"
+    >
+      @for (option of viewOptions; track option.value) {
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="view() === option.value"
+          class="inline-flex h-[30px] cursor-pointer items-center gap-1.5 rounded px-3 text-[13px] font-medium transition-colors duration-150 motion-reduce:transition-none"
+          [class]="
+            view() === option.value
+              ? 'bg-surface-0 text-surface-950 shadow-sm dark:bg-surface-800 dark:text-surface-50'
+              : 'text-surface-600 hover:text-surface-950 dark:text-surface-400 dark:hover:text-surface-50'
+          "
+          (click)="selectView(option.value)"
+        >
           <i
-            [class]="item.icon"
-            [pTooltip]="item.label"
-            tooltipPosition="bottom"
+            class="text-xs"
+            [class]="option.icon + (view() === option.value ? ' text-primary' : '')"
             aria-hidden="true"
           ></i>
-          <span class="sr-only">{{ item.label }}</span>
-        </ng-template>
-      </p-selectbutton>
+          <span>{{ option.label }}</span>
+        </button>
+      }
+    </div>
+
+    <p-iconfield class="w-full min-w-0 flex-1 sm:w-auto sm:max-w-96 sm:min-w-60">
+      <p-inputicon class="pi pi-search" />
+      <input
+        pInputText
+        type="text"
+        pSize="small"
+        i18n-placeholder="@@intervention.list.searchPlaceholder"
+        placeholder="Search interventions..."
+        [formControl]="searchControl"
+        class="w-full"
+      />
+    </p-iconfield>
+
+    <div class="ml-auto flex shrink-0 items-center gap-3">
+      <p class="hidden text-sm text-surface-600 tabular-nums lg:block dark:text-surface-400">
+        <ng-container i18n="@@intervention.list.count">{loadedCount(), plural,
+          =1 {1 intervention}
+          other {{{ loadedCount() }} interventions}
+        }</ng-container>
+      </p>
 
       <p-button
         i18n-label="@@intervention.list.newButton"
@@ -126,7 +135,7 @@
       >
         @for (column of [1, 2, 3, 4]; track column) {
           <div
-            class="flex w-full flex-col gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3 sm:w-72 sm:shrink-0 dark:border-surface-800 dark:bg-surface-900/40"
+            class="flex w-full flex-col gap-3 rounded-xl border border-surface-200 bg-surface-100 p-3 sm:w-[296px] sm:shrink-0 dark:border-surface-800 dark:bg-surface-900"
           >
             <p-skeleton width="7rem" height="1.25rem" borderRadius="0.5rem" />
             <app-skeleton
@@ -209,7 +218,7 @@
       <ng-template appGroupedListHeader let-group let-count="count">
         <div class="flex items-center gap-2">
           <app-intervention-tag kind="status" [value]="group.id" />
-          <span class="text-sm text-surface-500 tabular-nums dark:text-surface-400">{{
+          <span class="text-xs font-semibold text-surface-500 tabular-nums dark:text-surface-400">{{
             count
           }}</span>
         </div>
@@ -218,15 +227,16 @@
       <ng-template appGroupedListRow let-item>
         @let vm = asItem(item);
         <div class="flex items-center gap-3">
-          <app-intervention-priority-icon [priority]="vm.intervention.priority" />
-          <span
-            class="w-16 shrink-0 font-mono text-sm text-surface-500 tabular-nums dark:text-surface-400"
-            >FG-{{ vm.intervention.number }}</span
-          >
-          <span
-            class="min-w-0 flex-1 truncate text-[0.9375rem] font-medium text-surface-900 dark:text-surface-100"
-            >{{ vm.intervention.name }}</span
-          >
+          <app-intervention-priority-icon class="shrink-0" [priority]="vm.intervention.priority" />
+          <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span
+              class="text-xs font-semibold tracking-[0.04em] text-surface-500 tabular-nums dark:text-surface-400"
+              >FG-{{ vm.intervention.number }}</span
+            >
+            <span class="truncate text-sm font-semibold text-surface-950 dark:text-surface-50">{{
+              vm.intervention.name
+            }}</span>
+          </div>
 
           <div class="hidden max-w-40 flex-wrap items-center gap-1 md:flex">
             @for (label of vm.intervention.labels.slice(0, 3); track label.id) {
@@ -239,14 +249,23 @@
             }
           </div>
 
+          @if (vm.siteName) {
+            <span
+              class="hidden w-44 shrink-0 truncate text-sm text-surface-600 xl:block dark:text-surface-400"
+              >{{ vm.siteName }}</span
+            >
+          } @else {
+            <span class="hidden w-44 shrink-0 xl:block" aria-hidden="true"></span>
+          }
+
           <span
-            class="hidden w-10 shrink-0 items-center justify-end gap-1 text-sm text-surface-500 tabular-nums sm:flex dark:text-surface-400"
+            class="hidden w-10 shrink-0 items-center justify-end gap-1 text-sm text-surface-600 tabular-nums sm:flex dark:text-surface-400"
           >
             <i class="pi pi-building text-xs" aria-hidden="true"></i
             >{{ vm.intervention.facilitiesCount }}
           </span>
           <span
-            class="hidden w-10 shrink-0 items-center justify-end gap-1 text-sm text-surface-500 tabular-nums sm:flex dark:text-surface-400"
+            class="hidden w-10 shrink-0 items-center justify-end gap-1 text-sm text-surface-600 tabular-nums sm:flex dark:text-surface-400"
           >
             <i class="pi pi-box text-xs" aria-hidden="true"></i>{{ vm.intervention.equipmentCount }}
           </span>
@@ -254,9 +273,10 @@
           @if (vm.intervention.dueAt) {
             <span
               class="hidden w-24 shrink-0 text-right text-sm tabular-nums sm:block"
+              [class.font-semibold]="vm.isOverdue"
               [class.text-red-600]="vm.isOverdue"
               [class.dark:text-red-400]="vm.isOverdue"
-              [class.text-surface-500]="!vm.isOverdue"
+              [class.text-surface-600]="!vm.isOverdue"
               [class.dark:text-surface-400]="!vm.isOverdue"
               >{{ vm.intervention.dueAt | date: 'mediumDate' }}</span
             >
@@ -289,13 +309,20 @@
       (itemDropped)="onItemDropped($event)"
     >
       <ng-template appBoardColumnHeader let-column let-count="count">
-        <div
-          class="flex items-center justify-between text-sm font-medium text-surface-700 dark:text-surface-200"
-        >
-          <span>{{ boardColumnLabel(column.id) }}</span>
-          <span class="text-sm text-surface-500 tabular-nums dark:text-surface-400">{{
-            count
-          }}</span>
+        <div class="flex items-center gap-2">
+          <span
+            class="size-2 shrink-0 rounded-full"
+            [class]="boardColumnDotClass(column.id)"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="text-[13px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+            >{{ boardColumnLabel(column.id) }}</span
+          >
+          <span
+            class="min-w-5 rounded-full border border-surface-200 bg-surface-0 px-1.5 py-px text-center text-[11px] font-semibold text-surface-500 tabular-nums dark:border-surface-700 dark:bg-surface-800 dark:text-surface-400"
+            >{{ count }}</span
+          >
         </div>
       </ng-template>
 
@@ -309,48 +336,69 @@
           (keydown.enter)="onView(vm.intervention)"
           (keydown.space)="onView(vm.intervention); $event.preventDefault()"
         >
-          <div class="flex items-center justify-between gap-2">
-            <span class="font-mono text-sm text-surface-500 tabular-nums dark:text-surface-400"
+          <div class="flex items-center gap-2">
+            <span
+              class="text-xs font-semibold tracking-[0.04em] text-surface-500 tabular-nums dark:text-surface-400"
               >FG-{{ vm.intervention.number }}</span
             >
-            <app-intervention-priority-icon [priority]="vm.intervention.priority" />
+            <app-intervention-priority-icon
+              class="ml-auto shrink-0"
+              [priority]="vm.intervention.priority"
+            />
           </div>
 
-          <span class="line-clamp-2 text-sm font-medium text-surface-900 dark:text-surface-100">{{
-            vm.intervention.name
-          }}</span>
+          <span
+            class="line-clamp-2 text-[13px] leading-[1.35] font-semibold text-surface-950 dark:text-surface-50"
+            >{{ vm.intervention.name }}</span
+          >
 
-          <div class="flex items-center justify-between gap-2">
+          @if (vm.siteName) {
             <span
-              class="flex items-center gap-1 text-sm text-surface-500 tabular-nums dark:text-surface-400"
+              class="flex min-w-0 items-center gap-1.5 text-xs text-surface-600 dark:text-surface-400"
             >
-              <i class="pi pi-building text-xs" aria-hidden="true"></i
-              >{{ vm.intervention.facilitiesCount }}
+              <i
+                class="pi pi-map-marker text-[0.65rem] text-surface-500 dark:text-surface-400"
+                aria-hidden="true"
+              ></i>
+              <span class="truncate">{{ vm.siteName }}</span>
             </span>
-            @if (vm.intervention.dueAt) {
-              <span
-                class="text-sm tabular-nums"
-                [class.text-red-600]="vm.isOverdue"
-                [class.dark:text-red-400]="vm.isOverdue"
-                [class.text-surface-500]="!vm.isOverdue"
-                [class.dark:text-surface-400]="!vm.isOverdue"
-                >{{ vm.intervention.dueAt | date: 'mediumDate' }}</span
-              >
-            }
-          </div>
+          }
 
-          <div class="flex items-center justify-between gap-2">
-            <app-avatar-stack [people]="vm.people" [max]="3" />
-            <div class="flex max-w-36 flex-wrap items-center justify-end gap-1">
-              @for (label of vm.intervention.labels.slice(0, 2); track label.id) {
-                <app-intervention-label-chip [label]="label" />
-              }
-              @if (vm.intervention.labels.length > 2) {
-                <span class="text-sm text-surface-500 dark:text-surface-400"
-                  >+{{ vm.intervention.labels.length - 2 }}</span
+          <div class="mt-0.5 flex items-center gap-2">
+            @if (vm.intervention.dueAt) {
+              @if (vm.isOverdue) {
+                <span
+                  class="flex items-center gap-1.5 text-xs font-semibold text-red-600 dark:text-red-400"
                 >
+                  <i class="pi pi-exclamation-triangle text-[0.65rem]" aria-hidden="true"></i>
+                  <span i18n="@@intervention.board.dueOverdue">Overdue</span>
+                  <span class="tabular-nums"
+                    >· {{ vm.intervention.dueAt | date: 'mediumDate' }}</span
+                  >
+                </span>
+              } @else if (vm.isDueSoon) {
+                <span
+                  class="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400"
+                >
+                  <i class="pi pi-clock text-[0.65rem]" aria-hidden="true"></i>
+                  <span i18n="@@intervention.board.dueSoon">Due soon</span>
+                  <span class="tabular-nums"
+                    >· {{ vm.intervention.dueAt | date: 'mediumDate' }}</span
+                  >
+                </span>
+              } @else {
+                <span
+                  class="flex items-center gap-1.5 text-xs font-medium text-surface-600 tabular-nums dark:text-surface-400"
+                >
+                  <i
+                    class="pi pi-calendar text-[0.65rem] text-surface-500 dark:text-surface-400"
+                    aria-hidden="true"
+                  ></i>
+                  {{ vm.intervention.dueAt | date: 'mediumDate' }}
+                </span>
               }
-            </div>
+            }
+            <app-avatar-stack class="ml-auto shrink-0" [people]="vm.people" [max]="3" />
           </div>
         </div>
       </ng-template>

@@ -20,7 +20,6 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
-import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -69,7 +68,6 @@ import type { FacilityTypeIconMap, FacilityTypeOption } from './models';
 @Component({
   selector: 'app-facility-table',
   imports: [
-    AvatarModule,
     ButtonModule,
     DatePipe,
     EmptyState,

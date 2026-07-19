@@ -49,11 +49,11 @@
     <p-tabs [value]="activeTab()" [pt]="tabsPt" (valueChange)="activeTab.set(+$event!)">
       <p-tablist [pt]="tabListPt">
         <p-tab [value]="0"
-          ><i class="pi pi-chart-line mr-2 text-sm"></i
+          ><i class="pi pi-chart-line mr-2 text-sm" aria-hidden="true"></i
           ><ng-container i18n="@@inspection.tab.overview">Overview</ng-container></p-tab
         >
         <p-tab [value]="1"
-          ><i class="pi pi-exclamation-triangle mr-2 text-sm"></i
+          ><i class="pi pi-exclamation-triangle mr-2 text-sm" aria-hidden="true"></i
           ><ng-container i18n="@@inspection.tab.nc">Non-conformities</ng-container></p-tab
         >
       </p-tablist>
@@ -95,22 +95,40 @@
   @if (selectedNonConformity(); as nonConformity) {
     <dl class="grid gap-4 sm:grid-cols-2">
       <div class="sm:col-span-2">
-        <dt i18n="@@inspection.ncDialog.description" class="text-xs text-surface-500">
+        <dt
+          i18n="@@inspection.ncDialog.description"
+          class="text-xs text-surface-500 dark:text-surface-400"
+        >
           Description
         </dt>
-        <dd class="font-medium">{{ nonConformity.description }}</dd>
+        <dd class="mt-1 font-medium">{{ nonConformity.description }}</dd>
       </div>
       <div>
-        <dt i18n="@@inspection.ncDialog.severity" class="text-xs text-surface-500">Severity</dt>
-        <dd><app-tag [descriptor]="severityDescriptor(nonConformity.severity)" /></dd>
+        <dt
+          i18n="@@inspection.ncDialog.severity"
+          class="text-xs text-surface-500 dark:text-surface-400"
+        >
+          Severity
+        </dt>
+        <dd class="mt-1"><app-tag [descriptor]="severityDescriptor(nonConformity.severity)" /></dd>
       </div>
       <div>
-        <dt i18n="@@inspection.ncDialog.status" class="text-xs text-surface-500">Status</dt>
-        <dd><app-tag [descriptor]="statusDescriptor(nonConformity.status)" /></dd>
+        <dt
+          i18n="@@inspection.ncDialog.status"
+          class="text-xs text-surface-500 dark:text-surface-400"
+        >
+          Status
+        </dt>
+        <dd class="mt-1"><app-tag [descriptor]="statusDescriptor(nonConformity.status)" /></dd>
       </div>
       <div class="sm:col-span-2">
-        <dt i18n="@@inspection.ncDialog.notes" class="text-xs text-surface-500">Notes</dt>
-        <dd class="whitespace-pre-line">{{ nonConformity.notes || noNotesLabel }}</dd>
+        <dt
+          i18n="@@inspection.ncDialog.notes"
+          class="text-xs text-surface-500 dark:text-surface-400"
+        >
+          Notes
+        </dt>
+        <dd class="mt-1 whitespace-pre-line">{{ nonConformity.notes || noNotesLabel }}</dd>
       </div>
     </dl>
   }

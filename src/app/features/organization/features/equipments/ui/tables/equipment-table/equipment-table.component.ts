@@ -20,7 +20,6 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MenuItem, PrimeIcons } from 'primeng/api';
-import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -69,7 +68,6 @@ import { EQUIPMENT_FILTER_MAPPING } from './constants';
 @Component({
   selector: 'app-equipment-table',
   imports: [
-    AvatarModule,
     ButtonModule,
     DatePipe,
     EmptyState,
@@ -1029,30 +1027,6 @@ export class EquipmentTable implements OnInit {
    */
   protected getReference(equipment: EquipmentOutput): string {
     return [equipment.brand, equipment.model].filter(Boolean).join(' ').trim() || 'No reference';
-  }
-
-  /**
-   * Method getEquipmentIcon
-   *
-   * @description
-   * Resolves a PrimeIcon matching the equipment type.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {EquipmentOutput} equipment Equipment row rendered by the table.
-   *
-   * @returns {string} PrimeIcon class.
-   */
-  protected getEquipmentIcon(equipment: EquipmentOutput): string {
-    const label: string = `${equipment.type} ${equipment.subType ?? ''}`.toLowerCase();
-
-    if (label.includes('detector') || label.includes('alarm')) return PrimeIcons.BELL;
-    if (label.includes('exting')) return PrimeIcons.SHIELD;
-    if (label.includes('hydrant') || label.includes('sprinkler')) return PrimeIcons.BOLT;
-    if (label.includes('camera')) return PrimeIcons.VIDEO;
-
-    return PrimeIcons.BOX;
   }
 
   /**

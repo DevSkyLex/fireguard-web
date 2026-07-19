@@ -1,163 +1,167 @@
 <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
+<div class="mb-4 flex flex-wrap items-center gap-2.5">
+  <p-iconfield class="min-w-60 flex-1 sm:max-w-96">
+    <p-inputicon class="pi pi-search" />
+    <input
+      pInputText
+      type="text"
+      placeholder="Search equipments..."
+      i18n-placeholder="@@equipment.table.searchPlaceholder"
+      [formControl]="searchControl"
+      class="w-full"
+    />
+  </p-iconfield>
+
+  <p-button
+    label="Filters"
+    i18n-label="@@equipment.table.filtersButton"
+    icon="pi pi-filter"
+    severity="secondary"
+    [outlined]="true"
+    [badge]="filterBadge()"
+    (onClick)="onFilterToggle($event)"
+  />
+
+  <p-popover #filterPopover>
+    <div class="flex w-72 flex-col gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label i18n="@@common.status" class="text-sm font-medium">Status</label>
+        <p-select
+          [options]="statusOptions"
+          [formControl]="statusControl"
+          optionLabel="label"
+          optionValue="value"
+          i18n-placeholder="@@common.status"
+          placeholder="Status"
+          size="small"
+          [showClear]="true"
+          class="w-full"
+        >
+          <ng-template pTemplate="item" let-option>
+            <app-tag [descriptor]="option" variant="inline" />
+          </ng-template>
+
+          <ng-template pTemplate="selectedItem" let-option>
+            @if (option) {
+              <app-tag [descriptor]="option" variant="inline" />
+            }
+          </ng-template>
+        </p-select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label i18n="@@equipment.form.type" class="text-sm font-medium">Type</label>
+        <p-select
+          [options]="typeOptions"
+          [formControl]="typeControl"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          [showClear]="true"
+          size="small"
+          class="w-full"
+          placeholder="Any type"
+          i18n-placeholder="@@equipment.table.filterTypePlaceholder"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label i18n="@@equipment.table.filterSubType" class="text-sm font-medium">Sub-type</label>
+        <input pInputText [formControl]="subTypeControl" size="small" class="w-full" />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label i18n="@@equipment.table.filterBrand" class="text-sm font-medium">Brand</label>
+        <input pInputText [formControl]="brandControl" size="small" class="w-full" />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label i18n="@@equipment.table.filterModel" class="text-sm font-medium">Model</label>
+        <input pInputText [formControl]="modelControl" size="small" class="w-full" />
+      </div>
+
+      <div
+        class="flex items-center justify-end gap-2 border-t border-surface-200 pt-3 dark:border-surface-800"
+      >
+        <p-button
+          label="Reset"
+          i18n-label="@@common.reset"
+          severity="secondary"
+          size="small"
+          [text]="true"
+          (onClick)="onResetColumnFilters()"
+        />
+        <p-button
+          label="Apply"
+          i18n-label="@@common.apply"
+          severity="primary"
+          size="small"
+          (onClick)="onApplyColumnFilters()"
+        />
+      </div>
+    </div>
+  </p-popover>
+
+  <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+    @if (canManageEquipment()) {
+      <span
+        class="inline-flex w-full sm:w-auto"
+        [pTooltip]="createDisabled() ? createDisabledTooltip() : ''"
+        tooltipPosition="bottom"
+      >
+        <p-splitbutton
+          label="New equipment"
+          i18n-label="@@equipment.newButton"
+          icon="pi pi-plus"
+          severity="primary"
+          [model]="toolbarActions()"
+          (onClick)="add.emit()"
+          [disabled]="loading() || createDisabled()"
+          class="w-full sm:w-auto"
+        />
+      </span>
+    } @else {
+      <p-button
+        label="Refresh"
+        i18n-label="@@common.refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="loading()"
+        class="w-full sm:w-auto"
+        (onClick)="onRefresh()"
+      />
+
+      <p-button
+        label="Clear filters"
+        i18n-label="@@common.clearFilters"
+        icon="pi pi-filter-slash"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="loading()"
+        class="w-full sm:w-auto"
+        (onClick)="onClearFilters()"
+      />
+    }
+  </div>
+</div>
+
 <p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
-      <h2 class="font-semibold" i18n="@@equipment.table.title">Equipments</h2>
+      <h2 class="text-[15px] font-semibold tracking-[-0.01em]" i18n="@@equipment.table.title">
+        Equipments
+      </h2>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
-      <p-iconfield class="flex-1 sm:flex-none">
-        <p-inputicon class="pi pi-search" />
-        <input
-          pInputText
-          type="text"
-          pSize="small"
-          placeholder="Search equipments..."
-          i18n-placeholder="@@equipment.table.searchPlaceholder"
-          [formControl]="searchControl"
-          class="w-full"
-        />
-      </p-iconfield>
-
-      <p-button
-        label="Filters"
-        i18n-label="@@equipment.table.filtersButton"
-        icon="pi pi-filter"
-        severity="secondary"
-        size="small"
-        [outlined]="true"
-        [badge]="filterBadge()"
-        (onClick)="onFilterToggle($event)"
-        class="w-full sm:w-auto"
-      />
-
-      <p-popover #filterPopover>
-        <div class="flex w-72 flex-col gap-4">
-          <div class="flex flex-col gap-1.5">
-            <label i18n="@@common.status" class="text-sm font-medium">Status</label>
-            <p-select
-              [options]="statusOptions"
-              [formControl]="statusControl"
-              optionLabel="label"
-              optionValue="value"
-              i18n-placeholder="@@common.status"
-              placeholder="Status"
-              size="small"
-              [showClear]="true"
-              class="w-full"
-            >
-              <ng-template pTemplate="item" let-option>
-                <app-tag [descriptor]="option" variant="inline" />
-              </ng-template>
-
-              <ng-template pTemplate="selectedItem" let-option>
-                @if (option) {
-                  <app-tag [descriptor]="option" variant="inline" />
-                }
-              </ng-template>
-            </p-select>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label i18n="@@equipment.form.type" class="text-sm font-medium">Type</label>
-            <p-select
-              [options]="typeOptions"
-              [formControl]="typeControl"
-              optionLabel="label"
-              optionValue="value"
-              [filter]="true"
-              [showClear]="true"
-              size="small"
-              class="w-full"
-              placeholder="Any type"
-              i18n-placeholder="@@equipment.table.filterTypePlaceholder"
-            />
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label i18n="@@equipment.table.filterSubType" class="text-sm font-medium"
-              >Sub-type</label
-            >
-            <input pInputText [formControl]="subTypeControl" size="small" class="w-full" />
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label i18n="@@equipment.table.filterBrand" class="text-sm font-medium">Brand</label>
-            <input pInputText [formControl]="brandControl" size="small" class="w-full" />
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label i18n="@@equipment.table.filterModel" class="text-sm font-medium">Model</label>
-            <input pInputText [formControl]="modelControl" size="small" class="w-full" />
-          </div>
-
-          <div
-            class="flex items-center justify-end gap-2 border-t border-surface-200 pt-3 dark:border-surface-800"
-          >
-            <p-button
-              label="Reset"
-              i18n-label="@@common.reset"
-              severity="secondary"
-              size="small"
-              [text]="true"
-              (onClick)="onResetColumnFilters()"
-            />
-            <p-button
-              label="Apply"
-              i18n-label="@@common.apply"
-              severity="primary"
-              size="small"
-              (onClick)="onApplyColumnFilters()"
-            />
-          </div>
-        </div>
-      </p-popover>
-
-      @if (canManageEquipment()) {
-        <span
-          class="inline-flex w-full sm:w-auto"
-          [pTooltip]="createDisabled() ? createDisabledTooltip() : ''"
-          tooltipPosition="bottom"
-        >
-          <p-splitbutton
-            label="New equipment"
-            i18n-label="@@equipment.newButton"
-            icon="pi pi-plus"
-            severity="primary"
-            [model]="toolbarActions()"
-            size="small"
-            (onClick)="add.emit()"
-            [disabled]="loading() || createDisabled()"
-            class="w-full sm:w-auto"
-          />
-        </span>
-      } @else {
-        <p-button
-          label="Refresh"
-          i18n-label="@@common.refresh"
-          icon="pi pi-refresh"
-          severity="secondary"
-          size="small"
-          [outlined]="true"
-          [disabled]="loading()"
-          class="w-full sm:w-auto"
-          (onClick)="onRefresh()"
-        />
-
-        <p-button
-          label="Clear filters"
-          i18n-label="@@common.clearFilters"
-          icon="pi pi-filter-slash"
-          severity="secondary"
-          size="small"
-          [outlined]="true"
-          [disabled]="loading()"
-          class="w-full sm:w-auto"
-          (onClick)="onClearFilters()"
-        />
-      }
-    </div>
+    @if (total() > 0) {
+      <span
+        i18n="@@equipment.table.resultCount"
+        class="text-sm text-surface-600 tabular-nums dark:text-surface-400"
+        >{total(), plural, =1 {1 equipment} other {{{ total() }} equipments}}</span
+      >
+    }
   </ng-template>
 
   <ng-template pTemplate="content">
@@ -177,7 +181,7 @@
       [showCurrentPageReport]="true"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} equipments"
       i18n-currentPageReportTemplate="@@equipment.table.pageReport"
-      [stripedRows]="true"
+      [rowHover]="true"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -227,12 +231,9 @@
               <td class="pl-5"><p-skeleton shape="square" size="1.25rem" /></td>
             }
             <td>
-              <div class="flex items-center gap-3">
-                <p-skeleton shape="square" size="2.25rem" />
-                <div class="flex flex-col gap-1.5">
-                  <p-skeleton width="12rem" height="0.875rem" />
-                  <p-skeleton width="8rem" height="0.75rem" />
-                </div>
+              <div class="flex flex-col gap-1.5">
+                <p-skeleton width="8rem" height="0.75rem" />
+                <p-skeleton width="12rem" height="0.875rem" />
               </div>
             </td>
             <td class="hidden md:table-cell"><p-skeleton width="6rem" height="0.875rem" /></td>
@@ -247,29 +248,22 @@
       </ng-template>
 
       <ng-template pTemplate="body" let-equipment>
-        <tr>
+        <tr class="group">
           @if (canManageEquipment()) {
             <td class="pl-5">
               <p-tableCheckbox [value]="equipment" />
             </td>
           }
           <td>
-            <div class="flex min-w-0 items-center gap-3">
-              <p-avatar
-                [icon]="getEquipmentIcon(equipment)"
-                shape="square"
-                size="normal"
-                class="rounded-md bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-              />
-
-              <div class="flex min-w-0 flex-col">
-                <span class="truncate font-medium text-surface-900 dark:text-surface-100">
-                  {{ getEquipmentTitle(equipment) }}
-                </span>
-                <span class="truncate text-xs text-surface-500">
-                  {{ getReference(equipment) }}
-                </span>
-              </div>
+            <div class="flex min-w-0 flex-col gap-0.5">
+              <span
+                class="truncate text-xs font-semibold tracking-[0.04em] text-surface-500 tabular-nums dark:text-surface-400"
+              >
+                {{ getReference(equipment) }}
+              </span>
+              <span class="truncate font-semibold text-surface-950 dark:text-surface-50">
+                {{ getEquipmentTitle(equipment) }}
+              </span>
             </div>
           </td>
           <td class="hidden md:table-cell">
@@ -295,7 +289,7 @@
             <app-tag [descriptor]="getStatusOption(equipment.status)" />
           </td>
           <td class="hidden text-right lg:table-cell">
-            <span class="text-surface-500 dark:text-surface-400">
+            <span class="text-surface-600 tabular-nums dark:text-surface-400">
               {{ equipment.updatedAt | date: 'mediumDate' }}
             </span>
           </td>
@@ -308,6 +302,7 @@
               ariaLabel="Equipment actions"
               i18n-ariaLabel="@@equipment.table.actions"
               (onClick)="onActionMenuToggle($event, equipment)"
+              class="transition-opacity duration-150 pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100"
             />
           </td>
         </tr>

@@ -1,12 +1,12 @@
 <section
-  class="rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  class="rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
 >
   <header
     class="flex items-center gap-2 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
   >
-    <i class="pi pi-building text-sm text-surface-500"></i>
+    <i class="pi pi-building text-sm text-surface-500 dark:text-surface-400" aria-hidden="true"></i>
     <h2
-      class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+      class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
       i18n="@@equipment.assign.title"
     >
       Facility assignment
@@ -14,15 +14,17 @@
   </header>
   <div class="p-4">
     <div
-      class="mb-4 flex items-center gap-3 rounded-md bg-surface-50 px-3 py-2.5 dark:bg-surface-900"
+      class="mb-4 flex items-center gap-3 rounded-md bg-surface-50 px-3 py-2.5 dark:bg-surface-800/60"
     >
       <span
         class="flex size-8 items-center justify-center rounded-md bg-surface-100 dark:bg-surface-800"
       >
-        <i class="pi pi-map-marker text-sm text-surface-500"></i>
+        <i class="pi pi-map-marker text-sm text-surface-500 dark:text-surface-400"></i>
       </span>
       <div class="min-w-0">
-        <p class="text-xs text-surface-500" i18n="@@equipment.assign.current">Current facility</p>
+        <p class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.assign.current">
+          Current facility
+        </p>
         @if (facilityId(); as fid) {
           <button
             type="button"

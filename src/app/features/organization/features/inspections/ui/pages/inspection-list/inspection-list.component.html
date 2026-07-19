@@ -1,4 +1,11 @@
 <div id="inspection-list" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  <p
+    i18n="@@inspection.list.subtitle"
+    class="max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
+  >
+    History of the inspections performed across your organization's facilities and equipment.
+  </p>
+
   @if (store.listError()) {
     <p-message severity="error" class="block">
       <div class="flex flex-wrap items-center justify-between gap-3">

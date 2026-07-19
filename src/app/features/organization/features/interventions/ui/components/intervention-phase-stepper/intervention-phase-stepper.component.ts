@@ -136,8 +136,8 @@ export class InterventionPhaseStepper {
    */
   protected connectorClasses(state: InterventionPhaseStep['state']): string {
     return state === 'done'
-      ? 'bg-green-500 dark:bg-green-700'
-      : 'bg-surface-200 dark:bg-surface-700';
+      ? 'bg-green-600/40 dark:bg-green-400/40'
+      : 'bg-surface-200 dark:bg-surface-800';
   }
 
   /**

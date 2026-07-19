@@ -1,7 +1,6 @@
 import { NO_ERRORS_SCHEMA, signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import type { SelectButtonChangeEvent } from 'primeng/selectbutton';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '@features/organization/features/interventions/state';
@@ -23,7 +22,7 @@ type ItemViewModel = { intervention: InterventionOutput };
 type InterventionsPageHarness = {
   view(): 'list' | 'board' | 'calendar';
   q(): string;
-  onViewChange(event: SelectButtonChangeEvent): void;
+  selectView(view: 'list' | 'board' | 'calendar'): void;
   onView(intervention: InterventionOutput): void;
   onItemDropped(event: { item: ItemViewModel; fromColumnId: string; toColumnId: string }): void;
   openCreate(): void;
@@ -214,7 +213,7 @@ describe('InterventionsPage', () => {
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    build().onViewChange({ value: 'board' } as unknown as SelectButtonChangeEvent);
+    build().selectView('board');
 
     expect(navigate).toHaveBeenCalledWith([], {
       relativeTo: expect.anything(),
@@ -228,7 +227,7 @@ describe('InterventionsPage', () => {
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    build().onViewChange({ value: 'list' } as unknown as SelectButtonChangeEvent);
+    build().selectView('list');
 
     expect(navigate).toHaveBeenCalledWith(
       [],

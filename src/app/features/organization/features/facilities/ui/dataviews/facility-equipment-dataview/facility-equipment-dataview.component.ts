@@ -40,7 +40,8 @@ export class FacilityEquipmentDataview {
   protected readonly cardPt: CardPassThroughOptions = {
     ...DATAVIEW_CARD_PT,
     root: {
-      class: 'h-full flex flex-col bg-surface-0 dark:bg-surface-900 shadow-none!',
+      class:
+        'h-full flex flex-col border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900',
     },
   };
 

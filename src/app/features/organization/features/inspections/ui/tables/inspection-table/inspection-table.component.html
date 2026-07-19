@@ -1,174 +1,174 @@
 <p-menu #actionMenu [model]="actionMenuItems()" [popup]="true" appendTo="body" />
 
-<p-card [styleClass]="cardStyleClass" [pt]="cardPt">
-  <ng-template pTemplate="header">
-    <div class="flex items-center gap-2">
-      <h2 i18n="@@inspection.table.title" class="font-semibold">Inspections</h2>
-    </div>
+<div class="mb-4 flex flex-wrap items-center gap-2.5">
+  <div class="max-w-96 min-w-60 flex-1">
+    <p-iconfield>
+      <p-inputicon class="pi pi-search" />
+      <input
+        pInputText
+        type="text"
+        pSize="small"
+        i18n-placeholder="@@inspection.table.searchPlaceholder"
+        placeholder="Search inspections..."
+        [formControl]="searchControl"
+        class="w-full"
+      />
+    </p-iconfield>
+  </div>
 
-    <div class="flex flex-wrap items-center gap-2">
-      <p-iconfield class="flex-1 sm:flex-none">
-        <p-inputicon class="pi pi-search" />
-        <input
-          pInputText
-          type="text"
-          pSize="small"
-          i18n-placeholder="@@inspection.table.searchPlaceholder"
-          placeholder="Search inspections..."
-          [formControl]="searchControl"
+  <p-button
+    i18n-label="@@inspection.table.filtersButton"
+    label="Filters"
+    icon="pi pi-filter"
+    severity="secondary"
+    size="small"
+    [outlined]="true"
+    [badge]="filterBadge()"
+    (onClick)="onFilterToggle($event)"
+  />
+
+  <p-popover #filterPopover>
+    <div class="flex w-72 flex-col gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label i18n="@@common.result" class="text-sm font-medium">Result</label>
+        <p-select
+          [options]="resultOptions"
+          [formControl]="resultControl"
+          optionLabel="label"
+          optionValue="value"
+          i18n-placeholder="@@common.result"
+          placeholder="Result"
+          size="small"
+          [showClear]="true"
+          class="w-full"
+        >
+          <ng-template pTemplate="item" let-option>
+            <app-tag [descriptor]="option" variant="inline" />
+          </ng-template>
+
+          <ng-template pTemplate="selectedItem" let-option>
+            @if (option) {
+              <app-tag [descriptor]="option" variant="inline" />
+            }
+          </ng-template>
+        </p-select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label i18n="@@common.status" class="text-sm font-medium">Status</label>
+        <p-select
+          [options]="statusOptions"
+          [formControl]="statusControl"
+          optionLabel="label"
+          optionValue="value"
+          i18n-placeholder="@@common.status"
+          placeholder="Status"
+          size="small"
+          [showClear]="true"
+          class="w-full"
+        >
+          <ng-template pTemplate="item" let-option>
+            <app-tag [descriptor]="option" variant="inline" />
+          </ng-template>
+
+          <ng-template pTemplate="selectedItem" let-option>
+            @if (option) {
+              <app-tag [descriptor]="option" variant="inline" />
+            }
+          </ng-template>
+        </p-select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label i18n="@@inspection.table.filterPerformed" class="text-sm font-medium"
+          >Performed range</label
+        >
+        <p-datepicker
+          selectionMode="range"
+          [formControl]="performedAtControl"
+          [showClear]="true"
+          [readonlyInput]="true"
+          dateFormat="yy-mm-dd"
+          size="small"
+          i18n-placeholder="@@inspection.table.filterPerformed"
+          placeholder="Performed range"
           class="w-full"
         />
-      </p-iconfield>
+      </div>
 
+      <div
+        class="flex items-center justify-end gap-2 border-t border-surface-200 pt-3 dark:border-surface-800"
+      >
+        <p-button
+          i18n-label="@@common.reset"
+          label="Reset"
+          severity="secondary"
+          size="small"
+          [text]="true"
+          (onClick)="onResetColumnFilters()"
+        />
+        <p-button
+          i18n-label="@@common.apply"
+          label="Apply"
+          severity="primary"
+          size="small"
+          (onClick)="onApplyColumnFilters()"
+        />
+      </div>
+    </div>
+  </p-popover>
+
+  @if (!showSkeleton()) {
+    <span class="text-sm text-surface-600 tabular-nums dark:text-surface-400">{{
+      countLabel()
+    }}</span>
+  }
+
+  <div class="ml-auto flex flex-wrap items-center gap-2">
+    @if (canManageInspections()) {
+      <span
+        class="inline-flex"
+        [pTooltip]="createDisabled() ? createDisabledTooltip() : ''"
+        tooltipPosition="bottom"
+      >
+        <p-splitbutton
+          i18n-label="@@inspection.newButton"
+          label="New inspection"
+          icon="pi pi-plus"
+          severity="primary"
+          [model]="toolbarActions()"
+          size="small"
+          (onClick)="add.emit()"
+          [disabled]="loading() || createDisabled()"
+        />
+      </span>
+    } @else {
       <p-button
-        i18n-label="@@inspection.table.filtersButton"
-        label="Filters"
-        icon="pi pi-filter"
+        i18n-label="@@common.refresh"
+        label="Refresh"
+        icon="pi pi-refresh"
         severity="secondary"
         size="small"
         [outlined]="true"
-        [badge]="filterBadge()"
-        (onClick)="onFilterToggle($event)"
-        class="w-full sm:w-auto"
+        [disabled]="loading()"
+        (onClick)="onRefresh()"
       />
 
-      <p-popover #filterPopover>
-        <div class="flex w-72 flex-col gap-4">
-          <div class="flex flex-col gap-1.5">
-            <label i18n="@@common.result" class="text-sm font-medium">Result</label>
-            <p-select
-              [options]="resultOptions"
-              [formControl]="resultControl"
-              optionLabel="label"
-              optionValue="value"
-              i18n-placeholder="@@common.result"
-              placeholder="Result"
-              size="small"
-              [showClear]="true"
-              class="w-full"
-            >
-              <ng-template pTemplate="item" let-option>
-                <app-tag [descriptor]="option" variant="inline" />
-              </ng-template>
+      <p-button
+        i18n-label="@@common.clearFilters"
+        label="Clear filters"
+        icon="pi pi-filter-slash"
+        severity="secondary"
+        size="small"
+        [outlined]="true"
+        [disabled]="loading()"
+        (onClick)="onClearFilters()"
+      />
+    }
+  </div>
+</div>
 
-              <ng-template pTemplate="selectedItem" let-option>
-                @if (option) {
-                  <app-tag [descriptor]="option" variant="inline" />
-                }
-              </ng-template>
-            </p-select>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label i18n="@@common.status" class="text-sm font-medium">Status</label>
-            <p-select
-              [options]="statusOptions"
-              [formControl]="statusControl"
-              optionLabel="label"
-              optionValue="value"
-              i18n-placeholder="@@common.status"
-              placeholder="Status"
-              size="small"
-              [showClear]="true"
-              class="w-full"
-            >
-              <ng-template pTemplate="item" let-option>
-                <app-tag [descriptor]="option" variant="inline" />
-              </ng-template>
-
-              <ng-template pTemplate="selectedItem" let-option>
-                @if (option) {
-                  <app-tag [descriptor]="option" variant="inline" />
-                }
-              </ng-template>
-            </p-select>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label i18n="@@inspection.table.filterPerformed" class="text-sm font-medium"
-              >Performed range</label
-            >
-            <p-datepicker
-              selectionMode="range"
-              [formControl]="performedAtControl"
-              [showClear]="true"
-              [readonlyInput]="true"
-              dateFormat="yy-mm-dd"
-              size="small"
-              i18n-placeholder="@@inspection.table.filterPerformed"
-              placeholder="Performed range"
-              class="w-full"
-            />
-          </div>
-
-          <div
-            class="flex items-center justify-end gap-2 border-t border-surface-200 pt-3 dark:border-surface-800"
-          >
-            <p-button
-              i18n-label="@@common.reset"
-              label="Reset"
-              severity="secondary"
-              size="small"
-              [text]="true"
-              (onClick)="onResetColumnFilters()"
-            />
-            <p-button
-              i18n-label="@@common.apply"
-              label="Apply"
-              severity="primary"
-              size="small"
-              (onClick)="onApplyColumnFilters()"
-            />
-          </div>
-        </div>
-      </p-popover>
-
-      @if (canManageInspections()) {
-        <span
-          class="inline-flex w-full sm:w-auto"
-          [pTooltip]="createDisabled() ? createDisabledTooltip() : ''"
-          tooltipPosition="bottom"
-        >
-          <p-splitbutton
-            i18n-label="@@inspection.newButton"
-            label="New inspection"
-            icon="pi pi-plus"
-            severity="primary"
-            [model]="toolbarActions()"
-            size="small"
-            (onClick)="add.emit()"
-            [disabled]="loading() || createDisabled()"
-            class="w-full sm:w-auto"
-          />
-        </span>
-      } @else {
-        <p-button
-          i18n-label="@@common.refresh"
-          label="Refresh"
-          icon="pi pi-refresh"
-          severity="secondary"
-          size="small"
-          [outlined]="true"
-          [disabled]="loading()"
-          class="w-full sm:w-auto"
-          (onClick)="onRefresh()"
-        />
-
-        <p-button
-          i18n-label="@@common.clearFilters"
-          label="Clear filters"
-          icon="pi pi-filter-slash"
-          severity="secondary"
-          size="small"
-          [outlined]="true"
-          [disabled]="loading()"
-          class="w-full sm:w-auto"
-          (onClick)="onClearFilters()"
-        />
-      }
-    </div>
-  </ng-template>
-
+<p-card class="flex min-h-0 flex-1 flex-col" [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="content">
     <p-table
       [value]="showSkeleton() ? skeletonItems : empty() ? [] : [...inspections()]"
@@ -184,7 +184,7 @@
       [showCurrentPageReport]="true"
       i18n-currentPageReportTemplate="@@inspection.table.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} inspections"
-      [stripedRows]="true"
+      [rowHover]="true"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -244,7 +244,7 @@
       </ng-template>
 
       <ng-template pTemplate="body" let-inspection>
-        <tr>
+        <tr class="group">
           <td>
             <div class="flex min-w-0 items-center gap-3">
               <p-avatar
@@ -257,11 +257,11 @@
                 class="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
               />
 
-              <div class="flex min-w-0 flex-col">
-                <span class="truncate font-medium text-surface-900 dark:text-surface-100">
+              <div class="flex min-w-0 flex-col gap-0.5">
+                <span class="truncate font-semibold text-surface-950 dark:text-surface-50">
                   {{ getInspectorDisplayName(inspection) }}
                 </span>
-                <span class="truncate text-xs text-surface-500">
+                <span class="truncate text-xs text-surface-500 dark:text-surface-400">
                   {{ getInspectorTypeLabel(inspection) }}
                 </span>
               </div>
@@ -274,12 +274,12 @@
             <app-tag [descriptor]="getStatusOption(inspection.status)" />
           </td>
           <td class="hidden md:table-cell">
-            <span class="text-surface-600 dark:text-surface-400">
+            <span class="text-surface-600 tabular-nums dark:text-surface-400">
               {{ getFindingsLabel(inspection.nonConformitiesCount) }}
             </span>
           </td>
           <td class="hidden text-right lg:table-cell">
-            <span class="text-surface-500 dark:text-surface-400">
+            <span class="text-surface-600 tabular-nums dark:text-surface-400">
               {{ inspection.performedAt | date: 'medium' }}
             </span>
           </td>
@@ -291,6 +291,7 @@
               [outlined]="true"
               i18n-ariaLabel="@@inspection.table.rowActions"
               ariaLabel="Inspection actions"
+              class="transition-opacity duration-150 motion-reduce:transition-none pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100"
               (onClick)="onActionMenuToggle($event, inspection)"
             />
           </td>

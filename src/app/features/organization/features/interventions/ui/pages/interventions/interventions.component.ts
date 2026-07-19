@@ -12,16 +12,14 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
-import { SelectButtonModule, type SelectButtonChangeEvent } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
@@ -29,6 +27,7 @@ import {
   type InterventionOutput,
   type InterventionStatus,
   type MemberSelectOption,
+  type SelectOption,
 } from '@features/organization/features/interventions/models';
 import {
   InterventionStore,
@@ -71,6 +70,7 @@ import {
   GroupedListHeaderDirective,
   GroupedListRowDirective,
   Skeleton,
+  tagSeverityDotClass,
   type AvatarStackPerson,
   type BoardColumn,
   type BoardItemDropped,
@@ -81,6 +81,12 @@ import {
  * created from a calendar day.
  */
 const DEFAULT_PLANNED_HOUR = 9;
+
+/**
+ * Window before a due date (48 hours) during which a non-terminal, non-overdue
+ * intervention is flagged as due soon on its board card.
+ */
+const DUE_SOON_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 /**
  * View toggle for the interventions index page, mirrored in the `?view=`
@@ -107,13 +113,15 @@ const LIST_STATUS_ORDER: readonly InterventionStatus[] = [
  *
  * @description
  * Presentation view model wrapping one {@link InterventionOutput} for the
- * list row / board card templates: whether the intervention is overdue and
- * the resolved avatar-stack people. Every other rendered field reads
- * straight off the wrapped `intervention`.
+ * list row / board card templates: whether the intervention is overdue or due
+ * soon, the resolved site display name and the resolved avatar-stack people.
+ * Every other rendered field reads straight off the wrapped `intervention`.
  */
 interface InterventionListItemViewModel {
   readonly intervention: InterventionOutput;
   readonly isOverdue: boolean;
+  readonly isDueSoon: boolean;
+  readonly siteName: string | null;
   readonly people: readonly AvatarStackPerson[];
 }
 
@@ -132,7 +140,7 @@ interface InterventionListItemViewModel {
  * guided-creation drawer; every collection surface it composes stays
  * presentational.
  *
- * @version 5.0.0
+ * @version 5.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -146,7 +154,6 @@ interface InterventionListItemViewModel {
     ButtonModule,
     DatePipe,
     EmptyState,
-    FormsModule,
     GroupedList,
     GroupedListHeaderDirective,
     GroupedListRowDirective,
@@ -160,10 +167,8 @@ interface InterventionListItemViewModel {
     InterventionTag,
     MessageModule,
     ReactiveFormsModule,
-    SelectButtonModule,
     Skeleton,
     SkeletonModule,
-    TooltipModule,
   ],
   // InterventionStore is provided at the parent route level (interventions.routes.ts)
   // so it survives navigation into a detail page — do not re-provide it here.
@@ -343,7 +348,8 @@ export class InterventionsPage {
    * @readonly
    *
    * @description
-   * List / Board / Calendar options rendered by the header `p-selectbutton`.
+   * List / Board / Calendar options rendered by the toolbar's segmented view
+   * tabs.
    *
    * @access protected
    * @since 5.0.0
@@ -489,6 +495,28 @@ export class InterventionsPage {
         this.planningOptions
           .members()
           .map((member): [string, MemberSelectOption] => [member.value, member]),
+      ),
+  );
+
+  /**
+   * Property siteDisplayMap
+   * @readonly
+   *
+   * @description
+   * Loaded site selector options keyed by facility IRI, used to resolve the
+   * human-readable site name rendered on list rows and board cards.
+   *
+   * @access private
+   * @since 5.3.0
+   *
+   * @type {Signal<ReadonlyMap<string, string>>}
+   */
+  private readonly siteDisplayMap: Signal<ReadonlyMap<string, string>> = computed(
+    (): ReadonlyMap<string, string> =>
+      new Map(
+        this.planningOptions
+          .sites()
+          .map((site: SelectOption): [string, string] => [site.value, site.label]),
       ),
   );
 
@@ -833,21 +861,20 @@ export class InterventionsPage {
 
   //#region Methods
   /**
-   * Method onViewChange
-   * @method onViewChange
+   * Method selectView
+   * @method selectView
    *
    * @description
-   * Syncs the `?view=` query param when the user switches List/Board/Calendar
-   * (`list` — the default — is omitted from the URL).
+   * Syncs the `?view=` query param when the user activates a List/Board/Calendar
+   * view tab (`list` — the default — is omitted from the URL).
    *
    * @access protected
-   * @since 5.0.0
+   * @since 5.3.0
    *
-   * @param {SelectButtonChangeEvent} event - PrimeNG select-button change event.
+   * @param {InterventionListView} view - View tab activated.
    * @returns {void}
    */
-  protected onViewChange(event: SelectButtonChangeEvent): void {
-    const view: InterventionListView = event.value as InterventionListView;
+  protected selectView(view: InterventionListView): void {
     this.navigateQuery({ view: view === 'list' ? null : view });
   }
 
@@ -1070,6 +1097,26 @@ export class InterventionsPage {
   }
 
   /**
+   * Method boardColumnDotClass
+   * @method boardColumnDotClass
+   *
+   * @description
+   * Background class of a board lane's status dot: the tag registry severity of
+   * the column's status (the merged `review` column borrows the `submitted`
+   * severity), resolved through the shared severity dot mapping.
+   *
+   * @access protected
+   * @since 5.3.0
+   *
+   * @param {string} columnId - Board column id.
+   * @returns {string} Tailwind `bg-*` utility class for the lane dot.
+   */
+  protected boardColumnDotClass(columnId: string): string {
+    const status: string = columnId === 'review' ? 'submitted' : columnId;
+    return tagSeverityDotClass(resolveInterventionTag('status', status).severity);
+  }
+
+  /**
    * Method asItem
    * @method asItem
    *
@@ -1161,8 +1208,8 @@ export class InterventionsPage {
    *
    * @description
    * Maps a raw {@link InterventionOutput} into its
-   * {@link InterventionListItemViewModel}: overdue status and resolved
-   * avatar-stack people.
+   * {@link InterventionListItemViewModel}: overdue/due-soon flags, resolved
+   * site display name and resolved avatar-stack people.
    *
    * @access private
    * @since 5.0.0
@@ -1173,8 +1220,12 @@ export class InterventionsPage {
   private toItemViewModel(intervention: InterventionOutput): InterventionListItemViewModel {
     const isTerminal: boolean =
       intervention.status === 'published' || intervention.status === 'abandoned';
-    const isOverdue: boolean =
-      !!intervention.dueAt && !isTerminal && new Date(intervention.dueAt).getTime() < Date.now();
+    const dueTime: number | null = intervention.dueAt
+      ? new Date(intervention.dueAt).getTime()
+      : null;
+    const isOverdue: boolean = dueTime !== null && !isTerminal && dueTime < Date.now();
+    const isDueSoon: boolean =
+      dueTime !== null && !isTerminal && !isOverdue && dueTime - Date.now() <= DUE_SOON_WINDOW_MS;
 
     const memberIris: readonly string[] = [
       intervention.responsible,
@@ -1184,6 +1235,8 @@ export class InterventionsPage {
     return {
       intervention,
       isOverdue,
+      isDueSoon,
+      siteName: intervention.site ? (this.siteDisplayMap().get(intervention.site) ?? null) : null,
       people: memberIris.map((iri) => this.toPerson(iri)),
     };
   }

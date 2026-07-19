@@ -1,19 +1,24 @@
 <section
-  class="flex min-h-0 flex-1 flex-col rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  class="flex min-h-0 flex-1 flex-col rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
 >
   <header
     class="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-800"
   >
     <div class="flex items-center gap-2">
-      <i class="pi pi-exclamation-triangle text-sm text-surface-500"></i>
+      <i
+        class="pi pi-exclamation-triangle text-sm text-surface-500 dark:text-surface-400"
+        aria-hidden="true"
+      ></i>
       <h2
         i18n="@@nc.table.title"
-        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
       >
         Non-conformities
       </h2>
     </div>
-    <span i18n="@@nc.table.count" class="text-xs text-surface-500"
+    <span
+      i18n="@@nc.table.count"
+      class="text-xs text-surface-500 tabular-nums dark:text-surface-400"
       >{{ nonConformities().length }} finding(s)</span
     >
   </header>
@@ -30,7 +35,7 @@
     class="min-h-0 flex-1"
     [value]="loading() ? skeletonItems : [...nonConformities()]"
     dataKey="id"
-    [stripedRows]="true"
+    [rowHover]="true"
   >
     <ng-template pTemplate="header">
       <tr>
@@ -53,12 +58,14 @@
       } @else {
         <tr>
           <td>
-            <div class="max-w-xl">
-              <p class="truncate font-medium text-surface-900 dark:text-surface-100">
+            <div class="flex max-w-xl flex-col gap-0.5">
+              <p class="truncate font-semibold text-surface-950 dark:text-surface-50">
                 {{ nonConformity.description }}
               </p>
               @if (nonConformity.notes) {
-                <p class="truncate text-xs text-surface-500">{{ nonConformity.notes }}</p>
+                <p class="truncate text-xs text-surface-500 dark:text-surface-400">
+                  {{ nonConformity.notes }}
+                </p>
               }
             </div>
           </td>
@@ -86,7 +93,9 @@
             }
           </td>
           <td class="hidden md:table-cell">
-            {{ nonConformity.dueAt ? (nonConformity.dueAt | date: 'mediumDate') : noneLabel }}
+            <span class="text-surface-600 tabular-nums dark:text-surface-400">
+              {{ nonConformity.dueAt ? (nonConformity.dueAt | date: 'mediumDate') : noneLabel }}
+            </span>
           </td>
           <td class="text-right">
             <p-button

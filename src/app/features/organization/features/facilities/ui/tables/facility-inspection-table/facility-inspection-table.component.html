@@ -3,7 +3,9 @@
 <p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
-      <h2 i18n="@@facility.inspections.title" class="font-semibold">Inspections</h2>
+      <h2 i18n="@@facility.inspections.title" class="text-[15px] font-semibold tracking-[-0.01em]">
+        Inspections
+      </h2>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
@@ -102,7 +104,7 @@
       [showCurrentPageReport]="true"
       i18n-currentPageReportTemplate="@@facility.inspTable.pageReport"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} inspections"
-      [stripedRows]="true"
+      [rowHover]="true"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -235,7 +237,7 @@
               }
             </td>
             <td class="hidden text-right lg:table-cell">
-              <span class="text-surface-500 dark:text-surface-400">
+              <span class="text-surface-600 tabular-nums dark:text-surface-400">
                 {{ inspection.performedAt | date: 'medium' }}
               </span>
             </td>

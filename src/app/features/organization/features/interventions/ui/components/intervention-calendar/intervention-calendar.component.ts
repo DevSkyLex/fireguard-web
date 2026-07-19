@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -16,8 +17,8 @@ import {
 } from '@features/organization/features/interventions/models';
 import {
   Calendar,
-  tagSeverityIconClass,
   type CalendarCategoryGroup,
+  type CalendarConfig,
   type CalendarEvent,
 } from '@shared/components';
 import { InterventionTag } from '../intervention-tag';
@@ -49,13 +50,13 @@ const INTERVENTION_STATUSES: readonly InterventionStatus[] = [
  * generic events back into intervention intents. It owns no calendar state — the
  * shared calendar manages the view, focused date and filtering.
  *
- * @version 2.1.0
+ * @version 2.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-calendar',
-  imports: [ButtonModule, Calendar, InterventionTag],
+  imports: [ButtonModule, Calendar, DatePipe, InterventionTag],
   templateUrl: './intervention-calendar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -187,6 +188,22 @@ export class InterventionCalendar {
 
   //#region Properties
   /**
+   * Property calendarConfig
+   * @readonly
+   *
+   * @description
+   * Shared-calendar presentation configuration: renders the status category
+   * group as the card-footer colour legend so chip colours stay decodable even
+   * when the filter sidebar is collapsed.
+   *
+   * @access protected
+   * @since 2.3.0
+   *
+   * @type {CalendarConfig}
+   */
+  protected readonly calendarConfig: CalendarConfig = { legendGroupId: 'status' };
+
+  /**
    * Property categoryGroups
    * @readonly
    *
@@ -290,21 +307,40 @@ export class InterventionCalendar {
   }
 
   /**
-   * Method chipIconClass
+   * Method chipIcon
    *
    * @description
-   * Resolves the status glyph and its colour for the compact chip, reusing the
-   * intervention tag registry and the shared severity colour mapping.
+   * Resolves the status glyph for the compact chip from the intervention tag
+   * registry; the icon inherits the chip's semantic ink colour via
+   * `currentColor`.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 2.3.0
    *
    * @param {CalendarEvent} event - Calendar event.
-   * @returns {string} Combined icon + colour class string.
+   * @returns {string} Icon class string.
    */
-  protected chipIconClass(event: CalendarEvent): string {
-    const descriptor = resolveInterventionTag('status', this.interventionOf(event).status);
-    return `${descriptor.icon} ${tagSeverityIconClass(descriptor.severity)}`;
+  protected chipIcon(event: CalendarEvent): string {
+    return resolveInterventionTag('status', this.interventionOf(event).status).icon;
+  }
+
+  /**
+   * Method chipTime
+   *
+   * @description
+   * Start instant rendered on the compact chip, or `null` when the event is
+   * anchored at local midnight (a date-only planned start / due date carries no
+   * meaningful time of day).
+   *
+   * @access protected
+   * @since 2.3.0
+   *
+   * @param {CalendarEvent} event - Calendar event.
+   * @returns {Date | null} The start instant, or `null` when time is not meaningful.
+   */
+  protected chipTime(event: CalendarEvent): Date | null {
+    const start: Date = event.start;
+    return start.getHours() === 0 && start.getMinutes() === 0 ? null : start;
   }
 
   /**

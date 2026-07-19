@@ -21,7 +21,7 @@ This subfeature is responsible for:
 
 - `/organizations/:organizationId/interventions` — index page offering a
   Linear-style **List / Board / Calendar** browsing experience over one shared
-  dataset, toggled with a header `p-selectbutton` and synced to `?view=`
+  dataset, toggled with segmented toolbar view tabs and synced to `?view=`
   (default `list`, omitted from the URL). List groups interventions into
   status sections (`app-grouped-list`); Board lays them into
   draft/planned/in_progress/review/published columns (`app-board`,

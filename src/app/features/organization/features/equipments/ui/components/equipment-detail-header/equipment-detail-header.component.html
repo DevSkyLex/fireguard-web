@@ -5,12 +5,14 @@
     <p-avatar icon="pi pi-box" shape="square" size="xlarge" />
     <div class="flex min-w-0 flex-col gap-1">
       <div class="flex flex-wrap items-center gap-2">
-        <h1 class="truncate text-2xl font-semibold text-surface-900 dark:text-surface-100">
+        <h1
+          class="truncate text-2xl font-semibold tracking-[-0.035em] text-surface-950 dark:text-surface-50"
+        >
           {{ typeLabel() | titlecase }} {{ equipment().brand }} {{ equipment().model }}
         </h1>
         <app-tag [descriptor]="statusDescriptor(equipment().status)" />
       </div>
-      <div class="flex flex-wrap items-center gap-3 text-sm text-surface-500 dark:text-surface-300">
+      <div class="flex flex-wrap items-center gap-3 text-sm text-surface-600 dark:text-surface-400">
         <span class="inline-flex items-center gap-1.5">
           <i class="pi pi-hashtag text-xs"></i>
           @if (equipment().serialNumber; as serial) {

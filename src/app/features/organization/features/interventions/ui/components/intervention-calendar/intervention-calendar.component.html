@@ -3,6 +3,7 @@
   [events]="events()"
   [loading]="loading()"
   [categoryGroups]="categoryGroups"
+  [config]="calendarConfig"
   (eventClick)="onEventClick($event)"
   (dayCreate)="selectDay.emit($event)"
   (focusedDateChange)="focusedDateChange.emit($event)"
@@ -22,9 +23,14 @@
 
   <!-- Compact chip for month / week cells -->
   <ng-template #event let-event>
-    <span class="flex items-center gap-1.5 px-1.5 py-1 text-xs">
-      <i [class]="chipIconClass(event) + ' shrink-0 text-[0.6rem]'" aria-hidden="true"></i>
-      <span class="truncate text-surface-700 dark:text-surface-200">{{ event.title }}</span>
+    <span class="flex min-w-0 items-center gap-1.5 px-1.5 py-1 text-xs">
+      <i [class]="chipIcon(event) + ' shrink-0 text-[0.6rem]'" aria-hidden="true"></i>
+      @if (chipTime(event); as time) {
+        <span class="shrink-0 text-[0.65rem] font-semibold tabular-nums opacity-80">{{
+          time | date: 'shortTime'
+        }}</span>
+      }
+      <span class="truncate font-medium">{{ event.title }}</span>
     </span>
   </ng-template>
 

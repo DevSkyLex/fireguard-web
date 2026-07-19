@@ -11,19 +11,21 @@
 >
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
-      <i class="pi pi-wrench text-sm text-surface-500"></i>
+      <i class="pi pi-wrench text-sm text-surface-500 dark:text-surface-400" aria-hidden="true"></i>
       <h2
-        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
         i18n="@@equipment.maint.title"
       >
         Maintenance history
       </h2>
     </div>
-    <span class="text-xs text-surface-500" i18n="@@equipment.maint.eventCount"
+    <span
+      class="text-xs text-surface-500 tabular-nums dark:text-surface-400"
+      i18n="@@equipment.maint.eventCount"
       >{{ logs().length }} event(s)</span
     >
   </ng-template>
-  <p-table [value]="loading() ? skeletonItems : [...logs()]" dataKey="id" [stripedRows]="true">
+  <p-table [value]="loading() ? skeletonItems : [...logs()]" dataKey="id">
     <ng-template pTemplate="header">
       <tr>
         <th i18n="@@equipment.maint.colStarted">Started</th>

@@ -520,6 +520,27 @@ export class InspectionTable implements OnInit {
   );
 
   /**
+   * Property countLabel
+   * @readonly
+   *
+   * @description
+   * Human-readable result count shown in the filter bar, pluralized from
+   * {@link total}.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly countLabel: Signal<string> = computed((): string => {
+    const total: number = this.total();
+
+    return total > 1
+      ? $localize`:@@inspection.table.countPlural:${total}:count: inspections`
+      : $localize`:@@inspection.table.countOne:${total}:count: inspection`;
+  });
+
+  /**
    * Property filterPopover
    * @readonly
    *

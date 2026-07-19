@@ -1,12 +1,15 @@
 <section
-  class="rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  class="rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
 >
   <header
     class="flex items-center gap-2 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
   >
-    <i class="pi pi-info-circle text-sm text-surface-500"></i>
+    <i
+      class="pi pi-info-circle text-sm text-surface-500 dark:text-surface-400"
+      aria-hidden="true"
+    ></i>
     <h2
-      class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+      class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
       i18n="@@equipment.info.title"
     >
       Equipment information
@@ -16,13 +19,17 @@
     class="grid divide-y divide-surface-100 px-4 py-2 sm:grid-cols-2 sm:divide-y-0 dark:divide-surface-800"
   >
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pr-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500" i18n="@@equipment.info.type">Type</dt>
+      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.type">
+        Type
+      </dt>
       <dd class="mt-1 text-sm font-medium text-surface-900 dark:text-surface-100">
         {{ equipment().type | titlecase }}
       </dd>
     </div>
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pl-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500" i18n="@@equipment.info.subtype">Subtype</dt>
+      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.subtype">
+        Subtype
+      </dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
         @if (equipment().subType) {
           {{ equipment().subType | titlecase }}
@@ -32,7 +39,9 @@
       </dd>
     </div>
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pr-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500" i18n="@@equipment.info.brand">Brand</dt>
+      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.brand">
+        Brand
+      </dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
         @if (equipment().brand; as brand) {
           {{ brand }}
@@ -42,7 +51,9 @@
       </dd>
     </div>
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pl-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500" i18n="@@equipment.info.model">Model</dt>
+      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.model">
+        Model
+      </dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
         @if (equipment().model; as model) {
           {{ model }}
@@ -52,7 +63,9 @@
       </dd>
     </div>
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pr-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500" i18n="@@equipment.info.serial">Serial number</dt>
+      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.serial">
+        Serial number
+      </dt>
       <dd class="mt-1 font-mono text-sm text-surface-900 dark:text-surface-100">
         @if (equipment().serialNumber; as serialNumber) {
           {{ serialNumber }}
@@ -62,7 +75,9 @@
       </dd>
     </div>
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pl-4 dark:sm:border-surface-800">
-      <dt class="text-xs text-surface-500" i18n="@@equipment.info.location">Location</dt>
+      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.location">
+        Location
+      </dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
         @if (equipment().locationLabel; as locationLabel) {
           {{ locationLabel }}
@@ -72,7 +87,9 @@
       </dd>
     </div>
     <div class="py-3 sm:pr-4">
-      <dt class="text-xs text-surface-500" i18n="@@equipment.info.installed">Installed</dt>
+      <dt class="text-xs text-surface-500 dark:text-surface-400" i18n="@@equipment.info.installed">
+        Installed
+      </dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
         @if (equipment().installedAt; as installedAt) {
           {{ installedAt | date: 'mediumDate' }}
@@ -82,7 +99,12 @@
       </dd>
     </div>
     <div class="py-3 sm:pl-4">
-      <dt class="text-xs text-surface-500" i18n="@@equipment.info.commissioned">Commissioned</dt>
+      <dt
+        class="text-xs text-surface-500 dark:text-surface-400"
+        i18n="@@equipment.info.commissioned"
+      >
+        Commissioned
+      </dt>
       <dd class="mt-1 text-sm text-surface-900 dark:text-surface-100">
         @if (equipment().commissionedAt; as commissionedAt) {
           {{ commissionedAt | date: 'mediumDate' }}

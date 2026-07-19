@@ -1,31 +1,36 @@
 <section
-  class="rounded-lg border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  class="rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
 >
   <header
     class="flex flex-wrap items-center justify-between gap-3 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
   >
     <div class="flex items-center gap-2">
-      <i class="pi pi-clipboard text-sm text-surface-500"></i>
+      <i
+        class="pi pi-clipboard text-sm text-surface-500 dark:text-surface-400"
+        aria-hidden="true"
+      ></i>
       <h2
         i18n="@@facility.inspectionsOverview.title"
-        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+        class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
       >
         Inspections
       </h2>
-      <span class="text-xs text-surface-500">{{ store.inspections().length }}</span>
+      <span class="text-xs text-surface-500 tabular-nums dark:text-surface-400">{{
+        store.inspections().length
+      }}</span>
     </div>
 
     <div
-      class="inline-flex items-center gap-1 rounded-full bg-surface-100 p-0.5 dark:bg-surface-800"
+      class="inline-flex items-center gap-0.5 rounded-md border border-surface-200 bg-surface-100 p-0.5 dark:border-surface-800 dark:bg-surface-900"
     >
       @for (item of filters; track item.value) {
         <button
           type="button"
-          class="rounded-full px-3 py-1 text-xs font-medium transition-colors"
+          class="rounded px-3 py-1 text-xs font-medium transition-colors duration-150"
           [class]="
             filter() === item.value
-              ? 'bg-surface-0 text-surface-900 shadow-sm dark:bg-surface-950 dark:text-surface-100'
-              : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'
+              ? 'bg-surface-0 text-surface-950 shadow-sm dark:bg-surface-800 dark:text-surface-50'
+              : 'text-surface-600 hover:text-surface-950 dark:text-surface-400 dark:hover:text-surface-50'
           "
           (click)="filter.set(item.value)"
         >

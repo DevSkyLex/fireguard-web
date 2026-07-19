@@ -49,6 +49,27 @@ export const ORGANIZATION_ROUTES: Routes = [
             (m) => m.INTERVENTION_ROUTES,
           ),
       },
+      /**
+       * The facilities map is owned by the organization parent, not the
+       * facilities subfeature: a route outside `facilities/` would fall out of
+       * `FACILITY_ROUTES` and break the URL-to-ownership match the nested
+       * feature exists to keep.
+       */
+      {
+        path: 'map',
+        title: 'Map',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
+          }),
+        ],
+        data: {
+          breadcrumb: 'Map',
+          description: 'Every geolocated facility on one map.',
+        },
+        loadComponent: () =>
+          import('./ui/pages/organization-map').then((m) => m.OrganizationMapPage),
+      },
       {
         path: 'facilities',
         data: {

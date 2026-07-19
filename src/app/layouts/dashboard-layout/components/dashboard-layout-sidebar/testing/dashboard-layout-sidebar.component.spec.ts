@@ -111,7 +111,8 @@ describe('DashboardLayoutSidebar', () => {
     expect(fixture.debugElement.query(By.css('[data-testid="lead-widget-stub"]'))).toBeTruthy();
     expect(fixture.debugElement.query(By.css('[data-testid="footer-widget-stub"]'))).toBeTruthy();
 
-    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(4);
+    // dashboard, facilities, map (also facilities.read), equipments, inspections.
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(5);
     expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
 
     const textContent = fixture.nativeElement.textContent;

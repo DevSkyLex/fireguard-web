@@ -92,8 +92,9 @@ describe('DashboardLayoutSidebarNavigation', () => {
     fixture.detectChanges();
 
     // Overview + Assets + Compliance sections are visible for the granted
-    // permissions: dashboard, facilities, equipments, inspections.
-    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(4);
+    // permissions: dashboard, facilities, map (also facilities.read),
+    // equipments, inspections.
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(5);
     expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
   });
 

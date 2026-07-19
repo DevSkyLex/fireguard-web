@@ -1,0 +1,14 @@
+<div id="calendar" class="flex min-h-0 w-full flex-1 flex-col p-3 sm:p-6 md:p-7 lg:p-8">
+  <app-calendar
+    class="flex min-h-0 flex-1 flex-col"
+    [events]="store.events()"
+    [view]="view()"
+    [focusedDate]="focusedDate()"
+    [categoryGroups]="categoryGroups()"
+    [loading]="store.isQueryLoading()"
+    (viewChange)="view.set($event)"
+    (focusedDateChange)="focusedDate.set($event)"
+    (categoriesChange)="categoryGroups.set($event)"
+    (eventClick)="openEvent($event)"
+  />
+</div>

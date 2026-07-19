@@ -88,6 +88,21 @@ export const ORGANIZATION_ROUTES: Routes = [
         loadComponent: () =>
           import('./features/messaging/ui/pages/messaging').then((m) => m.MessagingPage),
       },
+      {
+        path: 'calendar',
+        title: 'Calendar',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.EVENTS_READ],
+          }),
+        ],
+        data: {
+          breadcrumb: 'Calendar',
+          description: 'Interventions, inspections, maintenance and events on one grid.',
+        },
+        loadComponent: () =>
+          import('./features/calendar/ui/pages/calendar').then((m) => m.CalendarPage),
+      },
       /**
        * The compliance register.
        *

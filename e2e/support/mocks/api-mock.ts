@@ -111,8 +111,26 @@ export class ApiMock {
         title: `No E2E mock registered for ${route.request().method()} ${route.request().url()}`,
       });
     });
+    // The hub lives on its own origin and the subscriber JWT travels in an
+    // `Authorization` header, which makes the SSE request preflighted. Mirror
+    // the real hub's CORS response, otherwise the browser blocks the call and
+    // the stream never opens.
     await this.page.route('http://localhost:3000/.well-known/mercure**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' });
+      const cors: Record<string, string> = {
+        'Access-Control-Allow-Origin': route.request().headers()['origin'] ?? '*',
+        'Access-Control-Allow-Headers': 'Authorization',
+      };
+
+      if ('OPTIONS' === route.request().method()) {
+        await route.fulfill({ status: 204, headers: cors });
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        headers: { ...cors, 'Content-Type': 'text/event-stream' },
+        body: '',
+      });
     });
   }
 

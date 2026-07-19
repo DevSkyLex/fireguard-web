@@ -96,6 +96,10 @@ describe('NotificationStore', () => {
     configure();
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('should reuse transferred notifications on the browser without calling the API', async () => {
     transferState.set(
       makeStateKey<HydraCollection<NotificationOutput> | null>('notification-list'),
@@ -146,13 +150,31 @@ describe('NotificationStore', () => {
     expect(mockMercureService.subscribe).not.toHaveBeenCalled();
   });
 
-  it('should reset the Mercure guard when the subscription bootstrap fails', async () => {
+  // The transport has no reconnect of its own, so a single failure must not end
+  // the channel — and each attempt must re-request a subscription, because the
+  // subscriber JWT expires and a replayed one would be rejected.
+  it('should retry the Mercure subscription rather than give up on first failure', async () => {
+    vi.useFakeTimers();
     mockNotificationService.getSubscription.mockReturnValue(
       throwError(() => new Error('Mercure bootstrap failed')),
     );
 
     store.connectMercure();
-    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(1_500);
+
+    expect(mockNotificationService.getSubscription.mock.calls.length).toBeGreaterThan(1);
+    expect(store.mercureConnected()).toBe(true);
+  });
+
+  it('should reset the Mercure guard once reconnection is abandoned', async () => {
+    vi.useFakeTimers();
+    mockNotificationService.getSubscription.mockReturnValue(
+      throwError(() => new Error('Mercure bootstrap failed')),
+    );
+
+    store.connectMercure();
+    // Past the full 1+2+4+8+16+30+30+30s backoff budget.
+    await vi.advanceTimersByTimeAsync(130_000);
 
     expect(store.mercureConnected()).toBe(false);
   });

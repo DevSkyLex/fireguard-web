@@ -14,8 +14,8 @@ describe('resilientMercureStream', () => {
     });
   });
 
-  // The whole point: MercureService kills EventSource's own reconnect, so a
-  // single blip would otherwise leave the channel silent forever.
+  // The whole point: the fetch-based transport has no reconnect of its own, so
+  // a single blip would otherwise leave the channel silent forever.
   it('should reconnect after a transport failure', () => {
     let attempt = 0;
     const factory = (): Observable<Observable<string>> => {
@@ -63,14 +63,14 @@ describe('resilientMercureStream', () => {
   // A hub that is genuinely down must eventually surface, not retry forever.
   it('should give up after the attempt ceiling', () => {
     const factory = (): Observable<Observable<string>> =>
-      of(throwError(() => new Error('Mercure EventSource connection error')));
+      of(throwError(() => new Error('Mercure stream connection error')));
 
     scheduler().run(({ expectObservable }) => {
       // 1+2+4+8+16+30+30+30 seconds of backoff, then the error propagates.
       expectObservable(resilientMercureStream(factory)).toBe(
         '121000ms #',
         undefined,
-        new Error('Mercure EventSource connection error'),
+        new Error('Mercure stream connection error'),
       );
     });
   });

@@ -18,13 +18,14 @@ import {
   exhaustMap,
   filter as rxFilter,
   firstValueFrom,
+  map,
   pipe,
   switchMap,
   tap,
 } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import type { MercureSubscriptionOutput } from '@core/mercure';
-import { MercureService } from '@core/mercure';
+import { MercureService, resilientMercureStream } from '@core/mercure';
 import {
   idleCallState,
   pendingCallState,
@@ -566,7 +567,12 @@ export const NotificationStore = signalStore(
          * Establishes a Server-Sent Events (SSE) connection via Mercure to
          * receive real-time notification pushes. Incoming notifications are
          * prepended to the entity collection. Sets `mercureConnected` to
-         * `true` once subscribed, and back to `false` on connection error.
+         * `true` once subscribed, and back to `false` only once reconnection
+         * has been abandoned.
+         *
+         * Goes through `resilientMercureStream` so each attempt re-requests a
+         * subscription: the transport has no reconnect of its own, and the
+         * subscriber JWT expires, so a replayed token would be rejected.
          *
          * @since 1.0.0
          *
@@ -577,23 +583,22 @@ export const NotificationStore = signalStore(
             rxFilter(() => isPlatformBrowser(platformId) && !store.mercureConnected()),
             tap(() => patchState(store, { mercureConnected: true })),
             switchMap(() =>
-              notificationService.getSubscription().pipe(
-                switchMap((subscription: MercureSubscriptionOutput) => {
-                  return mercureService
-                    .subscribe<NotificationOutput>(subscription.topic, subscription.token)
-                    .pipe(
-                      tap((notification: NotificationOutput) => {
-                        patchState(
-                          store,
-                          prependEntity(notification, { collection: 'notification' }),
-                          { totalNotifications: store.totalNotifications() + 1 },
-                        );
-                      }),
-                      catchError(() => {
-                        patchState(store, { mercureConnected: false });
-                        return EMPTY;
-                      }),
-                    );
+              resilientMercureStream<NotificationOutput>(() =>
+                notificationService
+                  .getSubscription()
+                  .pipe(
+                    map((subscription: MercureSubscriptionOutput) =>
+                      mercureService.subscribe<NotificationOutput>(
+                        subscription.topic,
+                        subscription.token,
+                      ),
+                    ),
+                  ),
+              ).pipe(
+                tap((notification: NotificationOutput) => {
+                  patchState(store, prependEntity(notification, { collection: 'notification' }), {
+                    totalNotifications: store.totalNotifications() + 1,
+                  });
                 }),
                 catchError(() => {
                   patchState(store, { mercureConnected: false });

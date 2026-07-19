@@ -22,14 +22,17 @@ const MAX_ATTEMPTS = 8;
  * Keeps a Mercure subscription alive across network failures.
  *
  * It wraps a **factory** rather than retrying an existing stream because
- * Mercure JWTs are short-lived: retrying the same `EventSource` URL replays a
- * token that may already have expired, so every attempt has to go back through
- * `GET /subscription` for a fresh one. Only the caller knows how.
+ * Mercure subscriber JWTs expire (see `mercure_subscriber_token_ttl` on the
+ * API): replaying the same subscription would reconnect with a token the hub
+ * now rejects, so every attempt has to go back through `GET /subscription` for
+ * a fresh one. Only the caller knows how.
  *
  * This is also the only thing standing between a network blip and a
- * permanently silent channel: `MercureService.subscribe` errors its subscriber
- * on the transport `error` event, which neutralises `EventSource`'s own
- * auto-reconnect — silently, because nothing throws afterwards.
+ * permanently silent channel. `MercureService` streams over `fetch`, which —
+ * unlike `EventSource` — has no reconnect of its own, so nothing else will
+ * bring the channel back. Every consumer must therefore go through this
+ * helper; subscribing to `MercureService` directly yields a channel that dies
+ * on the first blip and stays dead.
  *
  * @param {MercureSubscriptionFactory<T>} factory - Produces a fresh subscription per attempt.
  *

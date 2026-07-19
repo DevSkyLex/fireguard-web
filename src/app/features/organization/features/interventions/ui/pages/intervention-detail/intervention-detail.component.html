@@ -1,5 +1,6 @@
 <div
   id="intervention-workspace"
+  data-testid="intervention-workspace"
   class="flex flex-1 flex-col bg-surface-0 lg:pb-0 dark:bg-surface-950"
   [class.pb-24]="hasMobileCommandBar()"
 >
@@ -56,6 +57,7 @@
 
         @if (sync.blockedOperations() > 0) {
           <div
+            data-testid="sync-blocked-banner"
             role="alert"
             class="flex flex-wrap items-center gap-3 rounded-lg border border-red-600/20 bg-red-50 px-3.5 py-3 text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
           >
@@ -94,6 +96,7 @@
 
         @if (offline.hasUnsyncedChanges()) {
           <div
+            data-testid="sync-waiting-banner"
             role="status"
             class="flex flex-wrap items-center gap-3 rounded-lg border border-amber-600/20 bg-amber-50 px-3.5 py-3 text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300"
           >
@@ -434,6 +437,7 @@
                     >
                       <!-- 44px hit area (field gloves) around the 18px visual checkbox -->
                       <button
+                        data-testid="work-item-toggle"
                         type="button"
                         class="-m-3 flex size-11 shrink-0 items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-50"
                         [attr.aria-pressed]="isWorkItemDone(item)"
@@ -681,6 +685,7 @@
               />
               @if (!online()) {
                 <p
+                  data-testid="offline-comment-hint"
                   i18n="@@intervention.detail.commentOffline"
                   class="text-xs text-surface-400 dark:text-surface-500"
                 >

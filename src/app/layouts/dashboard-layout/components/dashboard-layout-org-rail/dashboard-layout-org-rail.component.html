@@ -1,0 +1,23 @@
+<!--
+  Ported from the design system's collaboration kit (`.ws-rail`): a 60px column
+  on the muted surface, hairline border on the right, 12px vertical padding and
+  8px gaps between tiles.
+-->
+<nav
+  class="flex h-full w-full flex-col items-center gap-2 overflow-x-hidden overflow-y-auto border-r border-surface-200 bg-surface-100 py-3 dark:border-surface-800 dark:bg-surface-900"
+  i18n-aria-label="@@layout.orgRail.aria"
+  aria-label="Organizations"
+>
+  <a
+    routerLink="/"
+    class="grid size-9.5 shrink-0 place-content-center rounded-[11px] text-surface-950 transition-colors hover:bg-surface-200 dark:text-surface-50 dark:hover:bg-surface-800"
+    i18n-aria-label="@@layout.orgRail.homeAria"
+    aria-label="Go to home"
+  >
+    <app-logo class="h-5 w-5" />
+  </a>
+
+  @for (contribution of railContributions(); track contribution.id) {
+    <ng-container *ngComponentOutlet="contribution.component" />
+  }
+</nav>

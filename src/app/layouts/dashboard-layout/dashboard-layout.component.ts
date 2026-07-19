@@ -9,12 +9,21 @@ import {
   DashboardLayoutHeader,
   DashboardLayoutSidebar,
   DashboardLayoutContent,
+  DashboardLayoutOrgRail,
+  DashboardLayoutPanelHost,
 } from '@layouts/dashboard-layout/components';
+import {
+  SHELL_INLINE_PANEL_MIN_WIDTH_PX,
+  SHELL_RAIL_WIDTH_PX,
+  SHELL_SECOND_PANEL_MIN_WIDTH_PX,
+  SHELL_SIDEBAR_WIDTH_PX,
+} from '@layouts/dashboard-layout/constants';
 import {
   DashboardSidebarNavigationService,
   DashboardSidebarService,
   DashboardHeaderActionsService,
   DashboardPageHeaderService,
+  DashboardPanelService,
 } from './services';
 
 /**
@@ -22,20 +31,23 @@ import {
  * @class DashboardLayout
  *
  * @description
- * Application shell for dashboard pages: a single tinted sidebar (brand,
- * shell widgets, navigation) next to a header + content column. The header
- * and the content share the same centered max-width column.
+ * Application shell for dashboard pages, composed as four independently
+ * scrolling regions: the organization rail, the channel sidebar, the main
+ * column (header + the one page scroller), and a stack of contextual panels.
  *
- * Provides {@link DashboardSidebarService} and
- * {@link DashboardSidebarNavigationService} at the component level
- * so child components can inject them directly.
+ * Geometry is ported from the design system's collaboration kit; the widths
+ * live in `constants/shell-geometry.constants.ts`.
  *
- * Responsive behavior:
- * - Desktop (xl+): full sidebar, collapsible to an icon-only rail
- * - Tablet (lg-xl): icon-only rail
- * - Mobile (<lg): sidebar hidden, accessible via Drawer overlay
+ * Responsive model:
+ * - `>= 1536px` — everything inline, up to two panels
+ * - `>= 1280px` — everything inline, one panel
+ * - `>= 768px`  — rail and sidebar inline, panels as an overlay drawer
+ * - `< 768px`   — rail and sidebar in the left drawer, panels in the right one
  *
- * @version 2.0.0
+ * `min-w-0` on the main column and `min-h-0` on the pane row are load-bearing:
+ * without them a flex child refuses to shrink and the page scrolls sideways.
+ *
+ * @version 3.0.0
  *
  * @example
  * ```html
@@ -51,6 +63,8 @@ import {
     DashboardLayoutHeader,
     DashboardLayoutSidebar,
     DashboardLayoutContent,
+    DashboardLayoutOrgRail,
+    DashboardLayoutPanelHost,
     DrawerModule,
   ],
   providers: [
@@ -65,32 +79,168 @@ import {
 })
 export class DashboardLayout {
   //#region Properties
+  /**
+   * Property sidebarService
+   * @readonly
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {DashboardSidebarService}
+   */
   protected readonly sidebarService: DashboardSidebarService =
     inject<DashboardSidebarService>(DashboardSidebarService);
 
-  protected readonly isDesktopSidebar: Signal<boolean> = toSignal(
-    inject<BreakpointObserver>(BreakpointObserver)
-      .observe('(min-width: 1280px)')
-      .pipe(map((result) => result.matches)),
-    { initialValue: false },
-  );
-
   /**
-   * Property primaryIconOnly
+   * Property panelService
    * @readonly
    *
    * @description
-   * Whether the sidebar should render in its icon-only (rail) form. True
-   * either when below the desktop breakpoint (tablet) or when the user has
-   * explicitly collapsed the sidebar via the brand toggle.
+   * Provided by `provideDashboardLayoutSlots()` at the route's environment
+   * injector, not by this component — a routed page injecting
+   * `SHELL_PANEL_PORT` must resolve the same instance.
    *
    * @access protected
-   * @since 4.0.0
+   * @since 3.0.0
+   *
+   * @type {DashboardPanelService}
+   */
+  protected readonly panelService: DashboardPanelService =
+    inject<DashboardPanelService>(DashboardPanelService);
+
+  /**
+   * Property railWidth
+   * @readonly
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {number}
+   */
+  protected readonly railWidth: number = SHELL_RAIL_WIDTH_PX;
+
+  /**
+   * Property sidebarWidth
+   * @readonly
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {number}
+   */
+  protected readonly sidebarWidth: number = SHELL_SIDEBAR_WIDTH_PX;
+
+  /**
+   * Property isTablet
+   * @readonly
+   *
+   * @description
+   * Whether the rail and sidebar render inline rather than in a drawer.
+   *
+   * @access protected
+   * @since 3.0.0
    *
    * @type {Signal<boolean>}
    */
-  protected readonly primaryIconOnly: Signal<boolean> = computed(
-    (): boolean => !this.isDesktopSidebar() || this.sidebarService.primaryCollapsed(),
+  protected readonly isTablet: Signal<boolean> = this.matches('(min-width: 768px)');
+
+  /**
+   * Property canInlinePanel
+   * @readonly
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canInlinePanel: Signal<boolean> = this.matches(
+    `(min-width: ${SHELL_INLINE_PANEL_MIN_WIDTH_PX}px)`,
   );
+
+  /**
+   * Property canInlineSecondPanel
+   * @readonly
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canInlineSecondPanel: Signal<boolean> = this.matches(
+    `(min-width: ${SHELL_SECOND_PANEL_MIN_WIDTH_PX}px)`,
+  );
+
+  /**
+   * Property maxInlinePanels
+   * @readonly
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly maxInlinePanels: Signal<number> = computed((): number =>
+    this.canInlineSecondPanel() ? 2 : 1,
+  );
+
+  /**
+   * Property sidebarInlineWidth
+   * @readonly
+   *
+   * @description
+   * Collapsing hides the sidebar rather than shrinking it to an icon rail: with
+   * a permanent organization rail, a second icon rail would rebuild the
+   * two-column navigation that was deliberately removed.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly sidebarInlineWidth: Signal<number> = computed((): number =>
+    this.sidebarService.primaryCollapsed() ? 0 : this.sidebarWidth,
+  );
+
+  /**
+   * Property panelsInDrawer
+   * @readonly
+   *
+   * @description
+   * Whether open panels render as a right-hand overlay instead of inline.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly panelsInDrawer: Signal<boolean> = computed(
+    (): boolean => !this.canInlinePanel() && this.panelService.openPanels().length > 0,
+  );
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method matches.
+   *
+   * @description
+   * Wraps a media query as a signal. `initialValue: false` means the server and
+   * the first client frame render the narrow branch; the dashboard is never
+   * server-rendered (`app.routes.server.ts` maps `**` to `RenderMode.Client`),
+   * so there is no hydration mismatch to guard against.
+   *
+   * @since 3.0.0
+   *
+   * @param {string} query the media query
+   *
+   * @returns {Signal<boolean>} whether the query currently matches
+   */
+  private matches(query: string): Signal<boolean> {
+    return toSignal(
+      inject<BreakpointObserver>(BreakpointObserver)
+        .observe(query)
+        .pipe(map((result): boolean => result.matches)),
+      { initialValue: false },
+    );
+  }
   //#endregion
 }

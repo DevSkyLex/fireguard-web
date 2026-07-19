@@ -2,41 +2,70 @@
   id="dashboard-layout"
   class="flex h-dvh overflow-hidden bg-surface-50 transition-colors dark:bg-surface-950"
 >
-  <!-- Single tinted sidebar (chrome layer): brand + widgets + navigation + footer -->
-  <aside
-    class="hidden shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out lg:flex"
-    [style.width.px]="primaryIconOnly() ? 68 : 272"
-  >
-    <app-dashboard-layout-sidebar
-      class="w-full"
-      variant="primary"
-      [iconOnly]="primaryIconOnly()"
-      [collapsible]="isDesktopSidebar()"
-    />
-  </aside>
+  <!-- Organization rail: chrome, never collapses, hidden below tablet. -->
+  @if (isTablet()) {
+    <div class="shrink-0" [style.width.px]="railWidth">
+      <app-dashboard-layout-org-rail />
+    </div>
+  }
 
-  <!-- Right column: header on top, then the single content scroller -->
+  <!-- Channel sidebar: collapses to zero width, not to an icon rail. -->
+  @if (isTablet()) {
+    <aside
+      class="shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out motion-reduce:transition-none"
+      [style.width.px]="sidebarInlineWidth()"
+    >
+      <app-dashboard-layout-sidebar class="w-full" variant="primary" [collapsible]="true" />
+    </aside>
+  }
+
+  <!-- Main column: header, then the pane row. Never scrolls itself. -->
   <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
     <app-dashboard-layout-header />
 
-    <!-- Mobile drawer: same sidebar rendered as an overlay below lg -->
-    <p-drawer
-      [visible]="sidebarService.visible()"
-      (visibleChange)="sidebarService.setVisible($event)"
-      [blockScroll]="true"
-      i18n-ariaCloseLabel="@@layout.sidebar.closeAria"
-      ariaCloseLabel="Close navigation menu"
-    >
-      <ng-template #headless>
-        <app-dashboard-layout-sidebar />
-      </ng-template>
-    </p-drawer>
+    <div class="flex min-h-0 flex-1 overflow-hidden">
+      <!-- The one page scroller. `min-w-0` keeps wide tables from pushing it. -->
+      <div class="min-w-0 flex-1 overflow-y-auto overscroll-contain">
+        <app-dashboard-layout-content>
+          <router-outlet />
+        </app-dashboard-layout-content>
+      </div>
 
-    <!-- Content plane: single scroller, pages render inside a centered max-width column -->
-    <div class="min-h-0 flex-1 overflow-y-auto">
-      <app-dashboard-layout-content>
-        <router-outlet />
-      </app-dashboard-layout-content>
+      @if (canInlinePanel()) {
+        <app-dashboard-layout-panel-host [maxPanels]="maxInlinePanels()" />
+      }
     </div>
   </div>
+
+  <!-- Below tablet the rail and sidebar share one left drawer. -->
+  <p-drawer
+    [visible]="sidebarService.visible()"
+    (visibleChange)="sidebarService.setVisible($event)"
+    [blockScroll]="true"
+    i18n-ariaCloseLabel="@@layout.sidebar.closeAria"
+    ariaCloseLabel="Close navigation menu"
+  >
+    <ng-template #headless>
+      <div class="flex h-full">
+        <div class="shrink-0" [style.width.px]="railWidth">
+          <app-dashboard-layout-org-rail />
+        </div>
+        <app-dashboard-layout-sidebar class="min-w-0 flex-1" />
+      </div>
+    </ng-template>
+  </p-drawer>
+
+  <!-- Too narrow for an inline panel: show it as a right-hand overlay. -->
+  <p-drawer
+    position="right"
+    [visible]="panelsInDrawer()"
+    (visibleChange)="!$event && panelService.close()"
+    [blockScroll]="true"
+    i18n-ariaCloseLabel="@@layout.panel.closeDrawerAria"
+    ariaCloseLabel="Close panel"
+  >
+    <ng-template #headless>
+      <app-dashboard-layout-panel-host class="flex h-full" [maxPanels]="1" />
+    </ng-template>
+  </p-drawer>
 </div>

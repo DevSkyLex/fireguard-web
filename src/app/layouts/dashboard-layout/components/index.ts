@@ -4,3 +4,5 @@ export { DashboardLayoutContent } from './dashboard-layout-content/dashboard-lay
 export { DashboardLayoutSidebar } from './dashboard-layout-sidebar/dashboard-layout-sidebar.component';
 export { DashboardLayoutBreadcrumb } from './dashboard-layout-breadcrumb/dashboard-layout-breadcrumb.component';
 export { DashboardLayoutPageHeader } from './dashboard-layout-page-header/dashboard-layout-page-header.component';
+export { DashboardLayoutOrgRail } from './dashboard-layout-org-rail/dashboard-layout-org-rail.component';
+export { DashboardLayoutPanelHost } from './dashboard-layout-panel-host/dashboard-layout-panel-host.component';

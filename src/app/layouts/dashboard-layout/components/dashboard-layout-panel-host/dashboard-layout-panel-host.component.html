@@ -1,0 +1,34 @@
+<!--
+  Ported from the kit's `.ws-info`: a 330px column with a hairline border on the
+  left, its own scroller, and a 56px header row matching the shell header.
+-->
+@for (panel of visiblePanels(); track panel.id) {
+  <aside
+    class="flex h-full shrink-0 flex-col border-l border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-950"
+    [style.width.px]="panelWidth"
+    [attr.aria-label]="panel.title()"
+  >
+    <header
+      class="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-surface-200 px-4 dark:border-surface-800"
+    >
+      <h2 class="truncate text-sm font-semibold text-surface-900 dark:text-surface-100">
+        {{ panel.title() }}
+      </h2>
+      <p-button
+        type="button"
+        icon="pi pi-times"
+        severity="secondary"
+        size="small"
+        [text]="true"
+        [rounded]="true"
+        i18n-ariaLabel="@@layout.panel.closeAria"
+        ariaLabel="Close panel"
+        (onClick)="panelService.close(panel.id)"
+      />
+    </header>
+
+    <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <ng-container *ngComponentOutlet="panel.component" />
+    </div>
+  </aside>
+}

@@ -278,15 +278,8 @@ test.describe('Messaging workspace', () => {
     await expect(page).toHaveURL(/conversation=c1/);
   });
 
-  // KNOWN GAP, deliberately left failing-visible rather than deleted.
-  //
-  // Clicking a conversation puts `?conversation=` in the URL and opens the
-  // thread. Arriving on that URL does not: the page renders "Pick a
-  // conversation", so `conversation` is absent from the route snapshot by the
-  // time the component reads it. The most likely cause is a guard redirect in
-  // the organization route chain dropping query params; confirming that needs
-  // a pass over `organizationAccessGuard` and friends.
-  test.fixme('opens the conversation named by the URL on arrival', async ({ page }) => {
+  // A shared link must land on the thread, not on the empty state.
+  test('opens the conversation named by the URL on arrival', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page, 'c1');
 

@@ -194,6 +194,13 @@ export class MessagingPage {
         (): string | null => this.activeOrganizationStore.selectedOrganization()?.id ?? null,
       ),
     );
+
+    // The URL is the source of truth for which thread is open, so a shared link
+    // and a reload both land on the same conversation.
+    const deepLinked: string | null = this.route.snapshot.queryParamMap.get('conversation');
+    if (deepLinked !== null) {
+      this.store.selectConversation(deepLinked);
+    }
   }
   //#endregion
 

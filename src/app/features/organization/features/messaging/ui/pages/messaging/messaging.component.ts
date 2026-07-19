@@ -167,6 +167,19 @@ export class MessagingPage {
   protected readonly draft: WritableSignal<string> = signal<string>('');
 
   /**
+   * Property pendingFile
+   *
+   * @description
+   * A file staged for the next message, if any.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @type {WritableSignal<File | null>}
+   */
+  protected readonly pendingFile: WritableSignal<File | null> = signal<File | null>(null);
+
+  /**
    * Property replyDraft
    *
    * @description
@@ -191,7 +204,7 @@ export class MessagingPage {
    */
   protected readonly canSend: Signal<boolean> = computed(
     (): boolean =>
-      this.draft().trim().length > 0 &&
+      (this.draft().trim().length > 0 || this.pendingFile() !== null) &&
       !this.store.isSending() &&
       this.store.activeConversation() !== null,
   );
@@ -263,6 +276,7 @@ export class MessagingPage {
     // input binding is not guaranteed to have flushed by the time the user
     // expects the thread, and the effect below is a no-op once the ids match.
     this.draft.set('');
+    this.pendingFile.set(null);
     this.store.selectConversation(conversationId);
 
     this.router.navigate([], {
@@ -406,8 +420,40 @@ export class MessagingPage {
   protected send(): void {
     if (!this.canSend()) return;
 
-    this.store.send(this.draft());
+    this.store.send({ body: this.draft(), file: this.pendingFile() });
     this.draft.set('');
+    this.pendingFile.set(null);
+  }
+
+  /**
+   * Method onFileSelected
+   *
+   * @description
+   * Stages the chosen file for the next message.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @param {Event} event - The file input change event.
+   *
+   * @returns {void}
+   */
+  protected onFileSelected(event: Event): void {
+    const target: HTMLInputElement = event.target as HTMLInputElement;
+    this.pendingFile.set(target.files?.[0] ?? null);
+    target.value = '';
+  }
+
+  /**
+   * Method clearFile
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @returns {void}
+   */
+  protected clearFile(): void {
+    this.pendingFile.set(null);
   }
 
   /**

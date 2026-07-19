@@ -108,6 +108,25 @@
             </p>
           }
 
+          @if (attachments(message.id).length > 0) {
+            <ul class="mt-1 flex flex-col gap-1">
+              @for (attachment of attachments(message.id); track attachment.id) {
+                <li
+                  class="flex items-center gap-2 rounded-lg border border-surface-200 px-2.5 py-1.5 text-xs dark:border-surface-700"
+                  data-testid="message-attachment"
+                >
+                  <i class="pi pi-paperclip text-surface-400" aria-hidden="true"></i>
+                  <span class="max-w-64 truncate text-surface-700 dark:text-surface-300">
+                    {{ attachment.fileName }}
+                  </span>
+                  <span class="text-surface-400 tabular-nums dark:text-surface-500">
+                    {{ formatSize(attachment.size) }}
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+
           @if (message.reactions.length > 0) {
             <!-- Reaction chip geometry ported from the kit: 26px, full radius. -->
             <ul class="mt-0.5 flex flex-wrap gap-1.5">

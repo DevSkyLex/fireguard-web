@@ -17,6 +17,7 @@ import {
 import { MessagingService } from '@features/organization/features/messaging/data-access';
 import type {
   ConversationOutput,
+  MessageAttachment,
   MessageOutput,
   PresenceOutput,
   SendMessageInput,
@@ -28,6 +29,7 @@ import type {
  * @since 1.0.0
  */
 interface MessagingWorkspaceState {
+  readonly attachments: readonly MessageAttachment[];
   readonly openThreadRootId: string | null;
   readonly repliesCallState: CallState<readonly MessageOutput[]>;
   readonly onlineMemberIds: readonly string[];
@@ -38,6 +40,7 @@ interface MessagingWorkspaceState {
 }
 
 const INITIAL_STATE: MessagingWorkspaceState = {
+  attachments: [],
   openThreadRootId: null,
   repliesCallState: idleCallState(),
   onlineMemberIds: [],
@@ -175,6 +178,25 @@ export const MessagingWorkspaceStore = signalStore(
     ),
 
     /**
+     * Computed attachmentsByMessage
+     *
+     * @description
+     * Attachments keyed by their message id, so a message row can show its
+     * files without a per-row lookup.
+     *
+     * @type {Signal<ReadonlyMap<string, readonly MessageAttachment[]>>}
+     */
+    attachmentsByMessage: computed<ReadonlyMap<string, readonly MessageAttachment[]>>(() => {
+      const grouped = new Map<string, MessageAttachment[]>();
+      for (const attachment of store.attachments()) {
+        const list = grouped.get(attachment.message) ?? [];
+        list.push(attachment);
+        grouped.set(attachment.message, list);
+      }
+      return grouped;
+    }),
+
+    /**
      * Computed isLoadingConversations
      *
      * @type {Signal<boolean>}
@@ -246,6 +268,25 @@ export const MessagingWorkspaceStore = signalStore(
 
   //#region Methods
   withMethods((store, service = inject(MessagingService), mercure = inject(MercureService)) => {
+    const loadAttachments = rxMethod<string | null>(
+      pipe(
+        switchMap((conversationId: string | null) => {
+          if (conversationId === null) {
+            patchState(store, { attachments: [] });
+            return EMPTY;
+          }
+
+          return service.listAttachments(conversationId).pipe(
+            tapResponse({
+              next: (collection: HydraCollection<MessageAttachment>) =>
+                patchState(store, { attachments: collection.member }),
+              error: () => patchState(store, { attachments: [] }),
+            }),
+          );
+        }),
+      ),
+    );
+
     const loadMessages = rxMethod<string | null>(
       pipe(
         switchMap((conversationId: string | null) => {
@@ -373,6 +414,7 @@ export const MessagingWorkspaceStore = signalStore(
        */
       selectConversation(conversationId: string | null): void {
         patchState(store, { activeConversationId: conversationId });
+        loadAttachments(conversationId);
         loadMessages(conversationId);
         streamMessages(conversationId);
       },
@@ -607,26 +649,47 @@ export const MessagingWorkspaceStore = signalStore(
        *
        * @returns {void}
        */
-      send: rxMethod<string>(
+      send: rxMethod<{ readonly body: string; readonly file: File | null }>(
         pipe(
-          switchMap((body: string) => {
+          switchMap((request: { readonly body: string; readonly file: File | null }) => {
             const conversationId: string | null = store.activeConversationId();
-            if (conversationId === null || body.trim().length === 0) return EMPTY;
+            const body: string = request.body.trim();
+
+            // A file with no text is a valid message: the API accepts an empty
+            // body, and "here is the report" is often just the report.
+            if (conversationId === null || (body.length === 0 && request.file === null)) {
+              return EMPTY;
+            }
 
             patchState(store, { sendCallState: pendingCallState() });
 
-            const input: SendMessageInput = { body: body.trim() };
+            const input: SendMessageInput = { body };
 
             return service.sendMessage(conversationId, input).pipe(
-              tapResponse({
-                next: (message: MessageOutput) =>
-                  patchState(store, {
-                    sendCallState: successCallState(message),
-                    messagesCallState: successCallState([
-                      ...(store.messagesCallState().data ?? []),
-                      message,
-                    ]),
+              switchMap((message: MessageOutput) => {
+                patchState(store, {
+                  sendCallState: successCallState(message),
+                  messagesCallState: successCallState([
+                    ...(store.messagesCallState().data ?? []),
+                    message,
+                  ]),
+                });
+
+                // Upload only after the message exists — the attachment hangs
+                // off its id. A failed upload leaves the message; it is not
+                // rolled back.
+                if (request.file === null) return EMPTY;
+
+                return service.uploadAttachment(message.id, request.file).pipe(
+                  tapResponse({
+                    next: (attachment: MessageAttachment) =>
+                      patchState(store, { attachments: [...store.attachments(), attachment] }),
+                    error: () => undefined,
                   }),
+                );
+              }),
+              tapResponse({
+                next: () => undefined,
                 error: (error: unknown) =>
                   patchState(store, { sendCallState: errorCallState(toStoreError(error)) }),
               }),

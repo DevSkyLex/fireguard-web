@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { catchError, type Observable } from 'rxjs';
 import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type { MercureSubscriptionOutput } from '@core/mercure';
 import type {
   ConversationOutput,
+  MessageAttachment,
   PresenceOutput,
   MessageOutput,
   SendMessageInput,
@@ -106,6 +107,59 @@ export class MessagingService extends HydraApiService {
       `/api/conversations/${conversationId}/messages`,
       input,
     );
+  }
+
+  /**
+   * Method listAttachments
+   * @method listAttachments
+   *
+   * @description
+   * Lists a conversation's attachments, so the thread can show file metadata
+   * against the messages that carry them.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @param {string} conversationId - The conversation.
+   *
+   * @return {Observable<HydraCollection<MessageAttachment>>} The attachments.
+   */
+  public listAttachments(conversationId: string): Observable<HydraCollection<MessageAttachment>> {
+    return this.getCollection<MessageAttachment>(
+      `/api/conversations/${conversationId}/attachments`,
+    );
+  }
+
+  /**
+   * Method uploadAttachment
+   * @method uploadAttachment
+   *
+   * @description
+   * Uploads a file to a message.
+   *
+   * Goes through `http` directly with the JSON content-type dropped, so the
+   * browser sets the multipart boundary — the same escape hatch the avatar
+   * upload uses. `HydraApiService.post` would force `application/ld+json` and
+   * break the upload.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @param {string} messageId - The message to attach to.
+   * @param {File} file - The file to upload.
+   *
+   * @return {Observable<MessageAttachment>} The stored attachment.
+   */
+  public uploadAttachment(messageId: string, file: File): Observable<MessageAttachment> {
+    const body = new FormData();
+    body.set('file', file, file.name);
+
+    return this.http
+      .post<MessageAttachment>(this.buildUrl(`/api/messages/${messageId}/attachments`), body, {
+        headers: this.defaultHeaders.delete('Content-Type'),
+        withCredentials: true,
+      })
+      .pipe(catchError(this.handleError));
   }
 
   /**

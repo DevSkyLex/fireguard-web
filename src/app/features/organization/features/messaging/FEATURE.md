@@ -13,7 +13,8 @@ backend scopes every endpoint by the session's active organization.
 Conversation list, thread, composer and emoji reactions are live at
 `…/messages`, with the thread updating in real time. Messages can be pinned
 (conversation-wide) and saved (personal), and online authors carry a presence
-dot. Replies open in a side panel. Attachments are not built.
+dot. Replies open in a side panel, and messages can carry file
+attachments.
 
 ## Route entry points
 
@@ -91,9 +92,23 @@ sender's own message arrives twice — once from the POST response, once echoed
 by the hub — and appending both would show it duplicated to its author and to
 nobody else, which is the worst kind of bug to reproduce.
 
+## Attachments
+
+A message can carry files: the composer stages a file, the message is created
+first, then the file is uploaded to its id (POST multipart). Uploading goes
+through `http` directly with the JSON content-type dropped so the browser sets
+the multipart boundary — `HydraApiService.post` would force `application/ld+json`
+and break it.
+
+⚠️ **There is no download endpoint.** The API exposes upload, list and delete of
+attachments but serves no file content, so attachments render as metadata (name,
+size), not links. A backend task is filed to add the download route.
+
+A file with no text is a valid message — "here is the report" is often just the
+report — so the composer sends when either a body or a file is present.
+
 ## Not built yet
 
-Reactions, pinned messages, saved messages, threads/replies, attachments,
-participants, presence, and record-bound conversations (`subjectType` is already
+Participants, and record-bound conversations (`subjectType` is already
 `facility | equipment | intervention | non_conformity` in the API, and no view
-surfaces it). All have backend endpoints already.
+surfaces it).

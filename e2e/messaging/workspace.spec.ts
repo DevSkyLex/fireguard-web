@@ -58,11 +58,12 @@ const message = (id: string, body: string | null, createdAt: string, isDeleted =
 async function landOnMessaging(
   page: Page,
   conversationId?: string,
-): Promise<{ sent: string[]; reacted: string[] }> {
+): Promise<{ sent: string[]; reacted: string[]; uploaded: string[] }> {
   const organization = organizationOutput();
   const api = new ApiMock(page);
   const sent: string[] = [];
   const reacted: string[] = [];
+  const uploaded: string[] = [];
 
   await api.mockAuthenticatedSession({ organizations: [organization] });
   await api.mockOrganizationDetail(organization);
@@ -112,6 +113,29 @@ async function landOnMessaging(
     const method: string = route.request().method();
     const path: string = decodeURIComponent(url.split('/messages/')[1] ?? '');
     reacted.push(`${method} ${path}`);
+
+    if (path.endsWith('/attachments')) {
+      uploaded.push(path);
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/ld+json',
+        body: JSON.stringify({
+          '@id': '/api/messaging-attachments/att-2',
+          '@type': 'MessagingAttachment',
+          id: 'att-2',
+          message: path.split('/')[0],
+          conversation: 'c1',
+          uploadedByMember: 'member-abc',
+          fileName: 'photo.jpg',
+          mimeType: 'image/jpeg',
+          size: 51200,
+          label: null,
+          revision: 1,
+          uploadedAt: '2026-07-01T10:06:00+00:00',
+        }),
+      });
+      return;
+    }
 
     if (path.endsWith('/replies')) {
       if (method === 'POST') {
@@ -167,6 +191,33 @@ async function landOnMessaging(
       return;
     }
 
+    if (url.includes('/attachments')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/ld+json',
+        body: JSON.stringify({
+          member: [
+            {
+              '@id': '/api/messaging-attachments/att-1',
+              '@type': 'MessagingAttachment',
+              id: 'att-1',
+              message: 'm1',
+              conversation: 'c1',
+              uploadedByMember: 'member-abc',
+              fileName: 'inspection-report.pdf',
+              mimeType: 'application/pdf',
+              size: 245760,
+              label: null,
+              revision: 1,
+              uploadedAt: '2026-07-01T10:00:00+00:00',
+            },
+          ],
+          totalItems: 1,
+        }),
+      });
+      return;
+    }
+
     if (url.includes('/messages')) {
       if (route.request().method() === 'POST') {
         const body = route.request().postDataJSON() as { body: string };
@@ -211,7 +262,7 @@ async function landOnMessaging(
   await page.goto(`/organizations/${organization.id}/messages${query}`);
   await expect(page.locator('#messaging')).toBeVisible();
 
-  return { sent, reacted };
+  return { sent, reacted, uploaded };
 }
 
 test.describe('Messaging workspace', () => {
@@ -420,6 +471,37 @@ test.describe('Messaging workspace', () => {
     await page.getByTestId('close-thread').click();
 
     await expect(page.getByTestId('thread-panel')).toHaveCount(0);
+  });
+
+  test('shows an attachment on the message that carries it', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+
+    const attachment = page.getByTestId('message-attachment');
+    await expect(attachment).toContainText('inspection-report.pdf');
+    await expect(attachment).toContainText('240 KB');
+  });
+
+  test('sends a message with a file attached', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const { uploaded } = await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+    await page.getByTestId('file-input').setInputFiles({
+      name: 'photo.jpg',
+      mimeType: 'image/jpeg',
+      buffer: Buffer.from('fake'),
+    });
+
+    await expect(page.getByTestId('staged-file')).toContainText('photo.jpg');
+
+    await page.getByTestId('message-composer').fill('Here is the photo.');
+    await page.getByTestId('message-send').locator('button').click();
+
+    // Uploaded to the just-created message, not the composed one.
+    await expect.poll(() => uploaded).toEqual(['m3/attachments']);
   });
 
   test('refuses to send an empty draft', async ({ page }) => {

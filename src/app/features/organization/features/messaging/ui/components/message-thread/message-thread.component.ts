@@ -8,6 +8,7 @@ import {
   type OutputEmitterRef,
 } from '@angular/core';
 import type {
+  MessageAttachment,
   MessageOutput,
   MessageReaction,
 } from '@features/organization/features/messaging/models';
@@ -117,6 +118,25 @@ export class MessageThread {
   public readonly onlineMembers: InputSignal<ReadonlySet<string>> = input<ReadonlySet<string>>(
     new Set<string>(),
   );
+
+  /**
+   * Property attachmentsByMessage
+   * @readonly
+   *
+   * @description
+   * Attachments keyed by message id. There is no download endpoint yet, so
+   * these render as metadata (name, size), not links.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @type {InputSignal<ReadonlyMap<string, readonly MessageAttachment[]>>}
+   */
+  public readonly attachmentsByMessage: InputSignal<
+    ReadonlyMap<string, readonly MessageAttachment[]>
+  > = input<ReadonlyMap<string, readonly MessageAttachment[]>>(
+    new Map<string, readonly MessageAttachment[]>(),
+  );
   //#endregion
 
   //#region Outputs
@@ -210,6 +230,42 @@ export class MessageThread {
         avatarUrl: null,
       }
     );
+  }
+
+  /**
+   * Method attachments
+   *
+   * @description
+   * The files on a message, or an empty list.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @param {string} messageId - The message id.
+   *
+   * @returns {readonly MessageAttachment[]} Its attachments.
+   */
+  protected attachments(messageId: string): readonly MessageAttachment[] {
+    return this.attachmentsByMessage().get(messageId) ?? [];
+  }
+
+  /**
+   * Method formatSize
+   *
+   * @description
+   * A short human size (e.g. `1.4 MB`) for an attachment.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @param {number} bytes - The file size.
+   *
+   * @returns {string} The formatted size.
+   */
+  protected formatSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
   //#endregion
 }

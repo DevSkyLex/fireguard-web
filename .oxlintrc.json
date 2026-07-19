@@ -35,6 +35,11 @@
   },
   "overrides": [
     {
+      "files": ["scripts/**/*.mjs"],
+      "env": { "builtin": true, "node": true },
+      "rules": { "no-console": "off" }
+    },
+    {
       "files": ["src/**/*.spec.ts", "src/**/*.test.ts"],
       "plugins": ["typescript", "unicorn", "oxc", "vitest"],
       "env": {

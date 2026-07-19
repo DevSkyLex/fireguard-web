@@ -9,16 +9,14 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { SelectButtonModule, type SelectButtonChangeEvent } from 'primeng/selectbutton';
-import { TagModule } from 'primeng/tag';
 import {
   type BillingInterval,
   type OrganizationOutput,
+  type OrganizationSubscriptionOutput,
   type PlanOutput,
   type PlanPricingOutput,
   resolveSubscriptionStatusTag,
@@ -27,7 +25,7 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import { OrganizationPlanStore } from '@features/organization/state/organization-plan';
 import { BillingInvoiceTable } from '@features/organization/ui/tables';
-import { Skeleton } from '@shared/components';
+import { EmptyState, ErrorState, Skeleton } from '@shared/components';
 import { Tag, type TagDescriptor } from '@shared/components/tag';
 import { BillingCancelCard } from './components/billing-cancel-card/billing-cancel-card.component';
 
@@ -66,11 +64,10 @@ interface IntervalOption {
   imports: [
     ButtonModule,
     MessageModule,
-    TagModule,
-    SelectButtonModule,
-    FormsModule,
     Tag,
     Skeleton,
+    EmptyState,
+    ErrorState,
     BillingInvoiceTable,
     BillingCancelCard,
   ],
@@ -105,7 +102,7 @@ export class OrganizationPlanSelector implements OnInit {
   /** Selected billing cadence for paid plans. */
   protected readonly interval: WritableSignal<BillingInterval> = signal<BillingInterval>('month');
 
-  /** Options of the cadence toggle (mutable array required by p-selectButton). */
+  /** Options of the segmented cadence toggle. */
   protected readonly intervalOptions: IntervalOption[] = [
     { label: $localize`:@@org.plan.monthly:Monthly`, value: 'month' },
     { label: $localize`:@@org.plan.yearly:Yearly`, value: 'year' },
@@ -131,6 +128,72 @@ export class OrganizationPlanSelector implements OnInit {
   protected readonly currentPlanId: Signal<string | null> = computed<string | null>(
     () => this.activeOrganizationStore.selectedOrganization()?.planId ?? null,
   );
+
+  /** The organization's current plan from the catalog, once plans are loaded. */
+  protected readonly currentPlan: Signal<PlanOutput | null> = computed<PlanOutput | null>(() => {
+    const planId: string | null = this.currentPlanId();
+    return this.store.plans().find((plan: PlanOutput): boolean => plan.id === planId) ?? null;
+  });
+
+  /** Badge descriptor marking the current plan in the plans grid. */
+  protected readonly currentPlanTag: TagDescriptor = {
+    label: $localize`:@@org.plan.current:Current`,
+    severity: 'success',
+    icon: 'pi pi-check',
+  };
+
+  /** Localized billing-cadence sentence of the active subscription, when known. */
+  protected readonly intervalBillingLabel: Signal<string | null> = computed<string | null>(() => {
+    const interval: BillingInterval | null | undefined = this.billingStore.subscription()?.interval;
+    if (interval === 'month') {
+      return $localize`:@@org.plan.monthlyBilling:Monthly billing`;
+    }
+    if (interval === 'year') {
+      return $localize`:@@org.plan.yearlyBilling:Yearly billing`;
+    }
+    return null;
+  });
+
+  /** Formatted price of the active subscription for its own cadence, when known. */
+  protected readonly currentPriceLabel: Signal<string | null> = computed<string | null>(() => {
+    const subscription: OrganizationSubscriptionOutput | null = this.billingStore.subscription();
+    if (
+      subscription?.hasSubscription !== true ||
+      subscription.planKey == null ||
+      subscription.interval == null
+    ) {
+      return null;
+    }
+
+    const pricing: PlanPricingOutput | undefined = this.pricingByKey().get(subscription.planKey);
+    if (pricing === undefined) {
+      return null;
+    }
+
+    const amount: number | null | undefined =
+      subscription.interval === 'year' ? pricing.yearlyAmount : pricing.monthlyAmount;
+    if (amount === null || amount === undefined) {
+      return null;
+    }
+
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: pricing.currency,
+      maximumFractionDigits: 2,
+    }).format(amount / 100);
+  });
+
+  /** Localized "per cadence" suffix rendered next to the current price. */
+  protected readonly currentPriceSuffix: Signal<string | null> = computed<string | null>(() => {
+    const interval: BillingInterval | null | undefined = this.billingStore.subscription()?.interval;
+    if (interval === 'month') {
+      return $localize`:@@org.plan.perMonth:/ month`;
+    }
+    if (interval === 'year') {
+      return $localize`:@@org.plan.perYear:/ year`;
+    }
+    return null;
+  });
 
   /** Display pricing indexed by plan key. */
   protected readonly pricingByKey: Signal<ReadonlyMap<string, PlanPricingOutput>> = computed<
@@ -239,15 +302,13 @@ export class OrganizationPlanSelector implements OnInit {
    * Method onIntervalChange
    *
    * @description
-   * Updates the selected billing cadence.
+   * Updates the selected billing cadence from the segmented toggle.
    *
-   * @param {SelectButtonChangeEvent} event - The toggle change event.
+   * @param {BillingInterval} value - The selected cadence.
    * @returns {void}
    */
-  protected onIntervalChange(event: SelectButtonChangeEvent): void {
-    if (event.value === 'month' || event.value === 'year') {
-      this.interval.set(event.value);
-    }
+  protected onIntervalChange(value: BillingInterval): void {
+    this.interval.set(value);
   }
 
   /**

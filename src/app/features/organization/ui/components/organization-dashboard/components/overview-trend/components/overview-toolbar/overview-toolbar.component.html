@@ -1,17 +1,14 @@
 <div class="flex items-center gap-2">
-  <p-inputgroup>
-    <p-inputgroup-addon>
-      <i class="pi pi-calendar"></i>
-    </p-inputgroup-addon>
-    <p-select
-      [formControl]="granularityControl"
-      [options]="store.granularityOptions()"
-      optionLabel="label"
-      optionValue="value"
-      [loading]="store.isQueryLoading()"
-      size="small"
-    />
-  </p-inputgroup>
+  <p-select
+    i18n-ariaLabel="@@org.trend.granularity"
+    ariaLabel="Granularity"
+    [formControl]="granularityControl"
+    [options]="store.granularityOptions()"
+    optionLabel="label"
+    optionValue="value"
+    [loading]="store.isQueryLoading()"
+    size="small"
+  />
 
   <p-overlay-badge [badgeDisabled]="activeFilterCount() <= 0">
     <p-button

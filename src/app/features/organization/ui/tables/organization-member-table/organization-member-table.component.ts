@@ -16,7 +16,7 @@ import {
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
+import { CardModule, type CardPassThroughOptions } from 'primeng/card';
 import { ChipModule } from 'primeng/chip';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -32,6 +32,7 @@ import type {
   OrganizationRoleOutput,
 } from '@features/organization/models';
 import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
+import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
 import type { OrganizationMemberBulkRoleAssignment, OrganizationMemberRoleRemoval } from './models';
 
 /**
@@ -61,6 +62,12 @@ import type { OrganizationMemberBulkRoleAssignment, OrganizationMemberRoleRemova
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationMemberTable {
+  /** Shared bordered card shell `styleClass`, identical across entity tables. */
+  protected readonly cardStyleClass: string = TABLE_CARD_SHELL_STYLE_CLASS;
+
+  /** Shared card shell pass-through options (flush body/content). */
+  protected readonly cardPt: CardPassThroughOptions = TABLE_CARD_SHELL_PT;
+
   /** Organization members to display. */
   public readonly members: InputSignal<readonly OrganizationMemberOutput[]> = input.required();
 

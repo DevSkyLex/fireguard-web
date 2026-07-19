@@ -1,21 +1,14 @@
 <div
   id="organization-settings"
-  class="mx-auto flex w-full max-w-7xl flex-col p-3 sm:p-6 lg:p-8 xl:p-10"
+  class="mx-auto flex w-full max-w-7xl flex-col p-3 sm:p-6 md:p-7 lg:p-8"
 >
-  <header class="mb-7">
-    <h1
-      i18n="@@org.settings.pageTitle"
-      class="text-2xl font-semibold tracking-[-0.025em] text-surface-950 dark:text-surface-50"
-    >
-      Organization settings
-    </h1>
-    <p
-      i18n="@@org.settings.pageSubtitle"
-      class="mt-1.5 max-w-2xl text-sm leading-6 text-surface-600 dark:text-surface-400"
-    >
-      Manage workspace preferences, subscription, usage, and organization-wide policies.
-    </p>
-  </header>
+  <!-- Page subtitle (the layout header band renders the route title) -->
+  <p
+    i18n="@@org.settings.pageSubtitle"
+    class="mb-6 max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
+  >
+    Manage workspace preferences, subscription, usage, and organization-wide policies.
+  </p>
 
   <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
     <!-- Vertical settings navigation (sticky on large screens) -->
@@ -36,14 +29,14 @@
     <div class="flex min-w-0 flex-col gap-6">
       <p-card [pt]="sectionCardPt">
         <ng-template pTemplate="header">
-          <div class="flex flex-col border-b border-surface-200 px-6 py-4 dark:border-surface-800">
+          <div class="flex flex-col border-b border-surface-200 px-5 py-4 dark:border-surface-800">
             <h2
-              class="font-semibold text-surface-900 dark:text-surface-50"
+              class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
               data-testid="organization-settings-section-title"
             >
               {{ activeSection().label }}
             </h2>
-            <p class="text-sm text-surface-500 dark:text-surface-400">
+            <p class="mt-0.5 text-xs text-surface-500 dark:text-surface-400">
               {{ activeSection().description }}
             </p>
           </div>

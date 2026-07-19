@@ -183,13 +183,14 @@ export class OrganizationSettingsPage {
     itemIcon: { class: 'text-surface-500 dark:text-surface-400' },
   };
 
-  /** Bordered flat surface for the section content card (matches the account page). */
+  /**
+   * Bordered section content card; background, radius and per-theme elevation
+   * come from the PrimeNG card preset tokens.
+   */
   protected readonly sectionCardPt: CardPassThroughOptions = {
     root: {
-      class:
-        'border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 shadow-none',
+      class: 'border border-surface-200 dark:border-surface-800',
     },
-    body: { class: 'p-6' },
   };
 
   /** PrimeNG menu model derived from the settings sections. */

@@ -1,62 +1,212 @@
-<div id="organization-team" class="flex h-full min-h-0 flex-col">
-  <section class="px-4 pt-8 pb-4 sm:px-6 lg:px-8 xl:px-10">
-    <h1
-      i18n="@@org.team.title"
-      class="text-2xl font-semibold tracking-[-0.025em] text-surface-950 dark:text-surface-50"
-    >
-      Roles &amp; permissions
-    </h1>
+<div id="organization-team" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  <div class="flex flex-wrap items-end gap-4">
     <p
       i18n="@@org.team.subtitle"
-      class="mt-1.5 text-sm leading-6 text-surface-600 dark:text-surface-400"
+      class="max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
     >
       Define the roles and permissions that govern what members can do.
     </p>
-  </section>
-
-  <section
-    class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8 xl:px-10 xl:pb-10"
-  >
-    @if (store.loadError(); as error) {
-      <p-message severity="error">
-        <div class="flex flex-wrap items-center gap-3">
-          <span>{{ error.message ?? loadErrorFallback }}</span>
-          <p-button
-            i18n-label="@@org.team.retry"
-            label="Retry"
-            icon="pi pi-refresh"
-            severity="secondary"
-            [text]="true"
-            (onClick)="reload()"
-          />
-        </div>
-      </p-message>
-    }
-    @if (store.mutationError(); as error) {
-      <p-message severity="error">{{ error.message ?? mutationErrorFallback }}</p-message>
-    }
 
     @if (canManageRoles()) {
-      <p-card
-        [header]="roleCardHeader()"
-        styleClass="border border-surface-200 dark:border-surface-800 dark:bg-surface-900"
-      >
-        <app-organization-role-form
-          [role]="selectedRole()"
-          [permissions]="store.permissions()"
-          [loading]="store.isMutating()"
-          (submitted)="saveRole($event)"
-          (cancelled)="selectedRole.set(null)"
+      <div class="ml-auto">
+        <p-button
+          i18n-label="@@org.team.newRole"
+          label="New role"
+          icon="pi pi-plus"
+          size="small"
+          [disabled]="store.isMutating()"
+          (onClick)="openCreateRole()"
         />
-      </p-card>
+      </div>
     }
+  </div>
 
+  @if (store.loadError(); as error) {
+    <p-message severity="error">
+      <div class="flex flex-wrap items-center gap-3">
+        <span>{{ error.message ?? loadErrorFallback }}</span>
+        <p-button
+          i18n-label="@@org.team.retry"
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          (onClick)="reload()"
+        />
+      </div>
+    </p-message>
+  }
+  @if (store.mutationError(); as error) {
+    <p-message severity="error">{{ error.message ?? mutationErrorFallback }}</p-message>
+  }
+
+  <div class="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
     <app-organization-role-table
       [roles]="store.roles()"
       [loading]="store.isLoading()"
       [canManage]="canManageRoles()"
-      (edit)="selectedRole.set($event)"
-      (remove)="removeRole($event)"
+      [selectedRoleId]="viewedRole()?.id ?? null"
+      (select)="onSelectRole($event)"
     />
-  </section>
+
+    <div class="min-w-0">
+      @if (roleFormVisible() && canManageRoles()) {
+        <p-card
+          [header]="roleCardHeader()"
+          styleClass="border border-surface-200 dark:border-surface-800"
+        >
+          <app-organization-role-form
+            [role]="selectedRole()"
+            [permissions]="store.permissions()"
+            [loading]="store.isMutating()"
+            (submitted)="saveRole($event)"
+            (cancelled)="onRoleFormCancelled()"
+          />
+        </p-card>
+      } @else if (viewedRole(); as role) {
+        <p-card
+          styleClass="overflow-hidden border border-surface-200 dark:border-surface-800"
+          [pt]="{
+            body: { class: 'p-0' },
+            content: { class: 'p-0' },
+            header: { class: 'flex flex-wrap items-start gap-3 px-5 pt-5 pb-3' },
+          }"
+        >
+          <ng-template pTemplate="header">
+            <div class="min-w-0 flex-1">
+              <h2
+                i18n="@@org.team.matrixTitle"
+                class="truncate text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+              >
+                Permissions — {{ role.name }}
+              </h2>
+              <p
+                i18n="@@org.team.matrixSubtitle"
+                class="mt-0.5 text-xs text-pretty text-surface-500 dark:text-surface-400"
+              >
+                What this role is allowed to do for each resource type.
+              </p>
+            </div>
+
+            @if (canManageRoles()) {
+              <div class="flex shrink-0 items-center gap-2">
+                <p-button
+                  i18n-label="@@org.team.editRole"
+                  label="Edit role"
+                  icon="pi pi-pencil"
+                  severity="secondary"
+                  size="small"
+                  [outlined]="true"
+                  (onClick)="openEditRole()"
+                />
+                @if (!role.isSystem) {
+                  <p-button
+                    icon="pi pi-trash"
+                    severity="danger"
+                    size="small"
+                    [text]="true"
+                    [rounded]="true"
+                    i18n-ariaLabel="@@org.team.deleteRoleAria"
+                    ariaLabel="Delete role"
+                    (onClick)="removeRole(role)"
+                  />
+                }
+              </div>
+            }
+          </ng-template>
+
+          <ng-template pTemplate="content">
+            <div class="overflow-x-auto">
+              <p-table
+                [value]="[...matrixRows()]"
+                dataKey="resource"
+                [pt]="{ tbody: { class: '[&>tr:last-child>td]:border-b-0' } }"
+              >
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th i18n="@@org.team.matrixResource" class="w-2/5 min-w-44">Resource</th>
+                    @for (action of matrixActions(); track action) {
+                      <th class="min-w-20 text-center">{{ action }}</th>
+                    }
+                  </tr>
+                </ng-template>
+
+                <ng-template pTemplate="body" let-row>
+                  <tr>
+                    <td>
+                      <span class="font-medium text-surface-900 capitalize dark:text-surface-100">{{
+                        row.label
+                      }}</span>
+                    </td>
+                    @for (cell of row.cells; track cell.action) {
+                      <td class="text-center">
+                        @switch (cell.state) {
+                          @case ('granted') {
+                            <span
+                              role="img"
+                              [attr.aria-label]="allowedLabel"
+                              class="inline-grid h-6 w-6 place-items-center rounded-md border border-green-600/20 bg-green-50 text-green-600 dark:border-green-400/20 dark:bg-green-400/10 dark:text-green-400"
+                            >
+                              <i class="pi pi-check text-xs" aria-hidden="true"></i>
+                            </span>
+                          }
+                          @case ('denied') {
+                            <span
+                              role="img"
+                              [attr.aria-label]="notAllowedLabel"
+                              class="inline-grid h-6 w-6 place-items-center text-surface-400 dark:text-surface-500"
+                            >
+                              <i class="pi pi-minus text-xs" aria-hidden="true"></i>
+                            </span>
+                          }
+                          @default {
+                            <span class="text-surface-300 dark:text-surface-600" aria-hidden="true"
+                              >—</span
+                            >
+                          }
+                        }
+                      </td>
+                    }
+                  </tr>
+                </ng-template>
+              </p-table>
+            </div>
+
+            <div
+              class="flex flex-wrap items-center justify-between gap-4 border-t border-surface-200 px-5 py-3.5 dark:border-surface-800"
+            >
+              <div class="flex items-center gap-5 text-xs text-surface-600 dark:text-surface-400">
+                <span class="inline-flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    class="inline-grid h-5 w-5 place-items-center rounded-md border border-green-600/20 bg-green-50 text-green-600 dark:border-green-400/20 dark:bg-green-400/10 dark:text-green-400"
+                    ><i class="pi pi-check text-[10px]"></i
+                  ></span>
+                  <ng-container i18n="@@org.team.matrixAllowed">Allowed</ng-container>
+                </span>
+                <span class="inline-flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    class="inline-grid h-5 w-5 place-items-center text-surface-400 dark:text-surface-500"
+                    ><i class="pi pi-minus text-[10px]"></i
+                  ></span>
+                  <ng-container i18n="@@org.team.matrixNotAllowed">Not allowed</ng-container>
+                </span>
+              </div>
+
+              <span
+                i18n="@@org.team.matrixSummary"
+                class="text-xs text-surface-600 dark:text-surface-400"
+              >
+                <strong class="font-semibold text-surface-950 tabular-nums dark:text-surface-50">{{
+                  matrixGrantedCount()
+                }}</strong>
+                of {{ matrixTotalCount() }} permissions granted
+              </span>
+            </div>
+          </ng-template>
+        </p-card>
+      }
+    </div>
+  </div>
 </div>

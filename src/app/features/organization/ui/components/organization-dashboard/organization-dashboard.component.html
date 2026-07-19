@@ -27,59 +27,55 @@
 
       <section class="flex flex-col gap-6">
         @if (hasActivityMetrics()) {
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <app-dashboard-metric-strip>
             @if (canReadFacilities()) {
-              <app-metric-card
+              <app-dashboard-metric-cell
                 i18n-title="@@org.dash.facilities"
                 title="Facilities"
-                i18n-description="@@org.dash.facilitiesDesc"
-                description="Registered sites"
                 icon="pi pi-building"
                 [value]="store.facilityCount()"
                 [loading]="store.isQueryLoading()"
                 [comparison]="store.facilitiesComparison()"
+                [points]="store.facilitiesSparkline()"
               />
             }
 
             @if (canReadMembers()) {
-              <app-metric-card
+              <app-dashboard-metric-cell
                 i18n-title="@@org.dash.members"
                 title="Members"
-                i18n-description="@@org.dash.membersDesc"
-                description="Active members"
                 icon="pi pi-users"
                 [value]="store.memberCount()"
                 [loading]="store.isQueryLoading()"
                 [comparison]="store.membersComparison()"
+                [points]="store.membersSparkline()"
               />
             }
 
             @if (canReadEquipment()) {
-              <app-metric-card
+              <app-dashboard-metric-cell
                 i18n-title="@@org.dash.equipment"
                 title="Equipment"
-                i18n-description="@@org.dash.equipmentDesc"
-                description="Tracked assets"
                 icon="pi pi-shield"
                 [value]="store.equipmentCount()"
                 [loading]="store.isQueryLoading()"
                 [comparison]="store.equipmentComparison()"
+                [points]="store.equipmentSparkline()"
               />
             }
 
             @if (canReadInspections()) {
-              <app-metric-card
+              <app-dashboard-metric-cell
                 i18n-title="@@org.dash.inspections"
                 title="Inspections"
-                i18n-description="@@org.dash.inspectionsDesc"
-                description="Performed this period"
                 icon="pi pi-check-square"
                 [value]="store.inspectionCount()"
                 [loading]="store.isQueryLoading()"
                 [comparison]="store.inspectionsComparison()"
+                [points]="store.inspectionsSparkline()"
               />
             }
-          </div>
+          </app-dashboard-metric-strip>
         }
 
         @if (hasActivityInsights()) {
@@ -89,6 +85,16 @@
             <app-non-conformities-opened-trend class="lg:col-span-6" />
             <app-non-conformities-resolved-trend class="lg:col-span-6" />
           </div>
+        }
+
+        @if (canReadRecentInterventions()) {
+          <app-dashboard-recent-interventions
+            [interventions]="store.recentInterventions()"
+            [loading]="store.isQueryLoading()"
+            [hasError]="store.queryHasError()"
+            (open)="openIntervention($event)"
+            (retry)="retryDashboard()"
+          />
         }
       </section>
     </div>

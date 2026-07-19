@@ -1,10 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  ORGANIZATION_PERMISSION,
+  type OrganizationDashboardRecentIntervention,
+} from '@features/organization/models';
 import { DashboardStore } from '@features/organization/state/organization-dashboard';
-import { EmptyState, MetricCard, Skeleton } from '@shared/components';
+import { EmptyState, Skeleton } from '@shared/components';
 import {
   AssetGrowthTrend,
+  DashboardMetricCell,
+  DashboardMetricStrip,
+  DashboardRecentInterventions,
   InspectionQualityTrend,
   NonConformitiesResolvedTrend,
   NonConformitiesOpenedTrend,
@@ -29,7 +36,9 @@ import {
   selector: 'app-organization-dashboard',
   templateUrl: './organization-dashboard.component.html',
   imports: [
-    MetricCard,
+    DashboardMetricStrip,
+    DashboardMetricCell,
+    DashboardRecentInterventions,
     OverviewTrend,
     InspectionQualityTrend,
     NonConformitiesOpenedTrend,
@@ -74,6 +83,21 @@ export class OrganizationDashboard {
    */
   protected readonly organizationPermissionService: OrganizationPermissionService =
     inject<OrganizationPermissionService>(OrganizationPermissionService);
+
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Router used to open an intervention from the recent-interventions
+   * table.
+   *
+   * @access private
+   * @since 1.3.0
+   *
+   * @type {Router}
+   */
+  private readonly router: Router = inject<Router>(Router);
 
   /**
    * Property canReadDashboard
@@ -165,6 +189,25 @@ export class OrganizationDashboard {
   );
 
   /**
+   * Property canReadRecentInterventions
+   * @readonly
+   *
+   * @description
+   * Indicates whether the recent-interventions table can be rendered.
+   * Gated on the interventions read permission alone (not the dashboard
+   * permission), because the backend embeds the rows only for callers
+   * holding `organization.interventions.read`.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadRecentInterventions: Signal<boolean> = computed<boolean>(() =>
+    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_READ),
+  );
+
+  /**
    * Property hasActivityMetrics
    * @readonly
    *
@@ -213,7 +256,8 @@ export class OrganizationDashboard {
    * @type {Signal<boolean>}
    */
   protected readonly showActivitySection: Signal<boolean> = computed<boolean>(
-    () => this.hasActivityMetrics() || this.hasActivityInsights(),
+    () =>
+      this.hasActivityMetrics() || this.hasActivityInsights() || this.canReadRecentInterventions(),
   );
 
   /**
@@ -231,6 +275,46 @@ export class OrganizationDashboard {
   protected readonly showResourcesSection: Signal<boolean> = computed<boolean>(
     () => this.canReadFacilities() || this.canReadEquipment(),
   );
+
+  //#endregion
+
+  //#region Methods
+
+  /**
+   * Method openIntervention
+   *
+   * @description
+   * Routes into the intervention workspace for the row activated in the
+   * recent-interventions table.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @param {OrganizationDashboardRecentIntervention} intervention - Activated table row.
+   * @returns {void}
+   */
+  protected openIntervention(intervention: OrganizationDashboardRecentIntervention): void {
+    const organizationId: string | undefined = this.store.loadParams();
+    if (!organizationId) return;
+
+    void this.router.navigate(['/organizations', organizationId, 'interventions', intervention.id]);
+  }
+
+  /**
+   * Method retryDashboard
+   *
+   * @description
+   * Re-triggers the aggregate dashboard query after a failure surfaced
+   * by the recent-interventions table.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @returns {void}
+   */
+  protected retryDashboard(): void {
+    this.store.load(this.store.loadParams());
+  }
 
   //#endregion
 }

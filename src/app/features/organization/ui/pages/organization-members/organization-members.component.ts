@@ -11,6 +11,7 @@ import {
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
+import { TabsModule } from 'primeng/tabs';
 import { FeedbackService } from '@core/feedback';
 import { errorFeedback, successFeedback } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -60,6 +61,7 @@ import { isQuotaExceededError } from '@features/organization/utils';
   imports: [
     ButtonModule,
     MessageModule,
+    TabsModule,
     OrganizationInvitationTable,
     OrganizationMemberTable,
     OrganizationInviteDrawer,
@@ -93,6 +95,9 @@ export class OrganizationMembersPage {
   protected readonly loadErrorFallback: string = $localize`:@@org.members.loadError:The members could not be loaded.`;
   /** Localized fallback for the mutation-error banner. */
   protected readonly mutationErrorFallback: string = $localize`:@@org.members.mutationError:The operation could not be completed.`;
+
+  /** Zero-based index of the active view tab (members / pending invitations). */
+  protected readonly activeTab: WritableSignal<number> = signal(0);
 
   /** Visibility of the invite-member drawer. */
   protected readonly inviteDrawerVisible: WritableSignal<boolean> = signal(false);
@@ -182,6 +187,11 @@ export class OrganizationMembersPage {
       includeInvitations: this.canViewMembers(),
       includeRoles: this.canViewRoles(),
     });
+  }
+
+  /** Activates the requested view tab from the PrimeNG tabs value change. */
+  protected onTabChange(value: string | number | undefined): void {
+    this.activeTab.set(Number(value ?? 0));
   }
 
   /** Loads the requested members page, preserving the active search term. */

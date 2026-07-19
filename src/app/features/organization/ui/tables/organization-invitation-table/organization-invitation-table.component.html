@@ -1,30 +1,18 @@
 <p-menu #rowMenu [model]="rowMenuItems()" [popup]="true" appendTo="body" />
 
-<p-card
-  styleClass="flex flex-col overflow-hidden border border-surface-200 dark:border-surface-800"
-  [pt]="{
-    body: { class: 'p-0' },
-    content: { class: 'p-0' },
-    header: {
-      class:
-        'flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800',
-    },
-  }"
->
-  <ng-template pTemplate="header">
-    <h2 i18n="@@org.members.sectionInvitations" class="font-semibold">Pending invitations</h2>
-  </ng-template>
-
+<p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="content">
     <p-table
       [value]="loading() ? skeletonItems : [...invitations()]"
       dataKey="id"
-      [stripedRows]="true"
+      [rowHover]="true"
+      [pt]="{ tbody: { class: '[&>tr:last-child>td]:border-b-0' } }"
     >
       <ng-template pTemplate="header">
         <tr>
-          <th i18n="@@org.invTable.email" class="min-w-64 pl-5">Email</th>
+          <th i18n="@@org.invTable.email" class="min-w-64">Email</th>
           <th i18n="@@org.invTable.roles" class="hidden min-w-48 md:table-cell">Roles</th>
+          <th i18n="@@org.invTable.sent" class="hidden min-w-28 lg:table-cell">Sent</th>
           <th i18n="@@org.invTable.status" class="min-w-28">Status</th>
           <th i18n="@@org.invTable.expires" class="min-w-36">Expires</th>
           <th class="w-20"><span i18n="@@org.invTable.actions" class="sr-only">Actions</span></th>
@@ -34,11 +22,12 @@
       <ng-template pTemplate="loadingbody">
         @for (_ of skeletonItems; track $index) {
           <tr>
-            <td class="pl-5"><p-skeleton width="12rem" height="0.875rem" /></td>
+            <td><p-skeleton width="12rem" height="0.875rem" /></td>
             <td class="hidden md:table-cell">
               <p-skeleton width="8rem" height="1.25rem" borderRadius="999px" />
             </td>
-            <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
+            <td class="hidden lg:table-cell"><p-skeleton width="5rem" height="0.875rem" /></td>
+            <td><p-skeleton width="5rem" height="1.75rem" borderRadius="999px" /></td>
             <td><p-skeleton width="6rem" height="0.875rem" /></td>
             <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
           </tr>
@@ -46,10 +35,10 @@
       </ng-template>
 
       <ng-template pTemplate="body" let-invitation>
-        <tr>
-          <td class="pl-5">
-            <span class="flex min-w-0 flex-col">
-              <span class="truncate font-medium text-surface-900 dark:text-surface-100">{{
+        <tr class="group">
+          <td>
+            <span class="flex min-w-0 flex-col gap-0.5">
+              <span class="truncate font-semibold text-surface-950 dark:text-surface-50">{{
                 invitation.email
               }}</span>
               @if (invitation.invitedByDisplayName) {
@@ -69,11 +58,16 @@
               }
             </div>
           </td>
+          <td class="hidden lg:table-cell">
+            <span class="text-surface-600 tabular-nums dark:text-surface-400">{{
+              invitation.createdAt | date: 'mediumDate'
+            }}</span>
+          </td>
           <td><app-tag [descriptor]="statusDescriptor(invitation.status)" /></td>
           <td>
             @let expires = expiresLabel(invitation.expiresAt);
             <span
-              class="text-surface-600 dark:text-surface-300"
+              class="text-surface-600 tabular-nums dark:text-surface-400"
               [title]="invitation.expiresAt | date: 'medium'"
               >{{ expires || (invitation.expiresAt | date: 'mediumDate') }}</span
             >
@@ -87,6 +81,7 @@
                 [outlined]="true"
                 i18n-ariaLabel="@@org.invTable.rowActions"
                 ariaLabel="Invitation actions"
+                class="transition-opacity duration-150 motion-reduce:transition-none pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100"
                 (onClick)="onRowMenuToggle($event, invitation)"
               />
             }
@@ -96,7 +91,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr class="bg-transparent! [&>td]:border-b-0!">
-          <td colspan="5">
+          <td colspan="6">
             <app-empty-state
               icon="pi-envelope"
               i18n-title="@@org.invTable.emptyTitle"

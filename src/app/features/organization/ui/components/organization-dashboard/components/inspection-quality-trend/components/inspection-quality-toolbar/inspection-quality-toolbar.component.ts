@@ -11,8 +11,6 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
 import { SelectModule } from 'primeng/select';
 import { OrganizationDashboardGranularity } from '@features/organization/models';
@@ -35,14 +33,7 @@ import { OrganizationDashboardInspectionQualityStore } from '@features/organizat
 @Component({
   selector: 'app-inspection-quality-toolbar',
   templateUrl: './inspection-quality-toolbar.component.html',
-  imports: [
-    ReactiveFormsModule,
-    ButtonModule,
-    InputGroupModule,
-    InputGroupAddonModule,
-    OverlayBadgeModule,
-    SelectModule,
-  ],
+  imports: [ReactiveFormsModule, ButtonModule, OverlayBadgeModule, SelectModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionQualityToolbar {

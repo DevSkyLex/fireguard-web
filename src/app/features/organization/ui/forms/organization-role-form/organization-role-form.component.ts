@@ -11,6 +11,7 @@ import {
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { TextareaModule } from 'primeng/textarea';
 import type {
@@ -24,7 +25,14 @@ import type { OrganizationRoleFormValues } from './models';
  */
 @Component({
   selector: 'app-organization-role-form',
-  imports: [ButtonModule, InputTextModule, MultiSelectModule, ReactiveFormsModule, TextareaModule],
+  imports: [
+    ButtonModule,
+    InputTextModule,
+    MessageModule,
+    MultiSelectModule,
+    ReactiveFormsModule,
+    TextareaModule,
+  ],
   templateUrl: './organization-role-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

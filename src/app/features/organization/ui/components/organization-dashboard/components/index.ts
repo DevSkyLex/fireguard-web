@@ -1,4 +1,6 @@
 export { AssetGrowthTrend } from './asset-growth-trend';
+export { DashboardMetricCell, DashboardMetricStrip } from './dashboard-metric-strip';
+export { DashboardRecentInterventions } from './dashboard-recent-interventions';
 export { EquipmentCreatedTrend } from './equipment-created-trend';
 export { FacilitiesCreatedTrend } from './facilities-created-trend';
 export { InspectionQualityTrend } from './inspection-quality-trend';

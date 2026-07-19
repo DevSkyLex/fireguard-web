@@ -34,6 +34,7 @@ export type {
   OrganizationDashboardTrendPointValue,
   OrganizationDashboardTrends,
 } from './dashboard/organization-dashboard-output.interface';
+export type { OrganizationDashboardRecentIntervention } from './dashboard/organization-dashboard-recent-intervention.interface';
 export type {
   OrganizationDashboardGranularity,
   OrganizationDashboardCommonQueryOptions,

@@ -12,10 +12,13 @@ import {
   toStoreError,
 } from '@core/request-state';
 import { OrganizationService } from '@features/organization/data-access';
+import { getDashboardTrendPointValue } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import type {
   OrganizationDashboardComparisonMetric,
   OrganizationDashboardComparisonMetricGroup,
   OrganizationDashboardOutput,
+  OrganizationDashboardRecentIntervention,
+  OrganizationDashboardTrends,
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 
@@ -40,6 +43,26 @@ type OrganizationDashboardComparisonDelta = {
   readonly value: string | number | null;
   readonly direction: string | null;
 };
+
+/**
+ * Function extractSparkline
+ *
+ * @description
+ * Maps one embedded trend series to the plain numeric points consumed
+ * by the KPI sparklines, or null when the series is absent or empty.
+ *
+ * @param {OrganizationDashboardTrends | undefined} trends - Embedded trends map from the dashboard payload.
+ * @param {string} key - Backend-defined series key (e.g. `facilities`).
+ * @returns {readonly number[] | null} Ordered numeric points, or null.
+ */
+function extractSparkline(
+  trends: OrganizationDashboardTrends | undefined,
+  key: string,
+): readonly number[] | null {
+  const points = trends?.[key];
+  if (!points?.length) return null;
+  return points.map(getDashboardTrendPointValue);
+}
 
 /**
  * Store OrganizationDashboardStore
@@ -220,6 +243,72 @@ export const DashboardStore = signalStore(
         direction: entry['direction'] != null ? String(entry['direction']) : null,
       };
     }),
+
+    /**
+     * Computed facilitiesSparkline
+     *
+     * @description
+     * Daily running-total points for the facilities KPI sparkline,
+     * from the embedded `trends.facilities` series.
+     *
+     * @since 1.1.0
+     */
+    facilitiesSparkline: computed<readonly number[] | null>(() =>
+      extractSparkline(store.queryData()?.trends, 'facilities'),
+    ),
+
+    /**
+     * Computed membersSparkline
+     *
+     * @description
+     * Daily running-total points for the members KPI sparkline,
+     * from the embedded `trends.members` series.
+     *
+     * @since 1.1.0
+     */
+    membersSparkline: computed<readonly number[] | null>(() =>
+      extractSparkline(store.queryData()?.trends, 'members'),
+    ),
+
+    /**
+     * Computed equipmentSparkline
+     *
+     * @description
+     * Daily running-total points for the equipment KPI sparkline,
+     * from the embedded `trends.equipment` series.
+     *
+     * @since 1.1.0
+     */
+    equipmentSparkline: computed<readonly number[] | null>(() =>
+      extractSparkline(store.queryData()?.trends, 'equipment'),
+    ),
+
+    /**
+     * Computed inspectionsSparkline
+     *
+     * @description
+     * Daily running-total points for the inspections KPI sparkline,
+     * from the embedded `trends.inspections` series.
+     *
+     * @since 1.1.0
+     */
+    inspectionsSparkline: computed<readonly number[] | null>(() =>
+      extractSparkline(store.queryData()?.trends, 'inspections'),
+    ),
+
+    /**
+     * Computed recentInterventions
+     *
+     * @description
+     * Most recently updated interventions embedded in the dashboard
+     * payload. Empty until loaded or when the caller lacks the
+     * interventions read permission.
+     *
+     * @since 1.1.0
+     */
+    recentInterventions: computed<readonly OrganizationDashboardRecentIntervention[]>(
+      () => store.queryData()?.recentInterventions ?? [],
+    ),
   })),
   //#endregion
 

@@ -6,37 +6,39 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TableModule } from 'primeng/table';
 import type { OrganizationRoleOutput } from '@features/organization/models';
 import { EmptyState } from '@shared/components';
 
 /**
- * Table presenting organization roles and role management actions.
+ * Selectable role-card list presenting the organization roles: icon, name,
+ * description and permission count per card. Selecting a card lets the parent
+ * page display the role's permission matrix.
  */
 @Component({
   selector: 'app-organization-role-table',
-  imports: [ButtonModule, CardModule, EmptyState, SkeletonModule, TableModule],
+  imports: [EmptyState, SkeletonModule],
   templateUrl: './organization-role-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationRoleTable {
   /** Localized placeholder shown when a role has no description. */
   protected readonly noDescriptionLabel: string = $localize`:@@org.roleTable.noDescription:No description`;
-  /** Localized placeholder shown when a role has no permissions. */
-  protected readonly noPermissionsLabel: string = $localize`:@@org.roleTable.noPermissions:No permissions`;
   /** Organization roles to display. */
   public readonly roles: InputSignal<readonly OrganizationRoleOutput[]> = input.required();
   /** Whether roles are loading. */
   public readonly loading: InputSignal<boolean> = input(false);
   /** Whether the active member can manage roles. */
   public readonly canManage: InputSignal<boolean> = input(false);
-  /** Emits a role selected for editing. */
-  public readonly edit: OutputEmitterRef<OrganizationRoleOutput> = output();
-  /** Emits a role selected for removal. */
-  public readonly remove: OutputEmitterRef<OrganizationRoleOutput> = output();
-  /** Placeholder rows displayed while loading. */
-  protected readonly skeletonItems = Array(5);
+  /** Identifier of the role currently highlighted as selected. */
+  public readonly selectedRoleId: InputSignal<string | null> = input<string | null>(null);
+  /** Emits a role selected for consultation. */
+  public readonly select: OutputEmitterRef<OrganizationRoleOutput> = output();
+  /** Placeholder cards displayed while loading. */
+  protected readonly skeletonItems: undefined[] = Array(3);
+
+  /** Resolves the decorative card icon for a role (system vs custom). */
+  protected roleIcon(role: OrganizationRoleOutput): string {
+    return role.isSystem ? 'pi-shield' : 'pi-id-card';
+  }
 }

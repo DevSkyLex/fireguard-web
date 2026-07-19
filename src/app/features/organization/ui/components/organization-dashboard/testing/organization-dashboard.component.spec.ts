@@ -1,7 +1,11 @@
 import { CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access/services/organization-permission/organization-permission.service';
-import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  ORGANIZATION_PERMISSION,
+  type OrganizationDashboardRecentIntervention,
+} from '@features/organization/models';
 import { DashboardStore } from '@features/organization/state/organization-dashboard';
 import { OrganizationDashboard } from '../organization-dashboard.component';
 
@@ -11,10 +15,13 @@ type OrganizationDashboardHarness = {
   readonly canReadMembers: () => boolean;
   readonly canReadEquipment: () => boolean;
   readonly canReadInspections: () => boolean;
+  readonly canReadRecentInterventions: () => boolean;
   readonly hasActivityMetrics: () => boolean;
   readonly hasActivityInsights: () => boolean;
   readonly showActivitySection: () => boolean;
   readonly showResourcesSection: () => boolean;
+  openIntervention(intervention: OrganizationDashboardRecentIntervention): void;
+  retryDashboard(): void;
 };
 
 const mockDashboardStore = {
@@ -23,16 +30,27 @@ const mockDashboardStore = {
   equipmentCount: signal('28'),
   inspectionCount: signal('4'),
   isQueryLoading: signal(false),
+  queryHasError: signal(false),
   facilitiesComparison: signal(null),
   membersComparison: signal(null),
   equipmentComparison: signal(null),
   inspectionsComparison: signal(null),
+  facilitiesSparkline: signal(null),
+  membersSparkline: signal(null),
+  equipmentSparkline: signal(null),
+  inspectionsSparkline: signal(null),
+  recentInterventions: signal<readonly OrganizationDashboardRecentIntervention[]>([]),
+  loadParams: signal<string | undefined>('org-1'),
+  load: vi.fn(),
 };
 
 describe('OrganizationDashboard', () => {
   let grantedPermissions: Set<string>;
   const mockOrganizationPermissionService = {
     hasPermission: vi.fn((permission: string) => grantedPermissions.has(permission)),
+  };
+  const mockRouter = {
+    navigate: vi.fn().mockResolvedValue(true),
   };
 
   beforeEach(() => {
@@ -53,9 +71,12 @@ describe('OrganizationDashboard', () => {
 
     grantedPermissions = new Set<string>();
     mockOrganizationPermissionService.hasPermission.mockClear();
+    mockRouter.navigate.mockClear();
+    mockDashboardStore.load.mockClear();
 
     TestBed.configureTestingModule({
       imports: [OrganizationDashboard],
+      providers: [{ provide: Router, useValue: mockRouter }],
     }).overrideComponent(OrganizationDashboard, {
       set: {
         imports: [],
@@ -137,5 +158,44 @@ describe('OrganizationDashboard', () => {
     expect(component.hasActivityInsights()).toBe(false);
     expect(component.showActivitySection()).toBe(true);
     expect(component.showResourcesSection()).toBe(false);
+  });
+
+  it('should gate recent interventions on the interventions read permission alone', () => {
+    grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.DASHBOARD_READ]);
+    const component = createComponent();
+
+    expect(component.canReadRecentInterventions()).toBe(false);
+  });
+
+  it('should treat interventions-only access as an activity-only dashboard', () => {
+    grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
+    const component = createComponent();
+
+    expect(component.canReadRecentInterventions()).toBe(true);
+    expect(component.hasActivityMetrics()).toBe(false);
+    expect(component.showActivitySection()).toBe(true);
+    expect(component.showResourcesSection()).toBe(false);
+  });
+
+  it('should route into the intervention workspace when a row is opened', () => {
+    grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
+    const component = createComponent();
+
+    component.openIntervention({ id: 'int-9' } as OrganizationDashboardRecentIntervention);
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith([
+      '/organizations',
+      'org-1',
+      'interventions',
+      'int-9',
+    ]);
+  });
+
+  it('should re-trigger the dashboard query on retry', () => {
+    const component = createComponent();
+
+    component.retryDashboard();
+
+    expect(mockDashboardStore.load).toHaveBeenCalledWith('org-1');
   });
 });

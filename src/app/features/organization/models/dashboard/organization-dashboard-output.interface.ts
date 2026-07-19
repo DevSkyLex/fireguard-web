@@ -1,4 +1,5 @@
 import type { HydraItem } from '@core/api/models';
+import type { OrganizationDashboardRecentIntervention } from './organization-dashboard-recent-intervention.interface';
 
 /**
  * Type OrganizationDashboardOverviewValue
@@ -362,5 +363,18 @@ export interface OrganizationDashboardOutput extends HydraItem {
    * @type {OrganizationDashboardTrends}
    */
   readonly trends?: OrganizationDashboardTrends;
+
+  /**
+   * Property recentInterventions
+   * @readonly
+   *
+   * @description
+   * Most recently updated interventions embedded in the aggregate
+   * dashboard response. Empty when the caller lacks the
+   * `organization.interventions.read` permission.
+   *
+   * @type {readonly OrganizationDashboardRecentIntervention[]}
+   */
+  readonly recentInterventions?: readonly OrganizationDashboardRecentIntervention[];
   //#endregion
 }

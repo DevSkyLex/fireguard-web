@@ -11,8 +11,6 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
 import { SelectModule } from 'primeng/select';
 import { OrganizationDashboardGranularity } from '@features/organization/models';
@@ -35,14 +33,7 @@ import { OrganizationDashboardNonConformitiesOpenedStore } from '@features/organ
 @Component({
   selector: 'app-non-conformities-opened-toolbar',
   templateUrl: './non-conformities-opened-toolbar.component.html',
-  imports: [
-    ReactiveFormsModule,
-    ButtonModule,
-    InputGroupModule,
-    InputGroupAddonModule,
-    OverlayBadgeModule,
-    SelectModule,
-  ],
+  imports: [ReactiveFormsModule, ButtonModule, OverlayBadgeModule, SelectModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NonConformitiesOpenedToolbar {

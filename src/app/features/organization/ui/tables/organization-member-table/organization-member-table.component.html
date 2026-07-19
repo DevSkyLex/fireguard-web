@@ -1,57 +1,48 @@
 <p-menu #rowMenu [model]="rowMenuItems()" [popup]="true" appendTo="body" />
 
-<p-card
-  styleClass="flex flex-col overflow-hidden border border-surface-200 dark:border-surface-800"
-  [pt]="{
-    body: { class: 'p-0' },
-    content: { class: 'p-0' },
-    header: {
-      class:
-        'flex flex-col gap-4 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800',
-    },
-  }"
->
-  <ng-template pTemplate="header">
-    @if (selectedCount() > 0) {
-      <span
-        role="status"
-        aria-live="polite"
-        class="text-sm font-medium text-surface-700 dark:text-surface-200"
-      >
-        {{ selectedCount() }} <span i18n="@@org.members.selectedSuffix">selected</span>
-      </span>
-      <div class="flex flex-wrap items-center gap-2">
-        @if (canManageRoles()) {
-          <p-select
-            [options]="[...roles()]"
-            optionLabel="name"
-            optionValue="id"
-            size="small"
-            i18n-placeholder="@@org.members.assignRole"
-            placeholder="Assign role"
-            styleClass="w-full sm:w-44"
-            (onChange)="emitBulkAssignRole($event.value)"
-          />
-        }
-        <p-button
-          i18n-label="@@org.members.removeSelected"
-          label="Remove"
-          icon="pi pi-trash"
-          severity="danger"
+<div class="mb-4 flex flex-wrap items-center gap-2.5">
+  @if (selectedCount() > 0) {
+    <span
+      role="status"
+      aria-live="polite"
+      class="text-sm font-medium text-surface-700 dark:text-surface-200"
+    >
+      {{ selectedCount() }} <span i18n="@@org.members.selectedSuffix">selected</span>
+    </span>
+
+    <div class="ml-auto flex flex-wrap items-center gap-2">
+      @if (canManageRoles()) {
+        <p-select
+          [options]="[...roles()]"
+          optionLabel="name"
+          optionValue="id"
           size="small"
-          (onClick)="emitBulkRemove()"
+          i18n-placeholder="@@org.members.assignRole"
+          placeholder="Assign role"
+          styleClass="w-full sm:w-44"
+          (onChange)="emitBulkAssignRole($event.value)"
         />
-        <p-button
-          i18n-label="@@org.members.clearSelection"
-          label="Clear"
-          severity="secondary"
-          size="small"
-          [text]="true"
-          (onClick)="clearSelection()"
-        />
-      </div>
-    } @else {
-      <p-iconfield class="w-full sm:max-w-xs">
+      }
+      <p-button
+        i18n-label="@@org.members.removeSelected"
+        label="Remove"
+        icon="pi pi-trash"
+        severity="danger"
+        size="small"
+        (onClick)="emitBulkRemove()"
+      />
+      <p-button
+        i18n-label="@@org.members.clearSelection"
+        label="Clear"
+        severity="secondary"
+        size="small"
+        [text]="true"
+        (onClick)="clearSelection()"
+      />
+    </div>
+  } @else {
+    <div class="max-w-96 min-w-60 flex-1">
+      <p-iconfield>
         <p-inputicon class="pi pi-search" />
         <input
           #search
@@ -64,50 +55,51 @@
           (input)="onSearch(search.value)"
         />
       </p-iconfield>
+    </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        @if (canManageRoles()) {
-          <p-button
-            i18n-label="@@org.members.assignRole"
-            label="Assign role"
-            icon="pi pi-id-card"
-            severity="secondary"
-            size="small"
-            [outlined]="true"
-            (onClick)="assignRole.emit()"
-          />
-        }
+    <div class="ml-auto flex flex-wrap items-center gap-2">
+      @if (canManageRoles()) {
+        <p-button
+          i18n-label="@@org.members.assignRole"
+          label="Assign role"
+          icon="pi pi-id-card"
+          severity="secondary"
+          size="small"
+          [outlined]="true"
+          (onClick)="assignRole.emit()"
+        />
+      }
 
-        @if (canManageMembers()) {
-          <p-button
-            i18n-label="@@org.members.invite"
-            label="Invite member"
-            icon="pi pi-envelope"
-            severity="primary"
-            size="small"
-            (onClick)="invite.emit()"
-          />
-        }
-      </div>
-    }
-  </ng-template>
+      @if (canManageMembers()) {
+        <p-button
+          i18n-label="@@org.members.invite"
+          label="Invite member"
+          icon="pi pi-envelope"
+          severity="primary"
+          size="small"
+          (onClick)="invite.emit()"
+        />
+      }
+    </div>
+  }
+</div>
 
+<p-card [styleClass]="cardStyleClass" [pt]="cardPt">
   <ng-template pTemplate="content">
     <p-table
       [value]="loading() ? skeletonItems : [...members()]"
       dataKey="id"
-      [stripedRows]="true"
+      [rowHover]="true"
+      [pt]="{ tbody: { class: '[&>tr:last-child>td]:border-b-0' } }"
       [selection]="selection()"
       (selectionChange)="selection.set($event)"
     >
       <ng-template pTemplate="header">
         <tr>
           @if (canRemoveMember()) {
-            <th class="w-12 pl-5"><p-tableHeaderCheckbox /></th>
+            <th class="w-12"><p-tableHeaderCheckbox /></th>
           }
-          <th i18n="@@org.memberTable.user" class="min-w-64" [class.pl-5]="!canRemoveMember()">
-            User
-          </th>
+          <th i18n="@@org.memberTable.user" class="min-w-64">User</th>
           <th i18n="@@org.memberTable.roles" class="min-w-48">Roles</th>
           <th i18n="@@org.memberTable.status" class="min-w-28">Status</th>
           <th i18n="@@org.memberTable.joined" class="hidden min-w-36 md:table-cell">Joined</th>
@@ -121,16 +113,19 @@
         @for (_ of skeletonItems; track $index) {
           <tr>
             @if (canRemoveMember()) {
-              <td class="pl-5"><p-skeleton shape="circle" size="1.25rem" /></td>
+              <td><p-skeleton shape="circle" size="1.25rem" /></td>
             }
-            <td [class.pl-5]="!canRemoveMember()">
+            <td>
               <div class="flex items-center gap-3">
                 <p-skeleton shape="circle" size="2.25rem" />
-                <p-skeleton width="10rem" height="0.875rem" />
+                <div class="flex flex-col gap-1.5">
+                  <p-skeleton width="10rem" height="0.875rem" />
+                  <p-skeleton width="7rem" height="0.75rem" />
+                </div>
               </div>
             </td>
             <td><p-skeleton width="8rem" height="1.25rem" borderRadius="999px" /></td>
-            <td><p-skeleton width="5rem" height="1.25rem" borderRadius="999px" /></td>
+            <td><p-skeleton width="5rem" height="1.75rem" borderRadius="999px" /></td>
             <td class="hidden md:table-cell"><p-skeleton width="6rem" height="0.875rem" /></td>
             <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
           </tr>
@@ -138,11 +133,11 @@
       </ng-template>
 
       <ng-template pTemplate="body" let-member>
-        <tr>
+        <tr class="group">
           @if (canRemoveMember()) {
-            <td class="pl-5"><p-tableCheckbox [value]="member" /></td>
+            <td><p-tableCheckbox [value]="member" /></td>
           }
-          <td [class.pl-5]="!canRemoveMember()">
+          <td>
             <div class="flex min-w-0 items-center gap-3">
               <p-avatar
                 [image]="member.avatarUrl ?? undefined"
@@ -151,8 +146,8 @@
                 size="normal"
                 styleClass="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
               />
-              <span class="flex min-w-0 flex-col">
-                <span class="truncate font-medium text-surface-900 dark:text-surface-100">{{
+              <span class="flex min-w-0 flex-col gap-0.5">
+                <span class="truncate font-semibold text-surface-950 dark:text-surface-50">{{
                   memberName(member)
                 }}</span>
                 @if (member.email) {
@@ -181,7 +176,7 @@
           </td>
           <td><app-tag [descriptor]="memberStatusDescriptor(member)" /></td>
           <td class="hidden md:table-cell">
-            <span class="text-surface-600 dark:text-surface-300">{{
+            <span class="text-surface-600 tabular-nums dark:text-surface-400">{{
               member.joinedAt | date: 'mediumDate'
             }}</span>
           </td>
@@ -194,6 +189,7 @@
                 [outlined]="true"
                 i18n-ariaLabel="@@org.memberTable.removeAria"
                 ariaLabel="Member actions"
+                class="transition-opacity duration-150 motion-reduce:transition-none pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100"
                 (onClick)="onRowMenuToggle($event, member)"
               />
             }
@@ -231,6 +227,9 @@
         [rows]="pageSize()"
         [totalRecords]="total()"
         [first]="(page() - 1) * pageSize()"
+        [showCurrentPageReport]="true"
+        i18n-currentPageReportTemplate="@@org.memberTable.pageReport"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} members"
         styleClass="border-t border-surface-200 dark:border-surface-800"
         (onPageChange)="pageChange.emit(($event.page ?? 0) + 1)"
       />

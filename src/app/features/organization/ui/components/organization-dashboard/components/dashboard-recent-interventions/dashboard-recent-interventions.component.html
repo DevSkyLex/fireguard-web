@@ -1,0 +1,163 @@
+<p-card [styleClass]="cardStyleClass" [pt]="cardPt">
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-2">
+      <h2
+        i18n="@@org.dash.recentInterventions.title"
+        class="text-[15px] font-semibold tracking-[-0.01em]"
+      >
+        Recent interventions
+      </h2>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="content">
+    @if (hasError()) {
+      <app-error-state
+        icon="pi-exclamation-triangle"
+        i18n-title="@@org.dash.recentInterventions.errorTitle"
+        title="Couldn't load recent interventions"
+      >
+        <p-button
+          i18n-label="@@org.dash.recentInterventions.retry"
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (onClick)="retry.emit()"
+        />
+      </app-error-state>
+    } @else {
+      <p-table
+        [value]="loading() ? skeletonItems : [...interventions()]"
+        dataKey="id"
+        [rowHover]="true"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="min-w-56 sm:min-w-64">
+              <span i18n="@@org.dash.recentInterventions.colIntervention">Intervention</span>
+            </th>
+            <th class="hidden min-w-36 md:table-cell">
+              <span i18n="@@org.dash.recentInterventions.colSite">Site</span>
+            </th>
+            <th class="min-w-32">
+              <span i18n="@@org.dash.recentInterventions.colStatus">Status</span>
+            </th>
+            <th class="hidden min-w-32 sm:table-cell">
+              <span i18n="@@org.dash.recentInterventions.colPriority">Priority</span>
+            </th>
+            <th class="hidden min-w-40 lg:table-cell">
+              <span i18n="@@org.dash.recentInterventions.colResponsible">Responsible</span>
+            </th>
+            <th class="min-w-28">
+              <span i18n="@@org.dash.recentInterventions.colDue">Due</span>
+            </th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="loadingbody">
+          <tr>
+            <td>
+              <div class="flex flex-col gap-1.5">
+                <p-skeleton width="4rem" height="0.75rem" />
+                <p-skeleton width="11rem" height="0.875rem" />
+              </div>
+            </td>
+            <td class="hidden md:table-cell"><p-skeleton width="7rem" height="0.875rem" /></td>
+            <td><p-skeleton width="6rem" height="1.25rem" borderRadius="999px" /></td>
+            <td class="hidden sm:table-cell"><p-skeleton width="5rem" height="0.875rem" /></td>
+            <td class="hidden lg:table-cell">
+              <div class="flex items-center gap-2">
+                <p-skeleton shape="circle" size="1.5rem" />
+                <p-skeleton width="6rem" height="0.875rem" />
+              </div>
+            </td>
+            <td><p-skeleton width="4.5rem" height="0.875rem" /></td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-intervention>
+          <tr class="group">
+            <td>
+              <div class="flex min-w-0 flex-col gap-0.5">
+                <span
+                  class="text-xs font-semibold tracking-[0.04em] text-surface-500 tabular-nums dark:text-surface-400"
+                  >FG-{{ intervention.number }}</span
+                >
+                <button
+                  type="button"
+                  class="w-fit max-w-full cursor-pointer truncate text-left font-semibold text-surface-950 transition-colors duration-150 hover:text-primary-600 dark:text-surface-50 dark:hover:text-primary-400"
+                  (click)="open.emit(intervention)"
+                >
+                  {{ intervention.name }}
+                </button>
+              </div>
+            </td>
+            <td class="hidden md:table-cell">
+              <span class="text-surface-600 dark:text-surface-400">{{
+                intervention.siteName ?? '—'
+              }}</span>
+            </td>
+            <td>
+              <app-intervention-tag kind="status" [value]="intervention.status" />
+            </td>
+            <td class="hidden sm:table-cell">
+              <span class="inline-flex items-center gap-2">
+                <app-intervention-priority-icon
+                  class="shrink-0"
+                  [priority]="priorityOf(intervention.priority)"
+                />
+                <span class="text-xs text-surface-600 dark:text-surface-400">{{
+                  priorityLabel(intervention.priority)
+                }}</span>
+              </span>
+            </td>
+            <td class="hidden lg:table-cell">
+              @if (intervention.responsibleName; as responsibleName) {
+                <span class="inline-flex items-center gap-2">
+                  <p-avatar
+                    [image]="intervention.responsibleAvatarUrl ?? undefined"
+                    [label]="
+                      intervention.responsibleAvatarUrl ? undefined : initials(responsibleName)
+                    "
+                    shape="circle"
+                    styleClass="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                  />
+                  <span class="truncate text-surface-700 dark:text-surface-300">{{
+                    responsibleName
+                  }}</span>
+                </span>
+              } @else {
+                <span class="text-surface-500 dark:text-surface-400">—</span>
+              }
+            </td>
+            <td>
+              @if (intervention.dueAt; as dueAt) {
+                <span class="text-surface-600 tabular-nums dark:text-surface-400">{{
+                  dueAt | date: 'mediumDate'
+                }}</span>
+              } @else {
+                <span class="text-surface-500 dark:text-surface-400">—</span>
+              }
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6">
+              <app-empty-state
+                icon="pi-clipboard"
+                i18n-title="@@org.dash.recentInterventions.emptyTitle"
+                title="No interventions yet"
+                i18n-description="@@org.dash.recentInterventions.emptyDesc"
+                description="Recently updated interventions will appear here once your team starts planning work."
+              />
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </ng-template>
+</p-card>

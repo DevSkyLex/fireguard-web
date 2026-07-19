@@ -12,6 +12,10 @@ import {
   toStoreError,
 } from '@core/request-state';
 import { OrganizationService } from '@features/organization/data-access';
+import {
+  adaptNonConformitySeverity,
+  type NonConformitySeverityBucket,
+} from '@features/organization/data-access/adapters/organization-dashboard-severity.adapter';
 import { getDashboardTrendPointValue } from '@features/organization/data-access/adapters/organization-dashboard-trend.adapter';
 import type {
   OrganizationDashboardComparisonMetric,
@@ -122,6 +126,23 @@ export const DashboardStore = signalStore(
      */
     facilityCount: computed<OrganizationDashboardKpiValue>(
       () => store.queryData()?.overview?.['facilities']?.['summary']?.[0]?.['value'] ?? null,
+    ),
+
+    /**
+     * Computed nonConformitiesBySeverity
+     *
+     * @description
+     * Open non-conformities split by severity, worst first.
+     *
+     * The backend has published this breakdown since L3.10 and nothing on the
+     * frontend read it: `overview.nonConformities.summary` carries the
+     * `severity*` keys alongside the status counts, and every consumer only
+     * ever took `summary[0]`.
+     *
+     * @type {Signal<readonly NonConformitySeverityBucket[]>}
+     */
+    nonConformitiesBySeverity: computed<readonly NonConformitySeverityBucket[]>(() =>
+      adaptNonConformitySeverity(store.queryData()?.overview?.['nonConformities']?.['summary']),
     ),
 
     /**

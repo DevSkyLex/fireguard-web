@@ -1,6 +1,6 @@
 <p-menu #rowMenu [model]="rowMenuItems()" [popup]="true" appendTo="body" />
 
-<p-card [styleClass]="cardStyleClass" [pt]="cardPt">
+<p-card data-shell="table">
   <ng-template pTemplate="content">
     <p-table
       [value]="loading() ? skeletonItems : [...invitations()]"

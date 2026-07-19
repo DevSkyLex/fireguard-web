@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
+import { CardModule } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import {
@@ -22,7 +22,6 @@ import {
 } from '@features/organization/features/interventions/ui/components';
 import type { OrganizationDashboardRecentIntervention } from '@features/organization/models';
 import { EmptyState, ErrorState } from '@shared/components';
-import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
 
 /**
  * Constant INTERVENTION_PRIORITIES
@@ -159,34 +158,6 @@ export class DashboardRecentInterventions {
   //#endregion
 
   //#region Properties
-
-  /**
-   * Property cardStyleClass
-   * @readonly
-   *
-   * @description
-   * Shared table-card shell `styleClass` applied to the `p-card` host.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {string}
-   */
-  protected readonly cardStyleClass: string = TABLE_CARD_SHELL_STYLE_CLASS;
-
-  /**
-   * Property cardPt
-   * @readonly
-   *
-   * @description
-   * Shared table-card shell pass-through options applied to the `p-card`.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {CardPassThroughOptions}
-   */
-  protected readonly cardPt: CardPassThroughOptions = TABLE_CARD_SHELL_PT;
 
   /**
    * Property skeletonItems

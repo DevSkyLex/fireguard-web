@@ -100,6 +100,9 @@ export const FireguardTheme: Preset = definePreset(Aura, {
           hoverColor: '{primary.700}',
           activeColor: '{primary.800}',
         },
+        content: {
+          borderColor: '{surface.200}',
+        },
         formField: {
           shadow: 'none',
           borderColor: '{surface.200}',
@@ -129,6 +132,9 @@ export const FireguardTheme: Preset = definePreset(Aura, {
           contrastColor: '{surface.950}',
           hoverColor: '{primary.300}',
           activeColor: '{primary.200}',
+        },
+        content: {
+          borderColor: '{surface.800}',
         },
         formField: {
           shadow: 'none',
@@ -187,15 +193,13 @@ export const FireguardTheme: Preset = definePreset(Aura, {
         light: {
           root: {
             background: '{surface.0}',
-            shadow:
-              '0 1px 2px rgba(24, 24, 27, 0.05), 0 2px 6px rgba(24, 24, 27, 0.045), inset 0 1px 0 rgba(255, 255, 255, 0.7)',
+            shadow: 'none',
           },
         },
         dark: {
           root: {
             background: '{surface.900}',
-            shadow:
-              '0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            shadow: 'none',
           },
         },
       },
@@ -210,6 +214,53 @@ export const FireguardTheme: Preset = definePreset(Aura, {
         fontSize: '0.9375rem',
         fontWeight: '600',
       },
+      // Flat, bordered surfaces: hierarchy comes from surface tints and hairline
+      // borders, never from stacked shadows. Shadows stay reserved for overlays
+      // (see `semantic.overlay`).
+      //
+      // `data-shell="table"` is a variant, not a second component: the card
+      // becomes a flush, full-height frame whose body scrolls internally and
+      // whose header is a divided toolbar. It replaces the former
+      // `TABLE_CARD_SHELL_STYLE_CLASS` / `_PT` constants, which every entity
+      // table had to import and bind by hand.
+      css: `
+.p-card {
+    border: 1px solid var(--p-content-border-color);
+}
+
+.p-card[data-shell='table'] {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.p-card[data-shell='table'] .p-card-body,
+.p-card[data-shell='table'] .p-card-content {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0;
+}
+
+.p-card[data-shell='table'] .p-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--p-content-border-color);
+}
+
+@media (min-width: 40rem) {
+    .p-card[data-shell='table'] .p-card-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+`,
     },
     datatable: {
       colorScheme: {

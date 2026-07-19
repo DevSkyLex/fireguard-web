@@ -168,7 +168,7 @@
   </div>
 </div>
 
-<p-card class="flex min-h-0 flex-1 flex-col" [styleClass]="cardStyleClass" [pt]="cardPt">
+<p-card class="flex min-h-0 flex-1 flex-col" data-shell="table">
   <ng-template pTemplate="content">
     <p-table
       [value]="showSkeleton() ? skeletonItems : empty() ? [] : [...inspections()]"

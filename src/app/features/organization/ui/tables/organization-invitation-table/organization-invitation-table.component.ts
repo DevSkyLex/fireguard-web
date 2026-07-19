@@ -14,7 +14,7 @@ import {
 } from '@angular/core';
 import { MenuItem, PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
+import { CardModule } from 'primeng/card';
 import { ChipModule } from 'primeng/chip';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -25,7 +25,6 @@ import type {
   OrganizationRoleOutput,
 } from '@features/organization/models';
 import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
-import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
 import { invitationExpiryBucket } from './utils';
 
 /**
@@ -50,12 +49,6 @@ import { invitationExpiryBucket } from './utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationInvitationTable {
-  /** Shared bordered card shell `styleClass`, identical across entity tables. */
-  protected readonly cardStyleClass: string = TABLE_CARD_SHELL_STYLE_CLASS;
-
-  /** Shared card shell pass-through options (flush body/content). */
-  protected readonly cardPt: CardPassThroughOptions = TABLE_CARD_SHELL_PT;
-
   /** Pending invitations to display. */
   public readonly invitations: InputSignal<readonly OrganizationInvitationOutput[]> =
     input.required();

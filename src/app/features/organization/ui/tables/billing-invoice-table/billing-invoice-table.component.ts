@@ -1,12 +1,11 @@
 import { DatePipe, DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, input, type InputSignal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
+import { CardModule } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import type { InvoiceOutput } from '@features/organization/models';
 import { EmptyState, Tag, type TagDescriptor } from '@shared/components';
-import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
 
 /**
  * Component BillingInvoiceTable
@@ -79,35 +78,6 @@ export class BillingInvoiceTable {
   //#endregion
 
   //#region Properties
-  /**
-   * Property cardStyleClass
-   * @readonly
-   *
-   * @description
-   * Shared card-shell `styleClass` so the invoice table reads like every other
-   * carded entity table.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {string}
-   */
-  protected readonly cardStyleClass: string = TABLE_CARD_SHELL_STYLE_CLASS;
-
-  /**
-   * Property cardPt
-   * @readonly
-   *
-   * @description
-   * Shared card-shell pass-through options (flush body, bordered header row).
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {CardPassThroughOptions}
-   */
-  protected readonly cardPt: CardPassThroughOptions = TABLE_CARD_SHELL_PT;
-
   /**
    * Property rows
    * @readonly

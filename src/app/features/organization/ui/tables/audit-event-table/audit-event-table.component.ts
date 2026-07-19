@@ -18,7 +18,7 @@ import {
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ButtonModule, type ButtonPassThroughOptions } from 'primeng/button';
-import { CardModule, type CardPassThroughOptions } from 'primeng/card';
+import { CardModule } from 'primeng/card';
 import { DatePickerModule } from 'primeng/datepicker';
 import { InputTextModule } from 'primeng/inputtext';
 import { Popover, PopoverModule } from 'primeng/popover';
@@ -27,7 +27,6 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
 import type { AuditEventListOptions, AuditEventOutput } from '@features/organization/models';
 import { EmptyState } from '@shared/components';
-import { TABLE_CARD_SHELL_PT, TABLE_CARD_SHELL_STYLE_CLASS } from '@shared/constants';
 
 /**
  * Interface AuditActorTypeOption
@@ -108,12 +107,6 @@ export class AuditEventTable implements OnInit {
   //#endregion
 
   //#region Properties
-  /** Shared `styleClass` for the bordered, full-height card shell wrapping the table. */
-  protected readonly cardStyleClass: string = TABLE_CARD_SHELL_STYLE_CLASS;
-
-  /** Shared pass-through options for the table's card shell (body, content, header). */
-  protected readonly cardPt: CardPassThroughOptions = TABLE_CARD_SHELL_PT;
-
   /**
    * Pass-through bumping the icon-only row action button's hit area to the
    * 44px minimum touch target without growing its compact visual size.

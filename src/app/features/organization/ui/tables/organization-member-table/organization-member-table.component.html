@@ -84,7 +84,7 @@
   }
 </div>
 
-<p-card [styleClass]="cardStyleClass" [pt]="cardPt">
+<p-card data-shell="table">
   <ng-template pTemplate="content">
     <p-table
       [value]="loading() ? skeletonItems : [...members()]"

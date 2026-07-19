@@ -20,7 +20,10 @@
       <article class="group flex gap-3" data-testid="message-row">
         @let author = this.author(message.authorMember);
 
-        <span class="relative mt-0.5 shrink-0">
+        <!-- Sized explicitly to the avatar: without a definite box the
+             absolutely-positioned dot anchors to the inline box instead and
+             lands below it. -->
+        <span class="relative mt-0.5 block size-8 shrink-0">
           @if (author.avatarUrl) {
             <img
               class="size-8 rounded-full object-cover"

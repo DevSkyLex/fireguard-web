@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { CardModule } from 'primeng/card';
 import { providePrimeNG } from 'primeng/config';
+import { TabsModule } from 'primeng/tabs';
 import { FireguardTheme } from '../fireguard.preset';
 
 /**
@@ -12,9 +13,9 @@ import { FireguardTheme } from '../fireguard.preset';
  * block fails silently at runtime and neither the build nor a token assertion
  * would notice.
  *
- * These specs pin the two rules the entity tables now depend on, after
- * `TABLE_CARD_SHELL_STYLE_CLASS` / `_PT` were deleted in favour of the
- * `data-shell="table"` variant.
+ * These specs pin the rules the entity tables and detail pages now depend on,
+ * after `TABLE_CARD_SHELL_*` and `DETAIL_TAB*_PT` were deleted in favour of
+ * `data-shell` variants.
  */
 @Component({
   imports: [CardModule],
@@ -23,13 +24,31 @@ import { FireguardTheme } from '../fireguard.preset';
 class CardHost {}
 
 /**
+ * Deliberately without `<p-tablist>`: PrimeNG's TabList binds a
+ * `ResizeObserver` in `ngAfterViewInit`, which jsdom does not provide. The
+ * `tabs-style` block is registered by the `p-tabs` root alone, which is all
+ * these assertions need.
+ */
+@Component({
+  imports: [TabsModule],
+  template: `<p-tabs data-shell="detail" [value]="0">
+    <p-tabpanels><p-tabpanel [value]="0">Body</p-tabpanel></p-tabpanels>
+  </p-tabs>`,
+})
+class TabsHost {}
+
+/**
  * PrimeNG minifies the injected block, so assertions are made against a
  * space-stripped copy rather than the source formatting.
  */
-function cardStyle(): string {
-  const style = document.querySelector('style[data-primeng-style-id="card-style"]');
+function injectedStyle(component: string): string {
+  const style = document.querySelector(`style[data-primeng-style-id="${component}-style"]`);
 
   return (style?.textContent ?? '').replace(/\s+/g, '');
+}
+
+function cardStyle(): string {
+  return injectedStyle('card');
 }
 
 describe('FireguardTheme', () => {
@@ -39,6 +58,19 @@ describe('FireguardTheme', () => {
       providers: [providePrimeNG({ theme: { preset: FireguardTheme } })],
     });
     TestBed.createComponent(CardHost).detectChanges();
+  });
+
+  it('ships the detail tabset variant', () => {
+    TestBed.createComponent(TabsHost).detectChanges();
+    const css = injectedStyle('tabs');
+
+    // The panel area becomes the page scroller instead of growing the document.
+    expect(css).toContain(".p-tabs[data-shell='detail']{display:flex");
+    expect(css).toContain(".p-tabs[data-shell='detail'].p-tabpanels{");
+    expect(css).toContain('overflow-y:auto');
+    // The class names are PrimeNG's own (TabListClasses/TabPanelsClasses); a
+    // typo here yields dead CSS that nothing else would surface.
+    expect(css).toContain('.p-tablist-tab-list{padding-inline:1rem');
   });
 
   it('renders the card as a flat bordered surface', () => {

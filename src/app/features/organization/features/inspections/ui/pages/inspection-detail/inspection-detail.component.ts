@@ -14,13 +14,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TabsModule } from 'primeng/tabs';
-import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
 import { OrganizationPermissionService } from '@features/organization/access';
-import {
-  DETAIL_TAB_LIST_PT,
-  DETAIL_TAB_PANELS_PT,
-  DETAIL_TABS_PT,
-} from '@features/organization/constants';
 import {
   resolveInspectionTag,
   type InspectionOutput,
@@ -109,12 +103,6 @@ export class InspectionDetailPage {
   );
   /** Index of the selected detail tab. */
   protected readonly activeTab: WritableSignal<number> = signal(0);
-  /** PrimeNG pass-through configuration for the tab container. */
-  protected readonly tabsPt: TabsPassThrough = DETAIL_TABS_PT;
-  /** PrimeNG pass-through configuration for the tab list. */
-  protected readonly tabListPt: TabListPassThrough = DETAIL_TAB_LIST_PT;
-  /** PrimeNG pass-through configuration for the tab panels. */
-  protected readonly tabPanelsPt: TabPanelsPassThrough = DETAIL_TAB_PANELS_PT;
 
   /** Initializes the active inspection non-conformity collection. */
   public constructor() {

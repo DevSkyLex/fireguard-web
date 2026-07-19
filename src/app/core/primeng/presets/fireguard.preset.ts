@@ -350,6 +350,37 @@ export const FireguardTheme: Preset = definePreset(Aura, {
       activeBar: {
         height: '2px',
       },
+      // `data-shell="detail"` turns a tabset into the full-height workspace the
+      // entity detail pages use: the panel area becomes the page's scroller
+      // instead of growing the document. Replaces the `DETAIL_TABS_PT` /
+      // `DETAIL_TAB_LIST_PT` / `DETAIL_TAB_PANELS_PT` constants.
+      //
+      // A variant, not a token change: `organization-members` also renders a
+      // tabset and must keep flowing with the page.
+      css: `
+.p-tabs[data-shell='detail'] {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.p-tabs[data-shell='detail'] .p-tablist-content {
+    border-top-left-radius: 0.375rem;
+    border-top-right-radius: 0.375rem;
+}
+
+.p-tabs[data-shell='detail'] .p-tablist-tab-list {
+    padding-inline: 1rem;
+}
+
+.p-tabs[data-shell='detail'] .p-tabpanels {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1.5rem 0 0;
+}
+`,
     },
     paginator: {
       root: {

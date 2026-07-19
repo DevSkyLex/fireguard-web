@@ -18,13 +18,7 @@ import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TabsModule } from 'primeng/tabs';
-import type { TabListPassThrough, TabPanelsPassThrough, TabsPassThrough } from 'primeng/types/tabs';
 import { OrganizationPermissionService } from '@features/organization/access';
-import {
-  DETAIL_TAB_LIST_PT,
-  DETAIL_TAB_PANELS_PT,
-  DETAIL_TABS_PT,
-} from '@features/organization/constants';
 import type {
   FacilityOutput,
   MoveFacilityInput,
@@ -400,11 +394,6 @@ export class FacilityDetailPage {
     return options;
   });
 
-  protected readonly tabsPt: TabsPassThrough = DETAIL_TABS_PT;
-
-  protected readonly tabListPt: TabListPassThrough = DETAIL_TAB_LIST_PT;
-
-  protected readonly tabPanelsPt: TabPanelsPassThrough = DETAIL_TAB_PANELS_PT;
   //#endregion
 
   //#region Constructor

@@ -50,8 +50,8 @@
 
   <!-- Workspace -->
   <section class="flex min-h-0 flex-1 flex-col">
-    <p-tabs [value]="activeTab()" [pt]="tabsPt" (valueChange)="activeTab.set(+$event!)">
-      <p-tablist [pt]="tabListPt">
+    <p-tabs [value]="activeTab()" data-shell="detail" (valueChange)="activeTab.set(+$event!)">
+      <p-tablist>
         <p-tab [value]="0">
           <i class="pi pi-chart-line mr-2 text-sm"></i>
           <span i18n="@@facility.tab.overview" class="text-sm">Overview</span>
@@ -66,7 +66,7 @@
         </p-tab>
       </p-tablist>
 
-      <p-tabpanels [pt]="tabPanelsPt">
+      <p-tabpanels>
         <p-tabpanel [value]="0">
           @if (facility(); as facility) {
             <div class="grid min-h-0 grid-cols-1 gap-6 xl:grid-cols-12">

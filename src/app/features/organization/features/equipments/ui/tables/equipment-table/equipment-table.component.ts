@@ -37,6 +37,7 @@ import type { RequestOptions } from '@core/api';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   EquipmentOutput,
+  EquipmentMaintenanceDueStatus,
   EquipmentStatus,
 } from '@features/organization/features/equipments/models';
 import {
@@ -1013,6 +1014,24 @@ export class EquipmentTable implements OnInit {
    */
   protected getStatusOption(status: EquipmentStatus): TagDescriptor {
     return resolveEquipmentTag('status', status);
+  }
+
+  /**
+   * Method getMaintenanceOption
+   *
+   * @description
+   * Resolves the badge for an equipment's maintenance due status — a separate
+   * axis from the lifecycle status: an operational asset can be overdue.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {EquipmentMaintenanceDueStatus} dueStatus - The raw due status.
+   *
+   * @returns {TagDescriptor} The descriptor to render.
+   */
+  protected getMaintenanceOption(dueStatus: EquipmentMaintenanceDueStatus): TagDescriptor {
+    return resolveEquipmentTag('maintenanceDueStatus', dueStatus);
   }
 
   /**

@@ -3,3 +3,4 @@ export type { EquipmentFacilityOption } from './equipment-assignment-panel';
 export { EquipmentDetailHeader } from './equipment-detail-header';
 export { EquipmentInformationPanel } from './equipment-information-panel';
 export { EquipmentTagsPanel } from './equipment-tags-panel';
+export { EquipmentFleetSummary } from './equipment-fleet-summary';

@@ -23,6 +23,7 @@ const MOCK_EQUIPMENT: EquipmentOutput = {
   tags: [],
   createdAt: '2025-01-01',
   updatedAt: '2025-01-03',
+  maintenanceDueStatus: 'up_to_date',
 } as EquipmentOutput;
 
 describe('FacilityEquipmentTable', () => {

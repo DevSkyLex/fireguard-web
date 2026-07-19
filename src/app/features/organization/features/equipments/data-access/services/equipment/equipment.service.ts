@@ -3,6 +3,7 @@ import { EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
 import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection, HydraItem, OptionOutput } from '@core/api/models';
 import type {
+  EquipmentKpiOutput,
   EquipmentOutput,
   CreateEquipmentInput,
   UpdateEquipmentInput,
@@ -67,6 +68,24 @@ export class EquipmentService extends HydraApiService {
   private equipmentPath(organizationId: string, equipmentId?: string): string {
     const base: string = `${EquipmentService.BASE_PATH}/${organizationId}/equipment`;
     return equipmentId ? `${base}/${equipmentId}` : base;
+  }
+
+  /**
+   * Method getKpis
+   * @method getKpis
+   *
+   * @description
+   * Fetches the aggregate equipment counters for the organization.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   *
+   * @return {Observable<EquipmentKpiOutput>} An observable emitting the counters.
+   */
+  public getKpis(organizationId: string): Observable<EquipmentKpiOutput> {
+    return this.getOne<EquipmentKpiOutput>(`${this.equipmentPath(organizationId)}/kpis`);
   }
 
   /**

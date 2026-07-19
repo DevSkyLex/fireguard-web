@@ -33,9 +33,40 @@ const STATUS: Record<string, EquipmentTagDescriptor> = {
   },
 };
 
+/**
+ * Maintenance due descriptors.
+ *
+ * Orthogonal to the lifecycle status: an `operational` asset can be `overdue`.
+ * `unscheduled` is neutral, not a failure — an asset nobody has put on a
+ * schedule is not the same as one that missed its date.
+ */
+const MAINTENANCE_DUE: Record<string, EquipmentTagDescriptor> = {
+  overdue: {
+    label: $localize`:@@equipmentDue.overdue:Overdue`,
+    severity: 'danger',
+    icon: 'pi pi-exclamation-circle',
+  },
+  due_soon: {
+    label: $localize`:@@equipmentDue.dueSoon:Due soon`,
+    severity: 'warn',
+    icon: 'pi pi-clock',
+  },
+  up_to_date: {
+    label: $localize`:@@equipmentDue.upToDate:Up to date`,
+    severity: 'success',
+    icon: 'pi pi-check-circle',
+  },
+  unscheduled: {
+    label: $localize`:@@equipmentDue.unscheduled:Unscheduled`,
+    severity: 'secondary',
+    icon: 'pi pi-minus-circle',
+  },
+};
+
 /** Registry indexed by tag kind. */
 const REGISTRY: Record<EquipmentTagKind, Record<string, EquipmentTagDescriptor>> = {
   status: STATUS,
+  maintenanceDueStatus: MAINTENANCE_DUE,
 };
 
 /**

@@ -1,0 +1,14 @@
+@if (counters().length > 0) {
+  <p class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
+    @for (counter of counters(); track counter.label; let last = $last) {
+      <span class="font-semibold tabular-nums" [class]="counter.toneClass">
+        {{ counter.value }}
+      </span>
+      <span class="text-surface-500 dark:text-surface-400">{{ counter.label }}</span>
+
+      @if (!last) {
+        <span class="px-1 text-surface-300 dark:text-surface-700" aria-hidden="true">·</span>
+      }
+    }
+  </p>
+}

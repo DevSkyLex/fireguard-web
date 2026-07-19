@@ -14,7 +14,12 @@ import { MessageModule } from 'primeng/message';
 import type { RequestOptions } from '@core/api';
 import { isCallError } from '@core/request-state';
 import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
-import { EquipmentStore } from '@features/organization/features/equipments/state';
+import {
+  EquipmentKpiStore,
+  EquipmentStore,
+  type EquipmentKpiStoreType,
+} from '@features/organization/features/equipments/state';
+import { EquipmentFleetSummary } from '@features/organization/features/equipments/ui/components';
 import { EquipmentTable } from '@features/organization/features/equipments/ui/tables';
 import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
@@ -33,8 +38,8 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
  */
 @Component({
   selector: 'app-equipment-list',
-  imports: [EquipmentTable, MessageModule, ButtonModule],
-  providers: [EquipmentStore],
+  imports: [EquipmentTable, EquipmentFleetSummary, MessageModule, ButtonModule],
+  providers: [EquipmentStore, EquipmentKpiStore],
   templateUrl: './equipment-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -103,6 +108,22 @@ export class EquipmentListPage {
    */
   protected readonly store: EquipmentStore = inject<EquipmentStore>(EquipmentStore);
 
+  /**
+   * Property kpiStore
+   * @readonly
+   *
+   * @description
+   * Component-scoped store for the fleet counters shown above the table. Kept
+   * apart from the list store so paging does not refetch them.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {EquipmentKpiStoreType}
+   */
+  protected readonly kpiStore: EquipmentKpiStoreType =
+    inject<EquipmentKpiStoreType>(EquipmentKpiStore);
+
   /** Root-provided quota store exposing whether the equipment limit is reached. */
   private readonly quotaStore: OrganizationQuotaStore =
     inject<OrganizationQuotaStore>(OrganizationQuotaStore);
@@ -155,11 +176,17 @@ export class EquipmentListPage {
    * @constructor
    *
    * @description
-   * Loads the initial page of equipment.
+   * Loads the initial page of equipment and the fleet counters.
    *
    * @since 1.0.0
    */
-
+  public constructor() {
+    this.kpiStore.load(
+      computed(
+        (): string | null => this.activeOrganizationStore.selectedOrganization()?.id ?? null,
+      ),
+    );
+  }
   //#endregion
 
   //#region Methods

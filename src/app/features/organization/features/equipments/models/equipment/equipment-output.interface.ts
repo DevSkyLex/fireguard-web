@@ -11,6 +11,18 @@ import type { EquipmentTagOutput } from '../equipment-tag/equipment-tag-output.i
 export type EquipmentStatus = 'in_stock' | 'operational' | 'decommissioned' | 'under_maintenance';
 
 /**
+ * Type EquipmentMaintenanceDueStatus
+ *
+ * @description
+ * Where an equipment stands against its maintenance schedule.
+ *
+ * Orthogonal to {@link EquipmentStatus}: an `operational` asset can be
+ * `overdue`, and a `decommissioned` one is simply `unscheduled`. The two must
+ * never be collapsed into one column.
+ */
+export type EquipmentMaintenanceDueStatus = 'unscheduled' | 'up_to_date' | 'due_soon' | 'overdue';
+
+/**
  * Type EquipmentType
  *
  * @description
@@ -217,5 +229,18 @@ export interface EquipmentOutput extends HydraItem {
    * @type {string}
    */
   readonly updatedAt: string;
+
+  /**
+   * Property maintenanceDueStatus
+   * @readonly
+   *
+   * @description
+   * Where the asset stands against its maintenance schedule. Resolved
+   * cross-module by the backend, which defaults to `'unscheduled'` when no
+   * schedule covers the equipment.
+   *
+   * @type {EquipmentMaintenanceDueStatus}
+   */
+  readonly maintenanceDueStatus: EquipmentMaintenanceDueStatus;
   //#endregion
 }

@@ -212,6 +212,11 @@
               <p-sortIcon field="status" />
             </div>
           </th>
+          <th class="min-w-40">
+            <div class="flex items-center gap-2">
+              <span i18n="@@equipment.table.colMaintenance">Maintenance</span>
+            </div>
+          </th>
           <th pSortableColumn="updatedAt" class="hidden min-w-36 lg:table-cell">
             <div class="flex items-center gap-2">
               <span i18n="@@common.updated">Updated</span>
@@ -285,6 +290,9 @@
           </td>
           <td>
             <app-tag [descriptor]="getStatusOption(equipment.status)" />
+          </td>
+          <td>
+            <app-tag [descriptor]="getMaintenanceOption(equipment.maintenanceDueStatus)" />
           </td>
           <td class="hidden text-right lg:table-cell">
             <span class="text-surface-600 tabular-nums dark:text-surface-400">

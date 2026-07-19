@@ -1,5 +1,6 @@
 export type {
   EquipmentOutput,
+  EquipmentMaintenanceDueStatus,
   EquipmentStatus,
   EquipmentType,
 } from './equipment/equipment-output.interface';
@@ -17,3 +18,4 @@ export {
   resolveEquipmentTag,
   equipmentTagOptions,
 } from './equipment-status-tag/equipment-tag.util';
+export type { EquipmentKpiOutput } from './equipment-kpi/equipment-kpi-output.interface';

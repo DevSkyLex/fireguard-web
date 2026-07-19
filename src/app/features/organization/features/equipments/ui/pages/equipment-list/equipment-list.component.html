@@ -20,6 +20,8 @@
       </div>
     </p-message>
   }
+  <app-equipment-fleet-summary [kpis]="kpiStore.queryData() ?? null" />
+
   <app-equipment-table
     class="flex min-h-0 flex-1 flex-col"
     [equipments]="store.equipmentList()"

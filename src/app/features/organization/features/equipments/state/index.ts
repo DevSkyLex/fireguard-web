@@ -6,3 +6,5 @@ export { EquipmentStore } from './equipment';
 export type { EquipmentStoreType } from './equipment';
 export { activeEquipmentStoreEvents } from './active-equipment';
 export { equipmentStoreEvents } from './equipment';
+export { EquipmentKpiStore } from './equipment-kpi';
+export type { EquipmentKpiStoreType } from './equipment-kpi';

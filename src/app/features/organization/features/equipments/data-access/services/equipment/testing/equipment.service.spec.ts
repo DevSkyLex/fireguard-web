@@ -63,6 +63,7 @@ describe('EquipmentService', () => {
     tags: [],
     createdAt: '2026-01-01T00:00:00+00:00',
     updatedAt: '2026-03-01T00:00:00+00:00',
+    maintenanceDueStatus: 'up_to_date',
   };
 
   const mockAttachment: EquipmentAttachmentOutput = {

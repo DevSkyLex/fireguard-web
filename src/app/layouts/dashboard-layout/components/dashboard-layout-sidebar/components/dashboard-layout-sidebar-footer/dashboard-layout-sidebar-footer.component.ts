@@ -32,9 +32,9 @@ export class DashboardLayoutSidebarFooter {
    * @access public
    * @since 2.0.0
    *
-   * @type {InputSignal<SidebarContribution[]>}
+   * @type {InputSignal<readonly SidebarContribution[]>}
    */
-  public readonly contributions: InputSignal<SidebarContribution[]> = input<SidebarContribution[]>(
-    [],
-  );
+  public readonly contributions: InputSignal<readonly SidebarContribution[]> = input<
+    readonly SidebarContribution[]
+  >([]);
 }

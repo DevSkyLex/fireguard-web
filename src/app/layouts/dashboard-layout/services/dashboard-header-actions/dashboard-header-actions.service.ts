@@ -1,4 +1,4 @@
-import { inject, Injectable, type Type } from '@angular/core';
+import { computed, inject, Injectable, type Signal, type Type } from '@angular/core';
 import { TOPBAR_SLOT } from '@layouts/dashboard-layout/slots/topbar';
 import type { TopbarContribution } from '@layouts/dashboard-layout/slots/topbar';
 
@@ -7,15 +7,14 @@ import type { TopbarContribution } from '@layouts/dashboard-layout/slots/topbar'
  * @class DashboardHeaderActionsService
  *
  * @description
- * Layout-scoped service aggregating header action contributions
- * registered via the `TOPBAR_SLOT` multi-provider token
- * and exposing them as a sorted list of component types.
+ * Layout-scoped service aggregating header action contributions registered via
+ * the `TOPBAR_SLOT` multi-provider token.
  *
- * The service is contribution-agnostic: it sorts contributions by their
- * `order` property and exposes the resulting `Type<unknown>[]` for the
- * header template to render via `NgComponentOutlet`.
+ * Registration is resolved once — a multi-provider array is immutable per
+ * injector, so a contribution can never appear or disappear at runtime — and
+ * visibility is filtered reactively on each contribution's `available` signal.
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Injectable()
@@ -23,36 +22,58 @@ export class DashboardHeaderActionsService {
   //#region Properties
 
   /**
+   * Property registered
+   * @readonly
+   *
+   * @description
+   * Every contribution, sorted by ascending `order`. Resolved at construction.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {readonly TopbarContribution[]}
+   */
+  private readonly registered: readonly TopbarContribution[] = (
+    inject(TOPBAR_SLOT, { optional: true }) ?? []
+  ).toSorted((a: TopbarContribution, b: TopbarContribution): number => a.order - b.order);
+
+  /**
    * Property actions
    * @readonly
    *
    * @description
-   * Sorted list of header action contributions.
+   * The contributions that currently apply, in order.
    *
    * @access public
-   * @since 1.4.0
+   * @since 2.0.0
    *
-   * @type {TopbarContribution[]}
+   * @type {Signal<readonly TopbarContribution[]>}
    */
-  public readonly actions: TopbarContribution[] = (
-    inject(TOPBAR_SLOT, { optional: true }) ?? []
-  ).toSorted((a: TopbarContribution, b: TopbarContribution): number => a.order - b.order);
+  public readonly actions: Signal<readonly TopbarContribution[]> = computed(
+    (): readonly TopbarContribution[] =>
+      this.registered.filter(
+        (contribution: TopbarContribution): boolean => contribution.available?.() ?? true,
+      ),
+  );
 
   /**
    * Property components
    * @readonly
    *
    * @description
-   * Sorted list of header action component types, ready to be rendered
-   * via `NgComponentOutlet`. Sorted by ascending `order`.
+   * Component types of the applicable contributions, ready to be rendered via
+   * `NgComponentOutlet`.
    *
    * @access public
-   * @since 1.0.0
+   * @since 2.0.0
    *
-   * @type {Type<unknown>[]}
+   * @type {Signal<readonly Type<unknown>[]>}
    */
-  public readonly components: Type<unknown>[] = this.actions.map(
-    (contribution: TopbarContribution): Type<unknown> => contribution.component,
+  public readonly components: Signal<readonly Type<unknown>[]> = computed(
+    (): readonly Type<unknown>[] =>
+      this.actions().map(
+        (contribution: TopbarContribution): Type<unknown> => contribution.component,
+      ),
   );
 
   //#endregion

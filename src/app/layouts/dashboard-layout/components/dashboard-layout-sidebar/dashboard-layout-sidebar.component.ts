@@ -70,7 +70,7 @@ export class DashboardLayoutSidebar {
    *
    * @type {SidebarContribution[]}
    */
-  private readonly contributions: SidebarContribution[] = (
+  private readonly contributions: readonly SidebarContribution[] = (
     inject(SIDEBAR_SLOT, { optional: true }) ?? []
   ).toSorted((a: SidebarContribution, b: SidebarContribution): number => a.order - b.order);
 
@@ -84,10 +84,14 @@ export class DashboardLayoutSidebar {
    * @access protected
    * @since 2.0.0
    *
-   * @type {SidebarContribution[]}
+   * @type {Signal<readonly SidebarContribution[]>}
    */
-  protected readonly leadContributions: SidebarContribution[] = this.contributions.filter(
-    (contribution: SidebarContribution): boolean => contribution.region === 'lead',
+  protected readonly leadContributions: Signal<readonly SidebarContribution[]> = computed(
+    (): readonly SidebarContribution[] =>
+      this.contributions.filter(
+        (contribution: SidebarContribution): boolean =>
+          contribution.region === 'lead' && (contribution.available?.() ?? true),
+      ),
   );
 
   /**
@@ -100,10 +104,14 @@ export class DashboardLayoutSidebar {
    * @access protected
    * @since 2.0.0
    *
-   * @type {SidebarContribution[]}
+   * @type {Signal<readonly SidebarContribution[]>}
    */
-  protected readonly footerContributions: SidebarContribution[] = this.contributions.filter(
-    (contribution: SidebarContribution): boolean => contribution.region === 'footer',
+  protected readonly footerContributions: Signal<readonly SidebarContribution[]> = computed(
+    (): readonly SidebarContribution[] =>
+      this.contributions.filter(
+        (contribution: SidebarContribution): boolean =>
+          contribution.region === 'footer' && (contribution.available?.() ?? true),
+      ),
   );
 
   /**

@@ -4,8 +4,11 @@ import {
   type EnvironmentProviders,
   type Provider,
 } from '@angular/core';
+import { SHELL_PANEL_PORT } from '@core/shell-panel';
+import { DashboardPanelService } from '../../services/dashboard-panel';
 import { NAVIGATION_SLOT, type NavigationContribution } from '../../slots/navigation';
 import { PAGE_HEADER_SLOT, type PageHeaderContribution } from '../../slots/page-header';
+import { PANEL_SLOT, type PanelContribution } from '../../slots/panel';
 import { SIDEBAR_SLOT, type SidebarContribution } from '../../slots/sidebar';
 import { TOPBAR_SLOT, type TopbarContribution } from '../../slots/topbar';
 
@@ -31,6 +34,7 @@ export type DashboardLayoutSidebarSlotFeature = DashboardLayoutSlotFeature<Sideb
 
 export type DashboardLayoutPageHeaderSlotFeature =
   DashboardLayoutSlotFeature<PageHeaderContribution>;
+export type DashboardLayoutPanelSlotFeature = DashboardLayoutSlotFeature<PanelContribution>;
 
 /**
  * DashboardLayoutSlotsConfig
@@ -46,6 +50,7 @@ export interface DashboardLayoutSlotsConfig {
   readonly sidebar?: DashboardLayoutSidebarSlotFeature[];
   readonly topbar?: DashboardLayoutTopbarSlotFeature[];
   readonly pageHeader?: DashboardLayoutPageHeaderSlotFeature[];
+  readonly panel?: DashboardLayoutPanelSlotFeature[];
 }
 
 /**
@@ -68,6 +73,13 @@ export function provideDashboardLayoutSlots(
     ...provideSlotContributions(SIDEBAR_SLOT, config.sidebar),
     ...provideSlotContributions(TOPBAR_SLOT, config.topbar),
     ...provideSlotContributions(PAGE_HEADER_SLOT, config.pageHeader),
+    ...provideSlotContributions(PANEL_SLOT, config.panel),
+    // Bound here, in `makeEnvironmentProviders`, and NOT in the layout
+    // component's `providers` array: a routed page injecting SHELL_PANEL_PORT
+    // resolves against the route's environment injector, which never sees a
+    // component-node binding. Documented in `core/shell-panel`.
+    DashboardPanelService,
+    { provide: SHELL_PANEL_PORT, useExisting: DashboardPanelService },
   ]);
 }
 

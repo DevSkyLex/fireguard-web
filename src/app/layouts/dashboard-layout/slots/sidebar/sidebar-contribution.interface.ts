@@ -1,4 +1,4 @@
-import type { Type } from '@angular/core';
+import type { Signal, Type } from '@angular/core';
 
 /**
  * Interface SidebarContribution
@@ -14,6 +14,27 @@ import type { Type } from '@angular/core';
 export interface SidebarContribution {
   readonly id: string;
   readonly order: number;
-  readonly region: 'lead' | 'footer';
+
+  /**
+   * Where the widget mounts. `rail` is the persistent organization rail on the
+   * far left; `lead` and `footer` bracket the navigation list inside the
+   * channel sidebar.
+   *
+   * A third region rather than a separate `RAIL_SLOT`: the rail has exactly one
+   * consumer (the organization switcher), and a token for one consumer is the
+   * abstraction the rule of three exists to prevent.
+   *
+   * @type {'rail' | 'lead' | 'footer'}
+   */
+  readonly region: 'rail' | 'lead' | 'footer';
   readonly component: Type<unknown>;
+
+  /**
+   * Whether the widget applies right now. Registration cannot be conditional —
+   * see {@link PanelContribution} for why — so gate here instead. Widgets that
+   * always apply may omit it.
+   *
+   * @type {Signal<boolean> | undefined}
+   */
+  readonly available?: Signal<boolean>;
 }

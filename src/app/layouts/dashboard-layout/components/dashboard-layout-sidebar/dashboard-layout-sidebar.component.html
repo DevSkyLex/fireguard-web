@@ -10,9 +10,9 @@
   </section>
 
   <!-- Lead shell widgets (organization switcher) -->
-  @if (!isIconOnly() && leadContributions.length > 0) {
+  @if (!isIconOnly() && leadContributions().length > 0) {
     <section class="flex shrink-0 flex-col gap-2 px-3 pt-3 pb-2">
-      @for (contribution of leadContributions; track contribution.id) {
+      @for (contribution of leadContributions(); track contribution.id) {
         <ng-container *ngComponentOutlet="contribution.component" />
       }
     </section>
@@ -31,7 +31,7 @@
   </section>
 
   <!-- Footer shell widgets (account menu) -->
-  @if (!isIconOnly() && footerContributions.length > 0) {
-    <app-dashboard-layout-sidebar-footer [contributions]="footerContributions" />
+  @if (!isIconOnly() && footerContributions().length > 0) {
+    <app-dashboard-layout-sidebar-footer [contributions]="footerContributions()" />
   }
 </div>

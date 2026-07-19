@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -26,14 +26,15 @@ class TestHeaderActionA {}
 class TestHeaderActionB {}
 
 describe('DashboardLayoutHeader', () => {
-  const mockHeaderActionsService: {
-    actions: TopbarContribution[];
-  } = {
-    actions: [],
-  };
+  // `actions` is a signal on the real service: registration is static, but
+  // visibility is filtered reactively on each contribution's `available`.
+  const actions: WritableSignal<readonly TopbarContribution[]> = signal<
+    readonly TopbarContribution[]
+  >([]);
+  const mockHeaderActionsService = { actions };
 
   beforeEach(() => {
-    mockHeaderActionsService.actions = [];
+    actions.set([]);
 
     TestBed.configureTestingModule({
       imports: [DashboardLayoutHeader],
@@ -75,10 +76,10 @@ describe('DashboardLayoutHeader', () => {
   });
 
   it('should render the search trigger then the topbar slot actions in order', () => {
-    mockHeaderActionsService.actions = [
+    actions.set([
       { id: 'theme-switcher', order: 10, component: TestHeaderActionA },
       { id: 'notification-bell', order: 20, component: TestHeaderActionB },
-    ];
+    ]);
     const fixture = TestBed.createComponent(DashboardLayoutHeader);
 
     fixture.detectChanges();

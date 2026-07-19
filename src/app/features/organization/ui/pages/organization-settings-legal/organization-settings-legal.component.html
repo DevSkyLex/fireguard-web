@@ -1,0 +1,7 @@
+<div id="organization-settings-legal">
+  <app-organization-legal-form
+    [organization]="activeOrganizationStore.selectedOrganization()"
+    [saving]="store.isSaving()"
+    (submitted)="save($event)"
+  />
+</div>

@@ -78,6 +78,11 @@ export const ORGANIZATION_SETTINGS_TABS: ReadonlyArray<OrganizationSettingsTab> 
     permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
   },
   {
+    path: 'legal',
+    scope: 'organization',
+    permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
+  },
+  {
     path: 'members',
     scope: 'organization',
     permissions: [ORGANIZATION_PERMISSION.MEMBERS_READ, ORGANIZATION_PERMISSION.MEMBERS_MANAGE],

@@ -32,8 +32,22 @@ import type { OrganizationSettingsTab } from './models';
  *
  * @since 1.0.0
  */
+type OrganizationSettingsRoute = 'legal' | 'danger';
+
+/** Whether a menu entry leaves the page for a sibling settings route. */
+function isSettingsRoute(
+  id: OrganizationSettingsTab | OrganizationSettingsRoute,
+): id is OrganizationSettingsRoute {
+  return id === 'legal' || id === 'danger';
+}
+
 interface OrganizationSettingsNavItem {
-  readonly id: OrganizationSettingsTab;
+  /**
+   * Either an in-page section (`?tab=`) or a sibling settings **route**.
+   * `legal` and `danger` are routes — they carry their own guard — but they
+   * still belong in this menu, which is where users look for them.
+   */
+  readonly id: OrganizationSettingsTab | OrganizationSettingsRoute;
   readonly label: string;
   readonly icon: string;
   readonly description: string;
@@ -117,6 +131,12 @@ export class OrganizationSettingsPage {
         description: $localize`:@@org.settings.generalDesc:Name, slug, description, logo and active status.`,
       },
       {
+        id: 'legal',
+        label: $localize`:@@org.settings.legal:Legal profile`,
+        icon: 'pi pi-id-card',
+        description: $localize`:@@org.settings.legalDesc:Registered name, entity type, registration and VAT numbers.`,
+      },
+      {
         id: 'subscription',
         label: $localize`:@@org.settings.subscription:Subscription`,
         icon: 'pi pi-star',
@@ -191,8 +211,8 @@ export class OrganizationSettingsPage {
               '[&_.p-menu-item-label]:font-semibold [&_.p-menu-item-label]:text-surface-900 dark:[&_.p-menu-item-label]:text-surface-50'
             : undefined,
         command: (): void =>
-          item.id === 'danger'
-            ? void this.router.navigate(['../danger'], { relativeTo: this.route })
+          isSettingsRoute(item.id)
+            ? void this.router.navigate([`../${item.id}`], { relativeTo: this.route })
             : this.onTabChange(item.id),
       }),
     ),

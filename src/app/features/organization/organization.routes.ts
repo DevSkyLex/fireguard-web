@@ -196,6 +196,20 @@ export const ORGANIZATION_ROUTES: Routes = [
             },
           },
           {
+            path: 'legal',
+            canActivate: [
+              organizationPermissionGuard({
+                permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
+              }),
+            ],
+            loadComponent: () =>
+              import('./ui/pages/organization-settings-legal').then(
+                (m) => m.OrganizationSettingsLegalPage,
+              ),
+            title: $localize`:@@route.legal:Legal profile`,
+            data: { breadcrumb: 'Legal profile' },
+          },
+          {
             /**
              * The danger zone is a route, not a `?tab=` section, so its guard
              * actually runs. As a query param it was only hidden behind an

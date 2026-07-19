@@ -25,5 +25,14 @@ export interface UpdateOrganizationInput {
   readonly notifications?: Partial<OrganizationNotificationSettings>;
   /** @type {(Partial<OrganizationRegionalSettings> | undefined)} */
   readonly regional?: Partial<OrganizationRegionalSettings>;
+  /**
+   * Legal profile fields. The backend clears a value when it receives an empty
+   * string, so a cleared input must send `''` and not be omitted.
+   */
+  readonly country?: string;
+  readonly legalType?: string;
+  readonly legalName?: string;
+  readonly registrationNumber?: string;
+  readonly vatNumber?: string;
   //#endregion
 }

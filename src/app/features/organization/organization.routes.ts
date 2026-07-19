@@ -196,6 +196,28 @@ export const ORGANIZATION_ROUTES: Routes = [
             },
           },
           {
+            /**
+             * The danger zone is a route, not a `?tab=` section, so its guard
+             * actually runs. As a query param it was only hidden behind an
+             * `@if`, and `canActivate` does not re-run on a query-param change:
+             * anyone could reach it by typing the URL.
+             */
+            path: 'danger',
+            canActivate: [
+              organizationPermissionGuard({
+                permissions: [ORGANIZATION_PERMISSION.DELETE],
+              }),
+            ],
+            loadComponent: () =>
+              import('./ui/pages/organization-settings-danger').then(
+                (m) => m.OrganizationSettingsDangerPage,
+              ),
+            title: $localize`:@@route.danger:Danger zone`,
+            data: {
+              breadcrumb: 'Danger zone',
+            },
+          },
+          {
             path: '',
             pathMatch: 'full',
             canActivate: [organizationSettingsLandingGuard],

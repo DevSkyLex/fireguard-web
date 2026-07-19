@@ -72,25 +72,8 @@
               (submitted)="save($event)"
             />
           }
-          @case ('danger') {
-            @if (canDeleteOrganization()) {
-              <app-organization-danger-zone
-                [organization]="activeOrganizationStore.selectedOrganization()"
-                [deleting]="store.isDeleting()"
-                (delete)="openDeleteDialog()"
-              />
-            }
-          }
         }
       </p-card>
     </div>
   </div>
-
-  <app-organization-delete-dialog
-    [(visible)]="deleteDialogVisible"
-    [organizationSlug]="activeOrganizationStore.selectedOrganization()?.slug ?? ''"
-    [organizationName]="activeOrganizationStore.selectedOrganization()?.name ?? ''"
-    [deleting]="store.isDeleting()"
-    (confirmed)="confirmDelete($event)"
-  />
 </div>

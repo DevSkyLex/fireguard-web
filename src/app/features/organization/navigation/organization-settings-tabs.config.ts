@@ -94,4 +94,9 @@ export const ORGANIZATION_SETTINGS_TABS: ReadonlyArray<OrganizationSettingsTab> 
     scope: 'account',
     permissions: [ACCOUNT_PERMISSION.AUDIT_READ],
   },
+  {
+    path: 'danger',
+    scope: 'organization',
+    permissions: [ORGANIZATION_PERMISSION.DELETE],
+  },
 ];

@@ -1,0 +1,15 @@
+<div id="organization-settings-danger" class="flex flex-col gap-6">
+  <app-organization-danger-zone
+    [organization]="activeOrganizationStore.selectedOrganization()"
+    [deleting]="store.isDeleting()"
+    (delete)="openDeleteDialog()"
+  />
+
+  <app-organization-delete-dialog
+    [(visible)]="deleteDialogVisible"
+    [organizationSlug]="activeOrganizationStore.selectedOrganization()?.slug ?? ''"
+    [organizationName]="activeOrganizationStore.selectedOrganization()?.name ?? ''"
+    [deleting]="store.isDeleting()"
+    (confirmed)="confirmDelete($event)"
+  />
+</div>

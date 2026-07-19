@@ -1,13 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  signal,
-  type Signal,
-  type WritableSignal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { type MenuItem } from 'primeng/api';
@@ -22,7 +13,6 @@ import {
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import {
-  OrganizationDangerZone,
   OrganizationPlanSelector,
   OrganizationUsagePanel,
 } from '@features/organization/ui/components';
@@ -31,7 +21,6 @@ import {
   OrganizationNotificationsForm,
   OrganizationRegionalForm,
 } from '@features/organization/ui/forms';
-import { OrganizationDeleteDialog } from '../../dialogs/organization-delete-dialog';
 import { DEFAULT_ORGANIZATION_SETTINGS_TAB, ORGANIZATION_SETTINGS_TABS } from './constants';
 import type { OrganizationSettingsTab } from './models';
 
@@ -72,10 +61,8 @@ interface OrganizationSettingsNavItem {
     OrganizationGeneralForm,
     OrganizationNotificationsForm,
     OrganizationRegionalForm,
-    OrganizationDangerZone,
     OrganizationPlanSelector,
     OrganizationUsagePanel,
-    OrganizationDeleteDialog,
   ],
   providers: [OrganizationSettingsStore],
   templateUrl: './organization-settings.component.html',
@@ -102,9 +89,6 @@ export class OrganizationSettingsPage {
   protected readonly canDeleteOrganization: Signal<boolean> = computed(() =>
     this.permissionService.hasPermission(ORGANIZATION_PERMISSION.DELETE),
   );
-
-  /** Visibility of the delete confirmation dialog. */
-  protected readonly deleteDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /** Currently selected settings section derived from the `tab` query parameter. */
   protected readonly activeTab: Signal<OrganizationSettingsTab> = toSignal(
@@ -206,7 +190,10 @@ export class OrganizationSettingsPage {
               '[&>.p-menu-item-content]:bg-surface-100 dark:[&>.p-menu-item-content]:bg-surface-800 ' +
               '[&_.p-menu-item-label]:font-semibold [&_.p-menu-item-label]:text-surface-900 dark:[&_.p-menu-item-label]:text-surface-50'
             : undefined,
-        command: (): void => this.onTabChange(item.id),
+        command: (): void =>
+          item.id === 'danger'
+            ? void this.router.navigate(['../danger'], { relativeTo: this.route })
+            : this.onTabChange(item.id),
       }),
     ),
   );
@@ -218,18 +205,6 @@ export class OrganizationSettingsPage {
    * and navigating away. Save, logo-upload and deletion toasts (success and
    * error) are produced centrally from the settings store's feedback events.
    */
-  public constructor() {
-    effect(() => {
-      if (this.store.deleteSucceeded()) {
-        this.deleteDialogVisible.set(false);
-        this.activeOrganizationStore.clear();
-        // Root forwards to the next remaining organization (or onboarding);
-        // organizationGuard invalidates the stale last-organization cookie.
-        void this.router.navigate(['/']);
-      }
-    });
-  }
-
   /**
    * Method onTabChange
    *
@@ -276,34 +251,5 @@ export class OrganizationSettingsPage {
     if (organizationId) this.store.uploadLogo({ organizationId, file, fileName: file.name });
   }
 
-  /**
-   * Method openDeleteDialog
-   *
-   * @description
-   * Opens the delete confirmation dialog.
-   *
-   * @returns {void}
-   */
-  protected openDeleteDialog(): void {
-    this.deleteDialogVisible.set(true);
-  }
-
-  /**
-   * Method confirmDelete
-   *
-   * @description
-   * Triggers permanent deletion of the active organization.
-   *
-   * The slug the user retyped is forwarded, not just used to enable the button:
-   * the backend enforces the same confirmation as a `slug` query parameter.
-   *
-   * @param {string} slugConfirmation - The slug retyped in the dialog.
-   *
-   * @returns {void}
-   */
-  protected confirmDelete(slugConfirmation: string): void {
-    const organizationId = this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) this.store.deleteOrganization({ organizationId, slugConfirmation });
-  }
   //#endregion
 }

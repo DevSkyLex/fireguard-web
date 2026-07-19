@@ -32,9 +32,7 @@ async function openDangerZone(page: Page): Promise<{ slug: string; requests: Req
     await route.fallback();
   });
 
-  // The danger zone is still a `?tab=` section of the general settings page;
-  // promoting it to its own guarded route is separate, later work.
-  await page.goto(`/organizations/${organization.id}/settings/general?tab=danger`);
+  await page.goto(`/organizations/${organization.id}/settings/danger`);
   await expect(page.locator('app-organization-danger-zone')).toBeVisible();
 
   return { slug: organization.slug, requests };
@@ -82,5 +80,37 @@ test.describe('Delete organization', () => {
 
     await dialog.getByRole('textbox').fill(slug);
     await expect(confirm).toBeEnabled();
+  });
+});
+
+test.describe('Danger zone access', () => {
+  // As a `?tab=` section this URL was only hidden behind an `@if`, and
+  // `canActivate` does not re-run on a query-param change — anyone could reach
+  // it by typing the address. As a route, the guard runs.
+  test('turns away a member without the delete permission', async ({ page }) => {
+    const organization = organizationOutput();
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession({ organizations: [organization] });
+    await api.mockOrganizationDetail(organization);
+    await api.mockOrganizationAccess(organization.id, {
+      permissions: ['organization.read', 'organization.settings.write'],
+    });
+
+    await page.goto(`/organizations/${organization.id}/settings/danger`);
+
+    await expect(page.locator('app-organization-danger-zone')).toHaveCount(0);
+    await expect(page).not.toHaveURL(/settings\/danger/);
+  });
+
+  test('lets a member holding it through', async ({ page }) => {
+    const organization = organizationOutput();
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession({ organizations: [organization] });
+    await api.mockOrganizationDetail(organization);
+    await api.mockOrganizationAccess(organization.id);
+
+    await page.goto(`/organizations/${organization.id}/settings/danger`);
+
+    await expect(page.locator('app-organization-danger-zone')).toBeVisible();
   });
 });

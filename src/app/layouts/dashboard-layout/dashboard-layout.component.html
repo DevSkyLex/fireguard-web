@@ -24,8 +24,14 @@
     <app-dashboard-layout-header />
 
     <div class="flex min-h-0 flex-1 overflow-hidden">
-      <!-- The one page scroller. `min-w-0` keeps wide tables from pushing it. -->
-      <div class="min-w-0 flex-1 overflow-y-auto overscroll-contain">
+      <!--
+        The one page scroller. `min-w-0` keeps wide tables from pushing it, and
+        `relative` makes it the containing block for absolutely positioned
+        descendants — without it, `sr-only` spans deep in the page resolve
+        against the initial containing block, escape this scroller's clipping
+        and stretch the document to the full content height.
+      -->
+      <div class="relative min-w-0 flex-1 overflow-y-auto overscroll-contain">
         <app-dashboard-layout-content>
           <router-outlet />
         </app-dashboard-layout-content>

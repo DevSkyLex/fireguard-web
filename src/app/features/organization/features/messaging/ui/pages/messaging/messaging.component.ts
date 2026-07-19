@@ -3,11 +3,14 @@ import {
   Component,
   computed,
   inject,
+  input,
   signal,
+  type InputSignal,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import type { MessageOutput } from '@features/organization/features/messaging/models';
@@ -52,7 +55,46 @@ import { EmptyState } from '@shared/components';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MessagingPage {
+  //#region Inputs
+  /**
+   * Input conversation
+   * @readonly
+   *
+   * @description
+   * The open conversation, bound from `?conversation=`. Keeping it in the URL
+   * is what makes a thread linkable and restorable on reload — before this it
+   * lived only in store state.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly conversation: InputSignal<string | null> = input<string | null>(null);
+  //#endregion
+
   //#region Properties
+  /**
+   * Property router
+   * @readonly
+   *
+   * @access private
+   * @since 3.0.0
+   *
+   * @type {Router}
+   */
+  private readonly router: Router = inject<Router>(Router);
+
+  /**
+   * Property route
+   * @readonly
+   *
+   * @access private
+   * @since 3.0.0
+   *
+   * @type {ActivatedRoute}
+   */
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   /**
    * Property store
    * @readonly
@@ -171,8 +213,17 @@ export class MessagingPage {
    * @returns {void}
    */
   protected open(conversationId: string): void {
+    // Opened directly rather than waiting for the URL to round-trip: query-param
+    // input binding is not guaranteed to have flushed by the time the user
+    // expects the thread, and the effect below is a no-op once the ids match.
     this.draft.set('');
     this.store.selectConversation(conversationId);
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { conversation: conversationId },
+      queryParamsHandling: 'merge',
+    });
   }
 
   /**

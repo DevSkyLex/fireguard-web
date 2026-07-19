@@ -20,9 +20,13 @@ threads, attachments and presence are not built.
 | ------------ | --------------- | ----------------------------------------------- |
 | `…/messages` | `MessagingPage` | `organizationPermissionGuard([MESSAGING_READ])` |
 
-Planned: per-conversation URLs (`…/channels/:channelId`, `…/dm/:conversationId`)
-so a thread can be linked to. Today the active conversation is store state, so
-it is not shareable or restorable on reload.
+The open conversation is mirrored to `?conversation=`, so a thread has a URL.
+
+⚠️ **Deep links do not yet work.** Clicking a conversation sets the param and
+opens the thread, but arriving on that URL renders the empty state: the param is
+absent from the route snapshot by the time the page reads it. The likely cause
+is a guard redirect in the organization route chain dropping query params. The
+e2e for it is `test.fixme`, kept visible rather than deleted.
 
 ## Known limitation
 

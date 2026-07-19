@@ -82,13 +82,18 @@
   </aside>
 
   <section class="flex min-w-0 flex-1 flex-col">
-    @if (store.activeConversation(); as conversation) {
+    @if (store.activeConversationId()) {
+      @let conversation = store.activeConversation();
       <header
         class="flex h-14 shrink-0 items-center gap-2 border-b border-surface-200 px-6 dark:border-surface-800"
       >
         <i class="pi pi-hashtag text-sm text-surface-400" aria-hidden="true"></i>
         <h1 class="truncate text-sm font-semibold text-surface-950 dark:text-surface-50">
-          {{ conversation.name ?? conversation.subjectLabel }}
+          <!--
+            The name comes from the conversation list, which may still be in
+            flight on a deep link — the thread must not wait for it.
+          -->
+          {{ conversation?.name ?? conversation?.subjectLabel ?? '' }}
         </h1>
       </header>
 

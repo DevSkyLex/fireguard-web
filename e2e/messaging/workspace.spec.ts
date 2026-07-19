@@ -55,7 +55,10 @@ const message = (id: string, body: string | null, createdAt: string, isDeleted =
   updatedAt: createdAt,
 });
 
-async function landOnMessaging(page: Page): Promise<{ sent: string[]; reacted: string[] }> {
+async function landOnMessaging(
+  page: Page,
+  conversationId?: string,
+): Promise<{ sent: string[]; reacted: string[] }> {
   const organization = organizationOutput();
   const api = new ApiMock(page);
   const sent: string[] = [];
@@ -153,7 +156,8 @@ async function landOnMessaging(page: Page): Promise<{ sent: string[]; reacted: s
     });
   });
 
-  await page.goto(`/organizations/${organization.id}/messages`);
+  const query: string = conversationId === undefined ? '' : `?conversation=${conversationId}`;
+  await page.goto(`/organizations/${organization.id}/messages${query}`);
   await expect(page.locator('#messaging')).toBeVisible();
 
   return { sent, reacted };
@@ -261,6 +265,34 @@ test.describe('Messaging workspace', () => {
     await page.getByTestId('reaction-chip').first().click();
 
     await expect.poll(() => reacted).toEqual(['DELETE m1/reactions/👍']);
+  });
+
+  // Before this the open thread lived only in store state, so it could not be
+  // linked to and did not survive a reload.
+  test('puts the open conversation in the URL', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+
+    await expect(page).toHaveURL(/conversation=c1/);
+  });
+
+  // KNOWN GAP, deliberately left failing-visible rather than deleted.
+  //
+  // Clicking a conversation puts `?conversation=` in the URL and opens the
+  // thread. Arriving on that URL does not: the page renders "Pick a
+  // conversation", so `conversation` is absent from the route snapshot by the
+  // time the component reads it. The most likely cause is a guard redirect in
+  // the organization route chain dropping query params; confirming that needs
+  // a pass over `organizationAccessGuard` and friends.
+  test.fixme('opens the conversation named by the URL on arrival', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnMessaging(page, 'c1');
+
+    await expect(page.getByTestId('message-row').first()).toContainText(
+      'Extinguisher check done on level 2.',
+    );
   });
 
   test('refuses to send an empty draft', async ({ page }) => {

@@ -60,6 +60,18 @@ export const OrganizationMemberAccessStore = signalStore(
     accessError: computed<StoreError | null>(() => store.accessCallState().error),
 
     /** Resolved organization role names for the authenticated user. */
+    /**
+     * Computed currentMemberId
+     *
+     * @description
+     * The signed-in member's id in this organization. Needed wherever the API
+     * reports "who did this" as member ids — reactions, mentions, assignees —
+     * to tell someone else's action from your own.
+     *
+     * @type {Signal<string | null>}
+     */
+    currentMemberId: computed<string | null>(() => store.accessCallState().data?.id ?? null),
+
     roles: computed<ReadonlyArray<string>>(
       () => store.profile()?.roles.map((role) => role.name) ?? [],
     ),

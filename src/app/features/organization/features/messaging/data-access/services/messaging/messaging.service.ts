@@ -107,6 +107,44 @@ export class MessagingService extends HydraApiService {
   }
 
   /**
+   * Method addReaction
+   * @method addReaction
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @param {string} messageId - The message to react to.
+   * @param {string} emoji - The emoji to add.
+   *
+   * @return {Observable<MessageOutput>} The updated message.
+   */
+  public addReaction(messageId: string, emoji: string): Observable<MessageOutput> {
+    return this.post<{ emoji: string }, MessageOutput>(`/api/messages/${messageId}/reactions`, {
+      emoji,
+    });
+  }
+
+  /**
+   * Method removeReaction
+   * @method removeReaction
+   *
+   * @description
+   * Removes the current member's reaction. The emoji is path-encoded because
+   * it is not URL-safe.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @param {string} messageId - The reacted message.
+   * @param {string} emoji - The emoji to remove.
+   *
+   * @return {Observable<void>} Completion.
+   */
+  public removeReaction(messageId: string, emoji: string): Observable<void> {
+    return this.delete(`/api/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`);
+  }
+
+  /**
    * Method markRead
    * @method markRead
    *

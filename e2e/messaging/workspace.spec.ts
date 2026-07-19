@@ -42,21 +42,30 @@ const message = (id: string, body: string | null, createdAt: string, isDeleted =
   attachments: [],
   pinnedAt: null,
   pinnedBy: null,
-  reactions: [],
+  reactions:
+    id === 'm1'
+      ? [
+          { emoji: '👍', count: 2, memberIds: ['member-abc', 'member-xyz'] },
+          { emoji: '🔥', count: 1, memberIds: ['member-xyz'] },
+        ]
+      : [],
   isSaved: false,
   replyCount: 0,
   createdAt,
   updatedAt: createdAt,
 });
 
-async function landOnMessaging(page: Page): Promise<{ sent: string[] }> {
+async function landOnMessaging(page: Page): Promise<{ sent: string[]; reacted: string[] }> {
   const organization = organizationOutput();
   const api = new ApiMock(page);
   const sent: string[] = [];
+  const reacted: string[] = [];
 
   await api.mockAuthenticatedSession({ organizations: [organization] });
   await api.mockOrganizationDetail(organization);
-  await api.mockOrganizationAccess(organization.id);
+  // The signed-in member is the author and one of the reactors, so the thread
+  // can prove it tells your own reaction from someone else's.
+  await api.mockOrganizationAccess(organization.id, { id: 'member-abc' });
 
   await page.route(`${API_BASE_URL}/api/organizations/${organization.id}/members**`, (route) =>
     route.fulfill({
@@ -83,6 +92,14 @@ async function landOnMessaging(page: Page): Promise<{ sent: string[] }> {
       }),
     }),
   );
+
+  await page.route(`${API_BASE_URL}/api/messages/**`, async (route) => {
+    const url: string = route.request().url();
+    reacted.push(
+      `${route.request().method()} ${decodeURIComponent(url.split('/messages/')[1] ?? '')}`,
+    );
+    await route.fulfill({ status: 204, body: '' });
+  });
 
   await page.route(`${API_BASE_URL}/api/conversations**`, async (route) => {
     const url: string = route.request().url();
@@ -130,7 +147,7 @@ async function landOnMessaging(page: Page): Promise<{ sent: string[] }> {
   await page.goto(`/organizations/${organization.id}/messages`);
   await expect(page.locator('#messaging')).toBeVisible();
 
-  return { sent };
+  return { sent, reacted };
 }
 
 test.describe('Messaging workspace', () => {
@@ -201,6 +218,40 @@ test.describe('Messaging workspace', () => {
     await page.getByTestId('conversation-item').first().click();
 
     await expect(page.getByTestId('message-author').first()).toHaveText('Nadia Rahal');
+  });
+
+  test('shows each reaction with its count', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+
+    const chips = page.getByTestId('reaction-chip');
+    await expect(chips).toHaveCount(2);
+    await expect(chips.first()).toContainText('2');
+  });
+
+  // memberIds tells your own reaction from someone else's; the chip you are
+  // part of reads as pressed.
+  test('marks the reaction the signed-in member is part of', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+
+    const chips = page.getByTestId('reaction-chip');
+    await expect(chips.nth(0)).toHaveAttribute('aria-pressed', 'true');
+    await expect(chips.nth(1)).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('removes a reaction the member already left', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const { reacted } = await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+    await page.getByTestId('reaction-chip').first().click();
+
+    await expect.poll(() => reacted).toEqual(['DELETE m1/reactions/👍']);
   });
 
   test('refuses to send an empty draft', async ({ page }) => {

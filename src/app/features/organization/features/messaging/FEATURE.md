@@ -10,8 +10,9 @@ backend scopes every endpoint by the session's active organization.
 
 ## Status
 
-Conversation list, thread and composer are live at `…/messages`. Reactions,
-pins, saved messages, threads, attachments and presence are not built.
+Conversation list, thread, composer and emoji reactions are live at
+`…/messages`. Pins, saved messages, threads, attachments and presence are not
+built.
 
 ## Route entry points
 
@@ -43,6 +44,13 @@ not here.
   20, filtered by its search box), so author names would vanish the moment an
   administrator typed in the members search — a bug that would read as a
   rendering glitch, far from its cause.
+- **Reactions need to know who "I" am.** The API reports `memberIds` per emoji,
+  so without `currentMemberId` (from `OrganizationMemberAccessStore`) the UI
+  cannot tell "3 people reacted" from "3 people including me", and the toggle
+  cannot choose between POST and DELETE.
+- **Removing a reaction returns no body.** The updated message is derived
+  locally, so the chip disappears when its last reactor leaves rather than
+  lingering at zero.
 - **An unknown author still renders.** Members get removed; their messages stay.
   The thread falls back to "Former member" rather than blanking the row.
 - **A deleted message keeps its row** (`isDeleted`, `body: null`) so replies and

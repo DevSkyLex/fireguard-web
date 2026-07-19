@@ -10,6 +10,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
+import type { MessageOutput } from '@features/organization/features/messaging/models';
 import {
   MessagingWorkspaceStore,
   type MessagingWorkspaceStoreType,
@@ -17,6 +18,7 @@ import {
 import { MessageThread } from '@features/organization/features/messaging/ui/components';
 import {
   ActiveOrganizationStore,
+  OrganizationMemberAccessStore,
   OrganizationMemberDirectoryStore,
   type OrganizationMemberDirectoryStoreType,
 } from '@features/organization/state';
@@ -89,6 +91,22 @@ export class MessagingPage {
    */
   private readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+
+  /**
+   * Property memberAccess
+   * @readonly
+   *
+   * @description
+   * Supplies the signed-in member's id, so a reaction can tell your own from
+   * someone else's.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {OrganizationMemberAccessStore}
+   */
+  protected readonly memberAccess: OrganizationMemberAccessStore =
+    inject<OrganizationMemberAccessStore>(OrganizationMemberAccessStore);
 
   /**
    * Property draft
@@ -168,6 +186,29 @@ export class MessagingPage {
    *
    * @returns {void}
    */
+  /**
+   * Method toggleReaction
+   *
+   * @description
+   * Adds or removes the signed-in member's reaction on a message.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {{ message: MessageOutput; emoji: string }} event - The chip that was pressed.
+   *
+   * @returns {void}
+   */
+  protected toggleReaction(event: {
+    readonly message: MessageOutput;
+    readonly emoji: string;
+  }): void {
+    const currentMemberId: string | null = this.memberAccess.currentMemberId();
+    if (currentMemberId === null) return;
+
+    this.store.toggleReaction({ ...event, currentMemberId });
+  }
+
   protected send(): void {
     if (!this.canSend()) return;
 

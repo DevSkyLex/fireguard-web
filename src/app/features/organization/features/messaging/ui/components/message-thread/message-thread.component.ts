@@ -1,6 +1,16 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
-import type { MessageOutput } from '@features/organization/features/messaging/models';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  output,
+  type InputSignal,
+  type OutputEmitterRef,
+} from '@angular/core';
+import type {
+  MessageOutput,
+  MessageReaction,
+} from '@features/organization/features/messaging/models';
 import type { MemberIdentity } from '@features/organization/state';
 import { EmptyState, Skeleton } from '@shared/components';
 
@@ -75,9 +85,57 @@ export class MessageThread {
   public readonly authors: InputSignal<ReadonlyMap<string, MemberIdentity>> = input<
     ReadonlyMap<string, MemberIdentity>
   >(new Map<string, MemberIdentity>());
+  /**
+   * Property currentMemberId
+   * @readonly
+   *
+   * @description
+   * Who "I" am. The API sends `memberIds` per emoji, so without this the UI
+   * cannot tell "3 people reacted" from "3 people including me".
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly currentMemberId: InputSignal<string | null> = input<string | null>(null);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property reactionToggled
+   * @readonly
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {OutputEmitterRef<{ message: MessageOutput; emoji: string }>}
+   */
+  public readonly reactionToggled: OutputEmitterRef<{
+    readonly message: MessageOutput;
+    readonly emoji: string;
+  }> = output<{ readonly message: MessageOutput; readonly emoji: string }>();
   //#endregion
 
   //#region Methods
+  /**
+   * Method hasReacted
+   *
+   * @description
+   * Whether the current member is among an emoji's reactors.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {MessageReaction} reaction - The reaction to test.
+   *
+   * @returns {boolean} `true` when the current member reacted.
+   */
+  protected hasReacted(reaction: MessageReaction): boolean {
+    const memberId: string | null = this.currentMemberId();
+    return memberId !== null && reaction.memberIds.includes(memberId);
+  }
+
   /**
    * Method author
    *

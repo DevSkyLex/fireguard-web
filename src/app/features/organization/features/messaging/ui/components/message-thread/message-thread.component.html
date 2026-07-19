@@ -79,6 +79,31 @@
             </p>
           }
 
+          @if (message.reactions.length > 0) {
+            <!-- Reaction chip geometry ported from the kit: 26px, full radius. -->
+            <ul class="mt-0.5 flex flex-wrap gap-1.5">
+              @for (reaction of message.reactions; track reaction.emoji) {
+                <li>
+                  <button
+                    type="button"
+                    data-testid="reaction-chip"
+                    class="flex h-[26px] items-center gap-1 rounded-full border px-2 text-xs"
+                    [class]="
+                      hasReacted(reaction)
+                        ? 'border-primary-400 bg-primary-50 text-primary-700 dark:border-primary-500 dark:bg-primary-950 dark:text-primary-300'
+                        : 'border-surface-200 text-surface-600 hover:bg-surface-50 dark:border-surface-700 dark:text-surface-400 dark:hover:bg-surface-800'
+                    "
+                    [attr.aria-pressed]="hasReacted(reaction)"
+                    (click)="reactionToggled.emit({ message: message, emoji: reaction.emoji })"
+                  >
+                    <span aria-hidden="true">{{ reaction.emoji }}</span>
+                    <span class="tabular-nums">{{ reaction.count }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+
           @if (message.replyCount > 0) {
             <p class="text-xs font-medium text-primary-600 dark:text-primary-400">
               {{ message.replyCount }}

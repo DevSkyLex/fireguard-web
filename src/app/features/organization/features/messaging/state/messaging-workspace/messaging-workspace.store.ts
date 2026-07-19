@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, map, mergeMap, pipe, switchMap, tap } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
@@ -38,6 +38,36 @@ const INITIAL_STATE: MessagingWorkspaceState = {
   sendCallState: idleCallState(),
   activeConversationId: null,
 };
+
+/**
+ * Removes a member from an emoji's reaction list, dropping the emoji entirely
+ * once nobody is left.
+ *
+ * The API's DELETE returns no body, so the updated message has to be derived
+ * locally rather than read back.
+ */
+function applyReaction(
+  message: MessageOutput,
+  emoji: string,
+  memberId: string,
+  reacted: boolean,
+): MessageOutput {
+  const reactions = message.reactions
+    .map((reaction) =>
+      reaction.emoji === emoji
+        ? {
+            ...reaction,
+            count: reacted ? reaction.count + 1 : Math.max(0, reaction.count - 1),
+            memberIds: reacted
+              ? [...reaction.memberIds, memberId]
+              : reaction.memberIds.filter((id: string) => id !== memberId),
+          }
+        : reaction,
+    )
+    .filter((reaction) => reaction.count > 0);
+
+  return { ...message, reactions };
+}
 
 /**
  * Store MessagingWorkspaceStore
@@ -213,6 +243,60 @@ export const MessagingWorkspaceStore = signalStore(
         patchState(store, { activeConversationId: conversationId });
         loadMessages(conversationId);
       },
+
+      /**
+       * Method toggleReaction
+       *
+       * @description
+       * Adds or removes the current member's reaction, replacing the message
+       * in place so only that row re-renders.
+       *
+       * The reacting member is identified by `currentMemberId`: the API sends
+       * `memberIds` per emoji, and without knowing who "I" am the UI cannot
+       * tell "3 people reacted" from "3 people including me".
+       *
+       * @param {{ message: MessageOutput; emoji: string; currentMemberId: string }} request - What to toggle.
+       *
+       * @returns {void}
+       */
+      toggleReaction: rxMethod<{
+        readonly message: MessageOutput;
+        readonly emoji: string;
+        readonly currentMemberId: string;
+      }>(
+        pipe(
+          mergeMap((request) => {
+            const reacted: boolean =
+              request.message.reactions
+                .find((reaction) => reaction.emoji === request.emoji)
+                ?.memberIds.includes(request.currentMemberId) ?? false;
+
+            const call = reacted
+              ? service
+                  .removeReaction(request.message.id, request.emoji)
+                  .pipe(
+                    map(() =>
+                      applyReaction(request.message, request.emoji, request.currentMemberId, false),
+                    ),
+                  )
+              : service.addReaction(request.message.id, request.emoji);
+
+            return call.pipe(
+              tapResponse({
+                next: (updated: MessageOutput) =>
+                  patchState(store, {
+                    messagesCallState: successCallState(
+                      (store.messagesCallState().data ?? []).map((message: MessageOutput) =>
+                        message.id === updated.id ? updated : message,
+                      ),
+                    ),
+                  }),
+                error: () => undefined,
+              }),
+            );
+          }),
+        ),
+      ),
 
       /**
        * Method send

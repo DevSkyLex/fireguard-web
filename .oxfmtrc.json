@@ -11,7 +11,9 @@
     ".angular/**",
     "coverage/**",
     "tmp/**",
-    ".build-check-*/**"
+    ".build-check-*/**",
+    ".impeccable/**",
+    ".claude/worktrees/**"
   ],
   "sortImports": {
     "internalPattern": [

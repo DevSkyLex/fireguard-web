@@ -65,6 +65,21 @@ test.describe('Dashboard shell', () => {
     });
   }
 
+  // The toggle used to be hidden by a `lg:hidden` class (1024px) while the
+  // shell switched to the drawer at 768px, leaving a useless button in the
+  // 256px band between them. The shell now owns the decision outright.
+  test('offers the navigation toggle only while the nav is in the drawer', async ({ page }) => {
+    await page.setViewportSize({ width: 900, height: 800 });
+    await landOnWorkspace(page);
+    const toggle = page.getByRole('button', { name: 'Open navigation menu' });
+
+    await expect(toggle).toHaveCount(0);
+
+    await page.setViewportSize({ width: 600, height: 800 });
+
+    await expect(toggle).toBeVisible();
+  });
+
   test('moves the rail and sidebar into the drawer on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 800 });
     await landOnWorkspace(page);
@@ -74,7 +89,7 @@ test.describe('Dashboard shell', () => {
     await expect(page.locator('app-dashboard-layout-sidebar')).toHaveCount(0);
 
     // The hamburger brings both back, inside the drawer.
-    await page.getByRole('button', { name: /menu/i }).first().click();
+    await page.getByRole('button', { name: 'Open navigation menu' }).first().click();
 
     await expect(page.locator('app-dashboard-layout-org-rail')).toBeVisible();
     await expect(page.locator('app-dashboard-layout-sidebar')).toBeVisible();

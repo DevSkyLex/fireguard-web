@@ -1,4 +1,10 @@
-<div class="mx-auto flex min-h-full w-full max-w-[1440px] flex-col">
+<!--
+  No centred max-width: inside a pane already narrowed by the rail, the sidebar
+  and an optional panel, a 1440px column produces double gutters and breaks the
+  full-bleed surfaces (tree table, map, calendar, conversation). Document-like
+  pages opt back in locally with `mx-auto max-w-[900px]`.
+-->
+<div class="flex min-h-full w-full flex-col">
   <app-dashboard-layout-page-header class="shrink-0" />
 
   <main class="flex min-h-0 flex-1 flex-col">

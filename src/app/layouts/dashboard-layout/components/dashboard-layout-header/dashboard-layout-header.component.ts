@@ -1,5 +1,5 @@
 import { NgComponentOutlet } from '@angular/common';
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, input, type InputSignal } from '@angular/core';
 import {
   DashboardSidebarService,
   DashboardHeaderActionsService,
@@ -33,6 +33,25 @@ import { DashboardLayoutSearch } from '../dashboard-layout-search/dashboard-layo
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardLayoutHeader {
+  //#region Inputs
+  /**
+   * Property showMenuButton
+   * @readonly
+   *
+   * @description
+   * Whether to offer the navigation toggle. The shell owns the decision: it is
+   * true exactly while the rail and sidebar live in the drawer. Passing it down
+   * keeps one source of truth for the breakpoint instead of a `lg:hidden` class
+   * that can drift from the layout's own media query.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly showMenuButton: InputSignal<boolean> = input<boolean>(true);
+  //#endregion
+
   //#region Properties
   /**
    * Property sidebarService

@@ -21,7 +21,7 @@
 
   <!-- Main column: header, then the pane row. Never scrolls itself. -->
   <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
-    <app-dashboard-layout-header />
+    <app-dashboard-layout-header [showMenuButton]="!isTablet()" />
 
     <div class="flex min-h-0 flex-1 overflow-hidden">
       <!--

@@ -13,6 +13,7 @@ import {
   DashboardLayoutPanelHost,
 } from '@layouts/dashboard-layout/components';
 import {
+  SHELL_INLINE_NAV_MIN_WIDTH_PX,
   SHELL_INLINE_PANEL_MIN_WIDTH_PX,
   SHELL_RAIL_WIDTH_PX,
   SHELL_SECOND_PANEL_MIN_WIDTH_PX,
@@ -142,7 +143,9 @@ export class DashboardLayout {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isTablet: Signal<boolean> = this.matches('(min-width: 768px)');
+  protected readonly isTablet: Signal<boolean> = this.matches(
+    `(min-width: ${SHELL_INLINE_NAV_MIN_WIDTH_PX}px)`,
+  );
 
   /**
    * Property canInlinePanel

@@ -48,6 +48,23 @@ export const SHELL_SIDEBAR_WIDTH_PX = 266;
 export const SHELL_PANEL_WIDTH_PX = 330;
 
 /**
+ * Constant SHELL_INLINE_NAV_MIN_WIDTH_PX
+ * @const SHELL_INLINE_NAV_MIN_WIDTH_PX
+ *
+ * @description
+ * Viewport width from which the organization rail and the channel sidebar
+ * render inline instead of inside the left drawer. Below it the shell offers
+ * the header's navigation toggle instead.
+ *
+ * DECIDED, not ported.
+ *
+ * @since 1.0.0
+ *
+ * @type {number}
+ */
+export const SHELL_INLINE_NAV_MIN_WIDTH_PX = 768;
+
+/**
  * Constant SHELL_INLINE_PANEL_MIN_WIDTH_PX
  * @const SHELL_INLINE_PANEL_MIN_WIDTH_PX
  *

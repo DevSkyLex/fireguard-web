@@ -76,6 +76,18 @@ export const ORGANIZATION_ROUTES: Routes = [
         loadChildren: () =>
           import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
       },
+      {
+        path: 'messages',
+        title: 'Messages',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.MESSAGING_READ],
+          }),
+        ],
+        data: { breadcrumb: 'Messages' },
+        loadComponent: () =>
+          import('./features/messaging/ui/pages/messaging').then((m) => m.MessagingPage),
+      },
       /**
        * The compliance register.
        *

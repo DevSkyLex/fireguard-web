@@ -28,6 +28,7 @@ export type OrganizationNavigationMatch = 'all' | 'any';
 export type OrganizationNavigationGroupId =
   | 'overview'
   | 'field-work'
+  | 'workspace'
   | 'assets'
   | 'compliance'
   | 'administration';
@@ -212,6 +213,14 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
   },
   {
+    id: 'messages',
+    label: $localize`:@@route.messages:Messages`,
+    icon: 'pi pi-comments',
+    path: 'messages',
+    group: 'workspace',
+    permissions: [ORGANIZATION_PERMISSION.MESSAGING_READ],
+  },
+  {
     id: 'compliance',
     label: $localize`:@@route.compliance:Compliance`,
     icon: 'pi pi-verified',
@@ -267,6 +276,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
 export const ORGANIZATION_NAVIGATION_GROUPS: ReadonlyArray<OrganizationNavigationGroup> = [
   { id: 'overview', label: $localize`:@@org.navGroup.overview:Overview` },
   { id: 'field-work', label: $localize`:@@org.navGroup.fieldWork:Field work` },
+  { id: 'workspace', label: $localize`:@@org.navGroup.workspace:Workspace` },
   { id: 'assets', label: $localize`:@@org.navGroup.assets:Assets` },
   { id: 'compliance', label: $localize`:@@org.navGroup.compliance:Compliance` },
   { id: 'administration', label: $localize`:@@org.navGroup.administration:Administration` },

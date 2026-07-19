@@ -1,0 +1,81 @@
+<!--
+  Thread rhythm ported from the design system's workspace kit: 22px/24px
+  padding and a 20px gap between messages, with the body capped at 62ch so a
+  long paragraph stays readable on a wide pane.
+-->
+<div class="flex h-full flex-col gap-5 overflow-y-auto px-6 py-[22px]">
+  @if (loading()) {
+    <app-skeleton height="4rem" />
+    <app-skeleton height="4rem" />
+  } @else if (messages().length === 0) {
+    <app-empty-state
+      icon="pi pi-comments"
+      i18n-title="@@messaging.thread.empty.title"
+      title="No messages yet"
+      i18n-description="@@messaging.thread.empty.desc"
+      description="Start the conversation — everyone in this channel will see it."
+    />
+  } @else {
+    @for (message of messages(); track message.id) {
+      <article class="flex gap-3" data-testid="message-row">
+        <span
+          class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-200 text-xs font-semibold text-surface-700 dark:bg-surface-700 dark:text-surface-200"
+          aria-hidden="true"
+        >
+          {{ initials(message.authorMember) }}
+        </span>
+
+        <div class="flex min-w-0 flex-col gap-1">
+          <p class="flex items-baseline gap-2">
+            <!--
+              The author is a bare member id until the directory lands; naming
+              that explicitly beats rendering a blank where a name belongs.
+            -->
+            <span
+              class="text-sm font-semibold text-surface-950 dark:text-surface-50"
+              i18n="@@messaging.thread.unknownAuthor"
+            >
+              Member
+            </span>
+            <time
+              class="text-xs text-surface-500 tabular-nums dark:text-surface-400"
+              [attr.datetime]="message.createdAt"
+            >
+              {{ message.createdAt | date: 'shortTime' }}
+            </time>
+            @if (message.editedAt) {
+              <span
+                class="text-xs text-surface-400 dark:text-surface-500"
+                i18n="@@messaging.thread.edited"
+              >
+                (edited)
+              </span>
+            }
+          </p>
+
+          @if (message.isDeleted) {
+            <p
+              class="text-sm text-surface-400 italic dark:text-surface-500"
+              i18n="@@messaging.thread.deleted"
+            >
+              This message was deleted.
+            </p>
+          } @else {
+            <p
+              class="max-w-[62ch] text-sm break-words whitespace-pre-wrap text-surface-700 dark:text-surface-300"
+            >
+              {{ message.body }}
+            </p>
+          }
+
+          @if (message.replyCount > 0) {
+            <p class="text-xs font-medium text-primary-600 dark:text-primary-400">
+              {{ message.replyCount }}
+              <span i18n="@@messaging.thread.replies">replies</span>
+            </p>
+          }
+        </div>
+      </article>
+    }
+  }
+</div>

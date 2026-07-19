@@ -18,6 +18,7 @@ import { BillingService } from '@features/organization/data-access';
 import type {
   CheckoutSessionOutput,
   InvoiceOutput,
+  PaymentMethodOutput,
   OrganizationSubscriptionOutput,
   PlanPricingOutput,
   PortalSessionOutput,
@@ -29,6 +30,7 @@ const INITIAL_STATE: OrganizationBillingState = {
   subscriptionCallState: idleCallState(),
   pricingCallState: idleCallState(),
   invoicesCallState: idleCallState(),
+  paymentMethodCallState: idleCallState(),
   checkoutCallState: idleCallState(),
   portalCallState: idleCallState(),
   cancelCallState: idleCallState(),
@@ -89,6 +91,24 @@ export const OrganizationBillingStore = signalStore(
       return isCallSuccess(state) ? state.data : [];
     }),
     isLoadingInvoices: computed<boolean>(() => store.invoicesCallState().status === 'pending'),
+
+    /**
+     * Computed paymentMethod
+     *
+     * @description
+     * The card on file, or `null` while it loads or when the organization has
+     * none. Consumers branch on `hasPaymentMethod`, not on `last4`.
+     *
+     * @type {Signal<PaymentMethodOutput | null>}
+     */
+    paymentMethod: computed<PaymentMethodOutput | null>(() => {
+      const state = store.paymentMethodCallState();
+      return isCallSuccess(state) ? state.data : null;
+    }),
+
+    isLoadingPaymentMethod: computed<boolean>(
+      () => store.paymentMethodCallState().status === 'pending',
+    ),
     invoicesError: computed<StoreError | null>(() => store.invoicesCallState().error),
     isStartingCheckout: computed<boolean>(() => store.checkoutCallState().status === 'pending'),
     isStartingPortal: computed<boolean>(() => store.portalCallState().status === 'pending'),
@@ -189,6 +209,40 @@ export const OrganizationBillingStore = signalStore(
                   patchState(store, { invoicesCallState: successCallState(collection.member) }),
                 error: (err: unknown) =>
                   patchState(store, { invoicesCallState: errorCallState(toStoreError(err)) }),
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Method loadPaymentMethod
+       * @method loadPaymentMethod
+       *
+       * @description
+       * Loads the card on file. Read-only — changing it goes through the Stripe
+       * portal, so there is no matching write here.
+       *
+       * @param {string} organizationId - The organization identifier.
+       *
+       * @returns {void}
+       */
+      loadPaymentMethod: rxMethod<string>(
+        pipe(
+          tap(() =>
+            patchState(store, {
+              paymentMethodCallState: pendingCallState(store.paymentMethodCallState().data),
+            }),
+          ),
+          switchMap((organizationId: string) =>
+            billingService.getPaymentMethod(organizationId).pipe(
+              tapResponse({
+                next: (method: PaymentMethodOutput) =>
+                  patchState(store, { paymentMethodCallState: successCallState(method) }),
+                error: (err: unknown) =>
+                  patchState(store, {
+                    paymentMethodCallState: errorCallState(toStoreError(err)),
+                  }),
               }),
             ),
           ),

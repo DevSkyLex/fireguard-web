@@ -13,10 +13,6 @@ import {
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import {
-  OrganizationPlanSelector,
-  OrganizationUsagePanel,
-} from '@features/organization/ui/components';
-import {
   OrganizationGeneralForm,
   OrganizationNotificationsForm,
   OrganizationRegionalForm,
@@ -75,8 +71,6 @@ interface OrganizationSettingsNavItem {
     OrganizationGeneralForm,
     OrganizationNotificationsForm,
     OrganizationRegionalForm,
-    OrganizationPlanSelector,
-    OrganizationUsagePanel,
   ],
   providers: [OrganizationSettingsStore],
   templateUrl: './organization-settings.component.html',
@@ -135,18 +129,6 @@ export class OrganizationSettingsPage {
         label: $localize`:@@org.settings.legal:Legal profile`,
         icon: 'pi pi-id-card',
         description: $localize`:@@org.settings.legalDesc:Registered name, entity type, registration and VAT numbers.`,
-      },
-      {
-        id: 'subscription',
-        label: $localize`:@@org.settings.subscription:Subscription`,
-        icon: 'pi pi-star',
-        description: $localize`:@@org.settings.subscriptionDesc:Choose the plan that fits your organization.`,
-      },
-      {
-        id: 'usage',
-        label: $localize`:@@org.settings.usage:Usage`,
-        icon: 'pi pi-gauge',
-        description: $localize`:@@org.settings.usageDesc:Resource consumption against your plan limits.`,
       },
       {
         id: 'notifications',

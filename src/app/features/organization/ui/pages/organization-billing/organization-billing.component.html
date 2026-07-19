@@ -1,0 +1,12 @@
+<div id="organization-billing" class="flex h-full flex-col gap-8 p-3 sm:p-6 md:p-7 lg:p-8">
+  <app-organization-plan-selector />
+
+  <app-billing-payment-method
+    [method]="store.paymentMethod()"
+    [loading]="store.isLoadingPaymentMethod()"
+    [busy]="store.isStartingPortal()"
+    (manage)="openPortal()"
+  />
+
+  <app-organization-usage-panel />
+</div>

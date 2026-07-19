@@ -3,6 +3,7 @@ import type {
   BillingInterval,
   CheckoutSessionOutput,
   InvoiceOutput,
+  PaymentMethodOutput,
   OrganizationSubscriptionOutput,
   PlanPricingOutput,
   PortalSessionOutput,
@@ -22,6 +23,7 @@ export interface OrganizationBillingState {
   readonly subscriptionCallState: CallState<OrganizationSubscriptionOutput>;
   readonly pricingCallState: CallState<ReadonlyArray<PlanPricingOutput>>;
   readonly invoicesCallState: CallState<ReadonlyArray<InvoiceOutput>>;
+  readonly paymentMethodCallState: CallState<PaymentMethodOutput>;
   readonly checkoutCallState: CallState<CheckoutSessionOutput>;
   readonly portalCallState: CallState<PortalSessionOutput>;
   readonly cancelCallState: CallState<OrganizationSubscriptionOutput>;

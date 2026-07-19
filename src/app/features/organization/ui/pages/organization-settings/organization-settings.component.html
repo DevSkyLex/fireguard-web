@@ -52,12 +52,6 @@
               (logoSelected)="uploadLogo($event)"
             />
           }
-          @case ('subscription') {
-            <app-organization-plan-selector />
-          }
-          @case ('usage') {
-            <app-organization-usage-panel />
-          }
           @case ('notifications') {
             <app-organization-notifications-form
               [organization]="activeOrganizationStore.selectedOrganization()"

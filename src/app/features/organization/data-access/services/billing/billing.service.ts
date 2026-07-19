@@ -3,6 +3,7 @@ import type { Observable } from 'rxjs';
 import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
+  PaymentMethodOutput,
   CheckoutSessionInput,
   CheckoutSessionOutput,
   InvoiceOutput,
@@ -192,6 +193,27 @@ export class BillingService extends HydraApiService {
   public getSubscription(organizationId: string): Observable<OrganizationSubscriptionOutput> {
     return this.getOne<OrganizationSubscriptionOutput>(
       `${BillingService.ORGANIZATIONS_PATH}/${organizationId}/billing/subscription`,
+    );
+  }
+
+  /**
+   * Method getPaymentMethod
+   * @method getPaymentMethod
+   *
+   * @description
+   * Reads the card on file. Read-only by design: card details are changed in
+   * the Stripe billing portal, never through this app.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   *
+   * @return {Observable<PaymentMethodOutput>} An observable emitting the card summary.
+   */
+  public getPaymentMethod(organizationId: string): Observable<PaymentMethodOutput> {
+    return this.getOne<PaymentMethodOutput>(
+      `${BillingService.ORGANIZATIONS_PATH}/${organizationId}/billing/payment-method`,
     );
   }
 

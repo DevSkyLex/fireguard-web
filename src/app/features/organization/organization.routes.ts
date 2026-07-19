@@ -100,6 +100,28 @@ export const ORGANIZATION_ROUTES: Routes = [
           import('./features/compliance/ui/pages/compliance').then((m) => m.CompliancePage),
       },
       /**
+       * Billing is a top-level surface, not a settings section: it has its own
+       * audience and its own workflows (plan, invoices, card, consumption).
+       *
+       * ⚠️ Gated on SETTINGS_WRITE as an interim — the backend exposes no
+       * `organization.billing.*` permission, so nothing more precise exists.
+       */
+      {
+        path: 'billing',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
+          }),
+        ],
+        loadComponent: () =>
+          import('./ui/pages/organization-billing').then((m) => m.OrganizationBillingPage),
+        title: $localize`:@@route.billing:Billing`,
+        data: {
+          breadcrumb: 'Billing',
+          description: 'Plan, invoices, payment method and usage against your limits.',
+        },
+      },
+      /**
        * Settings is a tab shell, and every tab is a real child route.
        *
        * The parent deliberately carries NO permission guard. It used to require

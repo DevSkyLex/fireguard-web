@@ -1,3 +1,4 @@
+export { BillingPaymentMethod } from './billing-payment-method';
 export {
   OrganizationDashboard,
   InspectionsTrend,

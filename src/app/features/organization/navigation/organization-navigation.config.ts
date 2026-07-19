@@ -220,6 +220,14 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.COMPLIANCE_READ],
   },
   {
+    id: 'billing',
+    label: $localize`:@@route.billing:Billing`,
+    icon: 'pi pi-credit-card',
+    path: 'billing',
+    group: 'administration',
+    permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
+  },
+  {
     id: 'members',
     label: $localize`:@@route.members:Members`,
     icon: 'pi pi-users',

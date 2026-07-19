@@ -1,0 +1,57 @@
+<section class="flex flex-col gap-3">
+  <div class="flex flex-col gap-0.5">
+    <h2
+      class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+      i18n="@@billing.paymentMethod.title"
+    >
+      Payment method
+    </h2>
+    <p class="text-xs text-surface-500 dark:text-surface-400" i18n="@@billing.paymentMethod.desc">
+      Card details are managed in the secure billing portal.
+    </p>
+  </div>
+
+  @if (loading()) {
+    <p class="text-sm text-surface-500 dark:text-surface-400" i18n="@@common.loading">Loading…</p>
+  } @else {
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      @if (hasCard()) {
+        <p class="flex items-center gap-2 text-sm">
+          <i
+            class="pi pi-credit-card text-surface-400 dark:text-surface-500"
+            aria-hidden="true"
+          ></i>
+          <span class="font-medium text-surface-900 capitalize dark:text-surface-100">
+            {{ method()?.brand }}
+          </span>
+          <span class="text-surface-500 tabular-nums dark:text-surface-400">
+            •••• {{ method()?.last4 }}
+          </span>
+          @if (expiry()) {
+            <span class="text-xs text-surface-400 tabular-nums dark:text-surface-500">
+              <span i18n="@@billing.paymentMethod.expires">expires</span> {{ expiry() }}
+            </span>
+          }
+        </p>
+      } @else {
+        <p
+          class="text-sm text-surface-500 dark:text-surface-400"
+          i18n="@@billing.paymentMethod.none"
+        >
+          No card on file.
+        </p>
+      }
+
+      <p-button
+        i18n-label="@@billing.paymentMethod.manage"
+        label="Manage in portal"
+        icon="pi pi-external-link"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        [loading]="busy()"
+        (onClick)="manage.emit()"
+      />
+    </div>
+  }
+</section>

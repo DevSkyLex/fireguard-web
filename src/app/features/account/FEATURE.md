@@ -101,3 +101,22 @@ first consumers.
   propagates across the shell. `AccountMfaPanel` must key its three states (not set up / pending
   confirmation / active) off `UserStore.profile()?.totpEnabled` and the store's transient
   `setupResult`, never off a locally-held "enabled" flag.
+
+## Unified inbox
+
+`…/account/inbox` merges everything needing the signed-in user's attention
+across sources and organizations (`InboxStore`, `InboxService`).
+
+It lives here rather than under an organization because `InboxItem.organizationId`
+is **optional**: an account-level item has no organization to be nested under,
+and such an entry is rendered but stays inert — routing it somewhere invented
+would be worse than not linking it.
+
+Invariants:
+
+- **Pages accumulate, never replace.** This is a feed the reader scrolls, not a
+  table they page through, so "load more" appends.
+- **Unread is a dot _and_ a bold title** — status is never colour-only.
+- `load`/`loadMore` are `rxMethod<void>`: rxMethod does not emit when handed
+  `undefined`, so an "all organizations" call written as `load(undefined)`
+  silently does nothing.

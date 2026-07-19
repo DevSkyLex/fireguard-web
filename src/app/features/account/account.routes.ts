@@ -24,4 +24,18 @@ export const ACCOUNT_ROUTES: Routes = [
       preload: true,
     },
   },
+  /**
+   * The unified inbox lives under the account, not an organization: an item's
+   * `organizationId` is optional, so account-level entries have no organization
+   * to be nested under.
+   */
+  {
+    path: 'inbox',
+    loadComponent: () => import('./ui/pages/inbox').then((m) => m.InboxPage),
+    title: $localize`:@@route.inbox:Inbox`,
+    data: {
+      breadcrumb: $localize`:@@route.inbox:Inbox`,
+      description: 'Mentions, assignments and alerts from every organization.',
+    },
+  },
 ];

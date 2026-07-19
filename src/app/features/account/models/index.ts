@@ -25,3 +25,5 @@ export type {
 export type { MfaMethodTagDescriptor } from './mfa-method-tag/mfa-method-tag-descriptor.interface';
 export type { MfaMethodTagKind } from './mfa-method-tag/mfa-method-tag-kind.type';
 export { resolveMfaMethodTag } from './mfa-method-tag/mfa-method-tag.util';
+export type { InboxItem } from './inbox/inbox-item.interface';
+export type { InboxOutput } from './inbox/inbox-output.interface';

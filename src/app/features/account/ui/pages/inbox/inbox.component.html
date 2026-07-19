@@ -1,0 +1,96 @@
+<div id="inbox" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <p class="text-sm text-surface-500 dark:text-surface-400">
+      <span class="font-semibold text-surface-950 tabular-nums dark:text-surface-50">
+        {{ store.unreadCount() }}
+      </span>
+      <span i18n="@@inbox.unread">unread</span>
+    </p>
+
+    <label class="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-400">
+      <p-toggleswitch
+        data-testid="unread-only"
+        [ngModel]="store.unreadOnly()"
+        (ngModelChange)="store.setUnreadOnly($event)"
+      />
+      <span i18n="@@inbox.unreadOnly">Unread only</span>
+    </label>
+  </div>
+
+  @if (store.pageCallState().status === 'error') {
+    <app-error-state
+      i18n-title="@@inbox.error.title"
+      title="Could not load your inbox"
+      i18n-description="@@inbox.error.desc"
+      description="Check your connection and try again."
+      (retry)="retry()"
+    />
+  } @else if (store.isLoading() && store.items().length === 0) {
+    <app-skeleton height="4rem" />
+    <app-skeleton height="4rem" />
+  } @else if (store.items().length === 0) {
+    <app-empty-state
+      icon="pi pi-inbox"
+      i18n-title="@@inbox.empty.title"
+      title="Nothing needs you right now"
+      i18n-description="@@inbox.empty.desc"
+      description="Mentions, assignments and alerts will appear here."
+    />
+  } @else {
+    <ul class="flex flex-col divide-y divide-surface-200 dark:divide-surface-800">
+      @for (item of store.items(); track item.sourceKey + item.id) {
+        <li>
+          <button
+            type="button"
+            data-testid="inbox-item"
+            class="flex w-full items-start gap-3 py-3 text-left hover:bg-surface-50 dark:hover:bg-surface-900"
+            (click)="open(item)"
+          >
+            <!--
+              Unread is a dot *and* a bold title: status is never colour-only.
+            -->
+            <span
+              class="mt-1.5 size-2 shrink-0 rounded-full"
+              [class]="item.isRead ? 'bg-transparent' : 'bg-primary-500'"
+              aria-hidden="true"
+            ></span>
+
+            <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span
+                class="truncate text-sm text-surface-950 dark:text-surface-50"
+                [class.font-semibold]="!item.isRead"
+              >
+                {{ item.title }}
+              </span>
+
+              @if (item.snippet) {
+                <span class="truncate text-xs text-surface-500 dark:text-surface-400">
+                  {{ item.snippet }}
+                </span>
+              }
+            </span>
+
+            <time
+              class="shrink-0 text-xs text-surface-400 tabular-nums dark:text-surface-500"
+              [attr.datetime]="item.occurredAt"
+            >
+              {{ item.occurredAt | date: 'shortDate' }}
+            </time>
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (store.hasMore()) {
+      <p-button
+        data-testid="inbox-load-more"
+        i18n-label="@@inbox.loadMore"
+        label="Load more"
+        severity="secondary"
+        [text]="true"
+        [loading]="store.isLoading()"
+        (onClick)="loadMore()"
+      />
+    }
+  }
+</div>

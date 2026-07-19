@@ -1,0 +1,95 @@
+@if (!loading() && rows().length === 0) {
+  <app-empty-state
+    icon="pi pi-verified"
+    i18n-title="@@compliance.sites.empty.title"
+    title="Nothing to report yet"
+    i18n-description="@@compliance.sites.empty.desc"
+    description="Once equipment is scheduled for maintenance, each site's coverage appears here."
+  />
+} @else {
+  <p-table [value]="mutableRows()" [loading]="loading()" dataKey="facilityId" styleClass="text-sm">
+    <ng-template #header>
+      <tr>
+        <th scope="col" i18n="@@compliance.sites.col.site">Site</th>
+        <th scope="col" class="text-right" i18n="@@compliance.sites.col.coverage">Coverage</th>
+        <th scope="col" class="text-right" i18n="@@compliance.sites.col.overdue">Overdue</th>
+        <th scope="col" class="text-right" i18n="@@compliance.sites.col.dueSoon">Due soon</th>
+        <th scope="col" class="text-right" i18n="@@compliance.sites.col.critical">Critical NC</th>
+        <th scope="col" class="hidden lg:table-cell" i18n="@@compliance.sites.col.lastInspection">
+          Last inspection
+        </th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-row>
+      <tr>
+        <td>
+          <div class="flex min-w-0 flex-col">
+            <span class="truncate font-medium text-surface-900 dark:text-surface-100">
+              {{ row.name }}
+            </span>
+            @if (row.path && row.path !== row.name) {
+              <span class="truncate text-xs text-surface-500 dark:text-surface-400">
+                {{ row.path }}
+              </span>
+            }
+          </div>
+        </td>
+
+        <td class="text-right">
+          <span class="font-semibold tabular-nums" [class]="coverageClass(row.complianceRate)">
+            {{ coverageLabel(row.complianceRate) }}
+          </span>
+          <span class="ml-1 text-xs text-surface-400 tabular-nums dark:text-surface-500">
+            ({{ row.trackedEquipmentCount }})
+          </span>
+        </td>
+
+        <td class="text-right tabular-nums">
+          @if (row.overdueEquipmentCount > 0) {
+            <span class="font-semibold text-red-600 dark:text-red-400">
+              {{ row.overdueEquipmentCount }}
+            </span>
+          } @else {
+            <span class="text-surface-400 dark:text-surface-500">0</span>
+          }
+        </td>
+
+        <td class="text-right tabular-nums">
+          @if (row.dueSoonEquipmentCount > 0) {
+            <span class="font-semibold text-amber-600 dark:text-amber-400">
+              {{ row.dueSoonEquipmentCount }}
+            </span>
+          } @else {
+            <span class="text-surface-400 dark:text-surface-500">0</span>
+          }
+        </td>
+
+        <td class="text-right tabular-nums">
+          @if (row.openCriticalNonConformityCount > 0) {
+            <span class="font-semibold text-red-600 dark:text-red-400">
+              {{ row.openCriticalNonConformityCount }}
+            </span>
+          } @else {
+            <span class="text-surface-400 dark:text-surface-500">0</span>
+          }
+        </td>
+
+        <td class="hidden lg:table-cell">
+          @if (row.lastInspectionAt) {
+            <span class="text-surface-600 tabular-nums dark:text-surface-400">
+              {{ row.lastInspectionAt | date: 'mediumDate' }}
+            </span>
+          } @else {
+            <span
+              class="text-surface-400 dark:text-surface-500"
+              i18n="@@compliance.sites.neverInspected"
+            >
+              Never
+            </span>
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+}

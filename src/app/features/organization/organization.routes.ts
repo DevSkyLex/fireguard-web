@@ -77,6 +77,29 @@ export const ORGANIZATION_ROUTES: Routes = [
           import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
       },
       /**
+       * The compliance register.
+       *
+       * Additive, not a replacement for `/inspections`: the two sit behind
+       * different backend permissions (`compliance.read` vs `inspection.read`),
+       * so redirecting one to the other would lock out any member holding only
+       * the inspection permission.
+       */
+      {
+        path: 'compliance',
+        title: 'Compliance',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.COMPLIANCE_READ],
+          }),
+        ],
+        data: {
+          breadcrumb: 'Compliance',
+          description: 'Maintenance coverage and open non-conformities across your sites.',
+        },
+        loadComponent: () =>
+          import('./features/compliance/ui/pages/compliance').then((m) => m.CompliancePage),
+      },
+      /**
        * Settings is a tab shell, and every tab is a real child route.
        *
        * The parent deliberately carries NO permission guard. It used to require

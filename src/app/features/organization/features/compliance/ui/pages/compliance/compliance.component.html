@@ -1,0 +1,141 @@
+<div id="compliance" class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8">
+  @if (store.queryHasError()) {
+    <p-message severity="error" class="block">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span class="flex items-center gap-2">
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+          <span i18n="@@compliance.error"
+            >The compliance register could not be loaded. Check your connection and try again.</span
+          >
+        </span>
+        <p-button
+          i18n-label="@@common.retry"
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="danger"
+          [text]="true"
+          size="small"
+          (onClick)="retry()"
+        />
+      </div>
+    </p-message>
+  }
+
+  <!--
+    Two sections, one query, one permission — so they are tabs in the URL, not
+    child routes. A section that needed its own guard would have to become a
+    real route (see the refonte plan, §3.2).
+  -->
+  <div
+    class="flex gap-1 border-b border-surface-200 dark:border-surface-800"
+    role="tablist"
+    i18n-aria-label="@@compliance.tabs.aria"
+    aria-label="Compliance sections"
+  >
+    <button
+      type="button"
+      role="tab"
+      class="-mb-px border-b-2 px-3 py-2 text-sm font-medium"
+      [class]="
+        activeTab() === 'overview'
+          ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+          : 'border-transparent text-surface-500 hover:text-surface-800 dark:text-surface-400 dark:hover:text-surface-200'
+      "
+      [attr.aria-selected]="activeTab() === 'overview'"
+      (click)="selectTab('overview')"
+      i18n="@@compliance.tabs.overview"
+    >
+      Overview
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="-mb-px border-b-2 px-3 py-2 text-sm font-medium"
+      [class]="
+        activeTab() === 'sites'
+          ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+          : 'border-transparent text-surface-500 hover:text-surface-800 dark:text-surface-400 dark:hover:text-surface-200'
+      "
+      [attr.aria-selected]="activeTab() === 'sites'"
+      (click)="selectTab('sites')"
+      i18n="@@compliance.tabs.sites"
+    >
+      By site
+    </button>
+  </div>
+
+  @if (store.isQueryLoading()) {
+    <app-skeleton height="8rem" />
+  } @else if (activeTab() === 'overview') {
+    <section class="flex flex-col gap-6">
+      <div class="flex flex-col gap-1">
+        <p class="text-3xl font-semibold text-surface-950 tabular-nums dark:text-surface-50">
+          {{ coverageLabel() }}
+        </p>
+        <p class="text-sm text-surface-500 dark:text-surface-400">
+          <span i18n="@@compliance.coverage.caption">Maintenance coverage across</span>
+          <span class="font-semibold tabular-nums">{{ rollup().trackedEquipmentCount }}</span>
+          <span i18n="@@compliance.coverage.tracked">tracked assets</span>
+        </p>
+      </div>
+
+      <!--
+        A flat definition list rather than a row of metric cards: those are the
+        dashboard's treatment, and this page is a register to read, not a
+        dashboard to scan.
+      -->
+      <dl class="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
+        <div class="flex flex-col gap-0.5">
+          <dt
+            class="text-xs text-surface-500 dark:text-surface-400"
+            i18n="@@compliance.kpi.overdue"
+          >
+            Overdue
+          </dt>
+          <dd class="text-xl font-semibold text-red-600 tabular-nums dark:text-red-400">
+            {{ rollup().overdueEquipmentCount }}
+          </dd>
+        </div>
+        <div class="flex flex-col gap-0.5">
+          <dt
+            class="text-xs text-surface-500 dark:text-surface-400"
+            i18n="@@compliance.kpi.dueSoon"
+          >
+            Due soon
+          </dt>
+          <dd class="text-xl font-semibold text-amber-600 tabular-nums dark:text-amber-400">
+            {{ rollup().dueSoonEquipmentCount }}
+          </dd>
+        </div>
+        <div class="flex flex-col gap-0.5">
+          <dt
+            class="text-xs text-surface-500 dark:text-surface-400"
+            i18n="@@compliance.kpi.unscheduled"
+          >
+            Unscheduled
+          </dt>
+          <dd class="text-xl font-semibold text-surface-950 tabular-nums dark:text-surface-50">
+            {{ rollup().unscheduledEquipmentCount }}
+          </dd>
+        </div>
+        <div class="flex flex-col gap-0.5">
+          <dt
+            class="text-xs text-surface-500 dark:text-surface-400"
+            i18n="@@compliance.kpi.openNonConformities"
+          >
+            Open non-conformities
+          </dt>
+          <dd class="text-xl font-semibold text-surface-950 tabular-nums dark:text-surface-50">
+            {{ openNonConformities() }}
+          </dd>
+        </div>
+      </dl>
+    </section>
+  } @else {
+    <app-compliance-facility-table
+      class="flex min-h-0 flex-1 flex-col"
+      [rows]="store.facilities()"
+      [loading]="store.isQueryLoading()"
+    />
+  }
+</div>

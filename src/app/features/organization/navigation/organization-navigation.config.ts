@@ -212,6 +212,14 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
   },
   {
+    id: 'compliance',
+    label: $localize`:@@route.compliance:Compliance`,
+    icon: 'pi pi-verified',
+    path: 'compliance',
+    group: 'compliance',
+    permissions: [ORGANIZATION_PERMISSION.COMPLIANCE_READ],
+  },
+  {
     id: 'members',
     label: $localize`:@@route.members:Members`,
     icon: 'pi pi-users',

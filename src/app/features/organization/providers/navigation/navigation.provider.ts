@@ -1,8 +1,7 @@
 import { computed, inject } from '@angular/core';
 import type { MenuItem } from 'primeng/api';
-import { ACCOUNT_PERMISSION, UserPermissionService } from '@features/account';
+import { NOTIFICATION_CENTER_PORT, type NotificationCenterPort } from '@features/account';
 import {
-  appendOrganizationAuditNavigationItem,
   buildOrganizationNavigationSection,
   ORGANIZATION_NAVIGATION_GROUPS,
   type OrganizationNavigationGroup,
@@ -17,30 +16,52 @@ import type { DashboardLayoutNavigationSlotFeature } from '@layouts/dashboard-la
 
 /**
  * Base sidebar order for the first organization navigation section. Each group
- * is offset from this base so the sections keep their canonical order while
- * still sitting after the main "Home" contribution (order 10).
+ * is offset from this base so the sections keep their canonical order.
  *
  * @since 1.1.0
  */
 const ORGANIZATION_NAVIGATION_BASE_ORDER: number = 20;
 
 /**
+ * Attaches the live unread badge to the inbox entry of a built section. The
+ * count comes from the account's notification center — the unified inbox is
+ * fed by the same stream — and the badge only renders when something is
+ * actually unread.
+ *
+ * @param {MenuItem | null} section - Utilities section built from the navigation catalog.
+ * @param {number} unreadCount - Current unread notification count.
+ *
+ * @returns {MenuItem | null} Section with the inbox badge applied.
+ *
+ * @since 1.3.0
+ */
+function withInboxBadge(section: MenuItem | null, unreadCount: number): MenuItem | null {
+  if (!section || unreadCount <= 0) {
+    return section;
+  }
+
+  return {
+    ...section,
+    items: (section.items ?? []).map(
+      (item: MenuItem): MenuItem =>
+        item.id === 'inbox' ? { ...item, badge: String(unreadCount) } : item,
+    ),
+  };
+}
+
+/**
  * Feature withOrganizationNavigation
  *
  * @description
- * Registers the organization navigation sections in the dashboard sidebar
- * navigation slot. Contributes one permission-filtered section per
- * {@link ORGANIZATION_NAVIGATION_GROUPS} entry (Overview, Field work, Assets,
- * Compliance, Administration), driven by the active organization context,
- * instead of a single catch-all "Organization" group.
+ * Registers the organization navigation in the dashboard sidebar navigation
+ * slot: the prototype's flat business navigation (`workspace`) followed by the
+ * workspace utilities cluster (`utilities`), both permission-filtered and
+ * driven by the active organization context.
  *
- * The audit log destination is appended to the "Administration" section when
- * the authenticated user holds the global `audit.read` permission. That check
- * goes through the account permission surface ({@link UserPermissionService})
- * because `audit.read` is not an organization-member permission and cannot be
- * expressed through the organization navigation items.
+ * Members, Roles, Settings and the audit log no longer appear here — they are
+ * settings child routes reached through the sidebar header's cog.
  *
- * @version 1.2.0
+ * @version 1.3.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
  * @example
@@ -54,7 +75,7 @@ export function withOrganizationNavigation(): DashboardLayoutNavigationSlotFeatu
       useFactory: () => {
         const context: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
         const memberAccess: OrganizationMemberAccessPort = inject(ORGANIZATION_MEMBER_ACCESS_PORT);
-        const userPermissions: UserPermissionService = inject(UserPermissionService);
+        const notificationCenter: NotificationCenterPort = inject(NOTIFICATION_CENTER_PORT);
 
         return {
           id: `organization-${group.id}`,
@@ -67,21 +88,15 @@ export function withOrganizationNavigation(): DashboardLayoutNavigationSlotFeatu
             }
 
             const grantedPermissionSet: ReadonlySet<string> = new Set(memberAccess.permissions());
-            const prefix: string = `/organizations/${organization.id}`;
             const section: MenuItem | null = buildOrganizationNavigationSection(
               group,
-              prefix,
+              `/organizations/${organization.id}`,
               grantedPermissionSet,
             );
 
-            if (
-              group.id !== 'administration' ||
-              !userPermissions.hasPermission(ACCOUNT_PERMISSION.AUDIT_READ)
-            ) {
-              return section;
-            }
-
-            return appendOrganizationAuditNavigationItem(section, prefix);
+            return group.id === 'utilities'
+              ? withInboxBadge(section, notificationCenter.unreadCount())
+              : section;
           }),
         };
       },

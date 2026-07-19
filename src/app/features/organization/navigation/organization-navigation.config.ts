@@ -19,19 +19,14 @@ export type OrganizationNavigationMatch = 'all' | 'any';
  * Type OrganizationNavigationGroupId
  *
  * @description
- * Identifies the logical group a navigation item belongs to. Groups split the
- * organization navigation into meaningful sections instead of a single
- * catch-all "Organization" list.
+ * Identifies the cluster a navigation item belongs to. The prototype's sidebar
+ * has exactly two: the flat business navigation (`workspace`) and the
+ * workspace utilities below it (`utilities`) — assistant, inbox, messaging
+ * entry points. Neither renders a section header.
  *
  * @since 1.1.0
  */
-export type OrganizationNavigationGroupId =
-  | 'overview'
-  | 'field-work'
-  | 'workspace'
-  | 'assets'
-  | 'compliance'
-  | 'administration';
+export type OrganizationNavigationGroupId = 'workspace' | 'utilities';
 
 /**
  * Interface OrganizationNavigationGroup
@@ -160,19 +155,24 @@ export interface OrganizationNavigationItem {
  * Canonical ordered list of organization destinations gated by
  * organization-member RBAC. The dashboard navigation provider and the
  * organization landing guard both consume this list so route visibility and
- * fallback behavior cannot diverge. The audit log destination is deliberately
- * absent: it is gated by the global `audit.read` account permission and is
- * appended separately via {@link appendOrganizationAuditNavigationItem}.
+ * fallback behavior cannot diverge.
+ *
+ * The list mirrors the collaboration prototype's flat sidebar. Members, Roles,
+ * Settings and the audit log are deliberately absent: they are settings child
+ * routes now, reached through the sidebar header's cog and the settings
+ * vertical navigation. Inspections is the one addition over the prototype's
+ * eight entries — it is a distinct permission (`inspection.read`) and hiding
+ * it would strand members who hold only that grant.
  *
  * @since 1.0.0
  */
 export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigationItem> = [
   {
     id: 'dashboard',
-    label: $localize`:@@org.nav.dashboard:Dashboard`,
-    icon: 'pi pi-chart-bar',
+    label: $localize`:@@org.nav.overview:Overview`,
+    icon: 'pi pi-th-large',
     path: '',
-    group: 'overview',
+    group: 'workspace',
     permissions: [ORGANIZATION_PERMISSION.DASHBOARD_READ],
   },
   /**
@@ -183,50 +183,26 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
   {
     id: 'interventions',
     label: $localize`:@@route.interventions:Interventions`,
-    icon: 'pi pi-compass',
+    icon: 'pi pi-bolt',
     path: 'interventions',
-    group: 'field-work',
+    group: 'workspace',
     permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ],
   },
   {
     id: 'facilities',
     label: $localize`:@@route.facilities:Facilities`,
-    icon: 'pi pi-map',
+    icon: 'pi pi-sitemap',
     path: 'facilities',
-    group: 'assets',
+    group: 'workspace',
     permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
   },
   {
     id: 'map',
     label: $localize`:@@route.map:Map`,
-    icon: 'pi pi-map-marker',
+    icon: 'pi pi-map',
     path: 'map',
-    group: 'assets',
-    permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
-  },
-  {
-    id: 'equipments',
-    label: $localize`:@@route.equipments:Equipments`,
-    icon: 'pi pi-box',
-    path: 'equipments',
-    group: 'assets',
-    permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ],
-  },
-  {
-    id: 'inspections',
-    label: $localize`:@@route.inspections:Inspections`,
-    icon: 'pi pi-clipboard',
-    path: 'inspections',
-    group: 'compliance',
-    permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
-  },
-  {
-    id: 'assistant',
-    label: $localize`:@@route.assistant:Assistant`,
-    icon: 'pi pi-sparkles',
-    path: 'assistant',
     group: 'workspace',
-    permissions: [ORGANIZATION_PERMISSION.ASSISTANT_USE],
+    permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
   },
   {
     id: 'calendar',
@@ -237,19 +213,27 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.EVENTS_READ],
   },
   {
-    id: 'messages',
-    label: $localize`:@@route.messages:Messages`,
-    icon: 'pi pi-comments',
-    path: 'messages',
+    id: 'equipments',
+    label: $localize`:@@route.equipments:Equipments`,
+    icon: 'pi pi-box',
+    path: 'equipments',
     group: 'workspace',
-    permissions: [ORGANIZATION_PERMISSION.MESSAGING_READ],
+    permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ],
+  },
+  {
+    id: 'inspections',
+    label: $localize`:@@route.inspections:Inspections`,
+    icon: 'pi pi-clipboard',
+    path: 'inspections',
+    group: 'workspace',
+    permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
   },
   {
     id: 'compliance',
     label: $localize`:@@route.compliance:Compliance`,
     icon: 'pi pi-verified',
     path: 'compliance',
-    group: 'compliance',
+    group: 'workspace',
     permissions: [ORGANIZATION_PERMISSION.COMPLIANCE_READ],
   },
   {
@@ -257,34 +241,38 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     label: $localize`:@@route.billing:Billing`,
     icon: 'pi pi-credit-card',
     path: 'billing',
-    group: 'administration',
+    group: 'workspace',
     permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
   },
   {
-    id: 'members',
-    label: $localize`:@@route.members:Members`,
-    icon: 'pi pi-users',
-    path: 'members',
-    group: 'administration',
-    permissions: [ORGANIZATION_PERMISSION.MEMBERS_READ, ORGANIZATION_PERMISSION.MEMBERS_MANAGE],
-    match: 'any',
+    id: 'assistant',
+    label: $localize`:@@route.assistant:Assistant`,
+    icon: 'pi pi-sparkles',
+    path: 'assistant',
+    group: 'utilities',
+    permissions: [ORGANIZATION_PERMISSION.ASSISTANT_USE],
+  },
+  /**
+   * The unified inbox is an account surface (`InboxItem.organizationId` is
+   * nullable), so its path is absolute and it carries no organization
+   * permission: every member has an inbox. The landing guard skips
+   * absolute-path items when picking a fallback destination.
+   */
+  {
+    id: 'inbox',
+    label: $localize`:@@route.inbox:Inbox`,
+    icon: 'pi pi-inbox',
+    path: '/account/inbox',
+    group: 'utilities',
+    permissions: [],
   },
   {
-    id: 'team',
-    label: $localize`:@@route.team:Roles`,
-    icon: 'pi pi-id-card',
-    path: 'team',
-    group: 'administration',
-    permissions: [ORGANIZATION_PERMISSION.ROLES_READ, ORGANIZATION_PERMISSION.ROLES_MANAGE],
-    match: 'any',
-  },
-  {
-    id: 'settings',
-    label: $localize`:@@route.settings:Settings`,
-    icon: 'pi pi-cog',
-    path: 'settings',
-    group: 'administration',
-    permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
+    id: 'messages',
+    label: $localize`:@@org.nav.directMessages:Direct messages`,
+    icon: 'pi pi-comments',
+    path: 'messages',
+    group: 'utilities',
+    permissions: [ORGANIZATION_PERMISSION.MESSAGING_READ],
   },
 ];
 
@@ -292,18 +280,15 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
  * Constant ORGANIZATION_NAVIGATION_GROUPS
  *
  * @description
- * Ordered organization navigation sections. The navigation provider renders
- * items grouped by these sections in the primary sidebar.
+ * Ordered organization navigation clusters. Both are headerless — the
+ * prototype's sidebar separates them by spacing alone, so the labels stay
+ * empty and the sidebar renders no section title.
  *
  * @since 1.1.0
  */
 export const ORGANIZATION_NAVIGATION_GROUPS: ReadonlyArray<OrganizationNavigationGroup> = [
-  { id: 'overview', label: $localize`:@@org.navGroup.overview:Overview` },
-  { id: 'field-work', label: $localize`:@@org.navGroup.fieldWork:Field work` },
-  { id: 'workspace', label: $localize`:@@org.navGroup.workspace:Workspace` },
-  { id: 'assets', label: $localize`:@@org.navGroup.assets:Assets` },
-  { id: 'compliance', label: $localize`:@@org.navGroup.compliance:Compliance` },
-  { id: 'administration', label: $localize`:@@org.navGroup.administration:Administration` },
+  { id: 'workspace', label: '' },
+  { id: 'utilities', label: '' },
 ];
 
 /**
@@ -392,7 +377,7 @@ export function buildOrganizationNavigationSection(
       id: item.id,
       label: item.label,
       icon: item.icon,
-      routerLink: item.path.length > 0 ? `${prefix}/${item.path}` : prefix,
+      routerLink: resolveOrganizationNavigationLink(item, prefix),
     }),
   );
 
@@ -409,46 +394,27 @@ export function buildOrganizationNavigationSection(
 }
 
 /**
- * Function appendOrganizationAuditNavigationItem
+ * Function resolveOrganizationNavigationLink
  *
  * @description
- * Appends the audit log destination to the "Administration" section, creating
- * that section when no organization-permission item is visible in it. The
- * destination is gated by the global `audit.read` account permission — not an
- * `OrganizationPermissionName` — so it cannot be expressed as an
- * {@link OrganizationNavigationItem}; the caller resolves visibility against
- * the account permission surface before appending.
+ * Resolves an item's router link. An absolute path (leading `/`) is an
+ * app-level destination — the unified inbox — and is used verbatim; a relative
+ * path is joined onto the active organization prefix.
  *
- * @param {MenuItem | null} section - Administration section built from organization-member permissions, or `null` when empty.
+ * @param {OrganizationNavigationItem} item - Navigation item to resolve.
  * @param {string} prefix - Active organization route prefix.
  *
- * @returns {MenuItem} Administration section including the audit log destination.
+ * @returns {string} Router link for the item.
  *
- * @since 1.2.0
+ * @since 1.3.0
  */
-export function appendOrganizationAuditNavigationItem(
-  section: MenuItem | null,
+export function resolveOrganizationNavigationLink(
+  item: OrganizationNavigationItem,
   prefix: string,
-): MenuItem {
-  const auditItem: MenuItem = {
-    id: 'audit',
-    label: $localize`:@@org.nav.audit:Audit log`,
-    icon: 'pi pi-history',
-    routerLink: `${prefix}/audit`,
-  };
-
-  if (section === null) {
-    const group: OrganizationNavigationGroup | undefined = ORGANIZATION_NAVIGATION_GROUPS.find(
-      (candidate: OrganizationNavigationGroup): boolean => candidate.id === 'administration',
-    );
-
-    return {
-      id: 'administration',
-      label: group?.label ?? '',
-      expanded: true,
-      items: [auditItem],
-    };
+): string {
+  if (item.path.startsWith('/')) {
+    return item.path;
   }
 
-  return { ...section, items: [...(section.items ?? []), auditItem] };
+  return item.path.length > 0 ? `${prefix}/${item.path}` : prefix;
 }

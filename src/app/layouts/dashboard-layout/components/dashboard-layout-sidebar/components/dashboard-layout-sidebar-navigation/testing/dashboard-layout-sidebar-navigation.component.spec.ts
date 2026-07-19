@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
-import { ACCOUNT_PERMISSION, UserPermissionService } from '@features/account';
+import { NOTIFICATION_CENTER_PORT } from '@features/account';
 import { withOrganizationNavigation } from '@features/organization';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
@@ -44,11 +44,8 @@ describe('DashboardLayoutSidebarNavigation', () => {
       ORGANIZATION_PERMISSION.INSPECTION_READ,
     ]),
   };
-  const auditReadGranted = signal(false);
-  const mockUserPermissions = {
-    hasPermission: (permission: string): boolean =>
-      permission === ACCOUNT_PERMISSION.AUDIT_READ && auditReadGranted(),
-  };
+  const unreadCount = signal(0);
+  const mockNotificationCenter = { unreadCount };
 
   beforeEach(() => {
     mockOrganizationStore.selectedOrganization.set(MOCK_ORG);
@@ -58,7 +55,7 @@ describe('DashboardLayoutSidebarNavigation', () => {
       ORGANIZATION_PERMISSION.EQUIPMENT_READ,
       ORGANIZATION_PERMISSION.INSPECTION_READ,
     ]);
-    auditReadGranted.set(false);
+    unreadCount.set(0);
 
     TestBed.configureTestingModule({
       imports: [DashboardLayoutSidebarNavigation],
@@ -70,7 +67,7 @@ describe('DashboardLayoutSidebarNavigation', () => {
         }),
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
-        { provide: UserPermissionService, useValue: mockUserPermissions },
+        { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenter },
         provideRouter([
           { path: '', component: DummyPage },
           { path: 'organizations/:organizationId', component: DummyPage },
@@ -87,15 +84,19 @@ describe('DashboardLayoutSidebarNavigation', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render navigation links grouped in labelled sections', () => {
+  it('should render the flat clusters without section headers', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
     fixture.detectChanges();
 
-    // Overview + Assets + Compliance sections are visible for the granted
-    // permissions: dashboard, facilities, map (also facilities.read),
-    // equipments, inspections.
-    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(5);
+    // Workspace cluster: dashboard, facilities, map (also facilities.read),
+    // equipments, inspections. Utilities cluster: the permissionless inbox.
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(6);
     expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
+
+    // Both clusters are headerless — the prototype separates them by spacing.
+    const textContent: string = fixture.nativeElement.textContent;
+    expect(textContent).not.toContain('Assets');
+    expect(textContent).not.toContain('Administration');
   });
 
   it('should expose organization links using the active organization id', () => {
@@ -104,17 +105,20 @@ describe('DashboardLayoutSidebarNavigation', () => {
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    const assets = component.menuItems().find((group) => group.label === 'Assets');
-    const facilities = assets?.items?.find((item) => item.label === 'Facilities');
+    const workspace = component.menuItems().find((group) => group.id === 'workspace');
+    const facilities = workspace?.items?.find((item) => item.label === 'Facilities');
 
     expect(facilities?.routerLink).toBe('/organizations/org-1/facilities');
   });
 
-  it('should append the audit log entry to Administration when audit.read is granted', () => {
-    auditReadGranted.set(true);
+  it('should keep members, settings and the audit log out of the sidebar', () => {
+    // Administration destinations are settings child routes now; even a member
+    // holding their permissions gets no sidebar entry for them.
     mockOrganizationMemberAccess.permissions.set([
       ORGANIZATION_PERMISSION.DASHBOARD_READ,
       ORGANIZATION_PERMISSION.MEMBERS_READ,
+      ORGANIZATION_PERMISSION.ROLES_READ,
+      ORGANIZATION_PERMISSION.SETTINGS_WRITE,
     ]);
 
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
@@ -122,43 +126,44 @@ describe('DashboardLayoutSidebarNavigation', () => {
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    const administration = component.menuItems().find((group) => group.id === 'administration');
-    const audit = administration?.items?.find((item) => item.id === 'audit');
+    const ids = component
+      .menuItems()
+      .flatMap((group) => group.items ?? [])
+      .map((item) => item.id);
 
-    expect(administration?.items?.map((item) => item.label)).toEqual(['Members', 'Audit log']);
-    expect(audit?.routerLink).toBe('/organizations/org-1/audit');
+    expect(ids).not.toContain('members');
+    expect(ids).not.toContain('team');
+    expect(ids).not.toContain('settings');
+    expect(ids).not.toContain('audit');
+    // SETTINGS_WRITE still surfaces billing, which is a real prototype entry.
+    expect(ids).toContain('billing');
   });
 
-  it('should create the Administration section for audit.read alone', () => {
-    // No org administration member permission is granted: the section only
-    // exists because the global audit.read account permission demands it.
-    auditReadGranted.set(true);
+  it('should link the inbox to the account surface with a live unread badge', () => {
+    unreadCount.set(8);
 
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
     const component = fixture.componentInstance as unknown as {
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    const administration = component.menuItems().find((group) => group.id === 'administration');
+    const utilities = component.menuItems().find((group) => group.id === 'utilities');
+    const inbox = utilities?.items?.find((item) => item.id === 'inbox');
 
-    expect(administration?.label).toBe('Administration');
-    expect(administration?.items?.map((item) => item.id)).toEqual(['audit']);
+    expect(inbox?.routerLink).toBe('/account/inbox');
+    expect(inbox?.badge).toBe('8');
   });
 
-  it('should hide the audit log entry without the global audit.read permission', () => {
-    mockOrganizationMemberAccess.permissions.set([
-      ORGANIZATION_PERMISSION.DASHBOARD_READ,
-      ORGANIZATION_PERMISSION.MEMBERS_READ,
-    ]);
-
+  it('should not badge the inbox when nothing is unread', () => {
     const fixture = TestBed.createComponent(DashboardLayoutSidebarNavigation);
     const component = fixture.componentInstance as unknown as {
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    const administration = component.menuItems().find((group) => group.id === 'administration');
+    const utilities = component.menuItems().find((group) => group.id === 'utilities');
+    const inbox = utilities?.items?.find((item) => item.id === 'inbox');
 
-    expect(administration?.items?.map((item) => item.id)).toEqual(['members']);
+    expect(inbox?.badge).toBeUndefined();
   });
 
   it('should show an empty state when no menu items are available', () => {
@@ -199,13 +204,11 @@ describe('DashboardLayoutSidebarNavigation', () => {
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    const labels = component.menuItems().map((item) => item.label);
+    const ids = component.menuItems().map((item) => item.id);
 
-    // The single sidebar carries the organization sections only; the former
-    // "Home" group was removed together with the organizations list page.
-    expect(labels).toEqual(['Overview', 'Assets', 'Compliance']);
-    expect(labels).not.toContain('Home');
-    expect(labels).not.toContain('Organization');
+    // The single sidebar carries the two organization clusters only; the
+    // former "Home" group was removed together with the organizations list.
+    expect(ids).toEqual(['workspace', 'utilities']);
   });
 
   it('should highlight the active route item', async () => {

@@ -3,7 +3,10 @@ import {
   ORGANIZATION_PERMISSION,
   type OrganizationPermissionName,
 } from '@features/organization/models';
-import type { OrganizationNavigationMatch } from './organization-navigation.config';
+import {
+  matchesOrganizationPermission,
+  type OrganizationNavigationMatch,
+} from './organization-navigation.config';
 
 /**
  * Interface OrganizationSettingsTab
@@ -89,6 +92,16 @@ export const ORGANIZATION_SETTINGS_TABS: ReadonlyArray<OrganizationSettingsTab> 
     match: 'any',
   },
   {
+    /**
+     * Never the landing target in practice — any MEMBERS_MANAGE holder already
+     * matches the members tab above ('any') — but listed so this catalog stays
+     * the complete map of the settings children.
+     */
+    path: 'invitations',
+    scope: 'organization',
+    permissions: [ORGANIZATION_PERMISSION.MEMBERS_MANAGE],
+  },
+  {
     path: 'roles',
     scope: 'organization',
     permissions: [ORGANIZATION_PERMISSION.ROLES_READ, ORGANIZATION_PERMISSION.ROLES_MANAGE],
@@ -105,3 +118,38 @@ export const ORGANIZATION_SETTINGS_TABS: ReadonlyArray<OrganizationSettingsTab> 
     permissions: [ORGANIZATION_PERMISSION.DELETE],
   },
 ];
+
+/**
+ * Function canReachOrganizationSettingsTabs
+ *
+ * @description
+ * Whether the member can open at least one organization-scoped settings tab.
+ * Drives the sidebar header's settings cog — settings left the sidebar
+ * navigation, so the cog is the discoverable way in.
+ *
+ * Account-scoped tabs (the audit log) are deliberately ignored: the shell
+ * checks organization grants through a port, and a member whose only
+ * reachable tab is the audit log is a platform auditor who reaches it through
+ * the command palette or a direct URL.
+ *
+ * @param {ReadonlySet<string>} grantedPermissions - Active member's organization grants.
+ *
+ * @returns {boolean} Whether the settings entry point should be offered.
+ *
+ * @since 1.1.0
+ */
+export function canReachOrganizationSettingsTabs(grantedPermissions: ReadonlySet<string>): boolean {
+  const hasPermission = (permission: OrganizationPermissionName): boolean =>
+    grantedPermissions.has(permission) ||
+    Array.from(grantedPermissions).some((grantedPermission: string): boolean =>
+      matchesOrganizationPermission(grantedPermission, permission),
+    );
+
+  return ORGANIZATION_SETTINGS_TABS.filter(
+    (tab: OrganizationSettingsTab): boolean => tab.scope === 'organization',
+  ).some((tab: OrganizationSettingsTab): boolean => {
+    const permissions = tab.permissions as ReadonlyArray<OrganizationPermissionName>;
+
+    return tab.match === 'any' ? permissions.some(hasPermission) : permissions.every(hasPermission);
+  });
+}

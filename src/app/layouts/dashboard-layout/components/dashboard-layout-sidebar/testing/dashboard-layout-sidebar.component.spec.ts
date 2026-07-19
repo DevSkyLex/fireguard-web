@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
-import { UserPermissionService } from '@features/account';
+import { NOTIFICATION_CENTER_PORT } from '@features/account';
 import { withOrganizationNavigation } from '@features/organization';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
@@ -89,7 +89,7 @@ describe('DashboardLayoutSidebar', () => {
         }),
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: mockOrganizationStore },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: mockOrganizationMemberAccess },
-        { provide: UserPermissionService, useValue: { hasPermission: (): boolean => false } },
+        { provide: NOTIFICATION_CENTER_PORT, useValue: { unreadCount: signal(0) } },
       ],
     });
   });
@@ -111,19 +111,22 @@ describe('DashboardLayoutSidebar', () => {
     expect(fixture.debugElement.query(By.css('[data-testid="lead-widget-stub"]'))).toBeTruthy();
     expect(fixture.debugElement.query(By.css('[data-testid="footer-widget-stub"]'))).toBeTruthy();
 
-    // dashboard, facilities, map (also facilities.read), equipments, inspections.
-    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(5);
+    // Workspace cluster: dashboard, facilities, map (also facilities.read),
+    // equipments, inspections — plus the permissionless inbox utility.
+    expect(fixture.debugElement.queryAll(By.css('a[data-sidebar-item-id]')).length).toBe(6);
     expect(fixture.debugElement.query(By.css('p-panelmenu'))).toBeFalsy();
 
     const textContent = fixture.nativeElement.textContent;
-    expect(textContent).toContain('Fireguard');
+    // The header shows the workspace name inside an organization.
+    expect(textContent).toContain('Acme Corp');
     expect(textContent).toContain('Overview');
-    expect(textContent).toContain('Assets');
-    expect(textContent).toContain('Compliance');
-    expect(textContent).toContain('Dashboard');
     expect(textContent).toContain('Facilities');
     expect(textContent).toContain('Equipments');
     expect(textContent).toContain('Inspections');
+    expect(textContent).toContain('Inbox');
+    // The flat prototype sidebar has no section headers.
+    expect(textContent).not.toContain('Assets');
+    expect(textContent).not.toContain('Administration');
   });
 
   it('should hide the slot widgets in primary icon-only mode', () => {
@@ -170,10 +173,12 @@ describe('DashboardLayoutSidebar', () => {
       }[];
     };
 
-    const overviewPanel = navigation.menuItems().find((group) => group.label === 'Overview');
-    const dashboard = overviewPanel?.items?.find((item) => item.label === 'Dashboard');
+    const workspace = navigation
+      .menuItems()
+      .find((group) => (group as { readonly id?: string }).id === 'workspace');
+    const overview = workspace?.items?.find((item) => item.label === 'Overview');
 
-    expect(dashboard?.routerLink).toBe('/organizations/org-1');
+    expect(overview?.routerLink).toBe('/organizations/org-1');
   });
 
   it('should keep stable top-level ordering', () => {
@@ -185,9 +190,9 @@ describe('DashboardLayoutSidebar', () => {
       readonly menuItems: () => readonly MenuItem[];
     };
 
-    const labels = navigation.menuItems().map((group) => group.label);
+    const ids = navigation.menuItems().map((group) => group.id);
 
-    expect(labels).toEqual(['Overview', 'Assets', 'Compliance']);
+    expect(ids).toEqual(['workspace', 'utilities']);
   });
 
   it('should not render collapsed flyout ui', () => {

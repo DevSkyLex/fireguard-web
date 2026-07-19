@@ -74,9 +74,12 @@ export const organizationLandingGuard: CanActivateFn = (
     return true;
   }
 
+  // Absolute-path items (the account inbox) are app-level destinations, not
+  // organization landings: sending a member there would silently leave the
+  // workspace they just picked.
   const destination: OrganizationNavigationItem | undefined = ORGANIZATION_NAVIGATION_ITEMS.find(
     (candidate: OrganizationNavigationItem): boolean =>
-      candidate.id !== 'dashboard' && isAccessible(candidate),
+      candidate.id !== 'dashboard' && !candidate.path.startsWith('/') && isAccessible(candidate),
   );
 
   // No permitted destination in this organization: let the default-organization

@@ -1,7 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import {
+  ORGANIZATION_CONTEXT_PORT,
+  ORGANIZATION_MEMBER_ACCESS_PORT,
+} from '@features/organization/ports';
 import { SIDEBAR_SLOT } from '@layouts/dashboard-layout/slots/sidebar';
 import { DashboardLayoutHeader, DashboardLayoutSidebar } from '../components';
 import { SHELL_SIDEBAR_WIDTH_PX } from '../constants';
@@ -26,6 +30,15 @@ describe('DashboardLayout', () => {
           provide: SIDEBAR_SLOT,
           useValue: { id: 'stub', order: 10, region: 'lead', component: SidebarWidgetStub },
           multi: true,
+        },
+        // The sidebar header reads the workspace identity through ports.
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: { selectedOrganization: signal(null) },
+        },
+        {
+          provide: ORGANIZATION_MEMBER_ACCESS_PORT,
+          useValue: { permissions: signal<ReadonlyArray<string>>([]) },
         },
       ],
     }).overrideComponent(DashboardLayoutHeader, {

@@ -85,12 +85,19 @@ describe('FacilityTable', () => {
     expect(fixture.nativeElement.textContent).toContain('No facilities yet');
   });
 
-  // Rendering the skeleton rows occasionally exceeds the default 5s
-  // timeout on loaded machines, hence the explicit allowance.
-  it('should show skeleton placeholders while loading', { timeout: 15_000 }, () => {
+  // PrimeNG picks the template per row: a falsy `rowData` renders
+  // `loadingbody`, a truthy one renders `body` (primeng-table.mjs, the
+  // `rowData ? template : loadingBodyTemplate` outlet). `skeletonItems` is
+  // therefore a sparse array on purpose, and `loadingbody` must emit ONE
+  // `<tr>` — iterating `skeletonItems` inside it renders rows squared.
+  it('should render exactly one skeleton row per placeholder while loading', () => {
     const fixture = createComponent({ loading: true });
-    const skeleton = fixture.debugElement.query(By.css('.p-skeleton'));
-    expect(skeleton).toBeTruthy();
+
+    const skeletonRows = fixture.debugElement
+      .queryAll(By.css('tbody tr'))
+      .filter((row) => row.query(By.css('.p-skeleton')) !== null);
+
+    expect(skeletonRows).toHaveLength(12);
   });
 
   it('should emit a load request with the resolved page', () => {

@@ -148,32 +148,30 @@
       </ng-template>
 
       <ng-template pTemplate="loadingbody">
-        @for (_ of skeletonItems; track $index) {
-          <tr>
-            @if (canManageEquipment()) {
-              <td class="pl-5">
-                <p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" />
-              </td>
-            }
-            <td>
-              <div class="flex items-center gap-3">
-                <p-skeleton shape="square" size="2.25rem" />
-                <div class="flex flex-col gap-1.5">
-                  <p-skeleton width="10rem" height="0.875rem" />
-                  <p-skeleton width="7rem" height="0.75rem" />
-                </div>
+        <tr>
+          @if (canManageEquipment()) {
+            <td class="pl-5">
+              <p-skeleton shape="square" size="1.25rem" borderRadius="0.25rem" />
+            </td>
+          }
+          <td>
+            <div class="flex items-center gap-3">
+              <p-skeleton shape="square" size="2.25rem" />
+              <div class="flex flex-col gap-1.5">
+                <p-skeleton width="10rem" height="0.875rem" />
+                <p-skeleton width="7rem" height="0.75rem" />
               </div>
-            </td>
-            <td><p-skeleton width="8rem" height="0.875rem" /></td>
-            <td class="hidden md:table-cell"><p-skeleton width="6rem" height="0.875rem" /></td>
-            <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
-            <td class="hidden md:table-cell"><p-skeleton width="8rem" height="0.875rem" /></td>
-            <td class="hidden lg:table-cell">
-              <p-skeleton width="5rem" height="0.875rem" class="ml-auto" />
-            </td>
-            <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
-          </tr>
-        }
+            </div>
+          </td>
+          <td><p-skeleton width="8rem" height="0.875rem" /></td>
+          <td class="hidden md:table-cell"><p-skeleton width="6rem" height="0.875rem" /></td>
+          <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
+          <td class="hidden md:table-cell"><p-skeleton width="8rem" height="0.875rem" /></td>
+          <td class="hidden lg:table-cell">
+            <p-skeleton width="5rem" height="0.875rem" class="ml-auto" />
+          </td>
+          <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
+        </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-equipment>

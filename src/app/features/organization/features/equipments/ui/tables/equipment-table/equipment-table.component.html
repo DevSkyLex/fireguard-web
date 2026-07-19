@@ -225,26 +225,24 @@
       </ng-template>
 
       <ng-template pTemplate="loadingbody">
-        @for (_ of skeletonItems; track $index) {
-          <tr>
-            @if (canManageEquipment()) {
-              <td class="pl-5"><p-skeleton shape="square" size="1.25rem" /></td>
-            }
-            <td>
-              <div class="flex flex-col gap-1.5">
-                <p-skeleton width="8rem" height="0.75rem" />
-                <p-skeleton width="12rem" height="0.875rem" />
-              </div>
-            </td>
-            <td class="hidden md:table-cell"><p-skeleton width="6rem" height="0.875rem" /></td>
-            <td><p-skeleton width="8rem" height="0.875rem" /></td>
-            <td><p-skeleton width="7rem" height="1.75rem" borderRadius="999px" /></td>
-            <td class="hidden lg:table-cell"><p-skeleton width="6rem" height="0.875rem" /></td>
-            @if (canManageEquipment()) {
-              <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
-            }
-          </tr>
-        }
+        <tr>
+          @if (canManageEquipment()) {
+            <td class="pl-5"><p-skeleton shape="square" size="1.25rem" /></td>
+          }
+          <td>
+            <div class="flex flex-col gap-1.5">
+              <p-skeleton width="8rem" height="0.75rem" />
+              <p-skeleton width="12rem" height="0.875rem" />
+            </div>
+          </td>
+          <td class="hidden md:table-cell"><p-skeleton width="6rem" height="0.875rem" /></td>
+          <td><p-skeleton width="8rem" height="0.875rem" /></td>
+          <td><p-skeleton width="7rem" height="1.75rem" borderRadius="999px" /></td>
+          <td class="hidden lg:table-cell"><p-skeleton width="6rem" height="0.875rem" /></td>
+          @if (canManageEquipment()) {
+            <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
+          }
+        </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-equipment>

@@ -20,18 +20,16 @@
       </ng-template>
 
       <ng-template pTemplate="loadingbody">
-        @for (_ of skeletonItems; track $index) {
-          <tr>
-            <td><p-skeleton width="12rem" height="0.875rem" /></td>
-            <td class="hidden md:table-cell">
-              <p-skeleton width="8rem" height="1.25rem" borderRadius="999px" />
-            </td>
-            <td class="hidden lg:table-cell"><p-skeleton width="5rem" height="0.875rem" /></td>
-            <td><p-skeleton width="5rem" height="1.75rem" borderRadius="999px" /></td>
-            <td><p-skeleton width="6rem" height="0.875rem" /></td>
-            <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
-          </tr>
-        }
+        <tr>
+          <td><p-skeleton width="12rem" height="0.875rem" /></td>
+          <td class="hidden md:table-cell">
+            <p-skeleton width="8rem" height="1.25rem" borderRadius="999px" />
+          </td>
+          <td class="hidden lg:table-cell"><p-skeleton width="5rem" height="0.875rem" /></td>
+          <td><p-skeleton width="5rem" height="1.75rem" borderRadius="999px" /></td>
+          <td><p-skeleton width="6rem" height="0.875rem" /></td>
+          <td><p-skeleton shape="circle" size="2rem" class="ml-auto" /></td>
+        </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-invitation>

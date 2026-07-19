@@ -150,24 +150,22 @@
       </ng-template>
 
       <ng-template pTemplate="loadingbody">
-        @for (_ of skeletonItems; track $index) {
-          <tr>
-            <td>
-              <div class="flex flex-col gap-1.5">
-                <p-skeleton width="10rem" height="0.875rem" />
-                <p-skeleton width="6rem" height="0.75rem" />
-              </div>
-            </td>
-            <td class="hidden md:table-cell"><p-skeleton width="8rem" height="0.875rem" /></td>
-            <td><p-skeleton width="5rem" height="1.25rem" borderRadius="0.375rem" /></td>
-            <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
-            <td><p-skeleton width="4rem" height="0.875rem" styleClass="ml-auto" /></td>
-            <td class="hidden lg:table-cell">
-              <p-skeleton width="7rem" height="0.875rem" styleClass="ml-auto" />
-            </td>
-            <td><p-skeleton shape="circle" size="2rem" styleClass="ml-auto" /></td>
-          </tr>
-        }
+        <tr>
+          <td>
+            <div class="flex flex-col gap-1.5">
+              <p-skeleton width="10rem" height="0.875rem" />
+              <p-skeleton width="6rem" height="0.75rem" />
+            </div>
+          </td>
+          <td class="hidden md:table-cell"><p-skeleton width="8rem" height="0.875rem" /></td>
+          <td><p-skeleton width="5rem" height="1.25rem" borderRadius="0.375rem" /></td>
+          <td><p-skeleton width="6rem" height="1.25rem" borderRadius="0.375rem" /></td>
+          <td><p-skeleton width="4rem" height="0.875rem" styleClass="ml-auto" /></td>
+          <td class="hidden lg:table-cell">
+            <p-skeleton width="7rem" height="0.875rem" styleClass="ml-auto" />
+          </td>
+          <td><p-skeleton shape="circle" size="2rem" styleClass="ml-auto" /></td>
+        </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-inspection>

@@ -7,3 +7,4 @@ export type {
   OrganizationPermissionGuardRedirect,
 } from './organization-permission';
 export { organizationGuard } from './organization';
+export { organizationSettingsLandingGuard } from './organization-settings-landing';

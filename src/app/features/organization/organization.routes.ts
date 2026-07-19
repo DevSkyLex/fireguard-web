@@ -5,6 +5,7 @@ import {
   organizationGuard,
   organizationLandingGuard,
   organizationPermissionGuard,
+  organizationSettingsLandingGuard,
 } from './http/guards';
 import { organizationResolver, organizationTitleResolver } from './http/resolvers';
 import { ORGANIZATION_PERMISSION } from './models';
@@ -75,85 +76,116 @@ export const ORGANIZATION_ROUTES: Routes = [
         loadChildren: () =>
           import('./features/inspections/inspections.routes').then((m) => m.INSPECTION_ROUTES),
       },
-      {
-        path: 'members',
-        canActivate: [
-          organizationPermissionGuard({
-            permissions: [
-              ORGANIZATION_PERMISSION.MEMBERS_READ,
-              ORGANIZATION_PERMISSION.MEMBERS_MANAGE,
-            ],
-            match: 'any',
-          }),
-        ],
-        loadComponent: () =>
-          import('./ui/pages/organization-members/organization-members.component').then(
-            (m) => m.OrganizationMembersPage,
-          ),
-        title: $localize`:@@route.members:Members`,
-        data: {
-          breadcrumb: 'Members',
-          preload: true,
-        },
-      },
-      {
-        path: 'team',
-        canActivate: [
-          organizationPermissionGuard({
-            permissions: [ORGANIZATION_PERMISSION.ROLES_READ, ORGANIZATION_PERMISSION.ROLES_MANAGE],
-            match: 'any',
-          }),
-        ],
-        loadComponent: () =>
-          import('./ui/pages/organization-team/organization-team.component').then(
-            (m) => m.OrganizationTeamPage,
-          ),
-        title: $localize`:@@route.team:Roles`,
-        data: {
-          breadcrumb: 'Roles',
-          preload: true,
-        },
-      },
-      {
-        /**
-         * Audit log entry point. Gated by the global `audit.read` permission
-         * (`@features/account`), not organization-member RBAC: audit access is a
-         * platform-wide capability that happens to be reachable from inside the
-         * organization shell rather than a per-organization member permission.
-         */
-        path: 'audit',
-        canActivate: [
-          accountPermissionGuard({
-            permissions: [ACCOUNT_PERMISSION.AUDIT_READ],
-          }),
-        ],
-        loadComponent: () =>
-          import('./ui/pages/organization-audit-log/organization-audit-log.component').then(
-            (m) => m.OrganizationAuditLogPage,
-          ),
-        title: $localize`:@@route.audit:Audit log`,
-        data: {
-          breadcrumb: 'Audit log',
-          preload: true,
-        },
-      },
+      /**
+       * Settings is a tab shell, and every tab is a real child route.
+       *
+       * The parent deliberately carries NO permission guard. It used to require
+       * `SETTINGS_WRITE`; keeping that while folding members, roles and the
+       * audit log underneath would lock the members list away from holders of
+       * `MEMBERS_READ` and the audit log away from holders of the platform-wide
+       * `audit.read`. Each tab keeps its own guard instead.
+       */
       {
         path: 'settings',
-        canActivate: [
-          organizationPermissionGuard({
-            permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
-          }),
-        ],
-        loadComponent: () =>
-          import('./ui/pages/organization-settings/organization-settings.component').then(
-            (m) => m.OrganizationSettingsPage,
-          ),
         title: $localize`:@@route.settings:Settings`,
-        data: {
-          breadcrumb: 'Settings',
-          preload: true,
-        },
+        data: { breadcrumb: 'Settings' },
+        children: [
+          {
+            path: 'general',
+            canActivate: [
+              organizationPermissionGuard({
+                permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
+              }),
+            ],
+            loadComponent: () =>
+              import('./ui/pages/organization-settings/organization-settings.component').then(
+                (m) => m.OrganizationSettingsPage,
+              ),
+            title: $localize`:@@route.settings:Settings`,
+            data: {
+              breadcrumb: 'Settings',
+              preload: true,
+            },
+          },
+          {
+            path: 'members',
+            canActivate: [
+              organizationPermissionGuard({
+                permissions: [
+                  ORGANIZATION_PERMISSION.MEMBERS_READ,
+                  ORGANIZATION_PERMISSION.MEMBERS_MANAGE,
+                ],
+                match: 'any',
+              }),
+            ],
+            loadComponent: () =>
+              import('./ui/pages/organization-members/organization-members.component').then(
+                (m) => m.OrganizationMembersPage,
+              ),
+            title: $localize`:@@route.members:Members`,
+            data: {
+              breadcrumb: 'Members',
+              preload: true,
+            },
+          },
+          {
+            path: 'roles',
+            canActivate: [
+              organizationPermissionGuard({
+                permissions: [
+                  ORGANIZATION_PERMISSION.ROLES_READ,
+                  ORGANIZATION_PERMISSION.ROLES_MANAGE,
+                ],
+                match: 'any',
+              }),
+            ],
+            loadComponent: () =>
+              import('./ui/pages/organization-team/organization-team.component').then(
+                (m) => m.OrganizationTeamPage,
+              ),
+            title: $localize`:@@route.team:Roles`,
+            data: {
+              breadcrumb: 'Roles',
+              preload: true,
+            },
+          },
+          {
+            /**
+             * Audit log entry point. Gated by the global `audit.read` permission
+             * (`@features/account`), not organization-member RBAC: audit access is a
+             * platform-wide capability that happens to be reachable from inside the
+             * organization shell rather than a per-organization member permission.
+             */
+            path: 'audit',
+            canActivate: [
+              accountPermissionGuard({
+                permissions: [ACCOUNT_PERMISSION.AUDIT_READ],
+              }),
+            ],
+            loadComponent: () =>
+              import('./ui/pages/organization-audit-log/organization-audit-log.component').then(
+                (m) => m.OrganizationAuditLogPage,
+              ),
+            title: $localize`:@@route.audit:Audit log`,
+            data: {
+              breadcrumb: 'Audit log',
+              preload: true,
+            },
+          },
+          {
+            path: '',
+            pathMatch: 'full',
+            canActivate: [organizationSettingsLandingGuard],
+            children: [],
+          },
+        ],
       },
+      // Legacy top-level paths, kept so bookmarks and external deep links keep
+      // resolving. `pathMatch: 'full'` is mandatory: with prefix matching these
+      // would also swallow any deeper URL that happens to share the segment.
+      { path: 'members', pathMatch: 'full', redirectTo: 'settings/members' },
+      { path: 'team', pathMatch: 'full', redirectTo: 'settings/roles' },
+      { path: 'audit', pathMatch: 'full', redirectTo: 'settings/audit' },
       {
         path: '',
         canActivate: [organizationLandingGuard],

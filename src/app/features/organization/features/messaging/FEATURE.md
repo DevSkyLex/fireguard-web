@@ -10,14 +10,26 @@ backend scopes every endpoint by the session's active organization.
 
 ## Status
 
-**Transport layer only.** Models and `MessagingService` are in place and
-covered; there is no UI, store, or route yet. The next lot owns the conversation
-view.
+Conversation list, thread and composer are live at `…/messages`. Reactions,
+pins, saved messages, threads, attachments and presence are not built.
 
 ## Route entry points
 
-None yet. Planned: `…/channels/:channelId`, `…/dm/:conversationId`, `…/saved`,
-`…/drafts`, under a pathless parent providing the workspace store.
+| URL          | Component       | Guard                                           |
+| ------------ | --------------- | ----------------------------------------------- |
+| `…/messages` | `MessagingPage` | `organizationPermissionGuard([MESSAGING_READ])` |
+
+Planned: per-conversation URLs (`…/channels/:channelId`, `…/dm/:conversationId`)
+so a thread can be linked to. Today the active conversation is store state, so
+it is not shareable or restorable on reload.
+
+## Known limitation
+
+The workspace does not stretch to the viewport height: the dashboard content
+wrapper is `min-h-full`, not `h-full`, so `flex-1` inside it resolves against
+content rather than the shell. Fixing it is a **shell** change affecting every
+routed page, so it belongs in a lot that can re-verify the whole e2e suite —
+not here.
 
 ## Invariants
 

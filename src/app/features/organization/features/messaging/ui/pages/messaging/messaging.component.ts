@@ -36,6 +36,10 @@ import { EmptyState } from '@shared/components';
 @Component({
   selector: 'app-messaging',
   imports: [FormsModule, ButtonModule, TextareaModule, MessageThread, EmptyState],
+  // The page is a full-height two-pane workspace, so its host must stretch;
+  // left to its default `display: inline` it collapses and the panes shrink to
+  // their content.
+  host: { class: 'flex min-h-0 flex-1' },
   providers: [MessagingWorkspaceStore],
   templateUrl: './messaging.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

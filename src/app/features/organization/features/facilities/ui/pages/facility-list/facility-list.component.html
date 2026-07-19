@@ -20,22 +20,55 @@
       </div>
     </p-message>
   }
-  <app-facility-table
-    class="flex min-h-0 flex-1 flex-col"
-    [facilities]="store.rootFacilities()"
-    [total]="store.totalRootFacilities()"
-    [loading]="store.isLoadingRootFacilities()"
-    [empty]="store.isRootEmpty()"
-    [initialPage]="page()"
-    [createDisabled]="atFacilityLimit()"
-    [createDisabledTooltip]="quotaLimitTooltip"
-    (load)="onLoad($event)"
-    (pageChange)="onPageChange($event)"
-    (view)="onView($event)"
-    (edit)="onEdit($event)"
-    (add)="onAdd()"
-    (archive)="onArchive($event)"
-    (restore)="onRestore($event)"
-    (bulkArchive)="onBulkArchive($event)"
-  />
+  @if (canViewTree()) {
+    <div class="flex justify-end">
+      <p-selectButton
+        [options]="viewOptions"
+        [ngModel]="activeView()"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        i18n-ariaLabel="@@facility.view.aria"
+        ariaLabel="Facility view"
+        (ngModelChange)="onViewChange($event)"
+      >
+        <ng-template #item let-option>
+          <span class="flex items-center gap-2">
+            <i [class]="option.icon" aria-hidden="true"></i>
+            <span>{{ option.label }}</span>
+          </span>
+        </ng-template>
+      </p-selectButton>
+    </div>
+  }
+
+  @if (activeView() === 'tree') {
+    <app-facility-tree-table
+      class="flex min-h-0 flex-1 flex-col"
+      [nodes]="treeStore.nodes()"
+      [loading]="treeStore.isQueryLoading()"
+      [hasError]="treeStore.queryHasError()"
+      (view)="onViewTreeNode($event)"
+      (retry)="reloadTree()"
+    />
+  } @else {
+    <app-facility-table
+      class="flex min-h-0 flex-1 flex-col"
+      [facilities]="store.rootFacilities()"
+      [total]="store.totalRootFacilities()"
+      [loading]="store.isLoadingRootFacilities()"
+      [empty]="store.isRootEmpty()"
+      [initialPage]="page()"
+      [createDisabled]="atFacilityLimit()"
+      [createDisabledTooltip]="quotaLimitTooltip"
+      (load)="onLoad($event)"
+      (pageChange)="onPageChange($event)"
+      (view)="onView($event)"
+      (edit)="onEdit($event)"
+      (add)="onAdd()"
+      (archive)="onArchive($event)"
+      (restore)="onRestore($event)"
+      (bulkArchive)="onBulkArchive($event)"
+    />
+  }
 </div>

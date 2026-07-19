@@ -1,0 +1,68 @@
+@if (hasError()) {
+  <app-error-state
+    i18n-title="@@facility.tree.error.title"
+    title="Could not load the hierarchy"
+    i18n-description="@@facility.tree.error.desc"
+    description="The facility hierarchy could not be retrieved."
+    (retry)="retry.emit()"
+  />
+} @else if (!loading() && total() === 0) {
+  <app-empty-state
+    icon="pi pi-sitemap"
+    i18n-title="@@facility.tree.empty.title"
+    title="No facilities yet"
+    i18n-description="@@facility.tree.empty.desc"
+    description="Sites, buildings and their zones will appear here once created."
+  />
+} @else {
+  <p-treeTable
+    [value]="treeNodes()"
+    [loading]="loading()"
+    [scrollable]="true"
+    dataKey="id"
+    styleClass="text-sm"
+  >
+    <ng-template #header>
+      <tr>
+        <th scope="col" i18n="@@facility.tree.col.name">Facility</th>
+        <th scope="col" i18n="@@facility.tree.col.type">Type</th>
+        <th scope="col" class="text-right" i18n="@@facility.tree.col.equipment">Equipment</th>
+        <th scope="col" class="text-right" i18n="@@facility.tree.col.compliance">Compliance</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-rowNode let-rowData="rowData">
+      <tr [ttRow]="rowNode">
+        <td>
+          <div class="flex min-w-0 items-center gap-2">
+            <p-treeTableToggler [rowNode]="rowNode" />
+
+            <button
+              data-testid="facility-tree-name"
+              type="button"
+              class="min-w-0 truncate text-left font-medium text-surface-900 hover:underline dark:text-surface-100"
+              (click)="view.emit(rowData)"
+            >
+              {{ rowData.name }}
+            </button>
+          </div>
+        </td>
+
+        <td>
+          <app-tag [descriptor]="typeDescriptor(rowData.type)" variant="inline" />
+        </td>
+
+        <td class="text-right tabular-nums">{{ rowData.equipmentCount }}</td>
+
+        <td class="text-right">
+          <span
+            class="font-semibold tabular-nums"
+            [class]="complianceClass(rowData.complianceRate)"
+          >
+            {{ complianceLabel(rowData.complianceRate) }}
+          </span>
+        </td>
+      </tr>
+    </ng-template>
+  </p-treeTable>
+}

@@ -7,6 +7,11 @@
  * A const object is preferred over a TypeScript enum here so consumers get
  * autocomplete and strict typing without introducing extra runtime enum code.
  *
+ * This catalog **mirrors** the backend's `OrganizationPermissionCatalog`. It is
+ * not a curated subset: a name missing here cannot be checked at all, so a page
+ * silently renders as if the permission did not exist. Add the name when the
+ * backend grants it, not when a consumer appears.
+ *
  * @since 1.0.0
  */
 export const ORGANIZATION_PERMISSION = {
@@ -35,6 +40,25 @@ export const ORGANIZATION_PERMISSION = {
   SETTINGS_WRITE: 'organization.settings.write',
   /** Permission required to permanently delete the organization. */
   DELETE: 'organization.delete',
+  /** Read the compliance register/summary; also gates the facility hierarchy. */
+  COMPLIANCE_READ: 'organization.compliance.read',
+  COMPLIANCE_EXPORT: 'organization.compliance.export',
+  MAINTENANCE_READ: 'organization.maintenance.read',
+  MAINTENANCE_MANAGE: 'organization.maintenance.manage',
+  MESSAGING_READ: 'organization.messaging.read',
+  MESSAGING_WRITE: 'organization.messaging.write',
+  MESSAGING_MANAGE: 'organization.messaging.manage',
+  ASSISTANT_USE: 'organization.assistant.use',
+  EVENTS_READ: 'organization.events.read',
+  EVENTS_WRITE: 'organization.events.write',
+  TEAMS_READ: 'organization.teams.read',
+  TEAMS_WRITE: 'organization.teams.write',
+  TEAMS_MANAGE: 'organization.teams.manage',
+  APPROVALS_READ: 'organization.approvals.read',
+  APPROVALS_REQUEST: 'organization.approvals.request',
+  APPROVALS_DECIDE: 'organization.approvals.decide',
+  WEBHOOKS_READ: 'organization.webhooks.read',
+  WEBHOOKS_MANAGE: 'organization.webhooks.manage',
   ALL: 'organization.*',
 } as const;
 

@@ -21,9 +21,37 @@ const STATUS: Record<string, FacilityTagDescriptor> = {
   },
 };
 
+/**
+ * Facility type descriptors (site / building / floor / zone / area).
+ *
+ * Types are structural, not a verdict, so every one is `secondary`: only the
+ * icon distinguishes them. Declaration order is the hierarchy order, which
+ * `facilityTagOptions` preserves for filter selects.
+ */
+const TYPE: Record<string, FacilityTagDescriptor> = {
+  site: { label: $localize`:@@facilityType.site:Site`, severity: 'secondary', icon: 'pi pi-globe' },
+  building: {
+    label: $localize`:@@facilityType.building:Building`,
+    severity: 'secondary',
+    icon: 'pi pi-building',
+  },
+  floor: {
+    label: $localize`:@@facilityType.floor:Floor`,
+    severity: 'secondary',
+    icon: 'pi pi-th-large',
+  },
+  zone: { label: $localize`:@@facilityType.zone:Zone`, severity: 'secondary', icon: 'pi pi-map' },
+  area: {
+    label: $localize`:@@facilityType.area:Area`,
+    severity: 'secondary',
+    icon: 'pi pi-map-marker',
+  },
+};
+
 /** Registry indexed by tag kind. */
 const REGISTRY: Record<FacilityTagKind, Record<string, FacilityTagDescriptor>> = {
   status: STATUS,
+  type: TYPE,
 };
 
 /**

@@ -57,6 +57,33 @@ Search and pagination operate on the **root level only** (the `?page=` query
 param is synced for roots). Row actions reuse the existing view / edit /
 archive / restore flows.
 
+## Hierarchy view (`?view=tree`)
+
+The list page offers a second surface through the `?view=` query param, backed by
+`GET /organizations/{orgId}/facility-tree` (`FacilityService.getTree` →
+`FacilityTreeStore`). It returns the **whole hierarchy already nested and
+unpaginated**, each node carrying `equipmentCount` and `complianceRate`.
+
+Invariants a reviewer must preserve:
+
+- this endpoint is **not** the `/children` + `/descendants` pair. It is owned by
+  the backend's Compliance module and gated on `organization.compliance.read`,
+  not `facilities.read`. Never feed it into `loadChildFacilities` — the lazy
+  loader paginates, and mixing the two caches the same rows in two shapes,
+- the permission is **asymmetric**: `?view=tree` opened by a member without
+  `compliance.read` silently falls back to the list and the switcher is not
+  rendered. It must not 403 — the URL is shareable and the reader may hold
+  different permissions than the sender,
+- the hierarchy is only queried while it is on screen; landing on the list costs
+  no extra request,
+- switching view drops `?page=` — the tree has no paginator and a stale cursor
+  would resurface on the way back.
+
+This does not reinstate the inline expansion that was removed from the list: the
+reason it went (a chevron that paginated) does not apply to a single nested
+response. The detail page's `p-organization-chart` remains the drill-down for one
+facility's descendants; this is the estate-wide compliance read.
+
 ## Facility Hierarchy (Detail Overview)
 
 The facility detail page's **Overview** tab renders the descendant hierarchy

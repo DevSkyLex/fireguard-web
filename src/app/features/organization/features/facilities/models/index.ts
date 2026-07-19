@@ -17,3 +17,6 @@ export type { FacilityTypeOutput } from './facility-type/facility-type-output.in
 export type { FacilityTagDescriptor } from './facility-tag/facility-tag-descriptor.interface';
 export type { FacilityTagKind } from './facility-tag/facility-tag-kind.type';
 export { resolveFacilityTag, facilityTagOptions } from './facility-tag/facility-tag.util';
+export type { FacilityTreeNode } from './facility-tree/facility-tree-node.interface';
+export type { FacilityTreeOutput } from './facility-tree/facility-tree-output.interface';
+export type { FacilityListView } from './facility-tree/facility-list-view.type';

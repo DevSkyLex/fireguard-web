@@ -5,18 +5,36 @@ import {
   inject,
   input,
   numberAttribute,
+  type InputSignal,
   type InputSignalWithTransform,
   type Signal,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import type { RequestOptions } from '@core/api';
+import { OrganizationPermissionService } from '@features/organization/access';
 import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
-import { FacilityStore } from '@features/organization/features/facilities/state';
-import { FacilityTable } from '@features/organization/features/facilities/ui/tables';
-import { ORGANIZATION_QUOTA_RESOURCE } from '@features/organization/models';
+import type {
+  FacilityListView,
+  FacilityOutput,
+  FacilityTreeNode,
+} from '@features/organization/features/facilities/models';
+import {
+  FacilityStore,
+  FacilityTreeStore,
+  type FacilityTreeStoreType,
+} from '@features/organization/features/facilities/state';
+import {
+  FacilityTable,
+  FacilityTreeTable,
+} from '@features/organization/features/facilities/ui/tables';
+import {
+  ORGANIZATION_PERMISSION,
+  ORGANIZATION_QUOTA_RESOURCE,
+} from '@features/organization/models';
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 
 /**
@@ -33,8 +51,16 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
  */
 @Component({
   selector: 'app-facility-list',
-  imports: [RouterModule, ButtonModule, MessageModule, FacilityTable],
-  providers: [FacilityStore],
+  imports: [
+    RouterModule,
+    ButtonModule,
+    MessageModule,
+    SelectButtonModule,
+    FormsModule,
+    FacilityTable,
+    FacilityTreeTable,
+  ],
+  providers: [FacilityStore, FacilityTreeStore],
   templateUrl: './facility-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -58,6 +84,21 @@ export class FacilityListPage {
   public readonly page: InputSignalWithTransform<number, unknown> = input<number, unknown>(1, {
     transform: (v: unknown): number => Math.max(1, numberAttribute(v, 1)),
   });
+  /**
+   * Input view
+   * @readonly
+   *
+   * @description
+   * Which surface to render, bound from the `?view=` query param. `'list'` is
+   * the default: it is paginated and needs only `facilities.read`, while the
+   * hierarchy loads every node at once and needs `compliance.read`.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<FacilityListView>}
+   */
+  public readonly view: InputSignal<FacilityListView> = input<FacilityListView>('list');
   //#endregion
 
   //#region Properties
@@ -121,6 +162,114 @@ export class FacilityListPage {
   protected readonly store: FacilityStore = inject<FacilityStore>(FacilityStore);
 
   /**
+   * Property treeStore
+   * @readonly
+   *
+   * @description
+   * Component-scoped store for the hierarchy surface.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {FacilityTreeStoreType}
+   */
+  protected readonly treeStore: FacilityTreeStoreType =
+    inject<FacilityTreeStoreType>(FacilityTreeStore);
+
+  /**
+   * Property permissionService
+   * @readonly
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {OrganizationPermissionService}
+   */
+  private readonly permissionService: OrganizationPermissionService =
+    inject<OrganizationPermissionService>(OrganizationPermissionService);
+
+  /**
+   * Property canViewTree
+   * @readonly
+   *
+   * @description
+   * The hierarchy endpoint is owned by the backend's Compliance module and
+   * gated on `compliance.read`, which a member holding only `facilities.read`
+   * does not have.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canViewTree: Signal<boolean> = computed((): boolean =>
+    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.COMPLIANCE_READ),
+  );
+
+  /**
+   * Property activeView
+   * @readonly
+   *
+   * @description
+   * The surface actually rendered. A `?view=tree` URL from a member without
+   * `compliance.read` falls back to the list rather than showing a 403 — the
+   * link is shareable and the reader may not hold the same permissions.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<FacilityListView>}
+   */
+  protected readonly activeView: Signal<FacilityListView> = computed(
+    (): FacilityListView => (this.view() === 'tree' && this.canViewTree() ? 'tree' : 'list'),
+  );
+
+  /**
+   * Property treeLoadTarget
+   * @readonly
+   *
+   * @description
+   * The organization whose hierarchy should be loaded, or `null` while the
+   * hierarchy is not on screen — so entering the page on the list costs no
+   * extra request.
+   *
+   * Fed straight into `rxMethod` rather than an `effect`: the store writes its
+   * own query state, and a tracked effect that reads it back would re-trigger
+   * itself.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {Signal<string | null>}
+   */
+  private readonly treeLoadTarget: Signal<string | null> = computed((): string | null =>
+    this.activeView() === 'tree'
+      ? (this.activeOrganizationStore.selectedOrganization()?.id ?? null)
+      : null,
+  );
+
+  /**
+   * Property viewOptions
+   * @readonly
+   *
+   * @description
+   * Surface switcher entries.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Array<{ label: string; value: FacilityListView; icon: string }>}
+   */
+  protected readonly viewOptions: Array<{
+    label: string;
+    value: FacilityListView;
+    icon: string;
+  }> = [
+    { label: $localize`:@@facility.view.list:List`, value: 'list', icon: 'pi pi-list' },
+    { label: $localize`:@@facility.view.tree:Hierarchy`, value: 'tree', icon: 'pi pi-sitemap' },
+  ];
+
+  /**
    * Property quotaStore
    * @readonly
    *
@@ -158,6 +307,18 @@ export class FacilityListPage {
    */
   private lastLoadOptions: RequestOptions | undefined;
 
+  //#endregion
+
+  //#region Lifecycle
+  /**
+   * Wires the hierarchy query to {@link treeLoadTarget}: it runs when the user
+   * switches to the tree and stays idle otherwise.
+   *
+   * @since 2.0.0
+   */
+  public constructor() {
+    this.treeStore.load(this.treeLoadTarget);
+  }
   //#endregion
 
   //#region Methods
@@ -340,6 +501,64 @@ export class FacilityListPage {
       queryParams: { page: page > 1 ? page : null },
       queryParamsHandling: 'merge',
     });
+  }
+
+  /**
+   * Method onViewChange
+   * @method onViewChange
+   *
+   * @description
+   * Switches surface through the `?view=` query param. `?page=` is dropped on
+   * the way into the hierarchy — it has no paginator, and a stale page cursor
+   * would reappear on the way back out.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @param {FacilityListView} view - The surface to show.
+   *
+   * @returns {void}
+   */
+  public onViewChange(view: FacilityListView): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { view: view === 'list' ? null : view, page: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /**
+   * Method onViewTreeNode
+   * @method onViewTreeNode
+   *
+   * @description
+   * Opens a facility picked from the hierarchy.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @param {FacilityTreeNode} node - The selected node.
+   *
+   * @returns {void}
+   */
+  public onViewTreeNode(node: FacilityTreeNode): void {
+    this.router.navigate([node.id], { relativeTo: this.route });
+  }
+
+  /**
+   * Method reloadTree
+   * @method reloadTree
+   *
+   * @description
+   * Re-runs the hierarchy query after a failure.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @returns {void}
+   */
+  public reloadTree(): void {
+    this.treeStore.load(this.activeOrganizationStore.selectedOrganization()?.id ?? null);
   }
   //#endregion
 }

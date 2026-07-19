@@ -8,3 +8,5 @@ export { FacilityStore } from './facility';
 export type { FacilityStoreType } from './facility';
 export type { FacilityEquipmentStatusRow, FacilityOverviewState } from './facility-overview';
 export { FacilityOverviewStore } from './facility-overview';
+export { FacilityTreeStore } from './facility-tree';
+export type { FacilityTreeStoreType } from './facility-tree';

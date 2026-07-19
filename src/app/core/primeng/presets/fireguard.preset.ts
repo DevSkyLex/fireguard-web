@@ -305,6 +305,50 @@ export const FireguardTheme: Preset = definePreset(Aura, {
 }
 `,
     },
+    treetable: {
+      colorScheme: {
+        light: {
+          row: {
+            background: '{surface.0}',
+            hoverBackground: '{surface.100}',
+          },
+          headerCell: {
+            background: '{surface.0}',
+            color: '{surface.500}',
+          },
+        },
+        dark: {
+          row: {
+            background: '{surface.900}',
+            hoverBackground: '{surface.800}',
+          },
+          headerCell: {
+            background: '{surface.900}',
+            color: '{surface.400}',
+          },
+        },
+      },
+      headerCell: {
+        padding: '0.875rem 1.25rem 0.625rem',
+      },
+      bodyCell: {
+        padding: '0.75rem 1.25rem',
+      },
+      columnTitle: {
+        fontWeight: '600',
+      },
+      // Mirrors the `datatable` header rule. TreeTable emits its own class
+      // names, so the datatable selector above does not reach these cells and
+      // the two grids would otherwise disagree on header typography.
+      css: `
+.p-treetable-thead > tr > th {
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+`,
+    },
     dialog: {
       root: {
         borderRadius: '12px',

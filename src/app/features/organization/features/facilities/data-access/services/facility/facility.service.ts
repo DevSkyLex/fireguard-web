@@ -4,6 +4,7 @@ import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection, OptionOutput } from '@core/api/models';
 import type {
   FacilityOutput,
+  FacilityTreeOutput,
   FacilityTypeOutput,
   FacilityListOptions,
   FacilityChildrenOptions,
@@ -225,6 +226,33 @@ export class FacilityService extends HydraApiService {
     return this.getCollection<FacilityOutput>(
       `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/descendants`,
       { params },
+    );
+  }
+
+  /**
+   * Method getTree
+   * @method getTree
+   *
+   * @description
+   * Fetches the whole facility hierarchy in one non-paginated response, each
+   * node enriched with its equipment count and compliance rate.
+   *
+   * This is a separate endpoint from the `/children` and `/descendants` pair:
+   * it is owned by the backend's Compliance module, requires
+   * `organization.compliance.read` rather than `facilities.read`, and returns
+   * nodes already nested. Do **not** feed it into the per-parent lazy loaders —
+   * that would cache the same rows twice.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   *
+   * @return {Observable<FacilityTreeOutput>} An observable emitting the nested hierarchy.
+   */
+  public getTree(organizationId: string): Observable<FacilityTreeOutput> {
+    return this.getOne<FacilityTreeOutput>(
+      `${FacilityService.BASE_PATH}/${organizationId}/facility-tree`,
     );
   }
 

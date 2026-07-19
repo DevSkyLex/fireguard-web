@@ -170,6 +170,49 @@ export class MessagingService extends HydraApiService {
   }
 
   /**
+   * Method setPinned
+   * @method setPinned
+   *
+   * @description
+   * Pins or unpins a message for everyone in the conversation.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @param {string} messageId - The message to pin.
+   * @param {boolean} pinned - Target state.
+   *
+   * @return {Observable<MessageOutput | void>} The updated message, or nothing when unpinning.
+   */
+  public setPinned(messageId: string, pinned: boolean): Observable<MessageOutput | void> {
+    return pinned
+      ? this.post<Record<string, never>, MessageOutput>(`/api/messages/${messageId}/pin`, {})
+      : this.delete(`/api/messages/${messageId}/pin`);
+  }
+
+  /**
+   * Method setSaved
+   * @method setSaved
+   *
+   * @description
+   * Adds or removes a message from the current member's saved list. Unlike a
+   * pin, this is personal and invisible to everyone else.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @param {string} messageId - The message to save.
+   * @param {boolean} saved - Target state.
+   *
+   * @return {Observable<MessageOutput | void>} The updated message, or nothing when unsaving.
+   */
+  public setSaved(messageId: string, saved: boolean): Observable<MessageOutput | void> {
+    return saved
+      ? this.post<Record<string, never>, MessageOutput>(`/api/messages/${messageId}/save`, {})
+      : this.delete(`/api/messages/${messageId}/save`);
+  }
+
+  /**
    * Method markRead
    * @method markRead
    *

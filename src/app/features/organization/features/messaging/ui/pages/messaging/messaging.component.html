@@ -104,6 +104,8 @@
         [currentMemberId]="memberAccess.currentMemberId()"
         [loading]="store.isLoadingMessages()"
         (reactionToggled)="toggleReaction($event)"
+        (pinToggled)="togglePin($event)"
+        (saveToggled)="toggleSave($event)"
       />
 
       <!-- Composer inset from the thread's edges, per the kit. -->

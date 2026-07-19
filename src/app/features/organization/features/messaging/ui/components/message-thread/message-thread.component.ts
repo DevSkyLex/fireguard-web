@@ -115,6 +115,28 @@ export class MessageThread {
     readonly message: MessageOutput;
     readonly emoji: string;
   }> = output<{ readonly message: MessageOutput; readonly emoji: string }>();
+
+  /**
+   * Property pinToggled
+   * @readonly
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {OutputEmitterRef<MessageOutput>}
+   */
+  public readonly pinToggled: OutputEmitterRef<MessageOutput> = output<MessageOutput>();
+
+  /**
+   * Property saveToggled
+   * @readonly
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {OutputEmitterRef<MessageOutput>}
+   */
+  public readonly saveToggled: OutputEmitterRef<MessageOutput> = output<MessageOutput>();
   //#endregion
 
   //#region Methods

@@ -288,6 +288,40 @@ test.describe('Messaging workspace', () => {
     );
   });
 
+  test('pins a message for the whole conversation', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const { reacted } = await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+    await page.getByTestId('pin-toggle').first().click();
+
+    await expect.poll(() => reacted).toEqual(['POST m1/pin']);
+    await expect(page.getByTestId('pinned-marker')).toBeVisible();
+  });
+
+  // Saving is personal; pinning is not. They must not share a control.
+  test('saves a message for the current member only', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const { reacted } = await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+    await page.getByTestId('save-toggle').first().click();
+
+    await expect.poll(() => reacted).toEqual(['POST m1/save']);
+    await expect(page.getByTestId('pinned-marker')).toHaveCount(0);
+  });
+
+  // Hidden until hover, but never removed from the tab order.
+  test('keeps the row actions reachable by keyboard', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+    await page.getByTestId('pin-toggle').first().focus();
+
+    await expect(page.getByTestId('pin-toggle').first()).toBeFocused();
+  });
+
   test('refuses to send an empty draft', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     const { sent } = await landOnMessaging(page);

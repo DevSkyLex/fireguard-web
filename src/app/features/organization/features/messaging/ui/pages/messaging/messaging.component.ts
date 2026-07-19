@@ -267,6 +267,40 @@ export class MessagingPage {
     this.store.toggleReaction({ ...event, currentMemberId });
   }
 
+  /**
+   * Method togglePin
+   *
+   * @description
+   * Pins or unpins a message for the whole conversation.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @param {MessageOutput} message - The message to pin.
+   *
+   * @returns {void}
+   */
+  protected togglePin(message: MessageOutput): void {
+    this.store.setPinned({ message, pinned: message.pinnedAt === null });
+  }
+
+  /**
+   * Method toggleSave
+   *
+   * @description
+   * Adds or removes a message from the member's own saved list.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @param {MessageOutput} message - The message to save.
+   *
+   * @returns {void}
+   */
+  protected toggleSave(message: MessageOutput): void {
+    this.store.setSaved({ message, saved: !message.isSaved });
+  }
+
   protected send(): void {
     if (!this.canSend()) return;
 

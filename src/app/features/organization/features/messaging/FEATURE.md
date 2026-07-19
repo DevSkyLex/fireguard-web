@@ -11,8 +11,9 @@ backend scopes every endpoint by the session's active organization.
 ## Status
 
 Conversation list, thread, composer and emoji reactions are live at
-`…/messages`, with the thread updating in real time. Pins, saved messages,
-threads, attachments and presence are not built.
+`…/messages`, with the thread updating in real time. Messages can be pinned
+(conversation-wide) and saved (personal). Reply threads, attachments and
+presence are not built.
 
 ## Route entry points
 
@@ -49,6 +50,12 @@ not here.
   so without `currentMemberId` (from `OrganizationMemberAccessStore`) the UI
   cannot tell "3 people reacted" from "3 people including me", and the toggle
   cannot choose between POST and DELETE.
+- **Pinning is shared, saving is personal.** A pin is visible to the whole
+  conversation; a save is only in the member's own list. They must never share a
+  control or an icon.
+- **Row actions hide on `opacity`, not `hidden`.** The thread reads as prose
+  until you hover, but the buttons stay in the tab order — `display: none` would
+  make them unreachable by keyboard.
 - **Removing a reaction returns no body.** The updated message is derived
   locally, so the chip disappears when its last reactor leaves rather than
   lingering at zero.

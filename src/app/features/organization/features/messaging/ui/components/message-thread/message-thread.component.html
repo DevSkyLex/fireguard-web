@@ -17,7 +17,7 @@
     />
   } @else {
     @for (message of messages(); track message.id) {
-      <article class="flex gap-3" data-testid="message-row">
+      <article class="group flex gap-3" data-testid="message-row">
         @let author = this.author(message.authorMember);
 
         @if (author.avatarUrl) {
@@ -35,7 +35,7 @@
           </span>
         }
 
-        <div class="flex min-w-0 flex-col gap-1">
+        <div class="flex min-w-0 flex-1 flex-col gap-1">
           <p class="flex items-baseline gap-2">
             <!--
               Resolved through the member directory: the API only sends a bare
@@ -79,6 +79,16 @@
             </p>
           }
 
+          @if (message.pinnedAt) {
+            <p
+              class="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400"
+              data-testid="pinned-marker"
+            >
+              <i class="pi pi-bookmark-fill text-[10px]" aria-hidden="true"></i>
+              <span i18n="@@messaging.thread.pinned">Pinned</span>
+            </p>
+          }
+
           @if (message.reactions.length > 0) {
             <!-- Reaction chip geometry ported from the kit: 26px, full radius. -->
             <ul class="mt-0.5 flex flex-wrap gap-1.5">
@@ -110,6 +120,41 @@
               <span i18n="@@messaging.thread.replies">replies</span>
             </p>
           }
+        </div>
+
+        <!--
+          Row actions stay hidden until hover or keyboard focus so the thread
+          reads as prose, but they remain focusable — `opacity` hides them
+          visually without removing them from the tab order.
+        -->
+        <div
+          class="flex shrink-0 items-start gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100"
+        >
+          <button
+            type="button"
+            data-testid="pin-toggle"
+            class="rounded p-1 text-surface-400 hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200"
+            [class.text-amber-600]="message.pinnedAt"
+            [attr.aria-pressed]="!!message.pinnedAt"
+            i18n-aria-label="@@messaging.thread.pinAction"
+            aria-label="Pin message"
+            (click)="pinToggled.emit(message)"
+          >
+            <i class="pi pi-bookmark text-xs" aria-hidden="true"></i>
+          </button>
+
+          <button
+            type="button"
+            data-testid="save-toggle"
+            class="rounded p-1 text-surface-400 hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200"
+            [class.text-primary-600]="message.isSaved"
+            [attr.aria-pressed]="message.isSaved"
+            i18n-aria-label="@@messaging.thread.saveAction"
+            aria-label="Save message"
+            (click)="saveToggled.emit(message)"
+          >
+            <i class="pi pi-star text-xs" aria-hidden="true"></i>
+          </button>
         </div>
       </article>
     }

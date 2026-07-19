@@ -238,6 +238,17 @@ export const MessagingWorkspaceStore = signalStore(
       ),
     );
 
+    /** Swaps one message in the thread, leaving the rest untouched. */
+    const replaceMessage = (updated: MessageOutput): void => {
+      patchState(store, {
+        messagesCallState: successCallState(
+          (store.messagesCallState().data ?? []).map((message: MessageOutput) =>
+            message.id === updated.id ? updated : message,
+          ),
+        ),
+      });
+    };
+
     return {
       loadMessages,
       streamMessages,
@@ -344,6 +355,60 @@ export const MessagingWorkspaceStore = signalStore(
               }),
             );
           }),
+        ),
+      ),
+
+      /**
+       * Method setPinned
+       *
+       * @description
+       * Pins or unpins a message for the whole conversation.
+       *
+       * @param {{ message: MessageOutput; pinned: boolean }} request - What to change.
+       *
+       * @returns {void}
+       */
+      setPinned: rxMethod<{ readonly message: MessageOutput; readonly pinned: boolean }>(
+        pipe(
+          mergeMap((request) =>
+            service.setPinned(request.message.id, request.pinned).pipe(
+              map(
+                (updated: MessageOutput | void): MessageOutput =>
+                  // Unpinning returns no body, so the new state is derived here
+                  // — and it must follow the requested direction, not assume one.
+                  updated ??
+                  (request.pinned
+                    ? { ...request.message, pinnedAt: request.message.createdAt }
+                    : { ...request.message, pinnedAt: null, pinnedBy: null }),
+              ),
+              tapResponse({ next: replaceMessage, error: () => undefined }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Method setSaved
+       *
+       * @description
+       * Adds or removes a message from the member's own saved list — personal,
+       * unlike a pin.
+       *
+       * @param {{ message: MessageOutput; saved: boolean }} request - What to change.
+       *
+       * @returns {void}
+       */
+      setSaved: rxMethod<{ readonly message: MessageOutput; readonly saved: boolean }>(
+        pipe(
+          mergeMap((request) =>
+            service.setSaved(request.message.id, request.saved).pipe(
+              map(
+                (updated: MessageOutput | void): MessageOutput =>
+                  updated ?? { ...request.message, isSaved: request.saved },
+              ),
+              tapResponse({ next: replaceMessage, error: () => undefined }),
+            ),
+          ),
         ),
       ),
 

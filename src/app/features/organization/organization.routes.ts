@@ -88,6 +88,26 @@ export const ORGANIZATION_ROUTES: Routes = [
         loadComponent: () =>
           import('./features/messaging/ui/pages/messaging').then((m) => m.MessagingPage),
       },
+      /**
+       * The assistant.
+       *
+       * ⚠️ Gated on `assistant.use` only. The backend also has a per-organization
+       * setting that can switch the assistant off, and this route does not read
+       * it yet — so an organization that disabled it still sees the page. Wiring
+       * that gate needs the setting exposed on `OrganizationSettingsOutput`.
+       */
+      {
+        path: 'assistant',
+        title: 'Assistant',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.ASSISTANT_USE],
+          }),
+        ],
+        data: { breadcrumb: 'Assistant' },
+        loadComponent: () =>
+          import('./features/assistant/ui/pages/assistant').then((m) => m.AssistantPage),
+      },
       {
         path: 'calendar',
         title: 'Calendar',

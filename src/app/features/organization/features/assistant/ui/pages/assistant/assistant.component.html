@@ -1,0 +1,130 @@
+<div id="assistant" class="flex min-h-0 w-full flex-1">
+  <aside
+    class="flex w-[266px] shrink-0 flex-col overflow-y-auto border-r border-surface-200 dark:border-surface-800"
+    i18n-aria-label="@@assistant.threads.aria"
+    aria-label="Assistant threads"
+  >
+    <h2
+      class="px-2.5 pt-4 pb-1 text-xs font-semibold tracking-wide text-surface-500 uppercase dark:text-surface-400"
+      i18n="@@assistant.threads.title"
+    >
+      Conversations
+    </h2>
+
+    @if (store.isLoadingThreads()) {
+      <div class="p-3"><app-skeleton height="2rem" /></div>
+    } @else if (store.threads().length === 0) {
+      <p
+        class="px-3 py-6 text-sm text-surface-500 dark:text-surface-400"
+        i18n="@@assistant.threads.empty"
+      >
+        No conversations yet.
+      </p>
+    } @else {
+      @for (thread of store.threads(); track thread.id) {
+        <button
+          type="button"
+          data-testid="assistant-thread"
+          class="mx-2 flex h-8 items-center gap-2.5 rounded-md px-2.5 text-sm"
+          [class]="
+            store.activeThreadId() === thread.id
+              ? 'bg-surface-100 font-semibold text-surface-950 dark:bg-surface-800 dark:text-surface-50'
+              : 'text-surface-600 hover:bg-surface-50 dark:text-surface-400 dark:hover:bg-surface-900'
+          "
+          (click)="openThread(thread.id)"
+        >
+          <i class="pi pi-sparkles text-xs" aria-hidden="true"></i>
+          <span class="min-w-0 flex-1 truncate text-left">
+            {{ thread.title ?? 'Untitled' }}
+          </span>
+        </button>
+      }
+    }
+  </aside>
+
+  <section class="flex min-w-0 flex-1 flex-col">
+    @if (store.activeThreadId()) {
+      <div class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-6 py-[22px]">
+        @if (store.isLoadingMessages()) {
+          <app-skeleton height="4rem" />
+        } @else {
+          @for (message of store.messages(); track message.id) {
+            <article
+              class="flex flex-col gap-1"
+              data-testid="assistant-message"
+              [class.items-end]="message.role === 'user'"
+            >
+              <p
+                class="max-w-[62ch] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap"
+                [class]="
+                  message.role === 'user'
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-surface-100 text-surface-800 dark:bg-surface-800 dark:text-surface-200'
+                "
+              >
+                <!--
+                  A pending answer has an empty body and fills in over Mercure,
+                  so the wait is shown rather than rendered as a blank bubble.
+                -->
+                @if (message.status === 'failed') {
+                  <span class="italic" i18n="@@assistant.message.failed">
+                    The assistant could not answer this one.
+                  </span>
+                } @else if (message.body.length === 0) {
+                  <span
+                    class="text-surface-500 italic dark:text-surface-400"
+                    data-testid="assistant-thinking"
+                    i18n="@@assistant.message.thinking"
+                  >
+                    Thinking…
+                  </span>
+                } @else {
+                  {{ message.body }}
+                }
+              </p>
+            </article>
+          }
+        }
+      </div>
+
+      <div
+        class="mx-6 mb-5 flex items-end gap-2 rounded-2xl border border-surface-300 p-2 shadow-sm dark:border-surface-700"
+      >
+        <textarea
+          pTextarea
+          rows="1"
+          data-testid="assistant-composer"
+          class="max-h-40 min-h-9 flex-1 resize-none border-0 bg-transparent shadow-none focus:ring-0"
+          i18n-placeholder="@@assistant.composer.placeholder"
+          placeholder="Ask about your sites, equipment or interventions…"
+          i18n-aria-label="@@assistant.composer.aria"
+          aria-label="Question"
+          [ngModel]="draft()"
+          (ngModelChange)="draft.set($event)"
+          (keydown)="onComposerKeydown($event)"
+        ></textarea>
+
+        <p-button
+          icon="pi pi-send"
+          size="small"
+          data-testid="assistant-send"
+          i18n-ariaLabel="@@assistant.composer.send"
+          ariaLabel="Ask"
+          [disabled]="!canAsk()"
+          [loading]="store.isAnswering()"
+          (onClick)="ask()"
+        />
+      </div>
+    } @else {
+      <div class="flex flex-1 items-center justify-center p-8">
+        <app-empty-state
+          icon="pi pi-sparkles"
+          i18n-title="@@assistant.empty.title"
+          title="Pick a conversation"
+          i18n-description="@@assistant.empty.desc"
+          description="Open a past conversation to keep going."
+        />
+      </div>
+    }
+  </section>
+</div>

@@ -213,6 +213,14 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
   },
   {
+    id: 'assistant',
+    label: $localize`:@@route.assistant:Assistant`,
+    icon: 'pi pi-sparkles',
+    path: 'assistant',
+    group: 'workspace',
+    permissions: [ORGANIZATION_PERMISSION.ASSISTANT_USE],
+  },
+  {
     id: 'calendar',
     label: $localize`:@@route.calendar:Calendar`,
     icon: 'pi pi-calendar',

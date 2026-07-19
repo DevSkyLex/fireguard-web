@@ -24,7 +24,8 @@
     "lint:fix": "oxlint -c .oxlintrc.json . --tsconfig tsconfig.json --ignore-path .gitignore --fix",
     "format": "oxfmt -c .oxfmtrc.json .",
     "format:check": "oxfmt -c .oxfmtrc.json --check .",
-    "quality": "npm run format:check && npm run lint && npm run test:ci && npm run build",
+    "guard": "node scripts/guard-surface-utilities.mjs",
+    "quality": "npm run format:check && npm run lint && npm run guard && npm run test:ci && npm run build",
     "serve:ssr:fireguard-web": "node dist/fireguard-web/server/server.mjs",
     "e2e": "ng e2e"
   },

@@ -3,8 +3,10 @@ import {
   Component,
   computed,
   inject,
+  effect,
   input,
   signal,
+  untracked,
   type InputSignal,
   type Signal,
   type WritableSignal,
@@ -194,6 +196,29 @@ export class MessagingPage {
         (): string | null => this.activeOrganizationStore.selectedOrganization()?.id ?? null,
       ),
     );
+
+    /**
+     * Presence for the authors currently on screen. The API has no
+     * "list all online" mode, so the ids are derived from the thread.
+     */
+    effect((): void => {
+      const organizationId: string | undefined =
+        this.activeOrganizationStore.selectedOrganization()?.id;
+      const authorIds: readonly string[] = [
+        ...new Set(
+          this.store.messages().map((message: MessageOutput): string => message.authorMember),
+        ),
+      ];
+
+      if (organizationId === undefined || authorIds.length === 0) return;
+
+      untracked((): void => {
+        this.store.loadPresence({
+          organization: `/api/organizations/${organizationId}`,
+          memberIds: authorIds,
+        });
+      });
+    });
 
     // The URL is the source of truth for which thread is open, so a shared link
     // and a reload both land on the same conversation.

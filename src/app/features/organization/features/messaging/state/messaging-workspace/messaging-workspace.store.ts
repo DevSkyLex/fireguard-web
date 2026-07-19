@@ -18,6 +18,7 @@ import { MessagingService } from '@features/organization/features/messaging/data
 import type {
   ConversationOutput,
   MessageOutput,
+  PresenceOutput,
   SendMessageInput,
 } from '@features/organization/features/messaging/models';
 
@@ -27,6 +28,7 @@ import type {
  * @since 1.0.0
  */
 interface MessagingWorkspaceState {
+  readonly onlineMemberIds: readonly string[];
   readonly conversationsCallState: CallState<readonly ConversationOutput[]>;
   readonly messagesCallState: CallState<readonly MessageOutput[]>;
   readonly sendCallState: CallState<MessageOutput>;
@@ -34,6 +36,7 @@ interface MessagingWorkspaceState {
 }
 
 const INITIAL_STATE: MessagingWorkspaceState = {
+  onlineMemberIds: [],
   conversationsCallState: idleCallState(),
   messagesCallState: idleCallState(),
   sendCallState: idleCallState(),
@@ -161,6 +164,16 @@ export const MessagingWorkspaceStore = signalStore(
      * @type {Signal<boolean>}
      */
     isLoadingMessages: computed<boolean>(() => isCallPending(store.messagesCallState())),
+
+    /**
+     * Computed onlineMembers
+     *
+     * @description
+     * Online member ids as a set, for O(1) lookup per rendered message.
+     *
+     * @type {Signal<ReadonlySet<string>>}
+     */
+    onlineMembers: computed<ReadonlySet<string>>(() => new Set(store.onlineMemberIds())),
 
     /**
      * Computed isSending
@@ -350,6 +363,42 @@ export const MessagingWorkspaceStore = signalStore(
                         message.id === updated.id ? updated : message,
                       ),
                     ),
+                  }),
+                error: () => undefined,
+              }),
+            );
+          }),
+        ),
+      ),
+
+      /**
+       * Method loadPresence
+       *
+       * @description
+       * Reads who is online among the thread's authors.
+       *
+       * The API has no "list all online members" mode, so the caller passes the
+       * ids it cares about — here, the distinct authors currently on screen.
+       *
+       * @param {{ organization: string; memberIds: readonly string[] }} request - Who to check.
+       *
+       * @returns {void}
+       */
+      loadPresence: rxMethod<{
+        readonly organization: string;
+        readonly memberIds: readonly string[];
+      }>(
+        pipe(
+          switchMap((request) => {
+            if (request.memberIds.length === 0) return EMPTY;
+
+            return service.getPresence(request.organization, request.memberIds).pipe(
+              tapResponse({
+                next: (collection: HydraCollection<PresenceOutput>) =>
+                  patchState(store, {
+                    onlineMemberIds: collection.member
+                      .filter((presence: PresenceOutput): boolean => presence.online)
+                      .map((presence: PresenceOutput): string => presence.memberId),
                   }),
                 error: () => undefined,
               }),

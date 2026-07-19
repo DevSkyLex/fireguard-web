@@ -8,3 +8,4 @@ export type {
   MessageReaction,
   SendMessageInput,
 } from './message/message-output.interface';
+export type { PresenceOutput } from './presence/presence-output.interface';

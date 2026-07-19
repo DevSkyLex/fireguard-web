@@ -102,6 +102,7 @@
         [messages]="store.messages()"
         [authors]="directory.identities()"
         [currentMemberId]="memberAccess.currentMemberId()"
+        [onlineMembers]="store.onlineMembers()"
         [loading]="store.isLoadingMessages()"
         (reactionToggled)="toggleReaction($event)"
         (pinToggled)="togglePin($event)"

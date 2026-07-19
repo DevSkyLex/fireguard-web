@@ -20,20 +20,36 @@
       <article class="group flex gap-3" data-testid="message-row">
         @let author = this.author(message.authorMember);
 
-        @if (author.avatarUrl) {
-          <img
-            class="mt-0.5 size-8 shrink-0 rounded-full object-cover"
-            [src]="author.avatarUrl"
-            [alt]="author.displayName"
-          />
-        } @else {
-          <span
-            class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-200 text-xs font-semibold text-surface-700 dark:bg-surface-700 dark:text-surface-200"
-            aria-hidden="true"
-          >
-            {{ author.initials }}
-          </span>
-        }
+        <span class="relative mt-0.5 shrink-0">
+          @if (author.avatarUrl) {
+            <img
+              class="size-8 rounded-full object-cover"
+              [src]="author.avatarUrl"
+              [alt]="author.displayName"
+            />
+          } @else {
+            <span
+              class="flex size-8 items-center justify-center rounded-full bg-surface-200 text-xs font-semibold text-surface-700 dark:bg-surface-700 dark:text-surface-200"
+              aria-hidden="true"
+            >
+              {{ author.initials }}
+            </span>
+          }
+
+          <!--
+            Presence is a dot *and* a label for screen readers: status is never
+            colour-only (PRODUCT.md). An absent id means offline or unknown, so
+            only the online case is announced.
+          -->
+          @if (onlineMembers().has(message.authorMember)) {
+            <span
+              data-testid="presence-dot"
+              class="absolute right-0 bottom-0 size-2.5 rounded-full border-2 border-surface-0 bg-green-500 dark:border-surface-900"
+            >
+              <span class="sr-only" i18n="@@messaging.thread.online">Online</span>
+            </span>
+          }
+        </span>
 
         <div class="flex min-w-0 flex-1 flex-col gap-1">
           <p class="flex items-baseline gap-2">

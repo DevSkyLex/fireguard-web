@@ -5,6 +5,7 @@ import type { HydraCollection } from '@core/api/models';
 import type { MercureSubscriptionOutput } from '@core/mercure';
 import type {
   ConversationOutput,
+  PresenceOutput,
   MessageOutput,
   SendMessageInput,
 } from '@features/organization/features/messaging/models';
@@ -210,6 +211,49 @@ export class MessagingService extends HydraApiService {
     return saved
       ? this.post<Record<string, never>, MessageOutput>(`/api/messages/${messageId}/save`, {})
       : this.delete(`/api/messages/${messageId}/save`);
+  }
+
+  /**
+   * Method getPresence
+   * @method getPresence
+   *
+   * @description
+   * Reads presence for specific members. There is deliberately no "list all
+   * online members" mode on the API, so callers must pass the ids they care
+   * about — capped at 100 by the backend.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @param {string} organization - The organization IRI.
+   * @param {readonly string[]} memberIds - Members to check.
+   *
+   * @return {Observable<HydraCollection<PresenceOutput>>} Their presence.
+   */
+  public getPresence(
+    organization: string,
+    memberIds: readonly string[],
+  ): Observable<HydraCollection<PresenceOutput>> {
+    return this.getCollection<PresenceOutput>('/api/presence', {
+      params: { organization, memberIds: memberIds.slice(0, 100).join(',') },
+    });
+  }
+
+  /**
+   * Method pingPresence
+   * @method pingPresence
+   *
+   * @description
+   * Marks the current member as online. The backend expires presence on its
+   * own, so this has to be repeated while the workspace is open.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @return {Observable<PresenceOutput>} The refreshed presence.
+   */
+  public pingPresence(): Observable<PresenceOutput> {
+    return this.post<Record<string, never>, PresenceOutput>('/api/presence/ping', {});
   }
 
   /**

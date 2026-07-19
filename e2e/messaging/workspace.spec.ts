@@ -96,6 +96,17 @@ async function landOnMessaging(
     }),
   );
 
+  await page.route(`${API_BASE_URL}/api/presence**`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/ld+json',
+      body: JSON.stringify({
+        member: [{ memberId: 'member-abc', online: true, lastSeenAt: '2026-07-01T10:05:00+00:00' }],
+        totalItems: 1,
+      }),
+    }),
+  );
+
   await page.route(`${API_BASE_URL}/api/messages/**`, async (route) => {
     const url: string = route.request().url();
     reacted.push(
@@ -320,6 +331,17 @@ test.describe('Messaging workspace', () => {
     await page.getByTestId('pin-toggle').first().focus();
 
     await expect(page.getByTestId('pin-toggle').first()).toBeFocused();
+  });
+
+  // Status is never colour-only: the dot carries a screen-reader label.
+  test('marks an online author with a labelled presence dot', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+
+    await expect(page.getByTestId('presence-dot').first()).toBeAttached();
+    await expect(page.getByText('Online').first()).toBeAttached();
   });
 
   test('refuses to send an empty draft', async ({ page }) => {

@@ -12,8 +12,8 @@ backend scopes every endpoint by the session's active organization.
 
 Conversation list, thread, composer and emoji reactions are live at
 `…/messages`, with the thread updating in real time. Messages can be pinned
-(conversation-wide) and saved (personal). Reply threads, attachments and
-presence are not built.
+(conversation-wide) and saved (personal), and online authors carry a presence
+dot. Reply threads and attachments are not built.
 
 ## Route entry points
 
@@ -50,6 +50,10 @@ not here.
   so without `currentMemberId` (from `OrganizationMemberAccessStore`) the UI
   cannot tell "3 people reacted" from "3 people including me", and the toggle
   cannot choose between POST and DELETE.
+- **Presence has no "list all online" mode.** The API requires the member ids to
+  check (max 100), so the page derives them from the authors currently on
+  screen. An id absent from the response means offline **or** unknown — presence
+  expires server-side — so only the online case is ever asserted in the UI.
 - **Pinning is shared, saving is personal.** A pin is visible to the whole
   conversation; a save is only in the member's own list. They must never share a
   control or an icon.

@@ -99,6 +99,24 @@ export class MessageThread {
    * @type {InputSignal<string | null>}
    */
   public readonly currentMemberId: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property onlineMembers
+   * @readonly
+   *
+   * @description
+   * Members currently online. Absent from the set means offline **or**
+   * unknown — presence expires server-side, so a missing id is not a claim
+   * that someone left.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {InputSignal<ReadonlySet<string>>}
+   */
+  public readonly onlineMembers: InputSignal<ReadonlySet<string>> = input<ReadonlySet<string>>(
+    new Set<string>(),
+  );
   //#endregion
 
   //#region Outputs

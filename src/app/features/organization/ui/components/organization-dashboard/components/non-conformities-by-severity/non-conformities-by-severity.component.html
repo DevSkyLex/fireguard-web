@@ -1,0 +1,53 @@
+<app-trend-card
+  i18n-title="@@org.dash.ncSeverity.title"
+  title="By severity"
+  i18n-description="@@org.dash.ncSeverity.desc"
+  description="Open non-conformities, most urgent first"
+  [loading]="isLoading()"
+>
+  <ng-template #content>
+    <!--
+      Ported from the prototype's "By severity" card: a 56px label column, an
+      8px full-radius track, and the count right-aligned. The bar carries the
+      severity colour, and the label carries the severity name — status is
+      never colour-only (PRODUCT.md).
+    -->
+    <div class="flex flex-col gap-3">
+      @for (row of rows(); track row.label) {
+        <div class="flex items-center gap-3">
+          <span class="w-14 shrink-0 truncate text-xs text-surface-600 dark:text-surface-400">
+            {{ row.label }}
+          </span>
+
+          <div
+            class="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
+            role="meter"
+            [attr.aria-label]="row.label"
+            [attr.aria-valuenow]="row.count"
+            [attr.aria-valuemin]="0"
+            [attr.aria-valuemax]="total()"
+          >
+            <div
+              class="h-full rounded-full"
+              [class]="row.barClass"
+              [style.width.%]="row.share"
+            ></div>
+          </div>
+
+          <span
+            class="w-8 shrink-0 text-right text-sm font-semibold text-surface-950 tabular-nums dark:text-surface-50"
+          >
+            {{ row.count }}
+          </span>
+        </div>
+      }
+
+      <p class="text-xs text-surface-500 dark:text-surface-400">
+        <span class="font-semibold text-surface-950 tabular-nums dark:text-surface-50">
+          {{ total() }}
+        </span>
+        <span i18n="@@org.dash.ncSeverity.total">open</span>
+      </p>
+    </div>
+  </ng-template>
+</app-trend-card>

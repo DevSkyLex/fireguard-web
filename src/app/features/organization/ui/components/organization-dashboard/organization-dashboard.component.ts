@@ -14,6 +14,7 @@ import {
   DashboardRecentInterventions,
   InspectionQualityTrend,
   NonConformitiesResolvedTrend,
+  NonConformitiesBySeverity,
   NonConformitiesOpenedTrend,
   OverviewTrend,
 } from './components';
@@ -41,6 +42,7 @@ import {
     DashboardRecentInterventions,
     OverviewTrend,
     InspectionQualityTrend,
+    NonConformitiesBySeverity,
     NonConformitiesOpenedTrend,
     NonConformitiesResolvedTrend,
     AssetGrowthTrend,

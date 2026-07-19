@@ -150,7 +150,7 @@ export const FireguardTheme: Preset = definePreset(Aura, {
         paddingY: '0.625rem',
         gap: '0.5rem',
         iconOnlyWidth: '2.625rem',
-        label: { fontWeight: '600' },
+        label: { fontWeight: '500' },
         raisedShadow: '0 2px 4px -2px rgba(15, 23, 42, 0.28)',
       },
     },
@@ -187,25 +187,28 @@ export const FireguardTheme: Preset = definePreset(Aura, {
         light: {
           root: {
             background: '{surface.0}',
+            shadow:
+              '0 1px 2px rgba(24, 24, 27, 0.05), 0 2px 6px rgba(24, 24, 27, 0.045), inset 0 1px 0 rgba(255, 255, 255, 0.7)',
           },
         },
         dark: {
           root: {
             background: '{surface.900}',
+            shadow:
+              '0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
           },
         },
       },
       root: {
-        shadow: 'none',
         borderRadius: '12px',
       },
       body: {
-        padding: '1.5rem',
+        padding: '1.25rem',
         gap: '0.75rem',
       },
       title: {
-        fontSize: '1.125rem',
-        fontWeight: '650',
+        fontSize: '0.9375rem',
+        fontWeight: '600',
       },
     },
     datatable: {
@@ -214,30 +217,42 @@ export const FireguardTheme: Preset = definePreset(Aura, {
           row: {
             background: '{surface.0}',
             stripedBackground: '{surface.50}',
+            hoverBackground: '{surface.100}',
           },
           headerCell: {
-            background: '{surface.50}',
+            background: '{surface.0}',
+            color: '{surface.500}',
           },
         },
         dark: {
           row: {
             background: '{surface.900}',
             stripedBackground: '{surface.800}',
+            hoverBackground: '{surface.800}',
           },
           headerCell: {
             background: '{surface.900}',
+            color: '{surface.400}',
           },
         },
       },
       headerCell: {
-        padding: '0.75rem 1rem',
+        padding: '0.875rem 1.25rem 0.625rem',
       },
       bodyCell: {
-        padding: '0.8rem 1rem',
+        padding: '0.75rem 1.25rem',
       },
       columnTitle: {
-        fontWeight: '650',
+        fontWeight: '600',
       },
+      css: `
+.p-datatable-thead > tr > th {
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+`,
     },
     dialog: {
       root: {

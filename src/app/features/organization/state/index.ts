@@ -19,3 +19,8 @@ export { activeOrganizationStoreEvents } from './active-organization';
 export { organizationStoreEvents } from './organization-list';
 export { OrganizationQuotaStore } from './organization-quota';
 export type { OrganizationQuotaStoreType } from './organization-quota';
+export { OrganizationMemberDirectoryStore } from './organization-member-directory';
+export type {
+  MemberIdentity,
+  OrganizationMemberDirectoryStoreType,
+} from './organization-member-directory';

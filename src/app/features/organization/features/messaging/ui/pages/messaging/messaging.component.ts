@@ -15,6 +15,11 @@ import {
   type MessagingWorkspaceStoreType,
 } from '@features/organization/features/messaging/state';
 import { MessageThread } from '@features/organization/features/messaging/ui/components';
+import {
+  ActiveOrganizationStore,
+  OrganizationMemberDirectoryStore,
+  type OrganizationMemberDirectoryStoreType,
+} from '@features/organization/state';
 import { EmptyState } from '@shared/components';
 
 /**
@@ -59,6 +64,33 @@ export class MessagingPage {
     inject<MessagingWorkspaceStoreType>(MessagingWorkspaceStore);
 
   /**
+   * Property directory
+   * @readonly
+   *
+   * @description
+   * Resolves message authors — the API sends bare member ids.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {OrganizationMemberDirectoryStoreType}
+   */
+  protected readonly directory: OrganizationMemberDirectoryStoreType =
+    inject<OrganizationMemberDirectoryStoreType>(OrganizationMemberDirectoryStore);
+
+  /**
+   * Property activeOrganizationStore
+   * @readonly
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {ActiveOrganizationStore}
+   */
+  private readonly activeOrganizationStore: ActiveOrganizationStore =
+    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+
+  /**
    * Property draft
    *
    * @description
@@ -97,6 +129,11 @@ export class MessagingPage {
    */
   public constructor() {
     this.store.loadConversations();
+    this.directory.load(
+      computed(
+        (): string | null => this.activeOrganizationStore.selectedOrganization()?.id ?? null,
+      ),
+    );
   }
   //#endregion
 

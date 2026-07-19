@@ -18,24 +18,35 @@
   } @else {
     @for (message of messages(); track message.id) {
       <article class="flex gap-3" data-testid="message-row">
-        <span
-          class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-200 text-xs font-semibold text-surface-700 dark:bg-surface-700 dark:text-surface-200"
-          aria-hidden="true"
-        >
-          {{ initials(message.authorMember) }}
-        </span>
+        @let author = this.author(message.authorMember);
+
+        @if (author.avatarUrl) {
+          <img
+            class="mt-0.5 size-8 shrink-0 rounded-full object-cover"
+            [src]="author.avatarUrl"
+            [alt]="author.displayName"
+          />
+        } @else {
+          <span
+            class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-200 text-xs font-semibold text-surface-700 dark:bg-surface-700 dark:text-surface-200"
+            aria-hidden="true"
+          >
+            {{ author.initials }}
+          </span>
+        }
 
         <div class="flex min-w-0 flex-col gap-1">
           <p class="flex items-baseline gap-2">
             <!--
-              The author is a bare member id until the directory lands; naming
-              that explicitly beats rendering a blank where a name belongs.
+              Resolved through the member directory: the API only sends a bare
+              member id. An author the directory does not know still renders —
+              members get removed, their messages stay.
             -->
             <span
               class="text-sm font-semibold text-surface-950 dark:text-surface-50"
-              i18n="@@messaging.thread.unknownAuthor"
+              data-testid="message-author"
             >
-              Member
+              {{ author.displayName }}
             </span>
             <time
               class="text-xs text-surface-500 tabular-nums dark:text-surface-400"

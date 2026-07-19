@@ -58,6 +58,32 @@ async function landOnMessaging(page: Page): Promise<{ sent: string[] }> {
   await api.mockOrganizationDetail(organization);
   await api.mockOrganizationAccess(organization.id);
 
+  await page.route(`${API_BASE_URL}/api/organizations/${organization.id}/members**`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/ld+json',
+      body: JSON.stringify({
+        member: [
+          {
+            '@id': '/api/members/member-abc',
+            '@type': 'OrganizationMember',
+            id: 'member-abc',
+            organizationId: organization.id,
+            userId: 'u1',
+            email: 'nadia@fireguard.test',
+            firstName: 'Nadia',
+            lastName: 'Rahal',
+            avatarUrl: null,
+            isActive: true,
+            joinedAt: '2026-01-01T00:00:00+00:00',
+            roleIds: [],
+          },
+        ],
+        totalItems: 1,
+      }),
+    }),
+  );
+
   await page.route(`${API_BASE_URL}/api/conversations**`, async (route) => {
     const url: string = route.request().url();
 
@@ -165,6 +191,16 @@ test.describe('Messaging workspace', () => {
     await expect(page.getByTestId('message-row')).toHaveCount(3);
     await expect(page.getByText('On my way.')).toBeVisible();
     expect(sent).toEqual(['On my way.']);
+  });
+
+  // The API sends a bare member id; the directory turns it into a name.
+  test('names message authors from the member directory', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+
+    await expect(page.getByTestId('message-author').first()).toHaveText('Nadia Rahal');
   });
 
   test('refuses to send an empty draft', async ({ page }) => {

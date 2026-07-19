@@ -37,12 +37,14 @@ not here.
   `/api/conversations…`, not `/api/organizations/{id}/conversations…` — the
   backend derives the organization from the session. Prefixing them hits a route
   that does not exist.
-- **`MessageOutput.authorMember` is a bare member id.** No name, no avatar.
-  Resolving an author needs the organization member directory, and the join
-  belongs in the store — never in a template. Do **not** read
-  `OrganizationMembersStore` for it: that is the admin table's state (one page
-  of 20, filtered by its search box), so avatars would vanish the moment an
-  admin types in the members search.
+- **`MessageOutput.authorMember` is a bare member id.** Authors are resolved
+  through `OrganizationMemberDirectoryStore`. Do **not** swap that for
+  `OrganizationMembersStore`: the latter is the admin table's state (one page of
+  20, filtered by its search box), so author names would vanish the moment an
+  administrator typed in the members search — a bug that would read as a
+  rendering glitch, far from its cause.
+- **An unknown author still renders.** Members get removed; their messages stay.
+  The thread falls back to "Former member" rather than blanking the row.
 - **A deleted message keeps its row** (`isDeleted`, `body: null`) so replies and
   reactions do not dangle. Renderers must handle a null body rather than
   filtering the message out.

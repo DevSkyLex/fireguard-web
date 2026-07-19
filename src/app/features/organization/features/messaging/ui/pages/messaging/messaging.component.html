@@ -95,6 +95,7 @@
       <app-message-thread
         class="min-h-0 flex-1"
         [messages]="store.messages()"
+        [authors]="directory.identities()"
         [loading]="store.isLoadingMessages()"
       />
 

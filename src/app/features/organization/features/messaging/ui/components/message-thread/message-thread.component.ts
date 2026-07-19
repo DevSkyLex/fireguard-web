@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@angular/core';
 import type { MessageOutput } from '@features/organization/features/messaging/models';
+import type { MemberIdentity } from '@features/organization/state';
 import { EmptyState, Skeleton } from '@shared/components';
 
 /**
@@ -57,23 +58,49 @@ export class MessageThread {
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
-  //#region Methods
   /**
-   * Method initials
+   * Property authors
+   * @readonly
    *
    * @description
-   * A two-character avatar stand-in derived from the member id, until the
-   * directory can supply a real name.
+   * Member id → identity, supplied by the directory. A message whose author is
+   * missing from it still renders — a member can be removed from the
+   * organization while their messages stay.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<ReadonlyMap<string, MemberIdentity>>}
+   */
+  public readonly authors: InputSignal<ReadonlyMap<string, MemberIdentity>> = input<
+    ReadonlyMap<string, MemberIdentity>
+  >(new Map<string, MemberIdentity>());
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method author
+   *
+   * @description
+   * The author's identity, or a stable fallback when the directory does not
+   * know them — a removed member must not blank out their own messages.
    *
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    *
    * @param {string} memberId - The author's member id.
    *
-   * @returns {string} The placeholder initials.
+   * @returns {MemberIdentity} The identity to render.
    */
-  protected initials(memberId: string): string {
-    return memberId.replaceAll('-', '').slice(0, 2).toUpperCase();
+  protected author(memberId: string): MemberIdentity {
+    return (
+      this.authors().get(memberId) ?? {
+        id: memberId,
+        displayName: $localize`:@@messaging.thread.formerMember:Former member`,
+        initials: '??',
+        avatarUrl: null,
+      }
+    );
   }
   //#endregion
 }

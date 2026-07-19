@@ -13,6 +13,10 @@ import {
 } from '@core/request-state';
 import { OrganizationService } from '@features/organization/data-access';
 import {
+  adaptEquipmentStatus,
+  type EquipmentStatusBucket,
+} from '@features/organization/data-access/adapters/organization-dashboard-equipment-status.adapter';
+import {
   adaptNonConformitySeverity,
   type NonConformitySeverityBucket,
 } from '@features/organization/data-access/adapters/organization-dashboard-severity.adapter';
@@ -143,6 +147,22 @@ export const DashboardStore = signalStore(
      */
     nonConformitiesBySeverity: computed<readonly NonConformitySeverityBucket[]>(() =>
       adaptNonConformitySeverity(store.queryData()?.overview?.['nonConformities']?.['summary']),
+    ),
+
+    /**
+     * Computed equipmentByStatus
+     *
+     * @description
+     * The equipment fleet split by status, healthiest first.
+     *
+     * Same untapped shape as {@link nonConformitiesBySeverity}:
+     * `overview.equipment.summary` has carried the per-status counts all along
+     * and every consumer only ever took `summary[0]`, the total.
+     *
+     * @type {Signal<readonly EquipmentStatusBucket[]>}
+     */
+    equipmentByStatus: computed<readonly EquipmentStatusBucket[]>(() =>
+      adaptEquipmentStatus(store.queryData()?.overview?.['equipment']?.['summary']),
     ),
 
     /**

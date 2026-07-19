@@ -9,3 +9,4 @@ export { NonConformitiesOpenedTrend } from './non-conformities-opened-trend';
 export { NonConformitiesResolvedTrend } from './non-conformities-resolved-trend';
 export { OverviewTrend } from './overview-trend';
 export { NonConformitiesBySeverity } from './non-conformities-by-severity';
+export { EquipmentStatusBreakdown } from './equipment-status-breakdown';

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
+import type { MercureSubscriptionOutput } from '@core/mercure';
 import type {
   ConversationOutput,
   MessageOutput,
@@ -103,6 +104,30 @@ export class MessagingService extends HydraApiService {
     return this.post<SendMessageInput, MessageOutput>(
       `/api/conversations/${conversationId}/messages`,
       input,
+    );
+  }
+
+  /**
+   * Method getSubscription
+   * @method getSubscription
+   *
+   * @description
+   * Issues a short-lived Mercure token and topic for one conversation.
+   *
+   * The token expires quickly, so callers must re-request it on every
+   * reconnection attempt rather than replaying the first one — which is why
+   * `resilientMercureStream` takes a factory.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @param {string} conversationId - The conversation to subscribe to.
+   *
+   * @return {Observable<MercureSubscriptionOutput>} The topic and token.
+   */
+  public getSubscription(conversationId: string): Observable<MercureSubscriptionOutput> {
+    return this.getOne<MercureSubscriptionOutput>(
+      `/api/conversations/${conversationId}/subscription`,
     );
   }
 

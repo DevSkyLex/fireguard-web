@@ -4,6 +4,7 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, map, mergeMap, pipe, switchMap, tap } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
+import { MercureService, resilientMercureStream } from '@core/mercure';
 import {
   errorCallState,
   idleCallState,
@@ -171,7 +172,7 @@ export const MessagingWorkspaceStore = signalStore(
   //#endregion
 
   //#region Methods
-  withMethods((store, service = inject(MessagingService)) => {
+  withMethods((store, service = inject(MessagingService), mercure = inject(MercureService)) => {
     const loadMessages = rxMethod<string | null>(
       pipe(
         switchMap((conversationId: string | null) => {
@@ -191,8 +192,55 @@ export const MessagingWorkspaceStore = signalStore(
       ),
     );
 
+    /**
+     * Live thread updates.
+     *
+     * Goes through `resilientMercureStream` rather than `MercureService`
+     * directly: the raw service errors its subscriber on the transport `error`
+     * event, which kills EventSource's own reconnect and leaves the channel
+     * silently dead. The factory re-requests the subscription each attempt
+     * because the token is short-lived.
+     *
+     * A message already in the thread is replaced, not appended — the sender's
+     * own message arrives twice, once from the POST and once from the hub.
+     */
+    const streamMessages = rxMethod<string | null>(
+      pipe(
+        switchMap((conversationId: string | null) => {
+          if (conversationId === null) return EMPTY;
+
+          return resilientMercureStream<MessageOutput>(() =>
+            service
+              .getSubscription(conversationId)
+              .pipe(
+                map((subscription) =>
+                  mercure.subscribe<MessageOutput>(subscription.topic, subscription.token),
+                ),
+              ),
+          ).pipe(
+            tapResponse({
+              next: (message: MessageOutput) => {
+                const current: readonly MessageOutput[] = store.messagesCallState().data ?? [];
+                const known: boolean = current.some((m: MessageOutput) => m.id === message.id);
+
+                patchState(store, {
+                  messagesCallState: successCallState(
+                    known
+                      ? current.map((m: MessageOutput) => (m.id === message.id ? message : m))
+                      : [...current, message],
+                  ),
+                });
+              },
+              error: () => undefined,
+            }),
+          );
+        }),
+      ),
+    );
+
     return {
       loadMessages,
+      streamMessages,
 
       /**
        * Method loadConversations
@@ -242,6 +290,7 @@ export const MessagingWorkspaceStore = signalStore(
       selectConversation(conversationId: string | null): void {
         patchState(store, { activeConversationId: conversationId });
         loadMessages(conversationId);
+        streamMessages(conversationId);
       },
 
       /**

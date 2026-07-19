@@ -11,8 +11,8 @@ backend scopes every endpoint by the session's active organization.
 ## Status
 
 Conversation list, thread, composer and emoji reactions are live at
-`…/messages`. Pins, saved messages, threads, attachments and presence are not
-built.
+`…/messages`, with the thread updating in real time. Pins, saved messages,
+threads, attachments and presence are not built.
 
 ## Route entry points
 
@@ -63,10 +63,16 @@ not here.
 
 - `MessagingService` — conversations, messages, send, mark-read.
 
-Live updates must go through `resilientMercureStream` (`@core/mercure`), not
+Live updates go through `resilientMercureStream` (`@core/mercure`), never
 `MercureService.subscribe` directly: the raw service errors its subscriber on
 the transport `error` event, which kills EventSource's own reconnect and leaves
-the channel silently dead.
+the channel silently dead. The subscription is re-requested per attempt because
+its token is short-lived.
+
+**A hub message the thread already holds is replaced, not appended.** The
+sender's own message arrives twice — once from the POST response, once echoed
+by the hub — and appending both would show it duplicated to its author and to
+nobody else, which is the worst kind of bug to reproduce.
 
 ## Not built yet
 

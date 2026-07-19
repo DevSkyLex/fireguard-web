@@ -104,6 +104,15 @@ async function landOnMessaging(page: Page): Promise<{ sent: string[]; reacted: s
   await page.route(`${API_BASE_URL}/api/conversations**`, async (route) => {
     const url: string = route.request().url();
 
+    if (url.includes('/subscription')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/ld+json',
+        body: JSON.stringify({ token: 'jwt', topic: 'conversation/c1' }),
+      });
+      return;
+    }
+
     if (url.includes('/messages')) {
       if (route.request().method() === 'POST') {
         const body = route.request().postDataJSON() as { body: string };

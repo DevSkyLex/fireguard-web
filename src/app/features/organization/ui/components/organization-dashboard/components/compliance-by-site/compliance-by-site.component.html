@@ -1,0 +1,115 @@
+<app-trend-card
+  i18n-title="@@org.dash.complianceBySite.title"
+  title="Compliance by site"
+  i18n-description="@@org.dash.complianceBySite.desc"
+  description="Sites with the weakest maintenance coverage"
+  [loading]="loading()"
+>
+  <ng-template #action>
+    <p-button
+      i18n-label="@@org.dash.complianceBySite.view"
+      label="View compliance"
+      icon="pi pi-arrow-right"
+      iconPos="right"
+      size="small"
+      [link]="true"
+      (onClick)="viewCompliance.emit()"
+    />
+  </ng-template>
+
+  <ng-template #content>
+    @if (hasError()) {
+      <app-error-state
+        icon="pi-exclamation-triangle"
+        i18n-title="@@org.dash.complianceBySite.errorTitle"
+        title="Couldn't load site compliance"
+      >
+        <p-button
+          i18n-label="@@org.dash.complianceBySite.retry"
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (onClick)="retry.emit()"
+        />
+      </app-error-state>
+    } @else if (loading()) {
+      <app-skeleton
+        preset="list-row"
+        [count]="5"
+        i18n-label="@@org.dash.complianceBySite.loading"
+        label="Loading site compliance"
+      />
+    } @else if (rows().length === 0) {
+      <app-empty-state
+        icon="pi-verified"
+        i18n-title="@@org.dash.complianceBySite.emptyTitle"
+        title="No sites to report yet"
+        i18n-description="@@org.dash.complianceBySite.emptyDesc"
+        description="Once equipment is scheduled for maintenance, each site's coverage appears here."
+      />
+    } @else {
+      <!--
+        The register invariant travels into the card: a null rate is
+        "unmeasured", never 0%. Unmeasured sites stay out of the bars and are
+        summed into the closing line, and every rate keeps its denominator
+        beside it so a 100% built on two assets is not mistaken for a clean
+        estate.
+      -->
+      <div class="flex flex-col gap-3">
+        @for (site of topSites(); track site.facilityId) {
+          <div class="flex flex-col gap-1">
+            <div class="flex items-baseline justify-between gap-3">
+              <span
+                class="min-w-0 truncate text-xs text-surface-600 dark:text-surface-400"
+                [title]="site.path"
+              >
+                {{ site.path }}
+              </span>
+
+              <span class="shrink-0 text-right">
+                <span
+                  class="text-sm font-semibold tabular-nums"
+                  [class]="rateTextClass(site.complianceRate)"
+                >
+                  {{ rateLabel(site.complianceRate) }}
+                </span>
+                <span class="ml-1 text-xs text-surface-400 tabular-nums dark:text-surface-500">
+                  ({{ site.trackedEquipmentCount }})
+                </span>
+              </span>
+            </div>
+
+            <div
+              class="h-1.5 overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
+              role="meter"
+              [attr.aria-label]="site.path"
+              [attr.aria-valuenow]="site.complianceRate"
+              [attr.aria-valuemin]="0"
+              [attr.aria-valuemax]="100"
+            >
+              <div
+                class="h-full rounded-full"
+                [class]="rateBarClass(site.complianceRate)"
+                [style.width.%]="site.complianceRate ?? 0"
+              ></div>
+            </div>
+          </div>
+        }
+
+        @if (unmeasuredCount() > 0) {
+          <p
+            class="text-xs text-surface-500 dark:text-surface-400"
+            i18n="@@org.dash.complianceBySite.notMeasured"
+          >
+            {unmeasuredCount(), plural,
+              =1 {1 site not yet measured}
+              other {{{ unmeasuredCount() }} sites not yet measured}
+            }
+          </p>
+        }
+      </div>
+    }
+  </ng-template>
+</app-trend-card>

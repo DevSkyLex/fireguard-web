@@ -78,14 +78,37 @@
           </app-dashboard-metric-strip>
         }
 
-        @if (hasActivityInsights()) {
+        @if (hasActivityInsights() || canReadCompliance()) {
+          <!--
+            The 12-column composition stays hole-free whichever permissions
+            are granted: 7+5 / 6+6 / 4+4+4 with the compliance card, 7+5 /
+            6+6 / 6+6 without it, and a single 12 when only compliance is
+            readable.
+          -->
           <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            <app-overview-trend class="lg:col-span-7" />
-            <app-inspection-quality-trend class="lg:col-span-5" />
-            <app-non-conformities-opened-trend class="lg:col-span-6" />
-            <app-non-conformities-resolved-trend class="lg:col-span-6" />
-            <app-non-conformities-by-severity class="lg:col-span-6" />
-            <app-equipment-status-breakdown class="lg:col-span-6" />
+            @if (hasActivityInsights()) {
+              <app-overview-trend class="lg:col-span-7" />
+              <app-inspection-quality-trend class="lg:col-span-5" />
+              <app-non-conformities-opened-trend class="lg:col-span-6" />
+              <app-non-conformities-resolved-trend class="lg:col-span-6" />
+              <app-non-conformities-by-severity
+                [class]="canReadCompliance() ? 'lg:col-span-4' : 'lg:col-span-6'"
+              />
+              <app-equipment-status-breakdown
+                [class]="canReadCompliance() ? 'lg:col-span-4' : 'lg:col-span-6'"
+              />
+            }
+
+            @if (canReadCompliance()) {
+              <app-compliance-by-site
+                [class]="hasActivityInsights() ? 'lg:col-span-4' : 'lg:col-span-12'"
+                [rows]="complianceStore.facilities()"
+                [loading]="complianceStore.isQueryLoading()"
+                [hasError]="complianceStore.queryHasError()"
+                (viewCompliance)="openCompliance()"
+                (retry)="retryCompliance()"
+              />
+            }
           </div>
         }
 

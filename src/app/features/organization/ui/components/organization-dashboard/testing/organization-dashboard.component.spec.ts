@@ -1,7 +1,9 @@
 import { CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access/services/organization-permission/organization-permission.service';
+import type { ComplianceFacilityRow } from '@features/organization/features/compliance/models';
+import { ComplianceSummaryStore } from '@features/organization/features/compliance/state';
 import {
   ORGANIZATION_PERMISSION,
   type OrganizationDashboardRecentIntervention,
@@ -16,12 +18,15 @@ type OrganizationDashboardHarness = {
   readonly canReadEquipment: () => boolean;
   readonly canReadInspections: () => boolean;
   readonly canReadRecentInterventions: () => boolean;
+  readonly canReadCompliance: () => boolean;
   readonly hasActivityMetrics: () => boolean;
   readonly hasActivityInsights: () => boolean;
   readonly showActivitySection: () => boolean;
   readonly showResourcesSection: () => boolean;
   openIntervention(intervention: OrganizationDashboardRecentIntervention): void;
   retryDashboard(): void;
+  openCompliance(): void;
+  retryCompliance(): void;
 };
 
 const mockDashboardStore = {
@@ -44,8 +49,16 @@ const mockDashboardStore = {
   load: vi.fn(),
 };
 
+const mockComplianceSummaryStore = {
+  facilities: signal<readonly ComplianceFacilityRow[]>([]),
+  isQueryLoading: signal(false),
+  queryHasError: signal(false),
+  load: vi.fn(),
+};
+
 describe('OrganizationDashboard', () => {
   let grantedPermissions: Set<string>;
+  let fixture: ComponentFixture<OrganizationDashboard>;
   const mockOrganizationPermissionService = {
     hasPermission: vi.fn((permission: string) => grantedPermissions.has(permission)),
   };
@@ -73,6 +86,7 @@ describe('OrganizationDashboard', () => {
     mockOrganizationPermissionService.hasPermission.mockClear();
     mockRouter.navigate.mockClear();
     mockDashboardStore.load.mockClear();
+    mockComplianceSummaryStore.load.mockClear();
 
     TestBed.configureTestingModule({
       imports: [OrganizationDashboard],
@@ -83,6 +97,7 @@ describe('OrganizationDashboard', () => {
         schemas: [CUSTOM_ELEMENTS_SCHEMA],
         providers: [
           { provide: DashboardStore, useValue: mockDashboardStore },
+          { provide: ComplianceSummaryStore, useValue: mockComplianceSummaryStore },
           {
             provide: OrganizationPermissionService,
             useValue: mockOrganizationPermissionService,
@@ -97,10 +112,14 @@ describe('OrganizationDashboard', () => {
   });
 
   function createComponent(): OrganizationDashboardHarness {
-    const fixture = TestBed.createComponent(OrganizationDashboard);
+    fixture = TestBed.createComponent(OrganizationDashboard);
     fixture.detectChanges();
 
     return fixture.componentInstance as unknown as OrganizationDashboardHarness;
+  }
+
+  function complianceLoadParams(): (() => string | null) | undefined {
+    return mockComplianceSummaryStore.load.mock.calls[0]?.[0] as (() => string | null) | undefined;
   }
 
   it('should create', () => {
@@ -197,5 +216,51 @@ describe('OrganizationDashboard', () => {
     component.retryDashboard();
 
     expect(mockDashboardStore.load).toHaveBeenCalledWith('org-1');
+  });
+
+  // The compliance card is gated on `organization.compliance.read` in its own
+  // right: the dashboard permission does not grant the compliance endpoint.
+  it('should not render the compliance card without the compliance read permission', () => {
+    grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.DASHBOARD_READ]);
+    const component = createComponent();
+
+    expect(component.canReadCompliance()).toBe(false);
+    expect(fixture.nativeElement.querySelector('app-compliance-by-site')).toBeNull();
+  });
+
+  it('should keep the compliance query parameterless without the permission', () => {
+    grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.DASHBOARD_READ]);
+    createComponent();
+
+    expect(complianceLoadParams()?.()).toBeNull();
+  });
+
+  it('should render the compliance card on the compliance permission alone', () => {
+    grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.COMPLIANCE_READ]);
+    const component = createComponent();
+
+    expect(component.canReadCompliance()).toBe(true);
+    expect(component.hasActivityInsights()).toBe(false);
+    expect(component.showActivitySection()).toBe(true);
+    expect(fixture.nativeElement.querySelector('app-compliance-by-site')).toBeTruthy();
+    expect(complianceLoadParams()?.()).toBe('org-1');
+  });
+
+  it('should route into the compliance register from the card', () => {
+    grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.COMPLIANCE_READ]);
+    const component = createComponent();
+
+    component.openCompliance();
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'compliance']);
+  });
+
+  it('should re-trigger the compliance query on retry', () => {
+    grantedPermissions = new Set<string>([ORGANIZATION_PERMISSION.COMPLIANCE_READ]);
+    const component = createComponent();
+
+    component.retryCompliance();
+
+    expect(mockComplianceSummaryStore.load).toHaveBeenCalledWith('org-1');
   });
 });

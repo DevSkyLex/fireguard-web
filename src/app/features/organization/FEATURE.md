@@ -68,7 +68,7 @@ Primary stores:
 - `OrganizationPlanStore` (scoped to the `OrganizationPlanSelector` in the settings Subscription tab; self-service plan change)
 - `OrganizationQuotaStore` (root-provided; active organization quota usage feeding the settings Usage tab and the create-flow quota checks)
 - `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history)
-- `OrganizationDashboardStore` (aggregate slice: overview KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`)
+- `OrganizationDashboardStore` (aggregate slice: overview KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; the overview dashboard component additionally instantiates the nested compliance feature's `ComplianceSummaryStore` for the "Compliance by site" card — see Cross-Feature Dependencies)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations + logo upload, refreshes `ActiveOrganizationStore`)
 - `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map)
 - `OrganizationTeamStore` (component-scoped to the roles page; roles and the permission catalog)
@@ -137,6 +137,14 @@ These contracts are the stable boundaries for approved consumers:
 - May expose organization context to shell composition through ports.
 - May expose current active member access to approved sibling features through `ORGANIZATION_MEMBER_ACCESS_PORT`.
 - May expose onboarding-approved setup workflows through `organization/setup`.
+- Consumes the nested `compliance` subfeature through its published barrels only
+  (`@features/organization/features/compliance/state` → `ComplianceSummaryStore`,
+  `@features/organization/features/compliance/models` → `ComplianceFacilityRow`)
+  to render the overview dashboard's "Compliance by site" card. The card renders
+  only for members holding `organization.compliance.read`, and the parent
+  preserves the child's invariants: `complianceRate === null` is "not measured"
+  (em dash), never 0%, and `trackedEquipmentCount` stays visible beside every
+  rate.
 - Must not move organization-owned widgets into layouts just because they render in the shell.
 - Consumes `@features/account`'s `accountPermissionGuard` and `ACCOUNT_PERMISSION` to gate the
   `audit` route, and its `UserPermissionService` in `withOrganizationNavigation` to resolve the

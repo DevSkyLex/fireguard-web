@@ -2,6 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import { Router } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
+  ComplianceSummaryStore,
+  type ComplianceSummaryStoreType,
+} from '@features/organization/features/compliance/state';
+import {
   ORGANIZATION_PERMISSION,
   type OrganizationDashboardRecentIntervention,
 } from '@features/organization/models';
@@ -9,6 +13,7 @@ import { DashboardStore } from '@features/organization/state/organization-dashbo
 import { EmptyState, Skeleton } from '@shared/components';
 import {
   AssetGrowthTrend,
+  ComplianceBySite,
   DashboardMetricCell,
   DashboardMetricStrip,
   DashboardRecentInterventions,
@@ -30,7 +35,7 @@ import {
  * Child trend components handle their own independent data requests
  * and are mounted below the summary row.
  *
- * @version 1.1.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -47,11 +52,12 @@ import {
     NonConformitiesBySeverity,
     NonConformitiesOpenedTrend,
     NonConformitiesResolvedTrend,
+    ComplianceBySite,
     AssetGrowthTrend,
     Skeleton,
     EmptyState,
   ],
-  providers: [DashboardStore],
+  providers: [DashboardStore, ComplianceSummaryStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboard {
@@ -71,6 +77,23 @@ export class OrganizationDashboard {
    * @type {DashboardStore}
    */
   protected readonly store: DashboardStore = inject<DashboardStore>(DashboardStore);
+
+  /**
+   * Property complianceStore
+   * @readonly
+   *
+   * @description
+   * Component-scoped instance of the nested compliance feature's summary
+   * store, consumed through its published `state` barrel. It feeds the
+   * "Compliance by site" card with the worst-first per-site breakdown.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {ComplianceSummaryStoreType}
+   */
+  protected readonly complianceStore: ComplianceSummaryStoreType =
+    inject<ComplianceSummaryStoreType>(ComplianceSummaryStore);
 
   /**
    * Property organizationPermissionService
@@ -212,6 +235,43 @@ export class OrganizationDashboard {
   );
 
   /**
+   * Property canReadCompliance
+   * @readonly
+   *
+   * @description
+   * Indicates whether the "Compliance by site" card can be rendered. Gated
+   * on the compliance read permission alone (not the dashboard permission),
+   * because the compliance summary endpoint requires
+   * `organization.compliance.read` in its own right.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadCompliance: Signal<boolean> = computed<boolean>(() =>
+    this.organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.COMPLIANCE_READ),
+  );
+
+  /**
+   * Property complianceLoadParams
+   * @readonly
+   *
+   * @description
+   * Organization id forwarded to the compliance summary query, or `null`
+   * while the card is not visible to the member — no permission means no
+   * fetch, and the query starts only once the card actually renders.
+   *
+   * @access private
+   * @since 1.4.0
+   *
+   * @type {Signal<string | null>}
+   */
+  private readonly complianceLoadParams: Signal<string | null> = computed<string | null>(() =>
+    this.canReadCompliance() ? (this.store.loadParams() ?? null) : null,
+  );
+
+  /**
    * Property hasActivityMetrics
    * @readonly
    *
@@ -261,7 +321,10 @@ export class OrganizationDashboard {
    */
   protected readonly showActivitySection: Signal<boolean> = computed<boolean>(
     () =>
-      this.hasActivityMetrics() || this.hasActivityInsights() || this.canReadRecentInterventions(),
+      this.hasActivityMetrics() ||
+      this.hasActivityInsights() ||
+      this.canReadRecentInterventions() ||
+      this.canReadCompliance(),
   );
 
   /**
@@ -279,6 +342,21 @@ export class OrganizationDashboard {
   protected readonly showResourcesSection: Signal<boolean> = computed<boolean>(
     () => this.canReadFacilities() || this.canReadEquipment(),
   );
+
+  //#endregion
+
+  //#region Lifecycle
+
+  /**
+   * Wires the compliance summary query to its reactive parameters: the
+   * query runs only while the member can see the card, and re-runs when
+   * the active organization changes.
+   *
+   * @since 1.4.0
+   */
+  public constructor() {
+    this.complianceStore.load(this.complianceLoadParams);
+  }
 
   //#endregion
 
@@ -318,6 +396,41 @@ export class OrganizationDashboard {
    */
   protected retryDashboard(): void {
     this.store.load(this.store.loadParams());
+  }
+
+  /**
+   * Method openCompliance
+   *
+   * @description
+   * Routes into the full compliance register from the "Compliance by
+   * site" card.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @returns {void}
+   */
+  protected openCompliance(): void {
+    const organizationId: string | undefined = this.store.loadParams();
+    if (!organizationId) return;
+
+    void this.router.navigate(['/organizations', organizationId, 'compliance']);
+  }
+
+  /**
+   * Method retryCompliance
+   *
+   * @description
+   * Re-runs the compliance summary query after a failure surfaced by the
+   * "Compliance by site" card.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @returns {void}
+   */
+  protected retryCompliance(): void {
+    this.complianceStore.load(this.store.loadParams() ?? null);
   }
 
   //#endregion

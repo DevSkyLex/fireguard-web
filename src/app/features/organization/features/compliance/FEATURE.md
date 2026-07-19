@@ -45,9 +45,26 @@ not re-run on a query-param change.
 - `ComplianceSummaryStore` — component-scoped, one query (`withQueryState`).
 - `ComplianceService.getSummary` — `GET /organizations/{orgId}/compliance`.
 
+## Published API
+
+- `state/index.ts` — `ComplianceSummaryStore` (+ `ComplianceSummaryStoreType`).
+- `models/index.ts` — `ComplianceFacilityRow`, `ComplianceSummaryOutput`,
+  `ComplianceTotals`.
+
+These two barrels are the only entry points for consumers outside this
+feature. The approved external consumer is the **parent `organization`
+feature**: its overview dashboard instantiates `ComplianceSummaryStore`
+(component-scoped, gated on `organization.compliance.read`) to feed the
+"Compliance by site" card. Consumers inherit the invariants above — in
+particular a `null` rate renders as an em dash, never 0%, and
+`trackedEquipmentCount` stays visible beside every rate.
+
 ## Cross-feature dependencies
 
 - Reads organization route context from the parent feature.
+- The parent `organization` feature consumes this feature's summary store and
+  models for the overview "Compliance by site" card (see Published API) —
+  parent → child through the public barrels only, never deep imports.
 - The backend module that owns this endpoint also owns `/facility-tree`, which
   the **facilities** feature consumes for its hierarchy view. That is a backend
   ownership detail, not a frontend dependency: the two features call different

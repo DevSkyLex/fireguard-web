@@ -1,2 +1,2 @@
 export { TrendCard } from './trend-card.component';
-export type { MetricSummary } from './models';
+export type { MetricComparison, MetricSummary } from './models';

@@ -28,8 +28,6 @@ export type { GroupedListHeaderContext, GroupedListRowContext } from './grouped-
 export { Logo } from './logo';
 export { MapCanvas } from './map';
 export type { MapMarker } from './map';
-export { MetricCard } from './metric-card';
-export type { MetricComparison } from './metric-card';
 export { RadioCardGroup } from './radio-card-group';
 export type { RadioCardOption } from './radio-card-group';
 export { Skeleton } from './skeleton';
@@ -41,4 +39,4 @@ export { tagSeverityIconClass, tagSeverityDotClass } from './tag';
 export { ThemeSwitcher, withThemeSwitcher } from './theme-switcher';
 export { Toast } from './toast';
 export { TrendCard } from './trend-card';
-export type { MetricSummary } from './trend-card';
+export type { MetricComparison, MetricSummary } from './trend-card';

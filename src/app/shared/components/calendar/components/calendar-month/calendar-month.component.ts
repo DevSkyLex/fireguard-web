@@ -8,7 +8,23 @@ import {
   type OutputEmitterRef,
   type TemplateRef,
 } from '@angular/core';
+import type { TagSeverity } from '../../../tag';
 import type { CalendarDay, CalendarEvent, CalendarEventContext } from '../../models';
+
+/**
+ * Soft chip classes (tinted background + ink text) per severity, applied to a
+ * month-cell event chip so the whole chip carries its semantic colour. Each
+ * value is a complete literal string so Tailwind's content scanner keeps the
+ * utilities.
+ */
+const CHIP_TONE_CLASS: Record<TagSeverity, string> = {
+  success: 'bg-green-50 text-green-700 dark:bg-green-400/10 dark:text-green-300',
+  info: 'bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-300',
+  warn: 'bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300',
+  danger: 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300',
+  secondary: 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300',
+  contrast: 'bg-surface-200 text-surface-800 dark:bg-surface-700 dark:text-surface-100',
+};
 
 /**
  * Component CalendarMonth
@@ -20,7 +36,7 @@ import type { CalendarDay, CalendarEvent, CalendarEventContext } from '../../mod
  * affordance that asks to open the day. Emits event, create and day-select
  * intents; owns no state.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -181,6 +197,45 @@ export class CalendarMonth {
    */
   protected overflowCount(day: CalendarDay): number {
     return Math.max(0, day.events.length - this.maxEventsPerDay());
+  }
+
+  /**
+   * Method chipClass
+   *
+   * @description
+   * Soft semantic chip classes (tinted background + ink text) for an event,
+   * falling back to the neutral `secondary` tone when the event carries none.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {CalendarEvent} event - Event rendered as a chip.
+   * @returns {string} Tailwind background/text utility classes for the chip.
+   */
+  protected chipClass(event: CalendarEvent): string {
+    return CHIP_TONE_CLASS[event.tone ?? 'secondary'];
+  }
+
+  /**
+   * Method cellClass
+   *
+   * @description
+   * Background variant of a day cell: accent-soft for today, muted chrome for
+   * adjacent-month cells, a lighter chrome wash for in-month weekends, and no
+   * extra background otherwise.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {CalendarDay} day - Day cell to style.
+   * @returns {string} Tailwind background utility classes for the cell.
+   */
+  protected cellClass(day: CalendarDay): string {
+    if (day.isToday) return 'bg-primary-50 dark:bg-primary-400/15';
+    if (!day.inMonth) return 'bg-surface-50 dark:bg-surface-950/40';
+    const weekday: number = day.date.getDay();
+    if (weekday === 0 || weekday === 6) return 'bg-surface-50/60 dark:bg-surface-950/25';
+    return '';
   }
   //#endregion
 }

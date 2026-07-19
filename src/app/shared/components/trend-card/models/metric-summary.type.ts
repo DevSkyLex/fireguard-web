@@ -1,4 +1,4 @@
-import type { MetricComparison } from '../../metric-card/models';
+import type { MetricComparison } from './metric-comparison.type';
 
 export type MetricSummary = {
   readonly label: string;

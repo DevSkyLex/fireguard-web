@@ -28,4 +28,10 @@ export interface CalendarConfig {
 
   /** Whether the configuration sidebar is shown. Defaults to true. */
   readonly showSidebar?: boolean;
+
+  /**
+   * Id of the category group rendered as a colour legend in the card footer.
+   * No legend is shown when absent or when the group id is unknown.
+   */
+  readonly legendGroupId?: string;
 }

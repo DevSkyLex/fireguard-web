@@ -111,7 +111,7 @@ const VIEW_LABELS: Readonly<Record<CalendarView, string>> = {
  * </app-calendar>
  * ```
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -535,6 +535,31 @@ export class Calendar {
       return views.map((value: CalendarView): ViewOption => ({ label: VIEW_LABELS[value], value }));
     },
   );
+
+  /**
+   * Property legendCategories
+   * @readonly
+   *
+   * @description
+   * Categories of the configured legend group (`config.legendGroupId`),
+   * rendered as the card-footer colour legend; empty when no legend group is
+   * configured or the group id is unknown.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<readonly CalendarCategory[]>}
+   */
+  protected readonly legendCategories: Signal<readonly CalendarCategory[]> = computed<
+    readonly CalendarCategory[]
+  >(() => {
+    const groupId: string | undefined = this.config().legendGroupId;
+    if (!groupId) return [];
+    return (
+      this.activeGroups().find((group: CalendarCategoryGroup): boolean => group.id === groupId)
+        ?.categories ?? []
+    );
+  });
   //#endregion
 
   //#region Derived view models

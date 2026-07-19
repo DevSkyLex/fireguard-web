@@ -2,7 +2,7 @@
   @for (group of groups(); track group.id) {
     <section>
       <header
-        class="flex items-center justify-between gap-2 rounded-md bg-surface-50 px-3 py-2 dark:bg-surface-900/50"
+        class="flex items-center justify-between gap-2 rounded-md bg-surface-100 px-3 py-2 dark:bg-surface-900"
       >
         @if (headerTemplate(); as template) {
           <ng-container
@@ -38,7 +38,7 @@
             <div
               role="button"
               tabindex="0"
-              class="flex min-h-11 cursor-pointer flex-col justify-center px-3 py-2 outline-none hover:bg-surface-50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset dark:hover:bg-surface-900/40"
+              class="flex min-h-11 cursor-pointer flex-col justify-center px-3 py-2 transition-colors duration-150 outline-none hover:bg-surface-100 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset motion-reduce:transition-none dark:hover:bg-surface-800"
               (click)="rowClicked.emit(item)"
               (keydown.enter)="rowClicked.emit(item)"
               (keydown.space)="$event.preventDefault(); rowClicked.emit(item)"

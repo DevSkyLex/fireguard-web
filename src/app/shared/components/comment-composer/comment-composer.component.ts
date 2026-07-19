@@ -1,7 +1,10 @@
+import { DOCUMENT } from '@angular/common';
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   output,
   signal,
@@ -40,6 +43,35 @@ import { EditorModule, type EditorTextChangeEvent } from 'primeng/editor';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CommentComposer {
+  //#region Constructor
+  /**
+   * Constructor.
+   *
+   * @description
+   * Appends Quill's `snow` stylesheet on first render. It ships as a copied
+   * asset rather than a global style so its weight never reaches routes with no
+   * editor — this component is Quill's only consumer. Runs inside
+   * `afterNextRender`, so it never executes on the server; the guard makes it
+   * idempotent across instances.
+   *
+   * @access public
+   * @since 2.1.0
+   */
+  public constructor() {
+    const document: Document = inject<Document>(DOCUMENT);
+
+    afterNextRender((): void => {
+      const href = 'vendor/quill.snow.css';
+      if (document.querySelector(`link[href="${href}"]`)) return;
+
+      const link: HTMLLinkElement = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      document.head.appendChild(link);
+    });
+  }
+  //#endregion
+
   //#region Inputs
   /**
    * Property placeholder

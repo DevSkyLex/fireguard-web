@@ -84,4 +84,36 @@ describe('CommentComposer', () => {
 
     expect(submitted).toEqual(['<p>Quick note</p>']);
   });
+
+  // Quill's stylesheet is a copied asset, not a global style, so it never
+  // weighs on routes with no editor. The href stays relative so it resolves
+  // against the locale `<base href="/en/">` rather than the site root.
+  const QUILL_LINK = 'link[href="vendor/quill.snow.css"]';
+  const quillLinks = (): NodeListOf<HTMLLinkElement> =>
+    document.head.querySelectorAll<HTMLLinkElement>(QUILL_LINK);
+
+  it('appends the Quill stylesheet lazily', async () => {
+    quillLinks().forEach((link) => link.remove());
+
+    const fixture = createComposer();
+    await fixture.whenStable();
+
+    const links = quillLinks();
+
+    expect(links).toHaveLength(1);
+    expect(links[0].rel).toBe('stylesheet');
+  });
+
+  it('does not append the Quill stylesheet twice', async () => {
+    quillLinks().forEach((link) => link.remove());
+    const seeded: HTMLLinkElement = document.createElement('link');
+    seeded.rel = 'stylesheet';
+    seeded.href = 'vendor/quill.snow.css';
+    document.head.appendChild(seeded);
+
+    const fixture = createComposer();
+    await fixture.whenStable();
+
+    expect(quillLinks()).toHaveLength(1);
+  });
 });

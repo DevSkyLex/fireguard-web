@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -153,6 +154,21 @@ export class MapCanvas {
   private readonly env: EnvironmentConfig = inject<EnvironmentConfig>(ENV_CONFIG);
   private readonly theme: ThemePort = inject<ThemePort>(THEME_PORT);
   private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
+
+  /**
+   * Property document
+   * @readonly
+   *
+   * @description
+   * Injected so the stylesheet append stays testable and SSR-safe; it only ever
+   * runs inside `afterNextRender`.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Document}
+   */
+  private readonly document: Document = inject<Document>(DOCUMENT);
   //#endregion
 
   //#region Constructor
@@ -213,6 +229,30 @@ export class MapCanvas {
 
   //#region Methods
   /**
+   * Method loadMapStylesheet
+   * @method loadMapStylesheet
+   *
+   * @description
+   * Appends MapLibre's stylesheet on first map creation. It is shipped as a
+   * copied asset rather than a global style so its ~40 kB never reach routes
+   * that show no map — this component is the only consumer. Idempotent.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  private loadMapStylesheet(): void {
+    const href = 'vendor/maplibre-gl.css';
+    if (this.document.querySelector(`link[href="${href}"]`)) return;
+
+    const link: HTMLLinkElement = this.document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    this.document.head.appendChild(link);
+  }
+
+  /**
    * Method initMap
    * @method initMap
    *
@@ -229,6 +269,8 @@ export class MapCanvas {
   private async initMap(): Promise<void> {
     if (this.initStarted) return;
     this.initStarted = true;
+
+    this.loadMapStylesheet();
 
     const gl = await import('maplibre-gl');
     const dark: boolean = this.theme.resolvedTheme() === 'dark';

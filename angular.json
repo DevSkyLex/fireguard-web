@@ -70,13 +70,19 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "maplibre-gl.css",
+                "input": "node_modules/maplibre-gl/dist",
+                "output": "vendor"
+              },
+              {
+                "glob": "quill.snow.css",
+                "input": "node_modules/quill/dist",
+                "output": "vendor"
               }
             ],
-            "styles": [
-              "src/styles.css",
-              "node_modules/maplibre-gl/dist/maplibre-gl.css",
-              "node_modules/quill/dist/quill.snow.css"
-            ],
+            "styles": ["src/styles.css"],
             "server": "src/main.server.ts",
             "outputMode": "server",
             "ssr": {

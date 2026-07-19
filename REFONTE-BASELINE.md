@@ -30,9 +30,19 @@ Par locale (`dist/fireguard-web/browser/en/`) :
 | **Total initial annoncé par le build** | **1,56 Mo**  |
 
 Budget `angular.json` : alerte **700 ko**, erreur **1,7 Mo**.
-→ On dépasse déjà l'alerte de **858 ko** et il ne reste que **~140 ko avant
-l'erreur**. Le lot 1.8 (sortir `maplibre-gl.css` et `quill.snow.css` des styles
-globaux) n'est pas une optimisation de confort : sans lui, W3 fera échouer le build.
+
+⚠️ **Le budget mesure le RAW, pas le transféré — ne pas confondre les deux.**
+Les 1,56 Mo se répartissent sur ~29 chunks initiaux dont la somme des tailles
+**de transfert est d'environ 335 ko**. La charge réellement envoyée au
+navigateur est donc saine ; c'est la métrique du budget qui est sévère.
+
+Ce qui reste vrai : le build **échoue** si le raw dépasse 1,7 Mo, et on en
+était à 140 ko. C'est une contrainte réelle sur la vague 3.
+
+**Après le lot 1.8** (`430a4c86`) : CSS initial **206,8 → 112,7 ko** raw
+(24,96 → 14,29 ko transféré), total initial **1,56 → 1,46 Mo**, soit ~240 ko
+de marge avant l'erreur. Les deux CSS vendeur sont désormais des assets
+copiés, chargés par leur unique consommateur.
 
 ## Catalogues i18n
 

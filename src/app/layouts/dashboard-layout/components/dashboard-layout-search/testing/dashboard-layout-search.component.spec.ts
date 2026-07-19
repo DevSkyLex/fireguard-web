@@ -24,6 +24,15 @@ const paletteItems = (): HTMLButtonElement[] => [
   ...document.querySelectorAll<HTMLButtonElement>('[data-search-item]'),
 ];
 
+/**
+ * Cmd/Ctrl+K is not the palette's to take unconditionally: Quill binds it to
+ * "insert link" in the comment composer, and a message composer will want it
+ * too. Stealing it mid-sentence is a silent, infuriating bug.
+ */
+const pressCommandK = (target: EventTarget): void => {
+  target.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }));
+};
+
 describe('DashboardLayoutSearch', () => {
   const menuItems = signal<MenuItem[]>([
     {
@@ -152,6 +161,75 @@ describe('DashboardLayoutSearch', () => {
     fixture.detectChanges();
 
     expect(navigateSpy).toHaveBeenCalledWith('/organizations/org-1/facilities');
+    expect(fixture.componentInstance['visible']()).toBe(false);
+  });
+
+  const textEntryCases: ReadonlyArray<readonly [string, () => HTMLElement]> = [
+    ['an input', () => document.createElement('input')],
+    ['a textarea', () => document.createElement('textarea')],
+    [
+      'a contenteditable div (Quill)',
+      () => {
+        const editor: HTMLDivElement = document.createElement('div');
+        editor.setAttribute('contenteditable', 'true');
+
+        return editor;
+      },
+    ],
+    [
+      // Quill raises the event from the node under the caret, not the editor.
+      'a node nested inside a contenteditable region',
+      () => {
+        const editor: HTMLDivElement = document.createElement('div');
+        editor.setAttribute('contenteditable', 'true');
+        const paragraph: HTMLParagraphElement = document.createElement('p');
+        editor.appendChild(paragraph);
+        document.body.appendChild(editor);
+
+        return paragraph;
+      },
+    ],
+  ];
+
+  for (const [name, createTarget] of textEntryCases) {
+    it(`should not open the palette on Ctrl+K from ${name}`, () => {
+      const fixture = TestBed.createComponent(DashboardLayoutSearch);
+      fixture.detectChanges();
+      const target: HTMLElement = createTarget();
+      // Only orphans need mounting: the nested case is already inside its
+      // editor, and re-parenting it here would destroy the very nesting the
+      // case exists to cover.
+      if (!target.parentElement) document.body.appendChild(target);
+
+      pressCommandK(target);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance['visible']()).toBe(false);
+
+      (target.closest('[contenteditable]') ?? target).remove();
+    });
+  }
+
+  it('should open the palette on Ctrl+K from outside a field', () => {
+    const fixture = TestBed.createComponent(DashboardLayoutSearch);
+    fixture.detectChanges();
+
+    pressCommandK(document.body);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['visible']()).toBe(true);
+  });
+
+  // Closing must still work from inside the palette's own input, which is
+  // itself a text field — hence the guard only applies while closed.
+  it('should close the palette on Ctrl+K from its own input', () => {
+    const fixture = TestBed.createComponent(DashboardLayoutSearch);
+    fixture.detectChanges();
+    openPalette(fixture);
+
+    pressCommandK(paletteInput() as HTMLInputElement);
+    fixture.detectChanges();
+
     expect(fixture.componentInstance['visible']()).toBe(false);
   });
 });

@@ -34,6 +34,34 @@ interface DashboardSearchEntry {
 }
 
 /**
+ * Whether a keydown originated inside a field where the user is typing.
+ *
+ * Cmd/Ctrl+K is claimed by other surfaces: Quill (the comment composer) binds
+ * it to "insert link", and any future message composer will want it too. The
+ * palette must not steal it mid-sentence — but it must still close itself when
+ * already open, which is why the caller only consults this while closed.
+ *
+ * The `contenteditable` branch covers Quill, whose editor is a `div`. It uses
+ * `closest()` rather than the `isContentEditable` property for two reasons: it
+ * catches events raised by nodes *inside* the editable region, and jsdom does
+ * not implement `isContentEditable` — a property-based check would be silently
+ * untestable.
+ *
+ * @param {EventTarget | null} target the event target
+ *
+ * @returns {boolean} true when the target accepts text entry
+ */
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+
+  if (target.closest('[contenteditable]:not([contenteditable="false"])')) return true;
+
+  const tag: string = target.tagName;
+
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+}
+
+/**
  * Component DashboardLayoutSearch
  * @class DashboardLayoutSearch
  *
@@ -223,6 +251,8 @@ export class DashboardLayoutSearch {
    */
   protected onDocumentKeydown(event: KeyboardEvent): void {
     if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'k') return;
+    if (!this.visible() && isTextEntryTarget(event.target)) return;
+
     event.preventDefault();
 
     if (this.visible()) {

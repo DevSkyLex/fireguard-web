@@ -50,7 +50,7 @@ const message = (id: string, body: string | null, createdAt: string, isDeleted =
         ]
       : [],
   isSaved: false,
-  replyCount: 0,
+  replyCount: id === 'm1' ? 2 : 0,
   createdAt,
   updatedAt: createdAt,
 });
@@ -109,9 +109,49 @@ async function landOnMessaging(
 
   await page.route(`${API_BASE_URL}/api/messages/**`, async (route) => {
     const url: string = route.request().url();
-    reacted.push(
-      `${route.request().method()} ${decodeURIComponent(url.split('/messages/')[1] ?? '')}`,
-    );
+    const method: string = route.request().method();
+    const path: string = decodeURIComponent(url.split('/messages/')[1] ?? '');
+    reacted.push(`${method} ${path}`);
+
+    if (path.endsWith('/replies')) {
+      if (method === 'POST') {
+        const body = route.request().postDataJSON() as { body: string };
+        sent.push(body.body);
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/ld+json',
+          body: JSON.stringify(message('r3', body.body, '2026-07-01T10:10:00+00:00')),
+        });
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/ld+json',
+        body: JSON.stringify({
+          member: [message('r1', 'Checked the north wing too.', '2026-07-01T10:03:00+00:00')],
+          totalItems: 1,
+        }),
+      });
+      return;
+    }
+
+    // Pin and save return the updated message; reactions and every DELETE
+    // return 204 with no body.
+    if (method === 'POST' && /\/(pin|save)$/.test(path)) {
+      const pinned: boolean = path.endsWith('/pin');
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/ld+json',
+        body: JSON.stringify({
+          ...message('m1', 'Extinguisher check done on level 2.', '2026-07-01T10:00:00+00:00'),
+          pinnedAt: pinned ? '2026-07-01T10:02:00+00:00' : null,
+          isSaved: !pinned,
+        }),
+      });
+      return;
+    }
+
     await route.fulfill({ status: 204, body: '' });
   });
 
@@ -342,6 +382,44 @@ test.describe('Messaging workspace', () => {
 
     await expect(page.getByTestId('presence-dot').first()).toBeAttached();
     await expect(page.getByText('Online').first()).toBeAttached();
+  });
+
+  // The replies panel sits beside the thread, not over it: a reply almost
+  // always needs the surrounding conversation for context.
+  test('opens replies in a side panel without hiding the thread', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+    await page.getByTestId('open-thread').first().click();
+
+    await expect(page.getByTestId('thread-panel')).toBeVisible();
+    await expect(page.getByText('Checked the north wing too.')).toBeVisible();
+    await expect(page.getByText('Extinguisher check done on level 2.').first()).toBeVisible();
+  });
+
+  test('posts a reply and bumps the root reply count', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const { sent } = await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+    await page.getByTestId('open-thread').first().click();
+    await page.getByTestId('reply-composer').fill('On it.');
+    await page.getByTestId('reply-send').click();
+
+    await expect.poll(() => sent).toEqual(['On it.']);
+    await expect(page.getByTestId('open-thread').first()).toContainText('3');
+  });
+
+  test('closes the replies panel', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnMessaging(page);
+
+    await page.getByTestId('conversation-item').first().click();
+    await page.getByTestId('open-thread').first().click();
+    await page.getByTestId('close-thread').click();
+
+    await expect(page.getByTestId('thread-panel')).toHaveCount(0);
   });
 
   test('refuses to send an empty draft', async ({ page }) => {

@@ -155,6 +155,17 @@ export class MessageThread {
    * @type {OutputEmitterRef<MessageOutput>}
    */
   public readonly saveToggled: OutputEmitterRef<MessageOutput> = output<MessageOutput>();
+
+  /**
+   * Property threadOpened
+   * @readonly
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @type {OutputEmitterRef<MessageOutput>}
+   */
+  public readonly threadOpened: OutputEmitterRef<MessageOutput> = output<MessageOutput>();
   //#endregion
 
   //#region Methods

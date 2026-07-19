@@ -134,10 +134,15 @@
           }
 
           @if (message.replyCount > 0) {
-            <p class="text-xs font-medium text-primary-600 dark:text-primary-400">
+            <button
+              type="button"
+              data-testid="open-thread"
+              class="self-start text-xs font-medium text-primary-600 hover:underline dark:text-primary-400"
+              (click)="threadOpened.emit(message)"
+            >
               {{ message.replyCount }}
               <span i18n="@@messaging.thread.replies">replies</span>
-            </p>
+            </button>
           }
         </div>
 

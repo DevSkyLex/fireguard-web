@@ -13,7 +13,7 @@ backend scopes every endpoint by the session's active organization.
 Conversation list, thread, composer and emoji reactions are live at
 `…/messages`, with the thread updating in real time. Messages can be pinned
 (conversation-wide) and saved (personal), and online authors carry a presence
-dot. Reply threads and attachments are not built.
+dot. Replies open in a side panel. Attachments are not built.
 
 ## Route entry points
 
@@ -50,6 +50,11 @@ not here.
   so without `currentMemberId` (from `OrganizationMemberAccessStore`) the UI
   cannot tell "3 people reacted" from "3 people including me", and the toggle
   cannot choose between POST and DELETE.
+- **The replies panel sits beside the thread, never over it.** A reply almost
+  always needs the surrounding conversation for context, so the panel is the
+  workspace's third pane (330px, per the kit) rather than a takeover.
+- **The root message is rendered at the top of the panel**, reusing the same
+  thread component — a reply list without its subject reads as orphaned.
 - **Presence has no "list all online" mode.** The API requires the member ids to
   check (max 100), so the page derives them from the authors currently on
   screen. An id absent from the response means offline **or** unknown — presence

@@ -171,6 +171,43 @@ export class MessagingService extends HydraApiService {
   }
 
   /**
+   * Method listReplies
+   * @method listReplies
+   *
+   * @description
+   * Lists the replies hanging off one message.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @param {string} messageId - The parent message.
+   *
+   * @return {Observable<HydraCollection<MessageOutput>>} The replies.
+   */
+  public listReplies(messageId: string): Observable<HydraCollection<MessageOutput>> {
+    return this.getCollection<MessageOutput>(`/api/messages/${messageId}/replies`);
+  }
+
+  /**
+   * Method reply
+   * @method reply
+   *
+   * @description
+   * Posts a reply to a message.
+   *
+   * @access public
+   * @since 4.0.0
+   *
+   * @param {string} messageId - The parent message.
+   * @param {SendMessageInput} input - The reply body.
+   *
+   * @return {Observable<MessageOutput>} The created reply.
+   */
+  public reply(messageId: string, input: SendMessageInput): Observable<MessageOutput> {
+    return this.post<SendMessageInput, MessageOutput>(`/api/messages/${messageId}/replies`, input);
+  }
+
+  /**
    * Method setPinned
    * @method setPinned
    *

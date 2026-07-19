@@ -107,6 +107,7 @@
         (reactionToggled)="toggleReaction($event)"
         (pinToggled)="togglePin($event)"
         (saveToggled)="toggleSave($event)"
+        (threadOpened)="openThread($event)"
       />
 
       <!-- Composer inset from the thread's edges, per the kit. -->
@@ -150,4 +151,76 @@
       </div>
     }
   </section>
+
+  <!--
+    The replies panel is the workspace's third pane, at the kit's 330px. It sits
+    beside the thread rather than replacing it: a reply almost always needs the
+    surrounding conversation for context.
+  -->
+  @if (store.threadRoot(); as root) {
+    <aside
+      class="flex w-[330px] shrink-0 flex-col border-l border-surface-200 dark:border-surface-800"
+      data-testid="thread-panel"
+      i18n-aria-label="@@messaging.replies.aria"
+      aria-label="Replies"
+    >
+      <header
+        class="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-surface-200 px-4 dark:border-surface-800"
+      >
+        <h2
+          class="text-sm font-semibold text-surface-950 dark:text-surface-50"
+          i18n="@@messaging.replies.title"
+        >
+          Thread
+        </h2>
+        <button
+          type="button"
+          data-testid="close-thread"
+          class="rounded p-1 text-surface-400 hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800"
+          i18n-aria-label="@@messaging.replies.close"
+          aria-label="Close thread"
+          (click)="closeThread()"
+        >
+          <i class="pi pi-times text-xs" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <app-message-thread
+        class="min-h-0 flex-1"
+        [messages]="[root, ...store.replies()]"
+        [authors]="directory.identities()"
+        [currentMemberId]="memberAccess.currentMemberId()"
+        [onlineMembers]="store.onlineMembers()"
+        [loading]="store.isLoadingReplies()"
+      />
+
+      <div
+        class="mx-4 mb-4 flex items-end gap-2 rounded-2xl border border-surface-300 p-2 shadow-sm dark:border-surface-700"
+      >
+        <textarea
+          pTextarea
+          rows="1"
+          data-testid="reply-composer"
+          class="max-h-32 min-h-9 flex-1 resize-none border-0 bg-transparent shadow-none focus:ring-0"
+          i18n-placeholder="@@messaging.replies.placeholder"
+          placeholder="Reply…"
+          i18n-aria-label="@@messaging.replies.composerAria"
+          aria-label="Reply"
+          [ngModel]="replyDraft()"
+          (ngModelChange)="replyDraft.set($event)"
+          (keydown)="onReplyKeydown($event)"
+        ></textarea>
+
+        <p-button
+          icon="pi pi-send"
+          size="small"
+          data-testid="reply-send"
+          i18n-ariaLabel="@@messaging.replies.send"
+          ariaLabel="Send reply"
+          [disabled]="replyDraft().trim().length === 0"
+          (onClick)="sendReply()"
+        />
+      </div>
+    </aside>
+  }
 </div>

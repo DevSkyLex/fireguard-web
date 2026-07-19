@@ -167,6 +167,20 @@ export class MessagingPage {
   protected readonly draft: WritableSignal<string> = signal<string>('');
 
   /**
+   * Property replyDraft
+   *
+   * @description
+   * The thread panel's composer text, separate from the main one — switching
+   * panes must not swallow either draft.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @type {WritableSignal<string>}
+   */
+  protected readonly replyDraft: WritableSignal<string> = signal<string>('');
+
+  /**
    * Property canSend
    * @readonly
    *
@@ -305,6 +319,69 @@ export class MessagingPage {
    *
    * @returns {void}
    */
+  /**
+   * Method openThread
+   *
+   * @description
+   * Opens a message's replies in the side panel.
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @param {MessageOutput} message - The thread root.
+   *
+   * @returns {void}
+   */
+  protected openThread(message: MessageOutput): void {
+    this.replyDraft.set('');
+    this.store.openThread(message.id);
+  }
+
+  /**
+   * Method closeThread
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @returns {void}
+   */
+  protected closeThread(): void {
+    this.replyDraft.set('');
+    this.store.openThread(null);
+  }
+
+  /**
+   * Method sendReply
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @returns {void}
+   */
+  protected sendReply(): void {
+    if (this.replyDraft().trim().length === 0) return;
+
+    this.store.reply(this.replyDraft());
+    this.replyDraft.set('');
+  }
+
+  /**
+   * Method onReplyKeydown
+   *
+   * @access protected
+   * @since 4.0.0
+   *
+   * @param {KeyboardEvent} event - The keydown event.
+   *
+   * @returns {void}
+   */
+  protected onReplyKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+
+    event.preventDefault();
+    this.sendReply();
+  }
+
   protected togglePin(message: MessageOutput): void {
     this.store.setPinned({ message, pinned: message.pinnedAt === null });
   }

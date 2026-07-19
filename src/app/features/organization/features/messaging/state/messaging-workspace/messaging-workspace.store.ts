@@ -28,6 +28,8 @@ import type {
  * @since 1.0.0
  */
 interface MessagingWorkspaceState {
+  readonly openThreadRootId: string | null;
+  readonly repliesCallState: CallState<readonly MessageOutput[]>;
   readonly onlineMemberIds: readonly string[];
   readonly conversationsCallState: CallState<readonly ConversationOutput[]>;
   readonly messagesCallState: CallState<readonly MessageOutput[]>;
@@ -36,6 +38,8 @@ interface MessagingWorkspaceState {
 }
 
 const INITIAL_STATE: MessagingWorkspaceState = {
+  openThreadRootId: null,
+  repliesCallState: idleCallState(),
   onlineMemberIds: [],
   conversationsCallState: idleCallState(),
   messagesCallState: idleCallState(),
@@ -71,6 +75,25 @@ function applyReaction(
     .filter((reaction) => reaction.count > 0);
 
   return { ...message, reactions };
+}
+
+/**
+ * Returns the thread with one message's reply count incremented.
+ *
+ * Kept out of the store body so the update is a named, testable step rather
+ * than a spread buried in a `map`.
+ */
+function bumpReplyCount(
+  messages: readonly MessageOutput[],
+  rootId: string,
+): readonly MessageOutput[] {
+  const index: number = messages.findIndex((message: MessageOutput) => message.id === rootId);
+  if (index === -1) return messages;
+
+  const root: MessageOutput = messages[index] as MessageOutput;
+  const updated: MessageOutput = { ...root, replyCount: root.replyCount + 1 };
+
+  return messages.with(index, updated);
 }
 
 /**
@@ -164,6 +187,43 @@ export const MessagingWorkspaceStore = signalStore(
      * @type {Signal<boolean>}
      */
     isLoadingMessages: computed<boolean>(() => isCallPending(store.messagesCallState())),
+
+    /**
+     * Computed threadRoot
+     *
+     * @description
+     * The message whose replies are open, if any.
+     *
+     * @type {Signal<MessageOutput | null>}
+     */
+    threadRoot: computed<MessageOutput | null>(() => {
+      const rootId: string | null = store.openThreadRootId();
+      if (rootId === null) return null;
+      return (
+        (store.messagesCallState().data ?? []).find((m: MessageOutput) => m.id === rootId) ?? null
+      );
+    }),
+
+    /**
+     * Computed replies
+     *
+     * @description
+     * The open thread's replies, oldest first.
+     *
+     * @type {Signal<readonly MessageOutput[]>}
+     */
+    replies: computed<readonly MessageOutput[]>(() =>
+      (store.repliesCallState().data ?? []).toSorted((left, right) =>
+        left.createdAt.localeCompare(right.createdAt),
+      ),
+    ),
+
+    /**
+     * Computed isLoadingReplies
+     *
+     * @type {Signal<boolean>}
+     */
+    isLoadingReplies: computed<boolean>(() => isCallPending(store.repliesCallState())),
 
     /**
      * Computed onlineMembers
@@ -364,6 +424,80 @@ export const MessagingWorkspaceStore = signalStore(
                       ),
                     ),
                   }),
+                error: () => undefined,
+              }),
+            );
+          }),
+        ),
+      ),
+
+      /**
+       * Method openThread
+       *
+       * @description
+       * Opens a message's replies, or closes the panel when passed `null`.
+       *
+       * @param {string | null} rootId - The message whose replies to show.
+       *
+       * @returns {void}
+       */
+      openThread: rxMethod<string | null>(
+        pipe(
+          switchMap((rootId: string | null) => {
+            patchState(store, { openThreadRootId: rootId });
+
+            if (rootId === null) {
+              patchState(store, { repliesCallState: idleCallState() });
+              return EMPTY;
+            }
+
+            patchState(store, { repliesCallState: pendingCallState() });
+
+            return service.listReplies(rootId).pipe(
+              tapResponse({
+                next: (collection: HydraCollection<MessageOutput>) =>
+                  patchState(store, { repliesCallState: successCallState(collection.member) }),
+                error: (error: unknown) =>
+                  patchState(store, { repliesCallState: errorCallState(toStoreError(error)) }),
+              }),
+            );
+          }),
+        ),
+      ),
+
+      /**
+       * Method reply
+       *
+       * @description
+       * Posts a reply into the open thread and appends it, bumping the root's
+       * reply count so the thread link in the main view stays truthful.
+       *
+       * @param {string} body - The reply body.
+       *
+       * @returns {void}
+       */
+      reply: rxMethod<string>(
+        pipe(
+          switchMap((body: string) => {
+            const rootId: string | null = store.openThreadRootId();
+            if (rootId === null || body.trim().length === 0) return EMPTY;
+
+            return service.reply(rootId, { body: body.trim() }).pipe(
+              tapResponse({
+                next: (created: MessageOutput) => {
+                  patchState(store, {
+                    repliesCallState: successCallState([
+                      ...(store.repliesCallState().data ?? []),
+                      created,
+                    ]),
+                    // Bumped through the shared replace helper so the lint rule
+                    // against spreading inside `map` stays satisfied and the
+                    // update path stays in one place.
+                    messagesCallState: successCallState(
+                      bumpReplyCount(store.messagesCallState().data ?? [], rootId),
+                    ),
+                  });
+                },
                 error: () => undefined,
               }),
             );

@@ -6576,6 +6576,510 @@
         <source>Status legend</source>
         <target>Leyenda de estados</target>
       </trans-unit>
+      <trans-unit id="assistant.composer.aria" datatype="html">
+        <source>Question</source>
+        <target>Pregunta</target>
+      </trans-unit>
+      <trans-unit id="assistant.composer.placeholder" datatype="html">
+        <source>Ask about your sites, equipment or interventions…</source>
+        <target>Pregunte sobre sus sitios, equipos o intervenciones…</target>
+      </trans-unit>
+      <trans-unit id="assistant.composer.send" datatype="html">
+        <source>Ask</source>
+        <target>Preguntar</target>
+      </trans-unit>
+      <trans-unit id="assistant.empty.desc" datatype="html">
+        <source>Open a past conversation to keep going.</source>
+        <target>Abra una conversación anterior para continuar.</target>
+      </trans-unit>
+      <trans-unit id="assistant.empty.title" datatype="html">
+        <source>Pick a conversation</source>
+        <target>Elija una conversación</target>
+      </trans-unit>
+      <trans-unit id="assistant.message.failed" datatype="html">
+        <source>The assistant could not answer this one.</source>
+        <target>El asistente no pudo responder a esta.</target>
+      </trans-unit>
+      <trans-unit id="assistant.message.thinking" datatype="html">
+        <source>Thinking…</source>
+        <target>Pensando…</target>
+      </trans-unit>
+      <trans-unit id="assistant.threads.aria" datatype="html">
+        <source>Assistant threads</source>
+        <target>Hilos del asistente</target>
+      </trans-unit>
+      <trans-unit id="assistant.threads.empty" datatype="html">
+        <source>No conversations yet.</source>
+        <target>Aún no hay conversaciones.</target>
+      </trans-unit>
+      <trans-unit id="assistant.threads.title" datatype="html">
+        <source>Conversations</source>
+        <target>Conversaciones</target>
+      </trans-unit>
+      <trans-unit id="billing.paymentMethod.desc" datatype="html">
+        <source>Card details are managed in the secure billing portal.</source>
+        <target>Los datos de la tarjeta se gestionan en el portal de facturación seguro.</target>
+      </trans-unit>
+      <trans-unit id="billing.paymentMethod.expires" datatype="html">
+        <source>expires</source>
+        <target>vence</target>
+      </trans-unit>
+      <trans-unit id="billing.paymentMethod.manage" datatype="html">
+        <source>Manage in portal</source>
+        <target>Gestionar en el portal</target>
+      </trans-unit>
+      <trans-unit id="billing.paymentMethod.none" datatype="html">
+        <source>No card on file.</source>
+        <target>No hay tarjeta registrada.</target>
+      </trans-unit>
+      <trans-unit id="billing.paymentMethod.title" datatype="html">
+        <source>Payment method</source>
+        <target>Método de pago</target>
+      </trans-unit>
+      <trans-unit id="calendar.source.event" datatype="html">
+        <source>Events</source>
+        <target>Eventos</target>
+      </trans-unit>
+      <trans-unit id="calendar.source.inspection" datatype="html">
+        <source>Inspections</source>
+        <target>Inspecciones</target>
+      </trans-unit>
+      <trans-unit id="calendar.source.intervention" datatype="html">
+        <source>Interventions</source>
+        <target>Intervenciones</target>
+      </trans-unit>
+      <trans-unit id="calendar.source.maintenance" datatype="html">
+        <source>Maintenance</source>
+        <target>Mantenimiento</target>
+      </trans-unit>
+      <trans-unit id="calendar.sources" datatype="html">
+        <source>Sources</source>
+        <target>Fuentes</target>
+      </trans-unit>
+      <trans-unit id="common.loading" datatype="html">
+        <source>Loading…</source>
+        <target>Cargando…</target>
+      </trans-unit>
+      <trans-unit id="compliance.coverage.caption" datatype="html">
+        <source>Maintenance coverage across</source>
+        <target>Cobertura de mantenimiento en</target>
+      </trans-unit>
+      <trans-unit id="compliance.coverage.tracked" datatype="html">
+        <source>tracked assets</source>
+        <target>activos supervisados</target>
+      </trans-unit>
+      <trans-unit id="compliance.error" datatype="html">
+        <source>The compliance register could not be loaded. Check your connection and try again.</source>
+        <target>No se pudo cargar el registro de conformidad. Compruebe su conexión e inténtelo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="compliance.kpi.dueSoon" datatype="html">
+        <source>Due soon</source>
+        <target>Próximo a vencer</target>
+      </trans-unit>
+      <trans-unit id="compliance.kpi.openNonConformities" datatype="html">
+        <source>Open non-conformities</source>
+        <target>No conformidades abiertas</target>
+      </trans-unit>
+      <trans-unit id="compliance.kpi.overdue" datatype="html">
+        <source>Overdue</source>
+        <target>Vencido</target>
+      </trans-unit>
+      <trans-unit id="compliance.kpi.unscheduled" datatype="html">
+        <source>Unscheduled</source>
+        <target>Sin programar</target>
+      </trans-unit>
+      <trans-unit id="compliance.sites.col.coverage" datatype="html">
+        <source>Coverage</source>
+        <target>Cobertura</target>
+      </trans-unit>
+      <trans-unit id="compliance.sites.col.critical" datatype="html">
+        <source>Critical NC</source>
+        <target>NC críticas</target>
+      </trans-unit>
+      <trans-unit id="compliance.sites.col.dueSoon" datatype="html">
+        <source>Due soon</source>
+        <target>Próximo</target>
+      </trans-unit>
+      <trans-unit id="compliance.sites.col.lastInspection" datatype="html">
+        <source>Last inspection</source>
+        <target>Última inspección</target>
+      </trans-unit>
+      <trans-unit id="compliance.sites.col.overdue" datatype="html">
+        <source>Overdue</source>
+        <target>Vencido</target>
+      </trans-unit>
+      <trans-unit id="compliance.sites.col.site" datatype="html">
+        <source>Site</source>
+        <target>Sitio</target>
+      </trans-unit>
+      <trans-unit id="compliance.sites.empty.desc" datatype="html">
+        <source>Once equipment is scheduled for maintenance, each site&apos;s coverage appears here.</source>
+        <target>Cuando se programe el mantenimiento de los equipos, la cobertura de cada sitio aparecerá aquí.</target>
+      </trans-unit>
+      <trans-unit id="compliance.sites.empty.title" datatype="html">
+        <source>Nothing to report yet</source>
+        <target>Nada que informar por ahora</target>
+      </trans-unit>
+      <trans-unit id="compliance.sites.neverInspected" datatype="html">
+        <source>Never</source>
+        <target>Nunca</target>
+      </trans-unit>
+      <trans-unit id="compliance.tabs.aria" datatype="html">
+        <source>Compliance sections</source>
+        <target>Secciones de conformidad</target>
+      </trans-unit>
+      <trans-unit id="compliance.tabs.overview" datatype="html">
+        <source>Overview</source>
+        <target>Resumen</target>
+      </trans-unit>
+      <trans-unit id="compliance.tabs.sites" datatype="html">
+        <source>By site</source>
+        <target>Por sitio</target>
+      </trans-unit>
+      <trans-unit id="equipment.summary.dueSoon" datatype="html">
+        <source>due soon</source>
+        <target>próximos</target>
+      </trans-unit>
+      <trans-unit id="equipment.summary.total" datatype="html">
+        <source>assets</source>
+        <target>activos</target>
+      </trans-unit>
+      <trans-unit id="equipment.summary.upToDate" datatype="html">
+        <source>up to date</source>
+        <target>al día</target>
+      </trans-unit>
+      <trans-unit id="equipment.table.colMaintenance" datatype="html">
+        <source>Maintenance</source>
+        <target>Mantenimiento</target>
+      </trans-unit>
+      <trans-unit id="equipmentDue.dueSoon" datatype="html">
+        <source>Due soon</source>
+        <target>Próximo a vencer</target>
+      </trans-unit>
+      <trans-unit id="equipmentDue.overdue" datatype="html">
+        <source>Overdue</source>
+        <target>Vencido</target>
+      </trans-unit>
+      <trans-unit id="equipmentDue.unscheduled" datatype="html">
+        <source>Unscheduled</source>
+        <target>Sin programar</target>
+      </trans-unit>
+      <trans-unit id="equipmentDue.upToDate" datatype="html">
+        <source>Up to date</source>
+        <target>Al día</target>
+      </trans-unit>
+      <trans-unit id="facility.tree.col.compliance" datatype="html">
+        <source>Compliance</source>
+        <target>Conformidad</target>
+      </trans-unit>
+      <trans-unit id="facility.tree.col.equipment" datatype="html">
+        <source>Equipment</source>
+        <target>Equipos</target>
+      </trans-unit>
+      <trans-unit id="facility.tree.col.name" datatype="html">
+        <source>Facility</source>
+        <target>Instalación</target>
+      </trans-unit>
+      <trans-unit id="facility.tree.col.type" datatype="html">
+        <source>Type</source>
+        <target>Tipo</target>
+      </trans-unit>
+      <trans-unit id="facility.tree.empty.desc" datatype="html">
+        <source>Sites, buildings and their zones will appear here once created.</source>
+        <target>Los sitios, edificios y sus zonas aparecerán aquí una vez creados.</target>
+      </trans-unit>
+      <trans-unit id="facility.tree.empty.title" datatype="html">
+        <source>No facilities yet</source>
+        <target>Aún no hay instalaciones</target>
+      </trans-unit>
+      <trans-unit id="facility.tree.error.desc" datatype="html">
+        <source>The facility hierarchy could not be retrieved.</source>
+        <target>No se pudo recuperar la jerarquía de instalaciones.</target>
+      </trans-unit>
+      <trans-unit id="facility.tree.error.title" datatype="html">
+        <source>Could not load the hierarchy</source>
+        <target>No se pudo cargar la jerarquía</target>
+      </trans-unit>
+      <trans-unit id="facility.view.aria" datatype="html">
+        <source>Facility view</source>
+        <target>Vista de instalaciones</target>
+      </trans-unit>
+      <trans-unit id="facility.view.list" datatype="html">
+        <source>List</source>
+        <target>Lista</target>
+      </trans-unit>
+      <trans-unit id="facility.view.tree" datatype="html">
+        <source>Hierarchy</source>
+        <target>Jerarquía</target>
+      </trans-unit>
+      <trans-unit id="inbox.empty.desc" datatype="html">
+        <source>Mentions, assignments and alerts will appear here.</source>
+        <target>Las menciones, asignaciones y alertas aparecerán aquí.</target>
+      </trans-unit>
+      <trans-unit id="inbox.empty.title" datatype="html">
+        <source>Nothing needs you right now</source>
+        <target>Nada requiere su atención</target>
+      </trans-unit>
+      <trans-unit id="inbox.error.desc" datatype="html">
+        <source>Check your connection and try again.</source>
+        <target>Compruebe su conexión e inténtelo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="inbox.error.title" datatype="html">
+        <source>Could not load your inbox</source>
+        <target>No se pudo cargar su bandeja de entrada</target>
+      </trans-unit>
+      <trans-unit id="inbox.loadMore" datatype="html">
+        <source>Load more</source>
+        <target>Cargar más</target>
+      </trans-unit>
+      <trans-unit id="inbox.unread" datatype="html">
+        <source>unread</source>
+        <target>sin leer</target>
+      </trans-unit>
+      <trans-unit id="inbox.unreadOnly" datatype="html">
+        <source>Unread only</source>
+        <target>Solo sin leer</target>
+      </trans-unit>
+      <trans-unit id="layout.orgRail.aria" datatype="html">
+        <source>Organizations</source>
+        <target>Organizaciones</target>
+      </trans-unit>
+      <trans-unit id="layout.orgRail.homeAria" datatype="html">
+        <source>Go to home</source>
+        <target>Ir al inicio</target>
+      </trans-unit>
+      <trans-unit id="layout.panel.closeAria" datatype="html">
+        <source>Close panel</source>
+        <target>Cerrar el panel</target>
+      </trans-unit>
+      <trans-unit id="layout.panel.closeDrawerAria" datatype="html">
+        <source>Close panel</source>
+        <target>Cerrar el panel</target>
+      </trans-unit>
+      <trans-unit id="map.empty.desc" datatype="html">
+        <source>Facilities with an address will appear here once they are added.</source>
+        <target>Las instalaciones con dirección aparecerán aquí una vez añadidas.</target>
+      </trans-unit>
+      <trans-unit id="map.empty.title" datatype="html">
+        <source>No facilities to place yet</source>
+        <target>Aún no hay instalaciones que ubicar</target>
+      </trans-unit>
+      <trans-unit id="map.facilitiesAria" datatype="html">
+        <source>Facilities map</source>
+        <target>Mapa de instalaciones</target>
+      </trans-unit>
+      <trans-unit id="messaging.composer.aria" datatype="html">
+        <source>Message</source>
+        <target>Mensaje</target>
+      </trans-unit>
+      <trans-unit id="messaging.composer.placeholder" datatype="html">
+        <source>Write a message…</source>
+        <target>Escribir un mensaje…</target>
+      </trans-unit>
+      <trans-unit id="messaging.composer.send" datatype="html">
+        <source>Send</source>
+        <target>Enviar</target>
+      </trans-unit>
+      <trans-unit id="messaging.empty.desc" datatype="html">
+        <source>Choose a channel or a direct message to start reading.</source>
+        <target>Elija un canal o un mensaje directo para empezar a leer.</target>
+      </trans-unit>
+      <trans-unit id="messaging.empty.title" datatype="html">
+        <source>Pick a conversation</source>
+        <target>Elija una conversación</target>
+      </trans-unit>
+      <trans-unit id="messaging.list.aria" datatype="html">
+        <source>Conversations</source>
+        <target>Conversaciones</target>
+      </trans-unit>
+      <trans-unit id="messaging.list.channels" datatype="html">
+        <source>Channels</source>
+        <target>Canales</target>
+      </trans-unit>
+      <trans-unit id="messaging.list.direct" datatype="html">
+        <source>Direct messages</source>
+        <target>Mensajes directos</target>
+      </trans-unit>
+      <trans-unit id="messaging.list.empty" datatype="html">
+        <source>No conversations yet.</source>
+        <target>Aún no hay conversaciones.</target>
+      </trans-unit>
+      <trans-unit id="messaging.replies.aria" datatype="html">
+        <source>Replies</source>
+        <target>Respuestas</target>
+      </trans-unit>
+      <trans-unit id="messaging.replies.close" datatype="html">
+        <source>Close thread</source>
+        <target>Cerrar el hilo</target>
+      </trans-unit>
+      <trans-unit id="messaging.replies.composerAria" datatype="html">
+        <source>Reply</source>
+        <target>Responder</target>
+      </trans-unit>
+      <trans-unit id="messaging.replies.placeholder" datatype="html">
+        <source>Reply…</source>
+        <target>Responder…</target>
+      </trans-unit>
+      <trans-unit id="messaging.replies.send" datatype="html">
+        <source>Send reply</source>
+        <target>Enviar respuesta</target>
+      </trans-unit>
+      <trans-unit id="messaging.replies.title" datatype="html">
+        <source>Thread</source>
+        <target>Hilo</target>
+      </trans-unit>
+      <trans-unit id="messaging.thread.deleted" datatype="html">
+        <source>This message was deleted.</source>
+        <target>Este mensaje fue eliminado.</target>
+      </trans-unit>
+      <trans-unit id="messaging.thread.edited" datatype="html">
+        <source>(edited)</source>
+        <target>(editado)</target>
+      </trans-unit>
+      <trans-unit id="messaging.thread.empty.desc" datatype="html">
+        <source>Start the conversation — everyone in this channel will see it.</source>
+        <target>Inicie la conversación — todos en este canal la verán.</target>
+      </trans-unit>
+      <trans-unit id="messaging.thread.empty.title" datatype="html">
+        <source>No messages yet</source>
+        <target>Aún no hay mensajes</target>
+      </trans-unit>
+      <trans-unit id="messaging.thread.formerMember" datatype="html">
+        <source>Former member</source>
+        <target>Miembro anterior</target>
+      </trans-unit>
+      <trans-unit id="messaging.thread.online" datatype="html">
+        <source>Online</source>
+        <target>En línea</target>
+      </trans-unit>
+      <trans-unit id="messaging.thread.pinAction" datatype="html">
+        <source>Pin message</source>
+        <target>Fijar el mensaje</target>
+      </trans-unit>
+      <trans-unit id="messaging.thread.pinned" datatype="html">
+        <source>Pinned</source>
+        <target>Fijado</target>
+      </trans-unit>
+      <trans-unit id="messaging.thread.replies" datatype="html">
+        <source>replies</source>
+        <target>respuestas</target>
+      </trans-unit>
+      <trans-unit id="messaging.thread.saveAction" datatype="html">
+        <source>Save message</source>
+        <target>Guardar el mensaje</target>
+      </trans-unit>
+      <trans-unit id="org.dash.equipStatus.desc" datatype="html">
+        <source>Equipment by current status</source>
+        <target>Equipos por estado actual</target>
+      </trans-unit>
+      <trans-unit id="org.dash.equipStatus.empty" datatype="html">
+        <source>No equipment recorded yet.</source>
+        <target>Aún no hay equipos registrados.</target>
+      </trans-unit>
+      <trans-unit id="org.dash.equipStatus.title" datatype="html">
+        <source>Fleet status</source>
+        <target>Estado del parque</target>
+      </trans-unit>
+      <trans-unit id="org.dash.equipStatus.unit" datatype="html">
+        <source>units</source>
+        <target>unidades</target>
+      </trans-unit>
+      <trans-unit id="org.dash.ncSeverity.desc" datatype="html">
+        <source>Open non-conformities, most urgent first</source>
+        <target>No conformidades abiertas, las más urgentes primero</target>
+      </trans-unit>
+      <trans-unit id="org.dash.ncSeverity.title" datatype="html">
+        <source>By severity</source>
+        <target>Por severidad</target>
+      </trans-unit>
+      <trans-unit id="org.dash.ncSeverity.total" datatype="html">
+        <source>open</source>
+        <target>abiertas</target>
+      </trans-unit>
+      <trans-unit id="org.legal.country" datatype="html">
+        <source>Country</source>
+        <target>País</target>
+      </trans-unit>
+      <trans-unit id="org.legal.countryHint" datatype="html">
+        <source>Two-letter code, e.g. FR.</source>
+        <target>Código de dos letras, p. ej. ES.</target>
+      </trans-unit>
+      <trans-unit id="org.legal.intro" datatype="html">
+        <source>Used on reports, invoices and compliance exports. Every field is optional.</source>
+        <target>Se usa en informes, facturas y exportaciones de conformidad. Cada campo es opcional.</target>
+      </trans-unit>
+      <trans-unit id="org.legal.name" datatype="html">
+        <source>Registered name</source>
+        <target>Razón social</target>
+      </trans-unit>
+      <trans-unit id="org.legal.nameHint" datatype="html">
+        <source>May differ from the display name.</source>
+        <target>Puede diferir del nombre visible.</target>
+      </trans-unit>
+      <trans-unit id="org.legal.registration" datatype="html">
+        <source>Registration number</source>
+        <target>Número de registro</target>
+      </trans-unit>
+      <trans-unit id="org.legal.type" datatype="html">
+        <source>Legal type</source>
+        <target>Tipo jurídico</target>
+      </trans-unit>
+      <trans-unit id="org.legal.vat" datatype="html">
+        <source>VAT number</source>
+        <target>Número de IVA</target>
+      </trans-unit>
+      <trans-unit id="org.navGroup.workspace" datatype="html">
+        <source>Workspace</source>
+        <target>Espacio de trabajo</target>
+      </trans-unit>
+      <trans-unit id="org.overview.description" datatype="html">
+        <source>Your fire-safety operations at a glance across all sites.</source>
+        <target>Sus operaciones de seguridad contra incendios de un vistazo en todos los sitios.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal" datatype="html">
+        <source>Legal profile</source>
+        <target>Perfil legal</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legalDesc" datatype="html">
+        <source>Registered name, entity type, registration and VAT numbers.</source>
+        <target>Razón social, tipo jurídico, números de registro e IVA.</target>
+      </trans-unit>
+      <trans-unit id="route.assistant" datatype="html">
+        <source>Assistant</source>
+        <target>Asistente</target>
+      </trans-unit>
+      <trans-unit id="route.billing" datatype="html">
+        <source>Billing</source>
+        <target>Facturación</target>
+      </trans-unit>
+      <trans-unit id="route.calendar" datatype="html">
+        <source>Calendar</source>
+        <target>Calendario</target>
+      </trans-unit>
+      <trans-unit id="route.compliance" datatype="html">
+        <source>Compliance</source>
+        <target>Conformidad</target>
+      </trans-unit>
+      <trans-unit id="route.danger" datatype="html">
+        <source>Danger zone</source>
+        <target>Zona de peligro</target>
+      </trans-unit>
+      <trans-unit id="route.inbox" datatype="html">
+        <source>Inbox</source>
+        <target>Bandeja de entrada</target>
+      </trans-unit>
+      <trans-unit id="route.legal" datatype="html">
+        <source>Legal profile</source>
+        <target>Perfil legal</target>
+      </trans-unit>
+      <trans-unit id="route.map" datatype="html">
+        <source>Map</source>
+        <target>Mapa</target>
+      </trans-unit>
+      <trans-unit id="route.messages" datatype="html">
+        <source>Messages</source>
+        <target>Mensajes</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

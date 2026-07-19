@@ -49,4 +49,6 @@ export interface OrganizationSettingsLogoParams {
  */
 export interface OrganizationSettingsDeleteParams {
   readonly organizationId: string;
+  /** The slug the user retyped, forwarded as the backend's `slug` guard. */
+  readonly slugConfirmation: string;
 }

@@ -108,11 +108,14 @@ describe('OrganizationSettingsStore', () => {
     );
   });
 
-  it('should delete the organization', async () => {
-    store.deleteOrganization({ organizationId: 'org-1' });
+  // The backend enforces the danger-zone confirmation as a `slug` query
+  // parameter and 422s without it, so the slug the user retyped has to travel
+  // all the way to the transport — validating it in the dialog is not enough.
+  it('should forward the slug confirmation when deleting the organization', async () => {
+    store.deleteOrganization({ organizationId: 'org-1', slugConfirmation: 'acme' });
     await flushEffects();
 
-    expect(mockOrganizationService.remove).toHaveBeenCalledWith('org-1');
+    expect(mockOrganizationService.remove).toHaveBeenCalledWith('org-1', 'acme');
     expect(store.deleteSucceeded()).toBe(true);
     expect(store.isDeleting()).toBe(false);
   });

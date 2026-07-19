@@ -91,6 +91,6 @@
     [organizationSlug]="activeOrganizationStore.selectedOrganization()?.slug ?? ''"
     [organizationName]="activeOrganizationStore.selectedOrganization()?.name ?? ''"
     [deleting]="store.isDeleting()"
-    (confirmed)="confirmDelete()"
+    (confirmed)="confirmDelete($event)"
   />
 </div>

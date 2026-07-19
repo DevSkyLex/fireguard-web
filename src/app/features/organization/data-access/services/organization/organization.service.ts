@@ -193,12 +193,19 @@ export class OrganizationService extends HydraApiService {
    * @access public
    * @since 1.1.0
    *
+   * The backend requires the organization's slug as a `slug` query parameter
+   * and rejects the call with a 422 without it — the danger-zone confirmation
+   * is enforced server-side, not merely in the dialog.
+   *
    * @param {string} id - The unique identifier of the organization to delete.
+   * @param {string} slugConfirmation - The organization slug, retyped by the user.
    *
    * @return {Observable<void>} Observable completing on success.
    */
-  public remove(id: string): Observable<void> {
-    return this.delete(`${OrganizationService.BASE_PATH}/${id}`);
+  public remove(id: string, slugConfirmation: string): Observable<void> {
+    return this.delete(`${OrganizationService.BASE_PATH}/${id}`, {
+      params: { slug: slugConfirmation },
+    });
   }
 
   /**

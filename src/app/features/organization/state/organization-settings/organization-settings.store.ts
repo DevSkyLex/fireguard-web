@@ -179,8 +179,8 @@ export const OrganizationSettingsStore = signalStore(
       deleteOrganization: rxMethod<OrganizationSettingsDeleteParams>(
         pipe(
           tap(() => patchState(store, { deleteCallState: pendingCallState() })),
-          switchMap(({ organizationId }) =>
-            organizationService.remove(organizationId).pipe(
+          switchMap(({ organizationId, slugConfirmation }) =>
+            organizationService.remove(organizationId, slugConfirmation).pipe(
               map(() => undefined),
               tapResponse({
                 next: () => {

@@ -294,11 +294,16 @@ export class OrganizationSettingsPage {
    * @description
    * Triggers permanent deletion of the active organization.
    *
+   * The slug the user retyped is forwarded, not just used to enable the button:
+   * the backend enforces the same confirmation as a `slug` query parameter.
+   *
+   * @param {string} slugConfirmation - The slug retyped in the dialog.
+   *
    * @returns {void}
    */
-  protected confirmDelete(): void {
+  protected confirmDelete(slugConfirmation: string): void {
     const organizationId = this.activeOrganizationStore.selectedOrganization()?.id;
-    if (organizationId) this.store.deleteOrganization({ organizationId });
+    if (organizationId) this.store.deleteOrganization({ organizationId, slugConfirmation });
   }
   //#endregion
 }

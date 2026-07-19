@@ -48,8 +48,14 @@ export class OrganizationDeleteDialog {
   public readonly organizationName: InputSignal<string> = input<string>('');
   /** Whether the deletion request is in progress. */
   public readonly deleting: InputSignal<boolean> = input<boolean>(false);
-  /** Emits when the user confirms the deletion. */
-  public readonly confirmed: OutputEmitterRef<void> = output();
+  /**
+   * Emits the slug the user retyped.
+   *
+   * It is the payload, not a `void` signal: the backend enforces the same
+   * confirmation as a `slug` query parameter, so dropping it here made every
+   * deletion fail with a 422 while the dialog looked like it had worked.
+   */
+  public readonly confirmed: OutputEmitterRef<string> = output<string>();
 
   /** Live value typed in the confirmation input. */
   protected readonly typedSlug: WritableSignal<string> = signal<string>('');
@@ -83,7 +89,7 @@ export class OrganizationDeleteDialog {
 
   /** Emits the confirmation when the typed slug matches. */
   protected confirm(): void {
-    if (this.canConfirm()) this.confirmed.emit();
+    if (this.canConfirm()) this.confirmed.emit(this.typedSlug().trim());
   }
 
   /** Closes the dialog without deleting. */

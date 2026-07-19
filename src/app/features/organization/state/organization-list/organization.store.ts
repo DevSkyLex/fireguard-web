@@ -10,17 +10,10 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
-import {
-  addEntity,
-  removeEntities,
-  removeEntity,
-  setAllEntities,
-  updateEntity,
-  withEntities,
-} from '@ngrx/signals/entities';
+import { addEntity, setAllEntities, updateEntity, withEntities } from '@ngrx/signals/entities';
 import { Dispatcher, Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { exhaustMap, forkJoin, map, pipe, switchMap, tap } from 'rxjs';
+import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
 import type { RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import {
@@ -401,101 +394,6 @@ export const OrganizationStore = signalStore(
                     dispatcher.dispatch(
                       organizationStoreEvents.createFailed(
                         toStoreFailureEventPayload(storeError, 'Failed to create organization'),
-                      ),
-                    );
-                  },
-                }),
-              ),
-            ),
-          ),
-        ),
-
-        /**
-         * Method deleteOne
-         * @method deleteOne
-         *
-         * @description
-         * Deletes a single organization by ID. Uses `exhaustMap` to prevent
-         * concurrent deletes. On success: removes the item from the paginated
-         * list and clears the active selection if the deleted organization was
-         * the currently selected one.
-         *
-         * @since 1.0.0
-         *
-         * @type {RxMethod<string>} An RxMethod that accepts the organization ID to delete.
-         */
-        deleteOne: rxMethod<string>(
-          pipe(
-            tap((): void => {
-              patchState(store, { deleteCallState: pendingCallState() });
-            }),
-            exhaustMap((id: string) =>
-              organizationService.remove(id).pipe(
-                tapResponse({
-                  next: (): void => {
-                    patchState(store, removeEntity(id, { collection: 'organization' }), {
-                      totalOrganizations: store.totalOrganizations() - 1,
-                      deleteCallState: successCallState(null),
-                    });
-                    if (activeOrganizationStore.selectedOrganization()?.id === id) {
-                      activeOrganizationStore.clearSelectedOrganization();
-                    }
-                  },
-                  error: (error: unknown): void => {
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { deleteCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      organizationStoreEvents.deleteFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to delete organization'),
-                      ),
-                    );
-                  },
-                }),
-              ),
-            ),
-          ),
-        ),
-
-        /**
-         * Method deleteMany
-         * @method deleteMany
-         *
-         * @description
-         * Bulk-deletes organizations in parallel using `forkJoin`. Uses `exhaustMap`
-         * to prevent concurrent bulk-delete operations. On success: removes all
-         * matching items from the list and clears the active selection if it was
-         * among the deleted IDs.
-         *
-         * @since 1.0.0
-         *
-         * @type {RxMethod<string[]>} An RxMethod that accepts an array of organization IDs to delete.
-         */
-        deleteMany: rxMethod<string[]>(
-          pipe(
-            tap((): void => {
-              patchState(store, { deleteCallState: pendingCallState() });
-            }),
-            exhaustMap((ids: string[]) =>
-              forkJoin(ids.map((id: string) => organizationService.remove(id))).pipe(
-                map((): void => void 0),
-                tapResponse({
-                  next: (): void => {
-                    patchState(store, removeEntities(ids, { collection: 'organization' }), {
-                      totalOrganizations: store.totalOrganizations() - ids.length,
-                      deleteCallState: successCallState(null),
-                    });
-                    const selectedId: string | undefined =
-                      activeOrganizationStore.selectedOrganization()?.id;
-                    if (selectedId !== undefined && ids.includes(selectedId)) {
-                      activeOrganizationStore.clearSelectedOrganization();
-                    }
-                  },
-                  error: (error: unknown): void => {
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { deleteCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      organizationStoreEvents.deleteManyFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to delete organizations'),
                       ),
                     );
                   },

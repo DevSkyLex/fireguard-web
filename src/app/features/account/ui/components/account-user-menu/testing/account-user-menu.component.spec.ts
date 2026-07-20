@@ -5,6 +5,7 @@ import { Events } from '@ngrx/signals/events';
 import { EMPTY } from 'rxjs';
 import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
 import { AUTH_LOGOUT_PORT } from '@features/auth';
+import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { AccountUserMenu } from '../account-user-menu.component';
 
 const query = <T extends HTMLElement>(
@@ -38,6 +39,10 @@ describe('AccountUserMenu', () => {
         { provide: USER_IDENTITY_PORT, useValue: mockUserIdentityPort },
         { provide: AUTH_LOGOUT_PORT, useValue: mockAuthLogoutPort },
         { provide: NOTIFICATION_CENTER_PORT, useValue: mockNotificationCenterPort },
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: { selectedOrganization: signal({ id: 'org-1', name: 'Acme' }) },
+        },
         { provide: Events, useValue: { on: () => EMPTY } },
       ],
     });

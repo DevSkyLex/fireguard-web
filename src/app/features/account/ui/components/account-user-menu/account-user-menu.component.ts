@@ -2,6 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   input,
   signal,
@@ -24,6 +25,10 @@ import {
   type UserIdentityPort,
 } from '@features/account/ports';
 import { AUTH_LOGOUT_PORT, authStoreEvents, type AuthLogoutPort } from '@features/auth';
+import {
+  ORGANIZATION_CONTEXT_PORT,
+  type OrganizationContextPort,
+} from '@features/organization/ports';
 
 /**
  * Component AccountUserMenu
@@ -152,6 +157,45 @@ export class AccountUserMenu {
    *
    * @type {UserIdentityPort}
    */
+  /**
+   * Property organizationContext
+   * @readonly
+   *
+   * @description
+   * Read through the published port, not the organization store: this is
+   * `features/account`, and a cross-feature contract is exactly what the port
+   * exists for.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {OrganizationContextPort}
+   */
+  private readonly organizationContext: OrganizationContextPort =
+    inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
+
+  /**
+   * Property organizationSettingsLink
+   * @readonly
+   *
+   * @description
+   * Route to the active workspace's settings, or null when none is active —
+   * the kit lists it in this menu, and it was the one entry missing.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<readonly string[] | null>}
+   */
+  protected readonly organizationSettingsLink: Signal<readonly string[] | null> = computed(
+    (): readonly string[] | null => {
+      const organizationId: string | undefined =
+        this.organizationContext.selectedOrganization()?.id;
+
+      return organizationId ? ['/organizations', organizationId, 'settings'] : null;
+    },
+  );
+
   protected readonly userIdentityPort: UserIdentityPort =
     inject<UserIdentityPort>(USER_IDENTITY_PORT);
 

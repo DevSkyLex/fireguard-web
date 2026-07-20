@@ -151,6 +151,21 @@
         <span class="min-w-0 flex-1 truncate" i18n="@@account.menu.profile">Profile</span>
       </a>
     </li>
+    @if (organizationSettingsLink(); as settingsLink) {
+      <li>
+        <a
+          [routerLink]="settingsLink"
+          class="flex min-h-8 w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] font-medium text-surface-600 transition-colors hover:bg-surface-100 hover:text-surface-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-surface-900 dark:hover:text-surface-50"
+          data-testid="header-user-menu-organization-settings"
+          (click)="closePanel()"
+        >
+          <i class="pi pi-cog w-4 shrink-0 text-center text-xs" aria-hidden="true"></i>
+          <span class="min-w-0 flex-1 truncate" i18n="@@account.menu.organizationSettings"
+            >Organization settings</span
+          >
+        </a>
+      </li>
+    }
     <li>
       <a
         routerLink="/account"

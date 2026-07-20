@@ -5,7 +5,9 @@ export type { OrganizationPermissionName } from './models';
 export { OrganizationPermissionService } from './access';
 export { provideOrganizationFeature } from './organization.feature';
 export {
+  ASSISTANT_PANEL_ID,
   CONVERSATION_DETAILS_PANEL_ID,
+  withAssistantPanel,
   withConversationDetailsPanel,
   withMessagingSidebar,
   withOrganizationNavigation,

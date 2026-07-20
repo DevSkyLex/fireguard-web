@@ -5,11 +5,16 @@
 The organization assistant: ask questions about the organization's sites,
 equipment and interventions, and read past exchanges.
 
-## Route entry points
+## Entry point
 
-| URL           | Component       | Guard                                          |
-| ------------- | --------------- | ---------------------------------------------- |
-| `…/assistant` | `AssistantPage` | `organizationPermissionGuard([ASSISTANT_USE])` |
+**No route.** The assistant is a shell panel, contributed by
+`withAssistantPanel()` (`providers/panel`) under the id `assistant` and rendered
+by `AssistantPanel` (`ui/drawers`). The design kit puts it beside the thread it
+answers from, so it opens from the messaging composer's sparkles action rather
+than from a destination in the navigation.
+
+The `assistant.use` gate lives on the contribution's `available`, where the
+route's `canActivate` used to be.
 
 ## Invariants
 
@@ -26,23 +31,24 @@ equipment and interventions, and read past exchanges.
 
 ## State and data access
 
-- `AssistantThreadStore` — component-scoped: threads, the open thread's turns,
-  and asking.
+- `AssistantThreadStore` — threads, the open thread's turns, starting a thread,
+  and asking. `startThread` writes the new id into `startCallState`; the panel
+  reads `startedThreadId()`, opens it, then calls `clearStartedThread()`.
 - `AssistantService` — threads, thread detail, ask, and the Mercure
   subscription.
 
 ## Known gap
 
-**The per-organization "assistant enabled" setting is not read.** The route is
+**The per-organization "assistant enabled" setting is not read.** The panel is
 gated on the `assistant.use` permission only, so an organization that switched
-the assistant off still sees the page. Closing this needs the setting exposed on
+the assistant off still sees it. Closing this needs the setting exposed on
 `OrganizationSettingsOutput`; until then a permission-holder in a disabled
-organization gets a page whose requests will fail.
+organization gets a panel whose requests will fail.
 
-This is also why the refonte plan wanted the assistant as a _panel_ rather than
-a route: a route can only express permissions, and availability here depends on
-a setting too.
+Being a panel rather than a route makes this fixable: `available` is a
+`computed`, so it can read a setting as easily as a permission — a route's
+`canActivate` could only express the latter.
 
 ## Not built yet
 
-Creating a thread (the page only opens existing ones) and deleting threads.
+Deleting threads, and renaming one from the panel.

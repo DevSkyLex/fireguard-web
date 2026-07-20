@@ -244,14 +244,8 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     group: 'workspace',
     permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
   },
-  {
-    id: 'assistant',
-    label: $localize`:@@route.assistant:Assistant`,
-    icon: 'pi pi-sparkles',
-    path: 'assistant',
-    group: 'utilities',
-    permissions: [ORGANIZATION_PERMISSION.ASSISTANT_USE],
-  },
+  // No assistant entry: it is a shell panel now, not a destination. It opens
+  // from the composer's sparkles action, beside the thread it answers from.
   {
     id: 'drafts',
     label: $localize`:@@route.drafts:Drafts`,

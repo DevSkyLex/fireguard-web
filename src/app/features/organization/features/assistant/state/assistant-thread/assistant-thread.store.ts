@@ -9,6 +9,7 @@ import {
   errorCallState,
   idleCallState,
   isCallPending,
+  isCallSuccess,
   pendingCallState,
   successCallState,
   toStoreError,
@@ -31,6 +32,12 @@ interface AssistantThreadState {
   readonly threadsCallState: CallState<readonly AssistantThread[]>;
   readonly messagesCallState: CallState<readonly AssistantMessage[]>;
   readonly askCallState: CallState<AskAssistantOutput>;
+
+  /**
+   * The thread a `startThread` just created, for the caller to open. Held as
+   * an id rather than opened here so the store keeps one job per method.
+   */
+  readonly startCallState: CallState<string>;
   readonly organizationId: string | null;
   readonly activeThreadId: string | null;
 
@@ -49,6 +56,7 @@ const INITIAL_STATE: AssistantThreadState = {
   threadsCallState: idleCallState(),
   messagesCallState: idleCallState(),
   askCallState: idleCallState(),
+  startCallState: idleCallState(),
   organizationId: null,
   activeThreadId: null,
   loadedMessagesPage: 1,
@@ -160,6 +168,28 @@ export const AssistantThreadStore = signalStore(
     isLoadingThreads: computed<boolean>(() => isCallPending(store.threadsCallState())),
 
     /**
+     * Computed isStartingThread
+     *
+     * @type {Signal<boolean>}
+     */
+    isStartingThread: computed<boolean>(() => isCallPending(store.startCallState())),
+
+    /**
+     * Computed startedThreadId
+     *
+     * @description
+     * The thread `startThread` just created, for the caller to open. Null
+     * until one succeeds.
+     *
+     * @type {Signal<string | null>}
+     */
+    startedThreadId: computed<string | null>(() => {
+      const state: CallState<string> = store.startCallState();
+
+      return isCallSuccess(state) ? state.data : null;
+    }),
+
+    /**
      * Computed isLoadingMessages
      *
      * @type {Signal<boolean>}
@@ -251,6 +281,61 @@ export const AssistantThreadStore = signalStore(
           }),
         ),
       ),
+
+      /**
+       * Method startThread
+       *
+       * @description
+       * Opens a new thread and refreshes the list. The id lands in
+       * `startedThreadId` for the caller to open, rather than being opened
+       * here — this store keeps one job per method.
+       *
+       * Without this, a member with no thread could never ask anything: the UI
+       * only ever opened threads that already existed.
+       *
+       * @param {string | null} title - Optional title; the backend names an
+       * untitled thread from its first exchange.
+       *
+       * @returns {void}
+       */
+      startThread: rxMethod<string | null>(
+        pipe(
+          switchMap((title: string | null) => {
+            const organizationId: string | null = store.organizationId();
+            if (organizationId === null) return EMPTY;
+
+            patchState(store, { startCallState: pendingCallState() });
+
+            return service.startThread(organizationId, title).pipe(
+              tapResponse({
+                next: (thread: AssistantThread) => {
+                  patchState(store, {
+                    startCallState: successCallState(thread.id),
+                    threadsCallState: successCallState([
+                      thread,
+                      ...(store.threadsCallState().data ?? []),
+                    ]),
+                  });
+                },
+                error: (error: unknown) =>
+                  patchState(store, { startCallState: errorCallState(toStoreError(error)) }),
+              }),
+            );
+          }),
+        ),
+      ),
+
+      /**
+       * Method clearStartedThread
+       *
+       * @description
+       * Resets the create result once the caller has opened it.
+       *
+       * @returns {void}
+       */
+      clearStartedThread(): void {
+        patchState(store, { startCallState: idleCallState() });
+      },
 
       /**
        * Method openThread

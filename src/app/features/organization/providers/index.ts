@@ -5,3 +5,4 @@ export {
   withConversationDetailsPanel,
   withMessagingSidebar,
 } from '../features/messaging/providers';
+export { ASSISTANT_PANEL_ID, withAssistantPanel } from '../features/assistant/providers';

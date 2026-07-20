@@ -1,0 +1,123 @@
+<header
+  class="flex items-start justify-between gap-2 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
+>
+  <div class="min-w-0">
+    <p class="text-sm font-semibold text-surface-900 dark:text-surface-100">
+      <ng-container i18n="@@assistant.panel.title">Assistant</ng-container>
+    </p>
+    <p class="truncate text-xs text-surface-500 dark:text-surface-400">
+      <ng-container i18n="@@assistant.panel.subtitle">Answers using this thread</ng-container>
+    </p>
+  </div>
+
+  <p-button
+    icon="pi pi-plus"
+    size="small"
+    severity="secondary"
+    data-testid="assistant-new-thread"
+    i18n-ariaLabel="@@assistant.panel.newThread"
+    ariaLabel="New conversation"
+    [text]="true"
+    [rounded]="true"
+    [loading]="store.isStartingThread()"
+    (onClick)="startNewThread()"
+  />
+</header>
+
+<div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
+  @if (store.isLoadingMessages()) {
+    <app-skeleton height="4rem" />
+  } @else {
+    @if (store.hasOlderMessages()) {
+      <p-button
+        severity="secondary"
+        size="small"
+        styleClass="self-center"
+        data-testid="assistant-load-older"
+        i18n-label="@@assistant.loadOlderMessages"
+        label="Load earlier messages"
+        [text]="true"
+        (onClick)="store.loadOlderMessages()"
+      />
+    }
+
+    @for (message of store.messages(); track message.id) {
+      <article
+        class="flex flex-col gap-1"
+        data-testid="assistant-message"
+        [class.items-end]="message.role === 'user'"
+      >
+        <p
+          class="max-w-[46ch] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap"
+          [class]="
+            message.role === 'user'
+              ? 'bg-primary-500 text-white'
+              : 'bg-surface-100 text-surface-800 dark:bg-surface-800 dark:text-surface-200'
+          "
+        >
+          <!--
+            A pending answer has an empty body and fills in over Mercure, so the
+            wait is shown rather than rendered as a blank bubble.
+          -->
+          @if (message.status === 'failed') {
+            <span class="italic" i18n="@@assistant.message.failed">
+              The assistant could not answer this one.
+            </span>
+          } @else if (message.body.length === 0) {
+            <span
+              class="text-surface-500 italic dark:text-surface-400"
+              data-testid="assistant-thinking"
+              i18n="@@assistant.message.thinking"
+            >
+              Thinking…
+            </span>
+          } @else {
+            {{ message.body }}
+          }
+        </p>
+      </article>
+    } @empty {
+      <!--
+        No empty-state gate here on purpose: the composer below is always live,
+        and asking with no thread open starts one. The old page dead-ended a
+        member who had never used the assistant.
+      -->
+      <p
+        class="px-2 py-6 text-center text-sm text-surface-500 dark:text-surface-400"
+        data-testid="assistant-panel-empty"
+        i18n="@@assistant.panel.empty"
+      >
+        Ask anything about your sites, equipment or interventions.
+      </p>
+    }
+  }
+</div>
+
+<div
+  class="mx-4 mb-4 flex items-end gap-2 rounded-xl border border-surface-300 p-2 dark:border-surface-700"
+>
+  <textarea
+    pTextarea
+    rows="1"
+    data-testid="assistant-composer"
+    class="max-h-32 min-h-9 flex-1 resize-none border-0 bg-transparent shadow-none focus:ring-0"
+    i18n-placeholder="@@assistant.composer.placeholder"
+    placeholder="Ask about your sites, equipment or interventions…"
+    i18n-aria-label="@@assistant.composer.aria"
+    aria-label="Question"
+    [ngModel]="draft()"
+    (ngModelChange)="draft.set($event)"
+    (keydown)="onComposerKeydown($event)"
+  ></textarea>
+
+  <p-button
+    icon="pi pi-send"
+    size="small"
+    data-testid="assistant-send"
+    i18n-ariaLabel="@@assistant.composer.send"
+    ariaLabel="Ask"
+    [disabled]="!canAsk()"
+    [loading]="store.isAnswering() || store.isStartingThread()"
+    (onClick)="ask()"
+  />
+</div>

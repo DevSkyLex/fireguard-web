@@ -70,6 +70,32 @@ export class AssistantService extends HydraApiService {
   }
 
   /**
+   * Method startThread
+   * @method startThread
+   *
+   * @description
+   * Opens a new assistant thread. The title is optional — the backend names an
+   * untitled thread from its first exchange.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @param {string} organizationId - The organization.
+   * @param {string | null} [title] - Optional title, 255 characters at most.
+   *
+   * @return {Observable<AssistantThread>} The created thread.
+   */
+  public startThread(
+    organizationId: string,
+    title: string | null = null,
+  ): Observable<AssistantThread> {
+    return this.post<{ title: string | null }, AssistantThread>(
+      `/api/organizations/${organizationId}/assistant/threads`,
+      { title },
+    );
+  }
+
+  /**
    * Method ask
    * @method ask
    *

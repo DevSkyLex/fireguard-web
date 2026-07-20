@@ -6,6 +6,7 @@ import type { InterventionOutput } from '@features/organization/features/interve
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { InterventionCalendarStore } from '@features/organization/features/interventions/state/intervention-calendar';
 import { InterventionPlanningOptionsStore } from '@features/organization/features/interventions/state/intervention-planning-options';
+import { InterventionSummaryStore } from '@features/organization/features/interventions/state/intervention-summary';
 import type { InterventionCreateFormValues } from '@features/organization/features/interventions/ui/forms';
 import type { OrganizationOutput } from '@features/organization/models';
 import {
@@ -87,6 +88,16 @@ describe('InterventionsPage', () => {
     transition: ReturnType<typeof vi.fn>;
     clearCreatedIntervention: ReturnType<typeof vi.fn>;
   };
+  const summaryStore = {
+    load: (): void => undefined,
+    loading: (): boolean => false,
+    total: (): number => 0,
+    inProgressCount: (): number => 0,
+    plannedCount: (): number => 0,
+    overdueCount: (): number => 0,
+    blockedCount: (): number => 0,
+  };
+
   let calendarStore: {
     interventions: WritableSignal<readonly InterventionOutput[]>;
     loading: WritableSignal<boolean>;
@@ -171,6 +182,9 @@ describe('InterventionsPage', () => {
           { provide: InterventionStore, useValue: store },
           { provide: InterventionCalendarStore, useValue: calendarStore },
           { provide: InterventionPlanningOptionsStore, useValue: planningOptions },
+          // `overrideComponent` with `set` replaces the component's providers
+          // outright, so anything the page declares has to be restated here.
+          { provide: InterventionSummaryStore, useValue: summaryStore },
         ],
       },
     });

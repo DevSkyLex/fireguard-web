@@ -64,6 +64,46 @@
     </div>
   </header>
 
+  <!--
+    The kit's KPI strip. InterventionSummaryStore already computed every one of
+    these and nothing rendered them — the whole store was dead code.
+    Hidden on the calendar, which is its own overview.
+  -->
+  @if (view() !== 'calendar') {
+    <div class="grid grid-cols-2 gap-3 md:grid-cols-4" data-testid="intervention-kpi-strip">
+      <app-metric-card
+        icon="pi pi-list"
+        i18n-title="@@intervention.kpi.total"
+        title="Total"
+        [value]="summary.total()"
+        [loading]="summary.loading()"
+      />
+      <app-metric-card
+        icon="pi pi-play-circle"
+        i18n-title="@@intervention.kpi.inProgress"
+        title="In progress"
+        [value]="summary.inProgressCount()"
+        [loading]="summary.loading()"
+      />
+      <app-metric-card
+        icon="pi pi-calendar"
+        i18n-title="@@intervention.kpi.planned"
+        title="Planned"
+        [value]="summary.plannedCount()"
+        [loading]="summary.loading()"
+      />
+      <!-- Overdue is bad when it rises: the card's polarity drives its colour. -->
+      <app-metric-card
+        icon="pi pi-exclamation-triangle"
+        i18n-title="@@intervention.kpi.overdue"
+        title="Overdue"
+        polarity="lower"
+        [value]="summary.overdueCount()"
+        [loading]="summary.loading()"
+      />
+    </div>
+  }
+
   @if (view() !== 'calendar' && store.listError()) {
     <p-message severity="error" class="block">
       <div class="flex flex-wrap items-center justify-between gap-3">

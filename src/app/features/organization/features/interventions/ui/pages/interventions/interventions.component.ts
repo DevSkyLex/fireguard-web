@@ -31,7 +31,9 @@ import {
 } from '@features/organization/features/interventions/models';
 import {
   InterventionStore,
+  InterventionSummaryStore,
   type InterventionStoreType,
+  type InterventionSummaryStoreType,
 } from '@features/organization/features/interventions/state';
 import {
   InterventionCalendarStore,
@@ -69,6 +71,7 @@ import {
   GroupedList,
   GroupedListHeaderDirective,
   GroupedListRowDirective,
+  MetricCard,
   Skeleton,
   tagSeverityDotClass,
   type AvatarStackPerson,
@@ -157,6 +160,7 @@ interface InterventionListItemViewModel {
     GroupedList,
     GroupedListHeaderDirective,
     GroupedListRowDirective,
+    MetricCard,
     IconFieldModule,
     InputIconModule,
     InputTextModule,
@@ -172,7 +176,13 @@ interface InterventionListItemViewModel {
   ],
   // InterventionStore is provided at the parent route level (interventions.routes.ts)
   // so it survives navigation into a detail page — do not re-provide it here.
-  providers: [InterventionCalendarStore, InterventionPlanningOptionsStore],
+  // InterventionSummaryStore is not root-provided; the page that renders the
+  // KPI strip has to supply it.
+  providers: [
+    InterventionCalendarStore,
+    InterventionPlanningOptionsStore,
+    InterventionSummaryStore,
+  ],
   templateUrl: './interventions.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'flex min-h-0 flex-1 flex-col' },
@@ -270,6 +280,22 @@ export class InterventionsPage {
    */
   protected readonly store: InterventionStoreType =
     inject<InterventionStoreType>(InterventionStore);
+
+  /**
+   * Property summary
+   * @readonly
+   *
+   * @description
+   * Backs the kit's KPI strip. The store computed every metric and no surface
+   * ever read it — it was dead code until the strip landed.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {InterventionSummaryStoreType}
+   */
+  protected readonly summary: InterventionSummaryStoreType =
+    inject<InterventionSummaryStoreType>(InterventionSummaryStore);
 
   /**
    * Property calendarStore
@@ -823,6 +849,12 @@ export class InterventionsPage {
       if (!organizationId) return;
 
       this.store.load({ organizationId, options: name ? { name } : undefined });
+    });
+
+    // The summary store existed and nothing ever called it, so the KPI strip
+    // the kit specifies had no data behind it.
+    effect((): void => {
+      this.summary.load(this.organization.selectedOrganization()?.id ?? null);
     });
 
     effect(() => {

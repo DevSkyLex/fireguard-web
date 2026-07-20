@@ -5,4 +5,6 @@ export { InterventionStore } from './intervention';
 export type { InterventionStoreType, InterventionState } from './intervention';
 export { interventionStoreEvents } from './intervention';
 export { InterventionHeaderStore, interventionHeaderEvents } from './intervention-header';
+export { InterventionSummaryStore } from './intervention-summary';
+export type { InterventionSummaryStoreType } from './intervention-summary';
 export type { InterventionHeaderState, InterventionHeaderStoreType } from './intervention-header';

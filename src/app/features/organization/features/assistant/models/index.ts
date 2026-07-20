@@ -1,5 +1,6 @@
 export type {
   AskAssistantOutput,
+  AssistantGenerationEvent,
   AssistantMessage,
   AssistantMessageStatus,
   AssistantRole,

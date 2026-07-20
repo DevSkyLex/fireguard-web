@@ -1,4 +1,5 @@
 import type { HydraItem } from '@core/api/models';
+import type { OrganizationPermissionDescriptor } from './organization-permission-output.interface';
 
 /**
  * Interface OrganizationRoleOutput
@@ -19,8 +20,15 @@ export interface OrganizationRoleOutput extends HydraItem {
   readonly description: string | null;
   /** @type {boolean} */
   readonly isSystem: boolean;
-  /** @type {ReadonlyArray<string>} */
-  readonly permissions: ReadonlyArray<string>;
+  /**
+   * The role's granted permissions as `{ name, description }` objects — the
+   * API embeds the catalog entry, it does not send bare names. Modelling them
+   * as strings crashed the permission matrix and made role editing silently
+   * drop every grant.
+   *
+   * @type {ReadonlyArray<OrganizationPermissionDescriptor>}
+   */
+  readonly permissions: ReadonlyArray<OrganizationPermissionDescriptor>;
   /** @type {string} */
   readonly createdAt: string;
   /** @type {string} */

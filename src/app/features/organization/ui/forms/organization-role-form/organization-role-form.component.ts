@@ -74,7 +74,8 @@ export class OrganizationRoleForm {
         {
           name: role?.name ?? '',
           description: role?.description ?? '',
-          permissions: [...(role?.permissions ?? [])],
+          // The control holds names; the payload embeds catalog objects.
+          permissions: (role?.permissions ?? []).map((permission) => permission.name),
         },
         { emitEvent: false },
       );

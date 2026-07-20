@@ -33,9 +33,10 @@ describe('OrganizationMemberAccessStore', () => {
     name: 'Owner',
     description: 'Organization owner',
     isSystem: true,
+    // The API embeds the catalog entry on a role, it does not send bare names.
     permissions: [
-      ORGANIZATION_PERMISSION.FACILITIES_READ,
-      ORGANIZATION_PERMISSION.FACILITIES_WRITE,
+      { name: ORGANIZATION_PERMISSION.FACILITIES_READ, description: '' },
+      { name: ORGANIZATION_PERMISSION.FACILITIES_WRITE, description: '' },
     ],
     createdAt: '2026-01-01T00:00:00+00:00',
     updatedAt: '2026-01-01T00:00:00+00:00',
@@ -44,7 +45,6 @@ describe('OrganizationMemberAccessStore', () => {
   const permission: OrganizationPermissionOutput = {
     '@id': '/api/organizations/org-1/permissions/facilities-write',
     '@type': 'Permission',
-    id: 'facilities-write',
     name: ORGANIZATION_PERMISSION.FACILITIES_WRITE,
     description: 'Write facilities',
   };
@@ -178,7 +178,6 @@ describe('OrganizationMemberAccessStore', () => {
         permission,
         {
           ...permission,
-          id: 'facilities-read',
           name: ORGANIZATION_PERMISSION.FACILITIES_READ,
         },
       ],

@@ -478,7 +478,6 @@ describe('OrganizationService', () => {
       const mockPermission: OrganizationPermissionOutput = {
         '@id': '/api/organizations/org-uuid-1/permissions/perm-uuid-1',
         '@type': 'Permission',
-        id: 'perm-uuid-1',
         name: 'facility:read',
         description: 'Read facilities',
       };

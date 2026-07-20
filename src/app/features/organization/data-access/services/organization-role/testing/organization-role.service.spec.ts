@@ -47,7 +47,10 @@ describe('OrganizationRoleService', () => {
     name: 'Manager',
     description: 'Can manage facilities',
     isSystem: false,
-    permissions: ['facility:read', 'facility:write'],
+    permissions: [
+      { name: 'facility:read', description: '' },
+      { name: 'facility:write', description: '' },
+    ],
     createdAt: '2026-01-01T00:00:00+00:00',
     updatedAt: '2026-03-01T00:00:00+00:00',
   };
@@ -120,11 +123,15 @@ describe('OrganizationRoleService', () => {
     it('should send PATCH request and return updated role', () => {
       const updatedRole: OrganizationRoleOutput = {
         ...mockRole,
-        permissions: ['facility:read', 'equipment:read'],
+        // Objects, not names: the API embeds the catalog entry on a role.
+        permissions: [
+          { name: 'facility:read', description: '' },
+          { name: 'equipment:read', description: '' },
+        ],
       };
 
       service.update(orgId, 'role-uuid-1', input).subscribe((role) => {
-        expect(role.permissions).toContain('facility:read');
+        expect(role.permissions.map((permission) => permission.name)).toContain('facility:read');
       });
 
       const req = httpMock.expectOne(`${rolesUrl}/role-uuid-1`);

@@ -17,6 +17,7 @@ import {
 import { AssistantService } from '@features/organization/features/assistant/data-access';
 import type {
   AskAssistantOutput,
+  AssistantGenerationEvent,
   AssistantMessage,
   AssistantThread,
 } from '@features/organization/features/assistant/models';
@@ -49,6 +50,32 @@ function upsert(
 ): readonly AssistantMessage[] {
   const index: number = messages.findIndex((message) => message.id === incoming.id);
   return index === -1 ? [...messages, incoming] : messages.with(index, incoming);
+}
+
+/**
+ * Folds a Mercure generation frame into the answer it belongs to.
+ *
+ * The frame is not a message — it carries only the generated text and its
+ * status — so it is merged onto the row the POST already created. A frame for
+ * a message the thread does not hold is dropped: inventing a row from it would
+ * mean guessing its author and its timestamp.
+ */
+function applyGenerationEvent(
+  messages: readonly AssistantMessage[],
+  event: AssistantGenerationEvent,
+): readonly AssistantMessage[] {
+  const index: number = messages.findIndex((message) => message.id === event.messageId);
+  if (index === -1) return messages;
+
+  const target: AssistantMessage = messages[index] as AssistantMessage;
+
+  return messages.with(index, {
+    ...target,
+    body: event.body,
+    status: event.status,
+    tokenCount: event.tokenCount,
+    errorCode: event.errorCode,
+  });
 }
 
 /**
@@ -137,20 +164,23 @@ export const AssistantThreadStore = signalStore(
           const organizationId: string | null = store.organizationId();
           if (threadId === null || organizationId === null) return EMPTY;
 
-          return resilientMercureStream<AssistantMessage>(() =>
+          return resilientMercureStream<AssistantGenerationEvent>(() =>
             service
               .getSubscription(organizationId, threadId)
               .pipe(
                 map((subscription) =>
-                  mercure.subscribe<AssistantMessage>(subscription.topic, subscription.token),
+                  mercure.subscribe<AssistantGenerationEvent>(
+                    subscription.topic,
+                    subscription.token,
+                  ),
                 ),
               ),
           ).pipe(
             tapResponse({
-              next: (message: AssistantMessage) =>
+              next: (event: AssistantGenerationEvent) =>
                 patchState(store, {
                   messagesCallState: successCallState(
-                    upsert(store.messagesCallState().data ?? [], message),
+                    applyGenerationEvent(store.messagesCallState().data ?? [], event),
                   ),
                 }),
               error: () => undefined,

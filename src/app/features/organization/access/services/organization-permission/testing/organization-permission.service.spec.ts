@@ -28,7 +28,6 @@ describe('OrganizationPermissionService', () => {
   const mockPermission: OrganizationPermissionOutput = {
     '@id': '/api/organizations/org-1/permissions/facilities-write',
     '@type': 'Permission',
-    id: 'facilities-write',
     name: ORGANIZATION_PERMISSION.FACILITIES_WRITE,
     description: 'Write facilities',
   };
@@ -41,7 +40,7 @@ describe('OrganizationPermissionService', () => {
     isActive: true,
     joinedAt: '2026-01-01T00:00:00+00:00',
     roles: [],
-    permissions: [mockPermission],
+    permissions: [],
   };
 
   let service: OrganizationPermissionService;
@@ -153,7 +152,6 @@ describe('OrganizationPermissionService', () => {
         permissions: [
           {
             ...mockPermission,
-            id: 'organization-all',
             name: ORGANIZATION_PERMISSION.ALL,
             description: 'All organization permissions',
           },

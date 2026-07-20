@@ -18,6 +18,25 @@ export type AssistantRole = 'user' | 'assistant';
 export type AssistantMessageStatus = 'pending' | 'streaming' | 'completed' | 'failed';
 
 /**
+ * A generation frame pushed over Mercure while an answer is being written.
+ *
+ * ⚠️ This is **not** an `AssistantMessage`: the hub publishes only
+ * `{ messageId, status, body, tokenCount, errorCode }` — no `id`, no
+ * `createdAt`, no `role`. Treating a frame as a full message made every
+ * chunk append a duplicate bubble and crashed the thread's `createdAt` sort
+ * on the first token.
+ *
+ * @since 1.1.0
+ */
+export interface AssistantGenerationEvent {
+  readonly messageId: string;
+  readonly status: AssistantMessageStatus;
+  readonly body: string;
+  readonly tokenCount: number | null;
+  readonly errorCode: string | null;
+}
+
+/**
  * One turn in an assistant thread.
  *
  * @since 1.0.0

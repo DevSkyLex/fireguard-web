@@ -99,8 +99,9 @@ export class OrganizationTeamPage {
     if (catalog.length > 0) return catalog.map((permission) => permission.name);
     const seen: string[] = [];
     for (const role of this.store.roles()) {
-      for (const name of role.permissions) {
-        if (!seen.includes(name)) seen.push(name);
+      // A role's permissions are `{ name, description }` objects, not names.
+      for (const permission of role.permissions) {
+        if (!seen.includes(permission.name)) seen.push(permission.name);
       }
     }
     return seen;
@@ -129,7 +130,9 @@ export class OrganizationTeamPage {
     const names = this.knownPermissionNames();
     const actions = this.matrixActions();
     const available = new Set(names);
-    const granted = new Set(this.viewedRole()?.permissions ?? []);
+    const granted = new Set(
+      (this.viewedRole()?.permissions ?? []).map((permission) => permission.name),
+    );
     const resources: string[] = [];
     for (const name of names) {
       const resource = this.permissionResource(name);

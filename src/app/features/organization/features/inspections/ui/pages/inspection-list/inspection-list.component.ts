@@ -171,6 +171,25 @@ export class InspectionListPage {
   }
 
   /**
+   * Method onEdit
+   *
+   * @description
+   * Opens an inspection's edit form. The table has emitted `edit` since the
+   * row menu shipped and nothing listened, so the entry sat in the menu doing
+   * nothing at all.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @param {InspectionOutput} inspection - The row the menu was opened on.
+   *
+   * @returns {void}
+   */
+  public onEdit(inspection: InspectionOutput): void {
+    void this.router.navigate([inspection.id, 'edit'], { relativeTo: this.route });
+  }
+
+  /**
    * Confirms and cancels a selected draft inspection.
    */
   public onCancel(inspection: InspectionOutput): void {

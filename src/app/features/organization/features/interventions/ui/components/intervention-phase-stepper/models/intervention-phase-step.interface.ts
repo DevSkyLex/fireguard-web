@@ -13,9 +13,9 @@ export interface InterventionPhaseStep {
    * @description
    * Stable identifier of the milestone.
    *
-   * @type {'prepare' | 'execute' | 'review' | 'publish'}
+   * @type {'prepare' | 'plan' | 'execute' | 'review' | 'publish'}
    */
-  readonly key: 'prepare' | 'execute' | 'review' | 'publish';
+  readonly key: 'prepare' | 'plan' | 'execute' | 'review' | 'publish';
 
   /**
    * Property label

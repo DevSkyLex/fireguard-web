@@ -24,24 +24,34 @@ describe('InterventionPhaseStepper', () => {
   }
 
   it('should mark preparation active for a draft', () => {
-    expect(states('draft')).toEqual(['active', 'upcoming', 'upcoming', 'upcoming']);
+    expect(states('draft')).toEqual(['active', 'upcoming', 'upcoming', 'upcoming', 'upcoming']);
   });
 
-  it('should mark execution active for planned, in progress and changes requested', () => {
-    expect(states('planned')).toEqual(['done', 'active', 'upcoming', 'upcoming']);
-    expect(states('in_progress')).toEqual(['done', 'active', 'upcoming', 'upcoming']);
-    expect(states('changes_requested')).toEqual(['done', 'active', 'upcoming', 'upcoming']);
+  it('should separate planning from execution across the workflow', () => {
+    // Planning and execution are separate milestones: collapsing them hid a
+    // real transition, and "planned" looked identical to "in progress".
+    expect(states('planned')).toEqual(['done', 'active', 'upcoming', 'upcoming', 'upcoming']);
+    expect(states('in_progress')).toEqual(['done', 'done', 'active', 'upcoming', 'upcoming']);
+    // Changes requested puts the work back in the agent's hands, so it sits
+    // with execution rather than review.
+    expect(states('changes_requested')).toEqual(['done', 'done', 'active', 'upcoming', 'upcoming']);
   });
 
   it('should mark review active for a submitted intervention', () => {
-    expect(states('submitted')).toEqual(['done', 'done', 'active', 'upcoming']);
+    expect(states('submitted')).toEqual(['done', 'done', 'done', 'active', 'upcoming']);
   });
 
   it('should mark every milestone done once published', () => {
-    expect(states('published')).toEqual(['done', 'done', 'done', 'done']);
+    expect(states('published')).toEqual(['done', 'done', 'done', 'done', 'done']);
   });
 
   it('should mark every milestone upcoming for an abandoned intervention', () => {
-    expect(states('abandoned')).toEqual(['upcoming', 'upcoming', 'upcoming', 'upcoming']);
+    expect(states('abandoned')).toEqual([
+      'upcoming',
+      'upcoming',
+      'upcoming',
+      'upcoming',
+      'upcoming',
+    ]);
   });
 });

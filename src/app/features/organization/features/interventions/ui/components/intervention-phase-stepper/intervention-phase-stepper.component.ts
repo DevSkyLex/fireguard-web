@@ -90,6 +90,11 @@ export class InterventionPhaseStepper {
         icon: 'pi pi-pencil',
       },
       {
+        key: 'plan',
+        label: $localize`:@@intervention.phase.plan:Planning`,
+        icon: 'pi pi-calendar',
+      },
+      {
         key: 'execute',
         label: $localize`:@@intervention.phase.execute:Execution`,
         icon: 'pi pi-compass',
@@ -160,13 +165,16 @@ export class InterventionPhaseStepper {
       case 'draft':
         return 0;
       case 'planned':
+        return 1;
+      // `changes_requested` sits with execution, not review: the work is back
+      // in the agent's hands, which is what the stepper should show.
       case 'in_progress':
       case 'changes_requested':
-        return 1;
-      case 'submitted':
         return 2;
-      case 'published':
+      case 'submitted':
         return 3;
+      case 'published':
+        return 4;
       default:
         return -1;
     }

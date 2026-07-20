@@ -39,10 +39,14 @@
             {{ step.label }}
           </span>
         } @else {
+          <!-- Each milestone carries its own icon; an empty circle said only
+               "not yet" and threw that away. -->
           <span
-            class="size-5 shrink-0 rounded-full border-[1.5px] border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-950"
+            class="flex size-5 shrink-0 items-center justify-center rounded-full border-[1.5px] border-surface-200 bg-surface-0 text-surface-400 dark:border-surface-800 dark:bg-surface-950 dark:text-surface-500"
             aria-hidden="true"
-          ></span>
+          >
+            <i [class]="step.icon + ' text-[9px]'" aria-hidden="true"></i>
+          </span>
           <span
             class="hidden text-xs font-semibold whitespace-nowrap text-surface-500 sm:inline dark:text-surface-400"
           >

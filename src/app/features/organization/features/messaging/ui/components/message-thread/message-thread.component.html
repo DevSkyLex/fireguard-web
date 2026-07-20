@@ -110,6 +110,42 @@
             >
               This message was deleted.
             </p>
+          } @else if (editingMessageId() === message.id) {
+            <!-- Edited in place: a dialog would hide the surrounding thread,
+                 which is the context an edit is usually made against. -->
+            <div class="flex max-w-[62ch] flex-col gap-2" data-testid="message-edit-form">
+              <textarea
+                rows="2"
+                class="w-full resize-none rounded-lg border border-surface-300 bg-transparent p-2 text-sm focus:border-primary focus:outline-none dark:border-surface-700"
+                i18n-aria-label="@@messaging.thread.editAria"
+                aria-label="Edit message"
+                [value]="editDraft()"
+                (input)="editDraft.set($any($event.target).value)"
+                (keydown.escape)="cancelEditing()"
+              ></textarea>
+
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  data-testid="message-edit-save"
+                  class="cursor-pointer rounded bg-primary px-2.5 py-1 text-xs font-medium text-primary-contrast disabled:opacity-50"
+                  [disabled]="editDraft().trim().length === 0"
+                  (click)="saveEdit(message)"
+                  i18n="@@messaging.thread.editSave"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  data-testid="message-edit-cancel"
+                  class="cursor-pointer rounded px-2.5 py-1 text-xs text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:bg-surface-800"
+                  (click)="cancelEditing()"
+                  i18n="@@messaging.thread.editCancel"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           } @else {
             <!--
               Split into parts: the body stores mentions as `@{uuid}` tokens, so
@@ -282,7 +318,55 @@
           >
             <i class="pi pi-bookmark text-xs" aria-hidden="true"></i>
           </button>
+
+          @if (canEdit(message) || canDelete(message)) {
+            <button
+              type="button"
+              data-testid="message-more"
+              class="grid size-7 cursor-pointer place-content-center rounded text-surface-500 hover:bg-surface-100 hover:text-surface-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800 dark:hover:text-surface-200"
+              [attr.aria-expanded]="moreMessageId() === message.id"
+              i18n-aria-label="@@messaging.thread.moreAction"
+              aria-label="More actions"
+              (click)="toggleMore(message)"
+            >
+              <i class="pi pi-ellipsis-v text-xs" aria-hidden="true"></i>
+            </button>
+          }
         </div>
+
+        @if (moreMessageId() === message.id) {
+          <div
+            class="absolute -top-2 right-0 z-10 w-40 rounded-lg border border-surface-200 bg-surface-0 p-1 shadow-lg dark:border-surface-700 dark:bg-surface-900"
+            role="menu"
+            data-testid="message-more-menu"
+          >
+            @if (canEdit(message)) {
+              <button
+                type="button"
+                role="menuitem"
+                data-testid="message-edit"
+                class="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-surface-700 hover:bg-surface-100 dark:text-surface-200 dark:hover:bg-surface-800"
+                (click)="startEditing(message)"
+              >
+                <i class="pi pi-pencil text-xs" aria-hidden="true"></i>
+                <ng-container i18n="@@messaging.thread.edit">Edit</ng-container>
+              </button>
+            }
+
+            @if (canDelete(message)) {
+              <button
+                type="button"
+                role="menuitem"
+                data-testid="message-delete"
+                class="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+                (click)="requestDelete(message)"
+              >
+                <i class="pi pi-trash text-xs" aria-hidden="true"></i>
+                <ng-container i18n="@@messaging.thread.delete">Delete</ng-container>
+              </button>
+            }
+          </div>
+        }
 
         @if (pickerMessageId() === message.id) {
           <!-- Quick reactions — the kit's eight. -->

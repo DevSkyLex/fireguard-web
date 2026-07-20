@@ -26,6 +26,15 @@ const message = (id: string): MessageOutput =>
     updatedAt: '2026-07-01T00:00:00Z',
   }) as MessageOutput;
 
+// jsdom implements no `Element.scrollTo`, and the thread calls it to follow new
+// messages. Supplied once for the file; the auto-scroll specs below still swap
+// in their own spy per instance.
+Object.defineProperty(Element.prototype, 'scrollTo', {
+  value: (): void => undefined,
+  writable: true,
+  configurable: true,
+});
+
 /**
  * The thread follows its own arrivals — but only for a reader already at the
  * bottom. Scrolling someone back down while they read history is worse than
@@ -92,5 +101,110 @@ describe('MessageThread auto-scroll', () => {
     arrive();
 
     expect(scrollTo).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Editing is the author's alone — the backend refuses it to anyone else
+ * whatever their permissions — while deleting also reaches a moderator. Both
+ * halves are pinned so the menu never offers an action that would 403.
+ */
+describe('MessageThread edit and delete', () => {
+  let fixture: ComponentFixture<MessageThread>;
+
+  const at = (testId: string): HTMLElement | null =>
+    (fixture.debugElement.query(By.css(`[data-testid="${testId}"]`))?.nativeElement as
+      | HTMLElement
+      | undefined) ?? null;
+
+  const render = (options: {
+    readonly self: string | null;
+    readonly canManage?: boolean;
+    readonly deleted?: boolean;
+  }): void => {
+    fixture = TestBed.createComponent(MessageThread);
+    fixture.componentRef.setInput('messages', [
+      { ...message('m1'), isDeleted: options.deleted ?? false },
+    ]);
+    fixture.componentRef.setInput('currentMemberId', options.self);
+    fixture.componentRef.setInput('canManageMessages', options.canManage ?? false);
+    fixture.detectChanges();
+  };
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [MessageThread],
+      providers: [{ provide: ENV_CONFIG, useValue: { apiUrl: 'http://localhost' } }],
+    });
+  });
+
+  it('offers nothing on someone else’s message without the manage permission', () => {
+    render({ self: 'someone-else' });
+
+    expect(at('message-more')).toBeNull();
+  });
+
+  it('offers delete but not edit to a moderator', () => {
+    render({ self: 'someone-else', canManage: true });
+    at('message-more')?.click();
+    fixture.detectChanges();
+
+    expect(at('message-delete')).not.toBeNull();
+    // Editing is the author's alone, permission or not.
+    expect(at('message-edit')).toBeNull();
+  });
+
+  it('offers both to the author', () => {
+    render({ self: 'member-1' });
+    at('message-more')?.click();
+    fixture.detectChanges();
+
+    expect(at('message-edit')).not.toBeNull();
+    expect(at('message-delete')).not.toBeNull();
+  });
+
+  it('offers nothing on an already deleted message', () => {
+    render({ self: 'member-1', canManage: true, deleted: true });
+
+    expect(at('message-more')).toBeNull();
+  });
+
+  it('emits the rewritten body and closes the editor', () => {
+    render({ self: 'member-1' });
+    const edited = vi.fn();
+    fixture.componentInstance.edited.subscribe(edited);
+
+    at('message-more')?.click();
+    fixture.detectChanges();
+    at('message-edit')?.click();
+    fixture.detectChanges();
+
+    const field = fixture.debugElement.query(By.css('[data-testid="message-edit-form"] textarea'));
+    // Seeded with the current body, so a small fix is not retyped whole.
+    expect((field.nativeElement as HTMLTextAreaElement).value).toBe('message m1');
+
+    field.nativeElement.value = 'corrected';
+    field.nativeElement.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    at('message-edit-save')?.click();
+    fixture.detectChanges();
+
+    expect(edited).toHaveBeenCalledWith(expect.objectContaining({ body: 'corrected' }) as unknown);
+    expect(at('message-edit-form')).toBeNull();
+  });
+
+  it('asks the page to delete rather than deleting itself', () => {
+    render({ self: 'member-1' });
+    const deleteRequested = vi.fn();
+    fixture.componentInstance.deleteRequested.subscribe(deleteRequested);
+
+    at('message-more')?.click();
+    fixture.detectChanges();
+    at('message-delete')?.click();
+    fixture.detectChanges();
+
+    expect(deleteRequested).toHaveBeenCalledTimes(1);
+    // The menu closes: the confirmation belongs to the page.
+    expect(at('message-more-menu')).toBeNull();
   });
 });

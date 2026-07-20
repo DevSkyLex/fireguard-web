@@ -13,6 +13,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, skip } from 'rxjs';
@@ -34,6 +35,7 @@ import {
   MessageComposer,
   MessageThread,
 } from '@features/organization/features/messaging/ui/components';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ActiveOrganizationStore,
   OrganizationMemberAccessStore,
@@ -217,6 +219,44 @@ export class MessagingPage {
   protected readonly mentionableMembers: Signal<readonly MemberIdentity[]> = computed(
     (): readonly MemberIdentity[] => Array.from(this.directory.identities().values()),
   );
+
+  /**
+   * Property confirmationService
+   * @readonly
+   *
+   * @access private
+   * @since 5.0.0
+   *
+   * @type {ConfirmationService}
+   */
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
+
+  /**
+   * Property canManageMessages
+   * @readonly
+   *
+   * @description
+   * Whether the member may delete someone else's message. Editing is not
+   * covered: the backend reserves that to the author whatever the permissions.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canManageMessages: Signal<boolean> = computed((): boolean => {
+    const granted: ReadonlySet<string> = new Set(this.memberAccess.permissions());
+
+    return (
+      granted.has(ORGANIZATION_PERMISSION.MESSAGING_MANAGE) ||
+      Array.from(granted).some(
+        (permission: string): boolean =>
+          permission.endsWith('.*') &&
+          ORGANIZATION_PERMISSION.MESSAGING_MANAGE.startsWith(permission.slice(0, -1)),
+      )
+    );
+  });
 
   /**
    * Property canSend
@@ -672,6 +712,59 @@ export class MessagingPage {
    */
   protected openAssistant(): void {
     this.shellPanel.open(ASSISTANT_PANEL_ID);
+  }
+
+  /**
+   * Method editMessage
+   *
+   * @description
+   * Rewrites a message. The backend allows this to its author only, so the
+   * thread offers the action to nobody else.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @param {{ message: MessageOutput; body: string }} request - What to rewrite.
+   *
+   * @returns {void}
+   */
+  protected editMessage(request: { readonly message: MessageOutput; readonly body: string }): void {
+    this.store.editMessage(request);
+  }
+
+  /**
+   * Method confirmDeleteMessage
+   *
+   * @description
+   * Deleting is irreversible from the reader's side, so it is confirmed. The
+   * page owns the prompt rather than the thread component, which stays
+   * presentational.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @param {MessageOutput} message - The message to delete.
+   *
+   * @returns {void}
+   */
+  protected confirmDeleteMessage(message: MessageOutput): void {
+    this.confirmationService.confirm({
+      header: $localize`:@@messaging.thread.deleteHeader:Delete message`,
+      message: $localize`:@@messaging.thread.deleteConfirm:Delete this message? Its replies and reactions stay, but the text is gone for everyone.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: {
+        label: $localize`:@@messaging.thread.delete:Delete`,
+        severity: 'danger',
+      },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
+      accept: (): void => {
+        this.store.deleteMessage(message);
+      },
+    });
   }
 
   protected discardDraft(): void {

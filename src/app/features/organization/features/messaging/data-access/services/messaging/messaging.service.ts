@@ -390,6 +390,46 @@ export class MessagingService extends HydraApiService {
    *
    * @return {Observable<MessageOutput | void>} The updated message, or nothing when unpinning.
    */
+  /**
+   * Method editMessage
+   * @method editMessage
+   *
+   * @description
+   * Rewrites a message's body. The backend accepts this from the **author
+   * only** — anyone else gets a 403, whatever their permissions.
+   *
+   * @access public
+   * @since 5.0.0
+   *
+   * @param {string} messageId - The message to rewrite.
+   * @param {string} body - The new body; 40 000 characters at most.
+   *
+   * @return {Observable<MessageOutput>} The updated message, carrying `editedAt`.
+   */
+  public editMessage(messageId: string, body: string): Observable<MessageOutput> {
+    return this.patch<{ body: string }, MessageOutput>(`/api/messages/${messageId}`, { body });
+  }
+
+  /**
+   * Method deleteMessage
+   * @method deleteMessage
+   *
+   * @description
+   * Soft-deletes a message: the row survives with `isDeleted`, so replies and
+   * reactions keep their anchor. Allowed to the author, or to a member holding
+   * `messaging.manage`.
+   *
+   * @access public
+   * @since 5.0.0
+   *
+   * @param {string} messageId - The message to delete.
+   *
+   * @return {Observable<void>} Completion.
+   */
+  public deleteMessage(messageId: string): Observable<void> {
+    return this.delete(`/api/messages/${messageId}`);
+  }
+
   public setPinned(messageId: string, pinned: boolean): Observable<MessageOutput | void> {
     return pinned
       ? this.post<Record<string, never>, MessageOutput>(`/api/messages/${messageId}/pin`, {})

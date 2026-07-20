@@ -211,6 +211,95 @@ export class MessageThread {
    * @type {OutputEmitterRef<MessageOutput>}
    */
   public readonly threadOpened: OutputEmitterRef<MessageOutput> = output<MessageOutput>();
+
+  /**
+   * Property edited
+   * @readonly
+   *
+   * @description
+   * A message's new body, confirmed by its author.
+   *
+   * @access public
+   * @since 2.2.0
+   *
+   * @type {OutputEmitterRef<{ message: MessageOutput; body: string }>}
+   */
+  public readonly edited: OutputEmitterRef<{
+    readonly message: MessageOutput;
+    readonly body: string;
+  }> = output<{ readonly message: MessageOutput; readonly body: string }>();
+
+  /**
+   * Property deleteRequested
+   * @readonly
+   *
+   * @description
+   * The member asked to delete a message. Confirmation is the page's call, not
+   * this component's.
+   *
+   * @access public
+   * @since 2.2.0
+   *
+   * @type {OutputEmitterRef<MessageOutput>}
+   */
+  public readonly deleteRequested: OutputEmitterRef<MessageOutput> = output<MessageOutput>();
+  //#endregion
+
+  //#region Editing state
+  /**
+   * Property canManageMessages
+   * @readonly
+   *
+   * @description
+   * Whether the acting member holds `messaging.manage`, which lets them delete
+   * someone else's message. Editing stays the author's alone — the backend
+   * refuses it to anyone else whatever their permissions.
+   *
+   * @access public
+   * @since 2.2.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canManageMessages: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property moreMessageId
+   * @readonly
+   *
+   * @description
+   * Which message has its overflow menu open.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly moreMessageId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /**
+   * Property editingMessageId
+   * @readonly
+   *
+   * @description
+   * Which message is being rewritten in place.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly editingMessageId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /**
+   * Property editDraft
+   * @readonly
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {WritableSignal<string>}
+   */
+  protected readonly editDraft: WritableSignal<string> = signal<string>('');
   //#endregion
 
   //#region Lifecycle
@@ -252,6 +341,130 @@ export class MessageThread {
   //#endregion
 
   //#region Methods
+  /**
+   * Method canEdit
+   *
+   * @description
+   * Only the author may rewrite a message, and only while it exists. The
+   * backend enforces this too — showing the action to anyone else would just
+   * buy a 403.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @param {MessageOutput} message - The message under the cursor.
+   *
+   * @returns {boolean} Whether to offer Edit.
+   */
+  protected canEdit(message: MessageOutput): boolean {
+    const self: string | null = this.currentMemberId();
+
+    return !message.isDeleted && self !== null && toMemberId(message.authorMember) === self;
+  }
+
+  /**
+   * Method canDelete
+   *
+   * @description
+   * The author, or a member holding `messaging.manage` — moderation has to
+   * reach someone else's message.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @param {MessageOutput} message - The message under the cursor.
+   *
+   * @returns {boolean} Whether to offer Delete.
+   */
+  protected canDelete(message: MessageOutput): boolean {
+    return !message.isDeleted && (this.canEdit(message) || this.canManageMessages());
+  }
+
+  /**
+   * Method toggleMore
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @param {MessageOutput} message - The message whose menu to toggle.
+   *
+   * @returns {void}
+   */
+  protected toggleMore(message: MessageOutput): void {
+    this.moreMessageId.update((open: string | null): string | null =>
+      open === message.id ? null : message.id,
+    );
+  }
+
+  /**
+   * Method startEditing
+   *
+   * @description
+   * Opens the in-place editor seeded with the current body.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @param {MessageOutput} message - The message to rewrite.
+   *
+   * @returns {void}
+   */
+  protected startEditing(message: MessageOutput): void {
+    this.moreMessageId.set(null);
+    this.editDraft.set(message.body ?? '');
+    this.editingMessageId.set(message.id);
+  }
+
+  /**
+   * Method cancelEditing
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @returns {void}
+   */
+  protected cancelEditing(): void {
+    this.editingMessageId.set(null);
+    this.editDraft.set('');
+  }
+
+  /**
+   * Method saveEdit
+   *
+   * @description
+   * Emits the new body and closes the editor. Nothing is patched locally: the
+   * page owns the call, and the server's answer carries `editedAt`.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @param {MessageOutput} message - The message being rewritten.
+   *
+   * @returns {void}
+   */
+  protected saveEdit(message: MessageOutput): void {
+    const body: string = this.editDraft().trim();
+    if (body.length === 0) return;
+
+    this.edited.emit({ message, body });
+    this.cancelEditing();
+  }
+
+  /**
+   * Method requestDelete
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @param {MessageOutput} message - The message to delete.
+   *
+   * @returns {void}
+   */
+  protected requestDelete(message: MessageOutput): void {
+    this.moreMessageId.set(null);
+    this.deleteRequested.emit(message);
+  }
+
   /**
    * Method hasReacted
    *

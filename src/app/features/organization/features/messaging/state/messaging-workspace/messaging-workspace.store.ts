@@ -533,6 +533,59 @@ export const MessagingWorkspaceStore = signalStore(
         ),
 
         /**
+         * Method editMessage
+         *
+         * @description
+         * Rewrites a message. The backend allows this to the author only, so a
+         * failure leaves the thread untouched rather than showing an edit that
+         * did not happen.
+         *
+         * @param {{ message: MessageOutput; body: string }} request - What to change.
+         *
+         * @returns {void}
+         */
+        editMessage: rxMethod<{ readonly message: MessageOutput; readonly body: string }>(
+          pipe(
+            mergeMap((request) =>
+              service
+                .editMessage(request.message.id, request.body)
+                .pipe(tapResponse({ next: replaceMessage, error: () => undefined })),
+            ),
+          ),
+        ),
+
+        /**
+         * Method deleteMessage
+         *
+         * @description
+         * Soft-deletes a message. The row stays so replies and reactions keep
+         * their anchor — it is marked `isDeleted` locally, not dropped from the
+         * list, which is also what a reload would show.
+         *
+         * @param {MessageOutput} message - The message to delete.
+         *
+         * @returns {void}
+         */
+        deleteMessage: rxMethod<MessageOutput>(
+          pipe(
+            mergeMap((message: MessageOutput) =>
+              service.deleteMessage(message.id).pipe(
+                tapResponse({
+                  next: (): void =>
+                    replaceMessage({
+                      ...message,
+                      isDeleted: true,
+                      body: null,
+                      deletedAt: new Date().toISOString(),
+                    }),
+                  error: (): void => undefined,
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
          * Method setPinned
          *
          * @description

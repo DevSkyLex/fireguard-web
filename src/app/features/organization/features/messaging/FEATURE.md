@@ -32,6 +32,13 @@ the textarea — rendering a chip there would need a rich-text field.
 `shortcutsRequested` is published but not yet answered; the shortcut palette is
 still to build.
 
+**Editing is the author's alone; deleting also reaches a moderator.** The
+backend refuses `PATCH /api/messages/{id}` to anyone but the author whatever
+their permissions, so the thread's overflow menu offers Edit only to them.
+Delete additionally opens to `messaging.manage`. A delete is soft: the row stays
+with `isDeleted`, so replies and reactions keep their anchor — the store marks
+it rather than dropping it, which is what a reload would show anyway.
+
 **The thread follows its own arrivals, but only from the bottom.**
 `MessageThread` scrolls to the newest message when the reader is within one
 viewport of the end, and leaves them alone otherwise — yanking someone back down

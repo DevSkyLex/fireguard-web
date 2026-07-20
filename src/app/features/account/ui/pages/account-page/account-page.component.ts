@@ -9,7 +9,9 @@ import { DividerModule } from 'primeng/divider';
 import { MenuModule, type MenuPassThroughOptions } from 'primeng/menu';
 import { TagModule } from 'primeng/tag';
 import { map } from 'rxjs';
+import { resolveAccountStatusTag, type AccountStatusTagDescriptor } from '@features/account/models';
 import { NotificationStore, UserStore } from '@features/account/state';
+import { Tag } from '@shared/components';
 import { AccountMfaPanel } from '../../components/account-mfa-panel/account-mfa-panel.component';
 import { AccountNotificationsPanel } from '../../components/account-notifications-panel/account-notifications-panel.component';
 import { AccountProfilePanel } from '../../components/account-profile-panel/account-profile-panel.component';
@@ -42,6 +44,7 @@ import { type AccountNavItem, type AccountTab } from './models';
     CardModule,
     DividerModule,
     MenuModule,
+    Tag,
     TagModule,
     AccountProfilePanel,
     AccountSettingsPanel,
@@ -112,6 +115,28 @@ export class AccountPage {
    * @type {UserStore}
    */
   protected readonly userStore: UserStore = inject<UserStore>(UserStore);
+
+  /**
+   * Property statusDescriptor
+   * @readonly
+   *
+   * @description
+   * Presentation descriptor for the account status, or null while the profile
+   * has not loaded or the backend sent no status. Resolved through the account
+   * tag registry so the label, colour and icon are not restated here.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<AccountStatusTagDescriptor | null>}
+   */
+  protected readonly statusDescriptor: Signal<AccountStatusTagDescriptor | null> = computed(
+    (): AccountStatusTagDescriptor | null => {
+      const status: string | null | undefined = this.userStore.profile()?.status;
+
+      return status ? resolveAccountStatusTag('accountStatus', status) : null;
+    },
+  );
 
   /**
    * Property activeTab

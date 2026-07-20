@@ -6,7 +6,7 @@ import { NotificationStore, UserStore } from '@features/account/state';
 import { AccountPage } from '../account-page.component';
 
 describe('AccountPage', () => {
-  const setup = (queryParams: Record<string, string> = {}) => {
+  const setup = (queryParams: Record<string, string> = {}, profile: unknown = null) => {
     const mockRoute = {
       queryParamMap: of(convertToParamMap(queryParams)),
     };
@@ -18,7 +18,7 @@ describe('AccountPage', () => {
       unreadCount: signal(0),
     };
     const mockUserStore = {
-      profile: signal(null),
+      profile: signal(profile),
       displayName: signal<string | null>(null),
       initials: signal<string | null>(null),
       avatarUrlMedium: signal<string | null>(null),
@@ -36,6 +36,39 @@ describe('AccountPage', () => {
     const component = TestBed.runInInjectionContext(() => new AccountPage());
     return { component, mockRoute, mockRouter };
   };
+
+  /**
+   * A locked or unverified account changes how the rest of the page should be
+   * read, so the header has to say so rather than leaving it to be inferred.
+   */
+  describe('account status', () => {
+    const descriptorOf = (profile: unknown): { label: string; severity: string } | null =>
+      (
+        setup({}, profile).component as unknown as {
+          statusDescriptor: () => { label: string; severity: string } | null;
+        }
+      ).statusDescriptor();
+
+    it('resolves the status through the tag registry', () => {
+      expect(descriptorOf({ status: 'locked' })).toEqual({
+        label: 'Locked',
+        severity: 'danger',
+        icon: 'pi pi-lock',
+      });
+    });
+
+    it('shows nothing while the profile has not loaded', () => {
+      expect(descriptorOf(null)).toBeNull();
+    });
+
+    it('shows nothing when the backend sent no status', () => {
+      expect(descriptorOf({ status: null })).toBeNull();
+    });
+
+    it('humanises a status the frontend does not know yet', () => {
+      expect(descriptorOf({ status: 'pending_deletion' })?.label).toBe('pending deletion');
+    });
+  });
 
   it('should default to the profile tab when no tab query parameter is present', () => {
     const { component } = setup();

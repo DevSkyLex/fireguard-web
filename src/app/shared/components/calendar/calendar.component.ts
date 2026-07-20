@@ -580,6 +580,42 @@ export class Calendar {
   >(() => filterEventsByCategories(this.events(), this.activeGroups()));
 
   /**
+   * Property categoryCounts
+   * @readonly
+   *
+   * @description
+   * How many events carry each category id.
+   *
+   * Counted over **all** events, not the visible ones: a category's own count
+   * must not collapse to zero the moment it is switched off, or the number
+   * stops answering the question it is there for — "is it worth turning this
+   * back on".
+   *
+   * Computed here rather than by each consumer: the calendar already holds both
+   * the events and the groups, so a `count` field on `CalendarCategory` would
+   * have to be filled correctly by every caller — and would read as zero
+   * wherever one forgot.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @type {Signal<Readonly<Record<string, number>>>}
+   */
+  protected readonly categoryCounts: Signal<Readonly<Record<string, number>>> = computed(
+    (): Readonly<Record<string, number>> => {
+      const counts: Record<string, number> = {};
+
+      for (const event of this.events()) {
+        for (const categoryId of event.categoryIds ?? []) {
+          counts[categoryId] = (counts[categoryId] ?? 0) + 1;
+        }
+      }
+
+      return counts;
+    },
+  );
+
+  /**
    * Property monthDays
    * @readonly
    *

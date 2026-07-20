@@ -50,6 +50,15 @@ export class CalendarSidebar {
     readonly CalendarCategoryGroup[]
   >([]);
 
+  /**
+   * Event count per category id. Supplied by the calendar, which owns both the
+   * events and the groups — a missing id simply renders no count rather than a
+   * misleading zero.
+   */
+  public readonly categoryCounts: InputSignal<Readonly<Record<string, number>>> = input<
+    Readonly<Record<string, number>>
+  >({});
+
   /** First day of the week: 0 = Sunday, 1 = Monday. */
   public readonly weekStartsOn: InputSignal<0 | 1> = input<0 | 1>(1);
 

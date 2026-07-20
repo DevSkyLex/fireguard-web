@@ -98,6 +98,19 @@
               >
                 {{ category.label }}
               </span>
+
+              <!--
+                Counted over every event, not the visible ones: a category's own
+                count must not collapse to zero when it is switched off, or it
+                stops answering "is it worth turning this back on".
+              -->
+              @if (categoryCounts()[category.id]; as count) {
+                <span
+                  class="ml-auto shrink-0 text-xs text-surface-400 tabular-nums dark:text-surface-500"
+                  data-testid="calendar-category-count"
+                  >{{ count }}</span
+                >
+              }
             </button>
           </li>
         }

@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Calendar } from '../calendar.component';
 import type { CalendarCategoryGroup, CalendarEvent, CalendarView } from '../models';
@@ -23,6 +23,14 @@ const GROUPS: CalendarCategoryGroup[] = [
     categories: [{ id: 'status:planned', label: 'Planned', tone: 'info', active: true }],
   },
 ];
+
+/** Text of every rendered category count, in document order. */
+const counts = (fixture: ComponentFixture<Calendar>): string[] =>
+  [
+    ...(fixture.nativeElement as HTMLElement).querySelectorAll(
+      '[data-testid="calendar-category-count"]',
+    ),
+  ].map((node: Element): string => node.textContent?.trim() ?? '');
 
 describe('Calendar', () => {
   beforeAll(() => {
@@ -51,6 +59,39 @@ describe('Calendar', () => {
     fixture.detectChanges();
     return fixture;
   }
+
+  /**
+   * The count is what makes an unchecked category worth re-checking. Computed
+   * by the calendar rather than by each consumer, so a caller cannot forget to
+   * fill it and render a misleading zero.
+   */
+  describe('category counts', () => {
+    it('counts the events carrying each category', () => {
+      const fixture = createCalendar();
+
+      expect(counts(fixture)).toEqual(['1']);
+    });
+
+    it('keeps a category counted once it is switched off', () => {
+      // Counting the *visible* events would zero this the moment it is
+      // unchecked, and the number would stop answering its own question.
+      const fixture = createCalendar();
+      const harness = fixture.componentInstance as unknown as CalendarHarness;
+
+      harness.toggleCategory({ groupId: 'status', categoryId: 'status:planned' });
+      fixture.detectChanges();
+
+      expect(counts(fixture)).toEqual(['1']);
+    });
+
+    it('renders no count for a category no event carries', () => {
+      const fixture = createCalendar();
+      fixture.componentRef.setInput('events', []);
+      fixture.detectChanges();
+
+      expect(counts(fixture)).toEqual([]);
+    });
+  });
 
   it('renders the month period and plots events', () => {
     const fixture = createCalendar();

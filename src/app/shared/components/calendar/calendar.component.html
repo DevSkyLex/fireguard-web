@@ -12,6 +12,7 @@
         <app-calendar-sidebar
           [focusedDate]="activeDate()"
           [categoryGroups]="activeGroups()"
+          [categoryCounts]="categoryCounts()"
           [weekStartsOn]="weekStartsOn()"
           [today]="today"
           (focusedDateChange)="focusDate($event)"

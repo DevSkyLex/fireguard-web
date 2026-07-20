@@ -17,16 +17,16 @@ export interface SidebarContribution {
 
   /**
    * Where the widget mounts. `rail` is the persistent organization rail on the
-   * far left; `lead` and `footer` bracket the navigation list inside the
-   * channel sidebar.
+   * far left and `rail-end` its bottom edge (the account avatar); `lead` and
+   * `footer` bracket the navigation list inside the channel sidebar.
    *
-   * A third region rather than a separate `RAIL_SLOT`: the rail has exactly one
-   * consumer (the organization switcher), and a token for one consumer is the
-   * abstraction the rule of three exists to prevent.
+   * Regions on one token rather than separate slots: each region has exactly
+   * one consumer today, and a token per consumer is the abstraction the rule
+   * of three exists to prevent.
    *
-   * @type {'rail' | 'lead' | 'footer'}
+   * @type {'rail' | 'rail-end' | 'lead' | 'footer'}
    */
-  readonly region: 'rail' | 'lead' | 'footer';
+  readonly region: 'rail' | 'rail-end' | 'lead' | 'footer';
   readonly component: Type<unknown>;
 
   /**

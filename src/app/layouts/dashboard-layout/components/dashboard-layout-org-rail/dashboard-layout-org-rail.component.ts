@@ -10,8 +10,9 @@ import { Logo } from '@shared/components';
  *
  * @description
  * The persistent organization rail on the far left of the shell: brand mark on
- * top, then the widgets contributed to `SIDEBAR_SLOT` region `'rail'` — today
- * only the organization switcher.
+ * top, the widgets contributed to `SIDEBAR_SLOT` region `'rail'` (the
+ * organization tiles), and the `'rail-end'` widgets pinned at the bottom (the
+ * account avatar).
  *
  * It is chrome, not navigation: it never collapses, and it stays visible while
  * the channel sidebar is hidden. Below the tablet breakpoint the whole rail is
@@ -68,6 +69,26 @@ export class DashboardLayoutOrgRail {
       this.contributions.filter(
         (contribution: SidebarContribution): boolean =>
           contribution.region === 'rail' && (contribution.available?.() ?? true),
+      ),
+  );
+
+  /**
+   * Property railEndContributions
+   * @readonly
+   *
+   * @description
+   * The widgets pinned at the bottom edge of the rail.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<readonly SidebarContribution[]>}
+   */
+  protected readonly railEndContributions: Signal<readonly SidebarContribution[]> = computed(
+    (): readonly SidebarContribution[] =>
+      this.contributions.filter(
+        (contribution: SidebarContribution): boolean =>
+          contribution.region === 'rail-end' && (contribution.available?.() ?? true),
       ),
   );
   //#endregion

@@ -11,4 +11,3 @@ export type {
   OrganizationPermissionGuardOptions,
   OrganizationPermissionGuardRedirect,
 } from './http/guards';
-export { OrganizationSwitcher } from './ui/components/organization-switcher';

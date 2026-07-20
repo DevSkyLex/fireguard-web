@@ -1,15 +1,22 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   inject,
+  input,
   signal,
+  viewChild,
+  type InputSignal,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { AvatarModule } from 'primeng/avatar';
+import { Popover, PopoverModule } from 'primeng/popover';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TooltipModule } from 'primeng/tooltip';
 import {
   NOTIFICATION_CENTER_PORT,
   USER_IDENTITY_PORT,
@@ -23,27 +30,36 @@ import { AUTH_LOGOUT_PORT, authStoreEvents, type AuthLogoutPort } from '@feature
  * @class AccountUserMenu
  *
  * @description
- * Account row rendered in the dashboard sidebar footer (avatar, display
- * name, email) that expands an inline panel upward inside the sidebar with
- * the account sections (Profile, Security, Notifications) and a Logout
- * action. The panel animates open via a CSS grid-rows transition and the
- * Notifications entry shows the unread count as a badge.
+ * The account menu, in one of two appearances. `row` (default) is the full
+ * account row (avatar, display name, email) expanding an inline panel with
+ * the account sections (Profile, Security, Notifications) and Logout.
+ * `avatar` is the compact rail form: a lone avatar button opening the same
+ * entries in a popover — the shell's organization rail pins it at its bottom
+ * edge, where a 60px column cannot host an inline panel.
  *
  * Subscribes to `authStoreEvents.logoutSucceeded` and
  * `authStoreEvents.logoutFailed` to redirect to `/auth/login` after logout.
  *
- * @version 2.0.0
+ * @version 3.0.0
  *
  * @example
  * ```html
  * <app-account-user-menu />
+ * <app-account-user-menu appearance="avatar" />
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-account-user-menu',
-  imports: [AvatarModule, RouterLink, SkeletonModule],
+  imports: [
+    AvatarModule,
+    NgTemplateOutlet,
+    RouterLink,
+    SkeletonModule,
+    PopoverModule,
+    TooltipModule,
+  ],
   templateUrl: './account-user-menu.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -78,6 +94,36 @@ export class AccountUserMenu {
    * @type {string}
    */
   protected readonly panelId: string = `account-user-menu-panel-${AccountUserMenu.nextInstanceId++}`;
+
+  /**
+   * Property appearance
+   * @readonly
+   *
+   * @description
+   * `row` renders the sidebar account row with its inline panel; `avatar`
+   * renders the compact rail avatar opening the same entries in a popover.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {InputSignal<'row' | 'avatar'>}
+   */
+  public readonly appearance: InputSignal<'row' | 'avatar'> = input<'row' | 'avatar'>('row');
+
+  /**
+   * Property railPopover
+   * @readonly
+   *
+   * @description
+   * Popover hosting the menu entries in the `avatar` appearance; absent in
+   * the `row` appearance.
+   *
+   * @access private
+   * @since 3.0.0
+   *
+   * @type {Signal<Popover | undefined>}
+   */
+  private readonly railPopover: Signal<Popover | undefined> = viewChild<Popover>('railPopover');
 
   /**
    * Property expanded
@@ -219,7 +265,8 @@ export class AccountUserMenu {
    * @method closePanel
    *
    * @description
-   * Collapses the inline account panel, called after activating an entry.
+   * Dismisses the menu — collapses the inline panel and, in the `avatar`
+   * appearance, hides the popover. Called after activating an entry.
    *
    * @access protected
    * @since 2.0.0
@@ -228,6 +275,25 @@ export class AccountUserMenu {
    */
   protected closePanel(): void {
     this.expanded.set(false);
+    this.railPopover()?.hide();
+  }
+
+  /**
+   * Method toggleFromAvatar
+   * @method toggleFromAvatar
+   *
+   * @description
+   * Toggles the popover from the rail avatar trigger.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @param {MouseEvent} event - Click event anchoring the popover.
+   *
+   * @returns {void} - This method does not return a value.
+   */
+  protected toggleFromAvatar(event: MouseEvent): void {
+    this.railPopover()?.toggle(event);
   }
 
   /**

@@ -1,7 +1,8 @@
 <!--
   Ported from the design system's collaboration kit (`.ws-rail`): a 60px column
   on the muted surface, hairline border on the right, 12px vertical padding and
-  8px gaps between tiles.
+  8px gaps between tiles. Rail-end widgets (the account avatar) pin to the
+  bottom edge, as in the prototype.
 -->
 <nav
   class="flex h-full w-full flex-col items-center gap-2 overflow-x-hidden overflow-y-auto border-r border-surface-200 bg-surface-100 py-3 dark:border-surface-800 dark:bg-surface-900"
@@ -18,6 +19,12 @@
   </a>
 
   @for (contribution of railContributions(); track contribution.id) {
+    <ng-container *ngComponentOutlet="contribution.component" />
+  }
+
+  <div class="min-h-2 flex-1" aria-hidden="true"></div>
+
+  @for (contribution of railEndContributions(); track contribution.id) {
     <ng-container *ngComponentOutlet="contribution.component" />
   }
 </nav>

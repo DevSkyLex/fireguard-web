@@ -1,4 +1,4 @@
-import { OrganizationSwitcher } from '@features/organization/ui/components/organization-switcher';
+import { OrganizationRailSwitcher } from '@features/organization/ui/components/organization-rail-switcher';
 import type { DashboardLayoutSidebarSlotFeature } from '@layouts/dashboard-layout';
 
 /**
@@ -6,8 +6,10 @@ import type { DashboardLayoutSidebarSlotFeature } from '@layouts/dashboard-layou
  * @function withOrganizationSwitcher
  *
  * @description
- * Registers the {@link OrganizationSwitcher} component into the dashboard
- * sidebar slot (`lead` region, below the brand row).
+ * Registers the {@link OrganizationRailSwitcher} tiles into the dashboard
+ * shell's organization rail (`rail` region). The former sidebar dropdown is
+ * gone: with a permanent rail, a second switching surface inside the sidebar
+ * would only compete with it.
  *
  * Use inside {@link provideDashboardLayoutSlots}:
  * ```typescript
@@ -16,16 +18,16 @@ import type { DashboardLayoutSidebarSlotFeature } from '@layouts/dashboard-layou
  *
  * @returns {DashboardLayoutSidebarSlotFeature}
  *
- * @since 2.0.0
+ * @since 3.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export function withOrganizationSwitcher(): DashboardLayoutSidebarSlotFeature {
   return {
     useFactory: () => ({
-      id: 'organization-switcher',
+      id: 'organization-rail-switcher',
       order: 10,
-      region: 'lead',
-      component: OrganizationSwitcher,
+      region: 'rail',
+      component: OrganizationRailSwitcher,
     }),
   };
 }

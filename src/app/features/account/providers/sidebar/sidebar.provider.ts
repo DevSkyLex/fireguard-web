@@ -1,4 +1,4 @@
-import { AccountUserMenu } from '@features/account/ui/components/account-user-menu/account-user-menu.component';
+import { AccountRailMenu } from '@features/account/ui/components/account-rail-menu/account-rail-menu.component';
 import type { DashboardLayoutSidebarSlotFeature } from '@layouts/dashboard-layout';
 
 /**
@@ -6,8 +6,9 @@ import type { DashboardLayoutSidebarSlotFeature } from '@layouts/dashboard-layou
  * @function withAccountProfile
  *
  * @description
- * Registers the {@link AccountUserMenu} component into the dashboard
- * sidebar slot (`footer` region, pinned at the bottom).
+ * Registers the {@link AccountRailMenu} — the account avatar with its menu
+ * popover — at the bottom edge of the shell's organization rail
+ * (`rail-end` region), where the prototype pins the signed-in user.
  *
  * Use inside {@link provideDashboardLayoutSlots}:
  * ```typescript
@@ -16,7 +17,7 @@ import type { DashboardLayoutSidebarSlotFeature } from '@layouts/dashboard-layou
  *
  * @returns {DashboardLayoutSidebarSlotFeature}
  *
- * @since 2.0.0
+ * @since 3.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export function withAccountProfile(): DashboardLayoutSidebarSlotFeature {
@@ -24,8 +25,8 @@ export function withAccountProfile(): DashboardLayoutSidebarSlotFeature {
     useFactory: () => ({
       id: 'user-menu',
       order: 10,
-      region: 'footer',
-      component: AccountUserMenu,
+      region: 'rail-end',
+      component: AccountRailMenu,
     }),
   };
 }

@@ -16,17 +16,112 @@
       />
     </div>
   } @else {
-    <!--
-      A definite min-height, not just `flex-1`: MapLibre renders into a canvas
-      that needs real pixels, and the dashboard content wrapper is `min-h-full`,
-      so `flex-1` alone resolves to zero and the map collapses to a strip.
-    -->
-    <app-map
-      class="min-h-[24rem] flex-1 overflow-hidden"
-      [markers]="markers()"
-      i18n-ariaLabel="@@map.facilitiesAria"
-      ariaLabel="Facilities map"
-      (markerSelect)="openFacility($event)"
-    />
+    <div class="grid min-h-0 flex-1 lg:grid-cols-[19rem_minmax(0,1fr)]">
+      <!--
+        The panel lists only *placed* facilities, the same set the map plots: a
+        row with no pin could not be selected from the map, and the count would
+        disagree with what is on screen.
+      -->
+      <aside
+        class="flex min-h-0 flex-col gap-3 border-surface-200 p-3 lg:overflow-y-auto lg:border-r dark:border-surface-800"
+      >
+        <div class="flex items-baseline justify-between gap-2">
+          <h2
+            class="text-[15px] font-semibold tracking-[-0.01em] text-surface-950 dark:text-surface-50"
+            i18n="@@map.panel.title"
+          >
+            Sites
+          </h2>
+          <span
+            class="text-xs text-surface-500 tabular-nums dark:text-surface-400"
+            data-testid="map-panel-count"
+            i18n="@@map.panel.count"
+          >
+            {filteredFacilities().length, plural,
+              =1 {1 site}
+              other {{{ filteredFacilities().length }} sites}
+            }
+          </span>
+        </div>
+
+        <input
+          pInputText
+          type="search"
+          class="w-full"
+          placeholder="Search sites…"
+          i18n-placeholder="@@map.panel.search"
+          data-testid="map-panel-search"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+        />
+
+        @if (isSearchEmpty()) {
+          <p
+            class="px-1 py-6 text-center text-sm text-surface-500 dark:text-surface-400"
+            data-testid="map-panel-no-match"
+            i18n="@@map.panel.noMatch"
+          >
+            No site matches your search.
+          </p>
+        } @else {
+          <ul class="flex flex-col gap-1">
+            @for (facility of filteredFacilities(); track facility.id) {
+              <li>
+                <button
+                  type="button"
+                  class="flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-md border px-2.5 py-2 text-left transition-colors motion-reduce:transition-none"
+                  [class]="
+                    facility.id === selectedFacilityId()
+                      ? 'border-primary bg-primary-50 dark:bg-primary-950/40'
+                      : 'border-transparent hover:bg-surface-100 dark:hover:bg-surface-800'
+                  "
+                  [attr.aria-pressed]="facility.id === selectedFacilityId()"
+                  data-testid="map-panel-item"
+                  (click)="selectedFacilityId.set(facility.id)"
+                >
+                  <span class="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
+                    {{ facility.name }}
+                  </span>
+                  <span class="truncate text-xs text-surface-500 dark:text-surface-400">
+                    {{ facility.type }}
+                  </span>
+                </button>
+
+                <!--
+                  Opening the record stays an explicit action: a single click
+                  selects, so sites can be compared without leaving the map.
+                -->
+                @if (facility.id === selectedFacilityId()) {
+                  <p-button
+                    label="Open site"
+                    i18n-label="@@map.panel.open"
+                    icon="pi pi-arrow-up-right"
+                    severity="secondary"
+                    size="small"
+                    [text]="true"
+                    class="mt-1 ml-1"
+                    data-testid="map-panel-open"
+                    (onClick)="openFacility(facility.id)"
+                  />
+                }
+              </li>
+            }
+          </ul>
+        }
+      </aside>
+
+      <!--
+        A definite min-height, not just `flex-1`: MapLibre renders into a canvas
+        that needs real pixels, and the dashboard content wrapper is `min-h-full`,
+        so `flex-1` alone resolves to zero and the map collapses to a strip.
+      -->
+      <app-map
+        class="min-h-[24rem] flex-1 overflow-hidden"
+        [markers]="markers()"
+        i18n-ariaLabel="@@map.facilitiesAria"
+        ariaLabel="Facilities map"
+        (markerSelect)="selectMarker($event)"
+      />
+    </div>
   }
 </div>

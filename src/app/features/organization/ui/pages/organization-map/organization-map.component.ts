@@ -9,7 +9,10 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import { FacilityService } from '@features/organization/features/facilities';
 import type { FacilityOutput } from '@features/organization/features/facilities';
 import { ActiveOrganizationStore } from '@features/organization/state';
@@ -34,7 +37,7 @@ import { EmptyState, MapCanvas, type MapMarker } from '@shared/components';
  */
 @Component({
   selector: 'app-organization-map',
-  imports: [MapCanvas, EmptyState],
+  imports: [MapCanvas, EmptyState, ButtonModule, FormsModule, InputTextModule],
   host: { class: 'flex min-h-0 flex-1' },
   templateUrl: './organization-map.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -146,6 +149,42 @@ export class OrganizationMapPage {
   protected readonly isEmpty: Signal<boolean> = computed(
     (): boolean => this.hasLoaded() && this.markers().length === 0,
   );
+
+  /** Free-text filter applied to the side panel's list. */
+  protected readonly search: WritableSignal<string> = signal<string>('');
+
+  /** Facility currently selected from a pin or the list, if any. */
+  protected readonly selectedFacilityId: WritableSignal<string | null> = signal<string | null>(
+    null,
+  );
+
+  /**
+   * Facilities matching the search, name first then type.
+   *
+   * Only placed facilities are listed, so the panel and the map always describe
+   * the same set — a row with no pin would be unselectable from the map and
+   * would make the count disagree with what is plotted.
+   */
+  protected readonly filteredFacilities: Signal<readonly FacilityOutput[]> = computed(
+    (): readonly FacilityOutput[] => {
+      const term: string = this.search().trim().toLowerCase();
+      const placed: readonly FacilityOutput[] = this.facilities().filter(
+        (facility: FacilityOutput): boolean =>
+          typeof facility.latitude === 'number' && typeof facility.longitude === 'number',
+      );
+
+      if (term === '') return placed;
+
+      return placed.filter((facility: FacilityOutput): boolean =>
+        `${facility.name} ${facility.type}`.toLowerCase().includes(term),
+      );
+    },
+  );
+
+  /** True when a search excluded everything — distinct from having no facilities. */
+  protected readonly isSearchEmpty: Signal<boolean> = computed(
+    (): boolean => this.search().trim() !== '' && this.filteredFacilities().length === 0,
+  );
   //#endregion
 
   //#region Lifecycle
@@ -179,21 +218,42 @@ export class OrganizationMapPage {
    * Method openFacility
    *
    * @description
-   * Opens the facility a marker stands for.
+   * Opens a facility's record. An explicit action from the panel, not a
+   * side effect of selecting it.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @param {MapMarker} marker - The selected marker.
+   * @param {string} facilityId - Identifier of the facility to open.
    *
    * @returns {void}
    */
-  protected openFacility(marker: MapMarker): void {
+  protected openFacility(facilityId: string): void {
     const organizationId: string | undefined =
       this.activeOrganizationStore.selectedOrganization()?.id;
     if (organizationId === undefined) return;
 
-    void this.router.navigate(['/organizations', organizationId, 'facilities', marker.id]);
+    void this.router.navigate(['/organizations', organizationId, 'facilities', facilityId]);
+  }
+
+  /**
+   * Method selectMarker
+   *
+   * @description
+   * Selects the facility a pin stands for, rather than navigating away from the
+   * map. Leaving the map on a single click made comparing sites impossible —
+   * the whole point of plotting them together. Opening the record stays
+   * available as an explicit action on the selected row.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {MapMarker} marker - The clicked marker.
+   *
+   * @returns {void}
+   */
+  protected selectMarker(marker: MapMarker): void {
+    this.selectedFacilityId.set(marker.id);
   }
   //#endregion
 }

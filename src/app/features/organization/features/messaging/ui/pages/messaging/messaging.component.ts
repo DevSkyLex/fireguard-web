@@ -379,6 +379,37 @@ export class MessagingPage {
   );
 
   /**
+   * Property isCounterpartOnline
+   * @readonly
+   *
+   * @description
+   * Whether the person on the other side of a direct conversation is online.
+   *
+   * The counterpart is derived from the thread's authors rather than read from
+   * the conversation: `ConversationOutput` carries no participant for a direct
+   * conversation — `subject` and `subjectLabel` are both null. So this only
+   * answers once they have written something, which is also the only case
+   * where the header shows their initials.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isCounterpartOnline: Signal<boolean> = computed((): boolean => {
+    if (this.store.activeConversation()?.isChannel !== false) return false;
+
+    const self: string | null = this.memberAccess.currentMemberId();
+    const online: ReadonlySet<string> = this.store.onlineMembers();
+
+    return this.store.messages().some((message: MessageOutput): boolean => {
+      const author: string = toMemberId(message.authorMember);
+
+      return author !== self && online.has(author);
+    });
+  });
+
+  /**
    * Property conversationInitials
    * @readonly
    *

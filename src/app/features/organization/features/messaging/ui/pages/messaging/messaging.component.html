@@ -12,12 +12,26 @@
       >
         @if (conversation?.isChannel === false) {
           <!-- A direct conversation is a person, not a channel: identity, not a hash. -->
-          <span
-            class="grid size-5.5 shrink-0 place-content-center rounded-full bg-surface-100 text-[10px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-            aria-hidden="true"
-            data-testid="conversation-header-avatar"
-            >{{ conversationInitials() }}</span
-          >
+          <span class="relative block size-5.5 shrink-0">
+            <span
+              class="grid size-5.5 place-content-center rounded-full bg-surface-100 text-[10px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+              aria-hidden="true"
+              data-testid="conversation-header-avatar"
+              >{{ conversationInitials() }}</span
+            >
+
+            <!-- Status is never colour-only (PRODUCT.md): the dot carries a
+                 screen-reader label. Only the online case is announced — an
+                 absent presence means offline OR expired. -->
+            @if (isCounterpartOnline()) {
+              <span
+                class="absolute right-0 bottom-0 size-2 rounded-full border-2 border-surface-0 bg-green-500 dark:border-surface-950"
+                data-testid="conversation-header-presence"
+              >
+                <span class="sr-only" i18n="@@messaging.thread.online">Online</span>
+              </span>
+            }
+          </span>
         } @else {
           <i class="pi pi-hashtag text-sm text-surface-400" aria-hidden="true"></i>
         }

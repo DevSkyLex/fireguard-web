@@ -129,6 +129,22 @@ export class MessageComposer {
   public readonly compact: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property testIdPrefix
+   * @readonly
+   *
+   * @description
+   * Namespaces the component's `data-testid`s. Two composers share one page —
+   * the thread's and the reply panel's — so a fixed id would match both and
+   * make every selector ambiguous.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly testIdPrefix: InputSignal<string> = input<string>('message');
+
+  /**
    * Property sent
    * @readonly
    *

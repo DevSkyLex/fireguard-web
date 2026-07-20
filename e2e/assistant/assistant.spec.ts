@@ -3,7 +3,8 @@ import { organizationOutput } from '../support/fixtures/api-fixtures';
 import { ApiMock } from '../support/mocks/api-mock';
 
 /**
- * The organization assistant (`/assistant`).
+ * The organization assistant, now a shell panel rather than a route: it opens
+ * beside the conversation it answers from.
  *
  * The behaviour worth pinning is the wait: an answer comes back `pending` with
  * an empty body and fills in over Mercure, so a blank bubble would read as a
@@ -128,26 +129,88 @@ async function landOnAssistant(page: Page): Promise<{ asked: string[] }> {
     });
   });
 
-  await page.goto(`/organizations/${organization.id}/assistant`);
-  await expect(page.locator('#assistant')).toBeVisible();
+  // No route any more: the panel opens from the conversation header, so the
+  // workspace has to render first. Only what the header needs is mocked.
+  const empty = { member: [], totalItems: 0 };
+  await page.route(`${API_BASE_URL}/api/conversations**`, async (route) => {
+    const path: string = new URL(route.request().url()).pathname;
+
+    if (path.endsWith('/messages') || path.endsWith('/pinned-messages')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/ld+json',
+        body: JSON.stringify(empty),
+      });
+      return;
+    }
+    if (path.endsWith('/subscription')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/ld+json',
+        body: JSON.stringify({ token: 'jwt', topic: 'conversation/c1' }),
+      });
+      return;
+    }
+    if (path.endsWith('/attachments')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/ld+json',
+        body: JSON.stringify(empty),
+      });
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/ld+json',
+      body: JSON.stringify({
+        member: [
+          {
+            '@id': '/api/conversations/c1',
+            '@type': 'Conversation',
+            id: 'c1',
+            organization: `/api/organizations/${organization.id}`,
+            subjectType: 'none',
+            subject: null,
+            subjectLabel: null,
+            visibility: 'public',
+            lastMessageAt: null,
+            messagesCount: 0,
+            isArchived: false,
+            unreadCount: 0,
+            createdAt: '2026-07-01T09:00:00+00:00',
+            updatedAt: '2026-07-01T09:00:00+00:00',
+            isChannel: true,
+            name: 'general',
+            team: null,
+            isFavorite: false,
+            parentConversationId: null,
+          },
+        ],
+        totalItems: 1,
+      }),
+    });
+  });
+  await page.route(`${API_BASE_URL}/api/presence**`, (route) =>
+    route.fulfill({ status: 200, contentType: 'application/ld+json', body: JSON.stringify(empty) }),
+  );
+  await page.route(`${API_BASE_URL}/api/organizations/${organization.id}/members**`, (route) =>
+    route.fulfill({ status: 200, contentType: 'application/ld+json', body: JSON.stringify(empty) }),
+  );
+
+  await page.goto(`/organizations/${organization.id}/messages?conversation=c1`);
+  await page.getByTestId('conversation-assistant').locator('button').click();
+  await expect(page.getByTestId('assistant-composer')).toBeVisible();
 
   return { asked };
 }
 
 test.describe('Organization assistant', () => {
-  test('lists past conversations', async ({ page }) => {
+  // The panel carries no thread list — it resumes the most recent exchange, so
+  // past conversations stay reachable without a second surface.
+  test('resumes the most recent conversation with both sides of the exchange', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnAssistant(page);
-
-    await expect(page.getByTestId('assistant-thread')).toHaveCount(1);
-    await expect(page.getByText('Overdue extinguishers')).toBeVisible();
-  });
-
-  test('opens a conversation with both sides of the exchange', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await landOnAssistant(page);
-
-    await page.getByTestId('assistant-thread').click();
 
     await expect(page.getByTestId('assistant-message')).toHaveCount(2);
     await expect(page.getByText('Which sites are overdue?')).toBeVisible();
@@ -159,7 +222,6 @@ test.describe('Organization assistant', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     const { asked } = await landOnAssistant(page);
 
-    await page.getByTestId('assistant-thread').click();
     await page.getByTestId('assistant-composer').fill('And which are due soon?');
     await page.getByTestId('assistant-send').locator('button').click();
 
@@ -172,7 +234,6 @@ test.describe('Organization assistant', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnAssistant(page);
 
-    await page.getByTestId('assistant-thread').click();
     await page.getByTestId('assistant-composer').fill('First question');
     await page.getByTestId('assistant-send').locator('button').click();
 

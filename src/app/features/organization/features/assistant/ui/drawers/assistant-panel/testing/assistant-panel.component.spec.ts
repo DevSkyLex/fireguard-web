@@ -17,6 +17,7 @@ describe('AssistantPanel', () => {
   let activeThreadId: WritableSignal<string | null>;
   let startedThreadId: WritableSignal<string | null>;
   let messages: WritableSignal<readonly AssistantMessage[]>;
+  let threads: WritableSignal<readonly { readonly id: string }[]>;
   let store: Record<string, unknown>;
 
   const build = (): ComponentFixture<AssistantPanel> => {
@@ -55,11 +56,13 @@ describe('AssistantPanel', () => {
     activeThreadId = signal<string | null>(null);
     startedThreadId = signal<string | null>(null);
     messages = signal<readonly AssistantMessage[]>([]);
+    threads = signal<readonly { readonly id: string }[]>([]);
 
     store = {
       activeThreadId,
       startedThreadId,
       messages,
+      threads,
       isAnswering: signal(false),
       isStartingThread: signal(false),
       isLoadingMessages: signal(false),
@@ -147,6 +150,16 @@ describe('AssistantPanel', () => {
     const fixture = build();
 
     expect(fixture.debugElement.query(By.css('[data-testid="assistant-suggestion"]'))).toBeNull();
+  });
+
+  it('picks up the most recent thread rather than opening blank', () => {
+    // The deleted page listed past threads; without this the panel would strand
+    // every earlier exchange.
+    threads.set([{ id: 'thread-latest' }, { id: 'thread-older' }]);
+
+    build();
+
+    expect(store['openThread']).toHaveBeenCalledWith('thread-latest');
   });
 
   it('opens a fresh thread without dragging a stale question along', () => {

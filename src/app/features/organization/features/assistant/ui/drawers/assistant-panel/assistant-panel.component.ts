@@ -11,6 +11,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
+import type { AssistantThread } from '@features/organization/features/assistant/models';
 import { AssistantThreadStore } from '@features/organization/features/assistant/state';
 import {
   ORGANIZATION_CONTEXT_PORT,
@@ -39,6 +40,10 @@ import { Skeleton } from '@shared/components';
   imports: [FormsModule, ButtonModule, TextareaModule, Skeleton],
   templateUrl: './assistant-panel.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
+  // The store is not root-provided; the deleted page used to supply it. Without
+  // this the panel fails to construct and the shell renders nothing at all —
+  // a unit spec cannot catch it, because it injects a double.
+  providers: [AssistantThreadStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AssistantPanel {
@@ -98,15 +103,6 @@ export class AssistantPanel {
   private readonly pendingQuestion: WritableSignal<string | null> = signal<string | null>(null);
 
   /**
-   * Property canAsk
-   * @readonly
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<boolean>}
-   */
-  /**
    * Property suggestions
    * @readonly
    *
@@ -126,6 +122,15 @@ export class AssistantPanel {
     $localize`:@@assistant.panel.suggestion.week:What interventions are planned this week?`,
   ];
 
+  /**
+   * Property canAsk
+   * @readonly
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canAsk: Signal<boolean> = computed(
     (): boolean =>
       this.draft().trim().length > 0 && !this.store.isAnswering() && !this.store.isStartingThread(),
@@ -150,6 +155,19 @@ export class AssistantPanel {
 
       this.store.setOrganization(organizationId);
       this.store.loadThreads(organizationId);
+    });
+
+    // Deleting the routed page took its thread list with it, which would have
+    // left every past exchange unreachable. The panel picks up the most recent
+    // thread instead — "answers using this thread" implies continuity, not a
+    // blank slate on every open.
+    effect((): void => {
+      if (this.store.activeThreadId() !== null || this.store.isStartingThread()) return;
+
+      const latest: AssistantThread | undefined = this.store.threads()[0];
+      if (!latest) return;
+
+      this.store.openThread(latest.id);
     });
 
     effect((): void => {
@@ -196,17 +214,6 @@ export class AssistantPanel {
   }
 
   /**
-   * Method startNewThread
-   *
-   * @description
-   * Opens a fresh thread, leaving the current one in the list.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  /**
    * Method useSuggestion
    *
    * @description
@@ -225,6 +232,17 @@ export class AssistantPanel {
     this.ask();
   }
 
+  /**
+   * Method startNewThread
+   *
+   * @description
+   * Opens a fresh thread, leaving the current one in the list.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
   protected startNewThread(): void {
     this.pendingQuestion.set(null);
     this.store.startThread(null);

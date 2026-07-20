@@ -27,21 +27,21 @@ describe('MessageComposer', () => {
 
   it('ships the five toolbar actions of the design kit', () => {
     for (const action of ['assistant', 'mention', 'shortcuts', 'emoji']) {
-      expect(at(fixture, `composer-${action}`)).not.toBeNull();
+      expect(at(fixture, `message-composer-${action}`)).not.toBeNull();
     }
     // The attachment trigger is a label wrapping a hidden input, not a button.
-    expect(at(fixture, 'file-input')).not.toBeNull();
+    expect(at(fixture, 'message-composer-file-input')).not.toBeNull();
   });
 
   it('drops the thread-only actions in the compact reply variant', () => {
     fixture.componentRef.setInput('compact', true);
     fixture.detectChanges();
 
-    expect(at(fixture, 'composer-assistant')).toBeNull();
-    expect(at(fixture, 'composer-shortcuts')).toBeNull();
+    expect(at(fixture, 'message-composer-assistant')).toBeNull();
+    expect(at(fixture, 'message-composer-shortcuts')).toBeNull();
     // Mention and emoji still make sense on a reply.
-    expect(at(fixture, 'composer-mention')).not.toBeNull();
-    expect(at(fixture, 'composer-emoji')).not.toBeNull();
+    expect(at(fixture, 'message-composer-mention')).not.toBeNull();
+    expect(at(fixture, 'message-composer-emoji')).not.toBeNull();
   });
 
   it('keeps Send disabled until there is text or an attachment', () => {
@@ -58,12 +58,12 @@ describe('MessageComposer', () => {
   });
 
   it('offers Discard only once something would be lost', () => {
-    expect(at(fixture, 'composer-discard')).toBeNull();
+    expect(at(fixture, 'message-composer-discard')).toBeNull();
 
     fixture.componentRef.setInput('draft', 'half a thought');
     fixture.detectChanges();
 
-    expect(at(fixture, 'composer-discard')).not.toBeNull();
+    expect(at(fixture, 'message-composer-discard')).not.toBeNull();
   });
 
   it('clears the draft and reports the discard', () => {
@@ -72,7 +72,7 @@ describe('MessageComposer', () => {
     fixture.componentRef.setInput('draft', 'half a thought');
     fixture.detectChanges();
 
-    at(fixture, 'composer-discard')?.querySelector('button')?.click();
+    at(fixture, 'message-composer-discard')?.querySelector('button')?.click();
     fixture.detectChanges();
 
     expect(fixture.componentInstance.draft()).toBe('');
@@ -83,17 +83,17 @@ describe('MessageComposer', () => {
     fixture.componentRef.setInput('draft', 'ship it');
     fixture.detectChanges();
 
-    at(fixture, 'composer-emoji')?.querySelector('button')?.click();
+    at(fixture, 'message-composer-emoji')?.querySelector('button')?.click();
     fixture.detectChanges();
 
-    const grid = at(fixture, 'composer-emoji-picker');
+    const grid = at(fixture, 'message-composer-emoji-picker');
     expect(grid).not.toBeNull();
 
     (grid?.querySelector('button') as HTMLButtonElement | null)?.click();
     fixture.detectChanges();
 
     expect(fixture.componentInstance.draft()).toBe('ship it👍');
-    expect(at(fixture, 'composer-emoji-picker')).toBeNull();
+    expect(at(fixture, 'message-composer-emoji-picker')).toBeNull();
   });
 
   it('does not send an empty draft on Enter', () => {
@@ -139,30 +139,32 @@ describe('MessageComposer', () => {
     it('opens on an @ at a word boundary and filters by name', () => {
       type('hey @ali');
 
-      expect(at(fixture, 'composer-mention-popover')).not.toBeNull();
-      expect(at(fixture, 'composer-mention-option-0')?.textContent).toContain('Alice Martin');
-      expect(at(fixture, 'composer-mention-option-1')).toBeNull();
+      expect(at(fixture, 'message-composer-mention-popover')).not.toBeNull();
+      expect(at(fixture, 'message-composer-mention-option-0')?.textContent).toContain(
+        'Alice Martin',
+      );
+      expect(at(fixture, 'message-composer-mention-option-1')).toBeNull();
     });
 
     it('stays shut for an @ glued to a word, which is an e-mail not a mention', () => {
       type('write to alice@acme');
 
-      expect(at(fixture, 'composer-mention-popover')).toBeNull();
+      expect(at(fixture, 'message-composer-mention-popover')).toBeNull();
     });
 
     it('says so when nothing matches instead of going silent', () => {
       type('hey @zzz');
 
-      expect(at(fixture, 'composer-mention-empty')).not.toBeNull();
+      expect(at(fixture, 'message-composer-mention-empty')).not.toBeNull();
     });
 
     it('inserts the backend token so the member is actually notified', () => {
       type('hey @ali');
-      at(fixture, 'composer-mention-option-0')?.click();
+      at(fixture, 'message-composer-mention-option-0')?.click();
       fixture.detectChanges();
 
       expect(fixture.componentInstance.draft()).toBe(`hey @{${ALICE_ID}} `);
-      expect(at(fixture, 'composer-mention-popover')).toBeNull();
+      expect(at(fixture, 'message-composer-mention-popover')).toBeNull();
     });
 
     it('completes the mention on Enter rather than posting a half-typed name', () => {
@@ -185,7 +187,7 @@ describe('MessageComposer', () => {
       field.triggerEventHandler('keydown', new KeyboardEvent('keydown', { key: 'Escape' }));
       fixture.detectChanges();
 
-      expect(at(fixture, 'composer-mention-popover')).toBeNull();
+      expect(at(fixture, 'message-composer-mention-popover')).toBeNull();
       expect(fixture.componentInstance.draft()).toBe('hey @ali');
     });
   });

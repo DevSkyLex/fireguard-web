@@ -4,13 +4,13 @@
   @if (file) {
     <div
       class="flex items-center gap-2 self-start rounded-lg border border-surface-200 px-2.5 py-1.5 text-xs dark:border-surface-700"
-      data-testid="staged-file"
+      [attr.data-testid]="testIdPrefix() + '-composer-staged-file'"
     >
       <i class="pi pi-paperclip text-surface-400" aria-hidden="true"></i>
       <span class="max-w-48 truncate text-surface-700 dark:text-surface-300">{{ file.name }}</span>
       <button
         type="button"
-        data-testid="clear-file"
+        [attr.data-testid]="testIdPrefix() + '-composer-clear-file'"
         class="text-surface-400 hover:text-surface-700 dark:hover:text-surface-200"
         i18n-aria-label="@@messaging.composer.clearFile"
         aria-label="Remove file"
@@ -29,7 +29,7 @@
     @if (emojiOpen()) {
       <div
         class="absolute right-3 bottom-full z-20 mb-2 grid grid-cols-4 gap-0.5 rounded-lg border border-surface-200 bg-surface-0 p-2 shadow-lg dark:border-surface-700 dark:bg-surface-900"
-        data-testid="composer-emoji-picker"
+        [attr.data-testid]="testIdPrefix() + '-composer-emoji-picker'"
       >
         @for (emoji of emojis; track emoji) {
           <button
@@ -47,7 +47,7 @@
     @if (mentionOpen()) {
       <div
         class="absolute bottom-full left-3 z-20 mb-2 w-60 rounded-lg border border-surface-200 bg-surface-0 p-1.5 shadow-lg dark:border-surface-700 dark:bg-surface-900"
-        data-testid="composer-mention-popover"
+        [attr.data-testid]="testIdPrefix() + '-composer-mention-popover'"
         role="listbox"
       >
         <div
@@ -65,7 +65,7 @@
             [class.bg-surface-100]="i === mentionIndex()"
             [class.dark:bg-surface-800]="i === mentionIndex()"
             [attr.aria-selected]="i === mentionIndex()"
-            [attr.data-testid]="'composer-mention-option-' + i"
+            [attr.data-testid]="testIdPrefix() + '-composer-mention-option-' + i"
             (click)="pickMention(member)"
           >
             <span
@@ -79,7 +79,7 @@
         } @empty {
           <div
             class="px-2 py-1.5 text-sm text-surface-500 dark:text-surface-400"
-            data-testid="composer-mention-empty"
+            [attr.data-testid]="testIdPrefix() + '-composer-mention-empty'"
             i18n="@@messaging.composer.mentionEmpty"
           >
             No members match
@@ -92,7 +92,7 @@
       #field
       pTextarea
       rows="1"
-      data-testid="message-composer"
+      [attr.data-testid]="testIdPrefix() + '-composer'"
       class="max-h-[150px] min-h-6 w-full resize-none border-0 bg-transparent px-4 pt-3.5 pb-1.5 shadow-none focus:ring-0"
       i18n-aria-label="@@messaging.composer.aria"
       aria-label="Message"
@@ -110,7 +110,7 @@
             icon="pi pi-sparkles"
             size="small"
             severity="secondary"
-            data-testid="composer-assistant"
+            [attr.data-testid]="testIdPrefix() + '-composer-assistant'"
             i18n-ariaLabel="@@messaging.composer.assistant"
             ariaLabel="Assistant"
             [text]="true"
@@ -123,7 +123,7 @@
           icon="pi pi-at"
           size="small"
           severity="secondary"
-          data-testid="composer-mention"
+          [attr.data-testid]="testIdPrefix() + '-composer-mention'"
           i18n-ariaLabel="@@messaging.composer.mention"
           ariaLabel="Mention"
           [text]="true"
@@ -136,7 +136,7 @@
             icon="pi pi-bolt"
             size="small"
             severity="secondary"
-            data-testid="composer-shortcuts"
+            [attr.data-testid]="testIdPrefix() + '-composer-shortcuts'"
             i18n-ariaLabel="@@messaging.composer.shortcuts"
             ariaLabel="Shortcuts"
             [text]="true"
@@ -149,7 +149,7 @@
           icon="pi pi-face-smile"
           size="small"
           severity="secondary"
-          data-testid="composer-emoji"
+          [attr.data-testid]="testIdPrefix() + '-composer-emoji'"
           i18n-ariaLabel="@@messaging.composer.emoji"
           ariaLabel="Emoji"
           [text]="true"
@@ -168,7 +168,7 @@
           <input
             type="file"
             class="sr-only"
-            data-testid="file-input"
+            [attr.data-testid]="testIdPrefix() + '-composer-file-input'"
             (change)="onFileSelected($event)"
           />
         </label>
@@ -179,7 +179,7 @@
           <p-button
             size="small"
             severity="secondary"
-            data-testid="composer-discard"
+            [attr.data-testid]="testIdPrefix() + '-composer-discard'"
             i18n-label="@@messaging.composer.discard"
             label="Discard"
             [text]="true"
@@ -190,7 +190,7 @@
         <p-button
           size="small"
           severity="contrast"
-          data-testid="message-send"
+          [attr.data-testid]="testIdPrefix() + '-send'"
           i18n-label="@@messaging.composer.send"
           label="Send"
           [disabled]="!canSend()"

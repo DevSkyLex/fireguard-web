@@ -509,13 +509,13 @@ test.describe('Messaging workspace', () => {
     const { uploaded } = await landOnMessaging(page);
 
     await openConversation(page);
-    await page.getByTestId('file-input').setInputFiles({
+    await page.getByTestId('message-composer-file-input').setInputFiles({
       name: 'photo.jpg',
       mimeType: 'image/jpeg',
       buffer: Buffer.from('fake'),
     });
 
-    await expect(page.getByTestId('staged-file')).toContainText('photo.jpg');
+    await expect(page.getByTestId('message-composer-staged-file')).toContainText('photo.jpg');
 
     await page.getByTestId('message-composer').fill('Here is the photo.');
     await page.getByTestId('message-send').locator('button').click();

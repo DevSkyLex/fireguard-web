@@ -222,8 +222,11 @@ export class DashboardLayoutSidebarNavigation {
    * @method getRouterLinkActiveOptions
    *
    * @description
-   * Returns active route matching options based on the item's route.
-   * Root route uses exact matching to avoid being active on all URLs.
+   * Returns active route matching options based on the item's route. The
+   * root uses exact matching to avoid being active on all URLs, and so does
+   * any item whose URL is the prefix of a SIBLING item's URL — otherwise
+   * opening the sibling (Saved items lives under the messaging workspace)
+   * lights up both rows.
    *
    * @access protected
    * @since 3.0.0
@@ -233,11 +236,23 @@ export class DashboardLayoutSidebarNavigation {
    * @returns {IsActiveMatchOptions}
    */
   protected getRouterLinkActiveOptions(routerLink: MenuItem['routerLink']): IsActiveMatchOptions {
-    if (typeof routerLink === 'string' && routerLink === '/') {
+    if (typeof routerLink !== 'string') {
+      return this.subsetMatchOptions;
+    }
+
+    if (routerLink === '/') {
       return this.exactMatchOptions;
     }
 
-    return this.subsetMatchOptions;
+    const nestsAnotherItem: boolean = this.menuItems().some(
+      (section: MenuItem): boolean =>
+        section.items?.some(
+          (item: MenuItem): boolean =>
+            typeof item.routerLink === 'string' && item.routerLink.startsWith(`${routerLink}/`),
+        ) ?? false,
+    );
+
+    return nestsAnotherItem ? this.exactMatchOptions : this.subsetMatchOptions;
   }
 
   /**

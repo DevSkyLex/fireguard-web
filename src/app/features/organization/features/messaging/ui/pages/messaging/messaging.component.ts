@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   effect,
   input,
@@ -11,11 +12,14 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
+import { debounceTime, skip } from 'rxjs';
 import type { MessageOutput } from '@features/organization/features/messaging/models';
+import { MessageDraftService } from '@features/organization/features/messaging/services';
 import {
   MessagingWorkspaceStore,
   type MessagingWorkspaceStoreType,
@@ -210,16 +214,42 @@ export class MessagingPage {
   );
   //#endregion
 
+  /**
+   * Property draftService
+   * @readonly
+   *
+   * @description
+   * Per-conversation draft persistence. The composer autosaves through it
+   * (debounced), `open` restores the target conversation's draft, and a
+   * successful send clears it.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {MessageDraftService}
+   */
+  private readonly draftService: MessageDraftService =
+    inject<MessageDraftService>(MessageDraftService);
+
   //#region Lifecycle
   /**
-   * Wires the member directory and presence. The conversation list itself is
-   * NOT loaded here: the root {@link ConversationInventoryStore} owns it and
-   * follows the active organization on its own — this page and the shell
-   * sidebar read the same instance.
+   * Wires the member directory, presence and draft autosave. The conversation
+   * list itself is NOT loaded here: the shared ConversationInventoryStore
+   * owns it and follows the active organization on its own — this page and
+   * the shell sidebar read the same instance.
    *
    * @since 1.0.0
    */
   public constructor() {
+    // Debounced autosave (plan 3.4: localStorage, 400ms). `skip(1)` leaves
+    // the initial empty emission alone, and the destroy hook below flushes
+    // whatever the debounce has not written yet.
+    toObservable(this.draft)
+      .pipe(skip(1), debounceTime(400), takeUntilDestroyed())
+      .subscribe((body: string): void => this.persistDraft(body));
+
+    inject(DestroyRef).onDestroy((): void => this.persistDraft(this.draft()));
+
     this.directory.load(
       computed(
         (): string | null => this.activeOrganizationStore.selectedOrganization()?.id ?? null,
@@ -249,12 +279,28 @@ export class MessagingPage {
       });
     });
 
-    // The URL is the source of truth for which thread is open, so a shared link
-    // and a reload both land on the same conversation.
-    const deepLinked: string | null = this.route.snapshot.queryParamMap.get('conversation');
-    if (deepLinked !== null) {
-      this.store.selectConversation(deepLinked);
-    }
+    /**
+     * The URL is the source of truth for which thread is open: a shared link,
+     * a reload AND an in-page navigation (the shell sidebar's channel rows
+     * link here with `?conversation=`) must all land on the same thread. The
+     * snapshot-only read this replaces handled the first two and silently
+     * ignored the third. `open()` pre-sets the same state for direct clicks,
+     * so the effect no-ops once the ids already match.
+     */
+    effect((): void => {
+      const target: string | null = this.conversation();
+
+      if (target === null || target === untracked(this.store.activeConversationId)) {
+        return;
+      }
+
+      untracked((): void => {
+        this.persistDraft(this.draft());
+        this.pendingFile.set(null);
+        this.store.selectConversation(target);
+        this.restoreDraft(target);
+      });
+    });
   }
   //#endregion
 
@@ -263,8 +309,9 @@ export class MessagingPage {
    * Method open
    *
    * @description
-   * Opens a conversation and clears any half-typed draft, which belonged to the
-   * previous thread.
+   * Opens a conversation. The half-typed draft is not lost: it is persisted
+   * to the conversation it belongs to, and the target conversation's own
+   * stored draft comes back into the composer.
    *
    * @access protected
    * @since 1.0.0
@@ -277,15 +324,62 @@ export class MessagingPage {
     // Opened directly rather than waiting for the URL to round-trip: query-param
     // input binding is not guaranteed to have flushed by the time the user
     // expects the thread, and the effect below is a no-op once the ids match.
-    this.draft.set('');
+    this.persistDraft(this.draft());
     this.pendingFile.set(null);
     this.store.selectConversation(conversationId);
+    this.restoreDraft(conversationId);
 
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { conversation: conversationId },
       queryParamsHandling: 'merge',
     });
+  }
+
+  /**
+   * Method persistDraft
+   *
+   * @description
+   * Writes the composer text to the ACTIVE conversation's stored draft; a
+   * blank body clears the entry.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @param {string} body - Current composer text.
+   *
+   * @returns {void}
+   */
+  private persistDraft(body: string): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+    const conversationId: string | null = this.store.activeConversationId();
+
+    if (organizationId !== undefined && conversationId !== null) {
+      this.draftService.write(organizationId, conversationId, body);
+    }
+  }
+
+  /**
+   * Method restoreDraft
+   *
+   * @description
+   * Puts a conversation's stored draft back into the composer.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @param {string} conversationId - The conversation being opened.
+   *
+   * @returns {void}
+   */
+  private restoreDraft(conversationId: string): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+
+    this.draft.set(
+      organizationId === undefined ? '' : this.draftService.read(organizationId, conversationId),
+    );
   }
 
   /**
@@ -425,6 +519,8 @@ export class MessagingPage {
     this.store.send({ body: this.draft(), file: this.pendingFile() });
     this.draft.set('');
     this.pendingFile.set(null);
+    // The message left the composer: its stored draft has served its purpose.
+    this.persistDraft('');
   }
 
   /**

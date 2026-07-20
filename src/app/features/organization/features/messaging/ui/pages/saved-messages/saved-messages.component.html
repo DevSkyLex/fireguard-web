@@ -1,0 +1,91 @@
+<!-- The layout's header band already renders the route description. -->
+<div id="saved-messages" class="mx-auto w-full max-w-[900px] p-3 sm:p-6 md:p-7 lg:p-8">
+  @if (store.isQueryLoading()) {
+    <div class="flex flex-col gap-3" aria-busy="true" data-testid="saved-messages-loading">
+      <p-skeleton width="100%" height="4.25rem" borderRadius="0.5rem" />
+      <p-skeleton width="100%" height="4.25rem" borderRadius="0.5rem" />
+      <p-skeleton width="100%" height="4.25rem" borderRadius="0.5rem" />
+    </div>
+  } @else if (store.queryError()) {
+    <app-error-state
+      i18n-title="@@messaging.saved.errorTitle"
+      title="Couldn't load your saved items"
+      i18n-description="@@messaging.saved.errorDescription"
+      description="Something went wrong while loading this list."
+      (retried)="retry()"
+    />
+  } @else if ((store.queryData() ?? []).length === 0) {
+    <app-empty-state
+      icon="pi pi-bookmark"
+      i18n-title="@@messaging.saved.emptyTitle"
+      title="Nothing saved yet"
+      i18n-description="@@messaging.saved.emptyDescription"
+      description="Save a message from any conversation and it will wait for you here."
+    />
+  } @else {
+    <ul class="flex flex-col divide-y divide-surface-200 dark:divide-surface-800">
+      @for (message of store.queryData() ?? []; track message.id) {
+        <li class="flex items-start gap-3 py-3.5" data-testid="saved-message-row">
+          <span
+            class="grid size-7 shrink-0 place-content-center rounded-full bg-surface-100 text-[11px] font-semibold text-surface-600 dark:bg-surface-900 dark:text-surface-400"
+            aria-hidden="true"
+          >
+            {{ authorName(message).charAt(0).toUpperCase() }}
+          </span>
+
+          <div class="min-w-0 flex-1">
+            <div class="flex items-baseline gap-2">
+              <span
+                class="truncate text-[13px] font-semibold text-surface-950 dark:text-surface-50"
+              >
+                {{ authorName(message) }}
+              </span>
+              <span class="shrink-0 text-xs text-surface-500 dark:text-surface-400">
+                {{ message.createdAt | date: 'medium' }}
+              </span>
+            </div>
+
+            @if (message.isDeleted) {
+              <p
+                class="mt-0.5 text-[13px] text-surface-400 italic dark:text-surface-500"
+                i18n="@@messaging.saved.deleted"
+              >
+                This message was deleted.
+              </p>
+            } @else {
+              <p class="mt-0.5 text-[13px] break-words text-surface-700 dark:text-surface-300">
+                {{ message.body }}
+              </p>
+            }
+          </div>
+
+          <div class="flex shrink-0 items-center gap-1">
+            <p-button
+              variant="text"
+              size="small"
+              icon="pi pi-arrow-up-right"
+              i18n-ariaLabel="@@messaging.saved.open"
+              ariaLabel="Open conversation"
+              i18n-pTooltip="@@messaging.saved.open"
+              pTooltip="Open conversation"
+              data-testid="saved-message-open"
+              (onClick)="openConversation(message)"
+            />
+            <p-button
+              variant="text"
+              size="small"
+              severity="secondary"
+              icon="pi pi-bookmark-fill"
+              i18n-ariaLabel="@@messaging.saved.remove"
+              ariaLabel="Remove from saved"
+              i18n-pTooltip="@@messaging.saved.remove"
+              pTooltip="Remove from saved"
+              data-testid="saved-message-unsave"
+              (onClick)="store.unsave(message)"
+            />
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>

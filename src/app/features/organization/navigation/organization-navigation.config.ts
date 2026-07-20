@@ -252,6 +252,22 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     group: 'utilities',
     permissions: [ORGANIZATION_PERMISSION.ASSISTANT_USE],
   },
+  {
+    id: 'drafts',
+    label: $localize`:@@route.drafts:Drafts`,
+    icon: 'pi pi-file-edit',
+    path: 'messages/drafts',
+    group: 'utilities',
+    permissions: [ORGANIZATION_PERMISSION.MESSAGING_READ],
+  },
+  {
+    id: 'saved',
+    label: $localize`:@@route.saved:Saved items`,
+    icon: 'pi pi-bookmark',
+    path: 'messages/saved',
+    group: 'utilities',
+    permissions: [ORGANIZATION_PERMISSION.MESSAGING_READ],
+  },
   /**
    * The unified inbox is an account surface (`InboxItem.organizationId` is
    * nullable), so its path is absolute and it carries no organization

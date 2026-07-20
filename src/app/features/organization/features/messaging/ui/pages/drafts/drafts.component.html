@@ -1,0 +1,69 @@
+<!-- The layout's header band already renders the route description. -->
+<div id="messaging-drafts" class="mx-auto w-full max-w-[900px] p-3 sm:p-6 md:p-7 lg:p-8">
+  @if (rows().length === 0) {
+    <app-empty-state
+      icon="pi pi-file-edit"
+      i18n-title="@@messaging.drafts.emptyTitle"
+      title="No drafts"
+      i18n-description="@@messaging.drafts.emptyDescription"
+      description="Start typing in any conversation and your unsent words will show up here."
+    />
+  } @else {
+    <ul class="flex flex-col divide-y divide-surface-200 dark:divide-surface-800">
+      @for (row of rows(); track row.draft.conversationId) {
+        <li class="flex items-start gap-3 py-3.5" data-testid="draft-row">
+          <span
+            class="grid size-7 shrink-0 place-content-center rounded-full bg-surface-100 text-surface-500 dark:bg-surface-900 dark:text-surface-400"
+            aria-hidden="true"
+          >
+            <i class="pi pi-file-edit text-xs"></i>
+          </span>
+
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-[13px] font-semibold text-surface-950 dark:text-surface-50">
+              @if (labelOf(row).length > 0) {
+                {{ labelOf(row) }}
+              } @else {
+                <ng-container i18n="@@messaging.drafts.unknownConversation"
+                  >Conversation unavailable</ng-container
+                >
+              }
+            </p>
+            <p
+              class="mt-0.5 line-clamp-2 text-[13px] break-words text-surface-600 dark:text-surface-400"
+              data-testid="draft-excerpt"
+            >
+              {{ row.draft.body }}
+            </p>
+          </div>
+
+          <div class="flex shrink-0 items-center gap-1">
+            <p-button
+              variant="text"
+              size="small"
+              icon="pi pi-arrow-up-right"
+              i18n-ariaLabel="@@messaging.drafts.open"
+              ariaLabel="Open conversation"
+              i18n-pTooltip="@@messaging.drafts.open"
+              pTooltip="Open conversation"
+              data-testid="draft-open"
+              (onClick)="open(row)"
+            />
+            <p-button
+              variant="text"
+              size="small"
+              severity="danger"
+              icon="pi pi-trash"
+              i18n-ariaLabel="@@messaging.drafts.discard"
+              ariaLabel="Discard draft"
+              i18n-pTooltip="@@messaging.drafts.discard"
+              pTooltip="Discard draft"
+              data-testid="draft-discard"
+              (onClick)="discard(row)"
+            />
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>

@@ -99,15 +99,43 @@ export const ORGANIZATION_ROUTES: Routes = [
       },
       {
         path: 'messages',
-        title: 'Messages',
         canActivate: [
           organizationPermissionGuard({
             permissions: [ORGANIZATION_PERMISSION.MESSAGING_READ],
           }),
         ],
         data: { breadcrumb: 'Messages' },
-        loadComponent: () =>
-          import('./features/messaging/ui/pages/messaging').then((m) => m.MessagingPage),
+        children: [
+          {
+            path: '',
+            title: 'Messages',
+            loadComponent: () =>
+              import('./features/messaging/ui/pages/messaging').then((m) => m.MessagingPage),
+          },
+          {
+            path: 'saved',
+            title: $localize`:@@route.saved:Saved items`,
+            data: {
+              breadcrumb: 'Saved items',
+              description: 'Messages you bookmarked across this workspace.',
+            },
+            loadComponent: () =>
+              import('./features/messaging/ui/pages/saved-messages').then(
+                (m) => m.SavedMessagesPage,
+              ),
+          },
+          {
+            path: 'drafts',
+            title: $localize`:@@route.drafts:Drafts`,
+            data: {
+              breadcrumb: 'Drafts',
+              description:
+                'Half-written messages waiting on this device — never sent on their own.',
+            },
+            loadComponent: () =>
+              import('./features/messaging/ui/pages/drafts').then((m) => m.DraftsPage),
+          },
+        ],
       },
       /**
        * The assistant.

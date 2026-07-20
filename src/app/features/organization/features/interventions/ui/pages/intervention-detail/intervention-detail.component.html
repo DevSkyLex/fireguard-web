@@ -828,15 +828,26 @@
           <div
             class="flex flex-col gap-2 border-b border-surface-100 py-3 first:pt-0 last:border-0 dark:border-surface-800"
           >
+            <!--
+              Responsible and participants are separate rows because they are
+              separate accountabilities — the contract has carried them as
+              distinct fields all along, and merging them into one avatar stack
+              made "who answers for this" unreadable from the rail.
+            -->
             <dt
-              i18n="@@intervention.sidebar.assignees"
+              i18n="@@intervention.sidebar.responsible"
               class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
             >
-              Assignees
+              Responsible
             </dt>
             <dd class="flex min-w-0 items-center gap-2">
-              @if (assigneePeople().length > 0) {
-                <app-avatar-stack [people]="assigneePeople()" />
+              @if (responsibleMember(); as responsible) {
+                <span
+                  class="truncate font-medium text-surface-900 dark:text-surface-100"
+                  data-testid="intervention-responsible"
+                >
+                  {{ responsible.displayName }}
+                </span>
               } @else {
                 <span
                   i18n="@@intervention.prop.unassigned"
@@ -855,6 +866,29 @@
                   ariaLabel="Edit assignees"
                   (onClick)="editDrawerVisible.set(true)"
                 />
+              }
+            </dd>
+          </div>
+
+          <div
+            class="flex flex-col gap-2 border-b border-surface-100 py-3 first:pt-0 last:border-0 dark:border-surface-800"
+          >
+            <dt
+              i18n="@@intervention.sidebar.participants"
+              class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
+            >
+              Participants
+            </dt>
+            <dd class="flex min-w-0 items-center gap-2">
+              @if (participantPeople().length > 0) {
+                <app-avatar-stack
+                  [people]="participantPeople()"
+                  data-testid="intervention-participants"
+                />
+              } @else {
+                <span i18n="@@intervention.prop.none" class="text-surface-400 dark:text-surface-500"
+                  >None</span
+                >
               }
             </dd>
           </div>

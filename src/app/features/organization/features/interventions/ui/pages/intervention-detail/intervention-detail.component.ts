@@ -1228,6 +1228,38 @@ export class InterventionDetailPage {
    *
    * @type {Signal<readonly AvatarStackPerson[]>}
    */
+  /**
+   * Property participantPeople
+   * @readonly
+   *
+   * @description
+   * Participants only, with the responsible agent removed — they are named in
+   * their own row, and one person cannot be accountable and merely present at
+   * the same time without the distinction losing its meaning.
+   *
+   * @access protected
+   * @since 5.4.0
+   *
+   * @type {Signal<readonly AvatarStackPerson[]>}
+   */
+  protected readonly participantPeople: Signal<readonly AvatarStackPerson[]> = computed<
+    readonly AvatarStackPerson[]
+  >(() => {
+    const responsible: MemberSelectOption | null = this.responsibleMember();
+
+    return this.participantMembers()
+      .filter(
+        (participant: MemberSelectOption): boolean => participant.value !== responsible?.value,
+      )
+      .map(
+        (participant: MemberSelectOption): AvatarStackPerson => ({
+          label: participant.displayName,
+          image: participant.avatarUrl ?? undefined,
+          tooltip: participant.displayName,
+        }),
+      );
+  });
+
   protected readonly assigneePeople: Signal<readonly AvatarStackPerson[]> = computed<
     readonly AvatarStackPerson[]
   >(() => {

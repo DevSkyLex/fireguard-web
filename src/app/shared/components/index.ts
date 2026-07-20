@@ -35,6 +35,14 @@ export type { SkeletonPreset } from './skeleton';
 export { SplashScreen } from './splash-screen';
 export { Tag } from './tag';
 export type { TagDescriptor, TagOption, TagSeverity, TagVariant } from './tag';
+export { CollectionToolbar } from './collection-toolbar';
+export { MetricCard } from './metric-card';
+export type { MetricPolarity } from './metric-card';
+export {
+  buildSparklinePath,
+  SPARKLINE_VIEWBOX_HEIGHT,
+  SPARKLINE_VIEWBOX_WIDTH,
+} from './metric-card';
 export { tagSeverityIconClass, tagSeverityDotClass } from './tag';
 export { ThemeSwitcher, withThemeSwitcher } from './theme-switcher';
 export { Toast } from './toast';

@@ -1,0 +1,48 @@
+<!-- Leading controls the surface owns (a view switch, a segmented control). -->
+<ng-content select="[toolbarLead]" />
+
+@if (count()) {
+  <p
+    class="text-sm text-surface-600 tabular-nums dark:text-surface-400"
+    data-testid="collection-toolbar-count"
+  >
+    {{ count() }}
+  </p>
+}
+
+<div class="ml-auto flex flex-wrap items-center gap-2">
+  @if (showSearch()) {
+    <p-iconfield class="w-full min-w-0 sm:w-auto sm:max-w-96 sm:min-w-60">
+      <p-inputicon class="pi pi-search" />
+      <input
+        pInputText
+        type="text"
+        pSize="small"
+        class="w-full"
+        [value]="searchValue()"
+        [placeholder]="searchPlaceholder()"
+        [attr.aria-label]="searchAriaLabel() || searchPlaceholder()"
+        data-testid="collection-toolbar-search"
+        (input)="searchChanged.emit($any($event.target).value)"
+      />
+    </p-iconfield>
+  }
+
+  @if (showFilters()) {
+    <p-button
+      severity="secondary"
+      variant="outlined"
+      size="small"
+      icon="pi pi-filter"
+      i18n-label="@@common.filters"
+      label="Filters"
+      [badge]="activeFilterCount() > 0 ? activeFilterCount().toString() : undefined"
+      badgeSeverity="contrast"
+      data-testid="collection-toolbar-filters"
+      (onClick)="filtersOpened.emit()"
+    />
+  }
+
+  <!-- Trailing actions: the surface's primary action. -->
+  <ng-content />
+</div>

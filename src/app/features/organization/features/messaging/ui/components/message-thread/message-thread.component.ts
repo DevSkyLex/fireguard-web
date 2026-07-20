@@ -2,12 +2,16 @@ import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  effect,
   inject,
   input,
   output,
   signal,
+  viewChild,
+  type ElementRef,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { ENV_CONFIG, type EnvironmentConfig } from '@core/config/environment';
@@ -73,6 +77,21 @@ export class MessageThread {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property scroller
+   * @readonly
+   *
+   * @description
+   * The scrolling log element, needed to keep the newest message in view.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
+  protected readonly scroller: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('scroller');
   //#endregion
 
   /**
@@ -192,6 +211,44 @@ export class MessageThread {
    * @type {OutputEmitterRef<MessageOutput>}
    */
   public readonly threadOpened: OutputEmitterRef<MessageOutput> = output<MessageOutput>();
+  //#endregion
+
+  //#region Lifecycle
+  /**
+   * Constructor
+   *
+   * @description
+   * Keeps the newest message in view — a chat that does not follow its own
+   * arrivals leaves the reader stranded mid-history on every send.
+   *
+   * Only when the reader is already near the bottom: yanking someone back down
+   * while they are reading older messages is worse than not scrolling at all.
+   *
+   * @access public
+   * @since 2.2.0
+   */
+  public constructor() {
+    effect((): void => {
+      // Read first so the effect re-runs on every arrival.
+      const count: number = this.messages().length;
+      const element: HTMLElement | undefined = this.scroller()?.nativeElement;
+
+      if (count === 0 || !element) return;
+
+      const distanceFromBottom: number =
+        element.scrollHeight - element.scrollTop - element.clientHeight;
+
+      // One viewport of slack: enough to cover a message that just pushed the
+      // content down, without hijacking a deliberate scroll upwards.
+      if (distanceFromBottom > element.clientHeight) return;
+
+      // Deferred a turn: the new message has not been laid out yet, so
+      // scrollHeight is still the previous one.
+      setTimeout((): void => {
+        element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' });
+      });
+    });
+  }
   //#endregion
 
   //#region Methods

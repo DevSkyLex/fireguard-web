@@ -17,6 +17,46 @@ Conversation list, thread, composer and emoji reactions are live at
 dot. Replies open in a side panel, and messages can carry file
 attachments.
 
+`MessageComposer` (`ui/components`) owns the two-row composer of the design kit
+— textarea over a toolbar, with Discard and Send — and serves both the thread
+and the reply panel through its `compact` input. It is presentational: the page
+keeps authority over draft persistence through the two-way `draft` model, and
+feeds the member directory in through `members`.
+
+Typing `@` at a word boundary opens the mention popover; picking a member
+inserts the backend's `@{memberUuid}` token, the exact form `MentionExtractor`
+parses, so mention notifications actually fire. The caret drives the detection,
+so `alice@acme` is left alone. Known rough edge: the raw token is what shows in
+the textarea — rendering a chip there would need a rich-text field.
+
+`shortcutsRequested` is published but not yet answered; the shortcut palette is
+still to build.
+
+**The thread follows its own arrivals, but only from the bottom.**
+`MessageThread` scrolls to the newest message when the reader is within one
+viewport of the end, and leaves them alone otherwise — yanking someone back down
+mid-history is worse than not scrolling. The scroll is deferred a turn because
+the new message has not been laid out when the effect runs.
+
+**Creating conversations.** The sidebar's Channels header carries the kit's `+`,
+which opens `NewChannelDialog` (`ui/dialogs`). Its header sits outside the list's
+`@if` on purpose: a workspace with no channel yet still needs the button, or the
+first channel could never be created. `ConversationInventoryStore.createChannel`
+and `.openDirectConversation` both write their result id into
+`openedConversationCallState`; the sidebar watches `openedConversationId()`,
+deep links into the thread, then calls `clearOpenedConversation()`.
+
+> `POST /api/channels` answers a **`ChannelOutput`**, not a `ConversationOutput`
+> — it carries `participantCount` / `createdByMember` / `parent` and has none of
+> `subjectType` / `visibility` / `isChannel` / `parentConversationId`. The store
+> therefore refetches the list instead of folding the answer into it. Do not
+> "simplify" that into a local push.
+
+`openDirectConversation` is get-or-create, so it doubles as "open" —
+`NewDirectConversationDialog` lists the workspace's members (minus the acting
+one) behind the Direct messages `+`. The directory loads when the picker opens
+rather than on mount: most members never start a new thread.
+
 ## Route entry points
 
 | URL          | Component       | Guard                                           |

@@ -15,13 +15,17 @@ import {
   errorCallState,
   idleCallState,
   isCallPending,
+  isCallSuccess,
   pendingCallState,
   successCallState,
   toStoreError,
   type CallState,
 } from '@core/request-state';
 import { MessagingService } from '@features/organization/features/messaging/data-access';
-import type { ConversationOutput } from '@features/organization/features/messaging/models';
+import type {
+  ChannelOutput,
+  ConversationOutput,
+} from '@features/organization/features/messaging/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
@@ -35,10 +39,19 @@ import {
  */
 interface ConversationInventoryState {
   readonly conversationsCallState: CallState<readonly ConversationOutput[]>;
+
+  /**
+   * The id of the conversation the last create/open call produced. Held rather
+   * than the whole payload because `POST /channels` answers a `ChannelOutput`,
+   * whose shape does not match the list's `ConversationOutput` — the list is
+   * reloaded instead, and the caller only needs the id to navigate.
+   */
+  readonly openedConversationCallState: CallState<string>;
 }
 
 const INITIAL_STATE: ConversationInventoryState = {
   conversationsCallState: idleCallState(),
+  openedConversationCallState: idleCallState(),
 };
 
 /**
@@ -136,6 +149,31 @@ export const ConversationInventoryStore = signalStore(
      * @type {Signal<boolean>}
      */
     isLoading: computed<boolean>(() => isCallPending(store.conversationsCallState())),
+
+    /**
+     * Computed isOpening
+     *
+     * @description
+     * A channel is being created, or a direct conversation opened.
+     *
+     * @type {Signal<boolean>}
+     */
+    isOpening: computed<boolean>(() => isCallPending(store.openedConversationCallState())),
+
+    /**
+     * Computed openedConversationId
+     *
+     * @description
+     * The conversation the last create/open produced, for the caller to
+     * navigate to. Null until one succeeds.
+     *
+     * @type {Signal<string | null>}
+     */
+    openedConversationId: computed<string | null>(() => {
+      const state: CallState<string> = store.openedConversationCallState();
+
+      return isCallSuccess(state) ? state.data : null;
+    }),
   })),
   //#endregion
 
@@ -174,6 +212,94 @@ export const ConversationInventoryStore = signalStore(
 
     return {
       load,
+
+      /**
+       * Method createChannel
+       *
+       * @description
+       * Opens a new channel and reloads the inventory. The list is refetched
+       * rather than patched: the endpoint answers a `ChannelOutput`, whose
+       * shape is not the list's `ConversationOutput`.
+       *
+       * @param {{ organizationId: string; name: string }} input - Owning
+       * organization and channel name (the backend rejects under 2 or over 80
+       * characters).
+       *
+       * @returns {void}
+       */
+      createChannel: rxMethod<{ readonly organizationId: string; readonly name: string }>(
+        pipe(
+          switchMap((input: { readonly organizationId: string; readonly name: string }) => {
+            patchState(store, { openedConversationCallState: pendingCallState() });
+
+            return service.createChannel(input.organizationId, input.name).pipe(
+              tapResponse({
+                next: (channel: ChannelOutput) => {
+                  patchState(store, {
+                    openedConversationCallState: successCallState(channel.id),
+                  });
+                  load(input.organizationId);
+                },
+                error: (error: unknown) =>
+                  patchState(store, {
+                    openedConversationCallState: errorCallState(toStoreError(error)),
+                  }),
+              }),
+            );
+          }),
+        ),
+      ),
+
+      /**
+       * Method openDirectConversation
+       *
+       * @description
+       * Get-or-create against a member: addressing someone already spoken to
+       * returns the existing conversation, so this doubles as "open".
+       *
+       * @param {{ organizationId: string; memberId: string }} input - Owning
+       * organization and the addressed **organization member** id.
+       *
+       * @returns {void}
+       */
+      openDirectConversation: rxMethod<{
+        readonly organizationId: string;
+        readonly memberId: string;
+      }>(
+        pipe(
+          switchMap((input: { readonly organizationId: string; readonly memberId: string }) => {
+            patchState(store, { openedConversationCallState: pendingCallState() });
+
+            return service.openDirectConversation(input.organizationId, input.memberId).pipe(
+              tapResponse({
+                next: (conversation: ConversationOutput) => {
+                  patchState(store, {
+                    openedConversationCallState: successCallState(conversation.id),
+                  });
+                  load(input.organizationId);
+                },
+                error: (error: unknown) =>
+                  patchState(store, {
+                    openedConversationCallState: errorCallState(toStoreError(error)),
+                  }),
+              }),
+            );
+          }),
+        ),
+      ),
+
+      /**
+       * Method clearOpenedConversation
+       *
+       * @description
+       * Resets the create/open result once the caller has navigated, so the
+       * next success is a fresh transition rather than a stale id.
+       *
+       * @returns {void}
+       */
+      clearOpenedConversation(): void {
+        patchState(store, { openedConversationCallState: idleCallState() });
+      },
 
       /**
        * Method markRead

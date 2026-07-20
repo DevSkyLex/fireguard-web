@@ -55,6 +55,8 @@ describe('ConversationInventoryStore', () => {
   let listConversations: ReturnType<typeof vi.fn>;
   let setFavorite: ReturnType<typeof vi.fn>;
   let markRead: ReturnType<typeof vi.fn>;
+  let createChannel: ReturnType<typeof vi.fn>;
+  let openDirectConversation: ReturnType<typeof vi.fn>;
 
   const configure = (): void => {
     TestBed.configureTestingModule({
@@ -64,7 +66,13 @@ describe('ConversationInventoryStore', () => {
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: { permissions } },
         {
           provide: MessagingService,
-          useValue: { listConversations, setFavorite, markRead },
+          useValue: {
+            listConversations,
+            setFavorite,
+            markRead,
+            createChannel,
+            openDirectConversation,
+          },
         },
       ],
     });
@@ -84,6 +92,87 @@ describe('ConversationInventoryStore', () => {
     );
     setFavorite = vi.fn(() => of(undefined));
     markRead = vi.fn((id: string) => of(conversation(id, { unreadCount: 0 })));
+    // A ChannelOutput, deliberately not shaped like a ConversationOutput: it
+    // carries participantCount/parent and lacks isChannel/visibility.
+    createChannel = vi.fn(() =>
+      of({
+        '@id': '/api/channels/site-inspections',
+        '@type': 'Channel',
+        id: 'site-inspections',
+        organization: '/api/organizations/org-1',
+        name: 'site-inspections',
+        team: null,
+        createdByMember: null,
+        participantCount: 1,
+        isArchived: false,
+        lastMessageAt: null,
+        messagesCount: 0,
+        unreadCount: 0,
+        createdAt: '2026-07-20T00:00:00Z',
+        updatedAt: '2026-07-20T00:00:00Z',
+        isFavorite: false,
+        parent: null,
+      }),
+    );
+    openDirectConversation = vi.fn(() =>
+      of(conversation('amelie', { isChannel: false, name: null, visibility: 'direct' })),
+    );
+  });
+
+  describe('opening a conversation', () => {
+    it('creates a channel, then refetches the list rather than folding the answer in', () => {
+      configure();
+      const store = TestBed.inject(ConversationInventoryStore);
+      TestBed.tick();
+      expect(listConversations).toHaveBeenCalledTimes(1);
+
+      store.createChannel({ organizationId: 'org-1', name: 'site-inspections' });
+      TestBed.tick();
+
+      expect(createChannel).toHaveBeenCalledWith('org-1', 'site-inspections');
+      // The list is reloaded: a ChannelOutput cannot be pushed into a
+      // ConversationOutput list without inventing the missing fields.
+      expect(listConversations).toHaveBeenCalledTimes(2);
+      expect(store.openedConversationId()).toBe('site-inspections');
+    });
+
+    it('opens a direct conversation and exposes its id for navigation', () => {
+      configure();
+      const store = TestBed.inject(ConversationInventoryStore);
+      TestBed.tick();
+
+      store.openDirectConversation({ organizationId: 'org-1', memberId: 'member-1' });
+      TestBed.tick();
+
+      expect(openDirectConversation).toHaveBeenCalledWith('org-1', 'member-1');
+      expect(store.openedConversationId()).toBe('amelie');
+    });
+
+    it('clears the one-shot result so the next success is a real transition', () => {
+      configure();
+      const store = TestBed.inject(ConversationInventoryStore);
+      TestBed.tick();
+
+      store.createChannel({ organizationId: 'org-1', name: 'site-inspections' });
+      TestBed.tick();
+      store.clearOpenedConversation();
+
+      expect(store.openedConversationId()).toBeNull();
+    });
+
+    it('reports a failed create without touching the list', () => {
+      createChannel = vi.fn(() => throwError(() => new Error('nope')));
+      configure();
+      const store = TestBed.inject(ConversationInventoryStore);
+      TestBed.tick();
+
+      store.createChannel({ organizationId: 'org-1', name: 'x' });
+      TestBed.tick();
+
+      expect(store.openedConversationId()).toBeNull();
+      expect(listConversations).toHaveBeenCalledTimes(1);
+      expect(store.channels().map((c) => c.id)).toEqual(['general']);
+    });
   });
 
   it('should load the list for a member holding messaging.read', () => {

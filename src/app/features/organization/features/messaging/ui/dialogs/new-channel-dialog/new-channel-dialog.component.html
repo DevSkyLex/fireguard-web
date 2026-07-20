@@ -1,0 +1,62 @@
+<p-dialog
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '26rem' }"
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+  (onHide)="reset()"
+>
+  <ng-template #header>
+    <span class="font-semibold" i18n="@@messaging.newChannel.title">New channel</span>
+  </ng-template>
+
+  <label
+    class="mb-1.5 block text-sm font-medium text-surface-700 dark:text-surface-300"
+    for="new-channel-name"
+    i18n="@@messaging.newChannel.nameLabel"
+  >
+    Name
+  </label>
+
+  <input
+    pInputText
+    id="new-channel-name"
+    class="w-full"
+    autocomplete="off"
+    data-testid="new-channel-name"
+    i18n-placeholder="@@messaging.newChannel.namePlaceholder"
+    placeholder="e.g. site-inspections"
+    [maxlength]="nameMax"
+    [ngModel]="name()"
+    (ngModelChange)="name.set($event)"
+    (keydown.enter)="submit()"
+  />
+
+  <p class="mt-1.5 text-xs text-surface-500 dark:text-surface-400">
+    <ng-container i18n="@@messaging.newChannel.nameHint"
+      >Between {{ nameMin }} and {{ nameMax }} characters.</ng-container
+    >
+  </p>
+
+  <ng-template #footer>
+    <p-button
+      severity="secondary"
+      data-testid="new-channel-cancel"
+      i18n-label="@@messaging.newChannel.cancel"
+      label="Cancel"
+      [text]="true"
+      [disabled]="pending()"
+      (onClick)="visible.set(false)"
+    />
+    <p-button
+      severity="contrast"
+      data-testid="new-channel-submit"
+      i18n-label="@@messaging.newChannel.submit"
+      label="Create"
+      [disabled]="!isValid()"
+      [loading]="pending()"
+      (onClick)="submit()"
+    />
+  </ng-template>
+</p-dialog>

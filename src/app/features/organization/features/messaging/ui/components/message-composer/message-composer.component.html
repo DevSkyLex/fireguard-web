@@ -1,0 +1,203 @@
+@let file = pendingFile();
+
+<div class="flex flex-col gap-2">
+  @if (file) {
+    <div
+      class="flex items-center gap-2 self-start rounded-lg border border-surface-200 px-2.5 py-1.5 text-xs dark:border-surface-700"
+      data-testid="staged-file"
+    >
+      <i class="pi pi-paperclip text-surface-400" aria-hidden="true"></i>
+      <span class="max-w-48 truncate text-surface-700 dark:text-surface-300">{{ file.name }}</span>
+      <button
+        type="button"
+        data-testid="clear-file"
+        class="text-surface-400 hover:text-surface-700 dark:hover:text-surface-200"
+        i18n-aria-label="@@messaging.composer.clearFile"
+        aria-label="Remove file"
+        (click)="fileCleared.emit()"
+      >
+        <i class="pi pi-times text-[10px]" aria-hidden="true"></i>
+      </button>
+    </div>
+  }
+
+  <!--
+    Two rows: a borderless textarea over a toolbar. The kit's metrics are
+    literal — 14px/16px/6px around the field, 6px/12px/10px around the toolbar.
+  -->
+  <div class="relative rounded-xl border border-surface-300 dark:border-surface-700">
+    @if (emojiOpen()) {
+      <div
+        class="absolute right-3 bottom-full z-20 mb-2 grid grid-cols-4 gap-0.5 rounded-lg border border-surface-200 bg-surface-0 p-2 shadow-lg dark:border-surface-700 dark:bg-surface-900"
+        data-testid="composer-emoji-picker"
+      >
+        @for (emoji of emojis; track emoji) {
+          <button
+            type="button"
+            class="size-[34px] rounded-md text-lg hover:bg-surface-100 dark:hover:bg-surface-800"
+            [attr.aria-label]="emoji"
+            (click)="insertEmoji(emoji)"
+          >
+            <span aria-hidden="true">{{ emoji }}</span>
+          </button>
+        }
+      </div>
+    }
+
+    @if (mentionOpen()) {
+      <div
+        class="absolute bottom-full left-3 z-20 mb-2 w-60 rounded-lg border border-surface-200 bg-surface-0 p-1.5 shadow-lg dark:border-surface-700 dark:bg-surface-900"
+        data-testid="composer-mention-popover"
+        role="listbox"
+      >
+        <div
+          class="px-2 py-1.5 text-[11px] font-semibold tracking-wide text-surface-500 uppercase dark:text-surface-400"
+          i18n="@@messaging.composer.mentionHeader"
+        >
+          Members
+        </div>
+
+        @for (member of mentionMatches(); track member.id; let i = $index) {
+          <button
+            type="button"
+            role="option"
+            class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-surface-700 hover:bg-surface-100 dark:text-surface-200 dark:hover:bg-surface-800"
+            [class.bg-surface-100]="i === mentionIndex()"
+            [class.dark:bg-surface-800]="i === mentionIndex()"
+            [attr.aria-selected]="i === mentionIndex()"
+            [attr.data-testid]="'composer-mention-option-' + i"
+            (click)="pickMention(member)"
+          >
+            <span
+              class="flex size-[22px] shrink-0 items-center justify-center rounded-full bg-surface-200 text-[10px] font-semibold text-surface-700 dark:bg-surface-700 dark:text-surface-200"
+              aria-hidden="true"
+            >
+              {{ member.initials }}
+            </span>
+            <span class="truncate">{{ member.displayName }}</span>
+          </button>
+        } @empty {
+          <div
+            class="px-2 py-1.5 text-sm text-surface-500 dark:text-surface-400"
+            data-testid="composer-mention-empty"
+            i18n="@@messaging.composer.mentionEmpty"
+          >
+            No members match
+          </div>
+        }
+      </div>
+    }
+
+    <textarea
+      #field
+      pTextarea
+      rows="1"
+      data-testid="message-composer"
+      class="max-h-[150px] min-h-6 w-full resize-none border-0 bg-transparent px-4 pt-3.5 pb-1.5 shadow-none focus:ring-0"
+      i18n-aria-label="@@messaging.composer.aria"
+      aria-label="Message"
+      [placeholder]="resolvedPlaceholder()"
+      [ngModel]="draft()"
+      (ngModelChange)="draft.set($event)"
+      (input)="onDraftInput()"
+      (keydown)="onKeydown($event)"
+    ></textarea>
+
+    <div class="flex items-center justify-between px-3 pt-1.5 pb-2.5">
+      <div class="flex items-center gap-0.5">
+        @if (!compact()) {
+          <p-button
+            icon="pi pi-sparkles"
+            size="small"
+            severity="secondary"
+            data-testid="composer-assistant"
+            i18n-ariaLabel="@@messaging.composer.assistant"
+            ariaLabel="Assistant"
+            [text]="true"
+            [rounded]="true"
+            (onClick)="assistantRequested.emit()"
+          />
+        }
+
+        <p-button
+          icon="pi pi-at"
+          size="small"
+          severity="secondary"
+          data-testid="composer-mention"
+          i18n-ariaLabel="@@messaging.composer.mention"
+          ariaLabel="Mention"
+          [text]="true"
+          [rounded]="true"
+          (onClick)="startMention()"
+        />
+
+        @if (!compact()) {
+          <p-button
+            icon="pi pi-bolt"
+            size="small"
+            severity="secondary"
+            data-testid="composer-shortcuts"
+            i18n-ariaLabel="@@messaging.composer.shortcuts"
+            ariaLabel="Shortcuts"
+            [text]="true"
+            [rounded]="true"
+            (onClick)="shortcutsRequested.emit()"
+          />
+        }
+
+        <p-button
+          icon="pi pi-face-smile"
+          size="small"
+          severity="secondary"
+          data-testid="composer-emoji"
+          i18n-ariaLabel="@@messaging.composer.emoji"
+          ariaLabel="Emoji"
+          [text]="true"
+          [rounded]="true"
+          (onClick)="toggleEmoji()"
+        />
+
+        <!-- A file input cannot be opened from a p-button, so the trigger is a
+             label wrapping the hidden input, sized like its siblings. -->
+        <label
+          class="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-surface-500 hover:bg-surface-100 hover:text-surface-700 dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-surface-200"
+          i18n-aria-label="@@messaging.composer.attach"
+          aria-label="Attach a file"
+        >
+          <i class="pi pi-paperclip text-sm" aria-hidden="true"></i>
+          <input
+            type="file"
+            class="sr-only"
+            data-testid="file-input"
+            (change)="onFileSelected($event)"
+          />
+        </label>
+      </div>
+
+      <div class="flex items-center gap-2">
+        @if (canDiscard()) {
+          <p-button
+            size="small"
+            severity="secondary"
+            data-testid="composer-discard"
+            i18n-label="@@messaging.composer.discard"
+            label="Discard"
+            [text]="true"
+            (onClick)="discard()"
+          />
+        }
+
+        <p-button
+          size="small"
+          severity="contrast"
+          data-testid="message-send"
+          i18n-label="@@messaging.composer.send"
+          label="Send"
+          [disabled]="!canSend()"
+          [loading]="sending()"
+          (onClick)="submit()"
+        />
+      </div>
+    </div>
+  </div>
+</div>

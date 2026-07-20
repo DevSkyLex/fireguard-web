@@ -60,11 +60,15 @@
     }
   }
 
-  <!-- Channels -->
-  @if (channelTree().length > 0) {
+  <!--
+    Channels. The header sits outside the list's `@if` on purpose: a workspace
+    with no channel yet still needs its "+", or the first one could never be
+    created.
+  -->
+  <div class="flex w-full items-center gap-1 px-2.5 pt-3 pb-1">
     <button
       type="button"
-      class="flex w-full cursor-pointer items-center justify-between px-2.5 pt-3 pb-1 text-[11px] font-semibold tracking-wider text-surface-500 uppercase hover:text-surface-700 dark:hover:text-surface-300"
+      class="flex flex-1 cursor-pointer items-center justify-between text-[11px] font-semibold tracking-wider text-surface-500 uppercase hover:text-surface-700 dark:hover:text-surface-300"
       [attr.aria-expanded]="channelsOpen()"
       data-testid="messaging-sidebar-channels-toggle"
       (click)="channelsOpen.set(!channelsOpen())"
@@ -76,6 +80,19 @@
       ></i>
     </button>
 
+    <button
+      type="button"
+      class="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded text-surface-500 hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-300"
+      data-testid="messaging-sidebar-new-channel"
+      i18n-aria-label="@@messaging.sidebar.newChannel"
+      aria-label="New channel"
+      (click)="channelDialogOpen.set(true)"
+    >
+      <i class="pi pi-plus text-[10px]" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  @if (channelTree().length > 0) {
     @if (channelsOpen()) {
       <ul class="flex flex-col gap-px" data-testid="messaging-sidebar-channels">
         @for (node of channelTree(); track node.conversation.id) {
@@ -113,10 +130,10 @@
     and Channels here. We list them: the sidebar is the workspace's only
     conversation list, so a non-favourited DM would otherwise be unreachable.
   -->
-  @if (directConversations().length > 0) {
+  <div class="flex w-full items-center gap-1 px-2.5 pt-3 pb-1">
     <button
       type="button"
-      class="flex w-full cursor-pointer items-center justify-between px-2.5 pt-3 pb-1 text-[11px] font-semibold tracking-wider text-surface-500 uppercase hover:text-surface-700 dark:hover:text-surface-300"
+      class="flex flex-1 cursor-pointer items-center justify-between text-[11px] font-semibold tracking-wider text-surface-500 uppercase hover:text-surface-700 dark:hover:text-surface-300"
       [attr.aria-expanded]="directOpen()"
       data-testid="messaging-sidebar-direct-toggle"
       (click)="directOpen.set(!directOpen())"
@@ -128,6 +145,19 @@
       ></i>
     </button>
 
+    <button
+      type="button"
+      class="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded text-surface-500 hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-300"
+      data-testid="messaging-sidebar-new-direct"
+      i18n-aria-label="@@messaging.sidebar.newDirect"
+      aria-label="New message"
+      (click)="openDirectDialog()"
+    >
+      <i class="pi pi-plus text-[10px]" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  @if (directConversations().length > 0) {
     @if (directOpen()) {
       <ul class="flex flex-col gap-px" data-testid="messaging-sidebar-direct">
         @for (conversation of directConversations(); track conversation.id) {
@@ -185,3 +215,19 @@
     }
   </a>
 </ng-template>
+
+<app-new-channel-dialog
+  [visible]="channelDialogOpen()"
+  [pending]="inventory.isOpening()"
+  (visibleChange)="channelDialogOpen.set($event)"
+  (submitted)="createChannel($event)"
+/>
+
+<app-new-direct-conversation-dialog
+  [visible]="directDialogOpen()"
+  [members]="addressableMembers()"
+  [loading]="directory.isQueryLoading()"
+  [pending]="inventory.isOpening()"
+  (visibleChange)="directDialogOpen.set($event)"
+  (submitted)="openDirectConversation($event)"
+/>

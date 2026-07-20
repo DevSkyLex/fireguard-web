@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
   type Signal,
@@ -14,9 +15,19 @@ import { filter, map } from 'rxjs';
 import type { ConversationOutput } from '@features/organization/features/messaging/models';
 import { ConversationInventoryStore } from '@features/organization/features/messaging/state';
 import {
+  NewChannelDialog,
+  NewDirectConversationDialog,
+} from '@features/organization/features/messaging/ui/dialogs';
+import {
   ORGANIZATION_CONTEXT_PORT,
   type OrganizationContextPort,
 } from '@features/organization/ports';
+import {
+  OrganizationMemberAccessStore,
+  OrganizationMemberDirectoryStore,
+  type MemberIdentity,
+  type OrganizationMemberDirectoryStoreType,
+} from '@features/organization/state';
 import { buildChannelTree, type ChannelTreeNode } from './utils/channel-tree.utils';
 
 /**
@@ -40,7 +51,7 @@ import { buildChannelTree, type ChannelTreeNode } from './utils/channel-tree.uti
  */
 @Component({
   selector: 'app-messaging-sidebar',
-  imports: [RouterLink, NgTemplateOutlet],
+  imports: [RouterLink, NgTemplateOutlet, NewChannelDialog, NewDirectConversationDialog],
   templateUrl: './messaging-sidebar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -196,6 +207,90 @@ export class MessagingSidebar {
   );
 
   /**
+   * Property channelDialogOpen
+   * @readonly
+   *
+   * @description
+   * Whether the "new channel" dialog shows.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly channelDialogOpen: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property directDialogOpen
+   * @readonly
+   *
+   * @description
+   * Whether the "new message" member picker shows.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly directDialogOpen: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property directory
+   * @readonly
+   *
+   * @description
+   * The workspace's members, loaded lazily when the picker opens — the sidebar
+   * itself never needs them.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {OrganizationMemberDirectoryStoreType}
+   */
+  protected readonly directory: OrganizationMemberDirectoryStoreType = inject(
+    OrganizationMemberDirectoryStore,
+  );
+
+  /**
+   * Property memberAccess
+   * @readonly
+   *
+   * @description
+   * Source of the acting member's id, so the picker can leave them out.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {InstanceType<typeof OrganizationMemberAccessStore>}
+   */
+  private readonly memberAccess: InstanceType<typeof OrganizationMemberAccessStore> = inject(
+    OrganizationMemberAccessStore,
+  );
+
+  /**
+   * Property addressableMembers
+   * @readonly
+   *
+   * @description
+   * Everyone but the acting member: a direct conversation with oneself is not
+   * a thing the endpoint accepts.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<readonly MemberIdentity[]>}
+   */
+  protected readonly addressableMembers: Signal<readonly MemberIdentity[]> = computed(
+    (): readonly MemberIdentity[] => {
+      const self: string | null = this.memberAccess.currentMemberId();
+
+      return Array.from(this.directory.identities().values()).filter(
+        (member: MemberIdentity): boolean => member.id !== self,
+      );
+    },
+  );
+
+  /**
    * Property activeConversationId
    * @readonly
    *
@@ -289,6 +384,91 @@ export class MessagingSidebar {
     return conversations.filter((conversation: ConversationOutput): boolean =>
       this.labelOf(conversation).toLowerCase().includes(query),
     );
+  }
+
+  /**
+   * Constructor
+   *
+   * @description
+   * Follows a freshly created or opened conversation: closes the dialog,
+   * clears the store's one-shot result so the next success is a real
+   * transition, and deep links into the thread.
+   *
+   * @access public
+   * @since 2.0.0
+   */
+  public constructor() {
+    effect((): void => {
+      const conversationId: string | null = this.inventory.openedConversationId();
+      const link: readonly string[] | null = this.messagesLink();
+
+      if (conversationId === null || link === null) return;
+
+      this.channelDialogOpen.set(false);
+      this.directDialogOpen.set(false);
+      this.inventory.clearOpenedConversation();
+      void this.router.navigate([...link], { queryParams: { conversation: conversationId } });
+    });
+  }
+
+  /**
+   * Method createChannel
+   *
+   * @description
+   * Opens a channel in the active organization. The dialog stays up until the
+   * call succeeds, so a rejected name is not retyped from scratch.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {string} name - The confirmed channel name.
+   *
+   * @returns {void}
+   */
+  protected createChannel(name: string): void {
+    const organizationId: string | undefined = this.organizationContext.selectedOrganization()?.id;
+    if (organizationId === undefined) return;
+
+    this.inventory.createChannel({ organizationId, name });
+  }
+
+  /**
+   * Method openDirectDialog
+   *
+   * @description
+   * Opens the member picker, fetching the directory on the way in. Loading it
+   * here rather than on mount keeps the sidebar's cost to the conversation
+   * list for the many members who never start a new thread.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @returns {void}
+   */
+  protected openDirectDialog(): void {
+    this.directory.load(this.organizationContext.selectedOrganization()?.id ?? null);
+    this.directDialogOpen.set(true);
+  }
+
+  /**
+   * Method openDirectConversation
+   *
+   * @description
+   * Writes to a member. The endpoint is get-or-create, so this reopens an
+   * existing thread just as well as it starts one.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {string} memberId - The addressed member.
+   *
+   * @returns {void}
+   */
+  protected openDirectConversation(memberId: string): void {
+    const organizationId: string | undefined = this.organizationContext.selectedOrganization()?.id;
+    if (organizationId === undefined) return;
+
+    this.inventory.openDirectConversation({ organizationId, memberId });
   }
   //#endregion
 }

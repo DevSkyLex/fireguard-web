@@ -1,0 +1,83 @@
+<p-dialog
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '26rem' }"
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+  (onHide)="reset()"
+>
+  <ng-template #header>
+    <span class="font-semibold" i18n="@@messaging.newDirect.title">New message</span>
+  </ng-template>
+
+  <div
+    class="mb-3 flex h-8.5 items-center gap-2 rounded-md border border-surface-200 bg-surface-100 px-2.5 focus-within:border-primary dark:border-surface-800 dark:bg-surface-900"
+  >
+    <i class="pi pi-search text-xs text-surface-500" aria-hidden="true"></i>
+    <input
+      type="text"
+      class="min-w-0 flex-1 bg-transparent text-[13px] text-surface-950 outline-none placeholder:text-surface-500 dark:text-surface-50"
+      autocomplete="off"
+      data-testid="new-direct-search"
+      i18n-placeholder="@@messaging.newDirect.search"
+      placeholder="Search members"
+      i18n-aria-label="@@messaging.newDirect.search"
+      aria-label="Search members"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+    />
+  </div>
+
+  @if (loading()) {
+    <p
+      class="py-6 text-center text-sm text-surface-500 dark:text-surface-400"
+      data-testid="new-direct-loading"
+      i18n="@@messaging.newDirect.loading"
+    >
+      Loading members…
+    </p>
+  } @else {
+    <ul class="max-h-72 overflow-y-auto" data-testid="new-direct-list">
+      @for (member of matches(); track member.id) {
+        <li>
+          <button
+            type="button"
+            class="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2 py-2 text-left text-sm text-surface-700 hover:bg-surface-100 disabled:opacity-60 dark:text-surface-200 dark:hover:bg-surface-800"
+            [attr.data-testid]="'new-direct-member-' + member.id"
+            [disabled]="pending()"
+            (click)="pick(member)"
+          >
+            <span
+              class="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-200 text-[11px] font-semibold text-surface-700 dark:bg-surface-700 dark:text-surface-200"
+              aria-hidden="true"
+            >
+              {{ member.initials }}
+            </span>
+            <span class="truncate">{{ member.displayName }}</span>
+          </button>
+        </li>
+      } @empty {
+        <li
+          class="py-6 text-center text-sm text-surface-500 dark:text-surface-400"
+          data-testid="new-direct-empty"
+          i18n="@@messaging.newDirect.empty"
+        >
+          No members match
+        </li>
+      }
+    </ul>
+  }
+
+  <ng-template #footer>
+    <p-button
+      severity="secondary"
+      data-testid="new-direct-cancel"
+      i18n-label="@@messaging.newDirect.cancel"
+      label="Cancel"
+      [text]="true"
+      [disabled]="pending()"
+      (onClick)="visible.set(false)"
+    />
+  </ng-template>
+</p-dialog>

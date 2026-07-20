@@ -91,71 +91,19 @@
       />
 
       <!-- Composer inset from the thread's edges, per the kit. -->
-      <div class="mx-6 mb-5 flex flex-col gap-2">
-        @if (pendingFile(); as file) {
-          <div
-            class="flex items-center gap-2 self-start rounded-lg border border-surface-200 px-2.5 py-1.5 text-xs dark:border-surface-700"
-            data-testid="staged-file"
-          >
-            <i class="pi pi-paperclip text-surface-400" aria-hidden="true"></i>
-            <span class="max-w-48 truncate text-surface-700 dark:text-surface-300">
-              {{ file.name }}
-            </span>
-            <button
-              type="button"
-              data-testid="clear-file"
-              class="text-surface-400 hover:text-surface-700 dark:hover:text-surface-200"
-              i18n-aria-label="@@messaging.composer.clearFile"
-              aria-label="Remove file"
-              (click)="clearFile()"
-            >
-              <i class="pi pi-times text-[10px]" aria-hidden="true"></i>
-            </button>
-          </div>
-        }
-
-        <div
-          class="flex items-end gap-2 rounded-2xl border border-surface-300 p-2 shadow-sm dark:border-surface-700"
-        >
-          <label
-            class="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-surface-400 hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800"
-            i18n-aria-label="@@messaging.composer.attach"
-            aria-label="Attach a file"
-          >
-            <i class="pi pi-paperclip text-sm" aria-hidden="true"></i>
-            <input
-              type="file"
-              class="sr-only"
-              data-testid="file-input"
-              (change)="onFileSelected($event)"
-            />
-          </label>
-
-          <textarea
-            pTextarea
-            rows="1"
-            data-testid="message-composer"
-            class="max-h-40 min-h-9 flex-1 resize-none border-0 bg-transparent shadow-none focus:ring-0"
-            i18n-placeholder="@@messaging.composer.placeholder"
-            placeholder="Write a message…"
-            i18n-aria-label="@@messaging.composer.aria"
-            aria-label="Message"
-            [ngModel]="draft()"
-            (ngModelChange)="draft.set($event)"
-            (keydown)="onComposerKeydown($event)"
-          ></textarea>
-
-          <p-button
-            icon="pi pi-send"
-            size="small"
-            data-testid="message-send"
-            i18n-ariaLabel="@@messaging.composer.send"
-            ariaLabel="Send"
-            [disabled]="!canSend()"
-            [loading]="store.isSending()"
-            (onClick)="send()"
-          />
-        </div>
+      <div class="mx-6 mb-5">
+        <app-message-composer
+          [draft]="draft()"
+          [members]="mentionableMembers()"
+          [pendingFile]="pendingFile()"
+          [sending]="store.isSending()"
+          (draftChange)="draft.set($event)"
+          (sent)="send()"
+          (assistantRequested)="openAssistant()"
+          (discarded)="discardDraft()"
+          (fileSelected)="pendingFile.set($event)"
+          (fileCleared)="clearFile()"
+        />
       </div>
     } @else {
       <div class="flex flex-1 items-center justify-center p-8">
@@ -213,31 +161,15 @@
         [loading]="store.isLoadingReplies()"
       />
 
-      <div
-        class="mx-4 mb-4 flex items-end gap-2 rounded-2xl border border-surface-300 p-2 shadow-sm dark:border-surface-700"
-      >
-        <textarea
-          pTextarea
-          rows="1"
-          data-testid="reply-composer"
-          class="max-h-32 min-h-9 flex-1 resize-none border-0 bg-transparent shadow-none focus:ring-0"
-          i18n-placeholder="@@messaging.replies.placeholder"
-          placeholder="Reply…"
-          i18n-aria-label="@@messaging.replies.composerAria"
-          aria-label="Reply"
-          [ngModel]="replyDraft()"
-          (ngModelChange)="replyDraft.set($event)"
-          (keydown)="onReplyKeydown($event)"
-        ></textarea>
-
-        <p-button
-          icon="pi pi-send"
-          size="small"
-          data-testid="reply-send"
-          i18n-ariaLabel="@@messaging.replies.send"
-          ariaLabel="Send reply"
-          [disabled]="replyDraft().trim().length === 0"
-          (onClick)="sendReply()"
+      <div class="mx-4 mb-4">
+        <app-message-composer
+          [draft]="replyDraft()"
+          [members]="mentionableMembers()"
+          [placeholder]="replyPlaceholder"
+          [compact]="true"
+          (draftChange)="replyDraft.set($event)"
+          (sent)="sendReply()"
+          (discarded)="replyDraft.set('')"
         />
       </div>
     </aside>

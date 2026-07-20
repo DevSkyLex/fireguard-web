@@ -4,8 +4,11 @@ import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type { MercureSubscriptionOutput } from '@core/mercure';
 import type {
+  ChannelOutput,
   ChannelParticipant,
   ConversationOutput,
+  CreateChannelInput,
+  CreateDirectConversationInput,
   MessageAttachment,
   PresenceOutput,
   MessageOutput,
@@ -75,6 +78,60 @@ export class MessagingService extends HydraApiService {
    */
   public getConversation(conversationId: string): Observable<ConversationOutput> {
     return this.getOne<ConversationOutput>(`/api/conversations/${conversationId}`);
+  }
+
+  /**
+   * Method createChannel
+   * @method createChannel
+   *
+   * @description
+   * Opens a new channel in the workspace. The creator joins it, so the channel
+   * shows up in their own list on the next read.
+   *
+   * @access public
+   * @since 5.0.0
+   *
+   * @param {string} organizationId - The owning organization; sent as an IRI,
+   * the endpoint being unscoped in its path.
+   * @param {string} name - Channel name; the backend rejects under 2 or over
+   * 80 characters.
+   *
+   * @return {Observable<ChannelOutput>} The created channel — a `ChannelOutput`,
+   * **not** a `ConversationOutput`: the shapes differ, so reload the inventory
+   * instead of folding this into the conversation list.
+   */
+  public createChannel(organizationId: string, name: string): Observable<ChannelOutput> {
+    return this.post<CreateChannelInput, ChannelOutput>('/api/channels', {
+      organization: `/api/organizations/${organizationId}`,
+      name,
+    });
+  }
+
+  /**
+   * Method openDirectConversation
+   * @method openDirectConversation
+   *
+   * @description
+   * Get-or-create: addressing the same member twice returns the existing
+   * conversation instead of a duplicate, so callers may treat it as "open".
+   *
+   * @access public
+   * @since 5.0.0
+   *
+   * @param {string} organizationId - The owning organization.
+   * @param {string} memberId - The addressed **organization member** id, not a
+   * user id.
+   *
+   * @return {Observable<ConversationOutput>} The existing or freshly created conversation.
+   */
+  public openDirectConversation(
+    organizationId: string,
+    memberId: string,
+  ): Observable<ConversationOutput> {
+    return this.post<CreateDirectConversationInput, ConversationOutput>(
+      '/api/direct-conversations',
+      { organization: `/api/organizations/${organizationId}`, memberId },
+    );
   }
 
   /**

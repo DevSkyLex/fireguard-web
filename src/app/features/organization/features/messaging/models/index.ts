@@ -1,8 +1,11 @@
+export type { ChannelOutput } from './channel/channel-output.interface';
+export type { CreateChannelInput } from './channel/create-channel-input.interface';
 export type {
   ConversationOutput,
   ConversationSubjectType,
   ConversationVisibility,
 } from './conversation/conversation-output.interface';
+export type { CreateDirectConversationInput } from './conversation/create-direct-conversation-input.interface';
 export type {
   MessageOutput,
   MessageReaction,

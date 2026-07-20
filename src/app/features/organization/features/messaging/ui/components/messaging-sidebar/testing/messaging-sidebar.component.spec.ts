@@ -11,6 +11,10 @@ import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
 } from '@features/organization/ports';
+import {
+  OrganizationMemberAccessStore,
+  OrganizationMemberDirectoryStore,
+} from '@features/organization/state';
 import { MessagingSidebar } from '../messaging-sidebar.component';
 import { buildChannelTree } from '../utils/channel-tree.utils';
 
@@ -88,7 +92,23 @@ describe('MessagingSidebar', () => {
             listConversations: vi.fn(() => of({ member: rows, totalItems: rows.length })),
             markRead: vi.fn(() => of()),
             setFavorite: vi.fn(() => of(undefined)),
+            createChannel: vi.fn(() => of()),
+            openDirectConversation: vi.fn(() => of()),
           },
+        },
+        // Doubled rather than real: the concrete stores reach HydraApiService,
+        // which the sidebar has no business pulling into a rendering spec.
+        {
+          provide: OrganizationMemberDirectoryStore,
+          useValue: {
+            identities: signal(new Map()),
+            isQueryLoading: signal(false),
+            load: vi.fn(),
+          },
+        },
+        {
+          provide: OrganizationMemberAccessStore,
+          useValue: { currentMemberId: signal<string | null>(null) },
         },
       ],
     });
@@ -154,6 +174,28 @@ describe('MessagingSidebar', () => {
     // a root because its parent is filtered out. The leading hash is the
     // channel glyph.
     expect(labels).toEqual(['#Extincteurs — RDC']);
+  });
+
+  it('offers both "+" even when the workspace has no conversation at all', () => {
+    // The headers used to live inside their list's `@if`, so an empty
+    // workspace could never create its first channel.
+    TestBed.overrideProvider(MessagingService, {
+      useValue: {
+        listConversations: vi.fn(() => of({ member: [], totalItems: 0 })),
+        markRead: vi.fn(() => of()),
+        setFavorite: vi.fn(() => of(undefined)),
+        createChannel: vi.fn(() => of()),
+        openDirectConversation: vi.fn(() => of()),
+      },
+    });
+
+    const fixture = TestBed.createComponent(MessagingSidebar);
+    fixture.detectChanges();
+
+    const at = (id: string): unknown => fixture.debugElement.query(By.css(`[data-testid="${id}"]`));
+
+    expect(at('messaging-sidebar-new-channel')).not.toBeNull();
+    expect(at('messaging-sidebar-new-direct')).not.toBeNull();
   });
 });
 

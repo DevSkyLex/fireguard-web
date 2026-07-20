@@ -13,12 +13,11 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { TextareaModule } from 'primeng/textarea';
 import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, skip } from 'rxjs';
 import { SHELL_PANEL_PORT, type ShellPanelPort } from '@core/shell-panel';
+import { ASSISTANT_PANEL_ID } from '@features/organization/features/assistant/providers';
 import { toMemberId } from '@features/organization/features/messaging/data-access';
 import type {
   ConversationOutput,
@@ -31,11 +30,15 @@ import {
   MessagingWorkspaceStore,
   type MessagingWorkspaceStoreType,
 } from '@features/organization/features/messaging/state';
-import { MessageThread } from '@features/organization/features/messaging/ui/components';
+import {
+  MessageComposer,
+  MessageThread,
+} from '@features/organization/features/messaging/ui/components';
 import {
   ActiveOrganizationStore,
   OrganizationMemberAccessStore,
   OrganizationMemberDirectoryStore,
+  type MemberIdentity,
   type OrganizationMemberDirectoryStoreType,
 } from '@features/organization/state';
 import { EmptyState } from '@shared/components';
@@ -58,7 +61,7 @@ import { EmptyState } from '@shared/components';
  */
 @Component({
   selector: 'app-messaging',
-  imports: [FormsModule, ButtonModule, TextareaModule, TooltipModule, MessageThread, EmptyState],
+  imports: [ButtonModule, TooltipModule, MessageComposer, MessageThread, EmptyState],
   // The page is a full-height two-pane workspace, so its host must stretch;
   // left to its default `display: inline` it collapses and the panes shrink to
   // their content.
@@ -182,6 +185,38 @@ export class MessagingPage {
    * @type {WritableSignal<string>}
    */
   protected readonly replyDraft: WritableSignal<string> = signal<string>('');
+
+  /**
+   * Property replyPlaceholder
+   * @readonly
+   *
+   * @description
+   * The reply composer's prompt. A constant rather than a template literal
+   * because the composer takes its placeholder as an input.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @type {string}
+   */
+  protected readonly replyPlaceholder: string = $localize`:@@messaging.replies.placeholder:Reply…`;
+
+  /**
+   * Property mentionableMembers
+   * @readonly
+   *
+   * @description
+   * The directory as a list, for the composer's mention popover. The store
+   * keys by id for lookup; the popover needs to iterate.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @type {Signal<readonly MemberIdentity[]>}
+   */
+  protected readonly mentionableMembers: Signal<readonly MemberIdentity[]> = computed(
+    (): readonly MemberIdentity[] => Array.from(this.directory.identities().values()),
+  );
 
   /**
    * Property canSend
@@ -567,23 +602,6 @@ export class MessagingPage {
     this.replyDraft.set('');
   }
 
-  /**
-   * Method onReplyKeydown
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @param {KeyboardEvent} event - The keydown event.
-   *
-   * @returns {void}
-   */
-  protected onReplyKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Enter' || event.shiftKey) return;
-
-    event.preventDefault();
-    this.sendReply();
-  }
-
   protected togglePin(message: MessageOutput): void {
     this.store.setPinned({ message, pinned: message.pinnedAt === null });
   }
@@ -616,25 +634,6 @@ export class MessagingPage {
   }
 
   /**
-   * Method onFileSelected
-   *
-   * @description
-   * Stages the chosen file for the next message.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @param {Event} event - The file input change event.
-   *
-   * @returns {void}
-   */
-  protected onFileSelected(event: Event): void {
-    const target: HTMLInputElement = event.target as HTMLInputElement;
-    this.pendingFile.set(target.files?.[0] ?? null);
-    target.value = '';
-  }
-
-  /**
    * Method clearFile
    *
    * @access protected
@@ -647,24 +646,38 @@ export class MessagingPage {
   }
 
   /**
-   * Method onComposerKeydown
+   * Method discardDraft
    *
    * @description
-   * Enter sends, Shift+Enter breaks the line — the convention every chat client
-   * shares, and the one users will try first.
+   * Drops the draft and its staged attachment, and clears what was persisted so
+   * reopening the conversation comes back empty.
    *
    * @access protected
-   * @since 1.0.0
-   *
-   * @param {KeyboardEvent} event - The keydown event.
+   * @since 5.0.0
    *
    * @returns {void}
    */
-  protected onComposerKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Enter' || event.shiftKey) return;
+  /**
+   * Method openAssistant
+   *
+   * @description
+   * Opens the assistant beside the thread, from the composer's sparkles
+   * action. The panel answers from the conversation on screen, so it is opened
+   * rather than navigated to.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @returns {void}
+   */
+  protected openAssistant(): void {
+    this.shellPanel.open(ASSISTANT_PANEL_ID);
+  }
 
-    event.preventDefault();
-    this.send();
+  protected discardDraft(): void {
+    this.draft.set('');
+    this.pendingFile.set(null);
+    this.persistDraft('');
   }
   //#endregion
 }

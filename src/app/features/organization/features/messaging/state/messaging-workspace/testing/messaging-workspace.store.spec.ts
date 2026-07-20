@@ -35,6 +35,13 @@ const message = (id: string, body: string, createdAt: string): MessageOutput =>
 
 describe('MessagingWorkspaceStore live thread', () => {
   const hub = new Subject<MessageOutput>();
+  let addReaction: ReturnType<typeof vi.fn>;
+  let removeReaction: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    addReaction = vi.fn(() => EMPTY);
+    removeReaction = vi.fn(() => of(undefined));
+  });
 
   const createStore = (initial: readonly MessageOutput[]) => {
     TestBed.configureTestingModule({
@@ -49,6 +56,8 @@ describe('MessagingWorkspaceStore live thread', () => {
             getSubscription: vi.fn(() => of({ token: 'jwt', topic: 'conversation/c1' })),
             listAttachments: vi.fn(() => of({ member: [], totalItems: 0 })),
             markRead: vi.fn(() => EMPTY),
+            addReaction,
+            removeReaction,
           },
         },
         { provide: MercureService, useValue: { subscribe: vi.fn(() => hub.asObservable()) } },
@@ -94,6 +103,28 @@ describe('MessagingWorkspaceStore live thread', () => {
     hub.next(message('m1', 'first', '2026-07-01T10:00:00Z'));
 
     expect(store.messages().map((m) => m.id)).toEqual(['m1', 'm2']);
+  });
+
+  // The API aggregates reactions server-side and sends `reactedByMe`; it never
+  // sends reactor ids. The frontend model used to declare `memberIds`, so the
+  // toggle read `undefined.includes(...)` — a guaranteed crash against the real
+  // backend that every e2e missed, because the fixtures had been written from
+  // the wrong model.
+  it('should decide the reaction direction from reactedByMe', () => {
+    const store = createStore([
+      {
+        ...message('m1', 'hello', '2026-07-01T10:00:00Z'),
+        reactions: [{ emoji: '👍', count: 2, reactedByMe: true }],
+      } as MessageOutput,
+    ]);
+
+    store.toggleReaction({ message: store.messages()[0] as MessageOutput, emoji: '👍' });
+
+    // Already mine, so removing it: DELETE, and the count comes back down.
+    expect(removeReaction).toHaveBeenCalledWith('m1', '👍');
+    expect(addReaction).not.toHaveBeenCalled();
+    expect(store.messages()[0]?.reactions[0]?.count).toBe(1);
+    expect(store.messages()[0]?.reactions[0]?.reactedByMe).toBe(false);
   });
 
   // Risk R8: the hub appends without bound — a channel left open all day must

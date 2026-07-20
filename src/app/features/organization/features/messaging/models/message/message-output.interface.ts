@@ -8,7 +8,15 @@ import type { HydraItem } from '@core/api/models';
 export interface MessageReaction {
   readonly emoji: string;
   readonly count: number;
-  readonly memberIds: readonly string[];
+
+  /**
+   * Whether the acting member is among this emoji's reactors.
+   *
+   * The API aggregates server-side and sends this flag — it never sends the
+   * reactor ids. The UI needs it to tell "3 people reacted" from "3 people
+   * including me", and the toggle needs it to choose between POST and DELETE.
+   */
+  readonly reactedByMe: boolean;
 }
 
 /**

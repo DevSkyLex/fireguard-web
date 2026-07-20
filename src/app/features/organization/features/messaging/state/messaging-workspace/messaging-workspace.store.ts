@@ -50,27 +50,20 @@ const INITIAL_STATE: MessagingWorkspaceState = {
 };
 
 /**
- * Removes a member from an emoji's reaction list, dropping the emoji entirely
- * once nobody is left.
+ * Applies the member's own reaction change to one emoji, dropping the emoji
+ * entirely once nobody is left.
  *
  * The API's DELETE returns no body, so the updated message has to be derived
  * locally rather than read back.
  */
-function applyReaction(
-  message: MessageOutput,
-  emoji: string,
-  memberId: string,
-  reacted: boolean,
-): MessageOutput {
+function applyReaction(message: MessageOutput, emoji: string, reacted: boolean): MessageOutput {
   const reactions = message.reactions
     .map((reaction) =>
       reaction.emoji === emoji
         ? {
             ...reaction,
             count: reacted ? reaction.count + 1 : Math.max(0, reaction.count - 1),
-            memberIds: reacted
-              ? [...reaction.memberIds, memberId]
-              : reaction.memberIds.filter((id: string) => id !== memberId),
+            reactedByMe: reacted,
           }
         : reaction,
     )
@@ -385,42 +378,31 @@ export const MessagingWorkspaceStore = signalStore(
          * Method toggleReaction
          *
          * @description
-         * Adds or removes the current member's reaction, replacing the message
+         * Adds or removes the acting member's reaction, replacing the message
          * in place so only that row re-renders.
          *
-         * The reacting member is identified by `currentMemberId`: the API sends
-         * `memberIds` per emoji, and without knowing who "I" am the UI cannot
-         * tell "3 people reacted" from "3 people including me".
+         * Whether it is already mine comes from `reactedByMe`, which the API
+         * aggregates server-side — it never sends the reactor ids, so there is
+         * nothing to search client-side.
          *
-         * @param {{ message: MessageOutput; emoji: string; currentMemberId: string }} request - What to toggle.
+         * @param {{ message: MessageOutput; emoji: string }} request - What to toggle.
          *
          * @returns {void}
          */
         toggleReaction: rxMethod<{
           readonly message: MessageOutput;
           readonly emoji: string;
-          readonly currentMemberId: string;
         }>(
           pipe(
             mergeMap((request) => {
               const reacted: boolean =
-                request.message.reactions
-                  .find((reaction) => reaction.emoji === request.emoji)
-                  ?.memberIds.includes(request.currentMemberId) ?? false;
+                request.message.reactions.find((reaction) => reaction.emoji === request.emoji)
+                  ?.reactedByMe ?? false;
 
               const call = reacted
                 ? service
                     .removeReaction(request.message.id, request.emoji)
-                    .pipe(
-                      map(() =>
-                        applyReaction(
-                          request.message,
-                          request.emoji,
-                          request.currentMemberId,
-                          false,
-                        ),
-                      ),
-                    )
+                    .pipe(map(() => applyReaction(request.message, request.emoji, false)))
                 : service.addReaction(request.message.id, request.emoji);
 
               return call.pipe(

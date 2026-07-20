@@ -501,10 +501,7 @@ export class MessagingPage {
     readonly message: MessageOutput;
     readonly emoji: string;
   }): void {
-    const currentMemberId: string | null = this.memberAccess.currentMemberId();
-    if (currentMemberId === null) return;
-
-    this.store.toggleReaction({ ...event, currentMemberId });
+    this.store.toggleReaction(event);
   }
 
   /**

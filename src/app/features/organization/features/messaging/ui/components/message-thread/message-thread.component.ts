@@ -195,7 +195,8 @@ export class MessageThread {
    * Method hasReacted
    *
    * @description
-   * Whether the current member is among an emoji's reactors.
+   * Whether the acting member is among an emoji's reactors — straight from
+   * the API's aggregated `reactedByMe`; reactor ids are never sent.
    *
    * @access protected
    * @since 2.0.0
@@ -205,8 +206,7 @@ export class MessageThread {
    * @returns {boolean} `true` when the current member reacted.
    */
   protected hasReacted(reaction: MessageReaction): boolean {
-    const memberId: string | null = this.currentMemberId();
-    return memberId !== null && reaction.memberIds.includes(memberId);
+    return reaction.reactedByMe;
   }
 
   /**

@@ -42,11 +42,14 @@ const message = (id: string, body: string | null, createdAt: string, isDeleted =
   attachments: [],
   pinnedAt: null,
   pinnedBy: null,
+  // Shape the API actually sends: aggregated server-side with a `reactedByMe`
+  // flag. It never sends reactor ids — a fixture that did let a contract bug
+  // through unnoticed.
   reactions:
     id === 'm1'
       ? [
-          { emoji: '👍', count: 2, memberIds: ['member-abc', 'member-xyz'] },
-          { emoji: '🔥', count: 1, memberIds: ['member-xyz'] },
+          { emoji: '👍', count: 2, reactedByMe: true },
+          { emoji: '🔥', count: 1, reactedByMe: false },
         ]
       : [],
   isSaved: false,
@@ -356,8 +359,8 @@ test.describe('Messaging workspace', () => {
     await expect(chips.first()).toContainText('2');
   });
 
-  // memberIds tells your own reaction from someone else's; the chip you are
-  // part of reads as pressed.
+  // `reactedByMe` tells your own reaction from someone else's; the chip you
+  // are part of reads as pressed.
   test('marks the reaction the signed-in member is part of', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);

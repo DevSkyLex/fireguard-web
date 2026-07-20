@@ -99,6 +99,22 @@ function bumpReplyCount(
 }
 
 /**
+ * How many messages the open thread keeps in memory — and therefore in the
+ * DOM. The API pages history at 50, but the Mercure stream APPENDS without
+ * bound: a channel left open all day would grow the DOM linearly (risk R8 of
+ * the refonte plan). Newest wins; scrollback beyond the window reloads.
+ */
+const THREAD_WINDOW: number = 200;
+
+/**
+ * Caps a thread at {@link THREAD_WINDOW} messages, dropping the oldest.
+ * Callers append newest-last, so trimming from the front keeps the live tail.
+ */
+function trimToWindow(messages: readonly MessageOutput[]): readonly MessageOutput[] {
+  return messages.length <= THREAD_WINDOW ? messages : messages.slice(-THREAD_WINDOW);
+}
+
+/**
  * Store MessagingWorkspaceStore
  * @const MessagingWorkspaceStore
  *
@@ -342,7 +358,7 @@ export const MessagingWorkspaceStore = signalStore(
                     messagesCallState: successCallState(
                       known
                         ? current.map((m: MessageOutput) => (m.id === message.id ? message : m))
-                        : [...current, message],
+                        : trimToWindow([...current, message]),
                     ),
                   });
                 },
@@ -645,10 +661,9 @@ export const MessagingWorkspaceStore = signalStore(
                 switchMap((message: MessageOutput) => {
                   patchState(store, {
                     sendCallState: successCallState(message),
-                    messagesCallState: successCallState([
-                      ...(store.messagesCallState().data ?? []),
-                      message,
-                    ]),
+                    messagesCallState: successCallState(
+                      trimToWindow([...(store.messagesCallState().data ?? []), message]),
+                    ),
                   });
 
                   // Upload only after the message exists — the attachment hangs

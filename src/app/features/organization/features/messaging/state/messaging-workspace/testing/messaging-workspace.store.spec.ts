@@ -95,4 +95,28 @@ describe('MessagingWorkspaceStore live thread', () => {
 
     expect(store.messages().map((m) => m.id)).toEqual(['m1', 'm2']);
   });
+
+  // Risk R8: the hub appends without bound — a channel left open all day must
+  // not grow the DOM linearly. The thread caps at 200, dropping the oldest.
+  it('should cap the streamed thread at the message window', () => {
+    const store = createStore([message('m0', 'seed', '2026-07-01T00:00:00Z')]);
+
+    for (let index = 1; index <= 320; index += 1) {
+      hub.next(
+        message(
+          `live-${String(index).padStart(3, '0')}`,
+          `live ${index}`,
+          `2026-07-01T10:${String(Math.floor(index / 60)).padStart(2, '0')}:${String(index % 60).padStart(2, '0')}Z`,
+        ),
+      );
+    }
+
+    const ids = store.messages().map((m) => m.id);
+    expect(ids).toHaveLength(200);
+    // Newest tail survives; the seed and the earliest live rows are gone.
+    expect(ids.at(-1)).toBe('live-320');
+    expect(ids).not.toContain('m0');
+    expect(ids).not.toContain('live-120');
+    expect(ids).toContain('live-121');
+  });
 });

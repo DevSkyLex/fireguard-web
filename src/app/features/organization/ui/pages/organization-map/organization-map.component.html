@@ -1,12 +1,20 @@
-<div id="organization-map" class="flex min-h-0 w-full flex-1 flex-col p-3 sm:p-6 md:p-7 lg:p-8">
+<!--
+  No page padding on the map branch: a map reads as a surface you look *into*,
+  and an inset one wastes the scarcest thing on this screen — plotted area. The
+  empty state keeps its padding, since a centred message against a bare viewport
+  edge reads as a broken layout rather than a deliberate one.
+-->
+<div id="organization-map" class="flex min-h-0 w-full flex-1 flex-col">
   @if (isEmpty()) {
-    <app-empty-state
-      icon="pi pi-map-marker"
-      i18n-title="@@map.empty.title"
-      title="No facilities to place yet"
-      i18n-description="@@map.empty.desc"
-      description="Facilities with an address will appear here once they are added."
-    />
+    <div class="p-3 sm:p-6 md:p-7 lg:p-8">
+      <app-empty-state
+        icon="pi pi-map-marker"
+        i18n-title="@@map.empty.title"
+        title="No facilities to place yet"
+        i18n-description="@@map.empty.desc"
+        description="Facilities with an address will appear here once they are added."
+      />
+    </div>
   } @else {
     <!--
       A definite min-height, not just `flex-1`: MapLibre renders into a canvas
@@ -14,7 +22,7 @@
       so `flex-1` alone resolves to zero and the map collapses to a strip.
     -->
     <app-map
-      class="min-h-[24rem] flex-1 overflow-hidden rounded-lg"
+      class="min-h-[24rem] flex-1 overflow-hidden"
       [markers]="markers()"
       i18n-ariaLabel="@@map.facilitiesAria"
       ariaLabel="Facilities map"

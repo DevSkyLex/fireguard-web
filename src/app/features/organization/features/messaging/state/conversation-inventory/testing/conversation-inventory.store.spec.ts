@@ -92,6 +92,9 @@ describe('ConversationInventoryStore', () => {
     TestBed.tick();
 
     expect(listConversations).toHaveBeenCalledTimes(1);
+    // The backend requires the organization filter; the store must pass the
+    // workspace it is watching.
+    expect(listConversations).toHaveBeenCalledWith('org-1', { itemsPerPage: 100 });
     expect(store.channels().map((c) => c.id)).toEqual(['general']);
     expect(store.directConversations().map((c) => c.id)).toEqual(['amelie']);
     expect(store.favorites().map((c) => c.id)).toEqual(['amelie']);

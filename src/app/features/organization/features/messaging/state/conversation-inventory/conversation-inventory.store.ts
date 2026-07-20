@@ -153,7 +153,7 @@ export const ConversationInventoryStore = signalStore(
             conversationsCallState: pendingCallState(store.conversationsCallState().data ?? []),
           });
 
-          return service.listConversations({ itemsPerPage: 100 }).pipe(
+          return service.listConversations(organizationId, { itemsPerPage: 100 }).pipe(
             tapResponse({
               next: (collection: HydraCollection<ConversationOutput>) =>
                 patchState(store, {

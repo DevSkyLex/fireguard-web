@@ -5,8 +5,9 @@
 Channels, direct conversations and their messages — the collaboration core of
 the workspace.
 
-Nested under `organization`: conversations belong to one organization, and the
-backend scopes every endpoint by the session's active organization.
+Nested under `organization`: conversations belong to one organization. The
+collection endpoints scope by an **explicit organization filter** (see
+Invariants) — never by an implicit "active organization" of the session.
 
 ## Status
 
@@ -37,10 +38,15 @@ not here.
 
 ## Invariants
 
-- **The endpoints are not organization-scoped in their path.** They are
-  `/api/conversations…`, not `/api/organizations/{id}/conversations…` — the
-  backend derives the organization from the session. Prefixing them hits a route
-  that does not exist.
+- **The endpoints are not organization-scoped in their path, but the
+  collection lists REQUIRE the organization as a query filter.** They are
+  `/api/conversations…`, not `/api/organizations/{id}/conversations…`
+  (prefixing them hits a route that does not exist) — and `GET
+/api/conversations`, `/api/saved-messages` and `/api/presence` all answer
+  **400 without `?organization=<IRI>`**. A member can belong to several
+  workspaces; there is no implicit "session organization" to fall back on,
+  and the hermetic e2e mocks cannot catch a missing filter — the service
+  spec pins it instead.
 - **`MessageOutput.authorMember` is a bare member id.** Authors are resolved
   through `OrganizationMemberDirectoryStore`. Do **not** swap that for
   `OrganizationMembersStore`: the latter is the admin table's state (one page of
@@ -100,9 +106,12 @@ through `http` directly with the JSON content-type dropped so the browser sets
 the multipart boundary — `HydraApiService.post` would force `application/ld+json`
 and break it.
 
-⚠️ **There is no download endpoint.** The API exposes upload, list and delete of
-attachments but serves no file content, so attachments render as metadata (name,
-size), not links. A backend task is filed to add the download route.
+**Attachments download through a plain link**, not an HttpClient call:
+`GET /api/messaging-attachments/{id}/content` (API `5f5128a7`) streams the
+bytes with `Content-Disposition: attachment` and rides the session cookie,
+gated by the same access rule as reading the owning conversation. The
+transport model still carries no URL — the thread builds it from
+`ENV_CONFIG.apiUrl`.
 
 A file with no text is a valid message — "here is the report" is often just the
 report — so the composer sends when either a body or a file is present.

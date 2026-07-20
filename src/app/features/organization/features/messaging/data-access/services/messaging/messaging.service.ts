@@ -40,14 +40,25 @@ export class MessagingService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
+   * @param {string} organizationId - The active organization identifier. The
+   * endpoint is unscoped in its PATH but the backend REQUIRES the
+   * organization as an IRI filter (400 without it) — a member can belong to
+   * several workspaces and the list must never mix them.
    * @param {RequestOptions} [options] - Optional pagination and filters.
    *
    * @return {Observable<HydraCollection<ConversationOutput>>} The conversation collection.
    */
   public listConversations(
+    organizationId: string,
     options?: RequestOptions,
   ): Observable<HydraCollection<ConversationOutput>> {
-    return this.getCollection<ConversationOutput>('/api/conversations', options);
+    return this.getCollection<ConversationOutput>('/api/conversations', {
+      ...options,
+      params: {
+        ...options?.params,
+        organization: `/api/organizations/${organizationId}`,
+      },
+    });
   }
 
   /**

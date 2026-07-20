@@ -28,14 +28,15 @@ describe('MessagingService', () => {
 
   afterEach(() => http.verify());
 
-  // The messaging endpoints are NOT organization-scoped in their path — the
-  // backend derives the organization from the session. Prefixing them with
-  // /organizations/{id} hits a route that does not exist.
-  it('should list conversations from the unscoped collection endpoint', () => {
-    service.listConversations().subscribe();
+  // The endpoint is unscoped in its PATH, but the backend REQUIRES the
+  // organization as an IRI filter — a member can belong to several
+  // workspaces, and without it the API answers 400.
+  it('should list conversations with the required organization filter', () => {
+    service.listConversations('org-1').subscribe();
 
-    const request = http.expectOne(`${apiUrl}/api/conversations`);
+    const request = http.expectOne((candidate) => candidate.url === `${apiUrl}/api/conversations`);
     expect(request.request.method).toBe('GET');
+    expect(request.request.params.get('organization')).toBe('/api/organizations/org-1');
     request.flush({ member: [], totalItems: 0 });
   });
 

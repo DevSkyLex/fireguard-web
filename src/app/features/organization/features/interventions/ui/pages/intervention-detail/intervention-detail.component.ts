@@ -1071,6 +1071,28 @@ export class InterventionDetailPage {
   );
 
   /**
+   * Property planningFrozen
+   * @readonly
+   *
+   * @description
+   * Whether the planning fields are frozen *for someone who could otherwise
+   * edit them*. Leaving draft removes every edit affordance with no
+   * explanation, which reads as a bug rather than a rule.
+   *
+   * Gated on {@link canPlan} on purpose: telling a member without the
+   * permission that planning is "frozen" would blame the workflow for what is
+   * actually a permission boundary, and imply the fields would open up again.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly planningFrozen: Signal<boolean> = computed<boolean>(
+    () => this.canPlan() && !this.canEditPlanning(),
+  );
+
+  /**
    * Property canEditDetails
    * @readonly
    *

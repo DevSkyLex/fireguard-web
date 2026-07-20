@@ -737,6 +737,25 @@
         <h2 i18n="@@intervention.sidebar.title" class="sr-only">Properties</h2>
 
         <!--
+          Leaving draft freezes the planning fields backend-side, and every edit
+          affordance simply vanished — which reads as a bug rather than a rule.
+          Shown only to someone who could otherwise edit: telling a member
+          without the permission that planning is "frozen" would blame the
+          workflow for what is really a permission boundary.
+        -->
+        @if (planningFrozen()) {
+          <p
+            class="mb-3 flex items-start gap-2 rounded-md bg-surface-100 px-2.5 py-2 text-xs text-surface-600 dark:bg-surface-800 dark:text-surface-400"
+            data-testid="intervention-planning-frozen"
+          >
+            <i class="pi pi-lock mt-0.5 shrink-0 text-[11px]" aria-hidden="true"></i>
+            <span i18n="@@intervention.sidebar.planningFrozen"
+              >Planning is frozen once the intervention leaves draft.</span
+            >
+          </p>
+        }
+
+        <!--
           A disclosure on narrow screens only. The rail stacks under the body
           below `xl`, which put a long definition list between the reader and
           the end of the page; from `xl` up it is a column beside the body and

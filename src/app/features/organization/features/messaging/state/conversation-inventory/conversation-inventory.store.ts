@@ -151,6 +151,24 @@ export const ConversationInventoryStore = signalStore(
     isLoading: computed<boolean>(() => isCallPending(store.conversationsCallState())),
 
     /**
+     * Computed totalUnread
+     *
+     * @description
+     * Unread messages across every conversation, for the shell's Messages
+     * badge. Summed here rather than in the navigation provider so both the
+     * sidebar rows and the nav entry read one source.
+     *
+     * @type {Signal<number>}
+     */
+    totalUnread: computed<number>(() =>
+      (store.conversationsCallState().data ?? []).reduce(
+        (total: number, conversation: ConversationOutput): number =>
+          total + conversation.unreadCount,
+        0,
+      ),
+    ),
+
+    /**
      * Computed isOpening
      *
      * @description

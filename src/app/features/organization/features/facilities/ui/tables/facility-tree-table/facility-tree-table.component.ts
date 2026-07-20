@@ -194,6 +194,27 @@ export class FacilityTreeTable {
    *
    * @returns {string} The text colour class.
    */
+  /**
+   * Method complianceBarClass
+   *
+   * @description
+   * Fill colour for the compliance bar, on the same thresholds as the figure's
+   * text colour so the two can never disagree.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {number} rate - The compliance percentage.
+   *
+   * @returns {string} The fill colour class.
+   */
+  protected complianceBarClass(rate: number): string {
+    if (rate >= 90) return 'bg-green-500';
+    if (rate >= 70) return 'bg-amber-500';
+
+    return 'bg-red-500';
+  }
+
   protected complianceClass(rate: number | null): string {
     if (rate === null) return 'text-surface-400 dark:text-surface-500';
     if (rate >= 90) return 'text-green-600 dark:text-green-400';

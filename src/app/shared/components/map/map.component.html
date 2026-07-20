@@ -6,6 +6,28 @@
     [attr.aria-label]="ariaLabel()"
   ></div>
 
+  <!--
+    Bottom-right, clear of MapLibre's own navigation control at top-right.
+    Hidden until the map has rendered and something is actually placeable, so
+    it never offers a re-frame that would do nothing.
+  -->
+  @if (canFitAll()) {
+    <p-button
+      icon="pi pi-arrows-alt"
+      severity="secondary"
+      size="small"
+      [rounded]="true"
+      i18n-ariaLabel="@@map.fitAll"
+      ariaLabel="Fit all markers to view"
+      i18n-pTooltip="@@map.fitAll"
+      pTooltip="Fit all markers to view"
+      tooltipPosition="left"
+      data-testid="map-fit-all"
+      class="absolute right-3 bottom-3 z-10"
+      (onClick)="fitAll()"
+    />
+  }
+
   @if (error()) {
     <div
       class="absolute inset-0 z-10 flex items-center justify-center rounded-xl border border-surface-200 bg-surface-0/95 backdrop-blur-sm dark:border-surface-800 dark:bg-surface-950/95"

@@ -3,6 +3,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   effect,
   inject,
@@ -19,6 +20,7 @@ import {
 import type { FeatureCollection, Point } from 'geojson';
 import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 import { ENV_CONFIG, type EnvironmentConfig } from '@core/config/environment';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { ErrorState } from '../error-state';
@@ -51,7 +53,7 @@ const PIN_COLOR = '#f97316';
  */
 @Component({
   selector: 'app-map',
-  imports: [ButtonModule, ErrorState, Skeleton],
+  imports: [ButtonModule, ErrorState, Skeleton, TooltipModule],
   templateUrl: './map.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -325,6 +327,54 @@ export class MapCanvas {
     this.initStarted = false;
     void this.initMap();
   }
+
+  /**
+   * Method fitAll
+   * @method fitAll
+   *
+   * @description
+   * Re-frames the viewport on every marker. The same framing already runs once
+   * on load, but panning or zooming away left no way back short of a reload —
+   * on a wide estate, a stray drag loses the markers entirely.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @returns {void}
+   */
+  protected fitAll(): void {
+    const map: MapLibreMap | null = this.mapInstance;
+    if (map === null) return;
+
+    this.fitToMarkers(map, this.markers());
+  }
+
+  /**
+   * Property canFitAll
+   * @readonly
+   *
+   * @description
+   * Whether re-framing can do anything: the map must have rendered and at
+   * least one marker must carry usable coordinates.
+   *
+   * Deliberately derived from signals rather than from `mapInstance`, which is
+   * a plain field — reading it here would not re-run under `OnPush`, so the
+   * control could stay hidden after the map finished loading.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canFitAll: Signal<boolean> = computed(
+    (): boolean =>
+      !this.loading() &&
+      !this.error() &&
+      this.markers().some(
+        (marker: MapMarker): boolean =>
+          Number.isFinite(marker.longitude) && Number.isFinite(marker.latitude),
+      ),
+  );
 
   /**
    * Method addMarkerLayers

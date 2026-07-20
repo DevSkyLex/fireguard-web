@@ -28,6 +28,7 @@ import { BillingInvoiceTable } from '@features/organization/ui/tables';
 import { EmptyState, ErrorState, Skeleton } from '@shared/components';
 import { Tag, type TagDescriptor } from '@shared/components/tag';
 import { BillingCancelCard } from './components/billing-cancel-card/billing-cancel-card.component';
+import { bestYearlySavingPercent } from './utils/yearly-saving.utils';
 
 /**
  * Type IntervalOption
@@ -199,6 +200,19 @@ export class OrganizationPlanSelector implements OnInit {
   protected readonly pricingByKey: Signal<ReadonlyMap<string, PlanPricingOutput>> = computed<
     ReadonlyMap<string, PlanPricingOutput>
   >(() => new Map(this.billingStore.pricing().map((pricing) => [pricing.planKey, pricing])));
+
+  /**
+   * Best whole-percent saving from paying yearly, or null when there is none.
+   *
+   * Derived from the real monthly and yearly amounts rather than stated as a
+   * fixed figure: the discount is a commercial decision that lives in the
+   * pricing data, and a hard-coded "-20%" would be the UI inventing a claim
+   * about what the customer is charged. Rounded **down**, so the badge can
+   * never overstate the saving.
+   */
+  protected readonly yearlySavingPercent: Signal<number | null> = computed((): number | null =>
+    bestYearlySavingPercent(this.billingStore.pricing()),
+  );
 
   /** Whether the organization has an access-granting subscription. */
   protected readonly hasActiveSubscription: Signal<boolean> = computed<boolean>(

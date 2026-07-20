@@ -131,6 +131,19 @@
           (click)="onIntervalChange(option.value)"
         >
           {{ option.label }}
+          <!--
+            Computed from the real monthly and yearly amounts, and rendered only
+            when a saving actually exists — an invented "-20%" would be a
+            commercial claim made up by the UI.
+          -->
+          @if (option.value === 'year' && yearlySavingPercent(); as saving) {
+            <span
+              class="rounded-full bg-green-100 px-1.5 py-0.5 text-[11px] font-semibold text-green-700 dark:bg-green-950 dark:text-green-400"
+              data-testid="organization-plan-yearly-saving"
+              i18n="@@org.plan.yearlySaving"
+              >-{{ saving }}%</span
+            >
+          }
         </button>
       }
     </div>
@@ -279,6 +292,16 @@
         </div>
       }
     </div>
+
+    <!-- Who takes the payment, and which figure is the binding one. -->
+    <p
+      class="mt-4 text-xs text-surface-500 dark:text-surface-400"
+      data-testid="organization-plan-billing-notice"
+      i18n="@@org.plan.billingNotice"
+    >
+      Payments are processed by Stripe. Taxes are applied at checkout, and the amount shown there is
+      the one you are charged.
+    </p>
   }
 </section>
 

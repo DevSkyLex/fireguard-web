@@ -47,9 +47,21 @@
               (click)="navigate.emit(child)"
             >
               <span class="flex min-w-0 items-center gap-2">
-                <i [class]="facilityTypeIcons[child.type]" class="text-xs text-surface-500"></i>
+                <i
+                  [class]="facilityTypeIcons[child.type]"
+                  class="text-xs text-surface-500"
+                  aria-hidden="true"
+                ></i>
                 <span class="truncate text-xs text-surface-700 dark:text-surface-300">
                   {{ child.name }}
+                </span>
+                <!-- The glyph alone named nothing: not for a screen reader, and
+                     not for anyone who has not learnt the icon set. -->
+                <span
+                  class="shrink-0 text-[11px] text-surface-500 dark:text-surface-400"
+                  data-testid="installation-type-label"
+                >
+                  {{ typeLabel(child.type) }}
                 </span>
               </span>
               <app-tag [descriptor]="statusDescriptor(child.status)" />

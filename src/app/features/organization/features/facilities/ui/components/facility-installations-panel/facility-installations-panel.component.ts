@@ -167,6 +167,25 @@ export class FacilityInstallationsPanel {
    * @param {string} status - Facility lifecycle status.
    * @returns {TagDescriptor} Matching status descriptor.
    */
+  /**
+   * Method typeLabel
+   *
+   * @description
+   * The sub-location's type in words. It was carried by an icon alone, which
+   * names nothing for a screen reader and asks every other reader to have
+   * learnt the glyph set.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {string} type - The facility type.
+   *
+   * @returns {string} Human-readable type.
+   */
+  protected typeLabel(type: string): string {
+    return resolveFacilityTag('type', type).label;
+  }
+
   protected statusDescriptor(status: string): TagDescriptor {
     return resolveFacilityTag('status', status);
   }

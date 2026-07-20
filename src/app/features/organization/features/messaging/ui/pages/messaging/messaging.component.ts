@@ -452,6 +452,11 @@ export class MessagingPage {
      * Presence for the authors currently on screen. The API has no
      * "list all online" mode, so the ids are derived from the thread.
      */
+    // Announce this member as online for as long as the workspace is open.
+    // Nothing did before, so the app read everyone else's presence while never
+    // publishing its own.
+    this.store.publishPresence(true);
+
     effect((): void => {
       const organizationId: string | undefined =
         this.activeOrganizationStore.selectedOrganization()?.id;

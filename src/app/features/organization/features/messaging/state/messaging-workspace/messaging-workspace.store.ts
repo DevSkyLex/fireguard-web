@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, map, mergeMap, pipe, switchMap } from 'rxjs';
+import { EMPTY, map, mergeMap, pipe, switchMap, timer } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { MercureService, resilientMercureStream } from '@core/mercure';
 import {
@@ -108,6 +108,13 @@ function bumpReplyCount(
  * the refonte plan). Newest wins; scrollback beyond the window reloads.
  */
 const THREAD_WINDOW: number = 200;
+
+/**
+ * How often this member re-announces itself as online. The server holds a
+ * presence for 90 seconds, so the beat sits well inside that window — a single
+ * dropped request must not read as "left".
+ */
+const PRESENCE_PING_INTERVAL_MS: number = 45_000;
 
 /**
  * Caps a thread at {@link THREAD_WINDOW} messages, dropping the oldest.
@@ -581,6 +588,39 @@ export const MessagingWorkspaceStore = signalStore(
          *
          * @returns {void}
          */
+        /**
+         * Method publishPresence
+         *
+         * @description
+         * Announces this member as online, and keeps announcing while the
+         * workspace stays open.
+         *
+         * Nothing called `pingPresence` before, so the app read everyone else's
+         * presence while never publishing its own — the dot could only ever
+         * appear for members using some other client. The server holds a
+         * presence for 90s, so the beat is well inside that: a missed request
+         * must not read as "left".
+         *
+         * @returns {void}
+         */
+        publishPresence: rxMethod<boolean>(
+          pipe(
+            switchMap((active: boolean) => {
+              if (!active) return EMPTY;
+
+              return timer(0, PRESENCE_PING_INTERVAL_MS).pipe(
+                switchMap(() =>
+                  service.pingPresence().pipe(
+                    // A failed beat is not worth surfacing: the next one is
+                    // seconds away and presence is ambient, not an action.
+                    tapResponse({ next: (): void => undefined, error: (): void => undefined }),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+
         loadPresence: rxMethod<{
           readonly organization: string;
           readonly memberIds: readonly string[];

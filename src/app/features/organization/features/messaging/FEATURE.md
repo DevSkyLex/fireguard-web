@@ -32,6 +32,12 @@ the textarea — rendering a chip there would need a rich-text field.
 `shortcutsRequested` is published but not yet answered; the shortcut palette is
 still to build.
 
+**Presence is published, not only read.** `pingPresence` existed and was called
+from nowhere, so the app checked everyone else's presence while never
+announcing its own — the online dot could appear only for members using some
+other client. The workspace now beats every 45s while it is open, inside the
+server's 90s hold so a dropped request does not read as "left".
+
 **A thread does not stop at its first page.** The API pages messages at 50,
 newest-first; the store tracks `loadedMessagesPage` / `messagesTotal` and
 `loadOlderMessages` prepends the page before, merging by id because a message

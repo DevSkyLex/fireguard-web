@@ -39,8 +39,10 @@ describe('MessagingWorkspaceStore live thread', () => {
   let removeReaction: ReturnType<typeof vi.fn>;
 
   let listMessages: ReturnType<typeof vi.fn>;
+  let pingPresence: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    pingPresence = vi.fn(() => of({ memberId: 'member-abc', online: true, lastSeenAt: 'now' }));
     addReaction = vi.fn(() => EMPTY);
     removeReaction = vi.fn(() => of(undefined));
   });
@@ -68,6 +70,7 @@ describe('MessagingWorkspaceStore live thread', () => {
             getSubscription: vi.fn(() => of({ token: 'jwt', topic: 'conversation/c1' })),
             listAttachments: vi.fn(() => of({ member: [], totalItems: 0 })),
             markRead: vi.fn(() => EMPTY),
+            pingPresence,
             addReaction,
             removeReaction,
           },
@@ -200,6 +203,30 @@ describe('MessagingWorkspaceStore live thread', () => {
       TestBed.tick();
 
       expect(listMessages.mock.calls.length).toBe(before);
+    });
+  });
+
+  describe('presence', () => {
+    it('announces this member as online, and keeps announcing', () => {
+      vi.useFakeTimers();
+      const store = createStore([]);
+      TestBed.tick();
+
+      store.publishPresence(true);
+      // `timer(0, …)` still schedules a macrotask, so the clock has to move
+      // before the first beat fires.
+      vi.advanceTimersByTime(0);
+      TestBed.tick();
+      // Nothing published its own presence before this: the dot could only ever
+      // appear for members using some other client.
+      expect(pingPresence).toHaveBeenCalledTimes(1);
+
+      // Well inside the server's 90s hold, so a dropped beat is not "left".
+      vi.advanceTimersByTime(45_000);
+      TestBed.tick();
+      expect(pingPresence).toHaveBeenCalledTimes(2);
+
+      vi.useRealTimers();
     });
   });
 });

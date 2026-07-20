@@ -60,15 +60,44 @@
           {{ reason }}
         </span>
       }
-      <p-button
-        class="hidden lg:block"
-        [label]="action.label"
-        [icon]="action.icon"
-        [loading]="action.loading"
-        [disabled]="action.disabled"
-        size="small"
-        (onClick)="invokeCommand()"
-      />
+      <!--
+        A split button once there are several secondary actions: it folds the
+        primary action and its overflow into one control instead of two
+        adjacent ones.
+
+        Not used when the overflow holds a single entry — that entry is
+        surfaced as its own button below, and putting it behind a caret would
+        turn one click into two. The consolidation is only a gain when it
+        replaces a menu that was going to open anyway.
+
+        Nor while the command runs: `p-splitbutton` has no `loading` input in
+        this PrimeNG version, and dropping the spinner to gain a caret would
+        trade feedback the user needs for a control they are not using
+        mid-flight. The plain button takes over for that moment.
+      -->
+      @if (header.overflowItems().length > 1 && !action.loading) {
+        <p-splitbutton
+          class="hidden lg:block"
+          [label]="action.label"
+          [icon]="action.icon"
+          [model]="[...header.overflowItems()]"
+          [disabled]="action.disabled"
+          size="small"
+          appendTo="body"
+          data-testid="intervention-primary-split"
+          (onClick)="invokeCommand()"
+        />
+      } @else {
+        <p-button
+          class="hidden lg:block"
+          [label]="action.label"
+          [icon]="action.icon"
+          [loading]="action.loading"
+          [disabled]="action.disabled"
+          size="small"
+          (onClick)="invokeCommand()"
+        />
+      }
     }
 
     @if (header.overflowItems().length === 1 && header.overflowItems()[0]; as single) {
@@ -84,7 +113,13 @@
         (onClick)="invokeSingleOverflowItem(single)"
       />
     } @else if (header.overflowItems().length > 1) {
+      <!--
+        Narrow screens only: from `lg` up the split button above already
+        carries these entries under its caret, and keeping both would put the
+        same menu behind two controls.
+      -->
       <p-button
+        class="lg:hidden"
         icon="pi pi-ellipsis-v"
         severity="secondary"
         [text]="true"

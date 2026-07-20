@@ -3,6 +3,7 @@ import { Dispatcher } from '@ngrx/signals/events';
 import type { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { Menu, MenuModule } from 'primeng/menu';
+import { SplitButtonModule } from 'primeng/splitbutton';
 import {
   InterventionHeaderStore,
   interventionHeaderEvents,
@@ -28,7 +29,7 @@ import {
  */
 @Component({
   selector: 'app-intervention-header-actions',
-  imports: [ButtonModule, MenuModule],
+  imports: [ButtonModule, MenuModule, SplitButtonModule],
   templateUrl: './intervention-header-actions.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

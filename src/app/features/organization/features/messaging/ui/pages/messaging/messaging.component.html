@@ -64,6 +64,19 @@
             variant="text"
             severity="secondary"
             size="small"
+            icon="pi pi-sparkles"
+            i18n-ariaLabel="@@messaging.header.assistant"
+            ariaLabel="Ask the assistant"
+            i18n-pTooltip="@@messaging.header.assistant"
+            pTooltip="Ask the assistant"
+            data-testid="conversation-assistant"
+            (onClick)="openAssistant()"
+          />
+
+          <p-button
+            variant="text"
+            severity="secondary"
+            size="small"
             icon="pi pi-info-circle"
             i18n-ariaLabel="@@messaging.header.details"
             ariaLabel="Conversation details"

@@ -1,16 +1,20 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, type FormGroup } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import type { Observable } from 'rxjs';
 import type { OrganizationOutput, UpdateOrganizationInput } from '@features/organization/models';
 
 /**
@@ -122,6 +126,50 @@ export class OrganizationLegalForm {
     vatNumber: this.formBuilder.control<string>(''),
     country: this.formBuilder.control<string>(''),
   });
+
+  /**
+   * Property formValue
+   * @readonly
+   *
+   * @description
+   * Current form value as a signal. Seeded with the raw value so the count is
+   * right before the first edit — `valueChanges` alone would leave it empty.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {Signal<Record<string, unknown>>}
+   */
+  private readonly formValue: Signal<Record<string, unknown>> = toSignal(
+    this.form.valueChanges as Observable<Record<string, unknown>>,
+    { initialValue: this.form.getRawValue() as Record<string, unknown> },
+  );
+
+  /**
+   * Property completeness
+   * @readonly
+   *
+   * @description
+   * How many legal fields carry a value. Every field is optional, so nothing
+   * here is an error — but a half-filled legal profile blocks compliance
+   * exports downstream, and the form otherwise gives no sign of it.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<{ filled: number; total: number }>}
+   */
+  protected readonly completeness: Signal<{ filled: number; total: number }> = computed(
+    (): { filled: number; total: number } => {
+      const values: readonly unknown[] = Object.values(this.formValue());
+
+      return {
+        filled: values.filter((value: unknown): boolean => String(value ?? '').trim() !== '')
+          .length,
+        total: values.length,
+      };
+    },
+  );
   //#endregion
 
   //#region Lifecycle

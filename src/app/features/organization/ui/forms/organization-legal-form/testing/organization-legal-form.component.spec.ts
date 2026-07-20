@@ -1,6 +1,12 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { OrganizationOutput, UpdateOrganizationInput } from '@features/organization/models';
 import { OrganizationLegalForm } from '../organization-legal-form.component';
+
+/** Text of the completeness readout, or '' when it is not rendered. */
+const readout = (fixture: ComponentFixture<OrganizationLegalForm>): string =>
+  (fixture.nativeElement as HTMLElement)
+    .querySelector('[data-testid="organization-legal-completeness"]')
+    ?.textContent?.trim() ?? '';
 
 const ORGANIZATION = {
   id: 'org-1',
@@ -80,5 +86,48 @@ describe('OrganizationLegalForm', () => {
     const legalName: HTMLInputElement = fixture.nativeElement.querySelector('#legalName');
 
     expect(legalName.value).toBe('');
+  });
+
+  /**
+   * No field here is required, so validation says nothing — but an incomplete
+   * legal profile blocks compliance exports, and the form has to admit it.
+   */
+  describe('completeness', () => {
+    it('declares the profile complete when every field carries a value', () => {
+      expect(readout(createComponent())).toContain('Legal profile complete');
+    });
+
+    it('counts what is filled when the profile is partial', () => {
+      const fixture = createComponent({
+        id: 'org-2',
+        name: 'New',
+        slug: 'new',
+        legalName: 'Acme Corporation SAS',
+        country: 'FR',
+      } as OrganizationOutput);
+
+      expect(readout(fixture)).toContain('2 of 5');
+    });
+
+    it('counts nothing for an organization with no legal profile at all', () => {
+      const fixture = createComponent({
+        id: 'org-2',
+        name: 'New',
+        slug: 'new',
+      } as OrganizationOutput);
+
+      expect(readout(fixture)).toContain('0 of 5');
+    });
+
+    it('does not count a field holding only whitespace', () => {
+      const fixture = createComponent({
+        id: 'org-2',
+        name: 'New',
+        slug: 'new',
+        legalName: '   ',
+      } as OrganizationOutput);
+
+      expect(readout(fixture)).toContain('0 of 5');
+    });
   });
 });

@@ -64,7 +64,27 @@
     </div>
   </div>
 
-  <div class="flex justify-end">
+  <!--
+    Every field here is optional, so nothing is flagged as an error — but an
+    incomplete legal profile blocks compliance exports downstream, and the form
+    gave no sign of it. A count, not a validation.
+  -->
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <span
+      class="inline-flex items-center gap-2 text-xs text-surface-500 dark:text-surface-400"
+      data-testid="organization-legal-completeness"
+    >
+      @if (completeness().filled === completeness().total) {
+        <i class="pi pi-check-circle text-green-600 dark:text-green-500" aria-hidden="true"></i>
+        <ng-container i18n="@@org.legal.complete">Legal profile complete</ng-container>
+      } @else {
+        <i class="pi pi-info-circle" aria-hidden="true"></i>
+        <span i18n="@@org.legal.completeness"
+          >{{ completeness().filled }} of {{ completeness().total }} legal details provided</span
+        >
+      }
+    </span>
+
     <p-button
       type="submit"
       i18n-label="@@common.save"

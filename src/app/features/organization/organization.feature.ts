@@ -1,4 +1,5 @@
 import { makeEnvironmentProviders, type EnvironmentProviders } from '@angular/core';
+import { ConversationInventoryStore } from '@features/organization/features/messaging/state';
 import {
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
@@ -34,5 +35,9 @@ export function provideOrganizationFeature(): EnvironmentProviders {
       provide: ORGANIZATION_MEMBER_ACCESS_PORT,
       useExisting: OrganizationMemberAccessStore,
     },
+    // One conversation inventory per shell, shared by the sidebar's channel
+    // sections and the messaging workspace page. Provided here — not
+    // root — because its hooks inject the two ports bound above.
+    ConversationInventoryStore,
   ]);
 }

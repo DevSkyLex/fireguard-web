@@ -212,12 +212,14 @@ export class MessagingPage {
 
   //#region Lifecycle
   /**
-   * Loads the conversation list.
+   * Wires the member directory and presence. The conversation list itself is
+   * NOT loaded here: the root {@link ConversationInventoryStore} owns it and
+   * follows the active organization on its own — this page and the shell
+   * sidebar read the same instance.
    *
    * @since 1.0.0
    */
   public constructor() {
-    this.store.loadConversations();
     this.directory.load(
       computed(
         (): string | null => this.activeOrganizationStore.selectedOrganization()?.id ?? null,

@@ -1,8 +1,14 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of, Subject } from 'rxjs';
+import { EMPTY, of, Subject } from 'rxjs';
 import { MercureService } from '@core/mercure';
 import { MessagingService } from '@features/organization/features/messaging/data-access';
 import type { MessageOutput } from '@features/organization/features/messaging/models';
+import {
+  ORGANIZATION_CONTEXT_PORT,
+  ORGANIZATION_MEMBER_ACCESS_PORT,
+} from '@features/organization/ports';
+import { ConversationInventoryStore } from '../../conversation-inventory';
 import { MessagingWorkspaceStore } from '../messaging-workspace.store';
 
 const message = (id: string, body: string, createdAt: string): MessageOutput =>
@@ -34,15 +40,26 @@ describe('MessagingWorkspaceStore live thread', () => {
     TestBed.configureTestingModule({
       providers: [
         MessagingWorkspaceStore,
+        ConversationInventoryStore,
         {
           provide: MessagingService,
           useValue: {
             listConversations: vi.fn(() => of({ member: [], totalItems: 0 })),
             listMessages: vi.fn(() => of({ member: initial, totalItems: initial.length })),
             getSubscription: vi.fn(() => of({ token: 'jwt', topic: 'conversation/c1' })),
+            listAttachments: vi.fn(() => of({ member: [], totalItems: 0 })),
+            markRead: vi.fn(() => EMPTY),
           },
         },
         { provide: MercureService, useValue: { subscribe: vi.fn(() => hub.asObservable()) } },
+        // The root conversation inventory, reached through the workspace
+        // store's delegation, follows the organization context — kept empty
+        // here so it stays idle.
+        { provide: ORGANIZATION_CONTEXT_PORT, useValue: { selectedOrganization: signal(null) } },
+        {
+          provide: ORGANIZATION_MEMBER_ACCESS_PORT,
+          useValue: { permissions: signal<ReadonlyArray<string>>([]) },
+        },
       ],
     });
 

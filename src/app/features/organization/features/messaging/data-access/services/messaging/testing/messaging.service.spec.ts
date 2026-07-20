@@ -69,4 +69,31 @@ describe('MessagingService', () => {
     expect(request.request.method).toBe('POST');
     request.flush({});
   });
+
+  it('should favorite through POST and unfavorite through DELETE', () => {
+    service.setFavorite('c1', true).subscribe();
+    http
+      .expectOne(
+        (request) =>
+          request.url === `${apiUrl}/api/conversations/c1/favorite` && request.method === 'POST',
+      )
+      .flush({});
+
+    service.setFavorite('c1', false).subscribe();
+    http
+      .expectOne(
+        (request) =>
+          request.url === `${apiUrl}/api/conversations/c1/favorite` && request.method === 'DELETE',
+      )
+      .flush(null);
+  });
+
+  it('should list saved messages filtered by the organization IRI', () => {
+    service.listSavedMessages('org-1', 2).subscribe();
+
+    const request = http.expectOne((candidate) => candidate.url === `${apiUrl}/api/saved-messages`);
+    expect(request.request.params.get('organization')).toBe('/api/organizations/org-1');
+    expect(request.request.params.get('page')).toBe('2');
+    request.flush({ member: [], totalItems: 0 });
+  });
 });

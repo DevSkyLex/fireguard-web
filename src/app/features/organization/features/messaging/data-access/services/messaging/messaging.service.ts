@@ -367,5 +367,60 @@ export class MessagingService extends HydraApiService {
       {},
     );
   }
+
+  /**
+   * Method setFavorite
+   * @method setFavorite
+   *
+   * @description
+   * Favorites or unfavorites a conversation for the current member. Sidebar
+   * ordering only — the backend never consults it for access, and both
+   * directions are idempotent.
+   *
+   * @access public
+   * @since 3.1.0
+   *
+   * @param {string} conversationId - The conversation to (un)favorite.
+   * @param {boolean} favorite - Target state.
+   *
+   * @return {Observable<ConversationOutput | void>} The updated conversation, or nothing when unfavoriting.
+   */
+  public setFavorite(
+    conversationId: string,
+    favorite: boolean,
+  ): Observable<ConversationOutput | void> {
+    return favorite
+      ? this.post<Record<string, never>, ConversationOutput>(
+          `/api/conversations/${conversationId}/favorite`,
+          {},
+        )
+      : this.delete(`/api/conversations/${conversationId}/favorite`);
+  }
+
+  /**
+   * Method listSavedMessages
+   * @method listSavedMessages
+   *
+   * @description
+   * The current member's saved messages across the whole organization, most
+   * recently saved first. The backend requires the organization as an IRI
+   * filter and pages by 30.
+   *
+   * @access public
+   * @since 3.1.0
+   *
+   * @param {string} organizationId - The active organization identifier.
+   * @param {number} page - 1-based page to read.
+   *
+   * @return {Observable<HydraCollection<MessageOutput>>} The saved messages page.
+   */
+  public listSavedMessages(
+    organizationId: string,
+    page: number = 1,
+  ): Observable<HydraCollection<MessageOutput>> {
+    return this.getCollection<MessageOutput>('/api/saved-messages', {
+      params: { organization: `/api/organizations/${organizationId}`, page: String(page) },
+    });
+  }
   //#endregion
 }

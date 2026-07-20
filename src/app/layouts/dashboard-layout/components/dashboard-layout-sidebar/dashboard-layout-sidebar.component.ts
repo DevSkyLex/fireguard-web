@@ -115,6 +115,27 @@ export class DashboardLayoutSidebar {
   );
 
   /**
+   * Property contentContributions
+   * @readonly
+   *
+   * @description
+   * Widgets rendered inside the sidebar's scroller, below the navigation —
+   * the messaging channel sections.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {Signal<readonly SidebarContribution[]>}
+   */
+  protected readonly contentContributions: Signal<readonly SidebarContribution[]> = computed(
+    (): readonly SidebarContribution[] =>
+      this.contributions.filter(
+        (contribution: SidebarContribution): boolean =>
+          contribution.region === 'content' && (contribution.available?.() ?? true),
+      ),
+  );
+
+  /**
    * Property variant
    * @readonly
    *

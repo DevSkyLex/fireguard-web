@@ -1,0 +1,151 @@
+<div data-testid="messaging-sidebar">
+  <!-- Channel search, kit geometry: 34px muted field. -->
+  <div class="mt-1 mb-2 border-t border-surface-200 pt-3 dark:border-surface-800">
+    <div
+      class="flex h-8.5 items-center gap-2 rounded-md border border-surface-200 bg-surface-100 px-2.5 transition-colors focus-within:border-primary dark:border-surface-800 dark:bg-surface-900"
+    >
+      <i class="pi pi-search text-xs text-surface-500" aria-hidden="true"></i>
+      <input
+        type="text"
+        class="min-w-0 flex-1 bg-transparent text-[13px] text-surface-950 outline-none placeholder:text-surface-500 dark:text-surface-50"
+        placeholder="Search channels"
+        i18n-placeholder="@@messaging.sidebar.search"
+        aria-label="Search channels"
+        i18n-aria-label="@@messaging.sidebar.search"
+        data-testid="messaging-sidebar-search"
+        [value]="search()"
+        (input)="search.set($any($event.target).value)"
+      />
+      @if (search().length > 0) {
+        <button
+          type="button"
+          class="grid size-4 cursor-pointer place-content-center text-surface-500 hover:text-surface-900 dark:hover:text-surface-100"
+          aria-label="Clear search"
+          i18n-aria-label="@@messaging.sidebar.clearSearch"
+          (click)="search.set('')"
+        >
+          <i class="pi pi-times text-[11px]" aria-hidden="true"></i>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Favorites -->
+  @if (favorites().length > 0) {
+    <button
+      type="button"
+      class="flex w-full cursor-pointer items-center justify-between px-2.5 pt-3 pb-1 text-[11px] font-semibold tracking-wider text-surface-500 uppercase hover:text-surface-700 dark:hover:text-surface-300"
+      [attr.aria-expanded]="favoritesOpen()"
+      data-testid="messaging-sidebar-favorites-toggle"
+      (click)="favoritesOpen.set(!favoritesOpen())"
+    >
+      <span i18n="@@messaging.sidebar.favorites">Favorites</span>
+      <i
+        [class]="'pi text-[10px] ' + (favoritesOpen() ? 'pi-chevron-down' : 'pi-chevron-right')"
+        aria-hidden="true"
+      ></i>
+    </button>
+
+    @if (favoritesOpen()) {
+      <ul class="flex flex-col gap-px" data-testid="messaging-sidebar-favorites">
+        @for (conversation of favorites(); track conversation.id) {
+          <li>
+            <ng-container
+              [ngTemplateOutlet]="conversationRow"
+              [ngTemplateOutletContext]="{ conversation, nested: false }"
+            />
+          </li>
+        }
+      </ul>
+    }
+  }
+
+  <!-- Channels -->
+  @if (channelTree().length > 0) {
+    <button
+      type="button"
+      class="flex w-full cursor-pointer items-center justify-between px-2.5 pt-3 pb-1 text-[11px] font-semibold tracking-wider text-surface-500 uppercase hover:text-surface-700 dark:hover:text-surface-300"
+      [attr.aria-expanded]="channelsOpen()"
+      data-testid="messaging-sidebar-channels-toggle"
+      (click)="channelsOpen.set(!channelsOpen())"
+    >
+      <span i18n="@@messaging.sidebar.channels">Channels</span>
+      <i
+        [class]="'pi text-[10px] ' + (channelsOpen() ? 'pi-chevron-down' : 'pi-chevron-right')"
+        aria-hidden="true"
+      ></i>
+    </button>
+
+    @if (channelsOpen()) {
+      <ul class="flex flex-col gap-px" data-testid="messaging-sidebar-channels">
+        @for (node of channelTree(); track node.conversation.id) {
+          <li>
+            <ng-container
+              [ngTemplateOutlet]="conversationRow"
+              [ngTemplateOutletContext]="{ conversation: node.conversation, nested: false }"
+            />
+
+            @if (node.children.length > 0) {
+              <!-- Kit geometry: nested channels inset with a hairline spine. -->
+              <ul
+                class="ml-3.5 flex flex-col gap-px border-l border-surface-200 pl-2 dark:border-surface-800"
+              >
+                @for (child of node.children; track child.id) {
+                  <li>
+                    <ng-container
+                      [ngTemplateOutlet]="conversationRow"
+                      [ngTemplateOutletContext]="{ conversation: child, nested: true }"
+                    />
+                  </li>
+                }
+              </ul>
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+</div>
+
+<!-- One conversation row: hash or avatar dot, label, unread badge. -->
+<ng-template #conversationRow let-conversation="conversation" let-nested="nested">
+  <a
+    [routerLink]="messagesLink()"
+    [queryParams]="{ conversation: conversation.id }"
+    [class]="
+      'group flex min-h-8 w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ' +
+      (conversation.id === activeConversationId()
+        ? 'bg-primary-50 font-semibold text-primary-700 dark:bg-primary-400/15 dark:text-primary-300'
+        : 'font-medium text-surface-600 hover:bg-surface-100 hover:text-surface-950 dark:text-surface-400 dark:hover:bg-surface-900 dark:hover:text-surface-50')
+    "
+    [attr.aria-current]="conversation.id === activeConversationId() ? 'page' : null"
+    [attr.data-testid]="'messaging-sidebar-row'"
+    [attr.data-conversation-id]="conversation.id"
+  >
+    @if (conversation.isChannel) {
+      <span
+        class="w-4 shrink-0 text-center font-medium text-surface-500 dark:text-surface-500"
+        aria-hidden="true"
+        >#</span
+      >
+    } @else {
+      <span
+        class="grid size-4 shrink-0 place-content-center text-surface-500 dark:text-surface-500"
+        aria-hidden="true"
+      >
+        <i class="pi pi-user text-[11px]"></i>
+      </span>
+    }
+
+    <span class="min-w-0 flex-1 truncate">{{ labelOf(conversation) }}</span>
+
+    @if (conversation.unreadCount > 0) {
+      <span
+        class="inline-flex min-w-5 items-center justify-center rounded-full bg-surface-100 px-1.75 py-px text-[11px] font-semibold text-surface-600 tabular-nums group-hover:bg-surface-200 dark:bg-surface-900 dark:text-surface-400"
+        data-testid="messaging-sidebar-unread"
+      >
+        {{ conversation.unreadCount }}
+      </span>
+    }
+  </a>
+</ng-template>

@@ -18,7 +18,7 @@
     </section>
   }
 
-  <!-- Sidebar navigation -->
+  <!-- Sidebar navigation + channel sections: one scrolling column -->
   <section class="min-h-0 flex-1 overflow-y-auto">
     @if (variant() === 'primary') {
       <app-dashboard-layout-sidebar-navigation
@@ -27,6 +27,14 @@
       />
     } @else {
       <app-dashboard-layout-sidebar-navigation />
+    }
+
+    @if (!isIconOnly() && contentContributions().length > 0) {
+      <div class="px-3 pb-5">
+        @for (contribution of contentContributions(); track contribution.id) {
+          <ng-container *ngComponentOutlet="contribution.component" />
+        }
+      </div>
     }
   </section>
 

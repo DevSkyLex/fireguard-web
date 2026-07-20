@@ -1,5 +1,9 @@
+<!--
+  No min-h-full: the messaging channel sections flow in the same scroller
+  right below this nav, and a full-height nav would push them under the fold.
+-->
 <nav
-  class="flex min-h-full flex-col px-3 pt-3 pb-5"
+  class="flex flex-col px-3 pt-3 pb-2"
   [class.px-2]="iconOnly()"
   [attr.aria-label]="navAriaLabel()"
 >

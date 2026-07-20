@@ -48,4 +48,11 @@ export interface ConversationOutput extends HydraItem {
   readonly name: string | null;
   readonly team: string | null;
   readonly isFavorite: boolean;
+
+  /**
+   * The parent channel's identifier when this channel is nested under another.
+   * Null for root channels, direct conversations and subject threads — the
+   * sidebar renders parented channels indented under their parent.
+   */
+  readonly parentConversationId: string | null;
 }

@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, map, mergeMap, pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, map, mergeMap, pipe, switchMap } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { MercureService, resilientMercureStream } from '@core/mercure';
 import {
@@ -22,6 +22,7 @@ import type {
   PresenceOutput,
   SendMessageInput,
 } from '@features/organization/features/messaging/models';
+import { ConversationInventoryStore } from '../conversation-inventory';
 
 /**
  * State of the messaging workspace.
@@ -33,7 +34,6 @@ interface MessagingWorkspaceState {
   readonly openThreadRootId: string | null;
   readonly repliesCallState: CallState<readonly MessageOutput[]>;
   readonly onlineMemberIds: readonly string[];
-  readonly conversationsCallState: CallState<readonly ConversationOutput[]>;
   readonly messagesCallState: CallState<readonly MessageOutput[]>;
   readonly sendCallState: CallState<MessageOutput>;
   readonly activeConversationId: string | null;
@@ -44,7 +44,6 @@ const INITIAL_STATE: MessagingWorkspaceState = {
   openThreadRootId: null,
   repliesCallState: idleCallState(),
   onlineMemberIds: [],
-  conversationsCallState: idleCallState(),
   messagesCallState: idleCallState(),
   sendCallState: idleCallState(),
   activeConversationId: null,
@@ -104,14 +103,17 @@ function bumpReplyCount(
  * @const MessagingWorkspaceStore
  *
  * @description
- * Owns the messaging workspace: the conversation list, the active
- * conversation's messages, and sending.
+ * Owns the open messaging workspace: the active conversation's messages,
+ * replies, presence and sending. The conversation LIST is deliberately not
+ * here — it lives in the root {@link ConversationInventoryStore}, shared with
+ * the shell sidebar, and this store delegates to it so both surfaces read the
+ * same unread counts.
  *
- * Three call states rather than one query: the list, the thread and the
- * composer fail independently, and a failed send must not blank the thread the
- * user is reading.
+ * Separate call states rather than one query: the thread and the composer
+ * fail independently, and a failed send must not blank the thread the user is
+ * reading.
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const MessagingWorkspaceStore = signalStore(
@@ -120,31 +122,24 @@ export const MessagingWorkspaceStore = signalStore(
   //#endregion
 
   //#region Computed
-  withComputed((store) => ({
+  withComputed((store, inventory = inject(ConversationInventoryStore)) => ({
     /**
      * Computed channels
      *
      * @description
-     * Named channels, most recently active first.
+     * Named channels, most recently active first — delegated to the shared
+     * inventory.
      *
      * @type {Signal<readonly ConversationOutput[]>}
      */
-    channels: computed<readonly ConversationOutput[]>(() =>
-      (store.conversationsCallState().data ?? []).filter(
-        (conversation: ConversationOutput): boolean => conversation.isChannel,
-      ),
-    ),
+    channels: inventory.channels,
 
     /**
      * Computed directConversations
      *
      * @type {Signal<readonly ConversationOutput[]>}
      */
-    directConversations: computed<readonly ConversationOutput[]>(() =>
-      (store.conversationsCallState().data ?? []).filter(
-        (conversation: ConversationOutput): boolean => !conversation.isChannel,
-      ),
-    ),
+    directConversations: inventory.directConversations,
 
     /**
      * Computed activeConversation
@@ -155,9 +150,9 @@ export const MessagingWorkspaceStore = signalStore(
       const id: string | null = store.activeConversationId();
       if (id === null) return null;
       return (
-        (store.conversationsCallState().data ?? []).find(
-          (conversation: ConversationOutput): boolean => conversation.id === id,
-        ) ?? null
+        inventory
+          .conversations()
+          .find((conversation: ConversationOutput): boolean => conversation.id === id) ?? null
       );
     }),
 
@@ -201,7 +196,7 @@ export const MessagingWorkspaceStore = signalStore(
      *
      * @type {Signal<boolean>}
      */
-    isLoadingConversations: computed<boolean>(() => isCallPending(store.conversationsCallState())),
+    isLoadingConversations: inventory.isLoading,
 
     /**
      * Computed isLoadingMessages
@@ -267,276 +262,87 @@ export const MessagingWorkspaceStore = signalStore(
   //#endregion
 
   //#region Methods
-  withMethods((store, service = inject(MessagingService), mercure = inject(MercureService)) => {
-    const loadAttachments = rxMethod<string | null>(
-      pipe(
-        switchMap((conversationId: string | null) => {
-          if (conversationId === null) {
-            patchState(store, { attachments: [] });
-            return EMPTY;
-          }
-
-          return service.listAttachments(conversationId).pipe(
-            tapResponse({
-              next: (collection: HydraCollection<MessageAttachment>) =>
-                patchState(store, { attachments: collection.member }),
-              error: () => patchState(store, { attachments: [] }),
-            }),
-          );
-        }),
-      ),
-    );
-
-    const loadMessages = rxMethod<string | null>(
-      pipe(
-        switchMap((conversationId: string | null) => {
-          if (conversationId === null) return EMPTY;
-
-          patchState(store, { messagesCallState: pendingCallState() });
-
-          return service.listMessages(conversationId, { itemsPerPage: 50 }).pipe(
-            tapResponse({
-              next: (collection: HydraCollection<MessageOutput>) =>
-                patchState(store, { messagesCallState: successCallState(collection.member) }),
-              error: (error: unknown) =>
-                patchState(store, { messagesCallState: errorCallState(toStoreError(error)) }),
-            }),
-          );
-        }),
-      ),
-    );
-
-    /**
-     * Live thread updates.
-     *
-     * Goes through `resilientMercureStream` rather than `MercureService`
-     * directly: the raw service errors its subscriber on the transport `error`
-     * event, which kills EventSource's own reconnect and leaves the channel
-     * silently dead. The factory re-requests the subscription each attempt
-     * because the token is short-lived.
-     *
-     * A message already in the thread is replaced, not appended — the sender's
-     * own message arrives twice, once from the POST and once from the hub.
-     */
-    const streamMessages = rxMethod<string | null>(
-      pipe(
-        switchMap((conversationId: string | null) => {
-          if (conversationId === null) return EMPTY;
-
-          return resilientMercureStream<MessageOutput>(() =>
-            service
-              .getSubscription(conversationId)
-              .pipe(
-                map((subscription) =>
-                  mercure.subscribe<MessageOutput>(subscription.topic, subscription.token),
-                ),
-              ),
-          ).pipe(
-            tapResponse({
-              next: (message: MessageOutput) => {
-                const current: readonly MessageOutput[] = store.messagesCallState().data ?? [];
-                const known: boolean = current.some((m: MessageOutput) => m.id === message.id);
-
-                patchState(store, {
-                  messagesCallState: successCallState(
-                    known
-                      ? current.map((m: MessageOutput) => (m.id === message.id ? message : m))
-                      : [...current, message],
-                  ),
-                });
-              },
-              error: () => undefined,
-            }),
-          );
-        }),
-      ),
-    );
-
-    /** Swaps one message in the thread, leaving the rest untouched. */
-    const replaceMessage = (updated: MessageOutput): void => {
-      patchState(store, {
-        messagesCallState: successCallState(
-          (store.messagesCallState().data ?? []).map((message: MessageOutput) =>
-            message.id === updated.id ? updated : message,
-          ),
-        ),
-      });
-    };
-
-    return {
-      loadMessages,
-      streamMessages,
-
-      /**
-       * Method loadConversations
-       *
-       * @description
-       * Loads every conversation the member can see.
-       *
-       * @returns {void}
-       */
-      loadConversations: rxMethod<void>(
+  withMethods(
+    (
+      store,
+      service = inject(MessagingService),
+      mercure = inject(MercureService),
+      inventory = inject(ConversationInventoryStore),
+    ) => {
+      const loadAttachments = rxMethod<string | null>(
         pipe(
-          tap(() =>
-            patchState(store, {
-              conversationsCallState: pendingCallState(store.conversationsCallState().data ?? []),
-            }),
-          ),
-          switchMap(() =>
-            service.listConversations({ itemsPerPage: 100 }).pipe(
-              tapResponse({
-                next: (collection: HydraCollection<ConversationOutput>) =>
-                  patchState(store, {
-                    conversationsCallState: successCallState(collection.member),
-                  }),
-                error: (error: unknown) =>
-                  patchState(store, {
-                    conversationsCallState: errorCallState(
-                      toStoreError(error),
-                      store.conversationsCallState().data ?? [],
-                    ),
-                  }),
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Method selectConversation
-       *
-       * @description
-       * Opens a conversation and loads its thread.
-       *
-       * @param {string | null} conversationId - The conversation to open.
-       *
-       * @returns {void}
-       */
-      selectConversation(conversationId: string | null): void {
-        patchState(store, { activeConversationId: conversationId });
-        loadAttachments(conversationId);
-        loadMessages(conversationId);
-        streamMessages(conversationId);
-      },
-
-      /**
-       * Method toggleReaction
-       *
-       * @description
-       * Adds or removes the current member's reaction, replacing the message
-       * in place so only that row re-renders.
-       *
-       * The reacting member is identified by `currentMemberId`: the API sends
-       * `memberIds` per emoji, and without knowing who "I" am the UI cannot
-       * tell "3 people reacted" from "3 people including me".
-       *
-       * @param {{ message: MessageOutput; emoji: string; currentMemberId: string }} request - What to toggle.
-       *
-       * @returns {void}
-       */
-      toggleReaction: rxMethod<{
-        readonly message: MessageOutput;
-        readonly emoji: string;
-        readonly currentMemberId: string;
-      }>(
-        pipe(
-          mergeMap((request) => {
-            const reacted: boolean =
-              request.message.reactions
-                .find((reaction) => reaction.emoji === request.emoji)
-                ?.memberIds.includes(request.currentMemberId) ?? false;
-
-            const call = reacted
-              ? service
-                  .removeReaction(request.message.id, request.emoji)
-                  .pipe(
-                    map(() =>
-                      applyReaction(request.message, request.emoji, request.currentMemberId, false),
-                    ),
-                  )
-              : service.addReaction(request.message.id, request.emoji);
-
-            return call.pipe(
-              tapResponse({
-                next: (updated: MessageOutput) =>
-                  patchState(store, {
-                    messagesCallState: successCallState(
-                      (store.messagesCallState().data ?? []).map((message: MessageOutput) =>
-                        message.id === updated.id ? updated : message,
-                      ),
-                    ),
-                  }),
-                error: () => undefined,
-              }),
-            );
-          }),
-        ),
-      ),
-
-      /**
-       * Method openThread
-       *
-       * @description
-       * Opens a message's replies, or closes the panel when passed `null`.
-       *
-       * @param {string | null} rootId - The message whose replies to show.
-       *
-       * @returns {void}
-       */
-      openThread: rxMethod<string | null>(
-        pipe(
-          switchMap((rootId: string | null) => {
-            patchState(store, { openThreadRootId: rootId });
-
-            if (rootId === null) {
-              patchState(store, { repliesCallState: idleCallState() });
+          switchMap((conversationId: string | null) => {
+            if (conversationId === null) {
+              patchState(store, { attachments: [] });
               return EMPTY;
             }
 
-            patchState(store, { repliesCallState: pendingCallState() });
-
-            return service.listReplies(rootId).pipe(
+            return service.listAttachments(conversationId).pipe(
               tapResponse({
-                next: (collection: HydraCollection<MessageOutput>) =>
-                  patchState(store, { repliesCallState: successCallState(collection.member) }),
-                error: (error: unknown) =>
-                  patchState(store, { repliesCallState: errorCallState(toStoreError(error)) }),
+                next: (collection: HydraCollection<MessageAttachment>) =>
+                  patchState(store, { attachments: collection.member }),
+                error: () => patchState(store, { attachments: [] }),
               }),
             );
           }),
         ),
-      ),
+      );
+
+      const loadMessages = rxMethod<string | null>(
+        pipe(
+          switchMap((conversationId: string | null) => {
+            if (conversationId === null) return EMPTY;
+
+            patchState(store, { messagesCallState: pendingCallState() });
+
+            return service.listMessages(conversationId, { itemsPerPage: 50 }).pipe(
+              tapResponse({
+                next: (collection: HydraCollection<MessageOutput>) =>
+                  patchState(store, { messagesCallState: successCallState(collection.member) }),
+                error: (error: unknown) =>
+                  patchState(store, { messagesCallState: errorCallState(toStoreError(error)) }),
+              }),
+            );
+          }),
+        ),
+      );
 
       /**
-       * Method reply
+       * Live thread updates.
        *
-       * @description
-       * Posts a reply into the open thread and appends it, bumping the root's
-       * reply count so the thread link in the main view stays truthful.
+       * Goes through `resilientMercureStream` rather than `MercureService`
+       * directly: the raw service errors its subscriber on the transport `error`
+       * event, which kills EventSource's own reconnect and leaves the channel
+       * silently dead. The factory re-requests the subscription each attempt
+       * because the token is short-lived.
        *
-       * @param {string} body - The reply body.
-       *
-       * @returns {void}
+       * A message already in the thread is replaced, not appended — the sender's
+       * own message arrives twice, once from the POST and once from the hub.
        */
-      reply: rxMethod<string>(
+      const streamMessages = rxMethod<string | null>(
         pipe(
-          switchMap((body: string) => {
-            const rootId: string | null = store.openThreadRootId();
-            if (rootId === null || body.trim().length === 0) return EMPTY;
+          switchMap((conversationId: string | null) => {
+            if (conversationId === null) return EMPTY;
 
-            return service.reply(rootId, { body: body.trim() }).pipe(
+            return resilientMercureStream<MessageOutput>(() =>
+              service
+                .getSubscription(conversationId)
+                .pipe(
+                  map((subscription) =>
+                    mercure.subscribe<MessageOutput>(subscription.topic, subscription.token),
+                  ),
+                ),
+            ).pipe(
               tapResponse({
-                next: (created: MessageOutput) => {
+                next: (message: MessageOutput) => {
+                  const current: readonly MessageOutput[] = store.messagesCallState().data ?? [];
+                  const known: boolean = current.some((m: MessageOutput) => m.id === message.id);
+
                   patchState(store, {
-                    repliesCallState: successCallState([
-                      ...(store.repliesCallState().data ?? []),
-                      created,
-                    ]),
-                    // Bumped through the shared replace helper so the lint rule
-                    // against spreading inside `map` stays satisfied and the
-                    // update path stays in one place.
                     messagesCallState: successCallState(
-                      bumpReplyCount(store.messagesCallState().data ?? [], rootId),
+                      known
+                        ? current.map((m: MessageOutput) => (m.id === message.id ? message : m))
+                        : [...current, message],
                     ),
                   });
                 },
@@ -545,160 +351,331 @@ export const MessagingWorkspaceStore = signalStore(
             );
           }),
         ),
-      ),
+      );
 
-      /**
-       * Method loadPresence
-       *
-       * @description
-       * Reads who is online among the thread's authors.
-       *
-       * The API has no "list all online members" mode, so the caller passes the
-       * ids it cares about — here, the distinct authors currently on screen.
-       *
-       * @param {{ organization: string; memberIds: readonly string[] }} request - Who to check.
-       *
-       * @returns {void}
-       */
-      loadPresence: rxMethod<{
-        readonly organization: string;
-        readonly memberIds: readonly string[];
-      }>(
-        pipe(
-          switchMap((request) => {
-            if (request.memberIds.length === 0) return EMPTY;
+      /** Swaps one message in the thread, leaving the rest untouched. */
+      const replaceMessage = (updated: MessageOutput): void => {
+        patchState(store, {
+          messagesCallState: successCallState(
+            (store.messagesCallState().data ?? []).map((message: MessageOutput) =>
+              message.id === updated.id ? updated : message,
+            ),
+          ),
+        });
+      };
 
-            return service.getPresence(request.organization, request.memberIds).pipe(
-              tapResponse({
-                next: (collection: HydraCollection<PresenceOutput>) =>
+      return {
+        loadMessages,
+        streamMessages,
+
+        /**
+         * Method selectConversation
+         *
+         * @description
+         * Opens a conversation, loads its thread and clears its unread count —
+         * opening IS reading, and the sidebar badge must agree.
+         *
+         * @param {string | null} conversationId - The conversation to open.
+         *
+         * @returns {void}
+         */
+        selectConversation(conversationId: string | null): void {
+          patchState(store, { activeConversationId: conversationId });
+          loadAttachments(conversationId);
+          loadMessages(conversationId);
+          streamMessages(conversationId);
+
+          if (conversationId !== null) {
+            inventory.markRead(conversationId);
+          }
+        },
+
+        /**
+         * Method toggleReaction
+         *
+         * @description
+         * Adds or removes the current member's reaction, replacing the message
+         * in place so only that row re-renders.
+         *
+         * The reacting member is identified by `currentMemberId`: the API sends
+         * `memberIds` per emoji, and without knowing who "I" am the UI cannot
+         * tell "3 people reacted" from "3 people including me".
+         *
+         * @param {{ message: MessageOutput; emoji: string; currentMemberId: string }} request - What to toggle.
+         *
+         * @returns {void}
+         */
+        toggleReaction: rxMethod<{
+          readonly message: MessageOutput;
+          readonly emoji: string;
+          readonly currentMemberId: string;
+        }>(
+          pipe(
+            mergeMap((request) => {
+              const reacted: boolean =
+                request.message.reactions
+                  .find((reaction) => reaction.emoji === request.emoji)
+                  ?.memberIds.includes(request.currentMemberId) ?? false;
+
+              const call = reacted
+                ? service
+                    .removeReaction(request.message.id, request.emoji)
+                    .pipe(
+                      map(() =>
+                        applyReaction(
+                          request.message,
+                          request.emoji,
+                          request.currentMemberId,
+                          false,
+                        ),
+                      ),
+                    )
+                : service.addReaction(request.message.id, request.emoji);
+
+              return call.pipe(
+                tapResponse({
+                  next: (updated: MessageOutput) =>
+                    patchState(store, {
+                      messagesCallState: successCallState(
+                        (store.messagesCallState().data ?? []).map((message: MessageOutput) =>
+                          message.id === updated.id ? updated : message,
+                        ),
+                      ),
+                    }),
+                  error: () => undefined,
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /**
+         * Method openThread
+         *
+         * @description
+         * Opens a message's replies, or closes the panel when passed `null`.
+         *
+         * @param {string | null} rootId - The message whose replies to show.
+         *
+         * @returns {void}
+         */
+        openThread: rxMethod<string | null>(
+          pipe(
+            switchMap((rootId: string | null) => {
+              patchState(store, { openThreadRootId: rootId });
+
+              if (rootId === null) {
+                patchState(store, { repliesCallState: idleCallState() });
+                return EMPTY;
+              }
+
+              patchState(store, { repliesCallState: pendingCallState() });
+
+              return service.listReplies(rootId).pipe(
+                tapResponse({
+                  next: (collection: HydraCollection<MessageOutput>) =>
+                    patchState(store, { repliesCallState: successCallState(collection.member) }),
+                  error: (error: unknown) =>
+                    patchState(store, { repliesCallState: errorCallState(toStoreError(error)) }),
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /**
+         * Method reply
+         *
+         * @description
+         * Posts a reply into the open thread and appends it, bumping the root's
+         * reply count so the thread link in the main view stays truthful.
+         *
+         * @param {string} body - The reply body.
+         *
+         * @returns {void}
+         */
+        reply: rxMethod<string>(
+          pipe(
+            switchMap((body: string) => {
+              const rootId: string | null = store.openThreadRootId();
+              if (rootId === null || body.trim().length === 0) return EMPTY;
+
+              return service.reply(rootId, { body: body.trim() }).pipe(
+                tapResponse({
+                  next: (created: MessageOutput) => {
+                    patchState(store, {
+                      repliesCallState: successCallState([
+                        ...(store.repliesCallState().data ?? []),
+                        created,
+                      ]),
+                      // Bumped through the shared replace helper so the lint rule
+                      // against spreading inside `map` stays satisfied and the
+                      // update path stays in one place.
+                      messagesCallState: successCallState(
+                        bumpReplyCount(store.messagesCallState().data ?? [], rootId),
+                      ),
+                    });
+                  },
+                  error: () => undefined,
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /**
+         * Method loadPresence
+         *
+         * @description
+         * Reads who is online among the thread's authors.
+         *
+         * The API has no "list all online members" mode, so the caller passes the
+         * ids it cares about — here, the distinct authors currently on screen.
+         *
+         * @param {{ organization: string; memberIds: readonly string[] }} request - Who to check.
+         *
+         * @returns {void}
+         */
+        loadPresence: rxMethod<{
+          readonly organization: string;
+          readonly memberIds: readonly string[];
+        }>(
+          pipe(
+            switchMap((request) => {
+              if (request.memberIds.length === 0) return EMPTY;
+
+              return service.getPresence(request.organization, request.memberIds).pipe(
+                tapResponse({
+                  next: (collection: HydraCollection<PresenceOutput>) =>
+                    patchState(store, {
+                      onlineMemberIds: collection.member
+                        .filter((presence: PresenceOutput): boolean => presence.online)
+                        .map((presence: PresenceOutput): string => presence.memberId),
+                    }),
+                  error: () => undefined,
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /**
+         * Method setPinned
+         *
+         * @description
+         * Pins or unpins a message for the whole conversation.
+         *
+         * @param {{ message: MessageOutput; pinned: boolean }} request - What to change.
+         *
+         * @returns {void}
+         */
+        setPinned: rxMethod<{ readonly message: MessageOutput; readonly pinned: boolean }>(
+          pipe(
+            mergeMap((request) =>
+              service.setPinned(request.message.id, request.pinned).pipe(
+                map(
+                  (updated: MessageOutput | void): MessageOutput =>
+                    // Unpinning returns no body, so the new state is derived here
+                    // — and it must follow the requested direction, not assume one.
+                    updated ??
+                    (request.pinned
+                      ? { ...request.message, pinnedAt: request.message.createdAt }
+                      : { ...request.message, pinnedAt: null, pinnedBy: null }),
+                ),
+                tapResponse({ next: replaceMessage, error: () => undefined }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method setSaved
+         *
+         * @description
+         * Adds or removes a message from the member's own saved list — personal,
+         * unlike a pin.
+         *
+         * @param {{ message: MessageOutput; saved: boolean }} request - What to change.
+         *
+         * @returns {void}
+         */
+        setSaved: rxMethod<{ readonly message: MessageOutput; readonly saved: boolean }>(
+          pipe(
+            mergeMap((request) =>
+              service.setSaved(request.message.id, request.saved).pipe(
+                map(
+                  (updated: MessageOutput | void): MessageOutput =>
+                    updated ?? { ...request.message, isSaved: request.saved },
+                ),
+                tapResponse({ next: replaceMessage, error: () => undefined }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method send
+         *
+         * @description
+         * Posts a message to the active conversation and appends it to the
+         * thread, so the sender sees it without waiting for the hub to echo it
+         * back.
+         *
+         * @param {string} body - The message body.
+         *
+         * @returns {void}
+         */
+        send: rxMethod<{ readonly body: string; readonly file: File | null }>(
+          pipe(
+            switchMap((request: { readonly body: string; readonly file: File | null }) => {
+              const conversationId: string | null = store.activeConversationId();
+              const body: string = request.body.trim();
+
+              // A file with no text is a valid message: the API accepts an empty
+              // body, and "here is the report" is often just the report.
+              if (conversationId === null || (body.length === 0 && request.file === null)) {
+                return EMPTY;
+              }
+
+              patchState(store, { sendCallState: pendingCallState() });
+
+              const input: SendMessageInput = { body };
+
+              return service.sendMessage(conversationId, input).pipe(
+                switchMap((message: MessageOutput) => {
                   patchState(store, {
-                    onlineMemberIds: collection.member
-                      .filter((presence: PresenceOutput): boolean => presence.online)
-                      .map((presence: PresenceOutput): string => presence.memberId),
-                  }),
-                error: () => undefined,
-              }),
-            );
-          }),
-        ),
-      ),
+                    sendCallState: successCallState(message),
+                    messagesCallState: successCallState([
+                      ...(store.messagesCallState().data ?? []),
+                      message,
+                    ]),
+                  });
 
-      /**
-       * Method setPinned
-       *
-       * @description
-       * Pins or unpins a message for the whole conversation.
-       *
-       * @param {{ message: MessageOutput; pinned: boolean }} request - What to change.
-       *
-       * @returns {void}
-       */
-      setPinned: rxMethod<{ readonly message: MessageOutput; readonly pinned: boolean }>(
-        pipe(
-          mergeMap((request) =>
-            service.setPinned(request.message.id, request.pinned).pipe(
-              map(
-                (updated: MessageOutput | void): MessageOutput =>
-                  // Unpinning returns no body, so the new state is derived here
-                  // — and it must follow the requested direction, not assume one.
-                  updated ??
-                  (request.pinned
-                    ? { ...request.message, pinnedAt: request.message.createdAt }
-                    : { ...request.message, pinnedAt: null, pinnedBy: null }),
-              ),
-              tapResponse({ next: replaceMessage, error: () => undefined }),
-            ),
+                  // Upload only after the message exists — the attachment hangs
+                  // off its id. A failed upload leaves the message; it is not
+                  // rolled back.
+                  if (request.file === null) return EMPTY;
+
+                  return service.uploadAttachment(message.id, request.file).pipe(
+                    tapResponse({
+                      next: (attachment: MessageAttachment) =>
+                        patchState(store, { attachments: [...store.attachments(), attachment] }),
+                      error: () => undefined,
+                    }),
+                  );
+                }),
+                tapResponse({
+                  next: () => undefined,
+                  error: (error: unknown) =>
+                    patchState(store, { sendCallState: errorCallState(toStoreError(error)) }),
+                }),
+              );
+            }),
           ),
         ),
-      ),
-
-      /**
-       * Method setSaved
-       *
-       * @description
-       * Adds or removes a message from the member's own saved list — personal,
-       * unlike a pin.
-       *
-       * @param {{ message: MessageOutput; saved: boolean }} request - What to change.
-       *
-       * @returns {void}
-       */
-      setSaved: rxMethod<{ readonly message: MessageOutput; readonly saved: boolean }>(
-        pipe(
-          mergeMap((request) =>
-            service.setSaved(request.message.id, request.saved).pipe(
-              map(
-                (updated: MessageOutput | void): MessageOutput =>
-                  updated ?? { ...request.message, isSaved: request.saved },
-              ),
-              tapResponse({ next: replaceMessage, error: () => undefined }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Method send
-       *
-       * @description
-       * Posts a message to the active conversation and appends it to the
-       * thread, so the sender sees it without waiting for the hub to echo it
-       * back.
-       *
-       * @param {string} body - The message body.
-       *
-       * @returns {void}
-       */
-      send: rxMethod<{ readonly body: string; readonly file: File | null }>(
-        pipe(
-          switchMap((request: { readonly body: string; readonly file: File | null }) => {
-            const conversationId: string | null = store.activeConversationId();
-            const body: string = request.body.trim();
-
-            // A file with no text is a valid message: the API accepts an empty
-            // body, and "here is the report" is often just the report.
-            if (conversationId === null || (body.length === 0 && request.file === null)) {
-              return EMPTY;
-            }
-
-            patchState(store, { sendCallState: pendingCallState() });
-
-            const input: SendMessageInput = { body };
-
-            return service.sendMessage(conversationId, input).pipe(
-              switchMap((message: MessageOutput) => {
-                patchState(store, {
-                  sendCallState: successCallState(message),
-                  messagesCallState: successCallState([
-                    ...(store.messagesCallState().data ?? []),
-                    message,
-                  ]),
-                });
-
-                // Upload only after the message exists — the attachment hangs
-                // off its id. A failed upload leaves the message; it is not
-                // rolled back.
-                if (request.file === null) return EMPTY;
-
-                return service.uploadAttachment(message.id, request.file).pipe(
-                  tapResponse({
-                    next: (attachment: MessageAttachment) =>
-                      patchState(store, { attachments: [...store.attachments(), attachment] }),
-                    error: () => undefined,
-                  }),
-                );
-              }),
-              tapResponse({
-                next: () => undefined,
-                error: (error: unknown) =>
-                  patchState(store, { sendCallState: errorCallState(toStoreError(error)) }),
-              }),
-            );
-          }),
-        ),
-      ),
-    };
-  }),
+      };
+    },
+  ),
   //#endregion
 );
 

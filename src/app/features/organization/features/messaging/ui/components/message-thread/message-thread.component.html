@@ -201,6 +201,28 @@
                     the bytes with Content-Disposition: attachment and rides
                     the session cookie.
                   -->
+                  @if (isImage(attachment)) {
+                    <!--
+                      A photo of a site is the common attachment here, and a
+                      filename says nothing about what was photographed. Opens
+                      full size rather than downloading blind.
+                    -->
+                    <a
+                      [href]="attachmentUrl(attachment)"
+                      target="_blank"
+                      rel="noopener"
+                      class="block w-fit overflow-hidden rounded-lg border border-surface-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-700"
+                      data-testid="message-attachment-preview"
+                    >
+                      <img
+                        class="max-h-56 max-w-[min(24rem,100%)] object-cover"
+                        loading="lazy"
+                        [src]="attachmentUrl(attachment)"
+                        [alt]="attachment.label ?? attachment.fileName"
+                      />
+                    </a>
+                  }
+
                   <a
                     [href]="attachmentUrl(attachment)"
                     [attr.download]="attachment.fileName"

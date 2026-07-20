@@ -385,6 +385,25 @@ export class MessageThread {
    *
    * @returns {boolean} Whether to offer Edit.
    */
+  /**
+   * Method isImage
+   *
+   * @description
+   * Whether an attachment can be shown rather than only downloaded. A photo of
+   * a site is the common case here, and a filename tells the reader nothing
+   * about what was photographed.
+   *
+   * @access protected
+   * @since 2.3.0
+   *
+   * @param {MessageAttachment} attachment - The attached file.
+   *
+   * @returns {boolean} Whether to render a preview.
+   */
+  protected isImage(attachment: MessageAttachment): boolean {
+    return attachment.mimeType.startsWith('image/');
+  }
+
   protected canEdit(message: MessageOutput): boolean {
     const self: string | null = this.currentMemberId();
 

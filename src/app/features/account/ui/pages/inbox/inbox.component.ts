@@ -8,14 +8,19 @@ import type { InboxItem } from '@features/account/models';
 import { InboxStore, type InboxStoreType } from '@features/account/state';
 import { EmptyState, ErrorState, Skeleton } from '@shared/components';
 
-/** Where an inbox entry links to, by the target it names. */
-const TARGET_ROUTE: Readonly<Record<string, string>> = {
-  intervention: 'interventions',
-  inspection: 'inspections',
-  facility: 'facilities',
-  equipment: 'equipments',
-  conversation: 'messages',
-};
+/**
+ * The `targetType` values the API actually emits.
+ *
+ * Exactly two sources feed the inbox: the Notification module
+ * (`targetType: 'notification'`) and Messaging mentions
+ * (`targetType: 'conversation'`). The map used to list intervention,
+ * inspection, facility and equipment — none of which the backend ever sends —
+ * while omitting `notification`, the dominant source, so nearly every row was
+ * inert.
+ *
+ * @since 1.1.0
+ */
+type InboxTargetType = 'notification' | 'conversation';
 
 /**
  * Component InboxPage
@@ -100,10 +105,28 @@ export class InboxPage {
    * @returns {void}
    */
   protected open(item: InboxItem): void {
-    const segment: string | undefined = TARGET_ROUTE[item.targetType];
-    if (segment === undefined || item.organizationId === null) return;
+    const targetType: InboxTargetType | null =
+      item.targetType === 'notification' || item.targetType === 'conversation'
+        ? item.targetType
+        : null;
 
-    void this.router.navigate(['/organizations', item.organizationId, segment, item.targetId]);
+    if (targetType === null) return;
+
+    if (targetType === 'notification') {
+      // A notification has no page of its own; its home is the account's
+      // notification list. It is also the one target that exists outside any
+      // organization.
+      void this.router.navigate(['/account'], { queryParams: { tab: 'notifications' } });
+      return;
+    }
+
+    if (item.organizationId === null) return;
+
+    // The workspace opens a thread through `?conversation=`, never as a path
+    // segment — `/messages/<id>` is not a route.
+    void this.router.navigate(['/organizations', item.organizationId, 'messages'], {
+      queryParams: { conversation: item.targetId },
+    });
   }
 
   /**

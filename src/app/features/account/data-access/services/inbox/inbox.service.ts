@@ -29,14 +29,17 @@ export class InboxService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {string} [organizationId] - Narrow to one organization; omit for everything.
-   * @param {string} [cursor] - Page cursor from a previous response.
+   * @param {string} [cursor] - The previous response's `nextCursor`.
    *
    * @return {Observable<InboxOutput>} The page.
    */
   public list(organizationId?: string, cursor?: string): Observable<InboxOutput> {
     const params: Record<string, string> = {};
     if (organizationId !== undefined) params['organizationId'] = organizationId;
-    if (cursor !== undefined) params['cursor'] = cursor;
+    // The cursor goes out as `before`, the only pagination parameter the API
+    // reads. Sending it as `cursor` was silently ignored, so "load more" kept
+    // re-requesting page one and appending the same items forever.
+    if (cursor !== undefined) params['before'] = cursor;
 
     return this.getOne<InboxOutput>('/api/inbox', { params });
   }

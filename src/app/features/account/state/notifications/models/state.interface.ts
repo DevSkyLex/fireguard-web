@@ -37,6 +37,22 @@ export interface NotificationStoreState {
   readonly totalNotifications: number;
 
   /**
+   * Property unreadTotal
+   * @readonly
+   *
+   * @description
+   * Authoritative unread count for the whole account, from
+   * `GET /notifications/unread-count`. `null` until it has been read once —
+   * the badge then falls back to counting the loaded page, which under-reports
+   * as soon as there are more unread items than one page holds.
+   *
+   * @since 2.0.0
+   *
+   * @type {number | null}
+   */
+  readonly unreadTotal: number | null;
+
+  /**
    * Property currentPage
    * @readonly
    *

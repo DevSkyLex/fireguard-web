@@ -1,4 +1,5 @@
 import type { AvatarUrls, HydraItem } from '@core/api/models';
+import type { UserLocale } from './user-locale.type';
 
 /**
  * Interface UserProfileOutput
@@ -17,6 +18,13 @@ export interface UserProfileOutput extends HydraItem {
 
   /** Username resolved for the authenticated user. */
   readonly username: string | null;
+
+  /**
+   * Display language stored on the account; `'system'` follows the browser.
+   * The API has always sent it — nothing read it, so a language chosen on one
+   * device did not carry to the next.
+   */
+  readonly locale: UserLocale;
 
   /** Email address of the authenticated user. */
   readonly email: string | null;

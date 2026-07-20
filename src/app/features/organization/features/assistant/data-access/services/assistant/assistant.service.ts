@@ -44,17 +44,28 @@ export class AssistantService extends HydraApiService {
    * Method getThread
    * @method getThread
    *
+   * @description
+   * Reads one page of a thread's messages, oldest first. The API caps a page at
+   * 50 messages, so a caller that never asks for page 2 silently sees only the
+   * opening of a long conversation.
+   *
    * @access public
-   * @since 1.0.0
+   * @since 1.1.0
    *
    * @param {string} organizationId - The organization.
    * @param {string} threadId - The thread to read.
+   * @param {number} messagesPage - 1-based page of messages to read.
    *
-   * @return {Observable<AssistantThread>} The thread with its messages.
+   * @return {Observable<AssistantThread>} The thread with that page of messages.
    */
-  public getThread(organizationId: string, threadId: string): Observable<AssistantThread> {
+  public getThread(
+    organizationId: string,
+    threadId: string,
+    messagesPage = 1,
+  ): Observable<AssistantThread> {
     return this.getOne<AssistantThread>(
       `/api/organizations/${organizationId}/assistant/threads/${threadId}`,
+      { params: { messagesPage } },
     );
   }
 

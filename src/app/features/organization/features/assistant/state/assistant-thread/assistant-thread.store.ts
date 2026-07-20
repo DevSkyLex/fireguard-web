@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, map, pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, map, of, pipe, switchMap, tap } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { MercureService, resilientMercureStream } from '@core/mercure';
 import {
@@ -33,6 +33,16 @@ interface AssistantThreadState {
   readonly askCallState: CallState<AskAssistantOutput>;
   readonly organizationId: string | null;
   readonly activeThreadId: string | null;
+
+  /**
+   * Oldest page of messages already loaded, and how many the thread holds in
+   * total. The API serves 50 messages per page; without these, a long thread
+   * was truncated at the first page and nothing said so.
+   *
+   * @since 1.1.0
+   */
+  readonly loadedMessagesPage: number;
+  readonly messagesTotal: number;
 }
 
 const INITIAL_STATE: AssistantThreadState = {
@@ -41,6 +51,8 @@ const INITIAL_STATE: AssistantThreadState = {
   askCallState: idleCallState(),
   organizationId: null,
   activeThreadId: null,
+  loadedMessagesPage: 1,
+  messagesTotal: 0,
 };
 
 /** Replaces a message by id, or appends it when it is new. */
@@ -153,6 +165,19 @@ export const AssistantThreadStore = signalStore(
      * @type {Signal<boolean>}
      */
     isLoadingMessages: computed<boolean>(() => isCallPending(store.messagesCallState())),
+
+    /**
+     * Computed hasOlderMessages
+     *
+     * @description
+     * True when pages older than the loaded one exist. The thread opens on its
+     * most recent page, so "more" always means further back.
+     *
+     * @since 1.1.0
+     *
+     * @type {Signal<boolean>}
+     */
+    hasOlderMessages: computed<boolean>(() => store.loadedMessagesPage() > 1),
   })),
   //#endregion
 
@@ -243,18 +268,77 @@ export const AssistantThreadStore = signalStore(
             patchState(store, {
               activeThreadId: threadId,
               messagesCallState: pendingCallState(),
+              loadedMessagesPage: 1,
+              messagesTotal: 0,
             }),
           ),
           switchMap((threadId: string) => {
             const organizationId: string | null = store.organizationId();
             if (organizationId === null) return EMPTY;
 
+            // Messages are paginated oldest-first, so page 1 is the *start* of
+            // the conversation. A thread longer than one page must therefore
+            // open on its last page — page 1 would show turns from months ago
+            // and hide the answer the user is waiting on.
             return service.getThread(organizationId, threadId).pipe(
+              switchMap((thread: AssistantThread) => {
+                const lastPage: number = Math.max(
+                  1,
+                  Math.ceil(thread.messagesTotal / Math.max(1, thread.messagesItemsPerPage)),
+                );
+
+                return lastPage > 1
+                  ? service.getThread(organizationId, threadId, lastPage)
+                  : of(thread);
+              }),
               tapResponse({
                 next: (thread: AssistantThread) => {
-                  patchState(store, { messagesCallState: successCallState(thread.messages) });
+                  patchState(store, {
+                    messagesCallState: successCallState(thread.messages),
+                    loadedMessagesPage: thread.messagesPage,
+                    messagesTotal: thread.messagesTotal,
+                  });
                   stream(threadId);
                 },
+                error: (error: unknown) =>
+                  patchState(store, { messagesCallState: errorCallState(toStoreError(error)) }),
+              }),
+            );
+          }),
+        ),
+      ),
+
+      /**
+       * Method loadOlderMessages
+       *
+       * @description
+       * Prepends the page just before the oldest one loaded. No-op once the
+       * first page is in, so the caller can bind it to a button unconditionally.
+       *
+       * @since 1.1.0
+       *
+       * @returns {void}
+       */
+      loadOlderMessages: rxMethod<void>(
+        pipe(
+          switchMap(() => {
+            const organizationId: string | null = store.organizationId();
+            const threadId: string | null = store.activeThreadId();
+            const previousPage: number = store.loadedMessagesPage() - 1;
+
+            if (organizationId === null || threadId === null || previousPage < 1) return EMPTY;
+
+            return service.getThread(organizationId, threadId, previousPage).pipe(
+              tapResponse({
+                next: (thread: AssistantThread) =>
+                  patchState(store, {
+                    messagesCallState: successCallState([
+                      ...thread.messages,
+                      ...(store.messagesCallState().data ?? []),
+                    ]),
+                    loadedMessagesPage: thread.messagesPage,
+                    messagesTotal: thread.messagesTotal,
+                  }),
                 error: (error: unknown) =>
                   patchState(store, { messagesCallState: errorCallState(toStoreError(error)) }),
               }),

@@ -5,6 +5,7 @@ import { HydraApiService } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type { MercureSubscriptionOutput } from '@core/mercure';
 import type {
+  NotificationCountOutput,
   NotificationListOptions,
   NotificationOutput,
   NotificationTypeOutput,
@@ -147,6 +148,45 @@ export class NotificationService extends HydraApiService {
       `${NotificationService.BASE_PATH}/${id}/read`,
       undefined,
     );
+  }
+
+  /**
+   * Method markAllAsRead
+   * @method markAllAsRead
+   *
+   * @description
+   * Marks **every** unread notification of the user as read, server-side and
+   * in one call — not only the ones the client happens to have loaded.
+   * Idempotent: calling it again once everything is read affects nothing.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @return {Observable<NotificationCountOutput>} How many were marked.
+   */
+  public markAllAsRead(): Observable<NotificationCountOutput> {
+    return this.patch<void, NotificationCountOutput>(
+      `${NotificationService.BASE_PATH}/read-all`,
+      undefined,
+    );
+  }
+
+  /**
+   * Method getUnreadCount
+   * @method getUnreadCount
+   *
+   * @description
+   * The authoritative unread total for the user. The badge cannot be derived
+   * from the loaded page — with 20 items per page a user with 200 unread
+   * notifications would forever read "20".
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @return {Observable<NotificationCountOutput>} The unread total.
+   */
+  public getUnreadCount(): Observable<NotificationCountOutput> {
+    return this.getOne<NotificationCountOutput>(`${NotificationService.BASE_PATH}/unread-count`);
   }
 
   /**

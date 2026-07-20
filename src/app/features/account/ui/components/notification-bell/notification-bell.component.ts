@@ -207,9 +207,11 @@ export class NotificationBell {
    * @method markAllAsRead
    *
    * @description
-   * Marks all notifications as read. Called when the user clicks the "Mark
-   * all as read" button in the footer. It filters the current notification list
-   * to only include unread notifications, then calls markAsRead for each of them.
+   * Marks every unread notification as read through the dedicated endpoint.
+   *
+   * It used to loop `markAsRead(id)` over the loaded page, which failed twice
+   * over: anything past that page stayed unread, and `markAsRead` is an
+   * `exhaustMap` action, so every call after the first was dropped.
    *
    * @access protected
    * @since 1.0.0
@@ -217,10 +219,7 @@ export class NotificationBell {
    * @return {void} - No return value.
    */
   protected markAllAsRead(): void {
-    this.notificationStore
-      .notifications()
-      .filter((n) => !n.isRead)
-      .forEach((n) => this.notificationStore.markAsRead(n.id));
+    this.notificationStore.markAllAsRead();
   }
   //#endregion
 }

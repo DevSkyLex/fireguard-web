@@ -8,6 +8,7 @@ import {
   removeAllEntities,
   setAllEntities,
   setEntity,
+  updateAllEntities,
   withEntities,
 } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
@@ -70,6 +71,7 @@ const NOTIFICATION_TYPES_TRANSFER_KEY = makeStateKey<ReadonlyArray<NotificationT
  */
 const INITIAL_NOTIFICATION_STATE: NotificationStoreState = {
   totalNotifications: 0,
+  unreadTotal: null,
   currentPage: 1,
   itemsPerPage: 20,
   listCallState: idleCallState(),
@@ -169,15 +171,19 @@ export const NotificationStore = signalStore(
      * Computed unreadCount
      *
      * @description
-     * Number of unread notifications in the local entity collection.
-     * Used to display a badge count on the bell icon.
+     * Unread notifications across the whole account, for the bell badge.
+     *
+     * Reads the server total when it is known; only before the first
+     * `unread-count` response does it fall back to counting the loaded
+     * entities — that fallback caps at one page (20), so a user with 200
+     * unread items used to see "20" forever.
      *
      * @since 1.0.0
      *
      * @returns {number}
      */
     unreadCount: computed<number>(
-      () => store.notificationEntities().filter((n) => !n.isRead).length,
+      () => store.unreadTotal() ?? store.notificationEntities().filter((n) => !n.isRead).length,
     ),
 
     /**
@@ -190,7 +196,9 @@ export const NotificationStore = signalStore(
      *
      * @returns {boolean}
      */
-    hasUnread: computed<boolean>(() => store.notificationEntities().some((n) => !n.isRead)),
+    hasUnread: computed<boolean>(
+      () => (store.unreadTotal() ?? 0) > 0 || store.notificationEntities().some((n) => !n.isRead),
+    ),
 
     /**
      * Computed hasMore
@@ -320,6 +328,17 @@ export const NotificationStore = signalStore(
                       ),
                     );
                   },
+                }),
+              ),
+              { defaultValue: undefined },
+            );
+
+            // The badge must count every unread item, not just this page.
+            await firstValueFrom(
+              notificationService.getUnreadCount().pipe(
+                tapResponse({
+                  next: (result) => patchState(store, { unreadTotal: result.count }),
+                  error: () => undefined,
                 }),
               ),
               { defaultValue: undefined },
@@ -649,6 +668,72 @@ export const NotificationStore = signalStore(
                         toStoreFailureEventPayload(
                           storeError,
                           'Failed to mark notification as read',
+                        ),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method loadUnreadCount
+         *
+         * @description
+         * Reads the authoritative unread total. Without it the badge counts
+         * only the loaded page and silently caps at 20.
+         *
+         * @since 2.0.0
+         *
+         * @returns {void}
+         */
+        loadUnreadCount: rxMethod<void>(
+          pipe(
+            exhaustMap(() =>
+              notificationService.getUnreadCount().pipe(
+                tapResponse({
+                  next: (result) => patchState(store, { unreadTotal: result.count }),
+                  error: () => undefined,
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method markAllAsRead
+         *
+         * @description
+         * Marks every unread notification read server-side, in one call, then
+         * reflects it locally. Looping single-id calls over the loaded page
+         * left everything beyond it unread — and, on an `exhaustMap` action,
+         * dropped all but the first call.
+         *
+         * @since 2.0.0
+         *
+         * @returns {void}
+         */
+        markAllAsRead: rxMethod<void>(
+          pipe(
+            exhaustMap(() =>
+              notificationService.markAllAsRead().pipe(
+                tapResponse({
+                  next: () => {
+                    patchState(
+                      store,
+                      updateAllEntities({ isRead: true }, { collection: 'notification' }),
+                      { unreadTotal: 0 },
+                    );
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    dispatcher.dispatch(
+                      notificationStoreEvents.markAsReadFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          'Failed to mark all notifications as read',
                         ),
                       ),
                     );

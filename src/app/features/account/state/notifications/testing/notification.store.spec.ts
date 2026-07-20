@@ -62,6 +62,8 @@ describe('NotificationStore', () => {
     list: ReturnType<typeof vi.fn>;
     listTypes: ReturnType<typeof vi.fn>;
     markAsRead: ReturnType<typeof vi.fn>;
+    markAllAsRead: ReturnType<typeof vi.fn>;
+    getUnreadCount: ReturnType<typeof vi.fn>;
     getSubscription: ReturnType<typeof vi.fn>;
   };
   let mockMercureService: { subscribe: ReturnType<typeof vi.fn> };
@@ -72,6 +74,9 @@ describe('NotificationStore', () => {
       list: vi.fn(),
       listTypes: vi.fn(),
       markAsRead: vi.fn(),
+      markAllAsRead: vi.fn(),
+      // The badge reads the authoritative total; the loaded page under-counts.
+      getUnreadCount: vi.fn(() => of({ count: 0 })),
       getSubscription: vi.fn(),
     };
     mockMercureService = {
@@ -222,5 +227,47 @@ describe('NotificationStore', () => {
 
     expect(store.notifications()).toEqual([otherNotification]);
     expect(store.markAsReadCallState().data).toEqual(updatedNotification);
+  });
+
+  // The badge used to count the loaded entities only, so a user with more
+  // unread items than one page holds saw the page size and never the truth.
+  it('should report the unread total the server gives, not the loaded page', async () => {
+    configure();
+    mockNotificationService.list.mockReturnValue(of(notificationCollection));
+    mockNotificationService.getUnreadCount.mockReturnValue(of({ count: 214 }));
+
+    store = TestBed.inject(NotificationStore);
+    await store.initialize();
+
+    expect(store.unreadCount()).toBe(214);
+    expect(store.hasUnread()).toBe(true);
+  });
+
+  it('should fall back to the loaded page before the total is known', () => {
+    configure();
+    store = TestBed.inject(NotificationStore);
+
+    // Nothing loaded and no total yet: the badge must not claim anything.
+    expect(store.unreadCount()).toBe(0);
+  });
+
+  // Looping single-id calls left everything past the loaded page unread, and
+  // markAsRead is an exhaustMap action so all but the first were dropped.
+  it('should mark everything read in one call and zero the badge', async () => {
+    configure();
+    mockNotificationService.list.mockReturnValue(of(notificationCollection));
+    mockNotificationService.getUnreadCount.mockReturnValue(of({ count: 214 }));
+    mockNotificationService.markAllAsRead.mockReturnValue(of({ count: 214 }));
+
+    store = TestBed.inject(NotificationStore);
+    await store.initialize();
+
+    store.markAllAsRead();
+    await Promise.resolve();
+
+    expect(mockNotificationService.markAllAsRead).toHaveBeenCalledTimes(1);
+    expect(mockNotificationService.markAsRead).not.toHaveBeenCalled();
+    expect(store.unreadCount()).toBe(0);
+    expect(store.notifications().every((entry) => entry.isRead)).toBe(true);
   });
 });

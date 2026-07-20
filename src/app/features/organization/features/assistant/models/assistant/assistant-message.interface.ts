@@ -55,9 +55,13 @@ export interface AssistantMessage extends HydraItem {
 }
 
 /**
- * A thread with its loaded page of messages.
+ * A thread with **one page** of its messages, oldest first.
  *
- * @since 1.0.0
+ * The API paginates `messages` at 50 per page. The three pagination fields were
+ * missing here, so a long thread came back truncated with nothing to say so —
+ * the UI showed the first 50 turns as if they were the whole conversation.
+ *
+ * @since 1.1.0
  */
 export interface AssistantThread extends HydraItem {
   readonly id: string;
@@ -69,6 +73,9 @@ export interface AssistantThread extends HydraItem {
   readonly updatedAt: string;
   readonly lastMessageAt: string | null;
   readonly messages: readonly AssistantMessage[];
+  readonly messagesPage: number;
+  readonly messagesItemsPerPage: number;
+  readonly messagesTotal: number;
 }
 
 /**

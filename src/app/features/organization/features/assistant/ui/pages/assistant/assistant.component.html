@@ -48,6 +48,18 @@
         @if (store.isLoadingMessages()) {
           <app-skeleton height="4rem" />
         } @else {
+          @if (store.hasOlderMessages()) {
+            <p-button
+              severity="secondary"
+              [text]="true"
+              size="small"
+              styleClass="self-center"
+              data-testid="assistant-load-older"
+              i18n-label="@@assistant.loadOlderMessages"
+              label="Load earlier messages"
+              (onClick)="store.loadOlderMessages()"
+            />
+          }
           @for (message of store.messages(); track message.id) {
             <article
               class="flex flex-col gap-1"

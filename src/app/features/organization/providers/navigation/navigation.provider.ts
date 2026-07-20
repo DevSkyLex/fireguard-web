@@ -40,13 +40,14 @@ function withInboxBadge(section: MenuItem | null, unreadCount: number): MenuItem
     return section;
   }
 
-  return {
-    ...section,
-    items: (section.items ?? []).map(
-      (item: MenuItem): MenuItem =>
-        item.id === 'inbox' ? { ...item, badge: String(unreadCount) } : item,
-    ),
-  };
+  const items: MenuItem[] = [...(section.items ?? [])];
+  const inboxIndex: number = items.findIndex((item: MenuItem): boolean => item.id === 'inbox');
+
+  if (inboxIndex >= 0) {
+    items[inboxIndex] = { ...items[inboxIndex], badge: String(unreadCount) };
+  }
+
+  return { ...section, items };
 }
 
 /**

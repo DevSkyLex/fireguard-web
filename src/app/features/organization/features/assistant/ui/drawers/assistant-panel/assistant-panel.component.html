@@ -1,14 +1,11 @@
 <header
   class="flex items-start justify-between gap-2 border-b border-surface-200 px-4 py-3 dark:border-surface-800"
 >
-  <div class="min-w-0">
-    <p class="text-sm font-semibold text-surface-900 dark:text-surface-100">
-      <ng-container i18n="@@assistant.panel.title">Assistant</ng-container>
-    </p>
-    <p class="truncate text-xs text-surface-500 dark:text-surface-400">
-      <ng-container i18n="@@assistant.panel.subtitle">Answers using this thread</ng-container>
-    </p>
-  </div>
+  <!-- No title here: the shell's panel chrome already renders one, and two
+       "Assistant" headings stacked read as a rendering bug. -->
+  <p class="min-w-0 truncate text-xs text-surface-500 dark:text-surface-400">
+    <ng-container i18n="@@assistant.panel.subtitle">Answers using this thread</ng-container>
+  </p>
 
   <p-button
     icon="pi pi-plus"
@@ -131,8 +128,8 @@
     rows="1"
     data-testid="assistant-composer"
     class="max-h-32 min-h-9 flex-1 resize-none border-0 bg-transparent shadow-none focus:ring-0"
-    i18n-placeholder="@@assistant.composer.placeholder"
-    placeholder="Ask about your sites, equipment or interventions…"
+    i18n-placeholder="@@assistant.panel.composerPlaceholder"
+    placeholder="Ask the assistant…"
     i18n-aria-label="@@assistant.composer.aria"
     aria-label="Question"
     [ngModel]="draft()"

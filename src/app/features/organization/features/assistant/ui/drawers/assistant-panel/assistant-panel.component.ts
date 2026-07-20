@@ -39,7 +39,7 @@ import { Skeleton } from '@shared/components';
   selector: 'app-assistant-panel',
   imports: [FormsModule, ButtonModule, TextareaModule, Skeleton],
   templateUrl: './assistant-panel.component.html',
-  host: { class: 'flex min-h-0 flex-1 flex-col' },
+  host: { class: 'flex h-full min-h-0 flex-1 flex-col' },
   // The store is not root-provided; the deleted page used to supply it. Without
   // this the panel fails to construct and the shell renders nothing at all —
   // a unit spec cannot catch it, because it injects a double.

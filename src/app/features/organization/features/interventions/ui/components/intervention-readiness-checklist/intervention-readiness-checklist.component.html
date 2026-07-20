@@ -17,3 +17,32 @@
     </li>
   }
 </ul>
+
+<!--
+  The consolidated verdict, which the list alone made the reader derive by
+  scanning every row — right before publishing, the one moment it matters.
+-->
+@if (checks().length > 0) {
+  @if (allPassed()) {
+    <p
+      class="mt-3 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-700 dark:bg-green-950 dark:text-green-300"
+      data-testid="readiness-all-passed"
+    >
+      <i class="pi pi-check-circle shrink-0" aria-hidden="true"></i>
+      <ng-container i18n="@@intervention.readiness.allPassed">All checks passed.</ng-container>
+    </p>
+  } @else {
+    <p
+      class="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+      data-testid="readiness-remaining"
+    >
+      <i class="pi pi-exclamation-circle shrink-0" aria-hidden="true"></i>
+      <ng-container i18n="@@intervention.readiness.remaining">
+        {remainingCount(), plural,
+          =1 {1 check still to pass}
+          other {{{ remainingCount() }} checks still to pass}
+        }
+      </ng-container>
+    </p>
+  }
+}

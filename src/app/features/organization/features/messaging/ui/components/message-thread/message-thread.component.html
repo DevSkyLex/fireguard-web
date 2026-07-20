@@ -53,7 +53,7 @@
             colour-only (PRODUCT.md). An absent id means offline or unknown, so
             only the online case is announced.
           -->
-          @if (onlineMembers().has(message.authorMember)) {
+          @if (isOnline(message.authorMember)) {
             <span
               data-testid="presence-dot"
               class="absolute right-0 bottom-0 size-2.5 rounded-full border-2 border-surface-0 bg-green-500 dark:border-surface-900"

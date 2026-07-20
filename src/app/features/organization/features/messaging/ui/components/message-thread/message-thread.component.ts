@@ -9,6 +9,7 @@ import {
   type OutputEmitterRef,
 } from '@angular/core';
 import { ENV_CONFIG, type EnvironmentConfig } from '@core/config/environment';
+import { toMemberId } from '@features/organization/features/messaging/data-access';
 import type {
   MessageAttachment,
   MessageOutput,
@@ -223,7 +224,28 @@ export class MessageThread {
    *
    * @returns {MemberIdentity} The identity to render.
    */
-  protected author(memberId: string): MemberIdentity {
+  /**
+   * Method isOnline
+   *
+   * @description
+   * Whether a message's author is currently online. Converts the member IRI
+   * the payload carries into the bare id the presence set is keyed by.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @param {string} memberReference - The message's `authorMember` IRI.
+   *
+   * @returns {boolean} Whether that member is online.
+   */
+  protected isOnline(memberReference: string): boolean {
+    return this.onlineMembers().has(toMemberId(memberReference));
+  }
+
+  protected author(memberReference: string): MemberIdentity {
+    // The payload carries a member IRI; the directory is keyed by bare id.
+    const memberId: string = toMemberId(memberReference);
+
     return (
       this.authors().get(memberId) ?? {
         id: memberId,

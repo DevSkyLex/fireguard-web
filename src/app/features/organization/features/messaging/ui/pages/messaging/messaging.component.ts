@@ -19,6 +19,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, skip } from 'rxjs';
 import { SHELL_PANEL_PORT, type ShellPanelPort } from '@core/shell-panel';
+import { toMemberId } from '@features/organization/features/messaging/data-access';
 import type {
   ConversationOutput,
   MessageOutput,
@@ -339,7 +340,10 @@ export class MessagingPage {
         this.activeOrganizationStore.selectedOrganization()?.id;
       const authorIds: readonly string[] = [
         ...new Set(
-          this.store.messages().map((message: MessageOutput): string => message.authorMember),
+          // The payload carries member IRIs; the presence endpoint wants ids.
+          this.store
+            .messages()
+            .map((message: MessageOutput): string => toMemberId(message.authorMember)),
         ),
       ];
 

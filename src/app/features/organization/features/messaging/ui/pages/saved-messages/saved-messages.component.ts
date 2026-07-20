@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
+import { toMemberId } from '@features/organization/features/messaging/data-access';
 import type { MessageOutput } from '@features/organization/features/messaging/models';
 import { SavedMessagesStore } from '@features/organization/features/messaging/state';
 import { ActiveOrganizationStore } from '@features/organization/state';
@@ -141,7 +142,8 @@ export class SavedMessagesPage {
    * @returns {string} Display name.
    */
   protected authorName(message: MessageOutput): string {
-    return this.directory.identities().get(message.authorMember)?.displayName ?? '';
+    // `authorMember` is a member IRI; the directory is keyed by bare id.
+    return this.directory.identities().get(toMemberId(message.authorMember))?.displayName ?? '';
   }
 
   /**

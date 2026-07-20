@@ -33,7 +33,9 @@ const message = (id: string, body: string | null, createdAt: string, isDeleted =
   '@type': 'Message',
   id,
   conversation: 'c1',
-  authorMember: 'member-abc',
+  // A member IRI, as the API sends it — a bare id here would re-validate the
+  // contract the frontend used to imagine instead of the real one.
+  authorMember: '/api/organizations/e2e-org-1/members/member-abc',
   body,
   mentions: [],
   editedAt: null,

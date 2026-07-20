@@ -37,7 +37,9 @@ const savedMessage = (id: string, body: string | null, isDeleted: boolean = fals
   '@type': 'Message',
   id,
   conversation: '/api/conversations/general',
-  authorMember: 'member-abc',
+  // A member IRI, as the API sends it — a bare id here would re-validate the
+  // contract the frontend used to imagine instead of the real one.
+  authorMember: '/api/organizations/e2e-org-1/members/member-abc',
   body,
   mentions: [],
   editedAt: null,

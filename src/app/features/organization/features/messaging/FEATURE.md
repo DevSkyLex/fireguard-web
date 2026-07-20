@@ -46,16 +46,21 @@ DM would be unreachable.
   workspaces; there is no implicit "session organization" to fall back on,
   and the hermetic e2e mocks cannot catch a missing filter — the service
   spec pins it instead.
-- **`MessageOutput.authorMember` is a bare member id.** Authors are resolved
-  through `OrganizationMemberDirectoryStore`. Do **not** swap that for
-  `OrganizationMembersStore`: the latter is the admin table's state (one page of
-  20, filtered by its search box), so author names would vanish the moment an
-  administrator typed in the members search — a bug that would read as a
-  rendering glitch, far from its cause.
-- **Reactions need to know who "I" am.** The API reports `memberIds` per emoji,
-  so without `currentMemberId` (from `OrganizationMemberAccessStore`) the UI
-  cannot tell "3 people reacted" from "3 people including me", and the toggle
-  cannot choose between POST and DELETE.
+- **`authorMember`, `pinnedBy` and every `mentions` entry are member IRIs**
+  (`/api/organizations/{id}/members/{memberId}`), _not_ bare ids — this file
+  asserted the opposite for a long time and the code believed it, so author
+  names and presence never resolved against the real backend. Convert with
+  `toMemberId` (`data-access/adapters/`) at every lookup; the member directory
+  and the presence endpoint are both keyed by the bare id.
+- Authors are resolved through `OrganizationMemberDirectoryStore`. Do **not**
+  swap that for `OrganizationMembersStore`: the latter is the admin table's
+  state (one page of 20, filtered by its search box), so author names would
+  vanish the moment an administrator typed in the members search — a bug that
+  would read as a rendering glitch, far from its cause.
+- **A reaction carries `reactedByMe`, never the reactor ids.** The API
+  aggregates server-side. The UI needs that flag to tell "3 people reacted"
+  from "3 people including me", and the toggle needs it to choose between POST
+  and DELETE — nothing client-side has to know who "I" am.
 - **The replies panel sits beside the thread, never over it.** A reply almost
   always needs the surrounding conversation for context, so the panel is the
   workspace's third pane (330px, per the kit) rather than a takeover.

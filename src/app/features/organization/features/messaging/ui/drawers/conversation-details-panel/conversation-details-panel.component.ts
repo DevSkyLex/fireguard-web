@@ -12,6 +12,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { ENV_CONFIG, type EnvironmentConfig } from '@core/config/environment';
+import { toMemberId } from '@features/organization/features/messaging/data-access';
 import type {
   ChannelParticipant,
   ConversationOutput,
@@ -295,7 +296,8 @@ export class ConversationDetailsPanel {
    * @returns {string} The author's display name.
    */
   protected authorName(message: MessageOutput): string {
-    return this.directory.identities().get(message.authorMember)?.displayName ?? '';
+    // `authorMember` is a member IRI; the directory is keyed by bare id.
+    return this.directory.identities().get(toMemberId(message.authorMember))?.displayName ?? '';
   }
 
   /**

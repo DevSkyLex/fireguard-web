@@ -136,7 +136,7 @@
       i18n-label="@@common.reset"
       severity="secondary"
       [outlined]="true"
-      [disabled]="saving()"
+      [disabled]="form.pristine || saving()"
       (onClick)="reset()"
     />
     <p-button

@@ -3565,10 +3565,6 @@
         <source>Unknown</source>
         <target>Inconnu</target>
       </trans-unit>
-      <trans-unit id="org.nav.dashboard" datatype="html">
-        <source>Dashboard</source>
-        <target>Tableau de bord</target>
-      </trans-unit>
       <trans-unit id="route.team" datatype="html">
         <source>Roles</source>
         <target>Rôles</target>
@@ -3576,26 +3572,6 @@
       <trans-unit id="route.settings" datatype="html">
         <source>Settings</source>
         <target>Paramètres</target>
-      </trans-unit>
-      <trans-unit id="org.navGroup.overview" datatype="html">
-        <source>Overview</source>
-        <target>Aperçu</target>
-      </trans-unit>
-      <trans-unit id="org.navGroup.fieldWork" datatype="html">
-        <source>Field work</source>
-        <target>Travail terrain</target>
-      </trans-unit>
-      <trans-unit id="org.navGroup.assets" datatype="html">
-        <source>Assets</source>
-        <target>Actifs</target>
-      </trans-unit>
-      <trans-unit id="org.navGroup.compliance" datatype="html">
-        <source>Compliance</source>
-        <target>Conformité</target>
-      </trans-unit>
-      <trans-unit id="org.navGroup.administration" datatype="html">
-        <source>Administration</source>
-        <target>Administration</target>
       </trans-unit>
       <trans-unit id="route.acceptInvitation" datatype="html">
         <source>Accept Invitation</source>
@@ -4137,42 +4113,6 @@
         <source>View plans</source>
         <target>Voir les forfaits</target>
       </trans-unit>
-      <trans-unit id="org.switcher.create" datatype="html">
-        <source>Create organization</source>
-        <target>Créer une organisation</target>
-      </trans-unit>
-      <trans-unit id="org.switcher.title" datatype="html">
-        <source>Organizations</source>
-        <target>Organisations</target>
-      </trans-unit>
-      <trans-unit id="org.switcher.loading" datatype="html">
-        <source> Loading workspaces... </source>
-        <target>Chargement des espaces de travail...</target>
-      </trans-unit>
-      <trans-unit id="org.switcher.empty" datatype="html">
-        <source>No workspaces found</source>
-        <target>Aucun espace de travail trouvé</target>
-      </trans-unit>
-      <trans-unit id="org.switcher.current" datatype="html">
-        <source>Current organization</source>
-        <target>Organisation actuelle</target>
-      </trans-unit>
-      <trans-unit id="org.switcher.members" datatype="html">
-        <source>Members</source>
-        <target>Membres</target>
-      </trans-unit>
-      <trans-unit id="org.switcher.settings" datatype="html">
-        <source>Settings</source>
-        <target>Paramètres</target>
-      </trans-unit>
-      <trans-unit id="org.switcher.billing" datatype="html">
-        <source>Billing</source>
-        <target>Facturation</target>
-      </trans-unit>
-      <trans-unit id="org.switcher.selectWorkspace" datatype="html">
-        <source>Select workspace</source>
-        <target>Sélectionner un espace de travail</target>
-      </trans-unit>
       <trans-unit id="org.usage.loading" datatype="html">
         <source>Loading usage…</source>
         <target>Chargement de l'utilisation…</target>
@@ -4468,22 +4408,6 @@
       <trans-unit id="org.settings.generalDesc" datatype="html">
         <source>Name, slug, description, logo and active status.</source>
         <target>Nom, identifiant, description, logo et statut actif.</target>
-      </trans-unit>
-      <trans-unit id="org.settings.subscription" datatype="html">
-        <source>Subscription</source>
-        <target>Abonnement</target>
-      </trans-unit>
-      <trans-unit id="org.settings.subscriptionDesc" datatype="html">
-        <source>Choose the plan that fits your organization.</source>
-        <target>Choisissez le forfait adapté à votre organisation.</target>
-      </trans-unit>
-      <trans-unit id="org.settings.usage" datatype="html">
-        <source>Usage</source>
-        <target>Utilisation</target>
-      </trans-unit>
-      <trans-unit id="org.settings.usageDesc" datatype="html">
-        <source>Resource consumption against your plan limits.</source>
-        <target>Consommation des ressources par rapport aux limites de votre forfait.</target>
       </trans-unit>
       <trans-unit id="org.settings.notifications" datatype="html">
         <source>Notifications</source>
@@ -5746,10 +5670,6 @@
         <target>La valeur n&apos;a pas pu être copiée. Copiez-la manuellement.</target>
       </trans-unit>
       <trans-unit id="route.audit" datatype="html">
-        <source>Audit log</source>
-        <target>Journal d&apos;audit</target>
-      </trans-unit>
-      <trans-unit id="org.nav.audit" datatype="html">
         <source>Audit log</source>
         <target>Journal d&apos;audit</target>
       </trans-unit>
@@ -7021,10 +6941,6 @@
         <source>VAT number</source>
         <target>Numéro de TVA</target>
       </trans-unit>
-      <trans-unit id="org.navGroup.workspace" datatype="html">
-        <source>Workspace</source>
-        <target>Espace de travail</target>
-      </trans-unit>
       <trans-unit id="org.overview.description" datatype="html">
         <source>Your fire-safety operations at a glance across all sites.</source>
         <target>Vos opérations de sécurité incendie en un coup d'œil sur tous les sites.</target>
@@ -7069,9 +6985,411 @@
         <source>Map</source>
         <target>Carte</target>
       </trans-unit>
-      <trans-unit id="route.messages" datatype="html">
-        <source>Messages</source>
-        <target>Messages</target>
+      <trans-unit id="3212817643854465630" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 site not yet measured} other {<x id="INTERPOLATION"/> sites not yet measured}}</source>
+        <target>{VAR_PLURAL, plural, =1 {1 site pas encore mesuré} other {<x id="INTERPOLATION"/> sites pas encore mesurés}}</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/compliance-by-site/compliance-by-site.component.html</context>
+          <context context-type="linenumber">106,108</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="layout.orgRail.add" datatype="html">
+        <source>Add organization</source>
+        <target>Ajouter une organisation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-rail-switcher/organization-rail-switcher.component.html</context>
+          <context context-type="linenumber">46,47</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-rail-switcher/organization-rail-switcher.component.html</context>
+          <context context-type="linenumber">49,50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="layout.sidebar.settings" datatype="html">
+        <source>Organization settings</source>
+        <target>Paramètres de l&apos;organisation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/layouts/dashboard-layout/components/dashboard-layout-sidebar/components/dashboard-layout-sidebar-header/dashboard-layout-sidebar-header.component.html</context>
+          <context context-type="linenumber">41,42</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/layouts/dashboard-layout/components/dashboard-layout-sidebar/components/dashboard-layout-sidebar-header/dashboard-layout-sidebar-header.component.html</context>
+          <context context-type="linenumber">44,45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="layout.skipToContent" datatype="html">
+        <source> Skip to content </source>
+        <target>Aller au contenu</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/layouts/dashboard-layout/dashboard-layout.component.html</context>
+          <context context-type="linenumber">17,20</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.composer.attach" datatype="html">
+        <source>Attach a file</source>
+        <target>Joindre un fichier</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/messaging/messaging.component.html</context>
+          <context context-type="linenumber">144,146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.composer.clearFile" datatype="html">
+        <source>Remove file</source>
+        <target>Retirer le fichier</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/messaging/messaging.component.html</context>
+          <context context-type="linenumber">130,132</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.drafts.discard" datatype="html">
+        <source>Discard draft</source>
+        <target>Supprimer le brouillon</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/drafts/drafts.component.html</context>
+          <context context-type="linenumber">58,59</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/drafts/drafts.component.html</context>
+          <context context-type="linenumber">60,61</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.drafts.emptyDescription" datatype="html">
+        <source>Start typing in any conversation and your unsent words will show up here.</source>
+        <target>Commencez à écrire dans n&apos;importe quelle conversation : vos mots non envoyés apparaîtront ici.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/drafts/drafts.component.html</context>
+          <context context-type="linenumber">9,12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.drafts.emptyTitle" datatype="html">
+        <source>No drafts</source>
+        <target>Aucun brouillon</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/drafts/drafts.component.html</context>
+          <context context-type="linenumber">7,8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.drafts.open" datatype="html">
+        <source>Open conversation</source>
+        <target>Ouvrir la conversation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/drafts/drafts.component.html</context>
+          <context context-type="linenumber">46,47</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/drafts/drafts.component.html</context>
+          <context context-type="linenumber">48,49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.drafts.unknownConversation" datatype="html">
+        <source>Conversation unavailable</source>
+        <target>Conversation indisponible</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/drafts/drafts.component.html</context>
+          <context context-type="linenumber">28,31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.saved.deleted" datatype="html">
+        <source> This message was deleted. </source>
+        <target>Ce message a été supprimé.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/saved-messages/saved-messages.component.html</context>
+          <context context-type="linenumber">53,55</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.saved.emptyDescription" datatype="html">
+        <source>Save a message from any conversation and it will wait for you here.</source>
+        <target>Enregistrez un message depuis n&apos;importe quelle conversation : il vous attendra ici.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/saved-messages/saved-messages.component.html</context>
+          <context context-type="linenumber">23,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.saved.emptyTitle" datatype="html">
+        <source>Nothing saved yet</source>
+        <target>Rien d&apos;enregistré pour l&apos;instant</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/saved-messages/saved-messages.component.html</context>
+          <context context-type="linenumber">21,22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.saved.errorDescription" datatype="html">
+        <source>Something went wrong while loading this list.</source>
+        <target>Une erreur est survenue pendant le chargement de cette liste.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/saved-messages/saved-messages.component.html</context>
+          <context context-type="linenumber">14,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.saved.errorTitle" datatype="html">
+        <source>Couldn&apos;t load your saved items</source>
+        <target>Impossible de charger vos éléments enregistrés</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/saved-messages/saved-messages.component.html</context>
+          <context context-type="linenumber">12,13</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.saved.open" datatype="html">
+        <source>Open conversation</source>
+        <target>Ouvrir la conversation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/saved-messages/saved-messages.component.html</context>
+          <context context-type="linenumber">68,69</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/saved-messages/saved-messages.component.html</context>
+          <context context-type="linenumber">70,71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.saved.remove" datatype="html">
+        <source>Remove from saved</source>
+        <target>Retirer des enregistrés</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/saved-messages/saved-messages.component.html</context>
+          <context context-type="linenumber">80,81</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/pages/saved-messages/saved-messages.component.html</context>
+          <context context-type="linenumber">82,83</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.sidebar.channels" datatype="html">
+        <source>Channels</source>
+        <target>Canaux</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/components/messaging-sidebar/messaging-sidebar.component.html</context>
+          <context context-type="linenumber">72,74</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.sidebar.clearSearch" datatype="html">
+        <source>Clear search</source>
+        <target>Effacer la recherche</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/components/messaging-sidebar/messaging-sidebar.component.html</context>
+          <context context-type="linenumber">23,24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.sidebar.favorites" datatype="html">
+        <source>Favorites</source>
+        <target>Favoris</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/components/messaging-sidebar/messaging-sidebar.component.html</context>
+          <context context-type="linenumber">42,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.sidebar.search" datatype="html">
+        <source>Search channels</source>
+        <target>Rechercher un canal</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/components/messaging-sidebar/messaging-sidebar.component.html</context>
+          <context context-type="linenumber">11,12</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/components/messaging-sidebar/messaging-sidebar.component.html</context>
+          <context context-type="linenumber">13,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="messaging.thread.logAria" datatype="html">
+        <source>Conversation messages</source>
+        <target>Messages de la conversation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/messaging/ui/components/message-thread/message-thread.component.html</context>
+          <context context-type="linenumber">14,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.dash.complianceBySite.desc" datatype="html">
+        <source>Sites with the weakest maintenance coverage</source>
+        <target>Les sites dont la couverture de maintenance est la plus faible</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/compliance-by-site/compliance-by-site.component.html</context>
+          <context context-type="linenumber">5,8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.dash.complianceBySite.emptyDesc" datatype="html">
+        <source>Once equipment is scheduled for maintenance, each site&apos;s coverage appears here.</source>
+        <target>Dès qu&apos;un équipement aura une maintenance planifiée, la couverture de chaque site apparaîtra ici.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/compliance-by-site/compliance-by-site.component.html</context>
+          <context context-type="linenumber">50,54</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.dash.complianceBySite.emptyTitle" datatype="html">
+        <source>No sites to report yet</source>
+        <target>Aucun site à afficher pour l&apos;instant</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/compliance-by-site/compliance-by-site.component.html</context>
+          <context context-type="linenumber">48,49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.dash.complianceBySite.errorTitle" datatype="html">
+        <source>Couldn&apos;t load site compliance</source>
+        <target>Impossible de charger la conformité des sites</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/compliance-by-site/compliance-by-site.component.html</context>
+          <context context-type="linenumber">25,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.dash.complianceBySite.loading" datatype="html">
+        <source>Loading site compliance</source>
+        <target>Chargement de la conformité des sites</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/compliance-by-site/compliance-by-site.component.html</context>
+          <context context-type="linenumber">42,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.dash.complianceBySite.notMeasured" datatype="html">
+        <source> <x id="ICU" equiv-text="{unmeasuredCount(), plural,
+              =1 {1 site not yet measured}
+              other {{{ unmeasuredCount() }} sites not yet measured}
+            }" xid="1664416297104528143"/> </source>
+        <target> <x id="ICU" equiv-text="{unmeasuredCount(), plural,
+              =1 {1 site not yet measured}
+              other {{{ unmeasuredCount() }} sites not yet measured}
+            }" xid="1664416297104528143"/> </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/compliance-by-site/compliance-by-site.component.html</context>
+          <context context-type="linenumber">106,112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.dash.complianceBySite.retry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/compliance-by-site/compliance-by-site.component.html</context>
+          <context context-type="linenumber">30,31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.dash.complianceBySite.title" datatype="html">
+        <source>Compliance by site</source>
+        <target>Conformité par site</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/compliance-by-site/compliance-by-site.component.html</context>
+          <context context-type="linenumber">3,4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.dash.complianceBySite.view" datatype="html">
+        <source>View compliance</source>
+        <target>Voir la conformité</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-dashboard/components/compliance-by-site/compliance-by-site.component.html</context>
+          <context context-type="linenumber">11,13</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.nav.directMessages" datatype="html">
+        <source>Direct messages</source>
+        <target>Messages directs</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
+          <context context-type="linenumber">287</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.nav.overview" datatype="html">
+        <source>Overview</source>
+        <target>Vue d&apos;ensemble</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
+          <context context-type="linenumber">172</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.auditDesc" datatype="html">
+        <source>Chronological record of administrative actions.</source>
+        <target>Journal chronologique des actions d&apos;administration.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
+          <context context-type="linenumber">208</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.invitationsDesc" datatype="html">
+        <source>Pending invitations awaiting acceptance.</source>
+        <target>Invitations en attente d&apos;acceptation.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
+          <context context-type="linenumber">185</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.invitationsLoadError" datatype="html">
+        <source>The invitations could not be loaded.</source>
+        <target>Les invitations n&apos;ont pas pu être chargées.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-invitations/organization-settings-invitations.component.ts</context>
+          <context context-type="linenumber">125</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.invitationsMutationError" datatype="html">
+        <source>The operation could not be completed.</source>
+        <target>L&apos;opération n&apos;a pas pu aboutir.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-invitations/organization-settings-invitations.component.ts</context>
+          <context context-type="linenumber">136</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.invitationsRetry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-invitations/organization-settings-invitations.component.html</context>
+          <context context-type="linenumber">20,21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.invitationsSubtitle" datatype="html">
+        <source> Track pending invitations, resend expiring links, and revoke access that should no longer be granted. </source>
+        <target>Suivez les invitations en attente, renvoyez les liens qui expirent et révoquez les accès qui ne doivent plus être accordés.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-invitations/organization-settings-invitations.component.html</context>
+          <context context-type="linenumber">9,13</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.membersDesc" datatype="html">
+        <source>People in this organization and their assigned roles.</source>
+        <target>Les personnes de cette organisation et leurs rôles.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
+          <context context-type="linenumber">176</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.rolesDesc" datatype="html">
+        <source>Role definitions and their permission grants.</source>
+        <target>Définitions des rôles et permissions accordées.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
+          <context context-type="linenumber">199</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.drafts" datatype="html">
+        <source>Drafts</source>
+        <target>Brouillons</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
+          <context context-type="linenumber">257</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
+          <context context-type="linenumber">129</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.invitations" datatype="html">
+        <source>Invitations</source>
+        <target>Invitations</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
+          <context context-type="linenumber">290</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings/organization-settings.component.ts</context>
+          <context context-type="linenumber">183</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.saved" datatype="html">
+        <source>Saved items</source>
+        <target>Éléments enregistrés</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
+          <context context-type="linenumber">265</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/organization.routes.ts</context>
+          <context context-type="linenumber">117</context>
+        </context-group>
       </trans-unit>
     </body>
   </file>

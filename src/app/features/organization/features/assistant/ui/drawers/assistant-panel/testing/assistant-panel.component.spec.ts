@@ -123,6 +123,32 @@ describe('AssistantPanel', () => {
     expect(store['startThread']).not.toHaveBeenCalled();
   });
 
+  it('sends a suggested opener rather than only filling the field', () => {
+    const fixture = build();
+
+    const suggestion = fixture.debugElement.query(By.css('[data-testid="assistant-suggestion"]'));
+    const text = (suggestion.nativeElement as HTMLElement).textContent?.trim() ?? '';
+    suggestion.nativeElement.click();
+    fixture.detectChanges();
+
+    // No thread yet, so it starts one and holds the question.
+    expect(store['startThread']).toHaveBeenCalledWith(null);
+
+    startedThreadId.set('thread-3');
+    fixture.detectChanges();
+
+    expect(store['ask']).toHaveBeenCalledWith(text);
+  });
+
+  it('hides the openers once the thread has turns', () => {
+    messages.set([
+      { id: 'a1', role: 'user', body: 'hi', status: 'complete' } as unknown as AssistantMessage,
+    ]);
+    const fixture = build();
+
+    expect(fixture.debugElement.query(By.css('[data-testid="assistant-suggestion"]'))).toBeNull();
+  });
+
   it('opens a fresh thread without dragging a stale question along', () => {
     const fixture = build();
     type(fixture, 'a question I abandoned');

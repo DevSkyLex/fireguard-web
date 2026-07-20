@@ -106,6 +106,26 @@ export class AssistantPanel {
    *
    * @type {Signal<boolean>}
    */
+  /**
+   * Property suggestions
+   * @readonly
+   *
+   * @description
+   * Openers offered on an empty thread. A blank assistant is intimidating and
+   * says nothing about what it can answer; these state its scope in the
+   * product's own terms — sites, equipment, interventions.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {readonly string[]}
+   */
+  protected readonly suggestions: readonly string[] = [
+    $localize`:@@assistant.panel.suggestion.overdue:Which equipment is overdue for inspection?`,
+    $localize`:@@assistant.panel.suggestion.nonConformities:What non-conformities are still open?`,
+    $localize`:@@assistant.panel.suggestion.week:What interventions are planned this week?`,
+  ];
+
   protected readonly canAsk: Signal<boolean> = computed(
     (): boolean =>
       this.draft().trim().length > 0 && !this.store.isAnswering() && !this.store.isStartingThread(),
@@ -186,6 +206,25 @@ export class AssistantPanel {
    *
    * @returns {void}
    */
+  /**
+   * Method useSuggestion
+   *
+   * @description
+   * Sends a suggested opener straight away. Dropping it into the field instead
+   * would ask the member to confirm a sentence they did not write.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {string} suggestion - The chosen opener.
+   *
+   * @returns {void}
+   */
+  protected useSuggestion(suggestion: string): void {
+    this.draft.set(suggestion);
+    this.ask();
+  }
+
   protected startNewThread(): void {
     this.pendingQuestion.set(null);
     this.store.startThread(null);

@@ -22,6 +22,7 @@ describe('OrganizationSettingsPage', () => {
   let accountPermissions: Set<string>;
   let router: { navigate: ReturnType<typeof vi.fn> };
   let route: { queryParamMap: Observable<ParamMap> };
+  let organization: { id: string; name?: string; status?: string } | null;
 
   const createComponent = (): SettingsPageTestApi => {
     TestBed.configureTestingModule({
@@ -30,7 +31,7 @@ describe('OrganizationSettingsPage', () => {
         { provide: Router, useValue: router },
         {
           provide: ActiveOrganizationStore,
-          useValue: { selectedOrganization: signal({ id: 'org-1' }) },
+          useValue: { selectedOrganization: signal(organization) },
         },
         {
           provide: OrganizationPermissionService,
@@ -73,6 +74,38 @@ describe('OrganizationSettingsPage', () => {
     accountPermissions = new Set<string>();
     router = { navigate: vi.fn() };
     route = { queryParamMap: of(convertToParamMap({})) };
+    organization = { id: 'org-1' };
+  });
+
+  /**
+   * The layout header band only says "Settings"; anyone who belongs to several
+   * workspaces needs the page itself to name which one it is editing.
+   */
+  describe('workspace identification', () => {
+    const descriptor = (): { label: string; severity: string } | null =>
+      (
+        createComponent() as unknown as {
+          statusDescriptor: () => { label: string; severity: string } | null;
+        }
+      ).statusDescriptor();
+
+    it('resolves the workspace status through the registry', () => {
+      organization = { id: 'org-1', name: 'Acme', status: 'suspended' };
+
+      expect(descriptor()?.severity).toBe('danger');
+    });
+
+    it('shows no status while no organization is resolved', () => {
+      organization = null;
+
+      expect(descriptor()).toBeNull();
+    });
+
+    it('shows no status when the organization carries none', () => {
+      organization = { id: 'org-1', name: 'Acme' };
+
+      expect(descriptor()).toBeNull();
+    });
   });
 
   it('always lists the in-page sections and the legal route', () => {

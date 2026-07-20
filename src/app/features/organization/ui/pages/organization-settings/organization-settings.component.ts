@@ -9,6 +9,8 @@ import { ACCOUNT_PERMISSION, UserPermissionService } from '@features/account';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
   ORGANIZATION_PERMISSION,
+  resolveOrganizationStatusTag,
+  type OrganizationStatusTagDescriptor,
   type UpdateOrganizationInput,
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
@@ -18,6 +20,7 @@ import {
   OrganizationNotificationsForm,
   OrganizationRegionalForm,
 } from '@features/organization/ui/forms';
+import { Tag } from '@shared/components';
 import { DEFAULT_ORGANIZATION_SETTINGS_TAB, ORGANIZATION_SETTINGS_TABS } from './constants';
 import type { OrganizationSettingsTab } from './models';
 
@@ -84,6 +87,7 @@ interface OrganizationSettingsNavItem {
     OrganizationGeneralForm,
     OrganizationNotificationsForm,
     OrganizationRegionalForm,
+    Tag,
   ],
   providers: [OrganizationSettingsStore],
   templateUrl: './organization-settings.component.html',
@@ -98,6 +102,19 @@ export class OrganizationSettingsPage {
   /** Active organization context store. */
   protected readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+  /**
+   * Presentation descriptor for the workspace status, or null while no
+   * organization is resolved. Read through the existing status registry so the
+   * label, colour and icon are declared in exactly one place.
+   */
+  protected readonly statusDescriptor: Signal<OrganizationStatusTagDescriptor | null> = computed(
+    (): OrganizationStatusTagDescriptor | null => {
+      const status: string | undefined =
+        this.activeOrganizationStore.selectedOrganization()?.status;
+
+      return status ? resolveOrganizationStatusTag('status', status) : null;
+    },
+  );
   /** Page-scoped settings workflow store. */
   protected readonly store: OrganizationSettingsStore =
     inject<OrganizationSettingsStore>(OrganizationSettingsStore);

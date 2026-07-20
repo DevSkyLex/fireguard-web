@@ -2,13 +2,37 @@
   id="organization-settings"
   class="mx-auto flex w-full max-w-7xl flex-col p-3 sm:p-6 md:p-7 lg:p-8"
 >
-  <!-- Page subtitle (the layout header band renders the route title) -->
-  <p
-    i18n="@@org.settings.pageSubtitle"
-    class="mb-6 max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
-  >
-    Manage workspace preferences, subscription, usage, and organization-wide policies.
-  </p>
+  <!--
+    The layout header band renders the route title ("Settings"), which does not
+    say *which* workspace is being edited — a real hazard for anyone who belongs
+    to several. The name and its status are stated here, before the subtitle.
+  -->
+  <div class="mb-6 flex flex-col gap-1">
+    @if (activeOrganizationStore.selectedOrganization(); as organization) {
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span
+          class="truncate font-semibold text-surface-950 dark:text-surface-50"
+          data-testid="organization-settings-name"
+        >
+          {{ organization.name }}
+        </span>
+        @if (statusDescriptor(); as status) {
+          <app-tag
+            [descriptor]="status"
+            variant="inline"
+            data-testid="organization-settings-status"
+          />
+        }
+      </div>
+    }
+
+    <p
+      i18n="@@org.settings.pageSubtitle"
+      class="max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
+    >
+      Manage workspace preferences, subscription, usage, and organization-wide policies.
+    </p>
+  </div>
 
   <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
     <!-- Vertical settings navigation (sticky on large screens) -->

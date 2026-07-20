@@ -2,17 +2,32 @@ import type { OrganizationStatusTagDescriptor } from './organization-status-tag-
 import type { OrganizationStatusTagKind } from './organization-status-tag-kind.type';
 
 /**
- * Organization entity status descriptors (active / inactive).
+ * Organization entity status descriptors.
  *
- * Colour code: green (`success`) for the operational state (active) and red
- * (`danger`) for the disabled state (inactive), each paired with an icon so
- * status is never conveyed by colour alone.
+ * `active`, `suspended` and `archived` are the values the backend
+ * `OrganizationStatus` enum can send; `inactive` predates them and is kept so
+ * any older payload still resolves rather than falling through.
+ *
+ * Colour code: green (`success`) while the workspace is usable, red (`danger`)
+ * when it has been cut off (suspended, inactive), and neutral (`secondary`)
+ * when it is merely retired — archived is an end state, not an alarm. Each is
+ * paired with an icon so status is never conveyed by colour alone.
  */
 const STATUS: Record<string, OrganizationStatusTagDescriptor> = {
   active: {
     label: $localize`:@@org.status.active:Active`,
     severity: 'success',
     icon: 'pi pi-check-circle',
+  },
+  suspended: {
+    label: $localize`:@@org.status.suspended:Suspended`,
+    severity: 'danger',
+    icon: 'pi pi-ban',
+  },
+  archived: {
+    label: $localize`:@@org.status.archived:Archived`,
+    severity: 'secondary',
+    icon: 'pi pi-inbox',
   },
   inactive: {
     label: $localize`:@@org.status.inactive:Inactive`,

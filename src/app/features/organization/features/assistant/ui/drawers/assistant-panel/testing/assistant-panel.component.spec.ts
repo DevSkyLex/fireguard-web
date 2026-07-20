@@ -24,12 +24,18 @@ describe('AssistantPanel', () => {
     TestBed.configureTestingModule({
       imports: [AssistantPanel],
       providers: [
-        { provide: AssistantThreadStore, useValue: store },
         {
           provide: ORGANIZATION_CONTEXT_PORT,
           useValue: { selectedOrganization: signal(ORG) },
         },
       ],
+    });
+
+    // The component provides the real store itself — a component-level provider
+    // wins over the module's, so the double has to be installed at the same
+    // level or it is silently ignored.
+    TestBed.overrideComponent(AssistantPanel, {
+      set: { providers: [{ provide: AssistantThreadStore, useValue: store }] },
     });
 
     const fixture = TestBed.createComponent(AssistantPanel);

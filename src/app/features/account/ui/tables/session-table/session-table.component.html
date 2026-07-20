@@ -87,7 +87,7 @@
             <td>
               <div class="flex min-w-0 items-center gap-3">
                 <p-avatar
-                  icon="pi pi-desktop"
+                  [icon]="deviceIcon(session.deviceType)"
                   shape="circle"
                   size="normal"
                   class="bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
@@ -129,8 +129,18 @@
               <span class="text-surface-600 dark:text-surface-400">{{ session.ipAddress }}</span>
             </td>
             <td>
-              <span class="text-surface-500 dark:text-surface-400">
-                {{ session.lastActivityAt | date: 'medium' }}
+              <!--
+                The relative label answers the question this column is scanned
+                for; the exact timestamp stays reachable as the tooltip.
+              -->
+              <span
+                class="text-surface-500 dark:text-surface-400"
+                [title]="session.lastActivityAt | date: 'medium'"
+              >
+                {{
+                  lastActivityLabel(session.lastActivityAt) ??
+                    (session.lastActivityAt | date: 'medium')
+                }}
               </span>
             </td>
             <td class="text-right">

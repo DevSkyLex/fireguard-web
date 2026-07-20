@@ -101,6 +101,64 @@ describe('SessionTable', () => {
     expect(spy).toHaveBeenCalledWith({ page: 1, itemsPerPage: 10 });
   });
 
+  /**
+   * The device glyph and the age of the last activity are what this table is
+   * scanned for — "is anything signed in that shouldn't be, and how recently".
+   */
+  describe('row legibility', () => {
+    const iconClasses = (fixture: ReturnType<typeof createComponent>): string =>
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '.p-avatar .p-icon, .p-avatar span[class*="pi-"]',
+      )?.className ?? '';
+
+    it('reflects the device family in the avatar glyph', () => {
+      const fixture = createComponent({
+        sessions: [{ ...MOCK_SESSION, deviceType: 'mobile' }],
+        total: 1,
+        empty: false,
+      });
+
+      expect(iconClasses(fixture)).toContain('pi-mobile');
+    });
+
+    it('falls back to the desktop glyph when the device is unknown', () => {
+      const fixture = createComponent({
+        sessions: [{ ...MOCK_SESSION, deviceType: null }],
+        total: 1,
+        empty: false,
+      });
+
+      expect(iconClasses(fixture)).toContain('pi-desktop');
+    });
+
+    it('states how long ago the session was last active', () => {
+      const threeHoursAgo: string = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+      const fixture = createComponent({
+        sessions: [{ ...MOCK_SESSION, lastActivityAt: threeHoursAgo }],
+        total: 1,
+        empty: false,
+      });
+
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('3 hours ago');
+    });
+
+    it('keeps the exact timestamp reachable as a tooltip', () => {
+      const fixture = createComponent({
+        sessions: [
+          { ...MOCK_SESSION, lastActivityAt: new Date(Date.now() - 60_000).toISOString() },
+        ],
+        total: 1,
+        empty: false,
+      });
+
+      const titled: HTMLElement | null = (fixture.nativeElement as HTMLElement).querySelector(
+        'span[title]',
+      );
+
+      expect(titled?.getAttribute('title')).toBeTruthy();
+    });
+  });
+
   it('should reload the first page when revoke-all leaves no loaded current session', () => {
     const fixture = createComponent({ sessions: [MOCK_SESSION], total: 2, empty: false });
     const spy = vi.fn();

@@ -1,13 +1,16 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
+  inject,
   input,
   output,
   signal,
   viewChild,
+  LOCALE_ID,
+  PLATFORM_ID,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -23,6 +26,21 @@ import { TableModule, type TableLazyLoadEvent } from 'primeng/table';
 import type { RequestOptions } from '@core/api';
 import type { SessionOutput } from '@features/auth/models';
 import { EmptyState } from '@shared/components';
+
+/** One minute in milliseconds — the floor below which activity reads as "just now". */
+const MINUTE_MS: number = 60_000;
+
+/**
+ * Units tried largest-first when phrasing an elapsed duration, so three days
+ * reads as "3 days ago" rather than "72 hours ago".
+ */
+const RELATIVE_UNITS: ReadonlyArray<readonly [Intl.RelativeTimeFormatUnit, number]> = [
+  ['year', 365 * 24 * 60 * MINUTE_MS],
+  ['month', 30 * 24 * 60 * MINUTE_MS],
+  ['day', 24 * 60 * MINUTE_MS],
+  ['hour', 60 * MINUTE_MS],
+  ['minute', MINUTE_MS],
+];
 
 /**
  * Component SessionTable
@@ -54,6 +72,37 @@ import { EmptyState } from '@shared/components';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SessionTable {
+  //#region Environment
+  /**
+   * Property isBrowser
+   * @readonly
+   *
+   * @description
+   * Whether the component runs in the browser, gating the relative-time label
+   * that must not be rendered during SSR.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {boolean}
+   */
+  private readonly isBrowser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
+
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * Active locale used to phrase relative durations.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {string}
+   */
+  private readonly locale: string = inject(LOCALE_ID);
+  //#endregion
+
   //#region Inputs
   /**
    * Input sessions
@@ -421,6 +470,66 @@ export class SessionTable {
       page: Math.floor(first / rowsPerPage) + 1,
       itemsPerPage: rowsPerPage,
     });
+  }
+
+  /**
+   * Method deviceIcon
+   *
+   * @description
+   * Icon standing for the session's device family. The backend sends a free
+   * string, so the match is on a lowercased substring and falls back to the
+   * desktop glyph rather than showing nothing.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {string | null | undefined} deviceType Device family reported for the session.
+   *
+   * @returns {string} PrimeIcons class for the device.
+   */
+  protected deviceIcon(deviceType: string | null | undefined): string {
+    const value: string = (deviceType ?? '').toLowerCase();
+
+    if (value.includes('mobile') || value.includes('phone')) return 'pi pi-mobile';
+    if (value.includes('tablet')) return 'pi pi-tablet';
+
+    return 'pi pi-desktop';
+  }
+
+  /**
+   * Method lastActivityLabel
+   *
+   * @description
+   * Relative age of the session's last activity ("2 hours ago"), which is how
+   * this column is read — the question is whether a session is stale, not the
+   * exact minute. Returns null on the server so SSR emits the absolute date
+   * instead: a relative label rendered at request time would not match the one
+   * hydration recomputes, and the mismatch is a real hydration error.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {string | null | undefined} isoDate Last-activity timestamp.
+   *
+   * @returns {string | null} Relative label, or null when it cannot be built.
+   */
+  protected lastActivityLabel(isoDate: string | null | undefined): string | null {
+    if (!isoDate || !this.isBrowser) return null;
+
+    const elapsedMs: number = Date.now() - new Date(isoDate).getTime();
+
+    if (Number.isNaN(elapsedMs)) return null;
+    if (elapsedMs < MINUTE_MS) return $localize`:@@common.justNow:Just now`;
+
+    const formatter: Intl.RelativeTimeFormat = new Intl.RelativeTimeFormat(this.locale, {
+      numeric: 'auto',
+    });
+
+    for (const [unit, unitMs] of RELATIVE_UNITS) {
+      if (elapsedMs >= unitMs) return formatter.format(-Math.floor(elapsedMs / unitMs), unit);
+    }
+
+    return formatter.format(-Math.floor(elapsedMs / MINUTE_MS), 'minute');
   }
 
   /**

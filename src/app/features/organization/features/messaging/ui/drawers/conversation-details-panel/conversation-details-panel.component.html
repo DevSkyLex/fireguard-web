@@ -1,0 +1,308 @@
+@if (conversation(); as conversation) {
+  <!-- Segmented tab bar, kit geometry: 3px padding on a muted track. -->
+  <div
+    class="mx-4 mt-3 flex gap-0.5 rounded-lg bg-surface-100 p-0.5 dark:bg-surface-800"
+    role="tablist"
+    i18n-aria-label="@@messaging.details.tabsAria"
+    aria-label="Conversation details"
+  >
+    @for (tab of ['info', 'pins', 'files']; track tab) {
+      <button
+        type="button"
+        role="tab"
+        class="h-7.5 flex-1 cursor-pointer rounded-md text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        [class]="
+          activeTab() === tab
+            ? 'bg-surface-0 font-semibold text-surface-950 shadow-sm dark:bg-surface-950 dark:text-surface-50'
+            : 'text-surface-600 hover:text-surface-950 dark:text-surface-400 dark:hover:text-surface-50'
+        "
+        [attr.aria-selected]="activeTab() === tab"
+        [attr.data-testid]="'details-tab-' + tab"
+        (click)="activeTab.set($any(tab))"
+      >
+        @switch (tab) {
+          @case ('info') {
+            <ng-container i18n="@@messaging.details.info">Info</ng-container>
+          }
+          @case ('pins') {
+            <ng-container i18n="@@messaging.details.pins">Pinned</ng-container>
+          }
+          @default {
+            <ng-container i18n="@@messaging.details.files">Files</ng-container>
+          }
+        }
+      </button>
+    }
+  </div>
+
+  <div class="min-h-0 flex-1 overflow-y-auto px-4 py-3" data-testid="conversation-details-panel">
+    @if (store.hasError()) {
+      <div class="flex flex-col items-center gap-2 py-8 text-center">
+        <i class="pi pi-exclamation-triangle text-lg text-surface-400" aria-hidden="true"></i>
+        <p class="text-sm text-surface-600 dark:text-surface-400" i18n="@@messaging.details.error">
+          These details could not be loaded.
+        </p>
+        <button
+          type="button"
+          class="cursor-pointer text-sm font-semibold text-primary hover:underline"
+          i18n="@@messaging.details.retry"
+          data-testid="details-retry"
+          (click)="retry()"
+        >
+          Retry
+        </button>
+      </div>
+    } @else {
+      @switch (activeTab()) {
+        @case ('info') {
+          <h3
+            class="pb-1 text-[11px] font-semibold tracking-wider text-surface-500 uppercase"
+            i18n="@@messaging.details.mainInfo"
+          >
+            Main info
+          </h3>
+
+          <dl class="flex flex-col">
+            <div
+              class="flex min-h-9.5 items-center justify-between gap-3 border-b border-surface-200 py-2 dark:border-surface-800"
+            >
+              <dt
+                class="flex items-center gap-2 text-xs text-surface-500 dark:text-surface-400"
+                i18n="@@messaging.details.created"
+              >
+                <i class="pi pi-calendar text-[11px]" aria-hidden="true"></i>Created
+              </dt>
+              <dd class="text-xs font-medium text-surface-950 dark:text-surface-50">
+                {{ conversation.createdAt | date: 'mediumDate' }}
+              </dd>
+            </div>
+
+            <div
+              class="flex min-h-9.5 items-center justify-between gap-3 border-b border-surface-200 py-2 dark:border-surface-800"
+            >
+              <dt
+                class="flex items-center gap-2 text-xs text-surface-500 dark:text-surface-400"
+                i18n="@@messaging.details.status"
+              >
+                <i class="pi pi-sparkles text-[11px]" aria-hidden="true"></i>Status
+              </dt>
+              <dd class="flex items-center gap-1.5 text-xs font-medium">
+                <i
+                  class="pi pi-circle-fill text-[7px]"
+                  [class]="conversation.isArchived ? 'text-surface-400' : 'text-green-500'"
+                  aria-hidden="true"
+                ></i>
+                @if (conversation.isArchived) {
+                  <span
+                    class="text-surface-600 dark:text-surface-400"
+                    i18n="@@messaging.details.archived"
+                    >Archived</span
+                  >
+                } @else {
+                  <span
+                    class="text-surface-950 dark:text-surface-50"
+                    i18n="@@messaging.details.active"
+                    >Active</span
+                  >
+                }
+              </dd>
+            </div>
+
+            <div class="flex min-h-9.5 items-center justify-between gap-3 py-2">
+              <dt
+                class="flex items-center gap-2 text-xs text-surface-500 dark:text-surface-400"
+                i18n="@@messaging.details.messages"
+              >
+                <i class="pi pi-comment text-[11px]" aria-hidden="true"></i>Messages
+              </dt>
+              <dd
+                class="text-xs font-medium text-surface-950 tabular-nums dark:text-surface-50"
+                data-testid="details-message-count"
+              >
+                {{ conversation.messagesCount }}
+              </dd>
+            </div>
+          </dl>
+
+          @if (conversation.isChannel) {
+            <h3
+              class="flex items-center gap-2 pt-5 pb-1 text-[11px] font-semibold tracking-wider text-surface-500 uppercase"
+            >
+              <ng-container i18n="@@messaging.details.members">Members</ng-container>
+              <span class="tabular-nums" data-testid="details-member-count">{{
+                participantRows().length
+              }}</span>
+            </h3>
+
+            @if (store.isLoading()) {
+              <p
+                class="py-3 text-xs text-surface-500 dark:text-surface-400"
+                i18n="@@messaging.details.loading"
+              >
+                Loading…
+              </p>
+            } @else if (participantRows().length === 0) {
+              <p
+                class="py-3 text-xs text-surface-500 dark:text-surface-400"
+                i18n="@@messaging.details.noMembers"
+              >
+                No members in this channel yet.
+              </p>
+            } @else {
+              <ul class="flex flex-col">
+                @for (participant of participantRows(); track participant.memberId) {
+                  <li class="flex items-center gap-2.5 py-1.5" data-testid="details-member">
+                    <span
+                      class="grid size-9 shrink-0 place-content-center rounded-full bg-surface-100 text-[11px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                      aria-hidden="true"
+                    >
+                      {{ participant.initials }}
+                    </span>
+                    <span class="min-w-0 flex-1">
+                      <span
+                        class="block truncate text-[13px] font-medium text-surface-950 dark:text-surface-50"
+                        >{{ participant.displayName }}</span
+                      >
+                      @if (participant.role) {
+                        <span
+                          class="block truncate text-xs text-surface-500 dark:text-surface-400"
+                          >{{ participant.role }}</span
+                        >
+                      }
+                    </span>
+                    @if (participant.fromTeam) {
+                      <!-- Membership comes from a team binding, so removing it by hand would not stick. -->
+                      <span
+                        class="shrink-0 rounded-sm bg-surface-100 px-1.5 py-0.5 text-[10px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-400"
+                        i18n="@@messaging.details.fromTeam"
+                        >Team</span
+                      >
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          }
+        }
+
+        @case ('pins') {
+          @if (store.isLoading()) {
+            <p
+              class="py-3 text-xs text-surface-500 dark:text-surface-400"
+              i18n="@@messaging.details.loading"
+            >
+              Loading…
+            </p>
+          } @else if (store.pinnedMessages().length === 0) {
+            <div class="flex flex-col items-center gap-2 py-8 text-center">
+              <i class="pi pi-bookmark text-lg text-surface-400" aria-hidden="true"></i>
+              <p
+                class="text-sm text-surface-600 dark:text-surface-400"
+                i18n="@@messaging.details.noPins"
+              >
+                No pinned messages in this conversation yet.
+              </p>
+            </div>
+          } @else {
+            <ul class="flex flex-col gap-2">
+              @for (message of store.pinnedMessages(); track message.id) {
+                <li
+                  class="rounded-lg border border-surface-200 p-2.5 dark:border-surface-700"
+                  data-testid="details-pin"
+                >
+                  <div class="flex items-baseline gap-2">
+                    <span
+                      class="truncate text-xs font-semibold text-surface-950 dark:text-surface-50"
+                      >{{ authorName(message) }}</span
+                    >
+                    <span class="shrink-0 text-[11px] text-surface-500 dark:text-surface-400">{{
+                      message.createdAt | date: 'shortDate'
+                    }}</span>
+                  </div>
+                  @if (message.isDeleted) {
+                    <p
+                      class="mt-1 text-xs text-surface-400 italic dark:text-surface-500"
+                      i18n="@@messaging.details.pinDeleted"
+                    >
+                      This message was deleted.
+                    </p>
+                  } @else {
+                    <p
+                      class="mt-1 line-clamp-3 text-xs break-words text-surface-700 dark:text-surface-300"
+                    >
+                      {{ message.body }}
+                    </p>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        }
+
+        @default {
+          @if (store.isLoading()) {
+            <p
+              class="py-3 text-xs text-surface-500 dark:text-surface-400"
+              i18n="@@messaging.details.loading"
+            >
+              Loading…
+            </p>
+          } @else if (store.attachments().length === 0) {
+            <div class="flex flex-col items-center gap-2 py-8 text-center">
+              <i class="pi pi-folder text-lg text-surface-400" aria-hidden="true"></i>
+              <p
+                class="text-sm text-surface-600 dark:text-surface-400"
+                i18n="@@messaging.details.noFiles"
+              >
+                No files shared in this conversation yet.
+              </p>
+            </div>
+          } @else {
+            <ul class="flex flex-col">
+              @for (attachment of store.attachments(); track attachment.id) {
+                <li>
+                  <a
+                    [href]="attachmentUrl(attachment)"
+                    [attr.download]="attachment.fileName"
+                    class="flex items-center gap-2.5 rounded-lg px-1 py-2 transition-colors hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800"
+                    data-testid="details-file"
+                  >
+                    <span
+                      class="grid size-9 shrink-0 place-content-center rounded-lg bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400"
+                      aria-hidden="true"
+                    >
+                      <i class="pi pi-file text-sm"></i>
+                    </span>
+                    <span class="min-w-0 flex-1">
+                      <span
+                        class="block truncate text-[13px] font-medium text-surface-950 dark:text-surface-50"
+                        >{{ attachment.fileName }}</span
+                      >
+                      <span class="block text-xs text-surface-500 dark:text-surface-400">{{
+                        formatSize(attachment.size)
+                      }}</span>
+                    </span>
+                    <i
+                      class="pi pi-download shrink-0 text-xs text-surface-400"
+                      aria-hidden="true"
+                    ></i>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        }
+      }
+    }
+  </div>
+} @else {
+  <div class="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center">
+    <i class="pi pi-info-circle text-lg text-surface-400" aria-hidden="true"></i>
+    <p
+      class="text-sm text-surface-600 dark:text-surface-400"
+      i18n="@@messaging.details.noConversation"
+    >
+      Open a conversation to see its details.
+    </p>
+  </div>
+}

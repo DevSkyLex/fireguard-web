@@ -5,6 +5,8 @@ export type { OrganizationPermissionName } from './models';
 export { OrganizationPermissionService } from './access';
 export { provideOrganizationFeature } from './organization.feature';
 export {
+  CONVERSATION_DETAILS_PANEL_ID,
+  withConversationDetailsPanel,
   withMessagingSidebar,
   withOrganizationNavigation,
   withOrganizationSwitcher,

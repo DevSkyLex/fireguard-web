@@ -87,7 +87,31 @@
       <header
         class="flex h-14 shrink-0 items-center gap-2 border-b border-surface-200 px-6 dark:border-surface-800"
       >
-        <i class="pi pi-hashtag text-sm text-surface-400" aria-hidden="true"></i>
+        @if (conversation?.isChannel === false) {
+          <!-- A direct conversation is a person, not a channel: identity, not a hash. -->
+          <span
+            class="grid size-5.5 shrink-0 place-content-center rounded-full bg-surface-100 text-[10px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+            aria-hidden="true"
+            data-testid="conversation-header-avatar"
+            >{{ conversationInitials() }}</span
+          >
+        } @else {
+          <i class="pi pi-hashtag text-sm text-surface-400" aria-hidden="true"></i>
+        }
+
+        @if (parentChannelName(); as parentName) {
+          <!-- Nested channel: its parent is part of its identity. -->
+          <span
+            class="hidden max-w-40 truncate text-sm text-surface-500 md:inline dark:text-surface-400"
+            data-testid="conversation-header-parent"
+            >{{ parentName }}</span
+          >
+          <i
+            class="pi pi-chevron-right hidden text-[10px] text-surface-400 md:inline"
+            aria-hidden="true"
+          ></i>
+        }
+
         <h1 class="truncate text-sm font-semibold text-surface-950 dark:text-surface-50">
           <!--
             The name comes from the conversation list, which may still be in
@@ -95,6 +119,38 @@
           -->
           {{ conversation?.name ?? conversation?.subjectLabel ?? '' }}
         </h1>
+
+        <div class="ml-auto flex shrink-0 items-center gap-1">
+          @if (conversation; as openConversation) {
+            <p-button
+              variant="text"
+              severity="secondary"
+              size="small"
+              [icon]="openConversation.isFavorite ? 'pi pi-bookmark-fill' : 'pi pi-bookmark'"
+              i18n-ariaLabel="@@messaging.header.favorite"
+              ariaLabel="Favorite this conversation"
+              i18n-pTooltip="@@messaging.header.favorite"
+              pTooltip="Favorite this conversation"
+              [attr.aria-pressed]="openConversation.isFavorite"
+              data-testid="conversation-favorite"
+              (onClick)="toggleFavorite(openConversation)"
+            />
+          }
+
+          <p-button
+            variant="text"
+            severity="secondary"
+            size="small"
+            icon="pi pi-info-circle"
+            i18n-ariaLabel="@@messaging.header.details"
+            ariaLabel="Conversation details"
+            i18n-pTooltip="@@messaging.header.details"
+            pTooltip="Conversation details"
+            [attr.aria-pressed]="isDetailsPanelOpen()"
+            data-testid="conversation-details-toggle"
+            (onClick)="toggleDetailsPanel()"
+          />
+        </div>
       </header>
 
       <app-message-thread

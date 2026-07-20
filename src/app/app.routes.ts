@@ -8,6 +8,7 @@ import { onboardingGuard, onboardingRequiredGuard } from '@features/onboarding/h
 import { withOnboardingShowcase } from '@features/onboarding/providers';
 import {
   provideOrganizationFeature,
+  withConversationDetailsPanel,
   withMessagingSidebar,
   withOrganizationNavigation,
   withOrganizationSwitcher,
@@ -73,6 +74,7 @@ export const APP_ROUTES: Routes = [
         sidebar: [withOrganizationSwitcher(), withAccountProfile(), withMessagingSidebar()],
         topbar: [withInterventionSyncChip(), withNotificationBell(), withThemeSwitcher()],
         pageHeader: [withInterventionHeaderActions()],
+        panel: [withConversationDetailsPanel()],
       }),
     ],
     children: [

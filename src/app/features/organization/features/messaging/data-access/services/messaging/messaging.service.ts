@@ -4,6 +4,7 @@ import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type { MercureSubscriptionOutput } from '@core/mercure';
 import type {
+  ChannelParticipant,
   ConversationOutput,
   MessageAttachment,
   PresenceOutput,
@@ -139,6 +140,51 @@ export class MessagingService extends HydraApiService {
     return this.getCollection<MessageAttachment>(
       `/api/conversations/${conversationId}/attachments`,
     );
+  }
+
+  /**
+   * Method listPinnedMessages
+   * @method listPinnedMessages
+   *
+   * @description
+   * The conversation's pinned messages, most recently pinned first — the
+   * details panel's Pins tab. Distinct from the per-message `pinnedAt` marker
+   * the thread already renders: a pin made before the loaded window would
+   * otherwise be unreachable.
+   *
+   * @access public
+   * @since 4.1.0
+   *
+   * @param {string} conversationId - The conversation.
+   *
+   * @return {Observable<HydraCollection<MessageOutput>>} The pinned messages.
+   */
+  public listPinnedMessages(conversationId: string): Observable<HydraCollection<MessageOutput>> {
+    return this.getCollection<MessageOutput>(
+      `/api/conversations/${conversationId}/pinned-messages`,
+    );
+  }
+
+  /**
+   * Method listParticipants
+   * @method listParticipants
+   *
+   * @description
+   * A channel's participants. Channel-only by design: a direct conversation
+   * has no participant collection on the API, so callers must not ask for one.
+   *
+   * The rows carry `memberId` and nothing else identifying — names and avatars
+   * are resolved through the organization member directory.
+   *
+   * @access public
+   * @since 4.1.0
+   *
+   * @param {string} channelId - The channel (a channel id IS a conversation id).
+   *
+   * @return {Observable<HydraCollection<ChannelParticipant>>} The participants.
+   */
+  public listParticipants(channelId: string): Observable<HydraCollection<ChannelParticipant>> {
+    return this.getCollection<ChannelParticipant>(`/api/channels/${channelId}/participants`);
   }
 
   /**

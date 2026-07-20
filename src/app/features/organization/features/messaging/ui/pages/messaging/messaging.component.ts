@@ -17,9 +17,16 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
+import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, skip } from 'rxjs';
-import type { MessageOutput } from '@features/organization/features/messaging/models';
+import { SHELL_PANEL_PORT, type ShellPanelPort } from '@core/shell-panel';
+import type {
+  ConversationOutput,
+  MessageOutput,
+} from '@features/organization/features/messaging/models';
+import { CONVERSATION_DETAILS_PANEL_ID } from '@features/organization/features/messaging/providers';
 import { MessageDraftService } from '@features/organization/features/messaging/services';
+import { ConversationInventoryStore } from '@features/organization/features/messaging/state';
 import {
   MessagingWorkspaceStore,
   type MessagingWorkspaceStoreType,
@@ -51,7 +58,7 @@ import { EmptyState } from '@shared/components';
  */
 @Component({
   selector: 'app-messaging',
-  imports: [FormsModule, ButtonModule, TextareaModule, MessageThread, EmptyState],
+  imports: [FormsModule, ButtonModule, TextareaModule, TooltipModule, MessageThread, EmptyState],
   // The page is a full-height two-pane workspace, so its host must stretch;
   // left to its default `display: inline` it collapses and the panes shrink to
   // their content.
@@ -231,6 +238,95 @@ export class MessagingPage {
   private readonly draftService: MessageDraftService =
     inject<MessageDraftService>(MessageDraftService);
 
+  /**
+   * Property shellPanel
+   * @readonly
+   *
+   * @description
+   * Shell panel port — how a routed page opens the right-hand region without
+   * importing the layout, which §5 forbids.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @type {ShellPanelPort}
+   */
+  private readonly shellPanel: ShellPanelPort = inject<ShellPanelPort>(SHELL_PANEL_PORT);
+
+  /**
+   * Property inventory
+   * @readonly
+   *
+   * @description
+   * Shared conversation list, used here to resolve a nested channel's parent
+   * name and to flip the favorite flag.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @type {InstanceType<typeof ConversationInventoryStore>}
+   */
+  private readonly inventory: InstanceType<typeof ConversationInventoryStore> = inject(
+    ConversationInventoryStore,
+  );
+
+  /**
+   * Property isDetailsPanelOpen
+   * @readonly
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isDetailsPanelOpen: Signal<boolean> = computed((): boolean =>
+    this.shellPanel.openPanelIds().includes(CONVERSATION_DETAILS_PANEL_ID),
+  );
+
+  /**
+   * Property parentChannelName
+   * @readonly
+   *
+   * @description
+   * Name of the open channel's parent, when it is nested — the prototype puts
+   * it before the channel name as a path.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly parentChannelName: Signal<string | null> = computed((): string | null => {
+    const parentId: string | null | undefined =
+      this.store.activeConversation()?.parentConversationId;
+    if (!parentId) return null;
+
+    return (
+      this.inventory
+        .conversations()
+        .find((candidate: ConversationOutput): boolean => candidate.id === parentId)?.name ?? null
+    );
+  });
+
+  /**
+   * Property conversationInitials
+   * @readonly
+   *
+   * @description
+   * Initial shown in place of an avatar for a direct conversation.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly conversationInitials: Signal<string> = computed((): string => {
+    const conversation: ConversationOutput | null = this.store.activeConversation();
+    const label: string = conversation?.name ?? conversation?.subjectLabel ?? '';
+
+    return label.trim().charAt(0).toUpperCase() || '?';
+  });
+
   //#region Lifecycle
   /**
    * Wires the member directory, presence and draft autosave. The conversation
@@ -320,6 +416,39 @@ export class MessagingPage {
    *
    * @returns {void}
    */
+  /**
+   * Method toggleDetailsPanel
+   *
+   * @description
+   * Shows or hides the shell's conversation details panel.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @returns {void}
+   */
+  protected toggleDetailsPanel(): void {
+    this.shellPanel.toggle(CONVERSATION_DETAILS_PANEL_ID);
+  }
+
+  /**
+   * Method toggleFavorite
+   *
+   * @description
+   * Flips the conversation's favorite flag — sidebar ordering only, never an
+   * access decision.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {ConversationOutput} conversation - The open conversation.
+   *
+   * @returns {void}
+   */
+  protected toggleFavorite(conversation: ConversationOutput): void {
+    this.inventory.toggleFavorite(conversation);
+  }
+
   protected open(conversationId: string): void {
     // Opened directly rather than waiting for the URL to round-trip: query-param
     // input binding is not guaranteed to have flushed by the time the user

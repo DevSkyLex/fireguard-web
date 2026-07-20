@@ -26,7 +26,8 @@
     />
   } @else {
     @for (message of messages(); track message.id) {
-      <article class="group flex gap-3" data-testid="message-row">
+      <!-- `relative`: the row is the anchor its floating action card sits on. -->
+      <article class="group relative flex gap-3" data-testid="message-row">
         @let author = this.author(message.authorMember);
 
         <!-- Sized explicitly to the avatar: without a definite box the
@@ -82,6 +83,15 @@
             >
               {{ message.createdAt | date: 'shortTime' }}
             </time>
+            @if (isMine(message)) {
+              <span
+                class="rounded-sm bg-surface-100 px-1.5 py-0.5 text-[10px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-400"
+                i18n="@@messaging.thread.you"
+                data-testid="message-you-badge"
+              >
+                You
+              </span>
+            }
             @if (message.editedAt) {
               <span
                 class="text-xs text-surface-400 dark:text-surface-500"
@@ -100,10 +110,26 @@
               This message was deleted.
             </p>
           } @else {
-            <p
-              class="max-w-[62ch] text-sm break-words whitespace-pre-wrap text-surface-700 dark:text-surface-300"
-            >
-              {{ message.body }}
+            <!--
+              Split into parts: the body stores mentions as `@{uuid}` tokens, so
+              printing it raw shows the reader a UUID mid-sentence.
+
+              `whitespace-pre-wrap` sits on the text segments, NOT on the
+              paragraph: on the paragraph it also preserves this template's own
+              indentation, padding every mention with stray spaces.
+            -->
+            <p class="max-w-[62ch] text-sm break-words text-surface-700 dark:text-surface-300">
+              @for (part of bodyParts(message.body); track $index) {
+                @if (part.kind === 'mention') {
+                  <span
+                    class="font-medium text-primary-700 dark:text-primary-300"
+                    data-testid="message-mention"
+                    >@{{ mentionLabel(part.value) }}</span
+                  >
+                } @else {
+                  <span class="whitespace-pre-wrap">{{ part.value }}</span>
+                }
+              }
             </p>
           }
 
@@ -191,31 +217,46 @@
         </div>
 
         <!--
-          Row actions stay hidden until hover or keyboard focus so the thread
-          reads as prose, but they remain focusable — `opacity` hides them
-          visually without removing them from the tab order.
+          Row actions: a floating elevated card overlapping the row's top edge,
+          as in the kit. Hidden until hover or keyboard focus so the thread
+          reads as prose — `opacity`, never `hidden`, so they stay in the tab
+          order.
         -->
         <div
-          class="flex shrink-0 items-start gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100"
+          class="absolute -top-3 right-0 flex items-center gap-0.5 rounded-lg border border-surface-200 bg-surface-0 p-0.5 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 focus-within:opacity-100 dark:border-surface-700 dark:bg-surface-900"
         >
           <button
             type="button"
-            data-testid="pin-toggle"
-            class="rounded p-1 text-surface-400 hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200"
-            [class.text-amber-600]="message.pinnedAt"
-            [attr.aria-pressed]="!!message.pinnedAt"
-            i18n-aria-label="@@messaging.thread.pinAction"
-            aria-label="Pin message"
-            (click)="pinToggled.emit(message)"
+            data-testid="react-toggle"
+            class="grid size-7 cursor-pointer place-content-center rounded text-surface-500 hover:bg-surface-100 hover:text-surface-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800 dark:hover:text-surface-200"
+            [attr.aria-expanded]="pickerMessageId() === message.id"
+            i18n-aria-label="@@messaging.thread.reactAction"
+            aria-label="Add a reaction"
+            (click)="togglePicker(message.id)"
           >
-            <i class="pi pi-bookmark text-xs" aria-hidden="true"></i>
+            <i class="pi pi-face-smile text-xs" aria-hidden="true"></i>
+          </button>
+
+          <button
+            type="button"
+            data-testid="reply-action"
+            class="grid size-7 cursor-pointer place-content-center rounded text-surface-500 hover:bg-surface-100 hover:text-surface-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800 dark:hover:text-surface-200"
+            i18n-aria-label="@@messaging.thread.replyAction"
+            aria-label="Reply in thread"
+            (click)="threadOpened.emit(message)"
+          >
+            <i class="pi pi-reply text-xs" aria-hidden="true"></i>
           </button>
 
           <button
             type="button"
             data-testid="save-toggle"
-            class="rounded p-1 text-surface-400 hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200"
-            [class.text-primary-600]="message.isSaved"
+            class="grid size-7 cursor-pointer place-content-center rounded hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800"
+            [class]="
+              message.isSaved
+                ? 'text-primary-600 dark:text-primary-400'
+                : 'text-surface-500 hover:text-surface-800 dark:hover:text-surface-200'
+            "
             [attr.aria-pressed]="message.isSaved"
             i18n-aria-label="@@messaging.thread.saveAction"
             aria-label="Save message"
@@ -223,7 +264,47 @@
           >
             <i class="pi pi-star text-xs" aria-hidden="true"></i>
           </button>
+
+          <button
+            type="button"
+            data-testid="pin-toggle"
+            class="grid size-7 cursor-pointer place-content-center rounded hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800"
+            [class]="
+              message.pinnedAt
+                ? 'text-amber-600 dark:text-amber-400'
+                : 'text-surface-500 hover:text-surface-800 dark:hover:text-surface-200'
+            "
+            [attr.aria-pressed]="!!message.pinnedAt"
+            i18n-aria-label="@@messaging.thread.pinAction"
+            aria-label="Pin message"
+            (click)="pinToggled.emit(message)"
+          >
+            <i class="pi pi-bookmark text-xs" aria-hidden="true"></i>
+          </button>
         </div>
+
+        @if (pickerMessageId() === message.id) {
+          <!-- Quick reactions — the kit's eight. -->
+          <div
+            class="absolute -top-11 right-0 z-10 flex gap-0.5 rounded-lg border border-surface-200 bg-surface-0 p-1 shadow-lg dark:border-surface-700 dark:bg-surface-900"
+            role="group"
+            i18n-aria-label="@@messaging.thread.reactAction"
+            aria-label="Add a reaction"
+            data-testid="reaction-picker"
+          >
+            @for (emoji of quickReactions; track emoji) {
+              <button
+                type="button"
+                class="grid size-7 cursor-pointer place-content-center rounded text-base hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800"
+                [attr.aria-label]="emoji"
+                data-testid="quick-reaction"
+                (click)="pickReaction(message, emoji)"
+              >
+                {{ emoji }}
+              </button>
+            }
+          </div>
+        }
       </article>
     }
   }

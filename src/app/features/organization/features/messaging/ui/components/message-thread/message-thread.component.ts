@@ -5,8 +5,10 @@ import {
   inject,
   input,
   output,
+  signal,
   type InputSignal,
   type OutputEmitterRef,
+  type WritableSignal,
 } from '@angular/core';
 import { ENV_CONFIG, type EnvironmentConfig } from '@core/config/environment';
 import { toMemberId } from '@features/organization/features/messaging/data-access';
@@ -17,6 +19,7 @@ import type {
 } from '@features/organization/features/messaging/models';
 import type { MemberIdentity } from '@features/organization/state';
 import { EmptyState, Skeleton } from '@shared/components';
+import { toMessageBodyParts, type MessageBodyPart } from './utils/message-body-parts.utils';
 
 /**
  * Component MessageThread
@@ -224,6 +227,136 @@ export class MessageThread {
    *
    * @returns {MemberIdentity} The identity to render.
    */
+  /**
+   * Method bodyParts
+   *
+   * @description
+   * The message body split into text and mention segments, so a mention can
+   * render as a chip instead of the raw `@{uuid}` token the body stores.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @param {string | null} body - The message body.
+   *
+   * @returns {readonly MessageBodyPart[]} Ordered segments.
+   */
+  protected bodyParts(body: string | null): readonly MessageBodyPart[] {
+    return toMessageBodyParts(body);
+  }
+
+  /**
+   * Method mentionLabel
+   *
+   * @description
+   * A mention's display label. Falls back to the bare id while the directory
+   * is still loading — never to the raw token, which is unreadable.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @param {string} memberId - The mentioned member.
+   *
+   * @returns {string} The label to show after the `@`.
+   */
+  protected mentionLabel(memberId: string): string {
+    return this.authors().get(memberId)?.displayName ?? memberId;
+  }
+
+  /**
+   * Method isMine
+   *
+   * @description
+   * Whether the acting member wrote this message — the row carries a "You"
+   * badge when they did.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @param {MessageOutput} message - The row's message.
+   *
+   * @returns {boolean} Whether the message is the reader's own.
+   */
+  protected isMine(message: MessageOutput): boolean {
+    const currentMemberId: string | null = this.currentMemberId();
+
+    return currentMemberId !== null && toMemberId(message.authorMember) === currentMemberId;
+  }
+
+  /**
+   * Property quickReactions
+   * @readonly
+   *
+   * @description
+   * The eight one-tap emoji of the design kit's reaction picker.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {readonly string[]}
+   */
+  protected readonly quickReactions: readonly string[] = [
+    '👍',
+    '❤️',
+    '🎉',
+    '✅',
+    '🙏',
+    '🔥',
+    '👀',
+    '⚠️',
+  ];
+
+  /**
+   * Property pickerMessageId
+   * @readonly
+   *
+   * @description
+   * Which message currently has its reaction picker open — one at a time, so
+   * opening a second closes the first.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly pickerMessageId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /**
+   * Method togglePicker
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @param {string} messageId - The row whose picker was requested.
+   *
+   * @returns {void}
+   */
+  protected togglePicker(messageId: string): void {
+    this.pickerMessageId.update((open: string | null): string | null =>
+      open === messageId ? null : messageId,
+    );
+  }
+
+  /**
+   * Method pickReaction
+   *
+   * @description
+   * Applies a quick reaction and closes the picker — leaving it open would
+   * hide the very chip the user just added.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @param {MessageOutput} message - The message reacted to.
+   * @param {string} emoji - The chosen emoji.
+   *
+   * @returns {void}
+   */
+  protected pickReaction(message: MessageOutput, emoji: string): void {
+    this.pickerMessageId.set(null);
+    this.reactionToggled.emit({ message, emoji });
+  }
+
   /**
    * Method isOnline
    *

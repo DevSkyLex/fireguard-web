@@ -239,6 +239,24 @@
             <span i18n="@@intervention.header.updatedLabel"
               >Updated {{ intervention.updatedAt | date: 'mediumDate' }}</span
             >
+
+            <!--
+              Labels were reachable only from the rail, which is collapsed on a
+              phone and below the fold on a laptop — so the one classification
+              a team applies itself was the one thing the header never said.
+              Same chip as the rail and the list, so the three read alike.
+            -->
+            @if (intervention.labels.length > 0) {
+              <span class="text-surface-300 dark:text-surface-600" aria-hidden="true">·</span>
+              <span
+                class="flex flex-wrap items-center gap-1.5"
+                data-testid="intervention-header-labels"
+              >
+                @for (label of intervention.labels; track label.id) {
+                  <app-intervention-label-chip [label]="label" />
+                }
+              </span>
+            }
           </div>
           <div class="mt-4 max-w-prose">
             @if (!descriptionEditorOpen()) {

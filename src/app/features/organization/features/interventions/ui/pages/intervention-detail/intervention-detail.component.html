@@ -188,8 +188,19 @@
               class="pi pi-check-circle mt-0.5 shrink-0 text-green-600 dark:text-green-400"
               aria-hidden="true"
             ></i>
+            <!--
+              Says read-only for the same reason the abandoned banner below
+              does: the surface still looks editable, so without it the only
+              way to find out is to try and have the action fail.
+
+              The kit also asks for a summary of what was materialised. No
+              field carries it — InterventionOutput has neither a publication
+              timestamp nor a record of what was written — so that half needs
+              an API change and is left out rather than invented.
+            -->
             <span i18n="@@intervention.review.publishedBanner"
-              >Published — every approved change was applied to the records atomically.</span
+              >Published — every approved change was applied to the records atomically. This
+              intervention is now read-only.</span
             >
           </div>
         } @else if (intervention.status === 'abandoned') {

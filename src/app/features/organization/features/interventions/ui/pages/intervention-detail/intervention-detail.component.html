@@ -736,7 +736,37 @@
       >
         <h2 i18n="@@intervention.sidebar.title" class="sr-only">Properties</h2>
 
-        <dl class="flex flex-col text-sm">
+        <!--
+          A disclosure on narrow screens only. The rail stacks under the body
+          below `xl`, which put a long definition list between the reader and
+          the end of the page; from `xl` up it is a column beside the body and
+          `xl:block` keeps it open regardless of this toggle.
+        -->
+        <button
+          type="button"
+          class="mb-1 flex w-full cursor-pointer items-center justify-between gap-2 py-1 text-left xl:hidden"
+          [attr.aria-expanded]="propertiesExpanded()"
+          data-testid="intervention-properties-toggle"
+          (click)="propertiesExpanded.set(!propertiesExpanded())"
+        >
+          <span
+            class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
+            i18n="@@intervention.sidebar.title"
+            >Properties</span
+          >
+          <i
+            class="pi text-xs text-surface-500 dark:text-surface-400"
+            [class]="propertiesExpanded() ? 'pi-chevron-up' : 'pi-chevron-down'"
+            aria-hidden="true"
+          ></i>
+        </button>
+
+        <dl
+          class="flex-col text-sm xl:flex"
+          [class.hidden]="!propertiesExpanded()"
+          [class.flex]="propertiesExpanded()"
+          data-testid="intervention-properties-list"
+        >
           <div
             class="flex flex-col gap-2 border-b border-surface-100 py-3 first:pt-0 last:border-0 dark:border-surface-800"
           >

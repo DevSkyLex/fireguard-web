@@ -1441,6 +1441,25 @@ export class InterventionDetailPage {
   );
 
   /**
+   * Property propertiesExpanded
+   * @readonly
+   *
+   * @description
+   * Whether the properties rail is open on narrow screens.
+   *
+   * The rail stacks below the body under `xl`, which put a long definition
+   * list between the reader and the end of the page. It stays a disclosure on
+   * small screens only — from `xl` up the rail is a column beside the body and
+   * is always shown, so this flag does not apply there.
+   *
+   * @access protected
+   * @since 5.4.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly propertiesExpanded: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
    * Property canRequestChanges
    * @readonly
    *

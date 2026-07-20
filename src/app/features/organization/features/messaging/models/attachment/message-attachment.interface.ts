@@ -3,9 +3,10 @@ import type { HydraItem } from '@core/api/models';
 /**
  * A file attached to a message.
  *
- * The API exposes upload, list and delete, but **no download endpoint** — so
- * there is no URL here to link to. Attachments render as metadata (name, size)
- * until the backend serves their content.
+ * Deliberately no URL field: the transport payload carries metadata only, and
+ * the download link is derived — `/api/messaging-attachments/{id}/content`
+ * against `ENV_CONFIG.apiUrl` — because the endpoint is a cookie-authenticated
+ * plain navigation, not an API resource with an IRI of its own.
  *
  * @since 1.0.0
  */

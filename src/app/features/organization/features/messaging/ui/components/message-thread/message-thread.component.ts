@@ -2,11 +2,13 @@ import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  inject,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
+import { ENV_CONFIG, type EnvironmentConfig } from '@core/config/environment';
 import type {
   MessageAttachment,
   MessageOutput,
@@ -247,6 +249,39 @@ export class MessageThread {
    */
   protected attachments(messageId: string): readonly MessageAttachment[] {
     return this.attachmentsByMessage().get(messageId) ?? [];
+  }
+
+  /**
+   * Property env
+   * @readonly
+   *
+   * @description
+   * Runtime environment, for the absolute attachment download URL — the
+   * download is a plain navigation (cookie-authenticated, served with
+   * `Content-Disposition: attachment`), not an HttpClient call.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {EnvironmentConfig}
+   */
+  private readonly env: EnvironmentConfig = inject<EnvironmentConfig>(ENV_CONFIG);
+
+  /**
+   * Method attachmentUrl
+   *
+   * @description
+   * Absolute URL of an attachment's binary content.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {MessageAttachment} attachment - The attachment to download.
+   *
+   * @returns {string} Download URL.
+   */
+  protected attachmentUrl(attachment: MessageAttachment): string {
+    return `${this.env.apiUrl}/api/messaging-attachments/${attachment.id}/content`;
   }
 
   /**

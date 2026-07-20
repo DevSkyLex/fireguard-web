@@ -120,17 +120,33 @@
           @if (attachments(message.id).length > 0) {
             <ul class="mt-1 flex flex-col gap-1">
               @for (attachment of attachments(message.id); track attachment.id) {
-                <li
-                  class="flex items-center gap-2 rounded-lg border border-surface-200 px-2.5 py-1.5 text-xs dark:border-surface-700"
-                  data-testid="message-attachment"
-                >
-                  <i class="pi pi-paperclip text-surface-400" aria-hidden="true"></i>
-                  <span class="max-w-64 truncate text-surface-700 dark:text-surface-300">
-                    {{ attachment.fileName }}
-                  </span>
-                  <span class="text-surface-400 tabular-nums dark:text-surface-500">
-                    {{ formatSize(attachment.size) }}
-                  </span>
+                <li>
+                  <!--
+                    A plain link, not an HttpClient call: the endpoint streams
+                    the bytes with Content-Disposition: attachment and rides
+                    the session cookie.
+                  -->
+                  <a
+                    [href]="attachmentUrl(attachment)"
+                    [attr.download]="attachment.fileName"
+                    class="group/attachment flex items-center gap-2 rounded-lg border border-surface-200 px-2.5 py-1.5 text-xs transition-colors hover:border-surface-300 hover:bg-surface-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-700 dark:hover:border-surface-600 dark:hover:bg-surface-900"
+                    data-testid="message-attachment"
+                  >
+                    <i
+                      class="pi pi-paperclip text-surface-400 group-hover/attachment:hidden"
+                      aria-hidden="true"
+                    ></i>
+                    <i
+                      class="pi pi-download hidden text-surface-500 group-hover/attachment:block dark:text-surface-400"
+                      aria-hidden="true"
+                    ></i>
+                    <span class="max-w-64 truncate text-surface-700 dark:text-surface-300">
+                      {{ attachment.fileName }}
+                    </span>
+                    <span class="text-surface-400 tabular-nums dark:text-surface-500">
+                      {{ formatSize(attachment.size) }}
+                    </span>
+                  </a>
                 </li>
               }
             </ul>

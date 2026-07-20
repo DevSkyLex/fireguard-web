@@ -473,7 +473,9 @@ test.describe('Messaging workspace', () => {
     await expect(page.getByTestId('thread-panel')).toHaveCount(0);
   });
 
-  test('shows an attachment on the message that carries it', async ({ page }) => {
+  test('shows an attachment as a download link on the message that carries it', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
@@ -482,6 +484,9 @@ test.describe('Messaging workspace', () => {
     const attachment = page.getByTestId('message-attachment');
     await expect(attachment).toContainText('inspection-report.pdf');
     await expect(attachment).toContainText('240 KB');
+    // The chip is a plain cookie-authenticated link to the content endpoint.
+    await expect(attachment).toHaveAttribute('href', /\/api\/messaging-attachments\/.+\/content$/);
+    await expect(attachment).toHaveAttribute('download', 'inspection-report.pdf');
   });
 
   test('sends a message with a file attached', async ({ page }) => {

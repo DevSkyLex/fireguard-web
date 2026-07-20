@@ -249,6 +249,23 @@
                   </button>
                 </li>
               }
+
+              <!--
+                Adding a second reaction otherwise meant hovering the row again
+                to find the action card — the chips are where the eye already is.
+              -->
+              <li>
+                <button
+                  type="button"
+                  data-testid="add-reaction-chip"
+                  class="flex h-[26px] cursor-pointer items-center rounded-full border border-dashed border-surface-300 px-2 text-xs text-surface-500 hover:border-surface-400 hover:text-surface-700 dark:border-surface-600 dark:text-surface-400 dark:hover:text-surface-200"
+                  i18n-aria-label="@@messaging.thread.reactAction"
+                  aria-label="Add a reaction"
+                  (click)="togglePicker(message.id)"
+                >
+                  <i class="pi pi-plus text-[10px]" aria-hidden="true"></i>
+                </button>
+              </li>
             </ul>
           }
 

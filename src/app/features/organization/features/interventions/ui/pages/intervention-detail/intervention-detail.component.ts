@@ -1090,6 +1090,27 @@ export class InterventionDetailPage {
   });
 
   /**
+   * Property canComment
+   * @readonly
+   *
+   * @description
+   * Whether a comment can still be posted. Unlike {@link canEditDetails} this
+   * does not require planning rights — anyone who can read the intervention may
+   * comment on it — only that the intervention has not reached a terminal
+   * status.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canComment: Signal<boolean> = computed<boolean>(() => {
+    const status: InterventionStatus | undefined = this.store.intervention()?.status;
+
+    return !!status && status !== 'published' && status !== 'abandoned';
+  });
+
+  /**
    * Property canAddWorkItem
    * @readonly
    *

@@ -695,12 +695,27 @@
               } @else {
                 <app-activity-feed [items]="activityFeedItems()" />
               }
-              <app-comment-composer
-                i18n-placeholder="@@intervention.detail.commentPlaceholder"
-                placeholder="Write a comment…"
-                [pending]="store.saving()"
-                (submitted)="addComment($event)"
-              />
+              <!--
+                A terminal intervention takes no new comment: offering the field
+                only to have the post rejected is worse than not offering it.
+                The feed above stays readable.
+              -->
+              @if (canComment()) {
+                <app-comment-composer
+                  i18n-placeholder="@@intervention.detail.commentPlaceholder"
+                  placeholder="Write a comment…"
+                  [pending]="store.saving()"
+                  (submitted)="addComment($event)"
+                />
+              } @else {
+                <p
+                  class="text-xs text-surface-400 dark:text-surface-500"
+                  data-testid="comments-closed-hint"
+                  i18n="@@intervention.detail.commentsClosed"
+                >
+                  This intervention is closed — its activity is kept for the record.
+                </p>
+              }
               @if (!online()) {
                 <p
                   data-testid="offline-comment-hint"

@@ -85,6 +85,8 @@
         [attachmentsByMessage]="store.attachmentsByMessage()"
         [loading]="store.isLoadingMessages()"
         [canManageMessages]="canManageMessages()"
+        [hasOlderMessages]="store.hasOlderMessages()"
+        (olderRequested)="store.loadOlderMessages()"
         (reactionToggled)="toggleReaction($event)"
         (edited)="editMessage($event)"
         (deleteRequested)="confirmDeleteMessage($event)"

@@ -26,6 +26,18 @@
       description="Start the conversation — everyone in this channel will see it."
     />
   } @else {
+    @if (hasOlderMessages()) {
+      <button
+        type="button"
+        data-testid="load-older-messages"
+        class="mx-auto cursor-pointer rounded-full border border-surface-200 px-3 py-1 text-xs text-surface-600 hover:bg-surface-100 dark:border-surface-700 dark:text-surface-400 dark:hover:bg-surface-800"
+        (click)="olderRequested.emit()"
+        i18n="@@messaging.thread.loadOlder"
+      >
+        Load earlier messages
+      </button>
+    }
+
     @for (message of messages(); track message.id) {
       <!-- `relative`: the row is the anchor its floating action card sits on. -->
       <article class="group relative flex gap-3" data-testid="message-row">

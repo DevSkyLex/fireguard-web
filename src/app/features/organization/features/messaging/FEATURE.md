@@ -32,6 +32,13 @@ the textarea — rendering a chip there would need a rich-text field.
 `shortcutsRequested` is published but not yet answered; the shortcut palette is
 still to build.
 
+**A thread does not stop at its first page.** The API pages messages at 50,
+newest-first; the store tracks `loadedMessagesPage` / `messagesTotal` and
+`loadOlderMessages` prepends the page before, merging by id because a message
+can straddle two requests. Scrollback deliberately skips the `THREAD_WINDOW`
+trim: that cap bounds the live tail's growth, and applying it here would drop
+the very history just asked for.
+
 **Editing is the author's alone; deleting also reaches a moderator.** The
 backend refuses `PATCH /api/messages/{id}` to anyone but the author whatever
 their permissions, so the thread's overflow menu offers Edit only to them.

@@ -38,12 +38,24 @@ describe('MessagingWorkspaceStore live thread', () => {
   let addReaction: ReturnType<typeof vi.fn>;
   let removeReaction: ReturnType<typeof vi.fn>;
 
+  let listMessages: ReturnType<typeof vi.fn>;
+
   beforeEach(() => {
     addReaction = vi.fn(() => EMPTY);
     removeReaction = vi.fn(() => of(undefined));
   });
 
-  const createStore = (initial: readonly MessageOutput[]) => {
+  const createStore = (
+    initial: readonly MessageOutput[],
+    options: { readonly total?: number; readonly older?: readonly MessageOutput[] } = {},
+  ) => {
+    listMessages = vi.fn((_id: string, request?: { readonly page?: number }) =>
+      of(
+        (request?.page ?? 1) > 1
+          ? { member: options.older ?? [], totalItems: options.total ?? initial.length }
+          : { member: initial, totalItems: options.total ?? initial.length },
+      ),
+    );
     TestBed.configureTestingModule({
       providers: [
         MessagingWorkspaceStore,
@@ -52,7 +64,7 @@ describe('MessagingWorkspaceStore live thread', () => {
           provide: MessagingService,
           useValue: {
             listConversations: vi.fn(() => of({ member: [], totalItems: 0 })),
-            listMessages: vi.fn(() => of({ member: initial, totalItems: initial.length })),
+            listMessages,
             getSubscription: vi.fn(() => of({ token: 'jwt', topic: 'conversation/c1' })),
             listAttachments: vi.fn(() => of({ member: [], totalItems: 0 })),
             markRead: vi.fn(() => EMPTY),
@@ -149,5 +161,45 @@ describe('MessagingWorkspaceStore live thread', () => {
     expect(ids).not.toContain('m0');
     expect(ids).not.toContain('live-120');
     expect(ids).toContain('live-121');
+  });
+
+  describe('scrollback', () => {
+    const recent = message('m50', 'newest', '2026-07-01T10:00:00Z');
+    const older = message('m1', 'oldest', '2026-06-01T10:00:00Z');
+
+    it('offers scrollback only while history remains', () => {
+      const complete = createStore([recent]);
+      TestBed.tick();
+      expect(complete.hasOlderMessages()).toBe(false);
+
+      TestBed.resetTestingModule();
+      const partial = createStore([recent], { total: 2, older: [older] });
+      TestBed.tick();
+      expect(partial.hasOlderMessages()).toBe(true);
+    });
+
+    it('prepends the previous page and stops offering more once complete', () => {
+      const store = createStore([recent], { total: 2, older: [older] });
+      TestBed.tick();
+
+      store.loadOlderMessages();
+      TestBed.tick();
+
+      // Older first: the thread reads oldest to newest.
+      expect(store.messages().map((m) => m.id)).toEqual(['m1', 'm50']);
+      expect(listMessages).toHaveBeenLastCalledWith('c1', { itemsPerPage: 50, page: 2 });
+      expect(store.hasOlderMessages()).toBe(false);
+    });
+
+    it('does not fetch when everything is already loaded', () => {
+      const store = createStore([recent]);
+      TestBed.tick();
+      const before = listMessages.mock.calls.length;
+
+      store.loadOlderMessages();
+      TestBed.tick();
+
+      expect(listMessages.mock.calls.length).toBe(before);
+    });
   });
 });

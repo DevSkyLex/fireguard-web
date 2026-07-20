@@ -263,6 +263,35 @@ export class MessageThread {
   public readonly canManageMessages: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property hasOlderMessages
+   * @readonly
+   *
+   * @description
+   * Whether history remains above what is loaded, which is what the scrollback
+   * affordance is for.
+   *
+   * @access public
+   * @since 2.2.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly hasOlderMessages: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property olderRequested
+   * @readonly
+   *
+   * @description
+   * The reader asked for the page before.
+   *
+   * @access public
+   * @since 2.2.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly olderRequested: OutputEmitterRef<void> = output<void>();
+
+  /**
    * Property moreMessageId
    * @readonly
    *

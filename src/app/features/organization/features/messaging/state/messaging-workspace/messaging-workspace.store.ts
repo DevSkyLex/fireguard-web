@@ -37,6 +37,14 @@ interface MessagingWorkspaceState {
   readonly messagesCallState: CallState<readonly MessageOutput[]>;
   readonly sendCallState: CallState<MessageOutput>;
   readonly activeConversationId: string | null;
+
+  /**
+   * Oldest page already fetched, and how many messages the conversation holds.
+   * The API pages at 50 newest-first; without these a long thread stopped dead
+   * at its first page with nothing saying so.
+   */
+  readonly loadedMessagesPage: number;
+  readonly messagesTotal: number;
 }
 
 const INITIAL_STATE: MessagingWorkspaceState = {
@@ -47,6 +55,8 @@ const INITIAL_STATE: MessagingWorkspaceState = {
   messagesCallState: idleCallState(),
   sendCallState: idleCallState(),
   activeConversationId: null,
+  loadedMessagesPage: 1,
+  messagesTotal: 0,
 };
 
 /**
@@ -190,6 +200,20 @@ export const MessagingWorkspaceStore = signalStore(
     isLoadingMessages: computed<boolean>(() => isCallPending(store.messagesCallState())),
 
     /**
+     * Computed hasOlderMessages
+     *
+     * @description
+     * Whether the conversation holds messages older than what is loaded. Drives
+     * the scrollback affordance — without it a long thread simply stopped, and
+     * nothing told the reader there was more above.
+     *
+     * @type {Signal<boolean>}
+     */
+    hasOlderMessages: computed<boolean>(
+      () => (store.messagesCallState().data ?? []).length < store.messagesTotal(),
+    ),
+
+    /**
      * Computed threadRoot
      *
      * @description
@@ -282,7 +306,11 @@ export const MessagingWorkspaceStore = signalStore(
             return service.listMessages(conversationId, { itemsPerPage: 50 }).pipe(
               tapResponse({
                 next: (collection: HydraCollection<MessageOutput>) =>
-                  patchState(store, { messagesCallState: successCallState(collection.member) }),
+                  patchState(store, {
+                    messagesCallState: successCallState(collection.member),
+                    loadedMessagesPage: 1,
+                    messagesTotal: collection.totalItems,
+                  }),
                 error: (error: unknown) =>
                   patchState(store, { messagesCallState: errorCallState(toStoreError(error)) }),
               }),
@@ -351,6 +379,50 @@ export const MessagingWorkspaceStore = signalStore(
       return {
         loadMessages,
         streamMessages,
+
+        /**
+         * Method loadOlderMessages
+         *
+         * @description
+         * Fetches the next page back and merges it in. Deliberately does NOT
+         * trim to the thread window: that cap exists to bound the live tail's
+         * growth, and applying it here would drop the very history just asked
+         * for.
+         *
+         * @returns {void}
+         */
+        loadOlderMessages: rxMethod<void>(
+          pipe(
+            switchMap(() => {
+              const conversationId: string | null = store.activeConversationId();
+              const loaded: readonly MessageOutput[] = store.messagesCallState().data ?? [];
+
+              if (conversationId === null || loaded.length >= store.messagesTotal()) return EMPTY;
+
+              const page: number = store.loadedMessagesPage() + 1;
+
+              return service.listMessages(conversationId, { itemsPerPage: 50, page }).pipe(
+                tapResponse({
+                  next: (collection: HydraCollection<MessageOutput>) => {
+                    // Merge by id: a message can straddle two pages when one
+                    // arrives between the requests.
+                    const known = new Set(loaded.map((message: MessageOutput) => message.id));
+                    const older = collection.member.filter(
+                      (message: MessageOutput) => !known.has(message.id),
+                    );
+
+                    patchState(store, {
+                      messagesCallState: successCallState([...older, ...loaded]),
+                      loadedMessagesPage: page,
+                      messagesTotal: collection.totalItems,
+                    });
+                  },
+                  error: (): void => undefined,
+                }),
+              );
+            }),
+          ),
+        ),
 
         /**
          * Method selectConversation

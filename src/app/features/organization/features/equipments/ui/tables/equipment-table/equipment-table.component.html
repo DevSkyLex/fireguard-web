@@ -251,9 +251,15 @@
       </ng-template>
 
       <ng-template pTemplate="body" let-equipment>
-        <tr class="group">
+        <!--
+          The whole row opens the record. Reaching for the row menu to do the
+          most common thing is friction, and every other table in the kit lets
+          the row itself be the target. The checkbox cell stops the event so
+          selecting never navigates.
+        -->
+        <tr class="group cursor-pointer" data-testid="equipment-row" (click)="view.emit(equipment)">
           @if (canManageEquipment()) {
-            <td class="pl-5">
+            <td class="pl-5" (click)="$event.stopPropagation()">
               <p-tableCheckbox [value]="equipment" />
             </td>
           }
@@ -299,7 +305,7 @@
               {{ equipment.updatedAt | date: 'mediumDate' }}
             </span>
           </td>
-          <td class="text-right">
+          <td class="text-right" (click)="$event.stopPropagation()">
             <p-button
               icon="pi pi-ellipsis-v"
               severity="secondary"

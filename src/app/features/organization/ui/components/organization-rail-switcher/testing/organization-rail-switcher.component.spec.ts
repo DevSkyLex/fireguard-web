@@ -121,4 +121,27 @@ describe('OrganizationRailSwitcher', () => {
 
     expect(loadOrganizations).toHaveBeenCalledTimes(1);
   });
+
+  it('should rove focus with arrow keys instead of adding tab stops', () => {
+    const fixture = TestBed.createComponent(OrganizationRailSwitcher);
+    fixture.detectChanges();
+
+    const buttons = fixture.debugElement.queryAll(By.css('button'));
+    // One roving stop: only the first tile is tabbable at rest.
+    expect(buttons.map((b) => b.nativeElement.tabIndex)).toEqual([0, -1, -1]);
+
+    const list = fixture.debugElement.query(
+      By.css('[data-testid="organization-rail-switcher"]'),
+    ).nativeElement;
+    list.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(buttons.map((b) => b.nativeElement.tabIndex)).toEqual([-1, 0, -1]);
+
+    list.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    fixture.detectChanges();
+
+    // Last position is the add tile.
+    expect(buttons.map((b) => b.nativeElement.tabIndex)).toEqual([-1, -1, 0]);
+  });
 });

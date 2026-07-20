@@ -1,9 +1,16 @@
 <!--
   One tile per workspace, geometry from the collaboration kit: 38px square,
   11px radius. The active tile is the only elevated surface on the rail.
+
+  Roving tabindex: the rail is a single Tab stop; ArrowUp/ArrowDown move
+  between tiles. Keeps the path to the content short for keyboard users.
 -->
-<ul class="flex flex-col items-center gap-2" data-testid="organization-rail-switcher">
-  @for (organization of organizations(); track organization.id) {
+<ul
+  class="flex flex-col items-center gap-2"
+  data-testid="organization-rail-switcher"
+  (keydown)="onKeydown($event)"
+>
+  @for (organization of organizations(); track organization.id; let index = $index) {
     <li>
       <button
         type="button"
@@ -13,12 +20,14 @@
             ? 'bg-surface-0 text-surface-950 ring-2 ring-primary dark:bg-surface-950 dark:text-surface-50'
             : 'bg-surface-200 text-surface-700 hover:bg-surface-300 dark:bg-surface-800 dark:text-surface-300 dark:hover:bg-surface-700'
         "
+        [tabindex]="focusedIndex() === index ? 0 : -1"
         [pTooltip]="organization.name"
         tooltipPosition="right"
         [attr.aria-label]="organization.name"
         [attr.aria-current]="organization.id === activeOrganizationId() ? 'true' : null"
         [attr.data-testid]="'organization-rail-tile'"
         (click)="switchTo(organization)"
+        (focus)="focusedIndex.set(index)"
       >
         @if (organization.logoUrl) {
           <img [src]="organization.logoUrl" [alt]="''" class="size-full object-cover" />
@@ -33,6 +42,7 @@
     <button
       type="button"
       class="grid size-9.5 cursor-pointer place-content-center rounded-[11px] border border-dashed border-surface-400 text-surface-500 transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-600 dark:text-surface-400 dark:hover:border-primary dark:hover:text-primary"
+      [tabindex]="focusedIndex() === organizations().length ? 0 : -1"
       pTooltip="Add organization"
       i18n-pTooltip="@@layout.orgRail.add"
       tooltipPosition="right"
@@ -40,6 +50,7 @@
       i18n-aria-label="@@layout.orgRail.add"
       data-testid="organization-rail-add"
       (click)="addOrganization()"
+      (focus)="focusedIndex.set(organizations().length)"
     >
       <i class="pi pi-plus text-[13px]" aria-hidden="true"></i>
     </button>

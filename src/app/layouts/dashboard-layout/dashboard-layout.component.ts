@@ -1,4 +1,5 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
+import { DOCUMENT } from '@angular/common';
 import { Component, ChangeDetectionStrategy, computed, inject, type Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
@@ -80,6 +81,20 @@ import {
 })
 export class DashboardLayout {
   //#region Properties
+  /**
+   * Property document
+   * @readonly
+   *
+   * @description
+   * Host document, used by the skip link to land focus in the page scroller.
+   *
+   * @access private
+   * @since 3.1.0
+   *
+   * @type {Document}
+   */
+  private readonly document: Document = inject<Document>(DOCUMENT);
+
   /**
    * Property sidebarService
    * @readonly
@@ -244,6 +259,26 @@ export class DashboardLayout {
         .pipe(map((result): boolean => result.matches)),
       { initialValue: false },
     );
+  }
+
+  /**
+   * Method focusContent
+   *
+   * @description
+   * Moves focus into the page scroller — the skip link's landing. Handled in
+   * code rather than left to the fragment jump so focus actually moves (the
+   * scroller carries `tabindex="-1"`) and the URL keeps no `#fragment`.
+   *
+   * @access protected
+   * @since 3.1.0
+   *
+   * @param {Event} event - The skip link activation.
+   *
+   * @returns {void}
+   */
+  protected focusContent(event: Event): void {
+    event.preventDefault();
+    this.document.getElementById('dashboard-content')?.focus();
   }
   //#endregion
 }

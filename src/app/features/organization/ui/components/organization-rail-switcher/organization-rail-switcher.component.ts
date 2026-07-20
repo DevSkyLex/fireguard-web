@@ -2,9 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
   inject,
   OnInit,
+  signal,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { PRIMARY_OUTLET, Router, type UrlTree } from '@angular/router';
 import { TooltipModule } from 'primeng/tooltip';
@@ -99,6 +102,32 @@ export class OrganizationRailSwitcher implements OnInit {
   protected readonly activeOrganizationId: Signal<string | null> = computed(
     (): string | null => this.organizationStore.selectedOrganization()?.id ?? null,
   );
+
+  /**
+   * Property host
+   * @readonly
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {ElementRef<HTMLElement>}
+   */
+  private readonly host: ElementRef<HTMLElement> = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /**
+   * Property focusedIndex
+   * @readonly
+   *
+   * @description
+   * Roving-tabindex position: the rail is one Tab stop, arrow keys move
+   * between tiles (the add tile is the last position).
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<number>}
+   */
+  protected readonly focusedIndex: WritableSignal<number> = signal<number>(0);
   //#endregion
 
   //#region Lifecycle
@@ -166,6 +195,40 @@ export class OrganizationRailSwitcher implements OnInit {
    */
   protected addOrganization(): void {
     this.router.navigate(['/onboarding']);
+  }
+
+  /**
+   * Method onKeydown
+   *
+   * @description
+   * Roving tabindex: ArrowUp/ArrowDown (and Home/End) move between the
+   * workspace tiles and the add tile without adding Tab stops — the rail is
+   * one stop on the way to the content.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {KeyboardEvent} event - The key event from a tile.
+   *
+   * @returns {void}
+   */
+  protected onKeydown(event: KeyboardEvent): void {
+    const count: number = this.organizations().length + 1;
+    if (count <= 1) return;
+
+    let next: number | null = null;
+    if (event.key === 'ArrowDown') next = (this.focusedIndex() + 1) % count;
+    if (event.key === 'ArrowUp') next = (this.focusedIndex() - 1 + count) % count;
+    if (event.key === 'Home') next = 0;
+    if (event.key === 'End') next = count - 1;
+    if (next === null) return;
+
+    event.preventDefault();
+    this.focusedIndex.set(next);
+
+    const tiles: NodeListOf<HTMLButtonElement> =
+      this.host.nativeElement.querySelectorAll<HTMLButtonElement>('button');
+    tiles.item(next)?.focus();
   }
 
   /**

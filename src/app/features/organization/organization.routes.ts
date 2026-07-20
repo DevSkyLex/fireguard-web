@@ -242,6 +242,27 @@ export const ORGANIZATION_ROUTES: Routes = [
             },
           },
           {
+            /**
+             * Pending-invitations management. Gated on MEMBERS_MANAGE alone:
+             * resending, revoking and copying accept links are management
+             * actions, so read-only members (MEMBERS_READ) have no business
+             * here — they keep the read-only invitations tab on the members
+             * page.
+             */
+            path: 'invitations',
+            canActivate: [
+              organizationPermissionGuard({
+                permissions: [ORGANIZATION_PERMISSION.MEMBERS_MANAGE],
+              }),
+            ],
+            loadComponent: () =>
+              import('./ui/pages/organization-settings-invitations').then(
+                (m) => m.OrganizationSettingsInvitationsPage,
+              ),
+            title: $localize`:@@route.invitations:Invitations`,
+            data: { breadcrumb: 'Invitations' },
+          },
+          {
             path: 'roles',
             canActivate: [
               organizationPermissionGuard({

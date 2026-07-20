@@ -37,12 +37,26 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId/equipments`
 - `/organizations/:organizationId/inspections`
 - `/organizations/:organizationId/checklists`
-- `/organizations/:organizationId/members` (members + invitations; gated by `organization.members.*`)
-- `/organizations/:organizationId/team` (roles & permissions only; gated by `organization.roles.*`)
-- `/organizations/:organizationId/audit` (audit log; gated by the **global** `audit.read`
-  permission via `@features/account`'s `accountPermissionGuard`/`ACCOUNT_PERMISSION`, not
-  organization-member RBAC — see Cross-Feature Dependencies)
-- `/organizations/:organizationId/settings` (tabbed via `?tab=`: general & branding, subscription, usage, notifications, regional & formats, danger zone; gated by `organization.settings.write`)
+- `/organizations/:organizationId/billing` (plan, invoices, payment method, usage; gated by
+  `organization.settings.write` as an interim — no finer backend permission exists)
+- `/organizations/:organizationId/settings` — consolidated settings area. The parent route
+  carries **no** permission guard; every tab is a real child route with its own guard (catalog:
+  `navigation/organization-settings-tabs.config.ts`, landing pick: `organizationSettingsLandingGuard`):
+  - `settings/general` (in-page sections general & branding / notifications / regional via
+    `?tab=`; `organization.settings.write`)
+  - `settings/legal` (`organization.settings.write`)
+  - `settings/members` (members + invitations view; `organization.members.read` **or** `.manage`)
+  - `settings/invitations` (pending-invitation management: resend, copy link, revoke; gated by
+    `organization.members.manage` alone — these are management actions, not a read surface)
+  - `settings/roles` (`organization.roles.read` **or** `.manage`)
+  - `settings/audit` (audit log; gated by the **global** `audit.read` permission via
+    `@features/account`'s `accountPermissionGuard`/`ACCOUNT_PERMISSION`, not organization-member
+    RBAC — see Cross-Feature Dependencies)
+  - `settings/danger` (`organization.delete`)
+
+  Legacy top-level `/members`, `/team` and `/audit` paths redirect (`pathMatch: 'full'`) into
+  their `settings/*` equivalents.
+
 - `/organizations/invitations/accept` — public invitation landing page; the
   route is mounted at the **app root** (outside the auth-guarded dashboard
   shell, in `app.routes.ts`) so a logged-out invitee can preview the invitation
@@ -70,7 +84,7 @@ Primary stores:
 - `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history)
 - `OrganizationDashboardStore` (aggregate slice: overview KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; the overview dashboard component additionally instantiates the nested compliance feature's `ComplianceSummaryStore` for the "Compliance by site" card — see Cross-Feature Dependencies)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations + logo upload, refreshes `ActiveOrganizationStore`)
-- `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map)
+- `OrganizationMembersStore` (component-scoped to the members page and the settings-invitations page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map)
 - `OrganizationTeamStore` (component-scoped to the roles page; roles and the permission catalog)
 - `OrganizationInvitationAcceptStore` (page-scoped; loads the public invitation preview and accepts an invitation token)
 - `AuditStore` (page-scoped to the audit log page; `/api/audit-events` is a **platform-wide**
@@ -147,11 +161,10 @@ These contracts are the stable boundaries for approved consumers:
   rate.
 - Must not move organization-owned widgets into layouts just because they render in the shell.
 - Consumes `@features/account`'s `accountPermissionGuard` and `ACCOUNT_PERMISSION` to gate the
-  `audit` route, and its `UserPermissionService` in `withOrganizationNavigation` to resolve the
-  sidebar "Audit log" entry (appended to the Administration section via
-  `appendOrganizationAuditNavigationItem`). `audit.read` is a global user permission, not an
-  `OrganizationPermissionName`, so it cannot be expressed through
-  `ORGANIZATION_NAVIGATION_ITEMS` (org-member-RBAC-only) — visibility must be resolved directly
+  `settings/audit` route, and its `UserPermissionService` to resolve "Audit log" visibility in
+  `organizationSettingsLandingGuard` and in the settings page's vertical navigation. `audit.read`
+  is a global user permission, not an `OrganizationPermissionName`, so it cannot be expressed
+  through the org-member-RBAC-only navigation catalogs — visibility must be resolved directly
   against the account permission surface.
 
 ## Invariants

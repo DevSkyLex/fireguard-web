@@ -2,6 +2,21 @@
   id="dashboard-layout"
   class="flex h-dvh overflow-hidden bg-surface-50 transition-colors dark:bg-surface-950"
 >
+  <!--
+    Skip link: with rail + sidebar + header a keyboard user crosses dozens of
+    tab stops before the page — this is the required shortcut. First focusable
+    element, visible only while focused.
+  -->
+  <a
+    href="#dashboard-content"
+    class="sr-only rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-contrast focus-visible:not-sr-only focus-visible:absolute focus-visible:top-2 focus-visible:left-2 focus-visible:z-50"
+    i18n="@@layout.skipToContent"
+    data-testid="skip-to-content"
+    (click)="focusContent($event)"
+  >
+    Skip to content
+  </a>
+
   <!-- Organization rail: chrome, never collapses, hidden below tablet. -->
   @if (isTablet()) {
     <div class="shrink-0" [style.width.px]="railWidth">
@@ -31,7 +46,11 @@
         against the initial containing block, escape this scroller's clipping
         and stretch the document to the full content height.
       -->
-      <div class="relative min-w-0 flex-1 overflow-y-auto overscroll-contain">
+      <div
+        id="dashboard-content"
+        tabindex="-1"
+        class="relative min-w-0 flex-1 overflow-y-auto overscroll-contain outline-none"
+      >
         <app-dashboard-layout-content>
           <router-outlet />
         </app-dashboard-layout-content>

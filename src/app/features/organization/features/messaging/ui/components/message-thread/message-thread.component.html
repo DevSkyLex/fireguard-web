@@ -2,8 +2,17 @@
   Thread rhythm ported from the design system's workspace kit: 22px/24px
   padding and a 20px gap between messages, with the body capped at 62ch so a
   long paragraph stays readable on a wide pane.
+
+  role="log": new messages announce politely to screen readers (implicit
+  aria-live) without yanking focus — the WCAG deliverable the refonte plan
+  names for the conversation surface.
 -->
-<div class="flex h-full flex-col gap-5 overflow-y-auto px-6 py-[22px]">
+<div
+  class="flex h-full flex-col gap-5 overflow-y-auto px-6 py-[22px]"
+  role="log"
+  i18n-aria-label="@@messaging.thread.logAria"
+  aria-label="Conversation messages"
+>
   @if (loading()) {
     <app-skeleton height="4rem" />
     <app-skeleton height="4rem" />

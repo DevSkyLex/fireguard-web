@@ -1,7 +1,13 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { TableLazyLoadEvent } from 'primeng/table';
 import type { SessionOutput } from '@features/auth/models';
 import { SessionTable } from '../session-table.component';
+
+/** Classes carried by the row's avatar glyph, or '' when no glyph rendered. */
+const iconClasses = (fixture: ComponentFixture<SessionTable>): string =>
+  (fixture.nativeElement as HTMLElement).querySelector(
+    '.p-avatar .p-icon, .p-avatar span[class*="pi-"]',
+  )?.className ?? '';
 
 const MOCK_SESSION: SessionOutput = {
   '@id': '/api/sessions/session-1',
@@ -106,11 +112,6 @@ describe('SessionTable', () => {
    * scanned for — "is anything signed in that shouldn't be, and how recently".
    */
   describe('row legibility', () => {
-    const iconClasses = (fixture: ReturnType<typeof createComponent>): string =>
-      (fixture.nativeElement as HTMLElement).querySelector(
-        '.p-avatar .p-icon, .p-avatar span[class*="pi-"]',
-      )?.className ?? '';
-
     it('reflects the device family in the avatar glyph', () => {
       const fixture = createComponent({
         sessions: [{ ...MOCK_SESSION, deviceType: 'mobile' }],

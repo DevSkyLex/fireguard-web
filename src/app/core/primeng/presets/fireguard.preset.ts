@@ -47,10 +47,12 @@ export const FireguardTheme: Preset = definePreset(Aura, {
       offset: '2px',
       shadow: 'none',
     },
+    // Radius scale (design system `radius.css`): md 6px for controls, lg 8px
+    // for popovers, xl 12px for cards, 2xl 16px for modals.
     formField: {
       paddingX: '0.875rem',
       paddingY: '0.625rem',
-      borderRadius: '8px',
+      borderRadius: '6px',
       transitionDuration: '0.18s',
       focusRing: {
         width: '3px',
@@ -60,39 +62,42 @@ export const FireguardTheme: Preset = definePreset(Aura, {
         shadow: 'none',
       },
     },
+    // Elevation is deliberately minimal (design system `elevation.css`): cards
+    // and inputs stay flat, and shadows exist only to float true overlays above
+    // the page. Menus and popovers take `--shadow-lg`, dialogs `--shadow-xl`.
     overlay: {
       select: {
-        borderRadius: '10px',
-        shadow: '0 8px 18px -12px rgba(15, 23, 42, 0.34)',
+        borderRadius: '8px',
+        shadow: '0 12px 32px -8px rgb(15 23 42 / 0.18), 0 4px 12px -4px rgb(15 23 42 / 0.08)',
       },
       popover: {
-        borderRadius: '10px',
-        shadow: '0 8px 18px -12px rgba(15, 23, 42, 0.34)',
+        borderRadius: '8px',
+        shadow: '0 12px 32px -8px rgb(15 23 42 / 0.18), 0 4px 12px -4px rgb(15 23 42 / 0.08)',
       },
       modal: {
-        borderRadius: '12px',
+        borderRadius: '16px',
         padding: '1.25rem',
-        shadow: '0 24px 60px -28px rgba(15, 23, 42, 0.52)',
+        shadow: '0 24px 56px -12px rgb(15 23 42 / 0.22), 0 8px 20px -8px rgb(15 23 42 / 0.10)',
       },
       navigation: {
-        shadow: '0 8px 18px -12px rgba(15, 23, 42, 0.34)',
+        shadow: '0 12px 32px -8px rgb(15 23 42 / 0.18), 0 4px 12px -4px rgb(15 23 42 / 0.08)',
       },
     },
     colorScheme: {
       light: {
         surface: {
           0: '#ffffff',
-          50: '{neutral.50}',
-          100: '{neutral.100}',
-          200: '{neutral.200}',
-          300: '{neutral.300}',
-          400: '{neutral.400}',
-          500: '{neutral.500}',
-          600: '{neutral.600}',
-          700: '{neutral.700}',
-          800: '{neutral.800}',
-          900: '{neutral.900}',
-          950: '{neutral.950}',
+          50: '{zinc.50}',
+          100: '{zinc.100}',
+          200: '{zinc.200}',
+          300: '{zinc.300}',
+          400: '{zinc.400}',
+          500: '{zinc.500}',
+          600: '{zinc.600}',
+          700: '{zinc.700}',
+          800: '{zinc.800}',
+          900: '{zinc.900}',
+          950: '{zinc.950}',
         },
         primary: {
           color: '{primary.600}',
@@ -115,17 +120,17 @@ export const FireguardTheme: Preset = definePreset(Aura, {
       dark: {
         surface: {
           0: '#ffffff',
-          50: '{neutral.50}',
-          100: '{neutral.100}',
-          200: '{neutral.200}',
-          300: '{neutral.300}',
-          400: '{neutral.400}',
-          500: '{neutral.500}',
-          600: '{neutral.600}',
-          700: '{neutral.700}',
-          800: '{neutral.800}',
-          900: '{neutral.900}',
-          950: '{neutral.950}',
+          50: '{zinc.50}',
+          100: '{zinc.100}',
+          200: '{zinc.200}',
+          300: '{zinc.300}',
+          400: '{zinc.400}',
+          500: '{zinc.500}',
+          600: '{zinc.600}',
+          700: '{zinc.700}',
+          800: '{zinc.800}',
+          900: '{zinc.900}',
+          950: '{zinc.950}',
         },
         primary: {
           color: '{primary.400}',
@@ -151,7 +156,7 @@ export const FireguardTheme: Preset = definePreset(Aura, {
   components: {
     button: {
       root: {
-        borderRadius: '8px',
+        borderRadius: '6px',
         paddingX: '1rem',
         paddingY: '0.625rem',
         gap: '0.5rem',

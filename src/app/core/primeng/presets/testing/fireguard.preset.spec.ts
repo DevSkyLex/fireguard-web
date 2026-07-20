@@ -51,6 +51,18 @@ function cardStyle(): string {
   return injectedStyle('card');
 }
 
+/**
+ * `Preset['semantic']` is typed as `{}` upstream, so the surface ramps are not
+ * navigable without stating their shape. Local to this spec: it describes what
+ * the assertions read, not a contract the preset must satisfy elsewhere.
+ */
+interface SemanticColorSchemes {
+  readonly colorScheme: {
+    readonly light: { readonly surface: Record<string, string> };
+    readonly dark: { readonly surface: Record<string, string> };
+  };
+}
+
 describe('FireguardTheme', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -58,6 +70,23 @@ describe('FireguardTheme', () => {
       providers: [providePrimeNG({ theme: { preset: FireguardTheme } })],
     });
     TestBed.createComponent(CardHost).detectChanges();
+  });
+
+  it('maps both surface ramps to the design system zinc primitives', () => {
+    // The mockup's `--fg-neutral-*` ramp is Tailwind zinc value for value
+    // (#fafafa … #09090b). The preset previously pointed at Aura's `neutral`,
+    // a half-tone warmer at every step — close enough to pass unnoticed, which
+    // is exactly why it is pinned here.
+    const { light, dark } = (FireguardTheme.semantic as SemanticColorSchemes).colorScheme;
+
+    for (const shade of [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]) {
+      expect(light.surface[shade]).toBe(`{zinc.${shade}}`);
+      expect(dark.surface[shade]).toBe(`{zinc.${shade}}`);
+    }
+
+    // surface.0 stays an absolute white in both schemes: it is the paper the
+    // flat, bordered surfaces sit on, not a step of the ramp.
+    expect(light.surface[0]).toBe('#ffffff');
   });
 
   it('ships the detail tabset variant', () => {

@@ -50,11 +50,28 @@
             i18n-ariaLabel="@@calendar.prevPeriod"
             (onClick)="previous()"
           />
-          <h2
-            class="min-w-44 px-1 text-center text-[15px] font-semibold tracking-[-0.01em] text-surface-900 sm:text-left dark:text-surface-50"
-          >
-            {{ periodLabel() }}
-          </h2>
+          <div class="min-w-44 px-1 text-center sm:text-left">
+            <h2
+              class="text-[15px] font-semibold tracking-[-0.01em] text-surface-900 dark:text-surface-50"
+            >
+              {{ periodLabel() }}
+            </h2>
+            <!--
+              Bounded exactly like the grid beside it, so the figure can never
+              contradict what is plotted.
+            -->
+            <p
+              class="text-xs text-surface-500 tabular-nums dark:text-surface-400"
+              data-testid="calendar-period-summary"
+              i18n="@@calendar.periodSummary"
+            >
+              {periodEventCount(), plural,
+                =0 {No events}
+                =1 {1 event}
+                other {{{ periodEventCount() }} events}
+              }
+            </p>
+          </div>
           <p-button
             icon="pi pi-chevron-right"
             severity="secondary"

@@ -45,6 +45,7 @@ import {
   CALENDAR_DEFAULT_DAY_START_HOUR,
   CALENDAR_DEFAULT_MAX_EVENTS_PER_DAY,
   CALENDAR_DEFAULT_WEEK_STARTS_ON,
+  addDays,
   addMonths,
   addWeeks,
   buildAgendaDays,
@@ -52,6 +53,7 @@ import {
   buildWeekDays,
   filterEventsByCategories,
   hoursRange,
+  isSameMonth,
   startOfDay,
   startOfWeek,
   weekdayLabels,
@@ -728,6 +730,39 @@ export class Calendar {
         : `${start.getDate()} ${month.format(start)} – ${end.getDate()} ${month.format(end)} ${end.getFullYear()}`;
     }
     return new Intl.DateTimeFormat(this.locale, { month: 'long', year: 'numeric' }).format(date);
+  });
+
+  /**
+   * Property periodEventCount
+   * @readonly
+   *
+   * @description
+   * How many visible events fall inside the period the header names.
+   *
+   * The bounds deliberately mirror what each view plots — the same month test
+   * `buildAgendaDays` applies, the same week window `periodLabel` prints — so
+   * the figure can never contradict the grid beside it.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly periodEventCount: Signal<number> = computed((): number => {
+    const date: Date = this.activeDate();
+    const events: readonly CalendarEvent[] = this.visibleEvents();
+
+    if (this.activeView() !== 'week') {
+      return events.filter((event: CalendarEvent): boolean => isSameMonth(event.start, date))
+        .length;
+    }
+
+    const start: Date = startOfWeek(date, this.weekStartsOn());
+    const end: Date = addDays(start, 7);
+
+    return events.filter(
+      (event: CalendarEvent): boolean => event.start >= start && event.start < end,
+    ).length;
   });
   //#endregion
 

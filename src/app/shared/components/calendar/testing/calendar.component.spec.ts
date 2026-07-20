@@ -24,6 +24,12 @@ const GROUPS: CalendarCategoryGroup[] = [
   },
 ];
 
+/** Text of the period summary line above the grid. */
+const summary = (fixture: ComponentFixture<Calendar>): string =>
+  (fixture.nativeElement as HTMLElement)
+    .querySelector('[data-testid="calendar-period-summary"]')
+    ?.textContent?.trim() ?? '';
+
 /** Text of every rendered category count, in document order. */
 const counts = (fixture: ComponentFixture<Calendar>): string[] =>
   [
@@ -65,6 +71,63 @@ describe('Calendar', () => {
    * by the calendar rather than by each consumer, so a caller cannot forget to
    * fill it and render a misleading zero.
    */
+  /**
+   * The summary is bounded exactly like the grid it sits above; a figure that
+   * disagrees with what is plotted is worse than no figure at all.
+   */
+  describe('period summary', () => {
+    it('counts the events inside the focused month', () => {
+      expect(summary(createCalendar())).toBe('1 event');
+    });
+
+    it('says so when the period holds nothing', () => {
+      const fixture = createCalendar();
+      fixture.componentRef.setInput('events', []);
+      fixture.detectChanges();
+
+      expect(summary(fixture)).toBe('No events');
+    });
+
+    it('excludes events outside the focused month', () => {
+      const fixture = createCalendar();
+      fixture.componentRef.setInput('events', [
+        EVENT,
+        { ...EVENT, id: 'b', start: new Date(2026, 6, 2, 9, 0) },
+      ]);
+      fixture.detectChanges();
+
+      expect(summary(fixture)).toBe('1 event');
+    });
+
+    it('re-bounds to the focused week when the week view is active', () => {
+      // 15 June 2026 is a Monday; the 2nd is three weeks earlier, so it counts
+      // for the month but must drop out of the week.
+      const fixture = createCalendar();
+      fixture.componentRef.setInput('events', [
+        EVENT,
+        { ...EVENT, id: 'b', start: new Date(2026, 5, 2, 9, 0) },
+      ]);
+      fixture.detectChanges();
+      expect(summary(fixture)).toBe('2 events');
+
+      (fixture.componentInstance as unknown as CalendarHarness).setView('week');
+      fixture.componentRef.setInput('focusedDate', new Date(2026, 5, 15));
+      fixture.detectChanges();
+
+      expect(summary(fixture)).toBe('1 event');
+    });
+
+    it('counts only what the active categories leave visible', () => {
+      const fixture = createCalendar();
+      const harness = fixture.componentInstance as unknown as CalendarHarness;
+
+      harness.toggleCategory({ groupId: 'status', categoryId: 'status:planned' });
+      fixture.detectChanges();
+
+      expect(summary(fixture)).toBe('No events');
+    });
+  });
+
   describe('category counts', () => {
     it('counts the events carrying each category', () => {
       const fixture = createCalendar();

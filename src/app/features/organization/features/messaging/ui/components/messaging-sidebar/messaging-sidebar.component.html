@@ -97,12 +97,40 @@
       <ul class="flex flex-col gap-px" data-testid="messaging-sidebar-channels">
         @for (node of channelTree(); track node.conversation.id) {
           <li>
-            <ng-container
-              [ngTemplateOutlet]="conversationRow"
-              [ngTemplateOutletContext]="{ conversation: node.conversation, nested: false }"
-            />
+            <div class="flex items-center">
+              <div class="min-w-0 flex-1">
+                <ng-container
+                  [ngTemplateOutlet]="conversationRow"
+                  [ngTemplateOutletContext]="{ conversation: node.conversation, nested: false }"
+                />
+              </div>
 
-            @if (node.children.length > 0) {
+              @if (node.children.length > 0) {
+                <!-- Per-row fold, outside the link: nesting a button inside an
+                     anchor is invalid, and the whole row must stay clickable. -->
+                <button
+                  type="button"
+                  class="grid size-5 shrink-0 cursor-pointer place-content-center rounded text-surface-400 hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-300"
+                  [attr.aria-expanded]="!collapsedChannels().has(node.conversation.id)"
+                  [attr.data-testid]="'messaging-sidebar-fold-' + node.conversation.id"
+                  i18n-aria-label="@@messaging.sidebar.foldChannel"
+                  aria-label="Fold sub-channels"
+                  (click)="toggleChannel(node.conversation.id)"
+                >
+                  <i
+                    [class]="
+                      'pi text-[10px] ' +
+                      (collapsedChannels().has(node.conversation.id)
+                        ? 'pi-chevron-right'
+                        : 'pi-chevron-down')
+                    "
+                    aria-hidden="true"
+                  ></i>
+                </button>
+              }
+            </div>
+
+            @if (node.children.length > 0 && !collapsedChannels().has(node.conversation.id)) {
               <!-- Kit geometry: nested channels inset with a hairline spine. -->
               <ul
                 class="ml-3.5 flex flex-col gap-px border-l border-surface-200 pl-2 dark:border-surface-800"

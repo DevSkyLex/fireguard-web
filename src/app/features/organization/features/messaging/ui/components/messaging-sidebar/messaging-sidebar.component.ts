@@ -235,6 +235,24 @@ export class MessagingSidebar {
   protected readonly directDialogOpen: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property collapsedChannels
+   * @readonly
+   *
+   * @description
+   * Parent channels whose children are folded away. Collapsed rather than
+   * expanded by default is the wrong way round for a workspace you live in, so
+   * the set starts empty and only what the member folds is remembered.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {WritableSignal<ReadonlySet<string>>}
+   */
+  protected readonly collapsedChannels: WritableSignal<ReadonlySet<string>> = signal<
+    ReadonlySet<string>
+  >(new Set());
+
+  /**
    * Property directory
    * @readonly
    *
@@ -425,6 +443,28 @@ export class MessagingSidebar {
    *
    * @returns {void}
    */
+  /**
+   * Method toggleChannel
+   *
+   * @description
+   * Folds or unfolds one parent channel's children.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {string} channelId - The parent whose children to fold.
+   *
+   * @returns {void}
+   */
+  protected toggleChannel(channelId: string): void {
+    this.collapsedChannels.update((collapsed: ReadonlySet<string>): ReadonlySet<string> => {
+      const next = new Set(collapsed);
+      if (!next.delete(channelId)) next.add(channelId);
+
+      return next;
+    });
+  }
+
   protected createChannel(name: string): void {
     const organizationId: string | undefined = this.organizationContext.selectedOrganization()?.id;
     if (organizationId === undefined) return;

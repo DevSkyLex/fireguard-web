@@ -176,6 +176,27 @@ describe('MessagingSidebar', () => {
     expect(labels).toEqual(['#Extincteurs — RDC']);
   });
 
+  it('folds one parent channel without touching the whole section', () => {
+    const fixture = TestBed.createComponent(MessagingSidebar);
+    fixture.detectChanges();
+
+    const nested = (): string =>
+      fixture.debugElement.query(By.css('[data-testid="messaging-sidebar-channels"]')).nativeElement
+        .textContent;
+
+    expect(nested()).toContain('Extincteurs — RDC');
+
+    fixture.debugElement
+      .query(By.css('[data-testid="messaging-sidebar-fold-batiment-nord"]'))
+      .nativeElement.click();
+    fixture.detectChanges();
+
+    // The child is gone, the parent and its siblings stay.
+    expect(nested()).not.toContain('Extincteurs — RDC');
+    expect(nested()).toContain('Bâtiment Nord');
+    expect(nested()).toContain('general');
+  });
+
   it('offers both "+" even when the workspace has no conversation at all', () => {
     // The headers used to live inside their list's `@if`, so an empty
     // workspace could never create its first channel.

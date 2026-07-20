@@ -24,17 +24,16 @@ attachments.
 | `…/messages` | `MessagingPage` | `organizationPermissionGuard([MESSAGING_READ])` |
 
 The open conversation is mirrored to `?conversation=`, so a thread can be
-linked and survives a reload. The page reads the param from the route snapshot
-on construction; opening a conversation selects it directly and mirrors it to
-the URL rather than waiting for the param to round-trip.
+linked and survives a reload. The page watches that param through its bound
+input, so an in-page navigation (a channel row in the shell sidebar) opens the
+thread just like a deep link does — reading it once from the route snapshot
+used to ignore every subsequent navigation.
 
-## Known limitation
-
-The workspace does not stretch to the viewport height: the dashboard content
-wrapper is `min-h-full`, not `h-full`, so `flex-1` inside it resolves against
-content rather than the shell. Fixing it is a **shell** change affecting every
-routed page, so it belongs in a lot that can re-verify the whole e2e suite —
-not here.
+**The workspace has no conversation column of its own.** The shell sidebar is
+the single list — Favorites, Channels and Direct messages — exactly as the
+prototype has one list, not two. Direct messages are a section here although
+the prototype files them behind a nav destination: without it a non-favourited
+DM would be unreachable.
 
 ## Invariants
 

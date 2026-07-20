@@ -265,20 +265,30 @@ async function landOnMessaging(
   return { sent, reacted, uploaded };
 }
 
+/**
+ * Opens the first channel from the SHELL sidebar — the only conversation list
+ * there is now.
+ */
+async function openConversation(page: Page, conversationId: string = 'c1'): Promise<void> {
+  await page.locator(`[data-conversation-id="${conversationId}"]`).click();
+}
+
 test.describe('Messaging workspace', () => {
-  test('lists channels and direct conversations separately', async ({ page }) => {
+  // The workspace has no conversation column of its own: the shell sidebar is
+  // the single list, as in the prototype. A second one used to sit inside the
+  // page and duplicate it.
+  test('lists channels and direct conversations in the shell sidebar', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
-    // Scoped to the list: the signed-in e2e user shares the DM's name, and the
-    // sidebar footer shows it too.
-    const list = page.getByRole('complementary', { name: 'Conversations' });
+    const sidebar = page.getByTestId('messaging-sidebar');
 
-    await expect(list.getByText('site-northgate')).toBeVisible();
-    await expect(list.getByText('Ella Uzer')).toBeVisible();
-    await expect(list.getByText('Channels')).toBeVisible();
-    await expect(list.getByText('Direct messages')).toBeVisible();
-    await expect(list.getByText('3', { exact: true })).toBeVisible();
+    await expect(sidebar.getByText('site-northgate')).toBeVisible();
+    await expect(sidebar.getByText('Ella Uzer')).toBeVisible();
+    await expect(sidebar.getByText('Channels')).toBeVisible();
+    await expect(page.getByTestId('messaging-sidebar-unread')).toHaveText('3');
+    // No duplicate list inside the page.
+    await expect(page.getByRole('complementary', { name: 'Conversations' })).toHaveCount(0);
   });
 
   test('invites the reader to pick a conversation before one is open', async ({ page }) => {
@@ -295,7 +305,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
 
     const rows = page.getByTestId('message-row');
     await expect(rows).toHaveCount(2);
@@ -307,7 +317,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
 
     await expect(page.getByText('This message was deleted.')).toBeVisible();
   });
@@ -316,7 +326,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     const { sent } = await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
     await page.getByTestId('message-composer').fill('On my way.');
     await page.getByTestId('message-send').click();
 
@@ -330,7 +340,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
 
     await expect(page.getByTestId('message-author').first()).toHaveText('Nadia Rahal');
   });
@@ -339,7 +349,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
 
     const chips = page.getByTestId('reaction-chip');
     await expect(chips).toHaveCount(2);
@@ -352,7 +362,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
 
     const chips = page.getByTestId('reaction-chip');
     await expect(chips.nth(0)).toHaveAttribute('aria-pressed', 'true');
@@ -363,7 +373,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     const { reacted } = await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
     await page.getByTestId('reaction-chip').first().click();
 
     await expect.poll(() => reacted).toEqual(['DELETE m1/reactions/👍']);
@@ -375,7 +385,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
 
     await expect(page).toHaveURL(/conversation=c1/);
   });
@@ -394,7 +404,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     const { reacted } = await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
     await page.getByTestId('pin-toggle').first().click();
 
     await expect.poll(() => reacted).toEqual(['POST m1/pin']);
@@ -406,7 +416,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     const { reacted } = await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
     await page.getByTestId('save-toggle').first().click();
 
     await expect.poll(() => reacted).toEqual(['POST m1/save']);
@@ -418,7 +428,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
     await page.getByTestId('pin-toggle').first().focus();
 
     await expect(page.getByTestId('pin-toggle').first()).toBeFocused();
@@ -429,7 +439,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
 
     await expect(page.getByTestId('presence-dot').first()).toBeAttached();
     await expect(page.getByText('Online').first()).toBeAttached();
@@ -441,7 +451,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
     await page.getByTestId('open-thread').first().click();
 
     await expect(page.getByTestId('thread-panel')).toBeVisible();
@@ -453,7 +463,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     const { sent } = await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
     await page.getByTestId('open-thread').first().click();
     await page.getByTestId('reply-composer').fill('On it.');
     await page.getByTestId('reply-send').click();
@@ -466,7 +476,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
     await page.getByTestId('open-thread').first().click();
     await page.getByTestId('close-thread').click();
 
@@ -479,7 +489,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
 
     const attachment = page.getByTestId('message-attachment');
     await expect(attachment).toContainText('inspection-report.pdf');
@@ -493,7 +503,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     const { uploaded } = await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
     await page.getByTestId('file-input').setInputFiles({
       name: 'photo.jpg',
       mimeType: 'image/jpeg',
@@ -513,7 +523,7 @@ test.describe('Messaging workspace', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     const { sent } = await landOnMessaging(page);
 
-    await page.getByTestId('conversation-item').first().click();
+    await openConversation(page);
     await page.getByTestId('message-composer').fill('   ');
 
     await expect(page.getByTestId('message-send').locator('button')).toBeDisabled();

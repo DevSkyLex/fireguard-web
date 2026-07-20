@@ -148,6 +148,35 @@ export class MessagingSidebar {
   protected readonly channelsOpen: WritableSignal<boolean> = signal<boolean>(true);
 
   /**
+   * Property directOpen
+   * @readonly
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly directOpen: WritableSignal<boolean> = signal<boolean>(true);
+
+  /**
+   * Property directConversations
+   * @readonly
+   *
+   * @description
+   * Direct conversations matching the search. The prototype hides them behind
+   * a nav destination; here they are a section, because this sidebar is the
+   * workspace's only conversation list.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<readonly ConversationOutput[]>}
+   */
+  protected readonly directConversations: Signal<readonly ConversationOutput[]> = computed(
+    (): readonly ConversationOutput[] => this.matching(this.inventory.directConversations()),
+  );
+
+  /**
    * Property messagesLink
    * @readonly
    *

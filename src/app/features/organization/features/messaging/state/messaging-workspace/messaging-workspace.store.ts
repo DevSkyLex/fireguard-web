@@ -140,24 +140,6 @@ export const MessagingWorkspaceStore = signalStore(
   //#region Computed
   withComputed((store, inventory = inject(ConversationInventoryStore)) => ({
     /**
-     * Computed channels
-     *
-     * @description
-     * Named channels, most recently active first — delegated to the shared
-     * inventory.
-     *
-     * @type {Signal<readonly ConversationOutput[]>}
-     */
-    channels: inventory.channels,
-
-    /**
-     * Computed directConversations
-     *
-     * @type {Signal<readonly ConversationOutput[]>}
-     */
-    directConversations: inventory.directConversations,
-
-    /**
      * Computed activeConversation
      *
      * @type {Signal<ConversationOutput | null>}
@@ -206,13 +188,6 @@ export const MessagingWorkspaceStore = signalStore(
       }
       return grouped;
     }),
-
-    /**
-     * Computed isLoadingConversations
-     *
-     * @type {Signal<boolean>}
-     */
-    isLoadingConversations: inventory.isLoading,
 
     /**
      * Computed isLoadingMessages

@@ -4,7 +4,14 @@
   full-bleed surfaces (tree table, map, calendar, conversation). Document-like
   pages opt back in locally with `mx-auto max-w-[900px]`.
 -->
-<div class="flex min-h-full w-full flex-col">
+<!--
+  `flex-1`, not a second `min-h-full`: the host already carries `min-h-full`,
+  and a nested percentage min-height resolves against an `auto` height — so it
+  collapsed, and every full-height surface (the conversation, the map, the
+  board) sized to its content instead of the shell, leaving the composer
+  floating mid-page.
+-->
+<div class="flex w-full flex-1 flex-col">
   <app-dashboard-layout-page-header class="shrink-0" />
 
   <main class="flex min-h-0 flex-1 flex-col">

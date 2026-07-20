@@ -105,6 +105,42 @@
       </ul>
     }
   }
+
+  <!--
+    Direct messages.
+
+    The prototype puts DMs behind a nav destination and keeps only Favorites
+    and Channels here. We list them: the sidebar is the workspace's only
+    conversation list, so a non-favourited DM would otherwise be unreachable.
+  -->
+  @if (directConversations().length > 0) {
+    <button
+      type="button"
+      class="flex w-full cursor-pointer items-center justify-between px-2.5 pt-3 pb-1 text-[11px] font-semibold tracking-wider text-surface-500 uppercase hover:text-surface-700 dark:hover:text-surface-300"
+      [attr.aria-expanded]="directOpen()"
+      data-testid="messaging-sidebar-direct-toggle"
+      (click)="directOpen.set(!directOpen())"
+    >
+      <span i18n="@@messaging.sidebar.direct">Direct messages</span>
+      <i
+        [class]="'pi text-[10px] ' + (directOpen() ? 'pi-chevron-down' : 'pi-chevron-right')"
+        aria-hidden="true"
+      ></i>
+    </button>
+
+    @if (directOpen()) {
+      <ul class="flex flex-col gap-px" data-testid="messaging-sidebar-direct">
+        @for (conversation of directConversations(); track conversation.id) {
+          <li>
+            <ng-container
+              [ngTemplateOutlet]="conversationRow"
+              [ngTemplateOutletContext]="{ conversation, nested: false }"
+            />
+          </li>
+        }
+      </ul>
+    }
+  }
 </div>
 
 <!-- One conversation row: hash or avatar dot, label, unread badge. -->

@@ -66,6 +66,25 @@
           </div>
         </ng-template>
 
+        <!--
+          Saving reported nothing at all: `saveSucceeded` was computed and
+          tested in the store, the matching event was dispatched, and neither
+          reached a template — no inline message, no toast. The state is not
+          dismissed on a timer; the store is page-scoped, and the next save
+          returns it to pending, so the message clears on its own.
+        -->
+        @if (store.saveSucceeded()) {
+          <div
+            class="mx-5 mt-4 flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-300"
+            role="status"
+            aria-live="polite"
+            data-testid="organization-settings-saved"
+          >
+            <i class="pi pi-check-circle" aria-hidden="true"></i>
+            <span i18n="@@org.settings.saved">Your changes have been saved.</span>
+          </div>
+        }
+
         @switch (activeTab()) {
           @case ('general') {
             <app-organization-general-form

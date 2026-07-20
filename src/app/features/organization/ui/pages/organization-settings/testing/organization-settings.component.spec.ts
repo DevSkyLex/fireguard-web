@@ -1,5 +1,5 @@
 import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, type ParamMap } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
 import { of, type Observable } from 'rxjs';
@@ -23,6 +23,7 @@ describe('OrganizationSettingsPage', () => {
   let router: { navigate: ReturnType<typeof vi.fn> };
   let route: { queryParamMap: Observable<ParamMap> };
   let organization: { id: string; name?: string; status?: string } | null;
+  let saveSucceeded: boolean;
 
   const createComponent = (): SettingsPageTestApi => {
     TestBed.configureTestingModule({
@@ -57,6 +58,7 @@ describe('OrganizationSettingsPage', () => {
             useValue: {
               isSaving: signal(false),
               isUploadingLogo: signal(false),
+              saveSucceeded: signal(saveSucceeded),
               save: vi.fn(),
               uploadLogo: vi.fn(),
             },
@@ -69,12 +71,44 @@ describe('OrganizationSettingsPage', () => {
       .componentInstance as unknown as SettingsPageTestApi;
   };
 
+  /** Same wiring as {@link createComponent}, but rendered — for DOM assertions. */
+  const renderComponent = (): ComponentFixture<OrganizationSettingsPage> => {
+    createComponent();
+
+    const fixture = TestBed.createComponent(OrganizationSettingsPage);
+    fixture.detectChanges();
+    return fixture;
+  };
+
   beforeEach(() => {
     orgPermissions = new Set<string>();
     accountPermissions = new Set<string>();
     router = { navigate: vi.fn() };
     route = { queryParamMap: of(convertToParamMap({})) };
     organization = { id: 'org-1' };
+    saveSucceeded = false;
+  });
+
+  /**
+   * Saving reported nothing at all before: `saveSucceeded` was computed and
+   * unit-tested in the store, the matching event was dispatched, and neither
+   * ever reached a template.
+   */
+  describe('save feedback', () => {
+    const confirmation = (): Element | null =>
+      (renderComponent().nativeElement as HTMLElement).querySelector(
+        '[data-testid="organization-settings-saved"]',
+      );
+
+    it('confirms a successful save in the page', () => {
+      saveSucceeded = true;
+
+      expect(confirmation()).not.toBeNull();
+    });
+
+    it('says nothing before anything has been saved', () => {
+      expect(confirmation()).toBeNull();
+    });
   });
 
   /**

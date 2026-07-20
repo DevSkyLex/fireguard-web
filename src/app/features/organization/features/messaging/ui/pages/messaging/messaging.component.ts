@@ -350,17 +350,33 @@ export class MessagingPage {
    *
    * @type {Signal<string | null>}
    */
-  protected readonly parentChannelName: Signal<string | null> = computed((): string | null => {
-    const parentId: string | null | undefined =
-      this.store.activeConversation()?.parentConversationId;
-    if (!parentId) return null;
+  protected readonly channelAncestry: Signal<readonly string[]> = computed(
+    (): readonly string[] => {
+      const conversations: readonly ConversationOutput[] = this.inventory.conversations();
+      const names: string[] = [];
 
-    return (
-      this.inventory
-        .conversations()
-        .find((candidate: ConversationOutput): boolean => candidate.id === parentId)?.name ?? null
-    );
-  });
+      let parentId: string | null | undefined =
+        this.store.activeConversation()?.parentConversationId;
+
+      // Bounded by the conversations actually known: a cycle in the data — or a
+      // parent pointing outside the list — must not spin here.
+      const seen = new Set<string>();
+
+      while (parentId && !seen.has(parentId)) {
+        seen.add(parentId);
+
+        const parent: ConversationOutput | undefined = conversations.find(
+          (candidate: ConversationOutput): boolean => candidate.id === parentId,
+        );
+        if (!parent) break;
+
+        names.unshift(parent.name ?? '');
+        parentId = parent.parentConversationId;
+      }
+
+      return names.filter((name: string): boolean => name.length > 0);
+    },
+  );
 
   /**
    * Property conversationInitials

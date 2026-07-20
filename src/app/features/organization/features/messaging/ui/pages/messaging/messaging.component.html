@@ -22,17 +22,19 @@
           <i class="pi pi-hashtag text-sm text-surface-400" aria-hidden="true"></i>
         }
 
-        @if (parentChannelName(); as parentName) {
-          <!-- Nested channel: its parent is part of its identity. -->
+        <!--
+          Full ancestry, not just the immediate parent: two sub-channels can
+          share a name under different parents, and the path is what tells them
+          apart. Kept on screen at every width — hiding it below `md` removed
+          the only thing distinguishing them exactly where space is tightest.
+        -->
+        @for (ancestor of channelAncestry(); track $index) {
           <span
-            class="hidden max-w-40 truncate text-sm text-surface-500 md:inline dark:text-surface-400"
+            class="max-w-28 truncate text-sm text-surface-500 dark:text-surface-400"
             data-testid="conversation-header-parent"
-            >{{ parentName }}</span
+            >{{ ancestor }}</span
           >
-          <i
-            class="pi pi-chevron-right hidden text-[10px] text-surface-400 md:inline"
-            aria-hidden="true"
-          ></i>
+          <i class="pi pi-chevron-right text-[10px] text-surface-400" aria-hidden="true"></i>
         }
 
         <h1 class="truncate text-sm font-semibold text-surface-950 dark:text-surface-50">

@@ -43,10 +43,25 @@
 
     @for (message of store.messages(); track message.id) {
       <article
-        class="flex flex-col gap-1"
+        class="flex gap-2"
         data-testid="assistant-message"
-        [class.items-end]="message.role === 'user'"
+        [class.flex-row-reverse]="message.role === 'user'"
       >
+        <!--
+          The assistant is marked as a speaker: without it a bare bubble on the
+          left reads as another member, and the panel is precisely where the two
+          could be confused.
+        -->
+        @if (message.role !== 'user') {
+          <span
+            class="mt-0.5 grid size-6 shrink-0 place-content-center rounded-full bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400"
+            data-testid="assistant-author-icon"
+          >
+            <i class="pi pi-sparkles text-[11px]" aria-hidden="true"></i>
+            <span class="sr-only" i18n="@@assistant.panel.authorAssistant">Assistant</span>
+          </span>
+        }
+
         <p
           class="max-w-[46ch] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap"
           [class]="

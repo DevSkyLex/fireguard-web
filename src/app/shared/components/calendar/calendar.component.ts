@@ -858,7 +858,8 @@ export class Calendar {
    * Method openDay
    *
    * @description
-   * Opens a day in the week view (used by the month "+N more" affordance).
+   * Opens a day in the week view — reached from the month grid's date number
+   * and from its "+N more" overflow affordance.
    *
    * @access protected
    * @since 1.0.0

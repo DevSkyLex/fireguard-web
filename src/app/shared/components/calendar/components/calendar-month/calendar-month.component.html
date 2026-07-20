@@ -17,18 +17,30 @@
         [attr.aria-current]="day.isToday ? 'date' : null"
       >
         <div class="flex items-center justify-between">
-          <span
-            class="grid size-6 place-items-center rounded-full text-xs font-semibold tabular-nums"
+          <!--
+            The date number is the day's own target, rather than the whole
+            cell: the cell already contains buttons (create, event chips), and
+            wrapping it in one more would nest interactive elements — invalid
+            markup, and a keyboard trap. This stays a real button, so it is
+            focusable and reachable without a pointer.
+          -->
+          <button
+            type="button"
+            class="grid size-6 cursor-pointer place-items-center rounded-full text-xs font-semibold tabular-nums transition-colors motion-reduce:transition-none"
             [class]="
               day.isToday
                 ? 'bg-primary-500 text-white'
                 : day.inMonth
-                  ? 'text-surface-700 dark:text-surface-200'
-                  : 'text-surface-400 dark:text-surface-600'
+                  ? 'text-surface-700 hover:bg-surface-100 dark:text-surface-200 dark:hover:bg-surface-800'
+                  : 'text-surface-400 hover:bg-surface-100 dark:text-surface-600 dark:hover:bg-surface-800'
             "
+            aria-label="Open {{ day.date | date: 'longDate' }}"
+            i18n-aria-label="@@calendar.openDay"
+            data-testid="calendar-day-select"
+            (click)="daySelect.emit(day.date)"
           >
             {{ day.date.getDate() }}
-          </span>
+          </button>
           <button
             type="button"
             class="grid size-5 cursor-pointer place-items-center rounded text-surface-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-surface-100 hover:text-surface-700 focus-visible:opacity-100 motion-reduce:transition-none max-sm:opacity-100 dark:hover:bg-surface-800 dark:hover:text-surface-200"

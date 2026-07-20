@@ -67,11 +67,6 @@ describe('Calendar', () => {
   }
 
   /**
-   * The count is what makes an unchecked category worth re-checking. Computed
-   * by the calendar rather than by each consumer, so a caller cannot forget to
-   * fill it and render a misleading zero.
-   */
-  /**
    * The summary is bounded exactly like the grid it sits above; a figure that
    * disagrees with what is plotted is worse than no figure at all.
    */
@@ -128,6 +123,43 @@ describe('Calendar', () => {
     });
   });
 
+  /**
+   * Only the "+N more" overflow could open a day before; a day holding two
+   * events — or none — had no target at all.
+   */
+  describe('opening a day', () => {
+    it('opens the focused day in the week view from its date number', () => {
+      const fixture = createCalendar();
+      const views: CalendarView[] = [];
+      fixture.componentInstance.viewChange.subscribe((view: CalendarView) => views.push(view));
+
+      const day: HTMLButtonElement | null = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="calendar-day-select"]',
+      );
+      day?.click();
+      fixture.detectChanges();
+
+      expect(views).toContain('week');
+    });
+
+    it('gives every day cell its own target, not just the overflowing ones', () => {
+      const fixture = createCalendar();
+
+      // A month grid is 42 cells; each must be reachable, including the empty
+      // ones, or "click the day" is a promise the grid only sometimes keeps.
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelectorAll(
+          '[data-testid="calendar-day-select"]',
+        ).length,
+      ).toBe(42);
+    });
+  });
+
+  /**
+   * The count is what makes an unchecked category worth re-checking. Computed
+   * by the calendar rather than by each consumer, so a caller cannot forget to
+   * fill it and render a misleading zero.
+   */
   describe('category counts', () => {
     it('counts the events carrying each category', () => {
       const fixture = createCalendar();

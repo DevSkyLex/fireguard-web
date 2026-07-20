@@ -859,6 +859,36 @@
             </dd>
           </div>
 
+          <!--
+            Planned start sits before Due because that is the order the two are
+            read in: when the work begins, then when it must be finished. The
+            field was already on InterventionOutput and rendered nowhere, so a
+            planned date could be set and never shown back.
+          -->
+          <div
+            class="flex flex-col gap-2 border-b border-surface-100 py-3 first:pt-0 last:border-0 dark:border-surface-800"
+          >
+            <dt
+              i18n="@@intervention.prop.plannedStart"
+              class="text-[11.5px] font-semibold tracking-[0.04em] text-surface-500 uppercase dark:text-surface-400"
+            >
+              Planned start
+            </dt>
+            <dd class="flex min-w-0 items-center gap-1.5 font-medium tabular-nums">
+              @if (intervention.plannedStartAt; as start) {
+                <span data-testid="intervention-planned-start">{{
+                  start | date: 'MMM d, HH:mm'
+                }}</span>
+              } @else {
+                <span
+                  i18n="@@intervention.prop.notSet"
+                  class="font-normal text-surface-400 dark:text-surface-500"
+                  >Not set</span
+                >
+              }
+            </dd>
+          </div>
+
           <div
             class="flex flex-col gap-2 border-b border-surface-100 py-3 first:pt-0 last:border-0 dark:border-surface-800"
           >

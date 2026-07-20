@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { MaintenancePage } from '../support/pages/maintenance.page';
 import { ApiMock } from '../support/mocks/api-mock';
+import { MaintenancePage } from '../support/pages/maintenance.page';
 
 /**
  * Static maintenance page — `/maintenance` (`FocusedLayout`,

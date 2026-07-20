@@ -102,6 +102,22 @@
       </div>
 
       <!--
+        Consumption belongs with the plan that caps it. The chips above state
+        what the plan allows; these gauges state how much of it is gone, and
+        reading one without the other was the whole difficulty — they sat in
+        different sections of the page, the gauges under no heading at all.
+      -->
+      <div class="border-t border-surface-200 pt-5 dark:border-surface-800">
+        <h4
+          class="mb-3 text-[13px] font-semibold text-surface-950 dark:text-surface-50"
+          i18n="@@org.plan.usageTitle"
+        >
+          Usage this period
+        </h4>
+        <app-organization-usage-panel />
+      </div>
+
+      <!--
         Cancelling belongs with the subscription it ends, not in a section of
         its own below the plans grid — reaching it meant scrolling past every
         plan on offer. Moved whole rather than reduced to a button in the

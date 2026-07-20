@@ -4,7 +4,6 @@ import { OrganizationBillingStore } from '@features/organization/state/organizat
 import {
   BillingPaymentMethod,
   OrganizationPlanSelector,
-  OrganizationUsagePanel,
 } from '@features/organization/ui/components';
 
 /**
@@ -29,7 +28,7 @@ import {
  */
 @Component({
   selector: 'app-organization-billing',
-  imports: [OrganizationPlanSelector, OrganizationUsagePanel, BillingPaymentMethod],
+  imports: [OrganizationPlanSelector, BillingPaymentMethod],
   providers: [OrganizationBillingStore],
   templateUrl: './organization-billing.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

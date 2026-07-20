@@ -27,6 +27,7 @@ import { OrganizationPlanStore } from '@features/organization/state/organization
 import { BillingInvoiceTable } from '@features/organization/ui/tables';
 import { EmptyState, ErrorState, Skeleton } from '@shared/components';
 import { Tag, type TagDescriptor } from '@shared/components/tag';
+import { OrganizationUsagePanel } from '../organization-usage-panel/organization-usage-panel.component';
 import { BillingCancelCard } from './components/billing-cancel-card/billing-cancel-card.component';
 import { bestYearlySavingPercent } from './utils/yearly-saving.utils';
 
@@ -71,6 +72,7 @@ interface IntervalOption {
     ErrorState,
     BillingInvoiceTable,
     BillingCancelCard,
+    OrganizationUsagePanel,
   ],
   providers: [OrganizationPlanStore, OrganizationBillingStore],
   templateUrl: './organization-plan-selector.component.html',

@@ -132,10 +132,63 @@
       </dl>
     </section>
   } @else {
-    <app-compliance-facility-table
-      class="flex min-h-0 flex-1 flex-col"
-      [rows]="store.facilities()"
-      [loading]="store.isQueryLoading()"
-    />
+    <!--
+      Filtering happens here, not in the table: the table renders what it is
+      given and owns no query state (ARCHITECTURE §9.3). The attention filter is
+      built from "which sites need me" rather than from the row's own status —
+      a site can be active and still be the most overdue one on the estate.
+    -->
+    <div class="flex flex-wrap items-center gap-2.5">
+      <input
+        pInputText
+        type="search"
+        class="min-w-60 flex-1 sm:max-w-96"
+        placeholder="Search sites…"
+        i18n-placeholder="@@compliance.search"
+        data-testid="compliance-search"
+        [ngModel]="siteSearch()"
+        (ngModelChange)="siteSearch.set($event)"
+      />
+
+      <p-selectButton
+        [options]="[...siteFilterOptions]"
+        [ngModel]="siteFilter()"
+        (ngModelChange)="siteFilter.set($event)"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        size="small"
+        aria-label="Filter sites by attention"
+        i18n-aria-label="@@compliance.filter.aria"
+        data-testid="compliance-filter"
+      />
+
+      <span
+        class="ml-auto text-sm text-surface-500 tabular-nums dark:text-surface-400"
+        data-testid="compliance-count"
+        i18n="@@compliance.count"
+      >
+        {visibleFacilities().length, plural,
+          =1 {1 site}
+          other {{{ visibleFacilities().length }} sites}
+        }
+      </span>
+    </div>
+
+    @if (hasNoMatch()) {
+      <p
+        class="py-10 text-center text-sm text-surface-500 dark:text-surface-400"
+        data-testid="compliance-no-match"
+        i18n="@@compliance.noMatch"
+      >
+        No site matches your search or filter.
+      </p>
+    } @else {
+      <app-compliance-facility-table
+        class="flex min-h-0 flex-1 flex-col"
+        [rows]="visibleFacilities()"
+        [loading]="store.isQueryLoading()"
+      />
+    }
   }
 </div>

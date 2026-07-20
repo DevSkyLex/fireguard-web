@@ -4,13 +4,19 @@ import {
   computed,
   inject,
   input,
+  signal,
   type InputSignal,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import type { ComplianceRollup } from '@features/organization/features/compliance/data-access/adapters/compliance-totals.adapter';
+import type { ComplianceFacilityRow } from '@features/organization/features/compliance/models';
 import {
   ComplianceSummaryStore,
   type ComplianceSummaryStoreType,
@@ -45,7 +51,15 @@ export type ComplianceTab = 'overview' | 'sites';
  */
 @Component({
   selector: 'app-compliance',
-  imports: [ButtonModule, MessageModule, ComplianceFacilityTable, Skeleton],
+  imports: [
+    ButtonModule,
+    FormsModule,
+    InputTextModule,
+    MessageModule,
+    SelectButtonModule,
+    ComplianceFacilityTable,
+    Skeleton,
+  ],
   providers: [ComplianceSummaryStore],
   templateUrl: './compliance.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -180,6 +194,51 @@ export class CompliancePage {
       rollup.openLowNonConformityCount
     );
   });
+
+  /** Free-text filter over site name and path. */
+  protected readonly siteSearch: WritableSignal<string> = signal<string>('');
+
+  /**
+   * Attention filter for the site register.
+   *
+   * The register is read to answer "which sites need me", so the filter is
+   * built from that question rather than from the row's own status field —
+   * a site can be `active` and still be the most overdue one on the estate.
+   */
+  protected readonly siteFilter: WritableSignal<'all' | 'overdue' | 'dueSoon'> = signal<
+    'all' | 'overdue' | 'dueSoon'
+  >('all');
+
+  /** Options of the attention filter. */
+  protected readonly siteFilterOptions: ReadonlyArray<{
+    readonly label: string;
+    readonly value: 'all' | 'overdue' | 'dueSoon';
+  }> = [
+    { label: $localize`:@@compliance.filter.all:All sites`, value: 'all' },
+    { label: $localize`:@@compliance.filter.overdue:Overdue`, value: 'overdue' },
+    { label: $localize`:@@compliance.filter.dueSoon:Due soon`, value: 'dueSoon' },
+  ];
+
+  /** Rows left by the search and the attention filter. */
+  protected readonly visibleFacilities: Signal<readonly ComplianceFacilityRow[]> = computed(
+    (): readonly ComplianceFacilityRow[] => {
+      const term: string = this.siteSearch().trim().toLowerCase();
+      const filter: 'all' | 'overdue' | 'dueSoon' = this.siteFilter();
+
+      return this.store.facilities().filter((row: ComplianceFacilityRow): boolean => {
+        if (filter === 'overdue' && row.overdueEquipmentCount === 0) return false;
+        if (filter === 'dueSoon' && row.dueSoonEquipmentCount === 0) return false;
+        if (term === '') return true;
+
+        return `${row.name} ${row.path}`.toLowerCase().includes(term);
+      });
+    },
+  );
+
+  /** True when the search or filter excluded every site — not "no sites". */
+  protected readonly hasNoMatch: Signal<boolean> = computed(
+    (): boolean => this.store.facilities().length > 0 && this.visibleFacilities().length === 0,
+  );
   //#endregion
 
   //#region Lifecycle

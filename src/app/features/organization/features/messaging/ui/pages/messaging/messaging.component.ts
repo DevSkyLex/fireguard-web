@@ -390,6 +390,32 @@ export class MessagingPage {
    *
    * @type {Signal<string>}
    */
+  /**
+   * Property composerPlaceholder
+   * @readonly
+   *
+   * @description
+   * Names what is being written to — `Message #general`, or the person for a
+   * direct conversation. The kit computes this rather than showing one generic
+   * prompt: with several threads open in a day, the field is the last thing
+   * confirming which one has focus.
+   *
+   * @access protected
+   * @since 5.0.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly composerPlaceholder: Signal<string> = computed((): string => {
+    const conversation: ConversationOutput | null = this.store.activeConversation();
+    const label: string = (conversation?.name ?? conversation?.subjectLabel ?? '').trim();
+
+    if (label.length === 0) return $localize`:@@messaging.composer.placeholder:Write a message…`;
+
+    return conversation?.isChannel === true
+      ? $localize`:@@messaging.composer.placeholderChannel:Message #${label}:channel:`
+      : $localize`:@@messaging.composer.placeholderDirect:Message ${label}:member:`;
+  });
+
   protected readonly conversationInitials: Signal<string> = computed((): string => {
     const conversation: ConversationOutput | null = this.store.activeConversation();
     const label: string = conversation?.name ?? conversation?.subjectLabel ?? '';

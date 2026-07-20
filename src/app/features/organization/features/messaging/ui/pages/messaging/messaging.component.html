@@ -114,6 +114,7 @@
       <div class="mx-6 mb-5">
         <app-message-composer
           [draft]="draft()"
+          [placeholder]="composerPlaceholder()"
           [members]="mentionableMembers()"
           [pendingFile]="pendingFile()"
           [sending]="store.isSending()"

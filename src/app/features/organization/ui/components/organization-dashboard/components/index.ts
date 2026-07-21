@@ -11,3 +11,4 @@ export { NonConformitiesResolvedTrend } from './non-conformities-resolved-trend'
 export { OverviewTrend } from './overview-trend';
 export { NonConformitiesBySeverity } from './non-conformities-by-severity';
 export { EquipmentStatusBreakdown } from './equipment-status-breakdown';
+export { InspectionResultBreakdown } from './inspection-result-breakdown';

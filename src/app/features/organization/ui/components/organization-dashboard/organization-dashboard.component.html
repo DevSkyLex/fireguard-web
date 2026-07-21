@@ -81,9 +81,9 @@
         @if (hasActivityInsights() || canReadCompliance()) {
           <!--
             The 12-column composition stays hole-free whichever permissions
-            are granted: 7+5 / 6+6 / 4+4+4 with the compliance card, 7+5 /
-            6+6 / 6+6 without it, and a single 12 when only compliance is
-            readable.
+            are granted: 7+5 / 12 / 6+6 / 4+4+4 for the three doughnuts, then
+            the compliance card on its own full-width row — or that row alone
+            when only compliance is readable.
           -->
           <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
             @if (hasActivityInsights()) {
@@ -104,17 +104,22 @@
               <app-inspections-trend class="lg:col-span-12" />
               <app-non-conformities-opened-trend class="lg:col-span-6" />
               <app-non-conformities-resolved-trend class="lg:col-span-6" />
-              <app-non-conformities-by-severity
-                [class]="canReadCompliance() ? 'lg:col-span-4' : 'lg:col-span-6'"
-              />
-              <app-equipment-status-breakdown
-                [class]="canReadCompliance() ? 'lg:col-span-4' : 'lg:col-span-6'"
-              />
+              <!--
+                Three doughnuts on one row, each answering "what is this
+                population made of": non-conformities by severity, inspections
+                by outcome, equipment by status. The outcome split was the one
+                missing — the handler has written pass/partial/fail into
+                `overview.inspections` all along and nothing read past the
+                total.
+              -->
+              <app-non-conformities-by-severity class="lg:col-span-4" />
+              <app-inspection-result-breakdown class="lg:col-span-4" />
+              <app-equipment-status-breakdown class="lg:col-span-4" />
             }
 
             @if (canReadCompliance()) {
               <app-compliance-by-site
-                [class]="hasActivityInsights() ? 'lg:col-span-4' : 'lg:col-span-12'"
+                class="lg:col-span-12"
                 [rows]="complianceStore.facilities()"
                 [loading]="complianceStore.isQueryLoading()"
                 [hasError]="complianceStore.queryHasError()"

@@ -3,17 +3,19 @@ import { organizationOutput } from '../support/fixtures/api-fixtures';
 import { ApiMock } from '../support/mocks/api-mock';
 
 /**
- * The two composition cards on Overview — "By severity" and "Fleet status".
+ * The three composition cards on Overview — "By severity", "Inspection
+ * results" and "Fleet status".
  *
- * Their unit specs cover the arithmetic (bar scaling, totals, empty fleets) but
- * cannot see the things that only exist once the real shell lays out around
- * them: whether the 6+6 grid holds at desktop width, whether a canvas inside a
- * flex column pushes the document sideways, and whether both cards survive the
- * dark scheme. That is what this suite is for.
+ * Their unit specs cover the arithmetic (bar scaling, totals, empty
+ * populations) but cannot see the things that only exist once the real shell
+ * lays out around them: whether the 4+4+4 row holds at desktop width, whether a
+ * canvas inside a flex column pushes the document sideways, and whether the
+ * cards survive the dark scheme. That is what this suite is for.
  *
  * The payload mirrors the real `/dashboard` response, including the flat
- * `{ key, value }` summary lists where the severity and status counts sit next
- * to the totals — the exact shape the two adapters have to pick apart.
+ * `{ key, value }` summary lists where the severity, outcome and status counts
+ * sit next to the totals — the exact shape the three adapters have to pick
+ * apart.
  */
 const API_BASE_URL = process.env['E2E_API_BASE_URL'] ?? 'http://localhost:8000';
 
@@ -28,7 +30,15 @@ function dashboardPayload() {
       facilities: { summary: [{ key: 'total', value: 12 }], primary: { key: 'total', value: 12 } },
       members: { summary: [{ key: 'total', value: 34 }], primary: { key: 'total', value: 34 } },
       inspections: {
-        summary: [{ key: 'closed', value: 87 }],
+        summary: [
+          { key: 'total', value: 100 },
+          { key: 'draft', value: 10 },
+          { key: 'submitted', value: 3 },
+          { key: 'closed', value: 87 },
+          { key: 'pass', value: 60 },
+          { key: 'fail', value: 9 },
+          { key: 'partial', value: 12 },
+        ],
         primary: { key: 'closed', value: 87 },
       },
       equipment: {
@@ -84,7 +94,7 @@ async function landOnOverview(page: Page): Promise<void> {
 
 test.describe('Overview composition cards', () => {
   for (const theme of ['light', 'dark'] as const) {
-    test(`renders both cards without pushing the page sideways — ${theme}`, async ({ page }) => {
+    test(`renders every card without pushing the page sideways — ${theme}`, async ({ page }) => {
       await page.setViewportSize({ width: 1440, height: 1200 });
       await landOnOverview(page);
 
@@ -93,13 +103,17 @@ test.describe('Overview composition cards', () => {
       }
 
       const severity = page.locator('app-non-conformities-by-severity');
+      const results = page.locator('app-inspection-result-breakdown');
       const fleet = page.locator('app-equipment-status-breakdown');
 
       await expect(severity).toBeVisible();
+      await expect(results).toBeVisible();
       await expect(fleet).toBeVisible();
 
-      // Four severities, four fleet statuses — a dropped bucket would show here.
+      // Four severities, three outcomes, four fleet statuses — a dropped bucket
+      // would show here.
       await expect(severity.locator('[role="meter"]')).toHaveCount(4);
+      await expect(results.locator('li')).toHaveCount(3);
       await expect(fleet.locator('li')).toHaveCount(4);
 
       // The canvas is aria-hidden, so the legend is the accessible carrier.
@@ -107,6 +121,11 @@ test.describe('Overview composition cards', () => {
       await expect(fleet).toContainText('40');
       await expect(severity).toContainText('Critical');
       await expect(severity).toContainText('12');
+      await expect(results).toContainText('Pass');
+      // The centre counts graded inspections (60 + 12 + 9), not the 100 total:
+      // a draft has no outcome and would leave the ring short of its own centre.
+      await expect(results).toContainText('81');
+      await expect(results).not.toContainText('100');
 
       const overflows = await page.evaluate(
         () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -115,19 +134,27 @@ test.describe('Overview composition cards', () => {
     });
   }
 
-  // The 6+6 pairing is what keeps the row from ending half-empty.
-  test('pairs the two cards side by side on desktop', async ({ page }) => {
+  // The 4+4+4 triple is what keeps the row from ending part-empty.
+  test('lines the three cards up on one desktop row', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1200 });
     await landOnOverview(page);
 
-    const severityBox = await page.locator('app-non-conformities-by-severity').boundingBox();
-    const fleetBox = await page.locator('app-equipment-status-breakdown').boundingBox();
+    const boxes = await Promise.all(
+      [
+        'app-non-conformities-by-severity',
+        'app-inspection-result-breakdown',
+        'app-equipment-status-breakdown',
+      ].map((selector: string) => page.locator(selector).boundingBox()),
+    );
 
-    if (severityBox === null || fleetBox === null) {
-      throw new Error('Both composition cards must be laid out to compare their positions.');
+    if (boxes.some((box) => box === null)) {
+      throw new Error('Every composition card must be laid out to compare their positions.');
     }
 
-    expect(fleetBox.x).toBeGreaterThan(severityBox.x);
-    expect(Math.abs(fleetBox.y - severityBox.y)).toBeLessThan(4);
+    const [severity, results, fleet] = boxes as { x: number; y: number }[];
+    expect(results.x).toBeGreaterThan(severity.x);
+    expect(fleet.x).toBeGreaterThan(results.x);
+    expect(Math.abs(results.y - severity.y)).toBeLessThan(4);
+    expect(Math.abs(fleet.y - severity.y)).toBeLessThan(4);
   });
 });

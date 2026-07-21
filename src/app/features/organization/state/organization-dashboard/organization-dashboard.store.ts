@@ -17,6 +17,10 @@ import {
   type EquipmentStatusBucket,
 } from '@features/organization/data-access/adapters/organization-dashboard-equipment-status.adapter';
 import {
+  adaptInspectionResult,
+  type InspectionResultBucket,
+} from '@features/organization/data-access/adapters/organization-dashboard-inspection-result.adapter';
+import {
   adaptNonConformitySeverity,
   type NonConformitySeverityBucket,
 } from '@features/organization/data-access/adapters/organization-dashboard-severity.adapter';
@@ -163,6 +167,22 @@ export const DashboardStore = signalStore(
      */
     equipmentByStatus: computed<readonly EquipmentStatusBucket[]>(() =>
       adaptEquipmentStatus(store.queryData()?.overview?.['equipment']?.['summary']),
+    ),
+
+    /**
+     * Computed inspectionsByResult
+     *
+     * @description
+     * Inspections split by outcome — pass, partial, fail — best first.
+     *
+     * Third case of the same shape: the handler has written `pass`/`partial`/
+     * `fail` into `overview.inspections.summary` all along, next to the
+     * workflow-state counts, and every consumer only ever took `summary[0]`.
+     *
+     * @type {Signal<readonly InspectionResultBucket[]>}
+     */
+    inspectionsByResult: computed<readonly InspectionResultBucket[]>(() =>
+      adaptInspectionResult(store.queryData()?.overview?.['inspections']?.['summary']),
     ),
 
     /**

@@ -643,7 +643,32 @@
                     <p class="truncate text-sm font-medium">{{ change.resource }}</p>
                     <app-intervention-change-diff class="mt-1.5 block" [patch]="change.patch" />
                   </div>
-                  <app-intervention-tag kind="changeStatus" [value]="change.status" />
+
+                  <div class="flex shrink-0 items-center gap-2">
+                    <app-intervention-tag kind="changeStatus" [value]="change.status" />
+
+                    <!--
+                      Reject is the only verdict there is: publication applies
+                      every change still standing, atomically, so there is
+                      nothing to "accept" — the contract admits `proposed` or
+                      `rejected` and nothing else. Offered only while the
+                      change is still proposed and the reviewer may act.
+                    -->
+                    @if (change.status === 'proposed' && canReview()) {
+                      <p-button
+                        icon="pi pi-times"
+                        severity="danger"
+                        size="small"
+                        [text]="true"
+                        [rounded]="true"
+                        [disabled]="store.saving()"
+                        i18n-ariaLabel="@@intervention.review.rejectChange"
+                        ariaLabel="Reject this change"
+                        data-testid="intervention-reject-change"
+                        (onClick)="rejectChange(change)"
+                      />
+                    }
+                  </div>
                 </li>
               }
             </ul>

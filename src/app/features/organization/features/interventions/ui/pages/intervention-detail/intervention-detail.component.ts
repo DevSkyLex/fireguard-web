@@ -3263,6 +3263,41 @@ export class InterventionDetailPage {
       accept: (): void => void this.sync.discardBlocked(),
     });
   }
+
+  /**
+   * Method rejectChange
+   *
+   * @description
+   * Rejects a proposed change after confirmation, so publication leaves the
+   * record it targets untouched.
+   *
+   * Confirmed rather than immediate: the list carries no undo, and the
+   * proposal came from someone else's field work.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {InterventionChangeOutput} change - Proposal to reject.
+   *
+   * @returns {void}
+   */
+  protected rejectChange(change: InterventionChangeOutput): void {
+    this.confirmationService.confirm({
+      header: $localize`:@@intervention.review.rejectChangeHeader:Reject change`,
+      message: $localize`:@@intervention.review.rejectChangeMessage:Reject this proposed change? It will not be applied when the intervention is published.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: {
+        label: $localize`:@@intervention.review.rejectChange:Reject`,
+        severity: 'danger',
+      },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
+      accept: (): void => void this.store.rejectChange({ change }),
+    });
+  }
   //#endregion
 
   //#region Header slot navigation

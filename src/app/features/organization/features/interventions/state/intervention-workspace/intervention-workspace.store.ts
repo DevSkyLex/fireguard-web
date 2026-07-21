@@ -32,6 +32,7 @@ import {
 } from '@features/organization/features/interventions/data-access';
 import type {
   CreateInterventionWorkItemInput,
+  InterventionChangeOutput,
   InterventionOutput,
   InterventionTransitionRequest,
   InterventionWorkItemOutput,
@@ -731,6 +732,63 @@ export const InterventionWorkspaceStore = signalStore(
                     patchState(store, {
                       saving: false,
                       error: $localize`:@@intervention.workspace.workItemDeleteFailed:The work item could not be deleted.`,
+                    }),
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /**
+         * Method rejectChange
+         * @method rejectChange
+         *
+         * @description
+         * Rejects a proposed change so it is not applied when the intervention
+         * is published.
+         *
+         * There is no matching "accept": `UpdateInterventionChangeInput` only
+         * admits `proposed` or `rejected`, because publication applies every
+         * change still standing, atomically. Rejecting is therefore the only
+         * decision a reviewer can express — and the UI expressed none, leaving
+         * the list read-only while the endpoint had always been there.
+         *
+         * Connected-only, like the other desk-time review actions: the offline
+         * outbox replays creates and work-item status changes, not review
+         * verdicts, so failing loudly beats queueing something that will never
+         * sync.
+         *
+         * @access public
+         * @since 1.1.0
+         *
+         * @type {RxMethod<{ change: InterventionChangeOutput }>}
+         */
+        rejectChange: rxMethod<{ change: InterventionChangeOutput }>(
+          pipe(
+            tap(() => patchState(store, { saving: true, error: null })),
+            switchMap(({ change }) => {
+              if (connectivity.isOffline()) {
+                patchState(store, {
+                  saving: false,
+                  error: $localize`:@@intervention.workspace.rejectChangeOffline:Connect to the network to reject a proposed change.`,
+                });
+                return EMPTY;
+              }
+
+              return service.updateChange(change.id, { status: 'rejected' }, change.revision).pipe(
+                tapResponse({
+                  next: (updated: InterventionChangeOutput) => {
+                    patchState(store, {
+                      changes: store
+                        .changes()
+                        .map((item) => (item.id === updated.id ? updated : item)),
+                      saving: false,
+                    });
+                  },
+                  error: () =>
+                    patchState(store, {
+                      saving: false,
+                      error: $localize`:@@intervention.workspace.rejectChangeFailed:The proposed change could not be rejected.`,
                     }),
                 }),
               );

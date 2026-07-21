@@ -17,6 +17,7 @@ import type {
   UserOutput,
   UserProfileOutput,
 } from '@features/account/models';
+import { AUTH_LOGOUT_PORT, type AuthLogoutPort } from '@features/auth';
 import { UserStore } from '../user';
 import type { AccountProfileEditState } from './models';
 
@@ -34,6 +35,7 @@ import type { AccountProfileEditState } from './models';
 const INITIAL_STATE: AccountProfileEditState = {
   saveCallState: idleCallState(),
   avatarCallState: idleCallState(),
+  deactivateCallState: idleCallState(),
 } as const;
 
 /**
@@ -118,6 +120,30 @@ export const AccountProfileEditStore = signalStore(
      * @returns {StoreError | null}
      */
     avatarError: computed<StoreError | null>(() => store.avatarCallState().error),
+
+    /**
+     * Computed isDeactivating
+     *
+     * @description
+     * Whether the account deactivation request is in flight.
+     *
+     * @since 1.2.0
+     *
+     * @returns {boolean}
+     */
+    isDeactivating: computed<boolean>(() => store.deactivateCallState().status === 'pending'),
+
+    /**
+     * Computed deactivateError
+     *
+     * @description
+     * Error from the latest deactivation attempt.
+     *
+     * @since 1.2.0
+     *
+     * @returns {StoreError | null}
+     */
+    deactivateError: computed<StoreError | null>(() => store.deactivateCallState().error),
   })),
   //#endregion
 
@@ -127,6 +153,7 @@ export const AccountProfileEditStore = signalStore(
       store,
       userProfileService = inject<UserProfileService>(UserProfileService),
       userStore = inject<UserStore>(UserStore),
+      authLogoutPort = inject<AuthLogoutPort>(AUTH_LOGOUT_PORT),
     ) => ({
       /**
        * Method save
@@ -191,6 +218,38 @@ export const AccountProfileEditStore = signalStore(
                 },
                 error: (error: unknown) =>
                   patchState(store, { avatarCallState: errorCallState(toStoreError(error)) }),
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Method deactivate
+       *
+       * @description
+       * Deactivates the current user's own account. The backend revokes every
+       * session as part of the call, so the local session is already dead when
+       * the response arrives — logging out is what turns that into a clean
+       * sign-out instead of the next request failing with a 401.
+       *
+       * `exhaustMap` matches the other two: a second click while the first is
+       * in flight would be a second irreversible request.
+       *
+       * @since 1.2.0
+       */
+      deactivate: rxMethod<void>(
+        pipe(
+          tap((): void => patchState(store, { deactivateCallState: pendingCallState() })),
+          exhaustMap(() =>
+            userProfileService.deactivateCurrentAccount().pipe(
+              tapResponse({
+                next: (profile: UserProfileOutput) => {
+                  patchState(store, { deactivateCallState: successCallState(profile) });
+                  authLogoutPort.logout();
+                },
+                error: (error: unknown) =>
+                  patchState(store, { deactivateCallState: errorCallState(toStoreError(error)) }),
               }),
             ),
           ),

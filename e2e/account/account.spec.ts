@@ -22,6 +22,62 @@ test.describe('Account page', () => {
     await expect(accountPage.nav).toBeVisible();
   });
 
+  // `POST /api/me/deactivate` has existed since the profile resource was
+  // written and nothing on the frontend called it. It is irreversible from the
+  // user's side, so the click must not reach the API before the prompt does.
+  test('deactivates the account only after the confirmation is accepted', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+
+    let deactivateCalls = 0;
+    await page.route('**/api/me/deactivate', (route) => {
+      deactivateCalls += 1;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/ld+json',
+        body: JSON.stringify({ id: 'u1', status: 'inactive' }),
+      });
+    });
+
+    const accountPage = new AccountPage(page);
+    await accountPage.goto();
+
+    await expect(page.getByTestId('account-deactivate-card')).toBeVisible();
+    await page.getByTestId('account-deactivate-button').click();
+
+    // The prompt is up and nothing has been sent yet.
+    // Two nodes carry role="alertdialog" (PrimeNG's host plus the rendered
+    // dialog); the named one is the rendered prompt.
+    const dialog = page.getByRole('alertdialog', { name: 'Deactivate account' });
+    await expect(dialog).toContainText('administrator');
+    expect(deactivateCalls).toBe(0);
+
+    await dialog.getByRole('button', { name: 'Deactivate' }).click();
+
+    await expect.poll(() => deactivateCalls).toBe(1);
+  });
+
+  test('abandons deactivation when the prompt is dismissed', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+
+    let deactivateCalls = 0;
+    await page.route('**/api/me/deactivate', (route) => {
+      deactivateCalls += 1;
+      return route.fulfill({ status: 200, contentType: 'application/ld+json', body: '{}' });
+    });
+
+    const accountPage = new AccountPage(page);
+    await accountPage.goto();
+
+    await page.getByTestId('account-deactivate-button').click();
+    const dialog = page.getByRole('alertdialog', { name: 'Deactivate account' });
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+
+    await expect(dialog).toHaveCount(0);
+    expect(deactivateCalls).toBe(0);
+  });
+
   test('switches to the settings section via the tab query param', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();

@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { ConfirmationService, type Confirmation } from 'primeng/api';
 import type { UpdateCurrentUserProfileInput } from '@features/account/models';
 import {
   AccountPasswordChangeStore,
@@ -13,11 +14,13 @@ interface PanelInternals {
   requestPasswordChange(currentPassword: string): void;
   confirmPasswordChange(confirmation: { code: string; newPassword: string }): void;
   restartPasswordChange(): void;
+  deactivateAccount(): void;
 }
 
 interface MockAccountProfileEditStore {
   readonly save: ReturnType<typeof vi.fn<(input: UpdateCurrentUserProfileInput) => void>>;
   readonly uploadAvatar: ReturnType<typeof vi.fn<(file: File) => void>>;
+  readonly deactivate: ReturnType<typeof vi.fn<() => void>>;
 }
 
 interface MockAccountPasswordChangeStore {
@@ -32,6 +35,7 @@ interface SetupResult {
   readonly component: PanelInternals;
   readonly mockEditStore: MockAccountProfileEditStore;
   readonly mockPasswordStore: MockAccountPasswordChangeStore;
+  readonly confirmations: Confirmation[];
 }
 
 describe('AccountProfilePanel', () => {
@@ -40,6 +44,15 @@ describe('AccountProfilePanel', () => {
     const mockEditStore: MockAccountProfileEditStore = {
       save: vi.fn<(input: UpdateCurrentUserProfileInput) => void>(),
       uploadAvatar: vi.fn<(file: File) => void>(),
+      deactivate: vi.fn<() => void>(),
+    };
+    // Captures what the panel asked to confirm, so a test can accept it.
+    const confirmations: Confirmation[] = [];
+    const mockConfirmationService = {
+      confirm: (confirmation: Confirmation): unknown => {
+        confirmations.push(confirmation);
+        return mockConfirmationService;
+      },
     };
     const mockPasswordStore: MockAccountPasswordChangeStore = {
       request: vi.fn<(currentPassword: string) => void>(),
@@ -52,13 +65,14 @@ describe('AccountProfilePanel', () => {
         { provide: UserStore, useValue: mockUserStore },
         { provide: AccountProfileEditStore, useValue: mockEditStore },
         { provide: AccountPasswordChangeStore, useValue: mockPasswordStore },
+        { provide: ConfirmationService, useValue: mockConfirmationService },
       ],
     });
 
     const component = TestBed.runInInjectionContext(
       () => new AccountProfilePanel(),
     ) as unknown as PanelInternals;
-    return { component, mockEditStore, mockPasswordStore };
+    return { component, mockEditStore, mockPasswordStore, confirmations };
   };
 
   it('should forward submitted profile values to the edit store', () => {
@@ -95,5 +109,31 @@ describe('AccountProfilePanel', () => {
       newPassword: 'NewP@ssw0rd!',
     });
     expect(mockPasswordStore.restart).toHaveBeenCalledTimes(1);
+  });
+
+  // Deactivation is one-way from the user's side, so the click alone must not
+  // reach the store — only accepting the prompt may.
+  it('should not deactivate until the confirmation is accepted', () => {
+    const { component, mockEditStore, confirmations } = setup();
+
+    component.deactivateAccount();
+
+    expect(confirmations).toHaveLength(1);
+    expect(mockEditStore.deactivate).not.toHaveBeenCalled();
+
+    confirmations[0].accept?.();
+
+    expect(mockEditStore.deactivate).toHaveBeenCalledTimes(1);
+  });
+
+  // The prompt has to say what cannot be undone; the card's copy is not on
+  // screen once a modal covers it.
+  it('should spell out that reactivation is not self-service', () => {
+    const { component, confirmations } = setup();
+
+    component.deactivateAccount();
+
+    expect(confirmations[0].message).toContain('administrator');
+    expect(confirmations[0].message).toContain('signed out everywhere');
   });
 });

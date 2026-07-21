@@ -6,6 +6,7 @@ import type {
   UserOutput,
   UserProfileOutput,
 } from '@features/account/models';
+import { AUTH_LOGOUT_PORT } from '@features/auth';
 import { UserStore } from '../../user';
 import { AccountProfileEditStore } from '../account-profile-edit.store';
 
@@ -16,6 +17,11 @@ interface MockUserProfileService {
   readonly uploadCurrentAvatar: ReturnType<
     typeof vi.fn<(avatar: Blob, fileName?: string) => Observable<UserOutput>>
   >;
+  readonly deactivateCurrentAccount: ReturnType<typeof vi.fn<() => Observable<UserProfileOutput>>>;
+}
+
+interface MockAuthLogoutPort {
+  readonly logout: ReturnType<typeof vi.fn<() => void>>;
 }
 
 interface MockUserStore {
@@ -28,6 +34,7 @@ interface SetupResult {
   readonly store: AccountProfileEditStore;
   readonly mockUserProfileService: MockUserProfileService;
   readonly mockUserStore: MockUserStore;
+  readonly mockAuthLogoutPort: MockAuthLogoutPort;
 }
 
 const USER_PROFILE_OUTPUT: UserProfileOutput = {
@@ -59,7 +66,11 @@ describe('AccountProfileEditStore', () => {
       uploadCurrentAvatar: vi.fn<(avatar: Blob, fileName?: string) => Observable<UserOutput>>(() =>
         of(USER_OUTPUT),
       ),
+      deactivateCurrentAccount: vi.fn<() => Observable<UserProfileOutput>>(() =>
+        of(USER_PROFILE_OUTPUT),
+      ),
     };
+    const mockAuthLogoutPort: MockAuthLogoutPort = { logout: vi.fn<() => void>() };
     const mockUserStore: MockUserStore = {
       profile: vi.fn<() => UserProfileOutput | null>(() => USER_PROFILE_OUTPUT),
       setProfile: vi.fn<(profile: UserProfileOutput) => void>(),
@@ -71,11 +82,12 @@ describe('AccountProfileEditStore', () => {
         AccountProfileEditStore,
         { provide: UserProfileService, useValue: mockUserProfileService },
         { provide: UserStore, useValue: mockUserStore },
+        { provide: AUTH_LOGOUT_PORT, useValue: mockAuthLogoutPort },
       ],
     });
 
     const store: AccountProfileEditStore = TestBed.inject(AccountProfileEditStore);
-    return { store, mockUserProfileService, mockUserStore };
+    return { store, mockUserProfileService, mockUserStore, mockAuthLogoutPort };
   };
 
   it('should patch and store the current profile without reloading it', () => {
@@ -138,5 +150,45 @@ describe('AccountProfileEditStore', () => {
     store.uploadAvatar(new File(['x'], 'avatar.png', { type: 'image/png' }));
 
     expect(store.avatarError()).not.toBeNull();
+  });
+
+  describe('deactivate', () => {
+    // The backend kills every session as part of the call, so the local one is
+    // already dead when the response lands. Logging out is what turns that into
+    // a clean sign-out instead of the next request failing with a 401.
+    it('should sign the user out once the account is deactivated', () => {
+      const { store, mockUserProfileService, mockAuthLogoutPort } = setup();
+
+      store.deactivate();
+
+      expect(mockUserProfileService.deactivateCurrentAccount).toHaveBeenCalledTimes(1);
+      expect(mockAuthLogoutPort.logout).toHaveBeenCalledTimes(1);
+      expect(store.isDeactivating()).toBe(false);
+      expect(store.deactivateError()).toBeNull();
+    });
+
+    // A failed deactivation must leave the user signed in — signing them out
+    // would look exactly like the success it is not.
+    it('should keep the session when the request fails', () => {
+      const { store, mockUserProfileService, mockAuthLogoutPort } = setup();
+      mockUserProfileService.deactivateCurrentAccount.mockReturnValueOnce(
+        throwError(() => new Error('boom')),
+      );
+
+      store.deactivate();
+
+      expect(store.deactivateError()).not.toBeNull();
+      expect(mockAuthLogoutPort.logout).not.toHaveBeenCalled();
+    });
+
+    it('should not touch the profile or avatar call states', () => {
+      const { store } = setup();
+
+      store.deactivate();
+
+      expect(store.saveError()).toBeNull();
+      expect(store.saveSucceeded()).toBe(false);
+      expect(store.avatarError()).toBeNull();
+    });
   });
 });

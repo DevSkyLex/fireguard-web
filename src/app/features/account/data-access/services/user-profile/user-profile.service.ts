@@ -127,4 +127,23 @@ export class UserProfileService extends HydraApiService {
       input,
     );
   }
+
+  /**
+   * Method deactivateCurrentAccount
+   *
+   * @description
+   * Deactivates the authenticated user's own account. The backend revokes
+   * every active session, signing the user out everywhere, and the operation
+   * is idempotent. Organization memberships are left untouched, and there is
+   * no self-service reactivation — an administrator has to restore the
+   * account.
+   *
+   * @returns {Observable<UserProfileOutput>} Observable emitting the deactivated profile.
+   */
+  public deactivateCurrentAccount(): Observable<UserProfileOutput> {
+    return this.post<Record<string, never>, UserProfileOutput>(
+      `${UserProfileService.BASE_PATH}/me/deactivate`,
+      {},
+    );
+  }
 }

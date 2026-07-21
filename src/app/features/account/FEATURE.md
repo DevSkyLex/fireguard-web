@@ -101,6 +101,13 @@ first consumers.
   propagates across the shell. `AccountMfaPanel` must key its three states (not set up / pending
   confirmation / active) off `UserStore.profile()?.totpEnabled` and the store's transient
   `setupResult`, never off a locally-held "enabled" flag.
+- Self-service deactivation (`POST /api/me/deactivate`, `AccountProfileEditStore.deactivate`)
+  is **one-way for the user**: the backend revokes every session and only an administrator can
+  reactivate (`POST /api/users/{id}/activate`). The store therefore signs the user out through
+  `AUTH_LOGOUT_PORT` on success — the local session is already dead when the response lands —
+  and must **not** sign them out on failure, which would be indistinguishable from success.
+  The confirm prompt has to state the consequences itself; the card's copy is off screen once
+  the modal covers it.
 
 ## Unified inbox
 

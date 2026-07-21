@@ -31,4 +31,14 @@ export interface AccountProfileEditState {
    * @type {CallState<UserOutput | null>}
    */
   readonly avatarCallState: CallState<UserOutput | null>;
+
+  /**
+   * Property deactivateCallState
+   *
+   * @description
+   * Request state for the self-service account deactivation.
+   *
+   * @type {CallState<UserProfileOutput | null>}
+   */
+  readonly deactivateCallState: CallState<UserProfileOutput | null>;
 }

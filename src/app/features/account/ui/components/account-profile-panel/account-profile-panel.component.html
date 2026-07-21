@@ -52,4 +52,50 @@
     (confirmed)="confirmPasswordChange($event)"
     (cancelled)="restartPasswordChange()"
   />
+
+  <p-divider class="my-0" />
+
+  <!--
+    Deactivation is one-way from the user's side — reactivation is an admin
+    action — so the card states the consequences before the click, and the
+    confirm dialog states them again. The endpoint has existed since the
+    profile resource was written and nothing on the frontend called it.
+  -->
+  <section
+    class="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-900 dark:bg-red-950/30"
+    data-testid="account-deactivate-card"
+  >
+    <h3
+      class="text-sm font-semibold text-red-900 dark:text-red-200"
+      i18n="@@account.deactivate.title"
+    >
+      Deactivate account
+    </h3>
+    <p class="mt-1 text-sm text-red-800/90 dark:text-red-300/90" i18n="@@account.deactivate.desc">
+      Signs you out on every device and blocks further sign-ins. Your organization memberships are
+      kept, but only an administrator can reactivate your account.
+    </p>
+
+    @if (editStore.deactivateError() !== null) {
+      <p
+        class="mt-2 text-sm font-medium text-red-700 dark:text-red-300"
+        role="alert"
+        i18n="@@account.deactivate.error"
+      >
+        Your account could not be deactivated. Please try again.
+      </p>
+    }
+
+    <p-button
+      class="mt-3 inline-block"
+      i18n-label="@@account.deactivate.accept"
+      label="Deactivate"
+      icon="pi pi-ban"
+      severity="danger"
+      [outlined]="true"
+      [loading]="editStore.isDeactivating()"
+      data-testid="account-deactivate-button"
+      (onClick)="deactivateAccount()"
+    />
+  </section>
 </div>

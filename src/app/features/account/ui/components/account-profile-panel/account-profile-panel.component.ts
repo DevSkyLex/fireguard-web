@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ConfirmationService } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import type { UpdateCurrentUserProfileInput } from '@features/account/models';
 import {
@@ -27,7 +29,13 @@ import {
  */
 @Component({
   selector: 'app-account-profile-panel',
-  imports: [DividerModule, AccountAvatarForm, AccountPasswordForm, AccountProfileForm],
+  imports: [
+    ButtonModule,
+    DividerModule,
+    AccountAvatarForm,
+    AccountPasswordForm,
+    AccountProfileForm,
+  ],
   providers: [AccountProfileEditStore, AccountPasswordChangeStore],
   templateUrl: './account-profile-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,6 +88,21 @@ export class AccountProfilePanel {
   protected readonly passwordStore: AccountPasswordChangeStore = inject<AccountPasswordChangeStore>(
     AccountPasswordChangeStore,
   );
+
+  /**
+   * Property confirmationService
+   * @readonly
+   *
+   * @description
+   * Drives the app-level confirm dialog guarding account deactivation.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @type {ConfirmationService}
+   */
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
   //#endregion
 
   //#region Methods
@@ -167,6 +190,41 @@ export class AccountProfilePanel {
    */
   protected restartPasswordChange(): void {
     this.passwordStore.restart();
+  }
+
+  /**
+   * Method deactivateAccount
+   * @method deactivateAccount
+   *
+   * @description
+   * Confirms, then deactivates the current user's own account. The
+   * consequences are spelled out in the prompt rather than in the card alone,
+   * because there is no self-service way back: reactivation is an
+   * administrator action.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected deactivateAccount(): void {
+    this.confirmationService.confirm({
+      header: $localize`:@@account.deactivate.header:Deactivate account`,
+      message: $localize`:@@account.deactivate.confirm:You will be signed out everywhere and will not be able to sign back in. Only an administrator can reactivate your account. Continue?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: {
+        label: $localize`:@@account.deactivate.accept:Deactivate`,
+        severity: 'danger',
+      },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
+      accept: (): void => {
+        void this.editStore.deactivate();
+      },
+    });
   }
   //#endregion
 }

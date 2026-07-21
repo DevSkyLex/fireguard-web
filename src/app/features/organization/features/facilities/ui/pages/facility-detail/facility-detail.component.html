@@ -71,7 +71,16 @@
           @if (facility(); as facility) {
             <div class="grid min-h-0 grid-cols-1 gap-6 xl:grid-cols-12">
               <div class="flex min-h-0 flex-col gap-6 xl:col-span-8">
+                <!--
+                  State before list: each summary answers "how is this doing"
+                  and the dataview under it answers "on what exactly". Both
+                  cards were built against the FacilityOverviewStore this page
+                  already provides, and neither was mounted anywhere — found
+                  by checking every selector against every template.
+                -->
+                <app-facility-inspections-overview />
                 <app-facility-inspection-dataview />
+                <app-facility-equipment-overview />
                 <app-facility-equipment-dataview />
               </div>
 

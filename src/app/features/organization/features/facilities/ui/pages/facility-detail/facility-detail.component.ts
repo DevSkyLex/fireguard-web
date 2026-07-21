@@ -31,8 +31,10 @@ import {
 import {
   FacilityDetailHeader,
   FacilityEquipmentTab,
+  FacilityEquipmentOverview,
   FacilityInformationPanel,
   FacilityInspectionTab,
+  FacilityInspectionsOverview,
   FacilityInstallationsPanel,
 } from '@features/organization/features/facilities/ui/components';
 import {
@@ -69,6 +71,8 @@ import { EmptyState } from '@shared/components';
     FacilityDetailHeader,
     FacilityInspectionDataview,
     FacilityEquipmentDataview,
+    FacilityEquipmentOverview,
+    FacilityInspectionsOverview,
     FacilityInformationPanel,
     FacilityInstallationsPanel,
     FacilityEquipmentTab,

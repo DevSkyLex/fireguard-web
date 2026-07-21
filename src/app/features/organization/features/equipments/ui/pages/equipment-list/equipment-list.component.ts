@@ -211,6 +211,27 @@ export class EquipmentListPage {
   }
 
   /**
+   * Method onEdit
+   *
+   * @description
+   * Opens the edit form for the equipment chosen from the row menu.
+   *
+   * The table has always emitted `edit`; this page never bound it, so the menu
+   * entry fired into nothing. The route and its `equipment.write` guard were
+   * already in place — only the listener was missing.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} equipmentId - Equipment to edit.
+   *
+   * @returns {void}
+   */
+  public onEdit(equipmentId: string): void {
+    this.router.navigate([equipmentId, 'edit'], { relativeTo: this.route });
+  }
+
+  /**
    * Method onLoad
    * @method onLoad
    *

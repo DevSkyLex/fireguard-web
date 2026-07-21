@@ -293,5 +293,28 @@ export class CompliancePage {
   protected retry(): void {
     this.store.load(this.activeOrganizationStore.selectedOrganization()?.id ?? null);
   }
+
+  /**
+   * Method openFacility
+   *
+   * @description
+   * Opens the site a register row stands for. The register is read to find the
+   * site that needs attention, and going there is the only thing left to do
+   * once it is found.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {ComplianceFacilityRow} row - Activated register row.
+   *
+   * @returns {void}
+   */
+  protected openFacility(row: ComplianceFacilityRow): void {
+    const organizationId: string | null =
+      this.activeOrganizationStore.selectedOrganization()?.id ?? null;
+    if (organizationId === null) return;
+
+    void this.router.navigate(['/organizations', organizationId, 'facilities', row.facilityId]);
+  }
   //#endregion
 }

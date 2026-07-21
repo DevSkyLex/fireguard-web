@@ -4,7 +4,9 @@ import {
   Component,
   computed,
   input,
+  output,
   type InputSignal,
+  type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
 import { TableModule } from 'primeng/table';
@@ -61,6 +63,23 @@ export class ComplianceFacilityTable {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property view
+   * @readonly
+   *
+   * @description
+   * Emits the site whose row was activated. The table stays presentational —
+   * the page owns where "open this site" leads (ARCHITECTURE §9.3).
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {OutputEmitterRef<ComplianceFacilityRow>}
+   */
+  public readonly view: OutputEmitterRef<ComplianceFacilityRow> = output<ComplianceFacilityRow>();
   //#endregion
 
   //#region Properties

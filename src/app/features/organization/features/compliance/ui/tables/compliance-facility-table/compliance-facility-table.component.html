@@ -10,11 +10,25 @@
   <p-table [value]="mutableRows()" [loading]="loading()" dataKey="facilityId" styleClass="text-sm">
     <ng-template #header>
       <tr>
-        <th scope="col" i18n="@@compliance.sites.col.site">Site</th>
-        <th scope="col" class="text-right" i18n="@@compliance.sites.col.coverage">Coverage</th>
-        <th scope="col" class="text-right" i18n="@@compliance.sites.col.overdue">Overdue</th>
-        <th scope="col" class="text-right" i18n="@@compliance.sites.col.dueSoon">Due soon</th>
-        <th scope="col" class="text-right" i18n="@@compliance.sites.col.critical">Critical NC</th>
+        <th scope="col" pSortableColumn="name">
+          <span i18n="@@compliance.sites.col.site">Site</span><p-sortIcon field="name" />
+        </th>
+        <th scope="col" class="text-right" pSortableColumn="complianceRate">
+          <span i18n="@@compliance.sites.col.coverage">Coverage</span
+          ><p-sortIcon field="complianceRate" />
+        </th>
+        <th scope="col" class="text-right" pSortableColumn="overdueEquipmentCount">
+          <span i18n="@@compliance.sites.col.overdue">Overdue</span
+          ><p-sortIcon field="overdueEquipmentCount" />
+        </th>
+        <th scope="col" class="text-right" pSortableColumn="dueSoonEquipmentCount">
+          <span i18n="@@compliance.sites.col.dueSoon">Due soon</span
+          ><p-sortIcon field="dueSoonEquipmentCount" />
+        </th>
+        <th scope="col" class="text-right" pSortableColumn="openCriticalNonConformityCount">
+          <span i18n="@@compliance.sites.col.critical">Critical NC</span
+          ><p-sortIcon field="openCriticalNonConformityCount" />
+        </th>
         <th scope="col" class="hidden lg:table-cell" i18n="@@compliance.sites.col.lastInspection">
           Last inspection
         </th>
@@ -22,7 +36,17 @@
     </ng-template>
 
     <ng-template #body let-row>
-      <tr>
+      <!--
+        The whole row opens the site. This register is read to find the site
+        that needs attention, and the only thing to do once you have found it
+        is go there — making the reader hunt for a link would be friction on
+        the one action the page exists to lead to.
+      -->
+      <tr
+        class="cursor-pointer transition-colors hover:bg-surface-50 motion-reduce:transition-none dark:hover:bg-surface-900/50"
+        data-testid="compliance-site-row"
+        (click)="view.emit(row)"
+      >
         <td>
           <div class="flex min-w-0 flex-col">
             <span class="truncate font-medium text-surface-900 dark:text-surface-100">

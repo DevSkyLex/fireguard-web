@@ -284,11 +284,36 @@
               <span class="text-surface-300 dark:text-surface-600">-</span>
             }
           </td>
+          <!--
+            The facility is the place; `locationLabel` is the spot inside it.
+            The column showed only the second, so a free-text "Boiler room" had
+            no site to belong to. The name is resolved server-side — the record
+            carries only `facilityId`, and looking it up per row would be one
+            request per line.
+          -->
           <td>
-            @if (equipment.locationLabel) {
-              <span class="inline-flex items-center gap-1.5 text-surface-600 dark:text-surface-400">
-                <i class="pi pi-map-marker text-[0.7rem]" aria-hidden="true"></i>
-                {{ equipment.locationLabel }}
+            @if (equipment.facilityName || equipment.locationLabel) {
+              <span class="flex min-w-0 flex-col">
+                @if (equipment.facilityName) {
+                  <span
+                    class="inline-flex items-center gap-1.5 truncate text-surface-700 dark:text-surface-300"
+                    data-testid="equipment-facility-name"
+                  >
+                    <i class="pi pi-building text-[0.7rem]" aria-hidden="true"></i>
+                    {{ equipment.facilityName }}
+                  </span>
+                }
+                @if (equipment.locationLabel) {
+                  <span
+                    class="inline-flex items-center gap-1.5 truncate text-xs text-surface-500 dark:text-surface-400"
+                    [class]="equipment.facilityName ? 'pl-[1.1rem]' : ''"
+                  >
+                    @if (!equipment.facilityName) {
+                      <i class="pi pi-map-marker text-[0.7rem]" aria-hidden="true"></i>
+                    }
+                    {{ equipment.locationLabel }}
+                  </span>
+                }
               </span>
             } @else {
               <span class="text-surface-300 dark:text-surface-600">-</span>

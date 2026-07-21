@@ -165,6 +165,23 @@ export interface EquipmentOutput extends HydraItem {
   readonly locationLabel: string | null;
 
   /**
+   * Property facilityName
+   * @readonly
+   *
+   * @description
+   * Display name of the assigned facility, resolved server-side through the
+   * Facility module's naming port — the equipment record stores only
+   * `facilityId`, so this cannot be derived client-side without a lookup per
+   * row.
+   *
+   * Optional: absent on an older payload, and null when the equipment is
+   * unassigned or the facility could not be resolved.
+   *
+   * @type {(string | null | undefined)}
+   */
+  readonly facilityName?: string | null;
+
+  /**
    * Property status
    * @readonly
    *

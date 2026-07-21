@@ -279,12 +279,20 @@ export class TrustedDeviceTable {
       return [];
     }
 
+    // Named header, same reason as the session table: the overlay hides the
+    // row, and this menu's only entry is destructive. Revoking the wrong
+    // device logs someone out of a machine they still use.
     return [
       {
-        label: $localize`:@@account.deviceTable.revokeDevice:Revoke device`,
-        icon: PrimeIcons.TIMES_CIRCLE,
-        styleClass: 'text-red-500',
-        command: (): void => this.revoke.emit(device),
+        label: device.name,
+        items: [
+          {
+            label: $localize`:@@account.deviceTable.revokeDevice:Revoke device`,
+            icon: PrimeIcons.TIMES_CIRCLE,
+            styleClass: 'text-red-500',
+            command: (): void => this.revoke.emit(device),
+          },
+        ],
       },
     ];
   });

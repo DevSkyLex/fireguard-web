@@ -342,22 +342,31 @@ export class SessionTable {
       return [];
     }
 
+    // The header names the row the menu was opened from. The overlay covers
+    // the table, so "revoke" without it asks the reader to remember which
+    // session they clicked — on a destructive action, against a list where
+    // every row looks alike.
     return [
       {
-        label: $localize`:@@account.sessionTable.viewDetails:View details`,
-        icon: PrimeIcons.EYE,
-        command: (): void => this.details.emit(session),
+        label: session.browser ?? $localize`:@@account.sessionTable.unknownBrowser:Unknown browser`,
+        items: [
+          {
+            label: $localize`:@@account.sessionTable.viewDetails:View details`,
+            icon: PrimeIcons.EYE,
+            command: (): void => this.details.emit(session),
+          },
+          ...(session.isCurrent
+            ? []
+            : [
+                {
+                  label: $localize`:@@common.revoke:Revoke`,
+                  icon: PrimeIcons.TIMES_CIRCLE,
+                  styleClass: 'text-red-500',
+                  command: (): void => this.revoke.emit(session),
+                },
+              ]),
+        ],
       },
-      ...(session.isCurrent
-        ? []
-        : [
-            {
-              label: $localize`:@@common.revoke:Revoke`,
-              icon: PrimeIcons.TIMES_CIRCLE,
-              styleClass: 'text-red-500',
-              command: (): void => this.revoke.emit(session),
-            },
-          ]),
     ];
   });
 

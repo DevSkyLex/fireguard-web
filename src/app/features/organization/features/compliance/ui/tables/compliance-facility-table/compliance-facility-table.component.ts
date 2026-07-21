@@ -95,6 +95,22 @@ export class ComplianceFacilityTable {
    *
    * @type {Signal<ComplianceFacilityRow[]>}
    */
+  /**
+   * Property pageSize
+   * @readonly
+   *
+   * @description
+   * Rows per page. Ten keeps the card the same height as the compliance
+   * summary beside it, which is what stops the tab reflowing when a site is
+   * added.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {number}
+   */
+  protected readonly pageSize: number = 10;
+
   protected readonly mutableRows: Signal<ComplianceFacilityRow[]> = computed(() => [
     ...this.rows(),
   ]);

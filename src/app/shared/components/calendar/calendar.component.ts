@@ -537,7 +537,15 @@ export class Calendar {
    */
   protected readonly viewOptions: Signal<readonly ViewOption[]> = computed<readonly ViewOption[]>(
     () => {
-      const views: readonly CalendarView[] = this.config().views ?? ['month', 'week', 'agenda'];
+      // 'day' was implemented end to end — its own template branch, its own
+      // navigation step, its own label — and left out of this default, so no
+      // consumer could ever reach it.
+      const views: readonly CalendarView[] = this.config().views ?? [
+        'month',
+        'week',
+        'day',
+        'agenda',
+      ];
       return views.map((value: CalendarView): ViewOption => ({ label: VIEW_LABELS[value], value }));
     },
   );

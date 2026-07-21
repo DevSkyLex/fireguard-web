@@ -120,4 +120,36 @@ test.describe('Organization calendar', () => {
 
     expect(overflows).toBe(false);
   });
+
+  // The switch offered Month / Week / Agenda. The day view was implemented end
+  // to end — its own template branch, navigation step and label — and simply
+  // left out of the default view list, so nothing could reach it.
+  test('offers the day view and opens it', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await landOnCalendar(page);
+
+    const dayOption = page.getByRole('button', { name: 'Day', exact: true });
+    await expect(dayOption).toBeVisible();
+
+    await dayOption.click();
+
+    // The day grid replaces the month cells.
+    await expect(page.locator('app-calendar-week')).toBeVisible();
+  });
+
+  // The colour bar encodes the kind and nothing else; PRODUCT.md forbids status
+  // carried by colour alone.
+  test('names the kind of each event, not just its colour', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await landOnCalendar(page);
+
+    // The agenda lists the whole period, so all four sources are on screen at
+    // once; the day column only holds the focused date.
+    await page.getByRole('button', { name: 'Agenda', exact: true }).click();
+
+    const labels = page.getByTestId('calendar-event-type');
+    await expect(labels).toHaveCount(4);
+    await expect(labels.filter({ hasText: 'Inspection' })).toHaveCount(1);
+    await expect(labels.filter({ hasText: 'Maintenance' })).toHaveCount(1);
+  });
 });

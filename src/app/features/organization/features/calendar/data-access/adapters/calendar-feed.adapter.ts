@@ -11,6 +11,13 @@ import type { CalendarEvent } from '@shared/components';
  * is this day made of", and a per-status palette would turn a month view into
  * noise. Status stays available on the entry for the detail surfaces.
  */
+const SOURCE_LABEL: Readonly<Record<CalendarFeedSourceKey, string>> = {
+  intervention: $localize`:@@calendar.type.intervention:Intervention`,
+  inspection: $localize`:@@calendar.type.inspection:Inspection`,
+  maintenance: $localize`:@@calendar.type.maintenance:Maintenance`,
+  calendar_event: $localize`:@@calendar.type.event:Event`,
+};
+
 const SOURCE_TONE: Readonly<Record<CalendarFeedSourceKey, CalendarEvent['tone']>> = {
   intervention: 'info',
   inspection: 'success',
@@ -40,6 +47,7 @@ export function adaptCalendarFeed(items: readonly CalendarFeedItem[]): readonly 
       end: item.endsAt === null ? null : new Date(item.endsAt),
       allDay: item.allDay,
       tone: SOURCE_TONE[item.sourceKey],
+      typeLabel: SOURCE_LABEL[item.sourceKey],
       categoryIds: [item.sourceKey],
       data: item,
     }),

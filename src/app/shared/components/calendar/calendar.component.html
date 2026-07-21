@@ -265,14 +265,29 @@
       <span class="truncate font-medium text-surface-900 dark:text-surface-100">{{
         event.title
       }}</span>
-      @if (!event.allDay) {
-        <span class="text-xs text-surface-500 tabular-nums dark:text-surface-400">
-          {{ event.start | date: 'HH:mm' }}
-          @if (event.end) {
-            – {{ event.end | date: 'HH:mm' }}
-          }
-        </span>
-      }
+      <span class="flex flex-wrap items-center gap-2">
+        <!--
+          The bar on the left encodes the kind as a colour and nothing else.
+          Naming it is what makes the row readable in greyscale, and to anyone
+          who has not learnt the palette.
+        -->
+        @if (event.typeLabel) {
+          <span
+            class="inline-flex h-5 items-center rounded border border-surface-200 bg-surface-50 px-1.5 text-[11px] font-medium text-surface-600 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
+            data-testid="calendar-event-type"
+          >
+            {{ event.typeLabel }}
+          </span>
+        }
+        @if (!event.allDay) {
+          <span class="text-xs text-surface-500 tabular-nums dark:text-surface-400">
+            {{ event.start | date: 'HH:mm' }}
+            @if (event.end) {
+              – {{ event.end | date: 'HH:mm' }}
+            }
+          </span>
+        }
+      </span>
     </span>
   </span>
 </ng-template>

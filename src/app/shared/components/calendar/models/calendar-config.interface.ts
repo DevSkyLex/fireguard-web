@@ -6,12 +6,12 @@ import type { CalendarView } from './calendar-view.type';
  * @description
  * Optional presentation configuration for the {@link Calendar}. Every field has
  * a sensible default, so a consumer can pass nothing and still get a complete
- * month/week/agenda calendar.
+ * month/week/day/agenda calendar.
  *
  * @since 1.0.0
  */
 export interface CalendarConfig {
-  /** Views to offer in the toolbar switch. Defaults to all three. */
+  /** Views to offer in the toolbar switch. Defaults to all four. */
   readonly views?: readonly CalendarView[];
 
   /** First column of the week: 0 = Sunday, 1 = Monday. Defaults to 1. */

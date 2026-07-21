@@ -136,4 +136,43 @@ test.describe('Compliance register', () => {
 
     await expect(lastRow).toContainText('Riverside Depot');
   });
+
+  // Eleven sibling tables carry a pager; the estate list was the only one that
+  // scrolled forever. It paginates client-side because the rows arrive whole.
+  test('paginates the estate list once it outgrows a page', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    const organization = organizationOutput();
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession({ organizations: [organization] });
+    await api.mockOrganizationDetail(organization);
+    await api.mockOrganizationAccess(organization.id);
+
+    const many = Array.from({ length: 24 }, (_, index) =>
+      facility(`f${index}`, `Site ${index}`, 90, 0, 0, '2026-06-01T00:00:00+00:00'),
+    );
+    await page.route(`${API_BASE_URL}/api/organizations/${organization.id}/compliance`, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/ld+json',
+        body: JSON.stringify({ ...summary, facilities: many }),
+      }),
+    );
+
+    await page.goto(`/organizations/${organization.id}/compliance?tab=sites`);
+
+    const table = page.locator('app-compliance-facility-table');
+    await expect(table.locator('p-paginator')).toBeVisible();
+    // Ten rows on screen, not twenty-four.
+    await expect(table.locator('tbody tr')).toHaveCount(10);
+  });
+
+  // Three sites fit; a pager there would be chrome with nothing to do.
+  test('shows no pager when everything fits on one page', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await landOnCompliance(page, 'sites');
+
+    const table = page.locator('app-compliance-facility-table');
+    await expect(table).toBeVisible();
+    await expect(table.locator('p-paginator')).toHaveCount(0);
+  });
 });

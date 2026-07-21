@@ -7,7 +7,25 @@
     description="Once equipment is scheduled for maintenance, each site's coverage appears here."
   />
 } @else {
-  <p-table [value]="mutableRows()" [loading]="loading()" dataKey="facilityId" styleClass="text-sm">
+  <!--
+    Paginated client-side, unlike its sibling tables: the rows arrive whole in
+    one input rather than page by page, so there is nothing to fetch. The pager
+    only appears once there is more than a page — eleven sibling tables carry
+    one and this was the only estate list that scrolled forever.
+  -->
+  <p-table
+    [value]="mutableRows()"
+    [loading]="loading()"
+    dataKey="facilityId"
+    styleClass="text-sm"
+    [paginator]="mutableRows().length > pageSize"
+    [rows]="pageSize"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    [paginatorDropdownAppendTo]="'body'"
+    [showCurrentPageReport]="true"
+    i18n-currentPageReportTemplate="@@compliance.table.pageReport"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sites"
+  >
     <ng-template #header>
       <tr>
         <th scope="col" pSortableColumn="name">

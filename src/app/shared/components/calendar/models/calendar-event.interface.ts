@@ -29,6 +29,16 @@ export interface CalendarEvent {
   /** Semantic colour role for the event bar/dot. */
   readonly tone?: TagSeverity;
 
+  /**
+   * Short human name for what kind of event this is ("Inspection").
+   *
+   * Optional, but the reason it exists is not: `tone` alone encodes the kind
+   * as a colour, and PRODUCT.md forbids status carried by colour alone. Any
+   * surface wide enough to show it — the day rows, the agenda — renders it
+   * beside the title.
+   */
+  readonly typeLabel?: string;
+
   /** Whether the event spans the whole day (rendered in the week all-day row). */
   readonly allDay?: boolean;
 

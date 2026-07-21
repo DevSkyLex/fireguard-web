@@ -24,7 +24,29 @@
       <label class="text-sm text-surface-900/50 dark:text-surface-0/50" for="legalType">
         <span i18n="@@org.legal.type">Legal type</span>
       </label>
-      <input id="legalType" pInputText formControlName="legalType" class="w-full" />
+      <!--
+        A select, not a text box: the API validates this value and publishes
+        the accepted list at GET /api/organizations/legal-types — an endpoint
+        whose own description says it exists to feed this control. Typing here
+        meant learning the value was wrong from a server rejection.
+
+        `[showClear]` because the field is optional and the backend clears it
+        on an empty string; `[editable]` stays off so nothing outside the
+        published list can be submitted.
+      -->
+      <p-select
+        inputId="legalType"
+        formControlName="legalType"
+        [options]="[...legalTypes()]"
+        optionLabel="label"
+        optionValue="value"
+        [showClear]="true"
+        [filter]="legalTypes().length > 8"
+        placeholder="Select a legal type"
+        i18n-placeholder="@@org.legal.typePlaceholder"
+        data-testid="organization-legal-type"
+        class="w-full"
+      />
     </div>
 
     <div class="flex flex-col gap-1.5">

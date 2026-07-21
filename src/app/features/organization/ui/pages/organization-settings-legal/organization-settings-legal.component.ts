@@ -1,4 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, type Signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, map, of, type Observable } from 'rxjs';
+import type { OptionOutput } from '@core/api/models';
+import { OrganizationService } from '@features/organization/data-access';
 import type { UpdateOrganizationInput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
@@ -48,6 +52,36 @@ export class OrganizationSettingsLegalPage {
    */
   protected readonly store: OrganizationSettingsStore =
     inject<OrganizationSettingsStore>(OrganizationSettingsStore);
+
+  /**
+   * Property legalTypes
+   * @readonly
+   *
+   * @description
+   * Legal entity types the API accepts, from
+   * `GET /api/organizations/legal-types` — an endpoint whose own description
+   * says it exists to feed this tab's select, and which nothing called.
+   *
+   * Loaded by the page, not the form: a `ui/forms` component owns form state
+   * and no API access (ARCHITECTURE §9.4).
+   *
+   * An empty list on failure rather than a hard-coded fallback: the backend
+   * owns this vocabulary, and a local copy would drift silently.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<readonly OptionOutput[]>}
+   */
+  protected readonly legalTypes: Signal<readonly OptionOutput[]> = toSignal(
+    inject(OrganizationService)
+      .listLegalTypes()
+      .pipe(
+        map((collection): readonly OptionOutput[] => collection.member),
+        catchError((): Observable<readonly OptionOutput[]> => of([])),
+      ),
+    { initialValue: [] as readonly OptionOutput[] },
+  );
   //#endregion
 
   //#region Methods

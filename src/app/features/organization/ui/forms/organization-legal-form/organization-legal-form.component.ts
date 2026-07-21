@@ -14,7 +14,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, type FormGroup } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
 import type { Observable } from 'rxjs';
+import type { OptionOutput } from '@core/api/models';
 import type { OrganizationOutput, UpdateOrganizationInput } from '@features/organization/models';
 
 /**
@@ -53,7 +55,7 @@ interface LegalFormValue {
  */
 @Component({
   selector: 'app-organization-legal-form',
-  imports: [ButtonModule, ReactiveFormsModule, InputTextModule],
+  imports: [ButtonModule, ReactiveFormsModule, InputTextModule, SelectModule],
   templateUrl: './organization-legal-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -81,6 +83,26 @@ export class OrganizationLegalForm {
    * @type {InputSignal<boolean>}
    */
   public readonly saving: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property legalTypes
+   * @readonly
+   *
+   * @description
+   * Legal entity types the API accepts, supplied by the page.
+   *
+   * Passed in rather than fetched here: a `ui/forms` component owns form state
+   * and no API access (ARCHITECTURE §9.4). Injecting the service worked until
+   * the spec asked for `ENV_CONFIG` — the boundary held, loudly.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {InputSignal<readonly OptionOutput[]>}
+   */
+  public readonly legalTypes: InputSignal<readonly OptionOutput[]> = input<readonly OptionOutput[]>(
+    [],
+  );
   //#endregion
 
   //#region Outputs
@@ -139,6 +161,23 @@ export class OrganizationLegalForm {
    * @since 1.1.0
    *
    * @type {Signal<Record<string, unknown>>}
+   */
+  /**
+   * Property legalTypeOptions
+   * @readonly
+   *
+   * @description
+   * Legal entity types accepted by the API, loaded from
+   * `GET /api/organizations/legal-types` — the endpoint that exists for this
+   * select and that the form ignored while offering a free text box.
+   *
+   * Falls back to an empty list on failure: the field then renders no choices
+   * rather than a stale hard-coded copy that would drift from the backend.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<readonly OptionOutput[]>}
    */
   private readonly formValue: Signal<Record<string, unknown>> = toSignal(
     this.form.valueChanges as Observable<Record<string, unknown>>,

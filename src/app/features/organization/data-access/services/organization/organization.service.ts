@@ -380,6 +380,30 @@ export class OrganizationService extends HydraApiService {
    *
    * @return {Observable<OrganizationDashboardTrendOutput>} An observable emitting the inspections trend resource.
    */
+  /**
+   * Method listLegalTypes
+   * @method listLegalTypes
+   *
+   * @description
+   * Lists the legal entity types the API accepts.
+   *
+   * The endpoint exists for exactly this: its OpenAPI description says it
+   * "returns organization legal entity type values for the Legal profile
+   * settings tab select". The form used a free text input against it, so the
+   * only feedback on a wrong value was a server rejection.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @return {Observable<HydraCollection<OptionOutput>>} The accepted legal types.
+   */
+  public listLegalTypes(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
+    return this.getCollection<OptionOutput>(
+      `${OrganizationService.BASE_PATH}/legal-types`,
+      options,
+    );
+  }
+
   public getDashboardInspectionsTrend(
     organizationId: string,
     options?: OrganizationDashboardInspectionTrendQueryOptions,

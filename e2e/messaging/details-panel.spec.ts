@@ -175,6 +175,34 @@ async function landOnConversation(page: Page): Promise<string> {
     }),
   );
 
+  // Presence is per-member and read for the participants shown: one of the two
+  // is reachable now, the other is not.
+  await page.route(`${API_BASE_URL}/api/presence?**`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/ld+json',
+      body: JSON.stringify({
+        member: [
+          {
+            '@id': '/api/presence/member-abc',
+            '@type': 'Presence',
+            memberId: 'member-abc',
+            online: true,
+            lastSeenAt: '2026-07-01T10:00:00Z',
+          },
+          {
+            '@id': '/api/presence/member-team',
+            '@type': 'Presence',
+            memberId: 'member-team',
+            online: false,
+            lastSeenAt: '2026-06-28T09:00:00Z',
+          },
+        ],
+        totalItems: 2,
+      }),
+    }),
+  );
+
   await page.goto(`/organizations/${organization.id}/messages?conversation=general`);
   await expect(page.getByTestId('conversation-details-toggle')).toBeVisible();
 
@@ -210,6 +238,26 @@ test.describe('Conversation details panel', () => {
     await expect(members.first()).toContainText('Nadia Rahal');
     await expect(members.first()).toContainText('Operations lead');
     await expect(members.nth(1)).toContainText('Team');
+  });
+
+  // Who can answer right now is the question this list is scanned for; a single
+  // alphabetical roll hides it. The dot never carries that alone — the groups
+  // are named, so the split survives a colour-blind or greyscale read.
+  test('splits the members into who is reachable now and who is not', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await landOnConversation(page);
+    await page.getByTestId('conversation-details-toggle').locator('button').click();
+
+    await expect(page.getByTestId('details-members-online-heading')).toContainText('Online');
+    await expect(page.getByTestId('details-members-online-heading')).toContainText('1');
+    await expect(page.getByTestId('details-members-offline-heading')).toContainText('Offline');
+
+    const online = page
+      .locator('ul', { has: page.getByTestId('details-member') })
+      .first()
+      .getByTestId('details-member');
+    await expect(online).toHaveCount(1);
+    await expect(online.first()).toContainText('Nadia Rahal');
   });
 
   test('lists the conversation pins', async ({ page }) => {

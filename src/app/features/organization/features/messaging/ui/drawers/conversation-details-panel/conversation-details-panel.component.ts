@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -51,6 +51,7 @@ interface ParticipantRow {
   readonly initials: string;
   readonly role: string | null;
   readonly fromTeam: boolean;
+  readonly online: boolean;
 }
 
 /**
@@ -73,7 +74,7 @@ interface ParticipantRow {
  */
 @Component({
   selector: 'app-conversation-details-panel',
-  imports: [DatePipe],
+  imports: [DatePipe, NgTemplateOutlet],
   providers: [ConversationDetailsStore],
   templateUrl: './conversation-details-panel.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
@@ -236,6 +237,7 @@ export class ConversationDetailsPanel {
   protected readonly participantRows: Signal<readonly ParticipantRow[]> = computed(
     (): readonly ParticipantRow[] => {
       const identities: ReadonlyMap<string, MemberIdentity> = this.directory.identities();
+      const online: ReadonlySet<string> = new Set(this.store.onlineMemberIds());
 
       return this.store
         .participants()
@@ -248,6 +250,7 @@ export class ConversationDetailsPanel {
             initials: identity?.initials ?? '?',
             role: participant.role,
             fromTeam: participant.source === 'team',
+            online: online.has(participant.memberId),
           };
         })
         .toSorted((left: ParticipantRow, right: ParticipantRow): number =>
@@ -256,6 +259,41 @@ export class ConversationDetailsPanel {
             : Number(left.fromTeam) - Number(right.fromTeam),
         );
     },
+  );
+
+  /**
+   * Property onlineParticipants
+   * @readonly
+   *
+   * @description
+   * Participants the presence read reported online.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<readonly ParticipantRow[]>}
+   */
+  protected readonly onlineParticipants: Signal<readonly ParticipantRow[]> = computed(
+    (): readonly ParticipantRow[] =>
+      this.participantRows().filter((row: ParticipantRow): boolean => row.online),
+  );
+
+  /**
+   * Property offlineParticipants
+   * @readonly
+   *
+   * @description
+   * Everyone else — including members whose presence could not be read, since
+   * an unknown presence is not a claim that someone is there.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<readonly ParticipantRow[]>}
+   */
+  protected readonly offlineParticipants: Signal<readonly ParticipantRow[]> = computed(
+    (): readonly ParticipantRow[] =>
+      this.participantRows().filter((row: ParticipantRow): boolean => !row.online),
   );
   //#endregion
 
@@ -280,6 +318,24 @@ export class ConversationDetailsPanel {
 
     this.directory.load(
       computed((): string | null => this.organizationContext.selectedOrganization()?.id ?? null),
+    );
+
+    // Presence is read here rather than reused from the messaging page: that
+    // store is page-provided, and this panel lives in the layout injector.
+    this.store.loadPresence(
+      computed(() => {
+        const organizationId: string | undefined =
+          this.organizationContext.selectedOrganization()?.id;
+
+        return {
+          organization: organizationId ? `/api/organizations/${organizationId}` : '',
+          memberIds: organizationId
+            ? this.store
+                .participants()
+                .map((participant: ChannelParticipant): string => participant.memberId)
+            : [],
+        };
+      }),
     );
   }
   //#endregion

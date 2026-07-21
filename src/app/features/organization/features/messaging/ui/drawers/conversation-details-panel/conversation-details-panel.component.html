@@ -149,38 +149,47 @@
                 No members in this channel yet.
               </p>
             } @else {
-              <ul class="flex flex-col">
-                @for (participant of participantRows(); track participant.memberId) {
-                  <li class="flex items-center gap-2.5 py-1.5" data-testid="details-member">
-                    <span
-                      class="grid size-9 shrink-0 place-content-center rounded-full bg-surface-100 text-[11px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-                      aria-hidden="true"
-                    >
-                      {{ participant.initials }}
-                    </span>
-                    <span class="min-w-0 flex-1">
-                      <span
-                        class="block truncate text-[13px] font-medium text-surface-950 dark:text-surface-50"
-                        >{{ participant.displayName }}</span
-                      >
-                      @if (participant.role) {
-                        <span
-                          class="block truncate text-xs text-surface-500 dark:text-surface-400"
-                          >{{ participant.role }}</span
-                        >
-                      }
-                    </span>
-                    @if (participant.fromTeam) {
-                      <!-- Membership comes from a team binding, so removing it by hand would not stick. -->
-                      <span
-                        class="shrink-0 rounded-sm bg-surface-100 px-1.5 py-0.5 text-[10px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-400"
-                        i18n="@@messaging.details.fromTeam"
-                        >Team</span
-                      >
-                    }
-                  </li>
-                }
-              </ul>
+              <!--
+                Split into who is reachable now and who is not: the panel's job
+                here is to answer "can I get an answer from this channel", and a
+                single alphabetical list hides that behind a scan. The presence
+                dot never carries the meaning alone — each group is named.
+              -->
+              @if (onlineParticipants().length > 0) {
+                <p
+                  class="pt-1 pb-0.5 text-[11px] font-semibold tracking-wider text-surface-500 uppercase"
+                  data-testid="details-members-online-heading"
+                >
+                  <ng-container i18n="@@messaging.details.online">Online</ng-container>
+                  <span class="tabular-nums"> {{ onlineParticipants().length }}</span>
+                </p>
+                <ul class="flex flex-col">
+                  @for (participant of onlineParticipants(); track participant.memberId) {
+                    <ng-container
+                      [ngTemplateOutlet]="memberRow"
+                      [ngTemplateOutletContext]="{ $implicit: participant }"
+                    />
+                  }
+                </ul>
+              }
+
+              @if (offlineParticipants().length > 0) {
+                <p
+                  class="pt-3 pb-0.5 text-[11px] font-semibold tracking-wider text-surface-500 uppercase"
+                  data-testid="details-members-offline-heading"
+                >
+                  <ng-container i18n="@@messaging.details.offline">Offline</ng-container>
+                  <span class="tabular-nums"> {{ offlineParticipants().length }}</span>
+                </p>
+                <ul class="flex flex-col">
+                  @for (participant of offlineParticipants(); track participant.memberId) {
+                    <ng-container
+                      [ngTemplateOutlet]="memberRow"
+                      [ngTemplateOutletContext]="{ $implicit: participant }"
+                    />
+                  }
+                </ul>
+              }
             }
           }
         }
@@ -306,3 +315,44 @@
     </p>
   </div>
 }
+
+<!--
+  One row shape for both presence groups: the groups differ by heading and by
+  the dot, not by what a member row is.
+-->
+<ng-template #memberRow let-participant>
+  <li class="flex items-center gap-2.5 py-1.5" data-testid="details-member">
+    <span class="relative shrink-0">
+      <span
+        class="grid size-9 place-content-center rounded-full bg-surface-100 text-[11px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+        aria-hidden="true"
+      >
+        {{ participant.initials }}
+      </span>
+      @if (participant.online) {
+        <span
+          class="absolute right-0 bottom-0 size-2.5 rounded-full border-2 border-surface-0 bg-emerald-500 dark:border-surface-900"
+          aria-hidden="true"
+        ></span>
+      }
+    </span>
+    <span class="min-w-0 flex-1">
+      <span class="block truncate text-[13px] font-medium text-surface-950 dark:text-surface-50">{{
+        participant.displayName
+      }}</span>
+      @if (participant.role) {
+        <span class="block truncate text-xs text-surface-500 dark:text-surface-400">{{
+          participant.role
+        }}</span>
+      }
+    </span>
+    @if (participant.fromTeam) {
+      <!-- Membership comes from a team binding, so removing it by hand would not stick. -->
+      <span
+        class="shrink-0 rounded-sm bg-surface-100 px-1.5 py-0.5 text-[10px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-400"
+        i18n="@@messaging.details.fromTeam"
+        >Team</span
+      >
+    }
+  </li>
+</ng-template>

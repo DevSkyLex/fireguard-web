@@ -19,6 +19,7 @@ import type {
   ChannelParticipant,
   MessageAttachment,
   MessageOutput,
+  PresenceOutput,
 } from '@features/organization/features/messaging/models';
 
 /**
@@ -29,6 +30,15 @@ import type {
 interface ConversationDetailsState {
   readonly conversationId: string | null;
   readonly detailsCallState: CallState<ConversationDetails>;
+
+  /**
+   * Members the presence endpoint reported online, as ids.
+   *
+   * Not a `CallState`: presence is ambient. A failed read means "we do not
+   * know", which renders exactly like "nobody is online" and is not worth a
+   * spinner or an error row in a 330px column.
+   */
+  readonly onlineMemberIds: readonly string[];
 }
 
 /**
@@ -47,6 +57,7 @@ const EMPTY_DETAILS: ConversationDetails = { pinned: [], attachments: [], partic
 const INITIAL_STATE: ConversationDetailsState = {
   conversationId: null,
   detailsCallState: idleCallState(),
+  onlineMemberIds: [],
 };
 
 /**
@@ -133,6 +144,11 @@ export const ConversationDetailsStore = signalStore(
         switchMap((target) => {
           patchState(store, { conversationId: target.conversationId });
 
+          // Presence belongs to the conversation that was open, not to the one
+          // arriving: keeping it would paint the new channel's members online
+          // until their own read lands.
+          patchState(store, { onlineMemberIds: [] });
+
           if (target.conversationId === null) {
             patchState(store, { detailsCallState: idleCallState() });
             return EMPTY;
@@ -169,6 +185,48 @@ export const ConversationDetailsStore = signalStore(
 
     return {
       load,
+
+      /**
+       * Method loadPresence
+       *
+       * @description
+       * Reads which of the given members are online. The endpoint has no
+       * "list everyone online" mode, so the caller passes the ids it cares
+       * about — here, the participants that just loaded.
+       *
+       * Errors are swallowed on purpose: an unknown presence renders as
+       * offline, which is the safe reading, and a failed ambient read is not
+       * an event the user acts on.
+       *
+       * @param {{ organization: string; memberIds: readonly string[] }} request - Organization IRI and members to check.
+       *
+       * @returns {void}
+       */
+      loadPresence: rxMethod<{
+        readonly organization: string;
+        readonly memberIds: readonly string[];
+      }>(
+        pipe(
+          switchMap((request) => {
+            if (request.memberIds.length === 0) {
+              patchState(store, { onlineMemberIds: [] });
+              return EMPTY;
+            }
+
+            return service.getPresence(request.organization, request.memberIds).pipe(
+              tapResponse({
+                next: (collection: HydraCollection<PresenceOutput>) =>
+                  patchState(store, {
+                    onlineMemberIds: collection.member
+                      .filter((presence: PresenceOutput): boolean => presence.online)
+                      .map((presence: PresenceOutput): string => presence.memberId),
+                  }),
+                error: (): void => undefined,
+              }),
+            );
+          }),
+        ),
+      ),
 
       /**
        * Method reload

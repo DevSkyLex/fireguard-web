@@ -127,9 +127,14 @@ DM would be unreachable.
 - **The root message is rendered at the top of the panel**, reusing the same
   thread component — a reply list without its subject reads as orphaned.
 - **Presence has no "list all online" mode.** The API requires the member ids to
-  check (max 100), so the page derives them from the authors currently on
-  screen. An id absent from the response means offline **or** unknown — presence
-  expires server-side — so only the online case is ever asserted in the UI.
+  check (max 100), so each surface derives them from what it shows: the page
+  from the authors on screen, the details panel from the channel's participants.
+  The panel reads presence itself rather than reusing the page's — the page
+  store is route-provided and the panel is built in the layout injector. An id
+  absent from the response means offline **or** unknown — presence expires
+  server-side — so only the online case is ever asserted in the UI, and the
+  details panel groups members under named **Online** / **Offline** headings so
+  the dot never carries the state alone.
 - **Pinning is shared, saving is personal.** A pin is visible to the whole
   conversation; a save is only in the member's own list. They must never share a
   control or an icon.

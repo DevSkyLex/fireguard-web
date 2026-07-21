@@ -9,6 +9,7 @@ describe('ConversationDetailsStore', () => {
   let listPinnedMessages: ReturnType<typeof vi.fn>;
   let listAttachments: ReturnType<typeof vi.fn>;
   let listParticipants: ReturnType<typeof vi.fn>;
+  let getPresence: ReturnType<typeof vi.fn>;
 
   const configure = (): InstanceType<typeof ConversationDetailsStore> => {
     TestBed.configureTestingModule({
@@ -16,7 +17,7 @@ describe('ConversationDetailsStore', () => {
         ConversationDetailsStore,
         {
           provide: MessagingService,
-          useValue: { listPinnedMessages, listAttachments, listParticipants },
+          useValue: { listPinnedMessages, listAttachments, listParticipants, getPresence },
         },
       ],
     });
@@ -33,6 +34,12 @@ describe('ConversationDetailsStore', () => {
       ]),
     );
     listParticipants = vi.fn(() => collection([{ memberId: 'm1' }]));
+    getPresence = vi.fn(() =>
+      collection([
+        { memberId: 'm1', online: true },
+        { memberId: 'm2', online: false },
+      ]),
+    );
   });
 
   it('should load the three collections together for a channel', () => {
@@ -76,6 +83,50 @@ describe('ConversationDetailsStore', () => {
     expect(listPinnedMessages).not.toHaveBeenCalled();
     expect(store.pinnedMessages()).toEqual([]);
     expect(store.hasError()).toBe(false);
+  });
+
+  describe('presence', () => {
+    it('should keep only the members the endpoint reports as online', () => {
+      const store = configure();
+
+      store.loadPresence({ organization: '/api/organizations/org-1', memberIds: ['m1', 'm2'] });
+
+      expect(getPresence).toHaveBeenCalledWith('/api/organizations/org-1', ['m1', 'm2']);
+      expect(store.onlineMemberIds()).toEqual(['m1']);
+    });
+
+    it('should not call the endpoint when there is nobody to check', () => {
+      const store = configure();
+
+      store.loadPresence({ organization: '/api/organizations/org-1', memberIds: [] });
+
+      expect(getPresence).not.toHaveBeenCalled();
+      expect(store.onlineMemberIds()).toEqual([]);
+    });
+
+    // An unknown presence is not a claim that someone is there, and it is not
+    // an event the user acts on either — so it degrades to offline, silently.
+    it('should treat a failed read as nobody online rather than an error', () => {
+      getPresence = vi.fn(() => throwError(() => new Error('nope')));
+      const store = configure();
+
+      store.loadPresence({ organization: '/api/organizations/org-1', memberIds: ['m1'] });
+
+      expect(store.onlineMemberIds()).toEqual([]);
+      expect(store.hasError()).toBe(false);
+    });
+
+    // Presence belongs to the conversation it was read for; carrying it over
+    // would paint the new channel's members online before anyone checked.
+    it('should drop presence when another conversation opens', () => {
+      const store = configure();
+      store.loadPresence({ organization: '/api/organizations/org-1', memberIds: ['m1'] });
+      expect(store.onlineMemberIds()).toEqual(['m1']);
+
+      store.load({ conversationId: 'c2', isChannel: true });
+
+      expect(store.onlineMemberIds()).toEqual([]);
+    });
   });
 
   it('should surface a failure so the panel can offer a retry', () => {

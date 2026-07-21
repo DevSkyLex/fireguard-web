@@ -15,9 +15,13 @@ import { FeedbackService } from '@core/feedback';
 import { errorFeedback, successFeedback } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import type { OrganizationInvitationOutput } from '@features/organization/models';
+import type {
+  InviteOrganizationMemberInput,
+  OrganizationInvitationOutput,
+} from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { OrganizationMembersStore } from '@features/organization/state/organization-members';
+import { OrganizationInviteDrawer } from '@features/organization/ui/drawers';
 import { OrganizationInvitationTable } from '@features/organization/ui/tables';
 
 /**
@@ -26,18 +30,23 @@ import { OrganizationInvitationTable } from '@features/organization/ui/tables';
  *
  * @description
  * Dedicated settings tab for pending invitations: renders the shared
- * invitation table and owns its lifecycle actions (resend, copy link, revoke)
- * through the same page-scoped members workflow store the members page uses.
- * Inviting stays on the members page; this surface only manages what is
- * already in flight.
+ * invitation table and owns its full lifecycle (invite, resend, copy link,
+ * revoke) through the same page-scoped members workflow store the members page
+ * uses.
  *
- * @version 1.0.0
+ * Inviting lives here as well as on the members page: this tab is where a
+ * reader goes to manage invitations, and one that could revoke and resend but
+ * not create was a dead end. The two entry points share the same drawer and
+ * the same store method — they are one workflow reached from two contexts, not
+ * two implementations.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-settings-invitations',
-  imports: [ButtonModule, MessageModule, OrganizationInvitationTable],
+  imports: [ButtonModule, MessageModule, OrganizationInvitationTable, OrganizationInviteDrawer],
   providers: [OrganizationMembersStore],
   templateUrl: './organization-settings-invitations.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -112,6 +121,23 @@ export class OrganizationSettingsInvitationsPage {
    */
   protected readonly store: OrganizationMembersStore =
     inject<OrganizationMembersStore>(OrganizationMembersStore);
+
+  /**
+   * Property inviteDrawerVisible
+   *
+   * @description
+   * Whether the invite drawer is open.
+   *
+   * This tab could revoke, resend and copy an invitation but not create one —
+   * a page for managing invitations with no way to make one is a dead end, and
+   * the only entry point sat on the Members tab.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly inviteDrawerVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property loadErrorFallback
@@ -400,6 +426,27 @@ export class OrganizationSettingsInvitationsPage {
    */
   private organizationId(): string | undefined {
     return this.activeOrganizationStore.selectedOrganization()?.id;
+  }
+
+  /**
+   * Method invite
+   *
+   * @description
+   * Sends an invitation, then closes the drawer.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {InviteOrganizationMemberInput} input - Invitation to send.
+   *
+   * @returns {void}
+   */
+  protected invite(input: InviteOrganizationMemberInput): void {
+    const organizationId: string | undefined = this.organizationId();
+    if (!organizationId) return;
+
+    this.store.invite({ organizationId, input });
+    this.inviteDrawerVisible.set(false);
   }
   //#endregion
 }

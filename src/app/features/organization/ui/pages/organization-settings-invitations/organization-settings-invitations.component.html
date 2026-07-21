@@ -2,13 +2,42 @@
   id="organization-settings-invitations"
   class="flex h-full flex-col gap-6 p-3 sm:p-6 md:p-7 lg:p-8"
 >
-  <p
-    i18n="@@org.settings.invitationsSubtitle"
-    class="max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
-  >
-    Track pending invitations, resend expiring links, and revoke access that should no longer be
-    granted.
-  </p>
+  <!--
+    The primary action belongs on the page that manages the thing. This tab
+    could revoke, resend and copy an invitation but not create one, so anyone
+    landing here had to know the button lived on the Members tab.
+  -->
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <p
+      i18n="@@org.settings.invitationsSubtitle"
+      class="max-w-[60ch] text-sm text-surface-600 dark:text-surface-400"
+    >
+      Track pending invitations, resend expiring links, and revoke access that should no longer be
+      granted.
+    </p>
+
+    @if (canManageInvitations()) {
+      <p-button
+        label="Invite member"
+        i18n-label="@@org.settings.invite"
+        icon="pi pi-user-plus"
+        severity="primary"
+        size="small"
+        data-testid="invitations-invite"
+        (onClick)="inviteDrawerVisible.set(true)"
+      />
+    }
+  </div>
+
+  @if (canManageInvitations()) {
+    <app-organization-invite-drawer
+      [visible]="inviteDrawerVisible()"
+      (visibleChange)="inviteDrawerVisible.set($event)"
+      [roles]="store.roles()"
+      [loading]="store.isMutating()"
+      (submitted)="invite($event)"
+    />
+  }
 
   @if (store.loadError(); as error) {
     <p-message severity="error">

@@ -48,6 +48,10 @@ describe('OrganizationSettingsInvitationsPage', () => {
     activeInvitations: WritableSignal<readonly OrganizationInvitationOutput[]>;
     roles: WritableSignal<readonly never[]>;
     isLoading: WritableSignal<boolean>;
+    // The invite drawer, mounted on this tab since 1.1.0, binds the store's
+    // mutation state to disable its submit while a send is in flight.
+    isMutating: WritableSignal<boolean>;
+    invite: ReturnType<typeof vi.fn>;
     loadError: WritableSignal<{ message?: string } | null>;
     mutationError: WritableSignal<{ message?: string } | null>;
     invitationLinks: WritableSignal<Record<string, string>>;
@@ -87,6 +91,8 @@ describe('OrganizationSettingsInvitationsPage', () => {
       activeInvitations: signal<readonly OrganizationInvitationOutput[]>([]),
       roles: signal<readonly never[]>([]),
       isLoading: signal<boolean>(false),
+      isMutating: signal<boolean>(false),
+      invite: vi.fn(),
       loadError: signal<{ message?: string } | null>(null),
       mutationError: signal<{ message?: string } | null>(null),
       invitationLinks: signal<Record<string, string>>({}),

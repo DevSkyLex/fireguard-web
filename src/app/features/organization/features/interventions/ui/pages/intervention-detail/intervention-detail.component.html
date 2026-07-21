@@ -22,6 +22,7 @@
   } @else if (store.intervention(); as intervention) {
     <!-- Page-level banners -->
     @if (
+      publishing() ||
       store.error() ||
       sync.blockedOperations() > 0 ||
       offline.hasUnsyncedChanges() ||
@@ -34,6 +35,28 @@
       <div
         class="flex flex-col gap-3 border-b border-surface-200 px-4 py-5 sm:px-7 sm:py-6 dark:border-surface-800"
       >
+        <!--
+          Publication writes several records atomically and cannot be undone.
+          The only feedback was a spinner inside the action button, which the
+          reader loses sight of the moment they scroll — thin for an operation
+          of that weight. `aria-live="assertive"` because this one interrupts:
+          it says not to close the tab.
+        -->
+        @if (publishing()) {
+          <div
+            role="status"
+            aria-live="assertive"
+            data-testid="intervention-publishing-banner"
+            class="flex items-start gap-3 rounded-lg border border-primary-600/20 bg-primary-50 px-3.5 py-3 text-sm leading-5 text-primary-700 dark:border-primary-400/20 dark:bg-primary-400/10 dark:text-primary-300"
+          >
+            <i class="pi pi-spin pi-spinner mt-0.5 shrink-0" aria-hidden="true"></i>
+            <span i18n="@@intervention.detail.publishingBanner"
+              >Publishing — applying every approved change to the records. Keep this page open until
+              it finishes.</span
+            >
+          </div>
+        }
+
         @if (store.error(); as error) {
           <div
             role="alert"

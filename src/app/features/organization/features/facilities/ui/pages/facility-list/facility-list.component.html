@@ -43,6 +43,58 @@
   }
 
   @if (activeView() === 'tree') {
+    <!--
+      The tree answers "how is this site doing". Nothing answered "how is the
+      estate doing" without expanding every branch and adding it up by hand.
+
+      The compliance figure is weighted by equipment, not averaged across
+      sites: a depot with two extinguishers must not offset a plant with two
+      hundred. Sites reporting no rate are excluded rather than counted as
+      zero — no data is not a failure.
+    -->
+    @if (!treeStore.isQueryLoading() && treeSummary().sites > 0) {
+      <dl
+        class="mb-4 flex flex-wrap items-baseline gap-x-8 gap-y-2"
+        data-testid="facility-tree-summary"
+      >
+        <div class="flex items-baseline gap-2">
+          <dt
+            class="text-xs text-surface-500 dark:text-surface-400"
+            i18n="@@facility.summary.sites"
+          >
+            Sites
+          </dt>
+          <dd class="text-lg font-semibold text-surface-950 tabular-nums dark:text-surface-50">
+            {{ treeSummary().sites }}
+          </dd>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <dt
+            class="text-xs text-surface-500 dark:text-surface-400"
+            i18n="@@facility.summary.equipment"
+          >
+            Equipment
+          </dt>
+          <dd class="text-lg font-semibold text-surface-950 tabular-nums dark:text-surface-50">
+            {{ treeSummary().equipment }}
+          </dd>
+        </div>
+        @if (treeSummary().complianceRate !== null) {
+          <div class="flex items-baseline gap-2">
+            <dt
+              class="text-xs text-surface-500 dark:text-surface-400"
+              i18n="@@facility.summary.compliance"
+            >
+              Compliance
+            </dt>
+            <dd class="text-lg font-semibold text-surface-950 tabular-nums dark:text-surface-50">
+              {{ treeSummary().complianceRate }}%
+            </dd>
+          </div>
+        }
+      </dl>
+    }
+
     <app-facility-tree-table
       class="flex min-h-0 flex-1 flex-col"
       [nodes]="treeStore.nodes()"

@@ -36,6 +36,10 @@ import {
   ORGANIZATION_QUOTA_RESOURCE,
 } from '@features/organization/models';
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import {
+  summariseFacilityTree,
+  type FacilityTreeSummary,
+} from './utils/facility-tree-summary.utils';
 
 /**
  * Component FacilityListPage
@@ -222,6 +226,24 @@ export class FacilityListPage {
    */
   protected readonly activeView: Signal<FacilityListView> = computed(
     (): FacilityListView => (this.view() === 'tree' && this.canViewTree() ? 'tree' : 'list'),
+  );
+
+  /**
+   * Property treeSummary
+   * @readonly
+   *
+   * @description
+   * Estate totals shown above the hierarchy. The tree answers "how is this
+   * site doing"; nothing answered "how is the estate doing" without expanding
+   * every branch and adding it up by hand.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<FacilityTreeSummary>}
+   */
+  protected readonly treeSummary: Signal<FacilityTreeSummary> = computed(
+    (): FacilityTreeSummary => summariseFacilityTree(this.treeStore.nodes()),
   );
 
   /**

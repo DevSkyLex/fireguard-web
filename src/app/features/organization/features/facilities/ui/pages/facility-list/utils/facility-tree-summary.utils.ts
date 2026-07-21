@@ -33,6 +33,43 @@ export interface FacilityTreeSummary {
  * @param nodes - Root nodes of the tree.
  * @returns Totals across every node at every depth.
  */
+/**
+ * Filters a facility tree by name or type, keeping the path to every match.
+ *
+ * A node survives when it matches **or when any descendant does**: dropping an
+ * unmatched parent would orphan its matching children and hide the very rows
+ * the reader searched for. The kept ancestors are the address of the match —
+ * "Boiler room" means nothing without the site above it.
+ *
+ * Children of a matching node are kept whole rather than filtered further: once
+ * a site matches, the reader is looking at that site, and pruning inside it
+ * would answer a question they did not ask.
+ *
+ * @param nodes - Root nodes of the tree.
+ * @param term - Raw search text; blank returns the tree untouched.
+ * @returns A new tree containing only matching branches.
+ */
+export function filterFacilityTree(
+  nodes: readonly FacilityTreeNode[],
+  term: string,
+): readonly FacilityTreeNode[] {
+  const needle: string = term.trim().toLowerCase();
+  if (needle === '') return nodes;
+
+  const keep = (node: FacilityTreeNode): FacilityTreeNode | null => {
+    const matches: boolean = `${node.name} ${node.type}`.toLowerCase().includes(needle);
+    if (matches) return node;
+
+    const children: readonly FacilityTreeNode[] = node.children
+      .map(keep)
+      .filter((child): child is FacilityTreeNode => child !== null);
+
+    return children.length > 0 ? { ...node, children } : null;
+  };
+
+  return nodes.map(keep).filter((node): node is FacilityTreeNode => node !== null);
+}
+
 export function summariseFacilityTree(nodes: readonly FacilityTreeNode[]): FacilityTreeSummary {
   let sites: number = 0;
   let equipment: number = 0;

@@ -5,13 +5,16 @@ import {
   inject,
   input,
   numberAttribute,
+  signal,
   type InputSignal,
   type InputSignalWithTransform,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import type { RequestOptions } from '@core/api';
@@ -37,6 +40,7 @@ import {
 } from '@features/organization/models';
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 import {
+  filterFacilityTree,
   summariseFacilityTree,
   type FacilityTreeSummary,
 } from './utils/facility-tree-summary.utils';
@@ -58,6 +62,7 @@ import {
   imports: [
     RouterModule,
     ButtonModule,
+    InputTextModule,
     MessageModule,
     SelectButtonModule,
     FormsModule,
@@ -228,14 +233,36 @@ export class FacilityListPage {
     (): FacilityListView => (this.view() === 'tree' && this.canViewTree() ? 'tree' : 'list'),
   );
 
+  /** Free-text filter over the hierarchy, by node name or type. */
+  protected readonly treeSearch: WritableSignal<string> = signal<string>('');
+
+  /**
+   * Property visibleTreeNodes
+   * @readonly
+   *
+   * @description
+   * The hierarchy left by the search, ancestors of every match included.
+   *
+   * Filtered here rather than in the table: the table renders what it is given
+   * and owns no query state (ARCHITECTURE §9.3).
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<readonly FacilityTreeNode[]>}
+   */
+  protected readonly visibleTreeNodes: Signal<readonly FacilityTreeNode[]> = computed(
+    (): readonly FacilityTreeNode[] =>
+      filterFacilityTree(this.treeStore.nodes(), this.treeSearch()),
+  );
+
   /**
    * Property treeSummary
    * @readonly
    *
    * @description
-   * Estate totals shown above the hierarchy. The tree answers "how is this
-   * site doing"; nothing answered "how is the estate doing" without expanding
-   * every branch and adding it up by hand.
+   * Estate totals for what is on screen — so the strip follows the search
+   * rather than describing a tree the reader is no longer looking at.
    *
    * @access protected
    * @since 1.1.0
@@ -243,7 +270,12 @@ export class FacilityListPage {
    * @type {Signal<FacilityTreeSummary>}
    */
   protected readonly treeSummary: Signal<FacilityTreeSummary> = computed(
-    (): FacilityTreeSummary => summariseFacilityTree(this.treeStore.nodes()),
+    (): FacilityTreeSummary => summariseFacilityTree(this.visibleTreeNodes()),
+  );
+
+  /** True when the search excluded every node — not "no facilities". */
+  protected readonly hasNoTreeMatch: Signal<boolean> = computed(
+    (): boolean => this.treeStore.nodes().length > 0 && this.visibleTreeNodes().length === 0,
   );
 
   /**

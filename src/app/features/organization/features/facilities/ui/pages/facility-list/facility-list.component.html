@@ -52,6 +52,22 @@
       hundred. Sites reporting no rate are excluded rather than counted as
       zero — no data is not a failure.
     -->
+    <!--
+      The list view has its own search; the hierarchy had none, so finding one
+      room in an estate meant expanding every branch. Filtering keeps the
+      ancestors of each match — a room without the site above it is unplaceable.
+    -->
+    <input
+      pInputText
+      type="search"
+      class="max-w-96"
+      placeholder="Search the hierarchy…"
+      i18n-placeholder="@@facility.tree.search"
+      data-testid="facility-tree-search"
+      [ngModel]="treeSearch()"
+      (ngModelChange)="treeSearch.set($event)"
+    />
+
     @if (!treeStore.isQueryLoading() && treeSummary().sites > 0) {
       <dl
         class="mb-4 flex flex-wrap items-baseline gap-x-8 gap-y-2"
@@ -95,9 +111,20 @@
       </dl>
     }
 
+    @if (hasNoTreeMatch()) {
+      <p
+        class="py-10 text-center text-sm text-surface-500 dark:text-surface-400"
+        data-testid="facility-tree-no-match"
+        i18n="@@facility.tree.noMatch"
+      >
+        No facility matches your search.
+      </p>
+    }
+
     <app-facility-tree-table
       class="flex min-h-0 flex-1 flex-col"
-      [nodes]="treeStore.nodes()"
+      [class.hidden]="hasNoTreeMatch()"
+      [nodes]="visibleTreeNodes()"
       [loading]="treeStore.isQueryLoading()"
       [hasError]="treeStore.queryHasError()"
       (view)="onViewTreeNode($event)"

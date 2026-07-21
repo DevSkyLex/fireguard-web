@@ -1,5 +1,5 @@
 import type { FacilityTreeNode } from '@features/organization/features/facilities/models';
-import { summariseFacilityTree } from '../facility-tree-summary.utils';
+import { filterFacilityTree, summariseFacilityTree } from '../facility-tree-summary.utils';
 
 const node = (
   id: string,
@@ -57,5 +57,47 @@ describe('summariseFacilityTree', () => {
 
   it('summarises an empty tree without inventing figures', () => {
     expect(summariseFacilityTree([])).toEqual({ sites: 0, equipment: 0, complianceRate: null });
+  });
+});
+
+/**
+ * Filtering a tree is not filtering a list: dropping an unmatched parent
+ * orphans its matching children and hides the rows the reader searched for.
+ */
+describe('filterFacilityTree', () => {
+  const tree: readonly FacilityTreeNode[] = [
+    node('site-a', 0, null, [node('boiler-room', 0, null), node('lobby', 0, null)]),
+    node('site-b', 0, null, [node('roof', 0, null)]),
+  ];
+
+  it('returns the tree untouched for a blank term', () => {
+    expect(filterFacilityTree(tree, '   ')).toBe(tree);
+  });
+
+  it('keeps the ancestors of a match', () => {
+    // "boiler-room" alone is unplaceable; the site above it is its address.
+    const result = filterFacilityTree(tree, 'boiler');
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.id).toBe('site-a');
+    expect(result[0]?.children.map((c) => c.id)).toEqual(['boiler-room']);
+  });
+
+  it('keeps a matching node whole rather than pruning inside it', () => {
+    const result = filterFacilityTree(tree, 'site-a');
+
+    expect(result[0]?.children.map((c) => c.id)).toEqual(['boiler-room', 'lobby']);
+  });
+
+  it('drops branches with no match at any depth', () => {
+    expect(filterFacilityTree(tree, 'roof').map((n) => n.id)).toEqual(['site-b']);
+  });
+
+  it('matches on type as well as name', () => {
+    expect(filterFacilityTree([node('anything', 0, null)], 'site')).toHaveLength(1);
+  });
+
+  it('returns nothing when no node matches', () => {
+    expect(filterFacilityTree(tree, 'nothing-here')).toEqual([]);
   });
 });

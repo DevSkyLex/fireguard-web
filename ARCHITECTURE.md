@@ -2065,20 +2065,31 @@ No layer skips a step. A page must not read raw `HttpErrorResponse` from a servi
 
 ### 16.7 Hydra transport model
 
-Collection responses from the API follow the Hydra/JSON-LD envelope:
+Collection responses from the API follow the Hydra/JSON-LD envelope. The API
+serialises **JSON-LD 1.1**, so the members and metadata are plain properties —
+not the `hydra:`-prefixed keys of Hydra 1.0:
 
 ```typescript
 interface HydraCollection<T> {
-  readonly 'hydra:member': T[];
-  readonly 'hydra:totalItems': number;
-  readonly 'hydra:view'?: HydraView;
+  readonly '@context'?: HydraContext;
+  readonly '@id': string;
+  readonly '@type': 'Collection';
+  readonly member: readonly T[];
+  readonly totalItems: number;
+  readonly view?: HydraView;
+  readonly search?: HydraSearch;
 }
 ```
 
 Use `getCollection<T>()` when the endpoint returns a Hydra collection.
 Use `getOne<T>()` when the endpoint returns a single resource.
 
-Stores that need pagination must read `'hydra:view'` and `'hydra:totalItems'` from the collection response.
+Stores that need pagination must read `view` and `totalItems` from the collection response.
+
+> Until 2026-07 this section documented `'hydra:member'`, `'hydra:totalItems'`
+> and `'hydra:view'`. Those keys do not exist on `HydraCollection` and code
+> written from them does not compile. The interface in
+> `core/api/models/hydra-collection.interface.ts` is the source of truth.
 
 ---
 
@@ -2151,7 +2162,7 @@ export const FeatureStore = signalStore(
             tapResponse({
               next: (res) =>
                 patchState(store, {
-                  listCallState: successCallState(res['hydra:member']),
+                  listCallState: successCallState(res.member),
                 }),
               error: (err: unknown) =>
                 patchState(store, {

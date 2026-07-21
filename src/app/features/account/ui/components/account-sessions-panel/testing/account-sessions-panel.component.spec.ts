@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ConfirmationService, type Confirmation } from 'primeng/api';
+import { ConfirmationService, MessageService, type Confirmation } from 'primeng/api';
 import type { SessionOutput } from '@features/auth/models';
 import { SessionStore } from '@features/auth/state';
 import { AccountSessionsPanel } from '../account-sessions-panel.component';
@@ -28,6 +28,8 @@ describe('AccountSessionsPanel', () => {
       providers: [
         { provide: SessionStore, useValue: mockSessionStore },
         { provide: ConfirmationService, useValue: mockConfirmationService },
+        // FeedbackService (revocation toasts) resolves PrimeNG's MessageService.
+        MessageService,
       ],
     });
 

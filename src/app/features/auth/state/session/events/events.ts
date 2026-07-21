@@ -7,10 +7,13 @@ import type { StoreFailureEventPayload } from '@core/request-state';
  * @const sessionStoreEvents
  *
  * @description
- * Session store events for handling session
- * operation failures.
+ * Session store events.
  *
- * @version 1.0.0
+ * Revocation announces success as well as failure: it is destructive and its
+ * only visible effect is a row disappearing, which is indistinguishable from a
+ * list that simply refreshed. Failures alone left the successful case mute.
+ *
+ * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const sessionStoreEvents = eventGroup({
@@ -19,5 +22,7 @@ export const sessionStoreEvents = eventGroup({
     loadFailed: type<StoreFailureEventPayload>(),
     revokeFailed: type<StoreFailureEventPayload>(),
     revokeAllFailed: type<StoreFailureEventPayload>(),
+    revokeSucceeded: type<void>(),
+    revokeAllSucceeded: type<void>(),
   },
 });

@@ -6,14 +6,17 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Events } from '@ngrx/signals/events';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import type { RequestOptions } from '@core/api';
+import { FeedbackService } from '@core/feedback';
 import { SessionTable } from '@features/account/ui/tables';
 import type { SessionOutput } from '@features/auth/models';
-import { SessionStore } from '@features/auth/state';
+import { SessionStore, sessionStoreEvents } from '@features/auth/state';
 
 /**
  * Component AccountSessionsPanel
@@ -36,6 +39,40 @@ import { SessionStore } from '@features/auth/state';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountSessionsPanel {
+  //#region Feedback
+  /** Toast surface for revocation outcomes. */
+  private readonly feedback: FeedbackService = inject<FeedbackService>(FeedbackService);
+
+  /** Event bus carrying the store's revocation outcomes. */
+  private readonly events: Events = inject<Events>(Events);
+
+  /**
+   * Announces a successful revocation.
+   *
+   * Revocation is destructive and its only visible effect is a row
+   * disappearing — indistinguishable from a list that merely refreshed. The
+   * store announced failures and stayed silent on success, so the case worth
+   * confirming was the one nobody confirmed.
+   */
+  public constructor() {
+    this.events
+      .on(sessionStoreEvents.revokeSucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe((): void =>
+        this.feedback.success($localize`:@@account.sessions.revoked:Session revoked.`),
+      );
+
+    this.events
+      .on(sessionStoreEvents.revokeAllSucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe((): void =>
+        this.feedback.success(
+          $localize`:@@account.sessions.revokedAll:Every other session has been revoked.`,
+        ),
+      );
+  }
+  //#endregion
+
   /** PrimeNG confirmation service used before revocation. */
   private readonly confirmationService: ConfirmationService =
     inject<ConfirmationService>(ConfirmationService);

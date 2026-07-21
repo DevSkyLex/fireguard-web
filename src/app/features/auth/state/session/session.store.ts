@@ -266,6 +266,7 @@ export const SessionStore = signalStore(
                       totalSessions: Math.max(0, store.totalSessions() - 1),
                       revokeCallState: successCallState(null),
                     });
+                    dispatcher.dispatch(sessionStoreEvents.revokeSucceeded());
                   },
                   error: (error: unknown) => {
                     const storeError: StoreError = toStoreError(error);
@@ -314,6 +315,7 @@ export const SessionStore = signalStore(
                         revokeAllCallState: successCallState(null),
                       },
                     );
+                    dispatcher.dispatch(sessionStoreEvents.revokeAllSucceeded());
                   },
                   error: (error: unknown) => {
                     const storeError: StoreError = toStoreError(error);

@@ -200,14 +200,61 @@
     </div>
   </section>
 
-  <div class="flex justify-end border-t border-surface-200 pt-5 dark:border-surface-800">
-    <p-button
-      type="submit"
-      i18n-label="@@org.saveChanges"
-      label="Save changes"
-      icon="pi pi-check"
-      [loading]="saving()"
-      [disabled]="form.invalid || saving()"
-    />
+  <div
+    class="flex flex-wrap items-center justify-between gap-3 border-t border-surface-200 pt-5 dark:border-surface-800"
+  >
+    <!--
+      Age and size, from fields the contract already carried and the form never
+      showed. Deliberately no "Owner": `ownerUserId` is an identifier, and
+      rendering a raw id helps nobody — resolving it to a name needs a member
+      lookup, which a ui/forms component must not perform (ARCHITECTURE §9.4).
+    -->
+    @if (organization(); as organization) {
+      <p
+        class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-surface-500 dark:text-surface-400"
+        data-testid="organization-general-meta"
+      >
+        <span class="inline-flex items-center gap-1.5" i18n="@@org.general.createdOn">
+          <i class="pi pi-calendar text-[0.7rem]" aria-hidden="true"></i>
+          Created {{ organization.createdAt | date: 'mediumDate' }}
+        </span>
+        <span
+          class="inline-flex items-center gap-1.5 tabular-nums"
+          i18n="@@org.general.memberCount"
+        >
+          <i class="pi pi-users text-[0.7rem]" aria-hidden="true"></i>
+          {organization.memberCount, plural,
+            =1 {1 member}
+            other {{{ organization.memberCount }} members}
+          }
+        </span>
+      </p>
+    }
+
+    <div class="ml-auto flex items-center gap-2">
+      <!--
+        Reset only once something has changed: offering it on an untouched
+        form advertises an action that does nothing, the same rule the Save
+        button beside it already follows.
+      -->
+      <p-button
+        type="button"
+        i18n-label="@@common.reset"
+        label="Reset"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="form.pristine || saving()"
+        data-testid="organization-general-reset"
+        (onClick)="resetToSaved()"
+      />
+      <p-button
+        type="submit"
+        i18n-label="@@org.saveChanges"
+        label="Save changes"
+        icon="pi pi-check"
+        [loading]="saving()"
+        [disabled]="form.invalid || form.pristine || saving()"
+      />
+    </div>
   </div>
 </form>

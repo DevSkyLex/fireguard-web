@@ -1,4 +1,4 @@
-import { SlicePipe } from '@angular/common';
+import { DatePipe, SlicePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -38,6 +38,7 @@ import type { LogoUploadEvent } from './models';
 @Component({
   selector: 'app-organization-general-form',
   imports: [
+    DatePipe,
     SlicePipe,
     AvatarModule,
     ButtonModule,
@@ -121,6 +122,31 @@ export class OrganizationGeneralForm {
         ? this.form.disable({ emitEvent: false })
         : this.form.enable({ emitEvent: false }),
     );
+  }
+
+  /**
+   * Method resetToSaved
+   *
+   * @description
+   * Restores every field to the organization's saved values.
+   *
+   * Reuses the same reset the loading effect performs, so "undo my edits" and
+   * "the organization changed underneath me" cannot drift apart.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @returns {void}
+   */
+  protected resetToSaved(): void {
+    const organization = this.organization();
+
+    this.form.reset({
+      name: organization?.name ?? '',
+      slug: organization?.slug ?? '',
+      description: organization?.description ?? '',
+      isActive: organization?.isActive ?? true,
+    });
   }
 
   /** Emits valid general settings values. */

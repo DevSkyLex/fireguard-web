@@ -68,6 +68,32 @@
             {{ role.description || noDescriptionLabel }}
           </span>
 
+          <!--
+            The areas a role can act on, not a chip per permission: the
+            catalogue holds 39, and a card wearing 39 chips reads worse than
+            the count it replaces. Four areas plus an overflow answers "what
+            kind of role is this", which the count alone never did — the count
+            stays beside them for the exact figure.
+          -->
+          @if (permissionAreas(role); as areas) {
+            <span class="flex flex-wrap items-center gap-1" data-testid="role-permission-areas">
+              @for (area of areas.slice(0, 4); track area) {
+                <span
+                  class="rounded bg-surface-100 px-1.5 py-0.5 text-[0.7rem] text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                >
+                  {{ area }}
+                </span>
+              }
+              @if (areas.length > 4) {
+                <span
+                  class="text-[0.7rem] text-surface-500 tabular-nums dark:text-surface-400"
+                  i18n="@@org.roleCard.moreAreas"
+                  >+{{ areas.length - 4 }}</span
+                >
+              }
+            </span>
+          }
+
           <span class="flex items-center justify-between gap-2.5">
             <span
               i18n="@@org.roleCard.permissionCount"

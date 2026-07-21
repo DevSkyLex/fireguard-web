@@ -41,4 +41,34 @@ export class OrganizationRoleTable {
   protected roleIcon(role: OrganizationRoleOutput): string {
     return role.isSystem ? 'pi-shield' : 'pi-id-card';
   }
+
+  /**
+   * Method permissionAreas
+   *
+   * @description
+   * The distinct resources a role can act on, derived from the `resource.verb`
+   * shape of each permission name.
+   *
+   * Not one chip per permission: the catalogue holds 39, and a card wearing 39
+   * chips is less readable than the bare count it replaced. Grouping answers
+   * the question the count could not — *what kind of role is this* — in at
+   * most a handful of words.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {OrganizationRoleOutput} role - Role whose permissions to summarise.
+   *
+   * @returns {readonly string[]} Distinct resource names, in first-seen order.
+   */
+  protected permissionAreas(role: OrganizationRoleOutput): readonly string[] {
+    const areas: string[] = [];
+
+    for (const permission of role.permissions) {
+      const area: string = permission.name.split('.')[0] ?? permission.name;
+      if (!areas.includes(area)) areas.push(area);
+    }
+
+    return areas;
+  }
 }

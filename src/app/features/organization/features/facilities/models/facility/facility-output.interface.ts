@@ -85,6 +85,23 @@ export interface FacilityOutput extends HydraItem {
   readonly hasChildren: boolean;
 
   /**
+   * Property equipmentCount
+   * @readonly
+   *
+   * @description
+   * Active (non-decommissioned, published) equipment assigned to this
+   * facility. Counted server-side through the Equipment module's outbound
+   * port — the Facility module owns no equipment data of its own, so this is
+   * not derivable from anything else on the resource.
+   *
+   * Optional so a cached or older payload degrades to "unknown" rather than
+   * asserting an empty site.
+   *
+   * @type {(number | undefined)}
+   */
+  readonly equipmentCount?: number;
+
+  /**
    * Property type
    * @readonly
    *

@@ -64,7 +64,27 @@
                   {{ typeLabel(child.type) }}
                 </span>
               </span>
-              <app-tag [descriptor]="statusDescriptor(child.status)" />
+              <span class="flex shrink-0 items-center gap-2">
+                <!--
+                  How much is actually installed here. `equipmentCount` is
+                  counted server-side through the Equipment module's port; the
+                  Facility resource carries no equipment data of its own, so
+                  before it existed this row could only name the place.
+                -->
+                @if (child.equipmentCount !== undefined) {
+                  <span
+                    class="flex items-center gap-1 text-[11px] text-surface-500 tabular-nums dark:text-surface-400"
+                    data-testid="installation-equipment-count"
+                  >
+                    <i class="pi pi-box text-[10px]" aria-hidden="true"></i>
+                    <span class="sr-only" i18n="@@facility.installations.equipmentAria"
+                      >Equipment</span
+                    >
+                    {{ child.equipmentCount }}
+                  </span>
+                }
+                <app-tag [descriptor]="statusDescriptor(child.status)" />
+              </span>
             </button>
 
             @if (childrenOf(child.id).length > 0) {
@@ -85,7 +105,27 @@
                           {{ grandChild.name }}
                         </span>
                       </span>
-                      <app-tag [descriptor]="statusDescriptor(grandChild.status)" />
+                      <span class="flex shrink-0 items-center gap-2">
+                        <!--
+                        How much is actually installed here. `equipmentCount` is
+                        counted server-side through the Equipment module's port; the
+                        Facility resource carries no equipment data of its own, so
+                        before it existed this row could only name the place.
+                      -->
+                        @if (grandChild.equipmentCount !== undefined) {
+                          <span
+                            class="flex items-center gap-1 text-[11px] text-surface-500 tabular-nums dark:text-surface-400"
+                            data-testid="installation-equipment-count"
+                          >
+                            <i class="pi pi-box text-[10px]" aria-hidden="true"></i>
+                            <span class="sr-only" i18n="@@facility.installations.equipmentAria"
+                              >Equipment</span
+                            >
+                            {{ grandChild.equipmentCount }}
+                          </span>
+                        }
+                        <app-tag [descriptor]="statusDescriptor(grandChild.status)" />
+                      </span>
                     </button>
                   </li>
                 }

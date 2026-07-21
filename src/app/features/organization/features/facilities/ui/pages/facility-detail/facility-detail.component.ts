@@ -43,7 +43,7 @@ import {
 } from '@features/organization/features/facilities/ui/dataviews';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { EmptyState } from '@shared/components';
+import { EmptyState, MapCanvas, type MapMarker } from '@shared/components';
 
 /**
  * Component FacilityDetailPage
@@ -78,6 +78,7 @@ import { EmptyState } from '@shared/components';
     FacilityEquipmentTab,
     FacilityInspectionTab,
     EmptyState,
+    MapCanvas,
   ],
   providers: [FacilityStore, FacilityOverviewStore],
   templateUrl: './facility-detail.component.html',
@@ -224,6 +225,48 @@ export class FacilityDetailPage {
    */
   protected readonly facility: Signal<FacilityOutput | null> = computed<FacilityOutput | null>(() =>
     this.activeFacilityStore.selectedFacility(),
+  );
+
+  /**
+   * Property locationMarkers
+   * @readonly
+   *
+   * @description
+   * This facility as a single map marker, or an empty list when it carries no
+   * coordinates.
+   *
+   * The information panel prints the address as text, which does not say
+   * *where* the site is. A facility without coordinates is not an error — it
+   * simply has no address on file — so the card is omitted rather than shown
+   * empty.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<readonly MapMarker[]>}
+   */
+  protected readonly locationMarkers: Signal<readonly MapMarker[]> = computed(
+    (): readonly MapMarker[] => {
+      const facility: FacilityOutput | null = this.facility();
+
+      if (
+        facility === null ||
+        typeof facility.latitude !== 'number' ||
+        typeof facility.longitude !== 'number'
+      ) {
+        return [];
+      }
+
+      return [
+        {
+          id: facility.id,
+          latitude: facility.latitude,
+          longitude: facility.longitude,
+          title: facility.name,
+          subtitle: facility.address ?? undefined,
+        },
+      ];
+    },
   );
 
   /**

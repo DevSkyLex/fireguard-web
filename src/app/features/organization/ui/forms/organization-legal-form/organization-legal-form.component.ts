@@ -11,7 +11,12 @@ import {
   type Signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule, type FormGroup } from '@angular/forms';
+import {
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validators,
+  type FormGroup,
+} from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -146,7 +151,15 @@ export class OrganizationLegalForm {
     legalType: this.formBuilder.control<string>(''),
     registrationNumber: this.formBuilder.control<string>(''),
     vatNumber: this.formBuilder.control<string>(''),
-    country: this.formBuilder.control<string>(''),
+    // Mirrors the server's own constraint on this field
+    // (`Assert\Regex('/^[A-Za-z]{2}$/')` on UpdateOrganizationSettingsInput).
+    // Without it the field accepted "1A" and the user learned it was wrong
+    // from a rejected save — the field was shaped like an ISO code (maxlength,
+    // uppercase, a hint naming FR) while enforcing none of it.
+    //
+    // Empty stays valid: the whole legal profile is optional, and the backend
+    // clears the field on an empty string.
+    country: this.formBuilder.control<string>('', [Validators.pattern(/^[A-Za-z]{2}$/)]),
   });
 
   /**

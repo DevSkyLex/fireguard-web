@@ -60,10 +60,32 @@
         autocomplete="country"
         maxlength="2"
         class="w-full uppercase"
+        [invalid]="form.controls['country'].invalid && form.controls['country'].touched"
       />
-      <small class="text-xs text-surface-500 dark:text-surface-400" i18n="@@org.legal.countryHint">
-        Two-letter code, e.g. FR.
-      </small>
+      <!--
+        No country select: the API validates the format but publishes no list
+        of codes the way it does for legal types, and shipping a 249-entry
+        copy would be the local vocabulary that drifts — the thing the legal
+        type select was written to avoid. The field mirrors the server's own
+        constraint instead, so a bad value is caught here rather than by a
+        rejected save.
+      -->
+      @if (form.controls['country'].invalid && form.controls['country'].touched) {
+        <small
+          class="text-xs text-red-600 dark:text-red-400"
+          i18n="@@org.legal.countryError"
+          data-testid="organization-legal-country-error"
+        >
+          Use a two-letter ISO country code, such as FR.
+        </small>
+      } @else {
+        <small
+          class="text-xs text-surface-500 dark:text-surface-400"
+          i18n="@@org.legal.countryHint"
+        >
+          Two-letter code, e.g. FR.
+        </small>
+      }
     </div>
 
     <div class="flex flex-col gap-1.5">

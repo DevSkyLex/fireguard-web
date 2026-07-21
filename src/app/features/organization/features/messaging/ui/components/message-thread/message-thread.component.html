@@ -223,27 +223,56 @@
                     </a>
                   }
 
-                  <a
-                    [href]="attachmentUrl(attachment)"
-                    [attr.download]="attachment.fileName"
-                    class="group/attachment flex items-center gap-2 rounded-lg border border-surface-200 px-2.5 py-1.5 text-xs transition-colors hover:border-surface-300 hover:bg-surface-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-surface-700 dark:hover:border-surface-600 dark:hover:bg-surface-900"
+                  <!--
+                    A card rather than a paperclip row: the icon says what kind
+                    of file this is before the reader spends a download finding
+                    out, and Quick view opens it in a tab instead of forcing it
+                    onto disk. Download stays, because a report someone needs
+                    to keep is not the same act as glancing at one.
+                  -->
+                  <div
+                    class="flex max-w-[30rem] items-center gap-2.5 rounded-lg border border-surface-200 px-2.5 py-2 text-xs dark:border-surface-700"
                     data-testid="message-attachment"
                   >
-                    <i
-                      class="pi pi-paperclip text-surface-400 group-hover/attachment:hidden"
+                    <span
+                      class="grid size-8 shrink-0 place-items-center rounded-md bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400"
                       aria-hidden="true"
-                    ></i>
-                    <i
-                      class="pi pi-download hidden text-surface-500 group-hover/attachment:block dark:text-surface-400"
-                      aria-hidden="true"
-                    ></i>
-                    <span class="max-w-64 truncate text-surface-700 dark:text-surface-300">
-                      {{ attachment.fileName }}
+                    >
+                      <i [class]="fileIcon(attachment)"></i>
                     </span>
-                    <span class="text-surface-400 tabular-nums dark:text-surface-500">
-                      {{ formatSize(attachment.size) }}
+
+                    <span class="flex min-w-0 flex-1 flex-col">
+                      <span class="truncate font-medium text-surface-800 dark:text-surface-200">
+                        {{ attachment.fileName }}
+                      </span>
+                      <span class="text-surface-500 tabular-nums dark:text-surface-400">
+                        {{ fileKind(attachment) }} · {{ formatSize(attachment.size) }}
+                      </span>
                     </span>
-                  </a>
+
+                    <a
+                      [href]="attachmentUrl(attachment)"
+                      target="_blank"
+                      rel="noopener"
+                      class="shrink-0 rounded p-1.5 text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-surface-100"
+                      i18n-aria-label="@@messaging.attachment.quickView"
+                      aria-label="Quick view"
+                      data-testid="message-attachment-quickview"
+                    >
+                      <i class="pi pi-external-link" aria-hidden="true"></i>
+                    </a>
+
+                    <a
+                      [href]="attachmentUrl(attachment)"
+                      [attr.download]="attachment.fileName"
+                      class="shrink-0 rounded p-1.5 text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-surface-100"
+                      i18n-aria-label="@@common.download"
+                      aria-label="Download"
+                      data-testid="message-attachment-download"
+                    >
+                      <i class="pi pi-download" aria-hidden="true"></i>
+                    </a>
+                  </div>
                 </li>
               }
             </ul>

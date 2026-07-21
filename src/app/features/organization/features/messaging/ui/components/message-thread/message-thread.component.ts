@@ -404,6 +404,60 @@ export class MessageThread {
     return attachment.mimeType.startsWith('image/');
   }
 
+  /**
+   * Method fileIcon
+   *
+   * @description
+   * Icon standing for an attachment's kind, from its MIME type.
+   *
+   * A paperclip on every row says only "a file is attached", which the row
+   * already says. The kind is what tells the reader whether this is the
+   * signed report or someone's spreadsheet, before they spend a download on
+   * finding out.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {MessageAttachment} attachment - Attachment to describe.
+   *
+   * @returns {string} PrimeIcons class.
+   */
+  protected fileIcon(attachment: MessageAttachment): string {
+    const type: string = attachment.mimeType;
+
+    if (type === 'application/pdf') return 'pi pi-file-pdf';
+    if (type.startsWith('video/')) return 'pi pi-video';
+    if (type.startsWith('audio/')) return 'pi pi-volume-up';
+    if (type.includes('spreadsheet') || type.includes('excel')) return 'pi pi-file-excel';
+    if (type.includes('word') || type.includes('document')) return 'pi pi-file-word';
+    if (type.includes('zip') || type.includes('compressed')) return 'pi pi-box';
+
+    return 'pi pi-file';
+  }
+
+  /**
+   * Method fileKind
+   *
+   * @description
+   * Short human label for an attachment's kind — the subtitle beside its name.
+   *
+   * Derived from the MIME subtype rather than the file extension: the
+   * extension is part of the name already shown above it, so repeating it
+   * would fill the line without adding anything.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {MessageAttachment} attachment - Attachment to describe.
+   *
+   * @returns {string} Upper-case kind, for example `PDF`.
+   */
+  protected fileKind(attachment: MessageAttachment): string {
+    const subtype: string = attachment.mimeType.split('/')[1] ?? attachment.mimeType;
+
+    return (subtype.split('.').pop() ?? subtype).replace(/^x-/, '').toUpperCase();
+  }
+
   protected canEdit(message: MessageOutput): boolean {
     const self: string | null = this.currentMemberId();
 

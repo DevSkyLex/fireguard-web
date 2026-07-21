@@ -488,9 +488,7 @@ test.describe('Messaging workspace', () => {
     await expect(page.getByTestId('thread-panel')).toHaveCount(0);
   });
 
-  test('shows an attachment as a download link on the message that carries it', async ({
-    page,
-  }) => {
+  test('offers an attachment for viewing and for download', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnMessaging(page);
 
@@ -499,9 +497,19 @@ test.describe('Messaging workspace', () => {
     const attachment = page.getByTestId('message-attachment');
     await expect(attachment).toContainText('inspection-report.pdf');
     await expect(attachment).toContainText('240 KB');
-    // The chip is a plain cookie-authenticated link to the content endpoint.
-    await expect(attachment).toHaveAttribute('href', /\/api\/messaging-attachments\/.+\/content$/);
-    await expect(attachment).toHaveAttribute('download', 'inspection-report.pdf');
+    // The kind is stated so the reader knows what it is before downloading it.
+    await expect(attachment).toContainText('PDF');
+
+    // Both controls are plain cookie-authenticated links to the content
+    // endpoint; they differ only in whether the file lands on disk.
+    const download = page.getByTestId('message-attachment-download');
+    await expect(download).toHaveAttribute('href', /\/api\/messaging-attachments\/.+\/content$/);
+    await expect(download).toHaveAttribute('download', 'inspection-report.pdf');
+
+    const quickView = page.getByTestId('message-attachment-quickview');
+    await expect(quickView).toHaveAttribute('href', /\/api\/messaging-attachments\/.+\/content$/);
+    await expect(quickView).toHaveAttribute('target', '_blank');
+    await expect(quickView).not.toHaveAttribute('download', /.*/);
   });
 
   test('sends a message with a file attached', async ({ page }) => {

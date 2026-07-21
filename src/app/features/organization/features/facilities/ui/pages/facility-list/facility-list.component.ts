@@ -17,6 +17,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectButtonModule } from 'primeng/selectbutton';
+import { TooltipModule } from 'primeng/tooltip';
 import type { RequestOptions } from '@core/api';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { QUOTA_LIMIT_REACHED_TOOLTIP } from '@features/organization/constants';
@@ -39,6 +40,7 @@ import {
   ORGANIZATION_QUOTA_RESOURCE,
 } from '@features/organization/models';
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import { CollectionToolbar } from '@shared/components';
 import {
   filterFacilityTree,
   summariseFacilityTree,
@@ -65,7 +67,9 @@ import {
     InputTextModule,
     MessageModule,
     SelectButtonModule,
+    TooltipModule,
     FormsModule,
+    CollectionToolbar,
     FacilityTable,
     FacilityTreeTable,
   ],
@@ -213,6 +217,24 @@ export class FacilityListPage {
    */
   protected readonly canViewTree: Signal<boolean> = computed((): boolean =>
     this.permissionService.hasPermission(ORGANIZATION_PERMISSION.COMPLIANCE_READ),
+  );
+
+  /**
+   * Property canManageFacilities
+   * @readonly
+   *
+   * @description
+   * Whether the member may create facilities. The list view reads the same
+   * permission inside `app-facility-table`; the hierarchy has no table to read
+   * it for, so the page gates its own create action.
+   *
+   * @access protected
+   * @since 2.3.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canManageFacilities: Signal<boolean> = computed((): boolean =>
+    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_WRITE),
   );
 
   /**

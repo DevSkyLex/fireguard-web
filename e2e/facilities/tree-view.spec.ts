@@ -91,6 +91,31 @@ test.describe('Facility hierarchy', () => {
     });
   }
 
+  // Finding one room in an estate meant expanding every branch. The filter
+  // keeps the ancestors of each match — a room without its site is unplaceable.
+  test('filters the hierarchy while keeping the ancestors of each match', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnTree(page);
+
+    await page.getByTestId('collection-toolbar-search').fill('Mezzanine');
+
+    await expect(page.getByText('Mezzanine')).toBeVisible();
+    // Kept because the match sits under them.
+    await expect(page.getByText('Northgate Plant')).toBeVisible();
+    await expect(page.getByText('Assembly Hall')).toBeVisible();
+    // No match anywhere beneath it.
+    await expect(page.getByText('Riverside Depot')).toHaveCount(0);
+  });
+
+  // Creation lived inside the list's table only, so the hierarchy offered no
+  // way to add a site without switching views first.
+  test('offers the create action from the hierarchy', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnTree(page);
+
+    await expect(page.getByTestId('facility-tree-create')).toBeVisible();
+  });
+
   test('opens a collapsed level on demand', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await landOnTree(page);

@@ -44,31 +44,56 @@
 
   @if (activeView() === 'tree') {
     <!--
+      The shared collection toolbar, which every collection surface is meant to
+      wear. No count on it: the summary strip below already reports the facility
+      and equipment totals, and saying it twice would read as two figures.
+
+      Creation lived only inside `app-facility-table`, so the hierarchy offered
+      no way to add a site — you had to switch views first.
+
+      Filtering keeps the ancestors of each match: a room without the site above
+      it is unplaceable. The table expands fully while a query is active,
+      because a match three levels down that arrives collapsed reads as no
+      match at all.
+    -->
+    <app-collection-toolbar
+      class="mb-4"
+      i18n-searchPlaceholder="@@facility.tree.search"
+      searchPlaceholder="Search the hierarchy…"
+      i18n-searchAriaLabel="@@facility.tree.searchAria"
+      searchAriaLabel="Search the facility hierarchy"
+      [searchValue]="treeSearch()"
+      (searchChanged)="treeSearch.set($event)"
+    >
+      @if (canManageFacilities()) {
+        <span
+          class="inline-flex"
+          [pTooltip]="atFacilityLimit() ? quotaLimitTooltip : ''"
+          tooltipPosition="bottom"
+        >
+          <p-button
+            i18n-label="@@facility.newButton"
+            label="New facility"
+            icon="pi pi-plus"
+            size="small"
+            data-testid="facility-tree-create"
+            [disabled]="atFacilityLimit()"
+            (onClick)="onAdd()"
+          />
+        </span>
+      }
+    </app-collection-toolbar>
+
+    <!--
       The tree answers "how is this site doing". Nothing answered "how is the
       estate doing" without expanding every branch and adding it up by hand.
 
-      The compliance figure is weighted by equipment, not averaged across
-      sites: a depot with two extinguishers must not offset a plant with two
-      hundred. Sites reporting no rate are excluded rather than counted as
-      zero — no data is not a failure.
+      Compliance is weighted by equipment, not averaged across facilities: a
+      depot with two extinguishers must not offset a plant with two hundred.
+      Facilities reporting no rate are excluded rather than counted as zero —
+      no data is not a failure.
     -->
-    <!--
-      The list view has its own search; the hierarchy had none, so finding one
-      room in an estate meant expanding every branch. Filtering keeps the
-      ancestors of each match — a room without the site above it is unplaceable.
-    -->
-    <input
-      pInputText
-      type="search"
-      class="max-w-96"
-      placeholder="Search the hierarchy…"
-      i18n-placeholder="@@facility.tree.search"
-      data-testid="facility-tree-search"
-      [ngModel]="treeSearch()"
-      (ngModelChange)="treeSearch.set($event)"
-    />
-
-    @if (!treeStore.isQueryLoading() && treeSummary().sites > 0) {
+    @if (!treeStore.isQueryLoading() && treeSummary().facilities > 0) {
       <dl
         class="mb-4 flex flex-wrap items-baseline gap-x-8 gap-y-2"
         data-testid="facility-tree-summary"
@@ -76,12 +101,12 @@
         <div class="flex items-baseline gap-2">
           <dt
             class="text-xs text-surface-500 dark:text-surface-400"
-            i18n="@@facility.summary.sites"
+            i18n="@@facility.summary.facilities"
           >
-            Sites
+            Facilities
           </dt>
           <dd class="text-lg font-semibold text-surface-950 tabular-nums dark:text-surface-50">
-            {{ treeSummary().sites }}
+            {{ treeSummary().facilities }}
           </dd>
         </div>
         <div class="flex items-baseline gap-2">
@@ -125,6 +150,7 @@
       class="flex min-h-0 flex-1 flex-col"
       [class.hidden]="hasNoTreeMatch()"
       [nodes]="visibleTreeNodes()"
+      [expandAll]="treeSearch().trim().length > 0"
       [loading]="treeStore.isQueryLoading()"
       [hasError]="treeStore.queryHasError()"
       (view)="onViewTreeNode($event)"

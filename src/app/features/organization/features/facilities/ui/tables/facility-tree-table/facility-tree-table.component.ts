@@ -74,6 +74,22 @@ export class FacilityTreeTable {
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property expandAll
+   * @readonly
+   *
+   * @description
+   * Opens every level instead of only the roots. Set while the hierarchy is
+   * filtered: a match three levels down that stays collapsed reads as no match
+   * at all.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly expandAll: InputSignal<boolean> = input<boolean>(false);
+
+  /**
    * Property hasError
    * @readonly
    *
@@ -126,7 +142,7 @@ export class FacilityTreeTable {
    * @type {Signal<TreeNode<FacilityTreeNode>[]>}
    */
   protected readonly treeNodes: Signal<TreeNode<FacilityTreeNode>[]> = computed(() =>
-    toTreeNodes(this.nodes()),
+    toTreeNodes(this.nodes(), this.expandAll()),
   );
 
   /**

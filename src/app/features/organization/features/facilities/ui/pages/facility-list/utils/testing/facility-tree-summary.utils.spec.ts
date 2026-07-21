@@ -20,7 +20,7 @@ describe('summariseFacilityTree', () => {
       node('b', 0, null),
     ];
 
-    expect(summariseFacilityTree(tree).sites).toBe(4);
+    expect(summariseFacilityTree(tree).facilities).toBe(4);
   });
 
   it('sums equipment across the whole tree', () => {
@@ -56,7 +56,11 @@ describe('summariseFacilityTree', () => {
   });
 
   it('summarises an empty tree without inventing figures', () => {
-    expect(summariseFacilityTree([])).toEqual({ sites: 0, equipment: 0, complianceRate: null });
+    expect(summariseFacilityTree([])).toEqual({
+      facilities: 0,
+      equipment: 0,
+      complianceRate: null,
+    });
   });
 });
 

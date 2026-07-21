@@ -11,22 +11,28 @@ import type { FacilityTreeNode } from '@features/organization/features/facilitie
  * Deeper levels stay collapsed: opening every floor and zone of a large estate
  * on arrival would bury the sites the reader came for.
  *
+ * `expandAll` overrides that for a filtered hierarchy. What survives a filter
+ * is already the answer, and a match three levels down that stays collapsed is
+ * indistinguishable from no match at all.
+ *
  * @param {readonly FacilityTreeNode[]} nodes - The API hierarchy.
+ * @param {boolean} [expandAll] - Open every level, whatever its depth.
  * @param {number} [depth] - Current depth, used to decide the expanded state.
  *
  * @returns {TreeNode<FacilityTreeNode>[]} The PrimeNG hierarchy.
  */
 export function toTreeNodes(
   nodes: readonly FacilityTreeNode[],
+  expandAll: boolean = false,
   depth: number = 0,
 ): TreeNode<FacilityTreeNode>[] {
   return nodes.map(
     (node: FacilityTreeNode): TreeNode<FacilityTreeNode> => ({
       key: node.id,
       data: node,
-      expanded: depth < 1,
+      expanded: expandAll || depth < 1,
       leaf: node.children.length === 0,
-      children: toTreeNodes(node.children, depth + 1),
+      children: toTreeNodes(node.children, expandAll, depth + 1),
     }),
   );
 }

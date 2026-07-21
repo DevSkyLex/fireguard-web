@@ -39,6 +39,16 @@ describe('toTreeNodes', () => {
     expect(root?.children?.[0]?.leaf).toBe(true);
   });
 
+  // What survives a filter is already the answer. A match three levels down
+  // that arrives collapsed reads as no match at all — the search looks broken.
+  it('expands every level when asked to', () => {
+    const [root] = toTreeNodes([node('a', [node('b', [node('c')])])], true);
+
+    expect(root?.expanded).toBe(true);
+    expect(root?.children?.[0]?.expanded).toBe(true);
+    expect(root?.children?.[0]?.children?.[0]?.expanded).toBe(true);
+  });
+
   it('returns nothing for an empty hierarchy', () => {
     expect(toTreeNodes([])).toEqual([]);
   });

@@ -6,8 +6,13 @@ import type { FacilityTreeNode } from '@features/organization/features/facilitie
  * @since 1.0.0
  */
 export interface FacilityTreeSummary {
-  /** Number of nodes in the tree, at every depth. */
-  readonly sites: number;
+  /**
+   * Facilities in the tree, at every depth.
+   *
+   * Not "sites": a building and a floor are facilities too, and labelling the
+   * node count as sites overstates the estate by every level below the top.
+   */
+  readonly facilities: number;
 
   /** Equipment tracked across every node. */
   readonly equipment: number;
@@ -71,14 +76,14 @@ export function filterFacilityTree(
 }
 
 export function summariseFacilityTree(nodes: readonly FacilityTreeNode[]): FacilityTreeSummary {
-  let sites: number = 0;
+  let facilities: number = 0;
   let equipment: number = 0;
   let ratedEquipment: number = 0;
   let weightedRate: number = 0;
 
   const walk = (current: readonly FacilityTreeNode[]): void => {
     for (const node of current) {
-      sites += 1;
+      facilities += 1;
       equipment += node.equipmentCount;
 
       if (node.complianceRate !== null && node.equipmentCount > 0) {
@@ -93,7 +98,7 @@ export function summariseFacilityTree(nodes: readonly FacilityTreeNode[]): Facil
   walk(nodes);
 
   return {
-    sites,
+    facilities,
     equipment,
     complianceRate: ratedEquipment > 0 ? Math.round(weightedRate / ratedEquipment) : null,
   };

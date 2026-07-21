@@ -10,6 +10,26 @@
 
   <p-divider class="my-0" />
 
+  <!--
+    Saving reported nothing back: the call reached success and no consumer read
+    it, so a saved profile looked exactly like a click that did nothing. Same
+    defect, same fix as the organization settings page.
+
+    No dismiss timer — the store is panel-scoped and the next save returns the
+    call state to pending, so the message clears itself.
+  -->
+  @if (editStore.saveSucceeded()) {
+    <div
+      class="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-300"
+      role="status"
+      aria-live="polite"
+      data-testid="account-profile-saved"
+    >
+      <i class="pi pi-check-circle" aria-hidden="true"></i>
+      <span i18n="@@account.profile.saved">Your profile has been saved.</span>
+    </div>
+  }
+
   <!-- Profile fields: persisted through PATCH /api/me -->
   <app-account-profile-form
     [profile]="userStore.profile()"

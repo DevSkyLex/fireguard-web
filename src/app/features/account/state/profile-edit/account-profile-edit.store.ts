@@ -94,6 +94,20 @@ export const AccountProfileEditStore = signalStore(
     saveError: computed<StoreError | null>(() => store.saveCallState().error),
 
     /**
+     * Computed saveSucceeded
+     *
+     * @description
+     * Whether the latest profile-field save completed. Saving reported nothing
+     * back before — the call reached success and no consumer read it, so a
+     * successful save looked identical to a click that did nothing.
+     *
+     * @since 1.1.0
+     *
+     * @returns {boolean}
+     */
+    saveSucceeded: computed<boolean>(() => store.saveCallState().status === 'success'),
+
+    /**
      * Computed avatarError
      *
      * @description

@@ -10,6 +10,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
+import { INTERVENTION_STATUSES } from '@features/organization/features/interventions/constants';
 import {
   resolveInterventionTag,
   type InterventionOutput,
@@ -22,21 +23,6 @@ import {
   type CalendarEvent,
 } from '@shared/components';
 import { InterventionTag } from '../intervention-tag';
-
-/**
- * Canonical intervention statuses, in workflow order, used to build the
- * calendar's status filter group. Every status an event can carry must appear
- * here so it remains filterable.
- */
-const INTERVENTION_STATUSES: readonly InterventionStatus[] = [
-  'draft',
-  'planned',
-  'in_progress',
-  'submitted',
-  'changes_requested',
-  'published',
-  'abandoned',
-];
 
 /**
  * Component InterventionCalendar

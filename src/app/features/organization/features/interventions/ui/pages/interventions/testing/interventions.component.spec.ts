@@ -36,6 +36,8 @@ type InterventionsPageHarness = {
   canDropCard(item: ItemViewModel, fromColumnId: string, toColumnId: string): boolean;
   createDrawerVisible: WritableSignal<boolean>;
   initialPlannedStartAt: WritableSignal<Date | null>;
+  statusFilterOptions: readonly { label: string; value: string }[];
+  onStatusFilterChange(status: string | null): void;
 };
 
 function intervention(overrides: Partial<InterventionOutput>): InterventionOutput {
@@ -221,6 +223,80 @@ describe('InterventionsPage', () => {
       organizationId: 'org-1',
       options: { name: 'roof' },
     });
+  });
+
+  it('should reload with a server-side status filter when the ?status= input changes', () => {
+    const fixture = TestBed.createComponent(InterventionsPage);
+    fixture.detectChanges();
+
+    fixture.componentRef.setInput('status', 'planned');
+    fixture.detectChanges();
+
+    expect(store.load).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      options: { status: 'planned' },
+    });
+  });
+
+  it('should combine the search and status filters in a single request', () => {
+    const fixture = TestBed.createComponent(InterventionsPage);
+    fixture.detectChanges();
+
+    fixture.componentRef.setInput('q', 'roof');
+    fixture.componentRef.setInput('status', 'in_progress');
+    fixture.detectChanges();
+
+    expect(store.load).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      options: { name: 'roof', status: 'in_progress' },
+    });
+  });
+
+  it('should ignore a ?status= value the workflow does not define', () => {
+    const fixture = TestBed.createComponent(InterventionsPage);
+    fixture.detectChanges();
+
+    fixture.componentRef.setInput('status', 'not-a-status');
+    fixture.detectChanges();
+
+    expect(store.load).toHaveBeenLastCalledWith({ organizationId: 'org-1', options: undefined });
+  });
+
+  it('should offer every workflow status, labelled through the tag registry', () => {
+    expect(build().statusFilterOptions.map((option) => option.value)).toEqual([
+      'draft',
+      'planned',
+      'in_progress',
+      'submitted',
+      'changes_requested',
+      'published',
+      'abandoned',
+    ]);
+    expect(build().statusFilterOptions.every((option) => option.label.length > 0)).toBe(true);
+  });
+
+  it('should put the chosen status in the URL rather than filter the loaded page', () => {
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    build().onStatusFilterChange('planned');
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { status: 'planned' } }),
+    );
+  });
+
+  it('should clear ?status= when the filter is reset', () => {
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    build().onStatusFilterChange(null);
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { status: null } }),
+    );
   });
 
   it('should navigate merging ?view= when switching to board', () => {

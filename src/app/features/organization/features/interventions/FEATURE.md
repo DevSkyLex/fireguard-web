@@ -29,8 +29,12 @@ This subfeature is responsible for:
   and RBAC capability) with a "Show abandoned" toggle for a 6th read-only
   column; Calendar reuses the existing bounded-window calendar. A header
   search box debounces into `?q=` and reloads the store with a server-side
-  `name` filter. The metric strip is gone from this page (`InterventionSummaryStore`
-  is unused here, kept for a future dashboard).
+  `name` filter, and a status select syncs to `?status=` for a server-side
+  `status` filter (unknown values are dropped, so a hand-edited link degrades
+  to the unfiltered list). Both filters are applied by the API, never by
+  trimming the loaded page — the collection is paginated, so client-side
+  filtering would hide matches sitting on page two. The metric strip is fed by
+  `InterventionSummaryStore`.
 - `/organizations/:organizationId/interventions/:interventionId`
 
 ## State and Data Access

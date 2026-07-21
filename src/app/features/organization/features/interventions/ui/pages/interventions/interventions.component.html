@@ -45,6 +45,25 @@
       />
     </p-iconfield>
 
+    <!--
+      Filtered server-side and carried in the URL, like the search beside it:
+      the list is paginated, so trimming the loaded page would hide matches
+      sitting on page two, and a filtered list is worth sending to someone.
+    -->
+    <p-select
+      [options]="statusFilterOptions"
+      [ngModel]="status()"
+      (ngModelChange)="onStatusFilterChange($event)"
+      optionLabel="label"
+      optionValue="value"
+      [showClear]="true"
+      size="small"
+      class="w-44 shrink-0"
+      placeholder="Any status"
+      i18n-placeholder="@@intervention.list.anyStatus"
+      data-testid="intervention-status-filter"
+    />
+
     <div class="ml-auto flex shrink-0 items-center gap-3">
       <p class="hidden text-sm text-surface-600 tabular-nums lg:block dark:text-surface-400">
         <ng-container i18n="@@intervention.list.count">{loadedCount(), plural,

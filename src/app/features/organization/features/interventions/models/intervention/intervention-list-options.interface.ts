@@ -24,6 +24,44 @@ export type InterventionListOptions = PaginationOptions & {
   readonly type?: InterventionType;
 
   /**
+   * Responsible member IRI.
+   *
+   * The API has accepted this since the resource was written; the frontend
+   * model simply never declared it, so no caller could pass it.
+   *
+   * @type {string}
+   */
+  readonly responsible?: string;
+
+  /**
+   * Participant member IRI.
+   *
+   * @type {string}
+   */
+  readonly participant?: string;
+
+  /**
+   * Site (facility) IRI.
+   *
+   * @type {string}
+   */
+  readonly site?: string;
+
+  /**
+   * Inclusive lower planned-start bound, ISO 8601.
+   *
+   * @type {string}
+   */
+  readonly plannedStartAtAfter?: string;
+
+  /**
+   * Inclusive upper planned-start bound, ISO 8601.
+   *
+   * @type {string}
+   */
+  readonly plannedStartAtBefore?: string;
+
+  /**
    * Inclusive lower bound (ISO 8601) applied to `dueAt`.
    *
    * @type {string}

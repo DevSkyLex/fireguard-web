@@ -13,7 +13,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -22,11 +22,14 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { Menu, MenuModule } from 'primeng/menu';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { INTERVENTION_STATUSES } from '@features/organization/features/interventions/constants';
 import {
   resolveInterventionTag,
+  type InterventionListOptions,
   type InterventionOutput,
   type InterventionStatus,
   type MemberSelectOption,
@@ -175,6 +178,8 @@ interface InterventionListItemViewModel {
     InterventionTag,
     MessageModule,
     ReactiveFormsModule,
+    SelectModule,
+    FormsModule,
     Skeleton,
     SkeletonModule,
   ],
@@ -374,6 +379,35 @@ export class InterventionsPage {
   });
 
   /**
+   * Property status
+   * @readonly
+   *
+   * @description
+   * Status filter, bound from `?status=`.
+   *
+   * A query param rather than local state, like the search beside it: a
+   * filtered list is worth sending to someone, and the board and list share
+   * the URL.
+   *
+   * Anything unrecognised reads as no filter rather than an empty list — the
+   * link may outlive a status the backend has since renamed.
+   *
+   * @access public
+   * @since 5.4.0
+   *
+   * @type {InputSignalWithTransform<InterventionStatus | null, unknown>}
+   */
+  public readonly status: InputSignalWithTransform<InterventionStatus | null, unknown> = input<
+    InterventionStatus | null,
+    unknown
+  >(null, {
+    transform: (value: unknown): InterventionStatus | null =>
+      typeof value === 'string' && INTERVENTION_STATUSES.includes(value as InterventionStatus)
+        ? (value as InterventionStatus)
+        : null,
+  });
+
+  /**
    * Property viewOptions
    * @readonly
    *
@@ -427,6 +461,25 @@ export class InterventionsPage {
    * @type {string}
    */
   protected readonly hideAbandonedLabel: string = $localize`:@@intervention.board.hideAbandoned:Hide abandoned`;
+
+  /**
+   * Property statusFilterOptions
+   * @readonly
+   *
+   * @description
+   * Status choices offered by the list filter, labelled through the tag
+   * registry so the select and the row tags never disagree.
+   *
+   * @access protected
+   * @since 5.4.0
+   *
+   * @type {{ label: string; value: InterventionStatus }[]}
+   */
+  protected readonly statusFilterOptions: { label: string; value: InterventionStatus }[] =
+    INTERVENTION_STATUSES.map((status: InterventionStatus) => ({
+      label: resolveInterventionTag('status', status).label,
+      value: status,
+    }));
 
   /**
    * Property searchControl
@@ -911,9 +964,21 @@ export class InterventionsPage {
     effect(() => {
       const organizationId: string | undefined = this.organization.selectedOrganization()?.id;
       const name: string = this.q().trim();
+      const status: InterventionStatus | null = this.status();
       if (!organizationId) return;
 
-      this.store.load({ organizationId, options: name ? { name } : undefined });
+      // Filtered server-side, not by trimming the loaded page: the list is
+      // paginated, so filtering what already arrived would hide matches that
+      // sit on page two.
+      const options: InterventionListOptions = {
+        ...(name ? { name } : {}),
+        ...(status ? { status } : {}),
+      };
+
+      this.store.load({
+        organizationId,
+        options: Object.keys(options).length > 0 ? options : undefined,
+      });
     });
 
     // The summary store existed and nothing ever called it, so the KPI strip
@@ -1011,6 +1076,24 @@ export class InterventionsPage {
     event.stopPropagation();
     this.rowMenuTarget.set(intervention);
     this.rowMenu().toggle(event);
+  }
+
+  /**
+   * Method onStatusFilterChange
+   *
+   * @description
+   * Puts the chosen status in the URL, which the load effect reads back — the
+   * same round trip the search takes, so a filtered list stays shareable.
+   *
+   * @access protected
+   * @since 5.4.0
+   *
+   * @param {InterventionStatus | null} status - Chosen status, or null to clear.
+   *
+   * @returns {void}
+   */
+  protected onStatusFilterChange(status: InterventionStatus | null): void {
+    this.navigateQuery({ status: status ?? null });
   }
 
   /**

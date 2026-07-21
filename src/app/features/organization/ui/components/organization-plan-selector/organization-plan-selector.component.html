@@ -230,6 +230,14 @@
               >
                 {{ plan.name }}
               </h4>
+              @if (anyPlanHasTagline()) {
+                <p
+                  class="min-h-5 text-[13px] leading-5 font-medium text-primary-600 dark:text-primary-400"
+                  data-testid="plan-tagline"
+                >
+                  {{ plan.tagline }}
+                </p>
+              }
               @if (plan.description) {
                 <p class="text-sm text-surface-600 dark:text-surface-400">{{ plan.description }}</p>
               }
@@ -270,6 +278,24 @@
                     aria-hidden="true"
                   ></i>
                   <span>{{ quota.summary }}</span>
+                </li>
+              }
+              <!--
+                Perks continue the same list: to a reader deciding between
+                plans, a quota and a perk are both "what I get". They keep a
+                distinct glyph because only the quotas above are enforced
+                numbers — the perks are configured copy.
+              -->
+              @for (perk of plan.perks; track perk) {
+                <li
+                  class="flex items-start gap-2 text-sm text-surface-700 dark:text-surface-200"
+                  data-testid="plan-perk"
+                >
+                  <i
+                    class="pi pi-sparkles mt-0.5 shrink-0 text-xs text-primary-600 dark:text-primary-400"
+                    aria-hidden="true"
+                  ></i>
+                  <span>{{ perk }}</span>
                 </li>
               }
             </ul>

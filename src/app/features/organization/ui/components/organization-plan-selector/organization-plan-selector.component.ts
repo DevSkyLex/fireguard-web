@@ -138,6 +138,18 @@ export class OrganizationPlanSelector implements OnInit {
     return this.store.plans().find((plan: PlanOutput): boolean => plan.id === planId) ?? null;
   });
 
+  /**
+   * Whether any plan in the catalog carries a tagline.
+   *
+   * The grid compares plans side by side, so the price rows must line up. If a
+   * single plan has a tagline, every card reserves the line — otherwise the
+   * card without one pulls its price a row higher and the comparison reads as
+   * misaligned rather than as "this plan has no tagline".
+   */
+  protected readonly anyPlanHasTagline: Signal<boolean> = computed<boolean>(() =>
+    this.store.plans().some((plan: PlanOutput): boolean => Boolean(plan.tagline)),
+  );
+
   /** Badge descriptor marking the current plan in the plans grid. */
   protected readonly currentPlanTag: TagDescriptor = {
     label: $localize`:@@org.plan.current:Current`,

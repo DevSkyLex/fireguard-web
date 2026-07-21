@@ -28,6 +28,21 @@ export interface PlanOutput extends HydraItem {
   readonly name: string;
   /** @type {(string | null | undefined)} */
   readonly description?: string | null;
+  /**
+   * Short marketing line for the comparison card, or null when unconfigured.
+   * Display copy only — never read to decide what the plan grants.
+   *
+   * @type {(string | null | undefined)}
+   */
+  readonly tagline?: string | null;
+  /**
+   * Marketing perk bullets in display order, empty when unconfigured. Display
+   * copy only: {@link limits} and {@link quotas} remain the source of truth for
+   * what the plan actually allows.
+   *
+   * @type {(ReadonlyArray<string> | undefined)}
+   */
+  readonly perks?: ReadonlyArray<string>;
   /** @type {PlanLimits} */
   readonly limits: PlanLimits;
   /** @type {ReadonlyArray<PlanQuotaOutput>} */

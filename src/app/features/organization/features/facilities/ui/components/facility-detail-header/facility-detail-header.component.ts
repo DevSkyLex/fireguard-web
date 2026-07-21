@@ -2,13 +2,17 @@ import { DatePipe, TitleCasePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
+import type { MenuItem } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
+import { SplitButtonModule } from 'primeng/splitbutton';
 import { TagModule } from 'primeng/tag';
 import {
   resolveFacilityTag,
@@ -32,7 +36,7 @@ import { Tag, type TagDescriptor } from '@shared/components';
  */
 @Component({
   selector: 'app-facility-detail-header',
-  imports: [DatePipe, TitleCasePipe, AvatarModule, ButtonModule, TagModule, Tag],
+  imports: [DatePipe, TitleCasePipe, AvatarModule, ButtonModule, SplitButtonModule, TagModule, Tag],
   templateUrl: './facility-detail-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -134,5 +138,33 @@ export class FacilityDetailHeader {
   protected statusDescriptor(status: string): TagDescriptor {
     return resolveFacilityTag('status', status);
   }
+
+  /**
+   * Property overflowItems
+   * @readonly
+   *
+   * @description
+   * The secondary actions, under the Edit split button's caret. Delete keeps
+   * its red styling there so demoting it from a flat button does not also
+   * disguise what it does.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<MenuItem[]>}
+   */
+  protected readonly overflowItems: Signal<MenuItem[]> = computed((): MenuItem[] => [
+    {
+      label: $localize`:@@facility.header.move:Move`,
+      icon: 'pi pi-arrow-right-arrow-left',
+      command: (): void => this.move.emit(),
+    },
+    {
+      label: $localize`:@@common.delete:Delete`,
+      icon: 'pi pi-trash',
+      styleClass: 'text-red-500',
+      command: (): void => this.delete.emit(),
+    },
+  ]);
   //#endregion
 }

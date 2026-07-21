@@ -1,1 +1,1 @@
-export { withNotificationBell } from './topbar.provider';
+export { withAccountMenu, withNotificationBell } from './topbar.provider';

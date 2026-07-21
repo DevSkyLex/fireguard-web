@@ -1,2 +1,2 @@
 export { withAccountProfile } from './sidebar';
-export { withNotificationBell } from './topbar';
+export { withAccountMenu, withNotificationBell } from './topbar';

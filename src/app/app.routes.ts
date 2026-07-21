@@ -1,5 +1,5 @@
 import type { Routes } from '@angular/router';
-import { withAccountProfile, withNotificationBell } from '@features/account';
+import { withAccountProfile, withAccountMenu, withNotificationBell } from '@features/account';
 import { withAuthShowcase } from '@features/auth';
 import { authGuard } from '@features/auth/http/guards';
 import { provideMainFeature } from '@features/main';
@@ -73,7 +73,12 @@ export const APP_ROUTES: Routes = [
       provideDashboardLayoutSlots({
         navigation: [...withOrganizationNavigation()],
         sidebar: [withOrganizationSwitcher(), withAccountProfile(), withMessagingSidebar()],
-        topbar: [withInterventionSyncChip(), withNotificationBell(), withThemeSwitcher()],
+        topbar: [
+          withInterventionSyncChip(),
+          withNotificationBell(),
+          withThemeSwitcher(),
+          withAccountMenu(),
+        ],
         pageHeader: [withInterventionHeaderActions()],
         panel: [withConversationDetailsPanel(), withAssistantPanel()],
       }),

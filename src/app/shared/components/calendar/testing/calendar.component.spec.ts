@@ -30,6 +30,11 @@ const summary = (fixture: ComponentFixture<Calendar>): string =>
     .querySelector('[data-testid="calendar-period-summary"]')
     ?.textContent?.trim() ?? '';
 
+/** Number of marked days in the mini-calendar. */
+const dots = (fixture: ComponentFixture<Calendar>): number =>
+  (fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="calendar-mini-day-dot"]')
+    .length;
+
 /** Text of every rendered category count, in document order. */
 const counts = (fixture: ComponentFixture<Calendar>): string[] =>
   [
@@ -160,6 +165,36 @@ describe('Calendar', () => {
    * by the calendar rather than by each consumer, so a caller cannot forget to
    * fill it and render a misleading zero.
    */
+  /**
+   * The mini-calendar previously built its grid with an empty event array, so
+   * it could never mark anything — the data simply never reached it.
+   */
+  describe('mini-calendar day marks', () => {
+    it('marks the day holding an event', () => {
+      expect(dots(createCalendar())).toBe(1);
+    });
+
+    it('marks nothing when there is nothing to plot', () => {
+      const fixture = createCalendar();
+      fixture.componentRef.setInput('events', []);
+      fixture.detectChanges();
+
+      expect(dots(fixture)).toBe(0);
+    });
+
+    it('follows the category filters', () => {
+      // A dot on a day whose only event is filtered out would send the reader
+      // to a month view showing nothing.
+      const fixture = createCalendar();
+      const harness = fixture.componentInstance as unknown as CalendarHarness;
+
+      harness.toggleCategory({ groupId: 'status', categoryId: 'status:planned' });
+      fixture.detectChanges();
+
+      expect(dots(fixture)).toBe(0);
+    });
+  });
+
   describe('category counts', () => {
     it('counts the events carrying each category', () => {
       const fixture = createCalendar();

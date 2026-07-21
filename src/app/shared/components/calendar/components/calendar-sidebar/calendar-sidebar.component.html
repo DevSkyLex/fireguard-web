@@ -51,6 +51,21 @@
         >
           {{ day.date.getDate() }}
         </button>
+
+        <!--
+          A dot under days that hold something, so the mini-calendar is worth
+          scanning before clicking. Drawn outside the button so it never
+          shifts the digit, and `aria-hidden` because the day's own label
+          already carries the date — the count is repeated in the grid the
+          reader lands on.
+        -->
+        @if (day.events.length > 0) {
+          <span
+            class="mx-auto -mt-0.5 block size-1 rounded-full bg-primary-500"
+            data-testid="calendar-mini-day-dot"
+            aria-hidden="true"
+          ></span>
+        }
       }
     </div>
   </section>

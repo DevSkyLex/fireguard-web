@@ -11,7 +11,12 @@ import {
 } from '@angular/core';
 import type { TagSeverity } from '../../../tag';
 import { tagSeverityDotClass } from '../../../tag';
-import type { CalendarCategory, CalendarCategoryGroup, CalendarDay } from '../../models';
+import type {
+  CalendarCategory,
+  CalendarCategoryGroup,
+  CalendarDay,
+  CalendarEvent,
+} from '../../models';
 import { addMonths, buildMonthDays, weekdayLabels } from '../../utils';
 
 /** A toggled category, identified within its group. */
@@ -59,6 +64,17 @@ export class CalendarSidebar {
     Readonly<Record<string, number>>
   >({});
 
+  /**
+   * Events used to mark which days in the mini-calendar hold something.
+   *
+   * The calendar passes its **visible** events, so the marks follow the
+   * category filters: a dot on a day whose only event is filtered out would
+   * send the reader to a month view that shows nothing.
+   */
+  public readonly events: InputSignal<readonly CalendarEvent[]> = input<readonly CalendarEvent[]>(
+    [],
+  );
+
   /** First day of the week: 0 = Sunday, 1 = Monday. */
   public readonly weekStartsOn: InputSignal<0 | 1> = input<0 | 1>(1);
 
@@ -83,7 +99,7 @@ export class CalendarSidebar {
 
   /** Day cells of the mini-calendar for the focused month. */
   protected readonly miniDays: Signal<readonly CalendarDay[]> = computed<readonly CalendarDay[]>(
-    () => buildMonthDays(this.focusedDate(), [], this.weekStartsOn(), this.today()),
+    () => buildMonthDays(this.focusedDate(), this.events(), this.weekStartsOn(), this.today()),
   );
   //#endregion
 

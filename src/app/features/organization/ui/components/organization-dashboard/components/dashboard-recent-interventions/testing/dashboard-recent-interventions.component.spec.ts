@@ -105,4 +105,18 @@ describe('DashboardRecentInterventions', () => {
 
     expect(retried).toBe(1);
   });
+
+  // Five rows and no way through to the rest: the card was a dead end, and
+  // "there are more than five" is the obvious next action. Asserted on the
+  // output rather than the DOM — this fixture does not render the p-card
+  // templates, so the rendered link is pinned by the dashboard e2e instead.
+  it('should emit a request to open the full intervention list', () => {
+    const fixture = createComponent();
+    let opened = 0;
+    fixture.componentInstance.openAll.subscribe(() => (opened += 1));
+
+    fixture.componentInstance.openAll.emit();
+
+    expect(opened).toBe(1);
+  });
 });

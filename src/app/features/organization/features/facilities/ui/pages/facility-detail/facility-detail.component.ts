@@ -34,8 +34,9 @@ import {
   FacilityEquipmentOverview,
   FacilityInformationPanel,
   FacilityInspectionTab,
-  FacilityInspectionsOverview,
   FacilityInstallationsPanel,
+  FacilityKpiStrip,
+  type FacilityKpi,
 } from '@features/organization/features/facilities/ui/components';
 import {
   FacilityEquipmentDataview,
@@ -72,9 +73,9 @@ import { EmptyState, MapCanvas, type MapMarker } from '@shared/components';
     FacilityInspectionDataview,
     FacilityEquipmentDataview,
     FacilityEquipmentOverview,
-    FacilityInspectionsOverview,
     FacilityInformationPanel,
     FacilityInstallationsPanel,
+    FacilityKpiStrip,
     FacilityEquipmentTab,
     FacilityInspectionTab,
     EmptyState,
@@ -226,6 +227,54 @@ export class FacilityDetailPage {
   protected readonly facility: Signal<FacilityOutput | null> = computed<FacilityOutput | null>(() =>
     this.activeFacilityStore.selectedFacility(),
   );
+
+  /**
+   * Property kpis
+   * @readonly
+   *
+   * @description
+   * The four figures under the header. Every one of them was already computed
+   * by {@link FacilityOverviewStore} — including the presentation-ready
+   * `complianceDisplay` and `equipmentDescription` — and no template read any
+   * of them.
+   *
+   * Formatting stays here rather than in the strip: "—" for a facility with no
+   * inspections is a statement about the data, not a rendering choice, and the
+   * pluralised sub-lines are localised by the feature that owns the nouns.
+   *
+   * @access protected
+   * @since 2.4.0
+   *
+   * @type {Signal<readonly FacilityKpi[]>}
+   */
+  protected readonly kpis: Signal<readonly FacilityKpi[]> = computed((): readonly FacilityKpi[] => {
+    const overdue: number = this.overviewStore.overdueInspectionsCount();
+    const days: number | null = this.overviewStore.nextInspectionInDays();
+
+    return [
+      {
+        label: $localize`:@@facility.kpi.compliance:Compliance`,
+        value: this.overviewStore.complianceDisplay(),
+      },
+      {
+        label: $localize`:@@facility.kpi.equipment:Equipment`,
+        value: String(this.overviewStore.equipmentCount()),
+        sub: this.overviewStore.equipmentDescription(),
+      },
+      {
+        label: $localize`:@@facility.kpi.overdue:Overdue inspections`,
+        value: String(overdue),
+        // No sub-line at zero: "0 overdue · nothing late" says the same thing
+        // twice, and the strip is scanned, not read.
+        sub: overdue > 0 ? $localize`:@@facility.kpi.overdueSub:needs attention` : null,
+      },
+      {
+        label: $localize`:@@facility.kpi.nextInspection:Next inspection`,
+        value: days === null ? '—' : $localize`:@@facility.kpi.inDays:${days}:count: d`,
+        sub: days === null ? $localize`:@@facility.kpi.noneScheduled:none scheduled` : null,
+      },
+    ];
+  });
 
   /**
    * Property locationMarkers

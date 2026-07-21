@@ -414,6 +414,25 @@ export class OrganizationDashboard {
   }
 
   /**
+   * Method openInterventionList
+   *
+   * @description
+   * Leaves for the full intervention list. The card shows five rows and had no
+   * way through to the rest.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @returns {void}
+   */
+  protected openInterventionList(): void {
+    const organizationId: string | undefined = this.store.loadParams();
+    if (!organizationId) return;
+
+    void this.router.navigate(['/organizations', organizationId, 'interventions']);
+  }
+
+  /**
    * Method retryDashboard
    *
    * @description

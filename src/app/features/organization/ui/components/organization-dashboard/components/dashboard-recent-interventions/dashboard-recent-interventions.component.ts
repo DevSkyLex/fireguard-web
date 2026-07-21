@@ -155,6 +155,21 @@ export class DashboardRecentInterventions {
    */
   public readonly retry: OutputEmitterRef<void> = output<void>();
 
+  /**
+   * Property openAll
+   * @readonly
+   *
+   * @description
+   * Emits the request to leave for the full intervention list. The card shows
+   * the five most recently updated; without this it is a dead end.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly openAll: OutputEmitterRef<void> = output<void>();
+
   //#endregion
 
   //#region Properties

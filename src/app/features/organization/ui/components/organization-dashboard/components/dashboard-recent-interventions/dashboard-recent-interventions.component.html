@@ -1,12 +1,29 @@
 <p-card data-shell="table">
   <ng-template pTemplate="header">
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center justify-between gap-2">
       <h2
         i18n="@@org.dash.recentInterventions.title"
         class="text-[15px] font-semibold tracking-[-0.01em]"
       >
         Recent interventions
       </h2>
+
+      <!--
+        The card was a dead end: five rows and no way through to the rest.
+        PRODUCT.md asks for the next action to be obvious, and "there are more
+        than five" is the obvious one here.
+      -->
+      <p-button
+        i18n-label="@@org.dash.recentInterventions.viewAll"
+        label="View all"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        severity="secondary"
+        [text]="true"
+        size="small"
+        data-testid="dashboard-interventions-view-all"
+        (onClick)="openAll.emit()"
+      />
     </div>
   </ng-template>
 

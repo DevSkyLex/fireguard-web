@@ -1,0 +1,47 @@
+<!--
+  One flat bordered card split into cells, as the mockup draws it: hairline
+  dividers between figures rather than four separate cards. PRODUCT.md calls
+  for "hierarchy through rhythm, not boxes", and four boxes here would compete
+  with the header card directly above.
+
+  Wraps below sm instead of scrolling: a figure pushed off-screen is a figure
+  nobody reads, and field agents are on phones.
+-->
+<div
+  class="flex flex-wrap overflow-hidden rounded-xl border border-surface-200 bg-surface-0 dark:border-surface-800 dark:bg-surface-900"
+  data-testid="facility-kpi-strip"
+>
+  @if (loading()) {
+    @for (placeholder of [0, 1, 2, 3]; track placeholder) {
+      <div
+        class="min-w-40 flex-1 border-surface-200 px-5 py-4 not-first:border-l dark:border-surface-800"
+      >
+        <p-skeleton width="5rem" height="0.75rem" />
+        <p-skeleton width="3.5rem" height="1.5rem" styleClass="mt-2" />
+      </div>
+    }
+  } @else {
+    @for (kpi of kpis(); track kpi.label) {
+      <div
+        class="min-w-40 flex-1 border-surface-200 px-5 py-4 not-first:border-l dark:border-surface-800"
+        data-testid="facility-kpi-cell"
+      >
+        <div class="text-xs font-medium text-surface-500 dark:text-surface-400">
+          {{ kpi.label }}
+        </div>
+
+        <div
+          class="mt-0.5 text-[22px] font-semibold text-surface-950 tabular-nums dark:text-surface-50"
+        >
+          {{ kpi.value }}
+        </div>
+
+        @if (kpi.sub) {
+          <div class="mt-0.5 text-[11px] text-surface-400 dark:text-surface-500">
+            {{ kpi.sub }}
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

@@ -154,6 +154,7 @@
             [loading]="store.isQueryLoading()"
             [hasError]="store.queryHasError()"
             (open)="openIntervention($event)"
+            (openAll)="openInterventionList()"
             (retry)="retryDashboard()"
           />
         }

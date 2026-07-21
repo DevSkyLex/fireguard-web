@@ -77,7 +77,21 @@ function dashboardPayload() {
       inspections: series([10, 22, 35, 48, 62, 75, 87]),
     },
     comparison: { metrics: [] },
-    recentInterventions: [],
+    recentInterventions: [
+      {
+        id: 'i-1',
+        number: 42,
+        name: 'Quarterly extinguisher round',
+        status: 'in_progress',
+        priority: 'high',
+        siteId: null,
+        siteName: null,
+        responsibleMemberId: null,
+        responsibleName: null,
+        dueAt: '2026-08-01T00:00:00Z',
+        updatedAt: '2026-07-20T00:00:00Z',
+      },
+    ],
   };
 }
 
@@ -177,5 +191,15 @@ test.describe('Overview composition cards', () => {
     await expect(strip).toContainText('12');
     // Lateness is a second fact about the same population, not a trend.
     await expect(page.getByTestId('metric-cell-note')).toContainText('4');
+  });
+
+  // The card showed five rows and offered no way through to the rest.
+  test('leaves for the full intervention list from the recent card', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1400 });
+    await landOnOverview(page);
+
+    await page.getByTestId('dashboard-interventions-view-all').click();
+
+    await expect(page).toHaveURL(/\/interventions$/);
   });
 });

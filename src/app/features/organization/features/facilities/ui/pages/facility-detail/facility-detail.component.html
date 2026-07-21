@@ -48,6 +48,15 @@
     }
   </section>
 
+  <!--
+    The figures the header cannot carry. Rendered whenever a facility resolved —
+    including while its inspections and equipment are still loading, so the band
+    does not appear and shove the workspace down a beat later.
+  -->
+  @if (facility()) {
+    <app-facility-kpi-strip [kpis]="kpis()" [loading]="overviewStore.isLoadingInspections()" />
+  }
+
   <!-- Workspace -->
   <section class="flex min-h-0 flex-1 flex-col">
     <p-tabs [value]="activeTab()" data-shell="detail" (valueChange)="activeTab.set(+$event!)">
@@ -78,7 +87,13 @@
                   already provides, and neither was mounted anywhere — found
                   by checking every selector against every template.
                 -->
-                <app-facility-inspections-overview />
+                <!--
+                  Only the dataview. `app-facility-inspections-overview` rendered
+                  the same four rows with the same All/Overdue/Upcoming filters
+                  directly above it — two identical lists, visible the moment the
+                  page is looked at rather than unit-tested. The summary half it
+                  was meant to provide is the KPI strip under the header now.
+                -->
                 <app-facility-inspection-dataview />
                 <app-facility-equipment-overview />
                 <app-facility-equipment-dataview />

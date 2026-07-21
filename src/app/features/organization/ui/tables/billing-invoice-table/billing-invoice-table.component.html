@@ -7,8 +7,15 @@
       >
         Invoices
       </h3>
+      <!--
+        Says who issues these and which file is the record — the two questions
+        an invoice list gets asked. Deliberately no "View all in Stripe"
+        button: this table sits on the same page as "Manage billing", which
+        opens the same portal, and a second control to one destination is
+        noise rather than access.
+      -->
       <p i18n="@@org.invoiceTable.subtitle" class="text-xs text-surface-500 dark:text-surface-400">
-        Download your invoices as PDF documents.
+        Issued by Stripe. The PDF is the document of record — download it for your accounts.
       </p>
     </div>
   </ng-template>

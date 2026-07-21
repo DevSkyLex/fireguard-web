@@ -101,6 +101,14 @@ export interface InspectionOutput extends HydraItem {
    * @type {(string | null | undefined)}
    */
   readonly facilityName?: string | null;
+
+  /**
+   * Display name of the checklist the inspection followed, resolved
+   * server-side from the Inspection module's own checklist aggregate.
+   *
+   * @type {(string | null | undefined)}
+   */
+  readonly checklistName?: string | null;
   /** @type {InspectionResult} */
   readonly result: InspectionResult;
   /** @type {InspectionStatus} */

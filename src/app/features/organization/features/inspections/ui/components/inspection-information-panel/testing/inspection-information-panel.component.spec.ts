@@ -16,7 +16,8 @@ const inspection = (overrides: Partial<InspectionOutput> = {}): InspectionOutput
     result: 'pass',
     status: 'closed',
     performedAt: '2026-02-12T10:00:00Z',
-    checklistId: null,
+    checklistId: 'chk-1',
+    checklistName: 'Quarterly extinguisher check',
     notes: null,
     signature: null,
     nonConformitiesCount: 0,
@@ -61,6 +62,13 @@ describe('InspectionInformationPanel', () => {
       createComponent(inspection({ facilityName: null })).nativeElement.textContent ?? '';
 
     expect(text).toContain(FACILITY_ID);
+  });
+
+  it('should name the checklist the inspection followed', () => {
+    const text: string = createComponent(inspection()).nativeElement.textContent ?? '';
+
+    expect(text).toContain('Quarterly extinguisher check');
+    expect(text).not.toContain('chk-1');
   });
 
   it('should say nothing rather than blank when the inspection has no facility', () => {

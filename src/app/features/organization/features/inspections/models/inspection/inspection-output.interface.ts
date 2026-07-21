@@ -81,6 +81,26 @@ export interface InspectionOutput extends HydraItem {
   readonly equipmentId: string;
   /** @type {string | null} */
   readonly facilityId: string | null;
+
+  /**
+   * Serial number of the inspected equipment, resolved server-side through the
+   * Equipment module's naming port. The inspection record stores only the
+   * identifier, and a UUID names nothing to the agent holding the device.
+   *
+   * Absent on an older payload; null when the equipment records no serial
+   * number or it could not be resolved.
+   *
+   * @type {(string | null | undefined)}
+   */
+  readonly equipmentSerialNumber?: string | null;
+
+  /**
+   * Display name of the facility the inspection took place in, resolved
+   * server-side through the Facility module's naming port.
+   *
+   * @type {(string | null | undefined)}
+   */
+  readonly facilityName?: string | null;
   /** @type {InspectionResult} */
   readonly result: InspectionResult;
   /** @type {InspectionStatus} */

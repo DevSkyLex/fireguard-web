@@ -46,17 +46,41 @@
       <dt i18n="@@inspection.info.equipment" class="text-xs text-surface-500 dark:text-surface-400">
         Equipment
       </dt>
-      <dd class="mt-1 font-mono text-xs break-all text-surface-950 dark:text-surface-50">
-        {{ inspection().equipmentId }}
-      </dd>
+      <!--
+        The panel printed the raw UUID. The serial number is what is written on
+        the device the agent is standing in front of; the identifier is kept
+        only when nothing better resolved, because an inspection with no
+        nameable subject still has to say which one it was.
+      -->
+      @if (inspection().equipmentSerialNumber; as serialNumber) {
+        <dd
+          class="mt-1 text-sm text-surface-950 dark:text-surface-50"
+          data-testid="inspection-equipment-serial"
+        >
+          {{ serialNumber }}
+        </dd>
+      } @else {
+        <dd class="mt-1 font-mono text-xs break-all text-surface-500 dark:text-surface-400">
+          {{ inspection().equipmentId }}
+        </dd>
+      }
     </div>
     <div class="py-3 sm:border-b sm:border-surface-100 sm:pl-4 dark:sm:border-surface-800">
       <dt i18n="@@inspection.info.facility" class="text-xs text-surface-500 dark:text-surface-400">
         Facility
       </dt>
-      <dd class="mt-1 font-mono text-xs break-all text-surface-950 dark:text-surface-50">
-        {{ inspection().facilityId || noneLabel }}
-      </dd>
+      @if (inspection().facilityName; as facilityName) {
+        <dd
+          class="mt-1 text-sm text-surface-950 dark:text-surface-50"
+          data-testid="inspection-facility-name"
+        >
+          {{ facilityName }}
+        </dd>
+      } @else {
+        <dd class="mt-1 font-mono text-xs break-all text-surface-500 dark:text-surface-400">
+          {{ inspection().facilityId || noneLabel }}
+        </dd>
+      }
     </div>
     <div class="py-3 sm:pr-4">
       <dt i18n="@@inspection.info.checklist" class="text-xs text-surface-500 dark:text-surface-400">

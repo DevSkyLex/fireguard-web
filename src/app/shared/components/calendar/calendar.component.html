@@ -156,14 +156,37 @@
               own component would duplicate the all-day split and the overlap
               packing, which are exactly the parts that drift when copied.
             -->
-            <app-calendar-week
-              class="block h-full"
-              [weekDays]="dayColumn()"
-              [hours]="weekHours()"
-              [eventTemplate]="eventTemplate() ?? defaultEvent"
-              (eventClick)="eventClick.emit($event)"
-              (dayCreate)="dayCreate.emit($event)"
-            />
+            <div class="relative h-full">
+              <app-calendar-week
+                class="block h-full"
+                [weekDays]="dayColumn()"
+                [hours]="weekHours()"
+                [eventTemplate]="eventTemplate() ?? defaultEvent"
+                (eventClick)="eventClick.emit($event)"
+                (dayCreate)="dayCreate.emit($event)"
+              />
+
+              <!--
+                Over the grid, not instead of it: the hours stay usable for
+                creating something, and the message answers the question an
+                empty column raises — is this day free, or did nothing load?
+                Only in the day view; an empty *week* still reads as empty
+                because six neighbouring columns give it scale.
+              -->
+              @if (periodEventCount() === 0) {
+                <div
+                  class="pointer-events-none absolute inset-0 flex items-start justify-center pt-16"
+                  data-testid="calendar-day-empty"
+                >
+                  <p
+                    class="rounded-md bg-surface-0/90 px-3 py-1.5 text-sm text-surface-500 backdrop-blur-sm dark:bg-surface-900/90 dark:text-surface-400"
+                    i18n="@@calendar.empty.day"
+                  >
+                    Nothing scheduled on this day.
+                  </p>
+                </div>
+              }
+            </div>
           }
           @case ('agenda') {
             <div class="h-full overflow-y-auto p-4">

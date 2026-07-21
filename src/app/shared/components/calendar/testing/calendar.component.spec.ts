@@ -200,6 +200,25 @@ describe('Calendar', () => {
       expect(summary(fixture)).toBe('1 event');
     });
 
+    it('says an empty day is empty rather than leaving a bare grid', () => {
+      const fixture = createCalendar();
+      fixture.componentRef.setInput('events', []);
+      toDay(fixture);
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="calendar-day-empty"]'),
+      ).not.toBeNull();
+    });
+
+    it('keeps the message out of the way once something is scheduled', () => {
+      const fixture = createCalendar();
+      toDay(fixture);
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="calendar-day-empty"]'),
+      ).toBeNull();
+    });
+
     it('steps by a day, not a month', () => {
       const fixture = createCalendar();
       toDay(fixture);

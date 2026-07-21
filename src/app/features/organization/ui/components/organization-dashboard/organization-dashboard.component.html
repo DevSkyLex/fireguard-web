@@ -89,6 +89,19 @@
             @if (hasActivityInsights()) {
               <app-overview-trend class="lg:col-span-7" />
               <app-inspection-quality-trend class="lg:col-span-5" />
+
+              <!--
+                Placed straight after the quality card because the two answer
+                one question together — how many inspections were run, and how
+                many passed. A rate without its volume is unreadable: 100% of
+                two inspections is not the same claim as 100% of two hundred.
+
+                Full width rather than re-splitting the row above: every other
+                span here is part of an existing pair, and this card was
+                complete but mounted nowhere, so the cheapest correct fix
+                touches no other card.
+              -->
+              <app-inspections-trend class="lg:col-span-12" />
               <app-non-conformities-opened-trend class="lg:col-span-6" />
               <app-non-conformities-resolved-trend class="lg:col-span-6" />
               <app-non-conformities-by-severity

@@ -1,4 +1,4 @@
-import { NgTemplateOutlet } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -124,6 +124,7 @@ const VIEW_LABELS: Readonly<Record<CalendarView, string>> = {
   selector: 'app-calendar',
   imports: [
     ButtonModule,
+    DatePipe,
     CalendarAgenda,
     CalendarMonth,
     CalendarSidebar,

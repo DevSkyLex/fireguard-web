@@ -155,13 +155,18 @@
               A day is a week of one, rendered by the same grid: giving it its
               own component would duplicate the all-day split and the overlap
               packing, which are exactly the parts that drift when copied.
+
+              It takes the *detail* template, not the compact chip. The chip
+              exists because a month cell or one of seven week columns is
+              narrow; a day column is the full width of the grid, so the
+              richer row — title plus time — fits and the chip would waste it.
             -->
             <div class="relative h-full">
               <app-calendar-week
                 class="block h-full"
                 [weekDays]="dayColumn()"
                 [hours]="weekHours()"
-                [eventTemplate]="eventTemplate() ?? defaultEvent"
+                [eventTemplate]="eventDetailTemplate() ?? eventTemplate() ?? defaultDetail"
                 (eventClick)="eventClick.emit($event)"
                 (dayCreate)="dayCreate.emit($event)"
               />
@@ -246,11 +251,28 @@
   </span>
 </ng-template>
 
+<!--
+  The meta line carries the time, which the row's position only approximates —
+  a block starting at 09:20 sits between two hour lines and is read as "around
+  nine". The type is already carried by the colour bar and named by the legend
+  under the grid, so repeating it here would spend a line on something the
+  reader can already see.
+-->
 <ng-template #defaultDetail let-event>
   <span class="flex items-center gap-2.5">
     <span class="h-8 w-1 shrink-0 rounded-full" [class]="dotClass(event.tone)"></span>
-    <span class="truncate font-medium text-surface-900 dark:text-surface-100">{{
-      event.title
-    }}</span>
+    <span class="flex min-w-0 flex-col">
+      <span class="truncate font-medium text-surface-900 dark:text-surface-100">{{
+        event.title
+      }}</span>
+      @if (!event.allDay) {
+        <span class="text-xs text-surface-500 tabular-nums dark:text-surface-400">
+          {{ event.start | date: 'HH:mm' }}
+          @if (event.end) {
+            – {{ event.end | date: 'HH:mm' }}
+          }
+        </span>
+      }
+    </span>
   </span>
 </ng-template>

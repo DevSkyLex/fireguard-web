@@ -28,16 +28,34 @@
       data-testid="rail-user-menu-trigger"
       (click)="toggleFromAvatar($event)"
     >
-      @if (userIdentityPort.avatarUrlSmall(); as avatarUrl) {
-        <p-avatar
-          [image]="avatarUrl"
-          [ariaLabel]="(userIdentityPort.displayName() ?? 'User') + ' avatar'"
-          shape="circle"
-          size="normal"
-        />
-      } @else {
-        <p-avatar [label]="userIdentityPort.initials() ?? '?'" shape="circle" size="normal" />
-      }
+      <!--
+        The presence dot is unconditional: the shell publishes this user's own
+        presence for as long as it is open (messaging publishPresence, 45s beat
+        inside the server's 90s hold), so "am I online" is answered by the rail
+        being rendered at all. It is not a lookup of someone else's state.
+
+        The `sr-only` label carries the meaning a coloured dot cannot —
+        PRODUCT.md forbids status conveyed by colour alone.
+      -->
+      <span class="relative inline-flex">
+        @if (userIdentityPort.avatarUrlSmall(); as avatarUrl) {
+          <p-avatar
+            [image]="avatarUrl"
+            [ariaLabel]="(userIdentityPort.displayName() ?? 'User') + ' avatar'"
+            shape="circle"
+            size="normal"
+          />
+        } @else {
+          <p-avatar [label]="userIdentityPort.initials() ?? '?'" shape="circle" size="normal" />
+        }
+
+        <span
+          class="absolute right-0 bottom-0 size-2.5 rounded-full bg-green-500 ring-2 ring-surface-0 dark:ring-surface-950"
+          data-testid="rail-presence-dot"
+        >
+          <span class="sr-only" i18n="@@account.userMenu.online">Online</span>
+        </span>
+      </span>
     </button>
 
     <p-popover #railPopover data-testid="rail-user-menu-panel">

@@ -325,9 +325,33 @@
           }
 
           <app-avatar-stack class="shrink-0" [people]="vm.people" [max]="3" />
+
+          <!--
+            The row itself opens the intervention; this menu carries the status
+            moves the board offers by drag, which a list has no gesture for.
+            `stopPropagation` so reaching for the menu does not also navigate.
+
+            Entries are gated by the same `resolveAllowedTransitions` +
+            capability check the board's drop rule uses — one source of truth
+            for "may this move happen", not a second copy that can drift.
+          -->
+          <p-button
+            icon="pi pi-ellipsis-h"
+            severity="secondary"
+            size="small"
+            [text]="true"
+            [rounded]="true"
+            class="shrink-0"
+            i18n-ariaLabel="@@intervention.list.rowActions"
+            ariaLabel="Intervention actions"
+            data-testid="intervention-row-actions"
+            (onClick)="onRowMenuToggle($event, vm.intervention)"
+          />
         </div>
       </ng-template>
     </app-grouped-list>
+
+    <p-menu #rowMenu [model]="rowMenuItems()" [popup]="true" appendTo="body" />
   } @else {
     <div class="flex items-center justify-end">
       <p-button

@@ -7,6 +7,7 @@ import {
   inject,
   input,
   signal,
+  viewChild,
   type InputSignalWithTransform,
   type Signal,
   type WritableSignal,
@@ -14,10 +15,12 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import type { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { Menu, MenuModule } from 'primeng/menu';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
@@ -152,6 +155,7 @@ interface InterventionListItemViewModel {
   imports: [
     AvatarStack,
     Board,
+    MenuModule,
     BoardCardDirective,
     BoardColumnHeaderDirective,
     ButtonModule,
@@ -733,6 +737,67 @@ export class InterventionsPage {
    *
    * @type {(item: InterventionListItemViewModel, fromColumnId: string, toColumnId: string) => boolean}
    */
+  /** Shared popup menu for row actions. */
+  private readonly rowMenu: Signal<Menu> = viewChild.required<Menu>('rowMenu');
+
+  /** Row the action menu was opened from. */
+  private readonly rowMenuTarget: WritableSignal<InterventionOutput | null> =
+    signal<InterventionOutput | null>(null);
+
+  /**
+   * Property rowMenuItems
+   * @readonly
+   *
+   * @description
+   * Row actions: open the record, then the status moves the board offers by
+   * drag — a list has no equivalent gesture, so those moves were unreachable
+   * outside the board.
+   *
+   * Gated by the same `resolveAllowedTransitions` + capability pair the drop
+   * rule uses, so "may this move happen" has one answer rather than two that
+   * can drift.
+   *
+   * Deliberately no Assign or Delete, which the inventory also listed: the
+   * list store has no delete (FEATURE.md places it on the workspace store,
+   * i.e. the detail page) and assignment needs the planning drawer's option
+   * stores. Offering either here would be a menu entry that cannot work.
+   *
+   * @access protected
+   * @since 5.4.0
+   *
+   * @type {Signal<MenuItem[]>}
+   */
+  protected readonly rowMenuItems: Signal<MenuItem[]> = computed((): MenuItem[] => {
+    const intervention: InterventionOutput | null = this.rowMenuTarget();
+    if (intervention === null) return [];
+
+    const transitions: MenuItem[] = resolveAllowedTransitions(intervention)
+      .filter((status: InterventionStatus): boolean =>
+        this.hasCapability(capabilityForTransition(intervention.status, status)),
+      )
+      .map((status: InterventionStatus) => ({
+        label: resolveInterventionTag('status', status).label,
+        icon: resolveInterventionTag('status', status).icon,
+        command: (): void =>
+          void this.store.transition({
+            id: intervention.id,
+            status,
+            revision: intervention.revision,
+          }),
+      }));
+
+    return [
+      {
+        label: $localize`:@@common.open:Open`,
+        icon: 'pi pi-arrow-up-right',
+        command: (): void => this.onView(intervention),
+      },
+      ...(transitions.length > 0
+        ? [{ label: $localize`:@@intervention.list.moveTo:Move to`, items: transitions }]
+        : []),
+    ];
+  });
+
   protected readonly canDropCard = (
     item: InterventionListItemViewModel,
     _fromColumnId: string,
@@ -925,6 +990,27 @@ export class InterventionsPage {
    */
   protected onView(intervention: InterventionOutput): void {
     void this.router.navigate([intervention.id], { relativeTo: this.route });
+  }
+
+  /**
+   * Method onRowMenuToggle
+   *
+   * @description
+   * Opens the row action menu for an intervention, without letting the click
+   * reach the row underneath and navigate away.
+   *
+   * @access protected
+   * @since 5.4.0
+   *
+   * @param {MouseEvent} event - Click event anchoring the popup.
+   * @param {InterventionOutput} intervention - Row the menu acts on.
+   *
+   * @returns {void}
+   */
+  protected onRowMenuToggle(event: MouseEvent, intervention: InterventionOutput): void {
+    event.stopPropagation();
+    this.rowMenuTarget.set(intervention);
+    this.rowMenu().toggle(event);
   }
 
   /**

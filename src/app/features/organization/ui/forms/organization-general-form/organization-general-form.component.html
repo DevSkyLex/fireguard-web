@@ -120,11 +120,18 @@
             class="text-sm font-medium text-surface-900 dark:text-surface-50"
             >Slug</span
           >
+          <!--
+            Deliberately no domain prefix here, and the copy no longer claims
+            URLs: the slug appears in no route in this app — every organization
+            surface is addressed by id — and its single consumer is the danger
+            zone, which asks the reader to type it to confirm a deletion.
+            Prefixing it with a domain would render a URL that does not exist.
+          -->
           <span
             i18n="@@org.general.slugDesc"
             class="text-sm text-surface-500 dark:text-surface-400"
           >
-            Used in URLs and to confirm deletion.
+            Typed to confirm destructive actions, such as deleting this organization.
           </span>
         </label>
         <div class="flex flex-col gap-1.5">

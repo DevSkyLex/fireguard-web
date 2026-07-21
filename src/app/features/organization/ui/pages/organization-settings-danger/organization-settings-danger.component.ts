@@ -7,6 +7,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { ConfirmationService } from 'primeng/api';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import { OrganizationDangerZone } from '@features/organization/ui/components';
@@ -82,6 +83,21 @@ export class OrganizationSettingsDangerPage {
    * @type {Router}
    */
   private readonly router: Router = inject<Router>(Router);
+
+  /**
+   * Property confirmationService
+   * @readonly
+   *
+   * @description
+   * Drives the app-level confirm dialog guarding suspension.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {ConfirmationService}
+   */
+  private readonly confirmationService: ConfirmationService =
+    inject<ConfirmationService>(ConfirmationService);
   //#endregion
 
   //#region Lifecycle
@@ -137,6 +153,67 @@ export class OrganizationSettingsDangerPage {
       this.activeOrganizationStore.selectedOrganization()?.id;
 
     if (organizationId) this.store.deleteOrganization({ organizationId, slugConfirmation });
+  }
+
+  /**
+   * Method onActiveChange
+   *
+   * @description
+   * Confirms, then suspends or brings back the workspace. The backend has no
+   * status field to PATCH: `isActive: false` is what it turns into `suspended`,
+   * and `true` into `active` — the same call restores an archived workspace.
+   *
+   * Suspension is confirmed because it cuts off every member at once;
+   * reactivation is not, because it only restores access.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {boolean} isActive - Requested activity state.
+   *
+   * @returns {void}
+   */
+  protected onActiveChange(isActive: boolean): void {
+    if (isActive) {
+      this.applyActive(true);
+      return;
+    }
+
+    this.confirmationService.confirm({
+      header: $localize`:@@org.danger.suspendHeader:Suspend organization`,
+      message: $localize`:@@org.danger.suspendConfirm:Every member loses access until you reactivate it. Nothing is deleted. Continue?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonProps: {
+        label: $localize`:@@org.danger.suspendButton:Suspend`,
+        severity: 'danger',
+      },
+      rejectButtonProps: {
+        label: $localize`:@@common.cancel:Cancel`,
+        severity: 'secondary',
+        outlined: true,
+      },
+      accept: (): void => this.applyActive(false),
+    });
+  }
+
+  /**
+   * Method applyActive
+   *
+   * @description
+   * Sends the activity change through the settings save path.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @param {boolean} isActive - Requested activity state.
+   *
+   * @returns {void}
+   */
+  private applyActive(isActive: boolean): void {
+    const organizationId: string | undefined =
+      this.activeOrganizationStore.selectedOrganization()?.id;
+
+    if (organizationId) this.store.save({ organizationId, input: { isActive } });
   }
   //#endregion
 }

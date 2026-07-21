@@ -2,7 +2,9 @@
   <app-organization-danger-zone
     [organization]="activeOrganizationStore.selectedOrganization()"
     [deleting]="store.isDeleting()"
+    [changingStatus]="store.isSaving()"
     (delete)="openDeleteDialog()"
+    (activeChange)="onActiveChange($event)"
   />
 
   <app-organization-delete-dialog

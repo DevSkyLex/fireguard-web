@@ -1,29 +1,128 @@
-<div
-  class="flex flex-col gap-4 rounded-lg border border-red-200 bg-red-50/60 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-red-900 dark:bg-red-950/40"
->
-  <div class="flex flex-col gap-0.5">
-    <span
-      i18n="@@org.danger.title"
-      class="text-sm font-medium text-surface-800 dark:text-surface-100"
-    >
-      Delete this organization
-    </span>
-    <span i18n="@@org.danger.desc" class="text-sm text-surface-500 dark:text-surface-400">
-      Permanently delete
-      <span class="font-medium text-surface-700 dark:text-surface-200">{{
-        organization()?.name ?? thisOrganizationLabel
-      }}</span>
-      and all of its data. This cannot be undone.
-    </span>
+<div class="flex flex-col gap-4">
+  <!--
+    Suspension used to be an unlabelled toggle in the General form, saved with
+    the name and the description. Cutting off every member of a workspace is not
+    a settings field, and `isActive: false` is exactly what the backend turns
+    into the `suspended` status — so it belongs here, on its own, behind its own
+    confirmation.
+  -->
+  <div
+    class="flex flex-col gap-4 rounded-lg border border-amber-200 bg-amber-50/60 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-amber-900 dark:bg-amber-950/40"
+    data-testid="organization-suspend-card"
+  >
+    <div class="flex flex-col gap-0.5">
+      @if (isArchived()) {
+        <span
+          i18n="@@org.danger.restoreTitle"
+          class="text-sm font-medium text-surface-800 dark:text-surface-100"
+        >
+          Restore this organization
+        </span>
+        <span
+          i18n="@@org.danger.restoreDesc"
+          class="text-sm text-surface-500 dark:text-surface-400"
+        >
+          It is archived: hidden from listings and read-only. Restoring brings it back to active
+          with all of its data.
+        </span>
+      } @else if (isSuspended()) {
+        <span
+          i18n="@@org.danger.reactivateTitle"
+          class="text-sm font-medium text-surface-800 dark:text-surface-100"
+        >
+          Reactivate this organization
+        </span>
+        <span
+          i18n="@@org.danger.reactivateDesc"
+          class="text-sm text-surface-500 dark:text-surface-400"
+        >
+          It is suspended: members can sign in but cannot work in it. Reactivating restores access
+          immediately.
+        </span>
+      } @else {
+        <span
+          i18n="@@org.danger.suspendTitle"
+          class="text-sm font-medium text-surface-800 dark:text-surface-100"
+        >
+          Suspend this organization
+        </span>
+        <span
+          i18n="@@org.danger.suspendDesc"
+          class="text-sm text-surface-500 dark:text-surface-400"
+        >
+          Cuts off every member of
+          <span class="font-medium text-surface-700 dark:text-surface-200">{{
+            organization()?.name ?? thisOrganizationLabel
+          }}</span>
+          until it is reactivated. Nothing is deleted, and you can undo it here.
+        </span>
+      }
+    </div>
+
+    @if (isArchived() || isSuspended()) {
+      <p-button
+        i18n-label="@@org.danger.reactivateButton"
+        label="Reactivate"
+        icon="pi pi-play"
+        severity="secondary"
+        styleClass="shrink-0 whitespace-nowrap"
+        data-testid="organization-reactivate-button"
+        [disabled]="!organization()"
+        [loading]="changingStatus()"
+        (onClick)="activeChange.emit(true)"
+      />
+    } @else {
+      <p-button
+        i18n-label="@@org.danger.suspendButton"
+        label="Suspend"
+        icon="pi pi-pause"
+        severity="warn"
+        [outlined]="true"
+        styleClass="shrink-0 whitespace-nowrap"
+        data-testid="organization-suspend-button"
+        [disabled]="!organization()"
+        [loading]="changingStatus()"
+        (onClick)="activeChange.emit(false)"
+      />
+    }
   </div>
 
-  <p-button
-    i18n-label="@@org.danger.deleteButton"
-    label="Delete organization"
-    icon="pi pi-trash"
-    severity="danger"
-    styleClass="shrink-0 whitespace-nowrap"
-    [disabled]="!organization() || deleting()"
-    (onClick)="delete.emit()"
-  />
+  <!--
+    The copy used to promise a permanent deletion. It is not one: the endpoint
+    archives — facilities, equipment, inspections and interventions are
+    preserved rather than orphaned, and the workspace can be brought back from
+    the card above. Saying "cannot be undone" of a reversible action is the kind
+    of warning that stops people doing something safe.
+  -->
+  <div
+    class="flex flex-col gap-4 rounded-lg border border-red-200 bg-red-50/60 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-red-900 dark:bg-red-950/40"
+    data-testid="organization-delete-card"
+  >
+    <div class="flex flex-col gap-0.5">
+      <span
+        i18n="@@org.danger.title"
+        class="text-sm font-medium text-surface-800 dark:text-surface-100"
+      >
+        Archive this organization
+      </span>
+      <span i18n="@@org.danger.desc" class="text-sm text-surface-500 dark:text-surface-400">
+        Removes
+        <span class="font-medium text-surface-700 dark:text-surface-200">{{
+          organization()?.name ?? thisOrganizationLabel
+        }}</span>
+        from every listing and makes it read-only. Its data is kept, and an administrator can
+        restore it.
+      </span>
+    </div>
+
+    <p-button
+      i18n-label="@@org.danger.deleteButton"
+      label="Archive organization"
+      icon="pi pi-box"
+      severity="danger"
+      styleClass="shrink-0 whitespace-nowrap"
+      [disabled]="!organization() || deleting()"
+      (onClick)="delete.emit()"
+    />
+  </div>
 </div>

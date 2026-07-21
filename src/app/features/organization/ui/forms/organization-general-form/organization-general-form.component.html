@@ -178,25 +178,12 @@
         ></textarea>
       </div>
 
-      <!-- Active status -->
-      <div class="flex items-center justify-between gap-6 py-6 sm:grid sm:grid-cols-2">
-        <label for="organization-active" class="flex flex-col gap-0.5">
-          <span
-            i18n="@@org.general.active"
-            class="text-sm font-medium text-surface-900 dark:text-surface-50"
-            >Active</span
-          >
-          <span
-            i18n="@@org.general.activeDesc"
-            class="text-sm text-surface-500 dark:text-surface-400"
-          >
-            Inactive organizations are hidden and read-only.
-          </span>
-        </label>
-        <div class="sm:justify-self-start">
-          <p-toggleswitch inputId="organization-active" formControlName="isActive" />
-        </div>
-      </div>
+      <!--
+        The "Active" toggle used to sit here. It suspended the whole workspace —
+        every member cut off — saved silently with the name and the description,
+        with no confirmation and a label that never said so. It now lives in the
+        Danger zone, where an action of that size belongs.
+      -->
     </div>
   </section>
 

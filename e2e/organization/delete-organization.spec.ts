@@ -43,10 +43,7 @@ test.describe('Delete organization', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     const { slug, requests } = await openDangerZone(page);
 
-    await page
-      .getByRole('button', { name: /delete/i })
-      .first()
-      .click();
+    await page.getByRole('button', { name: /archive organization/i }).click();
 
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
@@ -65,10 +62,7 @@ test.describe('Delete organization', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     const { slug } = await openDangerZone(page);
 
-    await page
-      .getByRole('button', { name: /delete/i })
-      .first()
-      .click();
+    await page.getByRole('button', { name: /archive organization/i }).click();
 
     const dialog = page.getByRole('dialog');
     const confirm = dialog.getByRole('button', { name: /delete/i });

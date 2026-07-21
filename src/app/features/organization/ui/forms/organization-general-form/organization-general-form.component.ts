@@ -16,7 +16,6 @@ import { FileUploadModule, type FileUpload } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { TextareaModule } from 'primeng/textarea';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import type { OrganizationOutput, UpdateOrganizationInput } from '@features/organization/models';
 import type { LogoUploadEvent } from './models';
 
@@ -47,7 +46,6 @@ import type { LogoUploadEvent } from './models';
     MessageModule,
     ReactiveFormsModule,
     TextareaModule,
-    ToggleSwitchModule,
   ],
   templateUrl: './organization-general-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -84,7 +82,6 @@ export class OrganizationGeneralForm {
       Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     ]),
     description: this.formBuilder.control('', [Validators.maxLength(2000)]),
-    isActive: this.formBuilder.control(true),
   });
 
   /** Maximum logo size accepted by the upload field, in bytes. */
@@ -111,7 +108,6 @@ export class OrganizationGeneralForm {
           name: organization?.name ?? '',
           slug: organization?.slug ?? '',
           description: organization?.description ?? '',
-          isActive: organization?.isActive ?? true,
         },
         { emitEvent: false },
       );
@@ -145,7 +141,6 @@ export class OrganizationGeneralForm {
       name: organization?.name ?? '',
       slug: organization?.slug ?? '',
       description: organization?.description ?? '',
-      isActive: organization?.isActive ?? true,
     });
   }
 
@@ -161,7 +156,6 @@ export class OrganizationGeneralForm {
       name: values.name,
       slug: values.slug,
       description: values.description,
-      isActive: values.isActive,
     });
   }
 

@@ -22,6 +22,7 @@ export {
 export {
   buildAgendaDays,
   buildMonthDays,
+  buildDayColumn,
   buildWeekDays,
   filterEventsByCategories,
 } from './calendar-grid.utils';

@@ -8,4 +8,4 @@
  *
  * @since 1.0.0
  */
-export type CalendarView = 'month' | 'week' | 'agenda';
+export type CalendarView = 'month' | 'week' | 'day' | 'agenda';

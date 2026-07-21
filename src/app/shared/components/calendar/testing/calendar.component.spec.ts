@@ -169,6 +169,51 @@ describe('Calendar', () => {
    * The mini-calendar previously built its grid with an empty event array, so
    * it could never mark anything — the data simply never reached it.
    */
+  /**
+   * A day is a week of one — rendered by the same grid, but bounded and
+   * navigated by day. Each of those three had its own place to go wrong.
+   */
+  describe('day view', () => {
+    const toDay = (fixture: ComponentFixture<Calendar>): CalendarHarness => {
+      const harness = fixture.componentInstance as unknown as CalendarHarness;
+      harness.setView('day');
+      fixture.componentRef.setInput('focusedDate', new Date(2026, 5, 15));
+      fixture.detectChanges();
+      return harness;
+    };
+
+    it('names the day rather than the month around it', () => {
+      const fixture = createCalendar();
+      toDay(fixture);
+
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('June 15, 2026');
+    });
+
+    it('counts only that day, not its month', () => {
+      const fixture = createCalendar();
+      fixture.componentRef.setInput('events', [
+        EVENT,
+        { ...EVENT, id: 'b', start: new Date(2026, 5, 20, 9, 0) },
+      ]);
+      toDay(fixture);
+
+      expect(summary(fixture)).toBe('1 event');
+    });
+
+    it('steps by a day, not a month', () => {
+      const fixture = createCalendar();
+      toDay(fixture);
+
+      const next = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+        'button[aria-label="Next period"]',
+      );
+      next?.click();
+      fixture.detectChanges();
+
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('June 16, 2026');
+    });
+  });
+
   describe('mini-calendar day marks', () => {
     it('marks the day holding an event', () => {
       expect(dots(createCalendar())).toBe(1);

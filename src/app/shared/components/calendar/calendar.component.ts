@@ -49,10 +49,12 @@ import {
   addMonths,
   addWeeks,
   buildAgendaDays,
+  buildDayColumn,
   buildMonthDays,
   buildWeekDays,
   filterEventsByCategories,
   hoursRange,
+  isSameDay,
   isSameMonth,
   startOfDay,
   startOfWeek,
@@ -89,6 +91,7 @@ interface ViewOption {
 const VIEW_LABELS: Readonly<Record<CalendarView, string>> = {
   month: 'Month',
   week: 'Week',
+  day: 'Day',
   agenda: 'Agenda',
 };
 
@@ -645,6 +648,32 @@ export class Calendar {
    *
    * @type {Signal<readonly CalendarWeekDay[]>}
    */
+  /**
+   * Property dayColumn
+   * @readonly
+   *
+   * @description
+   * The focused day as a one-column time grid, rendered by the same component
+   * as the week: a day view is a week of one, and giving it its own component
+   * would duplicate the all-day split and the overlap packing.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @type {Signal<readonly CalendarWeekDay[]>}
+   */
+  protected readonly dayColumn: Signal<readonly CalendarWeekDay[]> = computed<
+    readonly CalendarWeekDay[]
+  >(() => [
+    buildDayColumn(
+      this.activeDate(),
+      this.visibleEvents(),
+      this.today,
+      this.dayStartHour(),
+      this.dayEndHour(),
+    ),
+  ]);
+
   protected readonly weekDays: Signal<readonly CalendarWeekDay[]> = computed<
     readonly CalendarWeekDay[]
   >(() =>
@@ -721,6 +750,18 @@ export class Calendar {
    */
   protected readonly periodLabel: Signal<string> = computed<string>(() => {
     const date: Date = this.activeDate();
+
+    // The day view names the day itself; a bare month would leave the reader
+    // unable to tell which of its thirty columns they are looking at.
+    if (this.activeView() === 'day') {
+      return new Intl.DateTimeFormat(this.locale, {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(date);
+    }
+
     if (this.activeView() === 'week') {
       const start: Date = startOfWeek(date, this.weekStartsOn());
       const end: Date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
@@ -751,6 +792,12 @@ export class Calendar {
   protected readonly periodEventCount: Signal<number> = computed((): number => {
     const date: Date = this.activeDate();
     const events: readonly CalendarEvent[] = this.visibleEvents();
+
+    // The day view counts its own day, not the month around it — the summary
+    // has to describe the grid beside it, and that grid is one column wide.
+    if (this.activeView() === 'day') {
+      return events.filter((event: CalendarEvent): boolean => isSameDay(event.start, date)).length;
+    }
 
     if (this.activeView() !== 'week') {
       return events.filter((event: CalendarEvent): boolean => isSameMonth(event.start, date))
@@ -813,11 +860,38 @@ export class Calendar {
    * @returns {void}
    */
   protected previous(): void {
-    this.focusDate(
-      this.activeView() === 'week'
-        ? addWeeks(this.activeDate(), -1)
-        : addMonths(this.activeDate(), -1),
-    );
+    this.focusDate(this.step(-1));
+  }
+
+  /**
+   * Method step
+   *
+   * @description
+   * Moves the focused date by one period **of the active view** — a day in the
+   * day view, a week in the week view, a month otherwise.
+   *
+   * Shared by `previous` and `next` so the two cannot disagree about what a
+   * period is; they were two separate ternaries before the day view made a
+   * third case.
+   *
+   * @access private
+   * @since 1.3.0
+   *
+   * @param {number} direction - `-1` to go back, `1` to go forward.
+   *
+   * @returns {Date} The newly focused date.
+   */
+  private step(direction: number): Date {
+    const date: Date = this.activeDate();
+
+    switch (this.activeView()) {
+      case 'day':
+        return addDays(date, direction);
+      case 'week':
+        return addWeeks(date, direction);
+      default:
+        return addMonths(date, direction);
+    }
   }
 
   /**
@@ -832,11 +906,7 @@ export class Calendar {
    * @returns {void}
    */
   protected next(): void {
-    this.focusDate(
-      this.activeView() === 'week'
-        ? addWeeks(this.activeDate(), 1)
-        : addMonths(this.activeDate(), 1),
-    );
+    this.focusDate(this.step(1));
   }
 
   /**

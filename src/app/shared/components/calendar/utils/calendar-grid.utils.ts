@@ -266,21 +266,45 @@ export function buildWeekDays(
 
   const days: CalendarWeekDay[] = [];
   for (let index = 0; index < 7; index++) {
-    const date: Date = addDays(weekStart, index);
-    const dayEvents: readonly CalendarEvent[] = events.filter((event: CalendarEvent): boolean =>
-      isSameDay(event.start, date),
-    );
-    days.push({
-      date,
-      isToday: isSameDay(date, today),
-      allDayEvents: dayEvents.filter((event: CalendarEvent): boolean => event.allDay === true),
-      timedEvents: packDay(
-        dayEvents.filter((event: CalendarEvent): boolean => event.allDay !== true),
-        dayStartHour,
-        dayEndHour,
-      ),
-    });
+    days.push(buildDayColumn(addDays(weekStart, index), events, today, dayStartHour, dayEndHour));
   }
 
   return days;
+}
+
+/**
+ * Builds one day's time column.
+ *
+ * Extracted from {@link buildWeekDays} so the week grid and the day view share
+ * one definition of "what a day contains" — the all-day split and the overlap
+ * packing are the parts that would drift first if copied.
+ *
+ * @param date - The day to build.
+ * @param events - Events to place; those on other days are ignored.
+ * @param today - Reference for the `isToday` flag.
+ * @param dayStartHour - First hour rendered by the grid.
+ * @param dayEndHour - Last hour rendered by the grid.
+ * @returns The populated day column.
+ */
+export function buildDayColumn(
+  date: Date,
+  events: readonly CalendarEvent[],
+  today: Date,
+  dayStartHour: number,
+  dayEndHour: number,
+): CalendarWeekDay {
+  const dayEvents: readonly CalendarEvent[] = events.filter((event: CalendarEvent): boolean =>
+    isSameDay(event.start, date),
+  );
+
+  return {
+    date,
+    isToday: isSameDay(date, today),
+    allDayEvents: dayEvents.filter((event: CalendarEvent): boolean => event.allDay === true),
+    timedEvents: packDay(
+      dayEvents.filter((event: CalendarEvent): boolean => event.allDay !== true),
+      dayStartHour,
+      dayEndHour,
+    ),
+  };
 }

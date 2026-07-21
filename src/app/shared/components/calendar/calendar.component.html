@@ -150,6 +150,21 @@
               (dayCreate)="dayCreate.emit($event)"
             />
           }
+          @case ('day') {
+            <!--
+              A day is a week of one, rendered by the same grid: giving it its
+              own component would duplicate the all-day split and the overlap
+              packing, which are exactly the parts that drift when copied.
+            -->
+            <app-calendar-week
+              class="block h-full"
+              [weekDays]="dayColumn()"
+              [hours]="weekHours()"
+              [eventTemplate]="eventTemplate() ?? defaultEvent"
+              (eventClick)="eventClick.emit($event)"
+              (dayCreate)="dayCreate.emit($event)"
+            />
+          }
           @case ('agenda') {
             <div class="h-full overflow-y-auto p-4">
               @if (agendaDays().length > 0) {

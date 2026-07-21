@@ -442,8 +442,7 @@ export const FacilityStore = signalStore(
        * branches can expand concurrently. Entities are **upserted** to preserve
        * the rest of the tree, and the parent id is tracked in `loadedParentIds`
        * to avoid duplicate fetches on re-expansion. Exposed as
-       * {@link loadChildFacilities} and used internally by the guarded
-       * {@link ensureChildFacilitiesLoaded}.
+       * {@link loadChildFacilities}.
        *
        * @since 3.0.0
        *
@@ -696,43 +695,6 @@ export const FacilityStore = signalStore(
           }
 
           loadFacilityDescendantsFn(params);
-        },
-
-        /**
-         * Method ensureChildFacilitiesLoaded
-         * @method ensureChildFacilitiesLoaded
-         *
-         * @description
-         * Guarded loader for the direct children of a facility. Delegates to
-         * {@link loadChildFacilities} only when the children of the given parent
-         * have not already been fetched and are not currently being fetched.
-         * Used by the facility detail hierarchy chart to lazily expand a branch
-         * without issuing duplicate requests. Browser-only: child facilities are
-         * secondary UI data and must not be fetched during SSR.
-         *
-         * @since 3.1.0
-         *
-         * @param {{ organizationId: string; parentFacilityId: string }} params - Organization and parent facility identifiers.
-         *
-         * @returns {void}
-         */
-        ensureChildFacilitiesLoaded(params: {
-          organizationId: string;
-          parentFacilityId: string;
-        }): void {
-          if (!isPlatformBrowser(platformId)) {
-            return;
-          }
-
-          const { parentFacilityId } = params;
-          if (
-            store.loadedParentIds().includes(parentFacilityId) ||
-            store.loadingParentIds().includes(parentFacilityId)
-          ) {
-            return;
-          }
-
-          loadChildFacilitiesFn(params);
         },
 
         // ── Facility CRUD ──────────────────────────────────────────────────────

@@ -1777,10 +1777,6 @@
         <source>No equipment assigned to this facility.</source>
         <target>Aucun équipement affecté à cet établissement.</target>
       </trans-unit>
-      <trans-unit id="facility.hierarchy.empty" datatype="html">
-        <source> No hierarchy to display. </source>
-        <target>Aucune hiérarchie à afficher.</target>
-      </trans-unit>
       <trans-unit id="facility.info.title" datatype="html">
         <source>Site information</source>
         <target>Informations du site</target>

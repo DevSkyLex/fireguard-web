@@ -101,7 +101,6 @@ describe('FacilityDetailPage', () => {
     loadingParentIds: signal<readonly string[]>([]),
     deleteCallState: signal<{ status: string }>({ status: 'idle' }),
     ensureParentOptionsLoaded: vi.fn(),
-    ensureChildFacilitiesLoaded: vi.fn(),
     ensureFacilityDescendantsLoaded: vi.fn(),
     move: vi.fn(),
     remove: vi.fn(),
@@ -146,7 +145,6 @@ describe('FacilityDetailPage', () => {
     mockFacilityStore.loadedParentIds.set([]);
     mockFacilityStore.loadingParentIds.set([]);
     mockFacilityStore.ensureParentOptionsLoaded.mockReset();
-    mockFacilityStore.ensureChildFacilitiesLoaded.mockReset();
     mockFacilityStore.ensureFacilityDescendantsLoaded.mockReset();
     mockFacilityStore.move.mockReset();
     mockFacilityStore.remove.mockReset();
@@ -244,7 +242,6 @@ describe('FacilityDetailPage', () => {
     const fixture = TestBed.createComponent(FacilityDetailPage);
     fixture.detectChanges();
 
-    expect(mockFacilityStore.ensureChildFacilitiesLoaded).not.toHaveBeenCalled();
     expect(mockFacilityStore.ensureFacilityDescendantsLoaded).not.toHaveBeenCalled();
   });
 

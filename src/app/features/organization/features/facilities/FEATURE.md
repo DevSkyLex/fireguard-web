@@ -81,29 +81,39 @@ Invariants a reviewer must preserve:
 
 This does not reinstate the inline expansion that was removed from the list: the
 reason it went (a chevron that paginated) does not apply to a single nested
-response. The detail page's `p-organization-chart` remains the drill-down for one
-facility's descendants; this is the estate-wide compliance read.
+response. This is the estate-wide compliance read; one facility's own descendants
+are shown on its detail page (below).
 
 ## Facility Hierarchy (Detail Overview)
 
-The facility detail page's **Overview** tab renders the descendant hierarchy
-with a PrimeNG `p-organization-chart` (`FacilityHierarchyChart`). Loading is
-based on the backend descendants endpoint:
+The two hierarchy surfaces are deliberately split by scope, and neither is a
+tree diagram:
+
+- **estate-wide** browsing is the list page's `?view=tree` tree table, which is
+  where an arbitrarily deep hierarchy is read,
+- **one facility's own context** is the Overview tab's `FacilityInstallationsPanel`,
+  a divider list in the aside showing the root, its direct children and their
+  children, each row navigating to that facility.
+
+The panel is capped at those levels on purpose. Deeper drill-down is the tree
+table's job, and PRODUCT.md's "hierarchy through rhythm, not boxes" rules out
+duplicating it as a box-and-connector chart in the main column — which is also
+unusable at the phone widths field agents work on.
+
+Loading is based on the backend descendants endpoint:
 
 - all descendants are auto-loaded once the facility resolves (only when
   `facility.hasChildren` is `true`), via an `effect` calling
   `FacilityStore.ensureFacilityDescendantsLoaded`,
 - `FacilityService.listDescendants` calls
   `GET /organizations/{orgId}/facilities/{facilityId}/descendants`, then the
-  store groups the flat Hydra `member` collection by `parentFacilityId` for
-  `FacilityHierarchyChart`,
-- `FacilityStore.loadChildFacilities` remains available for direct-child
-  loading flows, but the detail overview uses `/descendants`,
-- all secondary fetches are **browser-only** (no `TransferState`), and node
+  store groups the flat Hydra `member` collection by `parentFacilityId`,
+- because the whole subtree arrives in that one call, the detail page has no
+  per-branch lazy expansion to guard. `FacilityStore.loadChildFacilities`
+  remains available for direct-child loading flows, but nothing on this page
+  uses it,
+- all secondary fetches are **browser-only** (no `TransferState`), and row
   selection navigates to the chosen facility's detail page.
-
-The list page stays **roots-only**; hierarchy navigation lives here in the
-detail Overview.
 
 ## State and Data Access
 

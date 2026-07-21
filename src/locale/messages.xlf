@@ -4804,13 +4804,6 @@
           <context context-type="linenumber">31,34</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="facility.hierarchy.empty" datatype="html">
-        <source> No hierarchy to display. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-hierarchy-chart/facility-hierarchy-chart.component.html</context>
-          <context context-type="linenumber">73,77</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="facility.info.title" datatype="html">
         <source> Site information </source>
         <context-group purpose="location">

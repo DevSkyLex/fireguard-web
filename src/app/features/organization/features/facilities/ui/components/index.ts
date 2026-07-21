@@ -1,13 +1,6 @@
 export { FacilityDetailHeader } from './facility-detail-header';
 export { FacilityEquipmentOverview } from './facility-equipment-overview';
 export { FacilityEquipmentTab } from './facility-equipment-tab';
-export {
-  FacilityHierarchyChart,
-  toFacilityTreeNode,
-  toFacilityTreeNodes,
-  type FacilityHierarchyContext,
-  type FacilityHierarchyNodeData,
-} from './facility-hierarchy-chart';
 export { FacilityInformationPanel } from './facility-information-panel';
 export {
   FacilityInspectionsOverview,

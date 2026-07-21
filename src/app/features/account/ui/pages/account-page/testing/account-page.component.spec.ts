@@ -96,6 +96,9 @@ describe('AccountPage', () => {
     expect(navItems.map((item) => item.id)).toEqual([
       'profile',
       'settings',
+      // Access sits before Sessions & security: it answers "what am I allowed
+      // to do", which is read far more often than "which devices am I on".
+      'access',
       'security',
       'notifications',
     ]);

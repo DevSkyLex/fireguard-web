@@ -1,0 +1,71 @@
+<div class="flex flex-col gap-4">
+  <div>
+    <h3
+      class="text-[11px] font-semibold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+      i18n="@@account.access.roles"
+    >
+      Roles
+    </h3>
+
+    <!--
+      Roles read as identity, permissions as machinery: the first are pills in
+      the brand tint, the second monospace chips. The mockup draws exactly that
+      split, and it is the reason a user can scan "what am I" without wading
+      through forty permission strings.
+    -->
+    @if (userStore.roles().length > 0) {
+      <ul class="mt-2 flex flex-wrap gap-2">
+        @for (role of userStore.roles(); track role) {
+          <li
+            class="inline-flex h-6.5 items-center gap-1.5 rounded-full bg-primary-50 px-2.5 text-xs font-semibold text-primary-700 dark:bg-primary-400/15 dark:text-primary-300"
+            data-testid="account-role"
+          >
+            <i class="pi pi-shield text-[11px]" aria-hidden="true"></i>
+            {{ role }}
+          </li>
+        }
+      </ul>
+    } @else {
+      <p
+        class="mt-2 text-sm text-surface-500 dark:text-surface-400"
+        i18n="@@account.access.noRoles"
+      >
+        No platform-wide role is granted on this account.
+      </p>
+    }
+  </div>
+
+  <div>
+    <h3
+      class="text-[11px] font-semibold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+      i18n="@@account.access.permissions"
+    >
+      Permissions
+    </h3>
+
+    @if (userStore.permissions().length > 0) {
+      <ul class="mt-2 flex flex-wrap gap-1.5">
+        @for (permission of userStore.permissions(); track permission) {
+          <li
+            class="inline-flex h-6 items-center rounded-md border border-surface-200 bg-surface-50 px-2 font-mono text-[11px] text-surface-700 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
+            data-testid="account-permission"
+          >
+            {{ permission }}
+          </li>
+        }
+      </ul>
+    } @else {
+      <!--
+        Distinct from the roles empty state: a user can hold a role that grants
+        nothing platform-wide, and saying "no permissions" under a listed role
+        would look like a bug rather than a fact.
+      -->
+      <p
+        class="mt-2 text-sm text-surface-500 dark:text-surface-400"
+        i18n="@@account.access.noPermissions"
+      >
+        This account carries no platform-wide permission.
+      </p>
+    }
+  </div>
+</div>

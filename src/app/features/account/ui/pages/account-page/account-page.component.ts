@@ -12,6 +12,7 @@ import { map } from 'rxjs';
 import { resolveAccountStatusTag, type AccountStatusTagDescriptor } from '@features/account/models';
 import { NotificationStore, UserStore } from '@features/account/state';
 import { Tag } from '@shared/components';
+import { AccountAccessPanel } from '../../components/account-access-panel/account-access-panel.component';
 import { AccountMfaPanel } from '../../components/account-mfa-panel/account-mfa-panel.component';
 import { AccountNotificationsPanel } from '../../components/account-notifications-panel/account-notifications-panel.component';
 import { AccountProfilePanel } from '../../components/account-profile-panel/account-profile-panel.component';
@@ -46,6 +47,7 @@ import { type AccountNavItem, type AccountTab } from './models';
     MenuModule,
     Tag,
     TagModule,
+    AccountAccessPanel,
     AccountProfilePanel,
     AccountSettingsPanel,
     AccountMfaPanel,
@@ -184,6 +186,12 @@ export class AccountPage {
       label: $localize`:@@account.nav.settingsLabel:Settings`,
       icon: 'pi pi-cog',
       description: $localize`:@@account.nav.settingsDesc:Language and display preferences.`,
+    },
+    {
+      id: 'access',
+      label: $localize`:@@account.nav.accessLabel:Access`,
+      icon: 'pi pi-shield',
+      description: $localize`:@@account.nav.accessDesc:Platform-wide roles and permissions on your account.`,
     },
     {
       id: 'security',

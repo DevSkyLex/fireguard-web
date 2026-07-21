@@ -216,15 +216,46 @@
               does: the surface still looks editable, so without it the only
               way to find out is to try and have the action fail.
 
-              The kit also asks for a summary of what was materialised. No
-              field carries it — InterventionOutput has neither a publication
-              timestamp nor a record of what was written — so that half needs
-              an API change and is left out rather than invented.
+              The materialisation summary is not invented: these three counts
+              are the records carrying this intervention's id — what the
+              publication wrote — and the API has always sent them. A
+              publication timestamp genuinely does not exist on
+              InterventionOutput, so the banner does not claim one.
             -->
-            <span i18n="@@intervention.review.publishedBanner"
-              >Published — every approved change was applied to the records atomically. This
-              intervention is now read-only.</span
-            >
+            <span class="flex flex-col gap-1">
+              <span i18n="@@intervention.review.publishedBanner"
+                >Published — every approved change was applied to the records atomically. This
+                intervention is now read-only.</span
+              >
+
+              @if (
+                intervention.facilitiesCount +
+                  intervention.equipmentCount +
+                  intervention.inspectionsCount >
+                0
+              ) {
+                <span
+                  class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs"
+                  data-testid="intervention-published-summary"
+                >
+                  @if (intervention.facilitiesCount > 0) {
+                    <span class="tabular-nums" i18n="@@intervention.published.sites"
+                      >{{ intervention.facilitiesCount }} sites</span
+                    >
+                  }
+                  @if (intervention.equipmentCount > 0) {
+                    <span class="tabular-nums" i18n="@@intervention.published.equipment"
+                      >{{ intervention.equipmentCount }} equipment</span
+                    >
+                  }
+                  @if (intervention.inspectionsCount > 0) {
+                    <span class="tabular-nums" i18n="@@intervention.published.inspections"
+                      >{{ intervention.inspectionsCount }} inspections</span
+                    >
+                  }
+                </span>
+              }
+            </span>
           </div>
         } @else if (intervention.status === 'abandoned') {
           <!--

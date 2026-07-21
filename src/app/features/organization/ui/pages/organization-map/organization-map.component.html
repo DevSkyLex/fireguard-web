@@ -79,11 +79,21 @@
                   data-testid="map-panel-item"
                   (click)="selectedFacilityId.set(facility.id)"
                 >
-                  <span class="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
-                    {{ facility.name }}
+                  <span class="flex w-full items-center gap-2">
+                    <span
+                      class="min-w-0 flex-1 truncate text-sm font-medium text-surface-900 dark:text-surface-100"
+                    >
+                      {{ facility.name }}
+                    </span>
+                    <!--
+                      An archived site still has a pin and still answers to a
+                      click. Without this the panel gave no hint that it is
+                      retired, and the pin colour says nothing either.
+                    -->
+                    <app-tag [descriptor]="statusDescriptor(facility.status)" variant="inline" />
                   </span>
                   <span class="truncate text-xs text-surface-500 dark:text-surface-400">
-                    {{ facility.type }}
+                    {{ typeLabel(facility.type) }}
                   </span>
                 </button>
 
@@ -92,6 +102,47 @@
                   selects, so sites can be compared without leaving the map.
                 -->
                 @if (facility.id === selectedFacilityId()) {
+                  <!--
+                    What the mockup expands under a selected site. The address
+                    is the one thing a map cannot show — a pin says where, not
+                    what to type into a satnav — and the equipment count is what
+                    makes a site worth driving to.
+
+                    The compliance rate and a structured city are the other two
+                    figures the mockup carries; `FacilityOutput` has neither, so
+                    they are absent rather than approximated.
+                  -->
+                  <div class="mt-2 ml-1 flex flex-col gap-2" data-testid="map-panel-detail">
+                    @if (facility.address) {
+                      <p
+                        class="flex items-start gap-1.5 text-xs text-surface-600 dark:text-surface-400"
+                        data-testid="map-panel-address"
+                      >
+                        <i class="pi pi-map-marker mt-0.5 text-[10px]" aria-hidden="true"></i>
+                        <span class="min-w-0">{{ facility.address }}</span>
+                      </p>
+                    }
+
+                    @if (facility.equipmentCount !== undefined) {
+                      <div
+                        class="rounded-md bg-surface-100 px-2.5 py-1.5 dark:bg-surface-800"
+                        data-testid="map-panel-equipment"
+                      >
+                        <div
+                          class="text-base font-semibold text-surface-950 tabular-nums dark:text-surface-50"
+                        >
+                          {{ facility.equipmentCount }}
+                        </div>
+                        <div
+                          class="text-[11px] text-surface-500 dark:text-surface-400"
+                          i18n="@@map.panel.equipment"
+                        >
+                          Equipment
+                        </div>
+                      </div>
+                    }
+                  </div>
+
                   <p-button
                     label="Open site"
                     i18n-label="@@map.panel.open"

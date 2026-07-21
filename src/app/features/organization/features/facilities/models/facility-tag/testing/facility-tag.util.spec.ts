@@ -27,4 +27,16 @@ describe('resolveFacilityTag', () => {
       'archived',
     ]);
   });
+
+  // The docblock promises graceful degradation for unknown values, and the
+  // signature used to break that promise: an absent value reached `.replace`
+  // and threw, taking the whole template down with it. A payload that omits
+  // the field is precisely what a fallback is for.
+  it.each([[null], [undefined], ['']])(
+    'returns a neutral descriptor rather than throwing for %p',
+    (value: string | null | undefined) => {
+      expect(() => resolveFacilityTag('status', value)).not.toThrow();
+      expect(resolveFacilityTag('status', value).label).toBe('—');
+    },
+  );
 });

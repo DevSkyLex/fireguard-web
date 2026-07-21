@@ -64,7 +64,18 @@ const REGISTRY: Record<FacilityTagKind, Record<string, FacilityTagDescriptor>> =
  * @param value - Raw enum value.
  * @returns The matching descriptor, or a humanised fallback.
  */
-export function resolveFacilityTag(kind: FacilityTagKind, value: string): FacilityTagDescriptor {
+export function resolveFacilityTag(
+  kind: FacilityTagKind,
+  value: string | null | undefined,
+): FacilityTagDescriptor {
+  // The docblock above promises graceful degradation, and the signature used to
+  // break it: an absent value went straight into `.replace` and threw, taking
+  // the whole template with it. A payload that omits the field is exactly the
+  // case a fallback exists for.
+  if (value === null || value === undefined || value === '') {
+    return { label: '—', severity: 'secondary', icon: 'pi pi-circle' };
+  }
+
   return (
     REGISTRY[kind][value] ?? {
       label: value.replace(/_/g, ' '),

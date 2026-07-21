@@ -14,6 +14,7 @@ const facility = (id: string, name: string, type: string, placed = true): Facili
     id,
     name,
     type,
+    status: 'active',
     latitude: placed ? 48.85 : null,
     longitude: placed ? 2.35 : null,
   }) as unknown as FacilityOutput;

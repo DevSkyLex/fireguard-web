@@ -15,8 +15,12 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { FacilityService } from '@features/organization/features/facilities';
 import type { FacilityOutput } from '@features/organization/features/facilities';
+import {
+  resolveFacilityTag,
+  type FacilityTagDescriptor,
+} from '@features/organization/features/facilities/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
-import { EmptyState, MapCanvas, type MapMarker } from '@shared/components';
+import { EmptyState, MapCanvas, Tag, type MapMarker } from '@shared/components';
 
 /**
  * Component OrganizationMapPage
@@ -37,7 +41,7 @@ import { EmptyState, MapCanvas, type MapMarker } from '@shared/components';
  */
 @Component({
   selector: 'app-organization-map',
-  imports: [MapCanvas, EmptyState, ButtonModule, FormsModule, InputTextModule],
+  imports: [MapCanvas, EmptyState, ButtonModule, FormsModule, InputTextModule, Tag],
   host: { class: 'flex min-h-0 flex-1' },
   templateUrl: './organization-map.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -256,4 +260,40 @@ export class OrganizationMapPage {
     this.selectedFacilityId.set(marker.id);
   }
   //#endregion
+
+  /**
+   * Method statusDescriptor
+   *
+   * @description
+   * Presentation of a site's lifecycle status, read through the facility tag
+   * registry so the panel, the tree and the list never disagree.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {string} status - Raw facility status.
+   *
+   * @returns {FacilityTagDescriptor} Matching descriptor.
+   */
+  protected statusDescriptor(status: string): FacilityTagDescriptor {
+    return resolveFacilityTag('status', status);
+  }
+
+  /**
+   * Method typeLabel
+   *
+   * @description
+   * The site's type in words. The row printed the raw enum ("site",
+   * "building"), which is the value the API sends, not something to show.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {string} type - Raw facility type.
+   *
+   * @returns {string} Human label.
+   */
+  protected typeLabel(type: string): string {
+    return resolveFacilityTag('type', type).label;
+  }
 }

@@ -11,7 +11,13 @@ import { ApiMock } from '../support/mocks/api-mock';
  */
 const API_BASE_URL = process.env['E2E_API_BASE_URL'] ?? 'http://localhost:8000';
 
-const facility = (id: string, name: string, latitude: number | null, longitude: number | null) => ({
+const facility = (
+  id: string,
+  name: string,
+  latitude: number | null,
+  longitude: number | null,
+  extra: Record<string, unknown> = {},
+) => ({
   '@id': `/api/facilities/${id}`,
   '@type': 'Facility',
   id,
@@ -26,6 +32,7 @@ const facility = (id: string, name: string, latitude: number | null, longitude: 
   longitude,
   createdAt: '2026-01-01T00:00:00+00:00',
   updatedAt: '2026-01-01T00:00:00+00:00',
+  ...extra,
 });
 
 async function landOnMap(page: Page, facilities: ReturnType<typeof facility>[]): Promise<void> {
@@ -82,5 +89,49 @@ test.describe('Facilities map', () => {
     );
 
     expect(overflows).toBe(false);
+  });
+
+  // The panel gave a name and a raw enum. A retired site kept a pin and a
+  // click, with nothing saying it was retired.
+  test('names the type and states the status of each site', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnMap(page, [
+      facility('f1', 'Northgate Plant', 48.86, 2.35),
+      facility('f2', 'Old Depot', 48.9, 2.4, { status: 'archived' }),
+    ]);
+
+    const items = page.getByTestId('map-panel-item');
+    await expect(items.first()).toContainText('Site');
+    await expect(items.first()).not.toContainText('site');
+    await expect(items.nth(1)).toContainText('Archived');
+  });
+
+  // A pin says where a site is, never what to type into a satnav; the count is
+  // what makes it worth the drive.
+  test('expands the address and the equipment count for the selected site', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnMap(page, [
+      facility('f1', 'Northgate Plant', 48.86, 2.35, {
+        address: '12 rue de la Paix, Paris',
+        equipmentCount: 41,
+      }),
+    ]);
+
+    await expect(page.getByTestId('map-panel-detail')).toHaveCount(0);
+
+    await page.getByTestId('map-panel-item').first().click();
+
+    await expect(page.getByTestId('map-panel-address')).toContainText('12 rue de la Paix');
+    await expect(page.getByTestId('map-panel-equipment')).toContainText('41');
+  });
+
+  // An older payload carries no count; printing "0" would assert an empty site.
+  test('omits the counter when the payload carries none', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await landOnMap(page, [facility('f1', 'Northgate Plant', 48.86, 2.35)]);
+
+    await page.getByTestId('map-panel-item').first().click();
+
+    await expect(page.getByTestId('map-panel-equipment')).toHaveCount(0);
   });
 });

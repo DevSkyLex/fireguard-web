@@ -243,6 +243,29 @@ export class OrganizationDashboard {
   );
 
   /**
+   * Property overdueInterventionsNote
+   * @readonly
+   *
+   * @description
+   * "N overdue" under the open-interventions figure, or null when none are
+   * late. Lateness is a second fact about the same population, not a
+   * period-over-period delta, so it does not go in the comparison slot.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly overdueInterventionsNote: Signal<string | null> = computed<string | null>(
+    () => {
+      const overdue = this.store.overdueInterventionCount();
+      return typeof overdue === 'number' && overdue > 0
+        ? $localize`:@@org.dash.overdueInterventions:${overdue}:count: overdue`
+        : null;
+    },
+  );
+
+  /**
    * Property canReadCompliance
    * @readonly
    *

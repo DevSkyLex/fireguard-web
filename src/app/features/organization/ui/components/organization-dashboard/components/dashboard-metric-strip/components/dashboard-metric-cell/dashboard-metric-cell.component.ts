@@ -104,6 +104,22 @@ export class DashboardMetricCell {
    *
    * @type {InputSignal<MetricComparison | null>}
    */
+  /**
+   * Property note
+   * @readonly
+   *
+   * @description
+   * Short qualifier shown under the value — a second fact about the same
+   * population, such as how many of the counted items are late. Distinct from
+   * {@link comparison}, which is period-over-period and would misdescribe it.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly note: InputSignal<string | null> = input<string | null>(null);
+
   public readonly comparison: InputSignal<MetricComparison | null> = input<MetricComparison | null>(
     null,
   );

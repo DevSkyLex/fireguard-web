@@ -14,6 +14,15 @@
     {{ value() ?? '—' }}
   </p>
 
+  @if (note(); as note) {
+    <p
+      class="mt-1.5 text-xs font-medium text-amber-600 tabular-nums dark:text-amber-400"
+      data-testid="metric-cell-note"
+    >
+      {{ note }}
+    </p>
+  }
+
   @if (comparison(); as comparison) {
     <div
       class="mt-2 flex items-center gap-1 text-xs font-semibold tabular-nums"

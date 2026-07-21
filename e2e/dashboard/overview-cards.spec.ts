@@ -51,6 +51,14 @@ function dashboardPayload() {
         ],
         primary: { key: 'operational', value: 28 },
       },
+      interventions: {
+        summary: [
+          { key: 'total', value: 31 },
+          { key: 'open', value: 12 },
+          { key: 'overdue', value: 4 },
+        ],
+        primary: { key: 'open', value: 12 },
+      },
       nonConformities: {
         summary: [
           { key: 'open', value: 12 },
@@ -156,5 +164,18 @@ test.describe('Overview composition cards', () => {
     expect(fleet.x).toBeGreaterThan(results.x);
     expect(Math.abs(results.y - severity.y)).toBeLessThan(4);
     expect(Math.abs(fleet.y - severity.y)).toBeLessThan(4);
+  });
+
+  // The dashboard overview had no interventions section at all: the strip
+  // counted places and things, never the work in flight.
+  test('shows the open interventions with how many are late', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1200 });
+    await landOnOverview(page);
+
+    const strip = page.locator('app-dashboard-metric-strip');
+    await expect(strip).toContainText('Open interventions');
+    await expect(strip).toContainText('12');
+    // Lateness is a second fact about the same population, not a trend.
+    await expect(page.getByTestId('metric-cell-note')).toContainText('4');
   });
 });

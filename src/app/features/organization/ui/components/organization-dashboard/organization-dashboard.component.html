@@ -75,6 +75,24 @@
                 [points]="store.inspectionsSparkline()"
               />
             }
+
+            <!--
+              The mockup's headline metric, and the one the backend had no
+              section for: the dashboard overview carried facilities, members,
+              equipment, inspections and non-conformities, but never the work
+              in flight. Gated on the same permission the backend gates the
+              section with, so the cell is absent rather than empty.
+            -->
+            @if (canReadRecentInterventions()) {
+              <app-dashboard-metric-cell
+                i18n-title="@@org.dash.openInterventions"
+                title="Open interventions"
+                icon="pi pi-bolt"
+                [value]="store.openInterventionCount()"
+                [loading]="store.isQueryLoading()"
+                [note]="overdueInterventionsNote()"
+              />
+            }
           </app-dashboard-metric-strip>
         }
 

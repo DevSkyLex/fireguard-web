@@ -77,6 +77,36 @@ function extractSparkline(
 }
 
 /**
+ * Function readOverviewMetric
+ *
+ * @description
+ * Reads one metric out of an overview section by key.
+ *
+ * The sections arrive as a flat `{ key, value }` list, so a caller that wants
+ * a specific figure has to find it — taking `summary[0]` only ever yields
+ * whatever the backend happened to put first.
+ *
+ * @param {unknown} section - One `overview.<widget>` section.
+ * @param {string} key - Metric key to read.
+ * @returns {number | null} The value, or null when the section or key is absent.
+ */
+function readOverviewMetric(section: unknown, key: string): number | null {
+  const summary: unknown = (section as Record<string, unknown> | undefined)?.['summary'];
+  if (!Array.isArray(summary)) return null;
+
+  for (const entry of summary) {
+    if (typeof entry !== 'object' || entry === null) continue;
+
+    const record = entry as Record<string, unknown>;
+    if (record['key'] === key && typeof record['value'] === 'number') {
+      return record['value'];
+    }
+  }
+
+  return null;
+}
+
+/**
  * Store OrganizationDashboardStore
  * @const OrganizationDashboardStore
  *
@@ -195,6 +225,35 @@ export const DashboardStore = signalStore(
      */
     memberCount: computed<OrganizationDashboardKpiValue>(
       () => store.queryData()?.overview?.['members']?.['summary']?.[0]?.['value'] ?? null,
+    ),
+
+    /**
+     * Computed openInterventionCount
+     *
+     * @description
+     * Interventions still in flight, read by key from
+     * `overview.interventions.summary`. The section is absent for a member
+     * without `organization.interventions.read`, which reads as `null` — no
+     * figure — rather than zero.
+     *
+     * @since 1.1.0
+     */
+    openInterventionCount: computed<OrganizationDashboardKpiValue>(
+      () => readOverviewMetric(store.queryData()?.overview?.['interventions'], 'open') ?? null,
+    ),
+
+    /**
+     * Computed overdueInterventionCount
+     *
+     * @description
+     * Open interventions past their due date. Counted server-side over open
+     * ones only: a published intervention that finished late is history, not
+     * something to act on.
+     *
+     * @since 1.1.0
+     */
+    overdueInterventionCount: computed<OrganizationDashboardKpiValue>(
+      () => readOverviewMetric(store.queryData()?.overview?.['interventions'], 'overdue') ?? null,
     ),
 
     /**

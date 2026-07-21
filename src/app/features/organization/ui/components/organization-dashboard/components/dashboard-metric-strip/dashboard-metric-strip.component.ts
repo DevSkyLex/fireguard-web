@@ -69,6 +69,11 @@ export class DashboardMetricStrip {
         return 'grid-cols-2';
       case 3:
         return 'grid-cols-1 sm:grid-cols-3';
+      case 5:
+        // Five never divides into two or four, so any intermediate breakpoint
+        // would leave a half-empty last row with the divider showing through.
+        // One column, then five.
+        return 'grid-cols-1 xl:grid-cols-5';
       default:
         return 'grid-cols-2 xl:grid-cols-4';
     }

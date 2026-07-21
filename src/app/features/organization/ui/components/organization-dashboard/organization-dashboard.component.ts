@@ -13,6 +13,8 @@ import { DashboardStore } from '@features/organization/state/organization-dashbo
 import { EmptyState, Skeleton } from '@shared/components';
 import {
   AssetGrowthTrend,
+  EquipmentCreatedTrend,
+  FacilitiesCreatedTrend,
   ComplianceBySite,
   DashboardMetricCell,
   DashboardMetricStrip,
@@ -56,6 +58,8 @@ import {
     NonConformitiesResolvedTrend,
     ComplianceBySite,
     AssetGrowthTrend,
+    EquipmentCreatedTrend,
+    FacilitiesCreatedTrend,
     Skeleton,
     EmptyState,
   ],

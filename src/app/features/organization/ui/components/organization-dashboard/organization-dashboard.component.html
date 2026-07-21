@@ -166,8 +166,22 @@
 
       <section class="flex flex-col gap-6">
         @defer (on viewport) {
-          <div class="grid grid-cols-1 gap-6">
-            <app-asset-growth-trend />
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <!--
+              Asset growth is the combined curve; these two are the halves it
+              adds up. Both were built with their own dashboard store slice and
+              service call and mounted nowhere — the same defect as the
+              "Inspections performed" card, found by checking every component
+              selector against every template rather than by reading the
+              inventory.
+
+              Beside the total rather than replacing it: the combined line
+              answers "is the estate growing", the split answers "which of the
+              two is driving it", and neither substitutes for the other.
+            -->
+            <app-asset-growth-trend class="lg:col-span-2" />
+            <app-facilities-created-trend />
+            <app-equipment-created-trend />
           </div>
         } @placeholder {
           <div class="grid grid-cols-1 gap-6">

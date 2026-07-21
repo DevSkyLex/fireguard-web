@@ -11,20 +11,49 @@
     <header
       class="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-surface-200 px-4 dark:border-surface-800"
     >
-      <h2 class="truncate text-sm font-semibold text-surface-900 dark:text-surface-100">
+      <!--
+        Inside the drawer the panel covers the page, so dismissing it is going
+        *back*, and the control leads the header the way a back affordance
+        does. Inline it sits beside the page and is closed, so the cross stays
+        on the right. Same action, and the difference is not decoration: a
+        cross over a covering surface reads as "discard".
+      -->
+      @if (overlay()) {
+        <p-button
+          type="button"
+          icon="pi pi-chevron-left"
+          severity="secondary"
+          size="small"
+          [text]="true"
+          [rounded]="true"
+          i18n-ariaLabel="@@layout.panel.backAria"
+          ariaLabel="Back"
+          data-testid="panel-back"
+          (onClick)="panelService.close(panel.id)"
+        />
+      }
+
+      <h2
+        class="truncate text-sm font-semibold text-surface-900 dark:text-surface-100"
+        [class.flex-1]="overlay()"
+      >
         {{ panel.title() }}
       </h2>
-      <p-button
-        type="button"
-        icon="pi pi-times"
-        severity="secondary"
-        size="small"
-        [text]="true"
-        [rounded]="true"
-        i18n-ariaLabel="@@layout.panel.closeAria"
-        ariaLabel="Close panel"
-        (onClick)="panelService.close(panel.id)"
-      />
+
+      @if (!overlay()) {
+        <p-button
+          type="button"
+          icon="pi pi-times"
+          severity="secondary"
+          size="small"
+          [text]="true"
+          [rounded]="true"
+          i18n-ariaLabel="@@layout.panel.closeAria"
+          ariaLabel="Close panel"
+          data-testid="panel-close"
+          (onClick)="panelService.close(panel.id)"
+        />
+      }
     </header>
 
     <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">

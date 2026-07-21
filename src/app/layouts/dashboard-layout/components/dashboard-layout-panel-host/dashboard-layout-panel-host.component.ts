@@ -57,6 +57,27 @@ export class DashboardLayoutPanelHost {
    * @type {InputSignal<number>}
    */
   public readonly maxPanels: InputSignal<number> = input<number>(1);
+
+  /**
+   * Property overlay
+   * @readonly
+   *
+   * @description
+   * Whether this host renders inside the mobile drawer rather than as an
+   * inline column.
+   *
+   * It changes the dismiss affordance, not the styling: an inline panel sits
+   * beside the page and is *closed*, so a cross is right; the drawer covers
+   * the page, and covering something is a place you come *back* from. A cross
+   * there reads as "discard", which is not what dismissing a details panel
+   * does.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly overlay: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Properties

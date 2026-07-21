@@ -41,6 +41,41 @@ import {
 type DetailsTab = 'info' | 'pins' | 'files';
 
 /**
+ * A conversation linked to the open one through the channel hierarchy.
+ *
+ * @since 1.2.0
+ */
+interface LinkedThreadRow {
+  readonly id: string;
+  readonly name: string;
+  readonly relation: 'parent' | 'child';
+}
+
+/**
+ * Projects a conversation into a linked-thread row.
+ *
+ * A channel falls back to its subject label and then to its id, so a row is
+ * never rendered nameless — an unnamed link is not clickable in practice.
+ *
+ * @param {ConversationOutput} thread - The linked conversation.
+ * @param {LinkedThreadRow['relation']} relation - How it relates to the open one.
+ *
+ * @returns {LinkedThreadRow} The row.
+ *
+ * @since 1.2.0
+ */
+function toLinkedThreadRow(
+  thread: ConversationOutput,
+  relation: LinkedThreadRow['relation'],
+): LinkedThreadRow {
+  return {
+    id: thread.id,
+    name: thread.name ?? thread.subjectLabel ?? thread.id,
+    relation,
+  };
+}
+
+/**
  * A participant joined with the identity the directory knows.
  *
  * @since 1.0.0
@@ -217,6 +252,50 @@ export class ConversationDetailsPanel {
           .conversations()
           .find((candidate: ConversationOutput): boolean => candidate.id === id) ?? null
       );
+    },
+  );
+
+  /**
+   * Property linkedThreads
+   * @readonly
+   *
+   * @description
+   * The open conversation's place in the channel hierarchy: its parent first,
+   * then its children, each as a row that opens that thread.
+   *
+   * Read from the inventory the panel already holds — the parent id is on the
+   * conversation and the children are the rows pointing back at it, so this
+   * costs no request.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<readonly LinkedThreadRow[]>}
+   */
+  protected readonly linkedThreads: Signal<readonly LinkedThreadRow[]> = computed(
+    (): readonly LinkedThreadRow[] => {
+      const conversation: ConversationOutput | null = this.conversation();
+      if (conversation === null) return [];
+
+      const all: readonly ConversationOutput[] = this.inventory.conversations();
+      const parent: ConversationOutput | undefined = conversation.parentConversationId
+        ? all.find(
+            (candidate: ConversationOutput): boolean =>
+              candidate.id === conversation.parentConversationId,
+          )
+        : undefined;
+
+      const children: readonly ConversationOutput[] = all.filter(
+        (candidate: ConversationOutput): boolean =>
+          candidate.parentConversationId === conversation.id,
+      );
+
+      return [
+        ...(parent ? [toLinkedThreadRow(parent, 'parent')] : []),
+        ...children.map(
+          (child: ConversationOutput): LinkedThreadRow => toLinkedThreadRow(child, 'child'),
+        ),
+      ];
     },
   );
 
@@ -400,6 +479,28 @@ export class ConversationDetailsPanel {
    */
   protected retry(): void {
     this.store.reload(this.conversation()?.isChannel ?? false);
+  }
+
+  /**
+   * Method openThread
+   *
+   * @description
+   * Opens a linked thread by swapping the `?conversation=` parameter. The path
+   * is left untouched — the panel and the workspace both read that one
+   * parameter, so changing it moves both.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {string} conversationId - Thread to open.
+   *
+   * @returns {void}
+   */
+  protected openThread(conversationId: string): void {
+    void this.router.navigate([], {
+      queryParams: { conversation: conversationId },
+      queryParamsHandling: 'merge',
+    });
   }
   //#endregion
 }

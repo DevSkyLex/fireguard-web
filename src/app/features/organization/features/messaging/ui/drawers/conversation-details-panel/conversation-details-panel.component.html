@@ -36,7 +36,14 @@
   </div>
 
   <div class="min-h-0 flex-1 overflow-y-auto px-4 py-3" data-testid="conversation-details-panel">
-    @if (store.hasError()) {
+    <!--
+      Info survives a failed fetch. Main info and the linked threads come from
+      the conversation inventory the panel already holds, not from the three
+      calls that can fail — blanking them would hide facts we have because
+      facts we do not have went missing. Only the members list, which is part
+      of that fetch, degrades, and it says so where it stands.
+    -->
+    @if (store.hasError() && activeTab() !== 'info') {
       <div class="flex flex-col items-center gap-2 py-8 text-center">
         <i class="pi pi-exclamation-triangle text-lg text-surface-400" aria-hidden="true"></i>
         <p class="text-sm text-surface-600 dark:text-surface-400" i18n="@@messaging.details.error">
@@ -124,6 +131,61 @@
             </div>
           </dl>
 
+          <!--
+            Where this thread sits in the channel hierarchy. Rendered only when
+            there is a link to show: an empty "Linked threads" heading would
+            claim a relationship the conversation does not have.
+          -->
+          @if (linkedThreads().length > 0) {
+            <h3
+              class="pt-5 pb-1 text-[11px] font-semibold tracking-wider text-surface-500 uppercase"
+              i18n="@@messaging.details.linkedThreads"
+            >
+              Linked threads
+            </h3>
+
+            <ul class="flex flex-col">
+              @for (thread of linkedThreads(); track thread.id) {
+                <li>
+                  <button
+                    type="button"
+                    class="flex w-full cursor-pointer items-center gap-2.5 rounded-md py-1.5 text-left hover:bg-surface-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:hover:bg-surface-800"
+                    data-testid="details-linked-thread"
+                    (click)="openThread(thread.id)"
+                  >
+                    <i
+                      class="pi shrink-0 text-[11px] text-surface-400"
+                      [class]="thread.relation === 'parent' ? 'pi-arrow-up' : 'pi-arrow-down'"
+                      aria-hidden="true"
+                    ></i>
+                    <span
+                      class="min-w-0 flex-1 truncate text-[13px] font-medium text-surface-950 dark:text-surface-50"
+                      >{{ thread.name }}</span
+                    >
+                    <!--
+                      The arrow alone would not say which way the link runs, and
+                      "parent" versus "sub-channel" is the whole point of the
+                      section.
+                    -->
+                    @if (thread.relation === 'parent') {
+                      <span
+                        class="shrink-0 text-[10px] font-semibold tracking-wider text-surface-500 uppercase"
+                        i18n="@@messaging.details.threadParent"
+                        >Parent</span
+                      >
+                    } @else {
+                      <span
+                        class="shrink-0 text-[10px] font-semibold tracking-wider text-surface-500 uppercase"
+                        i18n="@@messaging.details.threadChild"
+                        >Sub-channel</span
+                      >
+                    }
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+
           @if (conversation.isChannel) {
             <h3
               class="flex items-center gap-2 pt-5 pb-1 text-[11px] font-semibold tracking-wider text-surface-500 uppercase"
@@ -134,7 +196,22 @@
               }}</span>
             </h3>
 
-            @if (store.isLoading()) {
+            @if (store.hasError()) {
+              <p class="py-3 text-xs text-surface-500 dark:text-surface-400">
+                <ng-container i18n="@@messaging.details.membersError"
+                  >The member list could not be loaded.</ng-container
+                >
+                <button
+                  type="button"
+                  class="ml-1 cursor-pointer font-semibold text-primary hover:underline"
+                  i18n="@@messaging.details.retry"
+                  data-testid="details-members-retry"
+                  (click)="retry()"
+                >
+                  Retry
+                </button>
+              </p>
+            } @else if (store.isLoading()) {
               <p
                 class="py-3 text-xs text-surface-500 dark:text-surface-400"
                 i18n="@@messaging.details.loading"

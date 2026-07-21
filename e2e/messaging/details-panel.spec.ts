@@ -106,7 +106,16 @@ async function landOnConversation(page: Page): Promise<string> {
     route.fulfill({
       status: 200,
       contentType: 'application/ld+json',
-      body: JSON.stringify({ member: [conversation('general', 'general')], totalItems: 1 }),
+      body: JSON.stringify({
+        member: [
+          conversation('general', 'general'),
+          conversation('ops', 'operations'),
+          // A sub-channel of #general, and its parent — the two directions the
+          // linked-threads section has to tell apart.
+          conversation('incidents', 'incidents', { parentConversationId: 'general' }),
+        ],
+        totalItems: 3,
+      }),
     }),
   );
 
@@ -144,6 +153,16 @@ async function landOnConversation(page: Page): Promise<string> {
         ],
         totalItems: 1,
       }),
+    }),
+  );
+
+  // Every other channel has no participants; the specific #general route below
+  // is registered after this one, so it still wins.
+  await page.route(`${API_BASE_URL}/api/channels/**/participants**`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/ld+json',
+      body: JSON.stringify({ member: [], totalItems: 0 }),
     }),
   );
 
@@ -258,6 +277,73 @@ test.describe('Conversation details panel', () => {
       .getByTestId('details-member');
     await expect(online).toHaveCount(1);
     await expect(online.first()).toContainText('Nadia Rahal');
+  });
+
+  // `parentConversationId` has always been on the payload and nothing read it,
+  // so a sub-channel and its parent were unreachable from one another.
+  test('links a channel to its sub-channels and opens one', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await landOnConversation(page);
+    await page.getByTestId('conversation-details-toggle').locator('button').click();
+
+    const links = page.getByTestId('details-linked-thread');
+    await expect(links).toHaveCount(1);
+    await expect(links.first()).toContainText('incidents');
+    // The arrow does not say which way the link runs; the word does.
+    await expect(links.first()).toContainText('Sub-channel');
+
+    await links.first().click();
+
+    await expect(page).toHaveURL(/[?&]conversation=incidents/);
+    await expect(page.getByTestId('conversation-details-panel')).toBeVisible();
+  });
+
+  // The same section, read from the other end: the sub-channel must offer its
+  // way back up, labelled as the parent rather than as another child.
+  test('links a sub-channel back to its parent', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    const organizationId = await landOnConversation(page);
+    await page.goto(`/organizations/${organizationId}/messages?conversation=incidents`);
+    await page.getByTestId('conversation-details-toggle').locator('button').click();
+
+    const links = page.getByTestId('details-linked-thread');
+    await expect(links).toHaveCount(1);
+    await expect(links.first()).toContainText('general');
+    await expect(links.first()).toContainText('Parent');
+  });
+
+  // An empty "Linked threads" heading would claim a relationship the channel
+  // does not have.
+  test('omits the section for a channel with no hierarchy', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    const organizationId = await landOnConversation(page);
+    await page.goto(`/organizations/${organizationId}/messages?conversation=ops`);
+    await page.getByTestId('conversation-details-toggle').locator('button').click();
+
+    await expect(page.getByTestId('conversation-details-panel')).toBeVisible();
+    await expect(page.getByTestId('details-linked-thread')).toHaveCount(0);
+    await expect(page.getByText('Linked threads')).toHaveCount(0);
+  });
+
+  // Main info and the hierarchy come from the conversation inventory, not from
+  // the three calls the panel fetches. A failure there must not blank facts the
+  // panel already holds.
+  test('keeps the info tab readable when the details fetch fails', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    const organizationId = await landOnConversation(page);
+
+    // Registered last, so it wins over the broad conversations mock.
+    await page.route(`${API_BASE_URL}/api/conversations/incidents/pinned-messages**`, (route) =>
+      route.fulfill({ status: 500, contentType: 'application/ld+json', body: '{}' }),
+    );
+
+    await page.goto(`/organizations/${organizationId}/messages?conversation=incidents`);
+    await page.getByTestId('conversation-details-toggle').locator('button').click();
+
+    await expect(page.getByTestId('details-message-count')).toHaveText('12');
+    await expect(page.getByTestId('details-linked-thread')).toHaveCount(1);
+    // Only the part that actually failed says so.
+    await expect(page.getByTestId('details-members-retry')).toBeVisible();
   });
 
   test('lists the conversation pins', async ({ page }) => {

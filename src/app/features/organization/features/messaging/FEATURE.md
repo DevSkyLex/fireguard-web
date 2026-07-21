@@ -135,6 +135,11 @@ DM would be unreachable.
   server-side — so only the online case is ever asserted in the UI, and the
   details panel groups members under named **Online** / **Offline** headings so
   the dot never carries the state alone.
+- **The details panel degrades per-section, not as a whole.** Main info and the
+  linked threads are read from the conversation inventory the panel already
+  holds; only the members list belongs to the fetch that can fail. A failed
+  fetch therefore reports itself where the members would be instead of blanking
+  the tab — hiding facts we have because facts we do not have went missing.
 - **Pinning is shared, saving is personal.** A pin is visible to the whole
   conversation; a save is only in the member's own list. They must never share a
   control or an icon.
